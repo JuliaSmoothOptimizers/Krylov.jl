@@ -16,17 +16,16 @@ n = size(A, 1);
 b = ones(n); b_norm = norm(b);
 
 # Solve Ax=b.
-# x = cg_lanczos(A, b);
-# @time x = cg_lanczos(A, b);
-# r = b - A * x;
-# @printf("Relative residual without shift: %8.1e\n", norm(r)/norm(b));
+x = cg_lanczos(A, b);
+@time x = cg_lanczos(A, b);
+r = b - A * x;
+@printf("Relative residual without shift: %8.1e\n", norm(r)/norm(b));
 
 # Solve (A+αI)x = b.
 shifts = [1, 2, 3, 4];
-x = cg_lanczos_shift_seq(A, b, shifts, verbose=true);
-# Profile.init(delay=0.1)
+x = cg_lanczos_shift_seq(A, b, shifts);
 # @profile x = cg_lanczos_shift_seq(A, b, shifts);
-@time x = cg_lanczos_shift_seq(A, b, shifts, verbose=true);
+@time x = cg_lanczos_shift_seq(A, b, shifts);
 r = residuals(A, b, shifts, x);
 resids = map(norm, r) / b_norm;
 @printf("Relative residuals with shifts:\n");
