@@ -23,9 +23,9 @@ r = b - A * x;
 
 # Solve (A+αI)x = b.
 shifts = [1, 2, 3, 4];
-x = cg_lanczos_shift_seq(A, b, shifts);
+x = cg_lanczos_shift_par(A, b, shifts, verbose=false);
 # @profile x = cg_lanczos_shift_seq(A, b, shifts);
-@time x = cg_lanczos_shift_seq(A, b, shifts);
+@time x = cg_lanczos_shift_par(A, b, shifts, verbose=false);
 r = residuals(A, b, shifts, x);
 resids = map(norm, r) / b_norm;
 @printf("Relative residuals with shifts:\n");
