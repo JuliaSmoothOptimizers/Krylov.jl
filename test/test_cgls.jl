@@ -1,5 +1,9 @@
+cgls_tol = 1.0e-6;
+
 for npower = 1 : 4
   (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, npower, 0);  # No regularization.
   x = cgls(A, b);
-  @printf("CGLS: Relative residual: %8.1e\n", norm(A' * (A*x - b)) / norm(b));
+  resid = norm(A' * (A*x - b)) / norm(b)
+  @printf("CGLS: Relative residual: %8.1e\n", resid);
+  @test(resid <= cgls_tol);
 end
