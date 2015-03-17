@@ -5,7 +5,9 @@ function residuals(A, b, shifts, x)
 end
 
 n = 10;
-A = spdiagm([1:n]); b = ones(n); shifts=[1:6];
+A = spdiagm((ones(n-1), 4*ones(n), ones(n-1)), (-1, 0, 1))
+b = A * [1:10];
+shifts=[1:6];
 
 x = cg_lanczos_shift_seq(A, b, shifts, itmax=10);
 r = residuals(A, b, shifts, x);
