@@ -111,12 +111,8 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
 
   # Build format strings for printing.
   if verbose
-    fmt = "%5d";
-    for i = 1 : nshifts
-      fmt = fmt * "  %8.1e";
-    end
-    fmt = fmt * "\n";
-    print_formatted(fmt, iter, rNorms...);
+    fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n";
+    c_printf(fmt, iter, rNorms...);
   end
 
   # Main loop.
@@ -162,7 +158,7 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
     end
 
     iter = iter + 1;
-    verbose && print_formatted(fmt, iter, rNorms...);
+    verbose && c_printf(fmt, iter, rNorms...);
   end
   return x;
 end
@@ -216,12 +212,8 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
 
   # Build format strings for printing.
   if verbose
-    fmt = "%5d";
-    for i = 1 : nshifts
-      fmt = fmt * "  %8.1e";
-    end
-    fmt = fmt * "\n";
-    print_formatted(fmt, iter, drNorm...);
+    fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n";
+    c_printf(fmt, iter, drNorm...);
   end
 
   # Main loop.
@@ -273,7 +265,7 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
     end
 
     iter = iter + 1;
-    verbose && print_formatted(fmt, iter, drNorm...);
+    verbose && c_printf(fmt, iter, drNorm...);
   end
   return convert(Array, dx);
 end
