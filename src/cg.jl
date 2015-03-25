@@ -22,6 +22,7 @@ function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
   itmax == 0 && (itmax = 2 * n);
 
   rNorm = sqrt(γ);
+  rNorms = [rNorm];
   ε = atol + rtol * rNorm;
   verbose && @printf("%5d  %8.1e\n", iter, rNorm);
 
@@ -37,8 +38,9 @@ function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
     BLAS.axpy!(n, 1.0, r, 1, p, 1);  # Faster than p = r + β * p;
     γ = γ_next;
     rNorm = sqrt(γ);
+    push!(rNorms, rNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.1e\n", iter, rNorm);
   end
-  return x;
+  return (x, rNorms);
 end

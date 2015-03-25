@@ -11,9 +11,10 @@ n = size(A, 1);
 b = ones(n); b_norm = norm(b);
 
 # Solve Ax=b.
-x = cg(A, b, verbose=true);
-@profile x = cg(A, b);
+(x, rNorms) = cg(A, b);
+# @profile x = cg(A, b);
+@time (x, rNorms) = cg(A, b);
 r = b - A * x;
 @printf("Relative residual: %8.1e\n", norm(r)/b_norm);
 
-ProfileView.view()
+# ProfileView.view()
