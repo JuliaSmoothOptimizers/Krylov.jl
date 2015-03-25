@@ -8,10 +8,11 @@ A = M.matrix;
 
 for nrhs = 1 : size(M.rhs, 2)
   b = M.rhs[:,nrhs];
-  x = crls(A, b);
-  @time x = crls(A, b);
-#   @profile x = crls(A, b);
-  @printf("CRLS: Relative residual: %8.1e\n", norm(A' * (A * x - b)) / norm(b));
+  (x, rNorms, ArNorms) = crls(A, b);
+#   @profile (x, rNorms, ArNorms) = crls(A, b);
+  @time (x, rNorms, ArNorms) = crls(A, b);
+  resid = norm(A' * (A * x - b)) / norm(b);
+  @printf("CRLS: Relative residual: %8.1e\n", resid);
 end
 
 # ProfileView.view()
