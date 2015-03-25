@@ -33,9 +33,8 @@ function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
     BLAS.axpy!(n, -α, Ap, 1, r, 1);  # Faster than r = r - α * Ap;
     γ_next = BLAS.dot(n, r, 1, r, 1);
     β = γ_next / γ;
-#     BLAS.axpy!(n, 1.0, r, 1, BLAS.scal!(n, β, p, 1), 1);  # Faster than p = r + β * p;
     BLAS.scal!(n, β, p, 1)
-    BLAS.axpy!(n, 1.0, r, 1, p, 1);
+    BLAS.axpy!(n, 1.0, r, 1, p, 1);  # Faster than p = r + β * p;
     γ = γ_next;
     rNorm = sqrt(γ);
     iter = iter + 1;
