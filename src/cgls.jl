@@ -29,7 +29,8 @@ function cgls(A :: LinearOperator, b :: Array{Float64,1};
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
   x = zeros(n);
-  norm(b) == 0 && return x;
+  bNorm = BLAS.nrm2(m, b, 1);   # Marginally faster than norm(b);
+  bNorm == 0 && return x;
   r = copy(b);
   s = A' * r;
   p = copy(s);
@@ -37,11 +38,15 @@ function cgls(A :: LinearOperator, b :: Array{Float64,1};
   iter = 0;
   itmax == 0 && (itmax = 2 * n);
 
-  rNorm = sqrt(γ);
-  ε = atol + rtol * rNorm;
-  verbose && @printf("%5d  %8.1e\n", iter, rNorm);
+  rNorm  = bNorm;
+  ArNorm = sqrt(γ);
+  rNorms = [rNorm];
+  ArNorms = [ArNorm];
+  ε = atol + rtol * ArNorm;
+  verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖A'r‖", "‖r‖")
+  verbose && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm);
 
-  while (rNorm > ε) & (iter < itmax)
+  while (ArNorm > ε) & (iter < itmax)
     q = A * p;
     α = γ / BLAS.dot(m, q, 1, q, 1);   # Faster than α = γ / dot(q, q);
     BLAS.axpy!(n,  α, p, 1, x, 1);     # Faster than x = x + α * p;
@@ -54,9 +59,12 @@ function cgls(A :: LinearOperator, b :: Array{Float64,1};
     # The combined BLAS calls tend to trigger some gc.
     #  BLAS.axpy!(n, 1.0, s, 1, BLAS.scal!(n, β, p, 1), 1);
     γ = γ_next;
-    rNorm = sqrt(γ);
+    rNorm = BLAS.nrm2(m, r, 1);  # Marginally faster than norm(r);
+    ArNorm = sqrt(γ);
+    push!(rNorms, rNorm);
+    push!(ArNorms, ArNorm);
     iter = iter + 1;
-    verbose && @printf("%5d  %8.1e\n", iter, rNorm);
+    verbose && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm);
   end
-  return x;
+  return (x, rNorms, ArNorms);
 end
