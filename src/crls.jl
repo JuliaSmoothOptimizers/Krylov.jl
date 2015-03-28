@@ -61,19 +61,16 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
     s = A * Ar;
     γ_next = BLAS.dot(m, s, 1, s, 1);   # Faster than γ_next = dot(s, s);
     β = γ_next / γ;
+
     BLAS.scal!(n, β, p, 1);
     BLAS.axpy!(n, 1.0, Ar, 1, p, 1);    # Faster than  p = Ar + β *  p;
+    # The combined call uses less memory but tends to trigger more gc.
+    #     BLAS.axpy!(n, 1.0, Ar, 1, BLAS.scal!(n, β, p, 1), 1);
 
     BLAS.scal!(m, β, Ap, 1);
     BLAS.axpy!(m, 1.0, s, 1, Ap, 1);    # Faster than Ap =  s + β * Ap;
+    q = A' * Ap;
 
-    # The combined call uses less memory but tends to trigger more gc.
-    #     BLAS.axpy!(n, 1.0, r, 1, BLAS.scal!(n, β, p, 1), 1);
-    q = A' * s + β * q;
-    # The BLAS calls are not faster here and trigger lots of gc.
-    #     BLAS.scal!(n, β, q, 1);
-    #     BLAS.axpy!(n, 1.0, A' * s, 1, q, 1);
-    #     BLAS.axpy!(n, 1.0, A' * s, 1, BLAS.scal!(n, β, q, 1), 1);
     γ = γ_next;
     rNorm = norm(r);
     ArNorm = norm(Ar);
