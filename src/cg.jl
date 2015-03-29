@@ -1,5 +1,19 @@
 export cg
 
+type CGStats <: KrylovStats
+  solved :: Bool
+  residuals :: Array{Float64}
+  status :: UTF8String
+end
+
+function show(io :: IO, stats :: CGStats)
+  s  = "\nCG stats\n"
+  s *= @sprintf("  solved: %s\n", stats.solved)
+  s *= @sprintf("  residuals: %7.1e\n", stats.residuals)
+  s *= @sprintf("  status: %s\n", stats.status)
+  print(io, s)
+end
+
 # Methods for various argument types.
 include("cg_methods.jl")
 
@@ -26,7 +40,11 @@ function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
   ε = atol + rtol * rNorm;
   verbose && @printf("%5d  %8.1e\n", iter, rNorm);
 
-  while (rNorm > ε) & (iter < itmax)
+  solved = rNorm <= ε;
+  tired = iter >= itmax;
+  status = "unknown";
+
+  while ! (solved || tired)
     Ap = A * p;
     pAp = BLAS.dot(n, p, 1, Ap, 1);
     α = γ / pAp;
@@ -41,6 +59,11 @@ function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
     push!(rNorms, rNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.1e\n", iter, rNorm);
+    solved = rNorm <= ε;
+    tired = iter >= itmax;
   end
-  return (x, rNorms);
+
+  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  stats = CGStats(solved, rNorms, status);
+  return (x, stats);
 end

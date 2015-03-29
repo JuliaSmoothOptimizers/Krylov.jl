@@ -22,6 +22,13 @@
 
 export crls
 
+type CRLStats <: KrylovStats
+  solved :: Bool
+  residuals :: Array{Float64,1}
+  Aresiduals :: Array{Float64,1}
+  status :: UTF8String
+end
+
 # Methods for various argument types.
 include("crls_methods.jl")
 
@@ -43,7 +50,7 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
   q  = A' * Ap;
   γ  = BLAS.dot(m, s, 1, s, 1);  # Faster than γ = dot(s, s);
   iter = 0;
-  itmax == 0 && (itmax = 2 * n);
+  itmax == 0 && (itmax = min(m, n, 20));
 
   rNorm = bNorm;
   ArNorm = norm(Ar);
@@ -53,7 +60,11 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
   verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖A'r‖", "‖r‖")
   verbose && @printf("%5d  %8.2e  %8.2e\n", 3, ArNorm, rNorm);
 
-  while (ArNorm > ε) & (iter < itmax)
+  status = "unknown";
+  solved = ArNorm <= ε;
+  tired = iter >= itmax;
+
+  while ! (solved || tired)
     α = γ / dot(q, q);
     BLAS.axpy!(n,  α, p,  1,  x, 1);     # Faster than  x =  x + α *  p;
     BLAS.axpy!(m, -α, Ap, 1,  r, 1);     # Faster than  r =  r - α * Ap;
@@ -78,6 +89,11 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
     push!(ArNorms, ArNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.2e  %8.2e\n", 3 + 2 * iter, ArNorm, rNorm);
+    solved = ArNorm <= ε;
+    tired = iter >= itmax;
   end
-  return (x, rNorms, ArNorms);
+
+  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  stats = CRLStats(solved, rNorms, ArNorms, status);
+  return (x, stats);
 end

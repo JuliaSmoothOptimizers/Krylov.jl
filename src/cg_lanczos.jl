@@ -11,6 +11,24 @@
 
 export cg_lanczos, cg_lanczos_shift_seq, cg_lanczos_shift_par
 
+type LanczosStats <: KrylovStats
+  solved :: Bool
+  residuals :: Union(Array{Float64}, DArray{Float64,1,Array{Float64,1}})
+  Anorm :: Float64
+  Acond :: Float64
+  status :: UTF8String
+end
+
+function show(io :: IO, stats :: LanczosStats)
+  s  = "\nCG stats\n"
+  s *= @sprintf("  solved: %s\n", stats.solved)
+  s *= @sprintf("  residuals: %7.1e\n", stats.residuals)
+  s *= @sprintf("  ‖A‖frob: %7.1e\n", stats.Anorm)
+  s *= @sprintf("  κ₂(A): %7.1e\n", stats.Acond)
+  s *= @sprintf("  status: %s\n", stats.status)
+  print(io, s)
+end
+
 # Methods for various argument types.
 include("cg_lanczos_methods.jl")
 
@@ -39,15 +57,19 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
 
   # Define stopping tolerance.
   rNorm = σ;
+  rNorms = [rNorm];
   ε = atol + rtol * rNorm;
   verbose && @printf("%5d  %8.1e\n", iter, rNorm);
 
+  solved = rNorm <= ε;
+  tired = iter >= itmax;
+  status = "unknown";
+
   # Main loop.
-  while (rNorm > ε) & (iter < itmax)
+  while ! (solved || tired)
     # Form next Lanczos vector.
     v_next = A * v;
-    # δ = BLAS.dot(n, v, 1, v_next, 1); doesn't seem to pay off.
-    δ = dot(v, v_next);
+    δ = dot(v, v_next);  # BLAS.dot(n, v, 1, v_next, 1) doesn't seem to pay off.
     BLAS.axpy!(n, -δ, v, 1, v_next, 1);  # Faster than v_next = Av - δ * v;
     if iter > 0
       BLAS.axpy!(n, -β, v_prev, 1, v_next, 1);  # Faster than v_next = v_next - β * v_prev;
@@ -58,7 +80,6 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
 
     # Compute next CG iterate.
     γ = 1 / (δ - ω / γ);
-    #     x = x + γ * p;
     BLAS.axpy!(n, γ, p, 1, x, 1);  # Faster than x = x + γ * p;
 
     ω = β * γ;
@@ -67,10 +88,16 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
     BLAS.scal!(n, ω, p, 1);
     BLAS.axpy!(n, σ, v, 1, p, 1);  # Faster than p = σ * v + ω * p;
     rNorm = abs(σ);
+    push!(rNorms, rNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.1e\n", iter, rNorm);
+    solved = rNorm <= ε;
+    tired = iter >= itmax;
   end
-  return x;
+
+  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  stats = LanczosStats(solved, rNorms, 0.0, 0.0, status);  # TODO: Estimate Anorm and Acond.
+  return (x, stats);
 end
 
 
@@ -94,11 +121,6 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
   # Initialize each p to b.
   p = b * ones(nshifts)';
 
-  # Keep track of shifted systems that have converged.
-  converged = falses(nshifts);
-  iter = 0;
-  itmax == 0 && (itmax = 2 * n);
-
   # Initialize some constants used in recursions below.
   σ = β * ones(nshifts);
   δhat = zeros(nshifts);
@@ -107,7 +129,13 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
 
   # Define stopping tolerance.
   rNorms = β * ones(nshifts);
+  rNorms_history = [rNorms];
   ε = atol + rtol * β;
+
+  # Keep track of shifted systems that have converged.
+  converged = rNorms .<= ε;
+  iter = 0;
+  itmax == 0 && (itmax = 2 * n);
 
   # Build format strings for printing.
   if verbose
@@ -115,8 +143,12 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
     c_printf(fmt, iter, rNorms...);
   end
 
+  solved = all(converged);
+  tired = iter >= itmax;
+  status = "unknown";
+
   # Main loop.
-  while ! all(converged) & (iter < itmax)
+  while ! (solved || tired)
     # Form next Lanczos vector.
     v_next = A * v;
     δ = dot(v, v_next);
@@ -131,36 +163,40 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
     # Compute next CG iterate for each shift.
     not_cv = find(! converged);
 
-    #     δhat[not_cv] = δ + shifts[not_cv];
-    #     γ[not_cv] = 1 ./ (δhat[not_cv] - ω[not_cv] ./ γ[not_cv]);
-    #     x[:, not_cv] += (p[:, not_cv] * diagm(γ[not_cv]));  # diagm?!
-    #     ω[not_cv] = β * γ[not_cv];
-    #     σ[not_cv] .*= -ω[not_cv];
-    #     ω[not_cv] .*= ω[not_cv];
-    #     p[:, not_cv] = (v * σ[not_cv]' + p[:, not_cv] * diagm(ω[not_cv]));
-    #     rNorms[not_cv] = abs(σ[not_cv]);
-    #     converged[not_cv] = rNorms[not_cv] .<= ε;
+    if length(not_cv) > 0
+      # Loop is a bit faster than the vectorized version.
+      for i in not_cv
+        δhat[i] = δ + shifts[i];
+        γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i]);
+        x[:, i] += γ[i] * p[:, i];
 
-    # Loop is a bit faster than the vectorized version.
-    for i in not_cv
-      δhat[i] = δ + shifts[i];
-      γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i]);
-      x[:, i] += γ[i] * p[:, i];
+        ω[i] = β * γ[i];
+        σ[i] *= -ω[i];
+        ω[i] *= ω[i];
+        p[:, i] = v * σ[i] + p[:, i] * ω[i];
 
-      ω[i] = β * γ[i];
-      σ[i] *= -ω[i];
-      ω[i] *= ω[i];
-      p[:, i] = v * σ[i] + p[:, i] * ω[i];
+        # Update list of systems that have converged.
+        rNorms[i] = abs(σ[i]);
+        converged[i] = rNorms[i] <= ε;
+      end
 
-      # Update list of systems that have converged.
-      rNorms[i] = abs(σ[i]);
-      converged[i] = rNorms[i] <= ε;
+      # Can't seem to use BLAS3 GEMM calls here.
+      #       BLAS.gemm!('N', 'N', 1.0, p[:,not_cv], diagm(γ[not_cv]), 1.0, x[:,not_cv]);
+      #       p[:,not_cv] *= diagm(ω[not_cv]);
+      #       BLAS.gemm!('N', 'T', 1.0, v, σ[not_cv], 1.0, p[:,not_cv]);
     end
 
+    append!(rNorms_history, rNorms);
     iter = iter + 1;
     verbose && c_printf(fmt, iter, rNorms...);
+
+    solved = all(converged);
+    tired = iter >= itmax;
   end
-  return x;
+
+  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  stats = LanczosStats(solved, reshape(rNorms_history, nshifts, iter+1)', 0.0, 0.0, status);  # TODO: Estimate Anorm and Acond.
+  return (x, stats);
 end
 
 
@@ -208,6 +244,7 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
 
   # Define stopping tolerance.
   drNorm = dfill(β, (nshifts,), workers(), [nchunks]);
+  #   drNorms = dfill(β, (nshifts,), workers(), [nchunks]);
   ε = atol + rtol * β;
 
   # Build format strings for printing.
@@ -216,8 +253,12 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
     c_printf(fmt, iter, drNorm...);
   end
 
+  solved = preduce(&, dconverged);
+  tired = iter >= itmax;
+  status = "unknown";
+
   # Main loop.
-  while ! preduce(&, dconverged) & (iter < itmax)
+  while ! (solved || tired)
     # Form next Lanczos vector.
     v_next = A * v;
     δ = dot(v, v_next);
@@ -234,6 +275,8 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
       @spawnat proc begin
         converged_loc = localpart(dconverged);
         not_cv = find(! converged_loc);
+        rNorm_loc = localpart(drNorm);
+        #         rNorms_loc = localpart(drNorms);
 
         if ! all(converged_loc)
 
@@ -245,27 +288,36 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
           ω_loc = localpart(dω);
           x_loc = localpart(dx);
           p_loc = localpart(dp);
-          rNorm_loc = localpart(drNorm);
           shifts_loc = localpart(dshifts); shifts_loc = shifts_loc[not_cv];
 
           δ_loc[not_cv] = δ + shifts_loc;
           γ_loc[not_cv] = 1 ./ (δ_loc[not_cv] - ω_loc[not_cv] ./ γ_loc[not_cv]);
-          x_loc[:, not_cv] += (p_loc[:, not_cv] * diagm(γ_loc[not_cv]));  # diagm?!
-
           ω_loc[not_cv] = β * γ_loc[not_cv];
           σ_loc[not_cv] .*= -ω_loc[not_cv];
           ω_loc[not_cv] .*= ω_loc[not_cv];
-          p_loc[:, not_cv] = (v * σ_loc[not_cv]' + p_loc[:, not_cv] * diagm(ω_loc[not_cv]));
           rNorm_loc[not_cv] = abs(σ_loc[not_cv]);
+
+          # Can't seem to use BLAS3 GEMM calls here.
+          x_loc[:, not_cv] += (p_loc[:, not_cv] * diagm(γ_loc[not_cv]));  # diagm?!
+          p_loc[:, not_cv] = (v * σ_loc[not_cv]' + p_loc[:, not_cv] * diagm(ω_loc[not_cv]));
 
           # Update list of systems that have converged.
           converged_loc[not_cv] = rNorm_loc[not_cv] .<= ε;
         end
+
+        # It currently doesn't seem possible to do this with distributed arrays.
+        #         append!(rNorms_loc, rNorm_loc);
       end
     end
 
     iter = iter + 1;
     verbose && c_printf(fmt, iter, drNorm...);
+
+    solved = preduce(&, dconverged);
+    tired = iter >= itmax;
   end
-  return convert(Array, dx);
+
+  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  stats = LanczosStats(solved, drNorm, 0.0, 0.0, status);
+  return (dx, stats);
 end
