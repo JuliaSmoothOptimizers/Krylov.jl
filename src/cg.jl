@@ -17,7 +17,11 @@ end
 # Methods for various argument types.
 include("cg_methods.jl")
 
+@doc """
+The conjugate gradient method to solve the symmetric linear system Ax=b.
 
+The method does _not_ abort if A is not definite.
+""" ->
 function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
                        atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
                        verbose :: Bool=false)

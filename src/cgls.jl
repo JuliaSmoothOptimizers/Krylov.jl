@@ -28,7 +28,18 @@ end
 # Methods for various argument types.
 include("cgls_methods.jl")
 
+@doc """
+Solve the linear least-squares problem
 
+  minimize ‖b - Ax‖₂
+
+using the Conjugate Gradient (CG) method. This method is equivalent to
+applying CG to the normal equations A'Ax = A'b.
+
+CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖A'r‖₂.
+It is formally equivalent to LSQR, though can be slightly less accurate,
+but simpler to implement.
+""" ->
 function cgls(A :: LinearOperator, b :: Array{Float64,1};
               atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
               verbose :: Bool=false)

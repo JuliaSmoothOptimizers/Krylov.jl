@@ -32,7 +32,22 @@ end
 # Methods for various argument types.
 include("crls_methods.jl")
 
+@doc """
+Solve the linear least-squares problem
 
+  minimize ‖b - Ax‖₂
+
+using the Conjugate Residuals (CR) method. This method is equivalent to
+applying MINRES to the normal equations A'Ax = A'b. This implementation
+recurs the residual r := b - Ax.
+
+CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r‖₂.
+It is formally equivalent to LSMR, though can be slightly less accurate,
+but simpler to implement.
+
+It is not safe to call this method with a `LinearOperator` that implements
+preallocation.
+""" ->
 function crls(A :: LinearOperator, b :: Array{Float64,1};
               atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
               verbose :: Bool=false)
