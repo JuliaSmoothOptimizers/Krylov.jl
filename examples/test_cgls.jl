@@ -7,6 +7,7 @@ using LinearOperators
 M = HarwellBoeingMatrix("data/illc1850.rra");
 A = M.matrix;
 (m, n) = size(A);
+@printf("System size: %d rows and %d columns\n", m, n);
 
 # Define a linear operator with preallocation.
 Ap = zeros(m);
