@@ -16,13 +16,15 @@ op = LinearOperator(m, n, Float64, false, false,
                     p -> A_mul_B!(1.0,  A, p, 0.0, Ap),
                     q -> Ac_mul_B!(1.0, A, q, 0.0, Atq),
                     q -> Ac_mul_B!(1.0, A, q, 0.0, Atq));
+λ = 1.0e-3;
 
 for nrhs = 1 : size(M.rhs, 2)
   b = M.rhs[:,nrhs];
-  (x, stats) = cgls(op, b);
-  #   @profile (x, stats) = cgls(op, b, verbose=false);
-  @time (x, stats) = cgls(op, b);
+  (x, stats) = cgls(op, b, λ=λ);
+  #   @profile (x, stats) = cgls(op, b, λ=λ, verbose=false);
+  @time (x, stats) = cgls(op, b, λ=λ);
   @printf("CGLS: Relative residual: %8.1e\n", norm(A' * (A * x - b)) / norm(b));
+  @printf("CGLS: ‖x‖: %8.1e\n", norm(x));
 end
 
 # ProfileView.view()
