@@ -4,7 +4,7 @@ import IterativeSolvers
 import KrylovMethods
 import Krylov
 
-include("get_div_grad.jl");
+include("../test/get_div_grad.jl");
 
 for N in [32, 64, 128]
   @printf("N = %d\n", N);
@@ -20,8 +20,8 @@ for N in [32, 64, 128]
   rtol = 1.0e-6;
 
   @printf("Krylov:           ")
-  x = Krylov.cg(op, b, atol=0.0, rtol=rtol, itmax=size(A, 1));
-  @time x = Krylov.cg(op, b, atol=0.0, rtol=rtol, itmax=size(A, 1));
+  (x, stats) = Krylov.cg(op, b, atol=0.0, rtol=rtol, itmax=size(A, 1));
+  @time (x, stats) = Krylov.cg(op, b, atol=0.0, rtol=rtol, itmax=size(A, 1));
 
   @printf("KrylovMethods:    ")
   x,flag,relres,iter,resvec = KrylovMethods.cg(A, b, tol=rtol, maxIter=size(A, 1));
