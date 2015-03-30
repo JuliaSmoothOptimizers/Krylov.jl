@@ -5,6 +5,7 @@ using Krylov
 # M = HarwellBoeingMatrix("data/illc1033.rra");
 M = HarwellBoeingMatrix("data/illc1850.rra");
 A = M.matrix;
+(m, n) = size(A);
 @printf("System size: %d rows and %d columns\n", m, n);
 
 for nrhs = 1 : size(M.rhs, 2)
