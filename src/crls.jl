@@ -22,13 +22,6 @@
 
 export crls
 
-type CRLStats <: KrylovStats
-  solved :: Bool
-  residuals :: Array{Float64,1}
-  Aresiduals :: Array{Float64,1}
-  status :: UTF8String
-end
-
 # Methods for various argument types.
 include("crls_methods.jl")
 
@@ -109,6 +102,6 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = CRLStats(solved, rNorms, ArNorms, status);
+  stats = CGLStats(solved, rNorms, ArNorms, status);
   return (x, stats);
 end
