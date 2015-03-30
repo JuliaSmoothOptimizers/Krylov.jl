@@ -61,6 +61,8 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
   σ = β;
   ω = 0;
   γ = 1;
+  Anorm2 = 0.0;
+  β_prev = 0.0;
 
   # Define stopping tolerance.
   rNorm = σ;
@@ -84,6 +86,8 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
     end
     β = norm(v_next);
     v = v_next / β;
+    Anorm2 += β_prev^2 + β^2 + δ^2;  # Use ‖T‖ as increasing approximation of ‖A‖.
+    β_prev = β;
 
     # Compute next CG iterate.
     γ = 1 / (δ - ω / γ);
@@ -103,7 +107,7 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, rNorms, 0.0, 0.0, status);  # TODO: Estimate Anorm and Acond.
+  stats = LanczosStats(solved, rNorms, sqrt(Anorm2), 0.0, status);  # TODO: Estimate Acond.
   return (x, stats);
 end
 
