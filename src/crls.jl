@@ -58,7 +58,7 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
   q  = A' * Ap;
   γ  = BLAS.dot(m, s, 1, s, 1);  # Faster than γ = dot(s, s);
   iter = 0;
-  itmax == 0 && (itmax = min(m, n, 20));
+  itmax == 0 && (itmax = m + n);
 
   rNorm = bNorm;
   ArNorm = norm(Ar);

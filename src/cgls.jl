@@ -63,7 +63,7 @@ function cgls(A :: LinearOperator, b :: Array{Float64,1};
   p = copy(s);
   γ = BLAS.dot(n, s, 1, s, 1);  # Faster than γ = dot(s, s);
   iter = 0;
-  itmax == 0 && (itmax = min(m, n, 20));
+  itmax == 0 && (itmax = m + n);
 
   rNorm  = bNorm;
   ArNorm = sqrt(γ);
