@@ -6,4 +6,10 @@ for npower = 1 : 4
   resid = norm(A' * (A*x - b)) / norm(b)
   @printf("CGLS: Relative residual: %8.1e\n", resid);
   @test(resid <= cgls_tol);
+
+  λ = 1.0e-3;
+  (x, stats) = cgls(A, b, λ=λ);
+  resid = norm(A' * (A*x - b) + λ * x) / norm(b)
+  @printf("CGLS: Relative residual: %8.1e\n", resid);
+  @test(resid <= cgls_tol);
 end
