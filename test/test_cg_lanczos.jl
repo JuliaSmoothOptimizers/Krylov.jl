@@ -14,6 +14,7 @@ b_norm = norm(b);
 
 for mat in {A, full(A), LinearOperator(A)}
   (x, stats) = cg_lanczos(mat, b, itmax=n);
+  show(stats);
   resid = norm(b - A * x) / b_norm;
   @printf("CG_Lanczos: Relative residual: %8.1e\n", resid);
   @test(resid <= cg_tol);
@@ -24,6 +25,7 @@ shifts=[1:6];
 
 for mat in {A, full(A), LinearOperator(A)}
   (x, stats) = cg_lanczos_shift_seq(mat, b, shifts, itmax=n);
+  show(stats);
   r = residuals(A, b, shifts, x);
   resids = map(norm, r) / b_norm;
   @printf("CG_Lanczos: Relative residuals with shifts:");
@@ -35,6 +37,7 @@ for mat in {A, full(A), LinearOperator(A)}
   @test(stats.solved);
 
   (x, stats) = cg_lanczos_shift_par(mat, b, shifts, itmax=n);
+  show(stats);
   r = residuals(A, b, shifts, convert(Array, x));
   resids = map(norm, r) / b_norm;
   @printf("CG_Lanczos: Relative residuals with shifts:");

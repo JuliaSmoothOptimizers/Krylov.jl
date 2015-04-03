@@ -5,6 +5,7 @@ for npower = 1 : 4
 
   for mat in {sparse(full(A)), full(A), A}
     (x, stats) = cgls(mat, b);
+    show(stats);
     resid = norm(A' * (A*x - b)) / norm(b)
     @printf("CGLS: Relative residual: %8.1e\n", resid);
     @test(resid <= cgls_tol);
@@ -14,6 +15,7 @@ for npower = 1 : 4
   λ = 1.0e-3;
   for mat in {sparse(full(A)), full(A), A}
     (x, stats) = cgls(mat, b, λ=λ);
+    show(stats);
     resid = norm(A' * (A*x - b) + λ * x) / norm(b)
     @printf("CGLS: Relative residual: %8.1e\n", resid);
     @test(resid <= cgls_tol);

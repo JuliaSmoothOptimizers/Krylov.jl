@@ -9,6 +9,7 @@ b = A * [1:10];
 
 for mat in {A, full(A), LinearOperator(A)}
   (x, stats) = cg(mat, b, itmax=10);
+  show(stats);
   r = b - A * x;
   resid = norm(r) / norm(b)
   @printf("CG: Relative residual: %8.1e\n", resid);
@@ -22,6 +23,7 @@ b = randn(size(A, 1));
 
 for mat in {A, full(A), LinearOperator(A)}
   (x, stats) = cg(A, b);
+  show(stats);
   r = b - A * x;
   resid = norm(r) / norm(b);
   @printf("CG: Relative residual: %8.1e\n", resid);
