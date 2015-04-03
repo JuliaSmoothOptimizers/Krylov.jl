@@ -42,26 +42,28 @@ It is not safe to call this method with a `LinearOperator` that implements
 preallocation.
 """ ->
 function crls(A :: LinearOperator, b :: Array{Float64,1};
-              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-              verbose :: Bool=false)
+              λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+              itmax :: Int=0, verbose :: Bool=false)
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
   x = zeros(n);
-  bNorm = norm(b);
+  bNorm = BLAS.nrm2(m, b, 1);  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x;
   r  = copy(b);
-  Ar = A' * b;
+  Ar = A' * b;  # - λ * x0 if x0 ≠ 0.
   s  = A * Ar;
   p  = copy(Ar);
   Ap = copy(s);
   q  = A' * Ap;
+  λ > 0 && BLAS.axpy!(n, λ, p, 1, q, 1);  # q = q + λ * p;
   γ  = BLAS.dot(m, s, 1, s, 1);  # Faster than γ = dot(s, s);
   iter = 0;
   itmax == 0 && (itmax = m + n);
 
-  rNorm = bNorm;
-  ArNorm = norm(Ar);
+  rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
+  ArNorm = BLAS.nrm2(n, Ar, 1);  # Marginally faster than norm(Ar);
+  λ > 0 && (γ += λ * ArNorm * ArNorm);
   rNorms = [rNorm];
   ArNorms = [ArNorm];
   ε = atol + rtol * ArNorm;
@@ -73,12 +75,14 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
   tired = iter >= itmax;
 
   while ! (solved || tired)
-    α = γ / dot(q, q);
+    α = γ / BLAS.dot(n, q, 1, q, 1);     # dot(q, q);
     BLAS.axpy!(n,  α, p,  1,  x, 1);     # Faster than  x =  x + α *  p;
     BLAS.axpy!(m, -α, Ap, 1,  r, 1);     # Faster than  r =  r - α * Ap;
     BLAS.axpy!(n, -α, q,  1, Ar, 1);     # Faster than Ar = Ar - α *  q;
     s = A * Ar;
     γ_next = BLAS.dot(m, s, 1, s, 1);   # Faster than γ_next = dot(s, s);
+    ArNorm = BLAS.nrm2(n, Ar, 1);
+    λ > 0 && (γ_next += λ * ArNorm * ArNorm);
     β = γ_next / γ;
 
     BLAS.scal!(n, β, p, 1);
@@ -89,10 +93,15 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
     BLAS.scal!(m, β, Ap, 1);
     BLAS.axpy!(m, 1.0, s, 1, Ap, 1);    # Faster than Ap =  s + β * Ap;
     q = A' * Ap;
+    λ > 0 && BLAS.axpy!(n, λ, p, 1, q, 1);  # q = q + λ * p;
 
     γ = γ_next;
-    rNorm = norm(r);
-    ArNorm = norm(Ar);
+    if λ > 0
+      rNorm = sqrt(BLAS.dot(m, r, 1, r, 1) + λ * BLAS.dot(n, x, 1, x, 1));
+    else
+      rNorm = BLAS.nrm2(m, r, 1);  # norm(r);
+    end
+    #     ArNorm = norm(Ar);
     push!(rNorms, rNorm);
     push!(ArNorms, ArNorm);
     iter = iter + 1;
