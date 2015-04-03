@@ -1,0 +1,17 @@
+language: julia
+
+#os:
+#  - osx
+#  - linux
+
+julia:
+  - release
+  - nightly
+
+script:
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - julia -e 'Pkg.clone("https://github.com/dpo/LinearOperators.jl.git");'
+  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("Krylov"); Pkg.test("Krylov"; coverage=true)'
+
+after_success:
+  - julia -e 'cd(Pkg.dir("Krylov")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
