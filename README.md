@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/optimizers/Krylov.jl.svg)](https://travis-ci.org/optimizers/Krylov.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/ygy8aqqjmqhfwrxc?svg=true)](https://ci.appveyor.com/project/dpo/krylov-jl)
-[![Coverage Status](https://coveralls.io/repos/optimizers/Krylov.jl/badge.svg)](https://coveralls.io/r/optimizers/Krylov.jl)
+[![Coverage Status](https://coveralls.io/repos/optimizers/Krylov.jl/badge.svg?branch=develop)](https://coveralls.io/r/optimizers/Krylov.jl?branch=develop)
 
 ## How to Install
 
