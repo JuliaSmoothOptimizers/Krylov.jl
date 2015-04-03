@@ -6,7 +6,7 @@ language: julia
 
 julia:
   - release
-  - nightly
+  #- nightly  # Currently fails because of distributed arrays.
 
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
