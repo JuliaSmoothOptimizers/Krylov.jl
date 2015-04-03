@@ -1,5 +1,6 @@
 using Base.Test
 using Krylov
+using LinearOperators
 
 include("gen_lsq.jl")
 include("test_cg.jl")
