@@ -23,7 +23,8 @@ for nrhs = 1 : size(M.rhs, 2)
   (x, stats) = cgls(op, b, λ=λ);
   #   @profile (x, stats) = cgls(op, b, λ=λ, verbose=false);
   @time (x, stats) = cgls(op, b, λ=λ);
-  @printf("CGLS: Relative residual: %8.1e\n", norm(A' * (A * x - b)) / norm(b));
+  resid = norm(A' * (A * x - b) + λ * x) / norm(b);
+  @printf("CGLS: Relative residual: %8.1e\n", resid);
   @printf("CGLS: ‖x‖: %8.1e\n", norm(x));
 end
 
