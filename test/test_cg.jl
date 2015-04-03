@@ -7,17 +7,25 @@ n = 10;
 A = spdiagm((ones(n-1), 4*ones(n), ones(n-1)), (-1, 0, 1))
 b = A * [1:10];
 
-(x, stats) = cg(A, b, itmax=10);
-r = b - A * x;
-resid = norm(r) / norm(b)
-@printf("CG: Relative residual: %8.1e\n", resid);
-@test(resid <= cg_tol);
+for mat in {A, full(A), LinearOperator(A)}
+  (x, stats) = cg(mat, b, itmax=10);
+  r = b - A * x;
+  resid = norm(r) / norm(b)
+  @printf("CG: Relative residual: %8.1e\n", resid);
+  @test(resid <= cg_tol);
+  @test(stats.solved);
+end
 
 # Sparse Laplacian.
-A = get_div_grad(32, 32, 32);
+A = get_div_grad(16, 16, 16);
 b = randn(size(A, 1));
-(x, stats) = cg(A, b);
-r = b - A * x;
-resid = norm(r) / norm(b);
-@printf("CG: Relative residual: %8.1e\n", resid);
-@test(resid <= cg_tol);
+
+for mat in {A, full(A), LinearOperator(A)}
+  (x, stats) = cg(A, b);
+  r = b - A * x;
+  resid = norm(r) / norm(b);
+  @printf("CG: Relative residual: %8.1e\n", resid);
+  @test(resid <= cg_tol);
+  @test(stats.solved);
+end
+
