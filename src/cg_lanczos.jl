@@ -22,7 +22,7 @@ end
 function show(io :: IO, stats :: LanczosStats)
   s  = "\nCG Lanczos stats\n"
   s *= @sprintf("  solved: %s\n", stats.solved)
-  s *= @sprintf("  residuals: %s\n", stats.residuals)
+  s *= @sprintf("  residuals: %s\n", typeof(stats.residuals))
   s *= @sprintf("  ‖A‖F: %7.1e\n", stats.Anorm)
   s *= @sprintf("  κ₂(A): %7.1e\n", stats.Acond)
   s *= @sprintf("  status: %s\n", stats.status)

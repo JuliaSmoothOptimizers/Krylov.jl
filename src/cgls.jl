@@ -26,8 +26,8 @@ end
 function show(io :: IO, stats :: CGLStats)
   s  = "\nCGLS stats\n"
   s *= @sprintf("  solved: %s\n", stats.solved)
-  s *= @sprintf("  residuals: %7.1e\n", stats.residuals)
-  s *= @sprintf("  Aresiduals: %7.1e\n", stats.Aresiduals)
+  s *= @sprintf("  residuals:  %s\n", vec2str(stats.residuals))
+  s *= @sprintf("  Aresiduals: %s\n", vec2str(stats.Aresiduals))
   s *= @sprintf("  status: %s\n", stats.status)
   print(io, s)
 end

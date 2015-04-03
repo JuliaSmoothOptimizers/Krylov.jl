@@ -9,7 +9,7 @@ end
 function show(io :: IO, stats :: CGStats)
   s  = "\nCG stats\n"
   s *= @sprintf("  solved: %s\n", stats.solved)
-  s *= @sprintf("  residuals: %s\n", stats.residuals)
+  s *= @sprintf("  residuals: %s\n", vec2str(stats.residuals))
   s *= @sprintf("  status: %s\n", stats.status)
   print(io, s)
 end
