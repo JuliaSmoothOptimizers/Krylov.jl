@@ -25,7 +25,7 @@ function test_cgne(nrow :: Int, ncol :: Int; λ :: Float64=0.0)
   xmin = A' * ((A * A') \ b);
   xmin_norm = norm(xmin);
   @printf("CGNE: ‖x‖ = %7.1e, ‖xmin‖ = %7.1e\n", norm(x), xmin_norm);
-  @test(norm(x - xmin) <= cgne_tol * xmin_norm);
+  @test(norm(x - xmin) <= 100 * cgne_tol * xmin_norm);
 end
 
 for λ in {0.0, 1.0e-2}
