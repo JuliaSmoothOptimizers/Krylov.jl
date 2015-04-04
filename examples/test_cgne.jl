@@ -14,8 +14,8 @@ Ap = zeros(m);
 Atq = zeros(n);
 op = LinearOperator(m, n, Float64, false, false,
                     p -> A_mul_B!(1.0,  A, p, 0.0, Ap),
-                    q -> Ac_mul_B!(1.0, A, q, 0.0, Atq),
-                    q -> Ac_mul_B!(1.0, A, q, 0.0, Atq));
+                    q -> At_mul_B!(1.0, A, q, 0.0, Atq),
+                    q -> At_mul_B!(1.0, A, q, 0.0, Atq));
 
 x_exact = A * ones(n);  # y = ones(n);
 x_exact_norm = norm(x_exact);
