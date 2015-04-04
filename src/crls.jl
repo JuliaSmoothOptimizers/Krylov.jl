@@ -18,8 +18,6 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Princeton, NJ, March 2015.
 
-# Todo: allow regularization.
-
 export crls
 
 # Methods for various argument types.
@@ -28,11 +26,14 @@ include("crls_methods.jl")
 @doc """
 Solve the linear least-squares problem
 
-  minimize ‖b - Ax‖₂
+  minimize ‖b - Ax‖₂² + λ ‖x‖₂²
 
 using the Conjugate Residuals (CR) method. This method is equivalent to
-applying MINRES to the normal equations A'Ax = A'b. This implementation
-recurs the residual r := b - Ax.
+applying MINRES to the normal equations
+
+  (A'A + λI) x = A'b.
+
+This implementation recurs the residual r := b - Ax.
 
 CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r‖₂.
 It is formally equivalent to LSMR, though can be slightly less accurate,
