@@ -38,9 +38,6 @@ This implementation recurs the residual r := b - Ax.
 CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r‖₂.
 It is formally equivalent to LSMR, though can be slightly less accurate,
 but simpler to implement.
-
-It is not safe to call this method with a `LinearOperator` that implements
-preallocation.
 """ ->
 function crls(A :: LinearOperator, b :: Array{Float64,1};
               λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
@@ -52,7 +49,12 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
   bNorm = BLAS.nrm2(m, b, 1);  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x;
   r  = copy(b);
-  Ar = A' * b;  # - λ * x0 if x0 ≠ 0.
+
+  # The following vector copy takes care of the case where A is a LinearOperator
+  # with preallocation, so as to avoid overwriting vectors used later. In other
+  # case, this should only add minimum overhead.
+  Ar = copy(A' * b);  # - λ * x0 if x0 ≠ 0.
+
   s  = A * Ar;
   p  = copy(Ar);
   Ap = copy(s);
