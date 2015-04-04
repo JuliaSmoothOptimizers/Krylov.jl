@@ -15,5 +15,6 @@ include("cg.jl")
 include("cg_lanczos.jl")
 include("cgls.jl")
 include("crls.jl")
+include("cgne.jl")
 
 end
