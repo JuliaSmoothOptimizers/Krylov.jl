@@ -67,3 +67,4 @@ function testall()
   test(40, 40, 4, 3, damp);
   test(40, 40, 4, 4, damp);
 end
+

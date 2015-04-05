@@ -17,3 +17,4 @@ function ddx(n :: Int)
   e = ones(n);
   return d = spdiagm((-e, e), [0, 1], n, n+1)
 end
+
