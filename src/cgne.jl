@@ -72,21 +72,30 @@ function cgne(A :: LinearOperator, b :: Array{Float64,1};
   # case, this should only add minimum overhead.
   p = copy(A' * r);
 
+  # Use ‖p‖ to detect inconsistent system.
+  # An inconsistent system will necessarily have AA' singular.
+  # Because CGNE is equivalent to CG applied to AA'y = b, there will be a
+  # conjugate direction u such that u'AA'u = 0, i.e., A'u = 0. In this
+  # implementation, p is a substitute for A'u.
+  pNorm = BLAS.nrm2(n, p, 1);
+
   γ = BLAS.dot(m, r, 1, r, 1);  # Faster than γ = dot(r, r);
   iter = 0;
   itmax == 0 && (itmax = m + n);
 
   rNorm  = bNorm;
   rNorms = [rNorm];
-  ε = atol + rtol * rNorm;
+  ɛ_c = atol + rtol * rNorm;  # Stopping tolerance for consistent systems.
+  ɛ_i = atol + rtol * pNorm;  # Stopping tolerance for inconsistent systems.
   verbose && @printf("%5s  %8s\n", "Aprod", "‖r‖")
   verbose && @printf("%5d  %8.2e\n", 1, rNorm);
 
   status = "unknown";
-  solved = rNorm <= ε;
+  solved = rNorm <= ɛ_c;
+  inconsistent = (rNorm > 1.0e+2 * ɛ_c) && (pNorm <= ɛ_i);
   tired = iter >= itmax;
 
-  while ! (solved || tired)
+  while ! (solved || inconsistent || tired)
     q = A * p;
     λ > 0 && BLAS.axpy!(m, λ, s, 1, q, 1);
     δ = BLAS.dot(n, p, 1, p, 1);   # Faster than dot(p, p);
@@ -97,7 +106,8 @@ function cgne(A :: LinearOperator, b :: Array{Float64,1};
     γ_next = BLAS.dot(m, r, 1, r, 1);  # Faster than γ_next = dot(r, r);
     β = γ_next / γ;
     BLAS.scal!(n, β, p, 1);
-    BLAS.axpy!(n, 1.0, A' * r, 1, p, 1);    # Faster than p = A' * r + β * p;
+    BLAS.axpy!(n, 1.0, A' * r, 1, p, 1);   # Faster than p = A' * r + β * p;
+    pNorm = BLAS.nrm2(n, p, 1);
     if λ > 0
       BLAS.scal!(m, β, s, 1);
       BLAS.axpy!(m, 1.0, r, 1, s, 1);   # s = r + β * s;
@@ -107,11 +117,12 @@ function cgne(A :: LinearOperator, b :: Array{Float64,1};
     push!(rNorms, rNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.2e\n", 1 + 2 * iter, rNorm);
-    solved = rNorm <= ε;
+    solved = rNorm <= ɛ_c;
+    inconsistent = (rNorm > 1.0e+2 * ɛ_c) && (pNorm <= ɛ_i);
     tired = iter >= itmax;
   end
 
-  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent" : "solution good enough given atol and rtol")
   stats = CGStats(solved, rNorms, status);
   return (x, stats);
 end
