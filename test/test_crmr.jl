@@ -77,3 +77,7 @@ A = ones(5, 3); b = rand(5); b[1] = -1.0;
 (xI, xmin, xmin_norm) = check_min_norm(A, b, x, λ=1.0e-3);
 @test(norm(xI - xmin) <= cond(A) * crmr_tol * xmin_norm);
 
+# Code coverage.
+(x, stats, resid) = test_crmr(sparse(A), b, λ=1.0e-3);
+show(stats);
+

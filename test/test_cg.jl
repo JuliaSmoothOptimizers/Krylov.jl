@@ -25,6 +25,6 @@ resid = norm(r) / norm(b);
 @test(stats.solved);
 
 # Code coverage.
-(x, stats) = cg(sparse(A), b);
+(x, stats) = cg(full(A), b);
 show(stats);
 
