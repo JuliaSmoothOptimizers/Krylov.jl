@@ -1,3 +1,12 @@
+# A standard implementation of the Conjugate Gradient method.
+# The only non-standard point about it is that it does not check
+# that the operator is definite.
+# It is possible to check that the system is inconsistent by
+# monitoring ‖p‖, which would cost an extra norm computation per
+# iteration.
+#
+# Dominique Orban, <dominique.orban@gerad.ca>
+# Salt Lake City, UT, March 2015.
 
 export cg
 
