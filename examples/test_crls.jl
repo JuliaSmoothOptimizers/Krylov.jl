@@ -24,6 +24,7 @@ for nrhs = 1 : size(M.rhs, 2)
   (x, stats) = crls(op, b, λ=λ);
   #   @profile (x, stats) = crls(op, b, λ=λ);
   @time (x, stats) = crls(op, b, λ=λ);
+  show(stats);
   resid = norm(A' * (A * x - b) + λ * x) / norm(b);
   @printf("CRLS: Relative residual: %8.1e\n", resid);
   @printf("CRLS: ‖x‖: %8.1e\n", norm(x));

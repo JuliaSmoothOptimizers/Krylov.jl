@@ -21,8 +21,9 @@ op = LinearOperator(m, n, Float64, false, false,
 for nrhs = 1 : size(M.rhs, 2)
   b = M.rhs[:,nrhs];
   (x, stats) = cgls(op, b, λ=λ);
-  #   @profile (x, stats) = cgls(op, b, λ=λ, verbose=false);
+  #   @profile (x, stats) = cgls(op, b, λ=λ);
   @time (x, stats) = cgls(op, b, λ=λ);
+  show(stats);
   resid = norm(A' * (A * x - b) + λ * x) / norm(b);
   @printf("CGLS: Relative residual: %8.1e\n", resid);
   @printf("CGLS: ‖x‖: %8.1e\n", norm(x));

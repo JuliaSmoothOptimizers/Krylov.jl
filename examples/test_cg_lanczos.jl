@@ -18,6 +18,7 @@ b = ones(n); b_norm = norm(b);
 # Solve Ax=b.
 (x, stats) = cg_lanczos(A, b);
 @time (x, stats) = cg_lanczos(A, b);
+show(stats);
 r = b - A * x;
 @printf("Relative residual without shift: %8.1e\n", norm(r)/norm(b));
 
@@ -26,6 +27,7 @@ shifts = [1, 2, 3, 4];
 (x, stats) = cg_lanczos_shift_seq(A, b, shifts, verbose=false);
 # @profile (x, stats) = cg_lanczos_shift_seq(A, b, shifts);
 @time (x, stats) = cg_lanczos_shift_seq(A, b, shifts, verbose=false);
+show(stats);
 r = residuals(A, b, shifts, x);
 resids = map(norm, r) / b_norm;
 @printf("Relative residuals with shifts:\n");

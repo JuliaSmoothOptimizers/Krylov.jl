@@ -24,6 +24,7 @@ b = A' * x_exact;
 (x, stats) = cgne(op', b);
 # @profile (x, stats) = cgne(op', b);
 @time (x, stats) = cgne(op', b);
+show(stats);
 resid = norm(A' * x - b) / norm(b);
 @printf("CGNE: Relative residual: %7.1e\n", resid);
 @printf("CGNE: ‖x - x*‖₂: %7.1e\n", norm(x - x_exact));
