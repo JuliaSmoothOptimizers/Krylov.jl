@@ -11,24 +11,6 @@
 
 export cg_lanczos, cg_lanczos_shift_seq, cg_lanczos_shift_par
 
-type LanczosStats <: KrylovStats
-  solved :: Bool
-  residuals :: Union(Array{Float64}, DArray{Float64,1,Array{Float64,1}})
-  Anorm :: Float64
-  Acond :: Float64
-  status :: UTF8String
-end
-
-function show(io :: IO, stats :: LanczosStats)
-  s  = "\nCG Lanczos stats\n"
-  s *= @sprintf("  solved: %s\n", stats.solved)
-  s *= @sprintf("  residuals: %s\n", typeof(stats.residuals))
-  s *= @sprintf("  ‖A‖F: %7.1e\n", stats.Anorm)
-  s *= @sprintf("  κ₂(A): %7.1e\n", stats.Acond)
-  s *= @sprintf("  status: %s\n", stats.status)
-  print(io, s)
-end
-
 # Methods for various argument types.
 include("cg_lanczos_methods.jl")
 

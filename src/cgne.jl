@@ -123,6 +123,6 @@ function cgne(A :: LinearOperator, b :: Array{Float64,1};
   end
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent" : "solution good enough given atol and rtol")
-  stats = CGStats(solved, rNorms, status);
+  stats = SimpleStats(solved, inconsistent, rNorms, [], status);
   return (x, stats);
 end

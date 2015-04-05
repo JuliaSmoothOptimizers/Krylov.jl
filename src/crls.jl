@@ -114,6 +114,6 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = CGLStats(solved, rNorms, ArNorms, status);
+  stats = SimpleStats(solved, false, rNorms, ArNorms, status);
   return (x, stats);
 end

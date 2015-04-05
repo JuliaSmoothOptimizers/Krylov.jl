@@ -16,22 +16,6 @@
 
 export cgls
 
-type CGLStats <: KrylovStats
-  solved :: Bool
-  residuals :: Array{Float64,1}
-  Aresiduals :: Array{Float64,1}
-  status :: UTF8String
-end
-
-function show(io :: IO, stats :: CGLStats)
-  s  = "\nCGLS stats\n"
-  s *= @sprintf("  solved: %s\n", stats.solved)
-  s *= @sprintf("  residuals:  %s\n", vec2str(stats.residuals))
-  s *= @sprintf("  Aresiduals: %s\n", vec2str(stats.Aresiduals))
-  s *= @sprintf("  status: %s\n", stats.status)
-  print(io, s)
-end
-
 # Methods for various argument types.
 include("cgls_methods.jl")
 
@@ -106,6 +90,6 @@ function cgls(A :: LinearOperator, b :: Array{Float64,1};
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = CGLStats(solved, rNorms, ArNorms, status);
+  stats = SimpleStats(solved, false, rNorms, ArNorms, status);
   return (x, stats);
 end

@@ -1,18 +1,5 @@
+
 export cg
-
-type CGStats <: KrylovStats
-  solved :: Bool
-  residuals :: Array{Float64}
-  status :: UTF8String
-end
-
-function show(io :: IO, stats :: CGStats)
-  s  = "\nCG stats\n"
-  s *= @sprintf("  solved: %s\n", stats.solved)
-  s *= @sprintf("  residuals: %s\n", vec2str(stats.residuals))
-  s *= @sprintf("  status: %s\n", stats.status)
-  print(io, s)
-end
 
 # Methods for various argument types.
 include("cg_methods.jl")
@@ -68,6 +55,6 @@ function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = CGStats(solved, rNorms, status);
+  stats = SimpleStats(solved, false, rNorms, [], status);
   return (x, stats);
 end
