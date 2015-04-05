@@ -8,4 +8,5 @@ include("test_cg_lanczos.jl")
 include("test_cgls.jl")
 include("test_crls.jl")
 include("test_cgne.jl")
+include("test_crmr.jl")
 
