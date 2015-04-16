@@ -67,8 +67,8 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
   rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   ArNorm = BLAS.nrm2(n, Ar, 1);  # Marginally faster than norm(Ar);
   λ > 0 && (γ += λ * ArNorm * ArNorm);
-  rNorms = [rNorm];
-  ArNorms = [ArNorm];
+  rNorms = [rNorm;];
+  ArNorms = [ArNorm;];
   ε = atol + rtol * ArNorm;
   verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖A'r‖", "‖r‖")
   verbose && @printf("%5d  %8.2e  %8.2e\n", 3, ArNorm, rNorm);

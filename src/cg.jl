@@ -36,7 +36,7 @@ function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
   itmax == 0 && (itmax = 2 * n);
 
   rNorm = sqrt(γ);
-  rNorms = [rNorm];
+  rNorms = [rNorm;];
   ε = atol + rtol * rNorm;
   verbose && @printf("%5d  %8.1e\n", iter, rNorm);
 

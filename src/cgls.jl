@@ -53,8 +53,8 @@ function cgls(A :: LinearOperator, b :: Array{Float64,1};
 
   rNorm  = bNorm;
   ArNorm = sqrt(γ);
-  rNorms = [rNorm];
-  ArNorms = [ArNorm];
+  rNorms = [rNorm;];
+  ArNorms = [ArNorm;];
   ε = atol + rtol * ArNorm;
   verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖A'r‖", "‖r‖")
   verbose && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm);

@@ -84,7 +84,7 @@ function cgne(A :: LinearOperator, b :: Array{Float64,1};
   itmax == 0 && (itmax = m + n);
 
   rNorm  = bNorm;
-  rNorms = [rNorm];
+  rNorms = [rNorm;];
   ɛ_c = atol + rtol * rNorm;  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * pNorm;  # Stopping tolerance for inconsistent systems.
   verbose && @printf("%5s  %8s\n", "Aprod", "‖r‖")

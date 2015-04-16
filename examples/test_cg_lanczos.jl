@@ -4,14 +4,15 @@ using MatrixMarket
 
 function residuals(A, b, shifts, x)
   nshifts = size(shifts, 1);
-  r = { (b - A * x[:,i] - shifts[i] * x[:,i]) for i = 1 : nshifts };
+  r = [ (b - A * x[:,i] - shifts[i] * x[:,i]) for i = 1 : nshifts ];
   return r;
 end
 
 # mtx = "data/1138bus.mtx";
 mtx = "data/bcsstk09.mtx";
 
-A = MatrixMarket.mmread(mtx); A = A + tril(A, -1)';
+A = MatrixMarket.mmread(mtx);
+VERSION < v"0.4-" && (A = A + tril(A, -1)');  # Old MatrixMarket.jl.
 n = size(A, 1);
 b = ones(n); b_norm = norm(b);
 

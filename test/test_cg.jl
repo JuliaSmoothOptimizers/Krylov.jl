@@ -5,7 +5,7 @@ cg_tol = 1.0e-6;
 # Cubic spline matrix.
 n = 10;
 A = spdiagm((ones(n-1), 4*ones(n), ones(n-1)), (-1, 0, 1))
-b = A * [1:n];
+b = A * [1:n;];
 
 (x, stats) = cg(A, b, itmax=10);
 r = b - A * x;

@@ -73,8 +73,8 @@ function crmr(A :: LinearOperator, b :: Array{Float64,1};
   itmax == 0 && (itmax = m + n);
 
   ArNorm = sqrt(γ);
-  rNorms = [rNorm];
-  ArNorms = [ArNorm];
+  rNorms = [rNorm;];
+  ArNorms = [ArNorm;];
   ɛ_c = atol + rtol * rNorm;   # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm;  # Stopping tolerance for inconsistent systems.
   verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖A'r‖", "‖r‖")

@@ -6,10 +6,11 @@ language: julia
 
 julia:
   - release
-  #- nightly  # Currently fails because of distributed arrays.
+  - nightly
 
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - julia -e 'if VERSION >= v"0.4-" Pkg.add("DistributedArrays"); end'
   - julia -e 'Pkg.clone("https://github.com/dpo/LinearOperators.jl.git");'
   - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("Krylov"); Pkg.test("Krylov"; coverage=true)'
 

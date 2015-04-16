@@ -2,6 +2,10 @@ module Krylov
 
 using LinearOperators
 
+if VERSION >= v"0.4-"
+  using DistributedArrays
+end
+
 # Documentation.
 using Docile
 @docstrings

@@ -48,7 +48,7 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
 
   # Define stopping tolerance.
   rNorm = σ;
-  rNorms = [rNorm];
+  rNorms = [rNorm;];
   ε = atol + rtol * rNorm;
   verbose && @printf("%5d  %8.1e\n", iter, rNorm);
 
@@ -130,7 +130,7 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
 
   # Define stopping tolerance.
   rNorms = β * ones(nshifts);
-  rNorms_history = [rNorms];
+  rNorms_history = [rNorms;];
   ε = atol + rtol * β;
 
   # Keep track of shifted systems that have converged.
