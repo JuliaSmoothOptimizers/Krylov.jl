@@ -1,6 +1,8 @@
 using LinearOperators
 
-import IterativeSolvers
+if VERSION < v"0.4-"
+  import IterativeSolvers
+end
 import KrylovMethods
 import Krylov
 
@@ -27,7 +29,9 @@ for N in [32, 64, 128]
   x,flag,relres,iter,resvec = KrylovMethods.cg(A, b, tol=rtol, maxIter=size(A, 1));
   @time x,flag,relres,iter,resvec = KrylovMethods.cg(A, b, tol=rtol, maxIter=size(A, 1));
 
-  @printf("IterativeSolvers: ")
-  (x, hist) = IterativeSolvers.cg(A, b, tol=rtol, maxiter=size(A, 1));
-  @time (x, hist) = IterativeSolvers.cg(A, b, tol=rtol, maxiter=size(A, 1));
+  if VERSION < v"0.4-"
+    @printf("IterativeSolvers: ")
+    (x, hist) = IterativeSolvers.cg(A, b, tol=rtol, maxiter=size(A, 1));
+    @time (x, hist) = IterativeSolvers.cg(A, b, tol=rtol, maxiter=size(A, 1));
+  end
 end
