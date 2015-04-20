@@ -164,28 +164,26 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
     # Compute next CG iterate for each shift.
     not_cv = find(! converged);
 
-    if length(not_cv) > 0
-      # Loop is a bit faster than the vectorized version.
-      for i in not_cv
-        δhat[i] = δ + shifts[i];
-        γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i]);
-        x[:, i] += γ[i] * p[:, i];
+    # Loop is a bit faster than the vectorized version.
+    for i in not_cv
+      δhat[i] = δ + shifts[i];
+      γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i]);
+      x[:, i] += γ[i] * p[:, i];  # Strangely, this is faster than a loop.
 
-        ω[i] = β * γ[i];
-        σ[i] *= -ω[i];
-        ω[i] *= ω[i];
-        p[:, i] = v * σ[i] + p[:, i] * ω[i];
+      ω[i] = β * γ[i];
+      σ[i] *= -ω[i];
+      ω[i] *= ω[i];
+      p[:, i] = v * σ[i] + p[:, i] * ω[i];  # Faster than loop.
 
-        # Update list of systems that have converged.
-        rNorms[i] = abs(σ[i]);
-        converged[i] = rNorms[i] <= ε;
-      end
-
-      # Can't seem to use BLAS3 GEMM calls here.
-      #       BLAS.gemm!('N', 'N', 1.0, p[:,not_cv], diagm(γ[not_cv]), 1.0, x[:,not_cv]);
-      #       p[:,not_cv] *= diagm(ω[not_cv]);
-      #       BLAS.gemm!('N', 'T', 1.0, v, σ[not_cv], 1.0, p[:,not_cv]);
+      # Update list of systems that have converged.
+      rNorms[i] = abs(σ[i]);
+      converged[i] = rNorms[i] <= ε;
     end
+
+    # Can't seem to use BLAS3 GEMM calls here.
+    #       BLAS.gemm!('N', 'N', 1.0, p[:,not_cv], diagm(γ[not_cv]), 1.0, x[:,not_cv]);
+    #       p[:,not_cv] *= diagm(ω[not_cv]);
+    #       BLAS.gemm!('N', 'T', 1.0, v, σ[not_cv], 1.0, p[:,not_cv]);
 
     append!(rNorms_history, rNorms);
     iter = iter + 1;
