@@ -1,6 +1,7 @@
 using Krylov
+using LinearOperators
 using MatrixMarket
-#=using ProfileView=#
+# using ProfileView
 
 mtx = "data/1138bus.mtx";
 # mtx = "data/bcsstk09.mtx";
@@ -11,10 +12,14 @@ VERSION < v"0.4-" && (A = A + tril(A, -1)');  # Old MatrixMarket.jl.
 n = size(A, 1);
 b = ones(n); b_norm = norm(b);
 
+# Define a linear operator with preallocation.
+Ap = zeros(n);
+op = LinearOperator(n, Float64, p -> A_mul_B!(1.0,  A, p, 0.0, Ap))
+
 # Solve Ax=b.
-(x, stats) = cg(A, b);
+(x, stats) = cg(op, b);
 # @profile x = cg(A, b);
-@time (x, stats) = cg(A, b);
+@time (x, stats) = cg(op, b);
 show(stats);
 r = b - A * x;
 @printf("Relative residual: %8.1e\n", norm(r)/b_norm);
