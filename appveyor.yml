@@ -16,7 +16,7 @@ build_script:
   - IF EXIST .git\shallow (git fetch --unshallow)
   - C:\projects\julia\bin\julia -e "versioninfo(); Pkg.init();"
   - C:\projects\julia\bin\julia -e "Pkg.clone(\"https://github.com/dpo/LinearOperators.jl.git\");"
-  - C:\projects\julia\bin\julia -e 'if VERSION >= v"0.4-" Pkg.add("DistributedArrays"); end'
+  - C:\projects\julia\bin\julia -e "if VERSION >= v\"0.4-\" Pkg.add(\"DistributedArrays\"); end"
   - C:\projects\julia\bin\julia -e "Pkg.clone(pwd(), \"Krylov\");"
 
 test_script:
