@@ -24,7 +24,7 @@ The method does _not_ abort if A is not definite.
 """ ->
 function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
                                atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                               verbose :: Bool=false)
+                               check_curvature :: Bool=false, verbose :: Bool=false)
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
@@ -52,15 +52,21 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
   ε = atol + rtol * rNorm;
   verbose && @printf("%5d  %8.1e\n", iter, rNorm);
 
+  indefinite = false;
   solved = rNorm <= ε;
   tired = iter >= itmax;
   status = "unknown";
 
   # Main loop.
-  while ! (solved || tired)
+  while ! (solved || tired || (check_curvature & indefinite))
     # Form next Lanczos vector.
     v_next = A * v;
     δ = dot(v, v_next);  # BLAS.dot(n, v, 1, v_next, 1) doesn't seem to pay off.
+
+    # Check curvature. Exit fast if requested.
+    indefinite |= (δ <= 0.0);
+    (check_curvature & indefinite) && continue;
+
     BLAS.axpy!(n, -δ, v, 1, v_next, 1);  # Faster than v_next = Av - δ * v;
     if iter > 0
       BLAS.axpy!(n, -β, v_prev, 1, v_next, 1);  # Faster than v_next = v_next - β * v_prev;
@@ -88,8 +94,8 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
     tired = iter >= itmax;
   end
 
-  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, rNorms, sqrt(Anorm2), 0.0, status);  # TODO: Estimate Acond.
+  status = tired ? "maximum number of iterations exceeded" : (check_curvature & indefinite) ? "negative curvature" : "solution good enough given atol and rtol"
+  stats = LanczosStats(solved, rNorms, indefinite, sqrt(Anorm2), 0.0, status);  # TODO: Estimate Acond.
   return (x, stats);
 end
 
@@ -104,7 +110,7 @@ The method does _not_ abort if A + αI is not definite.
 """ ->
 function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: Array{Tb,1}, shifts :: Array{Ts,1};
                                                       atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                                                      verbose :: Bool=false)
+                                                      check_curvature :: Bool=false, verbose :: Bool=false)
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
@@ -138,6 +144,9 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
   iter = 0;
   itmax == 0 && (itmax = 2 * n);
 
+  # Keep track of shifted systems with negative curvature if required.
+  indefinite = falses(nshifts);
+
   # Build format strings for printing.
   if verbose
     fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n";
@@ -161,12 +170,17 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
     β = norm(v_next);
     v = v_next / β;
 
-    # Compute next CG iterate for each shift.
-    not_cv = find(! converged);
+    # Check curvature: v'(A + sᵢI)v = v'Av + sᵢ ‖v‖² = δ + sᵢ because ‖v‖ = 1.
+    indefinite |= (δ + shifts .<= 0.0);
+
+    # Compute next CG iterate for each shifted system that has not yet converged.
+    # Stop iterating on indefinite problems if requested.
+    not_cv = check_curvature ? find(! (converged | indefinite)) : find(! converged);
 
     # Loop is a bit faster than the vectorized version.
     for i in not_cv
       δhat[i] = δ + shifts[i];
+
       γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i]);
       x[:, i] += γ[i] * p[:, i];  # Strangely, this is faster than a loop.
 
@@ -180,21 +194,19 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
       converged[i] = rNorms[i] <= ε;
     end
 
-    # Can't seem to use BLAS3 GEMM calls here.
-    #       BLAS.gemm!('N', 'N', 1.0, p[:,not_cv], diagm(γ[not_cv]), 1.0, x[:,not_cv]);
-    #       p[:,not_cv] *= diagm(ω[not_cv]);
-    #       BLAS.gemm!('N', 'T', 1.0, v, σ[not_cv], 1.0, p[:,not_cv]);
+    # Is there a better way than to update this array twice per iteration?
+    not_cv = check_curvature ? find(! (converged | indefinite)) : find(! converged);
 
-    append!(rNorms_history, rNorms);
+    length(not_cv) > 0 && append!(rNorms_history, rNorms);
     iter = iter + 1;
     verbose && c_printf(fmt, iter, rNorms...);
 
-    solved = all(converged);
+    solved = length(not_cv) == 0;
     tired = iter >= itmax;
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, reshape(rNorms_history, nshifts, iter+1)', 0.0, 0.0, status);  # TODO: Estimate Anorm and Acond.
+  stats = LanczosStats(solved, reshape(rNorms_history, nshifts, int(sum(size(rNorms_history))/nshifts))', indefinite, 0.0, 0.0, status);  # TODO: Estimate Anorm and Acond.
   return (x, stats);
 end
 
@@ -212,7 +224,7 @@ and operations specific to each shift is carried out on the processor hosting it
 """ ->
 function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: Array{Tb,1}, shifts :: Array{Ts,1};
                                                       atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                                                      verbose :: Bool=false)
+                                                      check_curvature :: Bool=false, verbose :: Bool=false)
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
@@ -242,7 +254,9 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
   end
 
   # Keep track of shifted systems that have converged.
+  dsolved = dfill(false, (nshifts,), workers(), [nchunks]);
   dconverged = dfill(false, (nshifts,), workers(), [nchunks]);
+  dindefinite= dfill(false, (nshifts,), workers(), [nchunks]);
   iter = 0;
   itmax == 0 && (itmax = 2 * n);
 
@@ -263,7 +277,7 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
     c_printf(fmt, iter, drNorm...);
   end
 
-  solved = preduce(&, dconverged);
+  solved = false;
   tired = iter >= itmax;
   status = "unknown";
 
@@ -283,22 +297,28 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
     # Compute next CG iterate for each shift.
     @sync for proc in procs(dp)
       @spawnat proc begin
+        solved_loc = localpart(dsolved);
         converged_loc = localpart(dconverged);
-        not_cv = find(! converged_loc);
+        indefinite_loc = localpart(dindefinite);
+        shifts_loc = localpart(dshifts);
+
         rNorm_loc = localpart(drNorm);
         #         rNorms_loc = localpart(drNorms);
 
-        if ! all(converged_loc)
+        # Check curvature: v'(A + sᵢI)v = v'Av + sᵢ ‖v‖² = δ + sᵢ because ‖v‖ = 1.
+        # Stop iterating on indefinite problems if requested.
+        indefinite_loc[:] |= (δ + shifts_loc .<= 0.0);
+        not_cv = check_curvature ? find(! (converged_loc | indefinite_loc)) : find(! converged_loc);
 
-          # Fetch parts of relevant arrays for which
-          # the residual has not yet converged.
+        if length(not_cv) > 0
+          # Fetch parts of relevant arrays for which the residual has not yet converged.
           σ_loc = localpart(dσ);
           δ_loc = localpart(dδ);
           γ_loc = localpart(dγ);
           ω_loc = localpart(dω);
           x_loc = localpart(dx);
           p_loc = localpart(dp);
-          shifts_loc = localpart(dshifts); shifts_loc = shifts_loc[not_cv];
+          shifts_loc = shifts_loc[not_cv];
 
           δ_loc[not_cv] = δ + shifts_loc;
           γ_loc[not_cv] = 1 ./ (δ_loc[not_cv] - ω_loc[not_cv] ./ γ_loc[not_cv]);
@@ -315,19 +335,18 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
           converged_loc[not_cv] = rNorm_loc[not_cv] .<= ε;
         end
 
-        # It currently doesn't seem possible to do this with distributed arrays.
-        #         append!(rNorms_loc, rNorm_loc);
+        solved_loc[:] = converged_loc | indefinite_loc;
       end
     end
 
     iter = iter + 1;
     verbose && c_printf(fmt, iter, drNorm...);
 
-    solved = preduce(&, dconverged);
+    solved = preduce(&, dsolved);
     tired = iter >= itmax;
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, drNorm, 0.0, 0.0, status);
+  stats = LanczosStats(solved, drNorm, dindefinite, 0.0, 0.0, status);
   return (dx, stats);
 end

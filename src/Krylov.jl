@@ -25,6 +25,7 @@ end
 type LanczosStats <: KrylovStats
   solved :: Bool
   residuals :: Union(Array{Float64}, DArray{Float64,1,Array{Float64,1}})
+  flagged :: Union(Bool, BitArray{1}, DArray{Bool,1,Array{Bool,1}})
   Anorm :: Float64
   Acond :: Float64
   status :: UTF8String
@@ -46,6 +47,7 @@ function show(io :: IO, stats :: LanczosStats)
   s  = "\nCG Lanczos stats\n"
   s *= @sprintf("  solved: %s\n", stats.solved)
   s *= @sprintf("  residuals: %s\n", typeof(stats.residuals))
+  s *= @sprintf("  flagged: %s\n", stats.flagged)
   s *= @sprintf("  ‖A‖F: %7.1e\n", stats.Anorm)
   s *= @sprintf("  κ₂(A): %7.1e\n", stats.Acond)
   s *= @sprintf("  status: %s\n", stats.status)
