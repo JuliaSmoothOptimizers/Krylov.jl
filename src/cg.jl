@@ -24,6 +24,7 @@ function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
+  verbose && @printf("CG: system of %d equations in %d variables\n", n, n);
 
   # Initial state.
   x = zeros(n);

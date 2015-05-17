@@ -59,6 +59,8 @@ function crmr(A :: LinearOperator, b :: Array{Float64,1};
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
+  verbose && @printf("CRMR: system of %d equations in %d variables\n", m, n);
+
   x = zeros(n);
   bNorm = BLAS.nrm2(m, b, 1);  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x;

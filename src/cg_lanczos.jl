@@ -28,6 +28,7 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
+  verbose && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n);
 
   # Initial state.
   x = zeros(n);
@@ -110,6 +111,7 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
 
   nshifts = size(shifts, 1);
+  verbose && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts);
 
   # Initial state.
   ## Distribute x similarly to shifts.
@@ -220,6 +222,7 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
   dshifts = distribute(shifts);
   nshifts = size(shifts, 1);
   nchunks = size(dshifts.chunks, 1);
+  verbose && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts);
 
   # Initial state.
   ## Distribute x similarly to shifts.
