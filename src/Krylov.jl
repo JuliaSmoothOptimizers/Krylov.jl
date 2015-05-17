@@ -52,7 +52,9 @@ function show(io :: IO, stats :: LanczosStats)
   print(io, s)
 end
 
+include("krylov_aux.jl")
 include("krylov_utils.jl")
+
 include("cg.jl")
 include("cg_lanczos.jl")
 include("cgls.jl")
