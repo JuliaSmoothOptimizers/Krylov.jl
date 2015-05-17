@@ -63,5 +63,6 @@ include("cgne.jl")
 include("crmr.jl")
 
 include("craig.jl")
+include("craigmr.jl")
 
 end
