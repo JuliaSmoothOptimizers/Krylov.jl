@@ -2,7 +2,7 @@
 
 ## Methods
 
-- [ ] CG
+- [X] CG
 - [X] CRLS: CR on A'Ax = A'b (equivalent to LSMR in exact arithmetic)
 - [ ] LSQR (equivalent to CG on A'Ax = A'b)
 - [ ] LSMR (equivalent to MINRES on A'Ax = A'b)
@@ -13,5 +13,5 @@
 ## Special features
 
 - [ ] Estimate norms and conditions numbers
-- [ ] Allow for regularization
-- [ ] Allow for shifts
+- [X] Allow for regularization
+- [X] Allow for shifts
