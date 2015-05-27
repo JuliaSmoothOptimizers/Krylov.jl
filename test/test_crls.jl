@@ -17,6 +17,20 @@ for npower = 1 : 4
   @test(stats.solved);
 end
 
+# Test with preconditioning.
+A = rand(10, 6); b = rand(10);
+M = InverseLBFGSOperator(10, 4);
+for _ = 1 : 6
+  s = rand(10);
+  y = rand(10);
+  push!(M, s, y);
+end
+
+(x, stats) = crls(A, b, M=M);
+resid = norm(A' * M * (A * x - b)) / sqrt(dot(b, M * b));
+@printf("CRLS: Preconditioned residual: %8.1e\n", resid);
+@test resid <= crls_tol;
+
 # Code coverage.
 (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0);
 (x, stats) = crls(full(A), b);

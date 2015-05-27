@@ -39,7 +39,8 @@ CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r‖�
 It is formally equivalent to LSMR, though can be slightly less accurate,
 but simpler to implement.
 """ ->
-function crls(A :: LinearOperator, b :: Array{Float64,1};
+function crls(A :: AbstractLinearOperator, b :: Array{Float64,1};
+              M :: AbstractLinearOperator=opEye(size(b,1)),
               λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
               itmax :: Int=0, verbose :: Bool=false)
 
@@ -49,18 +50,21 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
   bNorm = BLAS.nrm2(m, b, 1);  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x;
   r  = copy(b);
+  Mr = M * r;
 
   # The following vector copy takes care of the case where A is a LinearOperator
   # with preallocation, so as to avoid overwriting vectors used later. In other
-  # case, this should only add minimum overhead.
-  Ar = copy(A' * b);  # - λ * x0 if x0 ≠ 0.
+  # cases, this should only add minimum overhead.
+  Ar = copy(A' * Mr);  # - λ * x0 if x0 ≠ 0.
 
   s  = A * Ar;
+  Ms = M * s;
+
   p  = copy(Ar);
   Ap = copy(s);
-  q  = A' * Ap;
+  q  = A' * Ms;  # Ap;
   λ > 0 && BLAS.axpy!(n, λ, p, 1, q, 1);  # q = q + λ * p;
-  γ  = BLAS.dot(m, s, 1, s, 1);  # Faster than γ = dot(s, s);
+  γ  = BLAS.dot(m, s, 1, Ms, 1);  # Faster than γ = dot(s, Ms);
   iter = 0;
   itmax == 0 && (itmax = m + n);
 
@@ -83,7 +87,8 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
     BLAS.axpy!(m, -α, Ap, 1,  r, 1);     # Faster than  r =  r - α * Ap;
     BLAS.axpy!(n, -α, q,  1, Ar, 1);     # Faster than Ar = Ar - α *  q;
     s = A * Ar;
-    γ_next = BLAS.dot(m, s, 1, s, 1);   # Faster than γ_next = dot(s, s);
+    Ms = M * s;
+    γ_next = BLAS.dot(m, s, 1, Ms, 1);   # Faster than γ_next = dot(s, s);
     ArNorm = BLAS.nrm2(n, Ar, 1);
     λ > 0 && (γ_next += λ * ArNorm * ArNorm);
     β = γ_next / γ;
@@ -95,7 +100,7 @@ function crls(A :: LinearOperator, b :: Array{Float64,1};
 
     BLAS.scal!(m, β, Ap, 1);
     BLAS.axpy!(m, 1.0, s, 1, Ap, 1);    # Faster than Ap =  s + β * Ap;
-    q = A' * Ap;
+    q = A' * M * Ap;
     λ > 0 && BLAS.axpy!(n, λ, p, 1, q, 1);  # q = q + λ * p;
 
     γ = γ_next;
