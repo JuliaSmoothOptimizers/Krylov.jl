@@ -15,3 +15,7 @@
 - [ ] Estimate norms and conditions numbers
 - [X] Allow for regularization
 - [X] Allow for shifts
+
+## Preconditioning
+
+- [ ] Save on storage when not preconditioning (How? Assign identifiers to ops)
