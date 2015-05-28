@@ -3,9 +3,14 @@
 #
 #  minimize ‖Ax - b‖
 #
-# equivalently, of the linear system
+# equivalently, of the normal equations
 #
 #  A'Ax = A'b.
+#
+# CGLS is formally equivalent to applying the conjugate gradient method
+# to the normal equations but should be more stable. It is also formally
+# equivalent to LSQR though LSQR should be expected to be more stable on
+# ill-conditioned or poorly scaled problems.
 #
 # This implementation is the standard formulation, as recommended by
 # A. Björck, T. Elfving and Z. Strakos, Stability of Conjugate Gradient
