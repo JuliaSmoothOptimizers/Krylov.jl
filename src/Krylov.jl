@@ -64,6 +64,7 @@ include("crmr.jl")
 
 include("lsqr.jl")
 include("craig.jl")
+include("lsmr.jl")
 include("craigmr.jl")
 
 end

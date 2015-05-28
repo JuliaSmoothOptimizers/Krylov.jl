@@ -11,5 +11,6 @@ include("test_cgne.jl")
 include("test_crmr.jl")
 
 include("test_lsqr.jl")
+include("test_lsmr.jl")
 include("test_craigmr.jl")
 
