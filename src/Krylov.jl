@@ -62,6 +62,7 @@ include("crls.jl")
 include("cgne.jl")
 include("crmr.jl")
 
+include("lsqr.jl")
 include("craig.jl")
 include("craigmr.jl")
 
