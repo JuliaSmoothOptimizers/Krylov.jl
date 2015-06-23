@@ -64,6 +64,7 @@ function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1};
               M :: AbstractLinearOperator=opEye(size(A,1)), N :: AbstractLinearOperator=opEye(size(A,2)),
               sqd :: Bool=false,
               λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
+              etol :: Float64=1.0e-8, window :: Int=5,
               itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
 
   m, n = size(A)
@@ -99,6 +100,10 @@ function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1};
   s2 =  0.0
   z  =  0.0
 
+  xENorm² = 0.0
+  err_lbnd = 0.0
+  err_vec = zeros(window)
+
   verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n",
                      "Aprod", "‖r‖", "‖A'r‖", "β", "α", "cos", "sin", "‖A‖²")
   verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
@@ -130,6 +135,7 @@ function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1};
   tired  = iter >= itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
   zero_resid = zero_resid_mach = zero_resid_lim = false
+  fwd_err = false
 
   while ! (solved || tired || ill_cond)
     iter = iter + 1
@@ -178,6 +184,10 @@ function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1};
     (c, s, ρ) = sym_givens(ρbar1, β)
     ϕ = c * ϕbar
     ϕbar = s * ϕbar
+
+    xENorm² = xENorm² + ϕ * ϕ
+    err_vec[mod(iter, window) + 1] = ϕ
+    iter >= window && (err_lbnd = norm(err_vec))
 
     τ = s * ϕ; 
     θ = s * α
@@ -238,9 +248,10 @@ function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1};
     ill_cond_lim = (test3 <= ctol)
     solved_lim = (test2 <= atol)
     zero_resid_lim = (test1 <= rtol)
+    iter >= window && (fwd_err = err_lbnd <= etol * sqrt(xENorm²))
 
     ill_cond = ill_cond_mach | ill_cond_lim
-    solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim
+    solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err
   end
 
   tired         && (status = "maximum number of iterations exceeded")
@@ -248,6 +259,7 @@ function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1};
   ill_cond_lim  && (status = "condition number exceeds tolerance")
   solved        && (status = "found approximate minimum least-squares solution")
   zero_resid    && (status = "found approximate zero-residual solution")
+  fwd_err       && (status = "truncated forward error small enough")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
   return (x, stats)
