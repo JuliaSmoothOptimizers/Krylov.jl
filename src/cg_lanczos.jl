@@ -208,7 +208,7 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, reshape(rNorms_history, nshifts, int(sum(size(rNorms_history))/nshifts))', indefinite, 0.0, 0.0, status);  # TODO: Estimate Anorm and Acond.
+  stats = LanczosStats(solved, reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))', indefinite, 0.0, 0.0, status);  # TODO: Estimate Anorm and Acond.
   return (x, stats);
 end
 
