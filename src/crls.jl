@@ -23,7 +23,7 @@ export crls
 # Methods for various argument types.
 include("crls_methods.jl")
 
-@doc """
+Docile.@doc """
 Solve the linear least-squares problem
 
   minimize ‖b - Ax‖₂² + λ ‖x‖₂²

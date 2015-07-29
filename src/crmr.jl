@@ -30,7 +30,7 @@ export crmr
 # Methods for various argument types.
 include("crmr_methods.jl")
 
-@doc """
+Docile.@doc """
 Solve the consistent linear system
 
   Ax + √λs = b

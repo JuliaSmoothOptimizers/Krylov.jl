@@ -24,7 +24,7 @@ export cgls
 # Methods for various argument types.
 include("cgls_methods.jl")
 
-@doc """
+Docile.@doc """
 Solve the regularized linear least-squares problem
 
   minimize ‖b - Ax‖₂² + λ ‖x‖₂²

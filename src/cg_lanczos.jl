@@ -14,7 +14,7 @@ export cg_lanczos, cg_lanczos_shift_seq, cg_lanczos_shift_par
 # Methods for various argument types.
 include("cg_lanczos_methods.jl")
 
-@doc """
+Docile.@doc """
 The Lanczos version of the conjugate gradient method to solve the
 symmetric linear system
 
@@ -101,7 +101,7 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
 end
 
 
-@doc """
+Docile.@doc """
 The Lanczos version of the conjugate gradient method to solve a family
 of shifted systems
 
@@ -213,7 +213,7 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
 end
 
 
-@doc """
+Docile.@doc """
 The Lanczos version of the conjugate gradient method to solve a family
 of shifted systems
 

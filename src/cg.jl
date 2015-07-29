@@ -13,7 +13,7 @@ export cg
 # Methods for various argument types.
 include("cg_methods.jl")
 
-@doc """
+Docile.@doc """
 The conjugate gradient method to solve the symmetric linear system Ax=b.
 
 The method does _not_ abort if A is not definite.

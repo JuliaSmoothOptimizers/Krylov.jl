@@ -8,12 +8,11 @@ end
 
 # Documentation.
 using Docile
-@docstrings
 
-@doc "Abstract type for statistics returned by a solver" ->
+Docile.@doc "Abstract type for statistics returned by a solver" ->
 abstract KrylovStats;
 
-@doc "Type for statistics returned by non-Lanczos solvers" ->
+Docile.@doc "Type for statistics returned by non-Lanczos solvers" ->
 type SimpleStats <: KrylovStats
   solved :: Bool
   inconsistent :: Bool

@@ -27,7 +27,7 @@ export lsqr
 # Methods for various argument types.
 include("lsqr_methods.jl")
 
-@doc """
+Docile.@doc """
 Solve the regularized linear least-squares problem
 
   minimize ‖b - Ax‖₂² + λ² ‖x‖₂²
