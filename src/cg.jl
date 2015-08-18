@@ -20,7 +20,7 @@ The method does _not_ abort if A is not definite.
 """ ->
 function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
                        atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                       verbose :: Bool=false)
+                       radius :: Float64=0.0, verbose :: Bool=false)
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
@@ -39,32 +39,54 @@ function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
   rNorm = sqrt(γ);
   rNorms = [rNorm;];
   ε = atol + rtol * rNorm;
-  verbose && @printf("%5d  %8.1e\n", iter, rNorm);
+  verbose && @printf("%5d  %8.1e  ", iter, rNorm);
 
   solved = rNorm <= ε;
   tired = iter >= itmax;
+  on_boundary = false;
   status = "unknown";
 
   while ! (solved || tired)
     Ap = A * p;
     pAp = BLAS.dot(n, p, 1, Ap, 1);
+
     α = γ / pAp;
+
+    # Compute step size to boundary if applicable.
+    σ = radius > 0.0 ? to_boundary(x, p, radius) : α
+
+    verbose && @printf("%8.1e  %7.1e  %7.1e\n", pAp, α, σ);
+
+    # Move along p from x to the boundary if either
+    # the next step leads outside the trust region or
+    # we have nonpositive curvature.
+    if (radius > 0.0) & ((pAp <= 0.0) | (α > σ))
+      α = σ
+      on_boundary = true
+    end
+
     BLAS.axpy!(n,  α,  p, 1, x, 1);  # Faster than x = x + α * p;
     BLAS.axpy!(n, -α, Ap, 1, r, 1);  # Faster than r = r - α * Ap;
     γ_next = BLAS.dot(n, r, 1, r, 1);
-    β = γ_next / γ;
-    BLAS.scal!(n, β, p, 1)
-    BLAS.axpy!(n, 1.0, r, 1, p, 1);  # Faster than p = r + β * p;
-    γ = γ_next;
     rNorm = sqrt(γ);
     push!(rNorms, rNorm);
-    iter = iter + 1;
-    verbose && @printf("%5d  %8.1e\n", iter, rNorm);
-    solved = rNorm <= ε;
-    tired = iter >= itmax;
-  end
 
-  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+    solved = (rNorm <= ε) | on_boundary;
+    tired = iter >= itmax;
+
+    if !solved
+      β = γ_next / γ;
+      γ = γ_next;
+
+      BLAS.scal!(n, β, p, 1)
+      BLAS.axpy!(n, 1.0, r, 1, p, 1);  # Faster than p = r + β * p;
+    end
+    iter = iter + 1;
+    verbose && @printf("%5d  %8.1e  ", iter, rNorm);
+  end
+  verbose && @printf("\n");
+
+  status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
   stats = SimpleStats(solved, false, rNorms, [], status);
   return (x, stats);
 end

@@ -14,6 +14,12 @@ resid = norm(r) / norm(b)
 @test(resid <= cg_tol);
 @test(stats.solved);
 
+radius = 0.75 * norm(x);
+(x, stats) = cg(A, b, radius=radius, itmax=10);
+show(stats)
+@test(stats.solved);
+@test(abs(radius - norm(x)) <= cg_tol * radius);
+
 # Sparse Laplacian.
 A = get_div_grad(16, 16, 16);
 b = randn(size(A, 1));
@@ -23,6 +29,12 @@ resid = norm(r) / norm(b);
 @printf("CG: Relative residual: %8.1e\n", resid);
 @test(resid <= cg_tol);
 @test(stats.solved);
+
+radius = 0.75 * norm(x);
+(x, stats) = cg(A, b, radius=radius, itmax=10);
+show(stats)
+@test(stats.solved);
+@test(abs(radius - norm(x)) <= cg_tol * radius);
 
 # Code coverage.
 (x, stats) = cg(full(A), b);
