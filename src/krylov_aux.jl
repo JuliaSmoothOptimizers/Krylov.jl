@@ -1,9 +1,10 @@
+"""Numerically stable symmetric Givens rotation.
+Given `a` and `b`, return `(c, s, ρ)` such that
+
+    [ c  s ] [ a ] = [ ρ ]
+    [ s -c ] [ b ] = [ 0 ].
+"""
 function sym_givens(a :: Float64, b :: Float64)
-  #
-	# Numerically stable symmetric Givens rotation
-	#
-	# [ c  s ] [ a ] = [ ρ ]
-	# [ s -c ] [ b ] = [ 0 ].
 	#
 	# Modeled after the corresponding Matlab function by M. A. Saunders and S.-C. Choi.
 	# http://www.stanford.edu/group/SOL/dissertations/sou-cheng-choi-thesis.pdf
