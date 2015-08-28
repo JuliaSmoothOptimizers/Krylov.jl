@@ -56,6 +56,8 @@ include("krylov_utils.jl")
 
 include("cg.jl")
 include("cg_lanczos.jl")
+include("minres.jl")
+
 include("cgls.jl")
 include("crls.jl")
 include("cgne.jl")
