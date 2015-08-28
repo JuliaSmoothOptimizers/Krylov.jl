@@ -24,8 +24,7 @@ export cgls
 # Methods for various argument types.
 include("cgls_methods.jl")
 
-Docile.@doc """
-Solve the regularized linear least-squares problem
+"""Solve the regularized linear least-squares problem
 
   minimize ‖b - Ax‖₂² + λ ‖x‖₂²
 
@@ -39,7 +38,7 @@ but is more stable.
 CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖A'r‖₂.
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
-""" ->
+"""
 function cgls(A :: AbstractLinearOperator, b :: Array{Float64,1};
               M :: AbstractLinearOperator=opEye(size(b,1)),
               λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,

@@ -27,8 +27,7 @@ export lsqr
 # Methods for various argument types.
 include("lsqr_methods.jl")
 
-Docile.@doc """
-Solve the regularized linear least-squares problem
+"""Solve the regularized linear least-squares problem
 
   minimize ‖b - Ax‖₂² + λ² ‖x‖₂²
 
@@ -59,7 +58,7 @@ indefinite system
 
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
-""" ->
+"""
 function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1};
               M :: AbstractLinearOperator=opEye(size(A,1)), N :: AbstractLinearOperator=opEye(size(A,2)),
               sqd :: Bool=false,

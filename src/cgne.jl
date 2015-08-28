@@ -32,8 +32,7 @@ export cgne
 # Methods for various argument types.
 include("cgne_methods.jl")
 
-Docile.@doc """
-Solve the consistent linear system
+"""Solve the consistent linear system
 
   Ax + √λs = b
 
@@ -54,7 +53,7 @@ When λ > 0, it solves the problem
 CGNE produces monotonic errors ‖x-x*‖₂ but not residuals ‖r‖₂.
 It is formally equivalent to CRAIG, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
-""" ->
+"""
 function cgne(A :: LinearOperator, b :: Array{Float64,1};
               λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
               itmax :: Int=0, verbose :: Bool=false)

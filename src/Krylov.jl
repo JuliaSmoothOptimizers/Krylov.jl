@@ -6,13 +6,10 @@ if VERSION >= v"0.4-"
   using DistributedArrays
 end
 
-# Documentation.
-using Docile
-
-Docile.@doc "Abstract type for statistics returned by a solver" ->
+"Abstract type for statistics returned by a solver"
 abstract KrylovStats;
 
-Docile.@doc "Type for statistics returned by non-Lanczos solvers" ->
+"Type for statistics returned by non-Lanczos solvers"
 type SimpleStats <: KrylovStats
   solved :: Bool
   inconsistent :: Bool
