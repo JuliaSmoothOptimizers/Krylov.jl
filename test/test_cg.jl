@@ -14,6 +14,10 @@ resid = norm(r) / norm(b)
 @test(resid <= cg_tol);
 @test(stats.solved);
 
+# Code coverage.
+(x, stats) = cg(full(A), b);
+show(stats);
+
 radius = 0.75 * norm(x);
 (x, stats) = cg(A, b, radius=radius, itmax=10);
 show(stats)
@@ -35,8 +39,4 @@ radius = 0.75 * norm(x);
 show(stats)
 @test(stats.solved);
 @test(abs(radius - norm(x)) <= cg_tol * radius);
-
-# Code coverage.
-(x, stats) = cg(full(A), b);
-show(stats);
 
