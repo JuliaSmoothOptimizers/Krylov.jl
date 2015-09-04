@@ -14,13 +14,21 @@ export cg_lanczos, cg_lanczos_shift_seq, cg_lanczos_shift_par
 # Methods for various argument types.
 include("cg_lanczos_methods.jl")
 
+Docile.@doc """
+The Lanczos version of the conjugate gradient method to solve the
+symmetric linear system
 
+  Ax = b
+
+The method does _not_ abort if A is not definite.
+""" ->
 function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
                                atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                               verbose :: Bool=false)
+                               check_curvature :: Bool=false, verbose :: Bool=false)
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
+  verbose && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n);
 
   # Initial state.
   x = zeros(n);
@@ -36,18 +44,30 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
   σ = β;
   ω = 0;
   γ = 1;
+  Anorm2 = 0.0;
+  β_prev = 0.0;
 
   # Define stopping tolerance.
   rNorm = σ;
+  rNorms = [rNorm;];
   ε = atol + rtol * rNorm;
   verbose && @printf("%5d  %8.1e\n", iter, rNorm);
 
+  indefinite = false;
+  solved = rNorm <= ε;
+  tired = iter >= itmax;
+  status = "unknown";
+
   # Main loop.
-  while (rNorm > ε) & (iter < itmax)
+  while ! (solved || tired || (check_curvature & indefinite))
     # Form next Lanczos vector.
     v_next = A * v;
-    # δ = BLAS.dot(n, v, 1, v_next, 1); doesn't seem to pay off.
-    δ = dot(v, v_next);
+    δ = dot(v, v_next);  # BLAS.dot(n, v, 1, v_next, 1) doesn't seem to pay off.
+
+    # Check curvature. Exit fast if requested.
+    indefinite |= (δ <= 0.0);
+    (check_curvature & indefinite) && continue;
+
     BLAS.axpy!(n, -δ, v, 1, v_next, 1);  # Faster than v_next = Av - δ * v;
     if iter > 0
       BLAS.axpy!(n, -β, v_prev, 1, v_next, 1);  # Faster than v_next = v_next - β * v_prev;
@@ -55,10 +75,11 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
     end
     β = norm(v_next);
     v = v_next / β;
+    Anorm2 += β_prev^2 + β^2 + δ^2;  # Use ‖T‖ as increasing approximation of ‖A‖.
+    β_prev = β;
 
     # Compute next CG iterate.
     γ = 1 / (δ - ω / γ);
-    #     x = x + γ * p;
     BLAS.axpy!(n, γ, p, 1, x, 1);  # Faster than x = x + γ * p;
 
     ω = β * γ;
@@ -67,21 +88,36 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
     BLAS.scal!(n, ω, p, 1);
     BLAS.axpy!(n, σ, v, 1, p, 1);  # Faster than p = σ * v + ω * p;
     rNorm = abs(σ);
+    push!(rNorms, rNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.1e\n", iter, rNorm);
+    solved = rNorm <= ε;
+    tired = iter >= itmax;
   end
-  return x;
+
+  status = tired ? "maximum number of iterations exceeded" : (check_curvature & indefinite) ? "negative curvature" : "solution good enough given atol and rtol"
+  stats = LanczosStats(solved, rNorms, indefinite, sqrt(Anorm2), 0.0, status);  # TODO: Estimate Acond.
+  return (x, stats);
 end
 
 
+Docile.@doc """
+The Lanczos version of the conjugate gradient method to solve a family
+of shifted systems
+
+  (A + αI) x = b  (α = α₁, α₂, ...)
+
+The method does _not_ abort if A + αI is not definite.
+""" ->
 function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: Array{Tb,1}, shifts :: Array{Ts,1};
                                                       atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                                                      verbose :: Bool=false)
+                                                      check_curvature :: Bool=false, verbose :: Bool=false)
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
 
   nshifts = size(shifts, 1);
+  verbose && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts);
 
   # Initial state.
   ## Distribute x similarly to shifts.
@@ -94,11 +130,6 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
   # Initialize each p to b.
   p = b * ones(nshifts)';
 
-  # Keep track of shifted systems that have converged.
-  converged = falses(nshifts);
-  iter = 0;
-  itmax == 0 && (itmax = 2 * n);
-
   # Initialize some constants used in recursions below.
   σ = β * ones(nshifts);
   δhat = zeros(nshifts);
@@ -107,20 +138,29 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
 
   # Define stopping tolerance.
   rNorms = β * ones(nshifts);
+  rNorms_history = [rNorms;];
   ε = atol + rtol * β;
+
+  # Keep track of shifted systems that have converged.
+  converged = rNorms .<= ε;
+  iter = 0;
+  itmax == 0 && (itmax = 2 * n);
+
+  # Keep track of shifted systems with negative curvature if required.
+  indefinite = falses(nshifts);
 
   # Build format strings for printing.
   if verbose
-    fmt = "%5d";
-    for i = 1 : nshifts
-      fmt = fmt * "  %8.1e";
-    end
-    fmt = fmt * "\n";
-    print_formatted(fmt, iter, rNorms...);
+    fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n";
+    c_printf(fmt, iter, rNorms...);
   end
 
+  solved = all(converged);
+  tired = iter >= itmax;
+  status = "unknown";
+
   # Main loop.
-  while ! all(converged) & (iter < itmax)
+  while ! (solved || tired)
     # Form next Lanczos vector.
     v_next = A * v;
     δ = dot(v, v_next);
@@ -132,45 +172,61 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
     β = norm(v_next);
     v = v_next / β;
 
-    # Compute next CG iterate for each shift.
-    not_cv = find(! converged);
+    # Check curvature: v'(A + sᵢI)v = v'Av + sᵢ ‖v‖² = δ + sᵢ because ‖v‖ = 1.
+    indefinite |= (δ + shifts  - (ω ./ γ) .<= 0.0); # JPD added "- (ω ./ γ)"
 
-    #     δhat[not_cv] = δ + shifts[not_cv];
-    #     γ[not_cv] = 1 ./ (δhat[not_cv] - ω[not_cv] ./ γ[not_cv]);
-    #     x[:, not_cv] += (p[:, not_cv] * diagm(γ[not_cv]));  # diagm?!
-    #     ω[not_cv] = β * γ[not_cv];
-    #     σ[not_cv] .*= -ω[not_cv];
-    #     ω[not_cv] .*= ω[not_cv];
-    #     p[:, not_cv] = (v * σ[not_cv]' + p[:, not_cv] * diagm(ω[not_cv]));
-    #     rNorms[not_cv] = abs(σ[not_cv]);
-    #     converged[not_cv] = rNorms[not_cv] .<= ε;
+    # Compute next CG iterate for each shifted system that has not yet converged.
+    # Stop iterating on indefinite problems if requested.
+    not_cv = check_curvature ? find(! (converged | indefinite)) : find(! converged);
 
     # Loop is a bit faster than the vectorized version.
     for i in not_cv
       δhat[i] = δ + shifts[i];
+
       γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i]);
-      x[:, i] += γ[i] * p[:, i];
+      x[:, i] += γ[i] * p[:, i];  # Strangely, this is faster than a loop.
 
       ω[i] = β * γ[i];
       σ[i] *= -ω[i];
       ω[i] *= ω[i];
-      p[:, i] = v * σ[i] + p[:, i] * ω[i];
+      p[:, i] = v * σ[i] + p[:, i] * ω[i];  # Faster than loop.
 
       # Update list of systems that have converged.
       rNorms[i] = abs(σ[i]);
       converged[i] = rNorms[i] <= ε;
     end
 
+    # Is there a better way than to update this array twice per iteration?
+    not_cv = check_curvature ? find(! (converged | indefinite)) : find(! converged);
+
+    length(not_cv) > 0 && append!(rNorms_history, rNorms);
     iter = iter + 1;
-    verbose && print_formatted(fmt, iter, rNorms...);
+    verbose && c_printf(fmt, iter, rNorms...);
+
+    solved = length(not_cv) == 0;
+    tired = iter >= itmax;
   end
-  return x;
+
+  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  stats = LanczosStats(solved, reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))', indefinite, 0.0, 0.0, status);  # TODO: Estimate Anorm and Acond.
+  return (x, stats);
 end
 
 
+Docile.@doc """
+The Lanczos version of the conjugate gradient method to solve a family
+of shifted systems
+
+  (A + αI) x = b  (α = α₁, α₂, ...)
+
+The method does _not_ abort if A + αI is not definite.
+
+In this version, the shifted systems are dispatched on the available processors,
+and operations specific to each shift is carried out on the processor hosting it.
+""" ->
 function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: Array{Tb,1}, shifts :: Array{Ts,1};
                                                       atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                                                      verbose :: Bool=false)
+                                                      check_curvature :: Bool=false, verbose :: Bool=false)
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
@@ -178,6 +234,7 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
   dshifts = distribute(shifts);
   nshifts = size(shifts, 1);
   nchunks = size(dshifts.chunks, 1);
+  verbose && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts);
 
   # Initial state.
   ## Distribute x similarly to shifts.
@@ -200,7 +257,9 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
   end
 
   # Keep track of shifted systems that have converged.
+  dsolved = dfill(false, (nshifts,), workers(), [nchunks]);
   dconverged = dfill(false, (nshifts,), workers(), [nchunks]);
+  dindefinite= dfill(false, (nshifts,), workers(), [nchunks]);
   iter = 0;
   itmax == 0 && (itmax = 2 * n);
 
@@ -212,20 +271,21 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
 
   # Define stopping tolerance.
   drNorm = dfill(β, (nshifts,), workers(), [nchunks]);
+  #   drNorms = dfill(β, (nshifts,), workers(), [nchunks]);
   ε = atol + rtol * β;
 
   # Build format strings for printing.
   if verbose
-    fmt = "%5d";
-    for i = 1 : nshifts
-      fmt = fmt * "  %8.1e";
-    end
-    fmt = fmt * "\n";
-    print_formatted(fmt, iter, drNorm...);
+    fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n";
+    c_printf(fmt, iter, drNorm...);
   end
 
+  solved = false;
+  tired = iter >= itmax;
+  status = "unknown";
+
   # Main loop.
-  while ! preduce(&, dconverged) & (iter < itmax)
+  while ! (solved || tired)
     # Form next Lanczos vector.
     v_next = A * v;
     δ = dot(v, v_next);
@@ -240,40 +300,56 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
     # Compute next CG iterate for each shift.
     @sync for proc in procs(dp)
       @spawnat proc begin
+        solved_loc = localpart(dsolved);
         converged_loc = localpart(dconverged);
-        not_cv = find(! converged_loc);
+        indefinite_loc = localpart(dindefinite);
+        shifts_loc = localpart(dshifts);
 
-        if ! all(converged_loc)
+        rNorm_loc = localpart(drNorm);
+        #         rNorms_loc = localpart(drNorms);
 
-          # Fetch parts of relevant arrays for which
-          # the residual has not yet converged.
+        # Check curvature: v'(A + sᵢI)v = v'Av + sᵢ ‖v‖² = δ + sᵢ because ‖v‖ = 1.
+        # Stop iterating on indefinite problems if requested.
+        indefinite_loc[:] |= (δ + shifts_loc .<= 0.0);
+        not_cv = check_curvature ? find(! (converged_loc | indefinite_loc)) : find(! converged_loc);
+
+        if length(not_cv) > 0
+          # Fetch parts of relevant arrays for which the residual has not yet converged.
           σ_loc = localpart(dσ);
           δ_loc = localpart(dδ);
           γ_loc = localpart(dγ);
           ω_loc = localpart(dω);
           x_loc = localpart(dx);
           p_loc = localpart(dp);
-          rNorm_loc = localpart(drNorm);
-          shifts_loc = localpart(dshifts); shifts_loc = shifts_loc[not_cv];
+          shifts_loc = shifts_loc[not_cv];
 
           δ_loc[not_cv] = δ + shifts_loc;
           γ_loc[not_cv] = 1 ./ (δ_loc[not_cv] - ω_loc[not_cv] ./ γ_loc[not_cv]);
-          x_loc[:, not_cv] += (p_loc[:, not_cv] * diagm(γ_loc[not_cv]));  # diagm?!
-
           ω_loc[not_cv] = β * γ_loc[not_cv];
           σ_loc[not_cv] .*= -ω_loc[not_cv];
           ω_loc[not_cv] .*= ω_loc[not_cv];
-          p_loc[:, not_cv] = (v * σ_loc[not_cv]' + p_loc[:, not_cv] * diagm(ω_loc[not_cv]));
           rNorm_loc[not_cv] = abs(σ_loc[not_cv]);
+
+          # Can't seem to use BLAS3 GEMM calls here.
+          x_loc[:, not_cv] += (p_loc[:, not_cv] * diagm(γ_loc[not_cv]));  # diagm?!
+          p_loc[:, not_cv] = (v * σ_loc[not_cv]' + p_loc[:, not_cv] * diagm(ω_loc[not_cv]));
 
           # Update list of systems that have converged.
           converged_loc[not_cv] = rNorm_loc[not_cv] .<= ε;
         end
+
+        solved_loc[:] = converged_loc | indefinite_loc;
       end
     end
 
     iter = iter + 1;
-    verbose && print_formatted(fmt, iter, drNorm...);
+    verbose && c_printf(fmt, iter, drNorm...);
+
+    solved = preduce(&, dsolved);
+    tired = iter >= itmax;
   end
-  return convert(Array, dx);
+
+  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  stats = LanczosStats(solved, drNorm, dindefinite, 0.0, 0.0, status);
+  return (dx, stats);
 end
