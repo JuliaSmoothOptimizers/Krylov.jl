@@ -104,7 +104,7 @@ function to_boundary(x :: Vector{Float64}, d :: Vector{Float64},
   flip && (xd = -xd)
   dNorm2 = dot(d, d)
   xNorm2 == 0.0 && (xNorm2 = dot(x, x))
-  (xNorm2 <= radius * radius) || error("x lies outside of the trust region")
+  (xNorm2 <= radius * radius) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius * radius))
   roots = roots_quadratic(dNorm2, 2 * xd, xNorm2 - radius * radius)
   return maximum(roots)
 end
