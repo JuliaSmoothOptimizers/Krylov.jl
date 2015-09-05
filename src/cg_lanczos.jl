@@ -64,7 +64,9 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
     δ = dot(v, v_next);  # BLAS.dot(n, v, 1, v_next, 1) doesn't seem to pay off.
 
     # Check curvature. Exit fast if requested.
-    indefinite |= (δ <= 0.0);
+    # It is possible to show that σⱼ² (δⱼ - ωⱼ₋₁ / γⱼ₋₁) = pⱼᵀ A pⱼ.
+    γ = 1 / (δ - ω / γ);
+    indefinite |= (γ <= 0.0);
     (check_curvature & indefinite) && continue;
 
     BLAS.axpy!(n, -δ, v, 1, v_next, 1);  # Faster than v_next = Av - δ * v;
@@ -78,7 +80,6 @@ function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
     β_prev = β;
 
     # Compute next CG iterate.
-    γ = 1 / (δ - ω / γ);
     BLAS.axpy!(n, γ, p, 1, x, 1);  # Faster than x = x + γ * p;
 
     ω = β * γ;
@@ -171,7 +172,12 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
     v = v_next / β;
 
     # Check curvature: v'(A + sᵢI)v = v'Av + sᵢ ‖v‖² = δ + sᵢ because ‖v‖ = 1.
-    indefinite |= (δ + shifts .<= 0.0);
+    # It is possible to show that σⱼ² (δⱼ + sᵢ - ωⱼ₋₁ / γⱼ₋₁) = pⱼᵀ (A + sᵢ I) pⱼ.
+    for i = 1 : nshifts
+      δhat[i] = δ + shifts[i]
+      γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i])
+    end
+    indefinite |= (γ .<= 0.0);
 
     # Compute next CG iterate for each shifted system that has not yet converged.
     # Stop iterating on indefinite problems if requested.
@@ -179,9 +185,6 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
 
     # Loop is a bit faster than the vectorized version.
     for i in not_cv
-      δhat[i] = δ + shifts[i];
-
-      γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i]);
       x[:, i] += γ[i] * p[:, i];  # Strangely, this is faster than a loop.
 
       ω[i] = β * γ[i];
@@ -194,10 +197,10 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
       converged[i] = rNorms[i] <= ε;
     end
 
+    length(not_cv) > 0 && append!(rNorms_history, rNorms);
+
     # Is there a better way than to update this array twice per iteration?
     not_cv = check_curvature ? find(! (converged | indefinite)) : find(! converged);
-
-    length(not_cv) > 0 && append!(rNorms_history, rNorms);
     iter = iter + 1;
     verbose && c_printf(fmt, iter, rNorms...);
 
@@ -268,7 +271,6 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
 
   # Define stopping tolerance.
   drNorm = dfill(β, (nshifts,), workers(), [nchunks]);
-  #   drNorms = dfill(β, (nshifts,), workers(), [nchunks]);
   ε = atol + rtol * β;
 
   # Build format strings for printing.
@@ -301,27 +303,27 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
         converged_loc = localpart(dconverged);
         indefinite_loc = localpart(dindefinite);
         shifts_loc = localpart(dshifts);
+        δ_loc = localpart(dδ);
+        γ_loc = localpart(dγ);
+        ω_loc = localpart(dω);
 
         rNorm_loc = localpart(drNorm);
-        #         rNorms_loc = localpart(drNorms);
 
         # Check curvature: v'(A + sᵢI)v = v'Av + sᵢ ‖v‖² = δ + sᵢ because ‖v‖ = 1.
+        # It is possible to show that σⱼ² (δⱼ + sᵢ - ωⱼ₋₁ / γⱼ₋₁) = pⱼᵀ (A + sᵢ I) pⱼ.
         # Stop iterating on indefinite problems if requested.
-        indefinite_loc[:] |= (δ + shifts_loc .<= 0.0);
+        δ_loc[:] = δ + shifts_loc
+        γ_loc[:] = 1 ./ (δ_loc - ω_loc ./ γ_loc)
+        indefinite_loc[:] |= (γ_loc .<= 0.0);
         not_cv = check_curvature ? find(! (converged_loc | indefinite_loc)) : find(! converged_loc);
 
         if length(not_cv) > 0
           # Fetch parts of relevant arrays for which the residual has not yet converged.
           σ_loc = localpart(dσ);
-          δ_loc = localpart(dδ);
-          γ_loc = localpart(dγ);
-          ω_loc = localpart(dω);
           x_loc = localpart(dx);
           p_loc = localpart(dp);
           shifts_loc = shifts_loc[not_cv];
 
-          δ_loc[not_cv] = δ + shifts_loc;
-          γ_loc[not_cv] = 1 ./ (δ_loc[not_cv] - ω_loc[not_cv] ./ γ_loc[not_cv]);
           ω_loc[not_cv] = β * γ_loc[not_cv];
           σ_loc[not_cv] .*= -ω_loc[not_cv];
           ω_loc[not_cv] .*= ω_loc[not_cv];

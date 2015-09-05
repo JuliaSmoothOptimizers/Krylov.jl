@@ -18,6 +18,12 @@ resid = norm(b - A * x) / b_norm;
 @test(resid <= cg_tol);
 @test(stats.solved);
 
+# Test negative curvature detection.
+A[n-1,n-1] = -4.0
+(x, stats) = cg_lanczos(A, b, check_curvature=true)
+@test(stats.status == "negative curvature")
+A[n-1,n-1] = 4.0
+
 shifts=[1:6;];
 
 (x, stats) = cg_lanczos_shift_seq(A, b, shifts, itmax=n);
@@ -41,6 +47,14 @@ end
 @printf("\n");
 @test(all(resids .<= cg_tol));
 @test(stats.solved);
+
+# Test negative curvature detection.
+shifts = [-4, -3, 2;]
+(x, stats) = cg_lanczos_shift_seq(A, b, shifts, check_curvature=true, itmax=n);
+@test(stats.flagged == [true, true, false])
+
+(x, stats) = cg_lanczos_shift_par(A, b, shifts, check_curvature=true, itmax=n);
+@test(stats.flagged == [true, true, false])
 
 # Code coverage.
 (x, stats) = cg_lanczos(full(A), b);
