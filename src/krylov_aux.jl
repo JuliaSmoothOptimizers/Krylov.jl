@@ -89,14 +89,19 @@ trust-region and a direction `d`, return `σ` > 0 such that
     ‖x + σ d‖ = radius
 
 in the Euclidean norm. If known, ‖x‖² may be supplied in `xNorm2`.
+
+If `flip` is set to `true`, `σ` > 0 is computed such that
+
+    ‖x - σ d‖ = radius.
 """
 function to_boundary(x :: Vector{Float64}, d :: Vector{Float64},
-                     radius :: Float64; xNorm2 :: Float64=0.0)
+                     radius :: Float64; flip :: Bool=false, xNorm2 :: Float64=0.0)
   radius > 0 || error("radius must be positive")
 
   # σ is the positive root of the quadratic
   # ‖d‖² σ² + 2 xᵀd σ + (‖x‖² - radius²).
   xd = dot(x, d)
+  flip && (xd = -xd)
   dNorm2 = dot(d, d)
   xNorm2 == 0.0 && (xNorm2 = dot(x, x))
   (xNorm2 <= radius * radius) || error("x lies outside of the trust region")
