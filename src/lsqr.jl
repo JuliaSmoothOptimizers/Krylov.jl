@@ -59,7 +59,7 @@ indefinite system
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
 """
-function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1};
+function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vector{Float64};
               M :: AbstractLinearOperator=opEye(size(A,1)), N :: AbstractLinearOperator=opEye(size(A,2)),
               sqd :: Bool=false,
               λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
@@ -75,13 +75,14 @@ function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1};
   λ² = λ * λ
   ctol = conlim > 0.0 ? 1/conlim : 0.0
   x = zeros(n)
+  fwdErrs = [norm(x_exact)]
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
   Mu = copy(b)
   u = M * Mu
   β₁ = sqrt(BLAS.dot(m, u, 1, Mu, 1))
-  β₁ == 0.0 && return (x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution"))
+  β₁ == 0.0 && return (x, fwdErrs, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β = β₁
 
   BLAS.scal!(m, 1.0/β₁, u, 1)
@@ -109,7 +110,7 @@ function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1};
                      1, β₁, α, β₁, α, 0, 1, Anorm²)
 
   # A'b = 0 so x = 0 is a minimum least-squares solution
-  α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
+  α == 0.0 && return (x, fwdErrs, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
   BLAS.scal!(n, 1.0/α, v, 1)
   BLAS.scal!(n, 1.0/α, Nv, 1)
   w = copy(v)
@@ -200,6 +201,8 @@ function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1};
     BLAS.scal!(n, -θ/ρ, w, 1)
     BLAS.axpy!(n,  1.0, v, 1, w, 1);  # w = v - θ / ρ * w
 
+    push!(fwdErrs, norm(x - x_exact))
+
     # Use a plane rotation on the right to eliminate the super-diagonal
     # element (θ) of the upper-bidiagonal matrix.
     # Use the result to estimate norm(x).
@@ -261,5 +264,5 @@ function lsqr(A :: AbstractLinearOperator, b :: Array{Float64,1};
   fwd_err       && (status = "truncated forward error small enough")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
-  return (x, stats)
+  return (x, fwdErrs, stats)
 end
