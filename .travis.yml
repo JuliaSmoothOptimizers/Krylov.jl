@@ -5,7 +5,8 @@ language: julia
 #  - linux
 
 julia:
-  - release
+  - 0.3
+  - 0.4
   - nightly
 
 script:
