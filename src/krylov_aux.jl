@@ -2,13 +2,18 @@
 Given `a` and `b`, return `(c, s, ρ)` such that
 
     [ c  s ] [ a ] = [ ρ ]
-    [ s -c ] [ b ] = [ 0 ].
+    [ s -c ] [ b ] = [ 0 ]
+
+or equivalently
+
+    [ a  b ] [ c  s ] = [ ρ  0 ].
+             [ s -c ]
 """
 function sym_givens(a :: Float64, b :: Float64)
-	#
-	# Modeled after the corresponding Matlab function by M. A. Saunders and S.-C. Choi.
-	# http://www.stanford.edu/group/SOL/dissertations/sou-cheng-choi-thesis.pdf
-	# D. Orban, Montreal, May 2015.
+  #
+  # Modeled after the corresponding Matlab function by M. A. Saunders and S.-C. Choi.
+  # http://www.stanford.edu/group/SOL/dissertations/sou-cheng-choi-thesis.pdf
+  # D. Orban, Montreal, May 2015.
 
   if b == 0.0
     a == 0.0 && (c = 1.0) || (c = sign(a));  # In Julia, sign(0) = 0.
