@@ -18,15 +18,14 @@
 # in preparation, July 2015.
 #
 # Dominique Orban, <dominique.orban@gerad.ca>
-# Montreal, QC, July 2015.
+# Montreal, QC, October 2015.
 
 export lslq
 
 # Methods for various argument types.
 include("lslq_methods.jl")
 
-Docile.@doc """
-Solve the regularized linear least-squares problem
+"""Solve the regularized linear least-squares problem
 
   minimize ‖b - Ax‖₂² + λ² ‖x‖₂²
 
@@ -57,7 +56,7 @@ indefinite system
 
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
-""" ->
+"""
 function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
               M :: AbstractLinearOperator=opEye(size(A,1)), N :: AbstractLinearOperator=opEye(size(A,2)),
               sqd :: Bool=false,
@@ -73,7 +72,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
   sqd && (λ = 1.0)
   λ² = λ * λ
   ctol = conlim > 0.0 ? 1/conlim : 0.0
-  x = zeros(n)
+  x_lq = zeros(n)
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
@@ -88,46 +87,45 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
   Nv = copy(A' * u)
   v = N * Nv
   α = sqrt(BLAS.dot(n, v, 1, Nv, 1))
-  Anorm² = α * α
-  Acond  = 0.0
-  xNorm  = 0.0
-  xNorm² = 0.0
-
-  # Initialize other constants.
-  αbar = α * α + β * β
-  βbar = α * β
-  γbar = αbar
-  δbar = βbar
-  wbar = copy(v)
-
-  xENorm² = 0.0
-  err_lbnd = 0.0
-  err_vec = zeros(window)
-
-  verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n",
-                     "Aprod", "‖r‖", "‖A'r‖", "β", "α", "cos", "sin", "‖A‖²")
-  verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
-                     1, β₁, α, β₁, α, 0, 1, Anorm²)
 
   # A'b = 0 so x = 0 is a minimum least-squares solution
   α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
+
+  Anorm² = α * α
+  Anorm  = α
+  Acond  = 0.0
+  xlqNorm  = 0.0
+  xlqNorm² = 0.0
+
+  # Initialize other constants.
+  ᾱ = α * α + β * β
+  β̄ = α * β
+  γ̄ = ᾱ
+  ζ = 0
+  ζ̄ = β̄ / γ̄
+  s = 0.0
+  c = -1.0
+  w = zeros(n)
+  w̄ = copy(v)
+  x_cg = ζ̄ * w̄
+  lc = β̄  # Used to update the residual of the normal equations at the CG point.
+
+  err_lbnd = 0.0
+  err_vec = zeros(window)
+
+  verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s\n",
+                     "Aprod", "‖r‖", "‖A'r‖", "β", "α", "cos", "sin", "‖A‖", "‖x‖")
+  verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
+                     1, β₁, α, β₁, α, c, s, Anorm, xlqNorm)
+
   BLAS.scal!(n, 1.0/α, v, 1)
   BLAS.scal!(n, 1.0/α, Nv, 1)
-  w = copy(v)
- 
 
-
-
-  ϕbar = β₁
-  ρbar = α
-  # θ = 0.0
-  rNorm = ϕbar
-  r1Norm = rNorm
-  r2Norm = rNorm
-  res2   = 0.0
-  rNorms = [r2Norm]
-  ArNorm = α * β
+  rNorm = β₁
+  rNorms = [rNorm]
+  ArNorm = α
   ArNorms = [ArNorm]
+  ArNorms_cg = Float64[]
 
   iter = 0
   itmax == 0 && (itmax = m + n)
@@ -151,8 +149,6 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
     if β != 0.0
       BLAS.scal!(m, 1.0/β, u, 1)
       BLAS.scal!(m, 1.0/β, Mu, 1)
-      Anorm² = Anorm² + α * α + β * β;  # = ‖Bₖ₋₁‖²
-      λ > 0.0 && (Anorm² += λ²)
 
       # 2. αv = A'u - βv
       BLAS.scal!(n, -β, Nv, 1)
@@ -163,81 +159,61 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
         BLAS.scal!(n, 1.0/α, v, 1)
         BLAS.scal!(n, 1.0/α, Nv, 1)
       end
+      ᾱ = α * α + β * β
+      β̄ = α * β
+      Anorm² = Anorm² + ᾱ  # = ‖Bₖ₋₁‖²
     end
 
-    # Continue QR factorization
-    # 1. Eliminate the regularization parameter.
-    (c1, s1, ρbar1) = sym_givens(ρbar, λ)
-    ψ = s1 * ϕbar
-    ϕbar = c1 * ϕbar
+    # Continue LQ factorization
+    ϵ = s * β̄
+    δ̄ = -c * β̄
 
-    # 2. Eliminate β.
-    # Q [ Lₖ  β₁ e₁ ] = [ Rₖ   zₖ  ] :
-    #   [ β    0    ]   [ 0   ζbar ]
-    #
-    #       k  k+1    k    k+1      k  k+1
-    # k   [ c   s ] [ ρbar    ] = [ ρ  θ⁺    ]
-    # k+1 [ s  -c ] [ β    α⁺ ]   [    ρbar⁺ ]
-    #
-    # so that we obtain
-    #
-    # [ c  s ] [ ζbar ] = [ ζ     ]
-    # [ s -c ] [  0   ]   [ ζbar⁺ ]
-    (c, s, ρ) = sym_givens(ρbar1, β)
-    ϕ = c * ϕbar
-    ϕbar = s * ϕbar
+    # Eliminate βbar.
+    #       k-2 k-1 k      k-1 k  k+1     k-2 k-1 k
+    # k-1 [ δ₋  γ̄₋  β̄  ] [ c   s    ]   [ δ₋  γ₋     ]
+    # k   [ ϵ   δ̄   ᾱ  ] [ s  -c    ] = [ ϵ   δ   γ̄  ]
+    # k+1 [         β̄⁺ ] [        1 ]   [     ϵ⁺  δ̄⁺ ]
+    # (c, s, γ) = sym_givens(γ̄, β̄)
+    γ = sqrt(γ̄^2 + β̄^2); c = γ̄ / γ; s = β̄ / γ;
+    δ = c * δ̄ + s * ᾱ
+    γ̄ = s * δ̄ - c * ᾱ
+    ζ_old = ζ
+    ζ = c * ζ̄
+    ζ̄ = -(δ * ζ + ϵ * ζ_old) / γ̄
 
-    xENorm² = xENorm² + ϕ * ϕ
-    err_vec[mod(iter, window) + 1] = ϕ
+    xlqNorm² = xlqNorm² + ζ * ζ
+    err_vec[mod(iter, window) + 1] = ζ
     iter >= window && (err_lbnd = norm(err_vec))
 
-    τ = s * ϕ; 
-    θ = s * α
-    ρbar = -c * α
-
-    d =  w / ρ;  # TODO: Use BLAS call.
-    dNorm² += BLAS.dot(n, d, 1, d, 1)
-    var += d .* d
-
-    BLAS.axpy!(n,  ϕ/ρ, w, 1, x, 1);  # x = x + ϕ / ρ * w
-    BLAS.scal!(n, -θ/ρ, w, 1)
-    BLAS.axpy!(n,  1.0, v, 1, w, 1);  # w = v - θ / ρ * w
-
-    # Use a plane rotation on the right to eliminate the super-diagonal
-    # element (θ) of the upper-bidiagonal matrix.
-    # Use the result to estimate norm(x).
-    δ = s2 * ρ
-    γbar = -c2 * ρ
-    rhs = ϕ - δ * z
-    zbar = rhs / γbar
-    xNorm = sqrt(xNorm² + zbar * zbar)
-    (c2, s2, γ) = sym_givens(γbar, θ)
-    z = rhs / γ
-    xNorm² += z * z
+    w = c * w̄ + s * v
+    BLAS.scal!(n, s, w̄, 1)
+    BLAS.axpy!(n, -c, v, 1, w̄, 1);     # w̄ = -c * v + s * w̄
+    BLAS.axpy!(n,  ζ, w, 1, x_lq, 1);  # xlq = xlq + ζ * w
+    x_cg = x_lq + ζ̄ * w̄ 
 
     Anorm = sqrt(Anorm²)
-    Acond = Anorm * sqrt(dNorm²)
-    res1  = ϕbar * ϕbar
-    res2 += ψ * ψ
-    rNorm = sqrt(res1 + res2)
+    Acond = 1.0  #Anorm * sqrt(dNorm²)
 
-    ArNorm = α * abs(τ)
+    ArNorm = sqrt(γ * γ * ζ * ζ + ϵ * ϵ * ζ_old * ζ_old)
     push!(ArNorms, ArNorm)
 
-    r1sq = rNorm * rNorm - λ² * xNorm²
-    r1Norm = sqrt(abs(r1sq))
-    r1sq < 0.0 && (r1Norm = -r1Norm)
-    r2Norm = rNorm
-    push!(rNorms, r2Norm)
+    ArNorm_cg = lc * s / c
+    push!(ArNorms_cg, ArNorm_cg)
+    lc = lc * s
 
+    # TODO: Estimate rNorm.
+    rNorm = norm(b - A * x_lq)
+    push!(rNorms, rNorm)
+
+    xlqNorm = sqrt(xlqNorm²)
     test1 = rNorm / β₁
     test2 = ArNorm / (Anorm * rNorm)
     test3 = 1 / Acond
-    t1    = test1 / (1.0 + Anorm * xNorm / β₁)
-    rtol  = btol + atol * Anorm * xNorm / β₁
+    t1    = test1 / (1.0 + Anorm * xlqNorm / β₁)
+    rtol  = btol + atol * Anorm * xlqNorm / β₁
 
-    verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
-                       1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
+    verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
+                       1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm, xlqNorm)
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
@@ -250,7 +226,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
     ill_cond_lim = (test3 <= ctol)
     solved_lim = (test2 <= atol)
     zero_resid_lim = (test1 <= rtol)
-    iter >= window && (fwd_err = err_lbnd <= etol * sqrt(xENorm²))
+    iter >= window && (fwd_err = err_lbnd <= etol * xlqNorm)
 
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err
@@ -264,5 +240,5 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
   fwd_err       && (status = "truncated forward error small enough")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
-  return (x, stats)
+  return (x_lq, x_cg, stats)
 end
