@@ -72,7 +72,6 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
   sqd && (λ = 1.0)
   λ² = λ * λ
   ctol = conlim > 0.0 ? 1/conlim : 0.0
-  x_lq = zeros(n)
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
@@ -91,41 +90,55 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
   # A'b = 0 so x = 0 is a minimum least-squares solution
   α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
 
-  Anorm² = α * α
-  Anorm  = α
-  Acond  = 0.0
+  BLAS.scal!(n, 1.0/α, v, 1)
+  BLAS.scal!(n, 1.0/α, Nv, 1)
+
+  β̄ = α * β          # = β̄₁
   xlqNorm  = 0.0
   xlqNorm² = 0.0
 
+  # We need the next u before entering the main loop.
+  # βu = Av - αu
+  BLAS.scal!(m, -α, Mu, 1)
+  BLAS.axpy!(m, 1.0, A * v, 1, Mu, 1)
+  u = M * Mu
+  β = sqrt(BLAS.dot(m, u, 1, Mu, 1))
+  if β != 0.0
+    BLAS.scal!(m, 1.0/β, u, 1)
+    BLAS.scal!(m, 1.0/β, Mu, 1)
+  end
+
   # Initialize other constants.
-  ᾱ = α * α + β * β
-  β̄ = α * β
-  γ̄ = ᾱ
+  ᾱ = α * α + β * β  # = ᾱ₁
+  γ̄ = ᾱ              # = γ̄₁
   ζ = 0
   ζ̄ = β̄ / γ̄
   s = 0.0
   c = -1.0
-  w = zeros(n)
-  w̄ = copy(v)
+
+  w = zeros(n)       # = w₀
+  x_lq = zeros(n)    # = x₀
+
+  w̄ = copy(v)        # = w̄₁ = v₁
   x_cg = ζ̄ * w̄
   lc = β̄  # Used to update the residual of the normal equations at the CG point.
 
   err_lbnd = 0.0
   err_vec = zeros(window)
 
-  verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s\n",
-                     "Aprod", "‖r‖", "‖A'r‖", "β", "α", "cos", "sin", "‖A‖", "‖x‖")
-  verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
-                     1, β₁, α, β₁, α, c, s, Anorm, xlqNorm)
-
-  BLAS.scal!(n, 1.0/α, v, 1)
-  BLAS.scal!(n, 1.0/α, Nv, 1)
-
   rNorm = β₁
   rNorms = [rNorm]
+  Anorm² = ᾱ
+  Anorm  = sqrt(Anorm²)
+  Acond  = 1.0
   ArNorm = α
   ArNorms = [ArNorm]
   ArNorms_cg = Float64[]
+
+  verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s\n",
+                     "Aprod", "‖r‖", "‖A'r‖", "β", "α", "cos", "sin", "‖A‖", "‖x‖")
+  verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
+                     1, β₁, α, β, α, c, s, Anorm, xlqNorm)
 
   iter = 0
   itmax == 0 && (itmax = m + n)
@@ -141,7 +154,18 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
     iter = iter + 1
 
     # Generate next Golub-Kahan vectors.
-    # 1. βu = Av - αu
+    # αv = A'u - βv
+    BLAS.scal!(n, -β, Nv, 1)
+    BLAS.axpy!(n, 1.0, A' * u, 1, Nv, 1)
+    v = N * Nv
+    α = sqrt(BLAS.dot(n, v, 1, Nv, 1))
+    if α != 0.0
+      BLAS.scal!(n, 1.0/α, v, 1)
+      BLAS.scal!(n, 1.0/α, Nv, 1)
+    end
+    β̄ = α * β  # this is α₂ β₂ = β̄₂ at the first pass through the loop.
+
+    # βu = Av - αu
     BLAS.scal!(m, -α, Mu, 1)
     BLAS.axpy!(m, 1.0, A * v, 1, Mu, 1)
     u = M * Mu
@@ -149,32 +173,23 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
     if β != 0.0
       BLAS.scal!(m, 1.0/β, u, 1)
       BLAS.scal!(m, 1.0/β, Mu, 1)
-
-      # 2. αv = A'u - βv
-      BLAS.scal!(n, -β, Nv, 1)
-      BLAS.axpy!(n, 1.0, A' * u, 1, Nv, 1)
-      v = N * Nv
-      α = sqrt(BLAS.dot(n, v, 1, Nv, 1))
-      if α != 0.0
-        BLAS.scal!(n, 1.0/α, v, 1)
-        BLAS.scal!(n, 1.0/α, Nv, 1)
-      end
-      ᾱ = α * α + β * β
-      β̄ = α * β
-      Anorm² = Anorm² + ᾱ  # = ‖Bₖ₋₁‖²
     end
+    ᾱ = α * α + β * β  # this is ᾱ₂ at the first pass through the loop.
+
+    Anorm² = Anorm² + ᾱ  # = ‖Bₖ₋₁‖²
 
     # Continue LQ factorization
     ϵ = s * β̄
     δ̄ = -c * β̄
 
-    # Eliminate βbar.
-    #       k-2 k-1 k      k-1 k  k+1     k-2 k-1 k
-    # k-1 [ δ₋  γ̄₋  β̄  ] [ c   s    ]   [ δ₋  γ₋     ]
-    # k   [ ϵ   δ̄   ᾱ  ] [ s  -c    ] = [ ϵ   δ   γ̄  ]
-    # k+1 [         β̄⁺ ] [        1 ]   [     ϵ⁺  δ̄⁺ ]
+    # Eliminate β̄.
+    #       k-2  k-1  k      k-1  k  k+1     k-2  k-1  k
+    # k-1 [ δ₋   γ̄₋   β̄  ] [ c    s     ]   [ δ₋  γ₋      ]
+    # k   [ ϵ    δ̄    ᾱ  ] [ s   -c     ] = [ ϵ   δ    γ̄  ]
+    # k+1 [           β̄⁺ ] [         1  ]   [     ϵ⁺   δ̄⁺ ]
     # (c, s, γ) = sym_givens(γ̄, β̄)
-    γ = sqrt(γ̄^2 + β̄^2); c = γ̄ / γ; s = β̄ / γ;
+    γ = sqrt(γ̄^2 + β̄^2);
+    c = γ̄ / γ; s = β̄ / γ
     δ = c * δ̄ + s * ᾱ
     γ̄ = s * δ̄ - c * ᾱ
     ζ_old = ζ
@@ -186,9 +201,11 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
     iter >= window && (err_lbnd = norm(err_vec))
 
     w = c * w̄ + s * v
-    BLAS.scal!(n, s, w̄, 1)
-    BLAS.axpy!(n, -c, v, 1, w̄, 1);     # w̄ = -c * v + s * w̄
-    BLAS.axpy!(n,  ζ, w, 1, x_lq, 1);  # xlq = xlq + ζ * w
+    w̄ = s * w̄ - c * v
+    # BLAS.scal!(n, s, w̄, 1)
+    # BLAS.axpy!(n, -c, v, 1, w̄, 1);     # w̄ = -c * v + s * w̄
+    # BLAS.axpy!(n,  ζ, w, 1, x_lq, 1);  # xlq = xlq + ζ * w
+    x_lq = x_lq + ζ * w
     x_cg = x_lq + ζ̄ * w̄ 
 
     Anorm = sqrt(Anorm²)
