@@ -57,7 +57,7 @@ indefinite system
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
 """
-function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
+function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vector{Float64};
               M :: AbstractLinearOperator=opEye(size(A,1)), N :: AbstractLinearOperator=opEye(size(A,2)),
               sqd :: Bool=false,
               λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
@@ -118,6 +118,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
 
   w = zeros(n)       # = w₀
   x_lq = zeros(n)    # = x₀
+  fwdErrs = [norm(x_exact)]
 
   w̄ = copy(v)        # = w̄₁ = v₁
   x_cg = ζ̄ * w̄
@@ -212,6 +213,8 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
     x_lq = x_lq + ζ * w
     x_cg = x_lq + ζ̄ * w̄ 
 
+    push!(fwdErrs, norm(x_lq - x_exact))
+
     Anorm = sqrt(Anorm²)
     Acond = 1.0  #Anorm * sqrt(dNorm²)
 
@@ -261,5 +264,5 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
   fwd_err       && (status = "truncated forward error small enough")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
-  return (x_lq, x_cg, stats)
+  return (x_lq, x_cg, fwdErrs, stats)
 end
