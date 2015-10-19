@@ -109,8 +109,8 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
   end
 
   # Initialize other constants.
-  ᾱ = α * α + β * β  # = ᾱ₁
-  γ̄ = ᾱ              # = γ̄₁
+  ᾱ = α * α + β * β + λ²  # = ᾱ₁
+  γ̄ = ᾱ                   # = γ̄₁
   ζ = 0
   ζ̄ = β̄ / γ̄
   s = 0.0
@@ -174,7 +174,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
       BLAS.scal!(m, 1.0/β, u, 1)
       BLAS.scal!(m, 1.0/β, Mu, 1)
     end
-    ᾱ = α * α + β * β  # this is ᾱ₂ at the first pass through the loop.
+    ᾱ = α * α + β * β + λ²  # this is ᾱ₂ at the first pass through the loop.
 
     Anorm² = Anorm² + ᾱ  # = ‖Bₖ₋₁‖²
 
