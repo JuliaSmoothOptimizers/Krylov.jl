@@ -124,6 +124,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
   lc = β̄  # Used to update the residual of the normal equations at the CG point.
 
   err_lbnd = 0.0
+  err_lbnds = Float64[]
   err_vec = zeros(window)
 
   rNorm = β₁
@@ -198,7 +199,10 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
 
     xlqNorm² = xlqNorm² + ζ * ζ
     err_vec[mod(iter, window) + 1] = ζ
-    iter >= window && (err_lbnd = norm(err_vec))
+    if iter >= window
+      err_lbnd = norm(err_vec)
+      push!(err_lbnds, err_lbnd)
+    end
 
     w = c * w̄ + s * v
     w̄ = s * w̄ - c * v
