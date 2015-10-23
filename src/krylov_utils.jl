@@ -24,7 +24,7 @@ function process_types(args...)
 end
 
 
-function c_printf(fmt :: String, args...)
+function c_printf(fmt :: AbstractString, args...)
   typexpr = process_types(args...)
   # Ignore printf's return value (an int).
   @eval ccall((:printf, "libc"), Void, $(typexpr), $(fmt), $(args...))
