@@ -2,7 +2,8 @@
 
 [![Build Status](https://travis-ci.org/JuliaOptimizers/Krylov.jl.svg?branch=develop)](https://travis-ci.org/JuliaOptimizers/Krylov.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/ygy8aqqjmqhfwrxc?svg=true)](https://ci.appveyor.com/project/dpo/krylov-jl)
-[![Coverage Status](https://coveralls.io/repos/JuliaOptimizers/Krylov.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/JuliaOptimizers/Krylov.jl?branch=master)
+[![Coverage Status](https://coveralls.io/repos/JuliaOptimizers/Krylov.jl/badge.svg?branch=develop&service=github)](https://coveralls.io/github/JuliaOptimizers/Krylov.jl?branch=develop)
+[![codecov.io](https://codecov.io/github/JuliaOptimizers/Krylov.jl/coverage.svg?branch=develop)](https://codecov.io/github/JuliaOptimizers/Krylov.jl?branch=develop)
 
 ## How to Install
 
