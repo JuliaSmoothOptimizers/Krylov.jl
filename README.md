@@ -1,8 +1,8 @@
 # Krylov.jl: A Julia basket of hand-picked Krylov methods
 
-[![Build Status](https://travis-ci.org/optimizers/Krylov.jl.svg)](https://travis-ci.org/optimizers/Krylov.jl)
+[![Build Status](https://travis-ci.org/JuliaOptimizers/Krylov.jl.svg?branch=develop)](https://travis-ci.org/JuliaOptimizers/Krylov.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/ygy8aqqjmqhfwrxc?svg=true)](https://ci.appveyor.com/project/dpo/krylov-jl)
-[![Coverage Status](https://coveralls.io/repos/optimizers/Krylov.jl/badge.svg?branch=develop)](https://coveralls.io/r/optimizers/Krylov.jl?branch=develop)
+[![Coverage Status](https://coveralls.io/repos/JuliaOptimizers/Krylov.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/JuliaOptimizers/Krylov.jl?branch=master)
 
 ## How to Install
 
