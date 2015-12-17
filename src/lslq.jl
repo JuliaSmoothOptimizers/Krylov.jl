@@ -118,12 +118,13 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
 
   w = zeros(n)       # = w₀
   x_lq = zeros(n)    # = x₀
-  nx_exact = norm(x_exact)
-  fwdErrs = [nx_exact]
-  fwdErrs_bar = [sqrt(nx_exact^2 - ζ̄^2)]
+  fwdErrs_lq = [norm(x_exact)]
 
   w̄ = copy(v)        # = w̄₁ = v₁
   x_cg = ζ̄ * w̄
+  fwdErrs_cg = [norm(x_exact - x_cg)]
+  xcgNorm  = ζ̄
+  xcgNorm² = ζ̄ * ζ̄
   lc = β̄  # Used to update the residual of the normal equations at the CG point.
 
   err_lbnd = 0.0
@@ -201,6 +202,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
     ζ̄ = -(δ * ζ + ϵ * ζ_old) / γ̄
 
     xlqNorm² = xlqNorm² + ζ * ζ
+    xcgNorm² = xcgNorm² + ζ̄ * ζ̄
     err_vec[mod(iter, window) + 1] = ζ
     if iter >= window
       err_lbnd = norm(err_vec)
@@ -212,12 +214,11 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
     # BLAS.scal!(n, s, w̄, 1)
     # BLAS.axpy!(n, -c, v, 1, w̄, 1);     # w̄ = -c * v + s * w̄
     # BLAS.axpy!(n,  ζ, w, 1, x_lq, 1);  # xlq = xlq + ζ * w
-    x_cg = x_lq + ζ̄ * w̄ 
     x_lq = x_lq + ζ * w
+    x_cg = x_lq + ζ̄ * w̄ 
 
-    nx_exact = norm(x_lq - x_exact)
-    push!(fwdErrs, nx_exact)
-    push!(fwdErrs_bar, sqrt(nx_exact^2 - ζ̄^2))
+    push!(fwdErrs_lq, norm(x_lq - x_exact))
+    push!(fwdErrs_cg, norm(x_cg - x_exact))
 
     Anorm = sqrt(Anorm²)
     Acond = 1.0  #Anorm * sqrt(dNorm²)
@@ -268,5 +269,5 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   fwd_err       && (status = "truncated forward error small enough")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
-  return (x_lq, x_cg, fwdErrs, fwdErrs_bar, stats)
+  return (x_lq, x_cg, fwdErrs_lq, fwdErrs_cg, err_lbnds, stats)
 end
