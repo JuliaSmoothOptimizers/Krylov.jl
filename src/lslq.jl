@@ -62,7 +62,8 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
               sqd :: Bool=false,
               λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
               etol :: Float64=1.0e-8, window :: Int=5,
-              itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+              itmax :: Int=0, conlim :: Float64=1.0e+8, 
+              a :: Float64=0.0, verbose :: Bool=false)
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -116,6 +117,11 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   s = 0.0
   c = -1.0
 
+  if (a > 0)
+    μ = sqrt(ᾱ )         # = μ₁
+    ρ = sqrt(μ * μ - a)  # = ρ₁
+  end
+
   w = zeros(n)       # = w₀
   x_lq = zeros(n)    # = x₀
   fwdErrs_lq = [norm(x_exact)]
@@ -129,6 +135,8 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
 
   err_lbnd = 0.0
   err_lbnds = Float64[]
+  err_ubnds = Float64[]
+  err_ubnds_cg = Float64[]
   err_vec = zeros(window)
 
   rNorm = β₁
@@ -139,6 +147,8 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   ArNorm = α
   ArNorms = [ArNorm]
   ArNorms_cg = Float64[]
+
+  xsol_est = Float64[]
 
   verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s\n",
                      "Aprod", "‖r‖", "‖A'r‖", "β", "α", "cos", "sin", "‖A‖", "‖x‖")
@@ -181,6 +191,14 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
     end
     ᾱ = α * α + β * β + λ²  # this is ᾱ₂ at the first pass through the loop.
 
+    if (a > 0)
+      ν = β̄  / μ                 # ν₂ at first pass of loop 
+      ω = a + (μ * μ * ν * ν / (ρ * ρ)) # ω₂ at first pass of loop
+
+      σ = μ * ν / ρ              # σ₂ at first pass of loop
+      μ = sqrt(ᾱ  - ν * ν)       # μ₂ at first pass of loop
+      ρ = sqrt(μ * μ + ν * ν - a - σ * σ) # ρ₂ at first pass of loop
+    end
     Anorm² = Anorm² + ᾱ  # = ‖Bₖ₋₁‖²
 
     # Continue LQ factorization
@@ -200,6 +218,21 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
     ζ_old = ζ
     ζ = c * ζ̄
     ζ̄ = -(δ * ζ + ϵ * ζ_old) / γ̄
+
+    if (a > 0)
+
+      ψ = c * δ̄ + s * ω
+      ω̄ = s * δ̄ - c * ω
+
+      ζ_norm = -(ψ * ζ + ϵ * ζ_old) / ω̄
+    end
+
+    if (a > 0)
+      xsolNorm² = xlqNorm² + ζ_norm * ζ_norm
+      push!(xsol_est, xsolNorm²)
+      push!(err_ubnds, xsolNorm² - xlqNorm²)
+      push!(err_ubnds_cg, xsolNorm² - xlqNorm² - ζ̄  * ζ̄ )
+    end
 
     xlqNorm² = xlqNorm² + ζ * ζ
     xcgNorm² = xcgNorm² + ζ̄ * ζ̄
@@ -269,5 +302,5 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   fwd_err       && (status = "truncated forward error small enough")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
-  return (x_lq, x_cg, fwdErrs_lq, fwdErrs_cg, err_lbnds, stats)
+  return (x_lq, x_cg, fwdErrs_lq, fwdErrs_cg, err_lbnds, err_ubnds, err_ubnds_cg, xsol_est, stats)
 end
