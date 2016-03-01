@@ -137,6 +137,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   err_lbnds = Float64[]
   err_ubnds = Float64[]
   err_ubnds_cg = Float64[]
+  cg_step = Float64[]
   err_vec = zeros(window)
 
   rNorm = β₁
@@ -193,11 +194,21 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
 
     if (a > 0)
       ν = β̄  / μ                 # ν₂ at first pass of loop 
-      ω = a + (μ * μ * ν * ν / (ρ * ρ)) # ω₂ at first pass of loop
-
       σ = μ * ν / ρ              # σ₂ at first pass of loop
+      ω = a + σ * σ              # ω₂ at first pass of loop
+
       μ = sqrt(ᾱ  - ν * ν)       # μ₂ at first pass of loop
       ρ = sqrt(μ * μ + ν * ν - a - σ * σ) # ρ₂ at first pass of loop
+
+       @show iter
+       @show ν
+       @show μ
+       @show σ
+       @show ρ
+       @show ω
+       @show ᾱ 
+       @show β̄ 
+       println()
     end
     Anorm² = Anorm² + ᾱ  # = ‖Bₖ₋₁‖²
 
@@ -220,18 +231,18 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
     ζ̄ = -(δ * ζ + ϵ * ζ_old) / γ̄
 
     if (a > 0)
-
       ψ = c * δ̄ + s * ω
       ω̄ = s * δ̄ - c * ω
 
       ζ_norm = -(ψ * ζ + ϵ * ζ_old) / ω̄
-    end
 
-    if (a > 0)
-      xsolNorm² = xlqNorm² + ζ_norm * ζ_norm
-      push!(xsol_est, xsolNorm²)
-      push!(err_ubnds, xsolNorm² - xlqNorm²)
-      push!(err_ubnds_cg, xsolNorm² - xlqNorm² - ζ̄  * ζ̄ )
+      # @show iter
+      # @show c
+      # @show s
+      # @show ζ
+      # @show ζ̄ 
+      # @show ζ_norm
+      # println()
     end
 
     xlqNorm² = xlqNorm² + ζ * ζ
@@ -240,6 +251,15 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
     if iter >= window
       err_lbnd = norm(err_vec)
       push!(err_lbnds, err_lbnd)
+    end
+
+    if (a > 0)
+      xsolNorm² = xlqNorm² + ζ_norm * ζ_norm
+      push!(xsol_est, xsolNorm²)
+      push!(err_ubnds, ζ_norm * ζ_norm)
+      #push!(err_ubnds, xsolNorm² - norm(x_lq)^2) # Surprisingly, a way worse estimate
+      push!(err_ubnds_cg, ζ_norm * ζ_norm - ζ̄  * ζ̄ )
+      push!(cg_step, ζ̄  * ζ̄ )
     end
 
     w = c * w̄ + s * v
@@ -302,5 +322,5 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   fwd_err       && (status = "truncated forward error small enough")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
-  return (x_lq, x_cg, fwdErrs_lq, fwdErrs_cg, err_lbnds, err_ubnds, err_ubnds_cg, xsol_est, stats)
+  return (x_lq, x_cg, fwdErrs_lq, fwdErrs_cg, err_lbnds, err_ubnds, err_ubnds_cg, xsol_est, cg_step, stats)
 end
