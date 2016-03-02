@@ -199,16 +199,6 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
 
       μ = sqrt(ᾱ  - ν * ν)       # μ₂ at first pass of loop
       ρ = sqrt(μ * μ + ν * ν - a - σ * σ) # ρ₂ at first pass of loop
-
-       @show iter
-       @show ν
-       @show μ
-       @show σ
-       @show ρ
-       @show ω
-       @show ᾱ 
-       @show β̄ 
-       println()
     end
     Anorm² = Anorm² + ᾱ  # = ‖Bₖ₋₁‖²
 
@@ -235,14 +225,6 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
       ω̄ = s * δ̄ - c * ω
 
       ζ_norm = -(ψ * ζ + ϵ * ζ_old) / ω̄
-
-      # @show iter
-      # @show c
-      # @show s
-      # @show ζ
-      # @show ζ̄ 
-      # @show ζ_norm
-      # println()
     end
 
     xlqNorm² = xlqNorm² + ζ * ζ
