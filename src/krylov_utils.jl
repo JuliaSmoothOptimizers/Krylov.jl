@@ -10,12 +10,12 @@ function process_types(args...)
   types = [typeof(arg) for arg in args]
 
   # Perform the following conversions:
-  # string -> Ptr{Uint8} (for %s)
+  # string -> Ptr{UInt8} (for %s)
   # arrays -> Ptr{Void}  (for %p)
-  types = map(t -> (t == ASCIIString ? Ptr{Uint8} : t), types)
+  types = map(t -> (t == ASCIIString ? Ptr{UInt8} : t), types)
   types = map(t -> (issubtype(t, Base.Array) ? Ptr{Void} : t), types)
   #types = map(t -> (issubtype(t, Function) ? Ptr{Void} : t), types)
-  types = append!([Ptr{Uint8}], types)
+  types = append!([Ptr{UInt8}], types)
 
   # ccall absolutely wants a tuple as 3rd argument.
   # A variable that evaluates to a tuple just won't do.
