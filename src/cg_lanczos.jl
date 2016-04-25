@@ -233,7 +233,7 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: 
 
   dshifts = distribute(shifts);
   nshifts = size(shifts, 1);
-  nchunks = size(dshifts.chunks, 1);
+  nchunks = length(dshifts.indexes)
   verbose && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts);
 
   # Initial state.
