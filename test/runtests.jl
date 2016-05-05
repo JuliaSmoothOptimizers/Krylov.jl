@@ -16,3 +16,4 @@ include("test_lsqr.jl")
 include("test_lsmr.jl")
 include("test_craigmr.jl")
 
+include("test_exp_lanczos.jl")

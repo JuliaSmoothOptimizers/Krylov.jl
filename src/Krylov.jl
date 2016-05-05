@@ -68,4 +68,6 @@ include("craig.jl")
 include("lsmr.jl")
 include("craigmr.jl")
 
+include("exp_lanczos.jl")
+
 end
