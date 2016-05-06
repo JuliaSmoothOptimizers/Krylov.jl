@@ -84,7 +84,7 @@ function test_propagation(m, N, t, c = nothing;
         # Crank–Nicolson.
         I = Diagonal(ones(N))
         F = I + τ/2*H0
-        B = I - τ/2*H0
+        B = factorize(I - τ/2*H0)
         psi_cmp = similar(psi)
         psi_cmp[:,1] = psi0
         println("Propagating using Crank–Nicolson")
