@@ -41,7 +41,8 @@ tot_energy(H0, psi, dx) = real(dot(psi,H0*psi))*dx
 Base.factorize{T<:Complex}(A::SymTridiagonal{T}) = factorize(Tridiagonal(diag(A,-1),diag(A), diag(A,1)))
 
 function test_propagation(m, N, t, c = nothing;
-                          verbose = false)
+                          verbose = false,
+                          cn_dist_tol = 1e-7)
     dx = 1/(N+1)
     x = linspace(dx,1-dx, N)
 
@@ -165,21 +166,23 @@ function test_propagation(m, N, t, c = nothing;
 
     @test_approx_eq_eps tot_energy(H0, psi[:,end], dx) E0 1e-8
     @test_approx_eq_eps psi_norm(psi[:,end], dx) 1 1e-8
+    @test_approx_eq_eps sumabs2(psi[:,end]-psi_cmp[:,end])*dx 0 cn_dist_tol
 end
 
 m = 15
 N = max(m+1,101)
+nt = 2001
 
 # For propagation of a single eigenstate, the propagator is
 # essentially exact
-test_propagation(m, N, linspace(0,1,3001), [1]; verbose = false)
+test_propagation(m, N, linspace(0,1,nt), [1]; verbose = false)
 println()
 println("+++++++++++++++++++++++++++++++")
 println()
-test_propagation(m, N, linspace(0,1,3001), [1,1]; verbose = false)
+test_propagation(m, N, linspace(0,1,nt), [1,1]; verbose = false)
 println()
 println("+++++++++++++++++++++++++++++++")
 println()
-test_propagation(m, N, linspace(0,1,2001), [1,1,1]; verbose = false)
+test_propagation(m, N, linspace(0,1,nt), [1,1,1]; verbose = false, cn_dist_tol = 2e-6)
 
 plot_p && show()
