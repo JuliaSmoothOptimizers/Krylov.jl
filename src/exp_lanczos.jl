@@ -49,7 +49,7 @@ function exp_lanczos!{T<:Number,R<:Real}(A :: LinearOperator,
     V[:,1] = v/β₀
     
     ε = atol + rtol * β₀
-    verbose && @printf("Initial norm: β₀ %g, stopping threshold: %g\n", β₀, ε)
+    verbose && @printf("Initial norm: β₀ %e, stopping threshold: %e\n", β₀, ε)
 
     fin = false
     j = 1
@@ -75,7 +75,7 @@ function exp_lanczos!{T<:Number,R<:Real}(A :: LinearOperator,
         σ = -ω * σ
         ω = ω * ω
         
-        verbose && @printf("iter %d, α[%d] %g, β[%d] %g, γ %g, ω %g, σ %g\n",
+        verbose && @printf("iter %d, α[%d] %e, β[%d] %e, γ %e, ω %e, σ %e\n",
                           j, j, α[j], j, β[j],
                           γ, ω, σ)
 

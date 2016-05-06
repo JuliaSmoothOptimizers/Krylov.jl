@@ -52,7 +52,7 @@ function test_propagation(m, N, t, c = nothing;
     println("Finding initial state")
     @time E0,psi0,E_phi,phi,c = initial_state(H0, c)
     DE = Diagonal(E_phi)
-    @printf("Initial energy: %g\n", E0)
+    @printf("Initial energy: %e\n", E0)
 
     τ = -im*(t[2]-t[1])
 
