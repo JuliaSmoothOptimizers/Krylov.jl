@@ -30,9 +30,16 @@ function exp_lanczos_work{T<:Number}(A :: LinearOperator,
     V,α,β
 end
 
-function expT(α,β,v,τ,β₀)
-    ee = eigfact(SymTridiagonal(α,β))
-    β₀*v*ee[:vectors]*Diagonal(exp(τ*ee[:values]))*ee[:vectors][1,:]'
+if VERSION ≥ v"0.5.0-dev"
+    function expT(α,β,v,τ,β₀)
+        ee = eigfact(SymTridiagonal(α,β))
+        β₀*v*ee[:vectors]*Diagonal(exp(τ*ee[:values]))*ee[:vectors][1,:]
+    end
+else
+    function expT(α,β,v,τ,β₀)
+        ee = eigfact(SymTridiagonal(α,β))
+        β₀*v*ee[:vectors]*Diagonal(exp(τ*ee[:values]))*ee[:vectors][1,:]'
+    end
 end
 
 function exp_lanczos!{T<:Number,R<:Real}(A :: LinearOperator,
@@ -47,14 +54,14 @@ function exp_lanczos!{T<:Number,R<:Real}(A :: LinearOperator,
                                                verbose :: Bool=false)
     β₀ = norm(v)
     V[:,1] = v/β₀
-    
+
     ε = atol + rtol * β₀
     verbose && @printf("Initial norm: β₀ %e, stopping threshold: %e\n", β₀, ε)
 
     fin = false
     j = 1
     jj = 1 # Which Krylov subspace to use, in the end
-    
+
     σ = β₀
     ω = 0
     γ = 1
@@ -63,18 +70,18 @@ function exp_lanczos!{T<:Number,R<:Real}(A :: LinearOperator,
         V[:,j+1] = A*V[:,j]
         j > 1 && (V[:,j+1] -= β[j-1]*V[:,j-1])
         α[j] = real(dot(V[:,j],V[:,j+1]))
-        
+
         γ = 1 / (α[j] - ω / γ)
         γ <= 0.0 && break
 
         V[:,j+1] -= α[j]*V[:,j]
         β[j] = norm(V[:,j+1])
         V[:,j+1] /= β[j]
-        
+
         ω = β[j] * γ
         σ = -ω * σ
         ω = ω * ω
-        
+
         verbose && @printf("iter %d, α[%d] %e, β[%d] %e, γ %e, ω %e, σ %e\n",
                           j, j, α[j], j, β[j],
                           γ, ω, σ)
