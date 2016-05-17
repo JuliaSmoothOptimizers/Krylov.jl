@@ -5,30 +5,30 @@ approximation to exp(τA)v"""
 function exp_lanczos_work{T<:Number}(A :: LinearOperator,
                                      v :: Array{T,1},
                                      m :: Integer,
-                                     verbose :: Bool=false)
-    n = size(v, 1);
-    (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size, $(size(A))×$(size(v))");
-    verbose && @printf("exp Lanczos: %d×%d system\n", n, n);
+                                     verbose :: Bool = false)
+  n = size(v, 1);
+  (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size, $(size(A))×$(size(v))");
+  verbose && @printf("exp Lanczos: %d×%d system\n", n, n);
 
-    V = zeros(T, n, m+1)
-    α = zeros(real(T), m)
-    β = zeros(real(T), m)
+  V = zeros(T, n, m + 1)
+  α = zeros(real(T), m)
+  β = zeros(real(T), m)
 
-    V,α,β
+  return (V, α, β)
 end
 
 if VERSION ≥ v"0.5.0-dev"
-    function expT(α,β,v,τ,β₀)
-        ee = eigfact(SymTridiagonal(α,β))
-        β₀*v*ee[:vectors]*Diagonal(exp(τ*ee[:values]))*ee[:vectors][1,:]
-    end
   """Used to calculate the subspace exponetial, where `T` is tridiagonal"""
+  function expT(α, β, v, τ, β₀)
+    ee = eigfact(SymTridiagonal(α, β))
+    β₀ * v * ee[:vectors] * Diagonal(exp(τ * ee[:values])) * ee[:vectors][1,:]
+  end
 else
-    function expT(α,β,v,τ,β₀)
-        ee = eigfact(SymTridiagonal(α,β))
-        β₀*v*ee[:vectors]*Diagonal(exp(τ*ee[:values]))*ee[:vectors][1,:]'
-    end
   """Used to calculate the subspace exponetial, where `T` is tridiagonal"""
+  function expT(α, β, v, τ, β₀)
+    ee = eigfact(SymTridiagonal(α,β))
+    β₀ * v * ee[:vectors] * Diagonal(exp(τ * ee[:values])) * ee[:vectors][1,:]'
+  end
 end
 
 """
@@ -46,57 +46,55 @@ cg_lanczos.jl
 Stefanos Carlström, <stefanos.carlstrom@gmail.com>
 Lund, Sweden, May 2016."""
 function exp_lanczos!{T<:Number,R<:Real}(A :: LinearOperator,
-                                               v :: AbstractVector{T},
-                                               τ :: T, m :: Integer,
-                                               vp :: AbstractVector{T},
-                                               V :: Matrix{T},
-                                               α :: Vector{R},
-                                               β :: Vector{R};
-                                               atol :: Float64=1.0e-8,
-                                               rtol :: Float64=1.0e-4,
-                                               verbose :: Bool=false)
-    β₀ = norm(v)
-    V[:,1] = v/β₀
+                                         v :: AbstractVector{T},
+                                         τ :: T, m :: Integer,
+                                         vp :: AbstractVector{T},
+                                         V :: Matrix{T},
+                                         α :: Vector{R},
+                                         β :: Vector{R};
+                                         atol :: Float64 = 1.0e-8,
+                                         rtol :: Float64 = 1.0e-4,
+                                         verbose :: Bool = false)
+  β₀ = norm(v)
+  V[:,1] = v / β₀
 
-    ε = atol + rtol * β₀
-    verbose && @printf("Initial norm: β₀ %e, stopping threshold: %e\n", β₀, ε)
+  ε = atol + rtol * β₀
+  verbose && @printf("Initial norm: β₀ %e, stopping threshold: %e\n", β₀, ε)
 
-    fin = false
-    j = 1
-    jj = 1 # Which Krylov subspace to use, in the end
+  fin = false
+  j = 1
+  jj = 1 # Which Krylov subspace to use, in the end
 
-    σ = β₀
-    ω = 0
-    γ = 1
+  σ = β₀
+  ω = 0
+  γ = 1
 
-    for j = 1:m
-        V[:,j+1] = A*V[:,j]
-        j > 1 && (V[:,j+1] -= β[j-1]*V[:,j-1])
-        α[j] = real(dot(V[:,j],V[:,j+1]))
+  for j = 1:m
+    V[:, j+1] = A*V[:, j]
+    j > 1 && (V[:, j+1] -= β[j-1]*V[:, j-1])
+    α[j] = real(dot(V[:, j], V[:, j+1]))
 
-        γ = 1 / (α[j] - ω / γ)
-        γ <= 0.0 && break
+    γ = 1 / (α[j] - ω / γ)
+    γ <= 0.0 && break
 
-        V[:,j+1] -= α[j]*V[:,j]
-        β[j] = norm(V[:,j+1])
-        V[:,j+1] /= β[j]
+    V[:, j+1] -= α[j]*V[:, j]
+    β[j] = norm(V[:, j+1])
+    V[:, j+1] /= β[j]
 
-        ω = β[j] * γ
-        σ = -ω * σ
-        ω = ω * ω
+    ω = β[j] * γ
+    σ = -ω * σ
+    ω = ω * ω
 
-        verbose && @printf("iter %d, α[%d] %e, β[%d] %e, γ %e, ω %e, σ %e\n",
-                          j, j, α[j], j, β[j],
-                          γ, ω, σ)
+    verbose && @printf("iter %d, α[%d] %e, β[%d] %e, γ %e, ω %e, σ %e\n",j, j, α[j], j, β[j], γ, ω, σ)
 
-        if abs(σ) < ε
-            break
-        else
-            j != m && (jj += 1)
-        end
+    if abs(σ) < ε
+      break
+    else
+      j != m && (jj += 1)
     end
-    verbose && println("Krylov subspace size: ", jj)
-    vp[:] = expT(α[1:jj], β[1:jj-1], V[:,1:jj], τ, β₀)
+  end
+  verbose && println("Krylov subspace size: ", jj)
+  vp[:] = expT(α[1:jj], β[1:jj - 1], V[:, 1:jj], τ, β₀)
 end
 
 # One-shot version
@@ -105,8 +103,8 @@ function exp_lanczos{T<:Number}(A :: LinearOperator, v :: Array{T,1},
                                 atol :: Float64=1.0e-8,
                                 rtol :: Float64=1.0e-6,
                                 verbose :: Bool=false)
-    l_work = exp_lanczos_work(A, v, m, verbose)
-    vp = similar(v)
-    exp_lanczos!(A, v, τ, m, vp, l_work...; βtol = βtol, verbose = verbose)
-    vp
+  l_work = exp_lanczos_work(A, v, m, verbose)
+  vp = similar(v)
+  exp_lanczos!(A, v, τ, m, vp, l_work...; βtol = βtol, verbose = verbose)
+  return vp
 end
