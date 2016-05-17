@@ -1,3 +1,11 @@
+using PyCall
+pygui(:qt)
+using PyPlot
+fignum = 0
+
+using LinearOperators
+using Krylov
+
 function diff2mat(N)
   dx = 1/(N+1)
   SymTridiagonal(-2ones(N),ones(N-1))/(dx^2)
@@ -85,9 +93,73 @@ function test_propagation(m, N, t, c = nothing;
     psi_cmp
   end
 
-  @test_approx_eq_eps tot_energy(H0, psi[:,end], dx) E0 1e-8
-  @test_approx_eq_eps psi_norm(psi[:,end], dx) 1 1e-8
-  @test_approx_eq_eps sumabs2(psi[:,end]-psi_cmp[:,end])*dx 0 cn_dist_tol
+  n = map(eachindex(t)) do j
+    psi_norm(psi[:,j], dx)
+  end
+  n_cmp = map(eachindex(t)) do j
+    psi_norm(psi_cmp[:,j], dx)
+  end
+
+  E = map(eachindex(t)) do j
+    tot_energy(H0, psi[:,j], dx)
+  end
+  E_cmp = map(eachindex(t)) do j
+    tot_energy(H0, psi_cmp[:,j], dx)
+  end
+
+  function time_series_plot{T<:Number}(v::Vector{T}, args...; kwargs...)
+    av = abs(v)
+    style = length(av) > 100 ? "-" : ".-"
+    plot_f = any(av.>0) ? semilogy : plot
+    plot_f(av, style, args...; kwargs...)
+
+    margins(0,1)
+  end
+
+  function plot_state(i)
+    l = plot(x, abs2(psi[:,i]), "-", label="Lanczos, $i")
+    # plot(x, abs2(phi*exp(-im*t[i]*DE)*c), "o", color = l[1][:get_color]())
+    plot(x, abs2(psi_cmp[:,i]), "x", color = l[1][:get_color](),
+         label="Crank–Nicolson, $i")
+  end
+
+  global fignum
+  figure(fignum+=1)
+  clf()
+  subplot(221)
+  for i = 1:4
+    plot_state(div(i*length(t),4))
+  end
+  margins(0,0.1)
+  legend(framealpha=0.75)
+  title("State")
+  subplot(243)
+  pcolormesh(t, x, abs2(psi), rasterized=true, cmap = plt[:get_cmap]("viridis"))
+  margins(0,0)
+  xlabel("t")
+  ylabel("x")
+  title("Lanczos")
+  subplot(244)
+  pcolormesh(t, x, abs2(psi_cmp), rasterized=true, cmap = plt[:get_cmap]("viridis"))
+  margins(0,0)
+  xlabel("t")
+  ylabel("x")
+  title("Crank–Nicolson")
+  subplot(223)
+  time_series_plot(n-1, label="Lanczos")
+  time_series_plot(n_cmp-1, label="Crank–Nicolson")
+  time_series_plot(vec(sumabs2(psi-psi_cmp,1)*dx), label="Distance")
+  xlabel("Step")
+  legend(framealpha=0.75)
+  title("Norm loss")
+  subplot(224)
+  time_series_plot(E-E0, label="Lanczos")
+  time_series_plot(E_cmp-E0, label="Crank–Nicolson")
+  legend(framealpha=0.75)
+  margins(0,1)
+  xlabel("Step")
+  title("Total energy loss")
+  tight_layout()
 end
 
 m = 15
@@ -106,3 +178,4 @@ println("+++++++++++++++++++++++++++++++")
 println()
 test_propagation(m, N, linspace(0,1,nt), [1,1,1]; verbose = false, cn_dist_tol = 2e-6)
 
+show()
