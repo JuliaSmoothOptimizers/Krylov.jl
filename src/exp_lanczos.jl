@@ -1,20 +1,7 @@
-# An implementation of exp(τA)v for Hermitian operators A.
-#
-# exp(τA)v = β₀Vₘ exp(τTₘ)e₁
-#
-# The implementation follows
-# Saad, Y. (1992). Analysis of some krylov subspace
-# approximations. SIAM Journal on Numerical Analysis.
-#
-# The error estimates/stopping criteria are borrowed from
-# cg_lanczos.jl
-#
-# Stefanos Carlström, <stefanos.carlstrom@gmail.com>
-# Lund, Sweden, May 2016.
-
 export exp_lanczos, exp_lanczos!, exp_lanczos_work
 
-# Check arguments and allocate work arrays
+"""Check arguments and allocate work arrays for the Lanczos
+approximation to exp(τA)v"""
 function exp_lanczos_work{T<:Number}(A :: LinearOperator,
                                      v :: Array{T,1},
                                      m :: Integer,
@@ -35,13 +22,29 @@ if VERSION ≥ v"0.5.0-dev"
         ee = eigfact(SymTridiagonal(α,β))
         β₀*v*ee[:vectors]*Diagonal(exp(τ*ee[:values]))*ee[:vectors][1,:]
     end
+  """Used to calculate the subspace exponetial, where `T` is tridiagonal"""
 else
     function expT(α,β,v,τ,β₀)
         ee = eigfact(SymTridiagonal(α,β))
         β₀*v*ee[:vectors]*Diagonal(exp(τ*ee[:values]))*ee[:vectors][1,:]'
     end
+  """Used to calculate the subspace exponetial, where `T` is tridiagonal"""
 end
 
+"""
+An implementation of exp(τA)v for Hermitian operators `A`.
+
+exp(τA)v = β₀Vₘ exp(τTₘ)e₁
+
+The implementation follows
+Saad, Y. (1992). Analysis of some krylov subspace
+approximations. SIAM Journal on Numerical Analysis.
+
+The error estimates/stopping criteria are borrowed from
+cg_lanczos.jl
+
+Stefanos Carlström, <stefanos.carlstrom@gmail.com>
+Lund, Sweden, May 2016."""
 function exp_lanczos!{T<:Number,R<:Real}(A :: LinearOperator,
                                                v :: AbstractVector{T},
                                                τ :: T, m :: Integer,
