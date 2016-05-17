@@ -10,8 +10,8 @@
 At the Julia prompt, type
 
 ````JULIA
-julia> Pkg.clone("https://github.com/dpo/LinearOperators.jl.git")
-julia> Pkg.clone("https://github.com/optimizers/Krylov.jl.git")
+julia> Pkg.clone("https://github.com/JuliaOptimizers/LinearOperators.jl.git")
+julia> Pkg.clone("https://github.com/JuliaOptimizers/Krylov.jl.git")
 julia> Pkg.test("Krylov")
 ````
 
