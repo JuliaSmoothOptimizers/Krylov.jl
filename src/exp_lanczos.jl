@@ -18,16 +18,22 @@ function exp_lanczos_work{T<:Number}(A :: LinearOperator,
 end
 
 if VERSION ≥ v"0.5.0-dev"
-  """Used to calculate the subspace exponetial, where `T` is tridiagonal"""
-  function expT(α, β, v, τ, β₀)
+  """Used to calculate the subspace exponential, where `T` is tridiagonal"""
+  function expT{T<:Number, R<:Real}(α :: Vector{R},
+                                    β :: Vector{R},
+                                    V :: Matrix{T},
+                                    τ :: T, β₀ :: R)
     ee = eigfact(SymTridiagonal(α, β))
-    β₀ * v * ee[:vectors] * Diagonal(exp(τ * ee[:values])) * ee[:vectors][1,:]
+    β₀ * V * ee[:vectors] * Diagonal(exp(τ * ee[:values])) * ee[:vectors][1,:]
   end
 else
-  """Used to calculate the subspace exponetial, where `T` is tridiagonal"""
-  function expT(α, β, v, τ, β₀)
+  """Used to calculate the subspace exponential, where `T` is tridiagonal"""
+  function expT{T<:Number, R<:Real}(α :: Vector{R},
+                                    β :: Vector{R},
+                                    V :: Matrix{T},
+                                    τ :: T, β₀ :: R)
     ee = eigfact(SymTridiagonal(α,β))
-    β₀ * v * ee[:vectors] * Diagonal(exp(τ * ee[:values])) * ee[:vectors][1,:]'
+    β₀ * V * ee[:vectors] * Diagonal(exp(τ * ee[:values])) * ee[:vectors][1,:]'
   end
 end
 
