@@ -21,8 +21,7 @@ build_script:
 # Need to convert from shallow to complete for Pkg.clone to work
   - IF EXIST .git\shallow (git fetch --unshallow)
   - C:\projects\julia\bin\julia -e "versioninfo(); Pkg.init();"
-  - C:\projects\julia\bin\julia -e "Pkg.clone(\"https://github.com/JuliaSmoothOptimizers/LinearOperators.jl.git\");"
-  - C:\projects\julia\bin\julia -e "Pkg.clone(pwd(), \"Krylov\");"
+  - C:\projects\julia\bin\julia -e "Pkg.clone(pwd(), \"Krylov\"); Pkg.build(\"Krylov\")"
 
 test_script:
   - C:\projects\julia\bin\julia -e "Pkg.test(\"Krylov\")"
