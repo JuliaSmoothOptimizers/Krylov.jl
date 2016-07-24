@@ -1,17 +1,17 @@
 # Krylov.jl: A Julia basket of hand-picked Krylov methods
 
-[![Build Status](https://travis-ci.org/JuliaOptimizers/Krylov.jl.svg?branch=develop)](https://travis-ci.org/JuliaOptimizers/Krylov.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/ygy8aqqjmqhfwrxc?svg=true)](https://ci.appveyor.com/project/dpo/krylov-jl)
-[![Coverage Status](https://coveralls.io/repos/JuliaOptimizers/Krylov.jl/badge.svg?branch=develop&service=github)](https://coveralls.io/github/JuliaOptimizers/Krylov.jl?branch=develop)
-[![codecov.io](https://codecov.io/github/JuliaOptimizers/Krylov.jl/coverage.svg?branch=develop)](https://codecov.io/github/JuliaOptimizers/Krylov.jl?branch=develop)
+[![Build Status](https://travis-ci.org/JuliaSmoothOptimizers/Krylov.jl.svg?branch=develop)](https://travis-ci.org/JuliaSmoothOptimizers/Krylov.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/ygy8aqqjmqhfwrxc?svg=true)](https://ci.appveyor.com/project/JuliaSmoothOptimizers/krylov-jl)
+[![Coverage Status](https://coveralls.io/repos/JuliaSmoothOptimizers/Krylov.jl/badge.svg?branch=develop&service=github)](https://coveralls.io/github/JuliaSmoothOptimizers/Krylov.jl?branch=develop)
+[![codecov.io](https://codecov.io/github/JuliaSmoothOptimizers/Krylov.jl/coverage.svg?branch=develop)](https://codecov.io/github/JuliaSmoothOptimizers/Krylov.jl?branch=develop)
 
 ## How to Install
 
 At the Julia prompt, type
 
 ````JULIA
-julia> Pkg.clone("https://github.com/JuliaOptimizers/LinearOperators.jl.git")
-julia> Pkg.clone("https://github.com/JuliaOptimizers/Krylov.jl.git")
+julia> Pkg.clone("https://github.com/JuliaSmoothOptimizers/LinearOperators.jl.git")
+julia> Pkg.clone("https://github.com/JuliaSmoothOptimizers/Krylov.jl.git")
 julia> Pkg.test("Krylov")
 ````
 
