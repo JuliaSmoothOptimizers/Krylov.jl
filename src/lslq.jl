@@ -63,7 +63,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
               λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
               etol :: Float64=1.0e-8, window :: Int=5,
               itmax :: Int=0, conlim :: Float64=1.0e+8, 
-              a :: Float64=0.0, verbose :: Bool=false)
+              λest :: Float64=0.0, verbose :: Bool=false)
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -73,6 +73,10 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   sqd && (λ = 1.0)
   λ² = λ * λ
   ctol = conlim > 0.0 ? 1/conlim : 0.0
+
+  # Check if estimate to minimum eigenvalue of A'A provided
+  # If not but λ² > 0, use that instead
+  λest = max(λ², λest)
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
@@ -117,9 +121,9 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   s = 0.0
   c = -1.0
 
-  if (a > 0)
+  if (λest > 0)
     μ = sqrt(ᾱ )         # = μ₁
-    ρ = sqrt(μ * μ - a)  # = ρ₁
+    ρ = sqrt(μ * μ - λest)  # = ρ₁
   end
 
   w = zeros(n)       # = w₀
@@ -137,7 +141,6 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   err_lbnds = Float64[]
   err_ubnds = Float64[]
   err_ubnds_cg = Float64[]
-  cg_step = Float64[]
   err_vec = zeros(window)
 
   rNorm = β₁
@@ -148,8 +151,6 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   ArNorm = α
   ArNorms = [ArNorm]
   ArNorms_cg = Float64[]
-
-  xsol_est = Float64[]
 
   verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s\n",
                      "Aprod", "‖r‖", "‖A'r‖", "β", "α", "cos", "sin", "‖A‖", "‖x‖")
@@ -192,13 +193,13 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
     end
     ᾱ = α * α + β * β + λ²  # this is ᾱ₂ at the first pass through the loop.
 
-    if (a > 0)
+    if (λest > 0)
       ν = β̄  / μ                 # ν₂ at first pass of loop 
       σ = μ * ν / ρ              # σ₂ at first pass of loop
-      ω = a + σ * σ              # ω₂ at first pass of loop
+      ω = λest + σ * σ              # ω₂ at first pass of loop
 
       μ = sqrt(ᾱ  - ν * ν)       # μ₂ at first pass of loop
-      ρ = sqrt(μ * μ + ν * ν - a - σ * σ) # ρ₂ at first pass of loop
+      ρ = sqrt(μ * μ + ν * ν - λest - σ * σ) # ρ₂ at first pass of loop
     end
     Anorm² = Anorm² + ᾱ  # = ‖Bₖ₋₁‖²
 
@@ -220,7 +221,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
     ζ = c * ζ̄
     ζ̄ = -(δ * ζ + ϵ * ζ_old) / γ̄
 
-    if (a > 0)
+    if (λest > 0)
       ψ = c * δ̄ + s * ω
       ω̄ = s * δ̄ - c * ω
 
@@ -235,13 +236,9 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
       push!(err_lbnds, err_lbnd)
     end
 
-    if (a > 0)
-      xsolNorm² = xlqNorm² + ζ_norm * ζ_norm
-      push!(xsol_est, xsolNorm²)
-      push!(err_ubnds, ζ_norm * ζ_norm)
-      #push!(err_ubnds, xsolNorm² - norm(x_lq)^2) # Surprisingly, a way worse estimate
-      push!(err_ubnds_cg, ζ_norm * ζ_norm - ζ̄  * ζ̄ )
-      push!(cg_step, ζ̄  * ζ̄ )
+    if (λest > 0)
+      push!(err_ubnds, ζ_norm)
+      push!(err_ubnds_cg, sqrt(ζ_norm * ζ_norm - ζ̄  * ζ̄ ))
     end
 
     w = c * w̄ + s * v
@@ -304,5 +301,5 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   fwd_err       && (status = "truncated forward error small enough")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
-  return (x_lq, x_cg, fwdErrs_lq, fwdErrs_cg, err_lbnds, err_ubnds, err_ubnds_cg, xsol_est, cg_step, stats)
+  return (x_lq, x_cg, fwdErrs_lq, fwdErrs_cg, err_lbnds, err_ubnds, err_ubnds_cg, stats)
 end
