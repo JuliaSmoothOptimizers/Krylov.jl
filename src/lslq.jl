@@ -74,9 +74,9 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   λ² = λ * λ
   ctol = conlim > 0.0 ? 1/conlim : 0.0
 
-  # Check if estimate to minimum eigenvalue of A'A provided
-  # If not but λ² > 0, use that instead
-  λ_est = max(λ², λ_est)
+  # Eigenvalue estimate is sum of regularization and
+  # eigenvalue estimate of A'A
+  λ_est = λ_est + λ²
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
