@@ -63,7 +63,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
               λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
               etol :: Float64=1.0e-8, window :: Int=5,
               itmax :: Int=0, conlim :: Float64=1.0e+8, 
-              λ_est :: Float64=0.0, verbose :: Bool=false)
+              σ_est :: Float64=0.0, verbose :: Bool=false)
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -76,6 +76,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
 
   # Eigenvalue estimate is sum of regularization and
   # eigenvalue estimate of A'A
+  λ_est = σ_est * σ_est
   λ_est = λ_est + λ²
 
   # Initialize Golub-Kahan process.
