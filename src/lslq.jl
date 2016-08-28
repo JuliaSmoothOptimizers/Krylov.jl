@@ -62,7 +62,8 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
               sqd :: Bool=false,
               λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
               etol :: Float64=1.0e-8, window :: Int=5,
-              itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+              itmax :: Int=0, conlim :: Float64=1.0e+8, 
+              σ_est :: Float64=0.0, verbose :: Bool=false)
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -72,6 +73,11 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   sqd && (λ = 1.0)
   λ² = λ * λ
   ctol = conlim > 0.0 ? 1/conlim : 0.0
+
+  # Eigenvalue estimate is sum of regularization and
+  # eigenvalue estimate of A'A
+  λ_est = σ_est * σ_est
+  λ_est = λ_est + λ²
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
@@ -116,6 +122,11 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   s = 0.0
   c = -1.0
 
+  if (λ_est > 0)
+    μ = sqrt(ᾱ )         # = μ₁
+    ρ = sqrt(μ * μ - λ_est)  # = ρ₁
+  end
+
   w = zeros(n)       # = w₀
   x_lq = zeros(n)    # = x₀
   fwdErrs_lq = [norm(x_exact)]
@@ -129,6 +140,8 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
 
   err_lbnd = 0.0
   err_lbnds = Float64[]
+  err_ubnds = Float64[]
+  err_ubnds_cg = Float64[]
   err_vec = zeros(window)
 
   rNorm = β₁
@@ -154,6 +167,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   ill_cond = ill_cond_mach = ill_cond_lim = false
   zero_resid = zero_resid_mach = zero_resid_lim = false
   fwd_err = false
+  fwd_err_ubnd = false
 
   while ! (solved || tired || ill_cond)
     iter = iter + 1
@@ -181,6 +195,14 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
     end
     ᾱ = α * α + β * β + λ²  # this is ᾱ₂ at the first pass through the loop.
 
+    if (λ_est > 0)
+      ν = β̄  / μ                 # ν₂ at first pass of loop 
+      σ = μ * ν / ρ              # σ₂ at first pass of loop
+      ω = λ_est + σ * σ              # ω₂ at first pass of loop
+
+      μ = sqrt(ᾱ  - ν * ν)       # μ₂ at first pass of loop
+      ρ = sqrt(μ * μ + ν * ν - λ_est - σ * σ) # ρ₂ at first pass of loop
+    end
     Anorm² = Anorm² + ᾱ  # = ‖Bₖ₋₁‖²
 
     # Continue LQ factorization
@@ -201,12 +223,24 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
     ζ = c * ζ̄
     ζ̄ = -(δ * ζ + ϵ * ζ_old) / γ̄
 
+    if (λ_est > 0)
+      ψ = c * δ̄ + s * ω
+      ω̄ = s * δ̄ - c * ω
+
+      ζ_norm = -(ψ * ζ + ϵ * ζ_old) / ω̄
+    end
+
     xlqNorm² = xlqNorm² + ζ * ζ
     xcgNorm² = xcgNorm² + ζ̄ * ζ̄
     err_vec[mod(iter, window) + 1] = ζ
     if iter >= window
       err_lbnd = norm(err_vec)
       push!(err_lbnds, err_lbnd)
+    end
+
+    if (λ_est > 0)
+      push!(err_ubnds, ζ_norm)
+      push!(err_ubnds_cg, sqrt(ζ_norm * ζ_norm - ζ̄  * ζ̄ ))
     end
 
     w = c * w̄ + s * v
@@ -256,6 +290,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
     solved_lim = (test2 <= atol)
     zero_resid_lim = (test1 <= rtol)
     iter >= window && (fwd_err = err_lbnd <= etol * xlqNorm)
+    fwd_err_ubnd = (λ_est > 0) && (ζ_norm <= etol * xlqNorm)
 
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err
@@ -267,7 +302,8 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, x_exact :: Vec
   solved        && (status = "found approximate minimum least-squares solution")
   zero_resid    && (status = "found approximate zero-residual solution")
   fwd_err       && (status = "truncated forward error small enough")
+  fwd_err_ubnd  && (status = "forward error upper-bound small enough")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
-  return (x_lq, x_cg, fwdErrs_lq, fwdErrs_cg, err_lbnds, stats)
+  return (x_lq, x_cg, fwdErrs_lq, fwdErrs_cg, err_lbnds, err_ubnds, err_ubnds_cg, stats)
 end
