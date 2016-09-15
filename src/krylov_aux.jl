@@ -50,10 +50,12 @@ function roots_quadratic(q₂ :: Float64, q₁ :: Float64, q₀ :: Float64;
   # Case where q(x) is linear.
   if q₂ == 0.0
     if q₁ == 0.0
-      q₀ == 0.0 && return [0.0] || return Float64[]
+      root = [0.0]
+      q₀ == 0.0 || (root = Float64[])
     else
-      return [-q₀ / q₁]
+      root = [-q₀ / q₁]
     end
+    return root
   end
 
   # Case where q(x) is indeed quadratic.
