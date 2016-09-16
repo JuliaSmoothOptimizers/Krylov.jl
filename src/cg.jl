@@ -67,7 +67,7 @@ function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
     BLAS.axpy!(n,  α,  p, 1, x, 1);  # Faster than x = x + α * p;
     BLAS.axpy!(n, -α, Ap, 1, r, 1);  # Faster than r = r - α * Ap;
     γ_next = BLAS.dot(n, r, 1, r, 1);
-    rNorm = sqrt(γ);
+    rNorm = sqrt(γ_next);
     push!(rNorms, rNorm);
 
     solved = (rNorm <= ε) | on_boundary;
