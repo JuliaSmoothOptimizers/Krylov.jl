@@ -1,6 +1,8 @@
 module Krylov
 
 using LinearOperators
+using Compat
+import Compat.String
 
 if VERSION >= v"0.4-"
   using DistributedArrays
@@ -15,7 +17,7 @@ type SimpleStats <: KrylovStats
   inconsistent :: Bool
   residuals :: Array{Float64,1}
   Aresiduals :: Array{Float64,1}
-  status :: UTF8String
+  status :: String
 end
 
 type LanczosStats <: KrylovStats
@@ -24,7 +26,7 @@ type LanczosStats <: KrylovStats
   flagged :: Union{Bool, BitArray{1}, DArray{Bool,1,Array{Bool,1}}}
   Anorm :: Float64
   Acond :: Float64
-  status :: UTF8String
+  status :: String
 end
 
 import Base.show
