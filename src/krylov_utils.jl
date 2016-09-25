@@ -12,7 +12,7 @@ function process_types(args...)
   # Perform the following conversions:
   # string -> Ptr{UInt8} (for %s)
   # arrays -> Ptr{Void}  (for %p)
-  types = map(t -> (t == ASCIIString ? Ptr{UInt8} : t), types)
+  types = map(t -> (t == String ? Ptr{UInt8} : t), types)
   types = map(t -> (issubtype(t, Base.Array) ? Ptr{Void} : t), types)
   #types = map(t -> (issubtype(t, Function) ? Ptr{Void} : t), types)
   types = append!([Ptr{UInt8}], types)
@@ -24,7 +24,7 @@ function process_types(args...)
 end
 
 
-function c_printf(fmt :: AbstractString, args...)
+function c_printf(fmt :: String, args...)
   typexpr = process_types(args...)
   # Ignore printf's return value (an int).
   @eval ccall((:printf, "libc"), Void, $(typexpr), $(fmt), $(args...))
