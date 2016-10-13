@@ -17,7 +17,7 @@ include("cg_methods.jl")
 
 The method does _not_ abort if A is not definite.
 """
-function cg{T <: Real}(A :: LinearOperator, b :: Array{T,1};
+function cg{T <: Real}(A :: AbstractLinearOperator, b :: Array{T,1};
                        atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
                        radius :: Float64=0.0, verbose :: Bool=false)
 
