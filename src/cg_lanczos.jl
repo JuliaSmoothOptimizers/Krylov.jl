@@ -21,7 +21,7 @@ symmetric linear system
 
 The method does _not_ abort if A is not definite.
 """
-function cg_lanczos{T <: Real}(A :: LinearOperator, b :: Array{T,1};
+function cg_lanczos{T <: Real}(A :: AbstractLinearOperator, b :: Array{T,1};
                                atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
                                check_curvature :: Bool=false, verbose :: Bool=false)
 
@@ -108,7 +108,7 @@ of shifted systems
 
 The method does _not_ abort if A + αI is not definite.
 """
-function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: Array{Tb,1}, shifts :: Array{Ts,1};
+function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperator, b :: Array{Tb,1}, shifts :: Array{Ts,1};
                                                       atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
                                                       check_curvature :: Bool=false, verbose :: Bool=false)
 
@@ -224,7 +224,7 @@ The method does _not_ abort if A + αI is not definite.
 In this version, the shifted systems are dispatched on the available processors,
 and operations specific to each shift is carried out on the processor hosting it.
 """
-function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: LinearOperator, b :: Array{Tb,1}, shifts :: Array{Ts,1};
+function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperator, b :: Array{Tb,1}, shifts :: Array{Ts,1};
                                                       atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
                                                       check_curvature :: Bool=false, verbose :: Bool=false)
 

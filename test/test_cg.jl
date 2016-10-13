@@ -40,3 +40,17 @@ show(stats)
 @test(stats.solved);
 @test(abs(radius - norm(x)) <= cg_tol * radius);
 
+opA = LinearOperator(A)
+(xop, statsop) = cg(opA, b, radius=radius, itmax=10)
+@test xop == x
+
+n = 100
+B = LBFGSOperator(n)
+srand(0)
+for i = 1:5
+  push!(B, rand(n), rand(n))
+end
+b = B * ones(n)
+(x, stats) = cg(B, b, itmax=2n)
+@test x ≈ ones(n)
+@test stats.solved
