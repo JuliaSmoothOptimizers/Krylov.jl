@@ -32,7 +32,7 @@ function cg_lanczos{T <: Real}(A :: AbstractLinearOperator, b :: Array{T,1};
   # Initial state.
   x = zeros(n);
   β = norm(b);
-  β == 0 && return x;
+  β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
   v = b / β;
   v_prev = v;
   p = copy(b);
@@ -122,7 +122,7 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
   ## Distribute x similarly to shifts.
   x = zeros(n, nshifts);
   β = norm(b);
-  β == 0 && return x;
+  β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
   v = b / β;
   v_prev = copy(v);
 
@@ -240,7 +240,8 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
   ## Distribute x similarly to shifts.
   dx = dzeros((n, nshifts), workers(), [1, nchunks]);
   β = norm(b);
-  β == 0 && return convert(Array, dx);
+  β == 0 && return convert(Array, dx), LanczosStats(true, dfill(0.0, (nshifts,), workers(), [nchunks]),
+                                                    false, 0.0, 0.0, "x = 0 is a zero-residual solution")
   v = b / β;
   v_prev = v;
 
