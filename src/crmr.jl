@@ -62,7 +62,7 @@ function crmr(A :: AbstractLinearOperator, b :: Array{Float64,1};
 
   x = zeros(n);
   bNorm = BLAS.nrm2(m, b, 1);  # norm(b - A * x0) if x0 ≠ 0.
-  bNorm == 0 && return x;
+  bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
   r  = copy(b);
   rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   λ > 0 && (s = copy(r));
