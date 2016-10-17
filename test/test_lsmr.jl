@@ -22,3 +22,8 @@ end
 (x, stats) = lsmr(full(A), b);
 (x, stats) = lsmr(sparse(full(A)), b);
 show(stats);
+
+# Test b == 0
+(x, stats) = lsmr(A, zeros(size(A,1)))
+@test x == zeros(size(A,1))
+@test stats.status == "x = 0 is a zero-residual solution"
