@@ -62,7 +62,7 @@ function craig(A :: AbstractLinearOperator, b :: Array{Float64,1};
 
   x = zeros(n);
   β₁ = BLAS.nrm2(m, b, 1);   # Marginally faster than norm(b);
-  β₁ == 0 && return x;
+  β₁ == 0 && return x, zeros(m), SimpleStats(true, false, [0.0], Float64[], "x = 0 is a zero-residual solution");
   β = β₁;
   θ = β₁;   # θ will differ from β when there is regularization (λ > 0).
   ξ = -1;   # Most recent component of x in Range(V).

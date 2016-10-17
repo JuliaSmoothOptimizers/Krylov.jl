@@ -64,7 +64,7 @@ function cgne(A :: AbstractLinearOperator, b :: Array{Float64,1};
 
   x = zeros(n);
   bNorm = BLAS.nrm2(m, b, 1);   # Marginally faster than norm(b);
-  bNorm == 0 && return x;
+  bNorm == 0 && return x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution");
   r = copy(b);
   λ > 0 && (s = copy(r));
 

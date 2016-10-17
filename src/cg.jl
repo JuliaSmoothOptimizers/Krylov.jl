@@ -28,7 +28,7 @@ function cg{T <: Real}(A :: AbstractLinearOperator, b :: Array{T,1};
   # Initial state.
   x = zeros(n);
   γ = dot(b, b);
-  γ == 0 && return x;
+  γ == 0 && return x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution")
   r = copy(b);
   p = copy(r);
 
