@@ -37,3 +37,7 @@ resid = norm(A' * M * (A * x - b)) / sqrt(dot(b, M * b));
 (x, stats) = crls(sparse(full(A)), b);
 show(stats);
 
+# Test b == 0
+(x, stats) = crls(A, zeros(size(A,1)))
+@test x == zeros(size(A,1))
+@test stats.status == "x = 0 is a zero-residual solution"

@@ -90,3 +90,9 @@ A = ones(5, 3); b = rand(5); b[1] = -1.0;
 # Code coverage.
 (x, y, stats) = craigmr(sparse(A), b, λ=1.0e-3);
 show(stats);
+
+# Test b == 0
+(x, y, stats) = craigmr(A, zeros(size(A,1)), λ=1.0e-3)
+@test x == zeros(size(A,2))
+@test y == zeros(size(A,1))
+@test stats.status == "x = 0 is a zero-residual solution"

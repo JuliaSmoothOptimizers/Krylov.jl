@@ -62,3 +62,13 @@ shifts = [-4, -3, 2;]
 (x, stats) = cg_lanczos_shift_par(full(A), b, [1:6;]);
 show(stats);
 
+# Test b == 0
+(x, stats) = cg_lanczos(A, zeros(size(A,1)))
+@test x == zeros(size(A,1))
+@test stats.status == "x = 0 is a zero-residual solution"
+(x, stats) = cg_lanczos_shift_par(A, zeros(size(A,1)), [1:6;])
+@test x == zeros(size(A,1), 6)
+@test stats.status == "x = 0 is a zero-residual solution"
+(x, stats) = cg_lanczos_shift_seq(A, zeros(size(A,1)), [1:6;])
+@test x == zeros(size(A,1), 6)
+@test stats.status == "x = 0 is a zero-residual solution"
