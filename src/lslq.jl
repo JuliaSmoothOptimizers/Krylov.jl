@@ -55,7 +55,7 @@ indefinite system
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
 """
-function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
+function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, xsol :: Vector{Float64};
               M :: AbstractLinearOperator=opEye(size(A,1)), N :: AbstractLinearOperator=opEye(size(A,2)),
               sqd :: Bool=false,
               λ :: Float64=0.0, σ :: Float64=0.0,
@@ -115,6 +115,10 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
   err_vec = zeros(window)
   err_ubnds_lq = Float64[]
   err_ubnds_cg = Float64[]
+
+  # For paper only
+  errs_lq = Float64[]; push!(errs_lq, norm(xsol))
+  errs_cg = Float64[]; push!(errs_cg, norm(xsol))
 
   # Initialize other constants.
   ρ̄ = -σ
@@ -249,6 +253,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
     # compute LSQR point
     x_cg = x_lq + ζ̄ * w̄
     xcgNorm² = xlqNorm² + ζ̄ * ζ̄
+    push!(errs_cg, norm(xsol - x_cg))
 
     if σ > 0.0 && iter > 0
       err_ubnd_cg = sqrt(ζ̃ * ζ̃ - ζ̄  * ζ̄ )
@@ -270,6 +275,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
     w̄ = s * w̄ - c * v
     x_lq = x_lq + ζ * w
     xlqNorm² += ζ * ζ
+    push!(errs_lq, norm(x - x_lq))
 
     # check stopping condition based on forward error lower bound
     err_vec[mod(iter, window) + 1] = ζ
@@ -315,5 +321,5 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
   fwd_err_ubnd  && (status = "forward error upper bound small enough")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
-  return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats)
+  return (x_lq, x_cg, errs_lq, errs_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats)
 end

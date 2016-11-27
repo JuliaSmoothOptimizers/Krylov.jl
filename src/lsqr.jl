@@ -113,7 +113,7 @@ function lsqr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   BLAS.scal!(n, 1.0/α, v, 1)
   BLAS.scal!(n, 1.0/α, Nv, 1)
   w = copy(v)
- 
+
   # Initialize other constants.
   ϕbar = β₁
   ρbar = α
@@ -188,7 +188,7 @@ function lsqr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
     err_vec[mod(iter, window) + 1] = ϕ
     iter >= window && (err_lbnd = norm(err_vec))
 
-    τ = s * ϕ; 
+    τ = s * ϕ;
     θ = s * α
     ρbar = -c * α
 
