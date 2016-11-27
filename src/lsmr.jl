@@ -130,7 +130,7 @@ function lsmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
   BLAS.scal!(n, 1.0/α, v, 1)
   BLAS.scal!(n, 1.0/α, Nv, 1)
- 
+
   h = copy(v)
   hbar = zeros(n)
 
