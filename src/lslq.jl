@@ -71,10 +71,8 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = 1.0)
   λ² = λ * λ
-  println("σ = ", σ)
-  σ = sqrt(λ² + σ^2); println("σ = ", σ)
+  σ = sqrt(λ² + σ^2)
   ctol = conlim > 0.0 ? 1/conlim : 0.0
-  x = zeros(n)
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
@@ -252,6 +250,12 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
     x_cg = x_lq + ζ̄ * w̄
     xcgNorm² = xlqNorm² + ζ̄ * ζ̄
 
+    if σ > 0.0 && iter > 0
+      err_ubnd_cg = sqrt(ζ̃ * ζ̃ - ζ̄  * ζ̄ )
+      push!(err_ubnds_cg, err_ubnd_cg)
+      fwd_err_ubnd = err_ubnd_cg ≤ utol * sqrt(xcgNorm²)
+    end
+
     test1 = rNorm / β₁
     test2 = ArNorm / (Anorm * rNorm)
     test3 = 1 / Acond
@@ -260,6 +264,29 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
 
     verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n",
                        1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
+
+    # update LSLQ point for next iteration
+    w = c * w̄ + s * v
+    w̄ = s * w̄ - c * v
+    x_lq = x_lq + ζ * w
+    xlqNorm² += ζ * ζ
+
+    # check stopping condition based on forward error lower bound
+    err_vec[mod(iter, window) + 1] = ζ
+    if iter ≥ window
+      err_lbnd = norm(err_vec)
+      push!(err_lbnds, err_lbnd)
+      fwd_err_lbnd = err_lbnd ≤ etol * sqrt(xlqNorm²)
+    end
+
+    # compute LQ forward error upper bound
+    if σ > 0.0
+      η̃ = ω * s
+      ϵ̃ = -ω * c
+      τ̃ = -τ * δ / ω
+      ζ̃ = (τ̃ - ζ * η̃) / ϵ̃
+      push!(err_ubnds_lq, abs(ζ̃ ))
+    end
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
@@ -275,32 +302,6 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
 
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err_lbnd | fwd_err_ubnd
-
-    # update LSLQ point
-    w = c * w̄ + s * v
-    w̄ = s * w̄ - c * v
-    x_lq = x_lq + ζ * w
-    xlqNorm² += ζ * ζ
-
-    # check stopping condition based on forward error lower bound
-    err_vec[mod(iter, window) + 1] = ζ
-    if iter ≥ window
-      err_lbnd = norm(err_vec)
-      push!(err_lbnds, err_lbnd)
-      fwd_err_lbnd = err_lbnd ≤ etol * sqrt(xlqNorm²)
-    end
-
-    # check stopping condition based on forward error upper bound
-    if σ > 0.0
-      η̃ = ω * s
-      ϵ̃ = -ω * c
-      τ̃ = -τ * δ / ω
-      ζ̃ = (τ̃ - ζ * η̃) / ϵ̃
-      push!(err_ubnds_lq, abs(ζ̃ ))
-      err_ubnd_cg = sqrt(ζ̃ * ζ̃ - ζ̄  * ζ̄ )
-      push!(err_ubnds_cg, err_ubnd_cg)
-      fwd_err_ubnd = err_ubnd_cg ≤ utol * sqrt(xcgNorm²)
-    end
 
     iter = iter + 1
   end
