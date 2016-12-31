@@ -71,7 +71,6 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, xsol :: Vector
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = 1.0)
   λ² = λ * λ
-  σ = sqrt(λ² + σ^2)
   ctol = conlim > 0.0 ? 1/conlim : 0.0
 
   # Initialize Golub-Kahan process.
@@ -86,7 +85,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, xsol :: Vector
   BLAS.scal!(m, 1.0/β₁, Mu, 1)
   Nv = copy(A' * u)
   v = N * Nv
-  α = sqrt(BLAS.dot(n, v, 1, Nv, 1))
+  α = sqrt(BLAS.dot(n, v, 1, Nv, 1))  # = α₁
 
   # A'b = 0 so x = 0 is a minimum least-squares solution
   α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
@@ -122,6 +121,7 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, xsol :: Vector
 
   # Initialize other constants.
   ρ̄ = -σ
+  # (_, _, γ̄ ) = sym_givens(α, λ)
   γ̄ = α
   ss = β₁
   c = -1.0
@@ -177,59 +177,48 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, xsol :: Vector
       # rotate out regularization term if present
       αL = α
       βL = β
-      if λ > 0.0
-        βL = sqrt(β * β + λ²)
-        cL = β / βL
-        sL = λ / βL
+      if λ != 0.0
+        (cL, sL, βL) = sym_givens(β, λ)
         αL = cL * α
 
         # the rotation updates the next regularization parameter
         λ = sqrt(λ² + (sL * α)^2)
       end
-      Anorm² = Anorm² + αL * αL + βL * βL;  # = ‖B_{k-1}‖²
+      Anorm² = Anorm² + αL * αL + βL * βL;  # = ‖Lₖ‖²
       Anorm = sqrt(Anorm²)
     end
 
     # Continue QR factorization of Bₖ
-    # 2. Eliminate β.
-    # Q [ Lₖ  β₁ e₁ ] = [ Rₖ   zₖ  ] :
-    #   [ β    0    ]   [ 0   ζbar ]
     #
     #       k   k+1     k   k+1      k  k+1
     # k   [ c'   s' ] [ γ̄      ] = [ γ   δ  ]
     # k+1 [ s'  -c' ] [ β   α⁺ ]   [     γ̄ ]
-    γ = sqrt(γ̄ * γ̄ + βL * βL)
+    (cp, sp, γ) = sym_givens(γ̄, βL)
     τ = -τ * δ / γ  # forward substitution for t
-    cp = γ̄ / γ
-    sp = βL / γ
     δ = sp * αL
     γ̄ = -cp * αL
+    # if λ != 0.0
+    #   (_, _, γ̄ ) = sym_givens(γ̄, λ)
+    # end
 
-    # Continue QR factorization for error estimate
     if σ > 0.0
+      # Continue QR factorization for error estimate
       μ̄ = -csig * γ
-      ρ = sqrt(ρ̄ * ρ̄ + γ * γ)
-      csig = ρ̄ / ρ
-      ssig = γ / ρ
+      (csig, ssig, ρ) = sym_givens(ρ̄, γ)
       ρ̄ = ssig * μ̄ + csig * σ
       μ̄ = -csig * δ
 
       # determine component of eigenvector and Gauss-Radau parameter
       h = δ * csig / ρ̄
-      ω = sqrt(σ * σ - σ * δ * h)
-
-      ρ = sqrt(ρ̄ * ρ̄ + δ * δ)
-      csig = ρ̄ / ρ
-      ssig = δ / ρ
+      ω = sqrt(σ * (σ - δ * h))
+      (csig, ssig, ρ) = sym_givens(ρ̄, δ)
       ρ̄ = ssig * μ̄ + csig * σ
     end
 
     # Continue LQ factorization of Rₖ
     ϵ̄ = -γ * c
     η = γ * s
-    ϵ = sqrt(ϵ̄ * ϵ̄ + δ * δ)
-    c = ϵ̄ / ϵ
-    s = δ / ϵ
+    (c, s, ϵ) = sym_givens(ϵ̄, δ)
 
     # condition number estimate
     # the QLP factorization suggests that the diagonal of M̄ approximates
@@ -275,14 +264,15 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, xsol :: Vector
     w̄ = s * w̄ - c * v
     x_lq = x_lq + ζ * w
     xlqNorm² += ζ * ζ
-    push!(errs_lq, norm(x - x_lq))
+    xlqNorm = sqrt(xlqNorm²)
+    push!(errs_lq, norm(xsol - x_lq))
 
     # check stopping condition based on forward error lower bound
     err_vec[mod(iter, window) + 1] = ζ
     if iter ≥ window
       err_lbnd = norm(err_vec)
       push!(err_lbnds, err_lbnd)
-      fwd_err_lbnd = err_lbnd ≤ etol * sqrt(xlqNorm²)
+      fwd_err_lbnd = err_lbnd ≤ etol * xlqNorm
     end
 
     # compute LQ forward error upper bound
