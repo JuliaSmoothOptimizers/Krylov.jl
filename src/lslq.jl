@@ -3,7 +3,7 @@
 #
 #  minimize ‖Ax - b‖
 #
-# equivalently, of the normal equations
+# or, equivalently, of the normal equations
 #
 #  A'Ax = A'b.
 #
@@ -26,36 +26,83 @@ include("lslq_methods.jl")
 
 """Solve the regularized linear least-squares problem
 
-  minimize ‖b - Ax‖₂² + λ² ‖x‖₂²
+    minimize ‖b - Ax‖₂² + λ² ‖x‖₂²
 
 using the LSLQ method, where λ ≥ 0 is a regularization parameter.
 LSLQ is formally equivalent to applying SYMMLQ to the normal equations
 
-  (A'A + λ² I) x = A'b
+    (A'A + λ² I) x = A'b
 
 but is more stable.
 
-LSLQ produces monotonic forward errors ‖x - x*‖₂.
+#### Main features
 
-Preconditioners M and N may be provided in the form of linear operators and are
-assumed to be symmetric and positive definite. If `sqd` is set to `true`,
-we solve the symmetric and quasi-definite system
+* the solution estimate is updated along orthogonal directions
+* the norm of the solution estimate ‖xᴸₖ‖₂ is increasing
+* the forward error ‖eₖ‖₂ := ‖xᴸₖ - x*‖₂ is decreasing
+* it is possible to transition cheaply from the LSLQ iterate to the LSQR iterate if there is an advantage (there always is in terms of forward error)
+* if `A` is rank deficient, identify the minimum least-squares solution
 
-  [ E   A' ] [ r ]   [ b ]
-  [ A  -F  ] [ x ] = [ 0 ],
+#### Input arguments
 
-where E = M⁻¹  and F = N⁻¹.
+* `A::AbstractLinearOperator`
+* `b::Vector{Float64}`
 
-If `sqd` is set to `false` (the default), we solve the symmetric and
-indefinite system
+#### Optional arguments
 
-  [ E   A' ] [ r ]   [ b ]
-  [ A   0  ] [ x ] = [ 0 ].
+* `M::AbstractLinearOperator=opEye(size(A,1))`: a symmetric and positive definite dual preconditioner
+* `N::AbstractLinearOperator=opEye(size(A,2))`: a symmetric and positive definite primal preconditioner
+* `sqd::Bool=false` indicates whether or not we are solving a symmetric and quasi-definite augmented system
+  If `sqd = true`, we solve the symmetric and quasi-definite system
 
-In this case, `N` can still be specified and indicates the norm
-in which `x` should be measured.
+      [ E   A' ] [ r ]   [ b ]
+      [ A  -F  ] [ x ] = [ 0 ],
+
+  where E = M⁻¹  and F = N⁻¹.
+
+  If `sqd = false`, we solve the symmetric and indefinite system
+
+      [ E   A' ] [ r ]   [ b ]
+      [ A   0  ] [ x ] = [ 0 ].
+
+  In this case, `N` can still be specified and indicates the norm in which `x` and the forward error should be measured.
+* `λ::Float64=0.0` is a regularization parameter (see the problem statement above)
+* `σ::Float64=0.0` is an underestimate of the smallest nonzero singular value of `A`---setting `σ` too large will result in an error in the course of the iterations
+* `atol::Float64=1.0e-8` is a stopping tolerance based on the residual
+* `btol::Float64=1.0e-8` is a stopping tolerance used to detect zero-residual problems
+* `etol::Float64=1.0e-8` is a stopping tolerance based on the lower bound on the error
+* `window::Int=5` is the number of iterations used to accumulate a lower bound on the error
+* `utol::Float64=1.0e-8` is a stopping tolerance based on the upper bound on the error
+* `itmax::Int=0` is the maximum number of iterations (0 means no imposed limit)
+* `conlim::Float64=1.0e+8` is the limit on the estimated condition number of `A` beyond which the solution will be abandoned
+* `verbose::Bool=false` determines verbosity.
+
+#### Return values
+
+`lslq()` returns the tuple `(x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats)` where
+
+* `x_lq::Vector{Float64}` is the LQ solution estimate
+* `x_cg::Vector{Float64}` is the CG solution estimate (i.e., the LSQR point)
+* `err_lbnds::Vector{Float64}` is a vector of lower bounds on the LQ error---the vector is empty if `window` is set to zero
+* `err_ubnds_lq::Vector{Float64}` is a vector of upper bounds on the LQ error---the vector is empty if `σ == 0` is left at zero
+* `err_ubnds_cg::Vector{Float64}` is a vector of upper bounds on the CG error---the vector is empty if `σ == 0` is left at zero
+* `stats::SimpleStats` collects other statistics on the run.
+
+#### Stopping conditions
+
+* the optimality residual is sufficiently small (`stats.status = "found approximate minimum least-squares solution"`) in the sense that either
+  * ‖Aᵀr‖ / (‖A‖ ‖r‖) ≤ atol, or
+  * 1 + ‖Aᵀr‖ / (‖A‖ ‖r‖) ≤ 1
+* an approximate zero-residual solution has been found (`stats.status = "found approximate zero-residual solution"`) in the sense that either
+  * ‖r‖ / ‖b‖ ≤ btol + atol ‖A‖ * ‖xᴸ‖ / ‖b‖, or
+  * 1 + ‖r‖ / ‖b‖ ≤ 1
+* the estimated condition number of `A` is too large in the sense that either
+  * 1/cond(A) ≤ 1/conlim (`stats.status = "condition number exceeds tolerance"`), or
+  * 1 + 1/cond(A) ≤ 1 (`stats.status = "condition number seems too large for this machine"`)
+* the lower bound on the LQ forward error is less than etol * ‖xᴸ‖
+* the upper bound on the CG forward error is less than utol * ‖xᶜ‖
 """
-function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, xsol :: Vector{Float64};
+function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
               M :: AbstractLinearOperator=opEye(size(A,1)), N :: AbstractLinearOperator=opEye(size(A,2)),
               sqd :: Bool=false,
               λ :: Float64=0.0, σ :: Float64=0.0,
@@ -121,7 +168,6 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, xsol :: Vector
 
   # Initialize other constants.
   ρ̄ = -σ
-  # (_, _, γ̄ ) = sym_givens(α, λ)
   γ̄ = α
   ss = β₁
   c = -1.0
@@ -197,9 +243,6 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, xsol :: Vector
     τ = -τ * δ / γ  # forward substitution for t
     δ = sp * αL
     γ̄ = -cp * αL
-    # if λ != 0.0
-    #   (_, _, γ̄ ) = sym_givens(γ̄, λ)
-    # end
 
     if σ > 0.0
       # Continue QR factorization for error estimate
@@ -307,9 +350,9 @@ function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1}, xsol :: Vector
   ill_cond_lim  && (status = "condition number exceeds tolerance")
   solved        && (status = "found approximate minimum least-squares solution")
   zero_resid    && (status = "found approximate zero-residual solution")
-  fwd_err_lbnd  && (status = "truncated forward error small enough")
+  fwd_err_lbnd  && (status = "forward error lower bound small enough")
   fwd_err_ubnd  && (status = "forward error upper bound small enough")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
-  return (x_lq, x_cg, errs_lq, errs_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats)
+  return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats)
 end
