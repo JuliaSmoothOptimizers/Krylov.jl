@@ -37,37 +37,19 @@ end
 @test(all(resids .<= cg_tol));
 @test(stats.solved);
 
-(x, stats) = cg_lanczos_shift_par(A, b, shifts, itmax=n);
-r = residuals(A, b, shifts, convert(Array, x));
-resids = map(norm, r) / b_norm;
-@printf("CG_Lanczos: Relative residuals with shifts:");
-for resid in resids
-  @printf(" %8.1e", resid);
-end
-@printf("\n");
-@test(all(resids .<= cg_tol));
-@test(stats.solved);
-
 # Test negative curvature detection.
 shifts = [-4, -3, 2;]
 (x, stats) = cg_lanczos_shift_seq(A, b, shifts, check_curvature=true, itmax=n);
 @test(stats.flagged == [true, true, false])
 
-(x, stats) = cg_lanczos_shift_par(A, b, shifts, check_curvature=true, itmax=n);
-@test(stats.flagged == [true, true, false])
-
 # Code coverage.
 (x, stats) = cg_lanczos(full(A), b);
 (x, stats) = cg_lanczos_shift_seq(full(A), b, [1:6;]);
-(x, stats) = cg_lanczos_shift_par(full(A), b, [1:6;]);
 show(stats);
 
 # Test b == 0
 (x, stats) = cg_lanczos(A, zeros(size(A,1)))
 @test x == zeros(size(A,1))
-@test stats.status == "x = 0 is a zero-residual solution"
-(x, stats) = cg_lanczos_shift_par(A, zeros(size(A,1)), [1:6;])
-@test x == zeros(size(A,1), 6)
 @test stats.status == "x = 0 is a zero-residual solution"
 (x, stats) = cg_lanczos_shift_seq(A, zeros(size(A,1)), [1:6;])
 @test x == zeros(size(A,1), 6)

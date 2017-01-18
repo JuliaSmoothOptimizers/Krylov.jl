@@ -8,13 +8,12 @@ mtx = "data/1138bus.mtx";
 # mtx = "data/bcsstk18.mtx";
 
 A = MatrixMarket.mmread(mtx);
-VERSION < v"0.4-" && (A = A + tril(A, -1)');  # Old MatrixMarket.jl.
 n = size(A, 1);
 b = ones(n); b_norm = norm(b);
 
 # Define a linear operator with preallocation.
 Ap = zeros(n);
-op = LinearOperator(n, Float64, p -> A_mul_B!(1.0,  A, p, 0.0, Ap))
+op = LinearOperator(n, n, true, true, p -> A_mul_B!(1.0,  A, p, 0.0, Ap))
 
 # Solve Ax=b.
 (x, stats) = cg(op, b);
