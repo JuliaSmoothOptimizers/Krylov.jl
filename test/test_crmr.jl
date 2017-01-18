@@ -85,3 +85,8 @@ show(stats);
 (x, stats) = crmr(A, zeros(size(A,1)))
 @test x == zeros(size(A,2))
 @test stats.status == "x = 0 is a zero-residual solution"
+
+# Test integer values
+A = [eye(Int, 3); rand(1:10, 2, 3)]
+b = A * ones(Int, 3)
+@test norm(crmr(A, b)[1] - ones(3)) < 1e-11

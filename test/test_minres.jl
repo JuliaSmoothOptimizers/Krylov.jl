@@ -6,8 +6,7 @@ minres_tol = 1.0e-6;
 #
 # Cubic spline matrix.
 n = 10;
-A = spdiagm((ones(n-1), 4*ones(n), ones(n-1)), (-1, 0, 1))
-b = A * [1:n;];
+A = spdiagm((ones(n-1), 4*ones(n), ones(n-1)), (-1, 0, 1)) b = A * [1:n;];
 
 (x, stats) = minres(A, b, itmax=10);
 r = b - A * x;
@@ -65,3 +64,8 @@ resid = norm(r) / norm(b)
 (x, stats) = minres(A, zeros(size(A,1)))
 @test x == zeros(size(A,1))
 @test stats.status == "x = 0 is a zero-residual solution"
+
+# Test integer values
+A = [eye(Int, 3); rand(1:10, 2, 3)]
+b = A * ones(Int, 3)
+@test norm(minres(A, b)[1] - ones(3)) < 1e-12

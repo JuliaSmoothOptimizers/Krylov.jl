@@ -39,7 +39,7 @@ CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖A'r
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 """
-function cgls(A :: AbstractLinearOperator, b :: Array{Float64,1};
+function cgls{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
               M :: AbstractLinearOperator=opEye(size(b,1)),
               λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
               itmax :: Int=0, verbose :: Bool=false)
@@ -49,9 +49,9 @@ function cgls(A :: AbstractLinearOperator, b :: Array{Float64,1};
   verbose && @printf("CGLS: system of %d equations in %d variables\n", m, n);
 
   x = zeros(n);
-  bNorm = BLAS.nrm2(m, b, 1);   # Marginally faster than norm(b);
+  r = 1.0*b
+  bNorm = BLAS.nrm2(m, r, 1)   # Marginally faster than norm(b);
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
-  r = copy(b);
   s = A' * M * r;
   p = copy(s);
   γ = BLAS.dot(n, s, 1, s, 1);  # Faster than γ = dot(s, s);

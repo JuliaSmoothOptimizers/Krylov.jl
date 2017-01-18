@@ -52,7 +52,7 @@ CGMR produces monotonic residuals ‖r‖₂.
 It is formally equivalent to CRAIG-MR, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 """
-function crmr(A :: AbstractLinearOperator, b :: Array{Float64,1};
+function crmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
               λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
               itmax :: Int=0, verbose :: Bool=false)
 
@@ -61,12 +61,12 @@ function crmr(A :: AbstractLinearOperator, b :: Array{Float64,1};
   verbose && @printf("CRMR: system of %d equations in %d variables\n", m, n);
 
   x = zeros(n);
-  bNorm = BLAS.nrm2(m, b, 1);  # norm(b - A * x0) if x0 ≠ 0.
+  r  = 1.0*b
+  bNorm = BLAS.nrm2(m, r, 1)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
-  r  = copy(b);
   rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   λ > 0 && (s = copy(r));
-  Ar = A' * b;  # - λ * x0 if x0 ≠ 0.
+  Ar = A' * r;  # - λ * x0 if x0 ≠ 0.
   p  = copy(Ar);
   γ  = BLAS.dot(n, Ar, 1, Ar, 1);  # Faster than γ = dot(Ar, Ar);
   λ > 0 && (γ += λ * rNorm * rNorm);

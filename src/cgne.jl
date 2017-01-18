@@ -54,7 +54,7 @@ CGNE produces monotonic errors ‖x-x*‖₂ but not residuals ‖r‖₂.
 It is formally equivalent to CRAIG, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 """
-function cgne(A :: AbstractLinearOperator, b :: Array{Float64,1};
+function cgne{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
               λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
               itmax :: Int=0, verbose :: Bool=false)
 
@@ -63,9 +63,9 @@ function cgne(A :: AbstractLinearOperator, b :: Array{Float64,1};
   verbose && @printf("CGNE: system of %d equations in %d variables\n", m, n);
 
   x = zeros(n);
-  bNorm = BLAS.nrm2(m, b, 1);   # Marginally faster than norm(b);
+  r = 1.0*b
+  bNorm = BLAS.nrm2(m, r, 1)   # Marginally faster than norm(b);
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution");
-  r = copy(b);
   λ > 0 && (s = copy(r));
 
   # The following vector copy takes care of the case where A is a LinearOperator
