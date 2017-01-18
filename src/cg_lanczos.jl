@@ -31,7 +31,7 @@ function cg_lanczos{T <: Real}(A :: AbstractLinearOperator, b :: Array{T,1};
 
   # Initial state.
   x = zeros(n);
-  β = norm(b);
+  β = BLAS.nrm2(n, b, 1);
   β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
   v = b / β;
   v_prev = v;
@@ -74,7 +74,7 @@ function cg_lanczos{T <: Real}(A :: AbstractLinearOperator, b :: Array{T,1};
       BLAS.axpy!(n, -β, v_prev, 1, v_next, 1);  # Faster than v_next = v_next - β * v_prev;
       v_prev = v;
     end
-    β = norm(v_next);
+    β = BLAS.nrm2(n, v_next, 1);
     v = v_next / β;
     Anorm2 += β_prev^2 + β^2 + δ^2;  # Use ‖T‖ as increasing approximation of ‖A‖.
     β_prev = β;
@@ -121,7 +121,7 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
   # Initial state.
   ## Distribute x similarly to shifts.
   x = zeros(n, nshifts);
-  β = norm(b);
+  β = BLAS.nrm2(n, b, 1);
   β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
   v = b / β;
   v_prev = copy(v);
@@ -168,7 +168,7 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
       BLAS.axpy!(n, -β, v_prev, 1, v_next, 1);  # Faster than v_next = v_next - β * v_prev;
       v_prev = v;
     end
-    β = norm(v_next);
+    β = BLAS.nrm2(n, v_next, 1);
     v = v_next / β;
 
     # Check curvature: v'(A + sᵢI)v = v'Av + sᵢ ‖v‖² = δ + sᵢ because ‖v‖ = 1.
@@ -212,5 +212,4 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
   stats = LanczosStats(solved, reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))', indefinite, 0.0, 0.0, status);  # TODO: Estimate Anorm and Acond.
   return (x, stats);
 end
-
 

@@ -53,7 +53,7 @@ It is formally equivalent to CRMR, though can be slightly more accurate,
 and intricate to implement. Both the x- and y-parts of the solution are
 returned.
 """
-function craigmr(A :: AbstractLinearOperator, b :: Array{Float64,1};
+function craigmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
                  λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
                  itmax :: Int=0, verbose :: Bool=false)
 
@@ -63,7 +63,8 @@ function craigmr(A :: AbstractLinearOperator, b :: Array{Float64,1};
 
   # Compute y such that AA'y = b. Then recover x = A'y.
   y = zeros(m);
-  β₁ = BLAS.nrm2(m, b, 1);   # Marginally faster than norm(b);
+  u = 1.0*b
+  β₁ = BLAS.nrm2(m, u, 1)   # Marginally faster than norm(b);
   if β₁ == 0.0
     x = zeros(n);
     return (x, y, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution"));
@@ -72,7 +73,6 @@ function craigmr(A :: AbstractLinearOperator, b :: Array{Float64,1};
 
   # Initialize Golub-Kahan process.
   # β₁ u₁ = b.
-  u = copy(b);
   BLAS.scal!(m, 1.0/β₁, u, 1);
   v = copy(A' * u);
   α = BLAS.nrm2(n, v, 1);
@@ -121,7 +121,7 @@ function craigmr(A :: AbstractLinearOperator, b :: Array{Float64,1};
     # 1. βu = Av - αu
     BLAS.scal!(m, -α, u, 1);
     BLAS.axpy!(m, 1.0, A * v, 1, u, 1);
-    β = norm(u);
+    β = BLAS.nrm2(m, u, 1);
     β != 0.0 && BLAS.scal!(m, 1.0/β, u, 1);
     Anorm² = Anorm² + β * β;  # = ‖B_{k-1}‖²
 

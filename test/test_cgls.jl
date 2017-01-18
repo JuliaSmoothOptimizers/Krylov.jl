@@ -41,3 +41,8 @@ show(stats);
 (x, stats) = cgls(A, zeros(size(A,1)))
 @test x == zeros(size(A,1))
 @test stats.status == "x = 0 is a zero-residual solution"
+
+# Test integer values
+A = [eye(Int, 3); rand(1:10, 2, 3)]
+b = A * ones(Int, 3)
+@test norm(cgls(A, b)[1] - ones(3)) < 1e-12
