@@ -38,7 +38,7 @@ CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r‖�
 It is formally equivalent to LSMR, though can be slightly less accurate,
 but simpler to implement.
 """
-function crls(A :: AbstractLinearOperator, b :: Array{Float64,1};
+function crls{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
               M :: AbstractLinearOperator=opEye(size(b,1)),
               λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
               itmax :: Int=0, verbose :: Bool=false)
@@ -48,9 +48,9 @@ function crls(A :: AbstractLinearOperator, b :: Array{Float64,1};
   verbose && @printf("CRLS: system of %d equations in %d variables\n", m, n);
 
   x = zeros(n);
-  bNorm = BLAS.nrm2(m, b, 1);  # norm(b - A * x0) if x0 ≠ 0.
+  r  = 1.0*b
+  bNorm = BLAS.nrm2(m, r, 1)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
-  r  = copy(b);
   Mr = M * r;
 
   # The following vector copy takes care of the case where A is a LinearOperator

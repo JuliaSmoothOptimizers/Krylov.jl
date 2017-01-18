@@ -54,3 +54,8 @@ show(stats);
 (x, stats) = cg_lanczos_shift_seq(A, zeros(size(A,1)), [1:6;])
 @test x == zeros(size(A,1), 6)
 @test stats.status == "x = 0 is a zero-residual solution"
+
+# Test integer values
+A = ceil(Int, A) + eye(size(A,1))
+b = A * ones(Int, size(A,1))
+@test norm(cg_lanczos(A, b)[1] - ones(size(A,1))) < 1e-12

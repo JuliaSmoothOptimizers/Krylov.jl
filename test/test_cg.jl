@@ -59,3 +59,8 @@ b = B * ones(n)
 (x, stats) = cg(A, zeros(size(A,1)))
 @test x == zeros(size(A,1))
 @test stats.status == "x = 0 is a zero-residual solution"
+
+# Test integer values
+A = [4 -1 0; -1 4 -1; 0 -1 4]
+b = [7; 2; -1]
+@test norm(cg(A, b)[1] - [2; 1; 0]) < 1e-12

@@ -41,7 +41,7 @@ A is indefinite.
 
 MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r‖₂.
 
-A preconditioner M may be provided in the form of a linear operator and is 
+A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
 function minres(A :: AbstractLinearOperator, b :: Array{Float64,1};
@@ -167,7 +167,7 @@ function minres(A :: AbstractLinearOperator, b :: Array{Float64,1};
     w = (v - oldϵ * w1 - δ * w2) / γ
     BLAS.axpy!(n, ϕ, w, 1, x, 1)  # x = x + ϕ * w
     xENorm² = xENorm² + ϕ * ϕ
-    
+
     # Compute lower bound on forward error.
     err_vec[mod(iter, window) + 1] = ϕ
     iter ≥ window && (err_lbnd = norm(err_vec))
@@ -180,7 +180,7 @@ function minres(A :: AbstractLinearOperator, b :: Array{Float64,1};
 
     # Estimate various norms.
     ANorm = sqrt(ANorm²)
-    xNorm = norm(x)
+    xNorm = BLAS.nrm2(n, x, 1)
     ϵA = ANorm * ϵM
     ϵx = ANorm * xNorm * ϵM
     ϵr = ANorm * xNorm * rtol

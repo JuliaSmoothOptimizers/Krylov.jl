@@ -59,7 +59,7 @@ indefinite system
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
 """
-function lsmr(A :: AbstractLinearOperator, b :: Array{Float64,1};
+function lsmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
               M :: AbstractLinearOperator=opEye(size(A,1)), N :: AbstractLinearOperator=opEye(size(A,2)),
               sqd :: Bool=false,
               λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
@@ -77,7 +77,7 @@ function lsmr(A :: AbstractLinearOperator, b :: Array{Float64,1};
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
-  Mu = copy(b)
+  Mu = 1.0*b
   u = M * Mu
   β₁ = sqrt(BLAS.dot(m, u, 1, Mu, 1))
   β₁ == 0.0 && return (x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution"))
@@ -225,7 +225,7 @@ function lsmr(A :: AbstractLinearOperator, b :: Array{Float64,1};
     # Test for convergence.
     ArNorm = abs(ζbar)
     push!(ArNorms, ArNorm)
-    xNorm = norm(x)
+    xNorm = BLAS.nrm2(n, x, 1)
 
     test1 = rNorm / β₁
     test2 = ArNorm / (Anorm * rNorm)
