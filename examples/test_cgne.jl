@@ -12,7 +12,7 @@ A = M.matrix;
 # Define a linear operator with preallocation.
 Ap = zeros(m);
 Atq = zeros(n);
-op = LinearOperator(m, n, Float64, false, false,
+op = LinearOperator(m, n, false, false,
                     p -> A_mul_B!(1.0,  A, p, 0.0, Ap),
                     q -> At_mul_B!(1.0, A, q, 0.0, Atq),
                     q -> At_mul_B!(1.0, A, q, 0.0, Atq));

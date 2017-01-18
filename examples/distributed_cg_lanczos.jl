@@ -1,3 +1,16 @@
+using DistributedArrays, Krylov, LinearOperators, MatrixMarket
+
+function residuals(A, b, shifts, x)
+  nshifts = size(shifts, 1);
+  r = [ (b - A * x[:,i] - shifts[i] * x[:,i]) for i = 1 : nshifts ];
+  return r;
+end
+
+# Parallel reduce.
+preduce(func, darray) = reduce(func,
+                               map(fetch,
+                                   [ (@spawnat p reduce(func, localpart(darray))) for p = procs(darray) ] ));
+
 """The Lanczos version of the conjugate gradient method to solve a family
 of shifted systems
 
@@ -24,8 +37,9 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
   ## Distribute x similarly to shifts.
   dx = dzeros((n, nshifts), workers(), [1, nchunks]);
   β = norm(b);
-  β == 0 && return convert(Array, dx), LanczosStats(true, dfill(0.0, (nshifts,), workers(), [nchunks]),
-                                                    false, 0.0, 0.0, "x = 0 is a zero-residual solution")
+  β == 0 && return convert(Array, dx),
+            Krylov.LanczosStats(true, zeros(nshifts), false, 0.0, 0.0, "x = 0
+                                is a zero-residual solution")
   v = b / β;
   v_prev = v;
 
@@ -134,9 +148,20 @@ function cg_lanczos_shift_par{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, drNorm, dindefinite, 0.0, 0.0, status);
+  stats = Krylov.LanczosStats(solved, convert(Array, drNorm), convert(Array, dindefinite), 0.0, 0.0, status);
   return (dx, stats);
 end
+
+# mtx = "data/1138bus.mtx";
+mtx = "data/bcsstk09.mtx";
+
+A = MatrixMarket.mmread(mtx);
+n = size(A, 1);
+b = ones(n); b_norm = norm(b);
+
+# Define a linear operator with preallocation.
+Ap = zeros(n);
+op = LinearOperator(n, n, true, true, p -> A_mul_B!(1.0,  A, p, 0.0, Ap))
 
 # Solve (A+αI)x = b in parallel.
 shifts = [1, 2, 3, 4];
