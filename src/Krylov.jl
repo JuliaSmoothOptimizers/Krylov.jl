@@ -4,10 +4,6 @@ using LinearOperators
 using Compat
 import Compat.String
 
-if VERSION >= v"0.4-"
-  using DistributedArrays
-end
-
 "Abstract type for statistics returned by a solver"
 abstract KrylovStats;
 
@@ -22,8 +18,8 @@ end
 
 type LanczosStats <: KrylovStats
   solved :: Bool
-  residuals :: Union{Array{Float64}, DArray{Float64,1,Array{Float64,1}}}
-  flagged :: Union{Bool, BitArray{1}, DArray{Bool,1,Array{Bool,1}}}
+  residuals :: Array{Float64}
+  flagged :: Union{Bool, Array{Bool,1}, BitArray{1}}
   Anorm :: Float64
   Acond :: Float64
   status :: String
