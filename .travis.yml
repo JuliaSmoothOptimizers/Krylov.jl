@@ -6,8 +6,12 @@ os:
 
 julia:
   - 0.4
-  - release
-  - nightly
+  - 0.5
+  - 0.6
+
+branches:
+  only:
+    - master
 
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi

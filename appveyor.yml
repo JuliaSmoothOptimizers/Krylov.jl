@@ -11,6 +11,12 @@ notifications:
     on_build_failure: false
     on_build_status_changed: false
 
+branches:
+  only:
+    - master
+
+skip_branch_with_pr: true
+
 install:
 # Download most recent Julia Windows binary
   - ps: (new-object net.webclient).DownloadFile($("http://s3.amazonaws.com/"+$env:JULIAVERSION), "C:\projects\julia-binary.exe")
