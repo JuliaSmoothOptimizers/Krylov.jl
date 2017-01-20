@@ -104,14 +104,15 @@ The iterations stop as soon as one of the following conditions holds true:
 * the lower bound on the LQ forward error is less than etol * ‖xᴸ‖
 * the upper bound on the CG forward error is less than utol * ‖xᶜ‖
 """
-function lslq(A :: AbstractLinearOperator, b :: Vector{Float64};
-              M :: AbstractLinearOperator=opEye(size(A,1)), N :: AbstractLinearOperator=opEye(size(A,2)),
-              sqd :: Bool=false,
-              λ :: Float64=0.0, σ :: Float64=0.0,
-              atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
-              etol :: Float64=1.0e-8, window :: Int=5,
-              utol :: Float64=1.0e-8,
-              itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+function lslq{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
+                         M :: AbstractLinearOperator=opEye(size(A,1)),
+                         N :: AbstractLinearOperator=opEye(size(A,2)),
+                         sqd :: Bool=false,
+                         λ :: Float64=0.0, σ :: Float64=0.0,
+                         atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
+                         etol :: Float64=1.0e-8, window :: Int=5,
+                         utol :: Float64=1.0e-8,
+                         itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
