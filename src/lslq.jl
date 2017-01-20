@@ -90,6 +90,8 @@ but is more stable.
 
 #### Stopping conditions
 
+The iterations stop as soon as one of the following conditions holds true:
+
 * the optimality residual is sufficiently small (`stats.status = "found approximate minimum least-squares solution"`) in the sense that either
   * ‖Aᵀr‖ / (‖A‖ ‖r‖) ≤ atol, or
   * 1 + ‖Aᵀr‖ / (‖A‖ ‖r‖) ≤ 1
@@ -102,7 +104,7 @@ but is more stable.
 * the lower bound on the LQ forward error is less than etol * ‖xᴸ‖
 * the upper bound on the CG forward error is less than utol * ‖xᶜ‖
 """
-function lslq(A :: AbstractLinearOperator, b :: Array{Float64,1};
+function lslq(A :: AbstractLinearOperator, b :: Vector{Float64};
               M :: AbstractLinearOperator=opEye(size(A,1)), N :: AbstractLinearOperator=opEye(size(A,2)),
               sqd :: Bool=false,
               λ :: Float64=0.0, σ :: Float64=0.0,
