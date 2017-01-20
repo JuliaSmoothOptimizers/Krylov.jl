@@ -21,8 +21,6 @@
 
 export cgls
 
-# Methods for various argument types.
-include("cgls_methods.jl")
 
 """Solve the regularized linear least-squares problem
 

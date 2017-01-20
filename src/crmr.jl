@@ -27,8 +27,6 @@
 
 export crmr
 
-# Methods for various argument types.
-include("crmr_methods.jl")
 
 """Solve the consistent linear system
 

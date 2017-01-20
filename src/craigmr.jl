@@ -27,8 +27,6 @@
 
 export craigmr
 
-# Methods for various argument types.
-include("craigmr_methods.jl")
 
 """Solve the consistent linear system
 
@@ -89,7 +87,7 @@ function craigmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
     return (x, y, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"));
   end
   BLAS.scal!(n, 1.0/α, v, 1);
- 
+
   # Initialize other constants.
   ζbar = β₁;
   ρbar = α;

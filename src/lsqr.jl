@@ -24,8 +24,6 @@
 
 export lsqr
 
-# Methods for various argument types.
-include("lsqr_methods.jl")
 
 """Solve the regularized linear least-squares problem
 

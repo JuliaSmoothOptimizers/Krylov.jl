@@ -3,8 +3,6 @@
 
 export lslq
 
-# Methods for various argument types.
-include("lslq_methods.jl")
 
 """Solve the regularized linear least-squares problem
 

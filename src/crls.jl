@@ -20,8 +20,6 @@
 
 export crls
 
-# Methods for various argument types.
-include("crls_methods.jl")
 
 """Solve the linear least-squares problem
 

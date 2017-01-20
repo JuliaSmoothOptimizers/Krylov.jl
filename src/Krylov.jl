@@ -66,4 +66,6 @@ include("lsmr.jl")
 include("craigmr.jl")
 include("lslq.jl")
 
+include("variants.jl")
+
 end
