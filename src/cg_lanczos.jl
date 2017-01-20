@@ -9,7 +9,7 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Princeton, NJ, March 2015.
 
-export cg_lanczos, cg_lanczos_shift_seq, cg_lanczos_shift_par
+export cg_lanczos, cg_lanczos_shift_seq
 
 # Methods for various argument types.
 include("cg_lanczos_methods.jl")
