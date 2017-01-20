@@ -3,6 +3,7 @@ using Krylov
 using LinearOperators
 
 include("gen_lsq.jl")
+include("check_min_norm.jl")
 include("test_cg.jl")
 include("test_cg_lanczos.jl")
 @printf("!!!! FIX MINRES TESTS !!!!")
@@ -15,4 +16,3 @@ include("test_crmr.jl")
 include("test_lsqr.jl")
 include("test_lsmr.jl")
 include("test_craigmr.jl")
-
