@@ -60,11 +60,12 @@ In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
 """
 function lsmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-              M :: AbstractLinearOperator=opEye(size(A,1)), N :: AbstractLinearOperator=opEye(size(A,2)),
-              sqd :: Bool=false,
-              λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
-              etol :: Float64=1.0e-8, window :: Int=5,
-              itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+                         M :: AbstractLinearOperator=opEye(size(A,1)),
+                         N :: AbstractLinearOperator=opEye(size(A,2)),
+                         sqd :: Bool=false,
+                         λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
+                         etol :: Float64=1.0e-8, window :: Int=5,
+                         itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
