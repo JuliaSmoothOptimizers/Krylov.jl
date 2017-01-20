@@ -21,8 +21,6 @@
 
 export minres
 
-# Methods for various argument types.
-include("minres_methods.jl")
 
 """Solve the shifted linear least-squares problem
 

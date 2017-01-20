@@ -10,8 +10,6 @@
 
 export cg
 
-# Methods for various argument types.
-include("cg_methods.jl")
 
 """The conjugate gradient method to solve the symmetric linear system Ax=b.
 

@@ -29,9 +29,6 @@
 export cgne
 
 
-# Methods for various argument types.
-include("cgne_methods.jl")
-
 """Solve the consistent linear system
 
   Ax + √λs = b

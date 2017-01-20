@@ -33,9 +33,6 @@
 export craig
 
 
-# Methods for various argument types.
-include("craig_methods.jl")
-
 """Find the least-norm solution of the consistent linear system
 
   Ax + √λs = b

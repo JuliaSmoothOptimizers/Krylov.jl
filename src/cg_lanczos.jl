@@ -11,8 +11,6 @@
 
 export cg_lanczos, cg_lanczos_shift_seq
 
-# Methods for various argument types.
-include("cg_lanczos_methods.jl")
 
 """The Lanczos version of the conjugate gradient method to solve the
 symmetric linear system
@@ -212,4 +210,3 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
   stats = LanczosStats(solved, reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))', indefinite, 0.0, 0.0, status);  # TODO: Estimate Anorm and Acond.
   return (x, stats);
 end
-
