@@ -1,23 +1,5 @@
-# An implementation of LSLQ for the solution of the
-# over-determined linear least-squares problem
-#
-#  minimize ‖Ax - b‖
-#
-# or, equivalently, of the normal equations
-#
-#  A'Ax = A'b.
-#
-# LSLQ is formally equivalent to applying SYMMLQ
-# to the normal equations but should be more stable.
-#
-# This implementation accompanies the paper
-#
-# R. Estrin, D. Orban and M. A. Saunders, LSLQ: An Iterative Method
-# for Linear Least-Squares with a Forward Error Minimization Property,
-# Cahier du GERAD G-2016-xx, GERAD, Montreal, 2016.
-#
 # Dominique Orban, <dominique.orban@gerad.ca>
-# Montreal, QC, November 2016.
+# Montreal, QC, November 2016-January 2017.
 
 export lslq
 
@@ -103,6 +85,11 @@ The iterations stop as soon as one of the following conditions holds true:
   * 1 + 1/cond(A) ≤ 1 (`stats.status = "condition number seems too large for this machine"`)
 * the lower bound on the LQ forward error is less than etol * ‖xᴸ‖
 * the upper bound on the CG forward error is less than utol * ‖xᶜ‖
+
+#### References
+
+* R. Estrin, D. Orban and M. A. Saunders, *Estimates of the 2-Norm Forward Error for SYMMLQ and CG*, Cahier du GERAD G-2016-70, GERAD, Montreal, 2016. DOI http://dx.doi.org/10.13140/RG.2.2.19581.77288.
+* R. Estrin, D. Orban and M. A. Saunders, *LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*, Cahier du GERAD G-2017-xx, GERAD, Montreal, 2017.
 """
 function lslq{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
                          M :: AbstractLinearOperator=opEye(size(A,1)),
