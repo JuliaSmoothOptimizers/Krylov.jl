@@ -39,9 +39,9 @@ It is formally equivalent to LSMR, though can be slightly less accurate,
 but simpler to implement.
 """
 function crls{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-              M :: AbstractLinearOperator=opEye(size(b,1)),
-              λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-              itmax :: Int=0, verbose :: Bool=false)
+                         M :: AbstractLinearOperator=opEye(size(b,1)),
+                         λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+                         itmax :: Int=0, verbose :: Bool=false)
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");

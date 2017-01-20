@@ -21,7 +21,7 @@ symmetric linear system
 
 The method does _not_ abort if A is not definite.
 """
-function cg_lanczos{T <: Real}(A :: AbstractLinearOperator, b :: Array{T,1};
+function cg_lanczos{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
                                atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
                                check_curvature :: Bool=false, verbose :: Bool=false)
 
