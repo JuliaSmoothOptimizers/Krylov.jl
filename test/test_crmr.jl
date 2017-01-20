@@ -13,21 +13,6 @@ function test_crmr(A, b; λ=0.0)
   return (x, stats, resid)
 end
 
-function check_min_norm(A, b, x; λ=0.0)
-  (nrow, ncol) = size(A);
-  if λ > 0.0
-    AI = [A sqrt(λ)*eye(nrow)];
-    xI = [x ; (b-A*x)/sqrt(λ)];
-  else
-    AI = A;
-    xI = x;
-  end
-  xmin = AI' * ((AI * AI') \ b);
-  xmin_norm = norm(xmin);
-  @printf("CRMR: ‖x - xmin‖ = %7.1e\n", norm(xI - xmin));
-  return (xI, xmin, xmin_norm)
-end
-
 # Underdetermined consistent.
 A = rand(10, 25); b = A * ones(25);
 (x, stats, resid) = test_crmr(A, b);
