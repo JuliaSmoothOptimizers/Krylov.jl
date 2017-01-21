@@ -1,7 +1,3 @@
-# This macro evaluates its arguments before calling @printf.
-print_formatted(fmt, args...) = @eval @printf($fmt, $(args...))
-
-
 ## The following function directly interfaces libc's printf.
 function process_types(args...)
   # Process types of arguments for libc's printf family.
