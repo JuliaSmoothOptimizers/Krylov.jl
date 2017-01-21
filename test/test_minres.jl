@@ -66,6 +66,6 @@ resid = norm(r) / norm(b)
 @test stats.status == "x = 0 is a zero-residual solution"
 
 # Test integer values
-A = [eye(Int, 3); rand(1:10, 2, 3)]
-b = A * ones(Int, 3)
+A = spdiagm((ones(Int, n-1), 4*ones(Int, n), ones(Int, n-1)), (-1, 0, 1)); b = A * [1:n;]
+(x, stats) = minres(A, b)
 @test stats.solved

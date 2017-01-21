@@ -84,4 +84,5 @@ show(stats);
 # Test integer values
 A = [eye(Int, 3); rand(1:10, 2, 3)]
 b = A * ones(Int, 3)
-@test norm(craigmr(A, b)[1] - ones(3)) < 1e-12
+(x, y, stats) = craigmr(A, b)
+@test stats.solved

@@ -44,4 +44,5 @@ show(stats)
 # Test integer values
 A = [eye(Int, 3); rand(1:10, 2, 3)]
 b = A * ones(Int, 3)
-@test norm(lslq(A, b)[1] - ones(3)) < 1e-11
+(x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b)
+@test stats.solved
