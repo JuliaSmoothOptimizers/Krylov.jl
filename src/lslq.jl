@@ -108,12 +108,19 @@ function lslq{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   λ² = λ * λ
   ctol = conlim > 0.0 ? 1/conlim : 0.0
 
+  x_lq = zeros(n)    # LSLQ point
+  x_cg = zeros(n)    # LSQR point
+  err_lbnds = Float64[]
+  err_ubnds_lq = Float64[]
+  err_ubnds_cg = Float64[]
+
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
   Mu = copy(b)
   u = M * Mu
   β₁ = sqrt(BLAS.dot(m, u, 1, Mu, 1))
-  β₁ == 0.0 && return (x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution"))
+  β₁ == 0.0 && return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg,
+                       SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β = β₁
 
   BLAS.scal!(m, 1.0/β₁, u, 1)
@@ -123,7 +130,8 @@ function lslq{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   α = sqrt(BLAS.dot(n, v, 1, Nv, 1))  # = α₁
 
   # A'b = 0 so x = 0 is a minimum least-squares solution
-  α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
+  α == 0.0 && return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg,
+                      SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
   BLAS.scal!(n, 1.0/α, v, 1)
   BLAS.scal!(n, 1.0/α, Nv, 1)
 
@@ -134,10 +142,8 @@ function lslq{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   σmin = Inf
   Acond  = 0.0
 
-  x_lq = zeros(n)    # LSLQ point
   xlqNorm  = 0.0
   xlqNorm² = 0.0
-  x_cg = zeros(n)    # LSQR point
   xcgNorm  = 0.0
   xcgNorm² = 0.0
 
@@ -145,14 +151,7 @@ function lslq{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   w̄ = copy(v)        # = w̄₁ = v₁
 
   err_lbnd = 0.0
-  err_lbnds = Float64[]
   err_vec = zeros(window)
-  err_ubnds_lq = Float64[]
-  err_ubnds_cg = Float64[]
-
-  # For paper only
-  errs_lq = Float64[]; push!(errs_lq, norm(xsol))
-  errs_cg = Float64[]; push!(errs_cg, norm(xsol))
 
   # Initialize other constants.
   ρ̄ = -σ
