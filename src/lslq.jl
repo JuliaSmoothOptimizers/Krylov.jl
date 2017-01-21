@@ -4,7 +4,10 @@
 export lslq
 
 
-"""Solve the regularized linear least-squares problem
+"""
+    lslq(A, b, λ=0.0)
+
+Solve the regularized linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ² ‖x‖₂²
 
@@ -19,8 +22,8 @@ but is more stable.
 
 * the solution estimate is updated along orthogonal directions
 * the norm of the solution estimate ‖xᴸₖ‖₂ is increasing
-* the forward error ‖eₖ‖₂ := ‖xᴸₖ - x*‖₂ is decreasing
-* it is possible to transition cheaply from the LSLQ iterate to the LSQR iterate if there is an advantage (there always is in terms of forward error)
+* the error ‖eₖ‖₂ := ‖xᴸₖ - x*‖₂ is decreasing
+* it is possible to transition cheaply from the LSLQ iterate to the LSQR iterate if there is an advantage (there always is in terms of error)
 * if `A` is rank deficient, identify the minimum least-squares solution
 
 #### Input arguments
