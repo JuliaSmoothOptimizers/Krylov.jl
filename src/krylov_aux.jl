@@ -11,7 +11,11 @@ function sym_givens(a :: Float64, b :: Float64)
 	# D. Orban, Montreal, May 2015.
 
   if b == 0.0
-    a == 0.0 && (c = 1.0) || (c = sign(a));  # In Julia, sign(0) = 0.
+    if a == 0.0
+      c = 1.0
+    else
+      c = sign(a)  # In Julia, sign(0) = 0.
+    end
     s = 0.0;
     ρ = abs(a);
 
