@@ -64,7 +64,7 @@ function minres{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   y = M * r1
   β₁ = BLAS.dot(m, r1, 1, y, 1)
   β₁ < 0.0 && error("Preconditioner is not positive definite")
-  β₁ == 0.0 && return (x, LanczosStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution"))
+  β₁ == 0.0 && return (x, SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
   β = β₁
 
