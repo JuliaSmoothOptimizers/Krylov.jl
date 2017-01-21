@@ -63,10 +63,7 @@ function craigmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   y = zeros(m);
   u = 1.0*b
   β₁ = BLAS.nrm2(m, u, 1)   # Marginally faster than norm(b);
-  if β₁ == 0.0
-    x = zeros(n);
-    return (x, y, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution"));
-  end
+  β₁ == 0.0 && return (zeros(n), y, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution"));
   β = β₁;
 
   # Initialize Golub-Kahan process.
@@ -81,11 +78,8 @@ function craigmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
                      1, β₁, α, β₁, α, 0, 1, Anorm²);
 
-  if α == 0.0
-    # A'b = 0 so x = 0 is a minimum least-squares solution
-    x = zeros(n);
-    return (x, y, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"));
-  end
+  # A'b = 0 so x = 0 is a minimum least-squares solution
+  α == 0.0 && return (zeros(n), y, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"));
   BLAS.scal!(n, 1.0/α, v, 1);
 
   # Initialize other constants.
