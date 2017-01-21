@@ -58,4 +58,5 @@ show(stats);
 # Test integer values
 A = ceil(Int, A) + eye(size(A,1))
 b = A * ones(Int, size(A,1))
-@test norm(cg_lanczos(A, b)[1] - ones(size(A,1))) < 1e-12
+(x, stats) = cg_lanczos(A, b)
+@test stats.solved

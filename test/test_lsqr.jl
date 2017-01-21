@@ -31,4 +31,5 @@ show(stats);
 # Test integer values
 A = [eye(Int, 3); rand(1:10, 2, 3)]
 b = A * ones(Int, 3)
-@test norm(lsqr(A, b)[1] - ones(3)) < 1e-11
+(x, stats) = lsqr(A, b)
+@test stats.solved

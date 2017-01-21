@@ -63,4 +63,5 @@ b = B * ones(n)
 # Test integer values
 A = [4 -1 0; -1 4 -1; 0 -1 4]
 b = [7; 2; -1]
-@test norm(cg(A, b)[1] - [2; 1; 0]) < 1e-12
+(x, stats) = cg(A, b)
+@test stats.solved
