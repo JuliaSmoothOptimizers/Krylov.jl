@@ -183,9 +183,11 @@ function craig{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
     tired = iter >= itmax;
   end
 
+  inconsistent = !solved  # is there a smarter way?
+
   # TODO: transfer to LSQR point and update y.
 
-  status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent" : "solution good enough given atol and rtol")
+  status = solved ? "solution good enough given atol and rtol" : (inconsistent ? "system probably inconsistent" : "maximum number of iterations exceeded")
   stats = SimpleStats(solved, inconsistent, rNorms, Float64[], status);
   return (x, y, stats);
 end
