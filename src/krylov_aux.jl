@@ -109,6 +109,7 @@ function to_boundary(x :: Vector{Float64}, d :: Vector{Float64},
   xd = dot(x, d)
   flip && (xd = -xd)
   dNorm2 = dot(d, d)
+  dNorm2 == 0.0 && error("zero direction")
   xNorm2 == 0.0 && (xNorm2 = dot(x, x))
   (xNorm2 <= radius * radius) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius * radius))
   roots = roots_quadratic(dNorm2, 2 * xd, xNorm2 - radius * radius)
