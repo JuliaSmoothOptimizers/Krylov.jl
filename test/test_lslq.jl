@@ -17,6 +17,19 @@ for npower = 1 : 4
   @test(stats.solved)
 end
 
+# Test with smallest singular value estimate
+Σ = diagm((1:4))
+U, _ = qr(rand(6, 6))
+V, _ = qr(rand(4, 4))
+A = U * [Σ ; zeros(2, 4)] * V'
+b = ones(6)
+(x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, σ=1 - 1.0e-10)
+@test isapprox(err_ubnds_lq[end], 0.0, atol=sqrt(eps(Float64)))
+@test isapprox(err_ubnds_cg[end], 0.0, atol=sqrt(eps(Float64)))
+x_exact = A \ b
+@test norm(x - x_exact) ≤ sqrt(eps(Float64)) * norm(x_exact)
+@test norm(x_cg - x_exact) ≤ sqrt(eps(Float64)) * norm(x_exact)
+
 # Code coverage.
 (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0)
 (x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(full(A), b)
