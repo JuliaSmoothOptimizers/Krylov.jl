@@ -1,4 +1,3 @@
-## The following function directly interfaces libc's printf.
 function process_types(args...)
   # Process types of arguments for libc's printf family.
 
@@ -20,6 +19,7 @@ function process_types(args...)
 end
 
 
+## The following function directly interfaces libc's printf.
 function c_printf(fmt :: String, args...)
   typexpr = process_types(args...)
   # Ignore printf's return value (an int).
