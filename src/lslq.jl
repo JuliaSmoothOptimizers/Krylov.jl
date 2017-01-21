@@ -273,7 +273,6 @@ function lslq{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
     # compute LSQR point
     x_cg = x_lq + ζ̄ * w̄
     xcgNorm² = xlqNorm² + ζ̄ * ζ̄
-    push!(errs_cg, norm(xsol - x_cg))
 
     if σ > 0.0 && iter > 0
       err_ubnd_cg = sqrt(ζ̃ * ζ̃ - ζ̄  * ζ̄ )
@@ -296,7 +295,6 @@ function lslq{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
     x_lq = x_lq + ζ * w
     xlqNorm² += ζ * ζ
     xlqNorm = sqrt(xlqNorm²)
-    push!(errs_lq, norm(xsol - x_lq))
 
     # check stopping condition based on forward error lower bound
     err_vec[mod(iter, window) + 1] = ζ
