@@ -4,6 +4,7 @@ using LinearOperators
 
 include("gen_lsq.jl")
 include("check_min_norm.jl")
+include("test_aux.jl")
 include("test_cg.jl")
 include("test_cg_lanczos.jl")
 @printf("!!!! FIX MINRES TESTS !!!!")
