@@ -44,7 +44,7 @@ shifts = [-4, -3, 2;]
 
 # Code coverage.
 (x, stats) = cg_lanczos(full(A), b);
-(x, stats) = cg_lanczos_shift_seq(full(A), b, [1:6;]);
+(x, stats) = cg_lanczos_shift_seq(full(A), b, [1:6;], verbose=true);
 show(stats);
 
 # Test b == 0
