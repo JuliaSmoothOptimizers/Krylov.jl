@@ -149,7 +149,9 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
   # Build format strings for printing.
   if verbose
     fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n";
-    c_printf(fmt, iter, rNorms...);
+    # precompile printf for our particular format
+    @eval local_printf(data...) = @printf($fmt, data...)
+    local_printf(iter, rNorms...)
   end
 
   solved = all(converged);
@@ -200,7 +202,7 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
     # Is there a better way than to update this array twice per iteration?
     not_cv = check_curvature ? find(! (converged | indefinite)) : find(! converged);
     iter = iter + 1;
-    verbose && c_printf(fmt, iter, rNorms...);
+    verbose && local_printf(iter, rNorms...)
 
     solved = length(not_cv) == 0;
     tired = iter >= itmax;
