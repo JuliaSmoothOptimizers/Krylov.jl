@@ -150,7 +150,7 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
   if verbose
     fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n";
     # precompile printf for our particular format
-    @eval local_printf(data...) = @printf($fmt, data...)
+    local_printf(data...) = Core.eval(:(@printf($fmt, $(data)...)))
     local_printf(iter, rNorms...)
   end
 
