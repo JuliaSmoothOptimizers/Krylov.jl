@@ -4,11 +4,11 @@
 
 - [X] CG
 - [X] CRLS: CR on A'Ax = A'b (equivalent to LSMR in exact arithmetic)
-- [ ] LSQR (equivalent to CG on A'Ax = A'b)
-- [ ] LSMR (equivalent to MINRES on A'Ax = A'b)
-- [ ] MINRES
-- [ ] CRAIG (equivalent to CG on AA'y=b, x = A'y)
-- [ ] CRAIGMR (must be equivalent to CR on AA'y = b, x = A'y)
+- [X] LSQR (equivalent to CG on A'Ax = A'b)
+- [X] LSMR (equivalent to MINRES on A'Ax = A'b)
+- [X] MINRES
+- [X] CRAIG (equivalent to CG on AA'y=b, x = A'y)
+- [X] CRAIGMR (must be equivalent to CR on AA'y = b, x = A'y)
 
 ## Special features
 
