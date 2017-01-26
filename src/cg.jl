@@ -15,19 +15,19 @@ export cg
 
 The method does _not_ abort if A is not definite.
 """
-function cg{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-                       atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                       radius :: Float64=0.0, verbose :: Bool=false)
+function cg{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+                         atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
+                         radius :: Float64=0.0, verbose :: Bool=false)
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
   verbose && @printf("CG: system of %d equations in %d variables\n", n, n);
 
   # Initial state.
-  x = zeros(n);
-  γ = dot(b, b);
+  x = zeros(T, n);
+  γ = @kdot(n, b, b)
   γ == 0 && return x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution")
-  r = 1.0*b
+  r = copy(b)
   p = copy(r);
 
   iter = 0;
@@ -45,7 +45,7 @@ function cg{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
 
   while ! (solved || tired)
     Ap = A * p;
-    pAp = BLAS.dot(n, p, 1, Ap, 1);
+    pAp = @kdot(n, p, Ap)
 
     α = γ / pAp;
 
@@ -62,9 +62,9 @@ function cg{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
       on_boundary = true
     end
 
-    BLAS.axpy!(n,  α,  p, 1, x, 1);  # Faster than x = x + α * p;
-    BLAS.axpy!(n, -α, Ap, 1, r, 1);  # Faster than r = r - α * Ap;
-    γ_next = BLAS.dot(n, r, 1, r, 1);
+    @kaxpy!(n,  α,  p, x)
+    @kaxpy!(n, -α, Ap, r)
+    γ_next = @kdot(n, r, r)
     rNorm = sqrt(γ_next);
     push!(rNorms, rNorm);
 
@@ -75,8 +75,8 @@ function cg{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
       β = γ_next / γ;
       γ = γ_next;
 
-      BLAS.scal!(n, β, p, 1)
-      BLAS.axpy!(n, 1.0, r, 1, p, 1);  # Faster than p = r + β * p;
+      @kscal!(n, β, p)
+      @kaxpy!(n, 1.0, r, p)
     end
     iter = iter + 1;
     verbose && @printf("%5d  %8.1e  ", iter, rNorm);
@@ -84,6 +84,6 @@ function cg{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   verbose && @printf("\n");
 
   status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, [], status);
+  stats = SimpleStats(solved, false, rNorms, T[], status);
   return (x, stats);
 end
