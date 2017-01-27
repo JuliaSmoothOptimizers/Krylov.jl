@@ -36,18 +36,18 @@ CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r‖�
 It is formally equivalent to LSMR, though can be slightly less accurate,
 but simpler to implement.
 """
-function crls{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-                         M :: AbstractLinearOperator=opEye(size(b,1)),
-                         λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-                         itmax :: Int=0, verbose :: Bool=false)
+function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+                           M :: AbstractLinearOperator=opEye(size(b,1)),
+                           λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+                           itmax :: Int=0, verbose :: Bool=false)
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CRLS: system of %d equations in %d variables\n", m, n);
 
-  x = zeros(n);
-  r  = 1.0*b
-  bNorm = BLAS.nrm2(m, r, 1)  # norm(b - A * x0) if x0 ≠ 0.
+  x = zeros(T, n)
+  r  = copy(b)
+  bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
   Mr = M * r;
 
@@ -62,13 +62,13 @@ function crls{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   p  = copy(Ar);
   Ap = copy(s);
   q  = A' * Ms;  # Ap;
-  λ > 0 && BLAS.axpy!(n, λ, p, 1, q, 1);  # q = q + λ * p;
-  γ  = BLAS.dot(m, s, 1, Ms, 1);  # Faster than γ = dot(s, Ms);
+  λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p;
+  γ  = @kdot(m, s, Ms)  # Faster than γ = dot(s, Ms);
   iter = 0;
   itmax == 0 && (itmax = m + n);
 
   rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
-  ArNorm = BLAS.nrm2(n, Ar, 1);  # Marginally faster than norm(Ar);
+  ArNorm = @knrm2(n, Ar)  # Marginally faster than norm(Ar);
   λ > 0 && (γ += λ * ArNorm * ArNorm);
   rNorms = [rNorm;];
   ArNorms = [ArNorm;];
@@ -81,32 +81,32 @@ function crls{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   tired = iter >= itmax;
 
   while ! (solved || tired)
-    α = γ / BLAS.dot(n, q, 1, q, 1);     # dot(q, q);
-    BLAS.axpy!(n,  α, p,  1,  x, 1);     # Faster than  x =  x + α *  p;
-    BLAS.axpy!(m, -α, Ap, 1,  r, 1);     # Faster than  r =  r - α * Ap;
-    BLAS.axpy!(n, -α, q,  1, Ar, 1);     # Faster than Ar = Ar - α *  q;
+    α = γ / @kdot(n, q, q)     # dot(q, q);
+    @kaxpy!(n,  α, p,   x)     # Faster than  x =  x + α *  p;
+    @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap;
+    @kaxpy!(n, -α, q,  Ar)     # Faster than Ar = Ar - α *  q;
     s = A * Ar;
     Ms = M * s;
-    γ_next = BLAS.dot(m, s, 1, Ms, 1);   # Faster than γ_next = dot(s, s);
-    ArNorm = BLAS.nrm2(n, Ar, 1);
+    γ_next = @kdot(m, s, Ms)   # Faster than γ_next = dot(s, s);
+    ArNorm = @knrm2(n, Ar)
     λ > 0 && (γ_next += λ * ArNorm * ArNorm);
     β = γ_next / γ;
 
-    BLAS.scal!(n, β, p, 1);
-    BLAS.axpy!(n, 1.0, Ar, 1, p, 1);    # Faster than  p = Ar + β *  p;
+    @kscal!(n, β, p)
+    @kaxpy!(n, 1.0, Ar, p)    # Faster than  p = Ar + β *  p;
     # The combined call uses less memory but tends to trigger more gc.
     #     BLAS.axpy!(n, 1.0, Ar, 1, BLAS.scal!(n, β, p, 1), 1);
 
-    BLAS.scal!(m, β, Ap, 1);
-    BLAS.axpy!(m, 1.0, s, 1, Ap, 1);    # Faster than Ap =  s + β * Ap;
+    @kscal!(m, β, Ap)
+    @kaxpy!(m, 1.0, s, Ap)    # Faster than Ap =  s + β * Ap;
     q = A' * M * Ap;
-    λ > 0 && BLAS.axpy!(n, λ, p, 1, q, 1);  # q = q + λ * p;
+    λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p;
 
     γ = γ_next;
     if λ > 0
-      rNorm = sqrt(BLAS.dot(m, r, 1, r, 1) + λ * BLAS.dot(n, x, 1, x, 1));
+      rNorm = sqrt(@kdot(m, r, r) + λ * @kdot(n, x, x))
     else
-      rNorm = BLAS.nrm2(m, r, 1);  # norm(r);
+      rNorm = @knrm2(m, r)  # norm(r);
     end
     #     ArNorm = norm(Ar);
     push!(rNorms, rNorm);

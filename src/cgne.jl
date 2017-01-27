@@ -51,17 +51,17 @@ CGNE produces monotonic errors ‖x-x*‖₂ but not residuals ‖r‖₂.
 It is formally equivalent to CRAIG, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 """
-function cgne{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-              λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-              itmax :: Int=0, verbose :: Bool=false)
+function cgne{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+                           λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+                           itmax :: Int=0, verbose :: Bool=false)
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CGNE: system of %d equations in %d variables\n", m, n);
 
-  x = zeros(n);
-  r = 1.0*b
-  bNorm = BLAS.nrm2(m, r, 1)   # Marginally faster than norm(b);
+  x = zeros(T, n);
+  r = copy(b)
+  bNorm = @knrm2(m, r)   # Marginally faster than norm(b);
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution");
   λ > 0 && (s = copy(r));
 
@@ -75,9 +75,9 @@ function cgne{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   # Because CGNE is equivalent to CG applied to AA'y = b, there will be a
   # conjugate direction u such that u'AA'u = 0, i.e., A'u = 0. In this
   # implementation, p is a substitute for A'u.
-  pNorm = BLAS.nrm2(n, p, 1);
+  pNorm = @knrm2(n, p)
 
-  γ = BLAS.dot(m, r, 1, r, 1);  # Faster than γ = dot(r, r);
+  γ = @kdot(m, r, r)  # Faster than γ = dot(r, r);
   iter = 0;
   itmax == 0 && (itmax = m + n);
 
@@ -95,20 +95,20 @@ function cgne{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
 
   while ! (solved || inconsistent || tired)
     q = A * p;
-    λ > 0 && BLAS.axpy!(m, λ, s, 1, q, 1);
-    δ = BLAS.dot(n, p, 1, p, 1);   # Faster than dot(p, p);
-    λ > 0 && (δ += λ * BLAS.dot(m, s, 1, s, 1));
+    λ > 0 && @kaxpy!(m, λ, s, q)
+    δ = @kdot(n, p, p)   # Faster than dot(p, p);
+    λ > 0 && (δ += λ * @kdot(m, s, s))
     α = γ / δ;
-    BLAS.axpy!(n,  α, p, 1, x, 1);     # Faster than x = x + α * p;
-    BLAS.axpy!(m, -α, q, 1, r, 1);     # Faster than r = r - α * q;
-    γ_next = BLAS.dot(m, r, 1, r, 1);  # Faster than γ_next = dot(r, r);
+    @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p;
+    @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q;
+    γ_next = @kdot(m, r, r)  # Faster than γ_next = dot(r, r);
     β = γ_next / γ;
-    BLAS.scal!(n, β, p, 1);
-    BLAS.axpy!(n, 1.0, A' * r, 1, p, 1);   # Faster than p = A' * r + β * p;
-    pNorm = BLAS.nrm2(n, p, 1);
+    @kscal!(n, β, p)
+    @kaxpy!(n, 1.0, A' * r, p)   # Faster than p = A' * r + β * p;
+    pNorm = @knrm2(n, p)
     if λ > 0
-      BLAS.scal!(m, β, s, 1);
-      BLAS.axpy!(m, 1.0, r, 1, s, 1);   # s = r + β * s;
+      @kscal!(m, β, s)
+      @kaxpy!(m, 1.0, r, s)   # s = r + β * s;
     end
     γ = γ_next;
     rNorm = sqrt(γ_next);

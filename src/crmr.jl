@@ -50,23 +50,23 @@ CGMR produces monotonic residuals ‖r‖₂.
 It is formally equivalent to CRAIG-MR, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 """
-function crmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-                         λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-                         itmax :: Int=0, verbose :: Bool=false)
+function crmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+                           λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+                           itmax :: Int=0, verbose :: Bool=false)
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CRMR: system of %d equations in %d variables\n", m, n);
 
-  x = zeros(n);
-  r  = 1.0*b
-  bNorm = BLAS.nrm2(m, r, 1)  # norm(b - A * x0) if x0 ≠ 0.
+  x = zeros(T, n)
+  r  = copy(b)
+  bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
   rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   λ > 0 && (s = copy(r));
   Ar = A' * r;  # - λ * x0 if x0 ≠ 0.
   p  = copy(Ar);
-  γ  = BLAS.dot(n, Ar, 1, Ar, 1);  # Faster than γ = dot(Ar, Ar);
+  γ  = @kdot(n, Ar, Ar)  # Faster than γ = dot(Ar, Ar);
   λ > 0 && (γ += λ * rNorm * rNorm);
   iter = 0;
   itmax == 0 && (itmax = m + n);
@@ -86,21 +86,21 @@ function crmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
 
   while ! (solved || inconsistent || tired)
     q = A * p;
-    λ > 0 && BLAS.axpy!(m, λ, s, 1, q, 1);  # q = q + λ * s;
-    α = γ / BLAS.dot(m, q, 1, q, 1);     # dot(q, q);
-    BLAS.axpy!(n,  α, p,  1,  x, 1);     # Faster than  x =  x + α *  p;
-    BLAS.axpy!(m, -α, q,  1,  r, 1);     # Faster than  r =  r - α * Ap;
-    rNorm = BLAS.nrm2(m, r, 1);          # norm(r);
+    λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s;
+    α = γ / @kdot(m, q, q)     # dot(q, q);
+    @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p;
+    @kaxpy!(m, -α, q, r)       # Faster than  r =  r - α * Ap;
+    rNorm = @knrm2(m, r)       # norm(r);
     Ar = A' * r;
-    γ_next = BLAS.dot(n, Ar, 1, Ar, 1);  # Faster than γ_next = dot(Ar, Ar);
+    γ_next = @kdot(n, Ar, Ar)  # Faster than γ_next = dot(Ar, Ar);
     λ > 0 && (γ_next += λ * rNorm * rNorm);
     β = γ_next / γ;
 
-    BLAS.scal!(n, β, p, 1);
-    BLAS.axpy!(n, 1.0, Ar, 1, p, 1);    # Faster than  p = Ar + β *  p;
+    @kscal!(n, β, p)
+    @kaxpy!(n, 1.0, Ar, p)    # Faster than  p = Ar + β *  p;
     if λ > 0
-      BLAS.scal!(m, β, s, 1);
-      BLAS.axpy!(m, 1.0, r, 1, s, 1);    # s = r + β * s;
+      @kscal!(m, β, s)
+      @kaxpy!(m, 1.0, r, s)   # s = r + β * s;
     end
 
     γ = γ_next;

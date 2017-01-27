@@ -49,16 +49,16 @@ multipliers of the least-norm problem
 
 In this implementation, both the x and y-parts of the solution are returned.
 """
-function craig{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-                          λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-                          conlim :: Float64=1.0e+8, itmax :: Int=0, verbose :: Bool=false)
+function craig{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+                            λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+                            conlim :: Float64=1.0e+8, itmax :: Int=0, verbose :: Bool=false)
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CRAIG: system of %d equations in %d variables\n", m, n);
 
-  x = zeros(n);
-  β₁ = BLAS.nrm2(m, b, 1);   # Marginally faster than norm(b);
+  x = zeros(T, n);
+  β₁ = @knrm2(m, b)   # Marginally faster than norm(b);
   β₁ == 0 && return x, zeros(m), SimpleStats(true, false, [0.0], Float64[], "x = 0 is a zero-residual solution");
   β = β₁;
   θ = β₁;   # θ will differ from β when there is regularization (λ > 0).
@@ -68,13 +68,13 @@ function craig{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
 
   # β₁ u₁ = b.
   u = copy(b);
-  BLAS.scal!(m, 1.0/β₁, u, 1);
+  @kscal!(m, 1.0/β₁, u)
 
-  v = zeros(n);
-  w = zeros(m);  # Used to update y.
+  v = zeros(T, n)
+  w = zeros(T, m)  # Used to update y.
 
-  y = zeros(m);
-  λ > 0.0 && (w2 = zeros(n));
+  y = zeros(T, m)
+  λ > 0.0 && (w2 = zeros(T, n))
 
   Anorm² = 0.0;  # Estimate of ‖A‖²_F.
   Dnorm  = 0.0;  # Estimate of ‖(A'A)⁻¹‖.
@@ -98,14 +98,14 @@ function craig{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   while ! (solved || inconsistent || tired)
     # Generate the next Golub-Kahan vectors
     # 1. αv = A'u - βv
-    BLAS.scal!(n, -β, v, 1);
-    BLAS.axpy!(n, 1.0, A' * u, 1, v, 1);
-    α = BLAS.nrm2(n, v, 1);
+    @kscal!(n, -β, v)
+    @kaxpy!(n, 1.0, A' * u, v)
+    α = @knrm2(n, v)
     if α == 0.0
       inconsistent = true;
       continue;
     end
-    BLAS.scal!(n, 1.0/α, v, 1);
+    @kscal!(n, 1.0/α, v)
 
     Anorm² += α * α + λ * λ;
 
@@ -129,24 +129,25 @@ function craig{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
       # x  = x + ξ * w1
       # Save storage on w1 since it cannot be updated
       # using a BLAS call.
-      for i = 1 : n
-        x[i]  = x[i] + ξ * (c₁ * v[i] + s₁ * w2[i]);
-        w2[i] = s₁ * x[i] - c₁ * w2[i];
+      # TODO: use dot notation in Julia 0.6.
+      @simd for i = 1 : n
+        @inbounds x[i]  = x[i] + ξ * (c₁ * v[i] + s₁ * w2[i]);
+        @inbounds w2[i] = s₁ * x[i] - c₁ * w2[i];
       end
     else
-      BLAS.axpy!(n, ξ, v, 1, x, 1);  # x = x + ξ * v;
+      @kaxpy!(n, ξ, v, x)  # x = x + ξ * v;
     end
 
     # Recur y.
-    BLAS.scal!(m, -θ/ρ_prev, w, 1);
-    BLAS.axpy!(m, 1.0, u, 1, w, 1);  # w = u - θ/ρ_prev * w;
-    BLAS.axpy!(m, ξ/ρ, w, 1, y, 1);  # y = y + ξ/ρ * w;
+    @kscal!(m, -θ/ρ_prev, w)
+    @kaxpy!(m, 1.0, u, w)  # w = u - θ/ρ_prev * w;
+    @kaxpy!(m, ξ/ρ, w, y)  # y = y + ξ/ρ * w;
 
     # 2. βu = A v - αu
-    BLAS.scal!(m, -α, u, 1);
-    BLAS.axpy!(m, 1.0, A * v, 1, u, 1);
-    β = BLAS.nrm2(m, u, 1);
-    β > 0.0 && BLAS.scal!(m, 1.0/β, u, 1);
+    @kscal!(m, -α, u)
+    @kaxpy!(m, 1.0, A * v, u)
+    β = @knrm2(m, u)
+    β > 0.0 && @kscal!(m, 1.0/β, u)
 
     # Finish  updates from the first Givens rotation.
     if λ > 0.0
@@ -164,7 +165,7 @@ function craig{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
       δ  =  sqrt(γ * γ + λ * λ);
       c₂ = -λ / δ;
       s₂ =  γ / δ;
-      BLAS.scal!(n, s₂, w2, 1);
+      @kscal!(n, s₂, w2)
     end
 
     Anorm² += β * β;

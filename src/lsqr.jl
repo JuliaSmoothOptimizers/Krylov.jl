@@ -57,13 +57,13 @@ indefinite system
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
 """
-function lsqr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-                         M :: AbstractLinearOperator=opEye(size(A,1)),
-                         N :: AbstractLinearOperator=opEye(size(A,2)),
-                         sqd :: Bool=false,
-                         λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
-                         etol :: Float64=1.0e-8, window :: Int=5,
-                         itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+                           M :: AbstractLinearOperator=opEye(size(A,1)),
+                           N :: AbstractLinearOperator=opEye(size(A,2)),
+                           sqd :: Bool=false,
+                           λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
+                           etol :: Float64=1.0e-8, window :: Int=5,
+                           itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -73,34 +73,34 @@ function lsqr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   sqd && (λ = 1.0)
   λ² = λ * λ
   ctol = conlim > 0.0 ? 1/conlim : 0.0
-  x = zeros(n)
+  x = zeros(T, n)
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
-  Mu = 1.0*b
+  Mu = copy(b)
   u = M * Mu
-  β₁ = sqrt(BLAS.dot(m, u, 1, Mu, 1))
+  β₁ = sqrt(@kdot(m, u, Mu))
   β₁ == 0.0 && return (x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β = β₁
 
-  BLAS.scal!(m, 1.0/β₁, u, 1)
-  BLAS.scal!(m, 1.0/β₁, Mu, 1)
+  @kscal!(m, 1.0/β₁, u)
+  @kscal!(m, 1.0/β₁, Mu)
   Nv = copy(A' * u)
   v = N * Nv
-  α = sqrt(BLAS.dot(n, v, 1, Nv, 1))
+  α = sqrt(@kdot(n, v, Nv))
   Anorm² = α * α
   Acond  = 0.0
   xNorm  = 0.0
   xNorm² = 0.0
   dNorm² = 0.0
-  var = zeros(n)
+  var = zeros(T, n)
   c2 = -1.0
   s2 =  0.0
   z  =  0.0
 
   xENorm² = 0.0
   err_lbnd = 0.0
-  err_vec = zeros(window)
+  err_vec = zeros(T, window)
 
   verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n",
                      "Aprod", "‖r‖", "‖A'r‖", "β", "α", "cos", "sin", "‖A‖²")
@@ -109,8 +109,8 @@ function lsqr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
 
   # A'b = 0 so x = 0 is a minimum least-squares solution
   α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
-  BLAS.scal!(n, 1.0/α, v, 1)
-  BLAS.scal!(n, 1.0/α, Nv, 1)
+  @kscal!(n, 1.0/α, v)
+  @kscal!(n, 1.0/α, Nv)
   w = copy(v)
 
   # Initialize other constants.
@@ -140,24 +140,24 @@ function lsqr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
 
     # Generate next Golub-Kahan vectors.
     # 1. βu = Av - αu
-    BLAS.scal!(m, -α, Mu, 1)
-    BLAS.axpy!(m, 1.0, A * v, 1, Mu, 1)
+    @kscal!(m, -α, Mu)
+    @kaxpy!(m, 1.0, A * v, Mu)
     u = M * Mu
-    β = sqrt(BLAS.dot(m, u, 1, Mu, 1))
+    β = sqrt(@kdot(m, u, Mu))
     if β != 0.0
-      BLAS.scal!(m, 1.0/β, u, 1)
-      BLAS.scal!(m, 1.0/β, Mu, 1)
+      @kscal!(m, 1.0/β, u)
+      @kscal!(m, 1.0/β, Mu)
       Anorm² = Anorm² + α * α + β * β;  # = ‖B_{k-1}‖²
       λ > 0.0 && (Anorm² += λ²)
 
       # 2. αv = A'u - βv
-      BLAS.scal!(n, -β, Nv, 1)
-      BLAS.axpy!(n, 1.0, A' * u, 1, Nv, 1)
+      @kscal!(n, -β, Nv)
+      @kaxpy!(n, 1.0, A' * u, Nv)
       v = N * Nv
-      α = sqrt(BLAS.dot(n, v, 1, Nv, 1))
+      α = sqrt(@kdot(n, v, Nv))
       if α != 0.0
-        BLAS.scal!(n, 1.0/α, v, 1)
-        BLAS.scal!(n, 1.0/α, Nv, 1)
+        @kscal!(n, 1.0/α, v)
+        @kscal!(n, 1.0/α, Nv)
       end
     end
 
@@ -192,12 +192,12 @@ function lsqr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
     ρbar = -c * α
 
     d =  w / ρ;  # TODO: Use BLAS call.
-    dNorm² += BLAS.dot(n, d, 1, d, 1)
+    dNorm² += @kdot(n, d, d)
     var += d .* d
 
-    BLAS.axpy!(n,  ϕ/ρ, w, 1, x, 1);  # x = x + ϕ / ρ * w
-    BLAS.scal!(n, -θ/ρ, w, 1)
-    BLAS.axpy!(n,  1.0, v, 1, w, 1);  # w = v - θ / ρ * w
+    @kaxpy!(n,  ϕ/ρ, w, x)  # x = x + ϕ / ρ * w
+    @kscal!(n, -θ/ρ, w)
+    @kaxpy!(n,  1.0, v, w)  # w = v - θ / ρ * w
 
     # Use a plane rotation on the right to eliminate the super-diagonal
     # element (θ) of the upper-bidiagonal matrix.
