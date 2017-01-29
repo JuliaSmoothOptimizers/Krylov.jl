@@ -115,3 +115,48 @@ function to_boundary(x :: Vector{Float64}, d :: Vector{Float64},
   roots = roots_quadratic(dNorm2, 2 * xd, xNorm2 - radius * radius)
   return maximum(roots)
 end
+
+
+# Call BLAS if possible when using dot, norm, etc.
+# Benchmarks indicate that the form BLAS.dot(n, x, 1, y, 1) is substantially faster than BLAS.dot(x, y)
+
+krylov_dot{T <: BLAS.BlasReal}(n :: Int, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) = BLAS.dot(n, x, dx, y, dy)
+krylov_dot{T <: Number}(n :: Int, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) = dot(x, y)  # ignore dx, dy here
+
+krylov_norm2{T <: BLAS.BlasReal}(n :: Int, x :: Vector{T}, dx :: Int) = BLAS.nrm2(n, x, dx)
+krylov_norm2{T <: Number}(n :: Int, x :: Vector{T}, dx :: Int) = norm(x)  # ignore dx here
+
+krylov_scal!{T <: BLAS.BlasReal}(n :: Int, s :: T, x :: Vector{T}, dx :: Int) = BLAS.scal!(n, s, x, dx)
+function krylov_scal!{T <: Number}(n :: Int, s :: T, x :: Vector{T}, dx :: Int)
+  @simd for i = 1:dx:n
+    @inbounds x[i] *= s
+  end
+  return x
+end
+
+krylov_axpy!{T <: BLAS.BlasReal}(n :: Int, s :: T, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) = BLAS.axpy!(n, s, x, dx, y, dy)
+function krylov_axpy!{T <: Number}(n :: Int, s :: T, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int)
+  # assume dx = dy
+  @simd for i = 1:dx:n
+    @inbounds y[i] += s * x[i]
+  end
+  return y
+end
+
+# the macros are just for readability, so we don't have to write the increments (always equal to 1)
+
+macro kdot(n, x, y)
+  return esc(:(krylov_dot($n, $x, 1, $y, 1)))
+end
+
+macro knrm2(n, x)
+  return esc(:(krylov_norm2($n, $x, 1)))
+end
+
+macro kscal!(n, s, x)
+  return esc(:(krylov_scal!($n, $s, $x, 1)))
+end
+
+macro kaxpy!(n, s, x, y)
+  return esc(:(krylov_axpy!($n, $s, $x, 1, $y, 1)))
+end

@@ -42,27 +42,27 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r�
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function minres{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-                           M :: AbstractLinearOperator=opEye(size(A,1)),
-                           λ :: Float64=0.0,
-                           atol :: Float64=1.0e-12, rtol :: Float64=1.0e-12,
-                           etol :: Float64=1.0e-8, window :: Int=5,
-                           itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+function minres{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+                             M :: AbstractLinearOperator=opEye(size(A,1)),
+                             λ :: Float64=0.0,
+                             atol :: Float64=1.0e-12, rtol :: Float64=1.0e-12,
+                             etol :: Float64=1.0e-8, window :: Int=5,
+                             itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
 
   m, n = size(A)
   m == n || error("System must be square")
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("MINRES: system of size %d\n", n)
 
-  ϵM = eps(Float64)
-  x = zeros(n)
+  ϵM = eps(T)
+  x = zeros(T, n)
   ctol = conlim > 0.0 ? 1./conlim : 0.0;
 
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
   r1 = copy(b)
   y = M * r1
-  β₁ = BLAS.dot(m, r1, 1, y, 1)
+  β₁ = @kdot(m, r1, y)
   β₁ < 0.0 && error("Preconditioner is not positive definite")
   β₁ == 0.0 && return (x, SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
@@ -80,10 +80,10 @@ function minres{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   γmin = Inf
   cs = -1.0
   sn = 0.0
-  v = zeros(n)
-  w = zeros(n)
-  w1 = zeros(n)
-  w2 = zeros(n)
+  v = zeros(T, n)
+  w = zeros(T, n)
+  w1 = zeros(T, n)
+  w2 = zeros(T, n)
   r2 = copy(r1)
 
   ANorm² = 0.0
@@ -95,7 +95,7 @@ function minres{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
 
   xENorm² = 0.0
   err_lbnd = 0.0
-  err_vec = zeros(window)
+  err_vec = zeros(T, window)
 
   verbose && @printf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s\n",
                      "Aprod", "‖r‖", "‖A'r‖", "β", "cos", "sin", "‖A‖", "κ(A)")
@@ -118,18 +118,18 @@ function minres{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
 
     # Generate next Lanczos vector.
     v = copy(y)
-    BLAS.scal!(n, 1./β, v, 1)
+    @kscal!(n, 1./β, v)
     y = A * v
-    λ != 0.0 && BLAS.axpy!(n, -λ, v, 1, y, 1)          # (y = y - λ * v)
-    iter ≥ 2 && BLAS.axpy!(n, -β / oldβ, r1, 1, y, 1)  # (y = y - β / oldβ * r1)
+    λ != 0.0 && @kaxpy!(n, -λ, v, y)          # (y = y - λ * v)
+    iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y)  # (y = y - β / oldβ * r1)
 
     α = dot(v, y)
-    BLAS.axpy!(n, -α / β, r2, 1, y, 1)  # y = y - α / β * r2
+    @kaxpy!(n, -α / β, r2, y)  # y = y - α / β * r2
     r1 = copy(r2)
     r2 = copy(y)
     y = M * r2
     oldβ = β
-    β = dot(r2, y)
+    β = @kdot(n, r2, y)
     β < 0.0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
     ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
@@ -163,7 +163,7 @@ function minres{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
     w1 = copy(w2)
     w2 = copy(w)
     w = (v - oldϵ * w1 - δ * w2) / γ
-    BLAS.axpy!(n, ϕ, w, 1, x, 1)  # x = x + ϕ * w
+    @kaxpy!(n, ϕ, w, x)  # x = x + ϕ * w
     xENorm² = xENorm² + ϕ * ϕ
 
     # Compute lower bound on forward error.
@@ -178,7 +178,7 @@ function minres{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
 
     # Estimate various norms.
     ANorm = sqrt(ANorm²)
-    xNorm = BLAS.nrm2(n, x, 1)
+    xNorm = @knrm2(n, x)
     ϵA = ANorm * ϵM
     ϵx = ANorm * xNorm * ϵM
     ϵr = ANorm * xNorm * rtol

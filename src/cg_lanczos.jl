@@ -19,17 +19,17 @@ symmetric linear system
 
 The method does _not_ abort if A is not definite.
 """
-function cg_lanczos{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-                               atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                               check_curvature :: Bool=false, verbose :: Bool=false)
+function cg_lanczos{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+                                 atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
+                                 check_curvature :: Bool=false, verbose :: Bool=false)
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
   verbose && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n);
 
   # Initial state.
-  x = zeros(n);
-  β = BLAS.nrm2(n, b, 1);
+  x = zeros(T, n);
+  β = @knrm2(n, b)
   β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
   v = b / β;
   v_prev = v;
@@ -59,7 +59,7 @@ function cg_lanczos{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   while ! (solved || tired || (check_curvature & indefinite))
     # Form next Lanczos vector.
     v_next = A * v;
-    δ = dot(v, v_next);  # BLAS.dot(n, v, 1, v_next, 1) doesn't seem to pay off.
+    δ = @kdot(n, v, v_next);  # BLAS.dot(n, v, 1, v_next, 1) doesn't seem to pay off.
 
     # Check curvature. Exit fast if requested.
     # It is possible to show that σⱼ² (δⱼ - ωⱼ₋₁ / γⱼ₋₁) = pⱼᵀ A pⱼ.
@@ -67,24 +67,24 @@ function cg_lanczos{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
     indefinite |= (γ <= 0.0);
     (check_curvature & indefinite) && continue;
 
-    BLAS.axpy!(n, -δ, v, 1, v_next, 1);  # Faster than v_next = Av - δ * v;
+    @kaxpy!(n, -δ, v, v_next)  # Faster than v_next = Av - δ * v;
     if iter > 0
-      BLAS.axpy!(n, -β, v_prev, 1, v_next, 1);  # Faster than v_next = v_next - β * v_prev;
+      @kaxpy!(n, -β, v_prev, v_next)  # Faster than v_next = v_next - β * v_prev;
       v_prev = v;
     end
-    β = BLAS.nrm2(n, v_next, 1);
+    β = @knrm2(n, v_next)
     v = v_next / β;
     Anorm2 += β_prev^2 + β^2 + δ^2;  # Use ‖T‖ as increasing approximation of ‖A‖.
     β_prev = β;
 
     # Compute next CG iterate.
-    BLAS.axpy!(n, γ, p, 1, x, 1);  # Faster than x = x + γ * p;
+    @kaxpy!(n, γ, p, x)  # Faster than x = x + γ * p;
 
     ω = β * γ;
     σ = -ω * σ;
     ω = ω * ω;
-    BLAS.scal!(n, ω, p, 1);
-    BLAS.axpy!(n, σ, v, 1, p, 1);  # Faster than p = σ * v + ω * p;
+    @kscal!(n, ω, p)
+    @kaxpy!(n, σ, v, p)  # Faster than p = σ * v + ω * p;
     rNorm = abs(σ);
     push!(rNorms, rNorm);
     iter = iter + 1;
@@ -106,9 +106,9 @@ of shifted systems
 
 The method does _not_ abort if A + αI is not definite.
 """
-function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperator, b :: Array{Tb,1}, shifts :: Array{Ts,1};
-                                                      atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                                                      check_curvature :: Bool=false, verbose :: Bool=false)
+function cg_lanczos_shift_seq{Tb <: Number, Ts <: Number}(A :: AbstractLinearOperator, b :: Vector{Tb}, shifts :: Vector{Ts};
+                                                          atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
+                                                          check_curvature :: Bool=false, verbose :: Bool=false)
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
@@ -118,8 +118,8 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
 
   # Initial state.
   ## Distribute x similarly to shifts.
-  x = zeros(n, nshifts);
-  β = BLAS.nrm2(n, b, 1);
+  x = zeros(Tb, n, nshifts);
+  β = @knrm2(n, b)
   β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
   v = b / β;
   v_prev = copy(v);
@@ -130,11 +130,11 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
   # Initialize some constants used in recursions below.
   σ = β * ones(nshifts);
   δhat = zeros(nshifts);
-  ω = zeros(nshifts);
-  γ = ones(nshifts);
+  ω = zeros(Tb, nshifts);
+  γ = ones(Tb, nshifts);
 
   # Define stopping tolerance.
-  rNorms = β * ones(nshifts);
+  rNorms = β * ones(Tb, nshifts);
   rNorms_history = [rNorms;];
   ε = atol + rtol * β;
 
@@ -162,13 +162,13 @@ function cg_lanczos_shift_seq{Tb <: Real, Ts <: Real}(A :: AbstractLinearOperato
   while ! (solved || tired)
     # Form next Lanczos vector.
     v_next = A * v;
-    δ = dot(v, v_next);
-    BLAS.axpy!(n, -δ, v, 1, v_next, 1);  # Faster than v_next = Av - δ * v;
+    δ = @kdot(n, v, v_next)
+    @kaxpy!(n, -δ, v, v_next)  # Faster than v_next = Av - δ * v;
     if iter > 0
-      BLAS.axpy!(n, -β, v_prev, 1, v_next, 1);  # Faster than v_next = v_next - β * v_prev;
+      @kaxpy!(n, -β, v_prev, v_next)  # Faster than v_next = v_next - β * v_prev;
       v_prev = v;
     end
-    β = BLAS.nrm2(n, v_next, 1);
+    β = @knrm2(n, v_next)
     v = v_next / β;
 
     # Check curvature: v'(A + sᵢI)v = v'Av + sᵢ ‖v‖² = δ + sᵢ because ‖v‖ = 1.

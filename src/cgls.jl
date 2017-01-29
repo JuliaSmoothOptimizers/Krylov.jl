@@ -37,22 +37,22 @@ CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖A'r
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 """
-function cgls{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-              M :: AbstractLinearOperator=opEye(size(b,1)),
-              λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-              itmax :: Int=0, verbose :: Bool=false)
+function cgls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+                           M :: AbstractLinearOperator=opEye(size(b,1)),
+                           λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+                           itmax :: Int=0, verbose :: Bool=false)
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CGLS: system of %d equations in %d variables\n", m, n);
 
-  x = zeros(n);
-  r = 1.0*b
-  bNorm = BLAS.nrm2(m, r, 1)   # Marginally faster than norm(b);
+  x = zeros(T, n);
+  r = copy(b)
+  bNorm = @knrm2(m, r)   # Marginally faster than norm(b);
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
   s = A' * M * r;
   p = copy(s);
-  γ = BLAS.dot(n, s, 1, s, 1);  # Faster than γ = dot(s, s);
+  γ = @kdot(n, s, s)  # Faster than γ = dot(s, s);
   iter = 0;
   itmax == 0 && (itmax = m + n);
 
@@ -70,21 +70,21 @@ function cgls{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
 
   while ! (solved || tired)
     q = A * p;
-    δ = BLAS.dot(m, q, 1, M * q, 1);   # Faster than α = γ / dot(q, q);
-    λ > 0 && (δ += λ * BLAS.dot(n, p, 1, p, 1));
+    δ = @kdot(m, q, M * q)   # Faster than α = γ / dot(q, q);
+    λ > 0 && (δ += λ * @kdot(n, p, p))
     α = γ / δ;
-    BLAS.axpy!(n,  α, p, 1, x, 1);     # Faster than x = x + α * p;
-    BLAS.axpy!(m, -α, q, 1, r, 1);     # Faster than r = r - α * q;
+    @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p;
+    @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q;
     s = A' * M * r;
-    λ > 0 && BLAS.axpy!(n, -λ, x, 1, s, 1);   # s = A' * r - λ * x;
-    γ_next = BLAS.dot(n, s, 1, s, 1);  # Faster than γ_next = dot(s, s);
+    λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x;
+    γ_next = @kdot(n, s, s)  # Faster than γ_next = dot(s, s);
     β = γ_next / γ;
-    BLAS.scal!(n, β, p, 1);
-    BLAS.axpy!(n, 1.0, s, 1, p, 1);    # Faster than p = s + β * p;
+    @kscal!(n, β, p)
+    @kaxpy!(n, 1.0, s, p)    # Faster than p = s + β * p;
     # The combined BLAS calls tend to trigger some gc.
     #  BLAS.axpy!(n, 1.0, s, 1, BLAS.scal!(n, β, p, 1), 1);
     γ = γ_next;
-    rNorm = BLAS.nrm2(m, r, 1);  # Marginally faster than norm(r);
+    rNorm = @knrm2(m, r)  # Marginally faster than norm(r);
     ArNorm = sqrt(γ);
     push!(rNorms, rNorm);
     push!(ArNorms, ArNorm);

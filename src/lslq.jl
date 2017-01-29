@@ -92,15 +92,15 @@ The iterations stop as soon as one of the following conditions holds true:
 * R. Estrin, D. Orban and M. A. Saunders, *Estimates of the 2-Norm Forward Error for SYMMLQ and CG*, Cahier du GERAD G-2016-70, GERAD, Montreal, 2016. DOI http://dx.doi.org/10.13140/RG.2.2.19581.77288.
 * R. Estrin, D. Orban and M. A. Saunders, *LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*, Cahier du GERAD G-2017-xx, GERAD, Montreal, 2017.
 """
-function lslq{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-                         M :: AbstractLinearOperator=opEye(size(A,1)),
-                         N :: AbstractLinearOperator=opEye(size(A,2)),
-                         sqd :: Bool=false,
-                         λ :: Float64=0.0, σ :: Float64=0.0,
-                         atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
-                         etol :: Float64=1.0e-8, window :: Int=5,
-                         utol :: Float64=1.0e-8,
-                         itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+function lslq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+                           M :: AbstractLinearOperator=opEye(size(A,1)),
+                           N :: AbstractLinearOperator=opEye(size(A,2)),
+                           sqd :: Bool=false,
+                           λ :: Float64=0.0, σ :: Float64=0.0,
+                           atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
+                           etol :: Float64=1.0e-8, window :: Int=5,
+                           utol :: Float64=1.0e-8,
+                           itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -111,32 +111,32 @@ function lslq{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   λ² = λ * λ
   ctol = conlim > 0.0 ? 1/conlim : 0.0
 
-  x_lq = zeros(n)    # LSLQ point
-  x_cg = zeros(n)    # LSQR point
-  err_lbnds = Float64[]
-  err_ubnds_lq = Float64[]
-  err_ubnds_cg = Float64[]
+  x_lq = zeros(T, n)    # LSLQ point
+  x_cg = zeros(T, n)    # LSQR point
+  err_lbnds = T[]
+  err_ubnds_lq = T[]
+  err_ubnds_cg = T[]
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
   Mu = copy(b)
   u = M * Mu
-  β₁ = sqrt(BLAS.dot(m, u, 1, Mu, 1))
+  β₁ = sqrt(@kdot(m, u, Mu))
   β₁ == 0.0 && return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg,
                        SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β = β₁
 
-  BLAS.scal!(m, 1.0/β₁, u, 1)
-  BLAS.scal!(m, 1.0/β₁, Mu, 1)
+  @kscal!(m, 1.0/β₁, u)
+  @kscal!(m, 1.0/β₁, Mu)
   Nv = copy(A' * u)
   v = N * Nv
-  α = sqrt(BLAS.dot(n, v, 1, Nv, 1))  # = α₁
+  α = sqrt(@kdot(n, v, Nv))  # = α₁
 
   # A'b = 0 so x = 0 is a minimum least-squares solution
   α == 0.0 && return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg,
                       SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
-  BLAS.scal!(n, 1.0/α, v, 1)
-  BLAS.scal!(n, 1.0/α, Nv, 1)
+  @kscal!(n, 1.0/α, v)
+  @kscal!(n, 1.0/α, Nv)
 
   Anorm² = α * α
 
@@ -150,11 +150,11 @@ function lslq{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   xcgNorm  = 0.0
   xcgNorm² = 0.0
 
-  w = zeros(n)       # = w₀
+  w = zeros(T, n)       # = w₀
   w̄ = copy(v)        # = w̄₁ = v₁
 
   err_lbnd = 0.0
-  err_vec = zeros(window)
+  err_vec = zeros(T, window)
 
   # Initialize other constants.
   ρ̄ = -σ
@@ -192,22 +192,22 @@ function lslq{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
 
     # Generate next Golub-Kahan vectors.
     # 1. βu = Av - αu
-    BLAS.scal!(m, -α, Mu, 1)
-    BLAS.axpy!(m, 1.0, A * v, 1, Mu, 1)
+    @kscal!(m, -α, Mu)
+    @kaxpy!(m, 1.0, A * v, Mu)
     u = M * Mu
-    β = sqrt(BLAS.dot(m, u, 1, Mu, 1))
+    β = sqrt(@kdot(m, u, Mu))
     if β != 0.0
-      BLAS.scal!(m, 1.0/β, u, 1)
-      BLAS.scal!(m, 1.0/β, Mu, 1)
+      @kscal!(m, 1.0/β, u)
+      @kscal!(m, 1.0/β, Mu)
 
       # 2. αv = A'u - βv
-      BLAS.scal!(n, -β, Nv, 1)
-      BLAS.axpy!(n, 1.0, A' * u, 1, Nv, 1)
+      @kscal!(n, -β, Nv)
+      @kaxpy!(n, 1.0, A' * u, Nv)
       v = N * Nv
-      α = sqrt(BLAS.dot(n, v, 1, Nv, 1))
+      α = sqrt(@kdot(n, v, Nv))
       if α != 0.0
-        BLAS.scal!(n, 1.0/α, v, 1)
-        BLAS.scal!(n, 1.0/α, Nv, 1)
+        @kscal!(n, 1.0/α, v)
+        @kscal!(n, 1.0/α, Nv)
       end
 
       # rotate out regularization term if present

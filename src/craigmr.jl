@@ -51,26 +51,26 @@ It is formally equivalent to CRMR, though can be slightly more accurate,
 and intricate to implement. Both the x- and y-parts of the solution are
 returned.
 """
-function craigmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
-                            λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-                            itmax :: Int=0, verbose :: Bool=false)
+function craigmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+                              λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+                              itmax :: Int=0, verbose :: Bool=false)
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CRAIG-MR: system of %d equations in %d variables\n", m, n);
 
   # Compute y such that AA'y = b. Then recover x = A'y.
-  y = zeros(m);
-  u = 1.0*b
-  β₁ = BLAS.nrm2(m, u, 1)   # Marginally faster than norm(b);
-  β₁ == 0.0 && return (zeros(n), y, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution"));
+  y = zeros(T, m);
+  u = copy(b)
+  β₁ = @knrm2(m, u)   # Marginally faster than norm(b);
+  β₁ == 0.0 && return (zeros(T, n), y, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution"));
   β = β₁;
 
   # Initialize Golub-Kahan process.
   # β₁ u₁ = b.
-  BLAS.scal!(m, 1.0/β₁, u, 1);
+  @kscal!(m, 1.0/β₁, u)
   v = copy(A' * u);
-  α = BLAS.nrm2(n, v, 1);
+  α = @knrm2(n, v)
   Anorm² = α * α;
 
   verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n",
@@ -79,8 +79,8 @@ function craigmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
                      1, β₁, α, β₁, α, 0, 1, Anorm²);
 
   # A'b = 0 so x = 0 is a minimum least-squares solution
-  α == 0.0 && return (zeros(n), y, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"));
-  BLAS.scal!(n, 1.0/α, v, 1);
+  α == 0.0 && return (zeros(T, n), y, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"));
+  @kscal!(n, 1.0/α, v)
 
   # Initialize other constants.
   ζbar = β₁;
@@ -98,8 +98,8 @@ function craigmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
   itmax == 0 && (itmax = m + n);
 
   wbar = copy(u);
-  BLAS.scal!(m, 1.0/α, wbar, 1);
-  w = zeros(m);
+  @kscal!(m, 1.0/α, wbar)
+  w = zeros(T, m);
 
   status = "unknown";
   solved = rNorm <= ɛ_c
@@ -111,10 +111,10 @@ function craigmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
 
     # Generate next Golub-Kahan vectors.
     # 1. βu = Av - αu
-    BLAS.scal!(m, -α, u, 1);
-    BLAS.axpy!(m, 1.0, A * v, 1, u, 1);
-    β = BLAS.nrm2(m, u, 1);
-    β != 0.0 && BLAS.scal!(m, 1.0/β, u, 1);
+    @kscal!(m, -α, u)
+    @kaxpy!(m, 1.0, A * v, u)
+    β = @knrm2(m, u)
+    β != 0.0 && @kscal!(m, 1.0/β, u)
     Anorm² = Anorm² + β * β;  # = ‖B_{k-1}‖²
 
     # Continue QR factorization
@@ -136,14 +136,14 @@ function craigmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
     rNorm = abs(ζbar);
     push!(rNorms, rNorm);
 
-    BLAS.scal!(m, -θ/ρ, w, 1);
-    BLAS.axpy!(m, 1.0/ρ, wbar, 1, w, 1);  # w = (wbar - θ * w) / ρ;
-    BLAS.axpy!(m, ζ, w, 1, y, 1);         # y = y + ζ * w;
+    @kscal!(m, -θ/ρ, w)
+    @kaxpy!(m, 1.0/ρ, wbar, w)  # w = (wbar - θ * w) / ρ;
+    @kaxpy!(m, ζ, w, y)         # y = y + ζ * w;
 
     # 2. αv = A'u - βv
-    BLAS.scal!(n, -β, v, 1);
-    BLAS.axpy!(n, 1.0, A' * u, 1, v, 1);
-    α = BLAS.nrm2(n, v, 1);
+    @kscal!(n, -β, v)
+    @kaxpy!(n, 1.0, A' * u, v)
+    α = @knrm2(n, v)
     Anorm² = Anorm² + α * α;  # = ‖Lₖ‖
     ArNorm = α * β * abs(ζ/ρ);
     push!(ArNorms, ArNorm);
@@ -152,9 +152,9 @@ function craigmr{T <: Real}(A :: AbstractLinearOperator, b :: Vector{T};
                        1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²);
 
     if α != 0.0
-      BLAS.scal!(n, 1.0/α, v, 1);
-      BLAS.scal!(m, -β/α, wbar, 1);
-      BLAS.axpy!(m, 1.0/α, u, 1, wbar, 1);  # wbar = (u - beta * wbar) / alpha;
+      @kscal!(n, 1.0/α, v)
+      @kscal!(m, -β/α, wbar)
+      @kaxpy!(m, 1.0/α, u, wbar)  # wbar = (u - beta * wbar) / alpha;
     end
     θ = s * α;
     ρbar = -c * α;
