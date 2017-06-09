@@ -193,7 +193,7 @@ function minres{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     
     if iter == 1
       # A'b = 0 so x = 0 is a minimum least-squares solution
-      β / β₁ ≤ 10 * ϵM && return (x, SimpleStats(true, true, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
+      β / β₁ ≤ 10 * ϵM && return (x, SimpleStats(true, true, [β₁], [0.0], "x is a minimum least-squares solution"))
     end
 
     # Stopping conditions that do not depend on user input.
@@ -213,7 +213,6 @@ function minres{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err
   end
-  
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
   ill_cond_lim  && (status = "condition number exceeds tolerance")
