@@ -134,11 +134,6 @@ function minres{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     β = sqrt(β)
     ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
 
-    if iter == 1
-      # A'b = 0 so x = 0 is a minimum least-squares solution
-      β / β₁ ≤ 10 * ϵM && return (x, SimpleStats(true, true, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
-    end
-
     # Apply rotation to obtain
     #  [ δₖ    ϵₖ₊₁    ] = [ cs  sn ] [ δbarₖ  0    ]
     #  [ γbar  δbarₖ₊₁ ]   [ sn -cs ] [ αₖ     βₖ₊₁ ]
@@ -195,6 +190,11 @@ function minres{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
 
     verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
                        iter, test1, test2, β, cs, sn, ANorm, Acond)
+    
+    if iter == 1
+      # A'b = 0 so x = 0 is a minimum least-squares solution
+      β / β₁ ≤ 10 * ϵM && return (x, SimpleStats(true, true, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
+    end
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
@@ -213,7 +213,7 @@ function minres{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err
   end
-
+  
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
   ill_cond_lim  && (status = "condition number exceeds tolerance")
