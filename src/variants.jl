@@ -1,6 +1,6 @@
 # Variants
 
-for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
+for fn in (:cr, :cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
            :craig, :craigmr, :crls, :crmr,
            :lslq, :lsmr, :lsqr,
            :minres)
@@ -13,7 +13,7 @@ for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
 
     # Variant for A given as a sparse matrix
     $fn{TA <: Number, Tb <: Number, IA <: Integer}(A :: SparseMatrixCSC{TA,IA}, b :: Array{Tb,1}, args...; kwargs...) =
-        $fn(LinearOperator(A), convert(Vector{Float64}, b), args...; kwargs...)
+      $fn(LinearOperator(A), convert(Vector{Float64}, b), args...; kwargs...)
 
   end
 end
