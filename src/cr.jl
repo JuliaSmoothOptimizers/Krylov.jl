@@ -60,8 +60,8 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, Δ :: Floa
     α = ρ / @knrm2(n, q)^2 # step
 
     # if x is out of the trust region, p is followed until the edge of the trust region
-		if α >= t1
-			@kaxpy!(n, t1, p, x)
+    if α >= t1
+      @kaxpy!(n, t1, p, x)
       xNorm = @knrm2(n, x)
       xNorms = push!(xNorms, xNorm)
       Ax = A * x
@@ -76,8 +76,8 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, Δ :: Floa
       status = "on_boundary"
       stats = Krylov.SimpleStats(solved, false, rNorms, ArNorms, status)
       verbose && @printf("%d    %8.1e    %8.1e    %8.1e\n", iter, xNorm, rNorm, m)
-			return (x, stats)
-		end
+      return (x, stats)
+    end
 
     @kaxpy!(n, α, p, x) # new estimation
     xNorm = @knrm2(n, x)
