@@ -3,7 +3,7 @@
 for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
            :craig, :craigmr, :crls, :crmr,
            :lslq, :lsmr, :lsqr,
-           :minres)
+           :minres, :cr)
 
   @eval begin
 
