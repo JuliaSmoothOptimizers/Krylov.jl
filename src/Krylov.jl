@@ -25,6 +25,17 @@ type LanczosStats <: KrylovStats
   status :: String
 end
 
+type SymmlqStats <: KrylovStats
+  solved :: Bool
+  residuals :: Array{Float64}
+  residualscg :: Array{Float64}
+  errors :: Array{Float64}
+  errorscg :: Array{Float64}
+  Anorm :: Float64
+  Acond :: Float64
+  status :: String
+end
+
 import Base.show
 
 function show(io :: IO, stats :: SimpleStats)
@@ -48,12 +59,26 @@ function show(io :: IO, stats :: LanczosStats)
   print(io, s)
 end
 
+function show(io :: IO, stats :: SymmlqStats)
+  s  = "\nSYMMLQ stats\n"
+  s *= @sprintf("  solved: %s\n", stats.solved)
+  s *= @sprintf("  residuals: %s\n", vec2str(stats.residuals))
+  s *= @sprintf("  residuals (cg): %s\n", vec2str(stats.residualscg))
+  s *= @sprintf("  errors: %s\n", vec2str(stats.errors))
+  s *= @sprintf("  errors(cg): %s\n", vec2str(stats.errorscg))
+  s *= @sprintf("  ‖A‖F: %7.1e\n", stats.Anorm)
+  s *= @sprintf("  κ₂(A): %7.1e\n", stats.Acond)
+  s *= @sprintf("  status: %s\n", stats.status)
+  print(io, s)
+end
+
 include("krylov_aux.jl")
 include("krylov_utils.jl")
 
 include("cg.jl")
 include("cg_lanczos.jl")
 include("minres.jl")
+include("symmlq.jl")
 
 include("cgls.jl")
 include("crls.jl")
