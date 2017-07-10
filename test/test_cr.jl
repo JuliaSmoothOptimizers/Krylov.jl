@@ -1,67 +1,66 @@
 include("get_div_grad.jl")
 
 cr_tol = 1.0e-6
+rtol = 1.0e-6
 atol = 1.0e-8
-Δ = 10.
 itmax = 10
 
 # Cubic spline matrix _ case: ‖x*‖ > Δ
 n = 10
 A = spdiagm((ones(n-1), 4 * ones(n), ones(n-1)), (-1, 0, 1))
 b = A * [1:n;]
-(x, stats) = cr(A, b, Δ, atol, cr_tol, itmax)
-xNorm = norm(x)
+
+(x, stats) = cr(A, b, atol, rtol, itmax)
 r = b - A * x
 resid = norm(r) / norm(b)
 @printf("CR: Relative residual: %8.1e\n", resid)
-@test(xNorm == Δ)
+@test(resid <= cr_tol)
 @test(stats.solved)
 
 # Code coverage
 (x, stats) = cr(A, b)
 show(stats)
 
-Δ = 0.75 * norm(x)
-(x, stats) = cr(A, b, Δ, atol, cr_tol, itmax)
+radius = 0.75 * norm(x)
+(x, stats) = cr(A, b, atol, rtol, itmax, radius)
 show(stats)
 @test(stats.solved)
-@test(abs(Δ - norm(x)) <= cr_tol * Δ)
+@test(abs(radius - norm(x)) <= cr_tol * radius)
 
 # Sparse Laplacian
-itmax = 0
 A = get_div_grad(16, 16, 16)
 b = randn(size(A, 1))
+itmax = 0
+  # case: ‖x*‖ > Δ
+radius = 10.
+(x, stats) = cr(A, b, atol, rtol, itmax, radius)
+xNorm = norm(x)
+r = b - A * x
+resid = norm(r) / norm(b)
+@printf("CR: Relative residual: %8.1e\n", resid)
+@test(xNorm == radius)
+@test(stats.solved)
   # case: ‖x*‖ < Δ
-Δ = 30.
-(x, stats) = cr(A, b, Δ, atol, cr_tol, itmax)
+radius = 30.
+(x, stats) = cr(A, b, atol, rtol, itmax, radius)
 xNorm = norm(x)
 r = b - A * x
 resid = norm(r) / norm(b)
 @printf("CR: Relative residual: %8.1e\n", resid)
 @test(resid <= cr_tol)
 @test(stats.solved)
-  # case: ‖x*‖ > Δ
-Δ = 10.
-(x, stats) = cr(A, b, Δ, atol, cr_tol, itmax)
-xNorm = norm(x)
-r = b - A * x
-resid = norm(r) / norm(b)
-@printf("CR: Relative residual: %8.1e\n", resid)
-@test(xNorm == Δ)
-@test(stats.solved)
 
-Δ = 0.75 * norm(x)
+radius = 0.75 * xNorm
 itmax = 10
-(x, stats) = cr(A, b, Δ, atol, cr_tol, itmax)
+(x, stats) = cr(A, b, atol, rtol, itmax, radius)
 show(stats)
 @test(stats.solved)
-@test(abs(Δ - norm(x)) <= cr_tol * Δ)
+@test(abs(radius - norm(x)) <= cr_tol * radius)
 
 opA = LinearOperator(A)
-(xop, statsop) = cr(opA, b, Δ, atol, cr_tol, itmax)
+(xop, statsop) = cr(opA, b, atol, rtol, itmax, radius)
 @test xop == x
 
-Δ = 10.
 n = 100
 itmax = 2 * n
 B = LBFGSOperator(n)
@@ -70,7 +69,7 @@ for i = 1:5
   push!(B, rand(n), rand(n))
 end
 b = B * ones(n)
-(x, stats) = cr(B, b, Δ, atol, cr_tol, itmax)
+(x, stats) = cr(B, b, atol, rtol, itmax)
 @test x ≈ ones(n)
 @test stats.solved
 
