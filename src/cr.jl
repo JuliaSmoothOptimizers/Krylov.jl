@@ -46,7 +46,7 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, atol :: Fl
   status = "unknown"
 
   while ! (solved || tired)
-    α = ρ / @knrm2(n, q)^2 # step
+    α = ρ / @kdot(n, q, q) # step
 
     # Compute step size to boundary if applicable.
     σ = radius > 0.0 ? to_boundary(x, p, radius) : α
@@ -65,7 +65,7 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, atol :: Fl
     xNorm = @knrm2(n, x)
     push!(xNorms, xNorm)
     Ax = A * x
-    m = @kdot(n, -b, x) + 1/2 * @kdot(n, x, Ax)
+    m = - @kdot(n, b, x) + 0.5 * @kdot(n, x, Ax)
     push!(mvalues, m)
     @kaxpy!(n, -α, q, r) # residual
     rNorm = @knrm2(n, r)
@@ -73,19 +73,19 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, atol :: Fl
     Ar = A * r
     ArNorm = @knrm2(n, Ar)
     push!(ArNorms, ArNorm)
+    
+    iter = iter + 1
+    verbose && @printf("    %d  %8.1e    %8.1e    %8.1e", iter, xNorm, rNorm, m)
 
     solved = (rNorm <= ε) | on_boundary
     tired = iter >= itmax
-
-    if !solved
-      ρbar = ρ
-      ρ = @kdot(n, r, Ar)
-      β = ρ / ρbar # step for the direction calculus
-      p = r + β * p # descent direction
-      q = Ar + β * q
-    end
-    iter = iter + 1
-    verbose && @printf("    %d  %8.1e    %8.1e    %8.1e", iter, xNorm, rNorm, m)
+    
+    (solved || tired) && continue
+    ρbar = ρ
+    ρ = @kdot(n, r, Ar)
+    β = ρ / ρbar # step for the direction calculus
+    p = r + β * p # descent direction
+    q = Ar + β * q
 
   end
   verbose && @printf("\n")
