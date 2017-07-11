@@ -143,6 +143,14 @@ function krylov_axpy!{T <: Number}(n :: Int, s :: T, x :: Vector{T}, dx :: Int, 
   return y
 end
 
+function krylov_axpy!{T <: Number}(n :: Int, s :: T, x :: Vector{T}, dx :: Int, t :: T, y :: Vector{T}, dy :: Int)
+  # assume dx = dy
+  @simd for i = 1:dx:n
+    @inbounds y[i] = s * x[i] + t * y[i]
+  end
+  return y
+end
+
 # the macros are just for readability, so we don't have to write the increments (always equal to 1)
 
 macro kdot(n, x, y)
@@ -159,4 +167,8 @@ end
 
 macro kaxpy!(n, s, x, y)
   return esc(:(krylov_axpy!($n, $s, $x, 1, $y, 1)))
+end
+
+macro kaxpy!(n, s, x, t, y)
+  return esc(:(krylov_axpy!($n, $s, $x, 1, $t, $y, 1)))
 end
