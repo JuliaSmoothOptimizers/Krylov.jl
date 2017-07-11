@@ -38,7 +38,7 @@ xNorm = norm(x)
 r = b - A * x
 resid = norm(r) / norm(b)
 @printf("CR: Relative residual: %8.1e\n", resid)
-@test(xNorm == radius)
+@test_approx_eq(xNorm, radius)
 @test(stats.solved)
   # case: ‖x*‖ < Δ
 radius = 30.
