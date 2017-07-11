@@ -84,10 +84,8 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, atol :: Fl
     ρbar = ρ
     ρ = @kdot(n, r, Ar)
     β = ρ / ρbar # step for the direction calculus
-    @kscal!(n, β, p)
-    @kaxpy!(n, 1.0, r, p)
-    @kscal!(n, β, q)
-    @kaxpy!(n, 1.0, Ar, q)
+    @kaxpy!(n, 1.0, r, β, p)
+    @kaxpy!(n, 1.0, Ar, β, q)
 
   end
   verbose && @printf("\n")
