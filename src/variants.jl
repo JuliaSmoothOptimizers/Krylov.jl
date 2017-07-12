@@ -1,7 +1,7 @@
 # Variants
 
-for fn in (:cr, :cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
-           :craig, :craigmr, :crls, :crmr,
+for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
+           :cr, :craig, :craigmr, :crls, :crmr,
            :lslq, :lsmr, :lsqr,
            :minres)
 
