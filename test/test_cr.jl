@@ -18,14 +18,14 @@ resid = norm(r) / norm(b)
 @test(stats.solved)
 
 # Code coverage
-(x, stats) = cr(A, b)
+(x, stats) = cr(full(A), b)
 show(stats)
 
 radius = 0.75 * norm(x)
 (x, stats) = cr(A, b, atol, rtol, itmax, radius)
 show(stats)
 @test(stats.solved)
-@test(abs(radius - norm(x)) <= cr_tol * radius)
+@test_approx_eq(norm(x), radius)
 
 # Sparse Laplacian
 A = get_div_grad(16, 16, 16)
