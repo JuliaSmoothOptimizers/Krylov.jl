@@ -28,17 +28,13 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, atol :: Fl
   iter = 0
   itmax == 0 && (itmax = 2 * n)
 
-  m = 0.0
-  mvalues = [m] # values of the quadratic model
-  xNorm = 0.0
-  xNorms = [xNorm] # Values of ‖x‖
   rNorm = @knrm2(n, r) # ‖r‖
   rNorms = [rNorm] # Values of ‖r‖
   ArNorm = @knrm2(n, Ar) # ‖Ar‖
   ArNorms = [ArNorm]
   ε = atol + rtol * rNorm
-  verbose && @printf("%5s %6s %10s %10s %10s %10s\n", "Iter", "‖x‖", "‖r‖", "q", "α", "σ")
-  verbose && @printf("    %d  %8.1e    %8.1e    %8.1e", iter, xNorm, rNorm, m)
+  verbose && @printf("%5s %8s %5s %8s\n", "Iter", "‖r‖", "α", "σ")
+  verbose && @printf("    %d  %8.1e", iter, rNorm)
 
   solved = rNorm <= ε
   tired = iter >= itmax
@@ -62,11 +58,6 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, atol :: Fl
     end
 
     @kaxpy!(n,  α,  p, x)
-    xNorm = @knrm2(n, x)
-    push!(xNorms, xNorm)
-    Ax = A * x
-    m = - @kdot(n, b, x) + 0.5 * @kdot(n, x, Ax)
-    push!(mvalues, m)
     @kaxpy!(n, -α, q, r) # residual
     rNorm = @knrm2(n, r)
     push!(rNorms, rNorm)
@@ -75,7 +66,7 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, atol :: Fl
     push!(ArNorms, ArNorm)
     
     iter = iter + 1
-    verbose && @printf("    %d  %8.1e    %8.1e    %8.1e", iter, xNorm, rNorm, m)
+    verbose && @printf("    %d  %8.1e", iter, rNorm)
 
     solved = (rNorm <= ε) | on_boundary
     tired = iter >= itmax
@@ -83,7 +74,7 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, atol :: Fl
     (solved || tired) && continue
     ρbar = ρ
     ρ = @kdot(n, r, Ar)
-    β = ρ / ρbar # step for the direction calculus
+    β = ρ / ρbar # step for the direction computation
     @kaxpy!(n, 1.0, r, β, p)
     @kaxpy!(n, 1.0, Ar, β, q)
 
