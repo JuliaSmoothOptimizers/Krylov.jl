@@ -28,7 +28,7 @@ end
 import Base.show
 
 function show(io :: IO, stats :: SimpleStats)
-  s  = "\Simple stats\n"
+  s  = "\nSimple stats\n"
   s *= @sprintf("  solved: %s\n", stats.solved)
   s *= @sprintf("  inconsistent: %s\n", stats.inconsistent)
   s *= @sprintf("  residuals:  %s\n", vec2str(stats.residuals))
