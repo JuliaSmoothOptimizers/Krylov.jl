@@ -5,7 +5,7 @@ using Compat
 import Compat.String
 
 "Abstract type for statistics returned by a solver"
-abstract KrylovStats;
+@compat abstract type KrylovStats end;
 
 "Type for statistics returned by non-Lanczos solvers"
 type SimpleStats <: KrylovStats
