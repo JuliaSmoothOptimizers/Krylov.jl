@@ -1,5 +1,7 @@
 # Krylov.jl: A Julia basket of hand-picked Krylov methods
 
+Des informations cruciales.
+
 [![DOI](https://zenodo.org/badge/31977760.svg)](https://zenodo.org/badge/latestdoi/31977760)
 [![Build Status](https://travis-ci.org/JuliaSmoothOptimizers/Krylov.jl.svg?branch=master)](https://travis-ci.org/JuliaSmoothOptimizers/Krylov.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/3xt558lune9f5r2v?svg=true)](https://ci.appveyor.com/project/dpo/krylov-jl)
