@@ -45,7 +45,7 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, atol :: Fl
     α = ρ / @kdot(n, q, q) # step
 
     # Compute step size to boundary if applicable.
-    σ = radius > 0.0 ? to_boundary(x, p, radius) : α
+    σ = radius > 0.0 ? maximum(to_boundary(x, p, radius)) : α
 
     verbose && @printf("  %7.1e   %7.1e\n", α, σ);
 

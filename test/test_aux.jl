@@ -72,5 +72,7 @@ d = ones(5); d[1:2:5] = -1
 @test_throws ErrorException Krylov.to_boundary(x, d, -1.0)
 @test_throws ErrorException Krylov.to_boundary(x, d, 0.5)
 @test_throws ErrorException Krylov.to_boundary(x, zeros(5), 1.0)
-@test Krylov.to_boundary(x, d, 5.0) ≈ 2.209975124224178
-@test Krylov.to_boundary(x, d, 5.0, flip=true) == 1.8099751242241782
+@test maximum(Krylov.to_boundary(x, d, 5.0)) ≈ 2.209975124224178
+@test minimum(Krylov.to_boundary(x, d, 5.0)) ≈ -1.8099751242241782
+@test maximum(Krylov.to_boundary(x, d, 5.0, flip=true)) == 1.8099751242241782
+@test minimum(Krylov.to_boundary(x, d, 5.0, flip=true)) == -2.209975124224178
