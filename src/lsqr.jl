@@ -63,7 +63,8 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
                            sqd :: Bool=false,
                            λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
                            etol :: Float64=1.0e-8, window :: Int=5,
-                           itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+                           itmax :: Int=0, conlim :: Float64=1.0e+8,
+                           radius :: Float64=0.0, verbose :: Bool=false)
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -129,6 +130,7 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   itmax == 0 && (itmax = m + n)
 
   status = "unknown"
+  on_boundary = false
   solved = solved_mach = solved_lim = (rNorm <= atol)
   tired  = iter >= itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
@@ -195,7 +197,17 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     dNorm² += @kdot(n, d, d)
     var += d .* d
 
-    @kaxpy!(n,  ϕ/ρ, w, x)  # x = x + ϕ / ρ * w
+    # if a trust-region constraint is give, compute step to the boundary
+    # the step ϕ/ρ is not necessarily positive
+    σ = ϕ / ρ
+    if radius > 0.0
+      t1, t2 = to_boundary(x, w, radius)
+      tmax, tmin = max(t1, t2), min(t1, t2)
+      on_boundary = σ > tmax || σ < tmin
+      σ = σ > 0 ? min(σ, tmax) : max(σ, tmin)
+    end
+
+    @kaxpy!(n,  σ, w, x)  # x = x + ϕ / ρ * w
     @kscal!(n, -θ/ρ, w)
     @kaxpy!(n,  1.0, v, w)  # w = v - θ / ρ * w
 
@@ -249,7 +261,7 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     iter >= window && (fwd_err = err_lbnd <= etol * sqrt(xENorm²))
 
     ill_cond = ill_cond_mach | ill_cond_lim
-    solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err
+    solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err | on_boundary
   end
 
   tired         && (status = "maximum number of iterations exceeded")
@@ -258,6 +270,7 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   solved        && (status = "found approximate minimum least-squares solution")
   zero_resid    && (status = "found approximate zero-residual solution")
   fwd_err       && (status = "truncated forward error small enough")
+  on_boundary   && (status = "on trust-region boundary")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
   return (x, stats)
