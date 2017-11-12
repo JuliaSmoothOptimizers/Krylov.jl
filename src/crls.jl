@@ -39,7 +39,7 @@ but simpler to implement.
 function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
                            M :: AbstractLinearOperator=opEye(size(b,1)),
                            λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-                           itmax :: Int=0, verbose :: Bool=false)
+                           radius :: Float64=0.0, itmax :: Int=0, verbose :: Bool=false)
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
@@ -77,11 +77,21 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   verbose && @printf("%5d  %8.2e  %8.2e\n", 3, ArNorm, rNorm);
 
   status = "unknown";
+  on_boundary = false
   solved = ArNorm <= ε;
   tired = iter >= itmax;
 
   while ! (solved || tired)
     α = γ / @kdot(n, q, q)     # dot(q, q);
+
+    # if a trust-region constraint is give, compute step to the boundary
+    # (note that α > 0 in CRLS)
+    σ = radius > 0.0 ? maximum(to_boundary(x, p, radius)) : α
+    if (radius > 0.0) & (α > σ)
+      α = σ
+      on_boundary = true
+    end
+
     @kaxpy!(n,  α, p,   x)     # Faster than  x =  x + α *  p;
     @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap;
     @kaxpy!(n, -α, q,  Ar)     # Faster than Ar = Ar - α *  q;
@@ -113,11 +123,11 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     push!(ArNorms, ArNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.2e  %8.2e\n", 3 + 2 * iter, ArNorm, rNorm);
-    solved = ArNorm <= ε;
+    solved = (ArNorm <= ε) | on_boundary
     tired = iter >= itmax;
   end
 
-  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
   stats = SimpleStats(solved, false, rNorms, ArNorms, status);
   return (x, stats);
 end
