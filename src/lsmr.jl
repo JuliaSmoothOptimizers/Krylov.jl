@@ -192,7 +192,7 @@ function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     # Update h, h_har, x.
     hbar = h - (θbar * ρ / (ρold * ρbarold)) * hbar
 
-    # if a trust-region constraint is give, compute step to the boundary
+    # if a trust-region constraint is given, compute step to the boundary
     # the step ϕ/ρ is not necessarily positive
     σ = ζ / (ρ * ρbar)
     if radius > 0.0
