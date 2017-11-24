@@ -10,7 +10,7 @@ export cr
 """A truncated version of Stiefel’s Conjugate Residual method to solve the symmetric linear system Ax=b.
 The matrix A must be positive semi-definite
 """
-function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0, radius :: Float64=0., verbose :: Bool=true)
+function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}; atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0, radius :: Float64=0., verbose :: Bool=true)
 
   n = size(b, 1) # size of the problem
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
@@ -64,13 +64,13 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T}, atol :: Fl
     Ar = A * r
     ArNorm = @knrm2(n, Ar)
     push!(ArNorms, ArNorm)
-    
+
     iter = iter + 1
     verbose && @printf("    %d  %8.1e", iter, rNorm)
 
     solved = (rNorm <= ε) | on_boundary
     tired = iter >= itmax
-    
+
     (solved || tired) && continue
     ρbar = ρ
     ρ = @kdot(n, r, Ar)
