@@ -31,6 +31,18 @@ resid = norm(A' * M * (A * x - b)) / sqrt(dot(b, M * b));
 @printf("CGLS: Preconditioned residual: %8.1e\n", resid);
 @test resid <= cgls_tol;
 
+# test trust-region constraint
+(x, stats) = cgls(A, b)
+
+radius = 0.75 * norm(x)
+(x, stats) = cgls(A, b, radius=radius)
+@test(stats.solved);
+@test(abs(radius - norm(x)) <= cgls_tol * radius)
+
+opA = LinearOperator(A)
+(xop, statsop) = cgls(opA, b, radius=radius)
+@test(abs(radius - norm(xop)) <= cgls_tol * radius)
+
 # Code coverage.
 (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0);
 (x, stats) = cgls(full(A), b);

@@ -42,7 +42,7 @@ show(stats)
 
 opA = LinearOperator(A)
 (xop, statsop) = cg(opA, b, radius=radius, itmax=10)
-@test xop == x
+@test(abs(radius - norm(xop)) <= cg_tol * radius)
 
 n = 100
 B = LBFGSOperator(n)
