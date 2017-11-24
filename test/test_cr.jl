@@ -1,16 +1,13 @@
 include("get_div_grad.jl")
 
 cr_tol = 1.0e-6
-rtol = 1.0e-6
-atol = 1.0e-8
-itmax = 10
 
 # Cubic spline matrix _ case: ‖x*‖ > Δ
 n = 10
 A = spdiagm((ones(n-1), 4 * ones(n), ones(n-1)), (-1, 0, 1))
 b = A * [1:n;]
 
-(x, stats) = cr(A, b, atol, rtol, itmax)
+(x, stats) = cr(A, b)
 r = b - A * x
 resid = norm(r) / norm(b)
 @printf("CR: Relative residual: %8.1e\n", resid)
@@ -22,7 +19,7 @@ resid = norm(r) / norm(b)
 show(stats)
 
 radius = 0.75 * norm(x)
-(x, stats) = cr(A, b, atol, rtol, itmax, radius)
+(x, stats) = cr(A, b, radius=radius)
 show(stats)
 @test(stats.solved)
 @test abs(norm(x) - radius) ≤ cr_tol * radius
@@ -33,7 +30,7 @@ b = randn(size(A, 1))
 itmax = 0
   # case: ‖x*‖ > Δ
 radius = 10.
-(x, stats) = cr(A, b, atol, rtol, itmax, radius)
+(x, stats) = cr(A, b, radius=radius)
 xNorm = norm(x)
 r = b - A * x
 resid = norm(r) / norm(b)
@@ -42,7 +39,7 @@ resid = norm(r) / norm(b)
 @test(stats.solved)
   # case: ‖x*‖ < Δ
 radius = 30.
-(x, stats) = cr(A, b, atol, rtol, itmax, radius)
+(x, stats) = cr(A, b, radius=radius)
 xNorm = norm(x)
 r = b - A * x
 resid = norm(r) / norm(b)
@@ -51,15 +48,14 @@ resid = norm(r) / norm(b)
 @test(stats.solved)
 
 radius = 0.75 * xNorm
-itmax = 10
-(x, stats) = cr(A, b, atol, rtol, itmax, radius)
+(x, stats) = cr(A, b, radius=radius)
 show(stats)
 @test(stats.solved)
 @test(abs(radius - norm(x)) <= cr_tol * radius)
 
 opA = LinearOperator(A)
-(xop, statsop) = cr(opA, b, atol, rtol, itmax, radius)
-@test xop == x
+(xop, statsop) = cr(opA, b, radius=radius)
+@test(abs(radius - norm(xop)) <= cr_tol * radius)
 
 n = 100
 itmax = 2 * n
@@ -69,7 +65,7 @@ for i = 1:5
   push!(B, rand(n), rand(n))
 end
 b = B * ones(n)
-(x, stats) = cr(B, b, atol, rtol, itmax)
+(x, stats) = cr(B, b)
 @test x ≈ ones(n)
 @test stats.solved
 
