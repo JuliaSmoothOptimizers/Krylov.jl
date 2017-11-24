@@ -17,6 +17,18 @@ for npower = 1 : 4
   @test(stats.solved);
 end
 
+# test trust-region constraint
+(x, stats) = lsmr(A, b)
+
+radius = 0.75 * norm(x)
+(x, stats) = lsmr(A, b, radius=radius)
+@test(stats.solved)
+@test(abs(radius - norm(x)) <= lsmr_tol * radius)
+
+opA = LinearOperator(A)
+(xop, statsop) = lsmr(opA, b, radius=radius)
+@test(abs(radius - norm(xop)) <= lsmr_tol * radius)
+
 # Code coverage.
 (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0);
 (x, stats) = lsmr(full(A), b);
