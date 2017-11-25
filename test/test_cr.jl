@@ -25,7 +25,7 @@ radius = 0.75 * norm(x)
 (x, stats) = cr(A, b, atol, rtol, itmax, radius)
 show(stats)
 @test(stats.solved)
-@test_approx_eq(norm(x), radius)
+@test abs(norm(x) - radius) ≤ cr_tol * radius
 
 # Sparse Laplacian
 A = get_div_grad(16, 16, 16)
@@ -38,7 +38,7 @@ xNorm = norm(x)
 r = b - A * x
 resid = norm(r) / norm(b)
 @printf("CR: Relative residual: %8.1e\n", resid)
-@test_approx_eq(xNorm, radius)
+@test abs(xNorm - radius) ≤ cr_tol * radius
 @test(stats.solved)
   # case: ‖x*‖ < Δ
 radius = 30.

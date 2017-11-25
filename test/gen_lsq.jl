@@ -21,8 +21,8 @@ function lstp(nrow :: Int, ncol :: Int, ndupl :: Int, npower :: Int, λ :: Real,
   fourpi = 4 * 3.141592;    # This is the approximation used in Mike's original subroutine.
   α = fourpi / nrow;        # 4π / nrow;
   β = fourpi / ncol;        # 4π / ncol;
-  hy = sin([1:nrow;] * α);
-  hz = cos([1:ncol;] * β);
+  hy = map(sin, [1:nrow;] * α)
+  hz = map(cos, [1:ncol;] * β)
 
   α = norm(hy); hy /= α; HY = opHouseholder(hy);  # HY is nrow x nrow.
   β = norm(hz); hz /= β; HZ = opHouseholder(hz);  # HZ is ncol x ncol.
@@ -67,4 +67,3 @@ function testall()
   test(40, 40, 4, 3, damp);
   test(40, 40, 4, 4, damp);
 end
-
