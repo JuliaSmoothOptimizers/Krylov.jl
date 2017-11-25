@@ -1,11 +1,16 @@
 environment:
   matrix:
-  - JULIAVERSION: "julialang/bin/winnt/x86/0.5/julia-0.5-latest-win32.exe"
-  - JULIAVERSION: "julialang/bin/winnt/x64/0.5/julia-0.5-latest-win64.exe"
-  - JULIAVERSION: "julialang/bin/winnt/x86/0.6/julia-0.6-latest-win32.exe"
-  - JULIAVERSION: "julialang/bin/winnt/x64/0.6/julia-0.6-latest-win64.exe"
-  - JULIAVERSION: "julianightlies/bin/winnt/x86/julia-latest-win32.exe"
-  - JULIAVERSION: "julianightlies/bin/winnt/x64/julia-latest-win64.exe"
+    - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x86/0.5/julia-0.5-latest-win32.exe"
+    - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x64/0.5/julia-0.5-latest-win64.exe"
+    - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x86/0.6/julia-0.6-latest-win32.exe"
+    - JULIA_URL: "https://julialang-s3.julialang.org/bin/winnt/x64/0.6/julia-0.6-latest-win64.exe"
+    - JULIA_URL: "https://julialangnightlies-s3.julialang.org/bin/winnt/x86/julia-latest-win32.exe"
+    - JULIA_URL: "https://julialangnightlies-s3.julialang.org/bin/winnt/x64/julia-latest-win64.exe"
+
+matrix:
+  allow_failures:
+    - JULIA_URL: "https://julialangnightlies-s3.julialang.org/bin/winnt/x86/julia-latest-win32.exe"
+    - JULIA_URL: "https://julialangnightlies-s3.julialang.org/bin/winnt/x64/julia-latest-win64.exe"
 
 notifications:
   - provider: Email
@@ -16,8 +21,9 @@ notifications:
 skip_branch_with_pr: true
 
 install:
+  - ps: "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12"
 # Download most recent Julia Windows binary
-  - ps: (new-object net.webclient).DownloadFile($("http://s3.amazonaws.com/"+$env:JULIAVERSION), "C:\projects\julia-binary.exe")
+  - ps: (new-object net.webclient).DownloadFile($env:JULIA_URL, "C:\projects\julia-binary.exe")
 # Run installer silently, output to C:\projects\julia
   - C:\projects\julia-binary.exe /S /D=C:\projects\julia
 
@@ -28,4 +34,4 @@ build_script:
   - C:\projects\julia\bin\julia -e "Pkg.clone(pwd(), \"Krylov\"); Pkg.build(\"Krylov\")"
 
 test_script:
-  - C:\projects\julia\bin\julia -e "Pkg.test(\"Krylov\")"
+  - C:\projects\julia\bin\julia --check-bounds=yes -e "Pkg.test(\"Krylov\")"
