@@ -94,7 +94,7 @@ function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   ρ = 1.0
   ρbar = 1.0
   cbar = 1.0
-  sbar = 1.0
+  sbar = 0.0
 
   # Initialize variables for estimation of ‖r‖.
   βdd = β
