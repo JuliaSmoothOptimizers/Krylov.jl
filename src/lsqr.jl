@@ -61,7 +61,8 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
                            M :: AbstractLinearOperator=opEye(size(A,1)),
                            N :: AbstractLinearOperator=opEye(size(A,2)),
                            sqd :: Bool=false,
-                           λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
+                           λ :: Float64=0.0, axtol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
+                           atol :: Float64=0.0, rtol :: Float64=0.0,
                            etol :: Float64=1.0e-8, window :: Int=5,
                            itmax :: Int=0, conlim :: Float64=1.0e+8,
                            radius :: Float64=0.0, verbose :: Bool=false)
@@ -123,7 +124,7 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   r2Norm = rNorm
   res2   = 0.0
   rNorms = [r2Norm]
-  ArNorm = α * β
+  ArNorm = ArNorm0 = α * β
   ArNorms = [ArNorm]
 
   iter = 0
@@ -131,7 +132,7 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
 
   status = "unknown"
   on_boundary = false
-  solved = solved_mach = solved_lim = (rNorm <= atol)
+  solved = solved_mach = solved_lim = (rNorm <= axtol)
   tired  = iter >= itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
   zero_resid = zero_resid_mach = zero_resid_lim = false
@@ -242,7 +243,7 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     test2 = ArNorm / (Anorm * rNorm)
     test3 = 1 / Acond
     t1    = test1 / (1.0 + Anorm * xNorm / β₁)
-    rtol  = btol + atol * Anorm * xNorm / β₁
+    rNormtol = btol + axtol * Anorm * xNorm / β₁
 
     verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
                        1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
@@ -256,12 +257,13 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     # Stopping conditions based on user-provided tolerances.
     tired  = iter >= itmax
     ill_cond_lim = (test3 <= ctol)
-    solved_lim = (test2 <= atol)
-    zero_resid_lim = (test1 <= rtol)
+    solved_lim = (test2 <= axtol)
+    solved_opt = ArNorm <= atol + rtol * ArNorm0
+    zero_resid_lim = (test1 <= rNormtol)
     iter >= window && (fwd_err = err_lbnd <= etol * sqrt(xENorm²))
 
     ill_cond = ill_cond_mach | ill_cond_lim
-    solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err | on_boundary
+    solved = solved_mach | solved_lim | solved_opt | zero_resid_mach | zero_resid_lim | fwd_err | on_boundary
   end
 
   tired         && (status = "maximum number of iterations exceeded")
