@@ -66,7 +66,7 @@ for i = 1:5
 end
 b = B * ones(n)
 (x, stats) = cr(B, b)
-@test x ≈ ones(n)
+@test norm(x - ones(n)) < cr_tol
 @test stats.solved
 
 # Test b == 0
