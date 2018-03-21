@@ -9,8 +9,12 @@ julia:
   - 0.6
   - nightly
 
+# Allow failure of Linux 0.5 because of
+# https://github.com/travis-ci/travis-ci/issues/9264
 matrix:
   allow_failures:
+    - julia: 0.5
+      os: linux
     - julia: nightly
 
 branches:
