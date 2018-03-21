@@ -197,7 +197,7 @@ function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     # the step ϕ/ρ is not necessarily positive
     σ = ζ / (ρ * ρbar)
     if radius > 0.0
-      t1, t2 = to_boundary(x, hbar, radius)
+      t1, t2 = to_boundary(x, hbar, radius, M=N)
       tmax, tmin = max(t1, t2), min(t1, t2)
       on_boundary = σ > tmax || σ < tmin
       σ = σ > 0 ? min(σ, tmax) : max(σ, tmin)

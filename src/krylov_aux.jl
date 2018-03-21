@@ -94,22 +94,25 @@ trust-region and a direction `d`, return `σ1` and `σ2` such that
 
     ‖x + σi d‖ = radius, i = 1, 2
 
-in the Euclidean norm. If known, ‖x‖² may be supplied in `xNorm2`.
+in the M-norm. If known, ‖x‖²_M may be supplied in `xNorm2`.
 
 If `flip` is set to `true`, `σ1` and `σ2` are computed such that
 
     ‖x - σi d‖ = radius, i = 1, 2.
 """
 function to_boundary(x :: Vector{Float64}, d :: Vector{Float64},
-                     radius :: Float64; flip :: Bool=false, xNorm2 :: Float64=0.0)
+                     radius :: Float64;
+                     M :: AbstractLinearOperator=opEye(length(x)),
+                     flip :: Bool=false, xNorm2 :: Float64=0.0)
   radius > 0 || error("radius must be positive")
 
-  # ‖d‖² σ² + 2 xᵀd σ + (‖x‖² - radius²).
-  xd = dot(x, d)
+  # ‖d‖² σ² + 2 xᵀMd σ + (‖x‖² - radius²).
+  Md = M * d
+  xd = dot(x, Md)
   flip && (xd = -xd)
-  dNorm2 = dot(d, d)
+  dNorm2 = dot(d, Md)
   dNorm2 == 0.0 && error("zero direction")
-  xNorm2 == 0.0 && (xNorm2 = dot(x, x))
+  xNorm2 == 0.0 && (xNorm2 = dot(M * x, x))
   (xNorm2 <= radius * radius) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius * radius))
   roots = roots_quadratic(dNorm2, 2 * xd, xNorm2 - radius * radius)
   return roots # `σ1` and `σ2`
