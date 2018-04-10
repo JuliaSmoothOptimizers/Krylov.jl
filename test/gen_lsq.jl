@@ -28,7 +28,7 @@ function lstp(nrow :: Int, ncol :: Int, ndupl :: Int, npower :: Int, λ :: Real,
   β = norm(hz); hz /= β; HZ = opHouseholder(hz);  # HZ is ncol x ncol.
 
   # Set the diagonal matrix D containing the singular values of A.
-  d = (div(([0:ncol-1;] .+ ndupl), ndupl) * ndupl / ncol).^npower;  # Integer div!
+  d = (div.(([0:ncol-1;] .+ ndupl), ndupl) * ndupl / ncol).^npower;  # Integer div!
   D = opDiagonal(nrow, ncol, d);
   A = HY * D * HZ;
 
