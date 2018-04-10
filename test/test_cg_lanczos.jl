@@ -56,7 +56,7 @@ show(stats);
 @test stats.status == "x = 0 is a zero-residual solution"
 
 # Test integer values
-A = ceil(Int, A) + eye(size(A,1))
+A = ceil.(Int, A) + eye(size(A,1))
 b = A * ones(Int, size(A,1))
 (x, stats) = cg_lanczos(A, b)
 @test stats.solved
