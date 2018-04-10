@@ -210,10 +210,11 @@ function minres{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     zero_resid_lim = (test1 ≤ tol)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
 
+    zero_resid = zero_resid_mach | zero_resid_lim
     ill_cond = ill_cond_mach | ill_cond_lim
-    solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err
+    solved = solved_mach | solved_lim | zero_resid | fwd_err
   end
-  
+
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
   ill_cond_lim  && (status = "condition number exceeds tolerance")
