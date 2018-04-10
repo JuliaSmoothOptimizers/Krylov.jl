@@ -52,7 +52,7 @@ for i = 1:5
 end
 b = B * ones(n)
 (x, stats) = cg(B, b, itmax=2n)
-@test x ≈ ones(n)
+@test norm(x - ones(n)) ≤ cg_tol * norm(x)
 @test stats.solved
 
 # Test b == 0
