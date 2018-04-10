@@ -91,6 +91,7 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))
   Anorm² = α * α
+  Anorm = α
   Acond  = 0.0
   xNorm  = 0.0
   xNorm² = 0.0
@@ -132,10 +133,14 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
 
   status = "unknown"
   on_boundary = false
-  solved = solved_mach = solved_lim = (rNorm <= axtol)
+  solved_lim = ArNorm / (Anorm * rNorm) <= axtol
+  solved_mach = 1.0 + ArNorm / (Anorm * rNorm) <= 1.0
+  solved = solved_mach | solved_lim
   tired  = iter >= itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
-  zero_resid = zero_resid_mach = zero_resid_lim = false
+  zero_resid_lim = rNorm / β₁ <= axtol
+  zero_resid_mach = 1.0 + rNorm / β₁ <= 1.0
+  zero_resid = zero_resid_mach | zero_resid_lim
   fwd_err = false
 
   while ! (solved || tired || ill_cond)
