@@ -19,3 +19,8 @@
 ## Preconditioning
 
 - [ ] Save on storage when not preconditioning (How? Assign identifiers to ops)
+
+## Stopping criterion
+
+- [ ] Shifted systems stopped according to the paper
+- [ ] cg interrupted in the spirit of "truncated Newton" with line search

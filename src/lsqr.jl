@@ -61,9 +61,11 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
                            M :: AbstractLinearOperator=opEye(size(A,1)),
                            N :: AbstractLinearOperator=opEye(size(A,2)),
                            sqd :: Bool=false,
-                           λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
+                           λ :: Float64=0.0, axtol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
+                           atol :: Float64=0.0, rtol :: Float64=0.0,
                            etol :: Float64=1.0e-8, window :: Int=5,
-                           itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+                           itmax :: Int=0, conlim :: Float64=1.0e+8,
+                           radius :: Float64=0.0, verbose :: Bool=false)
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -89,6 +91,7 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))
   Anorm² = α * α
+  Anorm = α
   Acond  = 0.0
   xNorm  = 0.0
   xNorm² = 0.0
@@ -122,17 +125,22 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   r2Norm = rNorm
   res2   = 0.0
   rNorms = [r2Norm]
-  ArNorm = α * β
+  ArNorm = ArNorm0 = α * β
   ArNorms = [ArNorm]
 
   iter = 0
   itmax == 0 && (itmax = m + n)
 
   status = "unknown"
-  solved = solved_mach = solved_lim = (rNorm <= atol)
+  on_boundary = false
+  solved_lim = ArNorm / (Anorm * rNorm) <= axtol
+  solved_mach = 1.0 + ArNorm / (Anorm * rNorm) <= 1.0
+  solved = solved_mach | solved_lim
   tired  = iter >= itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
-  zero_resid = zero_resid_mach = zero_resid_lim = false
+  zero_resid_lim = rNorm / β₁ <= axtol
+  zero_resid_mach = 1.0 + rNorm / β₁ <= 1.0
+  zero_resid = zero_resid_mach | zero_resid_lim
   fwd_err = false
 
   while ! (solved || tired || ill_cond)
@@ -195,7 +203,17 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     dNorm² += @kdot(n, d, d)
     var += d .* d
 
-    @kaxpy!(n,  ϕ/ρ, w, x)  # x = x + ϕ / ρ * w
+    # if a trust-region constraint is give, compute step to the boundary
+    # the step ϕ/ρ is not necessarily positive
+    σ = ϕ / ρ
+    if radius > 0.0
+      t1, t2 = to_boundary(x, w, radius)
+      tmax, tmin = max(t1, t2), min(t1, t2)
+      on_boundary = σ > tmax || σ < tmin
+      σ = σ > 0 ? min(σ, tmax) : max(σ, tmin)
+    end
+
+    @kaxpy!(n,  σ, w, x)  # x = x + ϕ / ρ * w
     @kscal!(n, -θ/ρ, w)
     @kaxpy!(n,  1.0, v, w)  # w = v - θ / ρ * w
 
@@ -230,7 +248,7 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     test2 = ArNorm / (Anorm * rNorm)
     test3 = 1 / Acond
     t1    = test1 / (1.0 + Anorm * xNorm / β₁)
-    rtol  = btol + atol * Anorm * xNorm / β₁
+    rNormtol = btol + axtol * Anorm * xNorm / β₁
 
     verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
                        1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
@@ -244,12 +262,13 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     # Stopping conditions based on user-provided tolerances.
     tired  = iter >= itmax
     ill_cond_lim = (test3 <= ctol)
-    solved_lim = (test2 <= atol)
-    zero_resid_lim = (test1 <= rtol)
+    solved_lim = (test2 <= axtol)
+    solved_opt = ArNorm <= atol + rtol * ArNorm0
+    zero_resid_lim = (test1 <= rNormtol)
     iter >= window && (fwd_err = err_lbnd <= etol * sqrt(xENorm²))
 
     ill_cond = ill_cond_mach | ill_cond_lim
-    solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err
+    solved = solved_mach | solved_lim | solved_opt | zero_resid_mach | zero_resid_lim | fwd_err | on_boundary
   end
 
   tired         && (status = "maximum number of iterations exceeded")
@@ -258,6 +277,7 @@ function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   solved        && (status = "found approximate minimum least-squares solution")
   zero_resid    && (status = "found approximate zero-residual solution")
   fwd_err       && (status = "truncated forward error small enough")
+  on_boundary   && (status = "on trust-region boundary")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
   return (x, stats)

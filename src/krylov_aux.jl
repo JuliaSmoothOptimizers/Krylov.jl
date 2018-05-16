@@ -90,21 +90,20 @@ end
 
 
 """Given a trust-region radius `radius`, a vector `x` lying inside the
-trust-region and a direction `d`, return `σ` > 0 such that
+trust-region and a direction `d`, return `σ1` and `σ2` such that
 
-    ‖x + σ d‖ = radius
+    ‖x + σi d‖ = radius, i = 1, 2
 
 in the Euclidean norm. If known, ‖x‖² may be supplied in `xNorm2`.
 
-If `flip` is set to `true`, `σ` > 0 is computed such that
+If `flip` is set to `true`, `σ1` and `σ2` are computed such that
 
-    ‖x - σ d‖ = radius.
+    ‖x - σi d‖ = radius, i = 1, 2.
 """
 function to_boundary(x :: Vector{Float64}, d :: Vector{Float64},
                      radius :: Float64; flip :: Bool=false, xNorm2 :: Float64=0.0)
   radius > 0 || error("radius must be positive")
 
-  # σ is the positive root of the quadratic
   # ‖d‖² σ² + 2 xᵀd σ + (‖x‖² - radius²).
   xd = dot(x, d)
   flip && (xd = -xd)
@@ -113,7 +112,7 @@ function to_boundary(x :: Vector{Float64}, d :: Vector{Float64},
   xNorm2 == 0.0 && (xNorm2 = dot(x, x))
   (xNorm2 <= radius * radius) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius * radius))
   roots = roots_quadratic(dNorm2, 2 * xd, xNorm2 - radius * radius)
-  return maximum(roots)
+  return roots # `σ1` and `σ2`
 end
 
 
@@ -143,6 +142,14 @@ function krylov_axpy!{T <: Number}(n :: Int, s :: T, x :: Vector{T}, dx :: Int, 
   return y
 end
 
+function krylov_axpy!{T <: Number}(n :: Int, s :: T, x :: Vector{T}, dx :: Int, t :: T, y :: Vector{T}, dy :: Int)
+  # assume dx = dy
+  @simd for i = 1:dx:n
+    @inbounds y[i] = s * x[i] + t * y[i]
+  end
+  return y
+end
+
 # the macros are just for readability, so we don't have to write the increments (always equal to 1)
 
 macro kdot(n, x, y)
@@ -159,4 +166,8 @@ end
 
 macro kaxpy!(n, s, x, y)
   return esc(:(krylov_axpy!($n, $s, $x, 1, $y, 1)))
+end
+
+macro kaxpy!(n, s, x, t, y)
+  return esc(:(krylov_axpy!($n, $s, $x, 1, $t, $y, 1)))
 end

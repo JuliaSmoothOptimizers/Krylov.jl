@@ -177,11 +177,11 @@ function cg_lanczos_shift_seq{Tb <: Number, Ts <: Number}(A :: AbstractLinearOpe
       δhat[i] = δ + shifts[i]
       γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i])
     end
-    indefinite |= (γ .<= 0.0);
+    indefinite .|= (γ .<= 0.0);
 
     # Compute next CG iterate for each shifted system that has not yet converged.
     # Stop iterating on indefinite problems if requested.
-    not_cv = check_curvature ? find(! (converged | indefinite)) : find(! converged);
+    @compat not_cv = check_curvature ? find(.! (converged .| indefinite)) : find(.! converged);
 
     # Loop is a bit faster than the vectorized version.
     for i in not_cv
@@ -200,7 +200,7 @@ function cg_lanczos_shift_seq{Tb <: Number, Ts <: Number}(A :: AbstractLinearOpe
     length(not_cv) > 0 && append!(rNorms_history, rNorms);
 
     # Is there a better way than to update this array twice per iteration?
-    not_cv = check_curvature ? find(! (converged | indefinite)) : find(! converged);
+    @compat not_cv = check_curvature ? find(.! (converged .| indefinite)) : find(.! converged);
     iter = iter + 1;
     verbose && local_printf(iter, rNorms...)
 

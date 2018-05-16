@@ -5,7 +5,7 @@ using Compat
 import Compat.String
 
 "Abstract type for statistics returned by a solver"
-abstract KrylovStats;
+@compat abstract type KrylovStats end;
 
 "Type for statistics returned by non-Lanczos solvers"
 type SimpleStats <: KrylovStats
@@ -39,7 +39,7 @@ end
 import Base.show
 
 function show(io :: IO, stats :: SimpleStats)
-  s  = "\Simple stats\n"
+  s  = "\nSimple stats\n"
   s *= @sprintf("  solved: %s\n", stats.solved)
   s *= @sprintf("  inconsistent: %s\n", stats.inconsistent)
   s *= @sprintf("  residuals:  %s\n", vec2str(stats.residuals))
@@ -79,6 +79,7 @@ include("cg.jl")
 include("cg_lanczos.jl")
 include("minres.jl")
 include("symmlq.jl")
+include("cr.jl")
 
 include("cgls.jl")
 include("crls.jl")

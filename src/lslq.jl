@@ -165,6 +165,7 @@ function lslq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   δ = -1.0
   τ = α * β₁
   ζ = 0.0
+  ζ̃  = T(0)
   csig = -1.0
 
   rNorm = β₁

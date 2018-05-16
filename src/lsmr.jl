@@ -61,9 +61,11 @@ function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
                            M :: AbstractLinearOperator=opEye(size(A,1)),
                            N :: AbstractLinearOperator=opEye(size(A,2)),
                            sqd :: Bool=false,
-                           λ :: Float64=0.0, atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
+                           λ :: Float64=0.0, axtol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
+                           atol :: Float64=0.0, rtol :: Float64=0.0,
                            etol :: Float64=1.0e-8, window :: Int=5,
-                           itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+                           itmax :: Int=0, conlim :: Float64=1.0e+8,
+                           radius :: Float64=0.0, verbose :: Bool=false)
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -93,7 +95,7 @@ function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   ρ = 1.0
   ρbar = 1.0
   cbar = 1.0
-  sbar = 1.0
+  sbar = 0.0
 
   # Initialize variables for estimation of ‖r‖.
   βdd = β
@@ -113,7 +115,7 @@ function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   ctol = conlim > 0.0 ? 1./conlim : 0.0;
   rNorm = β
   rNorms = [rNorm]
-  ArNorm = α * β
+  ArNorm = ArNorm0 = α * β
   ArNorms = [ArNorm]
 
   xENorm² = 0.0
@@ -137,7 +139,8 @@ function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   itmax == 0 && (itmax = m + n)
 
   status = "unknown"
-  solved = solved_mach = solved_lim = (rNorm <= atol)
+  on_boundary = false
+  solved = solved_mach = solved_lim = (rNorm <= axtol)
   tired  = iter >= itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
   zero_resid = zero_resid_mach = zero_resid_lim = false
@@ -189,7 +192,18 @@ function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
 
     # Update h, h_har, x.
     hbar = h - (θbar * ρ / (ρold * ρbarold)) * hbar
-    x = x + (ζ / (ρ * ρbar)) * hbar
+
+    # if a trust-region constraint is given, compute step to the boundary
+    # the step ϕ/ρ is not necessarily positive
+    σ = ζ / (ρ * ρbar)
+    if radius > 0.0
+      t1, t2 = to_boundary(x, hbar, radius)
+      tmax, tmin = max(t1, t2), min(t1, t2)
+      on_boundary = σ > tmax || σ < tmin
+      σ = σ > 0 ? min(σ, tmax) : max(σ, tmin)
+    end
+
+    x = x + σ * hbar
     h = v - (θnew / ρ) * h
 
     # Estimate ‖r‖.
@@ -230,7 +244,7 @@ function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     test2 = ArNorm / (Anorm * rNorm)
     test3 = 1 / Acond
     t1    = test1 / (1.0 + Anorm * xNorm / β₁)
-    rtol  = btol + atol * Anorm * xNorm / β₁
+    rNormtol  = btol + axtol * Anorm * xNorm / β₁
 
     verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
                        1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
@@ -244,12 +258,13 @@ function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     # Stopping conditions based on user-provided tolerances.
     tired  = iter >= itmax
     ill_cond_lim = (test3 <= ctol)
-    solved_lim = (test2 <= atol)
-    zero_resid_lim = (test1 <= rtol)
+    solved_lim = (test2 <= axtol)
+    solved_opt = ArNorm <= atol + rtol * ArNorm0
+    zero_resid_lim = (test1 <= rNormtol)
     iter >= window && (fwd_err = err_lbnd <= etol * sqrt(xENorm²))
 
     ill_cond = ill_cond_mach | ill_cond_lim
-    solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err
+    solved = solved_mach | solved_lim | solved_opt | zero_resid_mach | zero_resid_lim | fwd_err | on_boundary
   end
 
   tired         && (status = "maximum number of iterations exceeded")
@@ -258,6 +273,7 @@ function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   solved        && (status = "found approximate minimum least-squares solution")
   zero_resid    && (status = "found approximate zero-residual solution")
   fwd_err       && (status = "truncated forward error small enough")
+  on_boundary   && (status = "on trust-region boundary")
 
   stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
   return (x, stats)
