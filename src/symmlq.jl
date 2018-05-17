@@ -46,7 +46,7 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   vold = copy(b)
   p = M * vold
   β₁ = @kdot(m, vold, p)
-  β₁ == 0.0 && return (x, SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
+  β₁ == 0.0 && return (x, x, SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
   β = β₁
   vold = @kscal!(m, 1./β, vold)
@@ -177,7 +177,6 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
 
     # Update iterates
     x = x + ζ * w
-    xcg = x + ζbar * wbar
 
     xNorm = xNorm + ζ * ζ
     xcgNorm = xNorm + ζbar * ζbar
@@ -208,8 +207,6 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
          sprod = sprod/sprod[(ix % window) + 1]
          sprod[ix] = sprod[mod(ix-2, window)+1]*s
       end
-
-      display([clist zlist sprod])
     end
 
     if λest != 0
@@ -265,7 +262,7 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
 
   # Final solve against preconditioner
   x = M * x
-  xcg = M * x
+  xcg = M * (x + ζbar * wbar)
   
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
