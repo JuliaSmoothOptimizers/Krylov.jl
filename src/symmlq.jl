@@ -28,14 +28,14 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
                              M :: AbstractLinearOperator=opEye(size(A,1)),
                              λ :: Float64=0.0,
                              λest :: Float64=0.0,
-                             atol :: Float64=1.0e-12, rtol :: Float64=1.0e-12,
-                             etol :: Float64=1.0e-8, window :: Int=5,
+                             atol :: Float64=1.0e-8, rtol :: Float64=1.0e-8,
+                             etol :: Float64=1.0e-8, window :: Int=0,
                              itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
 
   m, n = size(A)
   m == n || error("System must be square")
   size(b, 1) == m || error("Inconsistent problem size")
-  verbose && @printf("MINRES: system of size %d\n", n)
+  verbose && @printf("SYMMLQ: system of size %d\n", n)
 
   ϵM = eps(T)
   x = zeros(T, n)
@@ -72,15 +72,6 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   ζold = 0.0
   ζbar = β₁/γbar
 
-  if λest > 0
-    ρbar = α - λest
-    σbar = β
-    ρ = sqrt(ρbar * ρbar + β * β)
-    cwold = -1.0
-    cw = ρbar / ρ
-    sw = β / ρ
-  end
-
   ANorm² = α * α + β * β
 
   x = zeros(T, n)
@@ -102,6 +93,23 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   errorscg = []
   err = Inf
   errcg = Inf
+
+  clist = zeros(window)
+  zlist = zeros(window)
+  sprod = ones(window)
+
+  if λest != 0
+    # Start QR factorization of Tₖ - λest I
+    ρbar = α - λest
+    σbar = β
+    ρ = sqrt(ρbar * ρbar + β * β)
+    cwold = -1.0
+    cw = ρbar / ρ
+    sw = β / ρ
+
+    push!(errors, abs(β₁/λest))
+    push!(errorscg, sqrt(errors[1]^2 - ζbar^2))
+  end
 
   verbose && @printf("%5s  %7s  %7s  %8s  %8s  %7s  %7s\n",
                      "Aprod", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)")
@@ -127,7 +135,7 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     c = γbar/γ
     s = β/γ
 
-    # Generate next Lanczos vector.
+    # Generate next Lanczos vector
     oldβ = β
     v_next = A * p
     α = @kdot(m, p, v_next) + λ
@@ -143,7 +151,7 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     # Continue A norm estimate
     ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
 
-    if λest > 0
+    if λest != 0
       η = -oldβ * oldβ * cwold / ρbar
       ω = λest + η
       ψ = c * δbar + s * ω
@@ -174,9 +182,39 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     xNorm = xNorm + ζ * ζ
     xcgNorm = xNorm + ζbar * ζbar
 
-    if λest > 0
+    if window > 0 && λest != 0
+      if iter < window && window > 1
+         sprod[iter+1:end] = sprod[iter+1:end]*s
+      end      
+
+      ix = ((iter-1) % window) + 1
+      clist[ix] = c
+      zlist[ix] = ζ
+
+      if iter >= window
+          jx = mod(iter,window)+1
+          zetabark = zlist[jx]/clist[jx] 
+
+          theta = abs(clist'*(sprod.*zlist))
+          theta = zetabark*theta + 
+              abs(zetabark*ζbar*sprod[ix]*s) -
+              zetabark^2
+
+          errorscg[iter-window+1] = sqrt(abs(errorscg[iter-window+1]^2 - 2*theta))
+      end
+
+      ix = ((iter) % window) + 1
+      if iter >= window && window > 1
+         sprod = sprod/sprod[(ix % window) + 1]
+         sprod[ix] = sprod[mod(ix-2, window)+1]*s
+      end
+
+      display([clist zlist sprod])
+    end
+
+    if λest != 0
       err = abs((ϵold * ζold + ψ * ζ)/ωbar)
-      errcg = sqrt(err * err - ζbar * ζbar)
+      errcg = sqrt(abs(err * err - ζbar * ζbar))
 
       push!(errors, err)
       push!(errorscg, errcg)
