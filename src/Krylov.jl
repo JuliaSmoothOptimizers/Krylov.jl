@@ -78,6 +78,7 @@ include("krylov_utils.jl")
 include("cg.jl")
 include("cg_lanczos.jl")
 include("minres.jl")
+include("symmlq.jl")
 include("cr.jl")
 include("symmlq.jl")
 
