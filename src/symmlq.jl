@@ -38,6 +38,7 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   verbose && @printf("SYMMLQ: system of size %d\n", n)
 
   ϵM = eps(T)
+  x = zeros(T, n)
   ctol = conlim > 0.0 ? 1./conlim : 0.0;
 
   # Initialize Lanczos process.
@@ -73,7 +74,6 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
 
   ANorm² = α * α + β * β
 
-  x = zeros(T, n)
   xcg = ζbar*vold
 
   γmax = -Inf
