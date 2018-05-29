@@ -260,7 +260,7 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
 
   # Final solve against preconditioner
   x = M * x
-  xcg = M * (x + ζbar * wbar)
+  xcg = x + M*(ζbar * wbar)
   
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
