@@ -94,6 +94,7 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
       if ApNorm² ≤ ε * norm(q) * pNorm # q is linear in the direction p
         psd = true # det(AᵀA) = 0
         pAr = @kdot(n, p, Ar) # pᵀAᵀr
+        ArNorm² = ArNorm^2
         if abs(pAr) ≤ ε * pNorm * ArNorm # q is constant in the direction p
           p = Ar # p = Aᵀr
           q = A' * s
@@ -108,7 +109,6 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
           if !descent
             σ = minimum(to_boundary(x, p, radius)) # < 0
           end
-          ArNorm² = ArNorm^2
           ν = min(ArNorm² / (2 * γ), maximum(to_boundary(x, Ar, radius)))
           δ = -σ * pAr + ν * ArNorm² + σ^2 * ApNorm² - ν^2 * γ
           if δ > 0.0

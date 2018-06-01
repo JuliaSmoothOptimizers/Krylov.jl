@@ -72,5 +72,6 @@ A = U * S * V'
 p = V[:,1]; b = A'\p;
 Aop = LinearOperator(A);
 (x, stats) = crls(Aop, b, radius=radius)
+@test stats.solved
 @test stats.status == "zero-curvature encountered"
 @test norm(x) ≤ radius
