@@ -99,7 +99,7 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
           p = Ar # p = Aᵀr
           q = A' * s
           if γ > 0.0
-            α = min(ArNorm² / (2 * γ), maximum(to_boundary(x, p, radius))) # q is minimal in the direction A'r for α = ‖Ar‖²/(2γ)
+            α = min(ArNorm² / γ, maximum(to_boundary(x, p, radius))) # q is minimal in the direction A'r for α = ‖Ar‖²/γ
           else
             # q is linear in the direction Aᵀr
             α = maximum(to_boundary(x, p, radius))
@@ -109,7 +109,7 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
           if !descent
             σ = minimum(to_boundary(x, p, radius)) # < 0
           end
-          ν = min(ArNorm² / (2 * γ), maximum(to_boundary(x, Ar, radius)))
+          ν = min(ArNorm² / γ, maximum(to_boundary(x, Ar, radius)))
           δ = -σ * pAr + ν * ArNorm² + σ^2 * ApNorm² - ν^2 * γ
           if δ > 0.0
             # direction A'r engenders a bigger decrease

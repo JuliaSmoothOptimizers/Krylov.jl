@@ -65,10 +65,9 @@ radius = 10.
 m,n = 10,7
 U=qr(rand(m,m))[1]
 V=qr(rand(n,n))[1]
-V = V'
 S = zeros(m,n)
 S[2,2]=1e-6;S[3,3]=1;S[4,4]=4;S[5,5]=20;S[6,6]=15;S[7,7]=1e5;
-A = U * S * V'
+A = U * S * V
 p = V[:,1]; b = A'\p;
 Aop = LinearOperator(A);
 (x, stats) = crls(Aop, b, radius=radius)
