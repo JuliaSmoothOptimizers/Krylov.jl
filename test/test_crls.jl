@@ -1,3 +1,4 @@
+⪅(x,y) = (x ≈ y) || (x < y)
 crls_tol = 1.0e-5;
 
 for npower = 1 : 4
@@ -71,4 +72,4 @@ p = V[:,1]; b = A'\p;
 (x, stats) = crls(A, b, radius=radius)
 @test stats.solved
 @test stats.status == "zero-curvature encountered"
-@test norm(x) ≤ radius
+@test norm(x) ⪅ radius

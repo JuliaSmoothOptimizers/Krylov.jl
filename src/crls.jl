@@ -83,37 +83,35 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   psd = false
 
   while ! (solved || tired)
-    α = γ / @kdot(n, q, q)     # dot(q, q);
+    qNorm² = @kdot(n, q, q) # dot(q, q)
+    α = γ / qNorm²
 
     # if a trust-region constraint is give, compute step to the boundary
     # (note that α > 0 in CRLS)
     if radius > 0.0
-      σ = maximum(to_boundary(x, p, radius))
       pNorm = @knrm2(n, p)
+      σ = maximum(to_boundary(x, p, radius, flip = false, dNorm = pNorm))
       ApNorm² = @knrm2(m, Ap)^2
-      if ApNorm² ≤ ε * norm(q) * pNorm # q is linear in the direction p
+      if ApNorm² ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is linear in the direction p
         psd = true # det(AᵀA) = 0
         pAr = @kdot(n, p, Ar) # pᵀAᵀr
-        ArNorm² = ArNorm^2
-        if abs(pAr) ≤ ε * pNorm * ArNorm # q is constant in the direction p
+        if abs(pAr) ≤ ε * pNorm * ArNorm # the quadratic is constant in the direction p
           p = Ar # p = Aᵀr
+          pNorm = ArNorm
           q = A' * s
-          if γ > 0.0
-            α = min(ArNorm² / γ, maximum(to_boundary(x, p, radius))) # q is minimal in the direction A'r for α = ‖Ar‖²/γ
-          else
-            # q is linear in the direction Aᵀr
-            α = maximum(to_boundary(x, p, radius))
-          end
+          α = maximum(to_boundary(x, p, radius, flip = false, dNorm = pNorm))
+          γ > 0.0 && (α = min(ArNorm^2 / γ, α)) # the quadratic is minimal in the direction Aᵀr for α = ‖Ar‖²/γ
         else
           descent = pAr > 0.0
           if !descent
-            σ = minimum(to_boundary(x, p, radius)) # < 0
+            σ = minimum(to_boundary(x, p, radius, flip = false, dNorm = pNorm)) # < 0
           end
-          ν = min(ArNorm² / γ, maximum(to_boundary(x, Ar, radius)))
+          ArNorm² = ArNorm * ArNorm
+          ν = min(ArNorm² / γ, maximum(to_boundary(x, Ar, radius, flip = false, dNorm = ArNorm)))
           δ = -σ * pAr + ν * ArNorm² + σ^2 * ApNorm² - ν^2 * γ
           if δ > 0.0
-            # direction A'r engenders a bigger decrease
-            p = Ar # p = A'r
+            # direction Aᵀr engenders a bigger decrease
+            p = Ar # p = Aᵀr
             q = A' * s
             α = ν
           else
