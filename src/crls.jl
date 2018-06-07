@@ -90,11 +90,14 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     # (note that α > 0 in CRLS)
     if radius > 0.0
       pNorm = @knrm2(n, p)
-      σ = maximum(to_boundary(x, p, radius, flip = false, dNorm = pNorm))
+      ζ = to_boundary(x, p, radius, flip = false, dNorm = pNorm)
+      σ = maximum(ζ)
       ApNorm² = @knrm2(m, Ap)^2
       if ApNorm² ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is linear in the direction p
         psd = true # det(AᵀA) = 0
         pAr = @kdot(n, p, Ar) # pᵀAᵀr
+        # Theoretically, Ap = 0 => pAr = 0
+        # Numerically, depending of how big ‖r‖ is, pAr can be different from zero
         if abs(pAr) ≤ ε * pNorm * ArNorm # the quadratic is constant in the direction p
           p = Ar # p = Aᵀr
           pNorm = ArNorm
@@ -104,7 +107,7 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
         else
           descent = pAr > 0.0
           if !descent
-            σ = minimum(to_boundary(x, p, radius, flip = false, dNorm = pNorm)) # < 0
+            σ = minimum(ζ) # < 0
           end
           ArNorm² = ArNorm * ArNorm
           ν = min(ArNorm² / γ, maximum(to_boundary(x, Ar, radius, flip = false, dNorm = ArNorm)))
@@ -129,7 +132,7 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     @kaxpy!(n,  α, p,   x)     # Faster than  x =  x + α *  p;
     @kaxpy!(n, -α, q,  Ar)     # Faster than Ar = Ar - α *  q;
     ArNorm = @knrm2(n, Ar)
-    solved = psd | on_boundary
+    solved = psd || on_boundary
     solved && continue
     @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap;
     s = A * Ar;
@@ -159,7 +162,7 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     push!(ArNorms, ArNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.2e  %8.2e\n", 3 + 2 * iter, ArNorm, rNorm);
-    solved = (ArNorm <= ε) | on_boundary
+    solved = (ArNorm <= ε) || on_boundary
     tired = iter >= itmax;
   end
 
