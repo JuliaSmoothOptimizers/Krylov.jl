@@ -90,17 +90,14 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     # (note that α > 0 in CRLS)
     if radius > 0.0
       pNorm = @knrm2(n, p)
-      ζ = to_boundary(x, p, radius, flip = false, dNorm = pNorm)
-      σ = maximum(ζ)
-      ApNorm² = @knrm2(m, Ap)^2
-      if ApNorm² ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is constant in the direction p
+      if @knrm2(m, Ap)^2 ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is constant in the direction p
         psd = true # det(AᵀA) = 0
         p = Ar # p = Aᵀr
         pNorm = ArNorm
         q = A' * s
-        α = maximum(to_boundary(x, p, radius, flip = false, dNorm = pNorm))
-        γ > 0.0 && (α = min(ArNorm^2 / γ, α)) # the quadratic is minimal in the direction Aᵀr for α = ‖Ar‖²/γ
+        α = min(ArNorm^2 / γ, maximum(to_boundary(x, p, radius, flip = false, dNorm = pNorm))) # the quadratic is minimal in the direction Aᵀr for α = ‖Ar‖²/γ
       else
+        σ = maximum(to_boundary(x, p, radius, flip = false, dNorm = pNorm))
         if α ≥ σ
           α = σ
           on_boundary = true
