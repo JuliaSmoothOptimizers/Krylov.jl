@@ -93,34 +93,13 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
       ζ = to_boundary(x, p, radius, flip = false, dNorm = pNorm)
       σ = maximum(ζ)
       ApNorm² = @knrm2(m, Ap)^2
-      if ApNorm² ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is linear in the direction p
+      if ApNorm² ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is constant in the direction p
         psd = true # det(AᵀA) = 0
-        pAr = @kdot(n, p, Ar) # pᵀAᵀr
-        # Theoretically, Ap = 0 => pAr = 0
-        # Numerically, depending of how big ‖r‖ is, pAr can be different from zero
-        if abs(pAr) ≤ ε * pNorm * ArNorm # the quadratic is constant in the direction p
-          p = Ar # p = Aᵀr
-          pNorm = ArNorm
-          q = A' * s
-          α = maximum(to_boundary(x, p, radius, flip = false, dNorm = pNorm))
-          γ > 0.0 && (α = min(ArNorm^2 / γ, α)) # the quadratic is minimal in the direction Aᵀr for α = ‖Ar‖²/γ
-        else
-          descent = pAr > 0.0
-          if !descent
-            σ = minimum(ζ) # < 0
-          end
-          ArNorm² = ArNorm * ArNorm
-          ν = min(ArNorm² / γ, maximum(to_boundary(x, Ar, radius, flip = false, dNorm = ArNorm)))
-          δ = -σ * pAr + ν * ArNorm² + σ^2 * ApNorm² - ν^2 * γ
-          if δ > 0.0
-            # direction Aᵀr engenders a bigger decrease
-            p = Ar # p = Aᵀr
-            q = A' * s
-            α = ν
-          else
-            α = σ
-          end
-        end
+        p = Ar # p = Aᵀr
+        pNorm = ArNorm
+        q = A' * s
+        α = maximum(to_boundary(x, p, radius, flip = false, dNorm = pNorm))
+        γ > 0.0 && (α = min(ArNorm^2 / γ, α)) # the quadratic is minimal in the direction Aᵀr for α = ‖Ar‖²/γ
       else
         if α ≥ σ
           α = σ
