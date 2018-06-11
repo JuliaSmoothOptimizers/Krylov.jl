@@ -80,25 +80,40 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   on_boundary = false
   solved = ArNorm <= ε;
   tired = iter >= itmax;
+  psd = false
 
   while ! (solved || tired)
-    α = γ / @kdot(n, q, q)     # dot(q, q);
+    qNorm² = @kdot(n, q, q) # dot(q, q)
+    α = γ / qNorm²
 
     # if a trust-region constraint is give, compute step to the boundary
     # (note that α > 0 in CRLS)
-    σ = radius > 0.0 ? maximum(to_boundary(x, p, radius)) : α
-    if (radius > 0.0) & (α > σ)
-      α = σ
-      on_boundary = true
+    if radius > 0.0
+      pNorm = @knrm2(n, p)
+      if @knrm2(m, Ap)^2 ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is constant in the direction p
+        psd = true # det(AᵀA) = 0
+        p = Ar # p = Aᵀr
+        pNorm = ArNorm
+        q = A' * s
+        α = min(ArNorm^2 / γ, maximum(to_boundary(x, p, radius, flip = false, dNorm = pNorm))) # the quadratic is minimal in the direction Aᵀr for α = ‖Ar‖²/γ
+      else
+        σ = maximum(to_boundary(x, p, radius, flip = false, dNorm = pNorm))
+        if α ≥ σ
+          α = σ
+          on_boundary = true
+        end
+      end
     end
 
     @kaxpy!(n,  α, p,   x)     # Faster than  x =  x + α *  p;
-    @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap;
     @kaxpy!(n, -α, q,  Ar)     # Faster than Ar = Ar - α *  q;
+    ArNorm = @knrm2(n, Ar)
+    solved = psd || on_boundary
+    solved && continue
+    @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap;
     s = A * Ar;
     Ms = M * s;
     γ_next = @kdot(m, s, Ms)   # Faster than γ_next = dot(s, s);
-    ArNorm = @knrm2(n, Ar)
     λ > 0 && (γ_next += λ * ArNorm * ArNorm);
     β = γ_next / γ;
 
@@ -123,11 +138,11 @@ function crls{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
     push!(ArNorms, ArNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.2e  %8.2e\n", 3 + 2 * iter, ArNorm, rNorm);
-    solved = (ArNorm <= ε) | on_boundary
+    solved = (ArNorm <= ε) || on_boundary
     tired = iter >= itmax;
   end
 
-  status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
+  status = psd ? "zero-curvature encountered" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
   stats = SimpleStats(solved, false, rNorms, ArNorms, status);
   return (x, stats);
 end

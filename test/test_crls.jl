@@ -1,3 +1,4 @@
+⪅(x,y) = (x ≈ y) || (x < y)
 crls_tol = 1.0e-5;
 
 for npower = 1 : 4
@@ -40,7 +41,7 @@ radius = 0.75 * norm(x)
 @test(abs(radius - norm(x)) <= crls_tol * radius)
 
 opA = LinearOperator(A)
-(xop, statsop) = cgls(opA, b, radius=radius)
+(xop, statsop) = crls(opA, b, radius=radius)
 @test(abs(radius - norm(xop)) <= crls_tol * radius)
 
 # Code coverage.
@@ -59,3 +60,16 @@ A = [eye(Int, 3); rand(1:10, 2, 3)]
 b = A * ones(Int, 3)
 (x, stats) = crls(A, b)
 @test stats.solved
+
+# Test A positive semi-definite
+radius = 10.
+m,n = 10,7
+U=qr(rand(m,m))[1]
+V=qr(rand(n,n))[1]
+S = [diagm([0, 1.0e-6, 1, 4, 20, 15, 1.0e5]) ; zeros(3,7)]
+A = U * S * V
+p = V[:,1]; b = A'\p;
+(x, stats) = crls(A, b, radius=radius)
+@test stats.solved
+@test stats.status == "zero-curvature encountered"
+@test norm(x) ⪅ radius

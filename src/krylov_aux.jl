@@ -101,13 +101,17 @@ If `flip` is set to `true`, `σ1` and `σ2` are computed such that
     ‖x - σi d‖ = radius, i = 1, 2.
 """
 function to_boundary(x :: Vector{Float64}, d :: Vector{Float64},
-                     radius :: Float64; flip :: Bool=false, xNorm2 :: Float64=0.0)
+                     radius :: Float64; flip :: Bool=false, xNorm2 :: Float64=0.0, dNorm :: Float64=0.0)
   radius > 0 || error("radius must be positive")
 
   # ‖d‖² σ² + 2 xᵀd σ + (‖x‖² - radius²).
   xd = dot(x, d)
   flip && (xd = -xd)
-  dNorm2 = dot(d, d)
+  if dNorm == 0.0
+      dNorm2 = dot(d, d)
+  else
+      dNorm2 = dNorm * dNorm
+  end
   dNorm2 == 0.0 && error("zero direction")
   xNorm2 == 0.0 && (xNorm2 = dot(x, x))
   (xNorm2 <= radius * radius) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius * radius))
