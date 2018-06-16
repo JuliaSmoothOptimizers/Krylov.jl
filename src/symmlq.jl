@@ -67,6 +67,7 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   δbar = β
   ϵold = 0.0
   cold = 1.0
+  sold = 0.0
 
   wbar = vold
   ζold = 0.0
@@ -112,7 +113,7 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   verbose && @printf("%5s  %7s  %7s  %8s  %8s  %7s  %7s\n",
                      "Aprod", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)")
   verbose && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
-                     0, rNorm, β, c, s, ANorm, Acond)
+                     0, rNorm, β, cold, sold, ANorm, Acond)
 
   iter = 0
   itmax == 0 && (itmax = n)
