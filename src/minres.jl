@@ -42,7 +42,7 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r�
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function minres{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+function minres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
                              M :: AbstractLinearOperator=opEye(size(A,1)),
                              λ :: Float64=0.0,
                              atol :: Float64=1.0e-12, rtol :: Float64=1.0e-12,

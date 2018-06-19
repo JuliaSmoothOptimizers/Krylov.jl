@@ -92,7 +92,7 @@ The iterations stop as soon as one of the following conditions holds true:
 * R. Estrin, D. Orban and M. A. Saunders, *Estimates of the 2-Norm Forward Error for SYMMLQ and CG*, Cahier du GERAD G-2016-70, GERAD, Montreal, 2016. DOI http://dx.doi.org/10.13140/RG.2.2.19581.77288.
 * R. Estrin, D. Orban and M. A. Saunders, *LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*, Cahier du GERAD G-2017-xx, GERAD, Montreal, 2017.
 """
-function lslq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+function lslq{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
                            M :: AbstractLinearOperator=opEye(size(A,1)),
                            N :: AbstractLinearOperator=opEye(size(A,2)),
                            sqd :: Bool=false,
@@ -138,6 +138,7 @@ function lslq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   @kscal!(n, 1.0/α, v)
   @kscal!(n, 1.0/α, Nv)
 
+  Anorm = α
   Anorm² = α * α
 
   # condition number estimate
@@ -157,6 +158,8 @@ function lslq{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
   err_vec = zeros(T, window)
 
   # Initialize other constants.
+  αL = α
+  βL = β
   ρ̄ = -σ
   γ̄ = α
   ss = β₁

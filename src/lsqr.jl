@@ -57,7 +57,7 @@ indefinite system
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
 """
-function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+function lsqr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
                            M :: AbstractLinearOperator=opEye(size(A,1)),
                            N :: AbstractLinearOperator=opEye(size(A,2)),
                            sqd :: Bool=false,

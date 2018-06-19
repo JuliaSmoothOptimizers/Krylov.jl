@@ -49,7 +49,7 @@ multipliers of the least-norm problem
 
 In this implementation, both the x and y-parts of the solution are returned.
 """
-function craig{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+function craig{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
                             λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
                             conlim :: Float64=1.0e+8, itmax :: Int=0, verbose :: Bool=false)
 

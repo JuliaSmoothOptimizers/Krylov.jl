@@ -80,7 +80,6 @@ include("cg_lanczos.jl")
 include("minres.jl")
 include("symmlq.jl")
 include("cr.jl")
-include("symmlq.jl")
 
 include("cgls.jl")
 include("crls.jl")

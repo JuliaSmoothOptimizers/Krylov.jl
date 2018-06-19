@@ -19,7 +19,7 @@ symmetric linear system
 
 The method does _not_ abort if A is not definite.
 """
-function cg_lanczos{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+function cg_lanczos{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
                                  atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
                                  check_curvature :: Bool=false, verbose :: Bool=false)
 
@@ -106,7 +106,7 @@ of shifted systems
 
 The method does _not_ abort if A + αI is not definite.
 """
-function cg_lanczos_shift_seq{Tb <: Number, Ts <: Number}(A :: AbstractLinearOperator, b :: Vector{Tb}, shifts :: Vector{Ts};
+function cg_lanczos_shift_seq{Tb <: Number, Ts <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{Tb}, shifts :: AbstractVector{Ts};
                                                           atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
                                                           check_curvature :: Bool=false, verbose :: Bool=false)
 

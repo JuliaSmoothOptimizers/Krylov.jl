@@ -13,7 +13,7 @@ include("test_cgls.jl")
 include("test_crls.jl")
 include("test_cgne.jl")
 include("test_crmr.jl")
-
+include("test_variants.jl")
 include("test_lslq.jl")
 include("test_lsqr.jl")
 include("test_lsmr.jl")
