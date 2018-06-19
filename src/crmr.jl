@@ -50,7 +50,7 @@ CGMR produces monotonic residuals ‖r‖₂.
 It is formally equivalent to CRAIG-MR, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 """
-function crmr{T <: Number}(A :: AbstractLinearOperator, b :: Vector{T};
+function crmr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
                            λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
                            itmax :: Int=0, verbose :: Bool=false)
 
