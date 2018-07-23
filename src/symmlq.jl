@@ -52,10 +52,10 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}
   vold = @kscal!(m, 1./β, vold)
   p = @kscal!(m, 1./β, p)
 
-  v = A * p
+  v = copy(A * p)
   α = @kdot(m, p, v) + λ
   @kaxpy!(m, -α, vold, v)  # v = v - α * vold
-  p = M * v
+  p = copy(M * v)
   β = @kdot(m, v, p)
   β < 0.0 && error("Preconditioner is not positive definite")
   β = sqrt(β)
@@ -136,11 +136,11 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}
 
     # Generate next Lanczos vector
     oldβ = β
-    v_next = A * p
+    v_next = copy(A * p)
     α = @kdot(m, p, v_next) + λ
     @kaxpy!(m, -α, v, v_next)
     @kaxpy!(m, -oldβ, vold, v_next)
-    p = M * v_next
+    p = copy(M * v_next)
     β = @kdot(m, v_next, p)
     β < 0.0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
