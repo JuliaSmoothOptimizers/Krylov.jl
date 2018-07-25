@@ -8,9 +8,12 @@
 export cr
 
 """A truncated version of Stiefel’s Conjugate Residual method to solve the symmetric linear system Ax=b.
-The matrix A must be positive semi-definite
+The matrix A must be positive semi-definite.
+
+A preconditioner M may be provided in the form of a linear operator and is
+assumed to be symmetric and positive definite.
 """
-function cr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}; atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0, radius :: Float64=0., verbose :: Bool=true)
+function cr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}; M :: AbstractLinearOperator=opEye(size(A,1)), atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0, radius :: Float64=0., verbose :: Bool=true)
 
   n = size(b, 1) # size of the problem
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
@@ -18,10 +21,10 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}; at
 
   # Initial state.
   x = zeros(T, n) # initial estimation x = 0
-  r = copy(b) # initial residual r = b - Ax = b
+  r = M * copy(b) # initial residual r = M * (b - Ax) = M * b
   Ar = A * r
   ρ = @kdot(n, r, Ar)
-  ρ == 0.0 && return (x, Krylov.SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution"))
+  ρ == 0.0 && return (x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution"))
   p = copy(r)
   q = copy(Ar)
 
@@ -42,7 +45,8 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}; at
   status = "unknown"
 
   while ! (solved || tired)
-    α = ρ / @kdot(n, q, q) # step
+    Mq = M * q
+    α = ρ / @kdot(n, q, Mq) # step
 
     # Compute step size to boundary if applicable.
     σ = radius > 0.0 ? maximum(to_boundary(x, p, radius)) : α
@@ -57,8 +61,8 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}; at
       on_boundary = true
     end
 
-    @kaxpy!(n,  α,  p, x)
-    @kaxpy!(n, -α, q, r) # residual
+    @kaxpy!(n,  α, p, x)
+    @kaxpy!(n, -α, Mq, r) # residual
     rNorm = @knrm2(n, r)
     push!(rNorms, rNorm)
     Ar = A * r
@@ -82,6 +86,6 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}; at
   verbose && @printf("\n")
 
   status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
-  stats = Krylov.SimpleStats(solved, false, rNorms, ArNorms, status)
+  stats = SimpleStats(solved, false, rNorms, ArNorms, status)
   return (x, stats)
 end
