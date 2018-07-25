@@ -14,8 +14,12 @@ export cg
 """The conjugate gradient method to solve the symmetric linear system Ax=b.
 
 The method does _not_ abort if A is not definite.
+
+A preconditioner M may be provided in the form of a linear operator and is
+assumed to be symmetric and positive definite.
 """
 function cg{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
+                         M :: AbstractLinearOperator=opEye(size(A,1)),
                          atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
                          radius :: Float64=0.0, verbose :: Bool=false)
 
@@ -25,10 +29,11 @@ function cg{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   # Initial state.
   x = zeros(T, n);
-  γ = @kdot(n, b, b)
-  γ == 0 && return x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution")
   r = copy(b)
-  p = copy(r);
+  z = M * r
+  p = copy(z)
+  γ = @kdot(n, r, z)
+  γ == 0 && return x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution")
 
   iter = 0;
   itmax == 0 && (itmax = 2 * n);
@@ -64,7 +69,8 @@ function cg{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     @kaxpy!(n,  α,  p, x)
     @kaxpy!(n, -α, Ap, r)
-    γ_next = @kdot(n, r, r)
+    z = M * r
+    γ_next = @kdot(n, r, z)
     rNorm = sqrt(γ_next);
     push!(rNorms, rNorm);
 
@@ -76,7 +82,7 @@ function cg{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
       γ = γ_next;
 
       @kscal!(n, β, p)
-      @kaxpy!(n, 1.0, r, p)
+      @kaxpy!(n, 1.0, z, p)
     end
     iter = iter + 1;
     verbose && @printf("%5d  %8.1e  ", iter, rNorm);
