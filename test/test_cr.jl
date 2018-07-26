@@ -79,3 +79,15 @@ A = [4 -1 0; -1 4 -1; 0 -1 4]
 b = [7; 2; -1]
 (x, stats) = cr(A, b)
 @test stats.solved
+
+# Test with preconditioners (Jacobi)
+A = ones(10,10) + 9 * eye(10)
+b = 10 * [1:10;]
+M = LinearOperator(1/10*eye(10))
+(x, stats) = cr(A, b, M=M, itmax=10);
+show(stats)
+r = b - A * x;
+resid = norm(r) / norm(b);
+@printf("CR: Relative residual: %8.1e\n", resid);
+@test(resid <= cg_tol);
+@test(stats.solved);
