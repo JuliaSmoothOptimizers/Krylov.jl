@@ -75,8 +75,6 @@ function cg{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
     push!(rNorms, rNorm);
 
     solved = (rNorm <= ε) | on_boundary;
-    tired = iter >= itmax;
-
     if !solved
       β = γ_next / γ;
       γ = γ_next;
@@ -84,7 +82,9 @@ function cg{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
       @kscal!(n, β, p)
       @kaxpy!(n, 1.0, z, p)
     end
+
     iter = iter + 1;
+    tired = iter >= itmax;
     verbose && @printf("%5d  %8.1e  ", iter, rNorm);
   end
   verbose && @printf("\n");
