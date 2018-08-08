@@ -66,10 +66,10 @@ b = [7; 2; -1]
 (x, stats) = cg(A, b)
 @test stats.solved
 
-# Test with preconditioners (Jacobi)
+# Test with Jacobi (or diagonal) preconditioner
 A = ones(10,10) + 9 * eye(10)
 b = 10 * [1:10;]
-M = LinearOperator(1/10*eye(10))
+M = 1/10 * opEye(10)
 (x, stats) = cg(A, b, M=M, itmax=10);
 show(stats)
 r = b - A * x;
