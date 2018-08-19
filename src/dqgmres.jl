@@ -49,10 +49,11 @@ function dqgmres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T
   V = zeros(n, mem+1) # Preconditioned Krylov vectors.
   P = zeros(n,mem+1) # Directions for x: P = V * inv(R).
   s = zeros(mem) # Givens sines.
-  c = zeros(mem) # Givens cosines.
-  H = spzeros(itmax, mem+2) # Upper Hessenberg matrix. Its mem+2 diagonals are stored  
+  c = zeros(mem) # Givens cosines. 
+  H = spzeros(itmax, mem+1) # Band hessenberg matrix. Its mem+1 upper diagonals are stored  
                             # as column vectors, according to the tranformation
-                            # (j,k) --> (j,2+k-j).
+                            # (i,j) --> (i,j-i+1).
+
   # Initial g and V.
   g[1] = rNorm
   V[:,1] = r / rNorm
@@ -79,14 +80,13 @@ function dqgmres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T
     w = A * z # V[:,next_pos]
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem+1) + 1 
-      jpos = iter-i+2 # Indice of the diagonal
-      H[i,jpos] = @kdot(n, w, V[:,ipos]) # H[i.jpos] = < w , V[:,ipos] >
+      jpos = iter-i+1 # Indice of the diagonal
+      H[i,jpos] = @kdot(n, w, V[:,ipos]) # H[i.jpos] = < w , V[:,ipos] > 
       @kaxpy!(n, -H[i,jpos], V[:,ipos], w) # w = w - H[i,jpos] * V[:,ipos] 
     end
-    # jpos = iter-(iter+1)+2 = 1
-    H[iter,1] = @knrm2(n, w)
-    if H[iter,1] ≉ 0 # if H[iter,1] ≈ 0 => "lucky breakdown"
-      V[:,next_pos] = w / H[iter,1]
+    h = @knrm2(n, w) # Coefficient H[iter+1, iter].
+    if h ≉ 0 # if h ≈ 0 => "lucky breakdown"
+      V[:,next_pos] = w / h
     end
 
     # Update the QR factorization of H.
@@ -95,8 +95,8 @@ function dqgmres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T
       ipos = mod(i-1, mem+1) + 1
       ip1pos = mod(i, mem+1) + 1
       irot_pos = mod(i-1, mem) + 1
-      jpos = iter - i + 1 # jpos = 2+iter-(i+1)
-      jp1pos = jpos + 1   # jp1pos = 2+iter-i
+      jpos = iter - i   # jpos = 1+iter-(i+1)
+      jp1pos = jpos + 1 # jp1pos = 1+iter-i
       H_aux       = c[irot_pos] * H[i,jp1pos] + s[irot_pos] * H[i+1,jpos]
       H[i+1,jpos] = s[irot_pos] * H[i,jp1pos] - c[irot_pos] * H[i+1,jpos]
       H[i,jp1pos] = H_aux
@@ -105,19 +105,19 @@ function dqgmres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T
     # Compute and apply current (symmetric) Givens rotation
     # [ck  sk] [ H[iter,iter]   ] = [ρ]
     # [sk -ck] [ H[iter+1,iter] ]   [0].
-    (c[rot_pos], s[rot_pos], H[iter,2]) = sym_givens(H[iter,2], H[iter,1])
-    H[iter,1]   = 0
+    (c[rot_pos], s[rot_pos], H[iter,1]) = sym_givens(H[iter,1], h)
+    # H[iter+1,iter] = 0, we can rewrite in h at the next iteration.
     g[next_pos] = s[rot_pos] * g[pos] 
     g[pos]      = c[rot_pos] * g[pos]
 
     # Update directions P and solution x
-    #P[:,pos] = z
+    # P[:,pos] = z
     for i = max(1,iter-mem) : iter-1
       ipos = mod(i-1, mem+1) + 1
-      jpos = iter - i + 2
+      jpos = iter-i+1
       @kaxpy!(n, -H[i,jpos], P[:,ipos], z) # z = z - H[i,jpos] * P[:,ipos]
     end
-    P[:,pos] = z / H[iter,2]
+    P[:,pos] = z / H[iter,1]
     @kaxpy!(n, g[pos], P[:,pos], x) # x = x + g[pos] * P[:,pos]
     
     # Update residual norm estimate.
