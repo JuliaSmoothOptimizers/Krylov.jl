@@ -50,9 +50,12 @@ When λ > 0, it solves the problem
 CGNE produces monotonic errors ‖x-x*‖₂ but not residuals ‖r‖₂.
 It is formally equivalent to CRAIG, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
+
+A preconditioner M may be provided in the form of a linear operator.
 """
 function cgne{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                           λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+                           M :: AbstractLinearOperator=opEye(size(A,1)), λ :: Float64=0.0,
+                           atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
                            itmax :: Int=0, verbose :: Bool=false)
 
   m, n = size(A);
@@ -61,14 +64,15 @@ function cgne{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   x = zeros(T, n);
   r = copy(b)
-  bNorm = @knrm2(m, r)   # Marginally faster than norm(b);
-  bNorm == 0 && return x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution");
+  z = M * r
+  rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
+  rNorm ≈ 0 && return x, SimpleStats(true, false, [rNorm], [], "x = 0 is a zero-residual solution");
   λ > 0 && (s = copy(r));
 
   # The following vector copy takes care of the case where A is a LinearOperator
   # with preallocation, so as to avoid overwriting vectors used later. In other
   # case, this should only add minimum overhead.
-  p = copy(A' * r);
+  p = copy(A' * z);
 
   # Use ‖p‖ to detect inconsistent system.
   # An inconsistent system will necessarily have AA' singular.
@@ -77,11 +81,10 @@ function cgne{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # implementation, p is a substitute for A'u.
   pNorm = @knrm2(n, p)
 
-  γ = @kdot(m, r, r)  # Faster than γ = dot(r, r);
+  γ = @kdot(m, r, z)  # Faster than γ = dot(r, z);
   iter = 0;
   itmax == 0 && (itmax = m + n);
 
-  rNorm  = bNorm;
   rNorms = [rNorm;];
   ɛ_c = atol + rtol * rNorm;  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * pNorm;  # Stopping tolerance for inconsistent systems.
@@ -101,10 +104,11 @@ function cgne{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
     α = γ / δ;
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p;
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q;
-    γ_next = @kdot(m, r, r)  # Faster than γ_next = dot(r, r);
+    z = M * r
+    γ_next = @kdot(m, r, z)  # Faster than γ_next = dot(r, z);
     β = γ_next / γ;
     @kscal!(n, β, p)
-    @kaxpy!(n, 1.0, A' * r, p)   # Faster than p = A' * r + β * p;
+    @kaxpy!(n, 1.0, A' * z, p)   # Faster than p = A' * z + β * p;
     pNorm = @knrm2(n, p)
     if λ > 0
       @kscal!(m, β, s)

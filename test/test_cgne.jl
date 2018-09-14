@@ -1,8 +1,8 @@
 cgne_tol = 1.0e-3;  # We're tolerant just so random tests don't fail.
 
-function test_cgne(A, b; λ=0.0)
+function test_cgne(A, b; λ=0.0, M=opEye(size(A,1)))
   (nrow, ncol) = size(A);
-  (x, stats) = cgne(A, b, λ=λ);
+  (x, stats) = cgne(A, b, λ=λ, M=M);
   r = b - A * x;
   if λ > 0
     s = r / sqrt(λ);
@@ -73,3 +73,13 @@ A = [eye(Int, 3); rand(1:10, 2, 3)]
 b = A * ones(Int, 3)
 (x, stats) = cgne(A, b)
 @test stats.solved
+
+# Test with Jacobi (or diagonal) preconditioner
+A = ones(10,10) + 9 * eye(10)
+b = 10 * [1:10;]
+M = 1/10 * opEye(10)
+(x, stats, resid) = test_cgne(A, b, M=M)
+@test(resid <= cgne_tol)
+@test(stats.solved)
+(xI, xmin, xmin_norm) = check_min_norm(A, b, x)
+@test(norm(xI - xmin) <= cond(A) * cgne_tol * xmin_norm)
