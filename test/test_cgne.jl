@@ -84,12 +84,14 @@ M = 1/10 * opEye(10)
 (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
 @test(norm(xI - xmin) <= cond(A) * cgne_tol * xmin_norm)
 
-# Test preconditioner in rectangular case
-# Compute k and l constants such that y = k * exp(l * x) from observations
-# Minimise sum(eᵢ²) with eᵢ = l * xᵢ + ln(k) - ln(yᵢ)
-xᵢ = [0.97167; 1.92917; 3.07500; 4.03583; 5.02500; 5.98000; 7.03417; 8.06833; 9.02417; 9.92667]
-yᵢ = [0.721012; 0.729326; 0.795348; 0.852749; 0.886014; 0.791215; 0.920449; 0.912621; 0.810742; 0.979552]
-A = hcat(xᵢ, ones(10))
-b = log.(yᵢ)
+# Test preconditioner with an under-determined problem:
+# Find the least norm force that transfers mass unit distance with zero final velocity
+A = 0.5 * [19.0 17.0 15.0 13.0 11.0 9.0 7.0 5.0 3.0 1.0;
+            2.0  2.0  2.0  2.0  2.0 2.0 2.0 2.0 2.0 2.0]
+b = [1.0; 0.0]
 M = LinearOperator(Diagonal(1 ./ (A * A')))
-(x, stats) = cgne(A, b, M=M)
+(x, stats, resid) = test_cgne(A, b, M=M)
+@test(resid <= cgne_tol)
+@test(stats.solved)
+(xI, xmin, xmin_norm) = check_min_norm(A, b, x)
+@test(norm(xI - xmin) <= cond(A) * cgne_tol * xmin_norm)
