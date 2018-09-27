@@ -77,6 +77,7 @@ include("cg.jl")
 include("cg_lanczos.jl")
 include("minres.jl")
 include("dqgmres.jl")
+include("diom.jl")
 include("symmlq.jl")
 include("cr.jl")
 

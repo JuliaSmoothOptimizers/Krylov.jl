@@ -2,6 +2,7 @@ using Base.Test
 using Krylov
 using LinearOperators
 
+include("test_diom.jl")
 include("test_dqgmres.jl")
 include("gen_lsq.jl")
 include("check_min_norm.jl")
