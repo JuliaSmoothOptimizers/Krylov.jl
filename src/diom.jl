@@ -94,24 +94,20 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
       V[:,next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
     end
 
-    if iter == 1
-      # l₂.₁ ← h₂.₁ / u₁.₁
-      L[next_pos] = H[1] / H[2]
-    else
-      # Update LU factorization of Hₘ by computing the last row of Lₘ and the next pivot lₘ₊₁.ₘ of Lₘ.
+    # Update LU factorization of Hₘ by computing the last column of Uₘ and the next pivot lₘ₊₁.ₘ of Lₘ.
+    if iter ≥ 2
       # uᵢ.ₘ ← hᵢ.ₘ - lᵢ.ᵢ₋₁ * uᵢ₋₁.ₘ
       for i = max(2,iter-mem+2) : iter
         lpos = mod(i-1, mem) + 1 # Position of lᵢ.ᵢ₋₁ in the circular stack
         jpos = iter - i + 2
         H[jpos] = H[jpos] - L[lpos] * H[jpos+1]
       end
-      # lₘ₊₁.ₘ ← hₘ₊₁.ₘ / uₘ.ₘ
-      L[next_pos] = H[1] / H[2]
-
       # Compute ξₘ the last composant of zₘ = β(Lₘ)⁻¹e₁.
       # ξₘ = -lₘ.ₘ₋₁ * ξₘ₋₁
       ξ = - L[pos] * ξ
     end
+    # lₘ₊₁.ₘ ← hₘ₊₁.ₘ / uₘ.ₘ
+    L[next_pos] = H[1] / H[2]
 
     # Compute the last column of Pₘ = Vₘ(Uₘ)⁻¹.
     for i = max(1,iter-mem+1) : iter - 1
