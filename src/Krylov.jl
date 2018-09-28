@@ -1,11 +1,9 @@
 module Krylov
 
 using LinearOperators
-using Compat
-import Compat.String
 
 "Abstract type for statistics returned by a solver"
-@compat abstract type KrylovStats end;
+abstract type KrylovStats end;
 
 "Type for statistics returned by non-Lanczos solvers"
 type SimpleStats <: KrylovStats
