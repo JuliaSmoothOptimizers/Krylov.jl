@@ -92,15 +92,13 @@ The iterations stop as soon as one of the following conditions holds true:
 * R. Estrin, D. Orban and M. A. Saunders, *Estimates of the 2-Norm Forward Error for SYMMLQ and CG*, Cahier du GERAD G-2016-70, GERAD, Montreal, 2016. DOI http://dx.doi.org/10.13140/RG.2.2.19581.77288.
 * R. Estrin, D. Orban and M. A. Saunders, *LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*, Cahier du GERAD G-2017-xx, GERAD, Montreal, 2017.
 """
-function lslq{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                           M :: AbstractLinearOperator=opEye(size(A,1)),
-                           N :: AbstractLinearOperator=opEye(size(A,2)),
-                           sqd :: Bool=false,
-                           λ :: Float64=0.0, σ :: Float64=0.0,
-                           atol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
-                           etol :: Float64=1.0e-8, window :: Int=5,
-                           utol :: Float64=1.0e-8,
-                           itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
+              M :: AbstractLinearOperator=opEye(size(A,1)),
+              N :: AbstractLinearOperator=opEye(size(A,2)),
+              sqd :: Bool=false, λ :: Float64=0.0, σ :: Float64=0.0,
+              atol :: Float64=1.0e-8, btol :: Float64=1.0e-8, etol :: Float64=1.0e-8,
+              window :: Int=5, utol :: Float64=1.0e-8, itmax :: Int=0,
+              conlim :: Float64=1.0e+8, verbose :: Bool=false) where T <: Number
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")

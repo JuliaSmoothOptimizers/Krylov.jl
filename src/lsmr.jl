@@ -57,15 +57,15 @@ indefinite system
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
 """
-function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                           M :: AbstractLinearOperator=opEye(size(A,1)),
-                           N :: AbstractLinearOperator=opEye(size(A,2)),
-                           sqd :: Bool=false,
-                           λ :: Float64=0.0, axtol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
-                           atol :: Float64=0.0, rtol :: Float64=0.0,
-                           etol :: Float64=1.0e-8, window :: Int=5,
-                           itmax :: Int=0, conlim :: Float64=1.0e+8,
-                           radius :: Float64=0.0, verbose :: Bool=false)
+function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
+              M :: AbstractLinearOperator=opEye(size(A,1)),
+              N :: AbstractLinearOperator=opEye(size(A,2)),
+              sqd :: Bool=false,
+              λ :: Float64=0.0, axtol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
+              atol :: Float64=0.0, rtol :: Float64=0.0,
+              etol :: Float64=1.0e-8, window :: Int=5,
+              itmax :: Int=0, conlim :: Float64=1.0e+8,
+              radius :: Float64=0.0, verbose :: Bool=false) where T <: Number
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -112,7 +112,7 @@ function lsmr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
   minrbar = 1.0e+100;
 
   # Items for use in stopping rules.
-  ctol = conlim > 0.0 ? 1./conlim : 0.0;
+  ctol = conlim > 0.0 ? 1 ./ conlim : 0.0;
   rNorm = β
   rNorms = [rNorm]
   ArNorm = ArNorm0 = α * β

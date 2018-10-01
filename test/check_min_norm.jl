@@ -1,7 +1,7 @@
 function check_min_norm(A, b, x; λ=0.0)
   (nrow, ncol) = size(A);
   if λ > 0.0
-    AI = [A sqrt(λ)*eye(nrow)];
+    AI = [A sqrt(λ)*I];
     xI = [x ; (b-A*x)/sqrt(λ)];
   else
     AI = A;

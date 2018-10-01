@@ -20,10 +20,10 @@ and computes a sequence of approximate solutions with the quasi-minimal residual
 
 This implementation allows a right preconditioning with M.
 """
-function dqgmres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                              M :: AbstractLinearOperator=opEye(size(A,1)),
-                              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-                              itmax :: Int=0, memory :: Int=20, verbose :: Bool=false)
+function dqgmres(A :: AbstractLinearOperator, b :: AbstractVector{T};
+                 M :: AbstractLinearOperator=opEye(size(A,1)), atol :: Float64=1.0e-8,
+                 rtol :: Float64=1.0e-6, itmax :: Int=0, memory :: Int=20,
+                 verbose :: Bool=false) where T <: Number
 
   m, n = size(A)
   m == n || error("System must be square")

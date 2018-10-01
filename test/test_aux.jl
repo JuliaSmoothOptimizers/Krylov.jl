@@ -68,7 +68,7 @@ roots = Krylov.roots_quadratic(-1.0e-7, 1.0, 1.0, nitref=1)
 
 # test trust-region boundary
 x = ones(5)
-d = ones(5); d[1:2:5] = -1
+d = ones(5); d[1:2:5] .= -1
 @test_throws ErrorException Krylov.to_boundary(x, d, -1.0)
 @test_throws ErrorException Krylov.to_boundary(x, d, 0.5)
 @test_throws ErrorException Krylov.to_boundary(x, zeros(5), 1.0)
