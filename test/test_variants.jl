@@ -1,5 +1,5 @@
 # Tests of variants.jl
-for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne, :cr, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :lsqr, :minres, :symmlq, :dqgmres)
+for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne, :cr, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :lsqr, :minres, :symmlq, :dqgmres, :diom)
   for TA in (Int32, Int64, Float32, Float64)
     for IA in (Int32, Int64)
       for Tb in (Int32, Int64, Float32, Float64)
