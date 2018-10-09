@@ -54,16 +54,16 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   # Set up workspace.
   mem = min(memory, itmax) # Memory.
-  P = zeros(n, mem) # Directions for x.
-  V = zeros(n, mem) # Preconditioned Krylov vectors.
+  V = zeros(n, mem) # Preconditioned Krylov vectors, orthogonal basis for {r₀, AM⁻¹r₀, (AM⁻¹)²r₀, ..., (AM⁻¹)ᵐ⁻¹r₀}.
+  P = zeros(n, mem) # Directions for x : Pₘ = Vₘ(Uₘ)⁻¹.
   H = zeros(mem+2)  # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
-  # Each column has at most mem + 2 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
+  # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
   # In addition of that, the last column of Uₘ is stored in H.
   L = zeros(mem) # Last mem Pivots of Lₘ.
   p = zeros(Bool, mem) # Last mem permutations.
 
-  # Initial ξ and V.
+  # Initial ξ₁ and V₁.
   ξ = rNorm
   V[:,1] = r / rNorm
 
@@ -77,61 +77,56 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Update iteration index.
     iter = iter + 1
 
-    # Set position in circular stack where iter-th Krylov vector should go.
-    pos = mod(iter-1, mem) + 1 # Position corresponding to iter in the circular stack.
-    next_pos = mod(iter, mem) + 1 # Position corresponding to iter + 1 in the circular stack.
+    # Set position in circulars stacks.
+    pos = mod(iter-1, mem) + 1 # Position corresponding to pₘ and vₘ in circular stacks P and V.
+    next_pos = mod(iter, mem) + 1 # Position corresponding to vₘ₊₁ in the circular stack V.
 
     # Incomplete Arnoldi procedure.
     z = M * V[:,pos] # Forms pₘ
     w = A * z # Forms vₘ₊₁
-    # hₘ₋ₘₑₘ.ₘ = 0
-    H[mem+2] = 0
     for i = max(1, iter-mem+1) : iter
-      ipos = mod(i-1, mem) + 1 # Position of vᵢ in the circular stack
-      jpos = iter - i + 2
-      H[jpos] = @kdot(n, w, V[:,ipos]) # hᵢ.ₘ = < A * vₘ , vᵢ >
-      @kaxpy!(n, -H[jpos], V[:,ipos], w) # w ← w - hᵢ.ₘ * vᵢ
+      ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
+      diag = iter - i + 2
+      H[diag] = @kdot(n, w, V[:,ipos]) # hᵢ.ₘ = < A * vₘ , vᵢ >
+      @kaxpy!(n, -H[diag], V[:,ipos], w) # w ← w - hᵢ.ₘ * vᵢ
     end
     # Compute hₘ₊₁.ₘ and vₘ₊₁.
     H[1] = @knrm2(n, w) # hₘ₊₁.ₘ = ‖vₘ₊₁‖
     if H[1] ≉ 0 # hₘ₊₁.ₘ ≈ 0 ⇒ "lucky breakdown"
       V[:,next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
     end
+    # It's possible that uₘ₋ₘₑₘ.ₘ ≠ 0 when m ≥ mem + 1
+    if iter ≥ mem + 2
+      H[mem+2] = 0 # hₘ₋ₘₑₘ.ₘ = 0
+    end
 
-    # Compute LU factorization with partial pivoting of Hₘ by computing the last column of Uₘ.
+    # Update the LU factorization with partial pivoting of H.
+    # Compute the last column of Uₘ.
     if iter ≥ 2
       for i = max(2,iter-mem+1) : iter
-        lpos = mod(i-1, mem) + 1 # Position of lᵢ.ᵢ₋₁ in the circular stack
-        jpos = iter - i + 2
+        lpos = mod(i-1, mem) + 1 # Position corresponding to lᵢ.ᵢ₋₁ in the circular stack L.
+        diag = iter - i + 2
+        next_diag = diag + 1
         if p[lpos]
-          # row i-1 and i are permuted
-          H[jpos], H[jpos+1] = H[jpos+1], H[jpos]
+          # The rows i-1 and i are permuted.
+          H[diag], H[next_diag] = H[next_diag], H[diag]
         end
         # uᵢ.ₘ ← hᵢ.ₘ - lᵢ.ᵢ₋₁ * uᵢ₋₁.ₘ
-        H[jpos] = H[jpos] - L[lpos] * H[jpos+1]
+        H[diag] = H[diag] - L[lpos] * H[next_diag]
       end
-      # Compute ξₘ the last composant of zₘ = β(Lₘ)⁻¹e₁.
+      # Compute ξₘ the last component of zₘ = β(Lₘ)⁻¹e₁.
       if !p[pos] # p[pos] ⇒ ξₘ = ξₘ₋₁
         # ξₘ = -lₘ.ₘ₋₁ * ξₘ₋₁
         ξ = - L[pos] * ξ
       end
     end
 
-    # Update residual norm estimate.
-    # ‖ b - Axₘ ‖ = hₘ₊₁.ₘ * |ξₘ / uₘ.ₘ|
-    rNorm = H[1] * abs(ξ / H[2])
-    push!(rNorms, rNorm)
-
-    # Update stopping criterion.
-    solved = rNorm ≤ ε
-    tired = iter ≥ itmax
-
     # Compute the direction pₘ, the last column of Pₘ = Vₘ(Uₘ)⁻¹.
     for i = max(1,iter-mem) : iter - 1
-      ipos = mod(i-1, mem) + 1
-      jpos = iter - i + 2
+      ipos = mod(i-1, mem) + 1 # Position corresponding to pᵢ in the circular stack P.
+      diag = iter - i + 2
       # z ← z - uᵢ.ₘ * pᵢ
-      @kaxpy!(n, -H[jpos], P[:,ipos], z)
+      @kaxpy!(n, -H[diag], P[:,ipos], z)
     end
 
     # Determine if interchange between hₘ₊₁.ₘ and uₘ.ₘ is needed and compute next pivot lₘ₊₁.ₘ.
@@ -152,17 +147,27 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Compute solution xₘ.
     if p[pos]
       # xₘ = xₘ₋ₙ + ξₘ₋ₙ * pₘ
-      # m-n is the last iteration without permutation at the next step
+      # x_old = xₘ₋ₙ, with m-n is the last iteration without permutation at the next step
       x = x_old + ξ * P[:,pos]
     else
       # xₘ = xₘ₋₁ + ξₘ * pₘ
       @kaxpy!(n, ξ, P[:,pos], x)
     end
 
-    # Update x_old.
+    # Update x_old and residual norm.
     if !p[next_pos]
       x_old = copy(x)
+      # ‖ b - Axₘ ‖ = hₘ₊₁.ₘ * |ξₘ / uₘ.ₘ| without pivoting
+      rNorm = H[1] * abs(ξ / H[2])
+    else
+      # ‖ b - Axₘ ‖ = hₘ₊₁.ₘ * |ξₘ / hₘ₊₁.ₘ| = |ξₘ| with pivoting
+      rNorm = abs(ξ)
     end
+    push!(rNorms, rNorm)
+
+    # Update stopping criterion.
+    solved = rNorm ≤ ε
+    tired = iter ≥ itmax
     verbose && @printf("%5d  %7.1e\n", iter, rNorm)
   end
   verbose && @printf("\n")
