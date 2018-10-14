@@ -49,17 +49,20 @@ When λ > 0, this method solves the problem
 CGMR produces monotonic residuals ‖r‖₂.
 It is formally equivalent to CRAIG-MR, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
+
+A preconditioner M may be provided in the form of a linear operator.
 """
 function crmr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                           λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+                           M :: AbstractLinearOperator=opEye(size(A,1)), λ :: Float64=0.0,
+                           atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
                            itmax :: Int=0, verbose :: Bool=false)
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CRMR: system of %d equations in %d variables\n", m, n);
 
-  x = zeros(T, n)
-  r  = copy(b)
+  x = zeros(T, n) # initial estimation x = 0
+  r = M * copy(b) # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
   rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
@@ -80,16 +83,17 @@ function crmr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
   verbose && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm);
 
   status = "unknown";
-  solved = rNorm <= ɛ_c;
-  inconsistent = (rNorm > 1.0e+2 * ɛ_c) && (ArNorm <= ɛ_i);
-  tired = iter >= itmax;
+  solved = rNorm ≤ ɛ_c;
+  inconsistent = (rNorm > 1.0e+2 * ɛ_c) && (ArNorm ≤ ɛ_i);
+  tired = iter ≥ itmax;
 
   while ! (solved || inconsistent || tired)
     q = A * p;
     λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s;
-    α = γ / @kdot(m, q, q)     # dot(q, q);
+    Mq = M * q
+    α = γ / @kdot(m, q, Mq)    # Compute qᵗ * M * q
     @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p;
-    @kaxpy!(m, -α, q, r)       # Faster than  r =  r - α * Ap;
+    @kaxpy!(m, -α, Mq, r)      # Faster than  r =  r - α * Mq;
     rNorm = @knrm2(m, r)       # norm(r);
     Ar = A' * r;
     γ_next = @kdot(n, Ar, Ar)  # Faster than γ_next = dot(Ar, Ar);
@@ -109,9 +113,9 @@ function crmr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
     push!(ArNorms, ArNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm);
-    solved = rNorm <= ɛ_c;
-    inconsistent = (rNorm > 1.0e+2 * ɛ_c) && (ArNorm <= ɛ_i);
-    tired = iter >= itmax;
+    solved = rNorm ≤ ɛ_c;
+    inconsistent = (rNorm > 1.0e+2 * ɛ_c) && (ArNorm ≤ ɛ_i);
+    tired = iter ≥ itmax;
   end
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent but least squares/norm solution found" : "solution good enough given atol and rtol")
