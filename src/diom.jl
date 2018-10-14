@@ -156,7 +156,7 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Update x_old and residual norm.
     if !p[next_pos]
-      x_old = copy(x)
+      copy!(x_old, x)
       # ‖ b - Axₘ ‖ = hₘ₊₁.ₘ * |ξₘ / uₘ.ₘ| without pivoting
       rNorm = H[1] * abs(ξ / H[2])
     else
