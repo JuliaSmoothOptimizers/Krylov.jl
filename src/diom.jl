@@ -6,8 +6,7 @@
 # PWS Publishing Company, Boston, USA, 1996.
 #
 # Y. Saad, Practical use of some krylov subspace methods for solving indefinite and nonsymmetric linear systems.
-# SIAM journal on scientific and statistical computing.
-# Vol. 5, No. 1, March 1984.
+# SIAM journal on scientific and statistical computing, 5(1), pp. 203--228, 1984.
 # 
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, September 2018.
