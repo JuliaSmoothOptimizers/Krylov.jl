@@ -15,11 +15,7 @@ export diom
 
 """Solve the consistent linear system Ax = b using direct incomplete orthogonalization method.
 
-DIOM is similar to SYMMLQ for nonsymmetric problems.
-It's a more economical algorithm based upon the LU factorization with partial pivoting.
-
-In the particular case where A is symmetric indefinite, DIOM is theorecally equivalent 
-to SYMMLQ but slightly more economical. 
+DIOM is similar to CG with partial reorthogonalization.
 
 An advantage of DIOM is that nonsymmetric or symmetric indefinite or both nonsymmetric 
 and indefinite systems of linear equations can be handled by this single algorithm.
