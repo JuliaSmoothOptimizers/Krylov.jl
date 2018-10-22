@@ -56,7 +56,7 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
   # In addition of that, the last column of Uₘ is stored in H.
   L = zeros(mem) # Last mem Pivots of Lₘ.
-  p = zeros(Bool, mem) # Last mem permutations.
+  p = BitArray(mem) # Last mem permutations.
 
   # Initial ξ₁ and V₁.
   ξ = rNorm
