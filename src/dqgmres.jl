@@ -18,7 +18,7 @@ export dqgmres
 DQGMRES algorithm is based on the incomplete Arnoldi orthogonalization process
 and computes a sequence of approximate solutions with the quasi-minimal residual property.
 
-This implementation allows a right preconditioning with M.
+This implementation allows a right preconditioner M.
 """
 function dqgmres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
                               M :: AbstractLinearOperator=opEye(size(A,1)),

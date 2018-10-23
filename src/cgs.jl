@@ -30,7 +30,7 @@ to become inaccurate.
 
 TFQMR and BICGSTAB were developed to remedy this difficulty.»
 
-This implementation allows a right preconditioning with M.
+This implementation allows a right preconditioner M.
 """
 function cgs{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
                           M :: AbstractLinearOperator=opEye(size(A,1)),

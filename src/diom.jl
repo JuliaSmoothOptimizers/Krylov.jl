@@ -20,7 +20,7 @@ DIOM is similar to CG with partial reorthogonalization.
 An advantage of DIOM is that nonsymmetric or symmetric indefinite or both nonsymmetric 
 and indefinite systems of linear equations can be handled by this single algorithm.
 
-This implementation allows a right preconditioning with M.
+This implementation allows a right preconditioner M.
 """
 function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
                               M :: AbstractLinearOperator=opEye(size(A,1)),
