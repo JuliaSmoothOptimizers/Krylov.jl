@@ -7,7 +7,7 @@ function preallocated_LinearOperator(A)
 end
 
 # Variants where A is a matrix without specific properties
-for fn in (:cgls, :cgne, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :lsqr, :dqgmres, :diom)
+for fn in (:cgls, :cgne, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :lsqr, :dqgmres, :diom, :cgs)
   @eval begin
     # Variant for A given as a dense array and b given as a dense vector
     $fn{TA <: Number, Tb <: Number}(A :: Array{TA,2}, b :: Vector{Tb}, args...; kwargs...) =
