@@ -73,6 +73,7 @@ end
 include("krylov_aux.jl")
 include("krylov_utils.jl")
 
+include("cgs.jl")
 include("cg.jl")
 include("cg_lanczos.jl")
 include("minres.jl")
