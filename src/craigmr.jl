@@ -51,9 +51,9 @@ It is formally equivalent to CRMR, though can be slightly more accurate,
 and intricate to implement. Both the x- and y-parts of the solution are
 returned.
 """
-function craigmr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                              λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-                              itmax :: Int=0, verbose :: Bool=false)
+function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
+                 λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+                 itmax :: Int=0, verbose :: Bool=false) where T <: Number
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");

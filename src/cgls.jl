@@ -37,10 +37,10 @@ CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖A'r
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 """
-function cgls{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                           M :: AbstractLinearOperator=opEye(size(b,1)),
-                           λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-                           radius :: Float64=0.0, itmax :: Int=0, verbose :: Bool=false)
+function cgls(A :: AbstractLinearOperator, b :: AbstractVector{T};
+              M :: AbstractLinearOperator=opEye(size(b,1)), λ :: Float64=0.0,
+              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, radius :: Float64=0.0,
+              itmax :: Int=0, verbose :: Bool=false) where T <: Number
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");

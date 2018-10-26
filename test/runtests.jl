@@ -1,6 +1,4 @@
-using Base.Test
-using Krylov
-using LinearOperators
+using Test, Krylov, LinearOperators, LinearAlgebra, SparseArrays, Printf
 
 include("test_diom.jl")
 include("test_cgs.jl")

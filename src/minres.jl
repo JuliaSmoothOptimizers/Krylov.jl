@@ -42,12 +42,11 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r�
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function minres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                             M :: AbstractLinearOperator=opEye(size(A,1)),
-                             λ :: Float64=0.0,
-                             atol :: Float64=1.0e-12, rtol :: Float64=1.0e-12,
-                             etol :: Float64=1.0e-8, window :: Int=5,
-                             itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
+                M :: AbstractLinearOperator=opEye(size(A,1)), λ :: Float64=0.0,
+                atol :: Float64=1.0e-12, rtol :: Float64=1.0e-12, etol :: Float64=1.0e-8,
+                window :: Int=5, itmax :: Int=0, conlim :: Float64=1.0e+8,
+                verbose :: Bool=false) where T <: Number
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -56,7 +55,7 @@ function minres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}
 
   ϵM = eps(T)
   x = zeros(T, n)
-  ctol = conlim > 0.0 ? 1./conlim : 0.0;
+  ctol = conlim > 0.0 ? 1 ./ conlim : 0.0;
 
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
@@ -118,7 +117,7 @@ function minres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}
 
     # Generate next Lanczos vector.
     v = copy(y)
-    @kscal!(n, 1./β, v)
+    @kscal!(n, 1 ./ β, v)
     y = A * v
     λ != 0.0 && @kaxpy!(n, -λ, v, y)          # (y = y - λ * v)
     iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y)  # (y = y - β / oldβ * r1)

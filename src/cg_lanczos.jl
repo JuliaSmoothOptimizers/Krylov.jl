@@ -19,9 +19,9 @@ symmetric linear system
 
 The method does _not_ abort if A is not definite.
 """
-function cg_lanczos{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                                 atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                                 check_curvature :: Bool=false, verbose :: Bool=false)
+function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
+                    atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
+                    check_curvature :: Bool=false, verbose :: Bool=false) where T <: Number
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
@@ -106,9 +106,9 @@ of shifted systems
 
 The method does _not_ abort if A + αI is not definite.
 """
-function cg_lanczos_shift_seq{Tb <: Number, Ts <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{Tb}, shifts :: AbstractVector{Ts};
-                                                          atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                                                          check_curvature :: Bool=false, verbose :: Bool=false)
+function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{Tb}, shifts :: AbstractVector{Ts};
+                              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
+                              check_curvature :: Bool=false, verbose :: Bool=false) where {Tb, Ts <: Number}
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
@@ -150,7 +150,7 @@ function cg_lanczos_shift_seq{Tb <: Number, Ts <: Number}(A :: AbstractLinearOpe
   if verbose
     fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n";
     # precompile printf for our particular format
-    local_printf(data...) = Core.eval(:(@printf($fmt, $(data)...)))
+    local_printf(data...) = Core.eval(Main, :(@printf($fmt, $(data)...)))
     local_printf(iter, rNorms...)
   end
 
@@ -181,7 +181,7 @@ function cg_lanczos_shift_seq{Tb <: Number, Ts <: Number}(A :: AbstractLinearOpe
 
     # Compute next CG iterate for each shifted system that has not yet converged.
     # Stop iterating on indefinite problems if requested.
-    not_cv = check_curvature ? find(.! (converged .| indefinite)) : find(.! converged);
+    not_cv = check_curvature ? findall(.! (converged .| indefinite)) : findall(.! converged);
 
     # Loop is a bit faster than the vectorized version.
     for i in not_cv
@@ -200,7 +200,7 @@ function cg_lanczos_shift_seq{Tb <: Number, Ts <: Number}(A :: AbstractLinearOpe
     length(not_cv) > 0 && append!(rNorms_history, rNorms);
 
     # Is there a better way than to update this array twice per iteration?
-    not_cv = check_curvature ? find(.! (converged .| indefinite)) : find(.! converged);
+    not_cv = check_curvature ? findall(.! (converged .| indefinite)) : findall(.! converged);
     iter = iter + 1;
     verbose && local_printf(iter, rNorms...)
 
