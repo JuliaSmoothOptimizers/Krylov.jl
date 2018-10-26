@@ -1,11 +1,12 @@
 using Krylov
 using LinearOperators
+using LinearAlgebra
 # using ProfileView
 
 m = 5; n = 8;
 λ = 1.0e-3;
 A = rand(m,n); b = A * ones(n);
-xy_exact = [A  λ*eye(m)] \ b;  # In Julia, this is the min-norm solution!
+xy_exact = [A  λ*I] \ b;  # In Julia, this is the min-norm solution!
 
 (x, y, stats) = craig(A, b, λ=λ, atol=0.0, rtol=1.0e-20, verbose=true);
 # @profile (x, y, stats) = craig(A, b, λ=λ);

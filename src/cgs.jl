@@ -7,7 +7,7 @@
 #
 # P. Sonneveld, CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems.
 # SIAM Journal on Scientific and Statistical Computing, 10(1), pp. 36--52, 1989.
-# 
+#
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, October 2018.
 
@@ -25,17 +25,17 @@ rate is about twice that of the BCG algorithm.
 The Conjugate Gradient Squared algorithm works quite well in many cases.
 However, one difficulty is that, since the polynomials are squared, rounding errors
 tend to be more damaging than in the standard BCG algorithm. In particular, very
-high variations of the residual vectors often cause the residual norms computed 
+high variations of the residual vectors often cause the residual norms computed
 to become inaccurate.
 
 TFQMR and BICGSTAB were developed to remedy this difficulty.»
 
 This implementation allows a right preconditioner M.
 """
-function cgs{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                          M :: AbstractLinearOperator=opEye(size(A,1)),
-                          atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-                          itmax :: Int=0, verbose :: Bool=false)
+function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
+             M :: AbstractLinearOperator=opEye(size(A,1)),
+             atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+             itmax :: Int=0, verbose :: Bool=false) where {T <: Number}
 
   m, n = size(A)
   m == n || error("System must be square")

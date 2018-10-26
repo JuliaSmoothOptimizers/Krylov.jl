@@ -7,7 +7,7 @@
 #
 # Y. Saad, Practical use of some krylov subspace methods for solving indefinite and nonsymmetric linear systems.
 # SIAM journal on scientific and statistical computing, 5(1), pp. 203--228, 1984.
-# 
+#
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, September 2018.
 
@@ -17,15 +17,15 @@ export diom
 
 DIOM is similar to CG with partial reorthogonalization.
 
-An advantage of DIOM is that nonsymmetric or symmetric indefinite or both nonsymmetric 
+An advantage of DIOM is that nonsymmetric or symmetric indefinite or both nonsymmetric
 and indefinite systems of linear equations can be handled by this single algorithm.
 
 This implementation allows a right preconditioner M.
 """
-function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                              M :: AbstractLinearOperator=opEye(size(A,1)),
-                              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-                              itmax :: Int=0, memory :: Int=20, verbose :: Bool=false)
+function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
+              M :: AbstractLinearOperator=opEye(size(A,1)),
+              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+              itmax :: Int=0, memory :: Int=20, verbose :: Bool=false) where {T <: Number}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -56,7 +56,7 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
   # In addition of that, the last column of Uₘ is stored in H.
   L = zeros(mem) # Last mem Pivots of Lₘ.
-  p = BitArray(mem) # Last mem permutations.
+  p = BitArray(undef, mem) # Last mem permutations.
 
   # Initial ξ₁ and V₁.
   ξ = rNorm
@@ -151,7 +151,7 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Update x_old and residual norm.
     if !p[next_pos]
-      copy!(x_old, x)
+      copyto!(x_old, x)
       # ‖ b - Axₘ ‖₂ = hₘ₊₁.ₘ * |ξₘ / uₘ.ₘ| without pivoting
       rNorm = H[1] * abs(ξ / H[2])
     else
