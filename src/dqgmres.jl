@@ -47,9 +47,7 @@ function dqgmres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T
   # Set up workspace.
   mem = min(memory, itmax) # Memory.
   V = zeros(n, mem) # Preconditioned Krylov vectors, orthogonal basis for {r₀, AM⁻¹r₀, (AM⁻¹)²r₀, ..., (AM⁻¹)ᵐ⁻¹r₀}.
-  w = zeros(n) # Temporary storage of Krylov vectors.
   P = zeros(n, mem) # Directions for x : Pₘ = Vₘ(Rₘ)⁻¹.
-  z = zeros(n) # Temporary storage of directions.
   s = zeros(mem)    # Last mem Givens sines used for the factorization QₘRₘ = Hₘ.
   c = zeros(mem)    # Last mem Givens cosines used for the factorization QₘRₘ = Hₘ.
   H = zeros(mem+2)  # Last column of the band hessenberg matrix Hₘ.
@@ -78,8 +76,8 @@ function dqgmres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T
     next_pos = mod(iter, mem) + 1 # Position corresponding to vₘ₊₁ in the circular stack V.
 
     # Incomplete Arnoldi procedure.
-    z[:] = M * view(V,:,pos) # Forms pₘ
-    w[:] = A * z # Forms vₘ₊₁
+    z = M * view(V,:,pos) # Forms pₘ
+    w = A * z # Forms vₘ₊₁
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
       diag = iter - i + 2
