@@ -24,13 +24,11 @@ SYMMLQ produces monotonic errors ‖x*-x‖₂.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                             M :: AbstractLinearOperator=opEye(size(A,1)),
-                             λ :: Float64=0.0,
-                             λest :: Float64=0.0,
-                             atol :: Float64=1.0e-8, rtol :: Float64=1.0e-8,
-                             etol :: Float64=1.0e-8, window :: Int=0,
-                             itmax :: Int=0, conlim :: Float64=1.0e+8, verbose :: Bool=false)
+function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
+                M :: AbstractLinearOperator=opEye(size(A,1)), λ :: Float64=0.0,
+                λest :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-8,
+                etol :: Float64=1.0e-8, window :: Int=0, itmax :: Int=0,
+                conlim :: Float64=1.0e+8, verbose :: Bool=false) where T <: Number
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -39,7 +37,7 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}
 
   ϵM = eps(T)
   x = zeros(T, n)
-  ctol = conlim > 0.0 ? 1./conlim : 0.0;
+  ctol = conlim > 0.0 ? 1 ./ conlim : 0.0;
 
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
@@ -49,18 +47,18 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}
   β₁ == 0.0 && return (x, x, SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
   β = β₁
-  vold = @kscal!(m, 1./β, vold)
-  p = @kscal!(m, 1./β, p)
+  vold = @kscal!(m, 1 ./ β, vold)
+  p = @kscal!(m, 1 ./ β, p)
 
   v = copy(A * p)
   α = @kdot(m, p, v) + λ
   @kaxpy!(m, -α, vold, v)  # v = v - α * vold
-  p = copy(M * v)
+  p = M * v
   β = @kdot(m, v, p)
   β < 0.0 && error("Preconditioner is not positive definite")
   β = sqrt(β)
-  @kscal!(m, 1./β, v)
-  @kscal!(m, 1./β, p)
+  @kscal!(m, 1 ./ β, v)
+  @kscal!(m, 1 ./ β, p)
 
   # Start QR factorization
   γbar = α
@@ -140,12 +138,12 @@ function symmlq{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}
     α = @kdot(m, p, v_next) + λ
     @kaxpy!(m, -α, v, v_next)
     @kaxpy!(m, -oldβ, vold, v_next)
-    p = copy(M * v_next)
+    p = M * v_next
     β = @kdot(m, v_next, p)
     β < 0.0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
-    @kscal!(m, 1./β, v_next)
-    @kscal!(m, 1./β, p)
+    @kscal!(m, 1 ./ β, v_next)
+    @kscal!(m, 1 ./ β, p)
 
     # Continue A norm estimate
     ANorm² = ANorm² + α * α + oldβ * oldβ + β * β

@@ -1,2 +1,2 @@
-julia 0.6 1.0
-LinearOperators 0.2.0 0.5.0
+julia 0.7 2.0
+LinearOperators 0.5.1

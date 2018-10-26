@@ -18,10 +18,10 @@ The method does _not_ abort if A is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function cg{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                         M :: AbstractLinearOperator=opEye(size(A,1)),
-                         atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                         radius :: Float64=0.0, verbose :: Bool=false)
+function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
+            M :: AbstractLinearOperator=opEye(size(A,1)), atol :: Float64=1.0e-8,
+            rtol :: Float64=1.0e-6, itmax :: Int=0, radius :: Float64=0.0,
+            verbose :: Bool=false) where T <: Number
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
