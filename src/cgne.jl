@@ -53,10 +53,10 @@ but simpler to implement. Only the x-part of the solution is returned.
 
 A preconditioner M may be provided in the form of a linear operator.
 """
-function cgne{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                           M :: AbstractLinearOperator=opEye(size(A,1)), λ :: Float64=0.0,
-                           atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-                           itmax :: Int=0, verbose :: Bool=false)
+function cgne(A :: AbstractLinearOperator, b :: AbstractVector{T};
+              M :: AbstractLinearOperator=opEye(size(A,1)), λ :: Float64=0.0,
+              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
+              verbose :: Bool=false) where T <: Number
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");

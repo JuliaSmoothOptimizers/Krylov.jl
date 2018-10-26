@@ -13,7 +13,10 @@ The matrix A must be positive semi-definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function cr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}; M :: AbstractLinearOperator=opEye(size(A,1)), atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0, radius :: Float64=0., verbose :: Bool=true)
+function cr(A :: AbstractLinearOperator, b :: AbstractVector{T};
+            M :: AbstractLinearOperator=opEye(size(A,1)), atol :: Float64=1.0e-8,
+            rtol :: Float64=1.0e-6, itmax :: Int=0, radius :: Float64=0.0,
+            verbose :: Bool=true) where T <: Number
 
   n = size(b, 1) # size of the problem
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
@@ -21,7 +24,7 @@ function cr{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T}; M 
 
   # Initial state.
   x = zeros(T, n) # initial estimation x = 0
-  r = M * copy(b) # initial residual r = M * (b - Ax) = M * b
+  r = M * b # initial residual r = M * (b - Ax) = M * b
   Ar = A * r
   ρ = @kdot(n, r, Ar)
   ρ == 0.0 && return (x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution"))

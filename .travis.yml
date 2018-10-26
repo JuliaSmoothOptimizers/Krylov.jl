@@ -5,14 +5,12 @@ os:
   - linux
 
 julia:
-  - 0.6
   - 0.7
   - 1.0
   - nightly
 
 matrix:
   allow_failures:
-    - julia: 1.0
     - julia: nightly
 
 branches:
@@ -22,7 +20,7 @@ branches:
 
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("Krylov"); Pkg.test("Krylov"; coverage=true)'
+  - julia --check-bounds=yes -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("Krylov"); Pkg.test("Krylov"; coverage=true)'
 
 after_success:
-  - julia -e 'cd(Pkg.dir("Krylov")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder()); Codecov.submit(process_folder())'
+  - julia -e 'using Pkg; cd(Pkg.dir("Krylov")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder()); Codecov.submit(process_folder())'

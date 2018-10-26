@@ -123,22 +123,22 @@ end
 # Call BLAS if possible when using dot, norm, etc.
 # Benchmarks indicate that the form BLAS.dot(n, x, 1, y, 1) is substantially faster than BLAS.dot(x, y)
 
-krylov_dot{T <: BLAS.BlasReal}(n :: Int, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) = BLAS.dot(n, x, dx, y, dy)
-krylov_dot{T <: Number}(n :: Int, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int) = dot(x, y)  # ignore dx, dy here
+krylov_dot(n :: Int, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) where T <: BLAS.BlasReal = BLAS.dot(n, x, dx, y, dy)
+krylov_dot(n :: Int, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int) where T <: Number = dot(x, y)  # ignore dx, dy here
 
-krylov_norm2{T <: BLAS.BlasReal}(n :: Int, x :: Vector{T}, dx :: Int) = BLAS.nrm2(n, x, dx)
-krylov_norm2{T <: Number}(n :: Int, x :: AbstractVector{T}, dx :: Int) = norm(x)  # ignore dx here
+krylov_norm2(n :: Int, x :: Vector{T}, dx :: Int) where T <: BLAS.BlasReal = BLAS.nrm2(n, x, dx)
+krylov_norm2(n :: Int, x :: AbstractVector{T}, dx :: Int) where T <: Number = norm(x)  # ignore dx here
 
-krylov_scal!{T <: BLAS.BlasReal}(n :: Int, s :: T, x :: Vector{T}, dx :: Int) = BLAS.scal!(n, s, x, dx)
-function krylov_scal!{T <: Number}(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int)
+krylov_scal!(n :: Int, s :: T, x :: Vector{T}, dx :: Int) where T <: BLAS.BlasReal = BLAS.scal!(n, s, x, dx)
+function krylov_scal!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int) where T <: Number
   @simd for i = 1:dx:n
     @inbounds x[i] *= s
   end
   return x
 end
 
-krylov_axpy!{T <: BLAS.BlasReal}(n :: Int, s :: T, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) = BLAS.axpy!(n, s, x, dx, y, dy)
-function krylov_axpy!{T <: Number}(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int)
+krylov_axpy!(n :: Int, s :: T, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) where T <: BLAS.BlasReal = BLAS.axpy!(n, s, x, dx, y, dy)
+function krylov_axpy!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int) where T <: Number
   # assume dx = dy
   @simd for i = 1:dx:n
     @inbounds y[i] += s * x[i]
@@ -146,7 +146,7 @@ function krylov_axpy!{T <: Number}(n :: Int, s :: T, x :: AbstractVector{T}, dx 
   return y
 end
 
-function krylov_axpby!{T <: Number}(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, t :: T, y :: AbstractVector{T}, dy :: Int)
+function krylov_axpby!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, t :: T, y :: AbstractVector{T}, dy :: Int) where T <: Number
   # assume dx = dy
   @simd for i = 1:dx:n
     @inbounds y[i] = s * x[i] + t * y[i]

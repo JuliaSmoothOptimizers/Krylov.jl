@@ -1,12 +1,12 @@
 module Krylov
 
-using LinearOperators
+using LinearOperators, LinearAlgebra, SparseArrays, Printf
 
 "Abstract type for statistics returned by a solver"
 abstract type KrylovStats end;
 
 "Type for statistics returned by non-Lanczos solvers"
-type SimpleStats <: KrylovStats
+mutable struct SimpleStats <: KrylovStats
   solved :: Bool
   inconsistent :: Bool
   residuals :: Array{Float64,1}
@@ -14,7 +14,7 @@ type SimpleStats <: KrylovStats
   status :: String
 end
 
-type LanczosStats <: KrylovStats
+mutable struct LanczosStats <: KrylovStats
   solved :: Bool
   residuals :: Array{Float64}
   flagged :: Union{Bool, Array{Bool,1}, BitArray{1}}
@@ -23,7 +23,7 @@ type LanczosStats <: KrylovStats
   status :: String
 end
 
-type SymmlqStats <: KrylovStats
+mutable struct SymmlqStats <: KrylovStats
   solved :: Bool
   residuals :: Array{Float64}
   residualscg :: Array{Float64}
