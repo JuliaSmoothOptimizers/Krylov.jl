@@ -37,8 +37,8 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
   x_old = copy(x)
   r = copy(b)
   # Compute β.
-  rNorm = @knrm2(n, r) # rNorm = ‖r₀‖
-  rNorm ≈ 0 && return x, SimpleStats(true, false, [rNorm], [], "x = 0 is a zero-residual solution")
+  rNorm = @knrm2(n, r) # rNorm = ‖r₀‖₂
+  rNorm == 0.0 && return x, SimpleStats(true, false, [rNorm], [], "x = 0 is a zero-residual solution")
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
@@ -50,7 +50,9 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # Set up workspace.
   mem = min(memory, itmax) # Memory.
   V = zeros(n, mem) # Preconditioned Krylov vectors, orthogonal basis for {r₀, AM⁻¹r₀, (AM⁻¹)²r₀, ..., (AM⁻¹)ᵐ⁻¹r₀}.
+  w = zeros(n) # Temporary storage of Krylov vectors.
   P = zeros(n, mem) # Directions for x : Pₘ = Vₘ(Uₘ)⁻¹.
+  z = zeros(n) # Temporary storage of directions.
   H = zeros(mem+2)  # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
   # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
@@ -60,7 +62,7 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   # Initial ξ₁ and V₁.
   ξ = rNorm
-  V[:,1] = r / rNorm
+  @. V[:,1] = r / rNorm
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -77,22 +79,22 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
     next_pos = mod(iter, mem) + 1 # Position corresponding to vₘ₊₁ in the circular stack V.
 
     # Incomplete Arnoldi procedure.
-    z = M * V[:,pos] # Forms pₘ
-    w = A * z # Forms vₘ₊₁
+    z[:] = M * view(V,:,pos) # Forms pₘ
+    w[:] = A * z # Forms vₘ₊₁
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
       diag = iter - i + 2
-      H[diag] = @kdot(n, w, V[:,ipos]) # hᵢ.ₘ = < A * vₘ , vᵢ >
-      @kaxpy!(n, -H[diag], V[:,ipos], w) # w ← w - hᵢ.ₘ * vᵢ
+      H[diag] = @kdot(n, w, view(V,:,ipos)) # hᵢ.ₘ = < A * vₘ , vᵢ >
+      @kaxpy!(n, -H[diag], view(V,:,ipos), w) # w ← w - hᵢ.ₘ * vᵢ
     end
     # Compute hₘ₊₁.ₘ and vₘ₊₁.
-    H[1] = @knrm2(n, w) # hₘ₊₁.ₘ = ‖vₘ₊₁‖
-    if H[1] ≉ 0 # hₘ₊₁.ₘ ≈ 0 ⇒ "lucky breakdown"
-      V[:,next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
+    H[1] = @knrm2(n, w) # hₘ₊₁.ₘ = ‖vₘ₊₁‖₂
+    if H[1] ≠ 0.0 # hₘ₊₁.ₘ = 0 ⇒ "lucky breakdown"
+      @. V[:,next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
     end
     # It's possible that uₘ₋ₘₑₘ.ₘ ≠ 0 when m ≥ mem + 1
     if iter ≥ mem + 2
-      H[mem+2] = 0 # hₘ₋ₘₑₘ.ₘ = 0
+      H[mem+2] = 0.0 # hₘ₋ₘₑₘ.ₘ = 0
     end
 
     # Update the LU factorization with partial pivoting of H.
@@ -121,20 +123,20 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
       ipos = mod(i-1, mem) + 1 # Position corresponding to pᵢ in the circular stack P.
       diag = iter - i + 2
       # z ← z - uᵢ.ₘ * pᵢ
-      @kaxpy!(n, -H[diag], P[:,ipos], z)
+      @kaxpy!(n, -H[diag], view(P,:,ipos), z)
     end
 
     # Determine if interchange between hₘ₊₁.ₘ and uₘ.ₘ is needed and compute next pivot lₘ₊₁.ₘ.
     if abs(H[2]) < H[1]
       p[next_pos] = true
       # pₘ = z / hₘ₊₁.ₘ
-      P[:,pos] = z / H[1]
+      @. P[:,pos] = z / H[1]
       # lₘ₊₁.ₘ = uₘ.ₘ / hₘ₊₁.ₘ
       L[next_pos] = H[2] / H[1]
     else
       p[next_pos] = false
       # pₘ = z / uₘ.ₘ
-      P[:,pos] = z / H[2]
+      @. P[:,pos] = z / H[2]
       # lₘ₊₁.ₘ = hₘ₊₁.ₘ / uₘ.ₘ
       L[next_pos] = H[1] / H[2]
     end
@@ -143,19 +145,19 @@ function diom{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T};
     if p[pos]
       # xₘ = xₘ₋ₙ + ξₘ₋ₙ * pₘ
       # x_old = xₘ₋ₙ, with m-n is the last iteration without permutation at the next step
-      x = x_old + ξ * P[:,pos]
+      x .= x_old .+ ξ .* view(P,:,pos)
     else
       # xₘ = xₘ₋₁ + ξₘ * pₘ
-      @kaxpy!(n, ξ, P[:,pos], x)
+      @kaxpy!(n, ξ, view(P,:,pos), x)
     end
 
     # Update x_old and residual norm.
     if !p[next_pos]
       copy!(x_old, x)
-      # ‖ b - Axₘ ‖ = hₘ₊₁.ₘ * |ξₘ / uₘ.ₘ| without pivoting
+      # ‖ b - Axₘ ‖₂ = hₘ₊₁.ₘ * |ξₘ / uₘ.ₘ| without pivoting
       rNorm = H[1] * abs(ξ / H[2])
     else
-      # ‖ b - Axₘ ‖ = hₘ₊₁.ₘ * |ξₘ / hₘ₊₁.ₘ| = |ξₘ| with pivoting
+      # ‖ b - Axₘ ‖₂ = hₘ₊₁.ₘ * |ξₘ / hₘ₊₁.ₘ| = |ξₘ| with pivoting
       rNorm = abs(ξ)
     end
     push!(rNorms, rNorm)

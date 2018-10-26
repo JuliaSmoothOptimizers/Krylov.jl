@@ -6,7 +6,7 @@
 # PWS Publishing Company, Boston, USA, 1996.
 #
 # Y. Saad and K. Wu, DQGMRES: a quasi minimal residual algorithm based on incomplete orthogonalization.
-# Numerical Linear Algebra with Applications, Vol. 3(4), 329-343, 1996.
+# Numerical Linear Algebra with Applications, Vol. 3(4), pp. 329--343, 1996.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, August 2018.
@@ -30,11 +30,12 @@ function dqgmres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("DQGMRES: system of size %d\n", n)
 
-  # Initial solution and residual.
+  # Initial solution x₀ and residual r₀.
   x = zeros(T, n)
   r = copy(b)
-  rNorm = @knrm2(n, r)
-  rNorm ≈ 0 && return x, SimpleStats(true, false, [rNorm], [], "x = 0 is a zero-residual solution")
+  # Compute β.
+  rNorm = @knrm2(n, r) # rNorm = ‖r₀‖₂
+  rNorm == 0.0 && return x, SimpleStats(true, false, [rNorm], [], "x = 0 is a zero-residual solution")
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
@@ -45,23 +46,26 @@ function dqgmres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T
 
   # Set up workspace.
   mem = min(memory, itmax) # Memory.
-  g = zeros(mem+1) # Right-hand of the least squares problem min ‖ Hy - g ‖.
-  V = zeros(n, mem+1) # Preconditioned Krylov vectors.
-  P = zeros(n,mem+1) # Directions for x: P = V * inv(R).
-  s = zeros(mem) # Givens sines.
-  c = zeros(mem) # Givens cosines.
-  H = spzeros(itmax, mem+2) # Upper Hessenberg matrix. Its mem+2 diagonals are stored
-                            # as column vectors, according to the tranformation
-                            # (j,k) --> (j,2+k-j).
-  # Initial g and V.
-  g[1] = rNorm
-  V[:,1] = r / rNorm
+  V = zeros(n, mem) # Preconditioned Krylov vectors, orthogonal basis for {r₀, AM⁻¹r₀, (AM⁻¹)²r₀, ..., (AM⁻¹)ᵐ⁻¹r₀}.
+  w = zeros(n) # Temporary storage of Krylov vectors.
+  P = zeros(n, mem) # Directions for x : Pₘ = Vₘ(Rₘ)⁻¹.
+  z = zeros(n) # Temporary storage of directions.
+  s = zeros(mem)    # Last mem Givens sines used for the factorization QₘRₘ = Hₘ.
+  c = zeros(mem)    # Last mem Givens cosines used for the factorization QₘRₘ = Hₘ.
+  H = zeros(mem+2)  # Last column of the band hessenberg matrix Hₘ.
+  # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
+  # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
+  # In addition of that, the last column of Rₘ is also stored in H.
+
+  # Initial γ₁ and V₁.
+  γₘ = rNorm # γₘ and γₘ₊₁ are the last components of gₘ, right-hand of the least squares problem min ‖ Hₘyₘ - gₘ ‖₂.
+  @. V[:,1] = r / rNorm
 
   # The following stopping criterion compensates for the lag in the
   # residual, but usually increases the number of iterations.
-  # solved = sqrt(max(1, iter-mem+1)) <= ε
-  solved = rNorm <= ε # less accurate, but acceptable.
-  tired = iter >= itmax
+  # solved = sqrt(max(1, iter-mem+1)) * |γₘ₊₁| ≤ ε
+  solved = rNorm ≤ ε # less accurate, but acceptable.
+  tired = iter ≥ itmax
   status = "unknown"
 
   while !(solved || tired)
@@ -69,64 +73,72 @@ function dqgmres{T <: Number}(A :: AbstractLinearOperator, b :: AbstractVector{T
     # Update iteration index.
     iter = iter + 1
 
-    # Set position in circular stack where iter-th Krylov vector should go.
-    pos = mod(iter-1, mem+1) + 1 # Position corresponding to iter in the circular stack.
-    next_pos = mod(iter, mem+1) + 1 # Position corresponding to iter+1 in the circular stack.
-    rot_pos = mod(iter-1, mem) + 1 # Position of the rotation Ω generate at current iteration.
+    # Set position in circulars stacks.
+    pos = mod(iter-1, mem) + 1 # Position corresponding to pₘ and vₘ in circular stacks P and V.
+    next_pos = mod(iter, mem) + 1 # Position corresponding to vₘ₊₁ in the circular stack V.
 
     # Incomplete Arnoldi procedure.
-    z = M * V[:,pos] # P[:,pos]
-    w = A * z # V[:,next_pos]
+    z[:] = M * view(V,:,pos) # Forms pₘ
+    w[:] = A * z # Forms vₘ₊₁
     for i = max(1, iter-mem+1) : iter
-      ipos = mod(i-1, mem+1) + 1
-      jpos = iter-i+2 # Indice of the diagonal
-      H[i,jpos] = @kdot(n, w, V[:,ipos]) # H[i.jpos] = < w , V[:,ipos] >
-      @kaxpy!(n, -H[i,jpos], V[:,ipos], w) # w = w - H[i,jpos] * V[:,ipos]
+      ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
+      diag = iter - i + 2
+      H[diag] = @kdot(n, w, view(V,:,ipos)) # hᵢ.ₘ = < A * vₘ , vᵢ >
+      @kaxpy!(n, -H[diag], view(V,:,ipos), w) # w ← w - hᵢ.ₘ * vᵢ
     end
-    # jpos = iter-(iter+1)+2 = 1
-    H[iter,1] = @knrm2(n, w)
-    if H[iter,1] ≉ 0 # if H[iter,1] ≈ 0 => "lucky breakdown"
-      V[:,next_pos] = w / H[iter,1]
+    # Compute hₘ₊₁.ₘ and vₘ₊₁.
+    H[1] = @knrm2(n, w) # hₘ₊₁.ₘ = ‖vₘ₊₁‖₂
+    if H[1] ≠ 0.0 # hₘ₊₁.ₘ = 0 ⇒ "lucky breakdown"
+      @. V[:,next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
+    end
+    # rₘ₋ₘₑₘ.ₘ ≠ 0 when m ≥ mem + 1
+    if iter ≥ mem + 2
+      H[mem+2] = 0.0 # hₘ₋ₘₑₘ.ₘ = 0
     end
 
     # Update the QR factorization of H.
-    # Apply mem previous (symmetric) Givens rotations.
+    # Apply mem previous Givens reflections Ωᵢ.
     for i = max(1,iter-mem) : iter-1
-      ipos = mod(i-1, mem+1) + 1
-      ip1pos = mod(i, mem+1) + 1
-      irot_pos = mod(i-1, mem) + 1
-      jpos = iter - i + 1 # jpos = 2+iter-(i+1)
-      jp1pos = jpos + 1   # jp1pos = 2+iter-i
-      H_aux       = c[irot_pos] * H[i,jp1pos] + s[irot_pos] * H[i+1,jpos]
-      H[i+1,jpos] = s[irot_pos] * H[i,jp1pos] - c[irot_pos] * H[i+1,jpos]
-      H[i,jp1pos] = H_aux
+      irot_pos = mod(i-1, mem) + 1 # Position corresponding to cᵢ and sᵢ in circular stacks c and s.
+      diag = iter - i + 1
+      next_diag = diag + 1
+      H_aux        = c[irot_pos] * H[next_diag] + s[irot_pos] * H[diag]
+      H[diag]      = s[irot_pos] * H[next_diag] - c[irot_pos] * H[diag]
+      H[next_diag] = H_aux
     end
 
-    # Compute and apply current (symmetric) Givens rotation
-    # [ck  sk] [ H[iter,iter]   ] = [ρ]
-    # [sk -ck] [ H[iter+1,iter] ]   [0].
-    (c[rot_pos], s[rot_pos], H[iter,2]) = sym_givens(H[iter,2], H[iter,1])
-    H[iter,1]   = 0
-    g[next_pos] = s[rot_pos] * g[pos]
-    g[pos]      = c[rot_pos] * g[pos]
+    # Compute and apply current Givens reflection Ωₘ.
+    # [cₘ  sₘ] [ hₘ.ₘ ] = [ρₘ]
+    # [sₘ -cₘ] [hₘ₊₁.ₘ]   [0 ]
+    (c[pos], s[pos], H[2]) = sym_givens(H[2], H[1])
+    γₘ₊₁ = s[pos] * γₘ
+    γₘ   = c[pos] * γₘ
 
-    # Update directions P and solution x
-    #P[:,pos] = z
+    # Compute the direction pₘ, the last column of Pₘ = Vₘ(Rₘ)⁻¹.
     for i = max(1,iter-mem) : iter-1
-      ipos = mod(i-1, mem+1) + 1
-      jpos = iter - i + 2
-      @kaxpy!(n, -H[i,jpos], P[:,ipos], z) # z = z - H[i,jpos] * P[:,ipos]
+      ipos = mod(i-1, mem) + 1 # Position corresponding to pᵢ in the circular stack P.
+      diag = iter - i + 2
+      # z ← z - hᵢ.ₘ * pᵢ
+      @kaxpy!(n, -H[diag], view(P,:,ipos), z)
     end
-    P[:,pos] = z / H[iter,2]
-    @kaxpy!(n, g[pos], P[:,pos], x) # x = x + g[pos] * P[:,pos]
+    # pₘ = z / hₘ.ₘ
+    @. P[:,pos] = z / H[2]
+
+    # Compute solution xₘ.
+    # xₘ ← xₘ₋₁ + γₘ * pₘ
+    @kaxpy!(n, γₘ, view(P,:,pos), x)
 
     # Update residual norm estimate.
-    rNorm = abs(g[next_pos])
+    # ‖ Axₘ - b ‖₂ ≈ |γₘ₊₁|
+    rNorm = abs(γₘ₊₁)
     push!(rNorms, rNorm)
 
+    # Update γₘ.
+    γₘ = γₘ₊₁
+
     # Update stopping criterion.
-    solved = rNorm <= ε
-    tired = iter >= itmax
+    solved = rNorm ≤ ε
+    tired = iter ≥ itmax
     verbose && @printf("%5d  %7.1e\n", iter, rNorm)
   end
   verbose && @printf("\n")
