@@ -1,4 +1,4 @@
-"""Numerically stable symmetric Givens rotation.
+"""Numerically stable symmetric Givens reflection.
 Given `a` and `b`, return `(c, s, ρ)` such that
 
     [ c  s ] [ a ] = [ ρ ]
@@ -124,13 +124,13 @@ end
 # Benchmarks indicate that the form BLAS.dot(n, x, 1, y, 1) is substantially faster than BLAS.dot(x, y)
 
 krylov_dot{T <: BLAS.BlasReal}(n :: Int, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) = BLAS.dot(n, x, dx, y, dy)
-krylov_dot{T <: Number}(n :: Int, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) = dot(x, y)  # ignore dx, dy here
+krylov_dot{T <: Number}(n :: Int, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int) = dot(x, y)  # ignore dx, dy here
 
 krylov_norm2{T <: BLAS.BlasReal}(n :: Int, x :: Vector{T}, dx :: Int) = BLAS.nrm2(n, x, dx)
-krylov_norm2{T <: Number}(n :: Int, x :: Vector{T}, dx :: Int) = norm(x)  # ignore dx here
+krylov_norm2{T <: Number}(n :: Int, x :: AbstractVector{T}, dx :: Int) = norm(x)  # ignore dx here
 
 krylov_scal!{T <: BLAS.BlasReal}(n :: Int, s :: T, x :: Vector{T}, dx :: Int) = BLAS.scal!(n, s, x, dx)
-function krylov_scal!{T <: Number}(n :: Int, s :: T, x :: Vector{T}, dx :: Int)
+function krylov_scal!{T <: Number}(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int)
   @simd for i = 1:dx:n
     @inbounds x[i] *= s
   end
@@ -138,7 +138,7 @@ function krylov_scal!{T <: Number}(n :: Int, s :: T, x :: Vector{T}, dx :: Int)
 end
 
 krylov_axpy!{T <: BLAS.BlasReal}(n :: Int, s :: T, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) = BLAS.axpy!(n, s, x, dx, y, dy)
-function krylov_axpy!{T <: Number}(n :: Int, s :: T, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int)
+function krylov_axpy!{T <: Number}(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int)
   # assume dx = dy
   @simd for i = 1:dx:n
     @inbounds y[i] += s * x[i]
@@ -146,7 +146,7 @@ function krylov_axpy!{T <: Number}(n :: Int, s :: T, x :: Vector{T}, dx :: Int, 
   return y
 end
 
-function krylov_axpy!{T <: Number}(n :: Int, s :: T, x :: Vector{T}, dx :: Int, t :: T, y :: Vector{T}, dy :: Int)
+function krylov_axpby!{T <: Number}(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, t :: T, y :: AbstractVector{T}, dy :: Int)
   # assume dx = dy
   @simd for i = 1:dx:n
     @inbounds y[i] = s * x[i] + t * y[i]
@@ -172,6 +172,6 @@ macro kaxpy!(n, s, x, y)
   return esc(:(krylov_axpy!($n, $s, $x, 1, $y, 1)))
 end
 
-macro kaxpy!(n, s, x, t, y)
-  return esc(:(krylov_axpy!($n, $s, $x, 1, $t, $y, 1)))
+macro kaxpby!(n, s, x, t, y)
+  return esc(:(krylov_axpby!($n, $s, $x, 1, $t, $y, 1)))
 end
