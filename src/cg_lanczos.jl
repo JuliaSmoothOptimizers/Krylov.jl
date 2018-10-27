@@ -32,7 +32,7 @@ function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
   β = @knrm2(n, b)
   β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
   v = b / β;
-  v_prev = v;
+  v_prev = copy(v);
   p = copy(b);
   iter = 0;
   itmax == 0 && (itmax = 2 * n);
@@ -70,10 +70,10 @@ function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
     @kaxpy!(n, -δ, v, v_next)  # Faster than v_next = Av - δ * v;
     if iter > 0
       @kaxpy!(n, -β, v_prev, v_next)  # Faster than v_next = v_next - β * v_prev;
-      v_prev = v;
+      @. v_prev .= v
     end
     β = @knrm2(n, v_next)
-    v = v_next / β;
+    @. v .= v_next / β
     Anorm2 += β_prev^2 + β^2 + δ^2;  # Use ‖T‖ as increasing approximation of ‖A‖.
     β_prev = β;
 
