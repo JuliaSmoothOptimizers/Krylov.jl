@@ -1,37 +1,75 @@
+using BenchmarkTools
+
+using LinearAlgebra
+
+import IterativeSolvers
+# import KrylovMethods
+using Krylov
 using LinearOperators
+using MatrixMarket
 
-if VERSION < v"0.4-"
-  import IterativeSolvers
-end
-import KrylovMethods
-import Krylov
+include("../test/get_div_grad.jl")
+include("../test/test_utils.jl")
+include("fetch_matrices.jl")
 
-include("../test/get_div_grad.jl");
+const SUITE = BenchmarkGroup()
+
+SUITE["CG"] = BenchmarkGroup(["CG", "SPD"])
 
 for N in [32, 64, 128]
-  @printf("N = %d\n", N);
-  A = get_div_grad(N, N, N);
-  n = size(A, 1);
-  b = rand(n);
+  SUITE["CG"]["DivGrad N=$N"] = BenchmarkGroup()
+  A = get_div_grad(N, N, N)
+  n = size(A, 1)
+  b = ones(n)
+  op = preallocated_LinearOperator(A)
+  M = nonallocating_opEye(n)
+  rtol = 1.0e-6
+  SUITE["CG"]["DivGrad N=$N"]["Krylov"] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  # SUITE["CG"]["DivGrad N=$N"]["KrylovMethods"] = @benchmarkable ($KrylovMethods.cg)($A, $b, tol=$rtol, maxIter=$n)
+  SUITE["CG"]["DivGrad N=$N"]["IterativeSolvers"] = @benchmarkable ($IterativeSolvers.cg)($A, $b, tol=$rtol, maxiter=$n)
+end
 
-  # Define a linear operator with preallocation.
-  Ap = zeros(n);
-  op = LinearOperator(n, Float64, p -> A_mul_B!(1.0, A, p, 0.0, Ap));
+SUITE["CG"]["UFL-small"] = BenchmarkGroup()
+for matrix in spd_small
+  name = basename(matrix)
+  A = MatrixMarket.mmread(joinpath(matrix_path, "..", "data", "uf", matrix, "$(name).mtx"))
+  n = size(A, 1)
+  b = ones(n)
+  op = preallocated_LinearOperator(A)
+  M = nonallocating_opEye(n)
+  rtol = 1.0e-6
+  SUITE["CG"]["UFL-small"][matrix] = BenchmarkGroup()
+  SUITE["CG"]["UFL-small"][matrix]["Krylov"] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  # SUITE["CG"]["UFL-small"][matrix]["KrylovMethods"] = @benchmarkable ($KrylovMethods.cg)($A, $b, tol=$rtol, maxIter=$n)
+  SUITE["CG"]["UFL-small"][matrix]["IterativeSolvers"] = @benchmarkable ($IterativeSolvers.cg)($A, $b, tol=$rtol, maxiter=$n)
+end
 
-  # Everybody stops when ‖r‖/‖r0‖ ≤ rtol.
-  rtol = 1.0e-6;
+SUITE["CG"]["UFL-medium"] = BenchmarkGroup()
+for matrix in spd_med
+  name = basename(matrix)
+  A = MatrixMarket.mmread(joinpath(matrix_path, "..", "data", "uf", matrix, "$(name).mtx"))
+  n = size(A, 1)
+  b = ones(n)
+  op = preallocated_LinearOperator(A)
+  M = nonallocating_opEye(n)
+  rtol = 1.0e-6
+  SUITE["CG"]["UFL-medium"][matrix] = BenchmarkGroup()
+  SUITE["CG"]["UFL-medium"][matrix]["Krylov"] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  # SUITE["CG"]["UFL-medium"][matrix]["KrylovMethods"] = @benchmarkable ($KrylovMethods.cg)($A, $b, tol=$rtol, maxIter=$n)
+  SUITE["CG"]["UFL-medium"][matrix]["IterativeSolvers"] = @benchmarkable ($IterativeSolvers.cg)($A, $b, tol=$rtol, maxiter=$n)
+end
 
-  @printf("Krylov:           ")
-  (x, stats) = Krylov.cg(op, b, atol=0.0, rtol=rtol, itmax=size(A, 1));
-  @time (x, stats) = Krylov.cg(op, b, atol=0.0, rtol=rtol, itmax=size(A, 1));
-
-  @printf("KrylovMethods:    ")
-  x,flag,relres,iter,resvec = KrylovMethods.cg(A, b, tol=rtol, maxIter=size(A, 1));
-  @time x,flag,relres,iter,resvec = KrylovMethods.cg(A, b, tol=rtol, maxIter=size(A, 1));
-
-  if VERSION < v"0.4-"
-    @printf("IterativeSolvers: ")
-    (x, hist) = IterativeSolvers.cg(A, b, tol=rtol, maxiter=size(A, 1));
-    @time (x, hist) = IterativeSolvers.cg(A, b, tol=rtol, maxiter=size(A, 1));
-  end
+SUITE["CG"]["UFL-large"] = BenchmarkGroup()
+for matrix in spd_large
+  name = basename(matrix)
+  A = MatrixMarket.mmread(joinpath(matrix_path, "..", "data", "uf", matrix, "$(name).mtx"))
+  n = size(A, 1)
+  b = ones(n)
+  op = preallocated_LinearOperator(A)
+  M = nonallocating_opEye(n)
+  rtol = 1.0e-6
+  SUITE["CG"]["UFL-large"][matrix] = BenchmarkGroup()
+  SUITE["CG"]["UFL-large"][matrix]["Krylov"] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  # SUITE["CG"]["UFL-large"][matrix]["KrylovMethods"] = @benchmarkable ($KrylovMethods.cg)($A, $b, tol=$rtol, maxIter=$n)
+  SUITE["CG"]["UFL-large"][matrix]["IterativeSolvers"] = @benchmarkable ($IterativeSolvers.cg)($A, $b, tol=$rtol, maxiter=$n)
 end
