@@ -20,12 +20,11 @@ assumed to be symmetric and positive definite.
 """
 function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
             M :: AbstractLinearOperator=opEye(size(A,1)), atol :: Float64=1.0e-8,
-            rtol :: Float64=1.0e-6, itmax :: Int=0, radius :: Float64=0.0,
-            verbose :: Bool=false) where T <: Number
+            rtol :: Float64=1.0e-6, itmax :: Int=0, radius :: Float64=0.0) where T <: Number
 
-  n = size(b, 1);
-  (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
-  verbose && @printf("CG: system of %d equations in %d variables\n", n, n);
+  m, n = size(A)
+  m == n == length(b) || @error "inconsistent problem size: $m x $n"
+  @debug "system of $m equations and $n variables"
 
   # Initial state.
   x = zeros(T, n);
@@ -37,11 +36,13 @@ function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   iter = 0;
   itmax == 0 && (itmax = 2 * n);
+  @debug "maximum number of iterations set to ", itmax
 
   rNorm = sqrt(γ);
   rNorms = [rNorm;];
   ε = atol + rtol * rNorm;
-  verbose && @printf("%5d  %8.1e  ", iter, rNorm);
+  @info @sprintf("%5s  %7s  %8s  %7s  %7s", "iter", "⁠‖res‖", "curv", "CGstep", "step")
+  info_line = @sprintf("%5d  %7.1e  ", iter, rNorm)
 
   solved = rNorm <= ε;
   tired = iter >= itmax;
@@ -57,12 +58,14 @@ function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Compute step size to boundary if applicable.
     σ = radius > 0.0 ? maximum(to_boundary(x, p, radius)) : α
 
-    verbose && @printf("%8.1e  %7.1e  %7.1e\n", pAp, α, σ);
+    info_line *= @sprintf("%8.1e  %7.1e  %7.1e\n", pAp, α, σ)
+    @info info_line
 
     # Move along p from x to the boundary if either
     # the next step leads outside the trust region or
     # we have nonpositive curvature.
     if (radius > 0.0) & ((pAp <= 0.0) | (α > σ))
+      @debug("stepping to trust-region boundary")
       α = σ
       on_boundary = true
     end
@@ -85,9 +88,9 @@ function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     iter = iter + 1;
     tired = iter >= itmax;
-    verbose && @printf("%5d  %8.1e  ", iter, rNorm);
+    info_line = @sprintf("%5d  %8.1e  ", iter, rNorm)
   end
-  verbose && @printf("\n");
+  @info info_line
 
   status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
   stats = SimpleStats(solved, false, rNorms, T[], status);

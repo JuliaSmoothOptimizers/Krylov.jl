@@ -1,6 +1,6 @@
 module Krylov
 
-using LinearOperators, LinearAlgebra, SparseArrays, Printf
+using LinearOperators, LinearAlgebra, Logging, SparseArrays, Printf
 
 "Abstract type for statistics returned by a solver"
 abstract type KrylovStats end;
