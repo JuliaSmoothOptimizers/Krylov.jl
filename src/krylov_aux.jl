@@ -146,6 +146,7 @@ function krylov_axpy!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, y :: 
   return y
 end
 
+krylov_axpby!(n :: Int, s :: T, x :: Vector{T}, dx :: Int, t :: T, y :: Vector{T}, dy :: Int) where T <: BLAS.BlasReal = BLAS.axpby!(n, s, x, dx, t, y, dy)
 function krylov_axpby!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, t :: T, y :: AbstractVector{T}, dy :: Int) where T <: Number
   # assume dx = dy
   @simd for i = 1:dx:n
