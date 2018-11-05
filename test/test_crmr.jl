@@ -80,15 +80,15 @@ function test_crmr()
 
   # Test preconditioner with an under-determined problem:
   # Find the least norm force that transfers mass unit distance with zero final velocity
-  # A = 0.5 * [19.0 17.0 15.0 13.0 11.0 9.0 7.0 5.0 3.0 1.0;
-  #             2.0  2.0  2.0  2.0  2.0 2.0 2.0 2.0 2.0 2.0]
-  # b = [1.0; 0.0]
-  # M = LinearOperator(Diagonal(1 ./ (A * A')))
-  # (x, stats, resid) = test_crmr(A, b, M=M)
-  # @test(resid <= crmr_tol)
-  # @test(stats.solved)
-  # (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
-  # @test(norm(xI - xmin) <= cond(A) * crmr_tol * xmin_norm)
+  A = 0.5 * [19.0 17.0 15.0 13.0 11.0 9.0 7.0 5.0 3.0 1.0;
+              2.0  2.0  2.0  2.0  2.0 2.0 2.0 2.0 2.0 2.0]
+  b = [1.0; 0.0]
+  M = LinearOperator(Diagonal(1 ./ (A * A')))
+  (x, stats, resid) = test_crmr(A, b, M=M)
+  @test(resid ≤ crmr_tol)
+  @test(stats.solved)
+  (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
+  @test(norm(xI - xmin) ≤ cond(A) * crmr_tol * xmin_norm)
 end
 
 test_crmr()
