@@ -62,7 +62,7 @@ function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   verbose && @printf("CRMR: system of %d equations in %d variables\n", m, n);
 
   x = zeros(T, n) # initial estimation x = 0
-  r = M * b       # initial residual r = M * (b - Ax) = M * b
+  r = copy(M * b) # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
   rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
@@ -100,11 +100,9 @@ function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     λ > 0 && (γ_next += λ * rNorm * rNorm);
     β = γ_next / γ;
 
-    @kscal!(n, β, p)
-    @kaxpy!(n, 1.0, Ar, p)    # Faster than  p = Ar + β *  p;
+    @kaxpby!(n, 1.0, Ar, β, p)  # Faster than  p = Ar + β * p
     if λ > 0
-      @kscal!(m, β, s)
-      @kaxpy!(m, 1.0, r, s)   # s = r + β * s;
+      @kaxpby!(m, 1.0, r, β, s) # s = r + β * s
     end
 
     γ = γ_next;
