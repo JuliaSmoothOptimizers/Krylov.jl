@@ -1,7 +1,10 @@
+# Tests of variants.jl
 function test_variants()
+  @printf("Tests of variants:\n")
   for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
              :cr, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr,
              :lsqr, :minres, :symmlq, :dqgmres, :diom, :cgs)
+    @printf("%s ", string(fn))
     for TA in (Int32, Int64, Float32, Float64)
       for IA in (Int32, Int64)
         for Tb in (Int32, Int64, Float32, Float64)
@@ -12,20 +15,21 @@ function test_variants()
             b_sparse = convert(SparseVector{Tb,Ib}, b_dense)
             if fn == :cg_lanczos_shift_seq
               shifts = [1:5;]
-              @eval $fn($A_dense, $b_dense, $shifts, verbose=false)
-              @eval $fn($A_dense, $b_sparse, $shifts, verbose=false)
-              @eval $fn($A_sparse, $b_dense, $shifts, verbose=false)
-              @eval $fn($A_sparse, $b_sparse, $shifts, verbose=false)
+              @eval $fn($A_dense,  $b_dense,  $shifts)
+              @eval $fn($A_dense,  $b_sparse, $shifts)
+              @eval $fn($A_sparse, $b_dense,  $shifts)
+              @eval $fn($A_sparse, $b_sparse, $shifts)
             else
-              @eval $fn($A_dense, $b_dense, verbose=false)
-              @eval $fn($A_dense, $b_sparse, verbose=false)
-              @eval $fn($A_sparse, $b_dense, verbose=false)
-              @eval $fn($A_sparse, $b_sparse, verbose=false)
+              @eval $fn($A_dense,  $b_dense )
+              @eval $fn($A_dense,  $b_sparse)
+              @eval $fn($A_sparse, $b_dense )
+              @eval $fn($A_sparse, $b_sparse)
             end
           end
         end
       end
     end
+    @printf("✔\n")
   end
 end
 

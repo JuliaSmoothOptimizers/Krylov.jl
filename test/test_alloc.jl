@@ -21,3 +21,12 @@ expected_cg_lanczos_bytes = storage_cg_lanczos_bytes(n)
 cg_lanczos(A, b)  # warmup
 actual_cg_lanczos_bytes = @allocated cg_lanczos(A, b)
 @test actual_cg_lanczos_bytes ≤ 1.1 * expected_cg_lanczos_bytes
+
+# without preconditioner and with Ap preallocated, CR needs 4 n-vectors: x, r, p, q
+storage_cr(n) = 4 * n
+storage_cr_bytes(n) = 8 * storage_cr(n)
+
+expected_cr_bytes = storage_cr_bytes(n)
+cr(A, b, M=M)  # warmup
+actual_cr_bytes = @allocated cr(A, b, M=M)
+@test actual_cr_bytes ≤ 1.1 * expected_cr_bytes
