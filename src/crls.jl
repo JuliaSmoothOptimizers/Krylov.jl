@@ -93,11 +93,12 @@ function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
       if @knrm2(m, Ap)^2 ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is constant in the direction p
         psd = true # det(AᵀA) = 0
         p = Ar # p = Aᵀr
-        pNorm = ArNorm
+        pNorm² = ArNorm * ArNorm
         q = A' * s
-        α = min(ArNorm^2 / γ, maximum(to_boundary(x, p, radius, flip = false, dNorm = pNorm))) # the quadratic is minimal in the direction Aᵀr for α = ‖Ar‖²/γ
+        α = min(ArNorm^2 / γ, maximum(to_boundary(x, p, radius, flip = false, dNorm2 = pNorm²))) # the quadratic is minimal in the direction Aᵀr for α = ‖Ar‖²/γ
       else
-        σ = maximum(to_boundary(x, p, radius, flip = false, dNorm = pNorm))
+        pNorm² = pNorm * pNorm
+        σ = maximum(to_boundary(x, p, radius, flip = false, dNorm2 = pNorm²))
         if α ≥ σ
           α = σ
           on_boundary = true
