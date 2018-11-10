@@ -1,10 +1,10 @@
 using GitHub, JSON, PkgBenchmark
 
 commit = benchmarkpkg("Krylov")  # current state of repository
-# master = benchmarkpkg("Krylov", "master")
-# judgement = judge(commit, master)
-# export_markdown("benchmark.md", judgement)
-export_markdown("benchmark.md", commit)
+master = benchmarkpkg("Krylov", "master")
+judgement = judge(commit, master)
+export_markdown("benchmark.md", judgement)
+# export_markdown("benchmark.md", commit)
 
 gist_json = JSON.parse(
 			"""
@@ -21,6 +21,6 @@ gist_json = JSON.parse(
         )
 
 # Need to add GITHUB_AUTH to your .bashrc
-myauth = GitHub.authenticate(ENV["GITHUB_AUTH"])
-posted_gist = create_gist(params = gist_json, auth = myauth)
-println(posted_gist.html_url)
+# myauth = GitHub.authenticate(ENV["GITHUB_AUTH"])
+# posted_gist = create_gist(params = gist_json, auth = myauth)
+# println(posted_gist.html_url)
