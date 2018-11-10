@@ -1,10 +1,13 @@
 using BenchmarkTools
 
 using LinearAlgebra
+using Logging
 
 using Krylov
 using LinearOperators
 using MatrixMarket
+
+cg_logger = Logging.NullLogger()  # no output
 
 include("../test/get_div_grad.jl")
 include("../test/test_utils.jl")
@@ -24,7 +27,9 @@ for N in [32, 64, 128]
   op = preallocated_LinearOperator(A)
   M = nonallocating_opEye(n)
   rtol = 1.0e-6
-  SUITE["CG"]["DivGrad N=$N"] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  SUITE["CG"]["DivGrad N=$N"] = @benchmarkable with_logger(cg_logger) do
+    cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  end
 end
 
 SUITE["CG"]["UFL-small"] = BenchmarkGroup()
@@ -36,7 +41,9 @@ for matrix in spd_small
   op = preallocated_LinearOperator(A)
   M = nonallocating_opEye(n)
   rtol = 1.0e-6
-  SUITE["CG"]["UFL-small"][matrix] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  SUITE["CG"]["UFL-small"][matrix] = @benchmarkable with_logger(cg_logger) do
+    cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  end
 end
 
 SUITE["CG"]["UFL-medium"] = BenchmarkGroup()
@@ -48,7 +55,9 @@ for matrix in spd_med
   op = preallocated_LinearOperator(A)
   M = nonallocating_opEye(n)
   rtol = 1.0e-6
-  SUITE["CG"]["UFL-medium"][matrix] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  SUITE["CG"]["UFL-medium"][matrix] = @benchmarkable with_logger(cg_logger) do
+    cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  end
 end
 
 SUITE["CG"]["UFL-large"] = BenchmarkGroup()
@@ -60,5 +69,7 @@ for matrix in spd_large
   op = preallocated_LinearOperator(A)
   M = nonallocating_opEye(n)
   rtol = 1.0e-6
-  SUITE["CG"]["UFL-large"][matrix] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  SUITE["CG"]["UFL-large"][matrix] = @benchmarkable with_logger(cg_logger) do
+    cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  end
 end
