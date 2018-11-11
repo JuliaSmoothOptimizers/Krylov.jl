@@ -133,13 +133,13 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Determine if interchange between hₘ₊₁.ₘ and uₘ.ₘ is needed and compute next pivot lₘ₊₁.ₘ.
     if abs(H[2]) < H[1]
       p[next_pos] = true
-      # pₘ = w / hₘ₊₁.ₘ
+      # pₘ = pₐᵤₓ / hₘ₊₁.ₘ
       @. P[pos] = P[pos] / H[1]
       # lₘ₊₁.ₘ = uₘ.ₘ / hₘ₊₁.ₘ
       L[next_pos] = H[2] / H[1]
     else
       p[next_pos] = false
-      # pₘ = w / uₘ.ₘ
+      # pₘ = pₐᵤₓ / uₘ.ₘ
       @. P[pos] = P[pos] / H[2]
       # lₘ₊₁.ₘ = hₘ₊₁.ₘ / uₘ.ₘ
       L[next_pos] = H[1] / H[2]
