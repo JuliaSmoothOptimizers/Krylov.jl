@@ -25,19 +25,18 @@ This implementation allows a right preconditioner M.
 function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(size(A,1)),
               atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-              itmax :: Int=0, memory :: Int=20, verbose :: Bool=false) where {T <: Number}
+              itmax :: Int=0, memory :: Int=20, verbose :: Bool=false) where T <: Number
 
   m, n = size(A)
   m == n || error("System must be square")
-  size(b, 1) == m || error("Inconsistent problem size")
+  length(b) == m || error("Inconsistent problem size")
   verbose && @printf("DIOM: system of size %d\n", n)
 
   # Initial solution x₀ and residual r₀.
   x = zeros(T, n)
   x_old = copy(x)
-  r = copy(b)
   # Compute β.
-  rNorm = @knrm2(n, r) # rNorm = ‖r₀‖₂
+  rNorm = @knrm2(n, b) # rNorm = ‖r₀‖₂
   rNorm == 0.0 && return x, SimpleStats(true, false, [rNorm], [], "x = 0 is a zero-residual solution")
 
   iter = 0
@@ -49,8 +48,8 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   # Set up workspace.
   mem = min(memory, itmax) # Memory.
-  V = zeros(n, mem) # Preconditioned Krylov vectors, orthogonal basis for {r₀, AM⁻¹r₀, (AM⁻¹)²r₀, ..., (AM⁻¹)ᵐ⁻¹r₀}.
-  P = zeros(n, mem) # Directions for x : Pₘ = Vₘ(Uₘ)⁻¹.
+  V = [zeros(n) for i = 1 : mem] # Preconditioned Krylov vectors, orthogonal basis for {r₀, AM⁻¹r₀, (AM⁻¹)²r₀, ..., (AM⁻¹)ᵐ⁻¹r₀}.
+  P = [zeros(n) for i = 1 : mem] # Directions for x : Pₘ = Vₘ(Uₘ)⁻¹.
   H = zeros(mem+2)  # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
   # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
@@ -60,7 +59,7 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   # Initial ξ₁ and V₁.
   ξ = rNorm
-  @. V[:,1] = r / rNorm
+  @. V[1] = b / rNorm
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -77,18 +76,18 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
     next_pos = mod(iter, mem) + 1 # Position corresponding to vₘ₊₁ in the circular stack V.
 
     # Incomplete Arnoldi procedure.
-    z = M * view(V,:,pos) # Forms pₘ
+    z = M * V[pos] # Forms pₘ
     w = A * z # Forms vₘ₊₁
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
       diag = iter - i + 2
-      H[diag] = @kdot(n, w, view(V,:,ipos)) # hᵢ.ₘ = < A * vₘ , vᵢ >
-      @kaxpy!(n, -H[diag], view(V,:,ipos), w) # w ← w - hᵢ.ₘ * vᵢ
+      H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₘ = < A * M⁻¹vₘ , vᵢ >
+      @kaxpy!(n, -H[diag], V[ipos], w) # w ← w - hᵢ.ₘ * vᵢ
     end
     # Compute hₘ₊₁.ₘ and vₘ₊₁.
     H[1] = @knrm2(n, w) # hₘ₊₁.ₘ = ‖vₘ₊₁‖₂
     if H[1] ≠ 0.0 # hₘ₊₁.ₘ = 0 ⇒ "lucky breakdown"
-      @. V[:,next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
+      @. V[next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
     end
     # It's possible that uₘ₋ₘₑₘ.ₘ ≠ 0 when m ≥ mem + 1
     if iter ≥ mem + 2
@@ -117,24 +116,31 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
     end
 
     # Compute the direction pₘ, the last column of Pₘ = Vₘ(Uₘ)⁻¹.
-    for i = max(1,iter-mem) : iter - 1
+    for i = max(1,iter-mem) : iter-1
       ipos = mod(i-1, mem) + 1 # Position corresponding to pᵢ in the circular stack P.
       diag = iter - i + 2
-      # z ← z - uᵢ.ₘ * pᵢ
-      @kaxpy!(n, -H[diag], view(P,:,ipos), z)
+      if ipos == pos
+        # pₐᵤₓ ← -hₘ₋ₘₑₘ.ₘ * pₘ₋ₘₑₘ
+        @kscal!(n, -H[diag], P[pos])
+      else
+        # pₐᵤₓ ← pₐᵤₓ - hᵢ.ₘ * pᵢ
+        @kaxpy!(n, -H[diag], P[ipos], P[pos])
+      end
     end
+    # pₐᵤₓ ← pₐᵤₓ + M⁻¹vₘ
+    @kaxpy!(n, 1.0, z, P[pos])
 
     # Determine if interchange between hₘ₊₁.ₘ and uₘ.ₘ is needed and compute next pivot lₘ₊₁.ₘ.
     if abs(H[2]) < H[1]
       p[next_pos] = true
-      # pₘ = z / hₘ₊₁.ₘ
-      @. P[:,pos] = z / H[1]
+      # pₘ = w / hₘ₊₁.ₘ
+      @. P[pos] = P[pos] / H[1]
       # lₘ₊₁.ₘ = uₘ.ₘ / hₘ₊₁.ₘ
       L[next_pos] = H[2] / H[1]
     else
       p[next_pos] = false
-      # pₘ = z / uₘ.ₘ
-      @. P[:,pos] = z / H[2]
+      # pₘ = w / uₘ.ₘ
+      @. P[pos] = P[pos] / H[2]
       # lₘ₊₁.ₘ = hₘ₊₁.ₘ / uₘ.ₘ
       L[next_pos] = H[1] / H[2]
     end
@@ -143,10 +149,10 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
     if p[pos]
       # xₘ = xₘ₋ₙ + ξₘ₋ₙ * pₘ
       # x_old = xₘ₋ₙ, with m-n is the last iteration without permutation at the next step
-      x .= x_old .+ ξ .* view(P,:,pos)
+      @. x = x_old + ξ * P[pos]
     else
       # xₘ = xₘ₋₁ + ξₘ * pₘ
-      @kaxpy!(n, ξ, view(P,:,pos), x)
+      @kaxpy!(n, ξ, P[pos], x)
     end
 
     # Update x_old and residual norm.
