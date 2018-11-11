@@ -1,13 +1,14 @@
 include("test_utils.jl")
 
+A   = preallocated_LinearOperator(get_div_grad(32, 32, 32))
+n   = size(A, 1)
+b   = ones(n)
+M   = nonallocating_opEye(n)
+
 # without preconditioner and with Ap preallocated, CG needs 3 n-vectors: x, r, p
 storage_cg(n) = 3 * n
 storage_cg_bytes(n) = 8 * storage_cg(n)
 
-A = preallocated_LinearOperator(get_div_grad(32, 32, 32))
-n = size(A, 1)
-b = ones(n)
-M = nonallocating_opEye(n)
 expected_cg_bytes = storage_cg_bytes(n)
 cg(A, b, M=M)  # warmup
 actual_cg_bytes = @allocated cg(A, b, M=M)
@@ -30,3 +31,11 @@ expected_cr_bytes = storage_cr_bytes(n)
 cr(A, b, M=M)  # warmup
 actual_cr_bytes = @allocated cr(A, b, M=M)
 @test actual_cr_bytes ≤ 1.1 * expected_cr_bytes
+
+# without preconditioner and with Ap preallocated, CGS needs 5 n-vectors: x, r, u, p, q
+storage_cgs(n) = 5 * n
+storage_cgs_bytes(n) = 8 * storage_cgs(n)
+expected_cgs_bytes = storage_cgs_bytes(n)
+cgs(A, b, M=M)  # warmup
+actual_cgs_bytes = @allocated cgs(A, b, M=M)
+@test actual_cgs_bytes ≤ 1.1 * expected_cgs_bytes
