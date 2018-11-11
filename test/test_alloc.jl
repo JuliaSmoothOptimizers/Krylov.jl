@@ -4,6 +4,7 @@ A   = preallocated_LinearOperator(get_div_grad(32, 32, 32))
 n   = size(A, 1)
 b   = ones(n)
 M   = nonallocating_opEye(n)
+mem = 10
 
 # without preconditioner and with Ap preallocated, CG needs 3 n-vectors: x, r, p
 storage_cg(n) = 3 * n
@@ -22,6 +23,19 @@ expected_cg_lanczos_bytes = storage_cg_lanczos_bytes(n)
 cg_lanczos(A, b)  # warmup
 actual_cg_lanczos_bytes = @allocated cg_lanczos(A, b)
 @test actual_cg_lanczos_bytes ≤ 1.1 * expected_cg_lanczos_bytes
+
+# without preconditioner and with Ap preallocated, DQGMRES needs:
+# - 1 n-vectors: x
+# - 2 (n*mem)-matrices: P, V
+# - 2 mem-vectors: c, s
+# - 1 (mem+2)-vector: H
+storage_dqgmres(mem, n) = (n) + (2 * n * mem) + (2 * mem) + (mem + 2)
+storage_dqgmres_bytes(mem, n) = 8 * storage_dqgmres(mem, n)
+
+expected_dqgmres_bytes = storage_dqgmres_bytes(mem, n)
+dqgmres(A, b, M=M, memory=mem)  # warmup
+actual_dqgmres_bytes = @allocated dqgmres(A, b, M=M, memory=mem)
+@test actual_dqgmres_bytes ≤ 1.05 * expected_dqgmres_bytes
 
 # without preconditioner and with Ap preallocated, CR needs 4 n-vectors: x, r, p, q
 storage_cr(n) = 4 * n
