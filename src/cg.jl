@@ -42,7 +42,6 @@ function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
   rNorms = [rNorm;];
   ε = atol + rtol * rNorm;
   @info @sprintf("%5s  %7s  %8s  %7s  %7s", "iter", "⁠‖res‖", "curv", "CGstep", "step")
-  info_line = @sprintf("%5d  %7.1e  ", iter, rNorm)
 
   solved = rNorm <= ε;
   tired = iter >= itmax;
@@ -58,8 +57,7 @@ function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Compute step size to boundary if applicable.
     σ = radius > 0.0 ? maximum(to_boundary(x, p, radius)) : α
 
-    info_line *= @sprintf("%8.1e  %7.1e  %7.1e\n", pAp, α, σ)
-    @info info_line
+    @info @sprintf("%5d  %7.1e  %8.1e  %7.1e  %7.1e", iter, rNorm, pAp, α, σ)
 
     # Move along p from x to the boundary if either
     # the next step leads outside the trust region or
@@ -88,9 +86,7 @@ function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     iter = iter + 1;
     tired = iter >= itmax;
-    info_line = @sprintf("%5d  %8.1e  ", iter, rNorm)
   end
-  @info info_line
 
   status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
   stats = SimpleStats(solved, false, rNorms, T[], status);
