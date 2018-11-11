@@ -39,16 +39,16 @@ function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   m, n = size(A)
   m == n || error("System must be square")
-  size(b, 1) == m || error("Inconsistent problem size")
+  length(b) == m || error("Inconsistent problem size")
   verbose && @printf("CGS: system of size %d\n", n)
 
   # Initial solution x₀ and residual r₀.
-  x = zeros(T, n)
-  r₀ = copy(b)
+  x = zeros(T, n) # x₀
+  r = copy(b)     # r₀
   # Compute ρ₀ = < r₀,r₀ > and residual norm ‖r₀‖₂.
-  ρ = @kdot(n, r₀, r₀)
+  ρ = @kdot(n, r, r)
   rNorm = sqrt(ρ)
-  rNorm ≈ 0 && return x, SimpleStats(true, false, [rNorm], [], "x = 0 is a zero-residual solution")
+  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], [], "x = 0 is a zero-residual solution")
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
@@ -58,9 +58,9 @@ function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
   verbose && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Set up workspace.
-  u = copy(r₀) # u₀
-  r = copy(r₀) # r₀
-  p = copy(r₀) # p₀
+  u = copy(r)  # u₀
+  p = copy(r)  # p₀
+  q = zeros(n) # q₋₁
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -69,22 +69,21 @@ function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   while !(solved || tired)
 
-    y = M * p                # yₘ = M⁻¹pₘ
-    v = A * y                # vₘ = Ayₘ
-    σ = @kdot(n, v, r₀)      # σₘ = < AM⁻¹pₘ,r₀ >
-    α = ρ / σ                # αₘ = ρₘ / σₘ
-    q = u - α * v            # qₘ = uₘ - αₘ * AM⁻¹pₘ
-    z = M * (u + q)          # zₘ = M⁻¹(uₘ + qₘ)
-    @kaxpy!(n, α, z, x)      # xₘ₊₁ = xₘ + αₘ * M⁻¹(uₘ + qₘ)
-    w = A * z                # wₘ = AM⁻¹(uₘ + qₘ)
-    @kaxpy!(n, -α, w, r)     # rₘ₊₁ = rₘ - αₘ * AM⁻¹(uₘ + qₘ)
-    ρ_next = @kdot(n, r, r₀) # ρₘ₊₁ = < rₘ₊₁,r₀ >
-    β = ρ_next / ρ           # βₘ = ρₘ₊₁ / ρₘ
-    u = r + β * q            # uₘ₊₁ = rₘ₊₁ + βₘ * qₘ
-    @kscal!(n, β, p)         # pₘ₊₁ = uₘ₊₁ + βₘ * (qₘ + βₘ * pₘ)
-    @kaxpy!(n, 1.0, q, p)
-    @kscal!(n, β, p)
-    @kaxpy!(n, 1.0, u, p)
+    y = M * p                 # yₘ = M⁻¹pₘ
+    v = A * y                 # vₘ = Ayₘ
+    σ = @kdot(n, v, b)        # σₘ = < AM⁻¹pₘ,r₀ >
+    α = ρ / σ                 # αₘ = ρₘ / σₘ
+    @. q = u - α * v          # qₘ = uₘ - αₘ * AM⁻¹pₘ
+    @kaxpy!(n, 1.0, q, u)     # uₘ₊½ = uₘ + qₘ
+    z = M * u                 # zₘ = M⁻¹uₘ₊½
+    @kaxpy!(n, α, z, x)       # xₘ₊₁ = xₘ + αₘ * M⁻¹(uₘ + qₘ)
+    w = A * z                 # wₘ = AM⁻¹(uₘ + qₘ)
+    @kaxpy!(n, -α, w, r)      # rₘ₊₁ = rₘ - αₘ * AM⁻¹(uₘ + qₘ)
+    ρ_next = @kdot(n, r, b)   # ρₘ₊₁ = < rₘ₊₁,r₀ >
+    β = ρ_next / ρ            # βₘ = ρₘ₊₁ / ρₘ
+    @. u = r + β * q          # uₘ₊₁ = rₘ₊₁ + βₘ * qₘ
+    @kaxpby!(n, 1.0, q, β, p) # pₘ₊₁ = uₘ₊₁ + βₘ * (qₘ + βₘ * pₘ)
+    @kaxpby!(n, 1.0, u, β, p)
 
     # Update ρ.
     ρ = ρ_next # ρₘ ← ρₘ₊₁
