@@ -27,14 +27,13 @@ function dqgmres(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   m, n = size(A)
   m == n || error("System must be square")
-  size(b, 1) == m || error("Inconsistent problem size")
+  length(b) == m || error("Inconsistent problem size")
   verbose && @printf("DQGMRES: system of size %d\n", n)
 
   # Initial solution x₀ and residual r₀.
   x = zeros(T, n)
-  r = copy(b)
   # Compute β.
-  rNorm = @knrm2(n, r) # rNorm = ‖r₀‖₂
+  rNorm = @knrm2(n, b) # rNorm = ‖r₀‖₂
   rNorm == 0.0 && return x, SimpleStats(true, false, [rNorm], [], "x = 0 is a zero-residual solution")
 
   iter = 0
@@ -46,8 +45,8 @@ function dqgmres(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   # Set up workspace.
   mem = min(memory, itmax) # Memory.
-  V = zeros(n, mem) # Preconditioned Krylov vectors, orthogonal basis for {r₀, AM⁻¹r₀, (AM⁻¹)²r₀, ..., (AM⁻¹)ᵐ⁻¹r₀}.
-  P = zeros(n, mem) # Directions for x : Pₘ = Vₘ(Rₘ)⁻¹.
+  V = [zeros(n) for i = 1 : mem] # Preconditioned Krylov vectors, orthogonal basis for {r₀, AM⁻¹r₀, (AM⁻¹)²r₀, ..., (AM⁻¹)ᵐ⁻¹r₀}.
+  P = [zeros(n) for i = 1 : mem] # Directions for x : Pₘ = Vₘ(Rₘ)⁻¹.
   s = zeros(mem)    # Last mem Givens sines used for the factorization QₘRₘ = Hₘ.
   c = zeros(mem)    # Last mem Givens cosines used for the factorization QₘRₘ = Hₘ.
   H = zeros(mem+2)  # Last column of the band hessenberg matrix Hₘ.
@@ -57,7 +56,7 @@ function dqgmres(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   # Initial γ₁ and V₁.
   γₘ = rNorm # γₘ and γₘ₊₁ are the last components of gₘ, right-hand of the least squares problem min ‖ Hₘyₘ - gₘ ‖₂.
-  @. V[:,1] = r / rNorm
+  @. V[1] = b / rNorm
 
   # The following stopping criterion compensates for the lag in the
   # residual, but usually increases the number of iterations.
@@ -76,18 +75,18 @@ function dqgmres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     next_pos = mod(iter, mem) + 1 # Position corresponding to vₘ₊₁ in the circular stack V.
 
     # Incomplete Arnoldi procedure.
-    z = M * view(V,:,pos) # Forms pₘ
+    z = M * V[pos] # Forms pₘ
     w = A * z # Forms vₘ₊₁
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
       diag = iter - i + 2
-      H[diag] = @kdot(n, w, view(V,:,ipos)) # hᵢ.ₘ = < A * vₘ , vᵢ >
-      @kaxpy!(n, -H[diag], view(V,:,ipos), w) # w ← w - hᵢ.ₘ * vᵢ
+      H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₘ = < A * M⁻¹vₘ , vᵢ >
+      @kaxpy!(n, -H[diag], V[ipos], w) # w ← w - hᵢ.ₘ * vᵢ
     end
     # Compute hₘ₊₁.ₘ and vₘ₊₁.
     H[1] = @knrm2(n, w) # hₘ₊₁.ₘ = ‖vₘ₊₁‖₂
     if H[1] ≠ 0.0 # hₘ₊₁.ₘ = 0 ⇒ "lucky breakdown"
-      @. V[:,next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
+      @. V[next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
     end
     # rₘ₋ₘₑₘ.ₘ ≠ 0 when m ≥ mem + 1
     if iter ≥ mem + 2
@@ -116,15 +115,22 @@ function dqgmres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     for i = max(1,iter-mem) : iter-1
       ipos = mod(i-1, mem) + 1 # Position corresponding to pᵢ in the circular stack P.
       diag = iter - i + 2
-      # z ← z - hᵢ.ₘ * pᵢ
-      @kaxpy!(n, -H[diag], view(P,:,ipos), z)
+      if ipos == pos
+        # pₐᵤₓ ← -hₘ₋ₘₑₘ.ₘ * pₘ₋ₘₑₘ
+        @kscal!(n, -H[diag], P[pos])
+      else
+        # pₐᵤₓ ← pₐᵤₓ - hᵢ.ₘ * pᵢ
+        @kaxpy!(n, -H[diag], P[ipos], P[pos])
+      end
     end
-    # pₘ = z / hₘ.ₘ
-    @. P[:,pos] = z / H[2]
+    # pₐᵤₓ ← pₐᵤₓ + M⁻¹vₘ
+    @kaxpy!(n, 1.0, z, P[pos])
+    # pₘ = pₐᵤₓ / hₘ.ₘ
+    @. P[pos] = P[pos] / H[2]
 
     # Compute solution xₘ.
     # xₘ ← xₘ₋₁ + γₘ * pₘ
-    @kaxpy!(n, γₘ, view(P,:,pos), x)
+    @kaxpy!(n, γₘ, P[pos], x)
 
     # Update residual norm estimate.
     # ‖ Axₘ - b ‖₂ ≈ |γₘ₊₁|
