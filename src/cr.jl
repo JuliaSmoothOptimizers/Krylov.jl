@@ -1,5 +1,5 @@
 # A truncated version of Stiefel’s Conjugate Residual method
-# cr(A, b, M, atol, rtol, ϵ, itmax, radius, verbose, linesearch) solves the linear system 'A * x = b' or the least-squares problem :
+# cr(A, b, M, atol, rtol, γ, itmax, radius, verbose, linesearch) solves the linear system 'A * x = b' or the least-squares problem :
 # 'min ‖b - A * x‖²' within a region of fixed radius.
 #
 # Marie-Ange Dahito, <marie-ange.dahito@polymtl.ca>
@@ -16,7 +16,7 @@ In a linesearch context, 'linesearch' must be set to 'true'.
 """
 function cr(A :: AbstractLinearOperator, b :: AbstractVector{T};
             M :: AbstractLinearOperator=opEye(size(A,1)), atol :: Float64=1.0e-8,
-            rtol :: Float64=1.0e-6, ϵ :: Float64=1.0e-6, itmax :: Int=0,
+            rtol :: Float64=1.0e-6, γ :: Float64=1.0e-6, itmax :: Int=0,
             radius :: Float64=0.0, verbose :: Bool=false, linesearch :: Bool=false) where T <: Number
 
   if linesearch && (radius > 0.0)
@@ -49,7 +49,7 @@ function cr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   pNorm² = copy(rNorm²)
   pr = copy(rNorm²)
   abspr = copy(pr)
-  pAp = copy(ρ)
+  pAp = ρ
   abspAp = abs(pAp)
   ArNorm = @knrm2(n, Ar) # ‖Ar‖
   ArNorms = [ArNorm]
@@ -66,7 +66,7 @@ function cr(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   while ! (solved || tired)
     if linesearch
-      if (pAp ≤ ϵ * pNorm²) || (ρ ≤ ϵ * rNorm²)
+      if (pAp ≤ γ * pNorm²) || (ρ ≤ γ * rNorm²)
         npcurv = true
         verbose && @printf("nonpositive curvature detected: pᵀAp = %8.1e and rᵀAr = %8.1e\n", pAp, ρ)
         stats = SimpleStats(solved, false, rNorms, ArNorms, "nonpositive curvature")
@@ -88,10 +88,10 @@ function cr(A :: AbstractLinearOperator, b :: AbstractVector{T};
       tr = maximum(to_boundary(x, r, radius; flip = false, xNorm2 = xNorm², dNorm2 = rNorm²))
       verbose && @printf("t1 = %8.1e, t2 = %8.1e and tr = %8.1e\n", t1, t2, tr)
 
-      if abspAp ≤ ϵ * pNorm * @knrm2(n, q) # pᵀAp ≃ 0
+      if abspAp ≤ γ * pNorm * @knrm2(n, q) # pᵀAp ≃ 0
         npcurv = true # nonpositive curvature
         verbose && @printf("pᵀAp = %8.1e ≃ 0\n", pAp)
-        if abspr ≤ ϵ * pNorm * rNorm # pᵀr ≃ 0
+        if abspr ≤ γ * pNorm * rNorm # pᵀr ≃ 0
           verbose && @printf("pᵀr = %8.1e ≃ 0, redefining p := r\n", pr)
           p = r # - ∇q(x)
           q = Ar
