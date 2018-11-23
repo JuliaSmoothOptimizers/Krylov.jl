@@ -13,19 +13,19 @@ end
 for fn in (:cgls, :cgne, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :lsqr, :dqgmres, :diom, :cgs)
   @eval begin
     # Variant for A given as a dense array and b given as a dense vector
-    $fn(A :: Array{TA,2}, b :: Vector{Tb}, args...; kwargs...) where {TA, Tb <: Number} =
+    $fn(A :: AbstractArray{TA,2}, b :: Vector{Tb}, args...; kwargs...) where {TA, Tb <: Number} =
       $fn(preallocated_LinearOperator(A), convert(Vector{Float64}, b), args...; kwargs...)
 
     # Variant for A given as a sparse matrix and b given as a dense vector
-    $fn(A :: SparseMatrixCSC{TA,IA}, b :: Array{Tb,1}, args...; kwargs...) where {TA, Tb <: Number, IA <: Integer} =
+    $fn(A :: AbstractSparseMatrix{TA,IA}, b :: Array{Tb,1}, args...; kwargs...) where {TA, Tb <: Number, IA <: Integer} =
       $fn(preallocated_LinearOperator(A), convert(Vector{Float64}, b), args...; kwargs...)
 
     # Variant for A given as a dense array and b given as a sparse vector
-    $fn(A :: Array{TA,2}, b :: SparseVector{Tb,Ib}, args...; kwargs...) where {TA, Tb <: Number, Ib <: Integer} =
+    $fn(A :: AbstractArray{TA,2}, b :: SparseVector{Tb,Ib}, args...; kwargs...) where {TA, Tb <: Number, Ib <: Integer} =
       $fn(preallocated_LinearOperator(A), convert(Vector{Float64}, b), args...; kwargs...)
 
     # Variant for A given as a sparse matrix and b given as a sparse vector
-    $fn(A :: SparseMatrixCSC{TA,IA}, b :: SparseVector{Tb,Ib}, args...; kwargs...) where {TA, Tb <: Number, IA, Ib <: Integer} =
+    $fn(A :: AbstractSparseMatrix{TA,IA}, b :: SparseVector{Tb,Ib}, args...; kwargs...) where {TA, Tb <: Number, IA, Ib <: Integer} =
       $fn(preallocated_LinearOperator(A), convert(Vector{Float64}, b), args...; kwargs...)
   end
 end
@@ -41,19 +41,19 @@ end
 for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cr, :minres, :symmlq)
   @eval begin
     # Variant for A given as a dense array and b given as a dense vector
-    $fn(A :: Array{TA,2}, b :: Vector{Tb}, args...; kwargs...) where {TA, Tb <: Number} =
+    $fn(A :: AbstractArray{TA,2}, b :: Vector{Tb}, args...; kwargs...) where {TA, Tb <: Number} =
       $fn(preallocated_symmetric_LinearOperator(A), convert(Vector{Float64}, b), args...; kwargs...)
 
     # Variant for A given as a sparse matrix and b given as a dense vector
-    $fn(A :: SparseMatrixCSC{TA,IA}, b :: Array{Tb,1}, args...; kwargs...) where {TA, Tb <: Number, IA <: Integer} =
+    $fn(A :: AbstractSparseMatrix{TA,IA}, b :: Array{Tb,1}, args...; kwargs...) where {TA, Tb <: Number, IA <: Integer} =
       $fn(preallocated_symmetric_LinearOperator(A), convert(Vector{Float64}, b), args...; kwargs...)
 
     # Variant for A given as a dense array and b given as a sparse vector
-    $fn(A :: Array{TA,2}, b :: SparseVector{Tb,Ib}, args...; kwargs...) where {TA, Tb <: Number, Ib <: Integer} =
+    $fn(A :: AbstractArray{TA,2}, b :: SparseVector{Tb,Ib}, args...; kwargs...) where {TA, Tb <: Number, Ib <: Integer} =
       $fn(preallocated_symmetric_LinearOperator(A), convert(Vector{Float64}, b), args...; kwargs...)
 
     # Variant for A given as a sparse matrix and b given as a sparse vector
-    $fn(A :: SparseMatrixCSC{TA,IA}, b :: SparseVector{Tb,Ib}, args...; kwargs...) where {TA, Tb <: Number, IA, Ib <: Integer} =
+    $fn(A :: AbstractSparseMatrix{TA,IA}, b :: SparseVector{Tb,Ib}, args...; kwargs...) where {TA, Tb <: Number, IA, Ib <: Integer} =
       $fn(preallocated_symmetric_LinearOperator(A), convert(Vector{Float64}, b), args...; kwargs...)
   end
 end
