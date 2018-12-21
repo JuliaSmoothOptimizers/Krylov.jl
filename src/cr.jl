@@ -45,10 +45,10 @@ function cr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   rNorm = @knrm2(n, r) # ‖r‖
   rNorms = [rNorm] # Values of ‖r‖
   rNorm² = rNorm * rNorm
-  pNorm = copy(rNorm)
-  pNorm² = copy(rNorm²)
-  pr = copy(rNorm²)
-  abspr = copy(pr)
+  pNorm = rNorm
+  pNorm² = rNorm²
+  pr = rNorm²
+  abspr = pr
   pAp = ρ
   abspAp = abs(pAp)
   ArNorm = @knrm2(n, Ar) # ‖Ar‖
