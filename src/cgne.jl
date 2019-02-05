@@ -72,7 +72,7 @@ function cgne(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # The following vector copy takes care of the case where A is a LinearOperator
   # with preallocation, so as to avoid overwriting vectors used later. In other
   # case, this should only add minimum overhead.
-  p = copy(A' * z);
+  p = copy(A.tprod(z));
 
   # Use ‖p‖ to detect inconsistent system.
   # An inconsistent system will necessarily have AA' singular.
@@ -107,12 +107,11 @@ function cgne(A :: AbstractLinearOperator, b :: AbstractVector{T};
     z = M * r
     γ_next = @kdot(m, r, z)  # Faster than γ_next = dot(r, z);
     β = γ_next / γ;
-    @kscal!(n, β, p)
-    @kaxpy!(n, 1.0, A' * z, p)   # Faster than p = A' * z + β * p;
+    Aᵀz = A.tprod(z)
+    @kaxpby!(n, 1.0, Aᵀz, β, p)  # Faster than p = Aᵀz + β * p;
     pNorm = @knrm2(n, p)
     if λ > 0
-      @kscal!(m, β, s)
-      @kaxpy!(m, 1.0, r, s)   # s = r + β * s;
+      @kaxpby!(m, 1.0, r, β, s)  # s = r + β * s;
     end
     γ = γ_next;
     rNorm = sqrt(γ_next);

@@ -1,9 +1,15 @@
 include("test_utils.jl")
 
-A   = preallocated_LinearOperator(get_div_grad(32, 32, 32))
-n   = size(A, 1)
+L   = get_div_grad(32, 32, 32)
+n   = size(L, 1)
+m   = div(n, 2)
+A   = preallocated_LinearOperator(L) # Dimension n x n
+Au  = preallocated_LinearOperator(L[1:m,:]) # Dimension m x n
+Ao  = preallocated_LinearOperator(L[:,1:m]) # Dimension n x m
 b   = ones(n)
+c   = ones(m)
 M   = nonallocating_opEye(n)
+N   = nonallocating_opEye(m)
 mem = 10
 
 # without preconditioner and with Ap preallocated, CG needs 3 n-vectors: x, r, p
@@ -39,7 +45,7 @@ actual_cg_lanczos_bytes = @allocated cg_lanczos(A, b)
 @test actual_cg_lanczos_bytes ≤ 1.1 * expected_cg_lanczos_bytes
 
 # without preconditioner and with Ap preallocated, DQGMRES needs:
-# - 1 n-vectors: x
+# - 1 n-vector: x
 # - 2 (n*mem)-matrices: P, V
 # - 2 mem-vectors: c, s
 # - 1 (mem+2)-vector: H
@@ -67,3 +73,13 @@ expected_cgs_bytes = storage_cgs_bytes(n)
 cgs(A, b, M=M)  # warmup
 actual_cgs_bytes = @allocated cgs(A, b, M=M)
 @test actual_cgs_bytes ≤ 1.1 * expected_cgs_bytes
+
+# without preconditioner and with (Ap, Aᵀq) preallocated, CGNE needs:
+# - 2 n-vectors: x, p
+# - 1 m-vector: r
+storage_cgne(n, m) = 2*n + m
+storage_cgne_bytes(n, m) = 8 * storage_cgne(n, m)
+expected_cgne_bytes = storage_cgne_bytes(n, m)
+(x, stats) = cgne(Au, c, M=N)  # warmup
+actual_cgne_bytes = @allocated cgne(Au, c, M=N)
+@test actual_cgne_bytes ≤ 1.1 * expected_cgne_bytes
