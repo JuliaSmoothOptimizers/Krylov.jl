@@ -83,3 +83,13 @@ expected_cgne_bytes = storage_cgne_bytes(n, m)
 (x, stats) = cgne(Au, c, M=N)  # warmup
 actual_cgne_bytes = @allocated cgne(Au, c, M=N)
 @test actual_cgne_bytes ≤ 1.1 * expected_cgne_bytes
+
+# without preconditioner and with (Ap, Aᵀq) preallocated, CGLS needs:
+# - 2 m-vectors: x, p
+# - 1 n-vector: r
+storage_cgls(n, m) = 2*m + n
+storage_cgls_bytes(n, m) = 8 * storage_cgls(n, m)
+expected_cgls_bytes = storage_cgls_bytes(n, m)
+(x, stats) = cgls(Ao, b, M=M)  # warmup
+actual_cgls_bytes = @allocated cgls(Ao, b, M=M)
+@test actual_cgls_bytes ≤ 1.1 * expected_cgls_bytes

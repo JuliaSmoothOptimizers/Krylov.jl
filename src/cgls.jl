@@ -50,7 +50,8 @@ function cgls(A :: AbstractLinearOperator, b :: AbstractVector{T};
   r = copy(b)
   bNorm = @knrm2(m, r)   # Marginally faster than norm(b);
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
-  s = A' * M * r;
+  Mr = M * r
+  s = A.tprod(Mr)
   p = copy(s);
   γ = @kdot(n, s, s)  # Faster than γ = dot(s, s);
   iter = 0;
@@ -71,7 +72,8 @@ function cgls(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   while ! (solved || tired)
     q = A * p;
-    δ = @kdot(m, q, M * q)   # Faster than α = γ / dot(q, q);
+    Mq = M * q
+    δ = @kdot(m, q, Mq)   # Faster than α = γ / dot(q, q);
     λ > 0 && (δ += λ * @kdot(n, p, p))
     α = γ / δ;
 
@@ -84,14 +86,12 @@ function cgls(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p;
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q;
-    s = A' * M * r;
+    Mr = M * r
+    s = A.tprod(Mr);
     λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x;
     γ_next = @kdot(n, s, s)  # Faster than γ_next = dot(s, s);
     β = γ_next / γ;
-    @kscal!(n, β, p)
-    @kaxpy!(n, 1.0, s, p)    # Faster than p = s + β * p;
-    # The combined BLAS calls tend to trigger some gc.
-    #  BLAS.axpy!(n, 1.0, s, 1, BLAS.scal!(n, β, p, 1), 1);
+    @kaxpby!(n, 1.0, s, β, p) # Faster than p = s + β * p;
     γ = γ_next;
     rNorm = @knrm2(m, r)  # Marginally faster than norm(r);
     ArNorm = sqrt(γ);
