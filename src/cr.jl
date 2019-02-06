@@ -32,7 +32,7 @@ function cr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   r = copy(M * b) # initial residual r = M * (b - Ax) = M * b
   Ar = A * r
   ρ = @kdot(n, r, Ar)
-  ρ == 0.0 && return (x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution"))
+  ρ == 0.0 && return (x, SimpleStats(true, false, [0.0], T[], "x = 0 is a zero-residual solution"))
   p = copy(r)
   q = copy(Ar)
   if verbose

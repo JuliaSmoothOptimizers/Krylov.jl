@@ -23,3 +23,4 @@ include("test_craigmr.jl")
 include("test_cr.jl")
 
 include("test_alloc.jl")
+include("test_mp.jl")

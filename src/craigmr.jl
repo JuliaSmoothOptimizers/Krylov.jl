@@ -63,7 +63,7 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   y = zeros(T, m);
   u = copy(b)
   β₁ = @knrm2(m, u)   # Marginally faster than norm(b);
-  β₁ == 0.0 && return (zeros(T, n), y, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution"));
+  β₁ == 0.0 && return (zeros(T, n), y, SimpleStats(true, false, [0.0], T[], "x = 0 is a zero-residual solution"));
   β = β₁;
 
   # Initialize Golub-Kahan process.

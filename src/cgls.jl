@@ -38,8 +38,8 @@ It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 """
 function cgls(A :: AbstractLinearOperator, b :: AbstractVector{T};
-              M :: AbstractLinearOperator=opEye(), λ :: Float64=0.0,
-              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, radius :: Float64=0.0,
+              M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
+              atol :: T=√eps(T), rtol :: T=T(1.0e-6), radius :: T=zero(T),
               itmax :: Int=0, verbose :: Bool=false) where T <: Number
 
   m, n = size(A);
@@ -49,7 +49,7 @@ function cgls(A :: AbstractLinearOperator, b :: AbstractVector{T};
   x = zeros(T, n);
   r = copy(b)
   bNorm = @knrm2(m, r)   # Marginally faster than norm(b);
-  bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
+  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution");
   Mr = M * r
   s = A.tprod(Mr)
   p = copy(s);
@@ -78,8 +78,8 @@ function cgls(A :: AbstractLinearOperator, b :: AbstractVector{T};
     α = γ / δ;
 
     # if a trust-region constraint is give, compute step to the boundary
-    σ = radius > 0.0 ? maximum(to_boundary(x, p, radius)) : α
-    if (radius > 0.0) & (α > σ)
+    σ = radius > 0 ? maximum(to_boundary(x, p, radius)) : α
+    if (radius > 0) & (α > σ)
       α = σ
       on_boundary = true
     end
@@ -91,7 +91,7 @@ function cgls(A :: AbstractLinearOperator, b :: AbstractVector{T};
     λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x;
     γ_next = @kdot(n, s, s)  # Faster than γ_next = dot(s, s);
     β = γ_next / γ;
-    @kaxpby!(n, 1.0, s, β, p) # Faster than p = s + β * p;
+    @kaxpby!(n, one(T), s, β, p) # Faster than p = s + β * p;
     γ = γ_next;
     rNorm = @knrm2(m, r)  # Marginally faster than norm(r);
     ArNorm = sqrt(γ);

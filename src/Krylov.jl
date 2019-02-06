@@ -3,34 +3,34 @@ module Krylov
 using LinearOperators, LinearAlgebra, SparseArrays, Printf
 
 "Abstract type for statistics returned by a solver"
-abstract type KrylovStats end;
+abstract type KrylovStats{T} end;
 
 "Type for statistics returned by non-Lanczos solvers"
-mutable struct SimpleStats <: KrylovStats
+mutable struct SimpleStats{T} <: KrylovStats{T}
   solved :: Bool
   inconsistent :: Bool
-  residuals :: Array{Float64,1}
-  Aresiduals :: Array{Float64,1}
+  residuals :: Array{T,1}
+  Aresiduals :: Array{T,1}
   status :: String
 end
 
-mutable struct LanczosStats <: KrylovStats
+mutable struct LanczosStats{T} <: KrylovStats{T}
   solved :: Bool
-  residuals :: Array{Float64}
+  residuals :: Array{T}
   flagged :: Union{Bool, Array{Bool,1}, BitArray{1}}
-  Anorm :: Float64
-  Acond :: Float64
+  Anorm :: T
+  Acond :: T
   status :: String
 end
 
-mutable struct SymmlqStats <: KrylovStats
+mutable struct SymmlqStats{T} <: KrylovStats{T}
   solved :: Bool
-  residuals :: Array{Float64}
-  residualscg :: Array{Float64}
-  errors :: Array{Float64}
-  errorscg :: Array{Float64}
-  Anorm :: Float64
-  Acond :: Float64
+  residuals :: Array{T}
+  residualscg :: Array{T}
+  errors :: Array{T}
+  errorscg :: Array{T}
+  Anorm :: T
+  Acond :: T
   status :: String
 end
 

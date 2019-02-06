@@ -48,7 +48,7 @@ function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # Compute ρ₀ = < r₀,r₀ > and residual norm ‖r₀‖₂.
   ρ = @kdot(n, r, r)
   rNorm = sqrt(ρ)
-  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], [], "x = 0 is a zero-residual solution")
+  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
 
   iter = 0
   itmax == 0 && (itmax = 2*n)

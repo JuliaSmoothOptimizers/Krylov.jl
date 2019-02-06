@@ -34,7 +34,7 @@ function dqgmres(A :: AbstractLinearOperator, b :: AbstractVector{T};
   x = zeros(T, n)
   # Compute β.
   rNorm = @knrm2(n, b) # rNorm = ‖r₀‖₂
-  rNorm == 0.0 && return x, SimpleStats(true, false, [rNorm], [], "x = 0 is a zero-residual solution")
+  rNorm == 0.0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
