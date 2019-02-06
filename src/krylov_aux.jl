@@ -49,13 +49,13 @@ where q₂, q₁ and q₀ are real. Care is taken to avoid numerical
 cancellation. Optionally, `nitref` steps of iterative refinement
 may be performed to improve accuracy. By default, `nitref=1`.
 """
-function roots_quadratic(q₂ :: Float64, q₁ :: Float64, q₀ :: Float64;
-                         nitref :: Int=1)
+function roots_quadratic(q₂ :: T, q₁ :: T, q₀ :: T;
+                         nitref :: Int=1) where T <: Number
   # Case where q(x) is linear.
-  if q₂ == 0.0
-    if q₁ == 0.0
-      root = [0.0]
-      q₀ == 0.0 || (root = Float64[])
+  if q₂ == zero(T)
+    if q₁ == zero(T)
+      root = [zero(T)]
+      q₀ == zero(T) || (root = T[])
     else
       root = [-q₀ / q₁]
     end
@@ -63,15 +63,15 @@ function roots_quadratic(q₂ :: Float64, q₁ :: Float64, q₀ :: Float64;
   end
 
   # Case where q(x) is indeed quadratic.
-  rhs = sqrt(eps(Float64)) * q₁ * q₁
+  rhs = √eps(T) * q₁ * q₁
   if abs(q₀ * q₂) > rhs
-    ρ = q₁ * q₁ - 4.0 * q₂ * q₀
-    ρ < 0.0 && return Float64[]
-    d = -0.5 * (q₁ + copysign(sqrt(ρ), q₁))
+    ρ = q₁ * q₁ - 4 * q₂ * q₀
+    ρ < 0 && return T[]
+    d = -T(0.5) * (q₁ + copysign(sqrt(ρ), q₁))
     roots = [d / q₂, q₀ / d]
   else
     # Ill-conditioned quadratic.
-    roots = [-q₁ / q₂, 0.0]
+    roots = [-q₁ / q₂, zero(T)]
   end
 
   # Perform a few Newton iterations to improve accuracy.
@@ -79,8 +79,8 @@ function roots_quadratic(q₂ :: Float64, q₁ :: Float64, q₀ :: Float64;
     root = roots[k]
     for it = 1 : nitref
       q = (q₂ * root + q₁) * root + q₀
-      dq = 2.0 * q₂ * root + q₁
-      dq == 0.0 && continue
+      dq = 2 * q₂ * root + q₁
+      dq == zero(T) && continue
       root = root - q / dq
     end
     roots[k] = root
@@ -100,16 +100,16 @@ If `flip` is set to `true`, `σ1` and `σ2` are computed such that
 
     ‖x - σi d‖ = radius, i = 1, 2.
 """
-function to_boundary(x :: Vector{Float64}, d :: Vector{Float64},
-                     radius :: Float64; flip :: Bool=false, xNorm2 :: Float64=0.0, dNorm2 :: Float64=0.0)
+function to_boundary(x :: Vector{T}, d :: Vector{T},
+                     radius :: T; flip :: Bool=false, xNorm2 :: T=zero(T), dNorm2 :: T=zero(T)) where T <: Number
   radius > 0 || error("radius must be positive")
 
   # ‖d‖² σ² + 2 xᵀd σ + (‖x‖² - radius²).
   xd = dot(x, d)
   flip && (xd = -xd)
-  dNorm2 == 0.0 && (dNorm2 = dot(d, d))
-  dNorm2 == 0.0 && error("zero direction")
-  xNorm2 == 0.0 && (xNorm2 = dot(x, x))
+  dNorm2 == zero(T) && (dNorm2 = dot(d, d))
+  dNorm2 == zero(T) && error("zero direction")
+  xNorm2 == zero(T) && (xNorm2 = dot(x, x))
   (xNorm2 <= radius * radius) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius * radius))
   roots = roots_quadratic(dNorm2, 2 * xd, xNorm2 - radius * radius)
   return roots # `σ1` and `σ2`

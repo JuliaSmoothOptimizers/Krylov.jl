@@ -89,8 +89,8 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   rNorms = [rNorm]
   rcgNorms = [rcgNorm]
-  errors = []
-  errorscg = []
+  errors = T[]
+  errorscg = T[]
   err = Inf
   errcg = Inf
 

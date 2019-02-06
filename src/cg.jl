@@ -19,8 +19,8 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
 function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
-            M :: AbstractLinearOperator=opEye(), atol :: Float64=1.0e-8,
-            rtol :: Float64=1.0e-6, itmax :: Int=0, radius :: Float64=0.0,
+            M :: AbstractLinearOperator=opEye(), atol :: T=√eps(T),
+            rtol :: T=T(1.e-6), itmax :: Int=0, radius :: T=zero(T),
             verbose :: Bool=false) where T <: Number
 
   n = size(b, 1);
@@ -33,7 +33,7 @@ function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
   z = M * r
   p = copy(z)
   γ = @kdot(n, r, z)
-  γ == 0 && return x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution")
+  γ == 0 && return x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
 
   iter = 0;
   itmax == 0 && (itmax = 2 * n);
@@ -55,14 +55,14 @@ function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
     α = γ / pAp;
 
     # Compute step size to boundary if applicable.
-    σ = radius > 0.0 ? maximum(to_boundary(x, p, radius)) : α
+    σ = radius > 0 ? maximum(to_boundary(x, p, radius)) : α
 
     verbose && @printf("%8.1e  %7.1e  %7.1e\n", pAp, α, σ);
 
     # Move along p from x to the boundary if either
     # the next step leads outside the trust region or
     # we have nonpositive curvature.
-    if (radius > 0.0) & ((pAp <= 0.0) | (α > σ))
+    if (radius > 0) & ((pAp <= 0) | (α > σ))
       α = σ
       on_boundary = true
     end
@@ -80,7 +80,7 @@ function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
       γ = γ_next;
 
       @kscal!(n, β, p)
-      @kaxpy!(n, 1.0, z, p)
+      @kaxpy!(n, one(T), z, p)
     end
 
     iter = iter + 1;

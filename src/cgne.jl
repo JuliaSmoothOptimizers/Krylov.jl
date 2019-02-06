@@ -66,7 +66,7 @@ function cgne(A :: AbstractLinearOperator, b :: AbstractVector{T};
   r = copy(b)
   z = M * r
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
-  rNorm ≈ 0 && return x, SimpleStats(true, false, [rNorm], [], "x = 0 is a zero-residual solution");
+  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution");
   λ > 0 && (s = copy(r));
 
   # The following vector copy takes care of the case where A is a LinearOperator
@@ -124,6 +124,6 @@ function cgne(A :: AbstractLinearOperator, b :: AbstractVector{T};
   end
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, inconsistent, rNorms, [], status);
+  stats = SimpleStats(solved, inconsistent, rNorms, T[], status);
   return (x, stats);
 end
