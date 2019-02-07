@@ -25,7 +25,7 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
 function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                M :: AbstractLinearOperator=opEye(size(A,1)), λ :: Float64=0.0,
+                M :: AbstractLinearOperator=opEye(), λ :: Float64=0.0,
                 λest :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-8,
                 etol :: Float64=1.0e-8, window :: Int=0, itmax :: Int=0,
                 conlim :: Float64=1.0e+8, verbose :: Bool=false) where T <: Number
@@ -34,6 +34,9 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   m == n || error("System must be square")
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("SYMMLQ: system of size %d\n", n)
+
+  # Test M == Iₘ
+  MisI = isa(M,opEye)
 
   ϵM = eps(T)
   x = zeros(T, n)
@@ -47,8 +50,8 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   β₁ == 0.0 && return (x, x, SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
   β = β₁
-  vold = @kscal!(m, 1 ./ β, vold)
-  p = @kscal!(m, 1 ./ β, p)
+  @kscal!(m, 1 ./ β, vold)
+  !MisI && @kscal!(m, 1 ./ β, p)
 
   v = copy(A * p)
   α = @kdot(m, p, v) + λ
@@ -58,7 +61,7 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   β < 0.0 && error("Preconditioner is not positive definite")
   β = sqrt(β)
   @kscal!(m, 1 ./ β, v)
-  @kscal!(m, 1 ./ β, p)
+  !MisI && @kscal!(m, 1 ./ β, p)
 
   # Start QR factorization
   γbar = α
@@ -143,7 +146,7 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     β < 0.0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
     @kscal!(m, 1 ./ β, v_next)
-    @kscal!(m, 1 ./ β, p)
+    !MisI && @kscal!(m, 1 ./ β, p)
 
     # Continue A norm estimate
     ANorm² = ANorm² + α * α + oldβ * oldβ + β * β

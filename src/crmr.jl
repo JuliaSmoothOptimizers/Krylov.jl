@@ -53,7 +53,7 @@ but simpler to implement. Only the x-part of the solution is returned.
 A preconditioner M may be provided in the form of a linear operator.
 """
 function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
-              M :: AbstractLinearOperator=opEye(size(A,1)), λ :: Float64=0.0,
+              M :: AbstractLinearOperator=opEye(), λ :: Float64=0.0,
               atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
               itmax :: Int=0, verbose :: Bool=false) where T <: Number
 

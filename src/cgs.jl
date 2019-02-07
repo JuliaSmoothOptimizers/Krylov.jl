@@ -33,7 +33,7 @@ TFQMR and BICGSTAB were developed to remedy this difficulty.»
 This implementation allows a right preconditioner M.
 """
 function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
-             M :: AbstractLinearOperator=opEye(size(A,1)),
+             M :: AbstractLinearOperator=opEye(),
              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
              itmax :: Int=0, verbose :: Bool=false) where {T <: Number}
 
