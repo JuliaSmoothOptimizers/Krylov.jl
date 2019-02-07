@@ -37,7 +37,7 @@ It is formally equivalent to LSMR, though can be slightly less accurate,
 but simpler to implement.
 """
 function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
-              M :: AbstractLinearOperator=opEye(size(b,1)), λ :: Float64=0.0,
+              M :: AbstractLinearOperator=opEye(), λ :: Float64=0.0,
               atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, radius :: Float64=0.0,
               itmax :: Int=0, verbose :: Bool=false) where T <: Number
 

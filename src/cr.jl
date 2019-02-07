@@ -15,7 +15,7 @@ assumed to be symmetric and positive definite.
 In a linesearch context, 'linesearch' must be set to 'true'.
 """
 function cr(A :: AbstractLinearOperator, b :: AbstractVector{T};
-            M :: AbstractLinearOperator=opEye(size(A,1)), atol :: Float64=1.0e-8,
+            M :: AbstractLinearOperator=opEye(), atol :: Float64=1.0e-8,
             rtol :: Float64=1.0e-6, γ :: Float64=1.0e-6, itmax :: Int=0,
             radius :: Float64=0.0, verbose :: Bool=false, linesearch :: Bool=false) where T <: Number
 
@@ -29,7 +29,7 @@ function cr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # Initial state.
   x = zeros(T, n) # initial estimation x = 0
   xNorm = 0.0
-  r = M * b # initial residual r = M * (b - Ax) = M * b
+  r = copy(M * b) # initial residual r = M * (b - Ax) = M * b
   Ar = A * r
   ρ = @kdot(n, r, Ar)
   ρ == 0.0 && return (x, SimpleStats(true, false, [0.0], [], "x = 0 is a zero-residual solution"))

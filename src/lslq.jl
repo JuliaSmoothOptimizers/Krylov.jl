@@ -93,8 +93,8 @@ The iterations stop as soon as one of the following conditions holds true:
 * R. Estrin, D. Orban and M. A. Saunders, *LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*, Cahier du GERAD G-2017-xx, GERAD, Montreal, 2017.
 """
 function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
-              M :: AbstractLinearOperator=opEye(size(A,1)),
-              N :: AbstractLinearOperator=opEye(size(A,2)),
+              M :: AbstractLinearOperator=opEye(),
+              N :: AbstractLinearOperator=opEye(),
               sqd :: Bool=false, λ :: Float64=0.0, σ :: Float64=0.0,
               atol :: Float64=1.0e-8, btol :: Float64=1.0e-8, etol :: Float64=1.0e-8,
               window :: Int=5, utol :: Float64=1.0e-8, itmax :: Int=0,
@@ -103,6 +103,10 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("LSLQ: system of %d equations in %d variables\n", m, n)
+
+  # Tests M == Iₙ and N == Iₘ
+  MisI = isa(M, opEye)
+  NisI = isa(N, opEye)
 
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = 1.0)
@@ -125,7 +129,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   β = β₁
 
   @kscal!(m, 1.0/β₁, u)
-  @kscal!(m, 1.0/β₁, Mu)
+  MisI || @kscal!(m, 1.0/β₁, Mu)
   Nv = copy(A' * u)
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))  # = α₁
@@ -134,7 +138,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   α == 0.0 && return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg,
                       SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
   @kscal!(n, 1.0/α, v)
-  @kscal!(n, 1.0/α, Nv)
+  NisI || @kscal!(n, 1.0/α, Nv)
 
   Anorm = α
   Anorm² = α * α
@@ -200,7 +204,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     β = sqrt(@kdot(m, u, Mu))
     if β != 0.0
       @kscal!(m, 1.0/β, u)
-      @kscal!(m, 1.0/β, Mu)
+      MisI || @kscal!(m, 1.0/β, Mu)
 
       # 2. αv = A'u - βv
       @kscal!(n, -β, Nv)
@@ -209,7 +213,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
       α = sqrt(@kdot(n, v, Nv))
       if α != 0.0
         @kscal!(n, 1.0/α, v)
-        @kscal!(n, 1.0/α, Nv)
+        NisI || @kscal!(n, 1.0/α, Nv)
       end
 
       # rotate out regularization term if present

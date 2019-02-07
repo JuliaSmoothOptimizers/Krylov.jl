@@ -23,7 +23,7 @@ and indefinite systems of linear equations can be handled by this single algorit
 This implementation allows a right preconditioner M.
 """
 function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
-              M :: AbstractLinearOperator=opEye(size(A,1)),
+              M :: AbstractLinearOperator=opEye(),
               atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
               itmax :: Int=0, memory :: Int=20, verbose :: Bool=false) where T <: Number
 
