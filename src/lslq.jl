@@ -105,8 +105,8 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   verbose && @printf("LSLQ: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₙ and N == Iₘ
-  MisI = isa(M,opEye)
-  NisI = isa(N,opEye)
+  MisI = isa(M, opEye)
+  NisI = isa(N, opEye)
 
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = 1.0)
@@ -129,7 +129,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   β = β₁
 
   @kscal!(m, 1.0/β₁, u)
-  !MisI && @kscal!(m, 1.0/β₁, Mu)
+  MisI || @kscal!(m, 1.0/β₁, Mu)
   Nv = copy(A' * u)
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))  # = α₁
@@ -138,7 +138,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   α == 0.0 && return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg,
                       SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
   @kscal!(n, 1.0/α, v)
-  !NisI && @kscal!(n, 1.0/α, Nv)
+  NisI || @kscal!(n, 1.0/α, Nv)
 
   Anorm = α
   Anorm² = α * α
@@ -204,7 +204,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     β = sqrt(@kdot(m, u, Mu))
     if β != 0.0
       @kscal!(m, 1.0/β, u)
-      !MisI && @kscal!(m, 1.0/β, Mu)
+      MisI || @kscal!(m, 1.0/β, Mu)
 
       # 2. αv = A'u - βv
       @kscal!(n, -β, Nv)
@@ -213,7 +213,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
       α = sqrt(@kdot(n, v, Nv))
       if α != 0.0
         @kscal!(n, 1.0/α, v)
-        !NisI && @kscal!(n, 1.0/α, Nv)
+        NisI || @kscal!(n, 1.0/α, Nv)
       end
 
       # rotate out regularization term if present

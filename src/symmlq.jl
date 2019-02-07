@@ -36,7 +36,7 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   verbose && @printf("SYMMLQ: system of size %d\n", n)
 
   # Test M == Iₘ
-  MisI = isa(M,opEye)
+  MisI = isa(M, opEye)
 
   ϵM = eps(T)
   x = zeros(T, n)
@@ -51,7 +51,7 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   β₁ = sqrt(β₁)
   β = β₁
   @kscal!(m, 1 ./ β, vold)
-  !MisI && @kscal!(m, 1 ./ β, p)
+  MisI || @kscal!(m, 1 ./ β, p)
 
   v = copy(A * p)
   α = @kdot(m, p, v) + λ
@@ -61,7 +61,7 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   β < 0.0 && error("Preconditioner is not positive definite")
   β = sqrt(β)
   @kscal!(m, 1 ./ β, v)
-  !MisI && @kscal!(m, 1 ./ β, p)
+  MisI || @kscal!(m, 1 ./ β, p)
 
   # Start QR factorization
   γbar = α
@@ -146,7 +146,7 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     β < 0.0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
     @kscal!(m, 1 ./ β, v_next)
-    !MisI && @kscal!(m, 1 ./ β, p)
+    MisI || @kscal!(m, 1 ./ β, p)
 
     # Continue A norm estimate
     ANorm² = ANorm² + α * α + oldβ * oldβ + β * β

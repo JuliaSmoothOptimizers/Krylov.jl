@@ -72,8 +72,8 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   verbose && @printf("LSMR: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₙ and N == Iₘ
-  MisI = isa(M,opEye)
-  NisI = isa(N,opEye)
+  MisI = isa(M, opEye)
+  NisI = isa(N, opEye)
 
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = 1.0)
@@ -89,7 +89,7 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   β = β₁
 
   @kscal!(m, 1.0/β₁, u)
-  !MisI && @kscal!(m, 1.0/β₁, Mu)
+  MisI || @kscal!(m, 1.0/β₁, Mu)
   Nv = copy(A' * u)
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))
@@ -134,7 +134,7 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # A'b = 0 so x = 0 is a minimum least-squares solution
   α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
   @kscal!(n, 1.0/α, v)
-  !NisI && @kscal!(n, 1.0/α, Nv)
+  NisI || @kscal!(n, 1.0/α, Nv)
 
   h = copy(v)
   hbar = zeros(T, n)
@@ -161,7 +161,7 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     β = sqrt(@kdot(m, u, Mu))
     if β != 0.0
       @kscal!(m, 1.0/β, u)
-      !MisI && @kscal!(m, 1.0/β, Mu)
+      MisI || @kscal!(m, 1.0/β, Mu)
 
       # 2. αv = A'u - βv
       @kscal!(n, -β, Nv)
@@ -170,7 +170,7 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
       α = sqrt(@kdot(n, v, Nv))
       if α != 0.0
         @kscal!(n, 1.0/α, v)
-        !NisI && @kscal!(n, 1.0/α, Nv)
+        NisI || @kscal!(n, 1.0/α, Nv)
       end
     end
 
