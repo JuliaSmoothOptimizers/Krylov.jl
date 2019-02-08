@@ -50,7 +50,7 @@ cancellation. Optionally, `nitref` steps of iterative refinement
 may be performed to improve accuracy. By default, `nitref=1`.
 """
 function roots_quadratic(q₂ :: T, q₁ :: T, q₀ :: T;
-                         nitref :: Int=1) where T <: Number
+                         nitref :: Int=1) where T <: AbstractFloat
   # Case where q(x) is linear.
   if q₂ == zero(T)
     if q₁ == zero(T)
@@ -67,7 +67,7 @@ function roots_quadratic(q₂ :: T, q₁ :: T, q₀ :: T;
   if abs(q₀ * q₂) > rhs
     ρ = q₁ * q₁ - 4 * q₂ * q₀
     ρ < 0 && return T[]
-    d = -T(0.5) * (q₁ + copysign(sqrt(ρ), q₁))
+    d = -(q₁ + copysign(sqrt(ρ), q₁)) / 2
     roots = [d / q₂, q₀ / d]
   else
     # Ill-conditioned quadratic.
