@@ -20,7 +20,7 @@ assumed to be symmetric and positive definite.
 """
 function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
             M :: AbstractLinearOperator=opEye(), atol :: T=√eps(T),
-            rtol :: T=T(1.e-6), itmax :: Int=0, radius :: T=zero(T),
+            rtol :: T=√eps(T), itmax :: Int=0, radius :: T=zero(T),
             verbose :: Bool=false) where T <: AbstractFloat
 
   n = size(b, 1);

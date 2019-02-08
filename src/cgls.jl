@@ -39,7 +39,7 @@ but simpler to implement.
 """
 function cgls(A :: AbstractLinearOperator, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
-              atol :: T=√eps(T), rtol :: T=T(1.0e-6), radius :: T=zero(T),
+              atol :: T=√eps(T), rtol :: T=√eps(T), radius :: T=zero(T),
               itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A);
