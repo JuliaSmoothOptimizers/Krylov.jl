@@ -1,6 +1,6 @@
 function test_mp()
   @printf("Tests of multi-precision methods:\n")
-  n = 10
+  n = 5
   for fn in (:cg, :cgls)
     @printf("%s ", string(fn))
     for T in (Float16, Float32, Float64, BigFloat)
@@ -9,7 +9,7 @@ function test_mp()
       b = ones(T, n)
       (x, stats) = @eval $fn($A, $b)
       atol = √eps(T)
-      rtol = T(1e-6)
+      rtol = √eps(T)
       @test norm(A*x - b) ≤ atol + norm(b) * rtol
     end  
     @printf("✔\n")
