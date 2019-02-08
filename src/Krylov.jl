@@ -9,8 +9,8 @@ abstract type KrylovStats{T} end;
 mutable struct SimpleStats{T} <: KrylovStats{T}
   solved :: Bool
   inconsistent :: Bool
-  residuals :: Array{T,1}
-  Aresiduals :: Array{T,1}
+  residuals :: Vector{T}
+  Aresiduals :: Vector{T}
   status :: String
 end
 
