@@ -1,0 +1,43 @@
+{
+  "description": "A Julia basket of hand-picked Krylov methods",
+  "title": "Krylov.jl",
+  "upload_type": "software",
+  "publication_date": "2019-02-06",
+  "creators": [
+    {
+      "affiliation": "École Polytechnique/GERAD - Montréal",
+      "name": "Dominique Orban"
+    }
+  ],
+  "access_right": "open",
+  "related_identifiers": [
+    {
+      "scheme": "url",
+      "identifier": "https://github.com/JuliaSmoothOptimizers/Krylov.jl/releases/latest",
+      "relation": "isSupplementTo"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Alexis Montoison",
+      "type": "Researcher"
+    },
+    {
+      "name": "Abel Soares Siqueira",
+      "type": "Researcher"
+    },
+    {
+      "name": "Marie-Ange Dahito",
+      "type": "Researcher"
+    },
+    {
+      "name": "Jean-Pierre Dussault",
+      "type": "Researcher"
+    },
+    {
+      "name": "Ron Estrin",
+      "type": "Researcher"
+    }
+  ],
+  "license": "MPL-2.0"
+}
