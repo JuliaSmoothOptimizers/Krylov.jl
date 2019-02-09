@@ -31,6 +31,21 @@ diom(A, b, memory=mem)  # warmup
 actual_diom_bytes = @allocated diom(A, b, memory=mem)
 @test actual_diom_bytes ≤ 1.05 * expected_diom_bytes
 
+# without preconditioner and with Ap preallocated, FOM needs:
+# - 1 n-vector: x
+# - 1 (n*iter)-matrix: V
+# - 2 iter-vectors: l, z
+# - 1 (iter*iter) upper-triangular matrix: H
+# - 1 iter-bitArray: p
+storage_fom(iter, n) = (n) + (n * iter) + (2 * iter) + (iter * (iter+1) / 2) + (iter / 64)
+storage_fom_bytes(iter, n) = 8 * storage_fom(iter, n)
+
+(x, stats) = fom(A, b)  # warmup
+iter = length(stats.residuals) - 1
+expected_fom_bytes = storage_fom_bytes(iter, n)
+actual_fom_bytes = @allocated fom(A, b)
+@test actual_fom_bytes ≤ 1.05 * expected_fom_bytes
+
 # with Ap preallocated, CG-Lanczos needs 4 n-vectors: x, v, v_prev, p
 storage_cg_lanczos(n) = 4 * n
 storage_cg_lanczos_bytes(n) = 8 * storage_cg_lanczos(n)

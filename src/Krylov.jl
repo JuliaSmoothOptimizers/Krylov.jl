@@ -79,6 +79,7 @@ include("cg_lanczos.jl")
 include("minres.jl")
 include("dqgmres.jl")
 include("diom.jl")
+include("fom.jl")
 include("symmlq.jl")
 include("cr.jl")
 
