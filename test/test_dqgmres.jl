@@ -77,7 +77,32 @@ function test_dqgmres()
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("DQGMRES: Relative residual: %8.1e\n", resid)
-  @test(resid <= dqgmres_tol)
+  @test(resid ≤ dqgmres_tol)
+  @test(stats.solved)
+
+  # Right preconditioning
+  A = ones(10,10) + 9 * I
+  b = 10 * [1:10;]
+  N = 1/10 * opEye(10)
+  (x, stats) = dqgmres(A, b, N=N)
+  show(stats)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ dqgmres_tol)
+  @test(stats.solved)
+
+  # Split preconditioning
+  A = ones(10,10) + 9 * I
+  b = 10 * [1:10;]
+  M = 1/√10 * opEye(10)
+  N = 1/√10 * opEye(10)
+  (x, stats) = dqgmres(A, b, M=M, N=N)
+  show(stats)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ dqgmres_tol)
   @test(stats.solved)
 end
 
