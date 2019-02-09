@@ -18,7 +18,8 @@ function test_lsqr()
     @test(stats.solved);
   end
 
-  A = rand(10, 6); b = rand(10)
+  A = [i/j - j/i for i=1:10, j=1:6];
+  b = A * ones(6);
 
   # test trust-region constraint
   (x, stats) = lsqr(A, b)
@@ -39,13 +40,13 @@ function test_lsqr()
   show(stats);
 
   # Test b == 0
-  (x, stats) = lsqr(A, zeros(size(A,1)))
+  A, b = zero_rhs()
+  (x, stats) = lsqr(A, b)
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values
-  A = [I; rand(1:10, 2, 3)]
-  b = A * ones(Int, 3)
+  A, b = over_int()
   (x, stats) = lsqr(A, b)
   @test stats.solved
 end

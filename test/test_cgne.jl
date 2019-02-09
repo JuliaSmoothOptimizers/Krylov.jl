@@ -1,7 +1,7 @@
 function test_cgne()
-  cgne_tol = 1.0e-3;  # We're tolerant just so random tests don't fail.
+  cgne_tol = 1.0e-6;
 
-  function test_cgne(A, b; λ=0.0, M=opEye(size(A,1)))
+  function test_cgne(A, b; λ=0.0, M=opEye())
     (nrow, ncol) = size(A);
     (x, stats) = cgne(A, b, λ=λ, M=M);
     r = b - A * x;
@@ -15,7 +15,7 @@ function test_cgne()
   end
 
   # Underdetermined consistent.
-  A = rand(10, 25); b = A * ones(25);
+  A, b = under_consistent()
   (x, stats, resid) = test_cgne(A, b);
   @test(resid <= cgne_tol);
   @test(stats.solved);
@@ -23,12 +23,12 @@ function test_cgne()
   @test(norm(xI - xmin) <= cond(A) * cgne_tol * xmin_norm);
 
   # Underdetermined inconsistent.
-  A = ones(10, 25); b = rand(10); b[1] = -1.0;
+  A, b = under_inconsistent()
   (x, stats, resid) = test_cgne(A, b);
   @test(stats.inconsistent);
 
   # Square consistent.
-  A = rand(10, 10); b = A * ones(10);
+  A, b = square_consistent()
   (x, stats, resid) = test_cgne(A, b);
   @test(resid <= cgne_tol);
   @test(stats.solved);
@@ -36,12 +36,12 @@ function test_cgne()
   @test(norm(xI - xmin) <= cond(A) * cgne_tol * xmin_norm);
 
   # Square inconsistent.
-  A = ones(10, 10); b = rand(10); b[1] = -1.0;
+  A, b = square_inconsistent()
   (x, stats, resid) = test_cgne(A, b);
   @test(stats.inconsistent);
 
   # Overdetermined consistent.
-  A = rand(25, 10); b = A * ones(10);
+  A, b = over_consistent()
   (x, stats, resid) = test_cgne(A, b);
   @test(resid <= cgne_tol);
   @test(stats.solved);
@@ -49,7 +49,7 @@ function test_cgne()
   @test(norm(xI - xmin) <= cond(A) * cgne_tol * xmin_norm);
 
   # Overdetermined inconsistent.
-  A = ones(5, 3); b = rand(5); b[1] = -1.0;
+  A, b = over_inconsistent()
   (x, stats, resid) = test_cgne(A, b);
   @test(stats.inconsistent);
 
@@ -65,20 +65,18 @@ function test_cgne()
   show(stats);
 
   # Test b == 0
-  (x, stats) = cgne(A, zeros(size(A,1)), λ=1.0e-3)
+  A, b = zero_rhs()
+  (x, stats) = cgne(A, b, λ=1.0e-3)
   @test x == zeros(size(A,2))
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values
-  A = [I; rand(1:10, 2, 3)]
-  b = A * ones(Int, 3)
+  A, b = over_int()
   (x, stats) = cgne(A, b)
   @test stats.solved
 
   # Test with Jacobi (or diagonal) preconditioner
-  A = ones(10,10) + 9 * I
-  b = 10 * [1:10;]
-  M = 1/10 * opEye(10)
+  A, b, M = square_preconditioned()
   (x, stats, resid) = test_cgne(A, b, M=M)
   @test(resid <= cgne_tol)
   @test(stats.solved)

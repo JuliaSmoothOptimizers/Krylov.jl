@@ -20,6 +20,7 @@ function test_crls()
   end
 
   # Test with preconditioning.
+  Random.seed!(0)
   A = rand(10, 6); b = rand(10);
   M = InverseLBFGSOperator(10, 4);
   for _ = 1 : 6
@@ -52,13 +53,13 @@ function test_crls()
   show(stats);
 
   # Test b == 0
-  (x, stats) = crls(A, zeros(size(A,1)))
+  A, b = zero_rhs()
+  (x, stats) = crls(A, b)
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values
-  A = [I; rand(1:10, 2, 3)]
-  b = A * ones(Int, 3)
+  A, b = over_int()
   (x, stats) = crls(A, b)
   @test stats.solved
 

@@ -1,7 +1,7 @@
 function test_crmr()
-  crmr_tol = 1.0e-4;  # We're tolerant just so random tests don't fail.
+  crmr_tol = 1.0e-6;
 
-  function test_crmr(A, b; λ=0.0, M=opEye(size(A,1)))
+  function test_crmr(A, b; λ=0.0, M=opEye())
     (nrow, ncol) = size(A);
     (x, stats) = crmr(A, b, λ=λ, M=M);
     r = b - A * x;
@@ -15,7 +15,7 @@ function test_crmr()
   end
 
   # Underdetermined consistent.
-  A = rand(10, 25); b = A * ones(25);
+  A, b = under_consistent()
   (x, stats, resid) = test_crmr(A, b);
   @test(resid <= crmr_tol);
   @test(stats.solved);
@@ -23,13 +23,13 @@ function test_crmr()
   @test(norm(xI - xmin) <= cond(A) * crmr_tol * xmin_norm);
 
   # Underdetermined inconsistent.
-  A = ones(10, 25); b = rand(10); b[1] = -1.0;
+  A, b = under_inconsistent()
   (x, stats, resid) = test_crmr(A, b);
   @test(stats.inconsistent);
   @test(stats.Aresiduals[end] <= crmr_tol);
 
   # Square consistent.
-  A = rand(10, 10); b = A * ones(10);
+  A, b = square_consistent()
   (x, stats, resid) = test_crmr(A, b);
   @test(resid <= crmr_tol);
   @test(stats.solved);
@@ -37,13 +37,13 @@ function test_crmr()
   @test(norm(xI - xmin) <= cond(A) * crmr_tol * xmin_norm);
 
   # Square inconsistent.
-  A = ones(10, 10); b = rand(10); b[1] = -1.0;
+  A, b = square_inconsistent()
   (x, stats, resid) = test_crmr(A, b);
   @test(stats.inconsistent);
   @test(stats.Aresiduals[end] <= crmr_tol);
 
   # Overdetermined consistent.
-  A = rand(25, 10); b = A * ones(10);
+  A, b = over_consistent()
   (x, stats, resid) = test_crmr(A, b);
   @test(resid <= crmr_tol);
   @test(stats.solved);
@@ -51,7 +51,7 @@ function test_crmr()
   @test(norm(xI - xmin) <= cond(A) * crmr_tol * xmin_norm);
 
   # Overdetermined inconsistent.
-  A = ones(5, 3); b = rand(5); b[1] = -1.0;
+  A, b = over_inconsistent()
   (x, stats, resid) = test_crmr(A, b);
   @test(stats.inconsistent);
   @test(stats.Aresiduals[end] <= crmr_tol);
@@ -68,13 +68,13 @@ function test_crmr()
   show(stats);
 
   # Test b == 0
-  (x, stats) = crmr(A, zeros(size(A,1)))
+  A, b = zero_rhs()
+  (x, stats) = crmr(A, b)
   @test x == zeros(size(A,2))
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values
-  A = [I; rand(1:10, 2, 3)]
-  b = A * ones(Int, 3)
+  A, b = over_int()
   (x, stats) = crmr(A, b)
   @test stats.solved
 

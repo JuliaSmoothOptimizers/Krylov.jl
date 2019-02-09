@@ -17,7 +17,7 @@ function test_craigmr()
   end
 
   # Underdetermined consistent.
-  A = rand(10, 25); b = A * ones(25);
+  A, b = under_consistent()
   (x, y, stats, resid, Aresid) = test_craigmr(A, b);
   @test(norm(x - A' * y) <= craigmr_tol * norm(x));
   @test(resid <= craigmr_tol);
@@ -26,14 +26,14 @@ function test_craigmr()
   @test(norm(xI - xmin) <= cond(A) * craigmr_tol * xmin_norm);
 
   # Underdetermined inconsistent.
-  A = ones(10, 25); b = rand(10); b[1] = -1.0;
+  A, b = under_inconsistent()
   (x, y, stats, resid) = test_craigmr(A, b);
   @test(norm(x - A' * y) <= craigmr_tol * norm(x));
   @test(stats.inconsistent);
   @test(stats.Aresiduals[end] <= craigmr_tol);
 
   # Square consistent.
-  A = rand(10, 10); b = A * ones(10);
+  A, b = square_consistent()
   (x, y, stats, resid) = test_craigmr(A, b);
   @test(norm(x - A' * y) <= craigmr_tol * norm(x));
   @test(resid <= craigmr_tol);
@@ -42,14 +42,14 @@ function test_craigmr()
   @test(norm(xI - xmin) <= cond(A) * craigmr_tol * xmin_norm);
 
   # Square inconsistent.
-  A = ones(10, 10); b = rand(10); b[1] = -1.0;
+  A, b = square_inconsistent()
   (x, y, stats, resid) = test_craigmr(A, b);
   @test(norm(x - A' * y) <= craigmr_tol * norm(x));
   @test(stats.inconsistent);
   @test(stats.Aresiduals[end] <= craigmr_tol);
 
   # Overdetermined consistent.
-  A = rand(25, 10); b = A * ones(10);
+  A, b = over_consistent()
   (x, y, stats, resid) = test_craigmr(A, b);
   @test(norm(x - A' * y) <= craigmr_tol * norm(x));
   @test(resid <= craigmr_tol);
@@ -58,7 +58,7 @@ function test_craigmr()
   @test(norm(xI - xmin) <= cond(A) * craigmr_tol * xmin_norm);
 
   # Overdetermined inconsistent.
-  A = ones(5, 3); b = rand(5); b[1] = -1.0;
+  A, b = over_inconsistent()
   (x, y, stats, resid) = test_craigmr(A, b);
   @test(norm(x - A' * y) <= craigmr_tol * norm(x));
   @test(stats.inconsistent);
@@ -77,14 +77,14 @@ function test_craigmr()
   show(stats);
 
   # Test b == 0
-  (x, y, stats) = craigmr(A, zeros(size(A,1)), λ=1.0e-3)
+  A, b = zero_rhs()
+  (x, y, stats) = craigmr(A, b, λ=1.0e-3)
   @test x == zeros(size(A,2))
   @test y == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values
-  A = [I; rand(1:10, 2, 3)]
-  b = A * ones(Int, 3)
+  A, b = over_int()
   (x, y, stats) = craigmr(A, b)
   @test stats.solved
 end
