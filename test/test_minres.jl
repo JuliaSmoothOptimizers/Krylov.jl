@@ -1,15 +1,8 @@
-include("get_div_grad.jl")
-
 function test_minres()
   minres_tol = 1.0e-6
 
-  # 1. Symmetric and positive definite systems.
-  #
   # Cubic spline matrix.
-  n = 10;
-  A = spdiagm(-1 => ones(n-1), 0 => 4*ones(n), 1 => ones(n-1))
-  b = A * [1:n;]
-
+  A, b = symmetric_definite()
   (x, stats) = minres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -24,9 +17,8 @@ function test_minres()
   # @test(abs(radius - norm(x)) <= minres_tol * radius)
 
   # Symmetric indefinite variant.
-  A = A - 3 * I
-  b = A * [1:n;]
-  (x, stats) = minres(A, b, itmax=10)
+  A, b = symmetric_indefinite()
+  (x, stats) = minres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("MINRES: Relative residual: %8.1e\n", resid)
@@ -38,8 +30,7 @@ function test_minres()
   show(stats)
 
   # Sparse Laplacian.
-  A = get_div_grad(16, 16, 16)
-  b = ones(size(A, 1))
+  A, b = sparse_laplacian()
   (x, stats) = minres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -54,7 +45,7 @@ function test_minres()
   # @test(abs(radius - norm(x)) <= minres_tol * radius)
 
   # Symmetric indefinite variant, almost singular.
-  A = A - 5 * I
+  A, b = almost_singular()
   (x, stats) = minres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -63,13 +54,13 @@ function test_minres()
   @test(stats.solved)
 
   # Test b == 0
-  (x, stats) = minres(A, zeros(size(A,1)))
+  A, b = zero_rhs()
+  (x, stats) = minres(A, b)
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values
-  A = spdiagm(-1 => ones(Int, n-1), 0 => 4*ones(Int, n), 1 => ones(Int, n-1))
-  b = A * [1:n;]
+  A, b = square_int()
   (x, stats) = minres(A, b)
   @test stats.solved
 end

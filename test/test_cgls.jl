@@ -19,6 +19,7 @@ function test_cgls()
   end
 
   # Test with preconditioning.
+  Random.seed!(0)
   A = rand(10, 6); b = rand(10);
   M = InverseLBFGSOperator(10, 4);
   for _ = 1 : 6
@@ -56,8 +57,7 @@ function test_cgls()
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values
-  A = [I; rand(1:10, 2, 3)]
-  b = A * ones(Int, 3)
+  A, b = over_int()
   (x, stats) = cgls(A, b)
   @test stats.solved
 end

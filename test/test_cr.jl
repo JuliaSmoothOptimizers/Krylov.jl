@@ -1,15 +1,8 @@
-using Random
-
-include("get_div_grad.jl")
-
 function test_cr()
   cr_tol = 1.0e-6
 
-  # Cubic spline matrix _ case: ‖x*‖ > Δ
-  n = 10
-  A = spdiagm(-1 => ones(n-1), 0 => 4 * ones(n), 1 => ones(n-1))
-  b = A * [1:n;]
-
+  # Symmetric and positive definite system.
+  A, b = symmetric_definite()
   (x, stats) = cr(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -28,7 +21,7 @@ function test_cr()
   @test abs(norm(x) - radius) ≤ cr_tol * radius
 
   # Sparse Laplacian
-  A = get_div_grad(16, 16, 16)
+  A, _ = sparse_laplacian()
   b = randn(size(A, 1))
   itmax = 0
   # case: ‖x*‖ > Δ
@@ -73,20 +66,18 @@ function test_cr()
   @test stats.solved
 
   # Test b == 0
-  (x, stats) = cr(A, zeros(size(A,1)))
+  A, b = zero_rhs()
+  (x, stats) = cr(A, b)
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values
-  A = [4 -1 0; -1 4 -1; 0 -1 4]
-  b = [7; 2; -1]
+  A, b = square_int()
   (x, stats) = cr(A, b)
   @test stats.solved
 
   # Test with Jacobi (or diagonal) preconditioner
-  A = ones(10,10) + 9 * I
-  b = 10 * [1:10;]
-  M = 1/10 * opEye(10)
+  A, b, M = square_preconditioned()
   (x, stats) = cr(A, b, M=M, itmax=10);
   show(stats)
   r = b - A * x;

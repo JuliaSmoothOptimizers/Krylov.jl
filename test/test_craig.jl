@@ -14,7 +14,7 @@ function test_craig()
   end
 
   # Underdetermined consistent.
-  A = rand(10, 25); b = A * ones(25)
+  A, b = under_consistent()
   (x, y, stats, resid) = test_craig(A, b)
   @test(norm(x - A' * y) <= craig_tol * norm(x))
   @test(resid <= craig_tol)
@@ -23,14 +23,14 @@ function test_craig()
   @test(norm(xI - xmin) <= cond(A) * craig_tol * xmin_norm)
 
   # Underdetermined inconsistent.
-  A = ones(10, 25); A[1, :] .= 0; b = ones(10)
+  A, b = under_inconsistent()
   (x, y, stats, resid) = test_craig(A, b)
   # @test(norm(x - A' * y) <= craig_tol * norm(x))
   show(stats)
   @test(stats.inconsistent)
 
   # Square consistent.
-  A = rand(10, 10); b = A * ones(10)
+  A, b = square_consistent()
   (x, y, stats, resid) = test_craig(A, b)
   @test(norm(x - A' * y) <= craig_tol * norm(x))
   @test(resid <= craig_tol)
@@ -39,13 +39,13 @@ function test_craig()
   @test(norm(xI - xmin) <= cond(A) * craig_tol * xmin_norm)
 
   # Square inconsistent.
-  A = ones(10, 10); A[1, :] .= 0; b = ones(10)
+  A, b = square_inconsistent()
   (x, y, stats, resid) = test_craig(A, b)
   # @test(norm(x - A' * y) <= craig_tol * norm(x))
   @test(stats.inconsistent)
 
   # Overdetermined consistent.
-  A = rand(25, 10); b = A * ones(10)
+  A, b = over_consistent()
   (x, y, stats, resid) = test_craig(A, b)
   @test(norm(x - A' * y) <= craig_tol * norm(x))
   @test(resid <= craig_tol)
@@ -54,7 +54,7 @@ function test_craig()
   @test(norm(xI - xmin) <= cond(A) * craig_tol * xmin_norm)
 
   # Overdetermined inconsistent.
-  A = ones(5, 3); A[1, :] .= 0; b = ones(5)
+  A, b = over_inconsistent()
   (x, y, stats, resid) = test_craig(A, b)
   # @test(norm(x - A' * y) <= craig_tol * norm(x))
   @test(stats.inconsistent)
@@ -72,14 +72,14 @@ function test_craig()
   show(stats)
 
   # Test b == 0
-  (x, y, stats) = craig(A, zeros(size(A,1)), λ=1.0e-3)
+  A, b = zero_rhs()
+  (x, y, stats) = craig(A, b, λ=1.0e-3)
   @test x == zeros(size(A,2))
   @test y == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values
-  A = [I; rand(1:10, 2, 3)]
-  b = A * ones(Int, 3)
+  A, b = over_int()
   (x, y, stats) = craig(A, b)
   @test stats.solved
 end

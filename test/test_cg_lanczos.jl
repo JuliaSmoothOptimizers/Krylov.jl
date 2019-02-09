@@ -6,11 +6,10 @@ end
 
 function test_cg_lanczos()
   cg_tol = 1.0e-6;
+  n = 10
 
   # Cubic splines matrix.
-  n = 10;
-  A = spdiagm(-1 => ones(n-1), 0 => 4*ones(n), 1 => ones(n-1))
-  b = A * [1:n;];
+  A, b = symmetric_definite()
   b_norm = norm(b);
 
   (x, stats) = cg_lanczos(A, b, itmax=n);
@@ -49,7 +48,8 @@ function test_cg_lanczos()
   show(stats);
 
   # Test b == 0
-  (x, stats) = cg_lanczos(A, zeros(size(A,1)))
+  A, b = zero_rhs()
+  (x, stats) = cg_lanczos(A, b)
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
   (x, stats) = cg_lanczos_shift_seq(A, zeros(size(A,1)), [1:6;])
@@ -57,8 +57,7 @@ function test_cg_lanczos()
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values
-  A = ceil.(Int, A) + I
-  b = A * ones(Int, size(A,1))
+  A, b = square_int()
   (x, stats) = cg_lanczos(A, b)
   @test stats.solved
 end

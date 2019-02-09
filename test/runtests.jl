@@ -1,11 +1,11 @@
-using Test, Krylov, LinearOperators, LinearAlgebra, SparseArrays, Printf
+using Test, Krylov, LinearOperators, LinearAlgebra, SparseArrays, Printf, Random
+
+include("test_utils.jl")
+include("test_aux.jl")
 
 include("test_diom.jl")
 include("test_cgs.jl")
 include("test_dqgmres.jl")
-include("gen_lsq.jl")
-include("check_min_norm.jl")
-include("test_aux.jl")
 include("test_cg.jl")
 include("test_cg_lanczos.jl")
 include("test_minres.jl")
@@ -14,7 +14,6 @@ include("test_cgls.jl")
 include("test_crls.jl")
 include("test_cgne.jl")
 include("test_crmr.jl")
-include("test_variants.jl")
 include("test_lslq.jl")
 include("test_lsqr.jl")
 include("test_lsmr.jl")
@@ -24,3 +23,4 @@ include("test_cr.jl")
 
 include("test_alloc.jl")
 include("test_mp.jl")
+include("test_variants.jl")

@@ -1,16 +1,10 @@
-include("get_div_grad.jl")
-
 function test_symmlq()
   symmlq_tol = 1.0e-5
 
-  # 1. Symmetric and positive definite systems.
-  #
-  # Cubic spline matrix.
+  # Symmetric and positive definite system.
   n = 10;
-  A = spdiagm(-1 => ones(n-1), 0 => 4*ones(n), 1 => ones(n-1))
-  b = A * [1:n;]
-
-  (x, xcg, stats) = symmlq(A, b)
+  A, b = symmetric_definite()
+  (x, xcg, stats) = symmlq(A, b, itmax=n+1)
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("SYMMLQ: Relative residual: %8.1e\n", resid)
@@ -18,8 +12,7 @@ function test_symmlq()
   @test(stats.solved)
 
   # Symmetric indefinite variant.
-  A = A - 3 * I
-  b = A * [1:n;]
+  A, b = symmetric_indefinite()
   (x, xcg, stats) = symmlq(A, b, itmax=n+1)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -32,8 +25,7 @@ function test_symmlq()
   show(stats)
 
   # Sparse Laplacian (CG point will terminate sooner).
-  A = get_div_grad(16, 16, 16)
-  b = ones(size(A, 1))
+  A, b = sparse_laplacian()
   (x, xcg, stats) = symmlq(A, b, atol=1e-12, rtol=1e-12)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -52,13 +44,13 @@ function test_symmlq()
   @test(stats.solved)
 
   # Test b == 0
+  A, b = zero_rhs()
   (x, xcg, stats) = symmlq(A, zeros(size(A,1)))
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values
-  A = spdiagm(-1 => ones(Int, n-1), 0 => 4*ones(Int, n), 1 => ones(Int, n-1))
-  b = A * [1:n;]
+  A, b = square_int()
   (x, xcg, stats) = symmlq(A, b)
   @test stats.solved
 

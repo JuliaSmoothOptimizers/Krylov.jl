@@ -43,8 +43,7 @@ function test_lslq()
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values
-  A = [I; rand(1:10, 2, 3)]
-  b = A * ones(Int, 3)
+  A, b = over_int()
   (x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b)
   @test stats.solved
 end
