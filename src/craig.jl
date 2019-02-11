@@ -11,7 +11,7 @@
 # and is equivalent to applying the conjugate gradient method
 # to the linear system
 #
-#  AA'y = b.
+#  AAᵀy = b.
 #
 # This method, sometimes known under the name CRAIG, is the
 # Golub-Kahan implementation of CGNE, and is described in
@@ -42,7 +42,7 @@ regularization parameter. This method is equivalent to CGNE but is more
 stable.
 
 For a system in the form Ax = b, Craig's method is equivalent to applying
-CG to AA'y = b and recovering x = A'y. Note that y are the Lagrange
+CG to AAᵀy = b and recovering x = Aᵀy. Note that y are the Lagrange
 multipliers of the least-norm problem
 
   minimize ‖x‖  subject to Ax = b.
@@ -51,7 +51,7 @@ In this implementation, both the x and y-parts of the solution are returned.
 """
 function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
                λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-               conlim :: Float64=1.0e+8, itmax :: Int=0, verbose :: Bool=false) where T <: Number
+               itmax :: Int=0, verbose :: Bool=false) where T <: Number
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
@@ -59,7 +59,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   x = zeros(T, n);
   β₁ = @knrm2(m, b)   # Marginally faster than norm(b);
-  β₁ == 0 && return x, zeros(m), SimpleStats(true, false, [0.0], Float64[], "x = 0 is a zero-residual solution");
+  β₁ == 0 && return x, zeros(m), SimpleStats(true, false, [0.0], T[], "x = 0 is a zero-residual solution");
   β = β₁;
   θ = β₁;   # θ will differ from β when there is regularization (λ > 0).
   ξ = -1;   # Most recent component of x in Range(V).
@@ -77,7 +77,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   λ > 0.0 && (w2 = zeros(T, n))
 
   Anorm² = 0.0;  # Estimate of ‖A‖²_F.
-  Dnorm  = 0.0;  # Estimate of ‖(A'A)⁻¹‖.
+  Dnorm  = 0.0;  # Estimate of ‖(AᵀA)⁻¹‖.
   xNorm² = 0.0;  # Estimate of ‖x‖².
 
   iter = 0;
@@ -97,9 +97,9 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   while ! (solved || inconsistent || tired)
     # Generate the next Golub-Kahan vectors
-    # 1. αv = A'u - βv
-    @kscal!(n, -β, v)
-    @kaxpy!(n, 1.0, A' * u, v)
+    # 1. αv = Aᵀu - βv
+    Aᵀu = A.tprod(u)
+    @kaxpby!(n, 1.0, Aᵀu, -β, v)
     α = @knrm2(n, v)
     if α == 0.0
       inconsistent = true;
@@ -114,9 +114,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
       #      k-1  k   2k     k   2k      k-1  k   2k
       # k   [ θ   α   δ ] [ c₁   s₁ ] = [ θ   ρ      ]
       # k+1 [     β     ] [ s₁  -c₁ ]   [     θ+   γ ]
-      ρ  = sqrt(α * α + δ * δ);
-      c₁ =  α / ρ;
-      s₁ = -δ / ρ;
+      (c₁, s₁, ρ) = sym_givens(α, δ)
     else
       ρ = α;
     end
@@ -127,25 +125,20 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
       # w1 = c₁ * v + s₁ * w2
       # w2 = s₁ * v - c₁ * w2
       # x  = x + ξ * w1
-      # Save storage on w1 since it cannot be updated
-      # using a BLAS call.
-      # TODO: use dot notation in Julia 0.6.
-      @simd for i = 1 : n
-        @inbounds x[i]  = x[i] + ξ * (c₁ * v[i] + s₁ * w2[i]);
-        @inbounds w2[i] = s₁ * x[i] - c₁ * w2[i];
-      end
+      @kaxpy!(n, ξ * c₁, v, x)
+      @kaxpy!(n, ξ * s₁, w2, x)
+      @kaxpby!(n, s₁, v, -c₁, w2)
     else
       @kaxpy!(n, ξ, v, x)  # x = x + ξ * v;
     end
 
     # Recur y.
-    @kscal!(m, -θ/ρ_prev, w)
-    @kaxpy!(m, 1.0, u, w)  # w = u - θ/ρ_prev * w;
+    @kaxpby!(m, 1.0, u, -θ/ρ_prev, w)  # w = u - θ/ρ_prev * w;
     @kaxpy!(m, ξ/ρ, w, y)  # y = y + ξ/ρ * w;
 
-    # 2. βu = A v - αu
-    @kscal!(m, -α, u)
-    @kaxpy!(m, 1.0, A * v, u)
+    # 2. βu = Av - αu
+    Av = A * v
+    @kaxpby!(m, 1.0, Av, -α, u)
     β = @knrm2(m, u)
     β > 0.0 && @kscal!(m, 1.0/β, u)
 
@@ -162,9 +155,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
       #       2k  2k+1    2k  2k+1      2k  2k+1
       # k+1 [  γ    λ ] [ c₂   s₂ ] = [  0    δ ]
       # k+2 [  0    0 ] [ s₂  -c₂ ]   [  0    0 ]
-      δ  =  sqrt(γ * γ + λ * λ);
-      c₂ = -λ / δ;
-      s₂ =  γ / δ;
+      c₂, s₂, δ = sym_givens(γ, λ)
       @kscal!(n, s₂, w2)
     end
 

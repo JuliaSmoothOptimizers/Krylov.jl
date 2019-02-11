@@ -9,7 +9,7 @@ function test_craig()
     #   r = r - sqrt(λ) * s;
     # end
     resid = norm(r) / norm(b)
-    @printf("craig: residual: %7.1e\n", resid)
+    @printf("CRAIG: residual: %7.1e\n", resid)
     return (x, y, stats, resid)
   end
 
