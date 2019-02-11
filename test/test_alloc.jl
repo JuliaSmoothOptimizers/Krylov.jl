@@ -70,6 +70,17 @@ cgs(A, b)  # warmup
 actual_cgs_bytes = @allocated cgs(A, b)
 @test actual_cgs_bytes ≤ 1.1 * expected_cgs_bytes
 
+# with (Ap, Aᵀq) preallocated, CRAIGMR needs:
+# - 2 n-vector: x, v
+# - 4 m-vectors: y, u, w, wbar
+storage_craigmr(n, m) = 2 * n + 4 * m
+storage_craigmr_bytes(n, m) = 8 * storage_craigmr(n, m)
+
+expected_craigmr_bytes = storage_craigmr_bytes(n, m)
+craigmr(Au, c)  # warmup
+actual_craigmr_bytes = @allocated craigmr(Au, c)
+@test actual_craigmr_bytes ≤ 1.1 * expected_craigmr_bytes
+
 # without preconditioner and with (Ap, Aᵀq) preallocated, CGNE needs:
 # - 2 n-vectors: x, p
 # - 1 m-vector: r

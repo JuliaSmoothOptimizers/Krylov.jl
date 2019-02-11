@@ -10,7 +10,7 @@
 # and is equivalent to applying the conjugate residual method
 # to the linear system
 #
-#  AA'y = b.
+#  AAᵀy = b.
 #
 # This method is equivalent to CRMR, and is described in
 #
@@ -36,7 +36,7 @@ using the CRAIG-MR method, where λ ≥ 0 is a regularization parameter.
 This method is equivalent to applying the Conjugate Residuals method
 to the normal equations of the second kind
 
-  (AA' + λI) y = b
+  (AAᵀ + λI) y = b
 
 but is more stable. When λ = 0, this method solves the minimum-norm problem
 
@@ -59,17 +59,19 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CRAIG-MR: system of %d equations in %d variables\n", m, n);
 
-  # Compute y such that AA'y = b. Then recover x = A'y.
+  # Compute y such that AAᵀy = b. Then recover x = Aᵀy.
+  x = zeros(T, n)
   y = zeros(T, m);
   u = copy(b)
   β₁ = @knrm2(m, u)   # Marginally faster than norm(b);
-  β₁ == 0.0 && return (zeros(T, n), y, SimpleStats(true, false, [0.0], T[], "x = 0 is a zero-residual solution"));
+  β₁ == 0.0 && return (x, y, SimpleStats(true, false, [0.0], T[], "x = 0 is a zero-residual solution"));
   β = β₁;
 
   # Initialize Golub-Kahan process.
   # β₁ u₁ = b.
   @kscal!(m, 1.0/β₁, u)
-  v = copy(A' * u);
+  Aᵀu = A.tprod(u)
+  v = copy(Aᵀu);
   α = @knrm2(n, v)
   Anorm² = α * α;
 
@@ -78,7 +80,7 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
                      1, β₁, α, β₁, α, 0, 1, Anorm²);
 
-  # A'b = 0 so x = 0 is a minimum least-squares solution
+  # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   α == 0.0 && return (zeros(T, n), y, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"));
   @kscal!(n, 1.0/α, v)
 
@@ -111,8 +113,8 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Generate next Golub-Kahan vectors.
     # 1. βu = Av - αu
-    @kscal!(m, -α, u)
-    @kaxpy!(m, 1.0, A * v, u)
+    Av = A * v
+    @kaxpby!(m, 1.0, Av, -α, u)
     β = @knrm2(m, u)
     β != 0.0 && @kscal!(m, 1.0/β, u)
     Anorm² = Anorm² + β * β;  # = ‖B_{k-1}‖²
@@ -136,13 +138,12 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     rNorm = abs(ζbar);
     push!(rNorms, rNorm);
 
-    @kscal!(m, -θ/ρ, w)
-    @kaxpy!(m, 1.0/ρ, wbar, w)  # w = (wbar - θ * w) / ρ;
-    @kaxpy!(m, ζ, w, y)         # y = y + ζ * w;
+    @kaxpby!(m, 1.0/ρ, wbar, -θ/ρ, w)  # w = (wbar - θ * w) / ρ;
+    @kaxpy!(m, ζ, w, y)             # y = y + ζ * w;
 
-    # 2. αv = A'u - βv
-    @kscal!(n, -β, v)
-    @kaxpy!(n, 1.0, A' * u, v)
+    # 2. αv = Aᵀu - βv
+    Aᵀu = A.tprod(u)
+    @kaxpby!(n, 1.0, Aᵀu, -β, v)
     α = @knrm2(n, v)
     Anorm² = Anorm² + α * α;  # = ‖Lₖ‖
     ArNorm = α * β * abs(ζ/ρ);
@@ -153,8 +154,7 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     if α != 0.0
       @kscal!(n, 1.0/α, v)
-      @kscal!(m, -β/α, wbar)
-      @kaxpy!(m, 1.0/α, u, wbar)  # wbar = (u - beta * wbar) / alpha;
+      @kaxpby!(m, 1.0/α, u, -β/α, wbar)  # wbar = (u - beta * wbar) / alpha;
     end
     θ = s * α;
     ρbar = -c * α;
@@ -164,7 +164,8 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     tired  = iter >= itmax
   end
 
-  x = A' * y;
+  Aᵀy = A.tprod(y)
+  @. x = Aᵀy
 
   status = tired ? "maximum number of iterations exceeded" : (solved ? "found approximate minimum-norm solution" : "found approximate minimum least-squares solution")
   stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status);
