@@ -80,6 +80,17 @@ expected_cgne_bytes = storage_cgne_bytes(n, m)
 actual_cgne_bytes = @allocated cgne(Au, c)
 @test actual_cgne_bytes ≤ 1.1 * expected_cgne_bytes
 
+# with (Ap, Aᵀq) preallocated, CRAIG needs:
+# - 2 n-vector: x, v
+# - 3 m-vectors: y, w, u
+storage_craig(n, m) = 2 * n + 3 * m
+storage_craig_bytes(n, m) = 8 * storage_craig(n, m)
+
+expected_craig_bytes = storage_craig_bytes(n, m)
+craig(Au, c)  # warmup
+actual_craig_bytes = @allocated craig(Au, c)
+@test actual_craig_bytes ≤ 1.1 * expected_craig_bytes
+
 # without preconditioner and with (Ap, Aᵀq) preallocated, CGLS needs:
 # - 2 m-vectors: x, p
 # - 1 n-vector: r
