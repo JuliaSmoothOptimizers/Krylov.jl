@@ -62,6 +62,16 @@ cr(A, b)  # warmup
 actual_cr_bytes = @allocated cr(A, b)
 @test actual_cr_bytes ≤ 1.1 * expected_cr_bytes
 
+# without preconditioner and with (Ap, Aᵀq) preallocated, CRMR needs:
+# - 2 n-vectors: x, p
+# - 1 m-vector: r
+storage_crmr(n, m) = 2 * n + m
+storage_crmr_bytes(n, m) = 8 * storage_crmr(n, m)
+expected_crmr_bytes = storage_crmr_bytes(n, m)
+(x, stats) = crmr(Au, c)  # warmup
+actual_crmr_bytes = @allocated crmr(Au, c)
+@test actual_crmr_bytes ≤ 1.1 * expected_crmr_bytes
+
 # without preconditioner and with Ap preallocated, CGS needs 5 n-vectors: x, r, u, p, q
 storage_cgs(n) = 5 * n
 storage_cgs_bytes(n) = 8 * storage_cgs(n)

@@ -10,7 +10,7 @@
 # and is equivalent to applying the conjugate residual method
 # to the linear system
 #
-#  AA'y = b.
+#  AAᵀy = b.
 #
 # This method is equivalent to Craig-MR, described in
 #
@@ -36,7 +36,7 @@ using the Conjugate Residual (CR) method, where λ ≥ 0 is a regularization
 parameter. This method is equivalent to applying CR to the normal equations
 of the second kind
 
-  (AA' + λI) y = b
+  (AAᵀ + λI) y = b
 
 but is more stable. When λ = 0, this method solves the minimum-norm problem
 
@@ -67,9 +67,9 @@ function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
   rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   λ > 0 && (s = copy(r));
-  Ar = A' * r;  # - λ * x0 if x0 ≠ 0.
-  p  = copy(Ar);
-  γ  = @kdot(n, Ar, Ar)  # Faster than γ = dot(Ar, Ar);
+  Aᵀr = A.tprod(r) # - λ * x0 if x0 ≠ 0.
+  p  = copy(Aᵀr);
+  γ  = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr);
   λ > 0 && (γ += λ * rNorm * rNorm);
   iter = 0;
   itmax == 0 && (itmax = m + n);
@@ -79,7 +79,7 @@ function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   ArNorms = [ArNorm;];
   ɛ_c = atol + rtol * rNorm;   # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm;  # Stopping tolerance for inconsistent systems.
-  verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖A'r‖", "‖r‖")
+  verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
   verbose && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm);
 
   status = "unknown";
@@ -95,12 +95,12 @@ function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p;
     @kaxpy!(m, -α, Mq, r)      # Faster than  r =  r - α * Mq;
     rNorm = @knrm2(m, r)       # norm(r);
-    Ar = A' * r;
-    γ_next = @kdot(n, Ar, Ar)  # Faster than γ_next = dot(Ar, Ar);
+    Aᵀr = A.tprod(r)
+    γ_next = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ_next = dot(Aᵀr, Aᵀr);
     λ > 0 && (γ_next += λ * rNorm * rNorm);
     β = γ_next / γ;
 
-    @kaxpby!(n, 1.0, Ar, β, p)  # Faster than  p = Ar + β * p
+    @kaxpby!(n, 1.0, Aᵀr, β, p)  # Faster than  p = Aᵀr + β * p
     if λ > 0
       @kaxpby!(m, 1.0, r, β, s) # s = r + β * s
     end
