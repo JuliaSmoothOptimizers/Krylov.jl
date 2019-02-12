@@ -8,6 +8,9 @@ b   = ones(n)
 c   = ones(m)
 mem = 10
 
+shifts  = [1:5;]
+nshifts = 5
+
 # without preconditioner and with Ap preallocated, CG needs 3 n-vectors: x, r, p
 storage_cg(n) = 3 * n
 storage_cg_bytes(n) = 8 * storage_cg(n)
@@ -31,7 +34,7 @@ diom(A, b, memory=mem)  # warmup
 actual_diom_bytes = @allocated diom(A, b, memory=mem)
 @test actual_diom_bytes ≤ 1.05 * expected_diom_bytes
 
-# with Ap preallocated, CG-Lanczos needs 4 n-vectors: x, v, v_prev, p
+# with Ap preallocated, CG_LANCZOS needs 4 n-vectors: x, v, v_prev, p
 storage_cg_lanczos(n) = 4 * n
 storage_cg_lanczos_bytes(n) = 8 * storage_cg_lanczos(n)
 
@@ -39,6 +42,19 @@ expected_cg_lanczos_bytes = storage_cg_lanczos_bytes(n)
 cg_lanczos(A, b)  # warmup
 actual_cg_lanczos_bytes = @allocated cg_lanczos(A, b)
 @test actual_cg_lanczos_bytes ≤ 1.1 * expected_cg_lanczos_bytes
+
+# with Ap preallocated, CG_LANCZOS_SHIFT_SEQ needs:
+# - 2 n-vectors: v, v_prev
+# - 2 (n*nshifts)-matrices: x, p
+# - 5 nshifts-vectors: σ, δhat, ω, γ, rNorms
+# - 2 nshifts-bitArray: indefinite, converged
+storage_cg_lanczos_shift_seq(n, nshifts) = (2 * n) + (2 * n * nshifts) + (5 * nshifts) + (2 * nshifts / 64)
+storage_cg_lanczos_shift_seq_bytes(n, nshifts) = 8 * storage_cg_lanczos_shift_seq(n, nshifts)
+
+expected_cg_lanczos_shift_seq_bytes = storage_cg_lanczos_shift_seq_bytes(n, nshifts)
+cg_lanczos_shift_seq(A, b, shifts)  # warmup
+actual_cg_lanczos_shift_seq_bytes = @allocated cg_lanczos_shift_seq(A, b, shifts)
+@test actual_cg_lanczos_shift_seq_bytes ≤ 1.1 * expected_cg_lanczos_shift_seq_bytes
 
 # without preconditioner and with Ap preallocated, DQGMRES needs:
 # - 1 n-vector: x
