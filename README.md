@@ -42,13 +42,12 @@ Given a linear operator **_A_** and a right-hand side **_b_**, solve **_Ax ≈ b
 
 ## How to Install
 
-At the Julia prompt, type
+Krylov can be installed and tested through the Julia package manager:
 
-````JULIA
-julia> Pkg.clone("https://github.com/JuliaSmoothOptimizers/Krylov.jl.git")
-julia> Pkg.build("Krylov")
+```julia
+julia> Pkg.add("Krylov")
 julia> Pkg.test("Krylov")
-````
+```
 
 ## Long-Term Goals
 
