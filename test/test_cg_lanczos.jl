@@ -1,6 +1,6 @@
 function residuals(A, b, shifts, x)
-  nshifts = size(shifts, 1);
-  r = [ (b - A * x[:,i] - shifts[i] * x[:,i]) for i = 1 : nshifts ];
+  nshifts = length(shifts)
+  r = [ (b - A * x[i] - shifts[i] * x[i]) for i = 1 : nshifts ];
   return r;
 end
 
@@ -53,7 +53,7 @@ function test_cg_lanczos()
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
   (x, stats) = cg_lanczos_shift_seq(A, zeros(size(A,1)), [1:6;])
-  @test x == zeros(size(A,1), 6)
+  @test x == [zeros(size(A,1)) for i=1:6]
   @test stats.status == "x = 0 is a zero-residual solution"
 
   # Test integer values

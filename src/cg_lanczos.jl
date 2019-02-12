@@ -118,14 +118,14 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{T
 
   # Initial state.
   ## Distribute x similarly to shifts.
-  x = zeros(Tb, n, nshifts);
+  x = [zeros(Tb, n) for i = 1 : nshifts]
   β = @knrm2(n, b)
   β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
   v = b / β;
   v_prev = copy(v);
 
   # Initialize each p to b.
-  p = b * ones(nshifts)';
+  p = [copy(b) for i = 1 : nshifts]
 
   # Initialize some constants used in recursions below.
   σ = β * ones(nshifts);
@@ -166,10 +166,10 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{T
     @kaxpy!(n, -δ, v, v_next)  # Faster than v_next = Av - δ * v;
     if iter > 0
       @kaxpy!(n, -β, v_prev, v_next)  # Faster than v_next = v_next - β * v_prev;
-      v_prev = v;
+      @. v_prev = v;
     end
     β = @knrm2(n, v_next)
-    v = v_next / β;
+    @. v = v_next / β;
 
     # Check curvature: v'(A + sᵢI)v = v'Av + sᵢ ‖v‖² = δ + sᵢ because ‖v‖ = 1.
     # It is possible to show that σⱼ² (δⱼ + sᵢ - ωⱼ₋₁ / γⱼ₋₁) = pⱼᵀ (A + sᵢ I) pⱼ.
@@ -183,14 +183,12 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{T
     # Stop iterating on indefinite problems if requested.
     not_cv = check_curvature ? findall(.! (converged .| indefinite)) : findall(.! converged);
 
-    # Loop is a bit faster than the vectorized version.
     for i in not_cv
-      x[:, i] += γ[i] * p[:, i];  # Strangely, this is faster than a loop.
-
+      @kaxpy!(n, γ[i], p[i], x[i])
       ω[i] = β * γ[i];
       σ[i] *= -ω[i];
       ω[i] *= ω[i];
-      p[:, i] = v * σ[i] + p[:, i] * ω[i];  # Faster than loop.
+      @kaxpby!(n, σ[i], v, ω[i], p[i])
 
       # Update list of systems that have converged.
       rNorms[i] = abs(σ[i]);
