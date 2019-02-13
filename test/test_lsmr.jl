@@ -49,6 +49,16 @@ function test_lsmr()
   A, b = over_int()
   (x, stats) = lsmr(A, b)
   @test stats.solved
+
+  # Test with preconditioners
+  A, b, M, N = two_preconditioners()
+  (x, stats) = lsmr(A, b, M=M, N=N)
+  show(stats)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("LSMR: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ lsmr_tol)
+  @test(stats.solved)
 end
 
 test_lsmr()
