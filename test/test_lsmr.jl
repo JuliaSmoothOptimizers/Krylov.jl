@@ -55,7 +55,7 @@ function test_lsmr()
   (x, stats) = lsmr(A, b, M=M, N=N)
   show(stats)
   r = b - A * x
-  resid = norm(r) / norm(b)
+  resid = sqrt(dot(r, M * r)) / norm(b)
   @printf("LSMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lsmr_tol)
   @test(stats.solved)

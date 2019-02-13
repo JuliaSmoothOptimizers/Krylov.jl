@@ -52,7 +52,7 @@ function test_lslq()
   (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, M=M, N=N)
   show(stats)
   r = b - A * x_lq
-  resid = norm(r) / norm(b)
+  resid = sqrt(dot(r, M * r)) / norm(b)
   @printf("LSLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lslq_tol)
   @test(stats.solved)

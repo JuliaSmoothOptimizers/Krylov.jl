@@ -93,8 +93,9 @@ function test_craigmr()
   (x, y, stats) = craigmr(A, b, M=M, N=N)
   show(stats)
   r = b - A * x
-  resid = norm(r) / norm(b)
+  resid = sqrt(dot(r, M * r)) / norm(b)
   @printf("CRAIGMR: Relative residual: %8.1e\n", resid)
+  @test(norm(x - N * A' * y) ≤ craigmr_tol * norm(x))
   @test(resid ≤ craigmr_tol)
   @test(stats.solved)
 end

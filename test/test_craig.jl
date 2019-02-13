@@ -88,8 +88,9 @@ function test_craig()
   (x, y, stats) = craig(A, b, M=M, N=N)
   show(stats)
   r = b - A * x
-  resid = norm(r) / norm(b)
+  resid = sqrt(dot(r, M * r)) / norm(b)
   @printf("CRAIG: Relative residual: %8.1e\n", resid)
+  @test(norm(x - N * A' * y) ≤ craig_tol * norm(x))
   @test(resid ≤ craig_tol)
   @test(stats.solved)
 end
