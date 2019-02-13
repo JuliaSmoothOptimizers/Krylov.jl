@@ -50,6 +50,7 @@ multipliers of the least-norm problem
 In this implementation, both the x and y-parts of the solution are returned.
 """
 function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
+<<<<<<< HEAD
                λ :: Float64=0.0,
                atol :: Float64=1.0e-8, btol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
                conlim :: Float64=1.0e+8, itmax :: Int=0,
@@ -59,9 +60,16 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("CRAIG: system of %d equations in %d variables\n", m, n)
 
+  # Tests M == Iₘ and N == Iₙ
+  MisI = isa(M, opEye)
+  NisI = isa(N, opEye)
+
   x = zeros(T, n)
-  β₁ = @knrm2(m, b)   # Marginally faster than norm(b)
-  β₁ == 0 && return x, zeros(m), SimpleStats(true, false, [0.0], T[], "x = 0 is a zero-residual solution")
+  y = zeros(T, m)
+  Mu = copy(b)
+  u = M * Mu
+  β₁ = sqrt(@kdot(m, u, Mu))
+  β₁ == 0 && return x, y, SimpleStats(true, false, [0.0], T[], "x = 0 is a zero-residual solution")
   β₁² = β₁^2
   β = β₁
   θ = β₁    # θ will differ from β when there is regularization (λ > 0).
@@ -69,14 +77,14 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   δ = λ
   ρ_prev = 1.0
 
-  # β₁ u₁ = b.
-  u = copy(b)
+  # Initialize Golub-Kahan process.
+  # β₁Mu₁ = b.
   @kscal!(m, 1.0/β₁, u)
+  MisI || @kscal!(m, 1.0/β₁, Mu)
 
-  v = zeros(T, n)
+  Nv = zeros(T, n)
   w = zeros(T, m)  # Used to update y.
 
-  y = zeros(T, m)
   λ > 0.0 && (w2 = zeros(T, n))
 
   Anorm² = 0.0   # Estimate of ‖A‖²_F.
@@ -114,15 +122,17 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   while ! (solved || inconsistent || ill_cond || tired)
     # Generate the next Golub-Kahan vectors
-    # 1. αv = Aᵀu - βv
+    # 1. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
     Aᵀu = A.tprod(u)
-    @kaxpby!(n, 1.0, Aᵀu, -β, v)
-    α = @knrm2(n, v)
+    @kaxpby!(n, 1.0, Aᵀu, -β, Nv)
+    v = N * Nv
+    α = sqrt(@kdot(n, v, Nv))
     if α == 0.0
       inconsistent = true
       continue
     end
     @kscal!(n, 1.0/α, v)
+    NisI || @kscal!(n, 1.0/α, Nv)
 
     Anorm² += α * α + λ * λ
 
@@ -155,11 +165,15 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     Dnorm² += @knrm2(m, w)
 
-    # 2. βu = Av - αu
+    # 2. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     Av = A * v
-    @kaxpby!(m, 1.0, Av, -α, u)
-    β = @knrm2(m, u)
-    β > 0.0 && @kscal!(m, 1.0/β, u)
+    @kaxpby!(m, 1.0, Av, -α, Mu)
+    u = M * Mu
+    β = sqrt(@kdot(m, u, Mu))
+    if β ≠ 0.0
+      @kscal!(m, 1.0/β, u)
+      MisI || @kscal!(m, 1.0/β, Mu)
+    end
 
     # Finish  updates from the first Givens rotation.
     if λ > 0.0

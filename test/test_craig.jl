@@ -82,6 +82,16 @@ function test_craig()
   A, b = over_int()
   (x, y, stats) = craig(A, b)
   @test stats.solved
+
+  # Test with preconditioners
+  A, b, M, N = two_preconditioners()
+  (x, y, stats) = craig(A, b, M=M, N=N)
+  show(stats)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("CRAIG: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ craig_tol)
+  @test(stats.solved)
 end
 
 test_craig()

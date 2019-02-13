@@ -119,8 +119,19 @@ end
 function square_preconditioned(n :: Int=10)
   A = ones(n, n) + (n-1) * I
   b = n * [1:n;]
-  M = 1/n * opEye(n)
+  O = zeros(n, n)
+  M = PreallocatedLinearOperator(1/n * (O + I))
   return A, b, M
+end
+
+# Square problems with two preconditioners.
+function two_preconditioners(n :: Int=10, m :: Int=20)
+  A = ones(n, n) + (n-1) * I
+  b = ones(n)
+  O = zeros(n, n)
+  M = PreallocatedLinearOperator(1/√n * (O + I))
+  N = PreallocatedLinearOperator(1/√m * (O + I))
+  return A, b, M, N
 end
 
 # Random Ax = b with b == 0.
