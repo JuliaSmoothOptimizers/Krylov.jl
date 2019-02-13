@@ -87,6 +87,16 @@ function test_craigmr()
   A, b = over_int()
   (x, y, stats) = craigmr(A, b)
   @test stats.solved
+
+  # Test with preconditioners
+  A, b, M, N = two_preconditioners()
+  (x, y, stats) = craigmr(A, b, M=M, N=N)
+  show(stats)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("CRAIGMR: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ craigmr_tol)
+  @test(stats.solved)
 end
 
 test_craigmr()
