@@ -55,7 +55,7 @@ function test_lsqr()
   (x, stats) = lsqr(A, b, M=M, N=N)
   show(stats)
   r = b - A * x
-  resid = norm(r) / norm(b)
+  resid = sqrt(dot(r, M * r)) / norm(b)
   @printf("LSQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lsqr_tol)
   @test(stats.solved)
