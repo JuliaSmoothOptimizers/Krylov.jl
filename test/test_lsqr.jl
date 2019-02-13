@@ -49,6 +49,16 @@ function test_lsqr()
   A, b = over_int()
   (x, stats) = lsqr(A, b)
   @test stats.solved
+
+  # Test with preconditioners
+  A, b, M, N = two_preconditioners()
+  (x, stats) = lsqr(A, b, M=M, N=N)
+  show(stats)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("LSQR: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ lsqr_tol)
+  @test(stats.solved)
 end
 
 test_lsqr()

@@ -46,6 +46,16 @@ function test_lslq()
   A, b = over_int()
   (x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b)
   @test stats.solved
+
+  # Test with preconditioners
+  A, b, M, N = two_preconditioners()
+  (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, M=M, N=N)
+  show(stats)
+  r = b - A * x_lq
+  resid = norm(r) / norm(b)
+  @printf("LSLQ: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ lslq_tol)
+  @test(stats.solved)
 end
 
 test_lslq()
