@@ -18,8 +18,12 @@ symmetric linear system
   Ax = b
 
 The method does _not_ abort if A is not definite.
+
+A preconditioner M may be provided in the form of a linear operator and is
+assumed to be symmetric and positive definite.
 """
 function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
+                    M :: AbstractLinearOperator=opEye(),
                     atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
                     check_curvature :: Bool=false, verbose :: Bool=false) where T <: Number
 
@@ -27,13 +31,23 @@ function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
   verbose && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n);
 
+  # Tests M == Iₙ
+  MisI = isa(M, opEye)
+
   # Initial state.
   x = zeros(T, n);
-  β = @knrm2(n, b)
+  Mv = copy(b)
+  v = M * Mv
+  β = sqrt(@kdot(n, v, Mv))
   β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
-  v = b / β;
-  v_prev = copy(v);
-  p = copy(b);
+  p = copy(v)
+
+  # Initialize Lanczos process.
+  # β₁Mv₁ = b
+  @kscal!(n, 1.0/β, v)
+  MisI || @kscal!(n, 1.0/β, Mv)
+  Mv_prev = copy(Mv)
+
   iter = 0;
   itmax == 0 && (itmax = 2 * n);
 
@@ -58,33 +72,36 @@ function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # Main loop.
   while ! (solved || tired || (check_curvature & indefinite))
     # Form next Lanczos vector.
-    v_next = A * v;
-    δ = @kdot(n, v, v_next);  # BLAS.dot(n, v, 1, v_next, 1) doesn't seem to pay off.
+    # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
+    Mv_next = A * v # Mv_next = AVₖ
+    δ = @kdot(n, v, Mv_next) # δₖ = vₖᵀAvₖ
 
     # Check curvature. Exit fast if requested.
-    # It is possible to show that σⱼ² (δⱼ - ωⱼ₋₁ / γⱼ₋₁) = pⱼᵀ A pⱼ.
+    # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ A pₖ.
     γ = 1 / (δ - ω / γ);
     indefinite |= (γ <= 0.0);
     (check_curvature & indefinite) && continue;
 
-    @kaxpy!(n, -δ, v, v_next)  # Faster than v_next = Av - δ * v;
+    @kaxpy!(n, -δ, Mv, Mv_next) # Mv_next = Avₖ - δₖMvₖ
     if iter > 0
-      @kaxpy!(n, -β, v_prev, v_next)  # Faster than v_next = v_next - β * v_prev;
-      @. v_prev .= v
+      @kaxpy!(n, -β, Mv_prev, Mv_next) # Mv_next = Avₖ - δₖMvₖ - βₖMvₖ₋₁
+      @. Mv_prev = Mv
     end
-    β = @knrm2(n, v_next)
-    @. v .= v_next / β
+    @. Mv = Mv_next
+    v = M * Mv
+    β = sqrt(@kdot(n, v, Mv))
+    @kscal!(n, 1.0/β, v)
+    MisI || @kscal!(n, 1.0/β, Mv)
     Anorm2 += β_prev^2 + β^2 + δ^2;  # Use ‖T‖ as increasing approximation of ‖A‖.
     β_prev = β;
 
     # Compute next CG iterate.
-    @kaxpy!(n, γ, p, x)  # Faster than x = x + γ * p;
+    @kaxpy!(n, γ, p, x)  # xₖ = xₖ + γₖ * pₖ
 
     ω = β * γ;
     σ = -ω * σ;
     ω = ω * ω;
-    @kscal!(n, ω, p)
-    @kaxpy!(n, σ, v, p)  # Faster than p = σ * v + ω * p;
+    @kaxpby!(n, σ, v, ω, p) # pₖ = σₖ * vₖ + ωₖ * pₖ
     rNorm = abs(σ);
     push!(rNorms, rNorm);
     iter = iter + 1;
