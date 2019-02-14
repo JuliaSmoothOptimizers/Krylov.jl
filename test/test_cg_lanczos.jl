@@ -60,6 +60,16 @@ function test_cg_lanczos()
   A, b = square_int()
   (x, stats) = cg_lanczos(A, b)
   @test stats.solved
+
+  # Test with Jacobi (or diagonal) preconditioner
+  A, b, M = square_preconditioned()
+  (x, stats) = cg_lanczos(A, b, M=M)
+  show(stats)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("CG_Lanczos: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ cg_tol)
+  @test(stats.solved)
 end
 
 test_cg_lanczos()
