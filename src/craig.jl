@@ -47,6 +47,15 @@ multipliers of the least-norm problem
 
   minimize ‖x‖  subject to Ax = b.
 
+Preconditioners M⁻¹ and N⁻¹ may be provided in the form of linear operators and are
+assumed to be symmetric and positive definite.
+Afterward CRAIG solves the symmetric and quasi-definite system
+
+  [ -N   Aᵀ ] [ x ]   [ 0 ]
+  [  A   M  ] [ y ] = [ b ],
+
+which is equivalent to applying CG to (M + AN⁻¹Aᵀ)y = b.
+
 In this implementation, both the x and y-parts of the solution are returned.
 """
 function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
