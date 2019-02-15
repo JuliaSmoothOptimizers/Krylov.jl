@@ -46,6 +46,15 @@ When λ > 0, this method solves the problem
 
   min ‖(x,s)‖₂  s.t. Ax + √λs = b.
 
+Preconditioners M⁻¹ and N⁻¹ may be provided in the form of linear operators and are
+assumed to be symmetric and positive definite.
+Afterward CRAIGMR solves the symmetric and quasi-definite system
+
+  [ -N   Aᵀ ] [ x ]   [ 0 ]
+  [  A   M  ] [ y ] = [ b ],
+
+which is equivalent to applying MINRES to (M + AN⁻¹Aᵀ)y = b.
+
 CRAIGMR produces monotonic residuals ‖r‖₂.
 It is formally equivalent to CRMR, though can be slightly more accurate,
 and intricate to implement. Both the x- and y-parts of the solution are
