@@ -5,7 +5,7 @@
 #
 # equivalently, of the normal equations
 #
-#  A'Ax = A'b.
+#  AᵀAx = Aᵀb.
 #
 # LSMR is formally equivalent to applying MINRES to the normal equations
 # but should be more stable. It is also formally equivalent to CRLS though
@@ -32,18 +32,18 @@ export lsmr
 using the LSMR method, where λ ≥ 0 is a regularization parameter.
 LSQR is formally equivalent to applying MINRES to the normal equations
 
-  (A'A + λ² I) x = A'b
+  (AᵀA + λ² I) x = Aᵀb
 
 (and therefore to CRLS) but is more stable.
 
-LSMR produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r‖₂.
-rt is formally equivalent to CRLS, though can be slightly more accurate.
+LSMR produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr‖₂.
+It is formally equivalent to CRLS, though can be slightly more accurate.
 
 Preconditioners M and N may be provided in the form of linear operators and are
 assumed to be symmetric and positive definite. If `sqd` is set to `true`,
 we solve the symmetric and quasi-definite system
 
-  [ E   A' ] [ r ]   [ b ]
+  [ E   Aᵀ ] [ r ]   [ b ]
   [ A  -F  ] [ x ] = [ 0 ],
 
 where E = M⁻¹  and F = N⁻¹.
@@ -51,7 +51,7 @@ where E = M⁻¹  and F = N⁻¹.
 If `sqd` is set to `false` (the default), we solve the symmetric and
 indefinite system
 
-  [ E   A' ] [ r ]   [ b ]
+  [ E   Aᵀ ] [ r ]   [ b ]
   [ A   0  ] [ x ] = [ 0 ].
 
 In this case, `N` can still be specified and indicates the norm
@@ -90,7 +90,8 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   @kscal!(m, 1.0/β₁, u)
   MisI || @kscal!(m, 1.0/β₁, Mu)
-  Nv = copy(A' * u)
+  Aᵀu = A.tprod(u)
+  Nv = copy(Aᵀu)
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))
 
@@ -127,11 +128,11 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   err_vec = zeros(T, window)
 
   verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n",
-                     "Aprod", "‖r‖", "‖A'r‖", "β", "α", "cos", "sin", "‖A‖²")
+                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
   verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
                      1, β₁, α, β₁, α, 0, 1, Anorm²)
 
-  # A'b = 0 so x = 0 is a minimum least-squares solution
+  # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
   @kscal!(n, 1.0/α, v)
   NisI || @kscal!(n, 1.0/α, Nv)
@@ -154,18 +155,18 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     iter = iter + 1
 
     # Generate next Golub-Kahan vectors.
-    # 1. βu = Av - αu
-    @kscal!(m, -α, Mu)
-    @kaxpy!(m, 1.0, A * v, Mu)
+    # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
+    Av = A * v
+    @kaxpby!(m, 1.0, Av, -α, Mu)
     u = M * Mu
     β = sqrt(@kdot(m, u, Mu))
     if β != 0.0
       @kscal!(m, 1.0/β, u)
       MisI || @kscal!(m, 1.0/β, Mu)
 
-      # 2. αv = A'u - βv
-      @kscal!(n, -β, Nv)
-      @kaxpy!(n, 1.0, A' * u, Nv)
+      # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
+      Aᵀu = A.tprod(u)
+      @kaxpby!(n, 1.0, Aᵀu, -β, Nv)
       v = N * Nv
       α = sqrt(@kdot(n, v, Nv))
       if α != 0.0
@@ -194,8 +195,9 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     err_vec[mod(iter, window) + 1] = ζ
     iter >= window && (err_lbnd = @knrm2(window, err_vec))
 
-    # Update h, h_har, x.
-    hbar = h - (θbar * ρ / (ρold * ρbarold)) * hbar
+    # Update h, hbar and x.
+    δ = θbar * ρ / (ρold * ρbarold) # δₖ = θbarₖ * ρₖ / (ρₖ₋₁ * ρbarₖ₋₁)
+    @kaxpby!(n, 1.0, h, -δ, hbar)   # ĥₖ = hₖ - δₖ * ĥₖ₋₁
 
     # if a trust-region constraint is given, compute step to the boundary
     # the step ϕ/ρ is not necessarily positive
@@ -207,8 +209,8 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
       σ = σ > 0 ? min(σ, tmax) : max(σ, tmin)
     end
 
-    x = x + σ * hbar
-    h = v - (θnew / ρ) * h
+    @kaxpy!(n, σ, hbar, x) # xₖ = xₖ₋₁ + σₖ * ĥₖ
+    @kaxpby!(n, 1.0, v, -θnew / ρ, h) # hₖ₊₁ = vₖ₊₁ - (θₖ₊₁/ρₖ) * hₖ
 
     # Estimate ‖r‖.
     βacute =  chat * βdd
