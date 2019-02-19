@@ -33,7 +33,7 @@ applying MINRES to the normal equations
 This implementation recurs the residual r := b - Ax.
 
 CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r‖₂.
-It is formally equivalent to LSMR, though can be slightly less accurate,
+It is formally equivalent to LSMR, though can be substantially less accurate,
 but simpler to implement.
 """
 function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
