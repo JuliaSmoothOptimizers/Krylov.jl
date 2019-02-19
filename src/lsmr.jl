@@ -37,7 +37,7 @@ LSQR is formally equivalent to applying MINRES to the normal equations
 (and therefore to CRLS) but is more stable.
 
 LSMR produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr‖₂.
-It is formally equivalent to CRLS, though can be slightly more accurate.
+It is formally equivalent to CRLS, though can be substantially more accurate.
 
 Preconditioners M and N may be provided in the form of linear operators and are
 assumed to be symmetric and positive definite. If `sqd` is set to `true`,
