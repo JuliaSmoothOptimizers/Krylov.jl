@@ -138,6 +138,16 @@ expected_cgls_bytes = storage_cgls_bytes(n, m)
 actual_cgls_bytes = @allocated cgls(Ao, b)
 @test actual_cgls_bytes ≤ 1.1 * expected_cgls_bytes
 
+# without preconditioner and with (Ap, Aᵀq) preallocated, LSQR needs:
+# - 3 m-vectors: x, v, w
+# - 1 n-vector: u
+storage_lsqr(n, m) = 3 * m + n
+storage_lsqr_bytes(n, m) = 8 * storage_lsqr(n, m)
+expected_lsqr_bytes = storage_lsqr_bytes(n, m)
+(x, stats) = lsqr(Ao, b)  # warmup
+actual_lsqr_bytes = @allocated lsqr(Ao, b)
+@test actual_lsqr_bytes ≤ 1.1 * expected_lsqr_bytes
+
 # without preconditioner and with (Ap, Aᵀq) preallocated, LSMR needs:
 # - 4 m-vectors: x, v, h, hbar
 # - 1 n-vector: u
