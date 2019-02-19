@@ -1,16 +1,23 @@
 using BenchmarkTools
-
-using LinearAlgebra
-
 import IterativeSolvers
-# import KrylovMethods
-using Krylov
-using LinearOperators
+import KrylovKit
+import KrylovMethods
 using MatrixMarket
 
+using LinearAlgebra
+using Printf
+using SparseArrays
+
+using Krylov
+using LinearOperators
+using SuiteSparseMatrixCollection
+
 include("../test/get_div_grad.jl")
-include("../test/test_utils.jl")
-include("fetch_matrices.jl")
+
+# ufl_posdef = filter(p -> p.structure == "symmetric" && p.posDef == "yes" && p.type == "real" && p.rows ≤ 2_000, ssmc)
+ufl_posdef = filter(p -> p.structure == "symmetric" && p.posDef == "yes" && p.type == "real" && p.rows ≤ 100, ssmc)
+
+# fetch_ssmc(ufl_posdef, format="MM")
 
 const SUITE = BenchmarkGroup()
 
@@ -21,55 +28,30 @@ for N in [32, 64, 128]
   A = get_div_grad(N, N, N)
   n = size(A, 1)
   b = ones(n)
-  op = preallocated_LinearOperator(A)
-  M = nonallocating_opEye(n)
+  op = PreallocatedLinearOperator(A)
+  M = opEye()
   rtol = 1.0e-6
   SUITE["CG"]["DivGrad N=$N"]["Krylov"] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
-  # SUITE["CG"]["DivGrad N=$N"]["KrylovMethods"] = @benchmarkable ($KrylovMethods.cg)($A, $b, tol=$rtol, maxIter=$n)
+  SUITE["CG"]["DivGrad N=$N"]["KrylovMethods"] = @benchmarkable ($KrylovMethods.cg)($A, $b, tol=$rtol, maxIter=$n)
   SUITE["CG"]["DivGrad N=$N"]["IterativeSolvers"] = @benchmarkable ($IterativeSolvers.cg)($A, $b, tol=$rtol, maxiter=$n)
+  SUITE["CG"]["DivGrad N=$N"]["KrylovKit"] = @benchmarkable ($KrylovKit.linsolve)($A, $b, atol=0.0, rtol=$rtol, isposdef=true, krylovdim=$n, maxiter=1)
 end
 
-SUITE["CG"]["UFL-small"] = BenchmarkGroup()
-for matrix in spd_small
-  name = basename(matrix)
-  A = MatrixMarket.mmread(joinpath(matrix_path, "..", "data", "uf", matrix, "$(name).mtx"))
+SUITE["CG"]["UFL"] = BenchmarkGroup()
+for matrix in ufl_posdef
+  name = matrix.name
+  A = MatrixMarket.mmread(joinpath(matrix_path(matrix, format="MM"), "$(name).mtx"))
+  if eltype(A) <: Integer
+    A = convert(SparseMatrixCSC{Float64,Int}, A)
+  end
   n = size(A, 1)
-  b = ones(n)
-  op = preallocated_LinearOperator(A)
-  M = nonallocating_opEye(n)
+  b = ones(eltype(A), n)
+  op = PreallocatedLinearOperator(A)
+  M = opEye()
   rtol = 1.0e-6
-  SUITE["CG"]["UFL-small"][matrix] = BenchmarkGroup()
-  SUITE["CG"]["UFL-small"][matrix]["Krylov"] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
-  # SUITE["CG"]["UFL-small"][matrix]["KrylovMethods"] = @benchmarkable ($KrylovMethods.cg)($A, $b, tol=$rtol, maxIter=$n)
-  SUITE["CG"]["UFL-small"][matrix]["IterativeSolvers"] = @benchmarkable ($IterativeSolvers.cg)($A, $b, tol=$rtol, maxiter=$n)
-end
-
-SUITE["CG"]["UFL-medium"] = BenchmarkGroup()
-for matrix in spd_med
-  name = basename(matrix)
-  A = MatrixMarket.mmread(joinpath(matrix_path, "..", "data", "uf", matrix, "$(name).mtx"))
-  n = size(A, 1)
-  b = ones(n)
-  op = preallocated_LinearOperator(A)
-  M = nonallocating_opEye(n)
-  rtol = 1.0e-6
-  SUITE["CG"]["UFL-medium"][matrix] = BenchmarkGroup()
-  SUITE["CG"]["UFL-medium"][matrix]["Krylov"] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
-  # SUITE["CG"]["UFL-medium"][matrix]["KrylovMethods"] = @benchmarkable ($KrylovMethods.cg)($A, $b, tol=$rtol, maxIter=$n)
-  SUITE["CG"]["UFL-medium"][matrix]["IterativeSolvers"] = @benchmarkable ($IterativeSolvers.cg)($A, $b, tol=$rtol, maxiter=$n)
-end
-
-SUITE["CG"]["UFL-large"] = BenchmarkGroup()
-for matrix in spd_large
-  name = basename(matrix)
-  A = MatrixMarket.mmread(joinpath(matrix_path, "..", "data", "uf", matrix, "$(name).mtx"))
-  n = size(A, 1)
-  b = ones(n)
-  op = preallocated_LinearOperator(A)
-  M = nonallocating_opEye(n)
-  rtol = 1.0e-6
-  SUITE["CG"]["UFL-large"][matrix] = BenchmarkGroup()
-  SUITE["CG"]["UFL-large"][matrix]["Krylov"] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
-  # SUITE["CG"]["UFL-large"][matrix]["KrylovMethods"] = @benchmarkable ($KrylovMethods.cg)($A, $b, tol=$rtol, maxIter=$n)
-  SUITE["CG"]["UFL-large"][matrix]["IterativeSolvers"] = @benchmarkable ($IterativeSolvers.cg)($A, $b, tol=$rtol, maxiter=$n)
+  SUITE["CG"]["UFL"][name] = BenchmarkGroup()
+  SUITE["CG"]["UFL"][name]["Krylov"] = @benchmarkable cg($op, $b, M=$M, atol=0.0, rtol=$rtol, itmax=$n)
+  SUITE["CG"]["UFL"][name]["KrylovMethods"] = @benchmarkable ($KrylovMethods.cg)($A, $b, tol=$rtol, maxIter=$n)
+  SUITE["CG"]["UFL"][name]["IterativeSolvers"] = @benchmarkable ($IterativeSolvers.cg)($A, $b, tol=$rtol, maxiter=$n)
+  SUITE["CG"]["UFL"][name]["KrylovKit"] = @benchmarkable ($KrylovKit.linsolve)($A, $b, atol=0.0, rtol=$rtol, isposdef=true, krylovdim=$n, maxiter=1)
 end
