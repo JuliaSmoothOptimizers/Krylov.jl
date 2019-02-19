@@ -1,11 +1,11 @@
 # An implementation of LSQR for the solution of the
 # over-determined linear least-squares problem
 #
-#  minimize ‖Ax - b‖
+#  minimize ‖Ax - b‖₂
 #
 # equivalently, of the normal equations
 #
-#  A'Ax = A'b.
+#  AᵀAx = Aᵀb.
 #
 # LSQR is formally equivalent to applying the conjugate gradient method
 # to the normal equations but should be more stable. It is also formally
@@ -32,18 +32,18 @@ export lsqr
 using the LSQR method, where λ ≥ 0 is a regularization parameter.
 LSQR is formally equivalent to applying CG to the normal equations
 
-  (A'A + λ² I) x = A'b
+  (AᵀA + λ² I) x = Aᵀb
 
 (and therefore to CGLS) but is more stable.
 
-LSQR produces monotonic residuals ‖r‖₂ but not optimality residuals ‖A'r‖₂.
+LSQR produces monotonic residuals ‖r‖₂ but not optimality residuals ‖Aᵀr‖₂.
 It is formally equivalent to CGLS, though can be slightly more accurate.
 
 Preconditioners M and N may be provided in the form of linear operators and are
 assumed to be symmetric and positive definite. If `sqd` is set to `true`,
 we solve the symmetric and quasi-definite system
 
-  [ E   A' ] [ r ]   [ b ]
+  [ E   Aᵀ ] [ r ]   [ b ]
   [ A  -F  ] [ x ] = [ 0 ],
 
 where E = M⁻¹  and F = N⁻¹.
@@ -51,7 +51,7 @@ where E = M⁻¹  and F = N⁻¹.
 If `sqd` is set to `false` (the default), we solve the symmetric and
 indefinite system
 
-  [ E   A' ] [ r ]   [ b ]
+  [ E   Aᵀ ] [ r ]   [ b ]
   [ A   0  ] [ x ] = [ 0 ].
 
 In this case, `N` can still be specified and indicates the norm
@@ -91,7 +91,8 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   @kscal!(m, 1.0/β₁, u)
   MisI || @kscal!(m, 1.0/β₁, Mu)
-  Nv = copy(A' * u)
+  Aᵀu = A.tprod(u)
+  Nv = copy(Aᵀu)
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))
   Anorm² = α * α
@@ -100,7 +101,6 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   xNorm  = 0.0
   xNorm² = 0.0
   dNorm² = 0.0
-  var = zeros(T, n)
   c2 = -1.0
   s2 =  0.0
   z  =  0.0
@@ -110,11 +110,11 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   err_vec = zeros(T, window)
 
   verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n",
-                     "Aprod", "‖r‖", "‖A'r‖", "β", "α", "cos", "sin", "‖A‖²")
+                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
   verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
                      1, β₁, α, β₁, α, 0, 1, Anorm²)
 
-  # A'b = 0 so x = 0 is a minimum least-squares solution
+  # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
   @kscal!(n, 1.0/α, v)
   NisI || @kscal!(n, 1.0/α, Nv)
@@ -151,9 +151,9 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     iter = iter + 1
 
     # Generate next Golub-Kahan vectors.
-    # 1. βu = Av - αu
-    @kscal!(m, -α, Mu)
-    @kaxpy!(m, 1.0, A * v, Mu)
+    # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
+    Av = A * v
+    @kaxpby!(m, 1.0, Av, -α, Mu)
     u = M * Mu
     β = sqrt(@kdot(m, u, Mu))
     if β != 0.0
@@ -162,9 +162,9 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
       Anorm² = Anorm² + α * α + β * β;  # = ‖B_{k-1}‖²
       λ > 0.0 && (Anorm² += λ²)
 
-      # 2. αv = A'u - βv
-      @kscal!(n, -β, Nv)
-      @kaxpy!(n, 1.0, A' * u, Nv)
+      # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
+      Aᵀu = A.tprod(u)
+      @kaxpby!(n, 1.0, Aᵀu, -β, Nv)
       v = N * Nv
       α = sqrt(@kdot(n, v, Nv))
       if α != 0.0
@@ -202,10 +202,7 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     τ = s * ϕ;
     θ = s * α
     ρbar = -c * α
-
-    d =  w / ρ;  # TODO: Use BLAS call.
-    dNorm² += @kdot(n, d, d)
-    var += d .* d
+    dNorm² += @kdot(n, w, w) / ρ^2
 
     # if a trust-region constraint is give, compute step to the boundary
     # the step ϕ/ρ is not necessarily positive
@@ -218,8 +215,7 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     end
 
     @kaxpy!(n,  σ, w, x)  # x = x + ϕ / ρ * w
-    @kscal!(n, -θ/ρ, w)
-    @kaxpy!(n,  1.0, v, w)  # w = v - θ / ρ * w
+    @kaxpby!(n, 1.0, v, -θ/ρ, w)  # w = v - θ / ρ * w
 
     # Use a plane rotation on the right to eliminate the super-diagonal
     # element (θ) of the upper-bidiagonal matrix.
