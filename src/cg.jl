@@ -79,8 +79,7 @@ function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
       β = γ_next / γ;
       γ = γ_next;
 
-      @kscal!(n, β, p)
-      @kaxpy!(n, one(T), z, p)
+      @kaxpby!(n, one(T), z, β, p)
     end
 
     iter = iter + 1;
