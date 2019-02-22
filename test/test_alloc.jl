@@ -128,6 +128,16 @@ craig(Au, c)  # warmup
 actual_craig_bytes = @allocated craig(Au, c)
 @test actual_craig_bytes ≤ 1.1 * expected_craig_bytes
 
+# without preconditioner and with (Ap, Aᵀq) preallocated, LSLQ needs:
+# - 5 m-vectors: x_lq, x_cg, v, w, w̄
+# - 1 n-vector: u
+storage_lslq(n, m) = 5 * m + n
+storage_lslq_bytes(n, m) = 8 * storage_lslq(n, m)
+expected_lslq_bytes = storage_lslq_bytes(n, m)
+(x, stats) = lslq(Ao, b)  # warmup
+actual_lslq_bytes = @allocated lslq(Ao, b)
+@test actual_lslq_bytes ≤ 1.1 * expected_lslq_bytes
+
 # without preconditioner and with (Ap, Aᵀq) preallocated, CGLS needs:
 # - 2 m-vectors: x, p
 # - 1 n-vector: r
