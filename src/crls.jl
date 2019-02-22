@@ -1,11 +1,11 @@
 # An implementation of CRLS for the solution of the
 # over-determined linear least-squares problem
 #
-#  minimize ‖Ax - b‖
+#  minimize ‖Ax - b‖₂
 #
 # equivalently, of the linear system
 #
-#  A'Ax = A'b.
+#  AᵀAx = Aᵀb.
 #
 # This implementation follows the formulation given in
 #
@@ -28,11 +28,11 @@ export crls
 using the Conjugate Residuals (CR) method. This method is equivalent to
 applying MINRES to the normal equations
 
-  (A'A + λI) x = A'b.
+  (AᵀA + λI) x = Aᵀb.
 
 This implementation recurs the residual r := b - Ax.
 
-CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r‖₂.
+CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr‖₂.
 It is formally equivalent to LSMR, though can be substantially less accurate,
 but simpler to implement.
 """
@@ -49,19 +49,15 @@ function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
   r  = copy(b)
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
+
   Mr = M * r;
-
-  # The following vector copy takes care of the case where A is a LinearOperator
-  # with preallocation, so as to avoid overwriting vectors used later. In other
-  # cases, this should only add minimum overhead.
-  Ar = copy(A' * Mr);  # - λ * x0 if x0 ≠ 0.
-
+  Ar = copy(A.tprod(Mr))  # - λ * x0 if x0 ≠ 0.
   s  = A * Ar;
   Ms = M * s;
 
   p  = copy(Ar);
   Ap = copy(s);
-  q  = A' * Ms;  # Ap;
+  q  = A.tprod(Ms) # Ap;
   λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p;
   γ  = @kdot(m, s, Ms)  # Faster than γ = dot(s, Ms);
   iter = 0;
@@ -73,7 +69,7 @@ function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
   rNorms = [rNorm;];
   ArNorms = [ArNorm;];
   ε = atol + rtol * ArNorm;
-  verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖A'r‖", "‖r‖")
+  verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
   verbose && @printf("%5d  %8.2e  %8.2e\n", 3, ArNorm, rNorm);
 
   status = "unknown";
@@ -94,7 +90,7 @@ function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
         psd = true # det(AᵀA) = 0
         p = Ar # p = Aᵀr
         pNorm² = ArNorm * ArNorm
-        q = A' * s
+        q = A.tprod(s)
         α = min(ArNorm^2 / γ, maximum(to_boundary(x, p, radius, flip = false, dNorm2 = pNorm²))) # the quadratic is minimal in the direction Aᵀr for α = ‖Ar‖²/γ
       else
         pNorm² = pNorm * pNorm
@@ -118,14 +114,10 @@ function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
     λ > 0 && (γ_next += λ * ArNorm * ArNorm);
     β = γ_next / γ;
 
-    @kscal!(n, β, p)
-    @kaxpy!(n, 1.0, Ar, p)    # Faster than  p = Ar + β *  p;
-    # The combined call uses less memory but tends to trigger more gc.
-    #     BLAS.axpy!(n, 1.0, Ar, 1, BLAS.scal!(n, β, p, 1), 1);
-
-    @kscal!(m, β, Ap)
-    @kaxpy!(m, 1.0, s, Ap)    # Faster than Ap =  s + β * Ap;
-    q = A' * M * Ap;
+    @kaxpby!(n, 1.0, Ar, β, p)    # Faster than  p = Ar + β *  p;
+    @kaxpby!(m, 1.0, s, β, Ap)    # Faster than Ap =  s + β * Ap;
+    MAp = M * Ap
+    q = A.tprod(MAp)
     λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p;
 
     γ = γ_next;
