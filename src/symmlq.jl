@@ -117,7 +117,7 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
                      0, rNorm, β, cold, sold, ANorm, Acond)
 
   iter = 0
-  itmax == 0 && (itmax = n)
+  itmax == 0 && (itmax = 2 * n)
 
   tol = atol + rtol * β₁
   status = "unknown"
