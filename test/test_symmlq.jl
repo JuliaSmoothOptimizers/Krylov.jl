@@ -78,6 +78,16 @@ function test_symmlq()
   @printf("SYMMLQ-CG : err up-bnd : %8.1e\n", stats.errorscg[end])
   @test( err <= stats.errors[end] )
   @test( errcg <= stats.errorscg[end])
+
+  # Test with Jacobi (or diagonal) preconditioner
+  A, b, M = square_preconditioned()
+  (x, xcg, stats) = symmlq(A, b, M=M)
+  show(stats)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("SYMMLQ: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ symmlq_tol)
+  @test(stats.solved)
 end
 
 test_symmlq()
