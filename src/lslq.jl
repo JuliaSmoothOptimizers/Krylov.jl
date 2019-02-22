@@ -14,7 +14,7 @@ Solve the regularized linear least-squares problem
 using the LSLQ method, where λ ≥ 0 is a regularization parameter.
 LSLQ is formally equivalent to applying SYMMLQ to the normal equations
 
-    (A'A + λ² I) x = A'b
+    (AᵀA + λ² I) x = Aᵀb
 
 but is more stable.
 
@@ -38,14 +38,14 @@ but is more stable.
 * `sqd::Bool=false` indicates whether or not we are solving a symmetric and quasi-definite augmented system
   If `sqd = true`, we solve the symmetric and quasi-definite system
 
-      [ E   A' ] [ r ]   [ b ]
+      [ E   Aᵀ ] [ r ]   [ b ]
       [ A  -F  ] [ x ] = [ 0 ],
 
   where E = M⁻¹  and F = N⁻¹.
 
   If `sqd = false`, we solve the symmetric and indefinite system
 
-      [ E   A' ] [ r ]   [ b ]
+      [ E   Aᵀ ] [ r ]   [ b ]
       [ A   0  ] [ x ] = [ 0 ].
 
   In this case, `N` can still be specified and indicates the norm in which `x` and the forward error should be measured.
@@ -130,11 +130,12 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   @kscal!(m, 1.0/β₁, u)
   MisI || @kscal!(m, 1.0/β₁, Mu)
-  Nv = copy(A' * u)
+  Aᵀu = A.tprod(u)
+  Nv = copy(Aᵀu)
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))  # = α₁
 
-  # A'b = 0 so x = 0 is a minimum least-squares solution
+  # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   α == 0.0 && return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg,
                       SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
   @kscal!(n, 1.0/α, v)
@@ -170,6 +171,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   δ = -1.0
   τ = α * β₁
   ζ = 0.0
+  ζ̄  = 0.0
   ζ̃  = T(0)
   csig = -1.0
 
@@ -179,7 +181,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   ArNorms = [ArNorm]
 
   verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n",
-                     "Aprod", "‖r‖", "‖A'r‖", "β", "α", "cos", "sin", "‖A‖²", "κ(A)", "‖xL‖")
+                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²", "κ(A)", "‖xL‖")
   verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n",
                      1, rNorm, ArNorm, β, α, c, s, Anorm², Acond, xlqNorm)
 
@@ -197,18 +199,18 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   while ! (solved || tired || ill_cond)
 
     # Generate next Golub-Kahan vectors.
-    # 1. βu = Av - αu
-    @kscal!(m, -α, Mu)
-    @kaxpy!(m, 1.0, A * v, Mu)
+    # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
+    Av = A * v
+    @kaxpby!(m, 1.0, Av, -α, Mu)
     u = M * Mu
     β = sqrt(@kdot(m, u, Mu))
     if β != 0.0
       @kscal!(m, 1.0/β, u)
       MisI || @kscal!(m, 1.0/β, Mu)
 
-      # 2. αv = A'u - βv
-      @kscal!(n, -β, Nv)
-      @kaxpy!(n, 1.0, A' * u, Nv)
+      # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
+      Aᵀu = A.tprod(u)
+      @kaxpby!(n, 1.0, Aᵀu, -β, Nv)
       v = N * Nv
       α = sqrt(@kdot(n, v, Nv))
       if α != 0.0
@@ -278,8 +280,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     ArNorm = sqrt((γ * ϵ * ζ)^2 + (δ * η * ζold)^2)
     push!(ArNorms, ArNorm)
 
-    # compute LSQR point
-    x_cg = x_lq + ζ̄ * w̄
+    # Compute ‖x_cg‖₂
     xcgNorm² = xlqNorm² + ζ̄ * ζ̄
 
     if σ > 0.0 && iter > 0
@@ -298,9 +299,9 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
                        1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
 
     # update LSLQ point for next iteration
-    w = c * w̄ + s * v
-    w̄ = s * w̄ - c * v
-    x_lq = x_lq + ζ * w
+    @. w = c * w̄ + s * v
+    @kaxpby!(n, -c, v, s, w̄)
+    @kaxpy!(n, ζ, w, x_lq)
     xlqNorm² += ζ * ζ
     xlqNorm = sqrt(xlqNorm²)
 
@@ -338,6 +339,9 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     iter = iter + 1
   end
+
+  # compute LSQR point
+  @. x_cg = x_lq + ζ̄ * w̄
 
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
