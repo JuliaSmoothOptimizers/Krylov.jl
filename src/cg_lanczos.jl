@@ -35,17 +35,17 @@ function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
   MisI = isa(M, opEye)
 
   # Initial state.
-  x = zeros(T, n);
-  Mv = copy(b)
-  v = M * Mv
-  β = sqrt(@kdot(n, v, Mv))
+  x = zeros(T, n)           # x₀
+  Mv = copy(b)              # Mv₁ ← b
+  v = M * Mv                # v₁ = M⁻¹ * Mv₁
+  β = sqrt(@kdot(n, v, Mv)) # β₁ = v₁ᵀ M v₁
   β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
   p = copy(v)
 
   # Initialize Lanczos process.
   # β₁Mv₁ = b
-  @kscal!(n, 1.0/β, v)
-  MisI || @kscal!(n, 1.0/β, Mv)
+  @kscal!(n, 1.0/β, v)          # v₁  ←  v₁ / β₁
+  MisI || @kscal!(n, 1.0/β, Mv) # Mv₁ ← Mv₁ / β₁
   Mv_prev = copy(Mv)
 
   iter = 0;
@@ -73,36 +73,35 @@ function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
   while ! (solved || tired || (check_curvature & indefinite))
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-    Mv_next = A * v # Mv_next = AVₖ
-    δ = @kdot(n, v, Mv_next) # δₖ = vₖᵀAvₖ
+    Mv_next = A * v          # Mvₖ₊₁ ← Avₖ
+    δ = @kdot(n, v, Mv_next) # δₖ = vₖᵀ A vₖ
 
     # Check curvature. Exit fast if requested.
     # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ A pₖ.
-    γ = 1 / (δ - ω / γ);
+    γ = 1 / (δ - ω / γ)      # γₖ = δₖ - ωₖ₋₁ / γₖ₋₁
     indefinite |= (γ <= 0.0);
     (check_curvature & indefinite) && continue;
 
-    @kaxpy!(n, -δ, Mv, Mv_next) # Mv_next = Avₖ - δₖMvₖ
+    @kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
     if iter > 0
-      @kaxpy!(n, -β, Mv_prev, Mv_next) # Mv_next = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-      @. Mv_prev = Mv
+      @kaxpy!(n, -β, Mv_prev, Mv_next) # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
+      @. Mv_prev = Mv                  # Mvₖ₋₁ ← Mvₖ
     end
-    @. Mv = Mv_next
-    v = M * Mv
-    β = sqrt(@kdot(n, v, Mv))
-    @kscal!(n, 1.0/β, v)
-    MisI || @kscal!(n, 1.0/β, Mv)
-    Anorm2 += β_prev^2 + β^2 + δ^2;  # Use ‖T‖ as increasing approximation of ‖A‖.
+    @. Mv = Mv_next                    # Mvₖ ← Mvₖ₊₁
+    v = M * Mv                         # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
+    β = sqrt(@kdot(n, v, Mv))          # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+    @kscal!(n, 1.0/β, v)               # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+    MisI || @kscal!(n, 1.0/β, Mv)      # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+    Anorm2 += β_prev^2 + β^2 + δ^2     # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
     β_prev = β;
 
     # Compute next CG iterate.
-    @kaxpy!(n, γ, p, x)  # xₖ = xₖ + γₖ * pₖ
-
-    ω = β * γ;
-    σ = -ω * σ;
-    ω = ω * ω;
-    @kaxpby!(n, σ, v, ω, p) # pₖ = σₖ * vₖ + ωₖ * pₖ
-    rNorm = abs(σ);
+    @kaxpy!(n, γ, p, x)     # xₖ₊₁ = xₖ + γₖ * pₖ
+    ω = β * γ 
+    σ = -ω * σ              # σₖ₊₁ = - βₖ₊₁ * γₖ * σₖ
+    ω = ω * ω               # ωₖ = (βₖ₊₁ * γₖ)²
+    @kaxpby!(n, σ, v, ω, p) # pₖ₊₁ = σₖ₊₁ * vₖ₊₁ + ωₖ * pₖ
+    rNorm = abs(σ)          # ‖rₖ₊₁‖_M = |σₖ₊₁| because rₖ₊₁ = σₖ₊₁ * vₖ₊₁ and ‖vₖ₊₁‖_M = 1
     push!(rNorms, rNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.1e\n", iter, rNorm);
