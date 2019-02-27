@@ -80,7 +80,6 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
   cs = -1.0
   sn = 0.0
   v = zeros(T, n)
-  w = zeros(T, n)
   w1 = zeros(T, n)
   w2 = zeros(T, n)
   r2 = copy(r1)
@@ -153,12 +152,25 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     ϕ = cs * ϕbar
     ϕbar = sn * ϕbar
 
+    # Compute w.
+    if iter == 1
+      w = w2
+    else
+      iter ≥ 3 && @kscal!(n, -oldϵ, w1)
+      w = w1
+      @kaxpy!(n, -δ, w2, w)
+    end
+    @kaxpy!(n, 1.0, v, w)
+    @kscal!(n, 1 / γ, w)
+
     # Update x.
-    @. w1 = w2
-    @. w2 = w
-    @. w = (v - oldϵ * w1 - δ * w2) / γ
     @kaxpy!(n, ϕ, w, x)  # x = x + ϕ * w
     xENorm² = xENorm² + ϕ * ϕ
+
+    # Update directions for x.
+    if iter ≥ 2
+      w1, w2 = w2, w
+    end
 
     # Compute lower bound on forward error.
     err_vec[mod(iter, window) + 1] = ϕ

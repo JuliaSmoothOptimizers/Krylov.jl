@@ -20,16 +20,13 @@ cg(A, b)  # warmup
 actual_cg_bytes = @allocated cg(A, b)
 @test actual_cg_bytes ≤ 1.1 * expected_cg_bytes
 
-# without preconditioner and with Ap preallocated, MINRES needs 7 n-vectors: x, r1, r2, v, w, w1, w2
-storage_minres(n) = 7 * n
+# without preconditioner and with Ap preallocated, MINRES needs 6 n-vectors: x, r1, r2, v, w1, w2
+storage_minres(n) = 6 * n
 storage_minres_bytes(n) = 8 * storage_minres(n)
 
 expected_minres_bytes = storage_minres_bytes(n)
-println(expected_minres_bytes)
 minres(A, b)  # warmup
 actual_minres_bytes = @allocated minres(A, b)
-println(actual_minres_bytes)
-println(actual_minres_bytes / expected_minres_bytes)
 @test actual_minres_bytes ≤ 1.1 * expected_minres_bytes
 
 # without preconditioner and with Ap preallocated, DIOM needs:
