@@ -20,8 +20,8 @@ cg(A, b)  # warmup
 actual_cg_bytes = @allocated cg(A, b)
 @test actual_cg_bytes ≤ 1.1 * expected_cg_bytes
 
-# without preconditioner and with Ap preallocated, MINRES needs 6 n-vectors: x, r1, r2, v, w1, w2
-storage_minres(n) = 6 * n
+# without preconditioner and with Ap preallocated, MINRES needs 5 n-vectors: x, r1, r2, w1, w2
+storage_minres(n) = 5 * n
 storage_minres_bytes(n) = 8 * storage_minres(n)
 
 expected_minres_bytes = storage_minres_bytes(n)

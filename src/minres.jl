@@ -60,8 +60,8 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
   r1 = copy(b)
-  y = M * r1
-  β₁ = @kdot(m, r1, y)
+  v = M * r1
+  β₁ = @kdot(m, r1, v)
   β₁ < 0.0 && error("Preconditioner is not positive definite")
   β₁ == 0.0 && return (x, SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
@@ -79,7 +79,6 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
   γmin = Inf
   cs = -1.0
   sn = 0.0
-  v = zeros(T, n)
   w1 = zeros(T, n)
   w2 = zeros(T, n)
   r2 = copy(r1)
@@ -115,19 +114,30 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     iter = iter + 1
 
     # Generate next Lanczos vector.
-    @. v = y
-    @kscal!(n, 1 ./ β, v)
     y = A * v
-    λ != 0.0 && @kaxpy!(n, -λ, v, y)          # (y = y - λ * v)
-    iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y)  # (y = y - β / oldβ * r1)
+    λ ≠ 0.0 && @kaxpy!(n, -λ, v, y)          # (y = y - λ * v)
+    @kscal!(n, 1 / β, y)
+    iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y) # (y = y - β / oldβ * r1)
 
-    α = @kdot(n, v, y)
+    α = @kdot(n, v, y) / β
     @kaxpy!(n, -α / β, r2, y)  # y = y - α / β * r2
+
+    # Compute w.
+    δ = cs * δbar + sn * α
+    if iter == 1
+      w = w2
+    else
+      iter ≥ 3 && @kscal!(n, -ϵ, w1)
+      w = w1
+      @kaxpy!(n, -δ, w2, w)
+    end
+    @kaxpy!(n, 1.0 / β, v, w)
+
     @. r1 = r2
     @. r2 = y
-    y = M * r2
+    v = M * r2
     oldβ = β
-    β = @kdot(n, r2, y)
+    β = @kdot(n, r2, v)
     β < 0.0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
     ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
@@ -135,8 +145,6 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Apply rotation to obtain
     #  [ δₖ    ϵₖ₊₁    ] = [ cs  sn ] [ δbarₖ  0    ]
     #  [ γbar  δbarₖ₊₁ ]   [ sn -cs ] [ αₖ     βₖ₊₁ ]
-    oldϵ = ϵ
-    δ = cs * δbar + sn * α
     γbar = sn * δbar - cs * α
     ϵ = sn * β
     δbar = -cs * β
@@ -152,15 +160,7 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     ϕ = cs * ϕbar
     ϕbar = sn * ϕbar
 
-    # Compute w.
-    if iter == 1
-      w = w2
-    else
-      iter ≥ 3 && @kscal!(n, -oldϵ, w1)
-      w = w1
-      @kaxpy!(n, -δ, w2, w)
-    end
-    @kaxpy!(n, 1.0, v, w)
+    # Final update of w.
     @kscal!(n, 1 / γ, w)
 
     # Update x.
