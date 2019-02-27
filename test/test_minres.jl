@@ -63,6 +63,16 @@ function test_minres()
   A, b = square_int()
   (x, stats) = minres(A, b)
   @test stats.solved
+
+  # Test with Jacobi (or diagonal) preconditioner
+  A, b, M = square_preconditioned()
+  (x, stats) = minres(A, b, M=M)
+  show(stats)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("MINRES: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ minres_tol)
+  @test(stats.solved)
 end
 
 test_minres()
