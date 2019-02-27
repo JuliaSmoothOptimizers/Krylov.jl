@@ -1,7 +1,7 @@
 # An implementation of MINRES for the solution of the
 # linear system Ax = b, or the linear least-squares problem
 #
-#  minimize ‖Ax - b‖
+#  minimize ‖Ax - b‖₂
 #
 # where A is square and symmetric.
 #
@@ -37,7 +37,7 @@ MINRES is formally equivalent to applying CR to Ax=b when A is positive
 definite, but is typically more stable and also applies to the case where
 A is indefinite.
 
-MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖A'r‖₂.
+MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr‖₂.
 
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
@@ -97,7 +97,7 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
   err_vec = zeros(T, window)
 
   verbose && @printf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s\n",
-                     "Aprod", "‖r‖", "‖A'r‖", "β", "cos", "sin", "‖A‖", "κ(A)")
+                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "cos", "sin", "‖A‖", "κ(A)")
   verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
                      0, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
 
@@ -116,16 +116,16 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     iter = iter + 1
 
     # Generate next Lanczos vector.
-    v = copy(y)
+    @. v = y
     @kscal!(n, 1 ./ β, v)
     y = A * v
     λ != 0.0 && @kaxpy!(n, -λ, v, y)          # (y = y - λ * v)
     iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y)  # (y = y - β / oldβ * r1)
 
-    α = dot(v, y)
+    α = @kdot(n, v, y)
     @kaxpy!(n, -α / β, r2, y)  # y = y - α / β * r2
-    r1 = copy(r2)
-    r2 = copy(y)
+    @. r1 = r2
+    @. r2 = y
     y = M * r2
     oldβ = β
     β = @kdot(n, r2, y)
@@ -142,7 +142,7 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     ϵ = sn * β
     δbar = -cs * β
     root = sqrt(γbar * γbar + δbar * δbar)
-    ArNorm = ϕbar * root  # = ‖A'rₖ₋₁‖
+    ArNorm = ϕbar * root  # = ‖Aᵀrₖ₋₁‖
     push!(ArNorms, ArNorm)
 
     # Compute the next plane rotation.
@@ -154,9 +154,9 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     ϕbar = sn * ϕbar
 
     # Update x.
-    w1 = copy(w2)
-    w2 = copy(w)
-    w = (v - oldϵ * w1 - δ * w2) / γ
+    @. w1 = w2
+    @. w2 = w
+    @. w = (v - oldϵ * w1 - δ * w2) / γ
     @kaxpy!(n, ϕ, w, x)  # x = x + ϕ * w
     xENorm² = xENorm² + ϕ * ϕ
 
@@ -191,7 +191,7 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
                        iter, test1, test2, β, cs, sn, ANorm, Acond)
     
     if iter == 1
-      # A'b = 0 so x = 0 is a minimum least-squares solution
+      # Aᵀb = 0 so x = 0 is a minimum least-squares solution
       β / β₁ ≤ 10 * ϵM && return (x, SimpleStats(true, true, [β₁], [0.0], "x is a minimum least-squares solution"))
     end
 
