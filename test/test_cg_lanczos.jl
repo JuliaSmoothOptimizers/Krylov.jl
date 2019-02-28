@@ -70,6 +70,18 @@ function test_cg_lanczos()
   @printf("CG_Lanczos: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cg_tol)
   @test(stats.solved)
+
+  shifts = [1:10;]
+  (x, stats) = cg_lanczos_shift_seq(A, b, shifts, M=M)
+  r = residuals(A, b, shifts, x)
+  resids = map(norm, r) / norm(b)
+  @printf("CG_Lanczos: Relative residuals with shifts:")
+  for resid in resids
+    @printf(" %8.1e", resid)
+  end
+  @printf("\n")
+  @test(all(resids .≤ cg_tol))
+  @test(stats.solved)
 end
 
 test_cg_lanczos()

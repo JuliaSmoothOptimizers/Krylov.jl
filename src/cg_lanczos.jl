@@ -121,8 +121,12 @@ of shifted systems
   (A + αI) x = b  (α = α₁, α₂, ...)
 
 The method does _not_ abort if A + αI is not definite.
+
+A preconditioner M may be provided in the form of a linear operator and is
+assumed to be symmetric and positive definite.
 """
-function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{Tb}, shifts :: AbstractVector{Ts};
+function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{Tb},
+                              shifts :: AbstractVector{Ts}; M :: AbstractLinearOperator=opEye(),
                               atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
                               check_curvature :: Bool=false, verbose :: Bool=false) where {Tb, Ts <: Number}
 
@@ -132,18 +136,28 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{T
   nshifts = size(shifts, 1);
   verbose && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts);
 
+  # Tests M == Iₙ
+  MisI = isa(M, opEye)
+
   # Initial state.
   ## Distribute x similarly to shifts.
-  x = [zeros(Tb, n) for i = 1 : nshifts]
-  β = @knrm2(n, b)
+  x = [zeros(Tb, n) for i = 1 : nshifts] # x₀
+  Mv = copy(b)                           # Mv₁ ← b
+  v = M * Mv                             # v₁ = M⁻¹ * Mv₁
+  β = sqrt(@kdot(n, v, Mv))              # β₁ = v₁ᵀ M v₁
   β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
-  v = b / β;
-  v_prev = copy(v);
 
-  # Initialize each p to b.
-  p = [copy(b) for i = 1 : nshifts]
+  # Initialize each p to v.
+  p = [copy(v) for i = 1 : nshifts]
+
+  # Initialize Lanczos process.
+  # β₁Mv₁ = b
+  @kscal!(n, 1.0/β, v)          # v₁  ←  v₁ / β₁
+  MisI || @kscal!(n, 1.0/β, Mv) # Mv₁ ← Mv₁ / β₁
+  Mv_prev = copy(Mv)
 
   # Initialize some constants used in recursions below.
+  ρ = 1.0
   σ = β * ones(nshifts);
   δhat = zeros(nshifts);
   ω = zeros(Tb, nshifts);
@@ -177,20 +191,25 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{T
   # Main loop.
   while ! (solved || tired)
     # Form next Lanczos vector.
-    v_next = A * v;
-    δ = @kdot(n, v, v_next)
-    @kaxpy!(n, -δ, v, v_next)  # Faster than v_next = Av - δ * v;
+    # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
+    Mv_next = A * v                    # Mvₖ₊₁ ← Avₖ
+    δ = @kdot(n, v, Mv_next)           # δₖ = vₖᵀ A vₖ
+    @kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
     if iter > 0
-      @kaxpy!(n, -β, v_prev, v_next)  # Faster than v_next = v_next - β * v_prev;
-      @. v_prev = v;
+      @kaxpy!(n, -β, Mv_prev, Mv_next) # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
+      @. Mv_prev = Mv                  # Mvₖ₋₁ ← Mvₖ
     end
-    β = @knrm2(n, v_next)
-    @. v = v_next / β;
+    @. Mv = Mv_next                    # Mvₖ ← Mvₖ₊₁
+    v = M * Mv                         # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
+    β = sqrt(@kdot(n, v, Mv))          # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+    @kscal!(n, 1.0/β, v)               # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+    MisI || @kscal!(n, 1.0/β, Mv)      # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
 
-    # Check curvature: v'(A + sᵢI)v = v'Av + sᵢ ‖v‖² = δ + sᵢ because ‖v‖ = 1.
-    # It is possible to show that σⱼ² (δⱼ + sᵢ - ωⱼ₋₁ / γⱼ₋₁) = pⱼᵀ (A + sᵢ I) pⱼ.
+    # Check curvature: vₖᵀ(A + sᵢI)vₖ = vₖᵀAvₖ + sᵢ‖vₖ‖² = δₖ + ρₖ * sᵢ with ρₖ = ‖vₖ‖².
+    # It is possible to show that σₖ² (δₖ + ρₖ * sᵢ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ (A + sᵢ I) pₖ.
+    MisI || (ρ = @kdot(n, v, v))
     for i = 1 : nshifts
-      δhat[i] = δ + shifts[i]
+      δhat[i] = δ + ρ * shifts[i]
       γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i])
     end
     indefinite .|= (γ .<= 0.0);
