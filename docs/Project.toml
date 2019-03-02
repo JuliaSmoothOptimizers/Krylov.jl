@@ -1,0 +1,6 @@
+[deps]
+LinearOperators = "5c8ed15e-5a4c-59e4-a42b-c7e8811fb125"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+
+[compat]
+Documenter = "~0.21"
