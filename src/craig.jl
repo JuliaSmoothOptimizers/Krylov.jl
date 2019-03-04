@@ -52,7 +52,8 @@ In this implementation, both the x and y-parts of the solution are returned.
 function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
                λ :: Float64=0.0,
                atol :: Float64=1.0e-8, btol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-               itmax :: Int=0, verbose :: Bool=false) where T <: Number
+               conlim :: Float64=1.0e+8, itmax :: Int=0,
+               verbose :: Bool=false) where T <: Number
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
@@ -79,7 +80,8 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   λ > 0.0 && (w2 = zeros(T, n))
 
   Anorm² = 0.0;  # Estimate of ‖A‖²_F.
-  Dnorm  = 0.0;  # Estimate of ‖(AᵀA)⁻¹‖.
+  Dnorm² = 0.0;  # Estimate of ‖(AᵀA)⁻¹‖².
+  Acond  = 0.0   # Estimate of cond(A).
   xNorm² = 0.0;  # Estimate of ‖x‖².
 
   iter = 0;
@@ -89,6 +91,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   rNorms = [rNorm;];
   ɛ_c = atol + rtol * rNorm;  # Stopping tolerance for consistent systems.
   ɛ_i = atol;                 # Stopping tolerance for inconsistent systems.
+  ctol = conlim > 0 ? 1/conlim : 0.0  # Stopping tolerance for ill-conditioned operators.
   verbose && @printf("%5s  %8s  %8s  %8s\n", "Aprod", "‖r‖", "‖x‖²", "‖A‖²")
   verbose && @printf("%5d  %8.2e  %8.2e  %8.2e\n", 1, rNorm, xNorm², Anorm²);
 
@@ -100,6 +103,8 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   solved_mach = 1.0 + bkwerr ≤ 1.0
   solved_resid = rNorm ≤ ɛ_c
   solved = solved_mach | solved_lim | solved_resid
+
+  ill_cond = ill_cond_mach = ill_cond_lim = false
 
   inconsistent = false
   tired = iter ≥ itmax
@@ -145,6 +150,8 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
     @kaxpby!(m, 1.0, u, -θ/ρ_prev, w)  # w = u - θ/ρ_prev * w;
     @kaxpy!(m, ξ/ρ, w, y)  # y = y + ξ/ρ * w;
 
+    Dnorm² += @knrm2(m, w)
+
     # 2. βu = Av - αu
     Av = A * v
     @kaxpby!(m, 1.0, Av, -α, u)
@@ -169,6 +176,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
     end
 
     Anorm² += β * β;
+    Acond   = sqrt(Anorm²) * sqrt(Dnorm²)
     xNorm² += ξ * ξ;
     rNorm   = β * abs(ξ);          # r = -     β * ξ * u
     λ > 0.0 && (rNorm *= abs(c₁)); # r = -c₁ * β * ξ * u when λ > 0.
@@ -185,15 +193,24 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
     solved_mach = 1.0 + bkwerr ≤ 1.0
     solved_resid = rNorm ≤ ɛ_c
     solved = solved_mach | solved_lim | solved_resid
+
+    ill_cond_mach = 1 + 1 / Acond ≤ 1
+    ill_cond_lim = 1 / Acond ≤ ctol
+    ill_cond = ill_cond_mach | ill_cond_lim
+
     inconsistent = false
     tired = iter ≥ itmax
   end
 
-  inconsistent = !solved  # is there a smarter way?
+  inconsistent = !solved_resid  # is there a smarter way?
 
   # TODO: transfer to LSQR point and update y.
+  tired         && (status = "maximum number of iterations exceeded")
+  ill_cond_mach && (status = "condition number seems too large for this machine")
+  ill_cond_lim  && (status = "condition number exceeds tolerance")
+  inconsistent  && (status = "system may be inconsistent")
+  solved        && (status = "solution good enough for the tolerances given")
 
-  status = solved ? "solution good enough given atol and rtol" : (inconsistent ? "system probably inconsistent" : "maximum number of iterations exceeded")
   stats = SimpleStats(solved, inconsistent, rNorms, Float64[], status);
   return (x, y, stats);
 end
