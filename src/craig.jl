@@ -55,22 +55,22 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
                conlim :: Float64=1.0e+8, itmax :: Int=0,
                verbose :: Bool=false, transfer_to_lsqr :: Bool=false) where T <: Number
 
-  m, n = size(A);
-  size(b, 1) == m || error("Inconsistent problem size");
-  verbose && @printf("CRAIG: system of %d equations in %d variables\n", m, n);
+  m, n = size(A)
+  size(b, 1) == m || error("Inconsistent problem size")
+  verbose && @printf("CRAIG: system of %d equations in %d variables\n", m, n)
 
-  x = zeros(T, n);
-  β₁ = @knrm2(m, b)   # Marginally faster than norm(b);
-  β₁ == 0 && return x, zeros(m), SimpleStats(true, false, [0.0], T[], "x = 0 is a zero-residual solution");
+  x = zeros(T, n)
+  β₁ = @knrm2(m, b)   # Marginally faster than norm(b)
+  β₁ == 0 && return x, zeros(m), SimpleStats(true, false, [0.0], T[], "x = 0 is a zero-residual solution")
   β₁² = β₁^2
-  β = β₁;
-  θ = β₁;   # θ will differ from β when there is regularization (λ > 0).
-  ξ = -1;   # Most recent component of x in Range(V).
-  δ = λ;
-  ρ_prev = 1;
+  β = β₁
+  θ = β₁    # θ will differ from β when there is regularization (λ > 0).
+  ξ = -1.0  # Most recent component of x in Range(V).
+  δ = λ
+  ρ_prev = 1.0
 
   # β₁ u₁ = b.
-  u = copy(b);
+  u = copy(b)
   @kscal!(m, 1.0/β₁, u)
 
   v = zeros(T, n)
@@ -79,21 +79,21 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   y = zeros(T, m)
   λ > 0.0 && (w2 = zeros(T, n))
 
-  Anorm² = 0.0;  # Estimate of ‖A‖²_F.
-  Dnorm² = 0.0;  # Estimate of ‖(AᵀA)⁻¹‖².
+  Anorm² = 0.0   # Estimate of ‖A‖²_F.
+  Dnorm² = 0.0   # Estimate of ‖(AᵀA)⁻¹‖².
   Acond  = 0.0   # Estimate of cond(A).
-  xNorm² = 0.0;  # Estimate of ‖x‖².
+  xNorm² = 0.0   # Estimate of ‖x‖².
 
-  iter = 0;
-  itmax == 0 && (itmax = m + n);
+  iter = 0
+  itmax == 0 && (itmax = m + n)
 
-  rNorm  = β₁;
-  rNorms = [rNorm;];
-  ɛ_c = atol + rtol * rNorm;  # Stopping tolerance for consistent systems.
-  ɛ_i = atol;                 # Stopping tolerance for inconsistent systems.
+  rNorm  = β₁
+  rNorms = [rNorm;]
+  ɛ_c = atol + rtol * rNorm   # Stopping tolerance for consistent systems.
+  ɛ_i = atol                  # Stopping tolerance for inconsistent systems.
   ctol = conlim > 0 ? 1/conlim : 0.0  # Stopping tolerance for ill-conditioned operators.
   verbose && @printf("%5s  %8s  %8s  %8s\n", "Aprod", "‖r‖", "‖x‖²", "‖A‖²")
-  verbose && @printf("%5d  %8.2e  %8.2e  %8.2e\n", 1, rNorm, xNorm², Anorm²);
+  verbose && @printf("%5d  %8.2e  %8.2e  %8.2e\n", 1, rNorm, xNorm², Anorm²)
 
   bkwerr = 1.0  # initial value of the backward error ‖r‖ / √(‖b‖² + ‖A‖² ‖x‖²)
 
@@ -116,12 +116,12 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
     @kaxpby!(n, 1.0, Aᵀu, -β, v)
     α = @knrm2(n, v)
     if α == 0.0
-      inconsistent = true;
-      continue;
+      inconsistent = true
+      continue
     end
     @kscal!(n, 1.0/α, v)
 
-    Anorm² += α * α + λ * λ;
+    Anorm² += α * α + λ * λ
 
     if λ > 0.0
       # Givens rotation to zero out the δ in position (k, 2k):
@@ -130,10 +130,10 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
       # k+1 [     β     ] [ s₁  -c₁ ]   [     θ+   γ ]
       (c₁, s₁, ρ) = sym_givens(α, δ)
     else
-      ρ = α;
+      ρ = α
     end
 
-    ξ = -θ / ρ * ξ;
+    ξ = -θ / ρ * ξ
 
     if λ > 0.0
       # w1 = c₁ * v + s₁ * w2
@@ -143,12 +143,12 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
       @kaxpy!(n, ξ * s₁, w2, x)
       @kaxpby!(n, s₁, v, -c₁, w2)
     else
-      @kaxpy!(n, ξ, v, x)  # x = x + ξ * v;
+      @kaxpy!(n, ξ, v, x)  # x = x + ξ * v
     end
 
     # Recur y.
-    @kaxpby!(m, 1.0, u, -θ/ρ_prev, w)  # w = u - θ/ρ_prev * w;
-    @kaxpy!(m, ξ/ρ, w, y)  # y = y + ξ/ρ * w;
+    @kaxpby!(m, 1.0, u, -θ/ρ_prev, w)  # w = u - θ/ρ_prev * w
+    @kaxpy!(m, ξ/ρ, w, y)  # y = y + ξ/ρ * w
 
     Dnorm² += @knrm2(m, w)
 
@@ -160,10 +160,10 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Finish  updates from the first Givens rotation.
     if λ > 0.0
-      θ =  β * c₁;
-      γ =  β * s₁;
+      θ =  β * c₁
+      γ =  β * s₁
     else
-      θ = β;
+      θ = β
     end
 
     if λ > 0.0
@@ -175,19 +175,19 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
       @kscal!(n, s₂, w2)
     end
 
-    Anorm² += β * β;
+    Anorm² += β * β
     Acond   = sqrt(Anorm²) * sqrt(Dnorm²)
-    xNorm² += ξ * ξ;
-    rNorm   = β * abs(ξ);          # r = -     β * ξ * u
-    λ > 0.0 && (rNorm *= abs(c₁)); # r = -c₁ * β * ξ * u when λ > 0.
-    push!(rNorms, rNorm);
-    iter = iter + 1;
+    xNorm² += ξ * ξ
+    rNorm   = β * abs(ξ)           # r = -     β * ξ * u
+    λ > 0.0 && (rNorm *= abs(c₁))  # r = -c₁ * β * ξ * u when λ > 0.
+    push!(rNorms, rNorm)
+    iter = iter + 1
 
     bkwerr = rNorm / sqrt(β₁² + Anorm² * xNorm²)
 
-    ρ_prev = ρ;  # Only differs from α if λ > 0.
+    ρ_prev = ρ   # Only differs from α if λ > 0.
 
-    verbose && @printf("%5d  %8.2e  %8.2e  %8.2e\n", 1 + 2 * iter, rNorm, xNorm², Anorm²);
+    verbose && @printf("%5d  %8.2e  %8.2e  %8.2e\n", 1 + 2 * iter, rNorm, xNorm², Anorm²)
 
     solved_lim = bkwerr ≤ btol
     solved_mach = 1.0 + bkwerr ≤ 1.0
@@ -217,6 +217,6 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   inconsistent  && (status = "system may be inconsistent")
   solved        && (status = "solution good enough for the tolerances given")
 
-  stats = SimpleStats(solved, inconsistent, rNorms, Float64[], status);
-  return (x, y, stats);
+  stats = SimpleStats(solved, inconsistent, rNorms, Float64[], status)
+  return (x, y, stats)
 end
