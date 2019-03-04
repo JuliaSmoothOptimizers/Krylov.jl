@@ -53,7 +53,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
                λ :: Float64=0.0,
                atol :: Float64=1.0e-8, btol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
                conlim :: Float64=1.0e+8, itmax :: Int=0,
-               verbose :: Bool=false) where T <: Number
+               verbose :: Bool=false, transfer_to_lsqr :: Bool=false) where T <: Number
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
@@ -204,7 +204,13 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   inconsistent = !solved_resid  # is there a smarter way?
 
-  # TODO: transfer to LSQR point and update y.
+  # transfer to LSQR point if requested
+  if λ > 0 && transfer_to_lsqr
+    ξ *= -θ / δ
+    @kaxpy!(n, ξ, w2, x)
+    # TODO: update y
+  end
+
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
   ill_cond_lim  && (status = "condition number exceeds tolerance")
