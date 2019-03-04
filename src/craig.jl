@@ -50,7 +50,8 @@ multipliers of the least-norm problem
 In this implementation, both the x and y-parts of the solution are returned.
 """
 function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
-               λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
+               λ :: Float64=0.0,
+               atol :: Float64=1.0e-8, btol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
                itmax :: Int=0, verbose :: Bool=false) where T <: Number
 
   m, n = size(A);
@@ -60,6 +61,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   x = zeros(T, n);
   β₁ = @knrm2(m, b)   # Marginally faster than norm(b);
   β₁ == 0 && return x, zeros(m), SimpleStats(true, false, [0.0], T[], "x = 0 is a zero-residual solution");
+  β₁² = β₁^2
   β = β₁;
   θ = β₁;   # θ will differ from β when there is regularization (λ > 0).
   ξ = -1;   # Most recent component of x in Range(V).
@@ -90,10 +92,17 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   verbose && @printf("%5s  %8s  %8s  %8s\n", "Aprod", "‖r‖", "‖x‖²", "‖A‖²")
   verbose && @printf("%5d  %8.2e  %8.2e  %8.2e\n", 1, rNorm, xNorm², Anorm²);
 
-  status = "unknown";
-  solved = rNorm <= ɛ_c;
-  inconsistent = false;
-  tired = iter >= itmax;
+  bkwerr = 1.0  # initial value of the backward error ‖r‖ / √(‖b‖² + ‖A‖² ‖x‖²)
+
+  status = "unknown"
+
+  solved_lim = bkwerr ≤ btol
+  solved_mach = 1.0 + bkwerr ≤ 1.0
+  solved_resid = rNorm ≤ ɛ_c
+  solved = solved_mach | solved_lim | solved_resid
+
+  inconsistent = false
+  tired = iter ≥ itmax
 
   while ! (solved || inconsistent || tired)
     # Generate the next Golub-Kahan vectors
@@ -166,13 +175,18 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
     push!(rNorms, rNorm);
     iter = iter + 1;
 
+    bkwerr = rNorm / sqrt(β₁² + Anorm² * xNorm²)
+
     ρ_prev = ρ;  # Only differs from α if λ > 0.
 
     verbose && @printf("%5d  %8.2e  %8.2e  %8.2e\n", 1 + 2 * iter, rNorm, xNorm², Anorm²);
 
-    solved = rNorm <= ɛ_c;
-    inconsistent = false;
-    tired = iter >= itmax;
+    solved_lim = bkwerr ≤ btol
+    solved_mach = 1.0 + bkwerr ≤ 1.0
+    solved_resid = rNorm ≤ ɛ_c
+    solved = solved_mach | solved_lim | solved_resid
+    inconsistent = false
+    tired = iter ≥ itmax
   end
 
   inconsistent = !solved  # is there a smarter way?
