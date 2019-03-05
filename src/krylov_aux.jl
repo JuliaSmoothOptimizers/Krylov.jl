@@ -172,3 +172,11 @@ end
 macro kaxpby!(n, s, x, t, y)
   return esc(:(krylov_axpby!($n, $s, $x, 1, $t, $y, 1)))
 end
+
+macro kswap(x, y)
+  quote
+    local tmp = $(esc(x))
+    $(esc(x)) = $(esc(y))
+    $(esc(y)) = tmp
+  end
+end

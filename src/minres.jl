@@ -169,7 +169,7 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Update directions for x.
     if iter ≥ 2
-      w1, w2 = w2, w
+      @kswap(w1, w2)
     end
 
     # Compute lower bound on forward error.
