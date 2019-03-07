@@ -114,7 +114,6 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   ctol = conlim > 0.0 ? 1/conlim : 0.0
 
   x_lq = zeros(T, n)    # LSLQ point
-  x_cg = zeros(T, n)    # LSQR point
   err_lbnds = T[]
   err_ubnds_lq = T[]
   err_ubnds_cg = T[]
@@ -124,7 +123,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   Mu = copy(b)
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0.0 && return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg,
+  β₁ == 0.0 && return (x_lq, zeros(T, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
                        SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β = β₁
 
@@ -136,7 +135,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   α = sqrt(@kdot(n, v, Nv))  # = α₁
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0.0 && return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg,
+  α == 0.0 && return (x_lq, zeros(T, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
                       SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
   @kscal!(n, 1.0/α, v)
   NisI || @kscal!(n, 1.0/α, Nv)
@@ -341,7 +340,8 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   end
 
   # compute LSQR point
-  @. x_cg = x_lq + ζ̄ * w̄
+  @kaxpby!(n, 1.0, x_lq, ζ̄ , w̄)
+  x_cg = w̄
 
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
