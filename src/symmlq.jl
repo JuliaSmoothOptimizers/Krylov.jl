@@ -55,7 +55,7 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   MisI || @kscal!(m, 1 / β, Mvold)
 
   w    = zeros(T, n)
-  wbar = copy(Mvold)
+  wbar = copy(vold)
 
   Mv = copy(A * vold)
   α = @kdot(m, vold, Mv) + λ
@@ -137,8 +137,8 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     s = β/γ
 
     # Update wbar and w
-    @. w = wbar * c + Mv * s
-    @kaxpby!(n, -c, Mv, s, wbar)
+    @. w = wbar * c + v * s
+    @kaxpby!(n, -c, v, s, wbar)
 
     # Generate next Lanczos vector
     oldβ = β
@@ -264,10 +264,6 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   # Compute CG point
   @. x_cg = x_lq + ζbar * wbar
-
-  # Final solve against preconditioner
-  MisI || (x_lq .= M * x_lq)
-  MisI || (x_cg .= M * x_cg)
   
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
