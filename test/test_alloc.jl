@@ -11,8 +11,8 @@ mem = 10
 shifts  = [1:5;]
 nshifts = 5
 
-# without preconditioner and with Ap preallocated, SYMMLQ needs 6 n-vectors: x_lq, x_cg, vold, v, w, wbar
-storage_symmlq(n) = 6 * n
+# without preconditioner and with Ap preallocated, SYMMLQ needs 5 n-vectors: x_lq, vold, v, w, wbar
+storage_symmlq(n) = 5 * n
 storage_symmlq_bytes(n) = 8 * storage_symmlq(n)
 
 expected_symmlq_bytes = storage_symmlq_bytes(n)
