@@ -11,6 +11,15 @@ mem = 10
 shifts  = [1:5;]
 nshifts = 5
 
+# without preconditioner and with Ap preallocated, SYMMLQ needs 6 n-vectors: x_lq, x_cg, vold, v, w, wbar
+storage_symmlq(n) = 6 * n
+storage_symmlq_bytes(n) = 8 * storage_symmlq(n)
+
+expected_symmlq_bytes = storage_symmlq_bytes(n)
+symmlq(A, b)  # warmup
+actual_symmlq_bytes = @allocated symmlq(A, b)
+@test actual_symmlq_bytes ≤ 1.1 * expected_symmlq_bytes
+
 # without preconditioner and with Ap preallocated, CG needs 3 n-vectors: x, r, p
 storage_cg(n) = 3 * n
 storage_cg_bytes(n) = 8 * storage_cg(n)

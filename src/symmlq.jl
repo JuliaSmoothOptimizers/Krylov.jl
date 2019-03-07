@@ -39,29 +39,33 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   MisI = isa(M, opEye)
 
   ϵM = eps(T)
-  x = zeros(T, n)
-  ctol = conlim > 0.0 ? 1 ./ conlim : 0.0;
+  x_lq = zeros(T, n)
+  x_cg = zeros(T, n)
+  ctol = conlim > 0.0 ? 1 / conlim : 0.0;
 
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
-  vold = copy(b)
-  p = M * vold
-  β₁ = @kdot(m, vold, p)
-  β₁ == 0.0 && return (x, x, SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
+  Mvold = copy(b)
+  vold = M * Mvold
+  β₁ = @kdot(m, vold, Mvold)
+  β₁ == 0.0 && return (x_lq, x_cg, SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
   β = β₁
-  @kscal!(m, 1 ./ β, vold)
-  MisI || @kscal!(m, 1 ./ β, p)
+  @kscal!(m, 1 / β, vold)
+  MisI || @kscal!(m, 1 / β, Mvold)
 
-  v = copy(A * p)
-  α = @kdot(m, p, v) + λ
-  @kaxpy!(m, -α, vold, v)  # v = v - α * vold
-  p = M * v
-  β = @kdot(m, v, p)
+  w    = zeros(T, n)
+  wbar = copy(Mvold)
+
+  Mv = copy(A * vold)
+  α = @kdot(m, vold, Mv) + λ
+  @kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
+  v = M * Mv
+  β = @kdot(m, v, Mv)
   β < 0.0 && error("Preconditioner is not positive definite")
   β = sqrt(β)
-  @kscal!(m, 1 ./ β, v)
-  MisI || @kscal!(m, 1 ./ β, p)
+  @kscal!(m, 1 / β, v)
+  MisI || @kscal!(m, 1 / β, Mv)
 
   # Start QR factorization
   γbar = α
@@ -70,13 +74,10 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   cold = 1.0
   sold = 0.0
 
-  wbar = vold
   ζold = 0.0
   ζbar = β₁/γbar
 
   ANorm² = α * α + β * β
-
-  xcg = ζbar*vold
 
   γmax = -Inf
   γmin = Inf
@@ -98,7 +99,7 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   zlist = zeros(window)
   sprod = ones(window)
 
-  if λest != 0
+  if λest ≠ 0
     # Start QR factorization of Tₖ - λest I
     ρbar = α - λest
     σbar = β
@@ -135,23 +136,29 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     c = γbar/γ
     s = β/γ
 
+    # Update wbar and w
+    @. w = wbar * c + Mv * s
+    @kaxpby!(n, -c, Mv, s, wbar)
+
     # Generate next Lanczos vector
     oldβ = β
-    v_next = copy(A * p)
-    α = @kdot(m, p, v_next) + λ
-    @kaxpy!(m, -α, v, v_next)
-    @kaxpy!(m, -oldβ, vold, v_next)
-    p = M * v_next
-    β = @kdot(m, v_next, p)
+    Mv_next = A * v
+    α = @kdot(m, v, Mv_next) + λ
+    @kaxpy!(m, -oldβ, Mvold, Mv_next)
+    @. Mvold = Mv
+    @kaxpy!(m, -α, Mv, Mv_next)
+    @. Mv = Mv_next
+    v = M * Mv
+    β = @kdot(m, v, Mv)
     β < 0.0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
-    @kscal!(m, 1 ./ β, v_next)
-    MisI || @kscal!(m, 1 ./ β, p)
+    @kscal!(m, 1 / β, v)
+    MisI || @kscal!(m, 1 / β, Mv)
 
     # Continue A norm estimate
     ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
 
-    if λest != 0
+    if λest ≠ 0
       η = -oldβ * oldβ * cwold / ρbar
       ω = λest + η
       ψ = c * δbar + s * ω
@@ -172,16 +179,13 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     push!(rNorms, rNorm)
     push!(rcgNorms, rcgNorm)
 
-    w = wbar * c + v * s
-    wbar = wbar * s - v * c
-
     # Update iterates
-    x = x + ζ * w
+    @kaxpy!(n, ζ, w, x_lq)
 
     xNorm = xNorm + ζ * ζ
     xcgNorm = xNorm + ζbar * ζbar
 
-    if window > 0 && λest != 0
+    if window > 0 && λest ≠ 0
       if iter < window && window > 1
          sprod[iter+1:end] = sprod[iter+1:end]*s
       end      
@@ -190,11 +194,11 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
       clist[ix] = c
       zlist[ix] = ζ
 
-      if iter >= window
+      if iter ≥ window
           jx = mod(iter,window)+1
           zetabark = zlist[jx]/clist[jx] 
 
-          theta = abs(clist'*(sprod.*zlist))
+          theta = abs(@kdot(window, clist, sprod.*zlist))
           theta = zetabark*theta + 
               abs(zetabark*ζbar*sprod[ix]*s) -
               zetabark^2
@@ -203,13 +207,13 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
       end
 
       ix = ((iter) % window) + 1
-      if iter >= window && window > 1
+      if iter ≥ window && window > 1
          sprod = sprod/sprod[(ix % window) + 1]
          sprod[ix] = sprod[mod(ix-2, window)+1]*s
       end
     end
 
-    if λest != 0
+    if λest ≠ 0
       err = abs((ϵold * ζold + ψ * ζ)/ωbar)
       errcg = sqrt(abs(err * err - ζbar * ζbar))
 
@@ -238,8 +242,6 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
                        iter, test1, β, c, s, ANorm, Acond)
     
     # Reset variables
-    vold = v
-    v = v_next
     ϵold = ϵ
     ζold = ζ
     cold = c
@@ -260,9 +262,12 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err
   end
 
+  # Compute CG point
+  @. x_cg = x_lq + ζbar * wbar
+
   # Final solve against preconditioner
-  x = M * x
-  xcg = x + M*(ζbar * wbar)
+  MisI || (x_lq .= M * x_lq)
+  MisI || (x_cg .= M * x_cg)
   
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
@@ -271,5 +276,5 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   zero_resid    && (status = "found approximate zero-residual solution")
 
   stats = SymmlqStats(solved, rNorms, rcgNorms, errors, errorscg, ANorm, Acond, status)
-  return (x, xcg, stats)
+  return (x_lq, x_cg, stats)
 end
