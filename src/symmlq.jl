@@ -40,7 +40,6 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   ϵM = eps(T)
   x_lq = zeros(T, n)
-  x_cg = zeros(T, n)
   ctol = conlim > 0.0 ? 1 / conlim : 0.0;
 
   # Initialize Lanczos process.
@@ -48,7 +47,7 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   Mvold = copy(b)
   vold = M * Mvold
   β₁ = @kdot(m, vold, Mvold)
-  β₁ == 0.0 && return (x_lq, x_cg, SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
+  β₁ == 0.0 && return (x_lq, zeros(T, n), SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
   β = β₁
   @kscal!(m, 1 / β, vold)
@@ -263,7 +262,8 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   end
 
   # Compute CG point
-  @. x_cg = x_lq + ζbar * wbar
+  @kaxpby!(m, 1.0, x_lq, ζbar, wbar)
+  x_cg = wbar
   
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
