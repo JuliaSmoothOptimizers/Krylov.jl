@@ -94,8 +94,8 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   ɛ_c = atol + rtol * rNorm   # Stopping tolerance for consistent systems.
   ɛ_i = atol                  # Stopping tolerance for inconsistent systems.
   ctol = conlim > 0 ? 1/conlim : 0.0  # Stopping tolerance for ill-conditioned operators.
-  verbose && @printf("%5s  %8s  %8s  %8s\n", "Aprod", "‖r‖", "‖x‖²", "‖A‖²")
-  verbose && @printf("%5d  %8.2e  %8.2e  %8.2e\n", 1, rNorm, xNorm², Anorm²)
+  verbose && @printf("%5s  %8s  %8s  %8s  %8s  %8s  %7s\n", "Aprod", "‖r‖", "‖x‖", "‖A‖", "κ(A)", "α", "β")
+  verbose && @printf("%5d  %8.2e  %8.2e  %8.2e  %8.2e\n", 1, rNorm, xNorm, Anorm, Acond)
 
   bkwerr = 1.0  # initial value of the backward error ‖r‖ / √(‖b‖² + ‖A‖² ‖x‖²)
 
@@ -192,7 +192,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     ρ_prev = ρ   # Only differs from α if λ > 0.
 
-    verbose && @printf("%5d  %8.2e  %8.2e  %8.2e\n", 1 + 2 * iter, rNorm, xNorm², Anorm²)
+    verbose && @printf("%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8.1e  %7.1e\n", 1 + 2 * iter, rNorm, xNorm, Anorm, Acond, α, β)
 
     solved_lim = bkwerr ≤ btol
     solved_mach = 1.0 + bkwerr ≤ 1.0
