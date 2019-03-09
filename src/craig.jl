@@ -80,9 +80,11 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   λ > 0.0 && (w2 = zeros(T, n))
 
   Anorm² = 0.0   # Estimate of ‖A‖²_F.
+  Anorm  = 0.0
   Dnorm² = 0.0   # Estimate of ‖(AᵀA)⁻¹‖².
   Acond  = 0.0   # Estimate of cond(A).
   xNorm² = 0.0   # Estimate of ‖x‖².
+  xNorm  = 0.0
 
   iter = 0
   itmax == 0 && (itmax = m + n)
@@ -101,8 +103,9 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   solved_lim = bkwerr ≤ btol
   solved_mach = 1.0 + bkwerr ≤ 1.0
-  solved_resid = rNorm ≤ ɛ_c
-  solved = solved_mach | solved_lim | solved_resid
+  solved_resid_tol = rNorm ≤ ɛ_c
+  solved_resid_lim = rNorm ≤ btol + atol * Anorm * xNorm / β₁
+  solved = solved_mach | solved_lim | solved_resid_tol | solved_resid_lim
 
   ill_cond = ill_cond_mach = ill_cond_lim = false
 
@@ -176,8 +179,10 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
     end
 
     Anorm² += β * β
-    Acond   = sqrt(Anorm²) * sqrt(Dnorm²)
+    Anorm = sqrt(Anorm²)
+    Acond   = Anorm * sqrt(Dnorm²)
     xNorm² += ξ * ξ
+    xNorm = sqrt(xNorm²)
     rNorm   = β * abs(ξ)           # r = -     β * ξ * u
     λ > 0.0 && (rNorm *= abs(c₁))  # r = -c₁ * β * ξ * u when λ > 0.
     push!(rNorms, rNorm)
@@ -191,8 +196,9 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     solved_lim = bkwerr ≤ btol
     solved_mach = 1.0 + bkwerr ≤ 1.0
-    solved_resid = rNorm ≤ ɛ_c
-    solved = solved_mach | solved_lim | solved_resid
+    solved_resid_tol = rNorm ≤ ɛ_c
+    solved_resid_lim = rNorm ≤ btol + atol * Anorm * xNorm / β₁
+    solved = solved_mach | solved_lim | solved_resid_tol | solved_resid_lim
 
     ill_cond_mach = 1 + 1 / Acond ≤ 1
     ill_cond_lim = 1 / Acond ≤ ctol
@@ -202,7 +208,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
     tired = iter ≥ itmax
   end
 
-  inconsistent = !solved_resid  # is there a smarter way?
+  inconsistent = !(solved_resid_lim | solved_resid_tol) # is there a smarter way?
 
   # transfer to LSQR point if requested
   if λ > 0 && transfer_to_lsqr
