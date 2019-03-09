@@ -216,10 +216,10 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   end
 
   tired         && (status = "maximum number of iterations exceeded")
+  solved        && (status = "solution good enough for the tolerances given")
   ill_cond_mach && (status = "condition number seems too large for this machine")
   ill_cond_lim  && (status = "condition number exceeds tolerance")
   inconsistent  && (status = "system may be inconsistent")
-  solved        && (status = "solution good enough for the tolerances given")
 
   stats = SimpleStats(solved, inconsistent, rNorms, Float64[], status)
   return (x, y, stats)

@@ -27,7 +27,7 @@ function test_craig()
   (x, y, stats, resid) = test_craig(A, b)
   # @test(norm(x - A' * y) <= craig_tol * norm(x))
   show(stats)
-  @test(stats.inconsistent)
+  @test(stats.inconsistent || stats.status == "condition number exceeds tolerance")
 
   # Square consistent.
   A, b = square_consistent()
@@ -42,7 +42,7 @@ function test_craig()
   A, b = square_inconsistent()
   (x, y, stats, resid) = test_craig(A, b)
   # @test(norm(x - A' * y) <= craig_tol * norm(x))
-  @test(stats.inconsistent)
+  @test(stats.inconsistent || stats.status == "condition number exceeds tolerance")
 
   # Overdetermined consistent.
   A, b = over_consistent()
@@ -57,7 +57,7 @@ function test_craig()
   A, b = over_inconsistent()
   (x, y, stats, resid) = test_craig(A, b)
   # @test(norm(x - A' * y) <= craig_tol * norm(x))
-  @test(stats.inconsistent)
+  @test(stats.inconsistent || stats.status == "condition number exceeds tolerance")
 
   # With regularization, all systems are underdetermined and consistent.
   # (x, y, stats, resid) = test_craig(A, b, λ=1.0e-3)
