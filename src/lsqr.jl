@@ -94,9 +94,9 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   Aᵀu = A.tprod(u)
   Nv = copy(Aᵀu)
   v = N * Nv
-  α = sqrt(@kdot(n, v, Nv))
-  Anorm² = α * α
-  Anorm = α
+  Anorm² = @kdot(n, v, Nv)
+  Anorm = sqrt(Anorm²)
+  α = Anorm
   Acond  = 0.0
   xNorm  = 0.0
   xNorm² = 0.0
@@ -109,10 +109,10 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   err_lbnd = 0.0
   err_vec = zeros(T, window)
 
-  verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n",
-                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
-  verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
-                     1, β₁, α, β₁, α, 0, 1, Anorm²)
+  verbose && @printf("%5s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %7s\n",
+                     "Aprod", "α", "β", "‖r‖", "‖Aᵀr‖", "compat", "backwrd", "‖A‖", "κ(A)")
+  verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n",
+                     1, β₁, α, β₁, α, 0, 1, Anorm, Acond)
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
@@ -250,8 +250,8 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     t1    = test1 / (1.0 + Anorm * xNorm / β₁)
     rNormtol = btol + axtol * Anorm * xNorm / β₁
 
-    verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
-                       1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
+    verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n",
+                       1 + 2 * iter, α, β, rNorm, ArNorm, test1, test2, Anorm, Acond)
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
