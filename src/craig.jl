@@ -112,7 +112,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   inconsistent = false
   tired = iter ≥ itmax
 
-  while ! (solved || inconsistent || tired)
+  while ! (solved || inconsistent || ill_cond || tired)
     # Generate the next Golub-Kahan vectors
     # 1. αv = Aᵀu - βv
     Aᵀu = A.tprod(u)
@@ -207,8 +207,6 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
     inconsistent = false
     tired = iter ≥ itmax
   end
-
-  inconsistent = !(solved_resid_lim | solved_resid_tol) # is there a smarter way?
 
   # transfer to LSQR point if requested
   if λ > 0 && transfer_to_lsqr
