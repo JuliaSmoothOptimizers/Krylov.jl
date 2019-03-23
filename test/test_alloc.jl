@@ -11,8 +11,8 @@ mem = 10
 shifts  = [1:5;]
 nshifts = 5
 
-# without preconditioner and with Ap preallocated, SYMMLQ needs 5 n-vectors: x_lq, vold, v, w, wbar (= x_cg)
-storage_symmlq(n) = 5 * n
+# without preconditioner and with Ap preallocated, SYMMLQ needs 4 n-vectors: x_lq, vold, v, w̅ (= x_cg)
+storage_symmlq(n) = 4 * n
 storage_symmlq_bytes(n) = 8 * storage_symmlq(n)
 
 expected_symmlq_bytes = storage_symmlq_bytes(n)
@@ -147,9 +147,9 @@ actual_craig_bytes = @allocated craig(Au, c)
 @test actual_craig_bytes ≤ 1.1 * expected_craig_bytes
 
 # without preconditioner and with (Ap, Aᵀq) preallocated, LSLQ needs:
-# - 4 m-vectors: x_lq, v, w, w̄ (= x_cg)
+# - 3 m-vectors: x_lq, v, w̄ (= x_cg)
 # - 1 n-vector: u
-storage_lslq(n, m) = 4 * m + n
+storage_lslq(n, m) = 3 * m + n
 storage_lslq_bytes(n, m) = 8 * storage_lslq(n, m)
 expected_lslq_bytes = storage_lslq_bytes(n, m)
 (x, stats) = lslq(Ao, b)  # warmup

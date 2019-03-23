@@ -153,8 +153,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   xcgNorm  = 0.0
   xcgNorm² = 0.0
 
-  w = zeros(T, n)       # = w₀
-  w̄ = copy(v)        # = w̄₁ = v₁
+  w̄ = copy(v) # w̄₁ = v₁
 
   err_lbnd = 0.0
   err_vec = zeros(T, window)
@@ -298,9 +297,12 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
                        1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
 
     # update LSLQ point for next iteration
-    @. w = c * w̄ + s * v
+    @kaxpy!(n, c * ζ, w̄, x_lq)
+    @kaxpy!(n, s * ζ, v, x_lq)
+
+    # compute w̄
     @kaxpby!(n, -c, v, s, w̄)
-    @kaxpy!(n, ζ, w, x_lq)
+
     xlqNorm² += ζ * ζ
     xlqNorm = sqrt(xlqNorm²)
 
