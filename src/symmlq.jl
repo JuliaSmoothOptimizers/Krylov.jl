@@ -53,8 +53,7 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   @kscal!(m, 1 / β, vold)
   MisI || @kscal!(m, 1 / β, Mvold)
 
-  w    = zeros(T, n)
-  wbar = copy(vold)
+  w̅ = copy(vold)
 
   Mv = copy(A * vold)
   α = @kdot(m, vold, Mv) + λ
@@ -135,9 +134,13 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     c = γbar/γ
     s = β/γ
 
-    # Update wbar and w
-    @. w = wbar * c + v * s
-    @kaxpby!(n, -c, v, s, wbar)
+    # Update SYMMLQ point
+    ζ = ζbar * c
+    @kaxpy!(n, c * ζ, w̅, x_lq)
+    @kaxpy!(n, s * ζ, v, x_lq)
+
+    # Update w̅
+    @kaxpby!(n, -c, v, s, w̅)
 
     # Generate next Lanczos vector
     oldβ = β
@@ -169,17 +172,12 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     γbar = δbar * s - α * c
     ϵ = β * s
     δbar = -β * c
-
-    ζ = ζbar * c
     ζbar = -(ϵold * ζold + δ * ζ)/γbar
 
     rNorm = sqrt(γ * γ * ζ * ζ + ϵold * ϵold * ζold * ζold)
     rcgNorm = abs(rcgNorm*s*cold/c)
     push!(rNorms, rNorm)
     push!(rcgNorms, rcgNorm)
-
-    # Update iterates
-    @kaxpy!(n, ζ, w, x_lq)
 
     xNorm = xNorm + ζ * ζ
     xcgNorm = xNorm + ζbar * ζbar
@@ -262,8 +260,8 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   end
 
   # Compute CG point
-  @kaxpby!(m, 1.0, x_lq, ζbar, wbar)
-  x_cg = wbar
+  @kaxpby!(m, 1.0, x_lq, ζbar, w̅)
+  x_cg = w̅
   
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
