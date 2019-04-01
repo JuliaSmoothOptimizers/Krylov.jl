@@ -53,9 +53,9 @@ but simpler to implement. Only the x-part of the solution is returned.
 A preconditioner M may be provided in the form of a linear operator.
 """
 function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
-              M :: AbstractLinearOperator=opEye(), λ :: Float64=0.0,
-              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-              itmax :: Int=0, verbose :: Bool=false) where T <: Number
+              M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
+              atol :: T=√eps(T), rtol :: T=√eps(T),
+              itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
@@ -64,7 +64,7 @@ function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   x = zeros(T, n) # initial estimation x = 0
   r = copy(M * b) # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
-  bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
+  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution");
   rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   λ > 0 && (s = copy(r));
   Aᵀr = A.tprod(r) # - λ * x0 if x0 ≠ 0.
@@ -84,7 +84,7 @@ function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   status = "unknown";
   solved = rNorm ≤ ɛ_c;
-  inconsistent = (rNorm > 1.0e+2 * ɛ_c) && (ArNorm ≤ ɛ_i);
+  inconsistent = (rNorm > 100 * ɛ_c) && (ArNorm ≤ ɛ_i);
   tired = iter ≥ itmax;
 
   while ! (solved || inconsistent || tired)
@@ -100,9 +100,9 @@ function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     λ > 0 && (γ_next += λ * rNorm * rNorm);
     β = γ_next / γ;
 
-    @kaxpby!(n, 1.0, Aᵀr, β, p)  # Faster than  p = Aᵀr + β * p
+    @kaxpby!(n, one(T), Aᵀr, β, p)  # Faster than  p = Aᵀr + β * p
     if λ > 0
-      @kaxpby!(m, 1.0, r, β, s) # s = r + β * s
+      @kaxpby!(m, one(T), r, β, s) # s = r + β * s
     end
 
     γ = γ_next;
@@ -112,7 +112,7 @@ function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     iter = iter + 1;
     verbose && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm);
     solved = rNorm ≤ ɛ_c;
-    inconsistent = (rNorm > 1.0e+2 * ɛ_c) && (ArNorm ≤ ɛ_i);
+    inconsistent = (rNorm > 100 * ɛ_c) && (ArNorm ≤ ɛ_i);
     tired = iter ≥ itmax;
   end
 
