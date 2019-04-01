@@ -93,7 +93,7 @@ function cgne(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   status = "unknown";
   solved = rNorm <= ɛ_c;
-  inconsistent = (rNorm > 1.0e+2 * ɛ_c) && (pNorm <= ɛ_i);
+  inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i);
   tired = iter >= itmax;
 
   while ! (solved || inconsistent || tired)
@@ -119,7 +119,7 @@ function cgne(A :: AbstractLinearOperator, b :: AbstractVector{T};
     iter = iter + 1;
     verbose && @printf("%5d  %8.2e\n", 1 + 2 * iter, rNorm);
     solved = rNorm <= ɛ_c;
-    inconsistent = (rNorm > 1.0e+2 * ɛ_c) && (pNorm <= ɛ_i);
+    inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i);
     tired = iter >= itmax;
   end
 
