@@ -24,8 +24,8 @@ assumed to be symmetric and positive definite.
 """
 function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
                     M :: AbstractLinearOperator=opEye(),
-                    atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                    check_curvature :: Bool=false, verbose :: Bool=false) where T <: Number
+                    atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+                    check_curvature :: Bool=false, verbose :: Bool=false) where T <: AbstractFloat
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
@@ -39,13 +39,13 @@ function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
   Mv = copy(b)              # Mv₁ ← b
   v = M * Mv                # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv)) # β₁ = v₁ᵀ M v₁
-  β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
+  β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
   p = copy(v)
 
   # Initialize Lanczos process.
   # β₁Mv₁ = b
-  @kscal!(n, 1.0/β, v)          # v₁  ←  v₁ / β₁
-  MisI || @kscal!(n, 1.0/β, Mv) # Mv₁ ← Mv₁ / β₁
+  @kscal!(n, one(T)/β, v)          # v₁  ←  v₁ / β₁
+  MisI || @kscal!(n, one(T)/β, Mv) # Mv₁ ← Mv₁ / β₁
   Mv_prev = copy(Mv)
 
   iter = 0;
@@ -53,10 +53,10 @@ function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   # Initialize some constants used in recursions below.
   σ = β;
-  ω = 0;
-  γ = 1;
-  Anorm2 = 0.0;
-  β_prev = 0.0;
+  ω = zero(T)
+  γ = one(T)
+  Anorm2 = zero(T)
+  β_prev = zero(T)
 
   # Define stopping tolerance.
   rNorm = σ;
@@ -79,7 +79,7 @@ function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Check curvature. Exit fast if requested.
     # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ A pₖ.
     γ = 1 / (δ - ω / γ)      # γₖ = δₖ - ωₖ₋₁ / γₖ₋₁
-    indefinite |= (γ <= 0.0);
+    indefinite |= (γ <= 0);
     (check_curvature & indefinite) && continue;
 
     @kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
@@ -90,8 +90,8 @@ function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
     @. Mv = Mv_next                    # Mvₖ ← Mvₖ₊₁
     v = M * Mv                         # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
     β = sqrt(@kdot(n, v, Mv))          # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
-    @kscal!(n, 1.0/β, v)               # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-    MisI || @kscal!(n, 1.0/β, Mv)      # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+    @kscal!(n, one(T)/β, v)            # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+    MisI || @kscal!(n, one(T)/β, Mv)   # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
     Anorm2 += β_prev^2 + β^2 + δ^2     # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
     β_prev = β;
 
@@ -110,7 +110,7 @@ function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
   end
 
   status = tired ? "maximum number of iterations exceeded" : (check_curvature & indefinite) ? "negative curvature" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, rNorms, indefinite, sqrt(Anorm2), 0.0, status);  # TODO: Estimate Acond.
+  stats = LanczosStats(solved, rNorms, indefinite, sqrt(Anorm2), zero(T), status);  # TODO: Estimate Acond.
   return (x, stats);
 end
 
