@@ -34,8 +34,8 @@ This implementation allows a right preconditioner M.
 """
 function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
              M :: AbstractLinearOperator=opEye(),
-             atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-             itmax :: Int=0, verbose :: Bool=false) where {T <: Number}
+             atol :: T=√eps(T), rtol :: T=√eps(T),
+             itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -58,9 +58,9 @@ function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
   verbose && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Set up workspace.
-  u = copy(r)  # u₀
-  p = copy(r)  # p₀
-  q = zeros(n) # q₋₁
+  u = copy(r)     # u₀
+  p = copy(r)     # p₀
+  q = zeros(T, n) # q₋₁
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -69,21 +69,21 @@ function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   while !(solved || tired)
 
-    y = M * p                 # yₘ = M⁻¹pₘ
-    v = A * y                 # vₘ = Ayₘ
-    σ = @kdot(n, v, b)        # σₘ = < AM⁻¹pₘ,r₀ >
-    α = ρ / σ                 # αₘ = ρₘ / σₘ
-    @. q = u - α * v          # qₘ = uₘ - αₘ * AM⁻¹pₘ
-    @kaxpy!(n, 1.0, q, u)     # uₘ₊½ = uₘ + qₘ
-    z = M * u                 # zₘ = M⁻¹uₘ₊½
-    @kaxpy!(n, α, z, x)       # xₘ₊₁ = xₘ + αₘ * M⁻¹(uₘ + qₘ)
-    w = A * z                 # wₘ = AM⁻¹(uₘ + qₘ)
-    @kaxpy!(n, -α, w, r)      # rₘ₊₁ = rₘ - αₘ * AM⁻¹(uₘ + qₘ)
-    ρ_next = @kdot(n, r, b)   # ρₘ₊₁ = < rₘ₊₁,r₀ >
-    β = ρ_next / ρ            # βₘ = ρₘ₊₁ / ρₘ
-    @. u = r + β * q          # uₘ₊₁ = rₘ₊₁ + βₘ * qₘ
-    @kaxpby!(n, 1.0, q, β, p) # pₘ₊₁ = uₘ₊₁ + βₘ * (qₘ + βₘ * pₘ)
-    @kaxpby!(n, 1.0, u, β, p)
+    y = M * p                    # yₘ = M⁻¹pₘ
+    v = A * y                    # vₘ = Ayₘ
+    σ = @kdot(n, v, b)           # σₘ = < AM⁻¹pₘ,r₀ >
+    α = ρ / σ                    # αₘ = ρₘ / σₘ
+    @. q = u - α * v             # qₘ = uₘ - αₘ * AM⁻¹pₘ
+    @kaxpy!(n, one(T), q, u)     # uₘ₊½ = uₘ + qₘ
+    z = M * u                    # zₘ = M⁻¹uₘ₊½
+    @kaxpy!(n, α, z, x)          # xₘ₊₁ = xₘ + αₘ * M⁻¹(uₘ + qₘ)
+    w = A * z                    # wₘ = AM⁻¹(uₘ + qₘ)
+    @kaxpy!(n, -α, w, r)         # rₘ₊₁ = rₘ - αₘ * AM⁻¹(uₘ + qₘ)
+    ρ_next = @kdot(n, r, b)      # ρₘ₊₁ = < rₘ₊₁,r₀ >
+    β = ρ_next / ρ               # βₘ = ρₘ₊₁ / ρₘ
+    @. u = r + β * q             # uₘ₊₁ = rₘ₊₁ + βₘ * qₘ
+    @kaxpby!(n, one(T), q, β, p) # pₘ₊₁ = uₘ₊₁ + βₘ * (qₘ + βₘ * pₘ)
+    @kaxpby!(n, one(T), u, β, p)
 
     # Update ρ.
     ρ = ρ_next # ρₘ ← ρₘ₊₁
