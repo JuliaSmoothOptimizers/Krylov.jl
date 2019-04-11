@@ -25,10 +25,10 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
 function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                M :: AbstractLinearOperator=opEye(), λ :: Float64=0.0,
-                λest :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-8,
-                etol :: Float64=1.0e-8, window :: Int=0, itmax :: Int=0,
-                conlim :: Float64=1.0e+8, verbose :: Bool=false) where T <: Number
+                M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
+                λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
+                etol :: T=√eps(T), window :: Int=0, itmax :: Int=0,
+                conlim :: T=1/√eps(T), verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -40,18 +40,18 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   ϵM = eps(T)
   x_lq = zeros(T, n)
-  ctol = conlim > 0.0 ? 1 / conlim : 0.0;
+  ctol = conlim > 0 ? 1 / conlim : zero(T)
 
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
   Mvold = copy(b)
   vold = M * Mvold
   β₁ = @kdot(m, vold, Mvold)
-  β₁ == 0.0 && return (x_lq, zeros(T, n), SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
+  β₁ == 0 && return (x_lq, zeros(T, n), SimpleStats(true, true, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
   β = β₁
-  @kscal!(m, 1 / β, vold)
-  MisI || @kscal!(m, 1 / β, Mvold)
+  @kscal!(m, one(T) / β, vold)
+  MisI || @kscal!(m, one(T) / β, Mvold)
 
   w̅ = copy(vold)
 
@@ -60,49 +60,49 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   @kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
   v = M * Mv
   β = @kdot(m, v, Mv)
-  β < 0.0 && error("Preconditioner is not positive definite")
+  β < 0 && error("Preconditioner is not positive definite")
   β = sqrt(β)
-  @kscal!(m, 1 / β, v)
-  MisI || @kscal!(m, 1 / β, Mv)
+  @kscal!(m, one(T) / β, v)
+  MisI || @kscal!(m, one(T) / β, Mv)
 
   # Start QR factorization
   γbar = α
   δbar = β
-  ϵold = 0.0
-  cold = 1.0
-  sold = 0.0
+  ϵold = zero(T)
+  cold = one(T)
+  sold = zero(T)
 
-  ζold = 0.0
+  ζold = zero(T)
   ζbar = β₁/γbar
 
   ANorm² = α * α + β * β
 
-  γmax = -Inf
-  γmin = Inf
-  ANorm = 0.0
-  Acond = 0.0
+  γmax = T(-Inf)
+  γmin = T(Inf)
+  ANorm = zero(T)
+  Acond = zero(T)
   rNorm = β₁
   rcgNorm = β₁
-  xNorm = 0.0
+  xNorm = zero(T)
   xcgNorm = abs(ζbar)
 
   rNorms = [rNorm]
   rcgNorms = [rcgNorm]
   errors = T[]
   errorscg = T[]
-  err = Inf
-  errcg = Inf
+  err = T(Inf)
+  errcg = T(Inf)
 
-  clist = zeros(window)
-  zlist = zeros(window)
-  sprod = ones(window)
+  clist = zeros(T, window)
+  zlist = zeros(T, window)
+  sprod = ones(T, window)
 
   if λest ≠ 0
     # Start QR factorization of Tₖ - λest I
     ρbar = α - λest
     σbar = β
     ρ = sqrt(ρbar * ρbar + β * β)
-    cwold = -1.0
+    cwold = -one(T)
     cw = ρbar / ρ
     sw = β / ρ
 
@@ -152,10 +152,10 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     @. Mv = Mv_next
     v = M * Mv
     β = @kdot(m, v, Mv)
-    β < 0.0 && error("Preconditioner is not positive definite")
+    β < 0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
-    @kscal!(m, 1 / β, v)
-    MisI || @kscal!(m, 1 / β, Mv)
+    @kscal!(m, one(T) / β, v)
+    MisI || @kscal!(m, one(T) / β, Mv)
 
     # Continue A norm estimate
     ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
@@ -245,13 +245,13 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
-    ill_cond_mach = (1.0 + 1.0 / Acond ≤ 1.0)
-    zero_resid_mach = (1.0 + test1 ≤ 1.0)
+    ill_cond_mach = (one(T) + one(T) / Acond ≤ one(T))
+    zero_resid_mach = (one(T) + test1 ≤ one(T))
     # solved_mach = (ϵx ≥ β₁)
 
     # Stopping conditions based on user-provided tolerances.
     tired = iter ≥ itmax
-    ill_cond_lim = (1.0 / Acond ≤ ctol)
+    ill_cond_lim = (one(T) / Acond ≤ ctol)
     zero_resid_lim = (test1 ≤ tol)
     fwd_err = (err ≤ etol) | (errcg ≤ etol)
 
@@ -260,7 +260,7 @@ function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   end
 
   # Compute CG point
-  @kaxpby!(m, 1.0, x_lq, ζbar, w̅)
+  @kaxpby!(m, one(T), x_lq, ζbar, w̅)
   x_cg = w̅
   
   tired         && (status = "maximum number of iterations exceeded")
