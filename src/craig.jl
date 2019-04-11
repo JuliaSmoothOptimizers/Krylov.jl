@@ -61,10 +61,10 @@ In this implementation, both the x and y-parts of the solution are returned.
 function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
                M :: AbstractLinearOperator=opEye(),
                N :: AbstractLinearOperator=opEye(),
-               λ :: Float64=0.0,
-               atol :: Float64=1.0e-8, btol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-               conlim :: Float64=1.0e+8, itmax :: Int=0,
-               verbose :: Bool=false, transfer_to_lsqr :: Bool=false) where T <: Number
+               λ :: T=zero(T),
+               atol :: T=√eps(T), btol :: T=√eps(T), rtol :: T=√eps(T),
+               conlim :: T=1/√eps(T), itmax :: Int=0,
+               verbose :: Bool=false, transfer_to_lsqr :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -79,30 +79,30 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   Mu = copy(b)
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0 && return x, y, SimpleStats(true, false, [0.0], T[], "x = 0 is a zero-residual solution")
+  β₁ == 0 && return x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
   β₁² = β₁^2
   β = β₁
-  θ = β₁    # θ will differ from β when there is regularization (λ > 0).
-  ξ = -1.0  # Most recent component of x in Range(V).
+  θ = β₁      # θ will differ from β when there is regularization (λ > 0).
+  ξ = -one(T) # Most recent component of x in Range(V).
   δ = λ
-  ρ_prev = 1.0
+  ρ_prev = one(T)
 
   # Initialize Golub-Kahan process.
   # β₁Mu₁ = b.
-  @kscal!(m, 1.0/β₁, u)
-  MisI || @kscal!(m, 1.0/β₁, Mu)
+  @kscal!(m, one(T)/β₁, u)
+  MisI || @kscal!(m, one(T)/β₁, Mu)
 
   Nv = zeros(T, n)
   w = zeros(T, m)  # Used to update y.
 
-  λ > 0.0 && (w2 = zeros(T, n))
+  λ > 0 && (w2 = zeros(T, n))
 
-  Anorm² = 0.0   # Estimate of ‖A‖²_F.
-  Anorm  = 0.0
-  Dnorm² = 0.0   # Estimate of ‖(AᵀA)⁻¹‖².
-  Acond  = 0.0   # Estimate of cond(A).
-  xNorm² = 0.0   # Estimate of ‖x‖².
-  xNorm  = 0.0
+  Anorm² = zero(T) # Estimate of ‖A‖²_F.
+  Anorm  = zero(T)
+  Dnorm² = zero(T) # Estimate of ‖(AᵀA)⁻¹‖².
+  Acond  = zero(T) # Estimate of cond(A).
+  xNorm² = zero(T) # Estimate of ‖x‖².
+  xNorm  = zero(T)
 
   iter = 0
   itmax == 0 && (itmax = m + n)
@@ -111,16 +111,16 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   rNorms = [rNorm;]
   ɛ_c = atol + rtol * rNorm   # Stopping tolerance for consistent systems.
   ɛ_i = atol                  # Stopping tolerance for inconsistent systems.
-  ctol = conlim > 0 ? 1/conlim : 0.0  # Stopping tolerance for ill-conditioned operators.
+  ctol = conlim > 0 ? 1/conlim : zero(T)  # Stopping tolerance for ill-conditioned operators.
   verbose && @printf("%5s  %8s  %8s  %8s  %8s  %8s  %7s\n", "Aprod", "‖r‖", "‖x‖", "‖A‖", "κ(A)", "α", "β")
   verbose && @printf("%5d  %8.2e  %8.2e  %8.2e  %8.2e\n", 1, rNorm, xNorm, Anorm, Acond)
 
-  bkwerr = 1.0  # initial value of the backward error ‖r‖ / √(‖b‖² + ‖A‖² ‖x‖²)
+  bkwerr = one(T)  # initial value of the backward error ‖r‖ / √(‖b‖² + ‖A‖² ‖x‖²)
 
   status = "unknown"
 
   solved_lim = bkwerr ≤ btol
-  solved_mach = 1.0 + bkwerr ≤ 1.0
+  solved_mach = one(T) + bkwerr ≤ one(T)
   solved_resid_tol = rNorm ≤ ɛ_c
   solved_resid_lim = rNorm ≤ btol + atol * Anorm * xNorm / β₁
   solved = solved_mach | solved_lim | solved_resid_tol | solved_resid_lim
@@ -134,19 +134,19 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Generate the next Golub-Kahan vectors
     # 1. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
     Aᵀu = A.tprod(u)
-    @kaxpby!(n, 1.0, Aᵀu, -β, Nv)
+    @kaxpby!(n, one(T), Aᵀu, -β, Nv)
     v = N * Nv
     α = sqrt(@kdot(n, v, Nv))
-    if α == 0.0
+    if α == 0
       inconsistent = true
       continue
     end
-    @kscal!(n, 1.0/α, v)
-    NisI || @kscal!(n, 1.0/α, Nv)
+    @kscal!(n, one(T)/α, v)
+    NisI || @kscal!(n, one(T)/α, Nv)
 
     Anorm² += α * α + λ * λ
 
-    if λ > 0.0
+    if λ > 0
       # Givens rotation to zero out the δ in position (k, 2k):
       #      k-1  k   2k     k   2k      k-1  k   2k
       # k   [ θ   α   δ ] [ c₁   s₁ ] = [ θ   ρ      ]
@@ -158,7 +158,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     ξ = -θ / ρ * ξ
 
-    if λ > 0.0
+    if λ > 0
       # w1 = c₁ * v + s₁ * w2
       # w2 = s₁ * v - c₁ * w2
       # x  = x + ξ * w1
@@ -170,30 +170,30 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
     end
 
     # Recur y.
-    @kaxpby!(m, 1.0, u, -θ/ρ_prev, w)  # w = u - θ/ρ_prev * w
+    @kaxpby!(m, one(T), u, -θ/ρ_prev, w)  # w = u - θ/ρ_prev * w
     @kaxpy!(m, ξ/ρ, w, y)  # y = y + ξ/ρ * w
 
     Dnorm² += @knrm2(m, w)
 
     # 2. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     Av = A * v
-    @kaxpby!(m, 1.0, Av, -α, Mu)
+    @kaxpby!(m, one(T), Av, -α, Mu)
     u = M * Mu
     β = sqrt(@kdot(m, u, Mu))
-    if β ≠ 0.0
-      @kscal!(m, 1.0/β, u)
-      MisI || @kscal!(m, 1.0/β, Mu)
+    if β ≠ 0
+      @kscal!(m, one(T)/β, u)
+      MisI || @kscal!(m, one(T)/β, Mu)
     end
 
     # Finish  updates from the first Givens rotation.
-    if λ > 0.0
+    if λ > 0
       θ =  β * c₁
       γ =  β * s₁
     else
       θ = β
     end
 
-    if λ > 0.0
+    if λ > 0
       # Givens rotation to zero out the γ in position (k+1, 2k)
       #       2k  2k+1    2k  2k+1      2k  2k+1
       # k+1 [  γ    λ ] [ c₂   s₂ ] = [  0    δ ]
@@ -204,11 +204,11 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     Anorm² += β * β
     Anorm = sqrt(Anorm²)
-    Acond   = Anorm * sqrt(Dnorm²)
+    Acond = Anorm * sqrt(Dnorm²)
     xNorm² += ξ * ξ
     xNorm = sqrt(xNorm²)
-    rNorm   = β * abs(ξ)           # r = -     β * ξ * u
-    λ > 0.0 && (rNorm *= abs(c₁))  # r = -c₁ * β * ξ * u when λ > 0.
+    rNorm = β * abs(ξ)           # r = - β * ξ * u
+    λ > 0 && (rNorm *= abs(c₁))  # r = -c₁ * β * ξ * u when λ > 0.
     push!(rNorms, rNorm)
     iter = iter + 1
 
@@ -219,12 +219,12 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
     verbose && @printf("%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8.1e  %7.1e\n", 1 + 2 * iter, rNorm, xNorm, Anorm, Acond, α, β)
 
     solved_lim = bkwerr ≤ btol
-    solved_mach = 1.0 + bkwerr ≤ 1.0
+    solved_mach = one(T) + bkwerr ≤ one(T)
     solved_resid_tol = rNorm ≤ ɛ_c
     solved_resid_lim = rNorm ≤ btol + atol * Anorm * xNorm / β₁
     solved = solved_mach | solved_lim | solved_resid_tol | solved_resid_lim
 
-    ill_cond_mach = 1 + 1 / Acond ≤ 1
+    ill_cond_mach = one(T) + one(T) / Acond ≤ one(T)
     ill_cond_lim = 1 / Acond ≤ ctol
     ill_cond = ill_cond_mach | ill_cond_lim
 
@@ -245,6 +245,6 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   ill_cond_lim  && (status = "condition number exceeds tolerance")
   inconsistent  && (status = "system may be inconsistent")
 
-  stats = SimpleStats(solved, inconsistent, rNorms, Float64[], status)
+  stats = SimpleStats(solved, inconsistent, rNorms, T[], status)
   return (x, y, stats)
 end
