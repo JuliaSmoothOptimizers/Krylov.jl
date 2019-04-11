@@ -3,7 +3,7 @@ function test_mp()
   n = 5
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos,
              :dqgmres, :diom, :cr, :lslq, :lsqr, :lsmr, :craig,
-             :craigmr, :crls)
+             :craigmr, :crls, :symmlq)
     @printf("%10s ", string(fn))
     for T in (Float16, Float32, Float64, BigFloat)
       M = spdiagm(-1 => -ones(T,n-1), 0 => 3*ones(T,n), 1 => -ones(T,n-1))
