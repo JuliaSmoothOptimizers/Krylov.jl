@@ -61,11 +61,11 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(),
               N :: AbstractLinearOperator=opEye(),
               sqd :: Bool=false,
-              λ :: Float64=0.0, axtol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
-              atol :: Float64=0.0, rtol :: Float64=0.0,
-              etol :: Float64=1.0e-8, window :: Int=5,
-              itmax :: Int=0, conlim :: Float64=1.0e+8,
-              radius :: Float64=0.0, verbose :: Bool=false) where T <: Number
+              λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
+              atol :: T=zero(T), rtol :: T=zero(T),
+              etol :: T=√eps(T), window :: Int=5,
+              itmax :: Int=0, conlim :: T=1/√eps(T),
+              radius :: T=zero(T), verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -76,8 +76,8 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   NisI = isa(N, opEye)
 
   # If solving an SQD system, set regularization to 1.
-  sqd && (λ = 1.0)
-  ctol = conlim > 0.0 ? 1/conlim : 0.0
+  sqd && (λ = one(T))
+  ctol = conlim > 0 ? 1/conlim : zero(T)
   x = zeros(T, n)
 
   # Initialize Golub-Kahan process.
@@ -85,11 +85,11 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   Mu = copy(b)
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0.0 && return (x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution"))
+  β₁ == 0 && return (x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
   β = β₁
 
-  @kscal!(m, 1.0/β₁, u)
-  MisI || @kscal!(m, 1.0/β₁, Mu)
+  @kscal!(m, one(T)/β₁, u)
+  MisI || @kscal!(m, one(T)/β₁, Mu)
   Aᵀu = A.tprod(u)
   Nv = copy(Aᵀu)
   v = N * Nv
@@ -97,34 +97,34 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   ζbar = α * β
   αbar = α
-  ρ = 1.0
-  ρbar = 1.0
-  cbar = 1.0
-  sbar = 0.0
+  ρ = one(T)
+  ρbar = one(T)
+  cbar = one(T)
+  sbar = zero(T)
 
   # Initialize variables for estimation of ‖r‖.
   βdd = β
-  βd = 0.0
-  ρdold = 1.0
-  τtildeold = 0.0
-  θtilde = 0.0
-  ζ = 0.0
-  d = 0
+  βd = zero(T)
+  ρdold = one(T)
+  τtildeold = zero(T)
+  θtilde = zero(T)
+  ζ = zero(T)
+  d = zero(T)
 
   # Initialize variables for estimation of ‖A‖ and cond(A).
   Anorm² = α * α
-  maxrbar = 0.0
-  minrbar = 1.0e+100;
+  maxrbar = zero(T)
+  minrbar = min(floatmax(T), T(1.0e+100))
 
   # Items for use in stopping rules.
-  ctol = conlim > 0.0 ? 1 ./ conlim : 0.0;
+  ctol = conlim > 0 ? 1 / conlim : zero(T)
   rNorm = β
   rNorms = [rNorm]
   ArNorm = ArNorm0 = α * β
   ArNorms = [ArNorm]
 
-  xENorm² = 0.0
-  err_lbnd = 0.0
+  xENorm² = zero(T)
+  err_lbnd = zero(T)
   err_vec = zeros(T, window)
 
   verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n",
@@ -133,9 +133,9 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
                      1, β₁, α, β₁, α, 0, 1, Anorm²)
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
-  @kscal!(n, 1.0/α, v)
-  NisI || @kscal!(n, 1.0/α, Nv)
+  α == 0 && return (x, SimpleStats(true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
+  @kscal!(n, one(T)/α, v)
+  NisI || @kscal!(n, one(T)/α, Nv)
 
   h = copy(v)
   hbar = zeros(T, n)
@@ -157,21 +157,21 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     Av = A * v
-    @kaxpby!(m, 1.0, Av, -α, Mu)
+    @kaxpby!(m, one(T), Av, -α, Mu)
     u = M * Mu
     β = sqrt(@kdot(m, u, Mu))
-    if β != 0.0
-      @kscal!(m, 1.0/β, u)
-      MisI || @kscal!(m, 1.0/β, Mu)
+    if β ≠ 0
+      @kscal!(m, one(T)/β, u)
+      MisI || @kscal!(m, one(T)/β, Mu)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
       Aᵀu = A.tprod(u)
-      @kaxpby!(n, 1.0, Aᵀu, -β, Nv)
+      @kaxpby!(n, one(T), Aᵀu, -β, Nv)
       v = N * Nv
       α = sqrt(@kdot(n, v, Nv))
-      if α != 0.0
-        @kscal!(n, 1.0/α, v)
-        NisI || @kscal!(n, 1.0/α, Nv)
+      if α ≠ 0
+        @kscal!(n, one(T)/α, v)
+        NisI || @kscal!(n, one(T)/α, Nv)
       end
     end
 
@@ -197,12 +197,12 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Update h, hbar and x.
     δ = θbar * ρ / (ρold * ρbarold) # δₖ = θbarₖ * ρₖ / (ρₖ₋₁ * ρbarₖ₋₁)
-    @kaxpby!(n, 1.0, h, -δ, hbar)   # ĥₖ = hₖ - δₖ * ĥₖ₋₁
+    @kaxpby!(n, one(T), h, -δ, hbar)   # ĥₖ = hₖ - δₖ * ĥₖ₋₁
 
     # if a trust-region constraint is given, compute step to the boundary
     # the step ϕ/ρ is not necessarily positive
     σ = ζ / (ρ * ρbar)
-    if radius > 0.0
+    if radius > 0
       t1, t2 = to_boundary(x, hbar, radius)
       tmax, tmin = max(t1, t2), min(t1, t2)
       on_boundary = σ > tmax || σ < tmin
@@ -210,7 +210,7 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     end
 
     @kaxpy!(n, σ, hbar, x) # xₖ = xₖ₋₁ + σₖ * ĥₖ
-    @kaxpby!(n, 1.0, v, -θnew / ρ, h) # hₖ₊₁ = vₖ₊₁ - (θₖ₊₁/ρₖ) * hₖ
+    @kaxpby!(n, one(T), v, -θnew / ρ, h) # hₖ₊₁ = vₖ₊₁ - (θₖ₊₁/ρₖ) * hₖ
 
     # Estimate ‖r‖.
     βacute =  chat * βdd
@@ -249,7 +249,7 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     test1 = rNorm / β₁
     test2 = ArNorm / (Anorm * rNorm)
     test3 = 1 / Acond
-    t1    = test1 / (1.0 + Anorm * xNorm / β₁)
+    t1    = test1 / (one(T) + Anorm * xNorm / β₁)
     rNormtol  = btol + axtol * Anorm * xNorm / β₁
 
     verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
@@ -257,9 +257,9 @@ function lsmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
-    ill_cond_mach = (1.0 + test3 <= 1.0)
-    solved_mach = (1.0 + test2 <= 1.0)
-    zero_resid_mach = (1.0 + t1 <= 1.0)
+    ill_cond_mach = (one(T) + test3 ≤ one(T))
+    solved_mach = (one(T) + test2 ≤ one(T))
+    zero_resid_mach = (one(T) + t1 ≤ one(T))
 
     # Stopping conditions based on user-provided tolerances.
     tired  = iter >= itmax
