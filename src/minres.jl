@@ -43,10 +43,10 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
 function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                M :: AbstractLinearOperator=opEye(), λ :: Float64=0.0,
-                atol :: Float64=1.0e-12, rtol :: Float64=1.0e-12, etol :: Float64=1.0e-8,
-                window :: Int=5, itmax :: Int=0, conlim :: Float64=1.0e+8,
-                verbose :: Bool=false) where T <: Number
+                M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
+                atol :: T=√eps(T), rtol :: T=√eps(T), etol :: T=√eps(T),
+                window :: Int=5, itmax :: Int=0, conlim :: T=1/√eps(T),
+                verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -55,43 +55,43 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   ϵM = eps(T)
   x = zeros(T, n)
-  ctol = conlim > 0.0 ? 1 ./ conlim : 0.0;
+  ctol = conlim > 0 ? 1 / conlim : zero(T)
 
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
   r1 = copy(b)
   v = M * r1
   β₁ = @kdot(m, r1, v)
-  β₁ < 0.0 && error("Preconditioner is not positive definite")
-  β₁ == 0.0 && return (x, SimpleStats(true, true, [0.0], [0.0], "x = 0 is a zero-residual solution"))
+  β₁ < 0 && error("Preconditioner is not positive definite")
+  β₁ == 0 && return (x, SimpleStats(true, true, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
   β = β₁
 
-  oldβ = 0.0
-  δbar = 0.0
-  ϵ = 0.0
+  oldβ = zero(T)
+  δbar = zero(T)
+  ϵ = zero(T)
   rNorm = β₁
   rNorms = [β₁]
   ϕbar = β₁
   rhs1 = β₁
-  rhs2 = 0.0
-  γmax = 0.0
-  γmin = Inf
-  cs = -1.0
-  sn = 0.0
+  rhs2 = zero(T)
+  γmax = zero(T)
+  γmin = T(Inf)
+  cs = -one(T)
+  sn = zero(T)
   w1 = zeros(T, n)
   w2 = zeros(T, n)
   r2 = copy(r1)
 
-  ANorm² = 0.0
-  ANorm = 0.0
-  Acond = 0.0
-  ArNorm = 0.0
+  ANorm² = zero(T)
+  ANorm = zero(T)
+  Acond = zero(T)
+  ArNorm = zero(T)
   ArNorms = [ArNorm]
-  xNorm = 0.0
+  xNorm = zero(T)
 
-  xENorm² = 0.0
-  err_lbnd = 0.0
+  xENorm² = zero(T)
+  err_lbnd = zero(T)
   err_vec = zeros(T, window)
 
   verbose && @printf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s\n",
@@ -115,8 +115,8 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Generate next Lanczos vector.
     y = A * v
-    λ ≠ 0.0 && @kaxpy!(n, -λ, v, y)          # (y = y - λ * v)
-    @kscal!(n, 1 / β, y)
+    λ ≠ 0 && @kaxpy!(n, -λ, v, y)            # (y = y - λ * v)
+    @kscal!(n, one(T) / β, y)
     iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y) # (y = y - β / oldβ * r1)
 
     α = @kdot(n, v, y) / β
@@ -131,14 +131,14 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
       w = w1
       @kaxpy!(n, -δ, w2, w)
     end
-    @kaxpy!(n, 1.0 / β, v, w)
+    @kaxpy!(n, one(T) / β, v, w)
 
     @. r1 = r2
     @. r2 = y
     v = M * r2
     oldβ = β
     β = @kdot(n, r2, v)
-    β < 0.0 && error("Preconditioner is not positive definite")
+    β < 0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
     ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
 
@@ -161,7 +161,7 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     ϕbar = sn * ϕbar
 
     # Final update of w.
-    @kscal!(n, 1 / γ, w)
+    @kscal!(n, one(T) / γ, w)
 
     # Update x.
     @kaxpy!(n, ϕ, w, x)  # x = x + ϕ * w
@@ -189,7 +189,7 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     ϵx = ANorm * xNorm * ϵM
     ϵr = ANorm * xNorm * rtol
     d = γbar
-    d == 0.0 && (d = ϵA)
+    d == 0 && (d = ϵA)
 
     rNorm = ϕbar
 
@@ -204,19 +204,19 @@ function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     
     if iter == 1
       # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-      β / β₁ ≤ 10 * ϵM && return (x, SimpleStats(true, true, [β₁], [0.0], "x is a minimum least-squares solution"))
+      β / β₁ ≤ 10 * ϵM && return (x, SimpleStats(true, true, [β₁], [zero(T)], "x is a minimum least-squares solution"))
     end
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
-    ill_cond_mach = (1.0 + 1.0 / Acond ≤ 1.0)
-    solved_mach = (1.0 + test2 ≤ 1.0)
-    zero_resid_mach = (1.0 + test1 ≤ 1.0)
+    ill_cond_mach = (one(T) + one(T) / Acond ≤ one(T))
+    solved_mach = (one(T) + test2 ≤ one(T))
+    zero_resid_mach = (one(T) + test1 ≤ one(T))
     # solved_mach = (ϵx ≥ β₁)
 
     # Stopping conditions based on user-provided tolerances.
     tired = iter ≥ itmax
-    ill_cond_lim = (1.0 / Acond ≤ ctol)
+    ill_cond_lim = (one(T) / Acond ≤ ctol)
     solved_lim = (test2 ≤ tol)
     zero_resid_lim = (test1 ≤ tol)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))

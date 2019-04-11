@@ -3,7 +3,7 @@ function test_mp()
   n = 5
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos,
              :dqgmres, :diom, :cr, :lslq, :lsqr, :lsmr, :craig,
-             :craigmr, :crls, :symmlq)
+             :craigmr, :crls, :symmlq, :minres)
     @printf("%10s ", string(fn))
     for T in (Float16, Float32, Float64, BigFloat)
       M = spdiagm(-1 => -ones(T,n-1), 0 => 3*ones(T,n), 1 => -ones(T,n-1))
@@ -18,6 +18,12 @@ function test_mp()
         (x, stats) = @eval $fn($A, $b)
       end
       @test norm(A * x - b) ≤ atol + norm(b) * rtol
+    end
+      if T == Float16
+        @test norm(A*x - b) ≤ 10 * (atol + norm(b) * rtol)
+      else
+        @test norm(A*x - b) ≤ atol + norm(b) * rtol
+      end
     end
     @printf("✔\n")
   end
