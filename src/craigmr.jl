@@ -63,8 +63,8 @@ returned.
 function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
                  M :: AbstractLinearOperator=opEye(),
                  N :: AbstractLinearOperator=opEye(),
-                 λ :: Float64=0.0, atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-                 itmax :: Int=0, verbose :: Bool=false) where T <: Number
+                 λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
+                 itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
@@ -80,12 +80,12 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   Mu = copy(b)
   u = M * Mu
   β = sqrt(@kdot(m, u, Mu))
-  β == 0.0 && return (x, y, SimpleStats(true, false, [0.0], T[], "x = 0 is a zero-residual solution"));
+  β == 0 && return (x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"));
 
   # Initialize Golub-Kahan process.
   # β₁Mu₁ = b.
-  @kscal!(m, 1.0/β, u)
-  MisI || @kscal!(m, 1.0/β, Mu)
+  @kscal!(m, one(T)/β, u)
+  MisI || @kscal!(m, one(T)/β, Mu)
   # α₁Nv₁ = Aᵀu₁.
   Aᵀu = A.tprod(u)
   Nv = copy(Aᵀu)
@@ -99,14 +99,14 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
                      1, β, α, β, α, 0, 1, Anorm²);
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0.0 && return (x, y, SimpleStats(true, false, [β], [0.0], "x = 0 is a minimum least-squares solution"));
-  @kscal!(n, 1.0/α, v)
-  NisI || @kscal!(n, 1.0/α, Nv)
+  α == 0 && return (x, y, SimpleStats(true, false, [β], [zero(T)], "x = 0 is a minimum least-squares solution"));
+  @kscal!(n, one(T)/α, v)
+  NisI || @kscal!(n, one(T)/α, Nv)
 
   # Initialize other constants.
   ζbar = β;
   ρbar = α;
-  θ = 0.0;
+  θ = zero(T)
   rNorm = ζbar;
   rNorms = [rNorm];
   ArNorm = α;
@@ -119,12 +119,12 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   itmax == 0 && (itmax = m + n);
 
   wbar = copy(u)
-  @kscal!(m, 1.0/α, wbar)
+  @kscal!(m, one(T)/α, wbar)
   w = zeros(T, m);
 
   status = "unknown";
   solved = rNorm <= ɛ_c
-  inconsistent = (rNorm > 1.0e+2 * ɛ_c) & (ArNorm <= ɛ_i)
+  inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
   tired  = iter >= itmax
 
   while ! (solved || inconsistent || tired)
@@ -133,12 +133,12 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     Av = A * v
-    @kaxpby!(m, 1.0, Av, -α, Mu)
+    @kaxpby!(m, one(T), Av, -α, Mu)
     u = M * Mu
     β = sqrt(@kdot(m, u, Mu))
-    if β ≠ 0.0
-      @kscal!(m, 1.0/β, u)
-      MisI || @kscal!(m, 1.0/β, Mu)
+    if β ≠ 0
+      @kscal!(m, one(T)/β, u)
+      MisI || @kscal!(m, one(T)/β, Mu)
     end
 
     Anorm² = Anorm² + β * β;  # = ‖B_{k-1}‖²
@@ -162,12 +162,12 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     rNorm = abs(ζbar);
     push!(rNorms, rNorm);
 
-    @kaxpby!(m, 1.0/ρ, wbar, -θ/ρ, w)  # w = (wbar - θ * w) / ρ;
+    @kaxpby!(m, one(T)/ρ, wbar, -θ/ρ, w)  # w = (wbar - θ * w) / ρ;
     @kaxpy!(m, ζ, w, y)             # y = y + ζ * w;
 
     # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
     Aᵀu = A.tprod(u)
-    @kaxpby!(n, 1.0, Aᵀu, -β, Nv)
+    @kaxpby!(n, one(T), Aᵀu, -β, Nv)
     v = N * Nv
     α = sqrt(@kdot(n, v, Nv))
     Anorm² = Anorm² + α * α;  # = ‖Lₖ‖
@@ -177,16 +177,16 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
                        1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²);
 
-    if α ≠ 0.0
-      @kscal!(n, 1.0/α, v)
-      NisI || @kscal!(n, 1.0/α, Nv)
-      @kaxpby!(m, 1.0/α, u, -β/α, wbar)  # wbar = (u - beta * wbar) / alpha;
+    if α ≠ 0
+      @kscal!(n, one(T)/α, v)
+      NisI || @kscal!(n, one(T)/α, Nv)
+      @kaxpby!(m, one(T)/α, u, -β/α, wbar)  # wbar = (u - beta * wbar) / alpha;
     end
     θ = s * α;
     ρbar = -c * α;
 
     solved = rNorm <= ɛ_c
-    inconsistent = (rNorm > 1.0e+2 * ɛ_c) & (ArNorm <= ɛ_i)
+    inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
     tired  = iter >= itmax
   end
 
