@@ -61,11 +61,11 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(),
               N :: AbstractLinearOperator=opEye(),
               sqd :: Bool=false,
-              λ :: Float64=0.0, axtol :: Float64=1.0e-8, btol :: Float64=1.0e-8,
-              atol :: Float64=0.0, rtol :: Float64=0.0,
-              etol :: Float64=1.0e-8, window :: Int=5,
-              itmax :: Int=0, conlim :: Float64=1.0e+8,
-              radius :: Float64=0.0, verbose :: Bool=false) where T <: Number
+              λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
+              atol :: T=zero(T), rtol :: T=zero(T),
+              etol :: T=√eps(T), window :: Int=5,
+              itmax :: Int=0, conlim :: T=1/√eps(T),
+              radius :: T=zero(T), verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -76,9 +76,9 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   NisI = isa(N, opEye)
 
   # If solving an SQD system, set regularization to 1.
-  sqd && (λ = 1.0)
+  sqd && (λ = one(T))
   λ² = λ * λ
-  ctol = conlim > 0.0 ? 1/conlim : 0.0
+  ctol = conlim > 0 ? 1/conlim : zero(T)
   x = zeros(T, n)
 
   # Initialize Golub-Kahan process.
@@ -86,27 +86,27 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   Mu = copy(b)
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0.0 && return (x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution"))
+  β₁ == 0 && return (x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
   β = β₁
 
-  @kscal!(m, 1.0/β₁, u)
-  MisI || @kscal!(m, 1.0/β₁, Mu)
+  @kscal!(m, one(T)/β₁, u)
+  MisI || @kscal!(m, one(T)/β₁, Mu)
   Aᵀu = A.tprod(u)
   Nv = copy(Aᵀu)
   v = N * Nv
   Anorm² = @kdot(n, v, Nv)
   Anorm = sqrt(Anorm²)
   α = Anorm
-  Acond  = 0.0
-  xNorm  = 0.0
-  xNorm² = 0.0
-  dNorm² = 0.0
-  c2 = -1.0
-  s2 =  0.0
-  z  =  0.0
+  Acond  = zero(T)
+  xNorm  = zero(T)
+  xNorm² = zero(T)
+  dNorm² = zero(T)
+  c2 = -one(T)
+  s2 = zero(T)
+  z  = zero(T)
 
-  xENorm² = 0.0
-  err_lbnd = 0.0
+  xENorm² = zero(T)
+  err_lbnd = zero(T)
   err_vec = zeros(T, window)
 
   verbose && @printf("%5s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %7s\n",
@@ -115,9 +115,9 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
                      1, β₁, α, β₁, α, 0, 1, Anorm, Acond)
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0.0 && return (x, SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
-  @kscal!(n, 1.0/α, v)
-  NisI || @kscal!(n, 1.0/α, Nv)
+  α == 0 && return (x, SimpleStats(true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
+  @kscal!(n, one(T)/α, v)
+  NisI || @kscal!(n, one(T)/α, Nv)
   w = copy(v)
 
   # Initialize other constants.
@@ -127,7 +127,7 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   rNorm = ϕbar
   r1Norm = rNorm
   r2Norm = rNorm
-  res2   = 0.0
+  res2   = zero(T)
   rNorms = [r2Norm]
   ArNorm = ArNorm0 = α * β
   ArNorms = [ArNorm]
@@ -138,12 +138,12 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   status = "unknown"
   on_boundary = false
   solved_lim = ArNorm / (Anorm * rNorm) <= axtol
-  solved_mach = 1.0 + ArNorm / (Anorm * rNorm) <= 1.0
+  solved_mach = one(T) + ArNorm / (Anorm * rNorm) ≤ one(T)
   solved = solved_mach | solved_lim
   tired  = iter >= itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
   zero_resid_lim = rNorm / β₁ <= axtol
-  zero_resid_mach = 1.0 + rNorm / β₁ <= 1.0
+  zero_resid_mach = one(T) + rNorm / β₁ ≤ one(T)
   zero_resid = zero_resid_mach | zero_resid_lim
   fwd_err = false
 
@@ -153,23 +153,23 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     Av = A * v
-    @kaxpby!(m, 1.0, Av, -α, Mu)
+    @kaxpby!(m, one(T), Av, -α, Mu)
     u = M * Mu
     β = sqrt(@kdot(m, u, Mu))
-    if β != 0.0
-      @kscal!(m, 1.0/β, u)
-      MisI || @kscal!(m, 1.0/β, Mu)
+    if β ≠ 0
+      @kscal!(m, one(T)/β, u)
+      MisI || @kscal!(m, one(T)/β, Mu)
       Anorm² = Anorm² + α * α + β * β;  # = ‖B_{k-1}‖²
-      λ > 0.0 && (Anorm² += λ²)
+      λ > 0 && (Anorm² += λ²)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
       Aᵀu = A.tprod(u)
-      @kaxpby!(n, 1.0, Aᵀu, -β, Nv)
+      @kaxpby!(n, one(T), Aᵀu, -β, Nv)
       v = N * Nv
       α = sqrt(@kdot(n, v, Nv))
-      if α != 0.0
-        @kscal!(n, 1.0/α, v)
-        NisI || @kscal!(n, 1.0/α, Nv)
+      if α ≠ 0
+        @kscal!(n, one(T)/α, v)
+        NisI || @kscal!(n, one(T)/α, Nv)
       end
     end
 
@@ -207,15 +207,15 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # if a trust-region constraint is give, compute step to the boundary
     # the step ϕ/ρ is not necessarily positive
     σ = ϕ / ρ
-    if radius > 0.0
+    if radius > 0
       t1, t2 = to_boundary(x, w, radius)
       tmax, tmin = max(t1, t2), min(t1, t2)
       on_boundary = σ > tmax || σ < tmin
       σ = σ > 0 ? min(σ, tmax) : max(σ, tmin)
     end
 
-    @kaxpy!(n,  σ, w, x)  # x = x + ϕ / ρ * w
-    @kaxpby!(n, 1.0, v, -θ/ρ, w)  # w = v - θ / ρ * w
+    @kaxpy!(n, σ, w, x)  # x = x + ϕ / ρ * w
+    @kaxpby!(n, one(T), v, -θ/ρ, w)  # w = v - θ / ρ * w
 
     # Use a plane rotation on the right to eliminate the super-diagonal
     # element (θ) of the upper-bidiagonal matrix.
@@ -240,14 +240,14 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     r1sq = rNorm * rNorm - λ² * xNorm²
     r1Norm = sqrt(abs(r1sq))
-    r1sq < 0.0 && (r1Norm = -r1Norm)
+    r1sq < 0 && (r1Norm = -r1Norm)
     r2Norm = rNorm
     push!(rNorms, r2Norm)
 
     test1 = rNorm / β₁
     test2 = ArNorm / (Anorm * rNorm)
     test3 = 1 / Acond
-    t1    = test1 / (1.0 + Anorm * xNorm / β₁)
+    t1    = test1 / (one(T) + Anorm * xNorm / β₁)
     rNormtol = btol + axtol * Anorm * xNorm / β₁
 
     verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n",
@@ -255,9 +255,9 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
-    ill_cond_mach = (1.0 + test3 <= 1.0)
-    solved_mach = (1.0 + test2 <= 1.0)
-    zero_resid_mach = (1.0 + t1 <= 1.0)
+    ill_cond_mach = (one(T) + test3 ≤ one(T))
+    solved_mach = (one(T) + test2 ≤ one(T))
+    zero_resid_mach = (one(T) + t1 ≤ one(T))
 
     # Stopping conditions based on user-provided tolerances.
     tired  = iter >= itmax
