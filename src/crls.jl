@@ -37,9 +37,9 @@ It is formally equivalent to LSMR, though can be substantially less accurate,
 but simpler to implement.
 """
 function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
-              M :: AbstractLinearOperator=opEye(), λ :: Float64=0.0,
-              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, radius :: Float64=0.0,
-              itmax :: Int=0, verbose :: Bool=false) where T <: Number
+              M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
+              atol :: T=√eps(T), rtol :: T=√eps(T), radius :: T=zero(T),
+              itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
@@ -48,7 +48,7 @@ function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
   x = zeros(T, n)
   r  = copy(b)
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
-  bNorm == 0 && return x, SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution");
+  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution");
 
   Mr = M * r;
   Ar = copy(A.tprod(Mr))  # - λ * x0 if x0 ≠ 0.
@@ -84,7 +84,7 @@ function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # if a trust-region constraint is give, compute step to the boundary
     # (note that α > 0 in CRLS)
-    if radius > 0.0
+    if radius > 0
       pNorm = @knrm2(n, p)
       if @knrm2(m, Ap)^2 ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is constant in the direction p
         psd = true # det(AᵀA) = 0
@@ -114,8 +114,8 @@ function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
     λ > 0 && (γ_next += λ * ArNorm * ArNorm);
     β = γ_next / γ;
 
-    @kaxpby!(n, 1.0, Ar, β, p)    # Faster than  p = Ar + β *  p;
-    @kaxpby!(m, 1.0, s, β, Ap)    # Faster than Ap =  s + β * Ap;
+    @kaxpby!(n, one(T), Ar, β, p)    # Faster than  p = Ar + β *  p;
+    @kaxpby!(m, one(T), s, β, Ap)    # Faster than Ap =  s + β * Ap;
     MAp = M * Ap
     q = A.tprod(MAp)
     λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p;
