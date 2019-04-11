@@ -1,7 +1,9 @@
 function test_mp()
   @printf("Tests of multi-precision methods:\n")
   n = 5
-  for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos)
+<<<<<<< HEAD
+  for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos,
+             :dqgmres)
     @printf("%10s ", string(fn))
     for T in (Float16, Float32, Float64, BigFloat)
       M = spdiagm(-1 => ones(T,n-1), 0 => 4*ones(T,n), 1 => ones(T,n-1))

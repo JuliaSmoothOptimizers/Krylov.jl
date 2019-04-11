@@ -21,9 +21,9 @@ and computes a sequence of approximate solutions with the quasi-minimal residual
 This implementation allows a right preconditioner M.
 """
 function dqgmres(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                 M :: AbstractLinearOperator=opEye(), atol :: Float64=1.0e-8,
-                 rtol :: Float64=1.0e-6, itmax :: Int=0, memory :: Int=20,
-                 verbose :: Bool=false) where T <: Number
+                 M :: AbstractLinearOperator=opEye(), atol :: T=√eps(T),
+                 rtol :: T=√eps(T), itmax :: Int=0, memory :: Int=20,
+                 verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -34,7 +34,7 @@ function dqgmres(A :: AbstractLinearOperator, b :: AbstractVector{T};
   x = zeros(T, n)
   # Compute β.
   rNorm = @knrm2(n, b) # rNorm = ‖r₀‖₂
-  rNorm == 0.0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
+  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
@@ -45,11 +45,11 @@ function dqgmres(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   # Set up workspace.
   mem = min(memory, itmax) # Memory.
-  V = [zeros(n) for i = 1 : mem] # Preconditioned Krylov vectors, orthogonal basis for {r₀, AM⁻¹r₀, (AM⁻¹)²r₀, ..., (AM⁻¹)ᵐ⁻¹r₀}.
-  P = [zeros(n) for i = 1 : mem] # Directions for x : Pₘ = Vₘ(Rₘ)⁻¹.
-  s = zeros(mem)    # Last mem Givens sines used for the factorization QₘRₘ = Hₘ.
-  c = zeros(mem)    # Last mem Givens cosines used for the factorization QₘRₘ = Hₘ.
-  H = zeros(mem+2)  # Last column of the band hessenberg matrix Hₘ.
+  V = [zeros(T, n) for i = 1 : mem] # Preconditioned Krylov vectors, orthogonal basis for {r₀, AM⁻¹r₀, (AM⁻¹)²r₀, ..., (AM⁻¹)ᵐ⁻¹r₀}.
+  P = [zeros(T, n) for i = 1 : mem] # Directions for x : Pₘ = Vₘ(Rₘ)⁻¹.
+  s = zeros(T, mem)    # Last mem Givens sines used for the factorization QₘRₘ = Hₘ.
+  c = zeros(T, mem)    # Last mem Givens cosines used for the factorization QₘRₘ = Hₘ.
+  H = zeros(T, mem+2)  # Last column of the band hessenberg matrix Hₘ.
   # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
   # In addition of that, the last column of Rₘ is also stored in H.
@@ -85,12 +85,12 @@ function dqgmres(A :: AbstractLinearOperator, b :: AbstractVector{T};
     end
     # Compute hₘ₊₁.ₘ and vₘ₊₁.
     H[1] = @knrm2(n, w) # hₘ₊₁.ₘ = ‖vₘ₊₁‖₂
-    if H[1] ≠ 0.0 # hₘ₊₁.ₘ = 0 ⇒ "lucky breakdown"
+    if H[1] ≠ 0 # hₘ₊₁.ₘ = 0 ⇒ "lucky breakdown"
       @. V[next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
     end
     # rₘ₋ₘₑₘ.ₘ ≠ 0 when m ≥ mem + 1
     if iter ≥ mem + 2
-      H[mem+2] = 0.0 # hₘ₋ₘₑₘ.ₘ = 0
+      H[mem+2] = zero(T) # hₘ₋ₘₑₘ.ₘ = 0
     end
 
     # Update the QR factorization of H.
@@ -124,7 +124,7 @@ function dqgmres(A :: AbstractLinearOperator, b :: AbstractVector{T};
       end
     end
     # pₐᵤₓ ← pₐᵤₓ + M⁻¹vₘ
-    @kaxpy!(n, 1.0, z, P[pos])
+    @kaxpy!(n, one(T), z, P[pos])
     # pₘ = pₐᵤₓ / hₘ.ₘ
     @. P[pos] = P[pos] / H[2]
 
