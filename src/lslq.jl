@@ -95,10 +95,10 @@ The iterations stop as soon as one of the following conditions holds true:
 function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(),
               N :: AbstractLinearOperator=opEye(),
-              sqd :: Bool=false, λ :: Float64=0.0, σ :: Float64=0.0,
-              atol :: Float64=1.0e-8, btol :: Float64=1.0e-8, etol :: Float64=1.0e-8,
-              window :: Int=5, utol :: Float64=1.0e-8, itmax :: Int=0,
-              conlim :: Float64=1.0e+8, verbose :: Bool=false) where T <: Number
+              sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
+              atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
+              window :: Int=5, utol :: T=√eps(T), itmax :: Int=0,
+              conlim :: T=1/√eps(T), verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -109,9 +109,9 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   NisI = isa(N, opEye)
 
   # If solving an SQD system, set regularization to 1.
-  sqd && (λ = 1.0)
+  sqd && (λ = one(T))
   λ² = λ * λ
-  ctol = conlim > 0.0 ? 1/conlim : 0.0
+  ctol = conlim > 0 ? 1/conlim : zero(T)
 
   x_lq = zeros(T, n)    # LSLQ point
   err_lbnds = T[]
@@ -123,39 +123,39 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   Mu = copy(b)
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0.0 && return (x_lq, zeros(T, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
-                       SimpleStats(true, false, [0.0], [0.0], "x = 0 is a zero-residual solution"))
+  β₁ == 0 && return (x_lq, zeros(T, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
+                       SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
   β = β₁
 
-  @kscal!(m, 1.0/β₁, u)
-  MisI || @kscal!(m, 1.0/β₁, Mu)
+  @kscal!(m, one(T)/β₁, u)
+  MisI || @kscal!(m, one(T)/β₁, Mu)
   Aᵀu = A.tprod(u)
   Nv = copy(Aᵀu)
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))  # = α₁
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0.0 && return (x_lq, zeros(T, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
-                      SimpleStats(true, false, [β₁], [0.0], "x = 0 is a minimum least-squares solution"))
-  @kscal!(n, 1.0/α, v)
-  NisI || @kscal!(n, 1.0/α, Nv)
+  α == 0 && return (x_lq, zeros(T, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
+                      SimpleStats(true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
+  @kscal!(n, one(T)/α, v)
+  NisI || @kscal!(n, one(T)/α, Nv)
 
   Anorm = α
   Anorm² = α * α
 
   # condition number estimate
-  σmax = 0.0
+  σmax = zero(T)
   σmin = Inf
-  Acond  = 0.0
+  Acond  = zero(T)
 
-  xlqNorm  = 0.0
-  xlqNorm² = 0.0
-  xcgNorm  = 0.0
-  xcgNorm² = 0.0
+  xlqNorm  = zero(T)
+  xlqNorm² = zero(T)
+  xcgNorm  = zero(T)
+  xcgNorm² = zero(T)
 
   w̄ = copy(v) # w̄₁ = v₁
 
-  err_lbnd = 0.0
+  err_lbnd = zero(T)
   err_vec = zeros(T, window)
 
   # Initialize other constants.
@@ -164,14 +164,14 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   ρ̄ = -σ
   γ̄ = α
   ss = β₁
-  c = -1.0
-  s = 0.0
-  δ = -1.0
+  c = -one(T)
+  s = zero(T)
+  δ = -one(T)
   τ = α * β₁
-  ζ = 0.0
-  ζ̄  = 0.0
-  ζ̃  = T(0)
-  csig = -1.0
+  ζ = zero(T)
+  ζ̄  = zero(T)
+  ζ̃  = zero(T)
+  csig = -one(T)
 
   rNorm = β₁
   rNorms = [rNorm]
@@ -199,27 +199,27 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     Av = A * v
-    @kaxpby!(m, 1.0, Av, -α, Mu)
+    @kaxpby!(m, one(T), Av, -α, Mu)
     u = M * Mu
     β = sqrt(@kdot(m, u, Mu))
-    if β != 0.0
-      @kscal!(m, 1.0/β, u)
-      MisI || @kscal!(m, 1.0/β, Mu)
+    if β ≠ 0
+      @kscal!(m, one(T)/β, u)
+      MisI || @kscal!(m, one(T)/β, Mu)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
       Aᵀu = A.tprod(u)
-      @kaxpby!(n, 1.0, Aᵀu, -β, Nv)
+      @kaxpby!(n, one(T), Aᵀu, -β, Nv)
       v = N * Nv
       α = sqrt(@kdot(n, v, Nv))
-      if α != 0.0
-        @kscal!(n, 1.0/α, v)
-        NisI || @kscal!(n, 1.0/α, Nv)
+      if α ≠ 0
+        @kscal!(n, one(T)/α, v)
+        NisI || @kscal!(n, one(T)/α, Nv)
       end
 
       # rotate out regularization term if present
       αL = α
       βL = β
-      if λ != 0.0
+      if λ ≠ 0
         (cL, sL, βL) = sym_givens(β, λ)
         αL = cL * α
 
@@ -240,7 +240,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     δ = sp * αL
     γ̄ = -cp * αL
 
-    if σ > 0.0
+    if σ > 0
       # Continue QR factorization for error estimate
       μ̄ = -csig * γ
       (csig, ssig, ρ) = sym_givens(ρ̄, γ)
@@ -281,7 +281,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Compute ‖x_cg‖₂
     xcgNorm² = xlqNorm² + ζ̄ * ζ̄
 
-    if σ > 0.0 && iter > 0
+    if σ > 0 && iter > 0
       err_ubnd_cg = sqrt(ζ̃ * ζ̃ - ζ̄  * ζ̄ )
       push!(err_ubnds_cg, err_ubnd_cg)
       fwd_err_ubnd = err_ubnd_cg ≤ utol * sqrt(xcgNorm²)
@@ -290,7 +290,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     test1 = rNorm / β₁
     test2 = ArNorm / (Anorm * rNorm)
     test3 = 1 / Acond
-    t1    = test1 / (1.0 + Anorm * xlqNorm / β₁)
+    t1    = test1 / (one(T) + Anorm * xlqNorm / β₁)
     rtol  = btol + atol * Anorm * xlqNorm / β₁
 
     verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n",
@@ -315,7 +315,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     end
 
     # compute LQ forward error upper bound
-    if σ > 0.0
+    if σ > 0
       η̃ = ω * s
       ϵ̃ = -ω * c
       τ̃ = -τ * δ / ω
@@ -325,9 +325,9 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
-    ill_cond_mach = (1.0 + test3 ≤ 1.0)
-    solved_mach = (1.0 + test2 ≤ 1.0)
-    zero_resid_mach = (1.0 + t1 ≤ 1.0)
+    ill_cond_mach = (one(T) + test3 ≤ one(T))
+    solved_mach = (one(T) + test2 ≤ one(T))
+    zero_resid_mach = (one(T) + t1 ≤ one(T))
 
     # Stopping conditions based on user-provided tolerances.
     tired  = iter ≥ itmax
@@ -342,7 +342,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   end
 
   # compute LSQR point
-  @kaxpby!(n, 1.0, x_lq, ζ̄ , w̄)
+  @kaxpby!(n, one(T), x_lq, ζ̄ , w̄)
   x_cg = w̄
 
   tired         && (status = "maximum number of iterations exceeded")
