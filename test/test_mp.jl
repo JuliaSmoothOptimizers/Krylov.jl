@@ -6,8 +6,9 @@ function test_mp()
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos,
-             :dqgmres, :diom, :cr, :lslq, :lsqr)
+             :dqgmres, :diom, :cr, :lslq, :lsqr, :lsmr)
     @printf("%10s ", string(fn))
     for T in (Float16, Float32, Float64, BigFloat)
       M = spdiagm(-1 => ones(T,n-1), 0 => 4*ones(T,n), 1 => ones(T,n-1))
