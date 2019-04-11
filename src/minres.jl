@@ -44,7 +44,7 @@ assumed to be symmetric and positive definite.
 """
 function minres(A :: AbstractLinearOperator, b :: AbstractVector{T};
                 M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
-                atol :: T=√eps(T), rtol :: T=√eps(T), etol :: T=√eps(T),
+                atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, etol :: T=√eps(T),
                 window :: Int=5, itmax :: Int=0, conlim :: T=1/√eps(T),
                 verbose :: Bool=false) where T <: AbstractFloat
 

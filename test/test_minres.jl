@@ -1,5 +1,5 @@
 function test_minres()
-  minres_tol = 1.0e-6
+  minres_tol = 1.0e-5
 
   # Cubic spline matrix.
   A, b = symmetric_definite()

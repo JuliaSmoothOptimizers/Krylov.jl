@@ -92,8 +92,8 @@ storage_cr(n) = 4 * n
 storage_cr_bytes(n) = 8 * storage_cr(n)
 
 expected_cr_bytes = storage_cr_bytes(n)
-cr(A, b)  # warmup
-actual_cr_bytes = @allocated cr(A, b)
+cr(A, b, rtol=1e-6)  # warmup
+actual_cr_bytes = @allocated cr(A, b, rtol=1e-6)
 @test actual_cr_bytes ≤ 1.1 * expected_cr_bytes
 
 # without preconditioner and with (Ap, Aᵀq) preallocated, CRMR needs:
