@@ -23,9 +23,9 @@ and indefinite systems of linear equations can be handled by this single algorit
 This implementation allows a right preconditioner M.
 """
 function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
-              M :: AbstractLinearOperator=opEye(),
-              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6,
-              itmax :: Int=0, memory :: Int=20, verbose :: Bool=false) where T <: Number
+              M :: AbstractLinearOperator=opEye(), atol :: T=√eps(T),
+              rtol :: T=√eps(T), itmax :: Int=0, memory :: Int=20,
+              verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -37,7 +37,7 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
   x_old = copy(x)
   # Compute β.
   rNorm = @knrm2(n, b) # rNorm = ‖r₀‖₂
-  rNorm == 0.0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
+  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
@@ -48,13 +48,13 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   # Set up workspace.
   mem = min(memory, itmax) # Memory.
-  V = [zeros(n) for i = 1 : mem] # Preconditioned Krylov vectors, orthogonal basis for {r₀, AM⁻¹r₀, (AM⁻¹)²r₀, ..., (AM⁻¹)ᵐ⁻¹r₀}.
-  P = [zeros(n) for i = 1 : mem] # Directions for x : Pₘ = Vₘ(Uₘ)⁻¹.
-  H = zeros(mem+2)  # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
+  V = [zeros(T, n) for i = 1 : mem] # Preconditioned Krylov vectors, orthogonal basis for {r₀, AM⁻¹r₀, (AM⁻¹)²r₀, ..., (AM⁻¹)ᵐ⁻¹r₀}.
+  P = [zeros(T, n) for i = 1 : mem] # Directions for x : Pₘ = Vₘ(Uₘ)⁻¹.
+  H = zeros(T, mem+2)  # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
   # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
   # In addition of that, the last column of Uₘ is stored in H.
-  L = zeros(mem) # Last mem Pivots of Lₘ.
+  L = zeros(T, mem) # Last mem Pivots of Lₘ.
   p = BitArray(undef, mem) # Last mem permutations.
 
   # Initial ξ₁ and V₁.
@@ -86,12 +86,12 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
     end
     # Compute hₘ₊₁.ₘ and vₘ₊₁.
     H[1] = @knrm2(n, w) # hₘ₊₁.ₘ = ‖vₘ₊₁‖₂
-    if H[1] ≠ 0.0 # hₘ₊₁.ₘ = 0 ⇒ "lucky breakdown"
+    if H[1] ≠ 0 # hₘ₊₁.ₘ = 0 ⇒ "lucky breakdown"
       @. V[next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
     end
     # It's possible that uₘ₋ₘₑₘ.ₘ ≠ 0 when m ≥ mem + 1
     if iter ≥ mem + 2
-      H[mem+2] = 0.0 # hₘ₋ₘₑₘ.ₘ = 0
+      H[mem+2] = zero(T) # hₘ₋ₘₑₘ.ₘ = 0
     end
 
     # Update the LU factorization with partial pivoting of H.
@@ -128,7 +128,7 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
       end
     end
     # pₐᵤₓ ← pₐᵤₓ + M⁻¹vₘ
-    @kaxpy!(n, 1.0, z, P[pos])
+    @kaxpy!(n, one(T), z, P[pos])
 
     # Determine if interchange between hₘ₊₁.ₘ and uₘ.ₘ is needed and compute next pivot lₘ₊₁.ₘ.
     if abs(H[2]) < H[1]
@@ -157,7 +157,7 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Update x_old and residual norm.
     if !p[next_pos]
-      copyto!(x_old, x)
+      @. x_old = x
       # ‖ b - Axₘ ‖₂ = hₘ₊₁.ₘ * |ξₘ / uₘ.ₘ| without pivoting
       rNorm = H[1] * abs(ξ / H[2])
     else
