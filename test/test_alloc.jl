@@ -203,5 +203,6 @@ storage_usymqr(n, m) = 5 * m + 2 * n
 storage_usymqr_bytes(n, m) = 8 * storage_usymqr(n, m)
 expected_usymqr_bytes = storage_usymqr_bytes(n, m)
 (x, stats) = usymqr(Ao, b, c) # warmup
+println(length(stats.Aresiduals))
 actual_usymqr_bytes = @allocated usymqr(Ao, b, c)
 @test actual_usymqr_bytes ≤ 1.1 * expected_usymqr_bytes

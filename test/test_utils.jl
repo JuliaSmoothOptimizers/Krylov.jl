@@ -1,3 +1,6 @@
+# Identity matrix.
+eye(n::Int) = Matrix{Float64}(I, n, n)
+
 include("get_div_grad.jl")
 include("gen_lsq.jl")
 include("check_min_norm.jl")
@@ -119,8 +122,7 @@ end
 function square_preconditioned(n :: Int=10)
   A = ones(n, n) + (n-1) * I
   b = n * [1:n;]
-  O = zeros(n, n)
-  M = PreallocatedLinearOperator(1/n * (O + I))
+  M = PreallocatedLinearOperator(1/n * eye(n))
   return A, b, M
 end
 
@@ -128,9 +130,8 @@ end
 function two_preconditioners(n :: Int=10, m :: Int=20)
   A = ones(n, n) + (n-1) * I
   b = ones(n)
-  O = zeros(n, n)
-  M = PreallocatedLinearOperator(1/√n * (O + I))
-  N = PreallocatedLinearOperator(1/√m * (O + I))
+  M = PreallocatedLinearOperator(1/√n * eye(n))
+  N = PreallocatedLinearOperator(1/√m * eye(n))
   return A, b, M, N
 end
 
