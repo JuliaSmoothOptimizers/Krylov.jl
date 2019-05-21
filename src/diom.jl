@@ -53,7 +53,6 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   # Set up workspace.
   mem = min(memory, itmax) # Memory.
-
   V = [zeros(T, n) for i = 1 : mem] # Preconditioned Krylov vectors, orthogonal basis for {b, M⁻¹AN⁻¹b, (M⁻¹AN⁻¹)²b, ..., (M⁻¹AN⁻¹)ᵐ⁻¹b}.
   P = [zeros(T, n) for i = 1 : mem] # Directions for x : Pₘ = Vₘ(Uₘ)⁻¹.
   H = zeros(T, mem+2)               # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
@@ -164,7 +163,6 @@ function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     # Update x_old and residual norm.
     if !p[next_pos]
-<<<<<<< HEAD
       @. x_old = x
       # ‖ M⁻¹(b - Axₘ) ‖₂ = hₘ₊₁.ₘ * |ξₘ / uₘ.ₘ| without pivoting
       rNorm = H[1] * abs(ξ / H[2])

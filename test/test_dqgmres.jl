@@ -81,9 +81,7 @@ function test_dqgmres()
   @test(stats.solved)
 
   # Right preconditioning
-  A = ones(10,10) + 9 * I
-  b = 10 * [1:10;]
-  N = 1/10 * opEye(10)
+  A, b, N = square_preconditioned()
   (x, stats) = dqgmres(A, b, N=N)
   show(stats)
   r = b - A * x
@@ -93,10 +91,7 @@ function test_dqgmres()
   @test(stats.solved)
 
   # Split preconditioning
-  A = ones(10,10) + 9 * I
-  b = 10 * [1:10;]
-  M = 1/√10 * opEye(10)
-  N = 1/√10 * opEye(10)
+  A, b, M, N = two_preconditioners()
   (x, stats) = dqgmres(A, b, M=M, N=N)
   show(stats)
   r = b - A * x
