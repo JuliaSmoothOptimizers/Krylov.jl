@@ -125,10 +125,11 @@ The method does _not_ abort if A + αI is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
+
 function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{Tb},
                               shifts :: AbstractVector{Ts}; M :: AbstractLinearOperator=opEye(),
-                              atol :: Float64=1.0e-8, rtol :: Float64=1.0e-6, itmax :: Int=0,
-                              check_curvature :: Bool=false, verbose :: Bool=false) where {Tb, Ts <: Number}
+                              atol :: Tb=√eps(Tb), rtol :: Tb=√eps(Tb), itmax :: Int=0,
+                              check_curvature :: Bool=false, verbose :: Bool=false) where {Tb <: AbstractFloat, Ts <: Number}
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
@@ -145,23 +146,23 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{T
   Mv = copy(b)                           # Mv₁ ← b
   v = M * Mv                             # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv))              # β₁ = v₁ᵀ M v₁
-  β == 0 && return x, LanczosStats(true, [0.0], false, 0.0, 0.0, "x = 0 is a zero-residual solution")
+  β == 0 && return x, LanczosStats(true, [zero(Tb)], false, zero(Tb), zero(Tb), "x = 0 is a zero-residual solution")
 
   # Initialize each p to v.
   p = [copy(v) for i = 1 : nshifts]
 
   # Initialize Lanczos process.
   # β₁Mv₁ = b
-  @kscal!(n, 1.0/β, v)          # v₁  ←  v₁ / β₁
-  MisI || @kscal!(n, 1.0/β, Mv) # Mv₁ ← Mv₁ / β₁
+  @kscal!(n, one(Tb)/β, v)          # v₁  ←  v₁ / β₁
+  MisI || @kscal!(n, one(Tb)/β, Mv) # Mv₁ ← Mv₁ / β₁
   Mv_prev = copy(Mv)
 
   # Initialize some constants used in recursions below.
-  ρ = 1.0
-  σ = β * ones(nshifts);
-  δhat = zeros(nshifts);
-  ω = zeros(Tb, nshifts);
-  γ = ones(Tb, nshifts);
+  ρ = one(Tb)
+  σ = β * ones(Tb, nshifts)
+  δhat = zeros(Tb, nshifts)
+  ω = zeros(Tb, nshifts)
+  γ = ones(Tb, nshifts)
 
   # Define stopping tolerance.
   rNorms = β * ones(Tb, nshifts);
@@ -202,8 +203,8 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{T
     @. Mv = Mv_next                    # Mvₖ ← Mvₖ₊₁
     v = M * Mv                         # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
     β = sqrt(@kdot(n, v, Mv))          # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
-    @kscal!(n, 1.0/β, v)               # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-    MisI || @kscal!(n, 1.0/β, Mv)      # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+    @kscal!(n, one(Tb)/β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+    MisI || @kscal!(n, one(Tb)/β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
 
     # Check curvature: vₖᵀ(A + sᵢI)vₖ = vₖᵀAvₖ + sᵢ‖vₖ‖² = δₖ + ρₖ * sᵢ with ρₖ = ‖vₖ‖².
     # It is possible to show that σₖ² (δₖ + ρₖ * sᵢ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ (A + sᵢ I) pₖ.
@@ -212,7 +213,7 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{T
       δhat[i] = δ + ρ * shifts[i]
       γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i])
     end
-    indefinite .|= (γ .<= 0.0);
+    indefinite .|= (γ .<= 0);
 
     # Compute next CG iterate for each shifted system that has not yet converged.
     # Stop iterating on indefinite problems if requested.
@@ -242,6 +243,6 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{T
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, permutedims(reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))), indefinite, 0.0, 0.0, status);  # TODO: Estimate Anorm and Acond.
+  stats = LanczosStats(solved, permutedims(reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))), indefinite, zero(Tb), zero(Tb), status);  # TODO: Estimate Anorm and Acond.
   return (x, stats);
 end
