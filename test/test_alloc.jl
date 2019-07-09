@@ -106,6 +106,15 @@ expected_crmr_bytes = storage_crmr_bytes(n, m)
 actual_crmr_bytes = @allocated crmr(Au, c)
 @test actual_crmr_bytes ≤ 1.1 * expected_crmr_bytes
 
+# without preconditioner and with Ap preallocated, TFQMR needs 5 n-vectors: x, y, w, d, v
+storage_tfqmr(n) = 5 * n
+storage_tfqmr_bytes(n) = 8 * storage_tfqmr(n)
+
+expected_tfqmr_bytes = storage_tfqmr_bytes(n)
+tfqmr(A, b)  # warmup
+actual_tfqmr_bytes = @allocated tfqmr(A, b)
+@test actual_tfqmr_bytes ≤ 1.1 * expected_tfqmr_bytes
+
 # without preconditioner and with Ap preallocated, CGS needs 5 n-vectors: x, r, u, p, q
 storage_cgs(n) = 5 * n
 storage_cgs_bytes(n) = 8 * storage_cgs(n)

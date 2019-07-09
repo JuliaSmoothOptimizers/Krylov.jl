@@ -81,6 +81,7 @@ include("dqgmres.jl")
 include("diom.jl")
 include("symmlq.jl")
 include("cr.jl")
+include("tfqmr.jl")
 
 include("cgls.jl")
 include("crls.jl")

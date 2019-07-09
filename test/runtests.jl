@@ -5,6 +5,7 @@ include("test_aux.jl")
 
 include("test_diom.jl")
 include("test_cgs.jl")
+include("test_tfqmr.jl")
 include("test_dqgmres.jl")
 include("test_cg.jl")
 include("test_cg_lanczos.jl")
