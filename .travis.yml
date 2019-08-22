@@ -8,6 +8,7 @@ os:
 julia:
   - 1.0
   - 1.1
+  - 1.2
   - nightly
 
 matrix:
@@ -30,4 +31,4 @@ jobs:
       after_success: skip
 
 after_success:
-  - julia -e 'using Pkg; cd(Pkg.dir("Krylov")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder()); Codecov.submit(process_folder())'
+  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder()); Codecov.submit(process_folder())'
