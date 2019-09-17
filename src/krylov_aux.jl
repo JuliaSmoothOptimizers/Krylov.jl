@@ -4,37 +4,37 @@ Given `a` and `b`, return `(c, s, ρ)` such that
     [ c  s ] [ a ] = [ ρ ]
     [ s -c ] [ b ] = [ 0 ].
 """
-function sym_givens(a :: Float64, b :: Float64)
-	#
-	# Modeled after the corresponding Matlab function by M. A. Saunders and S.-C. Choi.
-	# http://www.stanford.edu/group/SOL/dissertations/sou-cheng-choi-thesis.pdf
-	# D. Orban, Montreal, May 2015.
+function sym_givens(a :: T, b :: T) where T <: AbstractFloat
+  #
+  # Modeled after the corresponding Matlab function by M. A. Saunders and S.-C. Choi.
+  # http://www.stanford.edu/group/SOL/dissertations/sou-cheng-choi-thesis.pdf
+  # D. Orban, Montreal, May 2015.
 
-  if b == 0.0
-    if a == 0.0
-      c = 1.0
+  if b == 0
+    if a == 0
+      c = one(T)
     else
       c = sign(a)  # In Julia, sign(0) = 0.
     end
-    s = 0.0;
-    ρ = abs(a);
+    s = zero(T)
+    ρ = abs(a)
 
-  elseif a == 0.0
-    c = 0.0;
-    s = sign(b);
-    ρ = abs(b);
+  elseif a == 0
+    c = zero(T)
+    s = sign(b)
+    ρ = abs(b)
 
   elseif abs(b) > abs(a)
-    t = a / b;
-    s = sign(b) / sqrt(1.0 + t * t);
-    c = s * t;
-    ρ = b / s;  # Computationally better than d = a / c since |c| <= |s|.
+    t = a / b
+    s = sign(b) / sqrt(one(T) + t * t)
+    c = s * t
+    ρ = b / s  # Computationally better than d = a / c since |c| ≤ |s|.
 
   else
-    t = b / a;
-    c = sign(a) / sqrt(1.0 + t * t);
-    s = c * t;
-    ρ = a / c;  # Computationally better than d = b / s since |s| <= |c|
+    t = b / a
+    c = sign(a) / sqrt(one(T) + t * t)
+    s = c * t
+    ρ = a / c  # Computationally better than d = b / s since |s| ≤ |c|
   end
 
   return (c, s, ρ)
