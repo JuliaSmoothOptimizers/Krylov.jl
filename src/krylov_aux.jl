@@ -151,6 +151,17 @@ function krylov_axpby!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, t ::
   return y
 end
 
+function krylov_ref!(n :: Int, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int, c :: T , s :: T) where T <: Number
+  # assume dx = dy
+  @inbounds @simd for i = 1:dx:n
+    xi = x[i]
+    yi = y[i]
+    x[i] = c * xi + s * yi
+    y[i] = s * xi - c * yi
+  end
+  return x, y
+end
+
 # the macros are just for readability, so we don't have to write the increments (always equal to 1)
 
 macro kdot(n, x, y)
@@ -179,4 +190,8 @@ macro kswap(x, y)
     $(esc(x)) = $(esc(y))
     $(esc(y)) = tmp
   end
+end
+
+macro kref!(n, x, y, c, s)
+  return esc(:(krylov_ref!($n, $x, 1, $y, 1, $c, $s)))
 end
