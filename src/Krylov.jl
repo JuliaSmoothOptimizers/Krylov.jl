@@ -73,28 +73,34 @@ end
 include("krylov_aux.jl")
 include("krylov_utils.jl")
 
-include("cgs.jl")
 include("cg.jl")
-include("cg_lanczos.jl")
-include("minres.jl")
-include("usymqr.jl")
-include("dqgmres.jl")
-include("diom.jl")
-include("symmlq.jl")
 include("cr.jl")
 
+include("symmlq.jl")
+include("cg_lanczos.jl")
+include("minres.jl")
+include("minres_qlp.jl")
+
+include("dqgmres.jl")
+include("diom.jl")
+
+include("usymqr.jl")
+
 include("bilq.jl")
+include("cgs.jl")
 
 include("cgls.jl")
 include("crls.jl")
+
 include("cgne.jl")
 include("crmr.jl")
 
-include("lsqr.jl")
-include("craig.jl")
-include("lsmr.jl")
-include("craigmr.jl")
 include("lslq.jl")
+include("lsqr.jl")
+include("lsmr.jl")
+
+include("craig.jl")
+include("craigmr.jl")
 
 include("variants.jl")
 
