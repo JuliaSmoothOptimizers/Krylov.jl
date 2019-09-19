@@ -214,3 +214,12 @@ expected_bilq_bytes = storage_bilq_bytes(n)
 bilq(A, b)  # warmup
 actual_bilq_bytes = @allocated bilq(A, b)
 @test actual_bilq_bytes ≤ 1.1 * expected_bilq_bytes
+
+# with Ap preallocated, MINRES-QLP needs:
+# - 5 n-vectors: wₖ₋₁, wₖ, vₖ₋₁, vₖ, x
+storage_minres_qlp(n) = 5 * n
+storage_minres_qlp_bytes(n) = 8 * storage_minres_qlp(n)
+expected_minres_qlp_bytes = storage_minres_qlp_bytes(n)
+minres_qlp(A, b)  # warmup
+actual_minres_qlp_bytes = @allocated minres_qlp(A, b)
+@test actual_minres_qlp_bytes ≤ 1.1 * expected_minres_qlp_bytes
