@@ -17,12 +17,12 @@
 export minres_qlp
 
 """
-MINRES-QLP is the only method based on the Lanczos process that returns
-the minimum-norm solution on singular inconsistent systems Ax = b.
+MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
+solution on singular inconsistent systems (A + λI)x = b, where λ is a shift parameter.
 It is significantly more complex but can be more reliable than MINRES when A is ill-conditioned.
 """
 function minres_qlp(A :: AbstractLinearOperator, b :: AbstractVector{T};
-                    atol :: T=√eps(T), rtol :: T=√eps(T),
+                    atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
                     itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   n, m = size(A)
@@ -66,10 +66,13 @@ function minres_qlp(A :: AbstractLinearOperator, b :: AbstractVector{T};
     iter = iter + 1
 
     # Continue the Lanczos process.
-    # AVₖ = Vₖ₊₁Tₖ₊₁.ₖ
-    # βₖ₊₁vₖ₊₁ = Avₖ - αₖvₖ - βₖvₖ₋₁
+    # (A - λI)Vₖ = Vₖ₊₁Tₖ₊₁.ₖ
+    # βₖ₊₁vₖ₊₁ = (A - λI)vₖ - αₖvₖ - βₖvₖ₋₁
 
     p = A * vₖ                  # p ← Avₖ
+    if λ ≠ 0
+      @kaxpy!(n, -λ, vₖ, p)     # p ← p - λvₖ
+    end
     if iter ≥ 2
       @kaxpy!(n, -βₖ, vₖ₋₁, p)  # p ← p - βₖvₖ₋₁
     end
@@ -224,7 +227,7 @@ function minres_qlp(A :: AbstractLinearOperator, b :: AbstractVector{T};
     end
 
     # Update residual norm estimate
-    # ‖ Axₖ - b ‖ ≈ |ζₖ₊₁|
+    # ‖ Axₖ - b ‖ = |ζₖ₊₁|
     rNorm = abs(ζbarₖ₊₁)
     push!(rNorms, rNorm)
 

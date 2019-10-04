@@ -51,6 +51,16 @@ function test_minres_qlp()
   A, b = square_int()
   (x, stats) = minres_qlp(A, b)
   @test stats.solved
+
+  # Shifted system
+  A, b = symmetric_indefinite()
+  λ = 2.0
+  (x, stats) = minres_qlp(A, b, λ=λ)
+  r = b - (A - λ*I) * x
+  resid = norm(r) / norm(b)
+  @printf("MINRES-QLP: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ minres_qlp_tol)
+  @test(stats.solved)
 end
 
 test_minres_qlp()
