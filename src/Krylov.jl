@@ -14,6 +14,15 @@ mutable struct SimpleStats{T} <: KrylovStats{T}
   status :: String
 end
 
+"Type for statistics returned by adjoint systems solvers"
+mutable struct AdjointStats{T} <: KrylovStats{T}
+  solved_primal :: Bool
+  solved_dual :: Bool
+  residuals_primal :: Vector{T}
+  residuals_dual :: Vector{T}
+  status :: String
+end
+
 mutable struct LanczosStats{T} <: KrylovStats{T}
   solved :: Bool
   residuals :: Array{T}
@@ -42,6 +51,16 @@ function show(io :: IO, stats :: SimpleStats)
   s *= @sprintf("  inconsistent: %s\n", stats.inconsistent)
   s *= @sprintf("  residuals:  %s\n", vec2str(stats.residuals))
   s *= @sprintf("  Aresiduals: %s\n", vec2str(stats.Aresiduals))
+  s *= @sprintf("  status: %s\n", stats.status)
+  print(io, s)
+end
+
+function show(io :: IO, stats :: AdjointStats)
+  s  = "\nAdjoint stats\n"
+  s *= @sprintf("  solved primal: %s\n", stats.solved_primal)
+  s *= @sprintf("  solved dual:   %s\n", stats.solved_dual)
+  s *= @sprintf("  residuals primal: %s\n", vec2str(stats.residuals_primal))
+  s *= @sprintf("  residuals dual:   %s\n", vec2str(stats.residuals_dual))
   s *= @sprintf("  status: %s\n", stats.status)
   print(io, s)
 end
