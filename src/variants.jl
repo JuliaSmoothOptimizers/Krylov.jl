@@ -17,6 +17,14 @@ for fn in (:cgls, :cgne, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :lsqr, :d
   end
 end
 
+# Variants for USYMQR
+for fn in (:usymqr,)
+  @eval begin
+    $fn(A :: AbstractMatrix{TA}, b :: AbstractVector{Tb}, c :: AbstractVector{Tc}, args...; kwargs...) where {TA, Tb, Tc <: Number} =
+      $fn(preallocated_LinearOperator(A), convert(Vector{Float64}, b), convert(Vector{Float64}, c), args...; kwargs...)
+  end
+end
+
 # Define a symmetric linear operator with preallocation
 function preallocated_symmetric_LinearOperator(A)
   (n, m) = size(A)

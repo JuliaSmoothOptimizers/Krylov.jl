@@ -128,7 +128,7 @@ actual_craigmr_bytes = @allocated craigmr(Au, c)
 # without preconditioner and with (Ap, Aᵀq) preallocated, CGNE needs:
 # - 2 n-vectors: x, p
 # - 1 m-vector: r
-storage_cgne(n, m) = 2*n + m
+storage_cgne(n, m) = 2 * n + m
 storage_cgne_bytes(n, m) = 8 * storage_cgne(n, m)
 expected_cgne_bytes = storage_cgne_bytes(n, m)
 (x, stats) = cgne(Au, c)  # warmup
@@ -159,7 +159,7 @@ actual_lslq_bytes = @allocated lslq(Ao, b)
 # without preconditioner and with (Ap, Aᵀq) preallocated, CGLS needs:
 # - 2 m-vectors: x, p
 # - 1 n-vector: r
-storage_cgls(n, m) = 2*m + n
+storage_cgls(n, m) = n + 2 * m
 storage_cgls_bytes(n, m) = 8 * storage_cgls(n, m)
 expected_cgls_bytes = storage_cgls_bytes(n, m)
 (x, stats) = cgls(Ao, b)  # warmup
@@ -195,3 +195,13 @@ expected_lsmr_bytes = storage_lsmr_bytes(n, m)
 (x, stats) = lsmr(Ao, b)  # warmup
 actual_lsmr_bytes = @allocated lsmr(Ao, b)
 @test actual_lsmr_bytes ≤ 1.1 * expected_lsmr_bytes
+
+# with (Ap, Aᵀq) preallocated, USYMQR needs:
+# - 5 m-vectors: vₖ₋₁, vₖ, x, wₖ₋₁, wₖ
+# - 2 n-vectors: uₖ₋₁, uₖ
+storage_usymqr(n, m) = 5 * m + 2 * n
+storage_usymqr_bytes(n, m) = 8 * storage_usymqr(n, m)
+expected_usymqr_bytes = storage_usymqr_bytes(n, m)
+(x, stats) = usymqr(Ao, b, c) # warmup
+actual_usymqr_bytes = @allocated usymqr(Ao, b, c)
+@test actual_usymqr_bytes ≤ 1.1 * expected_usymqr_bytes
