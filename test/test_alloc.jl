@@ -87,6 +87,21 @@ dqgmres(A, b, memory=mem)  # warmup
 actual_dqgmres_bytes = @allocated dqgmres(A, b, memory=mem)
 @test actual_dqgmres_bytes ≤ 1.05 * expected_dqgmres_bytes
 
+# without preconditioner and with Ap preallocated, GMRES needs:
+# - 1 n-vector: x
+# - 1 n*(iter)-matrix: V
+# - 2 iter-vectors: c, s
+# - 1 (iter+1)-vector: z
+# - 1 (iter*iter) upper-triangular matrix: H
+storage_gmres(iter, n) = (n) + (n * iter) + (2 * iter) + (iter + 1) + (iter * (iter+1) / 2)
+storage_gmres_bytes(iter, n) = 8 * storage_gmres(iter, n)
+
+(x, stats) = gmres(A, b)  # warmup
+iter = length(stats.residuals) - 1
+expected_gmres_bytes = storage_gmres_bytes(iter, n)
+actual_gmres_bytes = @allocated gmres(A, b)
+@test actual_gmres_bytes ≤ 1.1 * expected_gmres_bytes
+
 # without preconditioner and with Ap preallocated, CR needs 4 n-vectors: x, r, p, q
 storage_cr(n) = 4 * n
 storage_cr_bytes(n) = 8 * storage_cr(n)

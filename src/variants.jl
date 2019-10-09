@@ -10,7 +10,7 @@ function preallocated_LinearOperator(A)
 end
 
 # Variants where A is a matrix without specific properties
-for fn in (:cgls, :cgne, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :lsqr, :dqgmres, :diom, :cgs)
+for fn in (:cgls, :cgne, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :lsqr, :dqgmres, :gmres, :diom, :cgs)
   @eval begin
     $fn(A :: AbstractMatrix{TA}, b :: AbstractVector{Tb}, args...; kwargs...) where {TA, Tb <: Number} =
       $fn(preallocated_LinearOperator(A), convert(Vector{Float64}, b), args...; kwargs...)
