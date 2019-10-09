@@ -1,6 +1,6 @@
 # Tests of variants.jl
 function test_variants()
-  @printf("Tests of variants:\n")
+  @printf("\nTests of variants:\n")
   for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
              :cr, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr,
              :lsqr, :minres, :symmlq, :dqgmres, :diom, :cgs, :usymqr)

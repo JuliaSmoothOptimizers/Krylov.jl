@@ -83,6 +83,8 @@ include("diom.jl")
 include("symmlq.jl")
 include("cr.jl")
 
+include("bilq.jl")
+
 include("cgls.jl")
 include("crls.jl")
 include("cgne.jl")

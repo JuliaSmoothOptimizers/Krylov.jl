@@ -205,3 +205,12 @@ expected_usymqr_bytes = storage_usymqr_bytes(n, m)
 (x, stats) = usymqr(Ao, b, c) # warmup
 actual_usymqr_bytes = @allocated usymqr(Ao, b, c)
 @test actual_usymqr_bytes ≤ 1.1 * expected_usymqr_bytes
+
+# with (Ap, Aᵀq) preallocated, BILQ needs:
+# - 6 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅
+storage_bilq(n) = 6 * n
+storage_bilq_bytes(n) = 8 * storage_bilq(n)
+expected_bilq_bytes = storage_bilq_bytes(n)
+bilq(A, b)  # warmup
+actual_bilq_bytes = @allocated bilq(A, b)
+@test actual_bilq_bytes ≤ 1.1 * expected_bilq_bytes
