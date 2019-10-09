@@ -59,7 +59,7 @@ end
 
 # Square and inconsistent systems.
 function square_inconsistent(n :: Int=10)
-  A = ones(n, n); A[1, :] .= 0
+  A = eye(n); A[1, 1] = 0.0
   b = ones(n)
   return A, b
 end

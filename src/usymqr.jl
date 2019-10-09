@@ -19,15 +19,15 @@
 
 export usymqr
 
-"""Solve the linear system Ax = b using USYMQR method.
+"""Solve the linear system Ax = b using the USYMQR method.
 USYMQR can also be applied to under-determined and over-determined problems.
 
-USYMQR algorithm is based on a tridiagonalization process for unsymmetric matrices.
+USYMQR is based on a tridiagonalization process for unsymmetric matrices.
 It's considered as a generalization of MINRES.
 
 It can also be applied to under-determined and over-determined problems.
 
-This version of USYMQR works in multiprecision.
+This version of USYMQR works in any floating-point data type.
 """
 function usymqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T),
@@ -47,29 +47,32 @@ function usymqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
   itmax == 0 && (itmax = 2*n)
 
   rNorms = [rNorm;]
-  AᵀrNorms = T[]
   ε = atol + rtol * rNorm
-  verbose && @printf("%5d  %7.1e\n", iter, rNorm)
+  AᵀrNorms = T[]
+  κ = zero(T)
+  verbose && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Aᵀrₖ₋₁‖")
+  verbose && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
   # Set up workspace.
-  βₖ = @knrm2(m, b)          # β₁ = ‖v₁‖
-  γₖ = @knrm2(n, c)          # γ₁ = ‖u₁‖
-  vₖ₋₁ = zeros(T, m)         # v₀ = 0
-  uₖ₋₁ = zeros(T, n)         # u₀ = 0
-  vₖ = b / βₖ                # v₁ = b / β₁
-  uₖ = c / γₖ                # u₁ = c / γ₁
-  cₖ₋₂ = cₖ₋₁ = cₖ = zero(T) # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
-  sₖ₋₂ = sₖ₋₁ = sₖ = zero(T) # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-  wₖ₋₂ = zeros(T, n)         # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
-  wₖ₋₁ = zeros(T, n)         # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
-  ζbarₖ = βₖ                 # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
+  βₖ = @knrm2(m, b)           # β₁ = ‖v₁‖
+  γₖ = @knrm2(n, c)           # γ₁ = ‖u₁‖
+  vₖ₋₁ = zeros(T, m)          # v₀ = 0
+  uₖ₋₁ = zeros(T, n)          # u₀ = 0
+  vₖ = b / βₖ                 # v₁ = b / β₁
+  uₖ = c / γₖ                 # u₁ = c / γ₁
+  cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+  sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+  wₖ₋₂ = zeros(T, n)          # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
+  wₖ₋₁ = zeros(T, n)          # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
+  ζbarₖ = βₖ                  # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
 
   # Stopping criterion.
   solved = rNorm ≤ ε
+  inconsistent = false
   tired = iter ≥ itmax
   status = "unknown"
 
-  while !(solved || tired)
+  while !(solved || tired || inconsistent)
     # Update iteration index.
     iter = iter + 1
 
@@ -121,10 +124,6 @@ function usymqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
       # [sₖ₋₁ -cₖ₋₁] [   αₖ  ]   [δbarₖ]
       λₖ₋₁  = cₖ₋₁ * λbarₖ₋₁ + sₖ₋₁ * αₖ
       δbarₖ = sₖ₋₁ * λbarₖ₋₁ - cₖ₋₁ * αₖ
-
-      # Update sₖ₋₂ and cₖ₋₂.
-      sₖ₋₂ = sₖ₋₁
-      cₖ₋₂ = cₖ₋₁
     end
 
     # Compute and apply current Givens reflection Qₖ.ₖ₊₁
@@ -140,10 +139,6 @@ function usymqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
     # [sₖ -cₖ] [  0  ]   [ζbarₖ₊₁]
     ζₖ      = cₖ * ζbarₖ
     ζbarₖ₊₁ = sₖ * ζbarₖ
-
-    # Update sₖ₋₁ and cₖ₋₁.
-    sₖ₋₁ = sₖ
-    cₖ₋₁ = cₖ
 
     # Compute the direction wₖ, the last column of Wₖ = Uₖ(Rₖ)⁻¹ ⟷ (Rₖ)ᵀ(Wₖ)ᵀ = (Uₖ)ᵀ.
     # w₁ = u₁ / δ₁
@@ -177,7 +172,7 @@ function usymqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
     push!(rNorms, rNorm)
 
     # Compute ‖Aᵀrₖ₋₁‖ = |ζbarₖ| * √((δbarₖ)² + (λbarₖ)²).
-    AᵀrNorm = abs(ζbarₖ) * √(δbarₖ^2 + (cₖ * γₖ₊₁)^2) # λbarₖ = - cₖ * γₖ₊₁
+    AᵀrNorm = abs(ζbarₖ) * √(δbarₖ^2 + (cₖ₋₁ * γₖ₊₁)^2)
     push!(AᵀrNorms, AᵀrNorm)
 
     # Compute uₖ₊₁ and uₖ₊₁.
@@ -196,18 +191,26 @@ function usymqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
       @kswap(wₖ₋₂, wₖ₋₁)
     end
 
-    # Update ζbarₖ, γₖ, βₖ.
+    # Update sₖ₋₂, cₖ₋₂, sₖ₋₁, cₖ₋₁, ζbarₖ, γₖ, βₖ.
+    if iter ≥ 2
+      sₖ₋₂ = sₖ₋₁
+      cₖ₋₂ = cₖ₋₁
+    end
+    sₖ₋₁  = sₖ
+    cₖ₋₁  = cₖ
     ζbarₖ = ζbarₖ₊₁
     γₖ    = γₖ₊₁
     βₖ    = βₖ₊₁
 
     # Update stopping criterion.
+    iter == 1 && (κ = atol + rtol * AᵀrNorm)
     solved = rNorm ≤ ε
+    inconsistent = !solved && AᵀrNorm ≤ κ
     tired = iter ≥ itmax
     verbose && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, AᵀrNorm)
   end
   verbose && @printf("\n")
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = SimpleStats(solved, false, rNorms, AᵀrNorms, status)
+  stats = SimpleStats(solved, inconsistent, rNorms, AᵀrNorms, status)
   return (x, stats)
 end

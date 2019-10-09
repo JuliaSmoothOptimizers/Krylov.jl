@@ -87,6 +87,27 @@ function test_usymqr()
   @printf("USYMQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymqr_tol)
 
+  # Underdetermined and inconsistent systems.
+  A, b = under_inconsistent()
+  c = [25 - i for i = 1 : 25]
+  (x, stats) = usymqr(A, b, c)
+  @test stats.inconsistent
+
+  # Square and consistent systems.
+  A, b = square_consistent()
+  c = ones(10)
+  (x, stats) = usymqr(A, b, c)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("USYMQR: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ usymqr_tol)
+
+  # Square and inconsistent systems.
+  A, b = square_inconsistent()
+  c = ones(10)
+  (x, stats) = usymqr(A, b, c)
+  @test stats.inconsistent
+
   # Overdetermined and consistent systems.
   A, b = over_consistent()
   c = ones(10)
@@ -95,6 +116,12 @@ function test_usymqr()
   resid = norm(r) / norm(b)
   @printf("USYMQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymqr_tol)
+
+  # Overdetermined and inconsistent systems.
+  A, b = over_inconsistent()
+  c = [i for i = 1:10]
+  (x, stats) = usymqr(A, b, c)
+  @test stats.inconsistent
 end
 
 test_usymqr()
