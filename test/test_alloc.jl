@@ -4,8 +4,8 @@ m   = div(n, 2)
 A   = PreallocatedLinearOperator(L) # Dimension n x n
 Au  = PreallocatedLinearOperator(L[1:m,:]) # Dimension m x n
 Ao  = PreallocatedLinearOperator(L[:,1:m]) # Dimension n x m
-b   = ones(n)
-c   = ones(m)
+b   = Ao * ones(m) # Dimension n
+c   = Au * ones(n) # Dimension m
 mem = 10
 
 shifts  = [1:5;]
