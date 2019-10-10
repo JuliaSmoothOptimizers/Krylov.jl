@@ -2,7 +2,7 @@
 function test_variants()
   @printf("\nTests of variants:\n")
   for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
-             :cr, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr,
+             :cr, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :bilq,
              :lsqr, :minres, :symmlq, :dqgmres, :diom, :cgs, :usymqr)
     @printf("%s ", string(fn))
     for TA in (Int32, Int64, Float32, Float64)
