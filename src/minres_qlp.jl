@@ -20,6 +20,8 @@ export minres_qlp
 MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
 solution on singular inconsistent systems (A + λI)x = b, where λ is a shift parameter.
 It is significantly more complex but can be more reliable than MINRES when A is ill-conditioned.
+
+This version of MINRES-QLP works in any floating-point data type.
 """
 function minres_qlp(A :: AbstractLinearOperator, b :: AbstractVector{T};
                     atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
@@ -40,7 +42,10 @@ function minres_qlp(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
-  verbose && @printf("%5d  %7.1e\n", iter, rNorm)
+  ArNorms = T[]
+  κ = zero(T)
+  verbose && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖")
+  verbose && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
   # Set up workspace.
   vₖ₋₁  = zeros(T, n)
@@ -53,15 +58,16 @@ function minres_qlp(A :: AbstractLinearOperator, b :: AbstractVector{T};
   μbisₖ₋₂ = μbarₖ₋₁ = zero(T)
   wₖ₋₁  = zeros(T, n)
   wₖ    = zeros(T, n)
-  cₖ₋₂  = cₖ₋₁ = cₖ = zero(T) # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
-  sₖ₋₂  = sₖ₋₁ = sₖ = zero(T) # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+  cₖ₋₂  = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+  sₖ₋₂  = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
 
   # Stopping criterion.
   solved = rNorm ≤ ε
+  inconsistent = false
   tired = iter ≥ itmax
   status = "unknown"
 
-  while !(solved || tired)
+  while !(solved || tired || inconsistent)
     # Update iteration index.
     iter = iter + 1
 
@@ -110,10 +116,6 @@ function minres_qlp(A :: AbstractLinearOperator, b :: AbstractVector{T};
       # [sₖ₋₁ -cₖ₋₁] [   αₖ  ]   [λbarₖ]
       γₖ₋₁  = cₖ₋₁ * γbarₖ₋₁ + sₖ₋₁ * αₖ
       λbarₖ = sₖ₋₁ * γbarₖ₋₁ - cₖ₋₁ * αₖ
-
-      # Update sₖ₋₂ and cₖ₋₂.
-      sₖ₋₂ = sₖ₋₁
-      cₖ₋₂ = cₖ₋₁
     end
     iter == 1 && (λbarₖ = αₖ)
 
@@ -121,10 +123,6 @@ function minres_qlp(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # [cₖ  sₖ] [λbarₖ] = [λₖ]
     # [sₖ -cₖ] [βₖ₊₁ ]   [0 ]
     (cₖ, sₖ, λₖ) = sym_givens(λbarₖ, βₖ₊₁)
-
-    # Update sₖ₋₁ and cₖ₋₁.
-    sₖ₋₁ = sₖ
-    cₖ₋₁ = cₖ
 
     # Compute [   zₖ  ] = (Qₖ)ᵀβ₁e₁
     #         [ζbarₖ₊₁]
@@ -226,25 +224,36 @@ function minres_qlp(A :: AbstractLinearOperator, b :: AbstractVector{T};
       @. vₖ = p / βₖ₊₁
     end
 
-    # Update residual norm estimate
-    # ‖ Axₖ - b ‖ = |ζₖ₊₁|
+    # Update ‖rₖ‖ estimate
+    # ‖ rₖ ‖ = |ζbarₖ₊₁|
     rNorm = abs(ζbarₖ₊₁)
     push!(rNorms, rNorm)
 
+    # Update ‖Arₖ₋₁‖ estimate
+    # ‖ Arₖ₋₁ ‖ = |ζbarₖ| * √((λbarₖ)² + (γbarₖ)²)
+    ArNorm = abs(ζbarₖ) * √(λbarₖ^2 + (cₖ₋₁ * βₖ₊₁)^2)
+    push!(ArNorms, ArNorm)
+
     # Update stopping criterion.
+    iter == 1 && (κ = (atol + rtol * ArNorm) / 100)
     solved = rNorm ≤ ε
+    inconsistent = !solved && ArNorm ≤ κ
     tired = iter ≥ itmax
 
     # Update variables
     if iter ≥ 2
+      sₖ₋₂ = sₖ₋₁
+      cₖ₋₂ = cₖ₋₁
       ξₖ₋₁ = ξₖ
       μbisₖ₋₂ = μbisₖ₋₁
       ψbarₖ₋₂ = ψbarₖ₋₁
     end
+    sₖ₋₁ = sₖ
+    cₖ₋₁ = cₖ
     μbarₖ₋₁ = μbarₖ
     ζbarₖ = ζbarₖ₊₁
     βₖ = βₖ₊₁
-    verbose && @printf("%5d  %7.1e\n", iter, rNorm)
+    verbose && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, ArNorm)
   end
   verbose && @printf("\n")
 
@@ -252,9 +261,11 @@ function minres_qlp(A :: AbstractLinearOperator, b :: AbstractVector{T};
   if iter ≥ 2
     @kaxpy!(n, τₖ₋₁, wₖ₋₁, x)
   end
-  @kaxpy!(n, τₖ, wₖ, x)
+  if !inconsistent
+    @kaxpy!(n, τₖ, wₖ, x)
+  end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+  stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status)
   return (x, stats)
 end

@@ -61,6 +61,11 @@ function test_minres_qlp()
   @printf("MINRES-QLP: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_qlp_tol)
   @test(stats.solved)
+
+  # Singular inconsistent system
+  A, b = square_inconsistent()
+  (x, stats) = minres_qlp(A, b)
+  @test stats.inconsistent
 end
 
 test_minres_qlp()
