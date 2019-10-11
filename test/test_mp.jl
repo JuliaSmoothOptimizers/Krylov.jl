@@ -4,7 +4,7 @@ function test_mp()
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos,
              :dqgmres, :diom, :cr, :lslq, :lsqr, :lsmr, :craig,
              :craigmr, :crls, :symmlq, :minres, :cg_lanczos_shift_seq,
-             :bilq, :minres_qlp, :qmr)
+             :bilq, :minres_qlp, :qmr, :usymlq)
     @printf("%s ", string(fn))
     for T in (Float16, Float32, Float64, BigFloat)
       A = spdiagm(-1 => -ones(T,n-1), 0 => 3*ones(T,n), 1 => -ones(T,n-1))
@@ -15,7 +15,7 @@ function test_mp()
         shifts = [λ]
         xs = @eval $fn($A, $b, $shifts)[1]
         x = xs[1]
-      elseif fn == :usymqr
+      elseif fn in (:usymlq, :usymqr)
         x = @eval $fn($A, $b, $c)[1]
       else
         x = @eval $fn($A, $b)[1]
