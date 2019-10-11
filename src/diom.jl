@@ -28,8 +28,8 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(),
               N :: AbstractLinearOperator=opEye(),
-              atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0, memory :: Int=20,
-              verbose :: Bool=false) where T <: AbstractFloat
+              atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+              memory :: Int=20, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
