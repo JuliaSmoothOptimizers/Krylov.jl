@@ -41,6 +41,7 @@ function bilq(A :: AbstractLinearOperator, b :: AbstractVector{T}; c :: Abstract
 
   rNorms = [bNorm;]
   ε = atol + rtol * bNorm
+  verbose && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   verbose && @printf("%5d  %7.1e\n", iter, bNorm)
 
   # Initialize the Lanczos biorthogonalization process.
@@ -66,7 +67,7 @@ function bilq(A :: AbstractLinearOperator, b :: AbstractVector{T}; c :: Abstract
   solved_lq = bNorm ≤ ε
   solved_cg = false
   breakdown = false
-  tired     = false
+  tired     = iter ≥ itmax
   status    = "unknown"
 
   while !(solved_lq || solved_cg || tired || breakdown)
