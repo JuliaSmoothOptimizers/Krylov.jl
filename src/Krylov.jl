@@ -86,6 +86,7 @@ include("minres_qlp.jl")
 include("dqgmres.jl")
 include("diom.jl")
 
+include("usymlq.jl")
 include("usymqr.jl")
 
 include("bilq.jl")
