@@ -1,4 +1,4 @@
-# An implementation of USYMQR for the solution of unsymmetric linear system Ax = b.
+# An implementation of USYMQR for the solution of linear system Ax = b.
 #
 # This method is described in
 #
@@ -12,7 +12,7 @@
 #
 # A. Montoison and D. Orban
 # BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property.
-# Cahier du GERAD G-2019-71, GERAD, Montreal, 2019. doi:10.13140/RG.2.2.18287.59042 
+# Cahier du GERAD G-2019-71, GERAD, Montreal, 2019. doi:10.13140/RG.2.2.18287.59042
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, November 2018.
@@ -20,12 +20,12 @@
 export usymqr
 
 """Solve the linear system Ax = b using the USYMQR method.
-USYMQR can also be applied to under-determined and over-determined problems.
 
 USYMQR is based on a tridiagonalization process for unsymmetric matrices.
 It's considered as a generalization of MINRES.
 
 It can also be applied to under-determined and over-determined problems.
+USYMQR finds the minimum-norm solution if problems are inconsistent.
 
 This version of USYMQR works in any floating-point data type.
 """
