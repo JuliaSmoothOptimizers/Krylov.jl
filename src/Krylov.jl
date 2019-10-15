@@ -90,6 +90,7 @@ include("usymqr.jl")
 
 include("bilq.jl")
 include("cgs.jl")
+include("qmr.jl")
 
 include("cgls.jl")
 include("crls.jl")

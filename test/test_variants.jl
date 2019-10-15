@@ -4,7 +4,7 @@ function test_variants()
   for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
              :cr, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :bilq,
              :lsqr, :minres, :symmlq, :dqgmres, :diom, :cgs, :usymqr,
-             :minres_qlp)
+             :minres_qlp, :qmr)
     @printf("%s ", string(fn))
     for TA in (Int32, Int64, Float32, Float64, BigFloat)
       for IA in (Int32, Int64)
