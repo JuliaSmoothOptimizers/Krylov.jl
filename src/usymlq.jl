@@ -22,10 +22,14 @@ export usymlq
 """Solve the linear system Ax = b using the USYMLQ method.
 
 USYMLQ is based on a tridiagonalization process for unsymmetric matrices.
+The eror norm ‖x - x*‖ monotonously decreases in USYMLQ.
 It's considered as a generalization of SYMMLQ.
 
 It can also be applied to under-determined and over-determined problems.
 In all cases, problems must be consistent.
+
+An option gives the possibility of transferring to the USYMCG point,
+when it exists. The transfer is based on the residual norm.
 
 This version of USYMLQ works in any floating-point data type.
 """

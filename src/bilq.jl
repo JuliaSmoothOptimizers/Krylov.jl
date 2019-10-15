@@ -61,7 +61,7 @@ function bilq(A :: AbstractLinearOperator, b :: AbstractVector{T}; c :: Abstract
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
   δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified during two iterations
-  norm_vₖ = bNorm / βₖ       # ‖vₖ‖ used for residual norm estimates
+  norm_vₖ = bNorm / βₖ       # ‖vₖ‖ is used for residual norm estimates
 
   # Stopping criterion.
   solved_lq = bNorm ≤ ε
