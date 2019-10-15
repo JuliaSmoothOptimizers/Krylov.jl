@@ -22,6 +22,7 @@ export usymqr
 """Solve the linear system Ax = b using the USYMQR method.
 
 USYMQR is based on a tridiagonalization process for unsymmetric matrices.
+The residual norm ‖b - Ax‖ monotonously decreases in USYMQR.
 It's considered as a generalization of MINRES.
 
 It can also be applied to under-determined and over-determined problems.
