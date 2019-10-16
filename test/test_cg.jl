@@ -70,6 +70,13 @@ function test_cg()
   @printf("CG: Relative residual: %8.1e\n", resid);
   @test(resid <= cg_tol);
   @test(stats.solved);
+
+  # Test that precision is not lost (#126)
+  A = rand(BigFloat, 3, 3)
+  A = A * A'
+  b = rand(BigFloat, 3)
+  x = cg(A, b)[1]
+  @test eltype(x) == BigFloat
 end
 
 test_cg()
