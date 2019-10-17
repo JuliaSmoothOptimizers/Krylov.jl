@@ -7,8 +7,7 @@ function test_mp()
              :bilq, :minres_qlp)
     @printf("%s ", string(fn))
     for T in (Float16, Float32, Float64, BigFloat)
-      M = spdiagm(-1 => -ones(T,n-1), 0 => 3*ones(T,n), 1 => -ones(T,n-1))
-      A = LinearOperator(M)
+      A = spdiagm(-1 => -ones(T,n-1), 0 => 3*ones(T,n), 1 => -ones(T,n-1))
       b = ones(T, n)
       c = - ones(T, n)
       λ = zero(T)
@@ -28,6 +27,7 @@ function test_mp()
       else
         @test norm(A * x - b) ≤ atol + norm(b) * rtol
       end
+      @test eltype(x) == T
     end
     @printf("✔\n")
   end
