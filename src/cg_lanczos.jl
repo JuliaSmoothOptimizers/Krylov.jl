@@ -125,7 +125,6 @@ The method does _not_ abort if A + αI is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-
 function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{Tb},
                               shifts :: AbstractVector{Ts}; M :: AbstractLinearOperator=opEye(),
                               atol :: Tb=√eps(Tb), rtol :: Tb=√eps(Tb), itmax :: Int=0,

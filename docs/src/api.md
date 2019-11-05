@@ -1,23 +1,17 @@
-# API
-
-```@contents
-Pages = ["api.md"]
-```
-
 ## Types
 
 ```@docs
-KrylovStats
-SimpleStats
-LanczosStats
-SymmlqStats
+Krylov.KrylovStats
+Krylov.SimpleStats
+Krylov.LanczosStats
+Krylov.SymmlqStats
 ```
 
 ## Utilities
 
 ```@docs
-roots_quadratic
-sym_givens
-to_boundary
-vec2str
+Krylov.roots_quadratic
+Krylov.sym_givens
+Krylov.to_boundary
+Krylov.vec2str
 ```
