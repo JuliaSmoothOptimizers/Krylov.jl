@@ -10,7 +10,7 @@
 # and is equivalent to applying the conjugate gradient method
 # to the linear system
 #
-#  AA'y = b.
+#  AAᵀy = b.
 #
 # This method is also known as Craig's method, CGME, and other
 # names, and is described in
@@ -31,13 +31,13 @@ export cgne
 
 """Solve the consistent linear system
 
-  Ax + √λs = b
+    Ax + √λs = b
 
 using the Conjugate Gradient (CG) method, where λ ≥ 0 is a regularization
 parameter. This method is equivalent to applying CG to the normal equations
 of the second kind
 
-  (AA' + λI) y = b
+    (AAᵀ + λI) y = b
 
 but is more stable. When λ = 0, this method solves the minimum-norm problem
 
@@ -45,7 +45,7 @@ but is more stable. When λ = 0, this method solves the minimum-norm problem
 
 When λ > 0, it solves the problem
 
-  min ‖(x,s)‖₂  s.t. Ax + √λs = b.
+    min ‖(x,s)‖₂  s.t. Ax + √λs = b.
 
 CGNE produces monotonic errors ‖x-x*‖₂ but not residuals ‖r‖₂.
 It is formally equivalent to CRAIG, though can be slightly less accurate,

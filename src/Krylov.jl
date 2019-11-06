@@ -24,7 +24,7 @@ mutable struct LanczosStats{T} <: KrylovStats{T}
   status :: String
 end
 
-"Type for statistics returned by SYMMLQ solver"
+"Type for statistics returned by SYMMLQ"
 mutable struct SymmlqStats{T} <: KrylovStats{T}
   solved :: Bool
   residuals :: Array{T}

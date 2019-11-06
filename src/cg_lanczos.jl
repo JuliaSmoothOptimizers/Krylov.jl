@@ -15,7 +15,7 @@ export cg_lanczos, cg_lanczos_shift_seq
 """The Lanczos version of the conjugate gradient method to solve the
 symmetric linear system
 
-  Ax = b
+    Ax = b
 
 The method does _not_ abort if A is not definite.
 
@@ -118,7 +118,7 @@ end
 """The Lanczos version of the conjugate gradient method to solve a family
 of shifted systems
 
-  (A + αI) x = b  (α = α₁, α₂, ...)
+    (A + αI) x = b  (α = α₁, ..., αₙ)
 
 The method does _not_ abort if A + αI is not definite.
 

@@ -5,7 +5,7 @@
 #
 # equivalently, of the normal equations
 #
-#  A'Ax = A'b.
+#  AᵀAx = Aᵀb.
 #
 # CGLS is formally equivalent to applying the conjugate gradient method
 # to the normal equations but should be more stable. It is also formally
@@ -24,16 +24,16 @@ export cgls
 
 """Solve the regularized linear least-squares problem
 
-  minimize ‖b - Ax‖₂² + λ ‖x‖₂²
+    minimize ‖b - Ax‖₂² + λ ‖x‖₂²
 
 using the Conjugate Gradient (CG) method, where λ ≥ 0 is a regularization
 parameter. This method is equivalent to applying CG to the normal equations
 
-  (A'A + λI) x = A'b
+    (AᵀA + λI) x = Aᵀb
 
 but is more stable.
 
-CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖A'r‖₂.
+CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖Aᵀr‖₂.
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 """

@@ -30,28 +30,28 @@ export craigmr
 
 """Solve the consistent linear system
 
-  Ax + √λs = b
+    Ax + √λs = b
 
 using the CRAIG-MR method, where λ ≥ 0 is a regularization parameter.
 This method is equivalent to applying the Conjugate Residuals method
 to the normal equations of the second kind
 
-  (AAᵀ + λI) y = b
+    (AAᵀ + λI) y = b
 
 but is more stable. When λ = 0, this method solves the minimum-norm problem
 
-  min ‖x‖₂  s.t.  x ∈ argmin ‖Ax - b‖₂.
+    min ‖x‖₂  s.t.  x ∈ argmin ‖Ax - b‖₂.
 
 When λ > 0, this method solves the problem
 
-  min ‖(x,s)‖₂  s.t. Ax + √λs = b.
+    min ‖(x,s)‖₂  s.t. Ax + √λs = b.
 
 Preconditioners M⁻¹ and N⁻¹ may be provided in the form of linear operators and are
 assumed to be symmetric and positive definite.
 Afterward CRAIGMR solves the symmetric and quasi-definite system
 
-  [ -N   Aᵀ ] [ x ]   [ 0 ]
-  [  A   M  ] [ y ] = [ b ],
+    [ -N   Aᵀ ] [ x ]   [ 0 ]
+    [  A   M  ] [ y ] = [ b ],
 
 which is equivalent to applying MINRES to (M + AN⁻¹Aᵀ)y = b.
 

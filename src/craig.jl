@@ -35,7 +35,7 @@ export craig
 
 """Find the least-norm solution of the consistent linear system
 
-  Ax + √λs = b
+    Ax + √λs = b
 
 using the Golub-Kahan implementation of Craig's method, where λ ≥ 0 is a
 regularization parameter. This method is equivalent to CGNE but is more
@@ -45,14 +45,14 @@ For a system in the form Ax = b, Craig's method is equivalent to applying
 CG to AAᵀy = b and recovering x = Aᵀy. Note that y are the Lagrange
 multipliers of the least-norm problem
 
-  minimize ‖x‖  subject to Ax = b.
+    minimize ‖x‖  subject to Ax = b.
 
 Preconditioners M⁻¹ and N⁻¹ may be provided in the form of linear operators and are
 assumed to be symmetric and positive definite.
 Afterward CRAIG solves the symmetric and quasi-definite system
 
-  [ -N   Aᵀ ] [ x ]   [ 0 ]
-  [  A   M  ] [ y ] = [ b ],
+    [ -N   Aᵀ ] [ x ]   [ 0 ]
+    [  A   M  ] [ y ] = [ b ],
 
 which is equivalent to applying CG to (M + AN⁻¹Aᵀ)y = b.
 
