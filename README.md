@@ -46,6 +46,7 @@ Given a linear operator **_A_** and a right-hand side **_b_**, solve **_Ax ≈ b
 Krylov can be installed and tested through the Julia package manager:
 
 ```julia
+julia> import Pkg
 julia> Pkg.add("Krylov")
 julia> Pkg.test("Krylov")
 ```
