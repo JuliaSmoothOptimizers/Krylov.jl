@@ -27,12 +27,12 @@ export lsmr
 
 """Solve the regularized linear least-squares problem
 
-  minimize ‖b - Ax‖₂² + λ² ‖x‖₂²
+    minimize ‖b - Ax‖₂² + λ² ‖x‖₂²
 
 using the LSMR method, where λ ≥ 0 is a regularization parameter.
 LSQR is formally equivalent to applying MINRES to the normal equations
 
-  (AᵀA + λ² I) x = Aᵀb
+    (AᵀA + λ² I) x = Aᵀb
 
 (and therefore to CRLS) but is more stable.
 
@@ -43,16 +43,16 @@ Preconditioners M and N may be provided in the form of linear operators and are
 assumed to be symmetric and positive definite. If `sqd` is set to `true`,
 we solve the symmetric and quasi-definite system
 
-  [ E   Aᵀ ] [ r ]   [ b ]
-  [ A  -F  ] [ x ] = [ 0 ],
+    [ E   Aᵀ ] [ r ]   [ b ]
+    [ A  -F  ] [ x ] = [ 0 ],
 
 where E = M⁻¹  and F = N⁻¹.
 
 If `sqd` is set to `false` (the default), we solve the symmetric and
 indefinite system
 
-  [ E   Aᵀ ] [ r ]   [ b ]
-  [ A   0  ] [ x ] = [ 0 ].
+    [ E   Aᵀ ] [ r ]   [ b ]
+    [ A   0  ] [ x ] = [ 0 ].
 
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.

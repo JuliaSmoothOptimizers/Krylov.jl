@@ -30,21 +30,21 @@ export crmr
 
 """Solve the consistent linear system
 
-  Ax + √λs = b
+    Ax + √λs = b
 
 using the Conjugate Residual (CR) method, where λ ≥ 0 is a regularization
 parameter. This method is equivalent to applying CR to the normal equations
 of the second kind
 
-  (AAᵀ + λI) y = b
+    (AAᵀ + λI) y = b
 
 but is more stable. When λ = 0, this method solves the minimum-norm problem
 
-  min ‖x‖₂  s.t.  x ∈ argmin ‖Ax - b‖₂.
+    min ‖x‖₂  s.t.  x ∈ argmin ‖Ax - b‖₂.
 
 When λ > 0, this method solves the problem
 
-  min ‖(x,s)‖₂  s.t. Ax + √λs = b.
+    min ‖(x,s)‖₂  s.t. Ax + √λs = b.
 
 CGMR produces monotonic residuals ‖r‖₂.
 It is formally equivalent to CRAIG-MR, though can be slightly less accurate,

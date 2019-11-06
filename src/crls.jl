@@ -23,12 +23,12 @@ export crls
 
 """Solve the linear least-squares problem
 
-  minimize ‖b - Ax‖₂² + λ ‖x‖₂²
+    minimize ‖b - Ax‖₂² + λ ‖x‖₂²
 
 using the Conjugate Residuals (CR) method. This method is equivalent to
 applying MINRES to the normal equations
 
-  (AᵀA + λI) x = Aᵀb.
+    (AᵀA + λI) x = Aᵀb.
 
 This implementation recurs the residual r := b - Ax.
 
