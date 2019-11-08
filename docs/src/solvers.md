@@ -15,6 +15,7 @@ minres
 minres_qlp
 diom
 dqgmres
+usymlq
 usymqr
 bilq
 cgs
