@@ -18,6 +18,7 @@ dqgmres
 usymqr
 bilq
 cgs
+qmr
 cgls
 crls
 cgne
