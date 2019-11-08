@@ -1,6 +1,8 @@
 All methods require that A is an `AbstractLinearOperator`.
 But a variant allows you to give A as an `AbstractMatrix`. Thereafter A is automatically wrapped in a `LinearOperator`.
 
+Detailed examples may be found [here](https://github.com/JuliaSmoothOptimizers/Krylov.jl/tree/master/examples).
+
 ## Krylov methods
 
 ```@docs
