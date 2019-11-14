@@ -215,6 +215,15 @@ expected_usymqr_bytes = storage_usymqr_bytes(n, m)
 actual_usymqr_bytes = @allocated usymqr(Ao, b, c)
 @test actual_usymqr_bytes ≤ 1.1 * expected_usymqr_bytes
 
+# with (Ap, Aᵀq) preallocated, TRILQR needs:
+# - 9 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₁, wₖ
+storage_trilqr(n) = 9 * n
+storage_trilqr_bytes(n) = 8 * storage_trilqr(n)
+expected_trilqr_bytes = storage_trilqr_bytes(n)
+trilqr(A, b, b)  # warmup
+actual_trilqr_bytes = @allocated trilqr(A, b, b)
+@test actual_trilqr_bytes ≤ 1.1 * expected_trilqr_bytes
+
 # with (Ap, Aᵀq) preallocated, BILQ needs:
 # - 6 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅
 storage_bilq(n) = 6 * n
@@ -224,6 +233,15 @@ expected_bilq_bytes = storage_bilq_bytes(n)
 bilq(A, b)  # warmup
 actual_bilq_bytes = @allocated bilq(A, b)
 @test actual_bilq_bytes ≤ 1.1 * expected_bilq_bytes
+
+# with (Ap, Aᵀq) preallocated, BILQR needs:
+# - 9 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₁, wₖ
+storage_bilqr(n) = 9 * n
+storage_bilqr_bytes(n) = 8 * storage_bilqr(n)
+expected_bilqr_bytes = storage_bilqr_bytes(n)
+bilqr(A, b, b)  # warmup
+actual_bilqr_bytes = @allocated bilqr(A, b, b)
+@test actual_bilqr_bytes ≤ 1.1 * expected_bilqr_bytes
 
 # with Ap preallocated, MINRES-QLP needs:
 # - 5 n-vectors: wₖ₋₁, wₖ, vₖ₋₁, vₖ, x

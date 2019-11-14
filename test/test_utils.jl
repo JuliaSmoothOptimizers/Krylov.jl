@@ -115,6 +115,7 @@ function almost_singular(n :: Int=16)
   return A, b
 end
 
+<<<<<<< HEAD
 # System that cause a breakdown with the symmetric Lanczos process.
 function symmetric_breakdown()
   A = [0.0 1.0; 1.0 0.0]
@@ -131,12 +132,37 @@ function unsymmetric_breakdown()
   return A, b, c
 end
 
+# Underdetermined adjoint systems.
+function underdetermined_adjoint(n :: Int=100, m :: Int=200)
+  n < m || error("Square or overdetermined system!")
+  A = [i == j ? 10.0 : i < j ? 1.0 : -1.0 for i=1:n, j=1:m]
+  b = A * [1:m;]
+  c = A' * [-n:-1;]
+  return A, b, c
+end
+
+# Square adjoint systems.
+function square_adjoint(n :: Int=100)
+  A = [i == j ? 10.0 : i < j ? 1.0 : -1.0 for i=1:n, j=1:n]
+  b = A * [1:n;]
+  c = A' * [-n:-1;]
+  return A, b, c
+end
+
+# Overdetermined adjoint systems.
+function overdetermined_adjoint(n :: Int=200, m :: Int=100)
+  n > m || error("Underdetermined or square system!")
+  A = [i == j ? 10.0 : i < j ? 1.0 : -1.0 for i=1:n, j=1:m]
+  b = A * [1:m;]
+  c = A' * [-n:-1;]
+  return A, b, c
+end
+
 # Square and preconditioned problems.
 function square_preconditioned(n :: Int=10)
   A = ones(n, n) + (n-1) * I
   b = n * [1:n;]
-  O = zeros(n, n)
-  M = PreallocatedLinearOperator(1/n * (O + I))
+  M = PreallocatedLinearOperator(1/n * eye(n))
   return A, b, M
 end
 
@@ -145,8 +171,8 @@ function two_preconditioners(n :: Int=10, m :: Int=20)
   A = ones(n, n) + (n-1) * I
   b = ones(n)
   O = zeros(n, n)
-  M = PreallocatedLinearOperator(1/√n * (O + I))
-  N = PreallocatedLinearOperator(1/√m * (O + I))
+  M = PreallocatedLinearOperator(1/√n * eye(n))
+  N = PreallocatedLinearOperator(1/√m * eye(n))
   return A, b, M, N
 end
 

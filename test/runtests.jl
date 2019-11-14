@@ -4,6 +4,8 @@ include("test_utils.jl")
 include("test_aux.jl")
 
 include("test_usymlq.jl")
+include("test_bilqr.jl")
+include("test_trilqr.jl")
 include("test_usymqr.jl")
 include("test_qmr.jl")
 include("test_diom.jl")

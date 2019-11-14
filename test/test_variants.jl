@@ -4,7 +4,7 @@ function test_variants()
   for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
              :cr, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :bilq,
              :lsqr, :minres, :symmlq, :dqgmres, :diom, :cgs, :usymqr,
-             :minres_qlp, :qmr, :usymlq)
+             :minres_qlp, :qmr, :usymlq, :bilqr, :trilqr)
     @printf("%s ", string(fn))
     for TA in (Int32, Int64, Float32, Float64, BigFloat)
       for IA in (Int32, Int64)
@@ -12,7 +12,7 @@ function test_variants()
           for Ib in (Int32, Int64)
             A_dense = Matrix{TA}(I, 5, 5)
             A_sparse = convert(SparseMatrixCSC{TA,IA}, A_dense)
-            b_dense = ones(Tb,5)
+            b_dense = ones(Tb, 5)
             b_sparse = convert(SparseVector{Tb,Ib}, b_dense)
             if fn == :cg_lanczos_shift_seq
               shifts = [1:5;]
@@ -28,8 +28,8 @@ function test_variants()
               @eval $fn(adjoint($A_dense),  $b_sparse, $shifts)
               @eval $fn(adjoint($A_sparse), $b_dense,  $shifts)
               @eval $fn(adjoint($A_sparse), $b_sparse, $shifts)
-            elseif fn in (:usymlq, :usymqr)
-              c_dense = ones(Tb,5)
+            elseif fn in (:usymlq, :usymqr, :trilqr, :bilqr)
+              c_dense = ones(Tb, 5)
               c_sparse = convert(SparseVector{Tb,Ib}, c_dense)
               @eval $fn($A_dense,  $b_dense,  $c_dense )
               @eval $fn($A_dense,  $b_dense,  $c_sparse)

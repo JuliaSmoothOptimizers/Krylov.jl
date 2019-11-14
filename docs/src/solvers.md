@@ -17,9 +17,11 @@ diom
 dqgmres
 usymlq
 usymqr
+trilqr
 bilq
 cgs
 qmr
+bilqr
 cgls
 crls
 cgne

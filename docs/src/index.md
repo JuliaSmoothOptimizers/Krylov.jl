@@ -41,6 +41,7 @@ Given a linear operator ``A`` and a right-hand side ``b``, solve ``Ax = b``, whi
 Krylov can be installed and tested through the Julia package manager:
 
 ```julia
+julia> import Pkg
 julia> Pkg.add("Krylov")
 julia> Pkg.test("Krylov")
 ```
