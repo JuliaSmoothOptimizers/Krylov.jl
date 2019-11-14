@@ -36,6 +36,15 @@ mutable struct SymmlqStats{T} <: KrylovStats{T}
   status :: String
 end
 
+"Type for statistics returned by adjoint systems solvers"
+mutable struct AdjointStats{T} <: KrylovStats{T}
+  solved_primal :: Bool
+  solved_dual :: Bool
+  residuals_primal :: Vector{T}
+  residuals_dual :: Vector{T}
+  status :: String
+end
+
 import Base.show
 
 function show(io :: IO, stats :: SimpleStats)
@@ -72,6 +81,16 @@ function show(io :: IO, stats :: SymmlqStats)
   print(io, s)
 end
 
+function show(io :: IO, stats :: AdjointStats)
+  s  = "\nAdjoint stats\n"
+  s *= @sprintf("  solved primal: %s\n", stats.solved_primal)
+  s *= @sprintf("  solved dual:   %s\n", stats.solved_dual)
+  s *= @sprintf("  residuals primal: %s\n", vec2str(stats.residuals_primal))
+  s *= @sprintf("  residuals dual:   %s\n", vec2str(stats.residuals_dual))
+  s *= @sprintf("  status: %s\n", stats.status)
+  print(io, s)
+end
+
 include("krylov_aux.jl")
 include("krylov_utils.jl")
 
@@ -88,10 +107,12 @@ include("diom.jl")
 
 include("usymlq.jl")
 include("usymqr.jl")
+include("trilqr.jl")
 
 include("bilq.jl")
 include("cgs.jl")
 include("qmr.jl")
+include("bilqr.jl")
 
 include("cgls.jl")
 include("crls.jl")

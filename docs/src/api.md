@@ -5,6 +5,7 @@ Krylov.KrylovStats
 Krylov.SimpleStats
 Krylov.LanczosStats
 Krylov.SymmlqStats
+Krylov.AdjointStats
 ```
 
 ## Utilities
