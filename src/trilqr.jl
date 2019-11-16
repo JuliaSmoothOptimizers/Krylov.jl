@@ -50,6 +50,7 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
   sNorms = [cNorm;]
   ε = atol + rtol * bNorm
   Κ = atol + rtol * cNorm
+  verbose && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
   verbose && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
   # Set up workspace.
@@ -281,7 +282,10 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
     βₖ      = βₖ₊₁
     
     tired = iter ≥ itmax
-    verbose && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, sNorm)
+
+    verbose &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "✗ ✗ ✗ ✗", sNorm)
+    verbose && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "✗ ✗ ✗ ✗")
+    verbose && !solved_primal && !solved_dual && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
   end
   verbose && @printf("\n")
 

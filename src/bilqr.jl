@@ -50,6 +50,7 @@ function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstrac
   sNorms = [cNorm;]
   ε = atol + rtol * bNorm
   Κ = atol + rtol * cNorm
+  verbose && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
   verbose && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
   # Initialize the Lanczos biorthogonalization process.
@@ -295,7 +296,10 @@ function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstrac
 
     tired = iter ≥ itmax
     breakdown = !solved_lq && !solved_cg && (qᵗp == 0)
-    verbose && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, sNorm)
+
+    verbose &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "✗ ✗ ✗ ✗", sNorm)
+    verbose && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "✗ ✗ ✗ ✗")
+    verbose && !solved_primal && !solved_dual && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
   end
   verbose && @printf("\n")
 
