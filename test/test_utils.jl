@@ -158,6 +158,46 @@ function overdetermined_adjoint(n :: Int=200, m :: Int=100)
   return A, b, c
 end
 
+# Adjoint ODEs
+function adjoint_ode(n :: Int=50)
+  χ₁ = χ₂ = χ₃ = 1.0
+  # Primal ODE
+  # χ₁ * d²U(x)/dx² + χ₂ * dU(x)/dx + χ₃ * U(x) = f(x)
+  # U(0) = U(1) = 0
+  function f(x)
+    return (- χ₁ * π * π + χ₃) .* sin.(π.*x) .+ (χ₂ * π) .* cos.(π.*x)
+  end
+  # Dual ODE
+  # χ₁ * d²V(x)/dx² - χ₂ * dV(x)/dx + χ₃ *  V(x) = g(x)
+  # V(0) = V(1) = 0
+  function g(x)
+    exp.(x)
+  end
+  A, b, c = ODE(n, f, g, [χ₁, χ₂, χ₃])
+  return A, b, c
+end
+
+# Adjoint PDEs
+function adjoint_pde(n :: Int=50, m :: Int=50)
+  κ₁ = 5.0
+  κ₂ = 20.0
+  κ₃ = 0.0
+  # Primal PDE
+  # κ₁ * ( ∂²u(x,y)/∂x² + ∂²u(x,y)/∂y² )  + κ₂ * ( ∂u(x,y)/∂x + ∂u(x,y)/∂y ) = f(x,y), (x,y) ∈ Ω
+  # u(x,y) = 0, (x,y) ∈ ∂Ω
+  function f(x, y)
+    return (-2 * κ₁ * π * π + κ₃) * sin(π * x) * sin(π * y) + κ₂ * π * cos(π * x) * sin(π * y) + κ₂ * π * sin(π * x) * cos(π * y)
+  end
+  # Dual PDE
+  # κ₁ * ( ∂²v(x,y)/∂x² + ∂²v(x,y)/∂y² )  - κ₂ * ( ∂v(x,y)/∂x + ∂v(x,y)/∂y ) = g(x,y), (x,y) ∈ Ω
+  # v(x,y) = 0, (x,y) ∈ ∂Ω
+  function g(x, y)
+    return exp(x + y)
+  end
+  A, b, c = PDE(n, m, f, g, [κ₁, κ₁, κ₂, κ₂, κ₃])
+  return A, b, c
+end
+
 # Square and preconditioned problems.
 function square_preconditioned(n :: Int=10)
   A = ones(n, n) + (n-1) * I
