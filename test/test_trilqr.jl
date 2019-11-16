@@ -51,6 +51,40 @@ function test_trilqr()
   @printf("TriLQR: Dual relative residual: %8.1e\n", resid_dual)
   @test(resid_dual ≤ trilqr_tol)
   @test(stats.solved_dual)
+
+  # Test adjoint ODEs.
+  A, b, c = adjoint_ode()
+  (x, t, stats) = trilqr(A, b, c)
+  show(stats)
+
+  r = b - A * x
+  resid_primal = norm(r) / norm(b)
+  @printf("TriLQR: Primal relative residual: %8.1e\n", resid_primal)
+  @test(resid_primal ≤ trilqr_tol)
+  @test(stats.solved_primal)
+
+  s = c - A' * t
+  resid_dual = norm(s) / norm(c)
+  @printf("TriLQR: Dual relative residual: %8.1e\n", resid_dual)
+  @test(resid_dual ≤ trilqr_tol)
+  @test(stats.solved_dual)
+
+  # Test adjoint PDEs.
+  A, b, c = adjoint_pde()
+  (x, t, stats) = trilqr(A, b, c)
+  show(stats)
+
+  r = b - A * x
+  resid_primal = norm(r) / norm(b)
+  @printf("TriLQR: Primal relative residual: %8.1e\n", resid_primal)
+  @test(resid_primal ≤ trilqr_tol)
+  @test(stats.solved_primal)
+
+  s = c - A' * t
+  resid_dual = norm(s) / norm(c)
+  @printf("TriLQR: Dual relative residual: %8.1e\n", resid_dual)
+  @test(resid_dual ≤ trilqr_tol)
+  @test(stats.solved_dual)
 end
 
 test_trilqr()
