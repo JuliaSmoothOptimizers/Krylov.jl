@@ -71,11 +71,12 @@ function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstrac
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
   δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified during two iterations
-  ψbarₖ₋₁ = ψₖ₋₁ = zero(T)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = 
+  ψbarₖ₋₁ = ψₖ₋₁ = zero(T)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
   norm_vₖ = bNorm / βₖ       # ‖vₖ‖ used for residual norm estimates
   ϵₖ₋₃ = λₖ₋₂ = zero(T)      # Components of Lₖ₋₁
   wₖ₋₃ = zeros(T, n)         # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᵀ
   wₖ₋₂ = zeros(T, n)         # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᵀ
+  τₖ = zero(T)               # τₖ is used for the dual residual norm estimate
 
   # Stopping criterion.
   solved_lq = false
@@ -266,8 +267,11 @@ function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstrac
       # Update ψbarₖ₋₁
       ψbarₖ₋₁ = ψbarₖ
 
-      # Compute QMR residual norm ‖sₖ₋₁‖ = |ψbarₖ| * ‖uₖ‖.
-      sNorm = abs(ψbarₖ) * @knrm2(n, uₖ)
+      # Compute τₖ = τₖ₋₁ + ‖uₖ‖²
+      τₖ += @kdot(n, uₖ, uₖ)
+
+      # Compute QMR residual norm ‖sₖ₋₁‖ ≤ |ψbarₖ| * √τₖ
+      sNorm = abs(ψbarₖ) * √τₖ
       push!(sNorms, sNorm)
 
       # Update dual stopping criterion
