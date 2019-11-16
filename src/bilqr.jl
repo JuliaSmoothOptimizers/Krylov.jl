@@ -309,9 +309,11 @@ function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstrac
     @kaxpy!(n, ζbarₖ, d̅, x)
   end
 
-  tired     && (status = "maximum number of iterations exceeded")
-  breakdown && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
-  solved_primal && solved_dual && (status = "solutions good enough given atol and rtol")
+   tired                         && (status = "maximum number of iterations exceeded")
+   breakdown                     && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
+   solved_primal && !solved_dual && (status = "Only the primal solution is good enough given atol and rtol")
+  !solved_primal &&  solved_dual && (status = "Only the dual solution is good enough given atol and rtol")
+   solved_primal &&  solved_dual && (status = "Both primal and dual solutions are good enough given atol and rtol")
   stats = AdjointStats(solved_primal, solved_dual, rNorms, sNorms, status)
   return (x, t, stats)
 end

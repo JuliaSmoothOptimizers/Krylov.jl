@@ -295,7 +295,10 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
     @kaxpy!(n, ζbarₖ, d̅, x)
   end
 
-  status = tired ? "maximum number of iterations exceeded" : "solutions good enough given atol and rtol"
+   tired                         && (status = "maximum number of iterations exceeded")
+   solved_primal && !solved_dual && (status = "Only the primal solution is good enough given atol and rtol")
+  !solved_primal &&  solved_dual && (status = "Only the dual solution is good enough given atol and rtol")
+   solved_primal &&  solved_dual && (status = "Both primal and dual solutions are good enough given atol and rtol")
   stats = AdjointStats(solved_primal, solved_dual, rNorms, sNorms, status)
   return (x, t, stats)
 end
