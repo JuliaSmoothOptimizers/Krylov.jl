@@ -115,7 +115,6 @@ function almost_singular(n :: Int=16)
   return A, b
 end
 
-<<<<<<< HEAD
 # System that cause a breakdown with the symmetric Lanczos process.
 function symmetric_breakdown()
   A = [0.0 1.0; 1.0 0.0]
@@ -132,7 +131,7 @@ function unsymmetric_breakdown()
   return A, b, c
 end
 
-# Underdetermined adjoint systems.
+# Underdetermined consistent adjoint systems.
 function underdetermined_adjoint(n :: Int=100, m :: Int=200)
   n < m || error("Square or overdetermined system!")
   A = [i == j ? 10.0 : i < j ? 1.0 : -1.0 for i=1:n, j=1:m]
@@ -141,7 +140,7 @@ function underdetermined_adjoint(n :: Int=100, m :: Int=200)
   return A, b, c
 end
 
-# Square adjoint systems.
+# Square consistent adjoint systems.
 function square_adjoint(n :: Int=100)
   A = [i == j ? 10.0 : i < j ? 1.0 : -1.0 for i=1:n, j=1:n]
   b = A * [1:n;]
@@ -149,7 +148,15 @@ function square_adjoint(n :: Int=100)
   return A, b, c
 end
 
-# Overdetermined adjoint systems.
+# Adjoint systems with Ax = b underdetermined consistent and Aᵀt = c overdetermined insconsistent.
+function rectangular_adjoint(n :: Int=10, m :: Int=25)
+  Aᵀ, c = over_inconsistent(m, n)
+  A = transpose(Aᵀ)
+  b = A * ones(m)
+  return A, b, c
+end
+
+# Overdetermined consistent adjoint systems.
 function overdetermined_adjoint(n :: Int=200, m :: Int=100)
   n > m || error("Underdetermined or square system!")
   A = [i == j ? 10.0 : i < j ? 1.0 : -1.0 for i=1:n, j=1:m]

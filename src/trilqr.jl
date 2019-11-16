@@ -50,6 +50,7 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
   sNorms = [cNorm;]
   ε = atol + rtol * bNorm
   Κ = atol + rtol * cNorm
+  ξ = zero(T)
   verbose && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
   verbose && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
@@ -74,6 +75,7 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
   # Stopping criterion.
   solved_lq = false
   solved_cg = false
+  inconsistent = false
   solved_primal = bNorm ≤ ε
   solved_dual = cNorm ≤ Κ
   tired = iter ≥ itmax
@@ -130,12 +132,6 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
       ϵₖ₋₂  =  sₖ₋₁ * βₖ
       λₖ₋₁  = -cₖ₋₁ * cₖ * βₖ + sₖ * αₖ
       δbarₖ = -cₖ₋₁ * sₖ * βₖ - cₖ * αₖ
-    end
-
-    # Update sₖ₋₁ and cₖ₋₁
-    if iter ≥ 2
-      sₖ₋₁ = sₖ
-      cₖ₋₁ = cₖ
     end
 
     if !solved_primal
@@ -255,8 +251,13 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
       sNorm = abs(ψbarₖ)
       push!(sNorms, sNorm)
 
+      # Compute ‖Asₖ₋₁‖ = |ψbarₖ| * √((δbarₖ)² + (λbarₖ)²).
+      AsNorm = abs(ψbarₖ) * √(δbarₖ^2 + (cₖ₋₁ * βₖ₊₁)^2)
+
       # Update dual stopping criterion
-      solved_dual = sNorm ≤ Κ
+      iter == 1 && (ξ = atol + rtol * AsNorm)
+      inconsistent = AsNorm ≤ ξ
+      solved_dual = sNorm ≤ Κ || inconsistent
     end
 
     # Compute uₖ₊₁ and uₖ₊₁.
@@ -270,7 +271,7 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
       @. uₖ = p / γₖ₊₁ # γₖ₊₁uₖ₊₁ = p
     end
 
-    # Update ϵₖ₋₃, λₖ₋₂, δbarₖ₋₁, γₖ and βₖ.
+    # Update ϵₖ₋₃, λₖ₋₂, δbarₖ₋₁, cₖ₋₁, sₖ₋₁, γₖ and βₖ.
     if iter ≥ 3
       ϵₖ₋₃ = ϵₖ₋₂
     end
@@ -278,6 +279,8 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
       λₖ₋₂ = λₖ₋₁
     end
     δbarₖ₋₁ = δbarₖ
+    cₖ₋₁    = cₖ
+    sₖ₋₁    = sₖ
     γₖ      = γₖ₊₁
     βₖ      = βₖ₊₁
     

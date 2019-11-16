@@ -65,7 +65,7 @@ function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstrac
   uₖ₋₁ = zeros(T, n)         # u₀ = 0
   vₖ = b / βₖ                # v₁ = b / β₁
   uₖ = c / γₖ                # u₁ = c / γ₁
-  cₖ₋₁ = cₖ = one(T)         # Givens cosines used for the LQ factorization of Tₖ
+  cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
   d̅ = zeros(T, n)            # Last column of D̅ₖ = Vₖ(Qₖ)ᵀ
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
@@ -139,12 +139,6 @@ function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstrac
       ϵₖ₋₂  =  sₖ₋₁ * βₖ
       λₖ₋₁  = -cₖ₋₁ * cₖ * βₖ + sₖ * αₖ
       δbarₖ = -cₖ₋₁ * sₖ * βₖ - cₖ * αₖ
-    end
-
-    # Update sₖ₋₁ and cₖ₋₁
-    if iter ≥ 2
-      sₖ₋₁ = sₖ
-      cₖ₋₁ = cₖ
     end
 
     if !solved_primal
@@ -287,7 +281,7 @@ function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstrac
       @. uₖ = p / γₖ₊₁ # γₖ₊₁uₖ₊₁ = p
     end
 
-    # Update ϵₖ₋₃, λₖ₋₂, δbarₖ₋₁, γₖ and βₖ.
+    # Update ϵₖ₋₃, λₖ₋₂, δbarₖ₋₁, cₖ₋₁, sₖ₋₁, γₖ and βₖ.
     if iter ≥ 3
       ϵₖ₋₃ = ϵₖ₋₂
     end
@@ -295,6 +289,8 @@ function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstrac
       λₖ₋₂ = λₖ₋₁
     end
     δbarₖ₋₁ = δbarₖ
+    cₖ₋₁    = cₖ
+    sₖ₋₁    = sₖ
     γₖ      = γₖ₊₁
     βₖ      = βₖ₊₁
 
