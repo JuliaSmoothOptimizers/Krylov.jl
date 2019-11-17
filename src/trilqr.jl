@@ -61,7 +61,7 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
   uₖ₋₁ = zeros(T, n)         # u₀ = 0
   vₖ = b / βₖ                # v₁ = b / β₁
   uₖ = c / γₖ                # u₁ = c / γ₁
-  cₖ₋₁ = cₖ = one(T)         # Givens cosines used for the LQ factorization of Tₖ
+  cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
   d̅ = zeros(T, n)            # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
