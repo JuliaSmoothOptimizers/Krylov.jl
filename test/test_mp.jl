@@ -28,11 +28,13 @@ function test_mp()
         @test norm(A * x - b) ≤ 10 * (atol + norm(b) * rtol)
         if fn in (:trilqr, :bilqr)
           @test norm(A' * t - c) ≤ 10 * (atol + norm(c) * rtol)
+          @test eltype(t) == T
         end
       else
         @test norm(A * x - b) ≤ atol + norm(b) * rtol
         if fn in (:trilqr, :bilqr)
           @test norm(A' * t - c) ≤ atol + norm(c) * rtol
+          @test eltype(t) == T
         end
       end
       @test eltype(x) == T
