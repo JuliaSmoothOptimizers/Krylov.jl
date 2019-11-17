@@ -219,6 +219,7 @@ actual_usymqr_bytes = @allocated usymqr(Ao, b, c)
 # - 9 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₁, wₖ
 storage_trilqr(n) = 9 * n
 storage_trilqr_bytes(n) = 8 * storage_trilqr(n)
+
 expected_trilqr_bytes = storage_trilqr_bytes(n)
 trilqr(A, b, b)  # warmup
 actual_trilqr_bytes = @allocated trilqr(A, b, b)
@@ -238,6 +239,7 @@ actual_bilq_bytes = @allocated bilq(A, b)
 # - 9 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₁, wₖ
 storage_bilqr(n) = 9 * n
 storage_bilqr_bytes(n) = 8 * storage_bilqr(n)
+
 expected_bilqr_bytes = storage_bilqr_bytes(n)
 bilqr(A, b, b)  # warmup
 actual_bilqr_bytes = @allocated bilqr(A, b, b)
