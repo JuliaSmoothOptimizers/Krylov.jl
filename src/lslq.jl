@@ -92,7 +92,7 @@ The iterations stop as soon as one of the following conditions holds true:
 * R. Estrin, D. Orban and M. A. Saunders, *Estimates of the 2-Norm Forward Error for SYMMLQ and CG*, Cahier du GERAD G-2016-70, GERAD, Montreal, 2016. DOI http://dx.doi.org/10.13140/RG.2.2.19581.77288.
 * R. Estrin, D. Orban and M. A. Saunders, *LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*, Cahier du GERAD G-2017-xx, GERAD, Montreal, 2017.
 """
-function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function lslq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(),
               N :: AbstractLinearOperator=opEye(),
               sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
@@ -107,6 +107,9 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # Tests M == Iₙ and N == Iₘ
   MisI = isa(M, opEye)
   NisI = isa(N, opEye)
+
+  # Compute the adjoint of A
+  Aᵀ = A'
 
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = one(T))
@@ -129,7 +132,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   @kscal!(m, one(T)/β₁, u)
   MisI || @kscal!(m, one(T)/β₁, Mu)
-  Aᵀu = A.tprod(u)
+  Aᵀu = Aᵀ * u
   Nv = copy(Aᵀu)
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))  # = α₁
@@ -207,7 +210,7 @@ function lslq(A :: AbstractLinearOperator, b :: AbstractVector{T};
       MisI || @kscal!(m, one(T)/β, Mu)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-      Aᵀu = A.tprod(u)
+      Aᵀu = Aᵀ * u
       @kaxpby!(n, one(T), Aᵀu, -β, Nv)
       v = N * Nv
       α = sqrt(@kdot(n, v, Nv))

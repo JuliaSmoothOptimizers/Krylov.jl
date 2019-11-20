@@ -60,7 +60,7 @@ It is formally equivalent to CRMR, though can be slightly more accurate,
 and intricate to implement. Both the x- and y-parts of the solution are
 returned.
 """
-function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
                  M :: AbstractLinearOperator=opEye(),
                  N :: AbstractLinearOperator=opEye(),
                  λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
@@ -69,6 +69,9 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CRAIG-MR: system of %d equations in %d variables\n", m, n);
+
+  # Compute the adjoint of A
+  Aᵀ = A'
 
   # Tests M == Iₘ and N == Iₙ
   MisI = isa(M, opEye)
@@ -87,7 +90,7 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   @kscal!(m, one(T)/β, u)
   MisI || @kscal!(m, one(T)/β, Mu)
   # α₁Nv₁ = Aᵀu₁.
-  Aᵀu = A.tprod(u)
+  Aᵀu = Aᵀ * u
   Nv = copy(Aᵀu)
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))
@@ -166,7 +169,7 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     @kaxpy!(m, ζ, w, y)             # y = y + ζ * w;
 
     # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    Aᵀu = A.tprod(u)
+    Aᵀu = Aᵀ * u
     @kaxpby!(n, one(T), Aᵀu, -β, Nv)
     v = N * Nv
     α = sqrt(@kdot(n, v, Nv))
@@ -190,7 +193,7 @@ function craigmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     tired  = iter >= itmax
   end
 
-  Aᵀy = A.tprod(y)
+  Aᵀy = Aᵀ * y
   N⁻¹Aᵀy = N * Aᵀy
   @. x = N⁻¹Aᵀy
 

@@ -52,7 +52,7 @@ but simpler to implement. Only the x-part of the solution is returned.
 
 A preconditioner M may be provided in the form of a linear operator.
 """
-function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function crmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
               atol :: T=√eps(T), rtol :: T=√eps(T),
               itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
@@ -61,13 +61,16 @@ function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CRMR: system of %d equations in %d variables\n", m, n);
 
+  # Compute the adjoint of A
+  Aᵀ = A'
+
   x = zeros(T, n) # initial estimation x = 0
   r = copy(M * b) # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution");
   rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   λ > 0 && (s = copy(r));
-  Aᵀr = A.tprod(r) # - λ * x0 if x0 ≠ 0.
+  Aᵀr = Aᵀ * r # - λ * x0 if x0 ≠ 0.
   p  = copy(Aᵀr);
   γ  = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr);
   λ > 0 && (γ += λ * rNorm * rNorm);
@@ -95,7 +98,7 @@ function crmr(A :: AbstractLinearOperator, b :: AbstractVector{T};
     @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p;
     @kaxpy!(m, -α, Mq, r)      # Faster than  r =  r - α * Mq;
     rNorm = @knrm2(m, r)       # norm(r);
-    Aᵀr = A.tprod(r)
+    Aᵀr = Aᵀ * r
     γ_next = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ_next = dot(Aᵀr, Aᵀr);
     λ > 0 && (γ_next += λ * rNorm * rNorm);
     β = γ_next / γ;

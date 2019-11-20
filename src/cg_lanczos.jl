@@ -22,7 +22,7 @@ The method does _not_ abort if A is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function cg_lanczos(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
                     M :: AbstractLinearOperator=opEye(),
                     atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                     check_curvature :: Bool=false, verbose :: Bool=false) where T <: AbstractFloat
@@ -125,10 +125,10 @@ The method does _not_ abort if A + αI is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{Tb},
-                              shifts :: AbstractVector{Ts}; M :: AbstractLinearOperator=opEye(),
-                              atol :: Tb=√eps(Tb), rtol :: Tb=√eps(Tb), itmax :: Int=0,
-                              check_curvature :: Bool=false, verbose :: Bool=false) where {Tb <: AbstractFloat, Ts <: Number}
+function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T},
+                              shifts :: AbstractVector{S}; M :: AbstractLinearOperator=opEye(),
+                              atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+                              check_curvature :: Bool=false, verbose :: Bool=false) where {T <: AbstractFloat, S <: Number}
 
   n = size(b, 1);
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
@@ -141,30 +141,30 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{T
 
   # Initial state.
   ## Distribute x similarly to shifts.
-  x = [zeros(Tb, n) for i = 1 : nshifts] # x₀
+  x = [zeros(T, n) for i = 1 : nshifts]  # x₀
   Mv = copy(b)                           # Mv₁ ← b
   v = M * Mv                             # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv))              # β₁ = v₁ᵀ M v₁
-  β == 0 && return x, LanczosStats(true, [zero(Tb)], false, zero(Tb), zero(Tb), "x = 0 is a zero-residual solution")
+  β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
 
   # Initialize each p to v.
   p = [copy(v) for i = 1 : nshifts]
 
   # Initialize Lanczos process.
   # β₁Mv₁ = b
-  @kscal!(n, one(Tb)/β, v)          # v₁  ←  v₁ / β₁
-  MisI || @kscal!(n, one(Tb)/β, Mv) # Mv₁ ← Mv₁ / β₁
+  @kscal!(n, one(T)/β, v)          # v₁  ←  v₁ / β₁
+  MisI || @kscal!(n, one(T)/β, Mv) # Mv₁ ← Mv₁ / β₁
   Mv_prev = copy(Mv)
 
   # Initialize some constants used in recursions below.
-  ρ = one(Tb)
-  σ = β * ones(Tb, nshifts)
-  δhat = zeros(Tb, nshifts)
-  ω = zeros(Tb, nshifts)
-  γ = ones(Tb, nshifts)
+  ρ = one(T)
+  σ = β * ones(T, nshifts)
+  δhat = zeros(T, nshifts)
+  ω = zeros(T, nshifts)
+  γ = ones(T, nshifts)
 
   # Define stopping tolerance.
-  rNorms = β * ones(Tb, nshifts);
+  rNorms = β * ones(T, nshifts);
   rNorms_history = [rNorms;];
   ε = atol + rtol * β;
 
@@ -202,8 +202,8 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{T
     @. Mv = Mv_next                    # Mvₖ ← Mvₖ₊₁
     v = M * Mv                         # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
     β = sqrt(@kdot(n, v, Mv))          # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
-    @kscal!(n, one(Tb)/β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-    MisI || @kscal!(n, one(Tb)/β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+    @kscal!(n, one(T)/β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+    MisI || @kscal!(n, one(T)/β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
 
     # Check curvature: vₖᵀ(A + sᵢI)vₖ = vₖᵀAvₖ + sᵢ‖vₖ‖² = δₖ + ρₖ * sᵢ with ρₖ = ‖vₖ‖².
     # It is possible to show that σₖ² (δₖ + ρₖ * sᵢ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ (A + sᵢ I) pₖ.
@@ -242,6 +242,6 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator, b :: AbstractVector{T
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, permutedims(reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))), indefinite, zero(Tb), zero(Tb), status);  # TODO: Estimate Anorm and Acond.
+  stats = LanczosStats(solved, permutedims(reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))), indefinite, zero(T), zero(T), status);  # TODO: Estimate Anorm and Acond.
   return (x, stats);
 end

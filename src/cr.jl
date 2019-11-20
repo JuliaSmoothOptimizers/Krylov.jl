@@ -14,7 +14,7 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 In a linesearch context, 'linesearch' must be set to 'true'.
 """
-function cr(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function cr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
             M :: AbstractLinearOperator=opEye(), atol :: T=√eps(T),
             rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
             radius :: T=zero(T), verbose :: Bool=false, linesearch :: Bool=false) where T <: AbstractFloat

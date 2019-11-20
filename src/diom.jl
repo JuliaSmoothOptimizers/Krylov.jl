@@ -25,7 +25,7 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 - Right preconditioning : AN⁻¹u = b with x = N⁻¹u
 - Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
 """
-function diom(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function diom(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(),
               N :: AbstractLinearOperator=opEye(),
               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,

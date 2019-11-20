@@ -33,7 +33,7 @@ when it exists. The transfer is based on the residual norm.
 
 This version of USYMLQ works in any floating-point data type.
 """
-function usymlq(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: AbstractVector{T};
+function usymlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
                 itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
@@ -41,6 +41,9 @@ function usymlq(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
   verbose && @printf("USYMLQ: system of %d equations in %d variables\n", m, n)
+
+  # Compute the adjoint of A
+  Aᵀ = A'
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x = zeros(T, n)
@@ -62,7 +65,7 @@ function usymlq(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
   uₖ₋₁ = zeros(T, n)         # u₀ = 0
   vₖ = b / βₖ                # v₁ = b / β₁
   uₖ = c / γₖ                # u₁ = c / γ₁
-  cₖ₋₁ = cₖ = - one(T)       # Givens cosines used for the LQ factorization of Tₖ
+  cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
   d̅ = zeros(T, n)            # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
@@ -83,8 +86,8 @@ function usymlq(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
     # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
     # AᵀVₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    q = A * uₖ       # Forms vₖ₊₁ : q ← Auₖ
-    p = A.tprod(vₖ)  # Forms uₖ₊₁ : p ← Aᵀvₖ
+    q = A  * uₖ  # Forms vₖ₊₁ : q ← Auₖ
+    p = Aᵀ * vₖ  # Forms uₖ₊₁ : p ← Aᵀvₖ
 
     @kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁

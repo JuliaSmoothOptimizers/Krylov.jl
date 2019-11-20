@@ -24,7 +24,7 @@ SYMMLQ produces monotonic errors ‖x*-x‖₂.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function symmlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
                 M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
                 λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                 etol :: T=√eps(T), window :: Int=0, itmax :: Int=0,
