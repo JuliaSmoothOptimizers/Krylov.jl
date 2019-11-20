@@ -36,7 +36,7 @@ CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr�
 It is formally equivalent to LSMR, though can be substantially less accurate,
 but simpler to implement.
 """
-function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function crls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
               atol :: T=√eps(T), rtol :: T=√eps(T), radius :: T=zero(T),
               itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
@@ -45,19 +45,22 @@ function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CRLS: system of %d equations in %d variables\n", m, n);
 
+  # Compute the adjoint of A
+  Aᵀ = A'
+
   x = zeros(T, n)
   r  = copy(b)
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution");
 
   Mr = M * r;
-  Ar = copy(A.tprod(Mr))  # - λ * x0 if x0 ≠ 0.
+  Ar = copy(Aᵀ * Mr)  # - λ * x0 if x0 ≠ 0.
   s  = A * Ar;
   Ms = M * s;
 
   p  = copy(Ar);
   Ap = copy(s);
-  q  = A.tprod(Ms) # Ap;
+  q  = Aᵀ * Ms # Ap;
   λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p;
   γ  = @kdot(m, s, Ms)  # Faster than γ = dot(s, Ms);
   iter = 0;
@@ -90,7 +93,7 @@ function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
         psd = true # det(AᵀA) = 0
         p = Ar # p = Aᵀr
         pNorm² = ArNorm * ArNorm
-        q = A.tprod(s)
+        q = Aᵀ * s
         α = min(ArNorm^2 / γ, maximum(to_boundary(x, p, radius, flip = false, dNorm2 = pNorm²))) # the quadratic is minimal in the direction Aᵀr for α = ‖Ar‖²/γ
       else
         pNorm² = pNorm * pNorm
@@ -117,7 +120,7 @@ function crls(A :: AbstractLinearOperator, b :: AbstractVector{T};
     @kaxpby!(n, one(T), Ar, β, p)    # Faster than  p = Ar + β *  p;
     @kaxpby!(m, one(T), s, β, Ap)    # Faster than Ap =  s + β * Ap;
     MAp = M * Ap
-    q = A.tprod(MAp)
+    q = Aᵀ * MAp
     λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p;
 
     γ = γ_next;

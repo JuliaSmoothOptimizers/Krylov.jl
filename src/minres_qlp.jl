@@ -23,7 +23,7 @@ It is significantly more complex but can be more reliable than MINRES when A is 
 
 This version of MINRES-QLP works in any floating-point data type.
 """
-function minres_qlp(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function minres_qlp(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
                     atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
                     itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 

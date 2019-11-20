@@ -37,7 +37,7 @@ CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖A�
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 """
-function cgls(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function cgls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
               atol :: T=√eps(T), rtol :: T=√eps(T), radius :: T=zero(T),
               itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
@@ -46,12 +46,15 @@ function cgls(A :: AbstractLinearOperator, b :: AbstractVector{T};
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CGLS: system of %d equations in %d variables\n", m, n);
 
+  # Compute Aᵀ
+  Aᵀ = A'
+
   x = zeros(T, n);
   r = copy(b)
   bNorm = @knrm2(m, r)   # Marginally faster than norm(b);
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution");
   Mr = M * r
-  s = A.tprod(Mr)
+  s = Aᵀ * Mr
   p = copy(s);
   γ = @kdot(n, s, s)  # Faster than γ = dot(s, s);
   iter = 0;
@@ -87,7 +90,7 @@ function cgls(A :: AbstractLinearOperator, b :: AbstractVector{T};
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p;
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q;
     Mr = M * r
-    s = A.tprod(Mr);
+    s = Aᵀ * Mr
     λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x;
     γ_next = @kdot(n, s, s)  # Faster than γ_next = dot(s, s);
     β = γ_next / γ;

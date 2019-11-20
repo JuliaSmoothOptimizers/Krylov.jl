@@ -101,6 +101,7 @@ actual_cr_bytes = @allocated cr(A, b, rtol=1e-6)
 # - 1 m-vector: r
 storage_crmr(n, m) = 2 * n + m
 storage_crmr_bytes(n, m) = 8 * storage_crmr(n, m)
+
 expected_crmr_bytes = storage_crmr_bytes(n, m)
 (x, stats) = crmr(Au, c)  # warmup
 actual_crmr_bytes = @allocated crmr(Au, c)
@@ -109,6 +110,7 @@ actual_crmr_bytes = @allocated crmr(Au, c)
 # without preconditioner and with Ap preallocated, CGS needs 5 n-vectors: x, r, u, p, q
 storage_cgs(n) = 5 * n
 storage_cgs_bytes(n) = 8 * storage_cgs(n)
+
 expected_cgs_bytes = storage_cgs_bytes(n)
 cgs(A, b)  # warmup
 actual_cgs_bytes = @allocated cgs(A, b)
@@ -130,6 +132,7 @@ actual_craigmr_bytes = @allocated craigmr(Au, c)
 # - 1 m-vector: r
 storage_cgne(n, m) = 2 * n + m
 storage_cgne_bytes(n, m) = 8 * storage_cgne(n, m)
+
 expected_cgne_bytes = storage_cgne_bytes(n, m)
 (x, stats) = cgne(Au, c)  # warmup
 actual_cgne_bytes = @allocated cgne(Au, c)
@@ -151,6 +154,7 @@ actual_craig_bytes = @allocated craig(Au, c)
 # - 1 n-vector: u
 storage_lslq(n, m) = 3 * m + n
 storage_lslq_bytes(n, m) = 8 * storage_lslq(n, m)
+
 expected_lslq_bytes = storage_lslq_bytes(n, m)
 (x, stats) = lslq(Ao, b)  # warmup
 actual_lslq_bytes = @allocated lslq(Ao, b)
@@ -161,6 +165,7 @@ actual_lslq_bytes = @allocated lslq(Ao, b)
 # - 1 n-vector: r
 storage_cgls(n, m) = n + 2 * m
 storage_cgls_bytes(n, m) = 8 * storage_cgls(n, m)
+
 expected_cgls_bytes = storage_cgls_bytes(n, m)
 (x, stats) = cgls(Ao, b)  # warmup
 actual_cgls_bytes = @allocated cgls(Ao, b)
@@ -171,6 +176,7 @@ actual_cgls_bytes = @allocated cgls(Ao, b)
 # - 1 n-vector: u
 storage_lsqr(n, m) = 3 * m + n
 storage_lsqr_bytes(n, m) = 8 * storage_lsqr(n, m)
+
 expected_lsqr_bytes = storage_lsqr_bytes(n, m)
 (x, stats) = lsqr(Ao, b)  # warmup
 actual_lsqr_bytes = @allocated lsqr(Ao, b)
@@ -181,6 +187,7 @@ actual_lsqr_bytes = @allocated lsqr(Ao, b)
 # - 2 n-vector: r, Ap
 storage_crls(n, m) = 3 * m + 2 * n
 storage_crls_bytes(n, m) = 8 * storage_crls(n, m)
+
 expected_crls_bytes = storage_crls_bytes(n, m)
 (x, stats) = crls(Ao, b)  # warmup
 actual_crls_bytes = @allocated crls(Ao, b)
@@ -191,6 +198,7 @@ actual_crls_bytes = @allocated crls(Ao, b)
 # - 1 n-vector: u
 storage_lsmr(n, m) = 4 * m + n
 storage_lsmr_bytes(n, m) = 8 * storage_lsmr(n, m)
+
 expected_lsmr_bytes = storage_lsmr_bytes(n, m)
 (x, stats) = lsmr(Ao, b)  # warmup
 actual_lsmr_bytes = @allocated lsmr(Ao, b)
@@ -201,6 +209,7 @@ actual_lsmr_bytes = @allocated lsmr(Ao, b)
 # - 2 n-vectors: uₖ₋₁, uₖ
 storage_usymqr(n, m) = 5 * m + 2 * n
 storage_usymqr_bytes(n, m) = 8 * storage_usymqr(n, m)
+
 expected_usymqr_bytes = storage_usymqr_bytes(n, m)
 (x, stats) = usymqr(Ao, b, c) # warmup
 actual_usymqr_bytes = @allocated usymqr(Ao, b, c)
@@ -210,6 +219,7 @@ actual_usymqr_bytes = @allocated usymqr(Ao, b, c)
 # - 6 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅
 storage_bilq(n) = 6 * n
 storage_bilq_bytes(n) = 8 * storage_bilq(n)
+
 expected_bilq_bytes = storage_bilq_bytes(n)
 bilq(A, b)  # warmup
 actual_bilq_bytes = @allocated bilq(A, b)
@@ -219,6 +229,7 @@ actual_bilq_bytes = @allocated bilq(A, b)
 # - 5 n-vectors: wₖ₋₁, wₖ, vₖ₋₁, vₖ, x
 storage_minres_qlp(n) = 5 * n
 storage_minres_qlp_bytes(n) = 8 * storage_minres_qlp(n)
+
 expected_minres_qlp_bytes = storage_minres_qlp_bytes(n)
 minres_qlp(A, b)  # warmup
 actual_minres_qlp_bytes = @allocated minres_qlp(A, b)
@@ -228,6 +239,7 @@ actual_minres_qlp_bytes = @allocated minres_qlp(A, b)
 # - 7 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₁, wₖ
 storage_qmr(n) = 7 * n
 storage_qmr_bytes(n) = 8 * storage_qmr(n)
+
 expected_qmr_bytes = storage_qmr_bytes(n)
 qmr(A, b)  # warmup
 actual_qmr_bytes = @allocated qmr(A, b)
@@ -238,6 +250,7 @@ actual_qmr_bytes = @allocated qmr(A, b)
 # - 2 m-vectors: uₖ₋₁, uₖ
 storage_usymlq(n, m) = 4 * n + 2 * m
 storage_usymlq_bytes(n, m) = 8 * storage_usymlq(n, m)
+
 expected_usymlq_bytes = storage_usymlq_bytes(n, m)
 usymlq(Au, c, b)  # warmup
 actual_usymlq_bytes = @allocated usymlq(Au, c, b)

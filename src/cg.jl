@@ -18,7 +18,7 @@ The method does _not_ abort if A is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function cg(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function cg(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
             M :: AbstractLinearOperator=opEye(), atol :: T=√eps(T),
             rtol :: T=√eps(T), itmax :: Int=0, radius :: T=zero(T),
             verbose :: Bool=false) where T <: AbstractFloat

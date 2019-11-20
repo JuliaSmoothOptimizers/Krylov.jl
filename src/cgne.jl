@@ -53,7 +53,7 @@ but simpler to implement. Only the x-part of the solution is returned.
 
 A preconditioner M may be provided in the form of a linear operator.
 """
-function cgne(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function cgne(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
               verbose :: Bool=false) where T <: AbstractFloat
@@ -61,6 +61,9 @@ function cgne(A :: AbstractLinearOperator, b :: AbstractVector{T};
   m, n = size(A);
   size(b, 1) == m || error("Inconsistent problem size");
   verbose && @printf("CGNE: system of %d equations in %d variables\n", m, n);
+
+  # Compute the adjoint of A
+  Aᵀ = A'
 
   x = zeros(T, n);
   r = copy(b)
@@ -72,7 +75,7 @@ function cgne(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # The following vector copy takes care of the case where A is a LinearOperator
   # with preallocation, so as to avoid overwriting vectors used later. In other
   # case, this should only add minimum overhead.
-  p = copy(A.tprod(z));
+  p = copy(Aᵀ * z)
 
   # Use ‖p‖ to detect inconsistent system.
   # An inconsistent system will necessarily have AA' singular.
@@ -107,7 +110,7 @@ function cgne(A :: AbstractLinearOperator, b :: AbstractVector{T};
     z = M * r
     γ_next = @kdot(m, r, z)  # Faster than γ_next = dot(r, z);
     β = γ_next / γ;
-    Aᵀz = A.tprod(z)
+    Aᵀz = Aᵀ * z
     @kaxpby!(n, one(T), Aᵀz, β, p)  # Faster than p = Aᵀz + β * p;
     pNorm = @knrm2(n, p)
     if λ > 0

@@ -58,7 +58,7 @@ which is equivalent to applying CG to (M + AN⁻¹Aᵀ)y = b.
 
 In this implementation, both the x and y-parts of the solution are returned.
 """
-function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function craig(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
                M :: AbstractLinearOperator=opEye(),
                N :: AbstractLinearOperator=opEye(),
                λ :: T=zero(T),
@@ -69,6 +69,9 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("CRAIG: system of %d equations in %d variables\n", m, n)
+
+  # Compute the adjoint of A
+  Aᵀ = A'
 
   # Tests M == Iₘ and N == Iₙ
   MisI = isa(M, opEye)
@@ -133,7 +136,7 @@ function craig(A :: AbstractLinearOperator, b :: AbstractVector{T};
   while ! (solved || inconsistent || ill_cond || tired)
     # Generate the next Golub-Kahan vectors
     # 1. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    Aᵀu = A.tprod(u)
+    Aᵀu = Aᵀ * u
     @kaxpby!(n, one(T), Aᵀu, -β, Nv)
     v = N * Nv
     α = sqrt(@kdot(n, v, Nv))

@@ -57,7 +57,7 @@ indefinite system
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
 """
-function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function lsqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(),
               N :: AbstractLinearOperator=opEye(),
               sqd :: Bool=false,
@@ -70,6 +70,9 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("LSQR: system of %d equations in %d variables\n", m, n)
+
+  # Compute the adjoint of A
+  Aᵀ = A'
 
   # Tests M == Iₙ and N == Iₘ
   MisI = isa(M, opEye)
@@ -91,7 +94,7 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   @kscal!(m, one(T)/β₁, u)
   MisI || @kscal!(m, one(T)/β₁, Mu)
-  Aᵀu = A.tprod(u)
+  Aᵀu = Aᵀ * u
   Nv = copy(Aᵀu)
   v = N * Nv
   Anorm² = @kdot(n, v, Nv)
@@ -163,7 +166,7 @@ function lsqr(A :: AbstractLinearOperator, b :: AbstractVector{T};
       λ > 0 && (Anorm² += λ²)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-      Aᵀu = A.tprod(u)
+      Aᵀu = Aᵀ * u
       @kaxpby!(n, one(T), Aᵀu, -β, Nv)
       v = N * Nv
       α = sqrt(@kdot(n, v, Nv))

@@ -26,7 +26,7 @@ When A is symmetric and b = c, QMR is equivalent to MINRES.
 
 This version of QMR works in any floating-point data type.
 """
-function qmr(A :: AbstractLinearOperator, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
+function qmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
              atol :: T=√eps(T), rtol :: T=√eps(T),
              itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
@@ -34,6 +34,9 @@ function qmr(A :: AbstractLinearOperator, b :: AbstractVector{T}; c :: AbstractV
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
   verbose && @printf("QMR: system of size %d\n", n)
+
+  # Compute the adjoint of A
+  Aᵀ = A'
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x = zeros(T, n)
@@ -80,8 +83,8 @@ function qmr(A :: AbstractLinearOperator, b :: AbstractVector{T}; c :: AbstractV
     # AVₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
     # AᵀUₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    q = A * vₖ       # Forms vₖ₊₁ : q ← Avₖ
-    p = A.tprod(uₖ)  # Forms uₖ₊₁ : p ← Aᵀuₖ
+    q = A  * vₖ  # Forms vₖ₊₁ : q ← Avₖ
+    p = Aᵀ * uₖ  # Forms uₖ₊₁ : p ← Aᵀuₖ
 
     @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁

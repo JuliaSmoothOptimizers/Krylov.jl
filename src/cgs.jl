@@ -32,7 +32,7 @@ TFQMR and BICGSTAB were developed to remedy this difficulty.»
 
 This implementation allows a right preconditioner M.
 """
-function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function cgs(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
              M :: AbstractLinearOperator=opEye(),
              atol :: T=√eps(T), rtol :: T=√eps(T),
              itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
@@ -45,7 +45,7 @@ function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # Initial solution x₀ and residual r₀.
   x = zeros(T, n) # x₀
   r = copy(b)     # r₀
-  # Compute ρ₀ = < r₀,r₀ > and residual norm ‖r₀‖₂.
+  # Compute ρ₀ = ⟨ r₀,r₀ ⟩ and residual norm ‖r₀‖₂.
   ρ = @kdot(n, r, r)
   rNorm = sqrt(ρ)
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
@@ -71,7 +71,7 @@ function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     y = M * p                    # yₘ = M⁻¹pₘ
     v = A * y                    # vₘ = Ayₘ
-    σ = @kdot(n, v, b)           # σₘ = < AM⁻¹pₘ,r₀ >
+    σ = @kdot(n, v, b)           # σₘ = ⟨ AM⁻¹pₘ,r₀ ⟩
     α = ρ / σ                    # αₘ = ρₘ / σₘ
     @. q = u - α * v             # qₘ = uₘ - αₘ * AM⁻¹pₘ
     @kaxpy!(n, one(T), q, u)     # uₘ₊½ = uₘ + qₘ
@@ -79,7 +79,7 @@ function cgs(A :: AbstractLinearOperator, b :: AbstractVector{T};
     @kaxpy!(n, α, z, x)          # xₘ₊₁ = xₘ + αₘ * M⁻¹(uₘ + qₘ)
     w = A * z                    # wₘ = AM⁻¹(uₘ + qₘ)
     @kaxpy!(n, -α, w, r)         # rₘ₊₁ = rₘ - αₘ * AM⁻¹(uₘ + qₘ)
-    ρ_next = @kdot(n, r, b)      # ρₘ₊₁ = < rₘ₊₁,r₀ >
+    ρ_next = @kdot(n, r, b)      # ρₘ₊₁ = ⟨ rₘ₊₁,r₀ ⟩
     β = ρ_next / ρ               # βₘ = ρₘ₊₁ / ρₘ
     @. u = r + β * q             # uₘ₊₁ = rₘ₊₁ + βₘ * qₘ
     @kaxpby!(n, one(T), q, β, p) # pₘ₊₁ = uₘ₊₁ + βₘ * (qₘ + βₘ * pₘ)
