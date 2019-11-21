@@ -25,7 +25,7 @@ point, when it exists. The transfer is based on the residual norm.
 
 This version of TriLQR works in any floating-point data type.
 """
-function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: AbstractVector{T};
+function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
                 itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
@@ -34,6 +34,9 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
   length(c) == n || error("Inconsistent problem size")
   verbose && @printf("TRILQR: primal system of %d equations in %d variables\n", m, n)
   verbose && @printf("TRILQR: dual system of %d equations in %d variables\n", n, m)
+
+  # Compute the adjoint of A
+  Aᵀ = A'
 
   # Initial solution x₀ and residual r₀ = b - Ax₀.
   x = zeros(T, n)       # x₀
@@ -89,8 +92,8 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
     # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
     # AᵀVₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    q = A * uₖ       # Forms vₖ₊₁ : q ← Auₖ
-    p = A.tprod(vₖ)  # Forms uₖ₊₁ : p ← Aᵀvₖ
+    q = A  * uₖ  # Forms vₖ₊₁ : q ← Auₖ
+    p = Aᵀ * vₖ  # Forms uₖ₊₁ : p ← Aᵀvₖ
 
     @kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
@@ -261,14 +264,14 @@ function trilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstra
     end
 
     # Compute uₖ₊₁ and uₖ₊₁.
-    @. vₖ₋₁ = vₖ # vₖ₋₁ ← vₖ
-    @. uₖ₋₁ = uₖ # uₖ₋₁ ← uₖ
+    @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
+    @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
 
     if βₖ₊₁ ≠ zero(T)
-      @. vₖ = q / βₖ₊₁ # βₖ₊₁vₖ₊₁ = q
+      @. vₖ = q / βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
     end
     if γₖ₊₁ ≠ zero(T)
-      @. uₖ = p / γₖ₊₁ # γₖ₊₁uₖ₊₁ = p
+      @. uₖ = p / γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
     end
 
     # Update ϵₖ₋₃, λₖ₋₂, δbarₖ₋₁, cₖ₋₁, sₖ₋₁, γₖ and βₖ.
