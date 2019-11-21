@@ -25,7 +25,7 @@ point, when it exists. The transfer is based on the residual norm.
 
 This version of BiLQR works in any floating-point data type.
 """
-function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: AbstractVector{T};
+function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: AbstractVector{T};
                atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
                itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
@@ -35,13 +35,16 @@ function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstrac
   length(c) == n || error("Inconsistent problem size")
   verbose && @printf("BILQR: systems of size %d\n", n)
 
+  # Compute the adjoint of A
+  Aᵀ = A'
+
   # Initial solution x₀ and residual norm ‖r₀‖ = ‖b - Ax₀‖.
-  x = zeros(T, n)      # x₀
-  bNorm = @knrm2(n, b) # rNorm = ‖r₀‖
+  x = zeros(T, n)       # x₀
+  bNorm = @knrm2(n, b)  # rNorm = ‖r₀‖
 
   # Initial solution t₀ and residual norm ‖s₀‖ = ‖c - Aᵀt₀‖.
-  t = zeros(T, n)      # t₀
-  cNorm = @knrm2(n, c) # sNorm = ‖s₀‖
+  t = zeros(T, n)       # t₀
+  cNorm = @knrm2(n, c)  # sNorm = ‖s₀‖
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
@@ -95,20 +98,20 @@ function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstrac
     # AVₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
     # AᵀUₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    q = A * vₖ      # Forms vₖ₊₁ : q ← Avₖ
-    p = A.tprod(uₖ) # Forms uₖ₊₁ : p ← Aᵀuₖ
+    q = A  * vₖ  # Forms vₖ₊₁ : q ← Avₖ
+    p = Aᵀ * uₖ  # Forms uₖ₊₁ : p ← Aᵀuₖ
 
-    @kaxpy!(n, -γₖ, vₖ₋₁, q) # q ← q - γₖ * vₖ₋₁
-    @kaxpy!(n, -βₖ, uₖ₋₁, p) # p ← p - βₖ * uₖ₋₁
+    @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
+    @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
 
-    αₖ = @kdot(n, q, uₖ)     # αₖ = qᵀuₖ
+    αₖ = @kdot(n, q, uₖ)      # αₖ = qᵀuₖ
 
-    @kaxpy!(n, -αₖ, vₖ, q)   # q ← q - αₖ * vₖ
-    @kaxpy!(n, -αₖ, uₖ, p)   # p ← p - αₖ * uₖ
+    @kaxpy!(n, -αₖ, vₖ, q)    # q ← q - αₖ * vₖ
+    @kaxpy!(n, -αₖ, uₖ, p)    # p ← p - αₖ * uₖ
 
-    qᵗp = @kdot(n, p, q)     # qᵗp  = ⟨q,p⟩
-    βₖ₊₁ = √(abs(qᵗp))       # βₖ₊₁ = √(|qᵗp|)
-    γₖ₊₁ = qᵗp / βₖ₊₁        # γₖ₊₁ = qᵗp / βₖ₊₁
+    qᵗp = @kdot(n, p, q)      # qᵗp  = ⟨q,p⟩
+    βₖ₊₁ = √(abs(qᵗp))        # βₖ₊₁ = √(|qᵗp|)
+    γₖ₊₁ = qᵗp / βₖ₊₁         # γₖ₊₁ = qᵗp / βₖ₊₁
 
     # Update the LQ factorization of Tₖ = L̅ₖQₖ.
     # [ α₁ γ₂ 0  •  •  •  0 ]   [ δ₁   0    •   •   •    •    0   ]
@@ -273,12 +276,12 @@ function bilqr(A :: AbstractLinearOperator, b :: AbstractVector{T}, c :: Abstrac
     end
 
     # Compute vₖ₊₁ and uₖ₊₁.
-    @. vₖ₋₁ = vₖ # vₖ₋₁ ← vₖ
-    @. uₖ₋₁ = uₖ # uₖ₋₁ ← uₖ
+    @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
+    @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
 
     if qᵗp ≠ zero(T)
-      @. vₖ = q / βₖ₊₁ # βₖ₊₁vₖ₊₁ = q
-      @. uₖ = p / γₖ₊₁ # γₖ₊₁uₖ₊₁ = p
+      @. vₖ = q / βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
+      @. uₖ = p / γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
     end
 
     # Update ϵₖ₋₃, λₖ₋₂, δbarₖ₋₁, cₖ₋₁, sₖ₋₁, γₖ and βₖ.
