@@ -104,6 +104,15 @@ function test_usymlq()
   resid = norm(r) / norm(b)
   @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
+
+  # System that cause a breakdown with the orthogonal tridiagonalization process.
+  A, b, c = unsymmetric_breakdown()
+  (x, stats) = usymlq(A, b, c)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ usymlq_tol)
+  @test(stats.solved)
 end
 
 test_usymlq()

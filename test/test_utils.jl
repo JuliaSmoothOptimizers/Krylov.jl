@@ -115,6 +115,22 @@ function almost_singular(n :: Int=16)
   return A, b
 end
 
+# System that cause a breakdown with the symmetric Lanczos process.
+function symmetric_breakdown()
+  A = [0.0 1.0; 1.0 0.0]
+  b = [1.0; 0.0]
+  return A, b
+end
+
+# System that cause a breakdown with the Lanczos biorthogonalization
+# and the orthogonal tridiagonalization processes.
+function unsymmetric_breakdown()
+  A = [0.0 1.0; -1.0 0.0]
+  b = [1.0; 0.0]
+  c = [-1.0; 0.0]
+  return A, b, c
+end
+
 # Square and preconditioned problems.
 function square_preconditioned(n :: Int=10)
   A = ones(n, n) + (n-1) * I

@@ -28,9 +28,9 @@ end
 mutable struct SymmlqStats{T} <: KrylovStats{T}
   solved :: Bool
   residuals :: Array{T}
-  residualscg :: Array{T}
+  residualscg :: Array{Union{T, Missing}}
   errors :: Array{T}
-  errorscg :: Array{T}
+  errorscg :: Array{Union{T, Missing}}
   Anorm :: T
   Acond :: T
   status :: String

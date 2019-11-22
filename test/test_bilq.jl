@@ -66,6 +66,15 @@ function test_bilq()
   b = A * [1:n;]
   (x, stats) = bilq(A, b)
   @test stats.solved
+
+  # System that cause a breakdown with the Lanczos biorthogonalization process.
+  A, b, c = unsymmetric_breakdown()
+  (x, stats) = bilq(A, b, c=c)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("BILQ: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ bilq_tol)
+  @test(stats.solved)
 end
 
 test_bilq()
