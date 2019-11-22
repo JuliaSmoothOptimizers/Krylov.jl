@@ -25,7 +25,8 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
 function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-                M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
+                M :: AbstractLinearOperator=opEye(),
+                λ :: T=zero(T), transfer_to_cg :: Bool=true,
                 λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                 etol :: T=√eps(T), window :: Int=0, itmax :: Int=0,
                 conlim :: T=1/√eps(T), verbose :: Bool=false) where T <: AbstractFloat
@@ -39,7 +40,7 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   MisI = isa(M, opEye)
 
   ϵM = eps(T)
-  x_lq = zeros(T, n)
+  x = zeros(T, n)
   ctol = conlim > 0 ? 1 / conlim : zero(T)
 
   # Initialize Lanczos process.
@@ -47,7 +48,7 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   Mvold = copy(b)
   vold = M * Mvold
   β₁ = @kdot(m, vold, Mvold)
-  β₁ == 0 && return (x_lq, zeros(T, n), SimpleStats(true, true, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
+  β₁ == 0 && return (x, SimpleStats(true, true, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
   β = β₁
   @kscal!(m, one(T) / β, vold)
@@ -72,8 +73,9 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   cold = one(T)
   sold = zero(T)
 
+  ηold = zero(T)
+  η    = β₁
   ζold = zero(T)
-  ζbar = β₁/γbar
 
   ANorm² = α * α + β * β
 
@@ -81,15 +83,22 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   γmin = T(Inf)
   ANorm = zero(T)
   Acond = zero(T)
-  rNorm = β₁
-  rcgNorm = β₁
-  xNorm = zero(T)
-  xcgNorm = abs(ζbar)
 
-  rNorms = [rNorm]
-  rcgNorms = [rcgNorm]
+  xNorm = zero(T)
+  rNorm = β₁
+  rNorms = T[rNorm]
+
+  if γbar ≠ 0
+    ζbar = η / γbar
+    xcgNorm = abs(ζbar)
+    rcgNorm = β₁ * abs(ζbar)
+    rcgNorms = Union{T, Missing}[rcgNorm]
+  else
+    rcgNorms = Union{T, Missing}[missing]
+  end
+
   errors = T[]
-  errorscg = T[]
+  errorscg = Union{T, Missing}[]
   err = T(Inf)
   errcg = T(Inf)
 
@@ -107,7 +116,11 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     sw = β / ρ
 
     push!(errors, abs(β₁/λest))
-    push!(errorscg, sqrt(errors[1]^2 - ζbar^2))
+    if γbar ≠ 0
+      push!(errorscg, sqrt(errors[1]^2 - ζbar^2))
+    else
+      push!(errorscg, missing)
+    end
   end
 
   verbose && @printf("%5s  %7s  %7s  %8s  %8s  %7s  %7s\n",
@@ -120,25 +133,24 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
 
   tol = atol + rtol * β₁
   status = "unknown"
-  solved = solved_mach = solved_lim = (rNorm ≤ rtol)
+  solved_lq = solved_mach = solved_lim = (rNorm ≤ tol)
+  solved_cg = (γbar ≠ 0) && transfer_to_cg && rcgNorm ≤ tol
   tired  = iter ≥ itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
-  zero_resid = zero_resid_mach = zero_resid_lim = (rNorm ≤ tol)
+  solved = zero_resid = solved_lq || solved_cg
   fwd_err = false
 
   while ! (solved || tired || ill_cond)
     iter = iter + 1
 
     # Continue QR factorization
-    γ = sqrt(γbar^2 + β^2)
-    c = γbar/γ
-    s = β/γ
+    (c, s, γ) = sym_givens(γbar, β)
 
     # Update SYMMLQ point
-    ζ = ζbar * c
-    @kaxpy!(n, c * ζ, w̅, x_lq)
-    @kaxpy!(n, s * ζ, v, x_lq)
-
+    ηold = η
+    ζ = ηold / γ
+    @kaxpy!(n, c * ζ, w̅, x)
+    @kaxpy!(n, s * ζ, v, x)
     # Update w̅
     @kaxpby!(n, -c, v, s, w̅)
 
@@ -172,19 +184,24 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     γbar = δbar * s - α * c
     ϵ = β * s
     δbar = -β * c
-    ζbar = -(ϵold * ζold + δ * ζ)/γbar
+    η = -ϵold * ζold - δ * ζ
 
     rNorm = sqrt(γ * γ * ζ * ζ + ϵold * ϵold * ζold * ζold)
-    rcgNorm = abs(rcgNorm*s*cold/c)
-    push!(rNorms, rNorm)
-    push!(rcgNorms, rcgNorm)
-
     xNorm = xNorm + ζ * ζ
-    xcgNorm = xNorm + ζbar * ζbar
+    push!(rNorms, rNorm)
+
+    if γbar ≠ 0
+      ζbar = η / γbar
+      rcgNorm = β * abs(s * ζ - c * ζbar)
+      xcgNorm = xNorm + ζbar * ζbar
+      push!(rcgNorms, rcgNorm)
+    else
+      push!(rcgNorms, missing)
+    end
 
     if window > 0 && λest ≠ 0
       if iter < window && window > 1
-         sprod[iter+1:end] = sprod[iter+1:end]*s
+         sprod[iter+1:end] = sprod[iter+1:end] * s
       end      
 
       ix = ((iter-1) % window) + 1
@@ -192,30 +209,35 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
       zlist[ix] = ζ
 
       if iter ≥ window
-          jx = mod(iter,window)+1
-          zetabark = zlist[jx]/clist[jx] 
+          jx = mod(iter,window) + 1
+          zetabark = zlist[jx] / clist[jx]
 
-          theta = abs(@kdot(window, clist, sprod.*zlist))
-          theta = zetabark*theta + 
-              abs(zetabark*ζbar*sprod[ix]*s) -
-              zetabark^2
-
-          errorscg[iter-window+1] = sqrt(abs(errorscg[iter-window+1]^2 - 2*theta))
+          if γbar ≠ 0
+            theta = abs(@kdot(window, clist, sprod .* zlist))
+            theta = zetabark * theta + abs(zetabark * ζbar * sprod[ix] * s) - zetabark^2
+            errorscg[iter-window+1] = sqrt(abs(errorscg[iter-window+1]^2 - 2*theta))
+          else
+            errorscg[iter-window+1] = missing
+          end
       end
 
       ix = ((iter) % window) + 1
       if iter ≥ window && window > 1
-         sprod = sprod/sprod[(ix % window) + 1]
-         sprod[ix] = sprod[mod(ix-2, window)+1]*s
+         sprod = sprod / sprod[(ix % window) + 1]
+         sprod[ix] = sprod[mod(ix-2, window)+1] * s
       end
     end
 
     if λest ≠ 0
-      err = abs((ϵold * ζold + ψ * ζ)/ωbar)
-      errcg = sqrt(abs(err * err - ζbar * ζbar))
-
+      err = abs((ϵold * ζold + ψ * ζ) / ωbar)
       push!(errors, err)
-      push!(errorscg, errcg)
+
+      if γbar ≠ 0
+        errcg = sqrt(abs(err * err - ζbar * ζbar))
+        push!(errorscg, errcg)
+      else
+        push!(errorscg, missing)
+      end
 
       ρbar = sw * σbar - cw * (α - λest)
       σbar = -cw * β
@@ -253,22 +275,26 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     tired = iter ≥ itmax
     ill_cond_lim = (one(T) / Acond ≤ ctol)
     zero_resid_lim = (test1 ≤ tol)
-    fwd_err = (err ≤ etol) | (errcg ≤ etol)
-
-    ill_cond = ill_cond_mach | ill_cond_lim
-    solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err
+    fwd_err = (err ≤ etol) || ((γbar ≠ 0) && (errcg ≤ etol))
+    solved_lq = rNorm ≤ tol
+    solved_cg = transfer_to_cg && (γbar ≠ 0) && rcgNorm ≤ tol
+    zero_resid = solved_lq || solved_cg
+    ill_cond = ill_cond_mach || ill_cond_lim
+    solved = solved_mach || zero_resid || zero_resid_mach || zero_resid_lim || fwd_err
   end
 
   # Compute CG point
-  @kaxpby!(m, one(T), x_lq, ζbar, w̅)
-  x_cg = w̅
+  # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * w̅ₖ
+  if solved_cg
+    @kaxpy!(m, ζbar, w̅, x)
+  end
   
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
   ill_cond_lim  && (status = "condition number exceeds tolerance")
   solved        && (status = "found approximate solution")
-  zero_resid    && (status = "found approximate zero-residual solution")
-
+  solved_lq     && (status = "solution xᴸ good enough given atol and rtol")
+  solved_cg     && (status = "solution xᶜ good enough given atol and rtol")
   stats = SymmlqStats(solved, rNorms, rcgNorms, errors, errorscg, ANorm, Acond, status)
-  return (x_lq, x_cg, stats)
+  return (x, stats)
 end
