@@ -1,3 +1,6 @@
+# Identity matrix.
+eye(n::Int) = Matrix{Float64}(I, n, n)
+
 # Based on Lars Ruthotto's initial implementation.
 function get_div_grad(n1 :: Int, n2 :: Int, n3 :: Int)
 
