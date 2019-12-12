@@ -51,8 +51,8 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
 
   rNorms = [bNorm;]
   sNorms = [cNorm;]
-  ε = atol + rtol * bNorm
-  Κ = atol + rtol * cNorm
+  εL = atol + rtol * bNorm
+  εQ = atol + rtol * cNorm
   verbose && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
   verbose && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
@@ -61,7 +61,6 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
   bᵗc == 0 && return (x, y, AdjointStats(false, false, [bNorm], [cNorm], "Breakdown bᵀc = 0"))
 
   # Set up workspace.
-  bᵗc = @kdot(n, b, c)       # ⟨b,c⟩
   βₖ = √(abs(bᵗc))           # β₁γ₁ = bᵀc
   γₖ = bᵗc / βₖ              # β₁γ₁ = bᵀc
   vₖ₋₁ = zeros(T, n)         # v₀ = 0
@@ -73,19 +72,19 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
   d̅ = zeros(T, n)            # Last column of D̅ₖ = Vₖ(Qₖ)ᵀ
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
-  δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified during two iterations
+  δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
   ψbarₖ₋₁ = ψₖ₋₁ = zero(T)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
-  norm_vₖ = bNorm / βₖ       # ‖vₖ‖ used for residual norm estimates
+  norm_vₖ = bNorm / βₖ       # ‖vₖ‖ is used for residual norm estimates
   ϵₖ₋₃ = λₖ₋₂ = zero(T)      # Components of Lₖ₋₁
   wₖ₋₃ = zeros(T, n)         # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᵀ
   wₖ₋₂ = zeros(T, n)         # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᵀ
   τₖ = zero(T)               # τₖ is used for the dual residual norm estimate
 
   # Stopping criterion.
-  solved_lq = false
+  solved_lq = bNorm == 0
   solved_cg = false
-  solved_primal = bNorm ≤ ε
-  solved_dual = cNorm ≤ Κ
+  solved_primal = solved_lq || solved_cg
+  solved_dual = cNorm == 0
   tired = iter ≥ itmax
   breakdown = false
   status = "unknown"
@@ -119,7 +118,7 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
     # [ 0  •  •  •  •     • ]   [ ϵ₁   λ₂   δ₃  •             •   ]
     # [ •  •  •  •  •  •  • ] = [ 0    •    •   •   •         •   ] Qₖ
     # [ •     •  •  •  •  0 ]   [ •    •    •   •   •    •    •   ]
-    # [ •        •  •  •  γₖ]   [ •         •   •   •    •    0   ]
+    # [ •        •  •  •  γₖ]   [ •         •   •  λₖ₋₂ δₖ₋₁  0   ]
     # [ 0  •  •  •  0  βₖ αₖ]   [ •    •    •   0  ϵₖ₋₂ λₖ₋₁ δbarₖ]
 
     if iter == 1
@@ -172,7 +171,7 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
       #           [sₖ -cₖ]             ⟷ d̅ₖ   = sₖ * d̅ₖ₋₁ - cₖ * vₖ
       if iter ≥ 2
         # Compute solution xₖ.
-        # (xᴸ)ₖ₋₁ ← (xᴸ)ₖ₋₂ + ζₖ₋₁ * dₖ₋₁
+        # (xᴸ)ₖ ← (xᴸ)ₖ₋₁ + ζₖ₋₁ * dₖ₋₁
         @kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
         @kaxpy!(n, ζₖ₋₁ * sₖ, vₖ, x)
       end
@@ -187,7 +186,7 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
       end
 
       # Compute ⟨vₖ,vₖ₊₁⟩ and ‖vₖ₊₁‖
-      dot_vₖ_vₖ₊₁ = @kdot(n, vₖ₋₁, vₖ)
+      vₖᵀvₖ₊₁ = @kdot(n, vₖ₋₁, vₖ)
       norm_vₖ₊₁ = @knrm2(n, vₖ)
 
       # Compute BiLQ residual norm
@@ -197,11 +196,11 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
       else
         μₖ = βₖ * (sₖ₋₁ * ζₖ₋₂ - cₖ₋₁ * cₖ * ζₖ₋₁) + αₖ * sₖ * ζₖ₋₁
         ωₖ = βₖ₊₁ * sₖ * ζₖ₋₁
-        rNorm_lq = sqrt(μₖ^2 * norm_vₖ^2 + ωₖ^2 * norm_vₖ₊₁^2 + 2 * μₖ * ωₖ * dot_vₖ_vₖ₊₁)
+        rNorm_lq = sqrt(μₖ^2 * norm_vₖ^2 + ωₖ^2 * norm_vₖ₊₁^2 + 2 * μₖ * ωₖ * vₖᵀvₖ₊₁)
       end
       push!(rNorms, rNorm_lq)
 
-      # Update norm_vₖ
+      # Update ‖vₖ‖
       norm_vₖ = norm_vₖ₊₁
 
       # Compute BiCG residual norm
@@ -213,9 +212,9 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
       end    
 
       # Update primal stopping criterion
-      solved_lq = rNorm_lq ≤ ε
-      solved_cg = transfer_to_bicg && (δbarₖ ≠ 0) && (rNorm_cg ≤ ε)
-      solved_primal = solved_lq || solved_cg
+      solved_lq = rNorm_lq ≤ εL
+      solved_cg = transfer_to_bicg && (δbarₖ ≠ 0) && (rNorm_cg ≤ εL)
+      solved_primal = solved_lq || solved_cg || (rNorm_lq + 1 ≤ 1)
     end
 
     if !solved_dual
@@ -272,7 +271,7 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
       push!(sNorms, sNorm)
 
       # Update dual stopping criterion
-      solved_dual = sNorm ≤ Κ
+      solved_dual = sNorm ≤ εQ || (sNorm + 1 ≤ 1)
     end
 
     # Compute vₖ₊₁ and uₖ₊₁.
@@ -300,8 +299,8 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
     tired = iter ≥ itmax
     breakdown = !solved_lq && !solved_cg && (qᵗp == 0)
 
-    verbose &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "✗ ✗ ✗ ✗", sNorm)
-    verbose && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "✗ ✗ ✗ ✗")
+    verbose &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "", sNorm)
+    verbose && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
     verbose && !solved_primal && !solved_dual && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
   end
   verbose && @printf("\n")

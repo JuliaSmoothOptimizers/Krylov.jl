@@ -51,8 +51,8 @@ function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
 
   rNorms = [bNorm;]
   sNorms = [cNorm;]
-  ε = atol + rtol * bNorm
-  Κ = atol + rtol * cNorm
+  εL = atol + rtol * bNorm
+  εQ = atol + rtol * cNorm
   ξ = zero(T)
   verbose && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
   verbose && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
@@ -69,18 +69,18 @@ function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
   d̅ = zeros(T, n)            # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
-  δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified during two iterations
+  δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
   ψbarₖ₋₁ = ψₖ₋₁ = zero(T)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
   ϵₖ₋₃ = λₖ₋₂ = zero(T)      # Components of Lₖ₋₁
   wₖ₋₃ = zeros(T, m)         # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᵀ
   wₖ₋₂ = zeros(T, m)         # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᵀ
 
   # Stopping criterion.
-  solved_lq = false
+  solved_lq = bNorm == 0
   solved_cg = false
   inconsistent = false
-  solved_primal = bNorm ≤ ε
-  solved_dual = cNorm ≤ Κ
+  solved_primal = solved_lq || solved_cg
+  solved_dual = cNorm == 0
   tired = iter ≥ itmax
   status = "unknown"
 
@@ -112,7 +112,7 @@ function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
     # [ 0  •  •  •  •     • ]   [ ϵ₁   λ₂   δ₃  •             •   ]
     # [ •  •  •  •  •  •  • ] = [ 0    •    •   •   •         •   ] Qₖ
     # [ •     •  •  •  •  0 ]   [ •    •    •   •   •    •    •   ]
-    # [ •        •  •  •  γₖ]   [ •         •   •   •    •    0   ]
+    # [ •        •  •  •  γₖ]   [ •         •   •  λₖ₋₂ δₖ₋₁  0   ]
     # [ 0  •  •  •  0  βₖ αₖ]   [ •    •    •   0  ϵₖ₋₂ λₖ₋₁ δbarₖ]
 
     if iter == 1
@@ -165,7 +165,7 @@ function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
       #           [sₖ -cₖ]             ⟷ d̅ₖ   = sₖ * d̅ₖ₋₁ - cₖ * uₖ
       if iter ≥ 2
         # Compute solution xₖ.
-        # (xᴸ)ₖ₋₁ ← (xᴸ)ₖ₋₂ + ζₖ₋₁ * dₖ₋₁
+        # (xᴸ)ₖ ← (xᴸ)ₖ₋₁ + ζₖ₋₁ * dₖ₋₁
         @kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
         @kaxpy!(n, ζₖ₋₁ * sₖ, uₖ, x)
       end
@@ -199,9 +199,9 @@ function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
       end
 
       # Update primal stopping criterion
-      solved_lq = rNorm_lq ≤ ε
-      solved_cg = transfer_to_usymcg && (δbarₖ ≠ 0) && (rNorm_cg ≤ ε)
-      solved_primal = solved_lq || solved_cg
+      solved_lq = rNorm_lq ≤ εL
+      solved_cg = transfer_to_usymcg && (δbarₖ ≠ 0) && (rNorm_cg ≤ εL)
+      solved_primal = solved_lq || solved_cg || (rNorm_lq + 1 ≤ 1)
     end
 
     if !solved_dual
@@ -260,7 +260,7 @@ function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
       # Update dual stopping criterion
       iter == 1 && (ξ = atol + rtol * AsNorm)
       inconsistent = AsNorm ≤ ξ
-      solved_dual = sNorm ≤ Κ || inconsistent
+      solved_dual = sNorm ≤ εQ || inconsistent || (sNorm + 1 ≤ 1)
     end
 
     # Compute uₖ₊₁ and uₖ₊₁.
@@ -289,8 +289,8 @@ function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
     
     tired = iter ≥ itmax
 
-    verbose &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "✗ ✗ ✗ ✗", sNorm)
-    verbose && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "✗ ✗ ✗ ✗")
+    verbose &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "", sNorm)
+    verbose && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
     verbose && !solved_primal && !solved_dual && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
   end
   verbose && @printf("\n")
