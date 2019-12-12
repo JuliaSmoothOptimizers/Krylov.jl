@@ -36,7 +36,7 @@ function ODE(n, f, g, ode_coefs; dim_x=[0.0, 1.0])
   χ₂ = ode_coefs[2]
   χ₃ = ode_coefs[3]
 
-  # Modelize problems with Au = b and Aᵀv = c
+  # Model problems with Au = b and Aᵀv = c
   #
   # A ∈ ℜⁿ*ⁿ, u ∈ ℜⁿ, b ∈ ℜⁿ, v ∈ ℜⁿ, c ∈ ℜⁿ
   #
@@ -82,7 +82,7 @@ function PDE(n, m, f, g, pde_coefs; dim_x=[0.0, 1.0], dim_y=[0.0, 1.0])
   d = pde_coefs[4]
   e = pde_coefs[5]
 
-  # Modelize problems with Au = b and Aᵀv = c
+  # Model problems with Au = b and Aᵀv = c
   #
   # A ∈ ℜᵐⁿ*ᵐⁿ, u ∈ ℜᵐⁿ, b ∈ ℜᵐⁿ, v ∈ ℜᵐⁿ, c ∈ ℜᵐⁿ
   # xᵢ = i * Δx, yⱼ = j * Δy and zᵢ.ⱼ = z(xᵢ, yⱼ)
