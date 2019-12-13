@@ -20,8 +20,8 @@ export bilqr
 BiLQ is used for solving primal system `Ax = b`.
 QMR is used for solving dual system `Aᵀt = c`.
 
-An option gives the possibility of transferring to the primal BiCG
-point, when it exists. The transfer is based on the residual norm.
+An option gives the possibility of transferring from the BiLQ point to the
+BiCG point, when it exists. The transfer is based on the residual norm.
 
 This version of BiLQR works in any floating-point data type.
 """

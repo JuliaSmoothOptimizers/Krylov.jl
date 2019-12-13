@@ -4,7 +4,7 @@
 
 with (ndisp - 1)/2 elements on each side.
 """
-function vec2str(x, ndisp :: Int=7)
+function vec2str(x :: AbstractVector{T}, ndisp :: Int=7) where T <: Union{AbstractFloat, Missing}
   n = length(x)
   if n ≤ ndisp
     ndisp = n
