@@ -199,9 +199,13 @@ function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
       end
 
       # Update primal stopping criterion
-      solved_lq = rNorm_lq ≤ εL
-      solved_cg = transfer_to_usymcg && (δbarₖ ≠ 0) && (rNorm_cg ≤ εL)
-      solved_primal = solved_lq || solved_cg || (rNorm_lq + 1 ≤ 1)
+      solved_lq_tol = rNorm_lq ≤ εL
+      solved_lq_mach = rNorm_lq + 1 ≤ 1
+      solved_lq = solved_lq_tol || solved_lq_mach
+      solved_cg_tol = transfer_to_usymcg && (δbarₖ ≠ 0) && (rNorm_cg ≤ εL)
+      solved_cg_mach = transfer_to_usymcg && (δbarₖ ≠ 0) && (rNorm_cg + 1 ≤ 1)
+      solved_cg = solved_cg_tol || solved_cg_mach
+      solved_primal = solved_lq || solved_cg
     end
 
     if !solved_dual
@@ -259,8 +263,10 @@ function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
 
       # Update dual stopping criterion
       iter == 1 && (ξ = atol + rtol * AsNorm)
+      solved_qr_tol = sNorm ≤ εQ
+      solved_qr_mach = sNorm + 1 ≤ 1
       inconsistent = AsNorm ≤ ξ
-      solved_dual = sNorm ≤ εQ || inconsistent || (sNorm + 1 ≤ 1)
+      solved_dual = solved_qr_tol || solved_qr_mach || inconsistent
     end
 
     # Compute uₖ₊₁ and uₖ₊₁.

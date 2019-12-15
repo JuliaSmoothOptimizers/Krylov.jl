@@ -63,7 +63,7 @@ function bilq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}; c :: Abstr
   d̅ = zeros(T, n)            # Last column of D̅ₖ = Vₖ(Qₖ)ᵀ
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
-  δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified during two iterations
+  δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
   norm_vₖ = bNorm / βₖ       # ‖vₖ‖ is used for residual norm estimates
 
   # Stopping criterion.
@@ -178,7 +178,7 @@ function bilq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}; c :: Abstr
     end
 
     # Compute ⟨vₖ,vₖ₊₁⟩ and ‖vₖ₊₁‖
-    dot_vₖ_vₖ₊₁ = @kdot(n, vₖ₋₁, vₖ)
+    vₖᵀvₖ₊₁ = @kdot(n, vₖ₋₁, vₖ)
     norm_vₖ₊₁ = @knrm2(n, vₖ)
 
     # Compute BiLQ residual norm
@@ -188,7 +188,7 @@ function bilq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}; c :: Abstr
     else
       μₖ = βₖ * (sₖ₋₁ * ζₖ₋₂ - cₖ₋₁ * cₖ * ζₖ₋₁) + αₖ * sₖ * ζₖ₋₁
       ωₖ = βₖ₊₁ * sₖ * ζₖ₋₁
-      rNorm_lq = sqrt(μₖ^2 * norm_vₖ^2 + ωₖ^2 * norm_vₖ₊₁^2 + 2 * μₖ * ωₖ * dot_vₖ_vₖ₊₁)
+      rNorm_lq = sqrt(μₖ^2 * norm_vₖ^2 + ωₖ^2 * norm_vₖ₊₁^2 + 2 * μₖ * ωₖ * vₖᵀvₖ₊₁)
     end
     push!(rNorms, rNorm_lq)
 
