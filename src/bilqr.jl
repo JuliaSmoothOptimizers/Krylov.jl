@@ -186,8 +186,8 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
       end
 
       # Compute ⟨vₖ,vₖ₊₁⟩ and ‖vₖ₊₁‖
-      vₖᵀvₖ₊₁ = @kdot(n, vₖ₋₁, vₖ)
-      norm_vₖ₊₁ = @knrm2(n, vₖ)
+      vₖᵀvₖ₊₁ = @kdot(n, vₖ, q) / βₖ₊₁
+      norm_vₖ₊₁ = @knrm2(n, q) / βₖ₊₁
 
       # Compute BiLQ residual norm
       # ‖rₖ‖ = √((μₖ)²‖vₖ‖² + (ωₖ)²‖vₖ₊₁‖² + 2μₖωₖ⟨vₖ,vₖ₊₁⟩)
@@ -212,9 +212,13 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
       end    
 
       # Update primal stopping criterion
-      solved_lq = rNorm_lq ≤ εL
-      solved_cg = transfer_to_bicg && (δbarₖ ≠ 0) && (rNorm_cg ≤ εL)
-      solved_primal = solved_lq || solved_cg || (rNorm_lq + 1 ≤ 1)
+      solved_lq_tol = rNorm_lq ≤ εL
+      solved_lq_mach = rNorm_lq + 1 ≤ 1
+      solved_lq = solved_lq_tol || solved_lq_mach
+      solved_cg_tol = transfer_to_bicg && (δbarₖ ≠ 0) && (rNorm_cg ≤ εL)
+      solved_cg_mach = transfer_to_bicg && (δbarₖ ≠ 0) && (rNorm_cg + 1 ≤ 1)
+      solved_cg = solved_cg_tol || solved_cg_mach
+      solved_primal = solved_lq || solved_cg
     end
 
     if !solved_dual
@@ -271,7 +275,9 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
       push!(sNorms, sNorm)
 
       # Update dual stopping criterion
-      solved_dual = sNorm ≤ εQ || (sNorm + 1 ≤ 1)
+      solved_qr_tol = sNorm ≤ εQ
+      solved_qr_mach = sNorm + 1 ≤ 1
+      solved_dual = solved_qr_tol || solved_qr_mach
     end
 
     # Compute vₖ₊₁ and uₖ₊₁.
