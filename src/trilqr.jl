@@ -76,10 +76,12 @@ function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
   wₖ₋₂ = zeros(T, m)         # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᵀ
 
   # Stopping criterion.
-  solved_lq = bNorm == 0
-  solved_cg = false
   inconsistent = false
-  solved_primal = solved_lq || solved_cg
+  solved_lq = bNorm == 0
+  solved_lq_tol = solved_lq_mach = false
+  solved_cg = solved_cg_tol = solved_cg_mach = false
+  solved_primal = solved_lq || solved_cg
+  solved_qr_tol = solved_qr_mach = false
   solved_dual = cNorm == 0
   tired = iter ≥ itmax
   status = "unknown"
@@ -307,10 +309,21 @@ function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
     @kaxpy!(n, ζbarₖ, d̅, x)
   end
 
-   tired                         && (status = "maximum number of iterations exceeded")
-   solved_primal && !solved_dual && (status = "Only the primal solution is good enough given atol and rtol")
-  !solved_primal &&  solved_dual && (status = "Only the dual solution is good enough given atol and rtol")
-   solved_primal &&  solved_dual && (status = "Both primal and dual solutions are good enough given atol and rtol")
+   tired                            && (status = "maximum number of iterations exceeded")
+   solved_lq_tol  && !solved_dual   && (status = "Only the primal solution xᴸ is good enough given atol and rtol")
+   solved_cg_tol  && !solved_dual   && (status = "Only the primal solution xᶜ is good enough given atol and rtol")
+  !solved_primal  && solved_qr_tol  && (status = "Only the dual solution t is good enough given atol and rtol")
+   solved_lq_tol  && solved_qr_tol  && (status = "Both primal and dual solutions (xᴸ, t) are good enough given atol and rtol")
+   solved_cg_tol  && solved_qr_tol  && (status = "Both primal and dual solutions (xᶜ, t) are good enough given atol and rtol")
+   solved_lq_mach && !solved_dual   && (status = "Only found approximate zero-residual primal solution xᴸ")
+   solved_cg_mach && !solved_dual   && (status = "Only found approximate zero-residual primal solution xᶜ")
+  !solved_primal  && solved_qr_mach && (status = "Only found approximate zero-residual dual solution t")
+   solved_lq_mach && solved_qr_mach && (status = "Found approximate zero-residual primal and dual solutions (xᴸ, t)")
+   solved_cg_mach && solved_qr_mach && (status = "Found approximate zero-residual primal and dual solutions (xᶜ, t)")
+   solved_lq_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᴸ and a dual solution t good enough given atol and rtol")
+   solved_cg_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᶜ and a dual solution t good enough given atol and rtol")
+   solved_lq_tol  && solved_qr_mach && (status = "Found a primal solution xᴸ good enough given atol and rtol and an approximate zero-residual dual solutions t")
+   solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
   stats = AdjointStats(solved_primal, solved_dual, rNorms, sNorms, status)
   return (x, t, stats)
 end
