@@ -70,6 +70,15 @@ function test_dqgmres()
   (x, stats) = dqgmres(A, b)
   @test stats.solved
 
+  # Poisson equation in polar coordinates.
+  A, b = polar_poisson()
+  (x, stats) = dqgmres(A, b, memory=100)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ dqgmres_tol)
+  @test(stats.solved)
+
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = dqgmres(A, b, M=M)

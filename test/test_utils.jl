@@ -205,6 +205,14 @@ function adjoint_pde(n :: Int=50, m :: Int=50)
   return A, b, c
 end
 
+# Poisson equation in polar coordinates
+function polar_poisson(n :: Int=50, m :: Int=50)
+  f(r, θ) = -3.0 * cos(θ)
+  g(r, θ) = 0.0
+  A, b = polar_poisson(n, m, f, g)
+  return A, b
+end
+
 # Square and preconditioned problems.
 function square_preconditioned(n :: Int=10)
   A = ones(n, n) + (n-1) * I

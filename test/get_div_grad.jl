@@ -133,3 +133,41 @@ function PDE(n, m, f, g, pde_coefs; dim_x=[0.0, 1.0], dim_y=[0.0, 1.0])
 
   return A, b, c
 end
+
+# Model Poisson equation in polar coordinates
+function polar_poisson(n, m, f, g; R=1.0)
+  Δr = 2 * R / (2*n + 1)
+  r = [(i - 1/2) * Δr for i = 1 : n+1]
+
+  Δθ = 2 * π / m
+  θ = [(j - 1) * Δθ for j = 1 : m+1]
+
+  λ = [1 / (2 * (k - 1/2)) for k = 1 : n]
+  β = [1 / ((k - 1/2)^2 * Δθ^2) for k = 1 : n]
+
+  D = spdiagm(0 => β)
+  T = spdiagm(-1 => 1.0 .- λ[2:n], 0 => -2.0 * ones(n), 1 => 1.0 .+ λ[1:n-1])
+
+  A = spzeros(n * m, n * m)
+  for k = 1 : m
+    A[1+(k-1)*n : k*n, 1+(k-1)*n : k*n] = T - 2*D
+    if k ≤ m - 1
+      A[1+k*n : (k+1)*n, 1+(k-1)*n : k*n] = D
+      A[1+(k-1)*n : k*n, 1+k*n : (k+1)*n] = D
+    end
+  end
+  A[1+(m-1)*n : m*n, 1 : n] = D
+  A[1 : n, 1+(m-1)*n : m*n] = D
+
+  b = zeros(n * m)
+  for j = 1 : m
+    for i = 1 : n-1
+      b[n*(j-1) + i] = Δr * Δr * f(r[i], θ[j])
+      if i == n
+        b[n*(j-1) + i] -= (1.0 + λ[n]) * g(r[n+1], θ[j])
+      end
+    end
+  end
+
+  return A, b
+end
