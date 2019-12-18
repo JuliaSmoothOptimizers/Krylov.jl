@@ -113,6 +113,15 @@ function test_usymlq()
   @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
   @test(stats.solved)
+
+  # Poisson equation in polar coordinates.
+  A, b = polar_poisson()
+  (x, stats) = usymlq(A, b, b)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ usymlq_tol)
+  @test(stats.solved)
 end
 
 test_usymlq()

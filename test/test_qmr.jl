@@ -60,6 +60,15 @@ function test_qmr()
   A, b = square_int()
   (x, stats) = qmr(A, b)
   @test stats.solved
+
+  # Poisson equation in polar coordinates.
+  A, b = polar_poisson()
+  (x, stats) = qmr(A, b)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("QMR: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ qmr_tol)
+  @test(stats.solved)
 end
 
 test_qmr()

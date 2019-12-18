@@ -70,6 +70,15 @@ function test_diom()
   (x, stats) = diom(A, b)
   @test stats.solved
 
+  # Poisson equation in polar coordinates.
+  A, b = polar_poisson()
+  (x, stats) = diom(A, b, memory=100)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("DIOM: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ diom_tol)
+  @test(stats.solved)
+
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = diom(A, b, M=M)

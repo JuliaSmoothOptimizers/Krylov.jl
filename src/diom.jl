@@ -29,7 +29,7 @@ function diom(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(),
               N :: AbstractLinearOperator=opEye(),
               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-              memory :: Int=20, verbose :: Bool=false) where T <: AbstractFloat
+              memory :: Int=20, pivoting :: Bool=false, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -137,7 +137,7 @@ function diom(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     @kaxpy!(n, one(T), z, P[pos])
 
     # Determine if interchange between hₘ₊₁.ₘ and uₘ.ₘ is needed and compute next pivot lₘ₊₁.ₘ.
-    if abs(H[2]) < H[1]
+    if pivoting && abs(H[2]) < H[1]
       p[next_pos] = true
       # pₘ = pₐᵤₓ / hₘ₊₁.ₘ
       @. P[pos] = P[pos] / H[1]

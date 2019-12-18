@@ -122,6 +122,15 @@ function test_usymqr()
   c = [i for i = 1:10]
   (x, stats) = usymqr(A, b, c)
   @test stats.inconsistent
+
+  # Poisson equation in polar coordinates.
+  A, b = polar_poisson()
+  (x, stats) = usymqr(A, b, b)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("USYMQR: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ usymqr_tol)
+  @test(stats.solved)
 end
 
 test_usymqr()
