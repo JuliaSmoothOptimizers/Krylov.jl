@@ -29,6 +29,7 @@ crmr
 lslq
 lsqr
 lsmr
+lnlq
 craig
 craigmr
 ```

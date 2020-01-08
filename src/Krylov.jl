@@ -159,6 +159,7 @@ include("lslq.jl")
 include("lsqr.jl")
 include("lsmr.jl")
 
+include("lnlq.jl")
 include("craig.jl")
 include("craigmr.jl")
 

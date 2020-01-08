@@ -156,6 +156,17 @@ expected_cgne_bytes = storage_cgne_bytes(n, m)
 actual_cgne_bytes = @allocated cgne(Au, c)
 @test actual_cgne_bytes ≤ 1.1 * expected_cgne_bytes
 
+# with (Ap, Aᵀq) preallocated, LNLQ needs:
+# - 2 n-vector: x, v
+# - 3 m-vectors: y, w, u
+storage_lnlq(n, m) = 2 * n + 3 * m
+storage_lnlq_bytes(n, m) = 8 * storage_lnlq(n, m)
+
+expected_lnlq_bytes = storage_lnlq_bytes(n, m)
+lnlq(Au, c)  # warmup
+actual_lnlq_bytes = @allocated lnlq(Au, c)
+@test actual_lnlq_bytes ≤ 1.1 * expected_lnlq_bytes
+
 # with (Ap, Aᵀq) preallocated, CRAIG needs:
 # - 2 n-vector: x, v
 # - 3 m-vectors: y, w, u

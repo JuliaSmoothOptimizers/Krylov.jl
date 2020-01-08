@@ -28,7 +28,7 @@ function wrap_preconditioners(kwargs, S)
 end
 
 # Variants where matrix-vector products with A and Aᵀ are required
-for fn in (:cgls, :cgne, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :lsqr, :bilq, :qmr)
+for fn in (:cgls, :cgne, :lnlq, :craig, :craigmr, :crls, :crmr, :lslq, :lsqr, :lsmr, :bilq, :qmr)
   @eval begin
     $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}; kwargs...) where T <: AbstractFloat =
       $fn(PreallocatedLinearOperator(A), convert(Vector{T}, b); wrap_preconditioners(kwargs, Vector{T})...)
