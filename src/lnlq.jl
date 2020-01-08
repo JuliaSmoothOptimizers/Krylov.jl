@@ -1,0 +1,330 @@
+# An implementation of LNLQ for the solution of the consistent linear system
+#
+#  Ax = b.
+#
+# The method seeks to solve the minimum-norm problem
+#
+#  min ‖x‖²  s.t.  Ax = b,
+#
+# and is equivalent to applying the SYMMLQ method
+# to the linear system
+#
+#  AAᵀy = b with x = Aᵀy and can be reformulated as
+#
+#  [ -I  Aᵀ ][ x ] = [ 0 ]
+#  [  A     ][ y ]   [ b ].
+#
+# This method is based on the Golub-Kahan bidiagonalization process and is described in
+#
+# R. Estrin, D. Orban, M.A. Saunders, LNLQ: An Iterative Method for Least-Norm Problems with an Error Minimization Property,
+# SIAM Journal on Matrix Analysis and Applications, 40(3),
+# pp. 1102--1124, 2019.
+#
+# Alexis Montoison, <alexis.montoison@polymtl.ca>
+# Montréal, March 2019 -- Alès, January 2020.
+
+export lnlq
+
+"""Find the least-norm solution of the consistent linear system
+
+    Ax + λs = b
+
+using the LNLQ method, where λ ≥ 0 is a regularization parameter.
+
+For a system in the form Ax = b, LNLQ method is equivalent to applying
+SYMMLQ to AAᵀy = b and recovering x = Aᵀy but is more stable.
+Note that y are the Lagrange multipliers of the least-norm problem
+
+    minimize ‖x‖²  s.t.  Ax = b.
+
+Preconditioners M⁻¹ and N⁻¹ may be provided in the form of linear operators and are
+assumed to be symmetric and positive definite.
+If `sqd = true`, LNLQ solves the symmetric and quasi-definite system
+
+    [ -N   Aᵀ ] [ x ]   [ 0 ]
+    [  A   M  ] [ y ] = [ b ],
+
+which is equivalent to applying SYMMLQ to `(AN⁻¹Aᵀ + M)y = b` with `Nx = Aᵀy`.
+
+If `sqd = false`, LNLQ solves the symmetric and indefinite system
+
+    [ -N   Aᵀ ] [ x ]   [ 0 ]
+    [  A   0  ] [ y ] = [ b ].
+
+In this case, M⁻¹ can still be specified and indicates the weighted norm in which residuals are measured.
+
+In this implementation, both the x and y-parts of the solution are returned.
+"""
+function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
+              M :: AbstractLinearOperator=opEye(),
+              N :: AbstractLinearOperator=opEye(),
+              sqd :: Bool=false, λ :: T=zero(T),
+              atol :: T=√eps(T), rtol :: T=√eps(T),
+              itmax :: Int=0, verbose :: Bool=false,
+              transfer_to_craig :: Bool=true) where T <: AbstractFloat
+
+  m, n = size(A)
+  size(b, 1) == m || error("Inconsistent problem size")
+  verbose && @printf("LNLQ: system of %d equations in %d variables\n", m, n)
+
+  # Compute the adjoint of A
+  Aᵀ = A'
+
+  # Tests M == Iₘ and N == Iₙ
+  MisI = isa(M, opEye)
+  NisI = isa(N, opEye)
+
+  # Initial solutions (x₀, y₀) and residual norm ‖r₀‖.
+  x = zeros(T, n)
+  y = zeros(T, m)
+
+  # When solving a SQD system, set regularization parameter λ = 1.
+  sqd && (λ = one(T))
+
+  bNorm = @knrm2(m, b)
+  bNorm == 0 && return x, y, SimpleStats(true, false, [bNorm], T[], "x = 0 is a zero-residual solution")
+
+  rNorms = [bNorm;]
+  ε = atol + rtol * bNorm
+
+  iter = 1
+  itmax == 0 && (itmax = m + n)
+
+  # Initialize generalized Golub-Kahan bidiagonalization.
+  # β₁Mu₁ = b.
+  Mu = copy(b)
+  u  = M * Mu                 # u₁ = M⁻¹ * Mu₁
+  βₖ = sqrt(@kdot(m, u, Mu))  # β₁ = ‖u₁‖_M
+  if βₖ ≠ 0
+    @kscal!(m, 1 / βₖ, u)
+    MisI || @kscal!(m, 1 / βₖ, Mu)
+  end
+
+  # α₁Nv₁ = Aᵀu₁.
+  Aᵀu = Aᵀ * u
+  Nv  = copy(Aᵀu)
+  v   = N * Nv                 # v₁ = N⁻¹ * Nv₁
+  αₖ  = sqrt(@kdot(n, v, Nv))  # α₁ = ‖v₁‖_N
+  if αₖ ≠ 0
+    @kscal!(n, 1 / αₖ, v)
+    NisI || @kscal!(n, 1 / αₖ, Nv)
+  end
+
+  # Set up workspace.
+  w̄ = copy(u)         # Direction w̄₁
+  cₖ = sₖ = zero(T)   # Givens sines and cosines used for the LQ factorization of (Lₖ)ᵀ
+  ζₖ₋₁ = zero(T)      # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
+  ηₖ = zero(T)        # Coefficient of M̅ₖ
+
+  # Regularization.
+  λₖ  = λ                 # λ₁ = λ
+  cpₖ = spₖ = one(T)      # Givens sines and cosines used to zero out λₖ
+  cdₖ = sdₖ = one(T)      # Givens sines and cosines used to define λₖ₊₁
+  λ > 0 && (q = copy(v))  # Additional vector needed to update x
+
+  if λ > 0
+    #        k    2k      k   2k           k      2k
+    # k   [  αₖ   λₖ ] [ cpₖ  spₖ ] = [  αbisₖ    0   ]
+    # k+1 [ βₖ₊₁  0  ] [ spₖ -cpₖ ]   [ βbisₖ₊₁  θₖ₊₁ ]
+    (cpₖ, spₖ, αbisₖ) = sym_givens(αₖ, λₖ)
+    @kscal!(n, spₖ, q)
+  else
+    αbisₖ = αₖ
+  end
+
+  # Begin the LQ factorization of (Lₖ)ᵀ = M̅ₖQₖ.
+  # [ α₁ β₂ 0  •  •  •  0 ]   [ ϵ₁  0   •   •   •   •   0   ]
+  # [ 0  α₂ •  •        • ]   [ η₂  ϵ₂  •               •   ]
+  # [ •  •  •  •  •     • ]   [ 0   •   •   •           •   ]
+  # [ •     •  •  •  •  • ] = [ •   •   •   •   •       •   ] Qₖ
+  # [ •        •  •  •  0 ]   [ •       •   •   •   •   •   ]
+  # [ •           •  •  βₖ]   [ •           •   •   •   0   ]
+  # [ 0  •  •  •  •  0  αₖ]   [ 0   •   •   •   0   ηₖ ϵbarₖ]
+
+  ϵbarₖ = αbisₖ       # ϵbar₁ = αbis₁
+
+  # Hₖ = Bₖ(Lₖ)ᵀ = [   Lₖ(Lₖ)ᵀ   ] ⟹ (Hₖ₋₁)ᵀ = [Lₖ₋₁Mₖ₋₁  0] Qₖ
+  #                [ αₖβₖ₊₁(eₖ)ᵀ ]
+  #
+  # Solve Lₖtₖ = β₁e₁ and M̅ₖz̅ₖ = tₖ
+  # tₖ = (τ₁, •••, τₖ)
+  # z̅ₖ = (zₖ₋₁, ζbarₖ) = (ζ₁, •••, ζₖ₋₁, ζbarₖ)
+
+  τₖ    = βₖ / αbisₖ  # τ₁ = β₁ / αbis₁
+  ζbarₖ = τₖ / ϵbarₖ  # ζbar₁ = τ₁ / ϵbar₁
+
+  # Stopping criterion.
+  solved_lq = solved_cg = false
+  tired = iter ≥ itmax
+  status = "unknown"
+
+  verbose && @printf("%5s  %7s\n", "iter", "‖r‖")
+  verbose && @printf("%5d  %7.1e\n", iter, bNorm)
+
+  while !(solved_lq || solved_cg || tired)
+
+    # Update of (xᵃᵘˣ)ₖ = Vₖtₖ
+    # (xᵃᵘˣ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖvₖ
+    if λ > 0
+      @kaxpy!(n, τₖ * cpₖ, v, x)
+      if iter ≥ 2
+        @kaxpy!(n, τₖ * spₖ, q, x)
+        @kaxpby!(n, spₖ, v, -cpₖ, q)
+      end
+    else
+      @kaxpy!(n, τₖ, v, x)
+    end
+
+    # Continue the generalized Golub-Kahan bidiagonalization.
+    # AVₖ    = MUₖ₊₁Bₖ
+    # AᵀUₖ₊₁ = NVₖ(Bₖ)ᵀ + αₖ₊₁Nvₖ₊₁(eₖ₊₁)ᵀ = NVₖ₊₁(Lₖ₊₁)ᵀ
+    #
+    #      [ α₁ 0  •  •  •  •  0 ]
+    #      [ β₂ α₂ •           • ]
+    #      [ 0  •  •  •        • ]
+    # Lₖ = [ •  •  •  •  •     • ]
+    #      [ •     •  •  •  •  • ]
+    #      [ •        •  •  •  0 ]
+    #      [ 0  •  •  •  0  βₖ αₖ]
+    #
+    # Bₖ = [    Lₖ     ]
+    #      [ βₖ₊₁(eₖ)ᵀ ]
+
+    # βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
+    Av = A * v
+    @kaxpby!(m, one(T), Av, -αₖ, Mu)
+    u = M * Mu                    # uₖ₊₁ = M⁻¹ * Muₖ₊₁
+    βₖ₊₁ = sqrt(@kdot(m, u, Mu))  # βₖ₊₁ = ‖uₖ₊₁‖_M
+    if βₖ₊₁ ≠ 0
+      @kscal!(m, 1 / βₖ₊₁, u)
+      MisI || @kscal!(m, 1 / βₖ₊₁, Mu)
+    end
+
+    # αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
+    Aᵀu = A.tprod(u)
+    @kaxpby!(n, one(T), Aᵀu, -βₖ₊₁, Nv)
+    v = N * Nv                    # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
+    αₖ₊₁ = sqrt(@kdot(n, v, Nv))  # αₖ₊₁ = ‖vₖ₊₁‖_N
+    if αₖ₊₁ ≠ 0
+      @kscal!(n, 1 / αₖ₊₁, v)
+      NisI || @kscal!(n, 1 / αₖ₊₁, Nv)
+    end
+
+    if λ > 0
+      #        k    2k      k   2k           k      2k
+      # k   [  αₖ   λₖ ] [ cpₖ  spₖ ] = [  αbisₖ    0   ]
+      # k+1 [ βₖ₊₁  0  ] [ spₖ -cpₖ ]   [ βbisₖ₊₁  θₖ₊₁ ]
+      βbisₖ₊₁ = cpₖ * βₖ₊₁
+      θₖ₊₁    = spₖ * βₖ₊₁
+
+      #       2k  2k+1     2k  2k+1       2k  2k+1
+      # k   [  0    0 ] [ -cdₖ  sdₖ ] = [ 0    0  ]
+      # k+1 [ θₖ₊₁  λ ] [  sdₖ  cdₖ ]   [ 0  λₖ₊₁ ]
+      (cdₖ, sdₖ, λₖ₊₁) = sym_givens(λ, θₖ₊₁)
+      @kscal!(n, sdₖ, q)
+
+      #       k+1   2k+1      k+1    2k+1        k+1     2k+1
+      # k+1 [ αₖ₊₁  λₖ₊₁ ] [ cpₖ₊₁  spₖ₊₁ ] = [ αbisₖ₊₁   0   ]
+      # k+2 [ βₖ₊₂   0   ] [ spₖ₊₁ -cpₖ₊₁ ]   [  γₖ₊₂    θₖ₊₂ ]
+      (cpₖ₊₁, spₖ₊₁, αbisₖ₊₁) = sym_givens(αₖ₊₁, λₖ₊₁)
+    else
+      βbisₖ₊₁ = βₖ₊₁
+      αbisₖ₊₁ = αₖ₊₁
+    end
+
+    # Continue the LQ factorization of (Lₖ₊₁)ᵀ.
+    # [ηₖ ϵbarₖ βₖ₊₁] [1     0     0 ] = [ηₖ  ϵₖ     0    ]
+    # [0    0   αₖ₊₁] [0   cₖ₊₁  sₖ₊₁]   [0  ηₖ₊₁  ϵbarₖ₊₁]
+    #                 [0   sₖ₊₁ -cₖ₊₁]
+
+    (cₖ₊₁, sₖ₊₁, ϵₖ) = sym_givens(ϵbarₖ, βbisₖ₊₁)
+    ηₖ₊₁    =   αbisₖ₊₁ * sₖ₊₁
+    ϵbarₖ₊₁ = - αbisₖ₊₁ * cₖ₊₁
+
+    # Update solutions of Lₖ₊₁tₖ₊₁ = β₁e₁ and M̅ₖ₊₁z̅ₖ₊₁ = tₖ₊₁.
+    τₖ₊₁    = - βbisₖ₊₁ * τₖ / αbisₖ₊₁
+    ζₖ      = cₖ₊₁ * ζbarₖ
+    ζbarₖ₊₁ = (τₖ₊₁ - ηₖ₊₁ * ζₖ) / ϵbarₖ₊₁
+
+    # Relations for the directions wₖ and w̄ₖ₊₁
+    # [w̄ₖ uₖ₊₁] [cₖ₊₁  sₖ₊₁] = [wₖ w̄ₖ₊₁] → wₖ   = cₖ₊₁ * w̄ₖ + sₖ₊₁ * uₖ₊₁
+    #           [sₖ₊₁ -cₖ₊₁]             → w̄ₖ₊₁ = sₖ₊₁ * w̄ₖ - cₖ₊₁ * uₖ₊₁
+
+    # (yᴸ)ₖ₊₁ ← (yᴸ)ₖ + ζₖ * wₖ
+    @kaxpy!(m, ζₖ * cₖ₊₁, w̄, y)
+    @kaxpy!(m, ζₖ * sₖ₊₁, u, y)
+
+    # Compute w̄ₖ₊₁
+    @kaxpby!(m, -cₖ₊₁, u, sₖ₊₁, w̄)
+
+    # Compute residual norm ‖(rᴸ)ₖ‖ = |αₖ| * √((ϵbarₖζbarₖ)² + (βₖ₊₁sₖζₖ₋₁)²)
+    if iter == 1
+      rNorm_lq = bNorm
+    else
+      rNorm_lq = abs(αbisₖ) * √((ϵbarₖ * ζbarₖ)^2 + (βbisₖ₊₁ * sₖ * ζₖ₋₁)^2)
+    end
+    push!(rNorms, rNorm_lq)
+
+    # Compute residual norm ‖(rᶜ)ₖ‖ = |βₖ₊₁ * τₖ|
+    if transfer_to_craig
+      rNorm_cg = abs(βbisₖ₊₁ * τₖ)
+    end
+
+    # Update sₖ, cₖ, αₖ, βₖ, ηₖ, ϵbarₖ, τₖ, ζₖ₋₁ and ζbarₖ.
+    cₖ    = cₖ₊₁
+    sₖ    = sₖ₊₁
+    αₖ    = αₖ₊₁
+    βₖ    = βₖ₊₁
+    ηₖ    = ηₖ₊₁
+    ϵbarₖ = ϵbarₖ₊₁
+    τₖ    = τₖ₊₁
+    ζₖ₋₁  = ζₖ
+    ζbarₖ = ζbarₖ₊₁
+
+    # Update regularization variables.
+    if λ > 0
+      cpₖ = cpₖ₊₁
+      spₖ = spₖ₊₁
+    end
+
+    # Update stopping criterion.
+    tired = iter ≥ itmax
+    solved_lq = rNorm_lq ≤ ε
+    solved_cg = transfer_to_craig && rNorm_cg ≤ ε
+    verbose && @printf("%5d  %7.1e\n", iter, rNorm_lq)
+
+    # Update iteration index.
+    iter = iter + 1
+  end
+  verbose && @printf("\n")
+
+  if solved_cg
+    # (xᶜ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + (ηₖζₖ₋₁ + ϵbarₖζbarₖ) * vₖ
+    if λ > 0
+      @kaxpy!(n, τₖ * cpₖ, v, x)
+      if iter ≥ 2
+        @kaxpy!(n, τₖ * spₖ, q, x)
+      end
+    else
+      @kaxpy!(n, τₖ, v, x)
+    end
+    # (yᶜ)ₖ ← (yᴸ)ₖ₋₁ + ζbarₖ * w̄ₖ
+    @kaxpy!(m, ζbarₖ, w̄, y)
+  else
+    # (xᴸ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + ηₖζₖ₋₁ * vₖ
+    if λ > 0
+      @kaxpy!(n, ηₖ * ζₖ₋₁ * cpₖ, v, x)
+      if iter ≥ 2
+        @kaxpy!(n, ηₖ * ζₖ₋₁ * spₖ, q, x)
+      end
+    else
+      @kaxpy!(n, ηₖ * ζₖ₋₁, v, x)
+    end
+  end
+
+  tired     && (status = "maximum number of iterations exceeded")
+  solved_lq && (status = "solutions (xᴸ, yᴸ) good enough for the tolerances given")
+  solved_cg && (status = "solutions (xᶜ, yᶜ) good enough for the tolerances given")
+  stats = SimpleStats(solved_lq || solved_cg, false, rNorms, T[], status)
+  return (x, y, stats)
+end
