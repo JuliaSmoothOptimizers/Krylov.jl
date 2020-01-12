@@ -4,7 +4,7 @@
 #
 # The method seeks to solve the minimum-norm problem
 #
-#  min ‖x‖²  s.t.  Ax = b,
+#  min ‖x‖  s.t.  Ax = b,
 #
 # and is equivalent to applying the SYMMLQ method
 # to the linear system
@@ -35,7 +35,7 @@ For a system in the form Ax = b, LNLQ method is equivalent to applying
 SYMMLQ to AAᵀy = b and recovering x = Aᵀy but is more stable.
 Note that y are the Lagrange multipliers of the least-norm problem
 
-    minimize ‖x‖²  s.t.  Ax = b.
+    minimize ‖x‖  s.t.  Ax = b.
 
 Preconditioners M⁻¹ and N⁻¹ may be provided in the form of linear operators and are
 assumed to be symmetric and positive definite.
@@ -124,12 +124,12 @@ function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
   if λ > 0
     #        k    2k      k   2k           k      2k
-    # k   [  αₖ   λₖ ] [ cpₖ  spₖ ] = [  αbisₖ    0   ]
-    # k+1 [ βₖ₊₁  0  ] [ spₖ -cpₖ ]   [ βbisₖ₊₁  θₖ₊₁ ]
-    (cpₖ, spₖ, αbisₖ) = sym_givens(αₖ, λₖ)
+    # k   [  αₖ   λₖ ] [ cpₖ  spₖ ] = [  αhatₖ    0   ]
+    # k+1 [ βₖ₊₁  0  ] [ spₖ -cpₖ ]   [ βhatₖ₊₁  θₖ₊₁ ]
+    (cpₖ, spₖ, αhatₖ) = sym_givens(αₖ, λₖ)
     @kscal!(n, spₖ, q)
   else
-    αbisₖ = αₖ
+    αhatₖ = αₖ
   end
 
   # Begin the LQ factorization of (Lₖ)ᵀ = M̅ₖQₖ.
@@ -141,7 +141,7 @@ function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # [ •           •  •  βₖ]   [ •           •   •   •   0   ]
   # [ 0  •  •  •  •  0  αₖ]   [ 0   •   •   •   0   ηₖ ϵbarₖ]
 
-  ϵbarₖ = αbisₖ       # ϵbar₁ = αbis₁
+  ϵbarₖ = αhatₖ       # ϵbar₁ = αhat₁
 
   # Hₖ = Bₖ(Lₖ)ᵀ = [   Lₖ(Lₖ)ᵀ   ] ⟹ (Hₖ₋₁)ᵀ = [Lₖ₋₁Mₖ₋₁  0] Qₖ
   #                [ αₖβₖ₊₁(eₖ)ᵀ ]
@@ -150,7 +150,7 @@ function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   # tₖ = (τ₁, •••, τₖ)
   # z̅ₖ = (zₖ₋₁, ζbarₖ) = (ζ₁, •••, ζₖ₋₁, ζbarₖ)
 
-  τₖ    = βₖ / αbisₖ  # τ₁ = β₁ / αbis₁
+  τₖ    = βₖ / αhatₖ  # τ₁ = β₁ / αhat₁
   ζbarₖ = τₖ / ϵbarₖ  # ζbar₁ = τ₁ / ϵbar₁
 
   # Stopping criterion.
@@ -212,9 +212,9 @@ function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
 
     if λ > 0
       #        k    2k      k   2k           k      2k
-      # k   [  αₖ   λₖ ] [ cpₖ  spₖ ] = [  αbisₖ    0   ]
-      # k+1 [ βₖ₊₁  0  ] [ spₖ -cpₖ ]   [ βbisₖ₊₁  θₖ₊₁ ]
-      βbisₖ₊₁ = cpₖ * βₖ₊₁
+      # k   [  αₖ   λₖ ] [ cpₖ  spₖ ] = [  αhatₖ    0   ]
+      # k+1 [ βₖ₊₁  0  ] [ spₖ -cpₖ ]   [ βhatₖ₊₁  θₖ₊₁ ]
+      βhatₖ₊₁ = cpₖ * βₖ₊₁
       θₖ₊₁    = spₖ * βₖ₊₁
 
       #       2k  2k+1     2k  2k+1       2k  2k+1
@@ -224,12 +224,12 @@ function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
       @kscal!(n, sdₖ, q)
 
       #       k+1   2k+1      k+1    2k+1        k+1     2k+1
-      # k+1 [ αₖ₊₁  λₖ₊₁ ] [ cpₖ₊₁  spₖ₊₁ ] = [ αbisₖ₊₁   0   ]
+      # k+1 [ αₖ₊₁  λₖ₊₁ ] [ cpₖ₊₁  spₖ₊₁ ] = [ αhatₖ₊₁   0   ]
       # k+2 [ βₖ₊₂   0   ] [ spₖ₊₁ -cpₖ₊₁ ]   [  γₖ₊₂    θₖ₊₂ ]
-      (cpₖ₊₁, spₖ₊₁, αbisₖ₊₁) = sym_givens(αₖ₊₁, λₖ₊₁)
+      (cpₖ₊₁, spₖ₊₁, αhatₖ₊₁) = sym_givens(αₖ₊₁, λₖ₊₁)
     else
-      βbisₖ₊₁ = βₖ₊₁
-      αbisₖ₊₁ = αₖ₊₁
+      βhatₖ₊₁ = βₖ₊₁
+      αhatₖ₊₁ = αₖ₊₁
     end
 
     # Continue the LQ factorization of (Lₖ₊₁)ᵀ.
@@ -237,12 +237,12 @@ function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # [0    0   αₖ₊₁] [0   cₖ₊₁  sₖ₊₁]   [0  ηₖ₊₁  ϵbarₖ₊₁]
     #                 [0   sₖ₊₁ -cₖ₊₁]
 
-    (cₖ₊₁, sₖ₊₁, ϵₖ) = sym_givens(ϵbarₖ, βbisₖ₊₁)
-    ηₖ₊₁    =   αbisₖ₊₁ * sₖ₊₁
-    ϵbarₖ₊₁ = - αbisₖ₊₁ * cₖ₊₁
+    (cₖ₊₁, sₖ₊₁, ϵₖ) = sym_givens(ϵbarₖ, βhatₖ₊₁)
+    ηₖ₊₁    =   αhatₖ₊₁ * sₖ₊₁
+    ϵbarₖ₊₁ = - αhatₖ₊₁ * cₖ₊₁
 
     # Update solutions of Lₖ₊₁tₖ₊₁ = β₁e₁ and M̅ₖ₊₁z̅ₖ₊₁ = tₖ₊₁.
-    τₖ₊₁    = - βbisₖ₊₁ * τₖ / αbisₖ₊₁
+    τₖ₊₁    = - βhatₖ₊₁ * τₖ / αhatₖ₊₁
     ζₖ      = cₖ₊₁ * ζbarₖ
     ζbarₖ₊₁ = (τₖ₊₁ - ηₖ₊₁ * ζₖ) / ϵbarₖ₊₁
 
@@ -261,13 +261,13 @@ function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
     if iter == 1
       rNorm_lq = bNorm
     else
-      rNorm_lq = abs(αbisₖ) * √((ϵbarₖ * ζbarₖ)^2 + (βbisₖ₊₁ * sₖ * ζₖ₋₁)^2)
+      rNorm_lq = abs(αhatₖ) * √((ϵbarₖ * ζbarₖ)^2 + (βhatₖ₊₁ * sₖ * ζₖ₋₁)^2)
     end
     push!(rNorms, rNorm_lq)
 
     # Compute residual norm ‖(rᶜ)ₖ‖ = |βₖ₊₁ * τₖ|
     if transfer_to_craig
-      rNorm_cg = abs(βbisₖ₊₁ * τₖ)
+      rNorm_cg = abs(βhatₖ₊₁ * τₖ)
     end
 
     # Update sₖ, cₖ, αₖ, βₖ, ηₖ, ϵbarₖ, τₖ, ζₖ₋₁ and ζbarₖ.
