@@ -13,7 +13,8 @@
 
 export cgs
 
-"""Solve the consistent linear system Ax = b using conjugate gradient squared algorithm.
+"""
+Solve the consistent linear system Ax = b using conjugate gradient squared algorithm.
 
 From "Iterative Methods for Sparse Linear Systems (Y. Saad)" :
 

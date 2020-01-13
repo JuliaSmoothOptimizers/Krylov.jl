@@ -12,7 +12,8 @@
 
 export trilqr
 
-"""Combine USYMLQ and USYMQR to solve adjoint systems.
+"""
+Combine USYMLQ and USYMQR to solve adjoint systems.
 
     [0  A] [t] = [b]
     [Aᵀ 0] [x]   [c]

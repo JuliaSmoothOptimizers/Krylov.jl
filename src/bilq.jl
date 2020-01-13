@@ -12,7 +12,8 @@
 
 export bilq
 
-"""Solve the square linear system Ax = b using the BiLQ method.
+"""
+Solve the square linear system Ax = b using the BiLQ method.
 
 BiLQ is based on the Lanczos biorthogonalization process.
 When A is symmetric and b = c, BiLQ is equivalent to SYMMLQ.

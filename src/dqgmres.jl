@@ -13,7 +13,8 @@
 
 export dqgmres
 
-"""Solve the consistent linear system Ax = b using DQGMRES method.
+"""
+Solve the consistent linear system Ax = b using DQGMRES method.
 
 DQGMRES algorithm is based on the incomplete Arnoldi orthogonalization process
 and computes a sequence of approximate solutions with the quasi-minimal residual property.

@@ -12,7 +12,8 @@
 
 export bilqr
 
-"""Combine BiLQ and QMR to solve adjoint systems.
+"""
+Combine BiLQ and QMR to solve adjoint systems.
 
     [0  A] [t] = [b]
     [Aᵀ 0] [x]   [c]

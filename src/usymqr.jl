@@ -19,7 +19,8 @@
 
 export usymqr
 
-"""Solve the linear system Ax = b using the USYMQR method.
+"""
+Solve the linear system Ax = b using the USYMQR method.
 
 USYMQR is based on a tridiagonalization process for unsymmetric matrices.
 The residual norm ‖b - Ax‖ monotonously decreases in USYMQR.

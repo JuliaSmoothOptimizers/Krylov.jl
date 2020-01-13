@@ -7,7 +7,8 @@
 
 export cr
 
-"""A truncated version of Stiefel’s Conjugate Residual method to solve the symmetric linear system Ax=b.
+"""
+A truncated version of Stiefel’s Conjugate Residual method to solve the symmetric linear system Ax=b.
 The matrix A must be positive semi-definite.
 
 A preconditioner M may be provided in the form of a linear operator and is

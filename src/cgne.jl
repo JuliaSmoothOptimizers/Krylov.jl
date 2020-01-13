@@ -29,7 +29,8 @@
 export cgne
 
 
-"""Solve the consistent linear system
+"""
+Solve the consistent linear system
 
     Ax + √λs = b
 

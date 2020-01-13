@@ -25,7 +25,8 @@
 export lsmr
 
 
-"""Solve the regularized linear least-squares problem
+"""
+Solve the regularized linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ² ‖x‖₂²
 

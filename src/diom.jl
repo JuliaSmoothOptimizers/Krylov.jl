@@ -13,7 +13,8 @@
 
 export diom
 
-"""Solve the consistent linear system Ax = b using direct incomplete orthogonalization method.
+"""
+Solve the consistent linear system Ax = b using direct incomplete orthogonalization method.
 
 DIOM is similar to CG with partial reorthogonalization.
 
