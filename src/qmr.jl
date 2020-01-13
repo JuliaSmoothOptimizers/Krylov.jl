@@ -19,7 +19,9 @@
 # Montreal, May 2019.
 
 export qmr
-"""Solve the square linear system Ax = b using the QMR method.
+
+"""
+Solve the square linear system Ax = b using the QMR method.
 
 QMR is based on the Lanczos biorthogonalization process.
 When A is symmetric and b = c, QMR is equivalent to MINRES.

@@ -19,7 +19,8 @@
 
 export usymlq
 
-"""Solve the linear system Ax = b using the USYMLQ method.
+"""
+Solve the linear system Ax = b using the USYMLQ method.
 
 USYMLQ is based on a tridiagonalization process for unsymmetric matrices.
 The error norm ‖x - x*‖ monotonously decreases in USYMLQ.

@@ -11,7 +11,8 @@
 export cg
 
 
-"""The conjugate gradient method to solve the symmetric linear system Ax=b.
+"""
+The conjugate gradient method to solve the symmetric linear system Ax=b.
 
 The method does _not_ abort if A is not definite.
 

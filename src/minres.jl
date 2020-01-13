@@ -22,7 +22,8 @@
 export minres
 
 
-"""Solve the shifted linear least-squares problem
+"""
+Solve the shifted linear least-squares problem
 
     minimize ‖b - (A + λ I)x‖₂²
 

@@ -21,7 +21,8 @@
 export crls
 
 
-"""Solve the linear least-squares problem
+"""
+Solve the linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ ‖x‖₂²
 

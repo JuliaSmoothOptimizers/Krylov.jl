@@ -22,7 +22,8 @@
 export cgls
 
 
-"""Solve the regularized linear least-squares problem
+"""
+Solve the regularized linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ ‖x‖₂²
 

@@ -12,7 +12,8 @@
 export symmlq
 
 
-"""Solve the shifted linear system
+"""
+Solve the shifted linear system
 
     (A + λ I) x = b
 

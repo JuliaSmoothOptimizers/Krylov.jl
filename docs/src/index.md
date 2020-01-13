@@ -2,7 +2,7 @@
 
 This package provides implementations of certain of the most useful Krylov method for a variety of problems:
 
-1. Square or rectangular full-rank systems
+1 - Square or rectangular full-rank systems
 
 ```math
   Ax = b
@@ -12,7 +12,7 @@ should be solved when **_b_** lies in the range space of **_A_**. This situation
   * **_A_** is square and nonsingular,
   * **_A_** is tall and has full column rank and **_b_** lies in the range of **_A_**.
 
-2. Linear least-squares problems
+2 - Linear least-squares problems
 
 ```math
   \min \|b - Ax\|
@@ -30,7 +30,7 @@ If there are infinitely many such **_x_** (because **_A_** is column rank-defici
   \min \|x\| \quad \text{subject to} \quad x \in \argmin \|b - Ax\|.
 ```
 
-3. Linear least-norm problems
+3 - Linear least-norm problems
 
 ```math
   \min \|x\| \quad \text{subject to} \quad Ax = b
@@ -43,7 +43,7 @@ This situation mainly occurs when
 
 Overdetermined sytems are less common but also occur.
 
-4. Adjoint systems
+4 - Adjoint systems
 
 ```math
   Ax = b \quad \text{and} \quad A^T y = c
@@ -51,7 +51,7 @@ Overdetermined sytems are less common but also occur.
 
 where **_A_** can have any shape.
 
-5. saddle-point or symmetric quasi-definite (SQD) systems
+5 - Saddle-point or symmetric quasi-definite (SQD) systems
 
 ```math
   \begin{bmatrix} M & \phantom{-}A \\ A^T & -N \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \left(\begin{bmatrix} b \\ 0 \end{bmatrix},\begin{bmatrix} 0 \\ c \end{bmatrix},\begin{bmatrix} b \\ c \end{bmatrix}\right)

@@ -12,7 +12,8 @@
 export cg_lanczos, cg_lanczos_shift_seq
 
 
-"""The Lanczos version of the conjugate gradient method to solve the
+"""
+The Lanczos version of the conjugate gradient method to solve the
 symmetric linear system
 
     Ax = b
@@ -115,7 +116,8 @@ function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
 end
 
 
-"""The Lanczos version of the conjugate gradient method to solve a family
+"""
+The Lanczos version of the conjugate gradient method to solve a family
 of shifted systems
 
     (A + αI) x = b  (α = α₁, ..., αₙ)
