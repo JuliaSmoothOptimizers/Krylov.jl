@@ -52,52 +52,54 @@ function test_lnlq()
   (x, y, stats) = lnlq(A, b)
   @test stats.solved
 
-  # Test regularization
-  A, b, λ = regularization()
-  (x, y, stats) = lnlq(A, b, λ=λ)
-  s = λ * y
-  r = b - (A * x + λ * s)
-  resid = norm(r) / norm(b)
-  @printf("LNLQ: Relative residual: %8.1e\n", resid)
-  @test(resid ≤ lnlq_tol)
-  r2 = b - (A * A' + λ^2 * I) * y
-  resid2 = norm(r2) / norm(b)
-  @test(resid2 ≤ lnlq_tol)
+  for transfer_to_craig ∈ (false, true)
+    # Test regularization
+    A, b, λ = regularization()
+    (x, y, stats) = lnlq(A, b, λ=λ, transfer_to_craig=transfer_to_craig)
+    s = λ * y
+    r = b - (A * x + λ * s)
+    resid = norm(r) / norm(b)
+    @printf("LNLQ: Relative residual: %8.1e\n", resid)
+    @test(resid ≤ lnlq_tol)
+    r2 = b - (A * A' + λ^2 * I) * y
+    resid2 = norm(r2) / norm(b)
+    @test(resid2 ≤ lnlq_tol)
 
-  # Test saddle-point systems
-  A, b, D = saddle_point()
-  D⁻¹ = PreallocatedLinearOperator(inv(D))
-  (x, y, stats) = lnlq(A, b, N=D⁻¹)
-  r = b - A * x
-  resid = norm(r) / norm(b)
-  @printf("LNLQ: Relative residual: %8.1e\n", resid)
-  @test(resid ≤ lnlq_tol)
-  r2 = b - (A * D⁻¹ * A') * y
-  resid2 = norm(r2) / norm(b)
-  @test(resid2 ≤ lnlq_tol)
+    # Test saddle-point systems
+    A, b, D = saddle_point()
+    D⁻¹ = PreallocatedLinearOperator(inv(D))
+    (x, y, stats) = lnlq(A, b, N=D⁻¹, transfer_to_craig=transfer_to_craig)
+    r = b - A * x
+    resid = norm(r) / norm(b)
+    @printf("LNLQ: Relative residual: %8.1e\n", resid)
+    @test(resid ≤ lnlq_tol)
+    r2 = b - (A * D⁻¹ * A') * y
+    resid2 = norm(r2) / norm(b)
+    @test(resid2 ≤ lnlq_tol)
 
-  # Test with preconditioners
-  A, b, M⁻¹, N⁻¹ = two_preconditioners()
-  (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=false)
-  show(stats)
-  r = b - A * x
-  resid = sqrt(dot(r, M⁻¹ * r)) / norm(b)
-  @printf("LNLQ: Relative residual: %8.1e\n", resid)
-  @test(resid ≤ lnlq_tol)
-  @test(norm(x - N⁻¹ * A' * y) ≤ lnlq_tol * norm(x))
+    # Test with preconditioners
+    A, b, M⁻¹, N⁻¹ = two_preconditioners()
+    (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=false, transfer_to_craig=transfer_to_craig)
+    show(stats)
+    r = b - A * x
+    resid = sqrt(dot(r, M⁻¹ * r)) / norm(b)
+    @printf("LNLQ: Relative residual: %8.1e\n", resid)
+    @test(resid ≤ lnlq_tol)
+    @test(norm(x - N⁻¹ * A' * y) ≤ lnlq_tol * norm(x))
 
-  # Test symmetric and quasi-definite systems
-  A, b, M, N = sqd()
-  M⁻¹ = PreallocatedLinearOperator(inv(M))
-  N⁻¹ = PreallocatedLinearOperator(inv(N))
-  (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
-  r = b - (A * x + M * y)
-  resid = norm(r) / norm(b)
-  @printf("LNLQ: Relative residual: %8.1e\n", resid)
-  @test(resid ≤ lnlq_tol)
-  r2 = b - (A * N⁻¹ * A' + M) * y
-  resid2 = norm(r2) / norm(b)
-  @test(resid2 ≤ lnlq_tol)
+    # Test symmetric and quasi-definite systems
+    A, b, M, N = sqd()
+    M⁻¹ = PreallocatedLinearOperator(inv(M))
+    N⁻¹ = PreallocatedLinearOperator(inv(N))
+    (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=true, transfer_to_craig=transfer_to_craig)
+    r = b - (A * x + M * y)
+    resid = norm(r) / norm(b)
+    @printf("LNLQ: Relative residual: %8.1e\n", resid)
+    @test(resid ≤ lnlq_tol)
+    r2 = b - (A * N⁻¹ * A' + M) * y
+    resid2 = norm(r2) / norm(b)
+    @test(resid2 ≤ lnlq_tol)
+  end
 end
 
 test_lnlq()
