@@ -21,12 +21,15 @@ function test_mp()
         x, t = @eval $fn($A, $b, $c)[1:2]
       elseif fn in (:tricg, :trimr)
         x, y = @eval $fn($A, $b, $c)[1:2]
+      elseif fn in (:lnlq, :craig, :craigmr)
+        x, y = @eval $fn($A, $b)[1:2]
       else
         x = @eval $fn($A, $b)[1]
       end
       atol = √eps(T)
       rtol = √eps(T)
       Κ = (T == Float16 ? 10 : 1)
+      @test eltype(x) == T
       if fn in (:tricg, :trimr)
         @test norm(x + A * y - b) ≤ Κ * (atol + norm([b; c]) * rtol)
         @test norm(A' * x - y - c) ≤ Κ * (atol + norm([b; c]) * rtol)
@@ -38,7 +41,10 @@ function test_mp()
         @test norm(A' * t - c) ≤ Κ * (atol + norm(c) * rtol)
         @test eltype(t) == T
       end
-      @test eltype(x) == T
+      if fn in (:lnlq, :craig, :craigmr)
+        @test norm(A * A' * y - b) ≤ Κ * (atol + norm(b) * rtol)
+        @test eltype(y) == T
+      end
     end
     @printf("✔\n")
   end
