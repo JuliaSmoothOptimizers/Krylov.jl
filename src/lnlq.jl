@@ -25,7 +25,8 @@
 
 export lnlq
 
-"""Find the least-norm solution of the consistent linear system
+"""
+Find the least-norm solution of the consistent linear system
 
     Ax + λs = b
 
