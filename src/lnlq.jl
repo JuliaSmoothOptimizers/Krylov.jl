@@ -121,13 +121,15 @@ function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   λₖ  = λ                 # λ₁ = λ
   cpₖ = spₖ = one(T)      # Givens sines and cosines used to zero out λₖ
   cdₖ = sdₖ = one(T)      # Givens sines and cosines used to define λₖ₊₁
-  λ > 0 && (q = copy(v))  # Additional vector needed to update x
+  λ > 0 && (q = copy(v))  # Additional vector needed to update x, by definition q₀ = 0
 
   if λ > 0
     #        k    2k      k   2k           k      2k
     # k   [  αₖ   λₖ ] [ cpₖ  spₖ ] = [  αhatₖ    0   ]
     # k+1 [ βₖ₊₁  0  ] [ spₖ -cpₖ ]   [ βhatₖ₊₁  θₖ₊₁ ]
     (cpₖ, spₖ, αhatₖ) = sym_givens(αₖ, λₖ)
+
+    # q̄₁ = sp₁ * v₁
     @kscal!(n, spₖ, q)
   else
     αhatₖ = αₖ
@@ -165,14 +167,16 @@ function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   while !(solved_lq || solved_cg || tired)
 
     # Update of (xᵃᵘˣ)ₖ = Vₖtₖ
-    # (xᵃᵘˣ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖvₖ
     if λ > 0
+      # (xᵃᵘˣ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖ * (cpₖvₖ + spₖqₖ₋₁)
       @kaxpy!(n, τₖ * cpₖ, v, x)
       if iter ≥ 2
         @kaxpy!(n, τₖ * spₖ, q, x)
+        # q̄ₖ ← spₖ * vₖ - cpₖ * qₖ₋₁
         @kaxpby!(n, spₖ, v, -cpₖ, q)
       end
     else
+      # (xᵃᵘˣ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖ * vₖ
       @kaxpy!(n, τₖ, v, x)
     end
 
@@ -222,6 +226,8 @@ function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
       # k   [  0    0 ] [ -cdₖ  sdₖ ] = [ 0    0  ]
       # k+1 [ θₖ₊₁  λ ] [  sdₖ  cdₖ ]   [ 0  λₖ₊₁ ]
       (cdₖ, sdₖ, λₖ₊₁) = sym_givens(λ, θₖ₊₁)
+
+      # qₖ ← sdₖ * q̄ₖ
       @kscal!(n, sdₖ, q)
 
       #       k+1   2k+1      k+1    2k+1        k+1     2k+1
@@ -300,25 +306,27 @@ function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
   verbose && @printf("\n")
 
   if solved_cg
-    # (xᶜ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + (ηₖζₖ₋₁ + ϵbarₖζbarₖ) * vₖ
     if λ > 0
+      # (xᶜ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖ * (cpₖvₖ + spₖqₖ₋₁)
       @kaxpy!(n, τₖ * cpₖ, v, x)
       if iter ≥ 2
         @kaxpy!(n, τₖ * spₖ, q, x)
       end
     else
+      # (xᶜ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖ * vₖ
       @kaxpy!(n, τₖ, v, x)
     end
     # (yᶜ)ₖ ← (yᴸ)ₖ₋₁ + ζbarₖ * w̄ₖ
     @kaxpy!(m, ζbarₖ, w̄, y)
   else
-    # (xᴸ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + ηₖζₖ₋₁ * vₖ
     if λ > 0
+      # (xᴸ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + ηₖζₖ₋₁ * (cpₖvₖ + spₖqₖ₋₁)
       @kaxpy!(n, ηₖ * ζₖ₋₁ * cpₖ, v, x)
       if iter ≥ 2
         @kaxpy!(n, ηₖ * ζₖ₋₁ * spₖ, q, x)
       end
     else
+      # (xᴸ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + ηₖζₖ₋₁ * vₖ
       @kaxpy!(n, ηₖ * ζₖ₋₁, v, x)
     end
   end
