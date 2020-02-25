@@ -44,16 +44,16 @@ Preconditioners M and N may be provided in the form of linear operators and are
 assumed to be symmetric and positive definite. If `sqd` is set to `true`,
 we solve the symmetric and quasi-definite system
 
-    [ E   Aᵀ ] [ r ]   [ b ]
-    [ A  -F  ] [ x ] = [ 0 ],
+    [ E    A ] [ r ]   [ b ]
+    [ Aᵀ  -F ] [ x ] = [ 0 ],
 
 where E = M⁻¹  and F = N⁻¹.
 
 If `sqd` is set to `false` (the default), we solve the symmetric and
 indefinite system
 
-    [ E   Aᵀ ] [ r ]   [ b ]
-    [ A   0  ] [ x ] = [ 0 ].
+    [ E    A ] [ r ]   [ b ]
+    [ Aᵀ   0 ] [ x ] = [ 0 ].
 
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.

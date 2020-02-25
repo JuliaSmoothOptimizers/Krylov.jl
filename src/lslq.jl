@@ -33,20 +33,20 @@ but is more stable.
 
 #### Optional arguments
 
-* `M::AbstractLinearOperator=opEye(size(A,1))`: a symmetric and positive definite dual preconditioner
-* `N::AbstractLinearOperator=opEye(size(A,2))`: a symmetric and positive definite primal preconditioner
+* `M::AbstractLinearOperator=opEye()`: a symmetric and positive definite dual preconditioner
+* `N::AbstractLinearOperator=opEye()`: a symmetric and positive definite primal preconditioner
 * `sqd::Bool=false` indicates whether or not we are solving a symmetric and quasi-definite augmented system
   If `sqd = true`, we solve the symmetric and quasi-definite system
 
-      [ E   Aᵀ ] [ r ]   [ b ]
-      [ A  -F  ] [ x ] = [ 0 ],
+      [ E    A ] [ r ]   [ b ]
+      [ Aᵀ  -F ] [ x ] = [ 0 ],
 
   where E = M⁻¹  and F = N⁻¹.
 
   If `sqd = false`, we solve the symmetric and indefinite system
 
-      [ E   Aᵀ ] [ r ]   [ b ]
-      [ A   0  ] [ x ] = [ 0 ].
+      [ E    A ] [ r ]   [ b ]
+      [ Aᵀ   0 ] [ x ] = [ 0 ].
 
   In this case, `N` can still be specified and indicates the norm in which `x` and the forward error should be measured.
 * `λ::Float64=0.0` is a regularization parameter (see the problem statement above)
