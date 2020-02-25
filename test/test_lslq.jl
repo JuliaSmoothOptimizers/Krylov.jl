@@ -5,14 +5,16 @@ function test_lslq()
     (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, npower, 0)  # No regularization.
 
     (x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b)
-    resid = norm(A' * (A*x - b)) / norm(b)
+    r = b - A * x
+    resid = norm(A' * r) / norm(b)
     @printf("LSLQ: Relative residual: %8.1e\n", resid)
     @test(resid <= lslq_tol)
     @test(stats.solved)
 
     λ = 1.0e-3
     (x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, λ=λ)
-    resid = norm(A' * (A*x - b) + λ * λ * x) / norm(b)
+    r = b - A * x
+    resid = norm(A' * r - λ * λ * x) / norm(b)
     @printf("LSLQ: Relative residual: %8.1e\n", resid)
     @test(resid <= lslq_tol)
     @test(stats.solved)
