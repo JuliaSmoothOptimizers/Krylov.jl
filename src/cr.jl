@@ -13,6 +13,8 @@ The matrix A must be positive semi-definite.
 
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
+M also indicates the weighted norm in which residuals are measured.
+
 In a linesearch context, 'linesearch' must be set to 'true'.
 """
 function cr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
@@ -43,7 +45,7 @@ function cr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = 2 * n)
 
-  rNorm = @knrm2(n, r) # ‖r‖
+  rNorm = sqrt(@kdot(n, r, b)) # ‖r‖
   rNorms = [rNorm] # Values of ‖r‖
   rNorm² = rNorm * rNorm
   pNorm = rNorm
