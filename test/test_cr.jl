@@ -78,13 +78,13 @@ function test_cr()
 
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
-  (x, stats) = cr(A, b, M=M, itmax=10);
+  (x, stats) = cr(A, b, M=M)
   show(stats)
   r = b - A * x;
-  resid = norm(r) / norm(b);
+  resid = sqrt(dot(r, M * r)) / norm(b)
   @printf("CR: Relative residual: %8.1e\n", resid);
   @test(resid <= cr_tol);
-  # @test(stats.solved);
+  @test(stats.solved)
 end
 
 test_cr()
