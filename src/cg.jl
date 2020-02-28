@@ -18,6 +18,7 @@ The method does _not_ abort if A is not definite.
 
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
+M also indicates the weighted norm in which residuals are measured.
 """
 function cg(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
             M :: AbstractLinearOperator=opEye(), atol :: T=√eps(T),
