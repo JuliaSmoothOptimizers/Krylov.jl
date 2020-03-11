@@ -56,7 +56,7 @@ In this case, M⁻¹ can still be specified and indicates the weighted norm in w
 
 In this implementation, both the x and y-parts of the solution are returned.
 """
-function lnlq(A :: AbstractLinearOperator, b :: AbstractVector{T};
+function lnlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               M :: AbstractLinearOperator=opEye(),
               N :: AbstractLinearOperator=opEye(),
               sqd :: Bool=false, λ :: T=zero(T),
