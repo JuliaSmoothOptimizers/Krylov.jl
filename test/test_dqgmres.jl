@@ -47,7 +47,7 @@ function test_dqgmres()
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("DQGMRES: Relative residual: %8.1e\n", resid)
-  @test(resid <= dqgmres_tol)
+  @test(resid ≤ dqgmres_tol)
   @test(stats.solved)
 
   # Symmetric indefinite variant, almost singular.
@@ -56,7 +56,7 @@ function test_dqgmres()
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("DQGMRES: Relative residual: %8.1e\n", resid)
-  @test(resid <= 100 * dqgmres_tol)
+  @test(resid ≤ 100 * dqgmres_tol)
   @test(stats.solved)
 
   # Test b == 0

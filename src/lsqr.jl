@@ -141,12 +141,12 @@ function lsqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
 
   status = "unknown"
   on_boundary = false
-  solved_lim = ArNorm / (Anorm * rNorm) <= axtol
+  solved_lim = ArNorm / (Anorm * rNorm) ≤ axtol
   solved_mach = one(T) + ArNorm / (Anorm * rNorm) ≤ one(T)
   solved = solved_mach | solved_lim
-  tired  = iter >= itmax
+  tired  = iter ≥ itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
-  zero_resid_lim = rNorm / β₁ <= axtol
+  zero_resid_lim = rNorm / β₁ ≤ axtol
   zero_resid_mach = one(T) + rNorm / β₁ ≤ one(T)
   zero_resid = zero_resid_mach | zero_resid_lim
   fwd_err = false
@@ -201,7 +201,7 @@ function lsqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
 
     xENorm² = xENorm² + ϕ * ϕ
     err_vec[mod(iter, window) + 1] = ϕ
-    iter >= window && (err_lbnd = norm(err_vec))
+    iter ≥ window && (err_lbnd = norm(err_vec))
 
     τ = s * ϕ;
     θ = s * α
@@ -264,12 +264,12 @@ function lsqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     zero_resid_mach = (one(T) + t1 ≤ one(T))
 
     # Stopping conditions based on user-provided tolerances.
-    tired  = iter >= itmax
-    ill_cond_lim = (test3 <= ctol)
-    solved_lim = (test2 <= axtol)
-    solved_opt = ArNorm <= atol + rtol * ArNorm0
-    zero_resid_lim = (test1 <= rNormtol)
-    iter >= window && (fwd_err = err_lbnd <= etol * sqrt(xENorm²))
+    tired  = iter ≥ itmax
+    ill_cond_lim = (test3 ≤ ctol)
+    solved_lim = (test2 ≤ axtol)
+    solved_opt = ArNorm ≤ atol + rtol * ArNorm0
+    zero_resid_lim = (test1 ≤ rNormtol)
+    iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
 
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | solved_opt | zero_resid_mach | zero_resid_lim | fwd_err | on_boundary

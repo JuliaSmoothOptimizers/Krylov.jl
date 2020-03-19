@@ -71,8 +71,8 @@ function cgls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
 
   status = "unknown";
   on_boundary = false
-  solved = ArNorm <= ε;
-  tired = iter >= itmax;
+  solved = ArNorm ≤ ε;
+  tired = iter ≥ itmax;
 
   while ! (solved || tired)
     q = A * p;
@@ -103,8 +103,8 @@ function cgls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     push!(ArNorms, ArNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm);
-    solved = (ArNorm <= ε) | on_boundary
-    tired = iter >= itmax;
+    solved = (ArNorm ≤ ε) | on_boundary
+    tired = iter ≥ itmax;
   end
 
   status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")

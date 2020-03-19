@@ -7,14 +7,14 @@ function test_minres()
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("MINRES: Relative residual: %8.1e\n", resid)
-  @test(resid <= minres_tol)
+  @test(resid ≤ minres_tol)
   @test(stats.solved)
 
   # radius = 0.75 * norm(x)
   # (x, stats) = minres(A, b, radius=radius, itmax=10)
   # show(stats)
   # @test(stats.solved)
-  # @test(abs(radius - norm(x)) <= minres_tol * radius)
+  # @test(abs(radius - norm(x)) ≤ minres_tol * radius)
 
   # Symmetric indefinite variant.
   A, b = symmetric_indefinite()
@@ -22,7 +22,7 @@ function test_minres()
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("MINRES: Relative residual: %8.1e\n", resid)
-  @test(resid <= minres_tol)
+  @test(resid ≤ minres_tol)
   @test(stats.solved)
 
   # Code coverage.
@@ -35,14 +35,14 @@ function test_minres()
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("MINRES: Relative residual: %8.1e\n", resid)
-  @test(resid <= minres_tol)
+  @test(resid ≤ minres_tol)
   @test(stats.solved)
 
   # radius = 0.75 * norm(x)
   # (x, stats) = minres(A, b, radius=radius, itmax=10)
   # show(stats)
   # @test(stats.solved)
-  # @test(abs(radius - norm(x)) <= minres_tol * radius)
+  # @test(abs(radius - norm(x)) ≤ minres_tol * radius)
 
   # Symmetric indefinite variant, almost singular.
   A, b = almost_singular()
@@ -50,7 +50,7 @@ function test_minres()
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("MINRES: Relative residual: %8.1e\n", resid)
-  @test(resid <= 100 * minres_tol)
+  @test(resid ≤ 100 * minres_tol)
   @test(stats.solved)
 
   # Test b == 0

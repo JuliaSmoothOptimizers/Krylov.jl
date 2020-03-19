@@ -8,7 +8,7 @@ function test_lsmr()
     r = b - A * x
     resid = norm(A' * r) / norm(b)
     @printf("LSMR: Relative residual: %8.1e\n", resid);
-    @test(resid <= lsmr_tol);
+    @test(resid ≤ lsmr_tol);
     @test(stats.solved);
 
     λ = 1.0e-3;
@@ -16,7 +16,7 @@ function test_lsmr()
     r = b - A * x
     resid = norm(A' * r - λ * λ * x) / norm(b)
     @printf("LSMR: Relative residual: %8.1e\n", resid);
-    @test(resid <= lsmr_tol);
+    @test(resid ≤ lsmr_tol);
     @test(stats.solved);
   end
 
@@ -29,11 +29,11 @@ function test_lsmr()
   radius = 0.75 * norm(x)
   (x, stats) = lsmr(A, b, radius=radius)
   @test(stats.solved)
-  @test(abs(radius - norm(x)) <= lsmr_tol * radius)
+  @test(abs(radius - norm(x)) ≤ lsmr_tol * radius)
 
   opA = LinearOperator(A)
   (xop, statsop) = lsmr(opA, b, radius=radius)
-  @test(abs(radius - norm(xop)) <= lsmr_tol * radius)
+  @test(abs(radius - norm(xop)) ≤ lsmr_tol * radius)
 
   # Code coverage.
   (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0);
