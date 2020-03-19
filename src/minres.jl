@@ -202,7 +202,7 @@ function minres(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
 
     verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
                        iter, test1, test2, β, cs, sn, ANorm, Acond)
-    
+
     if iter == 1
       # Aᵀb = 0 so x = 0 is a minimum least-squares solution
       β / β₁ ≤ 10 * ϵM && return (x, SimpleStats(true, true, [β₁], [zero(T)], "x is a minimum least-squares solution"))
