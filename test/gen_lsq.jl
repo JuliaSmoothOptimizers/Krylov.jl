@@ -14,13 +14,13 @@ function lstp(nrow :: Int, ncol :: Int, ndupl :: Int, npower :: Int, λ :: Real,
   # in the form A = HY*D*HZ, where D is an nrow by ncol diagonal matrix,
   # and HY and HZ are Householder transformations.
 
-  @assert(nrow ≥ ncol);
+  @assert(nrow ≥ ncol)
 
   # Construct two unit vectors for the Householder transformations.
-  # fourpi = 4π;
+  # fourpi = 4π
   fourpi = 4 * 3.141592;    # This is the approximation used in Mike's original subroutine.
-  α = fourpi / nrow;        # 4π / nrow;
-  β = fourpi / ncol;        # 4π / ncol;
+  α = fourpi / nrow;        # 4π / nrow
+  β = fourpi / ncol;        # 4π / ncol
   hy = map(sin, [1:nrow;] * α)
   hz = map(cos, [1:ncol;] * β)
 
@@ -29,25 +29,25 @@ function lstp(nrow :: Int, ncol :: Int, ndupl :: Int, npower :: Int, λ :: Real,
 
   # Set the diagonal matrix D containing the singular values of A.
   d = (div.(([0:ncol-1;] .+ ndupl), ndupl) * ndupl / ncol).^npower;  # Integer div!
-  D = opDiagonal(nrow, ncol, d);
-  A = HY * D * HZ;
+  D = opDiagonal(nrow, ncol, d)
+  A = HY * D * HZ
 
-  Acond = abs(d[ncol] / d[1]);
+  Acond = abs(d[ncol] / d[1])
 
   # Compute residual vector.
-  r = zeros(nrow);
-  r[1:ncol]  = HZ * x ./ d;
-  t = 1.0;
+  r = zeros(nrow)
+  r[1:ncol]  = HZ * x ./ d
+  t = 1.0
   for i = ncol + 1 : nrow
-    j = i - ncol;
-    r[i] = t * j / nrow;
-    t = -t;
+    j = i - ncol
+    r[i] = t * j / nrow
+    t = -t
   end
-  r = HY * r;
+  r = HY * r
 
   # Compute right-hand side b = r + Ax.
-  rnorm = norm(r);
-  b = r + A * x;
+  rnorm = norm(r)
+  b = r + A * x
 
   return (b, A, D, HY, HZ, Acond, rnorm)
 end
@@ -56,14 +56,14 @@ end
 function test(nrow, ncol, ndupl, npower, damp)
 
   x = ncol .- [1:ncol;];  # Desired solution.
-  return lstp(nrow, ncol, ndupl, npower, damp, x);
+  return lstp(nrow, ncol, ndupl, npower, damp, x)
 end
 
 
 function testall()
   damp = 0;  # Must be zero for this problem to be consistent.
-  test(40, 40, 4, 1, damp);
-  test(40, 40, 4, 2, damp);
-  test(40, 40, 4, 3, damp);
-  test(40, 40, 4, 4, damp);
+  test(40, 40, 4, 1, damp)
+  test(40, 40, 4, 2, damp)
+  test(40, 40, 4, 3, damp)
+  test(40, 40, 4, 4, damp)
 end

@@ -1,39 +1,39 @@
 function test_cg()
-  cg_tol = 1.0e-6;
+  cg_tol = 1.0e-6
 
   # Cubic spline matrix.
   A, b = symmetric_definite()
-  (x, stats) = cg(A, b, itmax=10);
-  r = b - A * x;
+  (x, stats) = cg(A, b, itmax=10)
+  r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CG: Relative residual: %8.1e\n", resid);
-  @test(resid ≤ cg_tol);
-  @test(stats.solved);
+  @printf("CG: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ cg_tol)
+  @test(stats.solved)
 
   # Code coverage.
-  (x, stats) = cg(Matrix(A), b);
-  show(stats);
-
-  radius = 0.75 * norm(x);
-  (x, stats) = cg(A, b, radius=radius, itmax=10);
+  (x, stats) = cg(Matrix(A), b)
   show(stats)
-  @test(stats.solved);
-  @test(abs(radius - norm(x)) ≤ cg_tol * radius);
+
+  radius = 0.75 * norm(x)
+  (x, stats) = cg(A, b, radius=radius, itmax=10)
+  show(stats)
+  @test(stats.solved)
+  @test(abs(radius - norm(x)) ≤ cg_tol * radius)
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
-  (x, stats) = cg(A, b);
-  r = b - A * x;
-  resid = norm(r) / norm(b);
-  @printf("CG: Relative residual: %8.1e\n", resid);
-  @test(resid ≤ cg_tol);
-  @test(stats.solved);
+  (x, stats) = cg(A, b)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("CG: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ cg_tol)
+  @test(stats.solved)
 
-  radius = 0.75 * norm(x);
-  (x, stats) = cg(A, b, radius=radius, itmax=10);
+  radius = 0.75 * norm(x)
+  (x, stats) = cg(A, b, radius=radius, itmax=10)
   show(stats)
-  @test(stats.solved);
-  @test(abs(radius - norm(x)) ≤ cg_tol * radius);
+  @test(stats.solved)
+  @test(abs(radius - norm(x)) ≤ cg_tol * radius)
 
   opA = LinearOperator(A)
   (xop, statsop) = cg(opA, b, radius=radius, itmax=10)
@@ -65,11 +65,11 @@ function test_cg()
   A, b, M = square_preconditioned()
   (x, stats) = cg(A, b, M=M)
   show(stats)
-  r = b - A * x;
+  r = b - A * x
   resid = sqrt(dot(r, M * r)) / norm(b)
-  @printf("CG: Relative residual: %8.1e\n", resid);
-  @test(resid ≤ cg_tol);
-  @test(stats.solved);
+  @printf("CG: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ cg_tol)
+  @test(stats.solved)
 
   # Test that precision is not lost (#126)
   A = rand(BigFloat, 3, 3)

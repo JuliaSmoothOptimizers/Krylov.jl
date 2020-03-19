@@ -3,7 +3,7 @@ module Krylov
 using LinearOperators, LinearAlgebra, SparseArrays, Printf
 
 "Abstract type for statistics returned by a solver"
-abstract type KrylovStats{T} end;
+abstract type KrylovStats{T} end
 
 "Type for statistics returned by non-Lanczos solvers"
 mutable struct SimpleStats{T} <: KrylovStats{T}

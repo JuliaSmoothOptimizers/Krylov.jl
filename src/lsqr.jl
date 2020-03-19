@@ -203,7 +203,7 @@ function lsqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     err_vec[mod(iter, window) + 1] = ϕ
     iter ≥ window && (err_lbnd = norm(err_vec))
 
-    τ = s * ϕ;
+    τ = s * ϕ
     θ = s * α
     ρbar = -c * α
     dNorm² += @kdot(n, w, w) / ρ^2

@@ -42,9 +42,9 @@ function crls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               atol :: T=√eps(T), rtol :: T=√eps(T), radius :: T=zero(T),
               itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
-  m, n = size(A);
-  size(b, 1) == m || error("Inconsistent problem size");
-  verbose && @printf("CRLS: system of %d equations in %d variables\n", m, n);
+  m, n = size(A)
+  size(b, 1) == m || error("Inconsistent problem size")
+  verbose && @printf("CRLS: system of %d equations in %d variables\n", m, n)
 
   # Compute the adjoint of A
   Aᵀ = A'
@@ -52,34 +52,34 @@ function crls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   x = zeros(T, n)
   r  = copy(b)
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
-  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution");
+  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
 
-  Mr = M * r;
+  Mr = M * r
   Ar = copy(Aᵀ * Mr)  # - λ * x0 if x0 ≠ 0.
-  s  = A * Ar;
-  Ms = M * s;
+  s  = A * Ar
+  Ms = M * s
 
-  p  = copy(Ar);
-  Ap = copy(s);
-  q  = Aᵀ * Ms # Ap;
-  λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p;
-  γ  = @kdot(m, s, Ms)  # Faster than γ = dot(s, Ms);
-  iter = 0;
-  itmax == 0 && (itmax = m + n);
+  p  = copy(Ar)
+  Ap = copy(s)
+  q  = Aᵀ * Ms # Ap
+  λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
+  γ  = @kdot(m, s, Ms)  # Faster than γ = dot(s, Ms)
+  iter = 0
+  itmax == 0 && (itmax = m + n)
 
   rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
-  ArNorm = @knrm2(n, Ar)  # Marginally faster than norm(Ar);
-  λ > 0 && (γ += λ * ArNorm * ArNorm);
-  rNorms = [rNorm;];
-  ArNorms = [ArNorm;];
-  ε = atol + rtol * ArNorm;
+  ArNorm = @knrm2(n, Ar)  # Marginally faster than norm(Ar)
+  λ > 0 && (γ += λ * ArNorm * ArNorm)
+  rNorms = [rNorm;]
+  ArNorms = [ArNorm;]
+  ε = atol + rtol * ArNorm
   verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
-  verbose && @printf("%5d  %8.2e  %8.2e\n", 3, ArNorm, rNorm);
+  verbose && @printf("%5d  %8.2e  %8.2e\n", 3, ArNorm, rNorm)
 
-  status = "unknown";
+  status = "unknown"
   on_boundary = false
-  solved = ArNorm ≤ ε;
-  tired = iter ≥ itmax;
+  solved = ArNorm ≤ ε
+  tired = iter ≥ itmax
   psd = false
 
   while ! (solved || tired)
@@ -106,40 +106,40 @@ function crls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
       end
     end
 
-    @kaxpy!(n,  α, p,   x)     # Faster than  x =  x + α *  p;
-    @kaxpy!(n, -α, q,  Ar)     # Faster than Ar = Ar - α *  q;
+    @kaxpy!(n,  α, p,   x)     # Faster than  x =  x + α *  p
+    @kaxpy!(n, -α, q,  Ar)     # Faster than Ar = Ar - α *  q
     ArNorm = @knrm2(n, Ar)
     solved = psd || on_boundary
     solved && continue
-    @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap;
-    s = A * Ar;
-    Ms = M * s;
-    γ_next = @kdot(m, s, Ms)   # Faster than γ_next = dot(s, s);
-    λ > 0 && (γ_next += λ * ArNorm * ArNorm);
-    β = γ_next / γ;
+    @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap
+    s = A * Ar
+    Ms = M * s
+    γ_next = @kdot(m, s, Ms)   # Faster than γ_next = dot(s, s)
+    λ > 0 && (γ_next += λ * ArNorm * ArNorm)
+    β = γ_next / γ
 
-    @kaxpby!(n, one(T), Ar, β, p)    # Faster than  p = Ar + β *  p;
-    @kaxpby!(m, one(T), s, β, Ap)    # Faster than Ap =  s + β * Ap;
+    @kaxpby!(n, one(T), Ar, β, p)    # Faster than  p = Ar + β *  p
+    @kaxpby!(m, one(T), s, β, Ap)    # Faster than Ap =  s + β * Ap
     MAp = M * Ap
     q = Aᵀ * MAp
-    λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p;
+    λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
 
-    γ = γ_next;
+    γ = γ_next
     if λ > 0
       rNorm = sqrt(@kdot(m, r, r) + λ * @kdot(n, x, x))
     else
-      rNorm = @knrm2(m, r)  # norm(r);
+      rNorm = @knrm2(m, r)  # norm(r)
     end
-    #     ArNorm = norm(Ar);
-    push!(rNorms, rNorm);
-    push!(ArNorms, ArNorm);
-    iter = iter + 1;
-    verbose && @printf("%5d  %8.2e  %8.2e\n", 3 + 2 * iter, ArNorm, rNorm);
+    #     ArNorm = norm(Ar)
+    push!(rNorms, rNorm)
+    push!(ArNorms, ArNorm)
+    iter = iter + 1
+    verbose && @printf("%5d  %8.2e  %8.2e\n", 3 + 2 * iter, ArNorm, rNorm)
     solved = (ArNorm ≤ ε) || on_boundary
-    tired = iter ≥ itmax;
+    tired = iter ≥ itmax
   end
 
   status = psd ? "zero-curvature encountered" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
-  stats = SimpleStats(solved, false, rNorms, ArNorms, status);
-  return (x, stats);
+  stats = SimpleStats(solved, false, rNorms, ArNorms, status)
+  return (x, stats)
 end

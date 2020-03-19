@@ -5,8 +5,8 @@ function test_craig()
     (x, y, stats) = craig(A, b, λ=λ)
     r = b - A * x
     # if λ > 0
-    #   s = r / sqrt(λ);
-    #   r = r - sqrt(λ) * s;
+    #   s = r / sqrt(λ)
+    #   r = r - sqrt(λ) * s
     # end
     resid = norm(r) / norm(b)
     @printf("CRAIG: residual: %7.1e\n", resid)

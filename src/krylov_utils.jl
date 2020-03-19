@@ -24,7 +24,7 @@ function vec2str(x :: AbstractVector{T}, ndisp :: Int=7) where T <: Union{Abstra
   end
   if i ≤ div(n, 2)
     s *= "... "
-  end;
+  end
   i = max(i, n - nside + 1)
   while i ≤ n
     if x[i] !== missing

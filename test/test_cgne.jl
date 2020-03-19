@@ -1,68 +1,68 @@
 function test_cgne()
-  cgne_tol = 1.0e-6;
+  cgne_tol = 1.0e-6
 
   function test_cgne(A, b; λ=0.0, M=opEye())
-    (nrow, ncol) = size(A);
-    (x, stats) = cgne(A, b, λ=λ, M=M);
-    r = b - A * x;
+    (nrow, ncol) = size(A)
+    (x, stats) = cgne(A, b, λ=λ, M=M)
+    r = b - A * x
     if λ > 0
-      s = r / sqrt(λ);
-      r = r - sqrt(λ) * s;
+      s = r / sqrt(λ)
+      r = r - sqrt(λ) * s
     end
-    resid = norm(r) / norm(b);
-    @printf("CGNE: residual: %7.1e\n", resid);
+    resid = norm(r) / norm(b)
+    @printf("CGNE: residual: %7.1e\n", resid)
     return (x, stats, resid)
   end
 
   # Underdetermined consistent.
   A, b = under_consistent()
-  (x, stats, resid) = test_cgne(A, b);
-  @test(resid ≤ cgne_tol);
-  @test(stats.solved);
-  (xI, xmin, xmin_norm) = check_min_norm(A, b, x);
-  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm);
+  (x, stats, resid) = test_cgne(A, b)
+  @test(resid ≤ cgne_tol)
+  @test(stats.solved)
+  (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
+  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm)
 
   # Underdetermined inconsistent.
   A, b = under_inconsistent()
-  (x, stats, resid) = test_cgne(A, b);
-  @test(stats.inconsistent);
+  (x, stats, resid) = test_cgne(A, b)
+  @test(stats.inconsistent)
 
   # Square consistent.
   A, b = square_consistent()
-  (x, stats, resid) = test_cgne(A, b);
-  @test(resid ≤ cgne_tol);
-  @test(stats.solved);
-  (xI, xmin, xmin_norm) = check_min_norm(A, b, x);
-  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm);
+  (x, stats, resid) = test_cgne(A, b)
+  @test(resid ≤ cgne_tol)
+  @test(stats.solved)
+  (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
+  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm)
 
   # Square inconsistent.
   A, b = square_inconsistent()
-  (x, stats, resid) = test_cgne(A, b);
-  @test(stats.inconsistent);
+  (x, stats, resid) = test_cgne(A, b)
+  @test(stats.inconsistent)
 
   # Overdetermined consistent.
   A, b = over_consistent()
-  (x, stats, resid) = test_cgne(A, b);
-  @test(resid ≤ cgne_tol);
-  @test(stats.solved);
-  (xI, xmin, xmin_norm) = check_min_norm(A, b, x);
-  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm);
+  (x, stats, resid) = test_cgne(A, b)
+  @test(resid ≤ cgne_tol)
+  @test(stats.solved)
+  (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
+  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm)
 
   # Overdetermined inconsistent.
   A, b = over_inconsistent()
-  (x, stats, resid) = test_cgne(A, b);
-  @test(stats.inconsistent);
+  (x, stats, resid) = test_cgne(A, b)
+  @test(stats.inconsistent)
 
   # With regularization, all systems are underdetermined and consistent.
-  (x, stats, resid) = test_cgne(A, b, λ=1.0e-3);
-  @test(resid ≤ cgne_tol);
-  @test(stats.solved);
-  (xI, xmin, xmin_norm) = check_min_norm(A, b, x, λ=1.0e-3);
-  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm);
+  (x, stats, resid) = test_cgne(A, b, λ=1.0e-3)
+  @test(resid ≤ cgne_tol)
+  @test(stats.solved)
+  (xI, xmin, xmin_norm) = check_min_norm(A, b, x, λ=1.0e-3)
+  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm)
 
   # Code coverage.
-  (x, stats, resid) = test_cgne(sparse(A), b, λ=1.0e-3);
-  show(stats);
+  (x, stats, resid) = test_cgne(sparse(A), b, λ=1.0e-3)
+  show(stats)
 
   # Test b == 0
   A, b = zero_rhs()

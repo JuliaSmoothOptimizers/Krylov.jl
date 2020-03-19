@@ -25,41 +25,41 @@ function cg(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
             rtol :: T=√eps(T), itmax :: Int=0, radius :: T=zero(T),
             verbose :: Bool=false) where T <: AbstractFloat
 
-  n = size(b, 1);
-  (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
-  verbose && @printf("CG: system of %d equations in %d variables\n", n, n);
+  n = size(b, 1)
+  (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
+  verbose && @printf("CG: system of %d equations in %d variables\n", n, n)
 
   # Initial state.
-  x = zeros(T, n);
+  x = zeros(T, n)
   r = copy(b)
   z = M * r
   p = copy(z)
   γ = @kdot(n, r, z)
   γ == 0 && return x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
 
-  iter = 0;
-  itmax == 0 && (itmax = 2 * n);
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
 
-  rNorm = sqrt(γ);
-  rNorms = [rNorm;];
-  ε = atol + rtol * rNorm;
-  verbose && @printf("%5d  %8.1e  ", iter, rNorm);
+  rNorm = sqrt(γ)
+  rNorms = [rNorm;]
+  ε = atol + rtol * rNorm
+  verbose && @printf("%5d  %8.1e  ", iter, rNorm)
 
-  solved = rNorm ≤ ε;
-  tired = iter ≥ itmax;
-  on_boundary = false;
-  status = "unknown";
+  solved = rNorm ≤ ε
+  tired = iter ≥ itmax
+  on_boundary = false
+  status = "unknown"
 
   while ! (solved || tired)
-    Ap = A * p;
+    Ap = A * p
     pAp = @kdot(n, p, Ap)
 
-    α = γ / pAp;
+    α = γ / pAp
 
     # Compute step size to boundary if applicable.
     σ = radius > 0 ? maximum(to_boundary(x, p, radius)) : α
 
-    verbose && @printf("%8.1e  %7.1e  %7.1e\n", pAp, α, σ);
+    verbose && @printf("%8.1e  %7.1e  %7.1e\n", pAp, α, σ)
 
     # Move along p from x to the boundary if either
     # the next step leads outside the trust region or
@@ -73,24 +73,24 @@ function cg(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     @kaxpy!(n, -α, Ap, r)
     z = M * r
     γ_next = @kdot(n, r, z)
-    rNorm = sqrt(γ_next);
-    push!(rNorms, rNorm);
+    rNorm = sqrt(γ_next)
+    push!(rNorms, rNorm)
 
-    solved = (rNorm ≤ ε) | on_boundary;
+    solved = (rNorm ≤ ε) | on_boundary
     if !solved
-      β = γ_next / γ;
-      γ = γ_next;
+      β = γ_next / γ
+      γ = γ_next
 
       @kaxpby!(n, one(T), z, β, p)
     end
 
-    iter = iter + 1;
-    tired = iter ≥ itmax;
-    verbose && @printf("%5d  %8.1e  ", iter, rNorm);
+    iter = iter + 1
+    tired = iter ≥ itmax
+    verbose && @printf("%5d  %8.1e  ", iter, rNorm)
   end
-  verbose && @printf("\n");
+  verbose && @printf("\n")
 
   status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, T[], status);
-  return (x, stats);
+  stats = SimpleStats(solved, false, rNorms, T[], status)
+  return (x, stats)
 end

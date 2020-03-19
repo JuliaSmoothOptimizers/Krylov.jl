@@ -80,10 +80,10 @@ function test_cr()
   A, b, M = square_preconditioned()
   (x, stats) = cr(A, b, M=M)
   show(stats)
-  r = b - A * x;
+  r = b - A * x
   resid = sqrt(dot(r, M * r)) / norm(b)
-  @printf("CR: Relative residual: %8.1e\n", resid);
-  @test(resid ≤ cr_tol);
+  @printf("CR: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ cr_tol)
   @test(stats.solved)
 end
 
