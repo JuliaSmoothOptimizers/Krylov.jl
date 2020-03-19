@@ -21,7 +21,7 @@ function test_lslq()
   end
 
   # Test with smallest singular value estimate
-  Σ = diagm(0 ≥ 1:4)
+  Σ = diagm(0 => 1:4)
   U, _ = qr(rand(6, 6))
   V, _ = qr(rand(4, 4))
   A = U * [Σ ; zeros(2, 4)] * V'

@@ -68,7 +68,7 @@ function test_crls()
   m,n = 10,7
   U = qr(rand(m,m)).Q
   V = qr(rand(n,n)).Q
-  S = [diagm(0 ≥ [0, 1.0e-6, 1, 4, 20, 15, 1.0e5]) ; zeros(3,7)]
+  S = [diagm(0 => [0, 1.0e-6, 1, 4, 20, 15, 1.0e5]) ; zeros(3,7)]
   A = U * S * V
   p = V[:,1]; b = A'\p
   (x, stats) = crls(A, b, radius=radius)

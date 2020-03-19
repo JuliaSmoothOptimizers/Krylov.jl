@@ -4,14 +4,14 @@ include("check_min_norm.jl")
 
 # Symmetric and positive definite systems.
 function symmetric_definite(n :: Int=10)
-  A = spdiagm(-1 ≥ ones(n-1), 0 ≥ 4*ones(n), 1 ≥ ones(n-1))
+  A = spdiagm(-1 => ones(n-1), 0 => 4*ones(n), 1 => ones(n-1))
   b = A * [1:n;]
   return A, b
 end
 
 # Symmetric and indefinite systems.
 function symmetric_indefinite(n :: Int=10)
-  A = spdiagm(-1 ≥ ones(n-1), 0 ≥ 4*ones(n), 1 ≥ ones(n-1))
+  A = spdiagm(-1 => ones(n-1), 0 => 4*ones(n), 1 => ones(n-1))
   A = A - 3 * I
   b = A * [1:n;]
   return A, b
@@ -87,7 +87,7 @@ end
 
 # Square and integer systems.
 function square_int(n :: Int=10)
-  A = spdiagm(-1 ≥ ones(Int, n-1), 0 ≥ 4*ones(Int, n), 1 ≥ ones(Int, n-1))
+  A = spdiagm(-1 => ones(Int, n-1), 0 => 4*ones(Int, n), 1 => ones(Int, n-1))
   b = A * [1:n;]
   return A, b
 end
