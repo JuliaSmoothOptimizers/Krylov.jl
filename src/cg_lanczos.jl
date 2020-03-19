@@ -28,9 +28,9 @@ function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
                     atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                     check_curvature :: Bool=false, verbose :: Bool=false) where T <: AbstractFloat
 
-  n = size(b, 1);
-  (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
-  verbose && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n);
+  n = size(b, 1)
+  (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
+  verbose && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n)
 
   # Tests M == Iₙ
   MisI = isa(M, opEye)
@@ -49,26 +49,26 @@ function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   MisI || @kscal!(n, one(T)/β, Mv) # Mv₁ ← Mv₁ / β₁
   Mv_prev = copy(Mv)
 
-  iter = 0;
-  itmax == 0 && (itmax = 2 * n);
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
 
   # Initialize some constants used in recursions below.
-  σ = β;
+  σ = β
   ω = zero(T)
   γ = one(T)
   Anorm2 = zero(T)
   β_prev = zero(T)
 
   # Define stopping tolerance.
-  rNorm = σ;
-  rNorms = [rNorm;];
-  ε = atol + rtol * rNorm;
-  verbose && @printf("%5d  %8.1e\n", iter, rNorm);
+  rNorm = σ
+  rNorms = [rNorm;]
+  ε = atol + rtol * rNorm
+  verbose && @printf("%5d  %8.1e\n", iter, rNorm)
 
-  indefinite = false;
-  solved = rNorm ≤ ε;
-  tired = iter ≥ itmax;
-  status = "unknown";
+  indefinite = false
+  solved = rNorm ≤ ε
+  tired = iter ≥ itmax
+  status = "unknown"
 
   # Main loop.
   while ! (solved || tired || (check_curvature & indefinite))
@@ -80,8 +80,8 @@ function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     # Check curvature. Exit fast if requested.
     # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ A pₖ.
     γ = 1 / (δ - ω / γ)      # γₖ = δₖ - ωₖ₋₁ / γₖ₋₁
-    indefinite |= (γ ≤ 0);
-    (check_curvature & indefinite) && continue;
+    indefinite |= (γ ≤ 0)
+    (check_curvature & indefinite) && continue
 
     @kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
     if iter > 0
@@ -94,7 +94,7 @@ function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     @kscal!(n, one(T)/β, v)            # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
     MisI || @kscal!(n, one(T)/β, Mv)   # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
     Anorm2 += β_prev^2 + β^2 + δ^2     # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
-    β_prev = β;
+    β_prev = β
 
     # Compute next CG iterate.
     @kaxpy!(n, γ, p, x)     # xₖ₊₁ = xₖ + γₖ * pₖ
@@ -103,16 +103,16 @@ function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     ω = ω * ω               # ωₖ = (βₖ₊₁ * γₖ)²
     @kaxpby!(n, σ, v, ω, p) # pₖ₊₁ = σₖ₊₁ * vₖ₊₁ + ωₖ * pₖ
     rNorm = abs(σ)          # ‖rₖ₊₁‖_M = |σₖ₊₁| because rₖ₊₁ = σₖ₊₁ * vₖ₊₁ and ‖vₖ₊₁‖_M = 1
-    push!(rNorms, rNorm);
-    iter = iter + 1;
-    verbose && @printf("%5d  %8.1e\n", iter, rNorm);
-    solved = rNorm ≤ ε;
-    tired = iter ≥ itmax;
+    push!(rNorms, rNorm)
+    iter = iter + 1
+    verbose && @printf("%5d  %8.1e\n", iter, rNorm)
+    solved = rNorm ≤ ε
+    tired = iter ≥ itmax
   end
 
   status = tired ? "maximum number of iterations exceeded" : (check_curvature & indefinite) ? "negative curvature" : "solution good enough given atol and rtol"
   stats = LanczosStats(solved, rNorms, indefinite, sqrt(Anorm2), zero(T), status);  # TODO: Estimate Acond.
-  return (x, stats);
+  return (x, stats)
 end
 
 
@@ -132,11 +132,11 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVecto
                               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                               check_curvature :: Bool=false, verbose :: Bool=false) where {T <: AbstractFloat, S <: Number}
 
-  n = size(b, 1);
-  (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size");
+  n = size(b, 1)
+  (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
 
-  nshifts = size(shifts, 1);
-  verbose && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts);
+  nshifts = size(shifts, 1)
+  verbose && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts)
 
   # Tests M == Iₙ
   MisI = isa(M, opEye)
@@ -166,29 +166,29 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVecto
   γ = ones(T, nshifts)
 
   # Define stopping tolerance.
-  rNorms = β * ones(T, nshifts);
-  rNorms_history = [rNorms;];
-  ε = atol + rtol * β;
+  rNorms = β * ones(T, nshifts)
+  rNorms_history = [rNorms;]
+  ε = atol + rtol * β
 
   # Keep track of shifted systems that have converged.
-  converged = rNorms .≤ ε;
-  iter = 0;
-  itmax == 0 && (itmax = 2 * n);
+  converged = rNorms .≤ ε
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
 
   # Keep track of shifted systems with negative curvature if required.
-  indefinite = falses(nshifts);
+  indefinite = falses(nshifts)
 
   # Build format strings for printing.
   if verbose
-    fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n";
+    fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n"
     # precompile printf for our particular format
     local_printf(data...) = Core.eval(Main, :(@printf($fmt, $(data)...)))
     local_printf(iter, rNorms...)
   end
 
-  solved = all(converged);
-  tired = iter ≥ itmax;
-  status = "unknown";
+  solved = all(converged)
+  tired = iter ≥ itmax
+  status = "unknown"
 
   # Main loop.
   while ! (solved || tired)
@@ -214,36 +214,36 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVecto
       δhat[i] = δ + ρ * shifts[i]
       γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i])
     end
-    indefinite .|= (γ .≤ 0);
+    indefinite .|= (γ .≤ 0)
 
     # Compute next CG iterate for each shifted system that has not yet converged.
     # Stop iterating on indefinite problems if requested.
-    not_cv = check_curvature ? findall(.! (converged .| indefinite)) : findall(.! converged);
+    not_cv = check_curvature ? findall(.! (converged .| indefinite)) : findall(.! converged)
 
     for i in not_cv
       @kaxpy!(n, γ[i], p[i], x[i])
-      ω[i] = β * γ[i];
-      σ[i] *= -ω[i];
-      ω[i] *= ω[i];
+      ω[i] = β * γ[i]
+      σ[i] *= -ω[i]
+      ω[i] *= ω[i]
       @kaxpby!(n, σ[i], v, ω[i], p[i])
 
       # Update list of systems that have converged.
-      rNorms[i] = abs(σ[i]);
-      converged[i] = rNorms[i] ≤ ε;
+      rNorms[i] = abs(σ[i])
+      converged[i] = rNorms[i] ≤ ε
     end
 
-    length(not_cv) > 0 && append!(rNorms_history, rNorms);
+    length(not_cv) > 0 && append!(rNorms_history, rNorms)
 
     # Is there a better way than to update this array twice per iteration?
-    not_cv = check_curvature ? findall(.! (converged .| indefinite)) : findall(.! converged);
-    iter = iter + 1;
+    not_cv = check_curvature ? findall(.! (converged .| indefinite)) : findall(.! converged)
+    iter = iter + 1
     verbose && local_printf(iter, rNorms...)
 
-    solved = length(not_cv) == 0;
-    tired = iter ≥ itmax;
+    solved = length(not_cv) == 0
+    tired = iter ≥ itmax
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
   stats = LanczosStats(solved, permutedims(reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))), indefinite, zero(T), zero(T), status);  # TODO: Estimate Anorm and Acond.
-  return (x, stats);
+  return (x, stats)
 end

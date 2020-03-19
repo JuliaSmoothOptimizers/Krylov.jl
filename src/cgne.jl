@@ -59,19 +59,19 @@ function cgne(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
               verbose :: Bool=false) where T <: AbstractFloat
 
-  m, n = size(A);
-  size(b, 1) == m || error("Inconsistent problem size");
-  verbose && @printf("CGNE: system of %d equations in %d variables\n", m, n);
+  m, n = size(A)
+  size(b, 1) == m || error("Inconsistent problem size")
+  verbose && @printf("CGNE: system of %d equations in %d variables\n", m, n)
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  x = zeros(T, n);
+  x = zeros(T, n)
   r = copy(b)
   z = M * r
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
-  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution");
-  λ > 0 && (s = copy(r));
+  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
+  λ > 0 && (s = copy(r))
 
   # The following vector copy takes care of the case where A is a LinearOperator
   # with preallocation, so as to avoid overwriting vectors used later. In other
@@ -85,49 +85,49 @@ function cgne(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   # implementation, p is a substitute for A'u.
   pNorm = @knrm2(n, p)
 
-  γ = @kdot(m, r, z)  # Faster than γ = dot(r, z);
-  iter = 0;
-  itmax == 0 && (itmax = m + n);
+  γ = @kdot(m, r, z)  # Faster than γ = dot(r, z)
+  iter = 0
+  itmax == 0 && (itmax = m + n)
 
-  rNorms = [rNorm;];
+  rNorms = [rNorm;]
   ɛ_c = atol + rtol * rNorm;  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * pNorm;  # Stopping tolerance for inconsistent systems.
   verbose && @printf("%5s  %8s\n", "Aprod", "‖r‖")
-  verbose && @printf("%5d  %8.2e\n", 1, rNorm);
+  verbose && @printf("%5d  %8.2e\n", 1, rNorm)
 
-  status = "unknown";
-  solved = rNorm ≤ ɛ_c;
-  inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i);
-  tired = iter ≥ itmax;
+  status = "unknown"
+  solved = rNorm ≤ ɛ_c
+  inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
+  tired = iter ≥ itmax
 
   while ! (solved || inconsistent || tired)
-    q = A * p;
+    q = A * p
     λ > 0 && @kaxpy!(m, λ, s, q)
-    δ = @kdot(n, p, p)   # Faster than dot(p, p);
+    δ = @kdot(n, p, p)   # Faster than dot(p, p)
     λ > 0 && (δ += λ * @kdot(m, s, s))
-    α = γ / δ;
-    @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p;
-    @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q;
+    α = γ / δ
+    @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
+    @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
     z = M * r
-    γ_next = @kdot(m, r, z)  # Faster than γ_next = dot(r, z);
-    β = γ_next / γ;
+    γ_next = @kdot(m, r, z)  # Faster than γ_next = dot(r, z)
+    β = γ_next / γ
     Aᵀz = Aᵀ * z
-    @kaxpby!(n, one(T), Aᵀz, β, p)  # Faster than p = Aᵀz + β * p;
+    @kaxpby!(n, one(T), Aᵀz, β, p)  # Faster than p = Aᵀz + β * p
     pNorm = @knrm2(n, p)
     if λ > 0
-      @kaxpby!(m, one(T), r, β, s)  # s = r + β * s;
+      @kaxpby!(m, one(T), r, β, s)  # s = r + β * s
     end
-    γ = γ_next;
-    rNorm = sqrt(γ_next);
-    push!(rNorms, rNorm);
-    iter = iter + 1;
-    verbose && @printf("%5d  %8.2e\n", 1 + 2 * iter, rNorm);
-    solved = rNorm ≤ ɛ_c;
-    inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i);
-    tired = iter ≥ itmax;
+    γ = γ_next
+    rNorm = sqrt(γ_next)
+    push!(rNorms, rNorm)
+    iter = iter + 1
+    verbose && @printf("%5d  %8.2e\n", 1 + 2 * iter, rNorm)
+    solved = rNorm ≤ ɛ_c
+    inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
+    tired = iter ≥ itmax
   end
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, inconsistent, rNorms, T[], status);
-  return (x, stats);
+  stats = SimpleStats(solved, inconsistent, rNorms, T[], status)
+  return (x, stats)
 end

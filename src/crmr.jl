@@ -58,9 +58,9 @@ function crmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               atol :: T=√eps(T), rtol :: T=√eps(T),
               itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
-  m, n = size(A);
-  size(b, 1) == m || error("Inconsistent problem size");
-  verbose && @printf("CRMR: system of %d equations in %d variables\n", m, n);
+  m, n = size(A)
+  size(b, 1) == m || error("Inconsistent problem size")
+  verbose && @printf("CRMR: system of %d equations in %d variables\n", m, n)
 
   # Compute the adjoint of A
   Aᵀ = A'
@@ -68,59 +68,59 @@ function crmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   x = zeros(T, n) # initial estimation x = 0
   r = copy(M * b) # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
-  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution");
+  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
   rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
-  λ > 0 && (s = copy(r));
+  λ > 0 && (s = copy(r))
   Aᵀr = Aᵀ * r # - λ * x0 if x0 ≠ 0.
-  p  = copy(Aᵀr);
-  γ  = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr);
-  λ > 0 && (γ += λ * rNorm * rNorm);
-  iter = 0;
-  itmax == 0 && (itmax = m + n);
+  p  = copy(Aᵀr)
+  γ  = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr)
+  λ > 0 && (γ += λ * rNorm * rNorm)
+  iter = 0
+  itmax == 0 && (itmax = m + n)
 
-  ArNorm = sqrt(γ);
-  rNorms = [rNorm;];
-  ArNorms = [ArNorm;];
+  ArNorm = sqrt(γ)
+  rNorms = [rNorm;]
+  ArNorms = [ArNorm;]
   ɛ_c = atol + rtol * rNorm;   # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm;  # Stopping tolerance for inconsistent systems.
   verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
-  verbose && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm);
+  verbose && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm)
 
-  status = "unknown";
-  solved = rNorm ≤ ɛ_c;
-  inconsistent = (rNorm > 100 * ɛ_c) && (ArNorm ≤ ɛ_i);
-  tired = iter ≥ itmax;
+  status = "unknown"
+  solved = rNorm ≤ ɛ_c
+  inconsistent = (rNorm > 100 * ɛ_c) && (ArNorm ≤ ɛ_i)
+  tired = iter ≥ itmax
 
   while ! (solved || inconsistent || tired)
-    q = A * p;
-    λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s;
+    q = A * p
+    λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s
     Mq = M * q
     α = γ / @kdot(m, q, Mq)    # Compute qᵗ * M * q
-    @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p;
-    @kaxpy!(m, -α, Mq, r)      # Faster than  r =  r - α * Mq;
-    rNorm = @knrm2(m, r)       # norm(r);
+    @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p
+    @kaxpy!(m, -α, Mq, r)      # Faster than  r =  r - α * Mq
+    rNorm = @knrm2(m, r)       # norm(r)
     Aᵀr = Aᵀ * r
-    γ_next = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ_next = dot(Aᵀr, Aᵀr);
-    λ > 0 && (γ_next += λ * rNorm * rNorm);
-    β = γ_next / γ;
+    γ_next = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ_next = dot(Aᵀr, Aᵀr)
+    λ > 0 && (γ_next += λ * rNorm * rNorm)
+    β = γ_next / γ
 
     @kaxpby!(n, one(T), Aᵀr, β, p)  # Faster than  p = Aᵀr + β * p
     if λ > 0
       @kaxpby!(m, one(T), r, β, s) # s = r + β * s
     end
 
-    γ = γ_next;
-    ArNorm = sqrt(γ);
-    push!(rNorms, rNorm);
-    push!(ArNorms, ArNorm);
-    iter = iter + 1;
-    verbose && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm);
-    solved = rNorm ≤ ɛ_c;
-    inconsistent = (rNorm > 100 * ɛ_c) && (ArNorm ≤ ɛ_i);
-    tired = iter ≥ itmax;
+    γ = γ_next
+    ArNorm = sqrt(γ)
+    push!(rNorms, rNorm)
+    push!(ArNorms, ArNorm)
+    iter = iter + 1
+    verbose && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm)
+    solved = rNorm ≤ ɛ_c
+    inconsistent = (rNorm > 100 * ɛ_c) && (ArNorm ≤ ɛ_i)
+    tired = iter ≥ itmax
   end
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent but least squares/norm solution found" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status);
-  return (x, stats);
+  stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status)
+  return (x, stats)
 end

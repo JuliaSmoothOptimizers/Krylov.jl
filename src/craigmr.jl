@@ -67,9 +67,9 @@ function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
                  λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                  itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
-  m, n = size(A);
-  size(b, 1) == m || error("Inconsistent problem size");
-  verbose && @printf("CRAIG-MR: system of %d equations in %d variables\n", m, n);
+  m, n = size(A)
+  size(b, 1) == m || error("Inconsistent problem size")
+  verbose && @printf("CRAIG-MR: system of %d equations in %d variables\n", m, n)
 
   # Compute the adjoint of A
   Aᵀ = A'
@@ -84,7 +84,7 @@ function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   Mu = copy(b)
   u = M * Mu
   β = sqrt(@kdot(m, u, Mu))
-  β == 0 && return (x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"));
+  β == 0 && return (x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
 
   # Initialize Golub-Kahan process.
   # β₁Mu₁ = b.
@@ -95,44 +95,44 @@ function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   Nv = copy(Aᵀu)
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))
-  Anorm² = α * α;
+  Anorm² = α * α
 
   verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n",
-                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²");
+                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
   verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
-                     1, β, α, β, α, 0, 1, Anorm²);
+                     1, β, α, β, α, 0, 1, Anorm²)
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0 && return (x, y, SimpleStats(true, false, [β], [zero(T)], "x = 0 is a minimum least-squares solution"));
+  α == 0 && return (x, y, SimpleStats(true, false, [β], [zero(T)], "x = 0 is a minimum least-squares solution"))
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
 
   # Initialize other constants.
-  ζbar = β;
-  ρbar = α;
+  ζbar = β
+  ρbar = α
   θ = zero(T)
-  rNorm = ζbar;
-  rNorms = [rNorm];
-  ArNorm = α;
-  ArNorms = [ArNorm];
+  rNorm = ζbar
+  rNorms = [rNorm]
+  ArNorm = α
+  ArNorms = [ArNorm]
 
   ɛ_c = atol + rtol * rNorm;   # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm;  # Stopping tolerance for inconsistent systems.
 
-  iter = 0;
-  itmax == 0 && (itmax = m + n);
+  iter = 0
+  itmax == 0 && (itmax = m + n)
 
   wbar = copy(u)
   @kscal!(m, one(T)/α, wbar)
-  w = zeros(T, m);
+  w = zeros(T, m)
 
-  status = "unknown";
+  status = "unknown"
   solved = rNorm ≤ ɛ_c
   inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
   tired  = iter ≥ itmax
 
   while ! (solved || inconsistent || tired)
-    iter = iter + 1;
+    iter = iter + 1
 
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
@@ -160,14 +160,14 @@ function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     #
     # [ c  s ] [ ζbar ] = [ ζ     ]
     # [ s -c ] [  0   ]   [ ζbar⁺ ]
-    (c, s, ρ) = sym_givens(ρbar, β);
-    ζ = c * ζbar;
-    ζbar = s * ζbar;
-    rNorm = abs(ζbar);
-    push!(rNorms, rNorm);
+    (c, s, ρ) = sym_givens(ρbar, β)
+    ζ = c * ζbar
+    ζbar = s * ζbar
+    rNorm = abs(ζbar)
+    push!(rNorms, rNorm)
 
-    @kaxpby!(m, one(T)/ρ, wbar, -θ/ρ, w)  # w = (wbar - θ * w) / ρ;
-    @kaxpy!(m, ζ, w, y)             # y = y + ζ * w;
+    @kaxpby!(m, one(T)/ρ, wbar, -θ/ρ, w)  # w = (wbar - θ * w) / ρ
+    @kaxpy!(m, ζ, w, y)             # y = y + ζ * w
 
     # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
     Aᵀu = Aᵀ * u
@@ -175,19 +175,19 @@ function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     v = N * Nv
     α = sqrt(@kdot(n, v, Nv))
     Anorm² = Anorm² + α * α;  # = ‖Lₖ‖
-    ArNorm = α * β * abs(ζ/ρ);
-    push!(ArNorms, ArNorm);
+    ArNorm = α * β * abs(ζ/ρ)
+    push!(ArNorms, ArNorm)
 
     verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
-                       1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²);
+                       1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
 
     if α ≠ 0
       @kscal!(n, one(T)/α, v)
       NisI || @kscal!(n, one(T)/α, Nv)
-      @kaxpby!(m, one(T)/α, u, -β/α, wbar)  # wbar = (u - beta * wbar) / alpha;
+      @kaxpby!(m, one(T)/α, u, -β/α, wbar)  # wbar = (u - beta * wbar) / alpha
     end
-    θ = s * α;
-    ρbar = -c * α;
+    θ = s * α
+    ρbar = -c * α
 
     solved = rNorm ≤ ɛ_c
     inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
@@ -199,6 +199,6 @@ function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   @. x = N⁻¹Aᵀy
 
   status = tired ? "maximum number of iterations exceeded" : (solved ? "found approximate minimum-norm solution" : "found approximate minimum least-squares solution")
-  stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status);
+  stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status)
   return (x, y, stats)
 end

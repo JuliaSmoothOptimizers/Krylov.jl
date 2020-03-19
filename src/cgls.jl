@@ -43,43 +43,43 @@ function cgls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
               atol :: T=√eps(T), rtol :: T=√eps(T), radius :: T=zero(T),
               itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
-  m, n = size(A);
-  size(b, 1) == m || error("Inconsistent problem size");
-  verbose && @printf("CGLS: system of %d equations in %d variables\n", m, n);
+  m, n = size(A)
+  size(b, 1) == m || error("Inconsistent problem size")
+  verbose && @printf("CGLS: system of %d equations in %d variables\n", m, n)
 
   # Compute Aᵀ
   Aᵀ = A'
 
-  x = zeros(T, n);
+  x = zeros(T, n)
   r = copy(b)
-  bNorm = @knrm2(m, r)   # Marginally faster than norm(b);
-  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution");
+  bNorm = @knrm2(m, r)   # Marginally faster than norm(b)
+  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
   Mr = M * r
   s = Aᵀ * Mr
-  p = copy(s);
-  γ = @kdot(n, s, s)  # Faster than γ = dot(s, s);
-  iter = 0;
-  itmax == 0 && (itmax = m + n);
+  p = copy(s)
+  γ = @kdot(n, s, s)  # Faster than γ = dot(s, s)
+  iter = 0
+  itmax == 0 && (itmax = m + n)
 
-  rNorm  = bNorm;
-  ArNorm = sqrt(γ);
-  rNorms = [rNorm;];
-  ArNorms = [ArNorm;];
-  ε = atol + rtol * ArNorm;
+  rNorm  = bNorm
+  ArNorm = sqrt(γ)
+  rNorms = [rNorm;]
+  ArNorms = [ArNorm;]
+  ε = atol + rtol * ArNorm
   verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖A'r‖", "‖r‖")
-  verbose && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm);
+  verbose && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm)
 
-  status = "unknown";
+  status = "unknown"
   on_boundary = false
-  solved = ArNorm ≤ ε;
-  tired = iter ≥ itmax;
+  solved = ArNorm ≤ ε
+  tired = iter ≥ itmax
 
   while ! (solved || tired)
-    q = A * p;
+    q = A * p
     Mq = M * q
-    δ = @kdot(m, q, Mq)   # Faster than α = γ / dot(q, q);
+    δ = @kdot(m, q, Mq)   # Faster than α = γ / dot(q, q)
     λ > 0 && (δ += λ * @kdot(n, p, p))
-    α = γ / δ;
+    α = γ / δ
 
     # if a trust-region constraint is give, compute step to the boundary
     σ = radius > 0 ? maximum(to_boundary(x, p, radius)) : α
@@ -88,26 +88,26 @@ function cgls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
       on_boundary = true
     end
 
-    @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p;
-    @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q;
+    @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
+    @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
     Mr = M * r
     s = Aᵀ * Mr
-    λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x;
-    γ_next = @kdot(n, s, s)  # Faster than γ_next = dot(s, s);
-    β = γ_next / γ;
-    @kaxpby!(n, one(T), s, β, p) # Faster than p = s + β * p;
-    γ = γ_next;
-    rNorm = @knrm2(m, r)  # Marginally faster than norm(r);
-    ArNorm = sqrt(γ);
-    push!(rNorms, rNorm);
-    push!(ArNorms, ArNorm);
-    iter = iter + 1;
-    verbose && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm);
+    λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x
+    γ_next = @kdot(n, s, s)  # Faster than γ_next = dot(s, s)
+    β = γ_next / γ
+    @kaxpby!(n, one(T), s, β, p) # Faster than p = s + β * p
+    γ = γ_next
+    rNorm = @knrm2(m, r)  # Marginally faster than norm(r)
+    ArNorm = sqrt(γ)
+    push!(rNorms, rNorm)
+    push!(ArNorms, ArNorm)
+    iter = iter + 1
+    verbose && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm)
     solved = (ArNorm ≤ ε) | on_boundary
-    tired = iter ≥ itmax;
+    tired = iter ≥ itmax
   end
 
   status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, ArNorms, status);
-  return (x, stats);
+  stats = SimpleStats(solved, false, rNorms, ArNorms, status)
+  return (x, stats)
 end
