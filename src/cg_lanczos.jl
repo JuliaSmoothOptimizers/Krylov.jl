@@ -98,7 +98,7 @@ function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
 
     # Compute next CG iterate.
     @kaxpy!(n, γ, p, x)     # xₖ₊₁ = xₖ + γₖ * pₖ
-    ω = β * γ 
+    ω = β * γ
     σ = -ω * σ              # σₖ₊₁ = - βₖ₊₁ * γₖ * σₖ
     ω = ω * ω               # ωₖ = (βₖ₊₁ * γₖ)²
     @kaxpby!(n, σ, v, ω, p) # pₖ₊₁ = σₖ₊₁ * vₖ₊₁ + ωₖ * pₖ

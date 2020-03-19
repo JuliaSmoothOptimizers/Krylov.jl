@@ -212,7 +212,7 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
         ζbarₖ = ηₖ / δbarₖ
         ρₖ = βₖ₊₁ * (sₖ * ζₖ₋₁ - cₖ * ζbarₖ)
         rNorm_cg = abs(ρₖ) * norm_vₖ₊₁
-      end    
+      end
 
       # Update primal stopping criterion
       solved_lq_tol = rNorm_lq ≤ εL

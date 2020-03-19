@@ -1,4 +1,4 @@
-# An implementation of TRILQR for the solution of square or 
+# An implementation of TRILQR for the solution of square or
 # rectangular consistent linear adjoint systems Ax = b and Aᵀt = c.
 #
 # This method is described in
@@ -295,7 +295,7 @@ function trilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
     sₖ₋₁    = sₖ
     γₖ      = γₖ₊₁
     βₖ      = βₖ₊₁
-    
+
     tired = iter ≥ itmax
 
     verbose &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "", sNorm)

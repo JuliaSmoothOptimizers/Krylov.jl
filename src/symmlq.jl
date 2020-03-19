@@ -203,7 +203,7 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     if window > 0 && λest ≠ 0
       if iter < window && window > 1
          sprod[iter+1:end] = sprod[iter+1:end] * s
-      end      
+      end
 
       ix = ((iter-1) % window) + 1
       clist[ix] = c
@@ -260,7 +260,7 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
 
     verbose && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
                        iter, test1, β, c, s, ANorm, Acond)
-    
+
     # Reset variables
     ϵold = ϵ
     ζold = ζ
@@ -289,7 +289,7 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   if solved_cg
     @kaxpy!(m, ζbar, w̅, x)
   end
-  
+
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
   ill_cond_lim  && (status = "condition number exceeds tolerance")
