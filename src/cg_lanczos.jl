@@ -66,8 +66,8 @@ function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   verbose && @printf("%5d  %8.1e\n", iter, rNorm);
 
   indefinite = false;
-  solved = rNorm <= ε;
-  tired = iter >= itmax;
+  solved = rNorm ≤ ε;
+  tired = iter ≥ itmax;
   status = "unknown";
 
   # Main loop.
@@ -80,7 +80,7 @@ function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     # Check curvature. Exit fast if requested.
     # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ A pₖ.
     γ = 1 / (δ - ω / γ)      # γₖ = δₖ - ωₖ₋₁ / γₖ₋₁
-    indefinite |= (γ <= 0);
+    indefinite |= (γ ≤ 0);
     (check_curvature & indefinite) && continue;
 
     @kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
@@ -106,8 +106,8 @@ function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     push!(rNorms, rNorm);
     iter = iter + 1;
     verbose && @printf("%5d  %8.1e\n", iter, rNorm);
-    solved = rNorm <= ε;
-    tired = iter >= itmax;
+    solved = rNorm ≤ ε;
+    tired = iter ≥ itmax;
   end
 
   status = tired ? "maximum number of iterations exceeded" : (check_curvature & indefinite) ? "negative curvature" : "solution good enough given atol and rtol"
@@ -171,7 +171,7 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVecto
   ε = atol + rtol * β;
 
   # Keep track of shifted systems that have converged.
-  converged = rNorms .<= ε;
+  converged = rNorms .≤ ε;
   iter = 0;
   itmax == 0 && (itmax = 2 * n);
 
@@ -187,7 +187,7 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVecto
   end
 
   solved = all(converged);
-  tired = iter >= itmax;
+  tired = iter ≥ itmax;
   status = "unknown";
 
   # Main loop.
@@ -214,7 +214,7 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVecto
       δhat[i] = δ + ρ * shifts[i]
       γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i])
     end
-    indefinite .|= (γ .<= 0);
+    indefinite .|= (γ .≤ 0);
 
     # Compute next CG iterate for each shifted system that has not yet converged.
     # Stop iterating on indefinite problems if requested.
@@ -229,7 +229,7 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVecto
 
       # Update list of systems that have converged.
       rNorms[i] = abs(σ[i]);
-      converged[i] = rNorms[i] <= ε;
+      converged[i] = rNorms[i] ≤ ε;
     end
 
     length(not_cv) > 0 && append!(rNorms_history, rNorms);
@@ -240,7 +240,7 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVecto
     verbose && local_printf(iter, rNorms...)
 
     solved = length(not_cv) == 0;
-    tired = iter >= itmax;
+    tired = iter ≥ itmax;
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"

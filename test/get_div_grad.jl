@@ -145,8 +145,8 @@ function polar_poisson(n, m, f, g; R=1.0)
   λ = [1 / (2 * (k - 1/2)) for k = 1 : n]
   β = [1 / ((k - 1/2)^2 * Δθ^2) for k = 1 : n]
 
-  D = spdiagm(0 => β)
-  T = spdiagm(-1 => 1.0 .- λ[2:n], 0 => -2.0 * ones(n), 1 => 1.0 .+ λ[1:n-1])
+  D = spdiagm(0 ≥ β)
+  T = spdiagm(-1 ≥ 1.0 .- λ[2:n], 0 ≥ -2.0 * ones(n), 1 ≥ 1.0 .+ λ[1:n-1])
 
   A = spzeros(n * m, n * m)
   for k = 1 : m

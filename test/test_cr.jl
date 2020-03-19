@@ -7,7 +7,7 @@ function test_cr()
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("CR: Relative residual: %8.1e\n", resid)
-  @test(resid <= cr_tol)
+  @test(resid ≤ cr_tol)
   @test(stats.solved)
 
   # Code coverage
@@ -40,18 +40,18 @@ function test_cr()
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("CR: Relative residual: %8.1e\n", resid)
-  @test(resid <= cr_tol)
+  @test(resid ≤ cr_tol)
   @test(stats.solved)
 
   radius = 0.75 * xNorm
   (x, stats) = cr(A, b, radius=radius)
   show(stats)
   @test(stats.solved)
-  @test(abs(radius - norm(x)) <= cr_tol * radius)
+  @test(abs(radius - norm(x)) ≤ cr_tol * radius)
 
   opA = LinearOperator(A)
   (xop, statsop) = cr(opA, b, radius=radius)
-  @test(abs(radius - norm(xop)) <= cr_tol * radius)
+  @test(abs(radius - norm(xop)) ≤ cr_tol * radius)
 
   n = 100
   itmax = 2 * n
@@ -83,7 +83,7 @@ function test_cr()
   r = b - A * x;
   resid = sqrt(dot(r, M * r)) / norm(b)
   @printf("CR: Relative residual: %8.1e\n", resid);
-  @test(resid <= cr_tol);
+  @test(resid ≤ cr_tol);
   @test(stats.solved)
 end
 

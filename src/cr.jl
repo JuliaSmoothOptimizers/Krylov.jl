@@ -203,8 +203,8 @@ function cr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
       @printf("    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
     end
 
-    solved = (rNorm <= ε) || npcurv || on_boundary
-    tired = iter >= itmax
+    solved = (rNorm ≤ ε) || npcurv || on_boundary
+    tired = iter ≥ itmax
 
     (solved || tired) && continue
     ρbar = ρ

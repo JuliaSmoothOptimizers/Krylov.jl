@@ -14,7 +14,7 @@ function lstp(nrow :: Int, ncol :: Int, ndupl :: Int, npower :: Int, λ :: Real,
   # in the form A = HY*D*HZ, where D is an nrow by ncol diagonal matrix,
   # and HY and HZ are Householder transformations.
 
-  @assert(nrow >= ncol);
+  @assert(nrow ≥ ncol);
 
   # Construct two unit vectors for the Householder transformations.
   # fourpi = 4π;

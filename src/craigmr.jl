@@ -127,9 +127,9 @@ function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   w = zeros(T, m);
 
   status = "unknown";
-  solved = rNorm <= ɛ_c
+  solved = rNorm ≤ ɛ_c
   inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
-  tired  = iter >= itmax
+  tired  = iter ≥ itmax
 
   while ! (solved || inconsistent || tired)
     iter = iter + 1;
@@ -189,9 +189,9 @@ function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     θ = s * α;
     ρbar = -c * α;
 
-    solved = rNorm <= ɛ_c
+    solved = rNorm ≤ ɛ_c
     inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
-    tired  = iter >= itmax
+    tired  = iter ≥ itmax
   end
 
   Aᵀy = Aᵀ * y

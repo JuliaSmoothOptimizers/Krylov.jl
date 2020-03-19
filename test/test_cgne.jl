@@ -17,10 +17,10 @@ function test_cgne()
   # Underdetermined consistent.
   A, b = under_consistent()
   (x, stats, resid) = test_cgne(A, b);
-  @test(resid <= cgne_tol);
+  @test(resid ≤ cgne_tol);
   @test(stats.solved);
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x);
-  @test(norm(xI - xmin) <= cond(A) * cgne_tol * xmin_norm);
+  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm);
 
   # Underdetermined inconsistent.
   A, b = under_inconsistent()
@@ -30,10 +30,10 @@ function test_cgne()
   # Square consistent.
   A, b = square_consistent()
   (x, stats, resid) = test_cgne(A, b);
-  @test(resid <= cgne_tol);
+  @test(resid ≤ cgne_tol);
   @test(stats.solved);
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x);
-  @test(norm(xI - xmin) <= cond(A) * cgne_tol * xmin_norm);
+  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm);
 
   # Square inconsistent.
   A, b = square_inconsistent()
@@ -43,10 +43,10 @@ function test_cgne()
   # Overdetermined consistent.
   A, b = over_consistent()
   (x, stats, resid) = test_cgne(A, b);
-  @test(resid <= cgne_tol);
+  @test(resid ≤ cgne_tol);
   @test(stats.solved);
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x);
-  @test(norm(xI - xmin) <= cond(A) * cgne_tol * xmin_norm);
+  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm);
 
   # Overdetermined inconsistent.
   A, b = over_inconsistent()
@@ -55,10 +55,10 @@ function test_cgne()
 
   # With regularization, all systems are underdetermined and consistent.
   (x, stats, resid) = test_cgne(A, b, λ=1.0e-3);
-  @test(resid <= cgne_tol);
+  @test(resid ≤ cgne_tol);
   @test(stats.solved);
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x, λ=1.0e-3);
-  @test(norm(xI - xmin) <= cond(A) * cgne_tol * xmin_norm);
+  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm);
 
   # Code coverage.
   (x, stats, resid) = test_cgne(sparse(A), b, λ=1.0e-3);
@@ -78,10 +78,10 @@ function test_cgne()
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats, resid) = test_cgne(A, b, M=M)
-  @test(resid <= cgne_tol)
+  @test(resid ≤ cgne_tol)
   @test(stats.solved)
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
-  @test(norm(xI - xmin) <= cond(A) * cgne_tol * xmin_norm)
+  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm)
 
   # Test preconditioner with an under-determined problem:
   # Find the least norm force that transfers mass unit distance with zero final velocity
@@ -90,10 +90,10 @@ function test_cgne()
   b = [1.0; 0.0]
   M = LinearOperator(Diagonal(1 ./ (A * A')))
   (x, stats, resid) = test_cgne(A, b, M=M)
-  @test(resid <= cgne_tol)
+  @test(resid ≤ cgne_tol)
   @test(stats.solved)
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
-  @test(norm(xI - xmin) <= cond(A) * cgne_tol * xmin_norm)
+  @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm)
 end
 
 test_cgne()

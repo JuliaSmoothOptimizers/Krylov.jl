@@ -113,7 +113,7 @@ function to_boundary(x :: Vector{T}, d :: Vector{T},
   dNorm2 == zero(T) && (dNorm2 = dot(d, d))
   dNorm2 == zero(T) && error("zero direction")
   xNorm2 == zero(T) && (xNorm2 = dot(x, x))
-  (xNorm2 <= radius * radius) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius * radius))
+  (xNorm2 ≤ radius * radius) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius * radius))
   roots = roots_quadratic(dNorm2, 2 * xd, xNorm2 - radius * radius)
   return roots # `σ1` and `σ2`
 end

@@ -15,7 +15,7 @@ function test_cg_lanczos()
   (x, stats) = cg_lanczos(A, b, itmax=n);
   resid = norm(b - A * x) / b_norm;
   @printf("CG_Lanczos: Relative residual: %8.1e\n", resid);
-  @test(resid <= cg_tol);
+  @test(resid ≤ cg_tol);
   @test(stats.solved);
 
   # Test negative curvature detection.
@@ -34,7 +34,7 @@ function test_cg_lanczos()
     @printf(" %8.1e", resid);
   end
   @printf("\n");
-  @test(all(resids .<= cg_tol));
+  @test(all(resids .≤ cg_tol));
   @test(stats.solved);
 
   # Test negative curvature detection.

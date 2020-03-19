@@ -16,56 +16,56 @@ function test_craig()
   # Underdetermined consistent.
   A, b = under_consistent()
   (x, y, stats, resid) = test_craig(A, b)
-  @test(norm(x - A' * y) <= craig_tol * norm(x))
-  @test(resid <= craig_tol)
+  @test(norm(x - A' * y) ≤ craig_tol * norm(x))
+  @test(resid ≤ craig_tol)
   @test(stats.solved)
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
-  @test(norm(xI - xmin) <= cond(A) * craig_tol * xmin_norm)
+  @test(norm(xI - xmin) ≤ cond(A) * craig_tol * xmin_norm)
 
   # Underdetermined inconsistent.
   A, b = under_inconsistent()
   (x, y, stats, resid) = test_craig(A, b)
-  # @test(norm(x - A' * y) <= craig_tol * norm(x))
+  # @test(norm(x - A' * y) ≤ craig_tol * norm(x))
   show(stats)
   @test(stats.inconsistent || stats.status == "condition number exceeds tolerance")
 
   # Square consistent.
   A, b = square_consistent()
   (x, y, stats, resid) = test_craig(A, b)
-  @test(norm(x - A' * y) <= craig_tol * norm(x))
-  @test(resid <= craig_tol)
+  @test(norm(x - A' * y) ≤ craig_tol * norm(x))
+  @test(resid ≤ craig_tol)
   @test(stats.solved)
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
-  @test(norm(xI - xmin) <= cond(A) * craig_tol * xmin_norm)
+  @test(norm(xI - xmin) ≤ cond(A) * craig_tol * xmin_norm)
 
   # Square inconsistent.
   A, b = square_inconsistent()
   (x, y, stats, resid) = test_craig(A, b)
-  # @test(norm(x - A' * y) <= craig_tol * norm(x))
+  # @test(norm(x - A' * y) ≤ craig_tol * norm(x))
   @test(stats.inconsistent || stats.status == "condition number exceeds tolerance")
 
   # Overdetermined consistent.
   A, b = over_consistent()
   (x, y, stats, resid) = test_craig(A, b)
-  @test(norm(x - A' * y) <= craig_tol * norm(x))
-  @test(resid <= craig_tol)
+  @test(norm(x - A' * y) ≤ craig_tol * norm(x))
+  @test(resid ≤ craig_tol)
   @test(stats.solved)
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
-  @test(norm(xI - xmin) <= cond(A) * craig_tol * xmin_norm)
+  @test(norm(xI - xmin) ≤ cond(A) * craig_tol * xmin_norm)
 
   # Overdetermined inconsistent.
   A, b = over_inconsistent()
   (x, y, stats, resid) = test_craig(A, b)
-  # @test(norm(x - A' * y) <= craig_tol * norm(x))
+  # @test(norm(x - A' * y) ≤ craig_tol * norm(x))
   @test(stats.inconsistent || stats.status == "condition number exceeds tolerance")
 
   # With regularization, all systems are underdetermined and consistent.
   # (x, y, stats, resid) = test_craig(A, b, λ=1.0e-3)
-  # @test(norm(x - A' * y) <= craig_tol * norm(x))
-  # @test(resid <= craig_tol)
+  # @test(norm(x - A' * y) ≤ craig_tol * norm(x))
+  # @test(resid ≤ craig_tol)
   # @test(stats.solved)
   # (xI, xmin, xmin_norm) = check_min_norm(A, b, x, λ=1.0e-3)
-  # @test(norm(xI - xmin) <= cond(A) * craig_tol * xmin_norm)
+  # @test(norm(xI - xmin) ≤ cond(A) * craig_tol * xmin_norm)
 
   # Code coverage.
   (x, y, stats) = craig(sparse(A), b, λ=1.0e-3)

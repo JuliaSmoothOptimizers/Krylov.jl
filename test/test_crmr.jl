@@ -17,51 +17,51 @@ function test_crmr()
   # Underdetermined consistent.
   A, b = under_consistent()
   (x, stats, resid) = test_crmr(A, b);
-  @test(resid <= crmr_tol);
+  @test(resid ≤ crmr_tol);
   @test(stats.solved);
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x);
-  @test(norm(xI - xmin) <= cond(A) * crmr_tol * xmin_norm);
+  @test(norm(xI - xmin) ≤ cond(A) * crmr_tol * xmin_norm);
 
   # Underdetermined inconsistent.
   A, b = under_inconsistent()
   (x, stats, resid) = test_crmr(A, b);
   @test(stats.inconsistent);
-  @test(stats.Aresiduals[end] <= crmr_tol);
+  @test(stats.Aresiduals[end] ≤ crmr_tol);
 
   # Square consistent.
   A, b = square_consistent()
   (x, stats, resid) = test_crmr(A, b);
-  @test(resid <= crmr_tol);
+  @test(resid ≤ crmr_tol);
   @test(stats.solved);
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x);
-  @test(norm(xI - xmin) <= cond(A) * crmr_tol * xmin_norm);
+  @test(norm(xI - xmin) ≤ cond(A) * crmr_tol * xmin_norm);
 
   # Square inconsistent.
   A, b = square_inconsistent()
   (x, stats, resid) = test_crmr(A, b);
   @test(stats.inconsistent);
-  @test(stats.Aresiduals[end] <= crmr_tol);
+  @test(stats.Aresiduals[end] ≤ crmr_tol);
 
   # Overdetermined consistent.
   A, b = over_consistent()
   (x, stats, resid) = test_crmr(A, b);
-  @test(resid <= crmr_tol);
+  @test(resid ≤ crmr_tol);
   @test(stats.solved);
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x);
-  @test(norm(xI - xmin) <= cond(A) * crmr_tol * xmin_norm);
+  @test(norm(xI - xmin) ≤ cond(A) * crmr_tol * xmin_norm);
 
   # Overdetermined inconsistent.
   A, b = over_inconsistent()
   (x, stats, resid) = test_crmr(A, b);
   @test(stats.inconsistent);
-  @test(stats.Aresiduals[end] <= crmr_tol);
+  @test(stats.Aresiduals[end] ≤ crmr_tol);
 
   # With regularization, all systems are underdetermined and consistent.
   (x, stats, resid) = test_crmr(A, b, λ=1.0e-3);
-  @test(resid <= crmr_tol);
+  @test(resid ≤ crmr_tol);
   @test(stats.solved);
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x, λ=1.0e-3);
-  @test(norm(xI - xmin) <= cond(A) * crmr_tol * xmin_norm);
+  @test(norm(xI - xmin) ≤ cond(A) * crmr_tol * xmin_norm);
 
   # Code coverage.
   (x, stats, resid) = test_crmr(sparse(A), b, λ=1.0e-3);

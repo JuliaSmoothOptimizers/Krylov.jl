@@ -7,7 +7,7 @@ function test_cg()
   r = b - A * x;
   resid = norm(r) / norm(b)
   @printf("CG: Relative residual: %8.1e\n", resid);
-  @test(resid <= cg_tol);
+  @test(resid ≤ cg_tol);
   @test(stats.solved);
 
   # Code coverage.
@@ -18,7 +18,7 @@ function test_cg()
   (x, stats) = cg(A, b, radius=radius, itmax=10);
   show(stats)
   @test(stats.solved);
-  @test(abs(radius - norm(x)) <= cg_tol * radius);
+  @test(abs(radius - norm(x)) ≤ cg_tol * radius);
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
@@ -26,18 +26,18 @@ function test_cg()
   r = b - A * x;
   resid = norm(r) / norm(b);
   @printf("CG: Relative residual: %8.1e\n", resid);
-  @test(resid <= cg_tol);
+  @test(resid ≤ cg_tol);
   @test(stats.solved);
 
   radius = 0.75 * norm(x);
   (x, stats) = cg(A, b, radius=radius, itmax=10);
   show(stats)
   @test(stats.solved);
-  @test(abs(radius - norm(x)) <= cg_tol * radius);
+  @test(abs(radius - norm(x)) ≤ cg_tol * radius);
 
   opA = LinearOperator(A)
   (xop, statsop) = cg(opA, b, radius=radius, itmax=10)
-  @test(abs(radius - norm(xop)) <= cg_tol * radius)
+  @test(abs(radius - norm(xop)) ≤ cg_tol * radius)
 
   n = 100
   B = LBFGSOperator(n)
@@ -68,7 +68,7 @@ function test_cg()
   r = b - A * x;
   resid = sqrt(dot(r, M * r)) / norm(b)
   @printf("CG: Relative residual: %8.1e\n", resid);
-  @test(resid <= cg_tol);
+  @test(resid ≤ cg_tol);
   @test(stats.solved);
 
   # Test that precision is not lost (#126)

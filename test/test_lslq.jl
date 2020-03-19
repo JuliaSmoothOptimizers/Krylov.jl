@@ -8,7 +8,7 @@ function test_lslq()
     r = b - A * x
     resid = norm(A' * r) / norm(b)
     @printf("LSLQ: Relative residual: %8.1e\n", resid)
-    @test(resid <= lslq_tol)
+    @test(resid ≤ lslq_tol)
     @test(stats.solved)
 
     λ = 1.0e-3
@@ -16,12 +16,12 @@ function test_lslq()
     r = b - A * x
     resid = norm(A' * r - λ * λ * x) / norm(b)
     @printf("LSLQ: Relative residual: %8.1e\n", resid)
-    @test(resid <= lslq_tol)
+    @test(resid ≤ lslq_tol)
     @test(stats.solved)
   end
 
   # Test with smallest singular value estimate
-  Σ = diagm(0 => 1:4)
+  Σ = diagm(0 ≥ 1:4)
   U, _ = qr(rand(6, 6))
   V, _ = qr(rand(4, 4))
   A = U * [Σ ; zeros(2, 4)] * V'

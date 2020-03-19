@@ -45,8 +45,8 @@ function cg(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   ε = atol + rtol * rNorm;
   verbose && @printf("%5d  %8.1e  ", iter, rNorm);
 
-  solved = rNorm <= ε;
-  tired = iter >= itmax;
+  solved = rNorm ≤ ε;
+  tired = iter ≥ itmax;
   on_boundary = false;
   status = "unknown";
 
@@ -64,7 +64,7 @@ function cg(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     # Move along p from x to the boundary if either
     # the next step leads outside the trust region or
     # we have nonpositive curvature.
-    if (radius > 0) & ((pAp <= 0) | (α > σ))
+    if (radius > 0) & ((pAp ≤ 0) | (α > σ))
       α = σ
       on_boundary = true
     end
@@ -76,7 +76,7 @@ function cg(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     rNorm = sqrt(γ_next);
     push!(rNorms, rNorm);
 
-    solved = (rNorm <= ε) | on_boundary;
+    solved = (rNorm ≤ ε) | on_boundary;
     if !solved
       β = γ_next / γ;
       γ = γ_next;
@@ -85,7 +85,7 @@ function cg(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     end
 
     iter = iter + 1;
-    tired = iter >= itmax;
+    tired = iter ≥ itmax;
     verbose && @printf("%5d  %8.1e  ", iter, rNorm);
   end
   verbose && @printf("\n");
