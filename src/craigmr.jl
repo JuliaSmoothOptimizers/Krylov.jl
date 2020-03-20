@@ -116,8 +116,8 @@ function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   ArNorm = α
   ArNorms = [ArNorm]
 
-  ɛ_c = atol + rtol * rNorm;   # Stopping tolerance for consistent systems.
-  ɛ_i = atol + rtol * ArNorm;  # Stopping tolerance for inconsistent systems.
+  ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
+  ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
 
   iter = 0
   itmax == 0 && (itmax = m + n)
@@ -145,7 +145,7 @@ function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
       MisI || @kscal!(m, one(T)/β, Mu)
     end
 
-    Anorm² = Anorm² + β * β;  # = ‖B_{k-1}‖²
+    Anorm² = Anorm² + β * β  # = ‖B_{k-1}‖²
 
     # Continue QR factorization
     #
@@ -174,7 +174,7 @@ function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     @kaxpby!(n, one(T), Aᵀu, -β, Nv)
     v = N * Nv
     α = sqrt(@kdot(n, v, Nv))
-    Anorm² = Anorm² + α * α;  # = ‖Lₖ‖
+    Anorm² = Anorm² + α * α  # = ‖Lₖ‖
     ArNorm = α * β * abs(ζ/ρ)
     push!(ArNorms, ArNorm)
 

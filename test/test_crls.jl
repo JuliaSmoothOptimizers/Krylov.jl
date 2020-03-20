@@ -3,7 +3,7 @@ function test_crls()
   crls_tol = 1.0e-5
 
   for npower = 1 : 4
-    (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, npower, 0);  # No regularization.
+    (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, npower, 0)  # No regularization.
 
     (x, stats) = crls(A, b)
     resid = norm(A' * (A*x - b)) / norm(b)

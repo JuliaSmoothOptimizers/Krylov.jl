@@ -18,17 +18,17 @@ function lstp(nrow :: Int, ncol :: Int, ndupl :: Int, npower :: Int, λ :: Real,
 
   # Construct two unit vectors for the Householder transformations.
   # fourpi = 4π
-  fourpi = 4 * 3.141592;    # This is the approximation used in Mike's original subroutine.
-  α = fourpi / nrow;        # 4π / nrow
-  β = fourpi / ncol;        # 4π / ncol
+  fourpi = 4 * 3.141592  # This is the approximation used in Mike's original subroutine.
+  α = fourpi / nrow  # 4π / nrow
+  β = fourpi / ncol  # 4π / ncol
   hy = map(sin, [1:nrow;] * α)
   hz = map(cos, [1:ncol;] * β)
 
-  α = norm(hy); hy /= α; HY = opHouseholder(hy);  # HY is nrow x nrow.
-  β = norm(hz); hz /= β; HZ = opHouseholder(hz);  # HZ is ncol x ncol.
+  α = norm(hy); hy /= α; HY = opHouseholder(hy)  # HY is nrow x nrow.
+  β = norm(hz); hz /= β; HZ = opHouseholder(hz)  # HZ is ncol x ncol.
 
   # Set the diagonal matrix D containing the singular values of A.
-  d = (div.(([0:ncol-1;] .+ ndupl), ndupl) * ndupl / ncol).^npower;  # Integer div!
+  d = (div.(([0:ncol-1;] .+ ndupl), ndupl) * ndupl / ncol).^npower  # Integer div!
   D = opDiagonal(nrow, ncol, d)
   A = HY * D * HZ
 
@@ -55,13 +55,13 @@ end
 
 function test(nrow, ncol, ndupl, npower, damp)
 
-  x = ncol .- [1:ncol;];  # Desired solution.
+  x = ncol .- [1:ncol;]  # Desired solution.
   return lstp(nrow, ncol, ndupl, npower, damp, x)
 end
 
 
 function testall()
-  damp = 0;  # Must be zero for this problem to be consistent.
+  damp = 0  # Must be zero for this problem to be consistent.
   test(40, 40, 4, 1, damp)
   test(40, 40, 4, 2, damp)
   test(40, 40, 4, 3, damp)

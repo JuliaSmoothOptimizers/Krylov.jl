@@ -229,7 +229,7 @@ function lslq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
         # the rotation updates the next regularization parameter
         λ = sqrt(λ² + (sL * α)^2)
       end
-      Anorm² = Anorm² + αL * αL + βL * βL;  # = ‖Lₖ‖²
+      Anorm² = Anorm² + αL * αL + βL * βL  # = ‖Lₖ‖²
       Anorm = sqrt(Anorm²)
     end
 

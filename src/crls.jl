@@ -67,7 +67,7 @@ function crls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = m + n)
 
-  rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
+  rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   ArNorm = @knrm2(n, Ar)  # Marginally faster than norm(Ar)
   λ > 0 && (γ += λ * ArNorm * ArNorm)
   rNorms = [rNorm;]
