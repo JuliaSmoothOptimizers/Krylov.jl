@@ -111,7 +111,7 @@ function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   end
 
   status = tired ? "maximum number of iterations exceeded" : (check_curvature & indefinite) ? "negative curvature" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, rNorms, indefinite, sqrt(Anorm2), zero(T), status);  # TODO: Estimate Acond.
+  stats = LanczosStats(solved, rNorms, indefinite, sqrt(Anorm2), zero(T), status)  # TODO: Estimate Acond.
   return (x, stats)
 end
 
@@ -244,6 +244,6 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVecto
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, permutedims(reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))), indefinite, zero(T), zero(T), status);  # TODO: Estimate Anorm and Acond.
+  stats = LanczosStats(solved, permutedims(reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))), indefinite, zero(T), zero(T), status)  # TODO: Estimate Anorm and Acond.
   return (x, stats)
 end

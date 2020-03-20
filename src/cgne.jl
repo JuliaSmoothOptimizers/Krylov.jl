@@ -90,8 +90,8 @@ function cgne(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   itmax == 0 && (itmax = m + n)
 
   rNorms = [rNorm;]
-  ɛ_c = atol + rtol * rNorm;  # Stopping tolerance for consistent systems.
-  ɛ_i = atol + rtol * pNorm;  # Stopping tolerance for inconsistent systems.
+  ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
+  ɛ_i = atol + rtol * pNorm  # Stopping tolerance for inconsistent systems.
   verbose && @printf("%5s  %8s\n", "Aprod", "‖r‖")
   verbose && @printf("%5d  %8.2e\n", 1, rNorm)
 

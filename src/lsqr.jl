@@ -163,7 +163,7 @@ function lsqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
     if β ≠ 0
       @kscal!(m, one(T)/β, u)
       MisI || @kscal!(m, one(T)/β, Mu)
-      Anorm² = Anorm² + α * α + β * β;  # = ‖B_{k-1}‖²
+      Anorm² = Anorm² + α * α + β * β  # = ‖B_{k-1}‖²
       λ > 0 && (Anorm² += λ²)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ

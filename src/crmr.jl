@@ -69,7 +69,7 @@ function crmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   r = copy(M * b) # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
-  rNorm = bNorm;  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
+  rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   λ > 0 && (s = copy(r))
   Aᵀr = Aᵀ * r # - λ * x0 if x0 ≠ 0.
   p  = copy(Aᵀr)
@@ -81,8 +81,8 @@ function crmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   ArNorm = sqrt(γ)
   rNorms = [rNorm;]
   ArNorms = [ArNorm;]
-  ɛ_c = atol + rtol * rNorm;   # Stopping tolerance for consistent systems.
-  ɛ_i = atol + rtol * ArNorm;  # Stopping tolerance for inconsistent systems.
+  ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
+  ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
   verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
   verbose && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm)
 

@@ -2,7 +2,7 @@ function test_lsmr()
   lsmr_tol = 1.0e-5
 
   for npower = 1 : 4
-    (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, npower, 0);  # No regularization.
+    (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, npower, 0)  # No regularization.
 
     (x, stats) = lsmr(A, b)
     r = b - A * x
