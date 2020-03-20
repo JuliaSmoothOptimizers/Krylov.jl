@@ -70,11 +70,6 @@ function test_cgne()
   @test x == zeros(size(A,2))
   @test stats.status == "x = 0 is a zero-residual solution"
 
-  # Test integer values
-  A, b = over_int()
-  (x, stats) = cgne(A, b)
-  @test stats.solved
-
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats, resid) = test_cgne(A, b, M=M)

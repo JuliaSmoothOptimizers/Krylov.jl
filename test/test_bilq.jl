@@ -56,11 +56,6 @@ function test_bilq()
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
-  # Test integer values
-  A, b = square_int()
-  (x, stats) = bilq(A, b)
-  @test stats.solved
-
   # System that cause a breakdown with the Lanczos biorthogonalization process.
   A, b, c = unsymmetric_breakdown()
   (x, stats) = bilq(A, b, c=c)

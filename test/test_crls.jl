@@ -58,11 +58,6 @@ function test_crls()
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
-  # Test integer values
-  A, b = over_int()
-  (x, stats) = crls(A, b)
-  @test stats.solved
-
   # Test A positive semi-definite
   radius = 10.
   m,n = 10,7
