@@ -45,6 +45,13 @@ mutable struct AdjointStats{T} <: KrylovStats{T}
   status :: String
 end
 
+"
+    Preconditioner{T} = Union{AbstractLinearOperator{T}, opEye}
+
+Abstract type accepted for preconditioners
+"
+Preconditioner{T} = Union{AbstractLinearOperator{T}, opEye}
+
 import Base.show
 
 function show(io :: IO, stats :: SimpleStats)

@@ -24,7 +24,7 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
 function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-                    M :: AbstractLinearOperator=opEye(),
+                    M :: Preconditioner{T}=opEye(),
                     atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                     check_curvature :: Bool=false, verbose :: Bool=false) where T <: AbstractFloat
 
@@ -128,7 +128,7 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
 function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T},
-                              shifts :: AbstractVector{T}; M :: AbstractLinearOperator=opEye(),
+                              shifts :: AbstractVector{T}; M :: Preconditioner{T}=opEye(),
                               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                               check_curvature :: Bool=false, verbose :: Bool=false) where T <: AbstractFloat
 
