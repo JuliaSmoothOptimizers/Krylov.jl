@@ -62,8 +62,8 @@ and intricate to implement. Both the x- and y-parts of the solution are
 returned.
 """
 function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-                 M :: AbstractLinearOperator=opEye(),
-                 N :: AbstractLinearOperator=opEye(),
+                 M :: Preconditioner{T}=opEye(),
+                 N :: Preconditioner{T}=opEye(),
                  λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                  itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 

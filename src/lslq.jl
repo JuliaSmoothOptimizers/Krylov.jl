@@ -93,8 +93,8 @@ The iterations stop as soon as one of the following conditions holds true:
 * R. Estrin, D. Orban and M. A. Saunders, *LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*, Cahier du GERAD G-2017-xx, GERAD, Montreal, 2017.
 """
 function lslq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-              M :: AbstractLinearOperator=opEye(),
-              N :: AbstractLinearOperator=opEye(),
+              M :: Preconditioner{T}=opEye(),
+              N :: Preconditioner{T}=opEye(),
               sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
               atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
               window :: Int=5, utol :: T=√eps(T), itmax :: Int=0,

@@ -59,8 +59,8 @@ In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
 """
 function lsqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-              M :: AbstractLinearOperator=opEye(),
-              N :: AbstractLinearOperator=opEye(),
+              M :: Preconditioner{T}=opEye(),
+              N :: Preconditioner{T}=opEye(),
               sqd :: Bool=false,
               λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
               atol :: T=zero(T), rtol :: T=zero(T),

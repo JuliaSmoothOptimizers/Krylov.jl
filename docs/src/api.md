@@ -1,6 +1,7 @@
 ## Types
 
 ```@docs
+Krylov.Preconditioner
 Krylov.KrylovStats
 Krylov.SimpleStats
 Krylov.LanczosStats

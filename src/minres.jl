@@ -44,7 +44,7 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
 function minres(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-                M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
+                M :: Preconditioner{T}=opEye(), λ :: T=zero(T),
                 atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, etol :: T=√eps(T),
                 window :: Int=5, itmax :: Int=0, conlim :: T=1/√eps(T),
                 verbose :: Bool=false) where T <: AbstractFloat

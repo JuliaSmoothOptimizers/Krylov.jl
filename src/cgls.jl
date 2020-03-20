@@ -39,7 +39,7 @@ It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 """
 function cgls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-              M :: AbstractLinearOperator=opEye(), λ :: T=zero(T),
+              M :: Preconditioner{T}=opEye(), λ :: T=zero(T),
               atol :: T=√eps(T), rtol :: T=√eps(T), radius :: T=zero(T),
               itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 

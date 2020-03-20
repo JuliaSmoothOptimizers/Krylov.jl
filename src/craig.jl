@@ -60,8 +60,8 @@ which is equivalent to applying CG to (M + AN⁻¹Aᵀ)y = b.
 In this implementation, both the x and y-parts of the solution are returned.
 """
 function craig(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-               M :: AbstractLinearOperator=opEye(),
-               N :: AbstractLinearOperator=opEye(),
+               M :: Preconditioner{T}=opEye(),
+               N :: Preconditioner{T}=opEye(),
                λ :: T=zero(T),
                atol :: T=√eps(T), btol :: T=√eps(T), rtol :: T=√eps(T),
                conlim :: T=1/√eps(T), itmax :: Int=0,
