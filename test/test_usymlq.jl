@@ -72,12 +72,6 @@ function test_usymlq()
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
-  # Test integer values
-  A, b = square_int()
-  c = copy(b)
-  (x, stats) = usymlq(A, b, c)
-  @test stats.solved
-
   # Underdetermined and consistent systems.
   A, b = under_consistent()
   c = ones(25)

@@ -56,11 +56,6 @@ function test_cgs()
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
-  # Test integer values
-  A, b = square_int()
-  (x, stats) = cgs(A, b)
-  @test stats.solved
-
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = cgs(A, b, M=M)

@@ -83,11 +83,6 @@ function test_craigmr()
   @test y == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
-  # Test integer values
-  A, b = over_int()
-  (x, y, stats) = craigmr(A, b)
-  @test stats.solved
-
   # Test with preconditioners
   A, b, M, N = two_preconditioners()
   (x, y, stats) = craigmr(A, b, M=M, N=N)

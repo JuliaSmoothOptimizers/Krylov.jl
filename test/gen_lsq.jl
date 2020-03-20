@@ -36,6 +36,7 @@ function lstp(nrow :: Int, ncol :: Int, ndupl :: Int, npower :: Int, λ :: Real,
 
   # Compute residual vector.
   r = zeros(nrow)
+  x = Float64.(x)
   r[1:ncol]  = HZ * x ./ d
   t = 1.0
   for i = ncol + 1 : nrow

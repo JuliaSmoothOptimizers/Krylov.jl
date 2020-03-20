@@ -77,29 +77,6 @@ function over_inconsistent(n :: Int=25, m :: Int=10)
   return A, b
 end
 
-# Underdetermined and integer systems.
-function under_int(n :: Int=3, m :: Int=5)
-  n < m || error("Square or overdetermined system!")
-  A = [i^j for i=1:n, j=1:m]
-  b = A * ones(Int, m)
-  return A, b
-end
-
-# Square and integer systems.
-function square_int(n :: Int=10)
-  A = spdiagm(-1 => ones(Int, n-1), 0 => 4*ones(Int, n), 1 => ones(Int, n-1))
-  b = A * [1:n;]
-  return A, b
-end
-
-# Overdetermined and integer systems.
-function over_int(n :: Int=5, m :: Int=3)
-  n > m || error("Underdetermined or square system!")
-  A = [i^j for i=1:n, j=1:m]
-  b = A * ones(Int, m)
-  return A, b
-end
-
 # Sparse Laplacian.
 function sparse_laplacian(n :: Int=16)
   A = get_div_grad(n, n, n)
@@ -216,7 +193,7 @@ end
 # Square and preconditioned problems.
 function square_preconditioned(n :: Int=10)
   A = ones(n, n) + (n-1) * I
-  b = n * [1:n;]
+  b = 10.0 * [1:n;]
   M = PreallocatedLinearOperator(1/n * eye(n))
   return A, b, M
 end

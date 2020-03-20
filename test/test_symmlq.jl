@@ -50,11 +50,6 @@ function test_symmlq()
   @test x == b
   @test stats.status == "x = 0 is a zero-residual solution"
 
-  # Test integer values
-  A, b = square_int()
-  (x, stats) = symmlq(A, b)
-  @test stats.solved
-
   # Test error estimate
   A = Matrix(get_div_grad(8, 8, 8))
   b = ones(size(A, 1))

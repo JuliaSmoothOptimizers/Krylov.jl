@@ -56,11 +56,6 @@ function test_qmr()
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
-  # Test integer values
-  A, b = square_int()
-  (x, stats) = qmr(A, b)
-  @test stats.solved
-
   # Poisson equation in polar coordinates.
   A, b = polar_poisson()
   (x, stats) = qmr(A, b)

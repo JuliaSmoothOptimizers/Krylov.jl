@@ -8,7 +8,7 @@ b   = Ao * ones(m) # Dimension n
 c   = Au * ones(n) # Dimension m
 mem = 10
 
-shifts  = [1:5;]
+shifts  = [1.0; 2.0; 3.0; 4.0; 5.0]
 nshifts = 5
 
 # without preconditioner and with Ap preallocated, SYMMLQ needs 4 n-vectors: x_lq, vold, v, w̅ (= x_cg)

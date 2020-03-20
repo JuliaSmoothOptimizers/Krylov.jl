@@ -55,11 +55,6 @@ function test_cgls()
   (x, stats) = cgls(A, zeros(size(A,1)))
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
-
-  # Test integer values
-  A, b = over_int()
-  (x, stats) = cgls(A, b)
-  @test stats.solved
 end
 
 test_cgls()

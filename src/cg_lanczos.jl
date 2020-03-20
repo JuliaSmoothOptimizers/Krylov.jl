@@ -128,9 +128,9 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
 function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T},
-                              shifts :: AbstractVector{S}; M :: AbstractLinearOperator=opEye(),
+                              shifts :: AbstractVector{T}; M :: AbstractLinearOperator=opEye(),
                               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                              check_curvature :: Bool=false, verbose :: Bool=false) where {T <: AbstractFloat, S <: Number}
+                              check_curvature :: Bool=false, verbose :: Bool=false) where T <: AbstractFloat
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")

@@ -47,11 +47,6 @@ function test_lsqr()
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
-  # Test integer values
-  A, b = over_int()
-  (x, stats) = lsqr(A, b)
-  @test stats.solved
-
   # Test with preconditioners
   A, b, M, N = two_preconditioners()
   (x, stats) = lsqr(A, b, M=M, N=N)
