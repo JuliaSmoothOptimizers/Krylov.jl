@@ -194,7 +194,7 @@ end
 function square_preconditioned(n :: Int=10)
   A = ones(n, n) + (n-1) * I
   b = 10.0 * [1:n;]
-  M = PreallocatedLinearOperator(1/n * eye(n))
+  M = 1/n * eye(n)
   return A, b, M
 end
 
@@ -203,8 +203,8 @@ function two_preconditioners(n :: Int=10, m :: Int=20)
   A = ones(n, n) + (n-1) * I
   b = ones(n)
   O = zeros(n, n)
-  M = PreallocatedLinearOperator(1/√n * eye(n))
-  N = PreallocatedLinearOperator(1/√m * eye(n))
+  M = 1/√n * eye(n)
+  N = 1/√m * eye(n)
   return A, b, M, N
 end
 
