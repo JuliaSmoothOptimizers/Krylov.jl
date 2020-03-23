@@ -4,7 +4,7 @@ using LinearAlgebra
 function wrap_preconditioners(kwargs)
   if (haskey(kwargs, :M) && typeof(kwargs[:M]) <: AbstractMatrix) || (haskey(kwargs, :N) && typeof(kwargs[:N]) <: AbstractMatrix)
     k = keys(kwargs)
-    v = Tuple(typeof(arg) <: AbstractMatrix ? PreallocatedLinearOperator(arg) : arg for arg in values(kwargs))
+    v = Tuple(typeof(arg) <: AbstractMatrix ? PreallocatedLinearOperator(arg, symmetric=true) : arg for arg in values(kwargs))
     kwargs = Iterators.Pairs(NamedTuple{k, typeof(v)}(v), k)
   end
   return kwargs
