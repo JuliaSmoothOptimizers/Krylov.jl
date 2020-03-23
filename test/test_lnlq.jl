@@ -47,11 +47,6 @@ function test_lnlq()
   @test y == zeros(size(A, 1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
-  # Test integer values
-  A, b = over_int()
-  (x, y, stats) = lnlq(A, b)
-  @test stats.solved
-
   for transfer_to_craig ∈ (false, true)
     # Test regularization
     A, b, λ = regularization()
