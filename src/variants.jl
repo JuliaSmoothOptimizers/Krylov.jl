@@ -4,6 +4,8 @@ using LinearAlgebra
 function wrap_preconditioners(kwargs)
   if (haskey(kwargs, :M) && typeof(kwargs[:M]) <: AbstractMatrix) || (haskey(kwargs, :N) && typeof(kwargs[:N]) <: AbstractMatrix)
     k = keys(kwargs)
+    # Matrix-vector products with Mᵀ and Nᵀ are not required, we can safely use one vector for products with M / Mᵀ and N / Nᵀ
+    # One vector for products with M / Mᵀ and N / Nᵀ is used when the option symmetric is set to true with a PreallocatedLinearOperator
     v = Tuple(typeof(arg) <: AbstractMatrix ? PreallocatedLinearOperator(arg, symmetric=true) : arg for arg in values(kwargs))
     kwargs = Iterators.Pairs(NamedTuple{k, typeof(v)}(v), k)
   end
