@@ -51,7 +51,7 @@ for fn in (:cg_lanczos, :cg, :cr, :minres, :minres_qlp, :symmlq, :cgs, :diom, :d
   end
 end
 
-# Variants CG-LANCZOS-SHIFT-SEQ
+# Variants for CG-LANCZOS-SHIFT-SEQ
 for fn in [:cg_lanczos_shift_seq]
   @eval begin
     $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}, shifts :: AbstractVector{T}; kwargs...) where T <: AbstractFloat =
