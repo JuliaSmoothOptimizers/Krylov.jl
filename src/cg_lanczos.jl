@@ -31,6 +31,9 @@ function cg_lanczos(A, b :: AbstractVector{T};
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
   verbose && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n)
 
+  # Determine the storage type of b
+  S = typeof(b)
+
   # Tests M == Iₙ
   MisI = isa(M, opEye)
 
@@ -39,7 +42,7 @@ function cg_lanczos(A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Initial state.
-  x = zeros(T, n)           # x₀
+  x = kzeros(S, n)          # x₀
   Mv = copy(b)              # Mv₁ ← b
   v = M * Mv                # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv)) # β₁ = v₁ᵀ M v₁
@@ -140,6 +143,9 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
   nshifts = size(shifts, 1)
   verbose && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts)
 
+  # Determine the storage type of b
+  S = typeof(b)
+
   # Tests M == Iₙ
   MisI = isa(M, opEye)
 
@@ -149,10 +155,10 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
 
   # Initial state.
   ## Distribute x similarly to shifts.
-  x = [zeros(T, n) for i = 1 : nshifts]  # x₀
-  Mv = copy(b)                           # Mv₁ ← b
-  v = M * Mv                             # v₁ = M⁻¹ * Mv₁
-  β = sqrt(@kdot(n, v, Mv))              # β₁ = v₁ᵀ M v₁
+  x = [kzeros(S, n) for i = 1 : nshifts]  # x₀
+  Mv = copy(b)                            # Mv₁ ← b
+  v = M * Mv                              # v₁ = M⁻¹ * Mv₁
+  β = sqrt(@kdot(n, v, Mv))               # β₁ = v₁ᵀ M v₁
   β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
 
   # Initialize each p to v.
@@ -210,8 +216,8 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
     @. Mv = Mv_next                    # Mvₖ ← Mvₖ₊₁
     v = M * Mv                         # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
     β = sqrt(@kdot(n, v, Mv))          # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
-    @kscal!(n, one(T)/β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-    MisI || @kscal!(n, one(T)/β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+    @kscal!(n, one(T)/β, v)            # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+    MisI || @kscal!(n, one(T)/β, Mv)   # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
 
     # Check curvature: vₖᵀ(A + sᵢI)vₖ = vₖᵀAvₖ + sᵢ‖vₖ‖² = δₖ + ρₖ * sᵢ with ρₖ = ‖vₖ‖².
     # It is possible to show that σₖ² (δₖ + ρₖ * sᵢ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ (A + sᵢ I) pₖ.

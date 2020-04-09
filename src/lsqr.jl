@@ -82,11 +82,14 @@ function lsqr(A, b :: AbstractVector{T};
   # Compute the adjoint of A
   Aᵀ = A'
 
+  # Determine the storage type of b
+  S = typeof(b)
+
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = one(T))
   λ² = λ * λ
   ctol = conlim > 0 ? 1/conlim : zero(T)
-  x = zeros(T, n)
+  x = kzeros(S, n)
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.

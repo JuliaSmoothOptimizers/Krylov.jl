@@ -58,8 +58,11 @@ function minres(A, b :: AbstractVector{T};
   eltype(A) == T || error("eltype(A) ≠ $T")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
+  # Determine the storage type of b
+  S = typeof(b)
+
   ϵM = eps(T)
-  x = zeros(T, n)
+  x = kzeros(S, n)
   ctol = conlim > 0 ? 1 / conlim : zero(T)
 
   # Initialize Lanczos process.
@@ -84,8 +87,8 @@ function minres(A, b :: AbstractVector{T};
   γmin = T(Inf)
   cs = -one(T)
   sn = zero(T)
-  w1 = zeros(T, n)
-  w2 = zeros(T, n)
+  w1 = kzeros(S, n)
+  w2 = kzeros(S, n)
   r2 = copy(r1)
 
   ANorm² = zero(T)

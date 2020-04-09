@@ -38,9 +38,12 @@ function dqgmres(A, b :: AbstractVector{T};
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
   isa(N, opEye) || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
+  # Determine the storage type of b
+  S = typeof(b)
+
   # Initial solution x₀ and residual r₀.
-  x = zeros(T, n) # x₀
-  r₀ = M * b      # M⁻¹(b - Ax₀)
+  x = kzeros(S, n)  # x₀
+  r₀ = M * b        # M⁻¹(b - Ax₀)
   # Compute β
   rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
@@ -54,11 +57,11 @@ function dqgmres(A, b :: AbstractVector{T};
 
   # Set up workspace.
   mem = min(memory, itmax) # Memory.
-  V = [zeros(T, n) for i = 1 : mem] # Preconditioned Krylov vectors, orthogonal basis for {b, M⁻¹AN⁻¹b, (M⁻¹AN⁻¹)²b, ..., (M⁻¹AN⁻¹)ᵐ⁻¹b}.
-  P = [zeros(T, n) for i = 1 : mem] # Directions for x : Pₘ = Vₘ(Rₘ)⁻¹.
-  s = zeros(T, mem)                 # Last mem Givens sines used for the factorization QₘRₘ = Hₘ.
-  c = zeros(T, mem)                 # Last mem Givens cosines used for the factorization QₘRₘ = Hₘ.
-  H = zeros(T, mem+2)               # Last column of the band hessenberg matrix Hₘ.
+  V = [kzeros(S, n) for i = 1 : mem]  # Preconditioned Krylov vectors, orthogonal basis for {b, M⁻¹AN⁻¹b, (M⁻¹AN⁻¹)²b, ..., (M⁻¹AN⁻¹)ᵐ⁻¹b}.
+  P = [kzeros(S, n) for i = 1 : mem]  # Directions for x : Pₘ = Vₘ(Rₘ)⁻¹.
+  s = zeros(T, mem)                   # Last mem Givens sines used for the factorization QₘRₘ = Hₘ.
+  c = zeros(T, mem)                   # Last mem Givens cosines used for the factorization QₘRₘ = Hₘ.
+  H = zeros(T, mem+2)                 # Last column of the band hessenberg matrix Hₘ.
   # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
   # In addition of that, the last column of Rₘ is also stored in H.

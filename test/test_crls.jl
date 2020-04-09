@@ -22,7 +22,7 @@ function test_crls()
   # Test with preconditioning.
   Random.seed!(0)
   A = rand(10, 6); b = rand(10)
-  M = InverseLBFGSOperator(10, 4)
+  M = InverseLBFGSOperator(10, mem=4)
   for _ = 1 : 6
     s = rand(10)
     y = rand(10)
