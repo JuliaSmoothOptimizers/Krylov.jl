@@ -26,7 +26,7 @@ BiCG point, when it exists. The transfer is based on the residual norm.
 
 This version of BiLQR works in any floating-point data type.
 """
-function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: AbstractVector{T};
+function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
                itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
@@ -35,6 +35,9 @@ function bilqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abst
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
   verbose && @printf("BILQR: systems of size %d\n", n)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'

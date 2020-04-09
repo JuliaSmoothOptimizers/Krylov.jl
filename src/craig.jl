@@ -59,24 +59,26 @@ which is equivalent to applying CG to (M + AN⁻¹Aᵀ)y = b.
 
 In this implementation, both the x and y-parts of the solution are returned.
 """
-function craig(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-               M :: Preconditioner{T}=opEye(),
-               N :: Preconditioner{T}=opEye(),
-               λ :: T=zero(T),
-               atol :: T=√eps(T), btol :: T=√eps(T), rtol :: T=√eps(T),
-               conlim :: T=1/√eps(T), itmax :: Int=0,
+function craig(A, b :: AbstractVector{T};
+               M=opEye(), N=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
+               btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,
                verbose :: Bool=false, transfer_to_lsqr :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("CRAIG: system of %d equations in %d variables\n", m, n)
 
-  # Compute the adjoint of A
-  Aᵀ = A'
-
   # Tests M == Iₘ and N == Iₙ
   MisI = isa(M, opEye)
   NisI = isa(N, opEye)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
+
+  # Compute the adjoint of A
+  Aᵀ = A'
 
   x = zeros(T, n)
   y = zeros(T, m)

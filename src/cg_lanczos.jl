@@ -23,9 +23,8 @@ The method does _not_ abort if A is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-                    M :: Preconditioner{T}=opEye(),
-                    atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+function cg_lanczos(A, b :: AbstractVector{T};
+                    M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                     check_curvature :: Bool=false, verbose :: Bool=false) where T <: AbstractFloat
 
   n = size(b, 1)
@@ -34,6 +33,10 @@ function cg_lanczos(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
 
   # Tests M == Iₙ
   MisI = isa(M, opEye)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Initial state.
   x = zeros(T, n)           # x₀
@@ -127,9 +130,8 @@ The method does _not_ abort if A + αI is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T},
-                              shifts :: AbstractVector{T}; M :: Preconditioner{T}=opEye(),
-                              atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVector{T};
+                              M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                               check_curvature :: Bool=false, verbose :: Bool=false) where T <: AbstractFloat
 
   n = size(b, 1)
@@ -140,6 +142,10 @@ function cg_lanczos_shift_seq(A :: AbstractLinearOperator{T}, b :: AbstractVecto
 
   # Tests M == Iₙ
   MisI = isa(M, opEye)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Initial state.
   ## Distribute x similarly to shifts.

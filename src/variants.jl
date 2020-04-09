@@ -15,38 +15,49 @@ end
 # Variants where matrix-vector products with A and Aᵀ are required
 for fn in (:cgls, :cgne, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :lsqr, :bilq, :qmr)
   @eval begin
-    $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}, args...; kwargs...) where T <: AbstractFloat =
-      $fn(PreallocatedLinearOperator(A), convert(Vector{T}, b), args...; wrap_preconditioners(kwargs)...)
+    $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}; kwargs...) where T <: AbstractFloat =
+      $fn(PreallocatedLinearOperator(A), convert(Vector{T}, b); wrap_preconditioners(kwargs)...)
 
-    $fn(A :: AbstractMatrix{T}, b :: AbstractVector{T}, args...; kwargs...) where T <: AbstractFloat =
-      $fn(PreallocatedLinearOperator(A), b, args...; wrap_preconditioners(kwargs)...)
+    $fn(A :: AbstractMatrix{T}, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat =
+      $fn(PreallocatedLinearOperator(A), b; wrap_preconditioners(kwargs)...)
   end
 end
 
 # Variants for USYMLQ, USYMQR, TriLQR and BiLQR
 for fn in (:usymlq, :usymqr, :trilqr, :bilqr)
   @eval begin
-    $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}, c :: SparseVector{T}, args...; kwargs...) where T <: AbstractFloat =
-      $fn(PreallocatedLinearOperator(A), convert(Vector{T}, b), convert(Vector{T}, c), args...; wrap_preconditioners(kwargs)...)
+    $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}, c :: SparseVector{T}; kwargs...) where T <: AbstractFloat =
+      $fn(PreallocatedLinearOperator(A), convert(Vector{T}, b), convert(Vector{T}, c); wrap_preconditioners(kwargs)...)
 
-    $fn(A :: AbstractMatrix{T}, b :: AbstractVector{T}, c :: SparseVector{T}, args...; kwargs...) where T <: AbstractFloat =
-      $fn(PreallocatedLinearOperator(A), b, convert(Vector{T}, c), args...; wrap_preconditioners(kwargs)...)
+    $fn(A :: AbstractMatrix{T}, b :: AbstractVector{T}, c :: SparseVector{T}; kwargs...) where T <: AbstractFloat =
+      $fn(PreallocatedLinearOperator(A), b, convert(Vector{T}, c); wrap_preconditioners(kwargs)...)
 
-    $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}, c :: AbstractVector{T}, args...; kwargs...) where T <: AbstractFloat =
-      $fn(PreallocatedLinearOperator(A), convert(Vector{T}, b), c, args...; wrap_preconditioners(kwargs)...)
+    $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat =
+      $fn(PreallocatedLinearOperator(A), convert(Vector{T}, b), c; wrap_preconditioners(kwargs)...)
 
-    $fn(A :: AbstractMatrix{T}, b :: AbstractVector{T}, c :: AbstractVector{T}, args...; kwargs...) where T <: AbstractFloat =
-      $fn(PreallocatedLinearOperator(A), b, c, args...; wrap_preconditioners(kwargs)...)
+    $fn(A :: AbstractMatrix{T}, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat =
+      $fn(PreallocatedLinearOperator(A), b, c; wrap_preconditioners(kwargs)...)
   end
 end
 
 # Variants where matrix-vector products with A are only required
-for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cr, :minres, :minres_qlp, :symmlq, :cgs, :diom, :dqgmres)
+for fn in (:cg_lanczos, :cg, :cr, :minres, :minres_qlp, :symmlq, :cgs, :diom, :dqgmres)
   @eval begin
-    $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}, args...; kwargs...) where T <: AbstractFloat =
-      $fn(PreallocatedLinearOperator(A, symmetric=true), convert(Vector{T}, b), args...; wrap_preconditioners(kwargs)...)
+    $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}; kwargs...) where T <: AbstractFloat =
+      $fn(PreallocatedLinearOperator(A, symmetric=true), convert(Vector{T}, b); wrap_preconditioners(kwargs)...)
 
-    $fn(A :: AbstractMatrix{T}, b :: AbstractVector{T}, args...; kwargs...) where T <: AbstractFloat =
-      $fn(PreallocatedLinearOperator(A, symmetric=true), b, args...; wrap_preconditioners(kwargs)...)
+    $fn(A :: AbstractMatrix{T}, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat =
+      $fn(PreallocatedLinearOperator(A, symmetric=true), b; wrap_preconditioners(kwargs)...)
+  end
+end
+
+# Variants CG-LANCZOS-SHIFT-SEQ
+for fn in [:cg_lanczos_shift_seq]
+  @eval begin
+    $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}, shifts :: AbstractVector{T}; kwargs...) where T <: AbstractFloat =
+      $fn(PreallocatedLinearOperator(A, symmetric=true), convert(Vector{T}, b), shifts; wrap_preconditioners(kwargs)...)
+
+    $fn(A :: AbstractMatrix{T}, b :: AbstractVector{T}, shifts :: AbstractVector{T}; kwargs...) where T <: AbstractFloat =
+      $fn(PreallocatedLinearOperator(A, symmetric=true), b, shifts; wrap_preconditioners(kwargs)...)
   end
 end

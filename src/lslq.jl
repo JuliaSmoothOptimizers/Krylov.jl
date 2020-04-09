@@ -92,13 +92,11 @@ The iterations stop as soon as one of the following conditions holds true:
 * R. Estrin, D. Orban and M. A. Saunders, *Estimates of the 2-Norm Forward Error for SYMMLQ and CG*, Cahier du GERAD G-2016-70, GERAD, Montreal, 2016. DOI http://dx.doi.org/10.13140/RG.2.2.19581.77288.
 * R. Estrin, D. Orban and M. A. Saunders, *LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*, Cahier du GERAD G-2017-xx, GERAD, Montreal, 2017.
 """
-function lslq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-              M :: Preconditioner{T}=opEye(),
-              N :: Preconditioner{T}=opEye(),
-              sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
+function lslq(A, b :: AbstractVector{T};
+              M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
               atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
               window :: Int=5, utol :: T=√eps(T), itmax :: Int=0,
-              conlim :: T=1/√eps(T), verbose :: Bool=false) where T <: AbstractFloat
+              σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -107,6 +105,11 @@ function lslq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   # Tests M == Iₙ and N == Iₘ
   MisI = isa(M, opEye)
   NisI = isa(N, opEye)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'

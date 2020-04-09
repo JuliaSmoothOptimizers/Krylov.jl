@@ -23,7 +23,7 @@ when it exists. The transfer is based on the residual norm.
 
 This version of BiLQ works in any floating-point data type.
 """
-function bilq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
+function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
               atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
               itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
@@ -31,6 +31,9 @@ function bilq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}; c :: Abstr
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
   verbose && @printf("BILQ: system of size %d\n", n)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'

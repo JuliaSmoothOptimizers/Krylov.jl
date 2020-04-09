@@ -33,15 +33,18 @@ TFQMR and BICGSTAB were developed to remedy this difficulty.»
 
 This implementation allows a right preconditioner M.
 """
-function cgs(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-             M :: Preconditioner{T}=opEye(),
-             atol :: T=√eps(T), rtol :: T=√eps(T),
+function cgs(A, b :: AbstractVector{T};
+             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
              itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
   verbose && @printf("CGS: system of size %d\n", n)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Initial solution x₀ and residual r₀.
   x = zeros(T, n) # x₀

@@ -25,9 +25,8 @@ SYMMLQ produces monotonic errors ‖x*-x‖₂.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-                M :: Preconditioner{T}=opEye(),
-                λ :: T=zero(T), transfer_to_cg :: Bool=true,
+function symmlq(A, b :: AbstractVector{T};
+                M=opEye(), λ :: T=zero(T), transfer_to_cg :: Bool=true,
                 λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                 etol :: T=√eps(T), window :: Int=0, itmax :: Int=0,
                 conlim :: T=1/√eps(T), verbose :: Bool=false) where T <: AbstractFloat
@@ -39,6 +38,10 @@ function symmlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
 
   # Test M == Iₘ
   MisI = isa(M, opEye)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   ϵM = eps(T)
   x = zeros(T, n)

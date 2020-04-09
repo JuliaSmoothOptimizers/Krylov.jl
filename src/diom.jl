@@ -26,16 +26,19 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 - Right preconditioning : AN⁻¹u = b with x = N⁻¹u
 - Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
 """
-function diom(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-              M :: Preconditioner{T}=opEye(),
-              N :: Preconditioner{T}=opEye(),
-              atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+function diom(A, b :: AbstractVector{T};
+              M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
               memory :: Int=20, pivoting :: Bool=false, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
   verbose && @printf("DIOM: system of size %d\n", n)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  isa(N, opEye) || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Initial solution x₀ and residual r₀.
   x = zeros(T, n) # x₀

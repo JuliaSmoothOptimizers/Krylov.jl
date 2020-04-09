@@ -53,14 +53,17 @@ but simpler to implement. Only the x-part of the solution is returned.
 
 A preconditioner M may be provided in the form of a linear operator.
 """
-function crmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-              M :: Preconditioner{T}=opEye(), λ :: T=zero(T),
-              atol :: T=√eps(T), rtol :: T=√eps(T),
-              itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+function crmr(A, b :: AbstractVector{T};
+              M=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
+              rtol :: T=√eps(T), itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("CRMR: system of %d equations in %d variables\n", m, n)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
