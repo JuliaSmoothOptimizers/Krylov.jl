@@ -58,10 +58,8 @@ indefinite system
 In this case, `N` can still be specified and indicates the norm
 in which `x` should be measured.
 """
-function lsmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-              M :: Preconditioner{T}=opEye(),
-              N :: Preconditioner{T}=opEye(),
-              sqd :: Bool=false,
+function lsmr(A, b :: AbstractVector{T};
+              M=opEye(), N=opEye(), sqd :: Bool=false,
               λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
               atol :: T=zero(T), rtol :: T=zero(T),
               etol :: T=√eps(T), window :: Int=5,
@@ -72,12 +70,17 @@ function lsmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("LSMR: system of %d equations in %d variables\n", m, n)
 
-  # Compute the adjoint of A
-  Aᵀ = A'
-
   # Tests M == Iₙ and N == Iₘ
   MisI = isa(M, opEye)
   NisI = isa(N, opEye)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
+
+  # Compute the adjoint of A
+  Aᵀ = A'
 
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = one(T))

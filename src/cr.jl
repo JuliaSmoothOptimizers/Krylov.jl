@@ -17,9 +17,8 @@ M also indicates the weighted norm in which residuals are measured.
 
 In a linesearch context, 'linesearch' must be set to 'true'.
 """
-function cr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-            M :: Preconditioner{T}=opEye(), atol :: T=√eps(T),
-            rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
+function cr(A, b :: AbstractVector{T};
+            M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
             radius :: T=zero(T), verbose :: Bool=false, linesearch :: Bool=false) where T <: AbstractFloat
 
   if linesearch && (radius > 0)
@@ -28,6 +27,10 @@ function cr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   n = size(b, 1) # size of the problem
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
   verbose && @printf("CR: system of %d equations in %d variables\n", n, n)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Initial state.
   x = zeros(T, n) # initial estimation x = 0

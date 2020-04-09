@@ -61,22 +61,25 @@ It is formally equivalent to CRMR, though can be slightly more accurate,
 and intricate to implement. Both the x- and y-parts of the solution are
 returned.
 """
-function craigmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-                 M :: Preconditioner{T}=opEye(),
-                 N :: Preconditioner{T}=opEye(),
-                 λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-                 itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+function craigmr(A, b :: AbstractVector{T};
+                 M=opEye(), N=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
+                 rtol :: T=√eps(T), itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("CRAIG-MR: system of %d equations in %d variables\n", m, n)
 
-  # Compute the adjoint of A
-  Aᵀ = A'
-
   # Tests M == Iₘ and N == Iₙ
   MisI = isa(M, opEye)
   NisI = isa(N, opEye)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
+
+  # Compute the adjoint of A
+  Aᵀ = A'
 
   # Compute y such that AAᵀy = b. Then recover x = Aᵀy.
   x = zeros(T, n)

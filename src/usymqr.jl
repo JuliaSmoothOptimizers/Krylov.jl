@@ -31,7 +31,7 @@ USYMQR finds the minimum-norm solution if problems are inconsistent.
 
 This version of USYMQR works in any floating-point data type.
 """
-function usymqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: AbstractVector{T};
+function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T),
                 itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
@@ -39,6 +39,9 @@ function usymqr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}, c :: Abs
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
   verbose && @printf("USYMQR: system of %d equations in %d variables\n", m, n)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'

@@ -37,14 +37,17 @@ CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr�
 It is formally equivalent to LSMR, though can be substantially less accurate,
 but simpler to implement.
 """
-function crls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-              M :: Preconditioner{T}=opEye(), λ :: T=zero(T),
-              atol :: T=√eps(T), rtol :: T=√eps(T), radius :: T=zero(T),
-              itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+function crls(A, b :: AbstractVector{T};
+              M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
+              radius :: T=zero(T), itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("CRLS: system of %d equations in %d variables\n", m, n)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'

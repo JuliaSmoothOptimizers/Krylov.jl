@@ -38,14 +38,17 @@ CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖A�
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 """
-function cgls(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-              M :: Preconditioner{T}=opEye(), λ :: T=zero(T),
-              atol :: T=√eps(T), rtol :: T=√eps(T), radius :: T=zero(T),
-              itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+function cgls(A, b :: AbstractVector{T};
+              M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
+              radius :: T=zero(T), itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("CGLS: system of %d equations in %d variables\n", m, n)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  isa(M, opEye) || eltype(M) == T || error("eltype(M) ≠ $T")
 
   # Compute Aᵀ
   Aᵀ = A'

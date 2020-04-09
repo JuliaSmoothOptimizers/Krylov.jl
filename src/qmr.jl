@@ -28,7 +28,7 @@ When A is symmetric and b = c, QMR is equivalent to MINRES.
 
 This version of QMR works in any floating-point data type.
 """
-function qmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
+function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
              atol :: T=√eps(T), rtol :: T=√eps(T),
              itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
@@ -36,6 +36,9 @@ function qmr(A :: AbstractLinearOperator{T}, b :: AbstractVector{T}; c :: Abstra
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
   verbose && @printf("QMR: system of size %d\n", n)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'

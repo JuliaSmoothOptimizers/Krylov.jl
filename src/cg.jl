@@ -20,14 +20,18 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 M also indicates the weighted norm in which residuals are measured.
 """
-function cg(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-            M :: Preconditioner{T}=opEye(), atol :: T=√eps(T),
-            rtol :: T=√eps(T), itmax :: Int=0, radius :: T=zero(T),
+function cg(A, b :: AbstractVector{T};
+            M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
+            itmax :: Int=0, radius :: T=zero(T),
             verbose :: Bool=false) where T <: AbstractFloat
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
   verbose && @printf("CG: system of %d equations in %d variables\n", n, n)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Initial state.
   x = zeros(T, n)

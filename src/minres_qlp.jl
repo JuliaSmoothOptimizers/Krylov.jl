@@ -23,7 +23,7 @@ It is significantly more complex but can be more reliable than MINRES when A is 
 
 This version of MINRES-QLP works in any floating-point data type.
 """
-function minres_qlp(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
+function minres_qlp(A, b :: AbstractVector{T};
                     atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
                     itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
@@ -31,6 +31,9 @@ function minres_qlp(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
   verbose && @printf("MINRES-QLP: system of size %d\n", n)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
 
   # Initial state.
   x = zeros(T, n)
