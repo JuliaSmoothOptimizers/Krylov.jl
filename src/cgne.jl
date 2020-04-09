@@ -69,7 +69,10 @@ function cgne(A, b :: AbstractVector{T};
   # Compute the adjoint of A
   Aᵀ = A'
 
-  x = zeros(T, n)
+  # Determine the storage type of b
+  S = typeof(b)
+
+  x = kzeros(S, n)
   r = copy(b)
   z = M * r
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)

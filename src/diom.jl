@@ -40,8 +40,11 @@ function diom(A, b :: AbstractVector{T};
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
   isa(N, opEye) || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
+  # Determine the storage type of b
+  S = typeof(b)
+
   # Initial solution x₀ and residual r₀.
-  x = zeros(T, n) # x₀
+  x = kzeros(S, n)  # x₀
   x_old = copy(x)
   r₀ = M * b      # M⁻¹(b - Ax₀)
   # Compute β.
@@ -57,9 +60,9 @@ function diom(A, b :: AbstractVector{T};
 
   # Set up workspace.
   mem = min(memory, itmax) # Memory.
-  V = [zeros(T, n) for i = 1 : mem] # Preconditioned Krylov vectors, orthogonal basis for {b, M⁻¹AN⁻¹b, (M⁻¹AN⁻¹)²b, ..., (M⁻¹AN⁻¹)ᵐ⁻¹b}.
-  P = [zeros(T, n) for i = 1 : mem] # Directions for x : Pₘ = Vₘ(Uₘ)⁻¹.
-  H = zeros(T, mem+2)               # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
+  V = [kzeros(S, n) for i = 1 : mem]  # Preconditioned Krylov vectors, orthogonal basis for {b, M⁻¹AN⁻¹b, (M⁻¹AN⁻¹)²b, ..., (M⁻¹AN⁻¹)ᵐ⁻¹b}.
+  P = [kzeros(S, n) for i = 1 : mem]  # Directions for x : Pₘ = Vₘ(Uₘ)⁻¹.
+  H = zeros(T, mem+2)                 # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
   # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
   # In addition of that, the last column of Uₘ is stored in H.

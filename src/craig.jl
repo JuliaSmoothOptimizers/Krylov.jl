@@ -80,8 +80,11 @@ function craig(A, b :: AbstractVector{T};
   # Compute the adjoint of A
   Aᵀ = A'
 
-  x = zeros(T, n)
-  y = zeros(T, m)
+  # Determine the storage type of b
+  S = typeof(b)
+
+  x = kzeros(S, n)
+  y = kzeros(S, m)
   Mu = copy(b)
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
@@ -98,10 +101,10 @@ function craig(A, b :: AbstractVector{T};
   @kscal!(m, one(T)/β₁, u)
   MisI || @kscal!(m, one(T)/β₁, Mu)
 
-  Nv = zeros(T, n)
-  w = zeros(T, m)  # Used to update y.
+  Nv = kzeros(S, n)
+  w = kzeros(S, m)  # Used to update y.
 
-  λ > 0 && (w2 = zeros(T, n))
+  λ > 0 && (w2 = kzeros(S, n))
 
   Anorm² = zero(T) # Estimate of ‖A‖²_F.
   Anorm  = zero(T)

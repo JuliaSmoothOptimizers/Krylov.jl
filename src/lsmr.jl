@@ -70,6 +70,12 @@ function lsmr(A, b :: AbstractVector{T};
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("LSMR: system of %d equations in %d variables\n", m, n)
 
+  # Compute the adjoint of A
+  Aᵀ = A'
+
+  # Determine the storage type of b
+  S = typeof(b)
+
   # Tests M == Iₙ and N == Iₘ
   MisI = isa(M, opEye)
   NisI = isa(N, opEye)
@@ -85,7 +91,7 @@ function lsmr(A, b :: AbstractVector{T};
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = one(T))
   ctol = conlim > 0 ? 1/conlim : zero(T)
-  x = zeros(T, n)
+  x = kzeros(S, n)
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
@@ -145,7 +151,7 @@ function lsmr(A, b :: AbstractVector{T};
   NisI || @kscal!(n, one(T)/α, Nv)
 
   h = copy(v)
-  hbar = zeros(T, n)
+  hbar = kzeros(S, n)
 
   iter = 0
   itmax == 0 && (itmax = m + n)

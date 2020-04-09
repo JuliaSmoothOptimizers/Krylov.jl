@@ -36,6 +36,9 @@ function symmlq(A, b :: AbstractVector{T};
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("SYMMLQ: system of size %d\n", n)
 
+  # Determine the storage type of b
+  S = typeof(b)
+
   # Test M == Iₘ
   MisI = isa(M, opEye)
 
@@ -44,7 +47,7 @@ function symmlq(A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   ϵM = eps(T)
-  x = zeros(T, n)
+  x = kzeros(S, n)
   ctol = conlim > 0 ? 1 / conlim : zero(T)
 
   # Initialize Lanczos process.

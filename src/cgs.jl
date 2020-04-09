@@ -46,9 +46,12 @@ function cgs(A, b :: AbstractVector{T};
   eltype(A) == T || error("eltype(A) ≠ $T")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
+  # Determine the storage type of b
+  S = typeof(b)
+
   # Initial solution x₀ and residual r₀.
-  x = zeros(T, n) # x₀
-  r = copy(b)     # r₀
+  x = kzeros(S, n)  # x₀
+  r = copy(b)       # r₀
   # Compute ρ₀ = ⟨ r₀,r₀ ⟩ and residual norm ‖r₀‖₂.
   ρ = @kdot(n, r, r)
   rNorm = sqrt(ρ)
@@ -62,9 +65,9 @@ function cgs(A, b :: AbstractVector{T};
   verbose && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Set up workspace.
-  u = copy(r)     # u₀
-  p = copy(r)     # p₀
-  q = zeros(T, n) # q₋₁
+  u = copy(r)       # u₀
+  p = copy(r)       # p₀
+  q = kzeros(S, n)  # q₋₁
 
   # Stopping criterion.
   solved = rNorm ≤ ε

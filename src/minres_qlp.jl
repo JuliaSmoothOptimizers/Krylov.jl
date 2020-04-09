@@ -35,8 +35,11 @@ function minres_qlp(A, b :: AbstractVector{T};
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
 
+  # Determine the storage type of b
+  S = typeof(b)
+
   # Initial state.
-  x = zeros(T, n)
+  x = kzeros(S, n)
   rNorm = @knrm2(n, b)
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
 
@@ -51,7 +54,7 @@ function minres_qlp(A, b :: AbstractVector{T};
   verbose && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
   # Set up workspace.
-  vₖ₋₁  = zeros(T, n)
+  vₖ₋₁  = kzeros(S, n)
   βₖ    = rNorm
   vₖ    = b / βₖ
   ζbarₖ = βₖ
@@ -59,8 +62,8 @@ function minres_qlp(A, b :: AbstractVector{T};
   τₖ₋₂ = τₖ₋₁ = τₖ = zero(T)
   ψbarₖ₋₂ = zero(T)
   μbisₖ₋₂ = μbarₖ₋₁ = zero(T)
-  wₖ₋₁  = zeros(T, n)
-  wₖ    = zeros(T, n)
+  wₖ₋₁  = kzeros(S, n)
+  wₖ    = kzeros(S, n)
   cₖ₋₂  = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
   sₖ₋₂  = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
 

@@ -33,8 +33,11 @@ function cg(A, b :: AbstractVector{T};
   eltype(A) == T || error("eltype(A) ≠ $T")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
+  # Determine the storage type of b
+  S = typeof(b)
+
   # Initial state.
-  x = zeros(T, n)
+  x = kzeros(S, n)
   r = copy(b)
   z = M * r
   p = copy(z)

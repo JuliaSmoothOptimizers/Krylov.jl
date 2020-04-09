@@ -32,10 +32,13 @@ function cr(A, b :: AbstractVector{T};
   eltype(A) == T || error("eltype(A) ≠ $T")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
+  # Determine the storage type of b
+  S = typeof(b)
+
   # Initial state.
-  x = zeros(T, n) # initial estimation x = 0
+  x = kzeros(S, n)  # initial estimation x = 0
   xNorm = zero(T)
-  r = copy(M * b) # initial residual r = M * (b - Ax) = M * b
+  r = copy(M * b)  # initial residual r = M * (b - Ax) = M * b
   Ar = A * r
   ρ = @kdot(n, r, Ar)
   ρ == 0 && return (x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
