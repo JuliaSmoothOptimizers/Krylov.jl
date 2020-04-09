@@ -1,6 +1,6 @@
 name = "Krylov"
 uuid = "ba0b0d4f-ebba-5204-a429-3ac8c609bfb7"
-version = "0.4.1"
+version = "0.5.0"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -9,7 +9,7 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
-LinearOperators = "0.7.1, 1"
+LinearOperators = "~1.1"
 julia = "^1.3.0"
 
 [extras]
