@@ -22,8 +22,10 @@ M also indicates the weighted norm in which residuals are measured.
 """
 function cg(A, b :: AbstractVector{T};
             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
-            itmax :: Int=0, radius :: T=zero(T),
+            itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
             verbose :: Bool=false) where T <: AbstractFloat
+
+  linesearch && (radius > 0) && error("'linesearch' set to 'true' but trust-region radius > 0")
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
@@ -54,12 +56,27 @@ function cg(A, b :: AbstractVector{T};
 
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
+  inconsistent = false
   on_boundary = false
+  null_curvature = false
+  pAp = zero(T)
+
   status = "unknown"
 
-  while ! (solved || tired)
+  while !(solved || tired || null_curvature)
     Ap = A * p
     pAp = @kdot(n, p, Ap)
+    if (pAp ≤ 0) && (radius == 0)
+      if pAp == 0
+        null_curvature = true
+        inconsistent = !linesearch
+      end
+      if linesearch
+        iter == 0 && (x .= b)
+        solved = true
+      end
+    end
+    (null_curvature || solved) && continue
 
     α = γ / pAp
 
@@ -71,7 +88,7 @@ function cg(A, b :: AbstractVector{T};
     # Move along p from x to the boundary if either
     # the next step leads outside the trust region or
     # we have nonpositive curvature.
-    if (radius > 0) & ((pAp ≤ 0) | (α > σ))
+    if (radius > 0) && ((pAp ≤ 0) || (α > σ))
       α = σ
       on_boundary = true
     end
@@ -83,7 +100,8 @@ function cg(A, b :: AbstractVector{T};
     rNorm = sqrt(γ_next)
     push!(rNorms, rNorm)
 
-    solved = (rNorm ≤ ε) | on_boundary
+    solved = (rNorm ≤ ε) || on_boundary
+
     if !solved
       β = γ_next / γ
       γ = γ_next
@@ -97,7 +115,11 @@ function cg(A, b :: AbstractVector{T};
   end
   verbose && @printf("\n")
 
-  status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+  solved && on_boundary && (status = "on trust-region boundary")
+  solved && linesearch && (pAp ≤ 0) && (status = "nonpositive curvature detected")
+  solved && (status == "unknown") && (status = "solution good enough given atol and rtol")
+  null_curvature && (status = "null curvature detected")
+  tired && (status = "maximum number of iterations exceeded")
+  stats = SimpleStats(solved, inconsistent, rNorms, T[], status)
   return (x, stats)
 end
