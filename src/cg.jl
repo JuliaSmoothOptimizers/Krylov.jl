@@ -25,7 +25,7 @@ function cg(A, b :: AbstractVector{T};
             itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
             verbose :: Bool=false) where T <: AbstractFloat
 
-  linesearch && (radius > 0) && error("'linesearch' set to 'true' but trust-region radius > 0")
+  linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
@@ -55,17 +55,17 @@ function cg(A, b :: AbstractVector{T};
   tired = iter ≥ itmax
   inconsistent = false
   on_boundary = false
-  null_curvature = false
+  zero_curvature = false
   pAp = zero(T)
 
   status = "unknown"
 
-  while !(solved || tired || null_curvature)
+  while !(solved || tired || zero_curvature)
     Ap = A * p
     pAp = @kdot(n, p, Ap)
     if (pAp ≤ 0) && (radius == 0)
       if pAp == 0
-        null_curvature = true
+        zero_curvature = true
         inconsistent = !linesearch
       end
       if linesearch
@@ -73,7 +73,7 @@ function cg(A, b :: AbstractVector{T};
         solved = true
       end
     end
-    (null_curvature || solved) && continue
+    (zero_curvature || solved) && continue
 
     α = γ / pAp
 
@@ -115,7 +115,7 @@ function cg(A, b :: AbstractVector{T};
   solved && on_boundary && (status = "on trust-region boundary")
   solved && linesearch && (pAp ≤ 0) && (status = "nonpositive curvature detected")
   solved && (status == "unknown") && (status = "solution good enough given atol and rtol")
-  null_curvature && (status = "null curvature detected")
+  zero_curvature && (status = "zero curvature detected")
   tired && (status = "maximum number of iterations exceeded")
   stats = SimpleStats(solved, inconsistent, rNorms, T[], status)
   return (x, stats)
