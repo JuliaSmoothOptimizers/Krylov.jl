@@ -92,6 +92,14 @@ function almost_singular(n :: Int=16)
   return A, b
 end
 
+# Symmetric, singular and consistent systems.
+function singular_consistent(n :: Int=10)
+  A = [1.0*i*j for i=1:n, j=1:n] + 5 * eye(n)
+  A[:,1] .= A[:,2] .= A[2,:] .= A[1,:] .= 1.0
+  b = A * ones(n)
+  return A, b
+end
+
 # System that cause a breakdown with the symmetric Lanczos process.
 function symmetric_breakdown()
   A = [0.0 1.0; 1.0 0.0]

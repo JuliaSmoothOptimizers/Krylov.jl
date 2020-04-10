@@ -72,6 +72,21 @@ function test_cg()
   b = rand(BigFloat, 3)
   x = cg(A, b)[1]
   @test eltype(x) == BigFloat
+
+  # Test linesearch
+  A, b = symmetric_indefinite()
+  x, stats = cg(A, b, linesearch=true)
+  @test stats.status == "nonpositive curvature detected"
+  @test !stats.inconsistent
+
+  # Test singular and consistent system
+  A, b = singular_consistent()
+  x, stats = cg(A, b)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("CG: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ cg_tol)
+  @test !stats.inconsistent
 end
 
 test_cg()
