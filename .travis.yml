@@ -4,6 +4,7 @@ os:
   - osx
   - linux
   - windows
+  - freebsd
 
 julia:
   - 1.3
