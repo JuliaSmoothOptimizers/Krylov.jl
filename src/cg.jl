@@ -49,7 +49,9 @@ function cg(A, b :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = 2 * n)
 
+  pAp = zero(T)
   rNorm = sqrt(γ)
+  pNorm² = γ
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
   verbose && @printf("%5d  %8.1e  ", iter, rNorm)
@@ -59,15 +61,14 @@ function cg(A, b :: AbstractVector{T};
   inconsistent = false
   on_boundary = false
   zero_curvature = false
-  pAp = zero(T)
 
   status = "unknown"
 
   while !(solved || tired || zero_curvature)
     Ap = A * p
     pAp = @kdot(n, p, Ap)
-    if (pAp ≤ 0) && (radius == 0)
-      if pAp == 0
+    if (pAp ≤ eps(T) * pNorm²) && (radius == 0)
+      if abs(pAp) ≤ eps(T) * pNorm²
         zero_curvature = true
         inconsistent = !linesearch
       end
@@ -81,7 +82,7 @@ function cg(A, b :: AbstractVector{T};
     α = γ / pAp
 
     # Compute step size to boundary if applicable.
-    σ = radius > 0 ? maximum(to_boundary(x, p, radius)) : α
+    σ = radius > 0 ? maximum(to_boundary(x, p, radius, dNorm2=pNorm²)) : α
 
     verbose && @printf("%8.1e  %7.1e  %7.1e\n", pAp, α, σ)
 
@@ -104,8 +105,8 @@ function cg(A, b :: AbstractVector{T};
 
     if !solved
       β = γ_next / γ
+      pNorm² = γ_next + β^2 * pNorm²
       γ = γ_next
-
       @kaxpby!(n, one(T), z, β, p)
     end
 

@@ -87,6 +87,11 @@ function test_cg()
   @printf("CG: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cg_tol)
   @test !stats.inconsistent
+
+  # Test inconsistent system
+  A, b = square_inconsistent()
+  x, stats = cg(A, b)
+  @test stats.inconsistent
 end
 
 test_cg()
