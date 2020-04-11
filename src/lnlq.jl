@@ -56,28 +56,33 @@ In this case, M⁻¹ can still be specified and indicates the weighted norm in w
 
 In this implementation, both the x and y-parts of the solution are returned.
 """
-function lnlq(A :: AbstractLinearOperator{T}, b :: AbstractVector{T};
-              M :: Preconditioner{T}=opEye(),
-              N :: Preconditioner{T}=opEye(),
-              sqd :: Bool=false, λ :: T=zero(T),
-              atol :: T=√eps(T), rtol :: T=√eps(T),
-              itmax :: Int=0, verbose :: Bool=false,
-              transfer_to_craig :: Bool=true) where T <: AbstractFloat
+function lnlq(A, b :: AbstractVector{T};
+              M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
+              atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+              verbose :: Bool=false, transfer_to_craig :: Bool=true) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
   verbose && @printf("LNLQ: system of %d equations in %d variables\n", m, n)
 
-  # Compute the adjoint of A
-  Aᵀ = A'
-
   # Tests M == Iₘ and N == Iₙ
   MisI = isa(M, opEye)
   NisI = isa(N, opEye)
 
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
+
+  # Compute the adjoint of A
+  Aᵀ = A'
+
+  # Determine the storage type of b
+  S = typeof(b)
+
   # Initial solutions (x₀, y₀) and residual norm ‖r₀‖.
-  x = zeros(T, n)
-  y = zeros(T, m)
+  x = kzeros(S, n)
+  y = kzeros(S, m)
 
   # When solving a SQD system, set regularization parameter λ = 1.
   sqd && (λ = one(T))

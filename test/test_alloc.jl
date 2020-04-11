@@ -158,7 +158,7 @@ actual_cgne_bytes = @allocated cgne(Au, c)
 
 # with (Ap, Aᵀq) preallocated, LNLQ needs:
 # - 2 n-vector: x, v
-# - 3 m-vectors: y, w, u
+# - 3 m-vectors: y, w̄, u
 storage_lnlq(n, m) = 2 * n + 3 * m
 storage_lnlq_bytes(n, m) = 8 * storage_lnlq(n, m)
 
