@@ -11,6 +11,7 @@ makedocs(
            "API" => "api.md",
            "Solvers" => "solvers.md",
            "GPU" => "gpu.md",
+           "Matrix-free operators" => "matrix-free.md",
            "Reference" => "reference.md",
           ]
 )
