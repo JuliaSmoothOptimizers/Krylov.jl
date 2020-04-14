@@ -1,33 +1,36 @@
 ## Matrix-free operators
 
-All methods are matrix-free which means that you only need to provide matrix-vector products.
+All methods are matrix-free which means that you only need to provide operator-vector products.
 
-For `A`, `M` or `N` parameters used in Krylov.jl solvers you can pass any linear operator that materialize the matrix. Thereafter, the solver will use `op * v` for operator-vector products. `size(op)` and `eltype(op)` must be implemented.
+The `A`, `M` or `N` input arguments of Krylov.jl solvers can be any object that represents a linear operator. That object must implement `*`, for multiplication with a vector, `size()` and `eltype()`. For certain methods it must also implement `adjoint()`.
 
-Some methods only required $A * v$ products, whereas other ones also required $A^T * u$ products. In that case, `adjoint(A)` must be implemented too.
+Some methods only required `A * v` products, whereas other ones also required `A' * u` products. In that case, `adjoint(A)` must be implemented too.
 
-| A * v                                  | A * v and Aᵀ * u                       |
+| A * v                                  | A * v and A' * u                       |
 |:--------------------------------------:|:--------------------------------------:|
 | CG, CR                                 | CGLS, CRLS, CGNE, CRMR                 |
 | SYMMLQ, CG-LANCZOS, MINRES, MINRES-QLP | LSLQ, LSQR, LSMR, LNLQ, CRAIG, CRAIGMR |
 | DQGMRES, DIOM                          | BiLQ, QMR, BiLQR                       |
 | CGS                                    | USYMLQ, USYMQR, TriLQR, USYMLQR        |
 
-## Tutorial
-
-We strongly recommend the package [LinearOperators.jl](https://github.com/JuliaSmoothOptimizers/LinearOperators.jl) if you want to modelize matrix-free operators but other packages like [LinearMaps.jl](https://github.com/Jutho/LinearMaps.jl), [DiffEqOperators.jl](https://github.com/SciML/DiffEqOperators.jl) or your own operator can be used too.
+We strongly recommend the package [LinearOperators.jl](https://github.com/JuliaSmoothOptimizers/LinearOperators.jl) if you want to model matrix-free operators but other packages such as [LinearMaps.jl](https://github.com/Jutho/LinearMaps.jl), [DiffEqOperators.jl](https://github.com/SciML/DiffEqOperators.jl) or your own operator can be used too.
 
 ```julia
 A = LinearOperator(type, nrows, ncols, symmetric, hermitian, prod, tprod, ctprod)
 ```
 
-`type` is the floating-point system in which matrix-vector products are computed (Float32, Float64, BigFloat, ...). `nrows`  and `ncols` are the dimension of the operators. Properties of the linear operator are given by `symmetric` and `hermitian` booleans. `prod(v)`, `tprod(u)` and `ctprod(w)` are the functions used when `A * v`, `transpose(A) * u` and `adjoint(A) * w` are respectively called.
+* `type` is the operator element type;
+* `nrow` and `ncol` are its dimensions;
+* `symmetric` and `hermitian` should be set to `true` or `false`;
+* `prod(v)`, `tprod(w)` and `ctprod(u)` are called when writing `A * v`, `tranpose(A) * w`, and `A' * u`, respectively.
 
-Detailed documentation about `LinearOperators.jl` is available [here](https://juliasmoothoptimizers.github.io/LinearOperators.jl/latest/).
+See the [tutorial](https://juliasmoothoptimizers.github.io/JSOTutorials.jl/linear-operators/introduction-to-linear-operators/introduction-to-linear-operators.html) and the detailed [documentation](https://juliasmoothoptimizers.github.io/LinearOperators.jl/latest/) for more informations on `LinearOperators.jl`.
+
+## Example
 
 Given a convex quadratic function $f(x) = (x_1 - 1)^2 + (x_2 - 2)^2 + (x_3 - 3)^2$, you should be interested by determining the minimum $d$ of this function by solving $\nabla^2 f(x_0) d = - \nabla f(x_0)$ because
 ```math
-f(d) = d^T \nabla^2 f(x_0) d + \nabla f(x_0)^T d + f(x_0).
+f(d) = ½~d^T \nabla^2 f(x_0) d + \nabla f(x_0)^T d + f(x_0).
 ```
 
 !!! info "Remark"
