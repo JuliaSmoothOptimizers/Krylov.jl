@@ -25,8 +25,6 @@ Solve the square linear system Ax = b using the QMR method.
 
 QMR is based on the Lanczos biorthogonalization process.
 When A is symmetric and b = c, QMR is equivalent to MINRES.
-
-This version of QMR works in any floating-point data type.
 """
 function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
              atol :: T=√eps(T), rtol :: T=√eps(T),

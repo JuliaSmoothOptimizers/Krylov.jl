@@ -31,8 +31,6 @@ In all cases, problems must be consistent.
 
 An option gives the possibility of transferring to the USYMCG point,
 when it exists. The transfer is based on the residual norm.
-
-This version of USYMLQ works in any floating-point data type.
 """
 function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,

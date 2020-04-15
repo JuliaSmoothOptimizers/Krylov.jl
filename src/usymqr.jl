@@ -28,8 +28,6 @@ It's considered as a generalization of MINRES.
 
 It can also be applied to under-determined and over-determined problems.
 USYMQR finds the minimum-norm solution if problems are inconsistent.
-
-This version of USYMQR works in any floating-point data type.
 """
 function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T),

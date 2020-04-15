@@ -23,8 +23,6 @@ USYMQR is used for solving dual system `Aᵀt = c`.
 
 An option gives the possibility of transferring from the USYMLQ point to the
 USYMCG point, when it exists. The transfer is based on the residual norm.
-
-This version of TriLQR works in any floating-point data type.
 """
 function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,

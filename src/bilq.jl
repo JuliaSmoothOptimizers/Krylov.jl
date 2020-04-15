@@ -20,8 +20,6 @@ When A is symmetric and b = c, BiLQ is equivalent to SYMMLQ.
 
 An option gives the possibility of transferring to the BiCG point,
 when it exists. The transfer is based on the residual norm.
-
-This version of BiLQ works in any floating-point data type.
 """
 function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
               atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
