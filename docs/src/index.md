@@ -70,6 +70,10 @@ Iterative methods are recommended in either of the following situations:
 * the operator can be represented efficiently as a sparse matrix,
 * the operator is *fast*, i.e., can be applied with better complexity than if it were materialized as a matrix. Certain fast operators would materialize as *dense* matrices.
 
+## Features
+
+All solvers in Krylov.jl are compatible with **GPU** and work in any floating-point data type.
+
 ## How to Install
 
 Krylov can be installed and tested through the Julia package manager:

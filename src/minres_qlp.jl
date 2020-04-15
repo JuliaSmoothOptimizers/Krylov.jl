@@ -20,8 +20,6 @@ export minres_qlp
 MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
 solution on singular inconsistent systems (A + λI)x = b, where λ is a shift parameter.
 It is significantly more complex but can be more reliable than MINRES when A is ill-conditioned.
-
-This version of MINRES-QLP works in any floating-point data type.
 """
 function minres_qlp(A, b :: AbstractVector{T};
                     atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
