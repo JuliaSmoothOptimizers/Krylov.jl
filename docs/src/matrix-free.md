@@ -48,7 +48,7 @@ x0 = zeros(3)
 d, stats = cg(H(x0), -g(x0))
 ```
 
-The main problem is that $\nabla^2(x_0)$ is stored as a dense matrix... We can avoid that by using a linear operator and not forming explicitly the hessian!
+However we can avoid the computation of $\nabla^2 f(x_0)$ by using a linear operator and not forming explicitly the hessian!
 
 ```@example linear_operator
 using ForwardDiff, LinearOperators, Krylov
