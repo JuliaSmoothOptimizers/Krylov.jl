@@ -1,10 +1,10 @@
 ## Matrix-free operators
 
-All methods are matrix-free which means that you only need to provide operator-vector products.
+All methods are matrix-free, which means that you only need to provide operator-vector products.
 
 The `A`, `M` or `N` input arguments of Krylov.jl solvers can be any object that represents a linear operator. That object must implement `*`, for multiplication with a vector, `size()` and `eltype()`. For certain methods it must also implement `adjoint()`.
 
-Some methods only required `A * v` products, whereas other ones also required `A' * u` products. In that case, `adjoint(A)` must be implemented too.
+Some methods only require `A * v` products, whereas other ones also require `A' * u` products. In the latter case, `adjoint(A)` must also be implemented.
 
 | A * v                                  | A * v and A' * u                       |
 |:--------------------------------------:|:--------------------------------------:|
@@ -13,12 +13,15 @@ Some methods only required `A * v` products, whereas other ones also required `A
 | DQGMRES, DIOM                          | BiLQ, QMR, BiLQR                       |
 | CGS                                    | USYMLQ, USYMQR, TriLQR, USYMLQR        |
 
-We strongly recommend the package [LinearOperators.jl](https://github.com/JuliaSmoothOptimizers/LinearOperators.jl) if you want to model matrix-free operators but other packages such as [LinearMaps.jl](https://github.com/Jutho/LinearMaps.jl), [DiffEqOperators.jl](https://github.com/SciML/DiffEqOperators.jl) or your own operator can be used too.
+We strongly recommend [LinearOperators.jl](https://github.com/JuliaSmoothOptimizers/LinearOperators.jl) to model matrix-free operators, but other packages such as [LinearMaps.jl](https://github.com/Jutho/LinearMaps.jl), [DiffEqOperators.jl](https://github.com/SciML/DiffEqOperators.jl) or your own operator can be used as well.
+
+With `LinearOperators.jl`, operators are defined as
 
 ```julia
 A = LinearOperator(type, nrows, ncols, symmetric, hermitian, prod, tprod, ctprod)
 ```
 
+where
 * `type` is the operator element type;
 * `nrow` and `ncol` are its dimensions;
 * `symmetric` and `hermitian` should be set to `true` or `false`;
