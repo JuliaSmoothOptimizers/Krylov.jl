@@ -29,38 +29,81 @@ where
 
 See the [tutorial](https://juliasmoothoptimizers.github.io/JSOTutorials.jl/linear-operators/introduction-to-linear-operators/introduction-to-linear-operators.html) and the detailed [documentation](https://juliasmoothoptimizers.github.io/LinearOperators.jl/latest/) for more informations on `LinearOperators.jl`.
 
-## Example
+## Examples
 
-Given a convex quadratic function $f(x) = (x_1 - 1)^2 + (x_2 - 2)^2 + (x_3 - 3)^2$, you should be interested by determining the minimum $d$ of this function by solving $\nabla^2 f(x_0) d = - \nabla f(x_0)$ because
+In the field of non-linear optimization, find critical points of a continuous function frequently involve linear systems with hessian and jacobian matrices. Form explicitly these matrices is expensive in term of operations and memory and is unreasonable for high dimensional problems. However efficient hessian-vector and jacobian-vector products can be computed with automatic differentiation tools and used within Krylov solvers. Variants without and with matrix-free operators are presented for two well-known optimization methods.
+
+At each iteration of the **Newton** method applied on a convex function $f : \mathbb{R}^n \rightarrow \mathbb{R}$, a descent direction direction is determined by minimizing the quadratic Taylor model of $f$ :
+
 ```math
-f(d) = ½~d^T \nabla^2 f(x_0) d + \nabla f(x_0)^T d + f(x_0).
+\min_{d \in \mathbb{R}^n}~~\tfrac{1}{2}~d^T \nabla^2 f(x_k) d + \nabla f(x_k)^T d + f(x_k) \\
+\Leftrightarrow \\
+\nabla^2 f(x_k) d  = -\nabla f(x_k).
 ```
 
-!!! info "Remark"
-
-    If $f$ is just convex, it's the quadratic Taylor model that is minimized.
-
-```@example dense_hessian
+```@nlp
 using ForwardDiff, Krylov
 
-f(x) = (x[1] - 1)^2 + (x[2] - 2)^2 + (x[3] - 3)^2
+xk = -ones(4)
+
+f(x) = (x[1] - 1)^2 + (x[2] - 2)^2 + (x[3] - 3)^2 + (x[4] - 4)^2
+
 g(x) = ForwardDiff.gradient(f, x)
+
 H(x) = ForwardDiff.hessian(f, x)
 
-x0 = zeros(3)
-d, stats = cg(H(x0), -g(x0))
+d, stats = cg(H(xk), -g(xk))
 ```
 
-However we can avoid the computation of $\nabla^2 f(x_0)$ by using a linear operator and not forming explicitly the hessian!
+The hessian matrix can be replaced by a linear operator that only computes hessian-vector products.
 
-```@example linear_operator
+```@example hessian_operator
 using ForwardDiff, LinearOperators, Krylov
 
-f(x) = (x[1] - 1)^2 + (x[2] - 2)^2 + (x[3] - 3)^2
+xk = -ones(4)
+
+f(x) = (x[1] - 1)^2 + (x[2] - 2)^2 + (x[3] - 3)^2 + (x[4] - 4)^2
+
 g(x) = ForwardDiff.gradient(f, x)
 
-x0 = zeros(3)
-H(v) = ForwardDiff.derivative(t -> g(x0 + t * v), 0.0)
-opH = LinearOperator(Float64, 3, 3, true, true, v -> H(v))
-cg(opH, -g(x0))
+H(v) = ForwardDiff.derivative(t -> g(xk + t * v), 0.0)
+opH = LinearOperator(Float64, 4, 4, true, true, v -> H(v))
+
+cg(opH, -g(xk))
+```
+
+At each iteration of the **Gauss-Newton** method applied on a non-linear least squares problem $f(x) = \tfrac{1}{2}\| F(x)\|^2$ where $F : \mathbb{R}^n \rightarrow \mathbb{R}^m$, the following subproblem needs to be solved :
+
+```math
+\min_{d \in \mathbb{R}^n}~~\tfrac{1}{2}~\|J(x_k) d + F(x_k)\|^2 \\
+\Leftrightarrow \\
+J(x_k)^T J(x_k) d  = J(x_k)^T F(x_k).
+```
+
+```@nls
+using ForwardDiff, Krylov
+
+xk = ones(2)
+
+F(x) = [x[1]^4 - 3; exp(x[2]) - 2; log(x[1]) - x[2]^2]
+
+J(x) = ForwardDiff.jacobian(F, x)
+
+d, stats = lsmr(J(xk), -F(xk))
+```
+
+The jacobian matrix can be replaced by a linear operator that only computes jacobian-vector and transposed jacobian-vector products.
+
+```@example jacobian_operator
+using LinearAlgebra, ForwardDiff, LinearOperators, Krylov
+
+xk = ones(2)
+
+F(x) = [x[1]^4 - 3; exp(x[2]) - 2; log(x[1]) - x[2]^2]
+
+J(v) = ForwardDiff.derivative(t -> F(xk + t * v), 0)
+Jᵀ(u) = ForwardDiff.gradient(x -> dot(F(x), u), xk)
+opJ = LinearOperator(Float64, 3, 2, false, false, v -> J(v), w -> Jᵀ(w), u -> Jᵀ(u))
+
+lsmr(opJ, -F(xk))
 ```
