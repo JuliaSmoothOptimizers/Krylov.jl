@@ -77,7 +77,7 @@ At each iteration of the **Gauss-Newton** method applied on a non-linear least s
 ```math
 \min_{d \in \mathbb{R}^n}~~\tfrac{1}{2}~\|J(x_k) d + F(x_k)\|^2 \\
 \Leftrightarrow \\
-J(x_k)^T J(x_k) d  = J(x_k)^T F(x_k).
+J(x_k)^T J(x_k) d  = -J(x_k)^T F(x_k).
 ```
 
 ```@nls
