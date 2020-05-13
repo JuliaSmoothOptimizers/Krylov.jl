@@ -10,6 +10,7 @@ makedocs(
   pages = ["Home" => "index.md",
            "API" => "api.md",
            "Solvers" => "solvers.md",
+           "GPU" => "gpu.md",
            "Reference" => "reference.md",
           ]
 )
