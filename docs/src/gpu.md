@@ -1,6 +1,6 @@
 ## GPU support
 
-All solvers in Krylov.jl can be used with `CuArrays` and allows computations with Nvidia GPU. Problems stored in CPU format (`Matrix` and `Vector`) must be converted to GPU format (`CuMatrix` and `CuVector`).
+All solvers in Krylov.jl can be used with `CuArrays` and allow computations with Nvidia GPU. Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to GPU format (`CuMatrix` and `CuVector`).
 
 ```julia
 using CuArrays, Krylov
@@ -17,7 +17,7 @@ b_gpu = CuVector(b_cpu)
 x, stats = dqgmres(A_gpu, b_gpu)
 ```
 
-Sparse matrices also have a specific storage on GPU (`CuSparseMatrixCSC` or `CuSparseMatrixCSR`).
+Sparse matrices have a specific storage on GPU (`CuSparseMatrixCSC` or `CuSparseMatrixCSR`):
 
 ```julia
 using CuArrays, Krylov
