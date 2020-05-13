@@ -20,9 +20,13 @@ export minres_qlp
 MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
 solution on singular inconsistent systems (A + λI)x = b, where λ is a shift parameter.
 It is significantly more complex but can be more reliable than MINRES when A is ill-conditioned.
+
+A preconditioner M may be provided in the form of a linear operator and is
+assumed to be symmetric and positive definite.
+M also indicates the weighted norm in which residuals are measured.
 """
 function minres_qlp(A, b :: AbstractVector{T};
-                    atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
+                    M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
                     itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   n, m = size(A)
@@ -30,15 +34,29 @@ function minres_qlp(A, b :: AbstractVector{T};
   length(b) == m || error("Inconsistent problem size")
   verbose && @printf("MINRES-QLP: system of size %d\n", n)
 
+  # Tests M == Iₙ
+  MisI = isa(M, opEye)
+
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Determine the storage type of b
   S = typeof(b)
 
-  # Initial state.
+  # Initial solution x₀
   x = kzeros(S, n)
-  rNorm = @knrm2(n, b)
+
+  # β₁Ev₁ = b ↔ β₁v₁ = Mb
+  M⁻¹vₖ = copy(b)
+  vₖ = M * M⁻¹vₖ
+  βₖ = sqrt(@kdot(n, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
+  if βₖ ≠ 0
+    @kscal!(n, 1 / βₖ, M⁻¹vₖ)
+    MisI || @kscal!(n, 1 / βₖ, vₖ)
+  end
+
+  rNorm = βₖ
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
 
   iter = 0
@@ -52,18 +70,19 @@ function minres_qlp(A, b :: AbstractVector{T};
   verbose && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
   # Set up workspace.
-  vₖ₋₁  = kzeros(S, n)
-  βₖ    = rNorm
-  vₖ    = b / βₖ
-  ζbarₖ = βₖ
-  ξₖ₋₁  = zero(T)
-  τₖ₋₂ = τₖ₋₁ = τₖ = zero(T)
+  M⁻¹vₖ₋₁ = kzeros(S, n)
+  ζbarₖ   = βₖ
+  ξₖ₋₁    = zero(T)
+  τₖ₋₂    = τₖ₋₁ = τₖ = zero(T)
   ψbarₖ₋₂ = zero(T)
   μbisₖ₋₂ = μbarₖ₋₁ = zero(T)
   wₖ₋₁  = kzeros(S, n)
   wₖ    = kzeros(S, n)
   cₖ₋₂  = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
   sₖ₋₂  = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+
+  # Use M⁻¹vₖ₋₁ to store vₖ when a preconditioner is provided
+  MisI ? (vₐᵤₓ = vₖ) : (vₐᵤₓ = M⁻¹vₖ₋₁)
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -75,20 +94,32 @@ function minres_qlp(A, b :: AbstractVector{T};
     # Update iteration index.
     iter = iter + 1
 
-    # Continue the Lanczos process.
-    # (A - λI)Vₖ = Vₖ₊₁Tₖ₊₁.ₖ
-    # βₖ₊₁vₖ₊₁ = (A - λI)vₖ - αₖvₖ - βₖvₖ₋₁
+    # Continue the preconditioned Lanczos process.
+    # (A - λI)Vₖ = EVₖ₊₁Tₖ₊₁.ₖ
+    # βₖ₊₁Evₖ₊₁ = (A - λI)vₖ - αₖEvₖ - βₖEvₖ₋₁
 
-    p = A * vₖ                  # p ← Avₖ
+    p = A * vₖ               # p ← Avₖ
     if λ ≠ 0
-      @kaxpy!(n, -λ, vₖ, p)     # p ← p - λvₖ
+      @kaxpy!(n, -λ, vₖ, p)  # p ← p - λvₖ
     end
+
     if iter ≥ 2
-      @kaxpy!(n, -βₖ, vₖ₋₁, p)  # p ← p - βₖvₖ₋₁
+      @kaxpy!(n, -βₖ, M⁻¹vₖ₋₁, p) # p ← p - βₖ * M⁻¹vₖ₋₁
     end
-    αₖ = @kdot(n, vₖ, p)        # αₖ = pᵀvₖ
-    @kaxpy!(n, -αₖ, vₖ, p)      # p ← p - αₖvₖ
-    βₖ₊₁ = @knrm2(n, p)         # βₖ₊₁ = ‖ p ‖
+
+    αₖ = @kdot(n, vₖ, p)       # αₖ = pᵀvₖ
+
+    @kaxpy!(n, -αₖ, M⁻¹vₖ, p)  # p ← p - αₖM⁻¹vₖ
+
+    MisI || (vₐᵤₓ .= vₖ)  # Tempory storage for vₖ
+    vₖ₊₁ = M * p          # βₖ₊₁vₖ₊₁ = MAvₖ  - γₖvₖ₋₁ - αₖvₖ
+
+    βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, p))  # βₖ₊₁ = ‖vₖ₊₁‖_E
+
+    if βₖ₊₁ ≠ 0
+      @kscal!(m, one(T) / βₖ₊₁, vₖ₊₁)
+      MisI || @kscal!(m, one(T) / βₖ₊₁, p)
+    end
 
     # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
     #                                            [ Oᵀ ]
@@ -198,13 +229,13 @@ function minres_qlp(A, b :: AbstractVector{T};
     # Compute directions wₖ₋₂, ẘₖ₋₁ and w̄ₖ, last columns of Wₖ = Vₖ(Pₖ)ᵀ
     if iter == 1
       # w̅₁ = v₁
-      @. wₖ = vₖ
+      @. wₖ = vₐᵤₓ
     elseif iter == 2
       # [w̅ₖ₋₁ vₖ] [cpₖ  spₖ] = [ẘₖ₋₁ w̅ₖ] ⟷ ẘₖ₋₁ = cpₖ * w̅ₖ₋₁ + spₖ * vₖ
       #           [spₖ -cpₖ]             ⟷ w̅ₖ   = spₖ * w̅ₖ₋₁ - cpₖ * vₖ
       @kswap(wₖ₋₁, wₖ)
-      @. wₖ = spₖ * wₖ₋₁ - cpₖ * vₖ
-      @kaxpby!(n, spₖ, vₖ, cpₖ, wₖ₋₁)
+      @. wₖ = spₖ * wₖ₋₁ - cpₖ * vₐᵤₓ
+      @kaxpby!(n, spₖ, vₐᵤₓ, cpₖ, wₖ₋₁)
     else
       # [ẘₖ₋₂ w̄ₖ₋₁ vₖ] [cpₖ  0   spₖ] [1   0    0 ] = [wₖ₋₂ ẘₖ₋₁ w̄ₖ] ⟷ wₖ₋₂ = cpₖ * ẘₖ₋₂ + spₖ * vₖ
       #                [ 0   1    0 ] [0  cdₖ  sdₖ]                  ⟷ ẘₖ₋₁ = cdₖ * w̄ₖ₋₁ + sdₖ * (spₖ * ẘₖ₋₂ - cpₖ * vₖ)
@@ -213,20 +244,18 @@ function minres_qlp(A, b :: AbstractVector{T};
       w̄ₖ₋₁ = wₖ
       # Update the solution x
       @kaxpy!(n, cpₖ * τₖ₋₂, ẘₖ₋₂, x)
-      @kaxpy!(n, spₖ * τₖ₋₂, vₖ, x)
+      @kaxpy!(n, spₖ * τₖ₋₂, vₐᵤₓ, x)
       # Compute wₐᵤₓ = spₖ * ẘₖ₋₂ - cpₖ * vₖ
-      @kaxpby!(n, -cpₖ, vₖ, spₖ, ẘₖ₋₂)
+      @kaxpby!(n, -cpₖ, vₐᵤₓ, spₖ, ẘₖ₋₂)
       wₐᵤₓ = ẘₖ₋₂
       # Compute ẘₖ₋₁ and w̄ₖ
       @kref!(n, w̄ₖ₋₁, wₐᵤₓ, cdₖ, sdₖ)
       @kswap(wₖ₋₁, wₖ)
     end
 
-    # Update Lanczos vectors
-    @. vₖ₋₁ = vₖ
-    if βₖ₊₁ ≠ zero(T)
-      @. vₖ = p / βₖ₊₁
-    end
+    # Update M⁻¹vₖ₋₁ and M⁻¹vₖ
+    @. M⁻¹vₖ₋₁ = M⁻¹vₖ
+    @. M⁻¹vₖ   = p
 
     # Update ‖rₖ‖ estimate
     # ‖ rₖ ‖ = |ζbarₖ₊₁|
