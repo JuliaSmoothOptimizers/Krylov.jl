@@ -253,9 +253,10 @@ function minres_qlp(A, b :: AbstractVector{T};
       @kswap(wₖ₋₁, wₖ)
     end
 
-    # Update M⁻¹vₖ₋₁ and M⁻¹vₖ
+    # Update M⁻¹vₖ₋₁, M⁻¹vₖ and vₖ
     @. M⁻¹vₖ₋₁ = M⁻¹vₖ
     @. M⁻¹vₖ   = p
+    MisI || (vₖ = vₖ₊₁)
 
     # Update ‖rₖ‖ estimate
     # ‖ rₖ ‖ = |ζbarₖ₊₁|
