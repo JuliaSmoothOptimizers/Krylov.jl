@@ -93,3 +93,8 @@ julia> ]
 pkg> add Krylov
 pkg> test Krylov
 ```
+
+## How to Cite
+
+If you use Krylov.jl in your work, please cite using the format given in [`CITATION.bib`](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/master/CITATION.bib).
+
