@@ -47,10 +47,10 @@ function minres_qlp(A, b :: AbstractVector{T};
   # Initial solution x₀
   x = kzeros(S, n)
 
-  # β₁Ev₁ = b ↔ β₁v₁ = Mb
+  # β₁v₁ = Mb
   M⁻¹vₖ = copy(b)
   vₖ = M * M⁻¹vₖ
-  βₖ = sqrt(@kdot(n, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
+  βₖ = sqrt(@kdot(n, vₖ, M⁻¹vₖ))
   if βₖ ≠ 0
     @kscal!(n, 1 / βₖ, M⁻¹vₖ)
     MisI || @kscal!(n, 1 / βₖ, vₖ)
@@ -95,8 +95,8 @@ function minres_qlp(A, b :: AbstractVector{T};
     iter = iter + 1
 
     # Continue the preconditioned Lanczos process.
-    # (A - λI)Vₖ = EVₖ₊₁Tₖ₊₁.ₖ
-    # βₖ₊₁Evₖ₊₁ = (A - λI)vₖ - αₖEvₖ - βₖEvₖ₋₁
+    # M(A - λI)Vₖ = Vₖ₊₁Tₖ₊₁.ₖ
+    # βₖ₊₁vₖ₊₁ = M(A - λI)vₖ - αₖvₖ - βₖvₖ₋₁
 
     p = A * vₖ               # p ← Avₖ
     if λ ≠ 0
@@ -112,9 +112,9 @@ function minres_qlp(A, b :: AbstractVector{T};
     @kaxpy!(n, -αₖ, M⁻¹vₖ, p)  # p ← p - αₖM⁻¹vₖ
 
     MisI || (vₐᵤₓ .= vₖ)  # Tempory storage for vₖ
-    vₖ₊₁ = M * p          # βₖ₊₁vₖ₊₁ = MAvₖ  - γₖvₖ₋₁ - αₖvₖ
+    vₖ₊₁ = M * p          # βₖ₊₁vₖ₊₁ = MAvₖ - γₖvₖ₋₁ - αₖvₖ
 
-    βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, p))  # βₖ₊₁ = ‖vₖ₊₁‖_E
+    βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, p))
 
     if βₖ₊₁ ≠ 0
       @kscal!(m, one(T) / βₖ₊₁, vₖ₊₁)
