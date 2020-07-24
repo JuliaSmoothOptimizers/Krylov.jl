@@ -50,7 +50,7 @@ function cg(A, b :: AbstractVector{T};
   itmax == 0 && (itmax = 2 * n)
 
   pAp = zero(T)
-  rNorm = sqrt(γ)
+  rNorm = sqrt(abs(γ))
   pNorm² = γ
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
@@ -99,7 +99,7 @@ function cg(A, b :: AbstractVector{T};
     @kaxpy!(n, -α, Ap, r)
     z = M * r
     γ_next = @kdot(n, r, z)
-    rNorm = sqrt(γ_next)
+    rNorm = sqrt(abs(γ_next))
     push!(rNorms, rNorm)
 
     solved = (rNorm ≤ ε) || on_boundary
