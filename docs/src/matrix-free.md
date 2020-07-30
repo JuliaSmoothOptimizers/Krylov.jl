@@ -31,7 +31,7 @@ See the [tutorial](https://juliasmoothoptimizers.github.io/JSOTutorials.jl/linea
 
 ## Examples
 
-In the field of non-linear optimization, find critical points of a continuous function frequently involve linear systems with hessian and jacobian matrices. Form explicitly these matrices is expensive in term of operations and memory and is unreasonable for high dimensional problems. However efficient hessian-vector and jacobian-vector products can be computed with automatic differentiation tools and used within Krylov solvers. Variants without and with matrix-free operators are presented for two well-known optimization methods.
+In the field of non-linear optimization, find critical points of a continuous function frequently involve linear systems with Hessian and Jacobian matrices. Form explicitly these matrices is expensive in term of operations and memory and is unreasonable for high dimensional problems. However efficient Hessian-vector and Jacobian-vector products can be computed with automatic differentiation tools and used within Krylov solvers. Variants without and with matrix-free operators are presented for two well-known optimization methods.
 
 At each iteration of the **Newton** method applied on a convex function $f : \mathbb{R}^n \rightarrow \mathbb{R}$, a descent direction direction is determined by minimizing the quadratic Taylor model of $f$ :
 
@@ -55,7 +55,7 @@ H(x) = ForwardDiff.hessian(f, x)
 d, stats = cg(H(xk), -g(xk))
 ```
 
-The hessian matrix can be replaced by a linear operator that only computes hessian-vector products.
+The Hessian matrix can be replaced by a linear operator that only computes Hessian-vector products.
 
 ```@example hessian_operator
 using ForwardDiff, LinearOperators, Krylov
@@ -92,7 +92,7 @@ J(x) = ForwardDiff.jacobian(F, x)
 d, stats = lsmr(J(xk), -F(xk))
 ```
 
-The jacobian matrix can be replaced by a linear operator that only computes jacobian-vector and transposed jacobian-vector products.
+The Jacobian matrix can be replaced by a linear operator that only computes Jacobian-vector and transposed Jacobian-vector products.
 
 ```@example jacobian_operator
 using LinearAlgebra, ForwardDiff, LinearOperators, Krylov
