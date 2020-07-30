@@ -1,6 +1,6 @@
 ## Matrix-free operators
 
-All methods are matrix-free, which means that you only need to provide operator-vector products.
+All methods are matrix free, which means that you only need to provide operator-vector products.
 
 The `A`, `M` or `N` input arguments of Krylov.jl solvers can be any object that represents a linear operator. That object must implement `*`, for multiplication with a vector, `size()` and `eltype()`. For certain methods it must also implement `adjoint()`.
 
@@ -31,16 +31,20 @@ See the [tutorial](https://juliasmoothoptimizers.github.io/JSOTutorials.jl/linea
 
 ## Examples
 
-In the field of non-linear optimization, find critical points of a continuous function frequently involve linear systems with Hessian and Jacobian matrices. Form explicitly these matrices is expensive in term of operations and memory and is unreasonable for high dimensional problems. However efficient Hessian-vector and Jacobian-vector products can be computed with automatic differentiation tools and used within Krylov solvers. Variants without and with matrix-free operators are presented for two well-known optimization methods.
+In the field of nonlinear optimization, finding critical points of a continuous function frequently involves linear systems with a Hessian or Jacobian as coefficient. Materializing such operators as matrices is expensive in terms of operations and memory consumption and is unreasonable for high-dimensional problems. However, it is often possible to implement efficient Hessian-vector and Jacobian-vector products, for example with the help of automatic differentiation tools, and used within Krylov solvers. We now illustrate variants with explicit matrices and with matrix-free operators for two well-known optimization methods.
 
-At each iteration of the **Newton** method applied on a convex function $f : \mathbb{R}^n \rightarrow \mathbb{R}$, a descent direction direction is determined by minimizing the quadratic Taylor model of $f$ :
+### Example 1: Newton's Method for convex optimization
+
+At each iteration of Newton's method applied to a $\mathcal{C}^2$ strictly convex function $f : \mathbb{R}^n \rightarrow \mathbb{R}$, a descent direction direction is determined by minimizing the quadratic Taylor model of $f$:
 
 ```math
-\min_{d \in \mathbb{R}^n}~~\tfrac{1}{2}~d^T \nabla^2 f(x_k) d + \nabla f(x_k)^T d + f(x_k) \\
-\Leftrightarrow \\
+\min_{d \in \mathbb{R}^n}~~f(x_k) + \nabla f(x_k)^T d + \tfrac{1}{2}~d^T \nabla^2 f(x_k) d
+```
+which is equivalent to solving the symmetric and positive-definite system
+```math
 \nabla^2 f(x_k) d  = -\nabla f(x_k).
 ```
-
+The system above can be solved with the conjugate gradient method as follows, using the explicit Hessian:
 ```@nlp
 using ForwardDiff, Krylov
 
@@ -55,7 +59,7 @@ H(x) = ForwardDiff.hessian(f, x)
 d, stats = cg(H(xk), -g(xk))
 ```
 
-The Hessian matrix can be replaced by a linear operator that only computes Hessian-vector products.
+The explicit Hessian can be replaced by a linear operator that only computes Hessian-vector products:
 
 ```@example hessian_operator
 using ForwardDiff, LinearOperators, Krylov
@@ -72,14 +76,16 @@ opH = LinearOperator(Float64, 4, 4, true, true, v -> H(v))
 cg(opH, -g(xk))
 ```
 
-At each iteration of the **Gauss-Newton** method applied on a non-linear least squares problem $f(x) = \tfrac{1}{2}\| F(x)\|^2$ where $F : \mathbb{R}^n \rightarrow \mathbb{R}^m$, the following subproblem needs to be solved :
+### Example 2: The Gauss-Newton Method for Nonlinear Least Squares
+
+At each iteration of the Gauss-Newton method applied to a nonlinear least-squares objective $f(x) = \tfrac{1}{2}\| F(x)\|^2$ where $F : \mathbb{R}^n \rightarrow \mathbb{R}^m$ is $\mathcal{C}^1$, we solve the subproblem:
 
 ```math
-\min_{d \in \mathbb{R}^n}~~\tfrac{1}{2}~\|J(x_k) d + F(x_k)\|^2 \\
-\Leftrightarrow \\
-J(x_k)^T J(x_k) d  = -J(x_k)^T F(x_k).
+\min_{d \in \mathbb{R}^n}~~\tfrac{1}{2}~\|J(x_k) d + F(x_k)\|^2,
 ```
+where $J(x)$ is the Jacobian of $F$ at $x$.
 
+An appropriate iterative method to solve the above linear least-squares problems is LSMR. We could pass the explicit Jacobian to LSMR as follows:
 ```@nls
 using ForwardDiff, Krylov
 
@@ -92,8 +98,7 @@ J(x) = ForwardDiff.jacobian(F, x)
 d, stats = lsmr(J(xk), -F(xk))
 ```
 
-The Jacobian matrix can be replaced by a linear operator that only computes Jacobian-vector and transposed Jacobian-vector products.
-
+However, the explicit Jacobian can be replaced by a linear operator that only computes Jacobian-vector and transposed Jacobian-vector products:
 ```@example jacobian_operator
 using LinearAlgebra, ForwardDiff, LinearOperators, Krylov
 
