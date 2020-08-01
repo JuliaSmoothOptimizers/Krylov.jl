@@ -112,3 +112,9 @@ opJ = LinearOperator(Float64, 3, 2, false, false, v -> J(v), w -> Jᵀ(w), u -> 
 
 lsmr(opJ, -F(xk))
 ```
+
+Note that preconditioners can be also implemented as abstract operators.
+For instance, we could compute the Cholesky factorization of $M$ and $N$ and create linear operators that perform the forward and backsolves.
+
+Krylov methods combined with matrix free operators allow to reduce computation time and memory requirements considerably by avoiding building and storing the system matrix.
+In the field of partial differential equations, the implementation of high-performance matrix free operators and assembly free preconditioning is a subject of active research.
