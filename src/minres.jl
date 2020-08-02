@@ -102,8 +102,8 @@ function minres(A, b :: AbstractVector{T};
   err_lbnd = zero(T)
   err_vec = zeros(T, window)
 
-  verbose && @printf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s\n",
-                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "cos", "sin", "‖A‖", "κ(A)")
+  verbose && @printf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %7s\n",
+                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "test2")
   verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
                      0, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
 
@@ -207,8 +207,8 @@ function minres(A, b :: AbstractVector{T};
 
     Acond = γmax / γmin
 
-    verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
-                       iter, test1, test2, β, cs, sn, ANorm, Acond)
+    verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e\n",
+                       iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, test1, test2)
 
     if iter == 1
       # Aᵀb = 0 so x = 0 is a minimum least-squares solution

@@ -130,8 +130,8 @@ function symmlq(A, b :: AbstractVector{T};
     end
   end
 
-  verbose && @printf("%5s  %7s  %7s  %8s  %8s  %7s  %7s\n",
-                     "Aprod", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)")
+  verbose && @printf("%5s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n",
+                     "Aprod", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1")
   verbose && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
                      0, rNorm, β, cold, sold, ANorm, Acond)
 
@@ -264,8 +264,8 @@ function symmlq(A, b :: AbstractVector{T};
     ANorm = sqrt(ANorm²)
     test1 = rNorm/(ANorm * xNorm)
 
-    verbose && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
-                       iter, test1, β, c, s, ANorm, Acond)
+    verbose && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n",
+                       iter, rNorm, β, c, s, ANorm, Acond, test1)
 
     # Reset variables
     ϵold = ϵ
