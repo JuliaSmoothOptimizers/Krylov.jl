@@ -150,7 +150,7 @@ function overdetermined_adjoint(n :: Int=200, m :: Int=100)
   return A, b, c
 end
 
-# Adjoint ODEs
+# Adjoint ODEs.
 function adjoint_ode(n :: Int=50)
   χ₁ = χ₂ = χ₃ = 1.0
   # Primal ODE
@@ -169,7 +169,7 @@ function adjoint_ode(n :: Int=50)
   return A, b, c
 end
 
-# Adjoint PDEs
+# Adjoint PDEs.
 function adjoint_pde(n :: Int=50, m :: Int=50)
   κ₁ = 5.0
   κ₂ = 20.0
@@ -190,7 +190,7 @@ function adjoint_pde(n :: Int=50, m :: Int=50)
   return A, b, c
 end
 
-# Poisson equation in polar coordinates
+# Poisson equation in polar coordinates.
 function polar_poisson(n :: Int=50, m :: Int=50)
   f(r, θ) = -3.0 * cos(θ)
   g(r, θ) = 0.0
@@ -200,20 +200,19 @@ end
 
 # Square and preconditioned problems.
 function square_preconditioned(n :: Int=10)
-  A = ones(n, n) + (n-1) * I
-  b = 10.0 * [1:n;]
-  M = 1/n * eye(n)
-  return A, b, M
+  A   = ones(n, n) + (n-1) * eye(n)
+  b   = 10.0 * [1:n;]
+  M⁻¹ = 1/n * eye(n)
+  return A, b, M⁻¹
 end
 
 # Square problems with two preconditioners.
 function two_preconditioners(n :: Int=10, m :: Int=20)
-  A = ones(n, n) + (n-1) * I
-  b = ones(n)
-  O = zeros(n, n)
-  M = 1/√n * eye(n)
-  N = 1/√m * eye(n)
-  return A, b, M, N
+  A   = ones(n, n) + (n-1) * eye(n)
+  b   = ones(n)
+  M⁻¹ = 1/√n * eye(n)
+  N⁻¹ = 1/√m * eye(n)
+  return A, b, M⁻¹, N⁻¹
 end
 
 # Random Ax = b with b == 0.
@@ -221,4 +220,29 @@ function zero_rhs(n :: Int=10)
   A = rand(n, n)
   b = zeros(n)
   return A, b
+end
+
+# Regularized problems.
+function regularization(n :: Int=5)
+  A = [2^(i/j)*j + (-1)^(i-j) * n*(i-1) for i = 1:n, j = 1:n]
+  b = ones(n)
+  λ = 4.0
+  return A, b, λ
+end
+
+# Saddle-point systems.
+function saddle_point(n :: Int=5)
+  A = [2^(i/j)*j + (-1)^(i-j) * n*(i-1) for i = 1:n, j = 1:n]
+  b = ones(n)
+  D = diagm(0 => [2.0 * i for i = 1:n])
+  return A, b, D
+end
+
+# Symmetric and quasi-definite systems.
+function sqd(n :: Int=5)
+  A = [2^(i/j)*j + (-1)^(i-j) * n*(i-1) for i = 1:n, j = 1:n]
+  b = ones(n)
+  M = diagm(0 => [3.0 * i for i = 1:n])
+  N = diagm(0 => [5.0 * i for i = 1:n])
+  return A, b, M, N
 end
