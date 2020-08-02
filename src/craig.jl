@@ -6,7 +6,7 @@
 #
 # The method seeks to solve the minimum-norm problem
 #
-#  min ‖x‖²  s.t. Ax = b,
+#  min ‖x‖  s.t.  Ax = b,
 #
 # and is equivalent to applying the conjugate gradient method
 # to the linear system
@@ -36,7 +36,7 @@ export craig
 """
 Find the least-norm solution of the consistent linear system
 
-    Ax + √λs = b
+    Ax + λs = b
 
 using the Golub-Kahan implementation of Craig's method, where λ ≥ 0 is a
 regularization parameter. This method is equivalent to CGNE but is more
@@ -46,21 +46,28 @@ For a system in the form Ax = b, Craig's method is equivalent to applying
 CG to AAᵀy = b and recovering x = Aᵀy. Note that y are the Lagrange
 multipliers of the least-norm problem
 
-    minimize ‖x‖  subject to Ax = b.
+    minimize ‖x‖  s.t.  Ax = b.
 
 Preconditioners M⁻¹ and N⁻¹ may be provided in the form of linear operators and are
 assumed to be symmetric and positive definite.
-Afterward CRAIG solves the symmetric and quasi-definite system
+If `sqd = true`, CRAIG solves the symmetric and quasi-definite system
 
     [ -N   Aᵀ ] [ x ]   [ 0 ]
     [  A   M  ] [ y ] = [ b ],
 
-which is equivalent to applying CG to (M + AN⁻¹Aᵀ)y = b.
+which is equivalent to applying CG to `(AN⁻¹Aᵀ + M)y = b` with `Nx = Aᵀy`.
+
+If `sqd = false`, CRAIG solves the symmetric and indefinite system
+
+    [ -N   Aᵀ ] [ x ]   [ 0 ]
+    [  A   0  ] [ y ] = [ b ].
+
+In this case, M⁻¹ can still be specified and indicates the weighted norm in which residuals are measured.
 
 In this implementation, both the x and y-parts of the solution are returned.
 """
 function craig(A, b :: AbstractVector{T};
-               M=opEye(), N=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
+               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,
                verbose :: Bool=false, transfer_to_lsqr :: Bool=false) where T <: AbstractFloat
 
@@ -85,6 +92,10 @@ function craig(A, b :: AbstractVector{T};
 
   x = kzeros(S, n)
   y = kzeros(S, m)
+
+  # When solving a SQD system, set regularization parameter λ = 1.
+  sqd && (λ = one(T))
+
   Mu = copy(b)
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
@@ -204,10 +215,10 @@ function craig(A, b :: AbstractVector{T};
 
     if λ > 0
       # Givens rotation to zero out the γ in position (k+1, 2k)
-      #       2k  2k+1    2k  2k+1      2k  2k+1
-      # k+1 [  γ    λ ] [ c₂   s₂ ] = [  0    δ ]
-      # k+2 [  0    0 ] [ s₂  -c₂ ]   [  0    0 ]
-      c₂, s₂, δ = sym_givens(γ, λ)
+      #       2k  2k+1     2k  2k+1      2k  2k+1
+      # k+1 [  γ    λ ] [ -c₂   s₂ ] = [  0    δ ]
+      # k+2 [  0    0 ] [  s₂   c₂ ]   [  0    0 ]
+      c₂, s₂, δ = sym_givens(λ, γ)
       @kscal!(n, s₂, w2)
     end
 
