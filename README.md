@@ -1,6 +1,6 @@
 # Krylov.jl: A Julia basket of hand-picked Krylov methods
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3548984.svg)](https://doi.org/10.5281/zenodo.3548984)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.822073-blue.svg)](https://doi.org/10.5281/zenodo.822073)
 
 | **Documentation** | **Travis, AppVeyor and Cirrus build statuses** | **Coverage** |
 |:-----------------:|:----------------------------------------------:|:------------:|
