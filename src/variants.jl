@@ -23,8 +23,8 @@ for fn in (:cgls, :cgne, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :lsqr, :b
   end
 end
 
-# Variants for USYMLQ, USYMQR, TriLQR and BiLQR
-for fn in (:usymlq, :usymqr, :trilqr, :bilqr)
+# Variants for USYMLQ, USYMQR, TriCG, TriLQR and BiLQR
+for fn in (:usymlq, :usymqr, :tricg, :trilqr, :bilqr)
   @eval begin
     $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}, c :: SparseVector{T}; kwargs...) where T <: AbstractFloat =
       $fn(PreallocatedLinearOperator(A), convert(Vector{T}, b), convert(Vector{T}, c); wrap_preconditioners(kwargs, Vector{T})...)

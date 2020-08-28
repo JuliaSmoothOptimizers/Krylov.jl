@@ -107,6 +107,7 @@ include("diom.jl")
 
 include("usymlq.jl")
 include("usymqr.jl")
+include("tricg.jl")
 include("trilqr.jl")
 
 include("bilq.jl")
