@@ -266,8 +266,8 @@ actual_qmr_bytes = @allocated qmr(A, b)
 @test actual_qmr_bytes ≤ 1.1 * expected_qmr_bytes
 
 # with (Ap, Aᵀp) preallocated, USYMLQ needs:
-# - 4 n-vectors: vₖ₋₁, vₖ, x, d̅
-# - 2 m-vectors: uₖ₋₁, uₖ
+# - 4 n-vectors: uₖ₋₁, uₖ, x, d̅
+# - 2 m-vectors: vₖ₋₁, vₖ
 storage_usymlq(n, m) = 4 * n + 2 * m
 storage_usymlq_bytes(n, m) = 8 * storage_usymlq(n, m)
 
@@ -275,3 +275,14 @@ expected_usymlq_bytes = storage_usymlq_bytes(n, m)
 usymlq(Au, c, b)  # warmup
 actual_usymlq_bytes = @allocated usymlq(Au, c, b)
 @test actual_usymlq_bytes ≤ 1.1 * expected_usymlq_bytes
+
+# with (Ap, Aᵀp) preallocated, TriCG needs:
+# - 5 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₁, gy₂ₖ
+# - 5 m-vectors: xₖ, vₖ₋₁, vₖ, gx₂ₖ₋₁, gx₂ₖ
+storage_tricg(n, m) = 5 * n + 5 * m
+storage_tricg_bytes(n, m) = 8 * storage_tricg(n, m)
+
+expected_tricg_bytes = storage_tricg_bytes(n, m)
+tricg(Au, c, b)  # warmup
+actual_tricg_bytes = @allocated tricg(Au, c, b)
+@test actual_tricg_bytes ≤ 1.1 * expected_tricg_bytes

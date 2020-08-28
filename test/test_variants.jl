@@ -4,7 +4,7 @@ function test_variants()
   for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
              :cr, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :bilq,
              :lsqr, :minres, :symmlq, :dqgmres, :diom, :cgs, :usymqr,
-             :minres_qlp, :qmr, :usymlq, :bilqr, :trilqr)
+             :minres_qlp, :qmr, :usymlq, :bilqr, :tricg, :trilqr)
     @printf("%s ", string(fn))
     for T in (Float32, Float64, BigFloat)
       for S in (Int32, Int64)
@@ -19,7 +19,7 @@ function test_variants()
               @eval $fn($A, $b, $shifts)
               @eval $fn($transpose($A), $b, $shifts)
               @eval $fn($adjoint($A), $b, $shifts)
-            elseif fn in (:usymlq, :usymqr, :trilqr, :bilqr)
+            elseif fn in (:usymlq, :usymqr, :tricg, :trilqr, :bilqr)
               c_dense = ones(T, 5)
               c_sparse = convert(SparseVector{T,S}, c_dense)
               for c in (c_dense, c_sparse)

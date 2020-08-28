@@ -14,6 +14,7 @@ diom
 dqgmres
 usymlq
 usymqr
+tricg
 trilqr
 bilq
 cgs
