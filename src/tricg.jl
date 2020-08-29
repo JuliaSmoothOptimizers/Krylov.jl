@@ -17,7 +17,8 @@ TriCG solves the symmetric linear system
     [ τE    A ] [ x ] = [ b ]
     [  Aᵀ  νF ] [ y ]   [ c ],
 
-where τ and ν are nonzero real numbers, E = M⁻¹ ≻ 0 and F = N⁻¹ ≻ 0.
+where τ and ν are real numbers, E = M⁻¹ ≻ 0 and F = N⁻¹ ≻ 0.
+TriCG could breakdown if `τ = 0` or `ν = 0`. It's recommended to use TriMR in these cases.
 
 By default, TriCG solves symmetric and quasi-definite linear systems with τ = 1 and ν = -1.
 If `flip = true`, TriCG solves another known variant of SQD systems where τ = -1 and ν = 1.
@@ -34,10 +35,10 @@ and its relation with the preconditioned block-Lanczos process.
 indicates the weighted norm in which residuals are measured.
 It's the Euclidean norm when `M` and `N` are identity operators.
 
-TriCG stopped when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
+TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
 
-Additional details can be displayed if the `verbose` mode is enable.
+Additional details can be displayed if the `verbose` mode is enabled.
 """
 function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
