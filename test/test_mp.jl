@@ -4,7 +4,7 @@ function test_mp()
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos,
              :dqgmres, :diom, :cr, :lslq, :lsqr, :lsmr, :craig,
              :craigmr, :crls, :symmlq, :minres, :cg_lanczos_shift_seq,
-             :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trilqr, :bilqr)
+             :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr)
     @printf("%s ", string(fn))
     for T in (Float16, Float32, Float64, BigFloat)
       A = spdiagm(-1 => -ones(T,n-1), 0 => 3*ones(T,n), 1 => -ones(T,n-1))
@@ -19,7 +19,7 @@ function test_mp()
         x = @eval $fn($A, $b, $c)[1]
       elseif fn in (:trilqr, :bilqr)
         x, t = @eval $fn($A, $b, $c)[1:2]
-      elseif fn == :tricg
+      elseif fn in (:tricg, :trimr)
         x, y = @eval $fn($A, $b, $c)[1:2]
       else
         x = @eval $fn($A, $b)[1]
@@ -27,7 +27,7 @@ function test_mp()
       atol = √eps(T)
       rtol = √eps(T)
       Κ = (T == Float16 ? 10 : 1)
-      if fn == :tricg
+      if fn in (:tricg, :trimr)
         @test norm(x + A * y - b) ≤ Κ * (atol + norm([b; c]) * rtol)
         @test norm(A' * x - y - c) ≤ Κ * (atol + norm([b; c]) * rtol)
         @test eltype(y) == T
