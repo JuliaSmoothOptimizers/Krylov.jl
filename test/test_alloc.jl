@@ -286,3 +286,14 @@ expected_tricg_bytes = storage_tricg_bytes(n, m)
 tricg(Au, c, b)  # warmup
 actual_tricg_bytes = @allocated tricg(Au, c, b)
 @test actual_tricg_bytes ≤ 1.1 * expected_tricg_bytes
+
+# with (Ap, Aᵀp) preallocated, TriMR needs:
+# - 8 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ
+# - 8 m-vectors: xₖ, vₖ₋₁, vₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ
+storage_trimr(n, m) = 7 * n + 7 * m
+storage_trimr_bytes(n, m) = 8 * storage_trimr(n, m)
+
+expected_trimr_bytes = storage_trimr_bytes(n, m)
+trimr(Au, c, b)  # warmup
+actual_trimr_bytes = @allocated trimr(Au, c, b)
+@test actual_trimr_bytes ≤ 1.1 * expected_trimr_bytes
