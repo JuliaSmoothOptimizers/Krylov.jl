@@ -66,7 +66,7 @@ function test_trimr()
   K = [eye(m) A; A' zeros(n, n)]
   B = [b; c]
   r =  B - K * [x; y]
-  resid = norm(r) / norm(b)
+  resid = norm(r) / norm(B)
   @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
@@ -90,7 +90,7 @@ function test_trimr()
   K = [eye(m) A; A' -eye(n)]
   B = [b; c]
   r =  B - K * [x; y]
-  resid = norm(r) / norm(b)
+  resid = norm(r) / norm(B)
   @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
@@ -106,7 +106,7 @@ function test_trimr()
   K = [-eye(m) A; A' eye(n)]
   B = [b; c]
   r =  B - K * [x; y]
-  resid = norm(r) / norm(b)
+  resid = norm(r) / norm(B)
   @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
@@ -123,7 +123,7 @@ function test_trimr()
   K = [τ*eye(m) A; A' ν*eye(n)]
   B = [b; c]
   r =  B - K * [x; y]
-  resid = norm(r) / norm(b)
+  resid = norm(r) / norm(B)
   @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
@@ -140,7 +140,7 @@ function test_trimr()
   K = [τ*eye(m) A; A' ν*eye(n)]
   B = [b; c]
   r =  B - K * [x; y]
-  resid = norm(r) / norm(b)
+  resid = norm(r) / norm(B)
   @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
@@ -157,7 +157,7 @@ function test_trimr()
   K = [eye(m) A; A' eye(n)]
   B = [b; c]
   r =  B - K * [x; y]
-  resid = norm(r) / norm(b)
+  resid = norm(r) / norm(B)
   @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
@@ -174,7 +174,7 @@ function test_trimr()
   K = [-eye(m) A; A' -eye(n)]
   B = [b; c]
   r =  B - K * [x; y]
-  resid = norm(r) / norm(b)
+  resid = norm(r) / norm(B)
   @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 end
