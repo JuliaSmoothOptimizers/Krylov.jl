@@ -24,7 +24,8 @@ c = -b
 # [D   A] [x] = [b]
 # [Aᵀ  0] [y]   [c]
 llt_D = cholesky(D)
-opD⁻¹ = LinearOperator(Float64, size(D,1), size(D,2), true, true, v -> llt_D \ v)
+vD = similar(b)
+opD⁻¹ = LinearOperator(Float64, size(D,1), size(D,2), true, true, v -> ldiv!(vD, llt_D, v))
 opH⁻¹ = BlockDiagonalOperator(opD⁻¹, eye(n))
 (x, y, stats) = trimr(A, b, c, M=opD⁻¹, sp=true)
 K = [D A; A' zeros(n,n)]
