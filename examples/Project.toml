@@ -1,0 +1,8 @@
+[deps]
+AMD = "14f7f29c-3bd6-536c-9a0b-7339e30b5a3e"
+DistributedArrays = "aaf54ef3-cdf8-58ed-94cc-d582ad619b94"
+HarwellRutherfordBoeing = "ce388394-9b3f-5993-a911-eb95552e4f2e"
+Krylov = "ba0b0d4f-ebba-5204-a429-3ac8c609bfb7"
+LDLFactorizations = "40e66cde-538c-5869-a4ad-c39174c6795b"
+LinearOperators = "5c8ed15e-5a4c-59e4-a42b-c7e8811fb125"
+MatrixMarket = "4d4711f2-db25-561a-b6b3-d35e7d4047d3"
