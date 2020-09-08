@@ -3,7 +3,7 @@
 All solvers in Krylov.jl can be used with `CuArrays` and allow computations with Nvidia GPU. Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to GPU format (`CuMatrix` and `CuVector`).
 
 ```julia
-using CuArrays, Krylov
+using CUDA, Krylov
 
 # CPU Arrays
 A_cpu = rand(20, 20)
@@ -14,14 +14,14 @@ A_gpu = CuMatrix(A_cpu)
 b_gpu = CuVector(b_cpu)
 
 # Solve a square and dense system on GPU
-x, stats = dqgmres(A_gpu, b_gpu)
+x, stats = bilq(A_gpu, b_gpu)
 ```
 
 Sparse matrices have a specific storage on GPU (`CuSparseMatrixCSC` or `CuSparseMatrixCSR`):
 
 ```julia
-using CuArrays, Krylov
-using CuArrays.CUSPARSE
+using CUDA, Krylov
+using CUDA.CUSPARSE, SparseArrays
 
 # CPU Arrays
 A_cpu = sprand(200, 100, 0.3)
@@ -35,5 +35,4 @@ b_gpu = CuVector(b_cpu)
 x, stats = lsmr(A_gpu, b_gpu)
 ```
 
-!!! note
-    Krylov.jl requires at least CuArrays.jl v2.2.0.
+Optimized operator-vector products that exploit GPU features can be also used by means of linear operators.
