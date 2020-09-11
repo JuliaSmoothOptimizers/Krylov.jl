@@ -189,5 +189,9 @@ macro kswap(x, y)
 end
 
 macro kref!(n, x, y, c, s)
-  return esc(:(krylov_ref!($n, $x, 1, $y, 1, $c, $s)))
+  if VERSION < v"1.5"
+    return esc(:(krylov_ref!($n, $x, 1, $y, 1, $c, $s)))
+  else
+    return esc(:(reflect!($x, $y, $c, $s)))
+  end
 end
