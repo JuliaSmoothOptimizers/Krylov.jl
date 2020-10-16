@@ -33,10 +33,10 @@ to become inaccurate.
 
 TFQMR and BICGSTAB were developed to remedy this difficulty.»
 
-This implementation allows a right preconditioner M.
+This implementation allows a left preconditioner M and a right preconditioner N.
 """
-function cgs(A, b :: AbstractVector{T};
-             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
+function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
+             M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
              itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
@@ -47,23 +47,29 @@ function cgs(A, b :: AbstractVector{T};
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  isa(N, opEye) || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Determine the storage type of b
   S = typeof(b)
 
   # Initial solution x₀ and residual r₀.
   x = kzeros(S, n)  # x₀
-  r = copy(b)       # r₀
-  # Compute ρ₀ = ⟨ r₀,r₀ ⟩ and residual norm ‖r₀‖₂.
-  ρ = @kdot(n, r, r)
-  rNorm = sqrt(ρ)
+  r = copy(M * b)   # r₀
+
+  # Compute residual norm ‖r₀‖₂.
+  rNorm = @knrm2(n, r)
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
+
+  # Compute ρ₀ = ⟨ r₀,̅r₀ ⟩
+  ρ = @kdot(n, r, c)
+  ρ == 0 && return x, SimpleStats(false, false, [rNorm], T[], "Breakdown bᵀc = 0")
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
+  verbose && @printf("%5s  %7s\n", "k", "‖r‖")
   verbose && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Set up workspace.
@@ -78,29 +84,31 @@ function cgs(A, b :: AbstractVector{T};
 
   while !(solved || tired)
 
-    y = M * p                    # yₘ = M⁻¹pₘ
-    v = A * y                    # vₘ = Ayₘ
-    σ = @kdot(n, v, b)           # σₘ = ⟨ AM⁻¹pₘ,r₀ ⟩
-    α = ρ / σ                    # αₘ = ρₘ / σₘ
-    @. q = u - α * v             # qₘ = uₘ - αₘ * AM⁻¹pₘ
-    @kaxpy!(n, one(T), q, u)     # uₘ₊½ = uₘ + qₘ
-    z = M * u                    # zₘ = M⁻¹uₘ₊½
-    @kaxpy!(n, α, z, x)          # xₘ₊₁ = xₘ + αₘ * M⁻¹(uₘ + qₘ)
-    w = A * z                    # wₘ = AM⁻¹(uₘ + qₘ)
-    @kaxpy!(n, -α, w, r)         # rₘ₊₁ = rₘ - αₘ * AM⁻¹(uₘ + qₘ)
-    ρ_next = @kdot(n, r, b)      # ρₘ₊₁ = ⟨ rₘ₊₁,r₀ ⟩
-    β = ρ_next / ρ               # βₘ = ρₘ₊₁ / ρₘ
-    @. u = r + β * q             # uₘ₊₁ = rₘ₊₁ + βₘ * qₘ
-    @kaxpby!(n, one(T), q, β, p) # pₘ₊₁ = uₘ₊₁ + βₘ * (qₘ + βₘ * pₘ)
+    y = N * p                     # yₖ = N⁻¹pₖ
+    t = A * y                     # tₖ = Ayₖ
+    v = M * t                     # vₖ = M⁻¹tₖ
+    σ = @kdot(n, v, c)            # σₖ = ⟨ M⁻¹AN⁻¹pₖ,̅r₀ ⟩
+    α = ρ / σ                     # αₖ = ρₖ / σₖ
+    @. q = u - α * v              # qₖ = uₖ - αₖ * M⁻¹AN⁻¹pₖ
+    @kaxpy!(n, one(T), q, u)      # uₖ₊½ = uₖ + qₖ
+    z = N * u                     # zₖ = N⁻¹uₖ₊½
+    @kaxpy!(n, α, z, x)           # xₖ₊₁ = xₖ + αₖ * N⁻¹(uₖ + qₖ)
+    s = A * z                     # sₖ = Azₖ
+    w = M * s                     # wₖ = M⁻¹sₖ
+    @kaxpy!(n, -α, w, r)          # rₖ₊₁ = rₖ - αₖ * M⁻¹AN⁻¹(uₖ + qₖ)
+    ρ_next = @kdot(n, r, c)       # ρₖ₊₁ = ⟨ rₖ₊₁,̅r₀ ⟩
+    β = ρ_next / ρ                # βₖ = ρₖ₊₁ / ρₖ
+    @. u = r + β * q              # uₖ₊₁ = rₖ₊₁ + βₖ * qₖ
+    @kaxpby!(n, one(T), q, β, p)  # pₖ₊₁ = uₖ₊₁ + βₖ * (qₖ + βₖ * pₖ)
     @kaxpby!(n, one(T), u, β, p)
 
     # Update ρ.
-    ρ = ρ_next # ρₘ ← ρₘ₊₁
+    ρ = ρ_next # ρₖ ← ρₖ₊₁
 
     # Update iteration index.
     iter = iter + 1
 
-    # Compute residual norm ‖rₘ‖₂.
+    # Compute residual norm ‖rₖ‖₂.
     rNorm = @knrm2(n, r)
     push!(rNorms, rNorm)
 

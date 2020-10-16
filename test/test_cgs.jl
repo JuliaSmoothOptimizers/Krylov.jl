@@ -56,9 +56,29 @@ function test_cgs()
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
-  # Test with Jacobi (or diagonal) preconditioner
+  # Left preconditioning
   A, b, M = square_preconditioned()
   (x, stats) = cgs(A, b, M=M)
+  show(stats)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("CGS: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ cgs_tol)
+  @test(stats.solved)
+
+  # Right preconditioning
+  A, b, N = square_preconditioned()
+  (x, stats) = cgs(A, b, N=N)
+  show(stats)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("CGS: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ cgs_tol)
+  @test(stats.solved)
+
+  # Split preconditioning
+  A, b, M, N = two_preconditioners()
+  (x, stats) = cgs(A, b, M=M, N=N)
   show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
