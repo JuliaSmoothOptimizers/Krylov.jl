@@ -5,7 +5,7 @@ export lslq
 
 
 """
-    lslq(A, b, λ=0.0)
+    (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b; M, N, sqd, λ, atol, btol, etol, window, utol, itmax, σ, conlim, verbose)
 
 Solve the regularized linear least-squares problem
 

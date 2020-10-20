@@ -13,6 +13,8 @@
 export bilqr
 
 """
+    (x, t, stats) = bilqr(A, b, c; atol, rtol, transfer_to_bicg, itmax, verbose)
+
 Combine BiLQ and QMR to solve adjoint systems.
 
     [0  A] [t] = [b]

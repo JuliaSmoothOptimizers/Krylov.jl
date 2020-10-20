@@ -20,6 +20,8 @@
 export usymlq
 
 """
+    (x, stats) = usymlq(A, b, c; atol, rtol, transfer_to_usymcg, itmax, verbose)
+
 Solve the linear system Ax = b using the USYMLQ method.
 
 USYMLQ is based on a tridiagonalization process for unsymmetric matrices.

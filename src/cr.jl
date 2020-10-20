@@ -8,6 +8,8 @@
 export cr
 
 """
+    (x, stats) = cr(A, b; M, atol, rtol, γ, itmax, radius, verbose, linesearch)
+
 A truncated version of Stiefel’s Conjugate Residual method to solve the symmetric linear system Ax=b.
 The matrix A must be positive semi-definite.
 

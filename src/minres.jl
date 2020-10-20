@@ -23,6 +23,8 @@ export minres
 
 
 """
+    (x, stats) = minres(A, b; M, λ, atol, rtol, etol, window, itmax, conlim, verbose)
+
 Solve the shifted linear least-squares problem
 
     minimize ‖b - (A + λ I)x‖₂²

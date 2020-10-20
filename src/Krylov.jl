@@ -91,7 +91,6 @@ function show(io :: IO, stats :: AdjointStats)
   print(io, s)
 end
 
-include("krylov_aux.jl")
 include("krylov_utils.jl")
 
 include("cg.jl")

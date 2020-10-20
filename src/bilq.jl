@@ -13,6 +13,8 @@
 export bilq
 
 """
+    (x, stats) = bilq(A, b; c, atol, rtol, transfer_to_bicg, itmax, verbose)
+
 Solve the square linear system Ax = b using the BiLQ method.
 
 BiLQ is based on the Lanczos biorthogonalization process.

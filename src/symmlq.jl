@@ -13,6 +13,8 @@ export symmlq
 
 
 """
+    (x, stats) = symmlq(A, b; M, λ, transfer_to_cg, λest, atol, rtol, etol, window, itmax, conlim, verbose)
+
 Solve the shifted linear system
 
     (A + λ I) x = b

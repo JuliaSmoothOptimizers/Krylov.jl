@@ -21,6 +21,8 @@
 export qmr
 
 """
+    (x, stats) = qmr(A, b; c, atol, rtol, itmax, verbose)
+
 Solve the square linear system Ax = b using the QMR method.
 
 QMR is based on the Lanczos biorthogonalization process.

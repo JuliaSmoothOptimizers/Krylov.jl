@@ -12,6 +12,8 @@
 export trimr
 
 """
+    (x, y, stats) = trimr(A, b, c; M, N, atol, rtol, spd, snd, flip, sp, τ, ν, itmax, verbose)
+
 TriMR solves the symmetric linear system
 
     [ τE    A ] [ x ] = [ b ]
