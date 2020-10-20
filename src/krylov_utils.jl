@@ -1,4 +1,6 @@
 """
+    (c, s, ρ) = sym_givens(a, b)
+
 Numerically stable symmetric Givens reflection.
 Given `a` and `b`, return `(c, s, ρ)` such that
 
@@ -43,6 +45,8 @@ end
 
 
 """
+    roots = roots_quadratic(q₂, q₁, q₀; nitref)
+
 Find the real roots of the quadratic
 
     q(x) = q₂ x² + q₁ x + q₀,
@@ -92,6 +96,8 @@ end
 
 
 """
+    roots = to_boundary(x, d, radius; flip, xNorm2, dNorm2)
+
 Given a trust-region radius `radius`, a vector `x` lying inside the
 trust-region and a direction `d`, return `σ1` and `σ2` such that
 
@@ -119,11 +125,15 @@ function to_boundary(x :: Vector{T}, d :: Vector{T},
 end
 
 """
+    v = kzeros(S, n)
+
 Create an AbstractVector of storage type `S` of length `n` only composed of zero.
 """
 @inline kzeros(S, n) = fill!(S(undef, n), zero(eltype(S)))
 
 """
+    v = kones(S, n)
+
 Create an AbstractVector of storage type `S` of length `n` only composed of one.
 """
 @inline kones(S, n) = fill!(S(undef, n), one(eltype(S)))
@@ -193,6 +203,8 @@ macro kref!(n, x, y, c, s)
 end
 
 """
+    s = vec2str(x; ndisp)
+
 Display an array in the form
 
     [ -3.0e-01 -5.1e-01  1.9e-01 ... -2.3e-01 -4.4e-01  2.4e-01 ]
