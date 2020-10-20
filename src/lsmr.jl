@@ -26,6 +26,8 @@ export lsmr
 
 
 """
+    (x, stats) = lsmr(A, b; M, N, sqd, λ, axtol, btol, atol, rtol, etol, window, itmax, conlim, radius, verbose)
+
 Solve the regularized linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ² ‖x‖₂²

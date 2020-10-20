@@ -14,6 +14,8 @@
 export cgs
 
 """
+    (x, stats) = cgs(A, b; M, atol, rtol, itmax, verbose)
+
 Solve the consistent linear system Ax = b using conjugate gradient squared algorithm.
 
 From "Iterative Methods for Sparse Linear Systems (Y. Saad)" :

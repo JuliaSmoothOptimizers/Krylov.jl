@@ -23,6 +23,8 @@ export cgls
 
 
 """
+    (x, stats) = cgls(A, b; M, λ, atol, rtol, radius, itmax, verbose)
+
 Solve the regularized linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ ‖x‖₂²

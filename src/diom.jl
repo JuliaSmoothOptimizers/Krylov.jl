@@ -14,6 +14,8 @@
 export diom
 
 """
+    (x, stats) = diom(A, b; M, N, atol, rtol, itmax, memory, pivoting, verbose)
+
 Solve the consistent linear system Ax = b using direct incomplete orthogonalization method.
 
 DIOM is similar to CG with partial reorthogonalization.

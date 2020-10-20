@@ -29,6 +29,8 @@ export craigmr
 
 
 """
+    (x, y, stats) = craigmr(A, b; M, N, λ, atol, rtol, itmax, verbose)
+
 Solve the consistent linear system
 
     Ax + √λs = b

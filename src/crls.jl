@@ -22,6 +22,8 @@ export crls
 
 
 """
+    (x, stats) = crls(A, b; M, λ, atol, rtol, radius, itmax, verbose)
+
 Solve the linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ ‖x‖₂²

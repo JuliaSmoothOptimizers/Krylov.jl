@@ -13,6 +13,8 @@
 export trilqr
 
 """
+    (x, t, stats) = trilqr(A, b, c; atol, rtol, transfer_to_usymcg, itmax, verbose)
+
 Combine USYMLQ and USYMQR to solve adjoint systems.
 
     [0  A] [t] = [b]

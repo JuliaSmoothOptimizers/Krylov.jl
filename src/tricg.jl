@@ -12,6 +12,8 @@
 export tricg
 
 """
+    (x, y, stats) = tricg(A, b, c; M, N, atol, rtol, spd, snd, flip, τ, ν, itmax, verbose)
+
 TriCG solves the symmetric linear system
 
     [ τE    A ] [ x ] = [ b ]

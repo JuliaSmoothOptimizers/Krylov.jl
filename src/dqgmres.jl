@@ -14,6 +14,8 @@
 export dqgmres
 
 """
+    (x, stats) = dqgmres(A, b; M, N, atol, rtol, itmax, memory, verbose)
+
 Solve the consistent linear system Ax = b using DQGMRES method.
 
 DQGMRES algorithm is based on the incomplete Arnoldi orthogonalization process

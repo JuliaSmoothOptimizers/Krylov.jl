@@ -29,6 +29,8 @@ export crmr
 
 
 """
+    (x, stats) = crmr(A, b; M, λ, atol, rtol, itmax, verbose)
+
 Solve the consistent linear system
 
     Ax + √λs = b

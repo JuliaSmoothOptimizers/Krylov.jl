@@ -34,6 +34,8 @@ export craig
 
 
 """
+    (x, y, stats) = craig(A, b; M, N, sqd, λ, atol, btol, rtol, conlim, itmax, verbose, transfer_to_lsqr)
+
 Find the least-norm solution of the consistent linear system
 
     Ax + λs = b

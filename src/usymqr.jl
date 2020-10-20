@@ -20,6 +20,8 @@
 export usymqr
 
 """
+    (x, stats) = usymqr(A, b, c; atol, rtol, itmax, verbose)
+
 Solve the linear system Ax = b using the USYMQR method.
 
 USYMQR is based on a tridiagonalization process for unsymmetric matrices.
