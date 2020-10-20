@@ -5,7 +5,14 @@ using LinearOperators, LinearAlgebra, SparseArrays, Printf
 "Abstract type for statistics returned by a solver"
 abstract type KrylovStats{T} end
 
-"Type for statistics returned by non-Lanczos solvers"
+"""
+Type for statistics returned by the majority of Krylov solvers, the attributes are:
+- solved
+- inconsistent
+- residuals
+- Aresiduals
+- status
+"""
 mutable struct SimpleStats{T} <: KrylovStats{T}
   solved :: Bool
   inconsistent :: Bool
@@ -14,7 +21,15 @@ mutable struct SimpleStats{T} <: KrylovStats{T}
   status :: String
 end
 
-"Type for statistics returned by Lanczos solvers"
+"""
+Type for statistics returned by Lanczos solvers CG-LANCZOS and CG-LANCZOS-SHIFT-SEQ, the attributes are:
+- solved
+- residuals
+- flagged
+- Anorm
+- Acond
+- status
+"""
 mutable struct LanczosStats{T} <: KrylovStats{T}
   solved :: Bool
   residuals :: Array{T}
@@ -24,7 +39,17 @@ mutable struct LanczosStats{T} <: KrylovStats{T}
   status :: String
 end
 
-"Type for statistics returned by SYMMLQ"
+"""
+Type for statistics returned by SYMMLQ, the attributes are:
+- solved
+- residuals
+- residualscg
+- errors
+- errorscg
+- Anorm
+- Acond
+- status
+"""
 mutable struct SymmlqStats{T} <: KrylovStats{T}
   solved :: Bool
   residuals :: Array{T}
@@ -36,7 +61,14 @@ mutable struct SymmlqStats{T} <: KrylovStats{T}
   status :: String
 end
 
-"Type for statistics returned by adjoint systems solvers"
+"""
+Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the attributes are:
+- solved_primal
+- solved_dual
+- residuals_primal
+- residuals_dual
+- status
+"""
 mutable struct AdjointStats{T} <: KrylovStats{T}
   solved_primal :: Bool
   solved_dual :: Bool
