@@ -26,6 +26,8 @@
 export lnlq
 
 """
+    (x, y, stats) = lnlq(A, b; M, N, sqd, λ, atol, rtol, itmax, transfer_to_craig, verbose)
+
 Find the least-norm solution of the consistent linear system
 
     Ax + λs = b
@@ -38,28 +40,28 @@ Note that y are the Lagrange multipliers of the least-norm problem
 
     minimize ‖x‖  s.t.  Ax = b.
 
-Preconditioners M⁻¹ and N⁻¹ may be provided in the form of linear operators and are
-assumed to be symmetric and positive definite.
 If `sqd = true`, LNLQ solves the symmetric and quasi-definite system
 
-    [ -N   Aᵀ ] [ x ]   [ 0 ]
-    [  A   M  ] [ y ] = [ b ],
+    [ -F   Aᵀ ] [ x ]   [ 0 ]
+    [  A   E  ] [ y ] = [ b ],
 
-which is equivalent to applying SYMMLQ to `(AN⁻¹Aᵀ + M)y = b` with `Nx = Aᵀy`.
+where E and F are symmetric and positive definite.
+LNLQ is then equivalent to applying SYMMLQ to `(AF⁻¹Aᵀ + E)y = b` with `Fx = Aᵀy`.
+Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
 
 If `sqd = false`, LNLQ solves the symmetric and indefinite system
 
-    [ -N   Aᵀ ] [ x ]   [ 0 ]
+    [ -F   Aᵀ ] [ x ]   [ 0 ]
     [  A   0  ] [ y ] = [ b ].
 
-In this case, M⁻¹ can still be specified and indicates the weighted norm in which residuals are measured.
+In this case, M can still be specified and indicates the weighted norm in which residuals are measured.
 
 In this implementation, both the x and y-parts of the solution are returned.
 """
 function lnlq(A, b :: AbstractVector{T};
               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-              verbose :: Bool=false, transfer_to_craig :: Bool=true) where T <: AbstractFloat
+              transfer_to_craig :: Bool=true, verbose :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
