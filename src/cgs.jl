@@ -14,7 +14,7 @@
 export cgs
 
 """
-    (x, stats) = cgs(A, b; M, atol, rtol, itmax, verbose)
+    (x, stats) = cgs(A, b; c, M, N, atol, rtol, itmax, verbose)
 
 Solve the consistent linear system Ax = b using conjugate gradient squared algorithm.
 
