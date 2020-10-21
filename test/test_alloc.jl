@@ -11,6 +11,15 @@ mem = 10
 shifts  = [1.0; 2.0; 3.0; 4.0; 5.0]
 nshifts = 5
 
+# UniformScaling preconditioners I should work as OpEye()
+M1 = opEye()
+M2 = I
+cg(L, b, M=M1) # warmup
+cg(L, b, M=M2) # warmup
+opEye_bytes = @allocated cg(L, b, M=M1)
+UniformScaling_bytes = @allocated cg(L, b, M=M2)
+@test 0.99 * UniformScaling_bytes ≤ opEye_bytes ≤ 1.01 * UniformScaling_bytes
+
 # without preconditioner and with Ap preallocated, SYMMLQ needs 4 n-vectors: x_lq, vold, v, w̅ (= x_cg)
 storage_symmlq(n) = 4 * n
 storage_symmlq_bytes(n) = 8 * storage_symmlq(n)
