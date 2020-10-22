@@ -19,6 +19,7 @@ trimr
 trilqr
 bilq
 cgs
+bicgstab
 qmr
 bilqr
 cgls

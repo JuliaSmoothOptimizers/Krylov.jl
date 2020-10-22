@@ -3,6 +3,7 @@ using Test, Krylov, LinearOperators, LinearAlgebra, SparseArrays, Printf, Random
 include("test_utils.jl")
 include("test_aux.jl")
 
+include("test_bicgstab.jl")
 include("test_usymlq.jl")
 include("test_tricg.jl")
 include("test_bilqr.jl")

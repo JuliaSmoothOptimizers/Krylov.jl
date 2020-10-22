@@ -142,8 +142,10 @@ include("tricg.jl")
 include("trimr.jl")
 include("trilqr.jl")
 
-include("bilq.jl")
 include("cgs.jl")
+include("bicgstab.jl")
+
+include("bilq.jl")
 include("qmr.jl")
 include("bilqr.jl")
 

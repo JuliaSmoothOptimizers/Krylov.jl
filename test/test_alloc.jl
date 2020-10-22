@@ -125,6 +125,15 @@ cgs(A, b)  # warmup
 actual_cgs_bytes = @allocated cgs(A, b)
 @test actual_cgs_bytes ≤ 1.1 * expected_cgs_bytes
 
+# without preconditioner and with Ap preallocated, BICGSTAB needs 5 n-vectors: x, r, p, v, s
+storage_bicgstab(n) = 5 * n
+storage_bicgstab_bytes(n) = 8 * storage_bicgstab(n)
+
+expected_bicgstab_bytes = storage_bicgstab_bytes(n)
+bicgstab(A, b)  # warmup
+actual_bicgstab_bytes = @allocated bicgstab(A, b)
+@test actual_bicgstab_bytes ≤ 1.1 * expected_bicgstab_bytes
+
 # with (Ap, Aᵀq) preallocated, CRAIGMR needs:
 # - 2 n-vector: x, v
 # - 4 m-vectors: y, u, w, wbar

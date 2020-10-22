@@ -11,7 +11,7 @@ Some methods only require `A * v` products, whereas other ones also require `A' 
 | CG, CR                                 | CGLS, CRLS, CGNE, CRMR                   |
 | SYMMLQ, CG-LANCZOS, MINRES, MINRES-QLP | LSLQ, LSQR, LSMR, LNLQ, CRAIG, CRAIGMR   |
 | DQGMRES, DIOM                          | BiLQ, QMR, BiLQR, USYMLQ, USYMQR, TriLQR |
-| CGS                                    | TriCG, TriMR, USYMLQR                    |
+| CGS, BICGSTAB                          | TriCG, TriMR, USYMLQR                    |
 
 We strongly recommend [LinearOperators.jl](https://github.com/JuliaSmoothOptimizers/LinearOperators.jl) to model matrix-free operators, but other packages such as [LinearMaps.jl](https://github.com/Jutho/LinearMaps.jl), [DiffEqOperators.jl](https://github.com/SciML/DiffEqOperators.jl) or your own operator can be used as well.
 
