@@ -1,9 +1,9 @@
 # Tests of variants.jl
 function test_variants()
   @printf("Tests of variants:\n")
-  for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne,
-             :cr, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :bilq,
-             :lsqr, :minres, :symmlq, :dqgmres, :diom, :cgs, :usymqr,
+  for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne, :cr,
+             :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :bilq, :lsqr,
+             :minres, :symmlq, :dqgmres, :diom, :cgs, :bicgstab, :usymqr,
              :minres_qlp, :qmr, :usymlq, :bilqr, :tricg, :trimr, :trilqr)
     @printf("%s ", string(fn))
     for T in (Float32, Float64, BigFloat)

@@ -2,7 +2,7 @@ function test_mp()
   @printf("Tests of multi-precision methods:\n")
   n = 5
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos,
-             :dqgmres, :diom, :cr, :lslq, :lsqr, :lsmr, :craig,
+             :dqgmres, :diom, :cr, :lslq, :lsqr, :lsmr, :craig, :bicgstab,
              :craigmr, :crls, :symmlq, :minres, :cg_lanczos_shift_seq,
              :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr)
     @printf("%s ", string(fn))
