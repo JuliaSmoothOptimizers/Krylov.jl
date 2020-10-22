@@ -65,7 +65,7 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
-  bᵗc == 0 && return (x, y, AdjointStats(false, false, [bNorm], [cNorm], "Breakdown bᵀc = 0"))
+  bᵗc == 0 && return (x, t, AdjointStats(false, false, [bNorm], [cNorm], "Breakdown bᵀc = 0"))
 
   # Set up workspace.
   βₖ = √(abs(bᵗc))           # β₁γ₁ = bᵀc
