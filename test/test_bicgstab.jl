@@ -86,7 +86,7 @@ function test_bicgstab()
   @test(stats.solved)
 
   # Split preconditioning
-  A, b, M, N = two_preconditioners()
+  A, b, M, N = two_preconditioners(500, 32)
   (x, stats) = bicgstab(A, b, M=M, N=N)
   show(stats)
   r = b - A * x
