@@ -30,7 +30,7 @@ where
 See the [tutorial](https://juliasmoothoptimizers.github.io/JSOTutorials.jl/linear-operators/introduction-to-linear-operators/introduction-to-linear-operators.html) and the detailed [documentation](https://juliasmoothoptimizers.github.io/LinearOperators.jl/latest/) for more informations on `LinearOperators.jl`.
 
 !!! note
-    When `A`, `M` or `N` input arguments are not matrices, the operator `op` must follow the convention that `y = op * v` and `z = op' * u` are not allocating and act like the 3-arg `mul!` to be memory efficient.
+    When the `A`, `M` or `N` input arguments are not matrices, the operator `op` should follow the convention that `y = op * v` and `z = op' * u` are not allocating and act like the 3-arg `mul!` to be memory efficient.
 
 ## Examples
 
