@@ -1,30 +1,23 @@
-using Krylov, LinearOperators, ILU0
+using Krylov, LinearOperators, ILUZero
 using LinearAlgebra, Printf
 
-n = 64
-N = n^3
-A = spdiagm(
-      -1 => fill(-1.0, n - 1), 
-       0 => fill(3.0, n), 
-       1 => fill(-2.0, n - 1)
-    )
-Id = sparse(1.0I, n, n)
-A = kron(A, Id) + kron(Id, A)
-A = kron(A, Id) + kron(Id, A)
-x = ones(N)
-b = A * x
+include("../test/test_utils.jl")
+
+A, b = polar_poisson()
+# A, b = kron_unsymmetric()
+n = length(b)
 F = ilu0(A)
 
 @printf("nnz(ILU) / nnz(A): %7.1e\n", nnz(F) / nnz(A))
 
 # Solve Ax = b with DQGMRES and an ILU(0) preconditioner
 # Remark: DIOM can be used in the same way
-yM = zeros(N)
-yN = zeros(N)
-yP = zeros(N)
-opM = LinearOperator(Float64, N, N, false, false, y -> forward_substitution(yM, F, y))
-opN = LinearOperator(Float64, N, N, false, false, y -> backward_substitution(yN, F, y))
-opP = LinearOperator(Float64, N, N, false, false, y -> ldiv!(yP, F, y))
+yM = zeros(n)
+yN = zeros(n)
+yP = zeros(n)
+opM = LinearOperator(Float64, n, n, false, false, y -> forward_substitution!(yM, F, y))
+opN = LinearOperator(Float64, n, n, false, false, y -> backward_substitution!(yN, F, y))
+opP = LinearOperator(Float64, n, n, false, false, y -> ldiv!(yP, F, y))
 
 # Without preconditioning
 x, stats = dqgmres(A, b)

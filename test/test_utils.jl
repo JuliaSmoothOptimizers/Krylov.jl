@@ -84,6 +84,18 @@ function sparse_laplacian(n :: Int=16)
   return A, b
 end
 
+# Large-scale unsymmetric systems generated with Kronecker products.
+function kron_unsymmetric(n :: Int=64)
+  N = n^3
+  A = spdiagm(-1 => fill(-1.0, n - 1), 0 => fill(3.0, n), 1 => fill(-2.0, n - 1))
+  Id = eye(n)
+  A = kron(A, Id) + kron(Id, A)
+  A = kron(A, Id) + kron(Id, A)
+  x = ones(N)
+  b = A * x
+  return A, b
+end
+
 # Symmetric, indefinite and almost singular systems.
 function almost_singular(n :: Int=16)
   A = get_div_grad(n, n, n)
