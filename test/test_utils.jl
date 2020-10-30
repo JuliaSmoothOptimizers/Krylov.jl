@@ -80,7 +80,7 @@ end
 # Sparse Laplacian.
 function sparse_laplacian(n :: Int=16)
   A = get_div_grad(n, n, n)
-  b = ones(size(A, 1))
+  b = ones(n^3)
   return A, b
 end
 
@@ -100,7 +100,7 @@ end
 function almost_singular(n :: Int=16)
   A = get_div_grad(n, n, n)
   A = A - 5 * I
-  b = randn(size(A, 1))
+  b = A * ones(n^3)
   return A, b
 end
 
