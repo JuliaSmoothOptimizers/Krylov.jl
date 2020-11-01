@@ -17,8 +17,7 @@
 # This method is based on the Golub-Kahan bidiagonalization process and is described in
 #
 # R. Estrin, D. Orban, M.A. Saunders, LNLQ: An Iterative Method for Least-Norm Problems with an Error Minimization Property,
-# SIAM Journal on Matrix Analysis and Applications, 40(3),
-# pp. 1102--1124, 2019.
+# SIAM Journal on Matrix Analysis and Applications, 40(3), pp. 1102--1124, 2019.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montréal, March 2019 -- Alès, January 2020.
@@ -213,7 +212,7 @@ function lnlq(A, b :: AbstractVector{T};
     end
 
     # αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    Aᵀu = A.tprod(u)
+    Aᵀu = Aᵀ * u
     @kaxpby!(n, one(T), Aᵀu, -βₖ₊₁, Nv)
     v = N * Nv                    # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
     αₖ₊₁ = sqrt(@kdot(n, v, Nv))  # αₖ₊₁ = ‖vₖ₊₁‖_N
