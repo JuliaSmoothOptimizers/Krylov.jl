@@ -69,7 +69,7 @@ function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
-  verbose && @printf("%5s  %7s\n", "k", "‖r‖")
+  verbose && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   verbose && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Set up workspace.
@@ -80,9 +80,10 @@ function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   # Stopping criterion.
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
+  breakdown = false
   status = "unknown"
 
-  while !(solved || tired)
+  while !(solved || tired || breakdown)
 
     y = N * p                     # yₖ = N⁻¹pₖ
     t = A * y                     # tₖ = Ayₖ
@@ -99,8 +100,8 @@ function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
     ρ_next = @kdot(n, r, c)       # ρₖ₊₁ = ⟨ rₖ₊₁,̅r₀ ⟩
     β = ρ_next / ρ                # βₖ = ρₖ₊₁ / ρₖ
     @. u = r + β * q              # uₖ₊₁ = rₖ₊₁ + βₖ * qₖ
-    @kaxpby!(n, one(T), q, β, p)  # pₖ₊₁ = uₖ₊₁ + βₖ * (qₖ + βₖ * pₖ)
-    @kaxpby!(n, one(T), u, β, p)
+    @kaxpby!(n, one(T), q, β, p)  # pₐᵤₓ = qₖ + βₖ * pₖ
+    @kaxpby!(n, one(T), u, β, p)  # pₖ₊₁ = uₖ₊₁ + βₖ * pₐᵤₓ
 
     # Update ρ.
     ρ = ρ_next # ρₖ ← ρₖ₊₁
@@ -115,11 +116,12 @@ function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
     # Update stopping criterion.
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
+    breakdown = (α == 0 || isnan(α))
     verbose && @printf("%5d  %7.1e\n", iter, rNorm)
   end
   verbose && @printf("\n")
 
-  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
   stats = SimpleStats(solved, false, rNorms, T[], status)
   return (x, stats)
 end
