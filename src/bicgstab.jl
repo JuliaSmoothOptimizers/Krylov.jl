@@ -58,15 +58,15 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   x = kzeros(S, n)  # x₀
   s = kzeros(S, n)  # s₀
   v = kzeros(S, n)  # v₀
-  r = copy(b)       # r₀
+  r = copy(M * b)   # r₀
   p = copy(r)       # p₁
 
   α = one(T) # α₀
   ω = one(T) # ω₀
   ρ = one(T) # ρ₀
 
-  # Initial residual norm ‖r₀‖.
-  rNorm = @knrm2(n, b)
+  # Compute residual norm ‖r₀‖₂.
+  rNorm = @knrm2(n, r)
   rNorm == 0 && return (x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution"))
 
   iter = 0
@@ -77,8 +77,8 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   verbose && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "αₖ", "ωₖ")
   verbose && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
 
-  next_ρ = @kdot(n, b, c)  # ρ₁ = ⟨r₀,r̅₀⟩ = ⟨b,c⟩
-  next_ρ == 0 && return (x, SimpleStats(false, false, [bNorm], T[], "Breakdown bᵀc = 0"))
+  next_ρ = @kdot(n, r, c)  # ρ₁ = ⟨r₀,r̅₀⟩
+  next_ρ == 0 && return (x, SimpleStats(false, false, [rNorm], T[], "Breakdown bᵀc = 0"))
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -91,22 +91,22 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
     iter = iter + 1
     ρ = next_ρ 
 
-    y = N * p                                # yₖ = Npₖ
-    v .= A * y                               # vₖ = Ayₖ
-    α = ρ / @kdot(n, v, c)                   # αₖ = ⟨rₖ₋₁,r̅₀⟩ / ⟨vₖ,r̅₀⟩
-    @. s = r - α * v                         # sₖ = rₖ₋₁ - αₖvₖ
-    @kaxpy!(n, α, y, x)                      # xₐᵤₓ = xₖ₋₁ + αₖyₖ
-    z = N * s                                # zₖ = Nsₖ
-    t = A * z                                # tₖ = Azₖ
-    MisI ? (Ms = s) : (r .= M * s ; Ms = r)  # Msₖ
-    Mt = M * t                               # Mtₖ
-    ω = @kdot(n, Mt, Ms) / @kdot(n, Mt, Mt)  # ⟨Mtₖ,Msₖ⟩ / ⟨Mtₖ,Mtₖ⟩
-    @kaxpy!(n, ω, z, x)                      # xₖ = xₐᵤₓ + ωₖzₖ
-    @. r = s - ω * t                         # rₖ = sₖ - ωₖtₖ
-    next_ρ = @kdot(n, r, c)                  # ρₖ₊₁ = ⟨rₖ,r̅₀⟩
-    β = (next_ρ / ρ) * (α / ω)               # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
-    @kaxpy!(n, -ω, v, p)                     # pₐᵤₓ = pₖ - ωₖvₖ
-    @kaxpby!(n, one(T), r, β, p)             # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
+    y = N * p                            # yₖ = N⁻¹pₖ
+    q = A * y                            # qₖ = Ayₖ
+    v .= M * q                           # vₖ = M⁻¹qₖ
+    α = ρ / @kdot(n, v, c)               # αₖ = ⟨rₖ₋₁,r̅₀⟩ / ⟨vₖ,r̅₀⟩
+    @. s = r - α * v                     # sₖ = rₖ₋₁ - αₖvₖ
+    @kaxpy!(n, α, y, x)                  # xₐᵤₓ = xₖ₋₁ + αₖyₖ
+    z = N * s                            # zₖ = N⁻¹sₖ
+    d = A * z                            # dₖ = Azₖ
+    t = M * d                            # tₖ = M⁻¹dₖ
+    ω = @kdot(n, t, s) / @kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
+    @kaxpy!(n, ω, z, x)                  # xₖ = xₐᵤₓ + ωₖzₖ
+    @. r = s - ω * t                     # rₖ = sₖ - ωₖtₖ
+    next_ρ = @kdot(n, r, c)              # ρₖ₊₁ = ⟨rₖ,r̅₀⟩
+    β = (next_ρ / ρ) * (α / ω)           # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
+    @kaxpy!(n, -ω, v, p)                 # pₐᵤₓ = pₖ - ωₖvₖ
+    @kaxpby!(n, one(T), r, β, p)         # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
 
     # Compute residual norm ‖rₖ‖₂.
     rNorm = @knrm2(n, r)
