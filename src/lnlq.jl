@@ -167,7 +167,7 @@ function lnlq(A, b :: AbstractVector{T};
   tired = iter ≥ itmax
   status = "unknown"
 
-  verbose && @printf("%5s  %7s\n", "iter", "‖r‖")
+  verbose && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   verbose && @printf("%5d  %7.1e\n", iter, bNorm)
 
   while !(solved_lq || solved_cg || tired)
