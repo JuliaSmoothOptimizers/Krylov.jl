@@ -1,43 +1,17 @@
 function test_lnlq()
   lnlq_tol = 1.0e-6
 
-  function test_lnlq(A, b)
-    (x, y, stats) = lnlq(A, b)
+  function test_lnlq(A, b,transfer_to_craig)
+    (x, y, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig)
     r = b - A * x
     resid = norm(r) / norm(b)
     @printf("LNLQ: residual: %7.1e\n", resid)
     return (x, y, stats, resid)
   end
 
-  # Underdetermined consistent.
-  A, b = under_consistent()
-  (x, y, stats, resid) = test_lnlq(A, b)
-  @test(norm(x - A' * y) ≤ lnlq_tol * norm(x))
-  @test(resid ≤ lnlq_tol)
-  @test(stats.solved)
-  (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
-  @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
-
-  # Square consistent.
-  A, b = square_consistent()
-  (x, y, stats, resid) = test_lnlq(A, b)
-  @test(norm(x - A' * y) ≤ lnlq_tol * norm(x))
-  @test(resid ≤ lnlq_tol)
-  @test(stats.solved)
-  (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
-  @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
-
-  # Overdetermined consistent.
-  A, b = over_consistent()
-  (x, y, stats, resid) = test_lnlq(A, b)
-  @test(norm(x - A' * y) ≤ lnlq_tol * norm(x))
-  @test(resid ≤ lnlq_tol)
-  @test(stats.solved)
-  (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
-  @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
-
   # Code coverage.
-  (x, y, stats) = lnlq(Matrix(A), b)
+  A, b = kron_unsymmetric(4)
+  (x, y, stats) = lnlq(A, b, transfer_to_craig=false, verbose=true)
   show(stats)
 
   # Test b == 0
@@ -48,6 +22,33 @@ function test_lnlq()
   @test stats.status == "x = 0 is a zero-residual solution"
 
   for transfer_to_craig ∈ (false, true)
+    # Underdetermined consistent.
+    A, b = under_consistent()
+    (x, y, stats, resid) = test_lnlq(A, b, transfer_to_craig)
+    @test(norm(x - A' * y) ≤ lnlq_tol * norm(x))
+    @test(resid ≤ lnlq_tol)
+    @test(stats.solved)
+    (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
+    @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
+
+    # Square consistent.
+    A, b = square_consistent()
+    (x, y, stats, resid) = test_lnlq(A, b, transfer_to_craig)
+    @test(norm(x - A' * y) ≤ lnlq_tol * norm(x))
+    @test(resid ≤ lnlq_tol)
+    @test(stats.solved)
+    (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
+    @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
+
+    # Overdetermined consistent.
+    A, b = over_consistent()
+    (x, y, stats, resid) = test_lnlq(A, b, transfer_to_craig)
+    @test(norm(x - A' * y) ≤ lnlq_tol * norm(x))
+    @test(resid ≤ lnlq_tol)
+    @test(stats.solved)
+    (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
+    @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
+
     # Test regularization
     A, b, λ = regularization()
     (x, y, stats) = lnlq(A, b, λ=λ, transfer_to_craig=transfer_to_craig)
