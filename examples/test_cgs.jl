@@ -15,8 +15,8 @@ F = ilu(A, τ = 0.05)
 yM = zeros(n)
 yN = zeros(n)
 yP = zeros(n)
-opM = LinearOperator(Float64, n, n, false, false, y -> (yM .= y ; IncompleteLU.forward_substitution_without_diag!(F.L, yM)))
-opN = LinearOperator(Float64, n, n, false, false, y -> (yN .= y ; IncompleteLU.transposed_backward_substitution!(F.U, yN)))
+opM = LinearOperator(Float64, n, n, false, false, y -> forward_substitution!(yM, F, y))
+opN = LinearOperator(Float64, n, n, false, false, y -> backward_substitution!(yN, F, y))
 opP = LinearOperator(Float64, n, n, false, false, y -> ldiv!(yP, F, y))
 
 # Without preconditioning
