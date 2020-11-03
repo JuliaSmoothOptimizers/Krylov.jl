@@ -287,6 +287,7 @@ function lnlq(A, b :: AbstractVector{T};
     cₖ    = cₖ₊₁
     sₖ    = sₖ₊₁
     αₖ    = αₖ₊₁
+    αhatₖ = αhatₖ₊₁
     βₖ    = βₖ₊₁
     ηₖ    = ηₖ₊₁
     ϵbarₖ = ϵbarₖ₊₁
