@@ -46,6 +46,10 @@ function minres_qlp(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   # Initial solution x₀
   x = kzeros(S, n)
 
@@ -59,10 +63,7 @@ function minres_qlp(A, b :: AbstractVector{T};
   end
 
   rNorm = βₖ
-  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
-
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
+  rNorm == 0 && return x, SimpleStats(iter, true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
@@ -302,6 +303,6 @@ function minres_qlp(A, b :: AbstractVector{T};
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status)
+  stats = SimpleStats(iter, solved, inconsistent, rNorms, ArNorms, status)
   return (x, stats)
 end

@@ -117,6 +117,10 @@ function lslq(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = one(T))
   λ² = λ * λ
@@ -133,7 +137,7 @@ function lslq(A, b :: AbstractVector{T};
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
   β₁ == 0 && return (x_lq, kzeros(S, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
-                       SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
+                       SimpleStats(iter, true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
   β = β₁
 
   @kscal!(m, one(T)/β₁, u)
@@ -145,7 +149,7 @@ function lslq(A, b :: AbstractVector{T};
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   α == 0 && return (x_lq, kzeros(S, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
-                      SimpleStats(true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
+                      SimpleStats(iter, true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
 
@@ -191,9 +195,6 @@ function lslq(A, b :: AbstractVector{T};
                      "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²", "κ(A)", "‖xL‖")
   verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n",
                      1, rNorm, ArNorm, β, α, c, s, Anorm², Acond, xlqNorm)
-
-  iter = 0
-  itmax == 0 && (itmax = m + n)
 
   status = "unknown"
   solved = solved_mach = solved_lim = (rNorm ≤ atol)
@@ -362,6 +363,6 @@ function lslq(A, b :: AbstractVector{T};
   fwd_err_lbnd  && (status = "forward error lower bound small enough")
   fwd_err_ubnd  && (status = "forward error upper bound small enough")
 
-  stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
+  stats = SimpleStats(iter, solved, !zero_resid, rNorms, ArNorms, status)
   return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats)
 end

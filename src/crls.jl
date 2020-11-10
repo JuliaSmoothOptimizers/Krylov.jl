@@ -57,10 +57,14 @@ function crls(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
   x = kzeros(S, n)
   r  = copy(b)
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
-  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
+  bNorm == 0 && return x, SimpleStats(iter, true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
 
   Mr = M * r
   Ar = copy(Aᵀ * Mr)  # - λ * x0 if x0 ≠ 0.
@@ -72,8 +76,6 @@ function crls(A, b :: AbstractVector{T};
   q  = Aᵀ * Ms # Ap
   λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
   γ  = @kdot(m, s, Ms)  # Faster than γ = dot(s, Ms)
-  iter = 0
-  itmax == 0 && (itmax = m + n)
 
   rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   ArNorm = @knrm2(n, Ar)  # Marginally faster than norm(Ar)
@@ -148,6 +150,6 @@ function crls(A, b :: AbstractVector{T};
   end
 
   status = psd ? "zero-curvature encountered" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
-  stats = SimpleStats(solved, false, rNorms, ArNorms, status)
+  stats = SimpleStats(iter, solved, false, rNorms, ArNorms, status)
   return (x, stats)
 end

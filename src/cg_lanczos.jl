@@ -43,12 +43,16 @@ function cg_lanczos(A, b :: AbstractVector{T};
   eltype(A) == T || error("eltype(A) ≠ $T")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   # Initial state.
   x = kzeros(S, n)          # x₀
   Mv = copy(b)              # Mv₁ ← b
   v = M * Mv                # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv)) # β₁ = v₁ᵀ M v₁
-  β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
+  β == 0 && return x, LanczosStats(iter, true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
   p = copy(v)
 
   # Initialize Lanczos process.
@@ -56,9 +60,6 @@ function cg_lanczos(A, b :: AbstractVector{T};
   @kscal!(n, one(T)/β, v)          # v₁  ←  v₁ / β₁
   MisI || @kscal!(n, one(T)/β, Mv) # Mv₁ ← Mv₁ / β₁
   Mv_prev = copy(Mv)
-
-  iter = 0
-  itmax == 0 && (itmax = 2 * n)
 
   # Initialize some constants used in recursions below.
   σ = β
@@ -119,7 +120,7 @@ function cg_lanczos(A, b :: AbstractVector{T};
   end
 
   status = tired ? "maximum number of iterations exceeded" : (check_curvature & indefinite) ? "negative curvature" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, rNorms, indefinite, sqrt(Anorm2), zero(T), status)  # TODO: Estimate Acond.
+  stats = LanczosStats(iter, solved, rNorms, indefinite, sqrt(Anorm2), zero(T), status)  # TODO: Estimate Acond.
   return (x, stats)
 end
 
@@ -157,13 +158,17 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
   eltype(A) == T || error("eltype(A) ≠ $T")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   # Initial state.
   ## Distribute x similarly to shifts.
   x = [kzeros(S, n) for i = 1 : nshifts]  # x₀
   Mv = copy(b)                            # Mv₁ ← b
   v = M * Mv                              # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv))               # β₁ = v₁ᵀ M v₁
-  β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
+  β == 0 && return x, LanczosStats(iter, true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
 
   # Initialize each p to v.
   p = [copy(v) for i = 1 : nshifts]
@@ -188,8 +193,6 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
 
   # Keep track of shifted systems that have converged.
   converged = rNorms .≤ ε
-  iter = 0
-  itmax == 0 && (itmax = 2 * n)
 
   # Keep track of shifted systems with negative curvature if required.
   indefinite = falses(nshifts)
@@ -260,6 +263,6 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, permutedims(reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))), indefinite, zero(T), zero(T), status)  # TODO: Estimate Anorm and Acond.
+  stats = LanczosStats(iter, solved, permutedims(reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))), indefinite, zero(T), zero(T), status)  # TODO: Estimate Anorm and Acond.
   return (x, stats)
 end

@@ -7,6 +7,7 @@ abstract type KrylovStats{T} end
 
 """
 Type for statistics returned by the majority of Krylov solvers, the attributes are:
+- iterations
 - solved
 - inconsistent
 - residuals
@@ -14,6 +15,7 @@ Type for statistics returned by the majority of Krylov solvers, the attributes a
 - status
 """
 mutable struct SimpleStats{T} <: KrylovStats{T}
+  iterations :: Int
   solved :: Bool
   inconsistent :: Bool
   residuals :: Vector{T}
@@ -23,6 +25,7 @@ end
 
 """
 Type for statistics returned by Lanczos solvers CG-LANCZOS and CG-LANCZOS-SHIFT-SEQ, the attributes are:
+- iterations
 - solved
 - residuals
 - flagged
@@ -31,6 +34,7 @@ Type for statistics returned by Lanczos solvers CG-LANCZOS and CG-LANCZOS-SHIFT-
 - status
 """
 mutable struct LanczosStats{T} <: KrylovStats{T}
+  iterations :: Int
   solved :: Bool
   residuals :: Array{T}
   flagged :: Union{Bool, Array{Bool,1}, BitArray{1}}
@@ -41,6 +45,7 @@ end
 
 """
 Type for statistics returned by SYMMLQ, the attributes are:
+- iterations
 - solved
 - residuals
 - residualscg
@@ -51,6 +56,7 @@ Type for statistics returned by SYMMLQ, the attributes are:
 - status
 """
 mutable struct SymmlqStats{T} <: KrylovStats{T}
+  iterations :: Int
   solved :: Bool
   residuals :: Array{T}
   residualscg :: Array{Union{T, Missing}}
@@ -63,6 +69,7 @@ end
 
 """
 Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the attributes are:
+- iterations
 - solved_primal
 - solved_dual
 - residuals_primal
@@ -70,6 +77,7 @@ Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the at
 - status
 """
 mutable struct AdjointStats{T} <: KrylovStats{T}
+  iterations :: Int
   solved_primal :: Bool
   solved_dual :: Bool
   residuals_primal :: Vector{T}
@@ -81,6 +89,7 @@ import Base.show
 
 function show(io :: IO, stats :: SimpleStats)
   s  = "\nSimple stats\n"
+  s *= @sprintf("  iterations: %d\n", stats.iterations)
   s *= @sprintf("  solved: %s\n", stats.solved)
   s *= @sprintf("  inconsistent: %s\n", stats.inconsistent)
   s *= @sprintf("  residuals:  %s\n", vec2str(stats.residuals))
@@ -91,6 +100,7 @@ end
 
 function show(io :: IO, stats :: LanczosStats)
   s  = "\nCG Lanczos stats\n"
+  s *= @sprintf("  iterations: %d\n", stats.iterations)
   s *= @sprintf("  solved: %s\n", stats.solved)
   s *= @sprintf("  residuals: %s\n", typeof(stats.residuals))
   s *= @sprintf("  flagged: %s\n", stats.flagged)
@@ -102,6 +112,7 @@ end
 
 function show(io :: IO, stats :: SymmlqStats)
   s  = "\nSYMMLQ stats\n"
+  s *= @sprintf("  iterations: %d\n", stats.iterations)
   s *= @sprintf("  solved: %s\n", stats.solved)
   s *= @sprintf("  residuals: %s\n", vec2str(stats.residuals))
   s *= @sprintf("  residuals (cg): %s\n", vec2str(stats.residualscg))
@@ -115,6 +126,7 @@ end
 
 function show(io :: IO, stats :: AdjointStats)
   s  = "\nAdjoint stats\n"
+  s *= @sprintf("  iterations: %d\n", stats.iterations)
   s *= @sprintf("  solved primal: %s\n", stats.solved_primal)
   s *= @sprintf("  solved dual:   %s\n", stats.solved_dual)
   s *= @sprintf("  residuals primal: %s\n", vec2str(stats.residuals_primal))

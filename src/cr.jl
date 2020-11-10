@@ -37,21 +37,22 @@ function cr(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   # Initial state.
   x = kzeros(S, n)  # initial estimation x = 0
   xNorm = zero(T)
   r = copy(M * b)  # initial residual r = M * (b - Ax) = M * b
   Ar = A * r
   ρ = @kdot(n, r, Ar)
-  ρ == 0 && return (x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
+  ρ == 0 && return (x, SimpleStats(iter, true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
   p = copy(r)
   q = copy(Ar)
   if verbose
     m = zero(T) # quadratic model
   end
-
-  iter = 0
-  itmax == 0 && (itmax = 2 * n)
 
   rNorm = sqrt(@kdot(n, r, b)) # ‖r‖
   rNorms = [rNorm] # Values of ‖r‖
@@ -80,7 +81,7 @@ function cr(A, b :: AbstractVector{T};
       if (pAp ≤ γ * pNorm²) || (ρ ≤ γ * rNorm²)
         npcurv = true
         verbose && @printf("nonpositive curvature detected: pᵀAp = %8.1e and rᵀAr = %8.1e\n", pAp, ρ)
-        stats = SimpleStats(solved, false, rNorms, ArNorms, "nonpositive curvature")
+        stats = SimpleStats(iter, solved, false, rNorms, ArNorms, "nonpositive curvature")
         iter == 0 && return (b, stats)
         return (x, stats)
       end
@@ -233,6 +234,6 @@ function cr(A, b :: AbstractVector{T};
   verbose && @printf("\n")
 
   status = npcurv ? "nonpositive curvature" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
-  stats = SimpleStats(solved, false, rNorms, ArNorms, status)
+  stats = SimpleStats(iter, solved, false, rNorms, ArNorms, status)
   return (x, stats)
 end

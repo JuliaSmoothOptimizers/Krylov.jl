@@ -92,6 +92,10 @@ function craig(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
   x = kzeros(S, n)
   y = kzeros(S, m)
 
@@ -101,7 +105,7 @@ function craig(A, b :: AbstractVector{T};
   Mu = copy(b)
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0 && return x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
+  β₁ == 0 && return x, y, SimpleStats(iter, true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
   β₁² = β₁^2
   β = β₁
   θ = β₁      # θ will differ from β when there is regularization (λ > 0).
@@ -125,9 +129,6 @@ function craig(A, b :: AbstractVector{T};
   Acond  = zero(T) # Estimate of cond(A).
   xNorm² = zero(T) # Estimate of ‖x‖².
   xNorm  = zero(T)
-
-  iter = 0
-  itmax == 0 && (itmax = m + n)
 
   rNorm  = β₁
   rNorms = [rNorm;]
@@ -267,6 +268,6 @@ function craig(A, b :: AbstractVector{T};
   ill_cond_lim  && (status = "condition number exceeds tolerance")
   inconsistent  && (status = "system may be inconsistent")
 
-  stats = SimpleStats(solved, inconsistent, rNorms, T[], status)
+  stats = SimpleStats(iter, solved, inconsistent, rNorms, T[], status)
   return (x, y, stats)
 end

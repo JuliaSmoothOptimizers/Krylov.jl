@@ -74,11 +74,15 @@ function cgne(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
   x = kzeros(S, n)
   r = copy(b)
   z = M * r
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
-  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
+  rNorm == 0 && return x, SimpleStats(iter, true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
   λ > 0 && (s = copy(r))
 
   # The following vector copy takes care of the case where A is a LinearOperator
@@ -94,8 +98,6 @@ function cgne(A, b :: AbstractVector{T};
   pNorm = @knrm2(n, p)
 
   γ = @kdot(m, r, z)  # Faster than γ = dot(r, z)
-  iter = 0
-  itmax == 0 && (itmax = m + n)
 
   rNorms = [rNorm;]
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
@@ -136,6 +138,6 @@ function cgne(A, b :: AbstractVector{T};
   end
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, inconsistent, rNorms, T[], status)
+  stats = SimpleStats(iter, solved, inconsistent, rNorms, T[], status)
   return (x, stats)
 end

@@ -40,16 +40,17 @@ function cg(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   # Initial state.
   x = kzeros(S, n)
   r = copy(b)
   z = M * r
   p = copy(z)
   γ = @kdot(n, r, z)
-  γ == 0 && return x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
-
-  iter = 0
-  itmax == 0 && (itmax = 2 * n)
+  γ == 0 && return x, SimpleStats(iter, true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
 
   pAp = zero(T)
   rNorm = sqrt(γ)
@@ -124,6 +125,6 @@ function cg(A, b :: AbstractVector{T};
   solved && (status == "unknown") && (status = "solution good enough given atol and rtol")
   zero_curvature && (status = "zero curvature detected")
   tired && (status = "maximum number of iterations exceeded")
-  stats = SimpleStats(solved, inconsistent, rNorms, T[], status)
+  stats = SimpleStats(iter, solved, inconsistent, rNorms, T[], status)
   return (x, stats)
 end

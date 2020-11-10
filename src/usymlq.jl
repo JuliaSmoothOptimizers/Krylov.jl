@@ -52,13 +52,14 @@ function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
   # Initial solution x₀ and residual norm ‖r₀‖.
   x = kzeros(S, n)
   bNorm = @knrm2(m, b)  # ‖r₀‖
-  bNorm == 0 && return (x, SimpleStats(true, false, [bNorm], T[], "x = 0 is a zero-residual solution"))
-
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
+  bNorm == 0 && return (x, SimpleStats(iter, true, false, [bNorm], T[], "x = 0 is a zero-residual solution"))
 
   rNorms = [bNorm;]
   ε = atol + rtol * bNorm
@@ -233,6 +234,6 @@ function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   tired     && (status = "maximum number of iterations exceeded")
   solved_lq && (status = "solution xᴸ good enough given atol and rtol")
   solved_cg && (status = "solution xᶜ good enough given atol and rtol")
-  stats = SimpleStats(solved_lq || solved_cg, false, rNorms, T[], status)
+  stats = SimpleStats(iter, solved_lq || solved_cg, false, rNorms, T[], status)
   return (x, stats)
 end

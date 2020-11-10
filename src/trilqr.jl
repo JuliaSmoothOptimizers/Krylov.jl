@@ -45,6 +45,10 @@ function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
   # Initial solution x₀ and residual r₀ = b - Ax₀.
   x = kzeros(S, n)      # x₀
   bNorm = @knrm2(m, b)  # rNorm = ‖r₀‖
@@ -52,9 +56,6 @@ function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   # Initial solution y₀ and residual s₀ = c - Aᵀy₀.
   t = kzeros(S, m)      # t₀
   cNorm = @knrm2(n, c)  # sNorm = ‖s₀‖
-
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
 
   rNorms = [bNorm;]
   sNorms = [cNorm;]
@@ -331,6 +332,6 @@ function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
    solved_cg_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᶜ and a dual solution t good enough given atol and rtol")
    solved_lq_tol  && solved_qr_mach && (status = "Found a primal solution xᴸ good enough given atol and rtol and an approximate zero-residual dual solutions t")
    solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
-  stats = AdjointStats(solved_primal, solved_dual, rNorms, sNorms, status)
+  stats = AdjointStats(iter, solved_primal, solved_dual, rNorms, sNorms, status)
   return (x, t, stats)
 end

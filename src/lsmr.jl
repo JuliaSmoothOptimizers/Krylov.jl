@@ -78,6 +78,10 @@ function lsmr(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
   # Tests M == Iₙ and N == Iₘ
   MisI = isa(M, opEye)
   NisI = isa(N, opEye)
@@ -100,7 +104,7 @@ function lsmr(A, b :: AbstractVector{T};
   Mu = copy(b)
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0 && return (x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
+  β₁ == 0 && return (x, SimpleStats(iter, true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
   β = β₁
 
   @kscal!(m, one(T)/β₁, u)
@@ -148,15 +152,12 @@ function lsmr(A, b :: AbstractVector{T};
                      1, β₁, α, β₁, α, 0, 1, Anorm²)
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0 && return (x, SimpleStats(true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
+  α == 0 && return (x, SimpleStats(iter, true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
 
   h = copy(v)
   hbar = kzeros(S, n)
-
-  iter = 0
-  itmax == 0 && (itmax = m + n)
 
   status = "unknown"
   on_boundary = false
@@ -296,6 +297,6 @@ function lsmr(A, b :: AbstractVector{T};
   fwd_err       && (status = "truncated forward error small enough")
   on_boundary   && (status = "on trust-region boundary")
 
-  stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
+  stats = SimpleStats(iter, solved, !zero_resid, rNorms, ArNorms, status)
   return (x, stats)
 end

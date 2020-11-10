@@ -46,13 +46,14 @@ function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   # Initial solution x₀ and residual norm ‖r₀‖.
   x = kzeros(S, n)
   rNorm = @knrm2(n, b)  # rNorm = ‖r₀‖
-  rNorm == 0 && return (x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution"))
-
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
+  rNorm == 0 && return (x, SimpleStats(iter, true, false, [rNorm], T[], "x = 0 is a zero-residual solution"))
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
@@ -61,7 +62,7 @@ function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
-  bᵗc == 0 && return (x, SimpleStats(false, false, [rNorm], T[], "Breakdown bᵀc = 0"))
+  bᵗc == 0 && return (x, SimpleStats(iter, false, false, [rNorm], T[], "Breakdown bᵀc = 0"))
 
   # Set up uorkspace.
   βₖ = √(abs(bᵗc))            # β₁γ₁ = bᵀc
@@ -225,6 +226,6 @@ function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   tired     && (status = "maximum number of iterations exceeded")
   breakdown && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
   solved    && (status = "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+  stats = SimpleStats(iter, solved, false, rNorms, T[], status)
   return (x, stats)
 end

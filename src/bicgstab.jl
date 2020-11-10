@@ -51,6 +51,10 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   # Determine the storage type of b
   S = typeof(b)
 
@@ -67,10 +71,7 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
-  rNorm == 0 && return (x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution"))
-
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
+  rNorm == 0 && return (x, SimpleStats(iter, true, false, [rNorm], T[], "x = 0 is a zero-residual solution"))
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
@@ -78,7 +79,7 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   verbose && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
 
   next_ρ = @kdot(n, r, c)  # ρ₁ = ⟨r₀,r̅₀⟩
-  next_ρ == 0 && return (x, SimpleStats(false, false, [rNorm], T[], "Breakdown bᵀc = 0"))
+  next_ρ == 0 && return (x, SimpleStats(iter, false, false, [rNorm], T[], "Breakdown bᵀc = 0"))
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -121,6 +122,6 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   verbose && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+  stats = SimpleStats(iter, solved, false, rNorms, T[], status)
   return (x, stats)
 end

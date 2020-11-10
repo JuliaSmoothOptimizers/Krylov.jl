@@ -73,18 +73,20 @@ function crmr(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
   x = kzeros(S, n)  # initial estimation x = 0
   r = copy(M * b)   # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
-  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
+  bNorm == 0 && return x, SimpleStats(iter, true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
   rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   λ > 0 && (s = copy(r))
   Aᵀr = Aᵀ * r # - λ * x0 if x0 ≠ 0.
   p  = copy(Aᵀr)
   γ  = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr)
   λ > 0 && (γ += λ * rNorm * rNorm)
-  iter = 0
-  itmax == 0 && (itmax = m + n)
 
   ArNorm = sqrt(γ)
   rNorms = [rNorm;]
@@ -129,6 +131,6 @@ function crmr(A, b :: AbstractVector{T};
   end
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent but least squares/norm solution found" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status)
+  stats = SimpleStats(iter, solved, inconsistent, rNorms, ArNorms, status)
   return (x, stats)
 end

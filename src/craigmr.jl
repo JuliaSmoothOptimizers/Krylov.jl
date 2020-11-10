@@ -69,7 +69,7 @@ function craigmr(A, b :: AbstractVector{T};
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  verbose && @printf("CRAIG-MR: system of %d equations in %d variables\n", m, n)
+  verbose && @printf("CRAIGMR: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
   MisI = isa(M, opEye)
@@ -86,13 +86,17 @@ function craigmr(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
   # Compute y such that AAᵀy = b. Then recover x = Aᵀy.
   x = kzeros(S, n)
   y = kzeros(S, m)
   Mu = copy(b)
   u = M * Mu
   β = sqrt(@kdot(m, u, Mu))
-  β == 0 && return (x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
+  β == 0 && return (x, y, SimpleStats(iter, true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
 
   # Initialize Golub-Kahan process.
   # β₁Mu₁ = b.
@@ -111,7 +115,7 @@ function craigmr(A, b :: AbstractVector{T};
                      1, β, α, β, α, 0, 1, Anorm²)
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0 && return (x, y, SimpleStats(true, false, [β], [zero(T)], "x = 0 is a minimum least-squares solution"))
+  α == 0 && return (x, y, SimpleStats(iter, true, false, [β], [zero(T)], "x = 0 is a minimum least-squares solution"))
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
 
@@ -126,9 +130,6 @@ function craigmr(A, b :: AbstractVector{T};
 
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
-
-  iter = 0
-  itmax == 0 && (itmax = m + n)
 
   wbar = copy(u)
   @kscal!(m, one(T)/α, wbar)
@@ -207,6 +208,6 @@ function craigmr(A, b :: AbstractVector{T};
   @. x = N⁻¹Aᵀy
 
   status = tired ? "maximum number of iterations exceeded" : (solved ? "found approximate minimum-norm solution" : "found approximate minimum least-squares solution")
-  stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status)
+  stats = SimpleStats(iter, solved, inconsistent, rNorms, ArNorms, status)
   return (x, y, stats)
 end

@@ -76,12 +76,13 @@ function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
   # Initial solutions x₀ and y₀.
   xₖ = kzeros(S, m)
   yₖ = kzeros(S, n)
-
-  iter = 0
-  itmax == 0 && (itmax = m+n)
   
   # Initialize preconditioned orthogonal tridiagonalization process.
   M⁻¹vₖ₋₁ = kzeros(S, m)  # v₀ = 0
@@ -395,6 +396,6 @@ function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   end
   verbose && @printf("\n")
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+  stats = SimpleStats(iter, solved, false, rNorms, T[], status)
   return (xₖ, yₖ, stats)
 end

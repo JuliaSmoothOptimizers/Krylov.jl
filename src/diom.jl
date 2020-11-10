@@ -45,16 +45,17 @@ function diom(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   # Initial solution x₀ and residual r₀.
   x = kzeros(S, n)  # x₀
   x_old = copy(x)
   r₀ = M * b      # M⁻¹(b - Ax₀)
   # Compute β.
   rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
-  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
-
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
+  rNorm == 0 && return x, SimpleStats(iter, true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
@@ -189,6 +190,6 @@ function diom(A, b :: AbstractVector{T};
   verbose && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+  stats = SimpleStats(iter, solved, false, rNorms, T[], status)
   return (x, stats)
 end

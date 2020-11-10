@@ -35,6 +35,10 @@ function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   # Compute the adjoint of A
   Aᵀ = A'
 
@@ -44,10 +48,7 @@ function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   # Initial solution x₀ and residual norm ‖r₀‖.
   x = kzeros(S, n)
   bNorm = @knrm2(n, b)  # ‖r₀‖
-  bNorm == 0 && return (x, SimpleStats(true, false, [bNorm], T[], "x = 0 is a zero-residual solution"))
-
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
+  bNorm == 0 && return (x, SimpleStats(iter, true, false, [bNorm], T[], "x = 0 is a zero-residual solution"))
 
   rNorms = [bNorm;]
   ε = atol + rtol * bNorm
@@ -56,7 +57,7 @@ function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
-  bᵗc == 0 && return (x, SimpleStats(false, false, [bNorm], T[], "Breakdown bᵀc = 0"))
+  bᵗc == 0 && return (x, SimpleStats(iter, false, false, [bNorm], T[], "Breakdown bᵀc = 0"))
 
   # Set up workspace.
   βₖ = √(abs(bᵗc))           # β₁γ₁ = bᵀc
@@ -234,6 +235,6 @@ function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   breakdown && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
   solved_lq && (status = "solution xᴸ good enough given atol and rtol")
   solved_cg && (status = "solution xᶜ good enough given atol and rtol")
-  stats = SimpleStats(solved_lq || solved_cg, false, rNorms, T[], status)
+  stats = SimpleStats(iter, solved_lq || solved_cg, false, rNorms, T[], status)
   return (x, stats)
 end

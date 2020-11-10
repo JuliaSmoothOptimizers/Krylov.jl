@@ -63,6 +63,10 @@ function minres(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   ϵM = eps(T)
   x = kzeros(S, n)
   ctol = conlim > 0 ? 1 / conlim : zero(T)
@@ -73,7 +77,7 @@ function minres(A, b :: AbstractVector{T};
   v = M * r1
   β₁ = @kdot(m, r1, v)
   β₁ < 0 && error("Preconditioner is not positive definite")
-  β₁ == 0 && return (x, SimpleStats(true, true, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
+  β₁ == 0 && return (x, SimpleStats(iter, true, true, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
   β = β₁
 
@@ -108,9 +112,6 @@ function minres(A, b :: AbstractVector{T};
                      "Aprod", "‖r‖", "‖Aᵀr‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "test2")
   verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
                      0, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
-
-  iter = 0
-  itmax == 0 && (itmax = n)
 
   tol = atol + rtol * β₁
   status = "unknown"
@@ -214,7 +215,7 @@ function minres(A, b :: AbstractVector{T};
 
     if iter == 1
       # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-      β / β₁ ≤ 10 * ϵM && return (x, SimpleStats(true, true, [β₁], [zero(T)], "x is a minimum least-squares solution"))
+      β / β₁ ≤ 10 * ϵM && return (x, SimpleStats(iter, true, true, [β₁], [zero(T)], "x is a minimum least-squares solution"))
     end
 
     # Stopping conditions that do not depend on user input.
@@ -243,6 +244,6 @@ function minres(A, b :: AbstractVector{T};
   zero_resid    && (status = "found approximate zero-residual solution")
   fwd_err       && (status = "truncated forward error small enough")
 
-  stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
+  stats = SimpleStats(iter, solved, !zero_resid, rNorms, ArNorms, status)
   return (x, stats)
 end

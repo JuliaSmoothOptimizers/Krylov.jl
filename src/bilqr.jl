@@ -39,6 +39,10 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   # Compute the adjoint of A
   Aᵀ = A'
 
@@ -53,9 +57,6 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   t = kzeros(S, n)      # t₀
   cNorm = @knrm2(n, c)  # sNorm = ‖s₀‖
 
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
-
   rNorms = [bNorm;]
   sNorms = [cNorm;]
   εL = atol + rtol * bNorm
@@ -65,7 +66,7 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
-  bᵗc == 0 && return (x, t, AdjointStats(false, false, [bNorm], [cNorm], "Breakdown bᵀc = 0"))
+  bᵗc == 0 && return (x, t, AdjointStats(iter, false, false, [bNorm], [cNorm], "Breakdown bᵀc = 0"))
 
   # Set up workspace.
   βₖ = √(abs(bᵗc))           # β₁γ₁ = bᵀc
@@ -342,6 +343,6 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
    solved_cg_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᶜ and a dual solution t good enough given atol and rtol")
    solved_lq_tol  && solved_qr_mach && (status = "Found a primal solution xᴸ good enough given atol and rtol and an approximate zero-residual dual solutions t")
    solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
-  stats = AdjointStats(solved_primal, solved_dual, rNorms, sNorms, status)
+  stats = AdjointStats(iter, solved_primal, solved_dual, rNorms, sNorms, status)
   return (x, t, stats)
 end

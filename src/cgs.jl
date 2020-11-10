@@ -52,20 +52,21 @@ function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   # Initial solution x₀ and residual r₀.
   x = kzeros(S, n)  # x₀
   r = copy(M * b)   # r₀
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
-  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
+  rNorm == 0 && return x, SimpleStats(iter, true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
 
   # Compute ρ₀ = ⟨ r₀,̅r₀ ⟩
   ρ = @kdot(n, r, c)
-  ρ == 0 && return x, SimpleStats(false, false, [rNorm], T[], "Breakdown bᵀc = 0")
-
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
+  ρ == 0 && return x, SimpleStats(iter, false, false, [rNorm], T[], "Breakdown bᵀc = 0")
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
@@ -122,6 +123,6 @@ function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   verbose && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+  stats = SimpleStats(iter, solved, false, rNorms, T[], status)
   return (x, stats)
 end

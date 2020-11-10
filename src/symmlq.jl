@@ -48,6 +48,10 @@ function symmlq(A, b :: AbstractVector{T};
   eltype(A) == T || error("eltype(A) ≠ $T")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = 2 * n)
+
   ϵM = eps(T)
   x = kzeros(S, n)
   ctol = conlim > 0 ? 1 / conlim : zero(T)
@@ -57,7 +61,7 @@ function symmlq(A, b :: AbstractVector{T};
   Mvold = copy(b)
   vold = M * Mvold
   β₁ = @kdot(m, vold, Mvold)
-  β₁ == 0 && return (x, SimpleStats(true, true, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
+  β₁ == 0 && return (x, SimpleStats(iter, true, true, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
   β₁ = sqrt(β₁)
   β = β₁
   @kscal!(m, one(T) / β, vold)
@@ -136,9 +140,6 @@ function symmlq(A, b :: AbstractVector{T};
                      "Aprod", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1")
   verbose && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
                      0, rNorm, β, cold, sold, ANorm, Acond)
-
-  iter = 0
-  itmax == 0 && (itmax = 2 * n)
 
   tol = atol + rtol * β₁
   status = "unknown"
@@ -304,6 +305,6 @@ function symmlq(A, b :: AbstractVector{T};
   solved        && (status = "found approximate solution")
   solved_lq     && (status = "solution xᴸ good enough given atol and rtol")
   solved_cg     && (status = "solution xᶜ good enough given atol and rtol")
-  stats = SymmlqStats(solved, rNorms, rcgNorms, errors, errorscg, ANorm, Acond, status)
+  stats = SymmlqStats(iter, solved, rNorms, rcgNorms, errors, errorscg, ANorm, Acond, status)
   return (x, stats)
 end

@@ -58,16 +58,18 @@ function cgls(A, b :: AbstractVector{T};
   # Determine the storage type of b
   S = typeof(b)
 
+  # Number of iterations
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
   x = kzeros(S, n)
   r = copy(b)
   bNorm = @knrm2(m, r)   # Marginally faster than norm(b)
-  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
+  bNorm == 0 && return x, SimpleStats(iter, true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
   Mr = M * r
   s = Aᵀ * Mr
   p = copy(s)
   γ = @kdot(n, s, s)  # Faster than γ = dot(s, s)
-  iter = 0
-  itmax == 0 && (itmax = m + n)
 
   rNorm  = bNorm
   ArNorm = sqrt(γ)
@@ -116,6 +118,6 @@ function cgls(A, b :: AbstractVector{T};
   end
 
   status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, ArNorms, status)
+  stats = SimpleStats(iter, solved, false, rNorms, ArNorms, status)
   return (x, stats)
 end
