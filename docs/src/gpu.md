@@ -37,20 +37,22 @@ x, stats = lsmr(A_gpu, b_gpu)
 
 Optimized operator-vector products that exploit GPU features can be also used by means of linear operators.
 
-Preconditioners, especially incomplete Cholesky or Incomplete LU factorizations with triangular solves,
-can be performed directly on GPU with efficient operators that take advantage of CUSPARSE routines.
+Preconditioners, especially incomplete Cholesky or Incomplete LU factorizations that involve triangular solves,
+can be applied directly on GPU thanks to efficient operators that take advantage of CUSPARSE routines.
+
+### Example with a symmetric positive-definite system
 
 ```julia
 using CUDA, Krylov
 using CUDA.CUSPARSE, SparseArrays
 
-# LLᵀ ≈ A
+# LLᵀ ≈ A for CuSparseMatrixCSC matrices
 P = ic02(A_gpu, 'O')
 
 # Solve Py = x
 function ldiv!(y, P, x)
   y .= x
-  sv2!('T', 'L', 1.0, P, y, 'O')
+  sv2!('T', 'U', 1.0, P, y, 'O')
   sv2!('N', 'U', 1.0, P, y, 'O')
   return y
 end
@@ -63,11 +65,13 @@ opM = LinearOperator(T, n, n, true, true, x -> ldiv!(y, P, x))
 (x, stats) = cg(A_gpu, b_gpu, M=opM)
 ```
 
+### Example with a general square system
+
 ```julia
 using CUDA, Krylov
 using CUDA.CUSPARSE, SparseArrays
 
-# LU ≈ A
+# LU ≈ A for CuSparseMatrixCSC matrices
 P = ilu02(A_gpu, 'O')
 
 # Solve Py = x
