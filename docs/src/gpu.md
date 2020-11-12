@@ -84,7 +84,7 @@ end
 
 # Operator that model P⁻¹
 y = similar(b_gpu); n = length(b_gpu); T = eltype(b_gpu)
-opN = LinearOperator(T, n, n, false, false, x -> ldiv!(y, P, x))
+opM = LinearOperator(T, n, n, false, false, x -> ldiv!(y, P, x))
 
 # Solve an unsymmetric system with an incomplete LU preconditioner on GPU
 (x, stats) = bicgstab(A_gpu, b_gpu, M=opM)
