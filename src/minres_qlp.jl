@@ -17,7 +17,9 @@
 export minres_qlp
 
 """
-    (x, stats) = minrres_qlp(A, b; M, atol, rtol, λ, itmax, verbose)
+    (x, stats) = minres_qlp(A, b::AbstractVector{T};
+                            M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), λ::T=zero(T),
+                            itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
 
 MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
 solution on singular inconsistent systems (A + λI)x = b, where λ is a shift parameter.

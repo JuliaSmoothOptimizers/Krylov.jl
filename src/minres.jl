@@ -23,7 +23,11 @@ export minres
 
 
 """
-    (x, stats) = minres(A, b; M, λ, atol, rtol, etol, window, itmax, conlim, verbose)
+    (x, stats) = minres(A, b::AbstractVector{T};
+                        M=opEye(), λ::T=zero(T), atol::T=√eps(T)/100,
+                        rtol::T=√eps(T)/100, etol::T=√eps(T),
+                        window::Int=5, itmax::Int=0, conlim::T=1/√eps(T),
+                        verbose::Bool=false) where T <: AbstractFloat
 
 Solve the shifted linear least-squares problem
 

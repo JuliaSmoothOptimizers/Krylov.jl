@@ -29,7 +29,9 @@ export crmr
 
 
 """
-    (x, stats) = crmr(A, b; M, λ, atol, rtol, itmax, verbose)
+    (x, stats) = crmr(A, b::AbstractVector{T};
+                      M=opEye(), λ::T=zero(T), atol::T=√eps(T),
+                      rtol::T=√eps(T), itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system
 

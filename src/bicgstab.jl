@@ -16,7 +16,9 @@
 export bicgstab
 
 """
-    (x, stats) = bicgstab(A, b; c, M, N, atol, rtol, itmax, verbose)
+    (x, stats) = bicgstab(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
+                          M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
+                          itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
 
 Solve the square linear system Ax = b using the BICGSTAB method.
 
@@ -34,8 +36,8 @@ Additional details can be displayed if the `verbose` mode is enabled.
 This implementation allows a left preconditioner `M` and a right preconditioner `N`.
 """
 function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
-                   M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
-                   itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+                  M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
+                  itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -89,7 +91,7 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   while !(solved || tired || breakdown)
     # Update iteration index and ρ.
     iter = iter + 1
-    ρ = next_ρ 
+    ρ = next_ρ
 
     y = N * p                            # yₖ = N⁻¹pₖ
     q = A * y                            # qₖ = Ayₖ

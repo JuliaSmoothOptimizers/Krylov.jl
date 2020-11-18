@@ -14,7 +14,9 @@
 export diom
 
 """
-    (x, stats) = diom(A, b; M, N, atol, rtol, itmax, memory, pivoting, verbose)
+    (x, stats) = diom(A, b::AbstractVector{T};
+                      M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                      memory::Int=20, pivoting::Bool=false, verbose::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system Ax = b using direct incomplete orthogonalization method.
 

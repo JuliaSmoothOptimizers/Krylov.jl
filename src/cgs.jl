@@ -14,7 +14,9 @@
 export cgs
 
 """
-    (x, stats) = cgs(A, b; c, M, N, atol, rtol, itmax, verbose)
+    (x, stats) = cgs(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
+                     M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
+                     itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system Ax = b using conjugate gradient squared algorithm.
 

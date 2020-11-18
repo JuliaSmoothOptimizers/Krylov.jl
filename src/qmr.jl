@@ -21,7 +21,9 @@
 export qmr
 
 """
-    (x, stats) = qmr(A, b; c, atol, rtol, itmax, verbose)
+    (x, stats) = qmr(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
+                     atol::T=√eps(T), rtol::T=√eps(T),
+                     itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
 
 Solve the square linear system Ax = b using the QMR method.
 

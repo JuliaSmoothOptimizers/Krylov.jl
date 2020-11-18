@@ -12,7 +12,10 @@
 export tricg
 
 """
-    (x, y, stats) = tricg(A, b, c; M, N, atol, rtol, spd, snd, flip, τ, ν, itmax, verbose)
+    (x, y, stats) = tricg(A, b::AbstractVector{T}, c::AbstractVector{T};
+                          M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
+                          spd::Bool=false, snd::Bool=false, flip::Bool=false,
+                          τ::T=one(T), ν::T=-one(T), itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
 
 TriCG solves the symmetric linear system
 
@@ -78,7 +81,7 @@ function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
   iter = 0
   itmax == 0 && (itmax = m+n)
-  
+
   # Initialize preconditioned orthogonal tridiagonalization process.
   M⁻¹vₖ₋₁ = kzeros(S, m)  # v₀ = 0
   N⁻¹uₖ₋₁ = kzeros(S, n)  # u₀ = 0

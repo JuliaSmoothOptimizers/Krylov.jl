@@ -13,7 +13,9 @@
 export trilqr
 
 """
-    (x, t, stats) = trilqr(A, b, c; atol, rtol, transfer_to_usymcg, itmax, verbose)
+    (x, t, stats) = trilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
+                           atol::T=√eps(T), rtol::T=√eps(T), transfer_to_usymcg::Bool=true,
+                           itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
 
 Combine USYMLQ and USYMQR to solve adjoint systems.
 

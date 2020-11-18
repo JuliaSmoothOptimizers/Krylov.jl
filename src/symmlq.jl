@@ -13,7 +13,11 @@ export symmlq
 
 
 """
-    (x, stats) = symmlq(A, b; M, λ, transfer_to_cg, λest, atol, rtol, etol, window, itmax, conlim, verbose)
+    (x, stats) = symmlq(A, b::AbstractVector{T};
+                        M=opEye(), λ::T=zero(T), transfer_to_cg::Bool=true,
+                        λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
+                        etol::T=√eps(T), window::Int=0, itmax::Int=0,
+                        conlim::T=1/√eps(T), verbose::Bool=false) where T <: AbstractFloat
 
 Solve the shifted linear system
 

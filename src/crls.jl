@@ -22,7 +22,9 @@ export crls
 
 
 """
-    (x, stats) = crls(A, b; M, λ, atol, rtol, radius, itmax, verbose)
+    (x, stats) = crls(A, b::AbstractVector{T};
+                      M=opEye(), λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
+                      radius::T=zero(T), itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
 
 Solve the linear least-squares problem
 

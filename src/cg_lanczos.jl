@@ -13,7 +13,9 @@ export cg_lanczos, cg_lanczos_shift_seq
 
 
 """
-    (x, stats) = cg_lanczos(A, b; M, atol, rtol, itmax, check_curvature, verbose)
+    (x, stats) = cg_lanczos(A, b::AbstractVector{T};
+                            M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                            check_curvature::Bool=false, verbose::Bool=false) where T <: AbstractFloat
 
 The Lanczos version of the conjugate gradient method to solve the
 symmetric linear system
@@ -125,7 +127,9 @@ end
 
 
 """
-    (x, stats) = cg_lanczos_shift_seq(A, b, shifts; M, atol, rtol, itmax, check_curvature, verbose)
+    (x, stats) = cg_lanczos_shift_seq(A, b::AbstractVector{T}, shifts::AbstractVector{T};
+                                      M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                                      check_curvature::Bool=false, verbose::Bool=false) where T <: AbstractFloat
 
 The Lanczos version of the conjugate gradient method to solve a family
 of shifted systems

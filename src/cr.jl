@@ -8,7 +8,9 @@
 export cr
 
 """
-    (x, stats) = cr(A, b; M, atol, rtol, γ, itmax, radius, verbose, linesearch)
+    (x, stats) = cr(A, b::AbstractVector{T};
+                    M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T), itmax::Int=0,
+                    radius::T=zero(T), verbose::Bool=false, linesearch::Bool=false) where T <: AbstractFloat
 
 A truncated version of Stiefel’s Conjugate Residual method to solve the symmetric linear system Ax=b.
 The matrix A must be positive semi-definite.
@@ -18,6 +20,10 @@ assumed to be symmetric and positive definite.
 M also indicates the weighted norm in which residuals are measured.
 
 In a linesearch context, 'linesearch' must be set to 'true'.
+
+If `itmax=0`, the default number of iterations is set to `2 * n`,
+with `n = length(b)`.
+
 """
 function cr(A, b :: AbstractVector{T};
             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
