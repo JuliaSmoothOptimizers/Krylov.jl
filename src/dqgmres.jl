@@ -14,7 +14,9 @@
 export dqgmres
 
 """
-    (x, stats) = dqgmres(A, b; M, N, atol, rtol, itmax, memory, verbose)
+    (x, stats) = dqgmres(A, b::AbstractVector{T};
+                         M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
+                         itmax::Int=0, memory::Int=20, verbose::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system Ax = b using DQGMRES method.
 

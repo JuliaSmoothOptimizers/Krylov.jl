@@ -13,7 +13,9 @@
 export bilq
 
 """
-    (x, stats) = bilq(A, b; c, atol, rtol, transfer_to_bicg, itmax, verbose)
+    (x, stats) = bilq(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
+                      atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
+                      itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
 
 Solve the square linear system Ax = b using the BiLQ method.
 

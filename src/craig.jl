@@ -34,7 +34,10 @@ export craig
 
 
 """
-    (x, y, stats) = craig(A, b; M, N, sqd, λ, atol, btol, rtol, conlim, itmax, verbose, transfer_to_lsqr)
+    (x, y, stats) = craig(A, b::AbstractVector{T};
+                          M=opEye(), N=opEye(), sqd::Bool=false, λ::T=zero(T), atol::T=√eps(T),
+                          btol::T=√eps(T), rtol::T=√eps(T), conlim::T=1/√eps(T), itmax::Int=0,
+                          verbose::Bool=false, transfer_to_lsqr::Bool=false) where T <: AbstractFloat
 
 Find the least-norm solution of the consistent linear system
 

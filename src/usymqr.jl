@@ -20,7 +20,9 @@
 export usymqr
 
 """
-    (x, stats) = usymqr(A, b, c; atol, rtol, itmax, verbose)
+    (x, stats) = usymqr(A, b::AbstractVector{T}, c::AbstractVector{T};
+                        atol::T=√eps(T), rtol::T=√eps(T),
+                        itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
 
 Solve the linear system Ax = b using the USYMQR method.
 

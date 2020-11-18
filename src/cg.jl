@@ -12,7 +12,10 @@ export cg
 
 
 """
-    (x, stats) = cg(A, b; M, atol, rtol, itmax, radius, linesearch, verbose)
+    (x, stats) = cg(A, b::AbstractVector{T};
+                    M=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
+                    itmax::Int=0, radius::T=zero(T), linesearch::Bool=false,
+                    verbose::Bool=false) where T <: AbstractFloat
 
 The conjugate gradient method to solve the symmetric linear system Ax=b.
 
@@ -21,6 +24,10 @@ The method does _not_ abort if A is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 M also indicates the weighted norm in which residuals are measured.
+
+If `itmax=0`, the default number of iterations is set to `2 * n`,
+with `n = length(b)`.
+
 """
 function cg(A, b :: AbstractVector{T};
             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),

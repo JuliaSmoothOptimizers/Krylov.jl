@@ -13,7 +13,9 @@
 export bilqr
 
 """
-    (x, t, stats) = bilqr(A, b, c; atol, rtol, transfer_to_bicg, itmax, verbose)
+    (x, t, stats) = bilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
+                          atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
+                          itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
 
 Combine BiLQ and QMR to solve adjoint systems.
 

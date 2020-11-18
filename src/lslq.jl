@@ -5,7 +5,12 @@ export lslq
 
 
 """
-    (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b; M, N, sqd, λ, atol, btol, etol, window, utol, itmax, σ, conlim, verbose)
+    (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) =
+        lslq(A, b::AbstractVector{T};
+             M=opEye(), N=opEye(), sqd::Bool=false, λ::T=zero(T),
+             atol::T=√eps(T), btol::T=√eps(T), etol::T=√eps(T),
+             window::Int=5, utol::T=√eps(T), itmax::Int=0,
+             σ::T=zero(T), conlim::T=1/√eps(T), verbose::Bool=false) where T <: AbstractFloat
 
 Solve the regularized linear least-squares problem
 
