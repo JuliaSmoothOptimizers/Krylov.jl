@@ -57,7 +57,7 @@ vN = similar(c)
 opM⁻¹ = LinearOperator(Float64, size(M,1), size(M,2), true, true, v -> ldiv!(vM, ldlt_M, v))
 opN⁻¹ = LinearOperator(Float64, size(N,1), size(N,2), true, true, v -> ldiv!(vN, ldlt_N, v))
 opH⁻¹ = BlockDiagonalOperator(opM⁻¹, opN⁻¹)
-(x, y, stats) = trimr(A, b, c, M=opM⁻¹, N=opN⁻¹, verbose=true)
+(x, y, stats) = trimr(A, b, c, M=opM⁻¹, N=opN⁻¹, verbose=1)
 K = [M A; A' -N]
 B = [b; c]
 r = B - K * [x; y]
