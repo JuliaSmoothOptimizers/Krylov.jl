@@ -31,7 +31,7 @@ export craigmr
 """
     (x, y, stats) = craigmr(A, b::AbstractVector{T};
                             M=opEye(), N=opEye(), λ::T=zero(T), atol::T=√eps(T),
-                            rtol::T=√eps(T), itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                            rtol::T=√eps(T), itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 Solve the consistent linear system
 
@@ -67,11 +67,11 @@ returned.
 """
 function craigmr(A, b :: AbstractVector{T};
                  M=opEye(), N=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
-                 rtol :: T=√eps(T), itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+                 rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  verbose && @printf("CRAIG-MR: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf("CRAIGMR: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
   MisI = isa(M, opEye)
@@ -107,10 +107,11 @@ function craigmr(A, b :: AbstractVector{T};
   α = sqrt(@kdot(n, v, Nv))
   Anorm² = α * α
 
-  verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n",
-                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
-  verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
-                     1, β, α, β, α, 0, 1, Anorm²)
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n", "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", 1, β, α, β, α, 0, 1, Anorm²)
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   α == 0 && return (x, y, SimpleStats(true, false, [β], [zero(T)], "x = 0 is a minimum least-squares solution"))
@@ -128,9 +129,6 @@ function craigmr(A, b :: AbstractVector{T};
 
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
-
-  iter = 0
-  itmax == 0 && (itmax = m + n)
 
   wbar = copy(u)
   @kscal!(m, one(T)/α, wbar)
@@ -188,8 +186,7 @@ function craigmr(A, b :: AbstractVector{T};
     ArNorm = α * β * abs(ζ/ρ)
     push!(ArNorms, ArNorm)
 
-    verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
-                       1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
+    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", 1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
 
     if α ≠ 0
       @kscal!(n, one(T)/α, v)
@@ -203,6 +200,7 @@ function craigmr(A, b :: AbstractVector{T};
     inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
     tired  = iter ≥ itmax
   end
+  (verbose > 0) && @printf("\n")
 
   Aᵀy = Aᵀ * y
   N⁻¹Aᵀy = N * Aᵀy

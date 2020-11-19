@@ -16,7 +16,7 @@ export dqgmres
 """
     (x, stats) = dqgmres(A, b::AbstractVector{T};
                          M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
-                         itmax::Int=0, memory::Int=20, verbose::Bool=false) where T <: AbstractFloat
+                         itmax::Int=0, memory::Int=20, verbose::Int=0) where T <: AbstractFloat
 
 Solve the consistent linear system Ax = b using DQGMRES method.
 
@@ -30,12 +30,12 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 """
 function dqgmres(A, b :: AbstractVector{T};
                  M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
-                 itmax :: Int=0, memory :: Int=20, verbose :: Bool=false) where T <: AbstractFloat
+                 itmax :: Int=0, memory :: Int=20, verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  verbose && @printf("DQGMRES: system of size %d\n", n)
+  (verbose > 0) && @printf("DQGMRES: system of size %d\n", n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -57,7 +57,8 @@ function dqgmres(A, b :: AbstractVector{T};
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
-  verbose && @printf("%5d  %7.1e\n", iter, rNorm)
+  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
+  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Set up workspace.
   mem = min(memory, itmax) # Memory.
@@ -160,9 +161,9 @@ function dqgmres(A, b :: AbstractVector{T};
     # Update stopping criterion.
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
-    verbose && @printf("%5d  %7.1e\n", iter, rNorm)
+    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
   stats = SimpleStats(solved, false, rNorms, T[], status)

@@ -31,7 +31,7 @@ export crmr
 """
     (x, stats) = crmr(A, b::AbstractVector{T};
                       M=opEye(), λ::T=zero(T), atol::T=√eps(T),
-                      rtol::T=√eps(T), itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                      rtol::T=√eps(T), itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 Solve the consistent linear system
 
@@ -59,11 +59,11 @@ A preconditioner M may be provided in the form of a linear operator.
 """
 function crmr(A, b :: AbstractVector{T};
               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
-              rtol :: T=√eps(T), itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+              rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  verbose && @printf("CRMR: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf("CRMR: system of %d equations in %d variables\n", m, n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -93,8 +93,8 @@ function crmr(A, b :: AbstractVector{T};
   ArNorms = [ArNorm;]
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
-  verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
-  verbose && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm)
+  (verbose > 0) && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
+  display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm)
 
   status = "unknown"
   solved = rNorm ≤ ɛ_c
@@ -124,11 +124,12 @@ function crmr(A, b :: AbstractVector{T};
     push!(rNorms, rNorm)
     push!(ArNorms, ArNorm)
     iter = iter + 1
-    verbose && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm)
+    display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm)
     solved = rNorm ≤ ɛ_c
     inconsistent = (rNorm > 100 * ɛ_c) && (ArNorm ≤ ɛ_i)
     tired = iter ≥ itmax
   end
+  (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent but least squares/norm solution found" : "solution good enough given atol and rtol")
   stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status)

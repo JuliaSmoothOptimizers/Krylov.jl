@@ -27,7 +27,7 @@ export minres
                         M=opEye(), λ::T=zero(T), atol::T=√eps(T)/100,
                         rtol::T=√eps(T)/100, etol::T=√eps(T),
                         window::Int=5, itmax::Int=0, conlim::T=1/√eps(T),
-                        verbose::Bool=false) where T <: AbstractFloat
+                        verbose::Int=0) where T <: AbstractFloat
 
 Solve the shifted linear least-squares problem
 
@@ -53,12 +53,12 @@ function minres(A, b :: AbstractVector{T};
                 M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
                 rtol :: T=√eps(T)/100, etol :: T=√eps(T),
                 window :: Int=5, itmax :: Int=0, conlim :: T=1/√eps(T),
-                verbose :: Bool=false) where T <: AbstractFloat
+                verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
   size(b, 1) == m || error("Inconsistent problem size")
-  verbose && @printf("MINRES: system of size %d\n", n)
+  (verbose > 0) && @printf("MINRES: system of size %d\n", n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -108,13 +108,11 @@ function minres(A, b :: AbstractVector{T};
   err_lbnd = zero(T)
   err_vec = zeros(T, window)
 
-  verbose && @printf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %7s\n",
-                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "test2")
-  verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
-                     0, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
-
   iter = 0
-  itmax == 0 && (itmax = n)
+  itmax == 0 && (itmax = 2*n)
+
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %7s\n", "Aprod", "‖r‖", "‖Aᵀr‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "test2")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", 0, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
 
   tol = atol + rtol * β₁
   status = "unknown"
@@ -213,8 +211,7 @@ function minres(A, b :: AbstractVector{T};
 
     Acond = γmax / γmin
 
-    verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e\n",
-                       iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, test1, test2)
+    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, test1, test2)
 
     if iter == 1
       # Aᵀb = 0 so x = 0 is a minimum least-squares solution
@@ -239,6 +236,7 @@ function minres(A, b :: AbstractVector{T};
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | zero_resid | fwd_err
   end
+  (verbose > 0) && @printf("\n")
 
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")

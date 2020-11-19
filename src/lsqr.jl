@@ -32,7 +32,7 @@ export lsqr
                       atol::T=zero(T), rtol::T=zero(T),
                       etol::T=√eps(T), window::Int=5,
                       itmax::Int=0, conlim::T=1/√eps(T),
-                      radius::T=zero(T), verbose::Bool=false) where T <: AbstractFloat
+                      radius::T=zero(T), verbose::Int=0) where T <: AbstractFloat
 
 Solve the regularized linear least-squares problem
 
@@ -72,11 +72,11 @@ function lsqr(A, b :: AbstractVector{T};
               atol :: T=zero(T), rtol :: T=zero(T),
               etol :: T=√eps(T), window :: Int=5,
               itmax :: Int=0, conlim :: T=1/√eps(T),
-              radius :: T=zero(T), verbose :: Bool=false) where T <: AbstractFloat
+              radius :: T=zero(T), verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  verbose && @printf("LSQR: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf("LSQR: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₙ and N == Iₘ
   MisI = isa(M, opEye)
@@ -127,10 +127,11 @@ function lsqr(A, b :: AbstractVector{T};
   err_lbnd = zero(T)
   err_vec = zeros(T, window)
 
-  verbose && @printf("%5s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %7s\n",
-                     "Aprod", "α", "β", "‖r‖", "‖Aᵀr‖", "compat", "backwrd", "‖A‖", "κ(A)")
-  verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n",
-                     1, β₁, α, β₁, α, 0, 1, Anorm, Acond)
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %7s\n", "Aprod", "α", "β", "‖r‖", "‖Aᵀr‖", "compat", "backwrd", "‖A‖", "κ(A)")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", 1, β₁, α, β₁, α, 0, 1, Anorm, Acond)
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   α == 0 && return (x, SimpleStats(true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
@@ -149,9 +150,6 @@ function lsqr(A, b :: AbstractVector{T};
   rNorms = [r2Norm]
   ArNorm = ArNorm0 = α * β
   ArNorms = [ArNorm]
-
-  iter = 0
-  itmax == 0 && (itmax = m + n)
 
   status = "unknown"
   on_boundary = false
@@ -268,8 +266,7 @@ function lsqr(A, b :: AbstractVector{T};
     t1    = test1 / (one(T) + Anorm * xNorm / β₁)
     rNormtol = btol + axtol * Anorm * xNorm / β₁
 
-    verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n",
-                       1 + 2 * iter, α, β, rNorm, ArNorm, test1, test2, Anorm, Acond)
+    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", 1 + 2 * iter, α, β, rNorm, ArNorm, test1, test2, Anorm, Acond)
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
@@ -288,6 +285,7 @@ function lsqr(A, b :: AbstractVector{T};
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | solved_opt | zero_resid_mach | zero_resid_lim | fwd_err | on_boundary
   end
+  (verbose > 0) && @printf("\n")
 
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")

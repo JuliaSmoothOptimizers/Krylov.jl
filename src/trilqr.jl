@@ -15,7 +15,7 @@ export trilqr
 """
     (x, t, stats) = trilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
                            atol::T=√eps(T), rtol::T=√eps(T), transfer_to_usymcg::Bool=true,
-                           itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                           itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 Combine USYMLQ and USYMQR to solve adjoint systems.
 
@@ -30,13 +30,13 @@ USYMCG point, when it exists. The transfer is based on the residual norm.
 """
 function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
-                itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+                itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  verbose && @printf("TRILQR: primal system of %d equations in %d variables\n", m, n)
-  verbose && @printf("TRILQR: dual system of %d equations in %d variables\n", n, m)
+  (verbose > 0) && @printf("TRILQR: primal system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf("TRILQR: dual system of %d equations in %d variables\n", n, m)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -56,15 +56,15 @@ function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   cNorm = @knrm2(n, c)  # sNorm = ‖s₀‖
 
   iter = 0
-  itmax == 0 && (itmax = 2*n)
+  itmax == 0 && (itmax = m+n)
 
   rNorms = [bNorm;]
   sNorms = [cNorm;]
   εL = atol + rtol * bNorm
   εQ = atol + rtol * cNorm
   ξ = zero(T)
-  verbose && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
-  verbose && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
+  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
   # Set up workspace.
   βₖ = @knrm2(m, b)          # β₁ = ‖v₁‖
@@ -306,11 +306,11 @@ function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
     tired = iter ≥ itmax
 
-    verbose &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "", sNorm)
-    verbose && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
-    verbose && !solved_primal && !solved_dual && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
+    display(iter, verbose) &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "", sNorm)
+    display(iter, verbose) && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
+    display(iter, verbose) && !solved_primal && !solved_dual && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
 
   # Compute USYMCG point
   # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ

@@ -32,7 +32,7 @@ export cgne
 """
     (x, stats) = cgne(A, b::AbstractVector{T};
                       M=opEye(), λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                      itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 Solve the consistent linear system
 
@@ -60,11 +60,11 @@ A preconditioner M may be provided in the form of a linear operator.
 """
 function cgne(A, b :: AbstractVector{T};
               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-              itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+              itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  verbose && @printf("CGNE: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf("CGNE: system of %d equations in %d variables\n", m, n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -102,8 +102,8 @@ function cgne(A, b :: AbstractVector{T};
   rNorms = [rNorm;]
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * pNorm  # Stopping tolerance for inconsistent systems.
-  verbose && @printf("%5s  %8s\n", "Aprod", "‖r‖")
-  verbose && @printf("%5d  %8.2e\n", 1, rNorm)
+  (verbose > 0) && @printf("%5s  %8s\n", "Aprod", "‖r‖")
+  display(iter, verbose) && @printf("%5d  %8.2e\n", 1, rNorm)
 
   status = "unknown"
   solved = rNorm ≤ ɛ_c
@@ -131,11 +131,12 @@ function cgne(A, b :: AbstractVector{T};
     rNorm = sqrt(γ_next)
     push!(rNorms, rNorm)
     iter = iter + 1
-    verbose && @printf("%5d  %8.2e\n", 1 + 2 * iter, rNorm)
+    display(iter, verbose) && @printf("%5d  %8.2e\n", 1 + 2 * iter, rNorm)
     solved = rNorm ≤ ɛ_c
     inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
     tired = iter ≥ itmax
   end
+  (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent" : "solution good enough given atol and rtol")
   stats = SimpleStats(solved, inconsistent, rNorms, T[], status)

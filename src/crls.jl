@@ -24,7 +24,7 @@ export crls
 """
     (x, stats) = crls(A, b::AbstractVector{T};
                       M=opEye(), λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      radius::T=zero(T), itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                      radius::T=zero(T), itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 Solve the linear least-squares problem
 
@@ -43,11 +43,11 @@ but simpler to implement.
 """
 function crls(A, b :: AbstractVector{T};
               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-              radius :: T=zero(T), itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+              radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  verbose && @printf("CRLS: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf("CRLS: system of %d equations in %d variables\n", m, n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -83,8 +83,8 @@ function crls(A, b :: AbstractVector{T};
   rNorms = [rNorm;]
   ArNorms = [ArNorm;]
   ε = atol + rtol * ArNorm
-  verbose && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
-  verbose && @printf("%5d  %8.2e  %8.2e\n", 3, ArNorm, rNorm)
+  (verbose > 0) && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
+  display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 3, ArNorm, rNorm)
 
   status = "unknown"
   on_boundary = false
@@ -144,10 +144,11 @@ function crls(A, b :: AbstractVector{T};
     push!(rNorms, rNorm)
     push!(ArNorms, ArNorm)
     iter = iter + 1
-    verbose && @printf("%5d  %8.2e  %8.2e\n", 3 + 2 * iter, ArNorm, rNorm)
+    display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 3 + 2 * iter, ArNorm, rNorm)
     solved = (ArNorm ≤ ε) || on_boundary
     tired = iter ≥ itmax
   end
+  (verbose > 0) && @printf("\n")
 
   status = psd ? "zero-curvature encountered" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
   stats = SimpleStats(solved, false, rNorms, ArNorms, status)

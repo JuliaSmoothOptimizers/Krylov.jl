@@ -78,7 +78,7 @@ function test_trimr()
   N⁻¹ = inv(N)
   H⁻¹ = BlockDiagonalOperator(M⁻¹, N⁻¹)
 
-  (x, y, stats) = trimr(A, b, c, M=M⁻¹, N=N⁻¹, verbose=true)
+  (x, y, stats) = trimr(A, b, c, M=M⁻¹, N=N⁻¹, verbose=1)
   K = [M A; A' -N]
   B = [b; c]
   r =  B - K * [x; y]

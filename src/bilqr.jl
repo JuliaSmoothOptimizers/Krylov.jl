@@ -15,7 +15,7 @@ export bilqr
 """
     (x, t, stats) = bilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
                           atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
-                          itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                          itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 Combine BiLQ and QMR to solve adjoint systems.
 
@@ -30,13 +30,13 @@ BiCG point, when it exists. The transfer is based on the residual norm.
 """
 function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
-               itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+               itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   n, m = size(A)
   m == n || error("Systems must be square")
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  verbose && @printf("BILQR: systems of size %d\n", n)
+  (verbose > 0) && @printf("BILQR: systems of size %d\n", n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -62,8 +62,8 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   sNorms = [cNorm;]
   εL = atol + rtol * bNorm
   εQ = atol + rtol * cNorm
-  verbose && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
-  verbose && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
+  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
@@ -316,11 +316,11 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
     tired = iter ≥ itmax
     breakdown = !solved_lq && !solved_cg && (qᵗp == 0)
 
-    verbose &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "", sNorm)
-    verbose && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
-    verbose && !solved_primal && !solved_dual && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
+    display(iter, verbose) &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "", sNorm)
+    display(iter, verbose) && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
+    display(iter, verbose) && !solved_primal && !solved_dual && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
 
   # Compute BICG point
   # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ

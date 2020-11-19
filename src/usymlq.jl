@@ -22,7 +22,7 @@ export usymlq
 """
     (x, stats) = usymlq(A, b::AbstractVector{T}, c::AbstractVector{T};
                         atol::T=√eps(T), rtol::T=√eps(T), transfer_to_usymcg::Bool=true,
-                        itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                        itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 Solve the linear system Ax = b using the USYMLQ method.
 
@@ -38,12 +38,12 @@ when it exists. The transfer is based on the residual norm.
 """
 function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
-                itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+                itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  verbose && @printf("USYMLQ: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf("USYMLQ: system of %d equations in %d variables\n", m, n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -60,12 +60,12 @@ function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   bNorm == 0 && return (x, SimpleStats(true, false, [bNorm], T[], "x = 0 is a zero-residual solution"))
 
   iter = 0
-  itmax == 0 && (itmax = 2*n)
+  itmax == 0 && (itmax = m+n)
 
   rNorms = [bNorm;]
   ε = atol + rtol * bNorm
-  verbose && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  verbose && @printf("%5d  %7.1e\n", iter, bNorm)
+  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
+  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
 
   # Set up workspace.
   βₖ = @knrm2(m, b)          # β₁ = ‖v₁‖
@@ -222,9 +222,9 @@ function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T};
     solved_lq = rNorm_lq ≤ ε
     solved_cg = transfer_to_usymcg && (δbarₖ ≠ 0) && (rNorm_cg ≤ ε)
     tired = iter ≥ itmax
-    verbose && @printf("%5d  %7.1e\n", iter, rNorm_lq)
+    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
 
   # Compute USYMCG point
   # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ

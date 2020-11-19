@@ -44,7 +44,7 @@ function test_cg_lanczos()
 
   # Code coverage.
   (x, stats) = cg_lanczos(Matrix(A), b)
-  (x, stats) = cg_lanczos_shift_seq(Matrix(A), b, Float64.([1:6;]), verbose=true)
+  (x, stats) = cg_lanczos_shift_seq(Matrix(A), b, Float64.([1:6;]), verbose=1)
   show(stats)
 
   # Test b == 0

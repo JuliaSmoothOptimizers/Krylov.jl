@@ -32,7 +32,7 @@ export lsmr
                       atol::T=zero(T), rtol::T=zero(T),
                       etol::T=√eps(T), window::Int=5,
                       itmax::Int=0, conlim::T=1/√eps(T),
-                      radius::T=zero(T), verbose::Bool=false) where T <: AbstractFloat
+                      radius::T=zero(T), verbose::Int=0) where T <: AbstractFloat
 
 Solve the regularized linear least-squares problem
 
@@ -72,11 +72,11 @@ function lsmr(A, b :: AbstractVector{T};
               atol :: T=zero(T), rtol :: T=zero(T),
               etol :: T=√eps(T), window :: Int=5,
               itmax :: Int=0, conlim :: T=1/√eps(T),
-              radius :: T=zero(T), verbose :: Bool=false) where T <: AbstractFloat
+              radius :: T=zero(T), verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  verbose && @printf("LSMR: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf("LSMR: system of %d equations in %d variables\n", m, n)
 
   # Compute the adjoint of A
   Aᵀ = A'
@@ -148,10 +148,11 @@ function lsmr(A, b :: AbstractVector{T};
   err_lbnd = zero(T)
   err_vec = zeros(T, window)
 
-  verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n",
-                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
-  verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
-                     1, β₁, α, β₁, α, 0, 1, Anorm²)
+  iter = 0
+  itmax == 0 && (itmax = m + n)
+
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n", "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", 1, β₁, α, β₁, α, 0, 1, Anorm²)
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   α == 0 && return (x, SimpleStats(true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
@@ -160,9 +161,6 @@ function lsmr(A, b :: AbstractVector{T};
 
   h = copy(v)
   hbar = kzeros(S, n)
-
-  iter = 0
-  itmax == 0 && (itmax = m + n)
 
   status = "unknown"
   on_boundary = false
@@ -273,8 +271,7 @@ function lsmr(A, b :: AbstractVector{T};
     t1    = test1 / (one(T) + Anorm * xNorm / β₁)
     rNormtol  = btol + axtol * Anorm * xNorm / β₁
 
-    verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n",
-                       1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
+    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", 1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
@@ -293,6 +290,7 @@ function lsmr(A, b :: AbstractVector{T};
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | solved_opt | zero_resid_mach | zero_resid_lim | fwd_err | on_boundary
   end
+  (verbose > 0) && @printf("\n")
 
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
