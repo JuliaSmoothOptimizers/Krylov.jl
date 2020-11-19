@@ -38,7 +38,7 @@ function test_bicgstab()
   @test(stats.solved)
 
   # Code coverage.
-  (x, stats) = bicgstab(Matrix(A), b, verbose=true)
+  (x, stats) = bicgstab(Matrix(A), b, verbose=1)
   show(stats)
 
   # Sparse Laplacian.
@@ -52,7 +52,7 @@ function test_bicgstab()
 
   # Symmetric indefinite variant, almost singular.
   A, b = almost_singular()
-  (x, stats) = bicgstab(A, b)
+  (x, stats) = bicgstab(A, b, verbose=25)
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("BICGSTAB: Relative residual: %8.1e\n", resid)
