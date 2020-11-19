@@ -56,7 +56,7 @@ resid = norm(r)
 
 # [M⁻¹  A  ] [x] = [b]
 # [Aᵀ  -N⁻¹] [y]   [c]
-(x, y, stats) = tricg(A, b, c, M=M, N=N, verbose=true)
+(x, y, stats) = tricg(A, b, c, M=M, N=N, verbose=1)
 K = [inv(M) A; A' -inv(N)]
 H = BlockDiagonalOperator(M, N)
 B = [b; c]

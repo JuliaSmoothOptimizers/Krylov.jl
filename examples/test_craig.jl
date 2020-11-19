@@ -8,7 +8,7 @@ A = rand(m, n)
 b = A * ones(n)
 xy_exact = [A  λ*I] \ b # In Julia, this is the min-norm solution!
 
-(x, y, stats) = craig(A, b, λ=λ, atol=0.0, rtol=1.0e-20, verbose=true)
+(x, y, stats) = craig(A, b, λ=λ, atol=0.0, rtol=1.0e-20, verbose=1)
 show(stats)
 
 # Check that we have a minimum-norm solution.

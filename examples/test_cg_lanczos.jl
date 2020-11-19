@@ -23,7 +23,7 @@ r = b - A * x
 
 # Solve (A + αI)x = b sequentially.
 shifts = [1.0, 2.0, 3.0, 4.0]
-(x, stats) = cg_lanczos_shift_seq(A, b, shifts, verbose=false)
+(x, stats) = cg_lanczos_shift_seq(A, b, shifts, verbose=1)
 show(stats)
 r = residuals(A, b, shifts, x)
 resids = map(norm, r) / b_norm
