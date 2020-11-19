@@ -16,7 +16,7 @@ export cgs
 """
     (x, stats) = cgs(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
                      M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
-                     itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                     itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 Solve the consistent linear system Ax = b using conjugate gradient squared algorithm.
 
@@ -39,12 +39,12 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 """
 function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
              M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
-             itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+             itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  verbose && @printf("CGS: system of size %d\n", n)
+  (verbose > 0) && @printf("CGS: system of size %d\n", n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -71,8 +71,8 @@ function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
-  verbose && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  verbose && @printf("%5d  %7.1e\n", iter, rNorm)
+  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
+  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Set up workspace.
   u = copy(r)       # u₀
@@ -119,9 +119,9 @@ function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
-    verbose && @printf("%5d  %7.1e\n", iter, rNorm)
+    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
   stats = SimpleStats(solved, false, rNorms, T[], status)

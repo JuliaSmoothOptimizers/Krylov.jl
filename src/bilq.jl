@@ -15,7 +15,7 @@ export bilq
 """
     (x, stats) = bilq(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
                       atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
-                      itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                      itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 Solve the square linear system Ax = b using the BiLQ method.
 
@@ -27,12 +27,12 @@ when it exists. The transfer is based on the residual norm.
 """
 function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
               atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
-              itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+              itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   n, m = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  verbose && @printf("BILQ: system of size %d\n", n)
+  (verbose > 0) && @printf("BILQ: system of size %d\n", n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -53,8 +53,8 @@ function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   rNorms = [bNorm;]
   ε = atol + rtol * bNorm
-  verbose && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  verbose && @printf("%5d  %7.1e\n", iter, bNorm)
+  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
+  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
 
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
@@ -222,9 +222,9 @@ function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
     solved_cg = transfer_to_bicg && (δbarₖ ≠ 0) && (rNorm_cg ≤ ε)
     tired = iter ≥ itmax
     breakdown = !solved_lq && !solved_cg && (qᵗp == 0)
-    verbose && @printf("%5d  %7.1e\n", iter, rNorm_lq)
+    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
 
   # Compute BICG point
   # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ

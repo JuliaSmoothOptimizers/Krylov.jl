@@ -10,7 +10,7 @@ export lslq
              M=opEye(), N=opEye(), sqd::Bool=false, λ::T=zero(T),
              atol::T=√eps(T), btol::T=√eps(T), etol::T=√eps(T),
              window::Int=5, utol::T=√eps(T), itmax::Int=0,
-             σ::T=zero(T), conlim::T=1/√eps(T), verbose::Bool=false) where T <: AbstractFloat
+             σ::T=zero(T), conlim::T=1/√eps(T), verbose::Int=0) where T <: AbstractFloat
 
 Solve the regularized linear least-squares problem
 
@@ -63,7 +63,7 @@ but is more stable.
 * `utol::Float64=1.0e-8` is a stopping tolerance based on the upper bound on the error
 * `itmax::Int=0` is the maximum number of iterations (0 means no imposed limit)
 * `conlim::Float64=1.0e+8` is the limit on the estimated condition number of `A` beyond which the solution will be abandoned
-* `verbose::Bool=false` determines verbosity.
+* `verbose::Int=0` determines verbosity.
 
 #### Return values
 
@@ -101,11 +101,11 @@ function lslq(A, b :: AbstractVector{T};
               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
               atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
               window :: Int=5, utol :: T=√eps(T), itmax :: Int=0,
-              σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Bool=false) where T <: AbstractFloat
+              σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  verbose && @printf("LSLQ: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf("LSLQ: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₙ and N == Iₘ
   MisI = isa(M, opEye)
@@ -192,13 +192,11 @@ function lslq(A, b :: AbstractVector{T};
   ArNorm = α * β
   ArNorms = [ArNorm]
 
-  verbose && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n",
-                     "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²", "κ(A)", "‖xL‖")
-  verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n",
-                     1, rNorm, ArNorm, β, α, c, s, Anorm², Acond, xlqNorm)
-
   iter = 0
   itmax == 0 && (itmax = m + n)
+
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²", "κ(A)", "‖xL‖")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", 1, rNorm, ArNorm, β, α, c, s, Anorm², Acond, xlqNorm)
 
   status = "unknown"
   solved = solved_mach = solved_lim = (rNorm ≤ atol)
@@ -307,8 +305,7 @@ function lslq(A, b :: AbstractVector{T};
     t1    = test1 / (one(T) + Anorm * xlqNorm / β₁)
     rtol  = btol + atol * Anorm * xlqNorm / β₁
 
-    verbose && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n",
-                       1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
+    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", 1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
 
     # update LSLQ point for next iteration
     @kaxpy!(n, c * ζ, w̄, x_lq)
@@ -354,6 +351,7 @@ function lslq(A, b :: AbstractVector{T};
 
     iter = iter + 1
   end
+  (verbose > 0) && @printf("\n")
 
   # compute LSQR point
   @kaxpby!(n, one(T), x_lq, ζ̄ , w̄)

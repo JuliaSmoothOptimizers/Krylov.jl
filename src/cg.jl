@@ -15,7 +15,7 @@ export cg
     (x, stats) = cg(A, b::AbstractVector{T};
                     M=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
                     itmax::Int=0, radius::T=zero(T), linesearch::Bool=false,
-                    verbose::Bool=false) where T <: AbstractFloat
+                    verbose::Int=0) where T <: AbstractFloat
 
 The conjugate gradient method to solve the symmetric linear system Ax=b.
 
@@ -32,13 +32,13 @@ with `n = length(b)`.
 function cg(A, b :: AbstractVector{T};
             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
             itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
-            verbose :: Bool=false) where T <: AbstractFloat
+            verbose :: Int=0) where T <: AbstractFloat
 
   linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
-  verbose && @printf("CG: system of %d equations in %d variables\n", n, n)
+  (verbose > 0) && @printf("CG: system of %d equations in %d variables\n", n, n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -63,8 +63,8 @@ function cg(A, b :: AbstractVector{T};
   pNorm² = γ
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
-  verbose && @printf("%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
-  verbose && @printf("%5d  %7.1e  ", iter, rNorm)
+  (verbose > 0) && @printf("%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
+  display(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
 
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
@@ -94,7 +94,7 @@ function cg(A, b :: AbstractVector{T};
     # Compute step size to boundary if applicable.
     σ = radius > 0 ? maximum(to_boundary(x, p, radius, dNorm2=pNorm²)) : α
 
-    verbose && @printf("%8.1e  %8.1e  %8.1e\n", pAp, α, σ)
+    display(iter, verbose) && @printf("%8.1e  %8.1e  %8.1e\n", pAp, α, σ)
 
     # Move along p from x to the boundary if either
     # the next step leads outside the trust region or
@@ -122,9 +122,9 @@ function cg(A, b :: AbstractVector{T};
 
     iter = iter + 1
     tired = iter ≥ itmax
-    verbose && @printf("%5d  %7.1e  ", iter, rNorm)
+    display(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
 
   solved && on_boundary && (status = "on trust-region boundary")
   solved && linesearch && (pAp ≤ 0) && (status = "nonpositive curvature detected")

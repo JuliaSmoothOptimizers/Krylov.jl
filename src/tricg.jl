@@ -15,7 +15,7 @@ export tricg
     (x, y, stats) = tricg(A, b::AbstractVector{T}, c::AbstractVector{T};
                           M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
                           spd::Bool=false, snd::Bool=false, flip::Bool=false,
-                          τ::T=one(T), ν::T=-one(T), itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                          τ::T=one(T), ν::T=-one(T), itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 TriCG solves the symmetric linear system
 
@@ -43,17 +43,18 @@ It's the Euclidean norm when `M` and `N` are identity operators.
 TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
 
-Additional details can be displayed if the `verbose` mode is enabled.
+Additional details can be displayed if verbose mode is enabled (verbose > 0).
+Information will be displayed every `verbose` iterations.
 """
 function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
                spd :: Bool=false, snd :: Bool=false, flip :: Bool=false,
-               τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+               τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  verbose && @printf("TriCG: system of %d equations in %d variables\n", m+n, m+n)
+  (verbose > 0) && @printf("TriCG: system of %d equations in %d variables\n", m+n, m+n)
 
   # Check flip, spd and snd parameters
   spd && flip && error("The matrix cannot be SPD and SQD")
@@ -115,8 +116,8 @@ function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
 
-  verbose && @printf("%5s  %7s  %8s  %7s  %7s\n", "k", "‖rₖ‖", "αₖ", "βₖ₊₁", "γₖ₊₁")
-  verbose && @printf("%5d  %7.1e  %8s  %7.1e  %7.1e\n", iter, rNorm, " ✗ ✗ ✗ ✗", βₖ, γₖ)
+  (verbose > 0) && @printf("%5s  %7s  %8s  %7s  %7s\n", "k", "‖rₖ‖", "αₖ", "βₖ₊₁", "γₖ₊₁")
+  display(iter, verbose) && @printf("%5d  %7.1e  %8s  %7.1e  %7.1e\n", iter, rNorm, " ✗ ✗ ✗ ✗", βₖ, γₖ)
 
   # Set up workspace.
   d₂ₖ₋₃ = d₂ₖ₋₂ = zero(T)
@@ -285,9 +286,9 @@ function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T};
     # Update stopping criterion.
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
-    verbose && @printf("%5d  %7.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, αₖ, βₖ₊₁, γₖ₊₁)
+    display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, αₖ, βₖ₊₁, γₖ₊₁)
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
   stats = SimpleStats(solved, false, rNorms, T[], status)
   return (xₖ, yₖ, stats)

@@ -19,7 +19,7 @@ export minres_qlp
 """
     (x, stats) = minres_qlp(A, b::AbstractVector{T};
                             M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), λ::T=zero(T),
-                            itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                            itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
 solution on singular inconsistent systems (A + λI)x = b, where λ is a shift parameter.
@@ -31,12 +31,12 @@ M also indicates the weighted norm in which residuals are measured.
 """
 function minres_qlp(A, b :: AbstractVector{T};
                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
-                    itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+                    itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   n, m = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  verbose && @printf("MINRES-QLP: system of size %d\n", n)
+  (verbose > 0) && @printf("MINRES-QLP: system of size %d\n", n)
 
   # Tests M == Iₙ
   MisI = isa(M, opEye)
@@ -70,8 +70,8 @@ function minres_qlp(A, b :: AbstractVector{T};
   ε = atol + rtol * rNorm
   ArNorms = T[]
   κ = zero(T)
-  verbose && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖")
-  verbose && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
+  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
   # Set up workspace.
   M⁻¹vₖ₋₁ = kzeros(S, n)
@@ -291,9 +291,9 @@ function minres_qlp(A, b :: AbstractVector{T};
     μbarₖ₋₁ = μbarₖ
     ζbarₖ = ζbarₖ₊₁
     βₖ = βₖ₊₁
-    verbose && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, ArNorm)
+    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, ArNorm)
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
 
   # Finalize the update of x
   if iter ≥ 2

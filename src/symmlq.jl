@@ -17,7 +17,7 @@ export symmlq
                         M=opEye(), λ::T=zero(T), transfer_to_cg::Bool=true,
                         λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                         etol::T=√eps(T), window::Int=0, itmax::Int=0,
-                        conlim::T=1/√eps(T), verbose::Bool=false) where T <: AbstractFloat
+                        conlim::T=1/√eps(T), verbose::Int=0) where T <: AbstractFloat
 
 Solve the shifted linear system
 
@@ -35,12 +35,12 @@ function symmlq(A, b :: AbstractVector{T};
                 M=opEye(), λ :: T=zero(T), transfer_to_cg :: Bool=true,
                 λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                 etol :: T=√eps(T), window :: Int=0, itmax :: Int=0,
-                conlim :: T=1/√eps(T), verbose :: Bool=false) where T <: AbstractFloat
+                conlim :: T=1/√eps(T), verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
   size(b, 1) == m || error("Inconsistent problem size")
-  verbose && @printf("SYMMLQ: system of size %d\n", n)
+  (verbose > 0) && @printf("SYMMLQ: system of size %d\n", n)
 
   # Determine the storage type of b
   S = typeof(b)
@@ -136,13 +136,11 @@ function symmlq(A, b :: AbstractVector{T};
     end
   end
 
-  verbose && @printf("%5s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n",
-                     "Aprod", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1")
-  verbose && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n",
-                     0, rNorm, β, cold, sold, ANorm, Acond)
-
   iter = 0
   itmax == 0 && (itmax = 2 * n)
+
+  (verbose > 0) && @printf("%5s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "Aprod", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", 0, rNorm, β, cold, sold, ANorm, Acond)
 
   tol = atol + rtol * β₁
   status = "unknown"
@@ -270,8 +268,7 @@ function symmlq(A, b :: AbstractVector{T};
     ANorm = sqrt(ANorm²)
     test1 = rNorm/(ANorm * xNorm)
 
-    verbose && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n",
-                       iter, rNorm, β, c, s, ANorm, Acond, test1)
+    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, β, c, s, ANorm, Acond, test1)
 
     # Reset variables
     ϵold = ϵ
@@ -295,6 +292,7 @@ function symmlq(A, b :: AbstractVector{T};
     ill_cond = ill_cond_mach || ill_cond_lim
     solved = solved_mach || zero_resid || zero_resid_mach || zero_resid_lim || fwd_err
   end
+  (verbose > 0) && @printf("\n")
 
   # Compute CG point
   # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * w̅ₖ

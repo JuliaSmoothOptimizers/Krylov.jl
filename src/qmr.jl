@@ -23,7 +23,7 @@ export qmr
 """
     (x, stats) = qmr(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
                      atol::T=√eps(T), rtol::T=√eps(T),
-                     itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                     itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 Solve the square linear system Ax = b using the QMR method.
 
@@ -32,12 +32,12 @@ When A is symmetric and b = c, QMR is equivalent to MINRES.
 """
 function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
              atol :: T=√eps(T), rtol :: T=√eps(T),
-             itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+             itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   n, m = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  verbose && @printf("QMR: system of size %d\n", n)
+  (verbose > 0) && @printf("QMR: system of size %d\n", n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -58,8 +58,8 @@ function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
-  verbose && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  verbose && @printf("%5d  %7.1e\n", iter, rNorm)
+  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
+  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
@@ -220,9 +220,9 @@ function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     breakdown = !solved && (qᵗp == 0)
-    verbose && @printf("%5d  %7.1e\n", iter, rNorm)
+    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
 
   tired     && (status = "maximum number of iterations exceeded")
   breakdown && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")

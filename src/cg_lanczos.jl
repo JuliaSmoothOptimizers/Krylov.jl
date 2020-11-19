@@ -15,7 +15,7 @@ export cg_lanczos, cg_lanczos_shift_seq
 """
     (x, stats) = cg_lanczos(A, b::AbstractVector{T};
                             M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                            check_curvature::Bool=false, verbose::Bool=false) where T <: AbstractFloat
+                            check_curvature::Bool=false, verbose::Int=0) where T <: AbstractFloat
 
 The Lanczos version of the conjugate gradient method to solve the
 symmetric linear system
@@ -29,11 +29,11 @@ assumed to be symmetric and positive definite.
 """
 function cg_lanczos(A, b :: AbstractVector{T};
                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                    check_curvature :: Bool=false, verbose :: Bool=false) where T <: AbstractFloat
+                    check_curvature :: Bool=false, verbose :: Int=0) where T <: AbstractFloat
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
-  verbose && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n)
+  (verbose > 0) && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n)
 
   # Determine the storage type of b
   S = typeof(b)
@@ -73,7 +73,8 @@ function cg_lanczos(A, b :: AbstractVector{T};
   rNorm = σ
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
-  verbose && @printf("%5d  %8.1e\n", iter, rNorm)
+  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
+  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
   indefinite = false
   solved = rNorm ≤ ε
@@ -115,10 +116,11 @@ function cg_lanczos(A, b :: AbstractVector{T};
     rNorm = abs(σ)          # ‖rₖ₊₁‖_M = |σₖ₊₁| because rₖ₊₁ = σₖ₊₁ * vₖ₊₁ and ‖vₖ₊₁‖_M = 1
     push!(rNorms, rNorm)
     iter = iter + 1
-    verbose && @printf("%5d  %8.1e\n", iter, rNorm)
+    display(iter, verbose) && @printf("%5d  %8.1e\n", iter, rNorm)
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
   end
+  (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (check_curvature & indefinite) ? "negative curvature" : "solution good enough given atol and rtol"
   stats = LanczosStats(solved, rNorms, indefinite, sqrt(Anorm2), zero(T), status)  # TODO: Estimate Acond.
@@ -129,7 +131,7 @@ end
 """
     (x, stats) = cg_lanczos_shift_seq(A, b::AbstractVector{T}, shifts::AbstractVector{T};
                                       M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                                      check_curvature::Bool=false, verbose::Bool=false) where T <: AbstractFloat
+                                      check_curvature::Bool=false, verbose::Int=0) where T <: AbstractFloat
 
 The Lanczos version of the conjugate gradient method to solve a family
 of shifted systems
@@ -143,13 +145,13 @@ assumed to be symmetric and positive definite.
 """
 function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVector{T};
                               M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                              check_curvature :: Bool=false, verbose :: Bool=false) where T <: AbstractFloat
+                              check_curvature :: Bool=false, verbose :: Int=0) where T <: AbstractFloat
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
 
   nshifts = size(shifts, 1)
-  verbose && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts)
+  (verbose > 0) && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts)
 
   # Determine the storage type of b
   S = typeof(b)
@@ -199,7 +201,7 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
   indefinite = falses(nshifts)
 
   # Build format strings for printing.
-  if verbose
+  if display(iter, verbose)
     fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n"
     # precompile printf for our particular format
     local_printf(data...) = Core.eval(Main, :(@printf($fmt, $(data)...)))
@@ -257,11 +259,12 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
     # Is there a better way than to update this array twice per iteration?
     not_cv = check_curvature ? findall(.! (converged .| indefinite)) : findall(.! converged)
     iter = iter + 1
-    verbose && local_printf(iter, rNorms...)
+    display(iter, verbose) && local_printf(iter, rNorms...)
 
     solved = length(not_cv) == 0
     tired = iter ≥ itmax
   end
+  (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
   stats = LanczosStats(solved, permutedims(reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))), indefinite, zero(T), zero(T), status)  # TODO: Estimate Anorm and Acond.

@@ -22,7 +22,7 @@ export usymqr
 """
     (x, stats) = usymqr(A, b::AbstractVector{T}, c::AbstractVector{T};
                         atol::T=√eps(T), rtol::T=√eps(T),
-                        itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                        itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 Solve the linear system Ax = b using the USYMQR method.
 
@@ -35,12 +35,12 @@ USYMQR finds the minimum-norm solution if problems are inconsistent.
 """
 function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T),
-                itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+                itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  verbose && @printf("USYMQR: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf("USYMQR: system of %d equations in %d variables\n", m, n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -57,14 +57,14 @@ function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
 
   iter = 0
-  itmax == 0 && (itmax = 2*n)
+  itmax == 0 && (itmax = m+n)
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
   AᵀrNorms = T[]
   κ = zero(T)
-  verbose && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Aᵀrₖ₋₁‖")
-  verbose && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
+  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Aᵀrₖ₋₁‖")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
   # Set up workspace.
   βₖ = @knrm2(m, b)           # β₁ = ‖v₁‖
@@ -220,9 +220,9 @@ function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
     solved = rNorm ≤ ε
     inconsistent = !solved && AᵀrNorm ≤ κ
     tired = iter ≥ itmax
-    verbose && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, AᵀrNorm)
+    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, AᵀrNorm)
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
   stats = SimpleStats(solved, inconsistent, rNorms, AᵀrNorms, status)
   return (x, stats)
