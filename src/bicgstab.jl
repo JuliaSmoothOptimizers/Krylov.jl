@@ -18,7 +18,7 @@ export bicgstab
 """
     (x, stats) = bicgstab(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
                           M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
-                          itmax::Int=0, verbose::Bool=false) where T <: AbstractFloat
+                          itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
 
 Solve the square linear system Ax = b using the BICGSTAB method.
 
@@ -31,18 +31,19 @@ If BICGSTAB stagnates, we recommend DQGMRES and BiLQ as alternative methods for 
 BICGSTAB stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖b‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
 
-Additional details can be displayed if the `verbose` mode is enabled.
+Additional details can be displayed if verbose mode is enabled (verbose > 0).
+Information will be displayed every `verbose` iterations.
 
 This implementation allows a left preconditioner `M` and a right preconditioner `N`.
 """
 function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
                   M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
-                  itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+                  itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
 
   n, m = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  verbose && @printf("BICGSTAB: system of size %d\n", n)
+  (verbose > 0) && @printf("BICGSTAB: system of size %d\n", n)
 
   # Check M == Iₘ and N == Iₙ
   MisI = isa(M, opEye)
@@ -76,8 +77,8 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   rNorms = [rNorm;]
   ε = atol + rtol * rNorm
-  verbose && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "αₖ", "ωₖ")
-  verbose && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
+  (verbose > 0) && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "αₖ", "ωₖ")
+  display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
 
   next_ρ = @kdot(n, r, c)  # ρ₁ = ⟨r₀,r̅₀⟩
   next_ρ == 0 && return (x, SimpleStats(false, false, [rNorm], T[], "Breakdown bᵀc = 0"))
@@ -118,9 +119,9 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
-    verbose && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
+    display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
   stats = SimpleStats(solved, false, rNorms, T[], status)
