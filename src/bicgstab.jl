@@ -96,16 +96,18 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
     y = N * p                            # yₖ = N⁻¹pₖ
     q = A * y                            # qₖ = Ayₖ
-    v .= M * q                           # vₖ = M⁻¹qₖ
+    Mq = M * q; @kcopy!(n, Mq, v)        # vₖ = M⁻¹qₖ
     α = ρ / @kdot(n, v, c)               # αₖ = ⟨rₖ₋₁,r̅₀⟩ / ⟨vₖ,r̅₀⟩
-    @. s = r - α * v                     # sₖ = rₖ₋₁ - αₖvₖ
+    @kcopy!(n, r, s)                     # sₖ = rₖ₋₁
+    @kaxpy!(n, -α, v, s)                 # sₖ = sₖ - αₖvₖ
     @kaxpy!(n, α, y, x)                  # xₐᵤₓ = xₖ₋₁ + αₖyₖ
     z = N * s                            # zₖ = N⁻¹sₖ
     d = A * z                            # dₖ = Azₖ
     t = M * d                            # tₖ = M⁻¹dₖ
     ω = @kdot(n, t, s) / @kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
     @kaxpy!(n, ω, z, x)                  # xₖ = xₐᵤₓ + ωₖzₖ
-    @. r = s - ω * t                     # rₖ = sₖ - ωₖtₖ
+    @kcopy!(n, s, r)                     # rₖ = sₖ
+    @kaxpy!(n, -ω, t, r)                 # rₖ = rₖ - ωₖtₖ
     next_ρ = @kdot(n, r, c)              # ρₖ₊₁ = ⟨rₖ,r̅₀⟩
     β = (next_ρ / ρ) * (α / ω)           # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
     @kaxpy!(n, -ω, v, p)                 # pₐᵤₓ = pₖ - ωₖvₖ

@@ -155,6 +155,9 @@ Create an AbstractVector of storage type `S` of length `n` only composed of one.
 @inline krylov_axpby!(n :: Int, s :: T, x :: Vector{T}, dx :: Int, t :: T, y :: Vector{T}, dy :: Int) where T <: BLAS.BlasReal = BLAS.axpby!(n, s, x, dx, t, y, dy)
 @inline krylov_axpby!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, t :: T, y :: AbstractVector{T}, dy :: Int) where T <: Number = axpby!(s, x, t, y)
 
+@inline krylov_copy!(n :: Int, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) where T <: BLAS.BlasReal = BLAS.blascopy!(n, x, dx, y, dy)
+@inline krylov_copy!(n :: Int, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int) where T <: Number = copyto!(y, x)
+
 function krylov_ref!(n :: Int, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int, c :: T , s :: T) where T <: Number
   # assume dx = dy
   @inbounds @simd for i = 1:dx:n
@@ -186,6 +189,10 @@ end
 
 macro kaxpby!(n, s, x, t, y)
   return esc(:(krylov_axpby!($n, $s, $x, 1, $t, $y, 1)))
+end
+
+macro kcopy!(n, x, y)
+  return esc(:(krylov_copy!($n, $x, 1, $y, 1)))
 end
 
 macro kswap(x, y)
