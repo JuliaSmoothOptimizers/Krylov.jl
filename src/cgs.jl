@@ -92,7 +92,8 @@ function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
     v = M * t                     # vₖ = M⁻¹tₖ
     σ = @kdot(n, v, c)            # σₖ = ⟨ M⁻¹AN⁻¹pₖ,̅r₀ ⟩
     α = ρ / σ                     # αₖ = ρₖ / σₖ
-    @. q = u - α * v              # qₖ = uₖ - αₖ * M⁻¹AN⁻¹pₖ
+    @kcopy!(n, u, q)              # qₖ = uₖ
+    @kaxpy!(n, -α, v, q)          # qₖ = qₖ - αₖ * M⁻¹AN⁻¹pₖ
     @kaxpy!(n, one(T), q, u)      # uₖ₊½ = uₖ + qₖ
     z = N * u                     # zₖ = N⁻¹uₖ₊½
     @kaxpy!(n, α, z, x)           # xₖ₊₁ = xₖ + αₖ * N⁻¹(uₖ + qₖ)
@@ -101,7 +102,8 @@ function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
     @kaxpy!(n, -α, w, r)          # rₖ₊₁ = rₖ - αₖ * M⁻¹AN⁻¹(uₖ + qₖ)
     ρ_next = @kdot(n, r, c)       # ρₖ₊₁ = ⟨ rₖ₊₁,̅r₀ ⟩
     β = ρ_next / ρ                # βₖ = ρₖ₊₁ / ρₖ
-    @. u = r + β * q              # uₖ₊₁ = rₖ₊₁ + βₖ * qₖ
+    @kcopy!(n, r, u)              # uₖ₊₁ = rₖ₊₁
+    @kaxpy!(n, β, q, u)           # uₖ₊₁ = uₖ₊₁ + βₖ * qₖ
     @kaxpby!(n, one(T), q, β, p)  # pₐᵤₓ = qₖ + βₖ * pₖ
     @kaxpby!(n, one(T), u, β, p)  # pₖ₊₁ = uₖ₊₁ + βₖ * pₐᵤₓ
 
