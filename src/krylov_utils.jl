@@ -150,10 +150,10 @@ Create an AbstractVector of storage type `S` of length `n` only composed of one.
 @inline krylov_scal!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int) where T <: Number = (x .*= s)
 
 @inline krylov_axpy!(n :: Int, s :: T, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) where T <: BLAS.BlasReal = BLAS.axpy!(n, s, x, dx, y, dy)
-@inline krylov_axpy!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int) where T <: Number = (y .+= s .* x)
+@inline krylov_axpy!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int) where T <: Number = axpy!(s, x, y)
 
 @inline krylov_axpby!(n :: Int, s :: T, x :: Vector{T}, dx :: Int, t :: T, y :: Vector{T}, dy :: Int) where T <: BLAS.BlasReal = BLAS.axpby!(n, s, x, dx, t, y, dy)
-@inline krylov_axpby!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, t :: T, y :: AbstractVector{T}, dy :: Int) where T <: Number = (y .= s .* x .+ t.* y)
+@inline krylov_axpby!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, t :: T, y :: AbstractVector{T}, dy :: Int) where T <: Number = axpby!(s, x, t, y)
 
 function krylov_ref!(n :: Int, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int, c :: T , s :: T) where T <: Number
   # assume dx = dy
