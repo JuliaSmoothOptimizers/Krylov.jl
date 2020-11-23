@@ -1,7 +1,8 @@
 using GitHub, JSON, PkgBenchmark
 
-commit = benchmarkpkg("Krylov")  # current state of repository
-master = benchmarkpkg("Krylov", "master")
+filename = "gpu.jl"  # gpu.jl, cg_bmark.jl, ...
+commit = benchmarkpkg("Krylov", script="benchmark/$filename")  # current state of repository
+master = benchmarkpkg("Krylov", "master", script="benchmark/$filename")
 judgement = judge(commit, master)
 export_markdown("judgement.md", judgement)
 export_markdown("master.md", master)
