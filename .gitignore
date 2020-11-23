@@ -1,2 +1,6 @@
 docs/build
 **/Manifest.toml
+benchmark/tune.json
+benchmark/commit.md
+benchmark/master.md
+benchmark/judgement.md
