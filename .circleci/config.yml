@@ -1,0 +1,47 @@
+# .circleci/config.yml
+version: 2.0
+
+orbs:
+    mac-permissions: circleci/macos
+
+jobs:
+  build-mac-julia-1.3:
+    macos:
+      xcode: 11.7.0
+    working_directory: ~/NLPModels.jl
+    machine: true
+    environment:
+      JULIAVERSION: 1.3
+      JULIAMINOR: 1
+    steps:
+      - checkout
+      - run: |
+          wget https://julialang-s3.julialang.org/bin/mac/x64/${JULIAVERSION}/julia-${JULIAVERSION}.${JULIAMINOR}-mac64.tar.gz
+          tar zxf julia-${JULIAVERSION}.${JULIAMINOR}-mac64.tar.gz
+      - run: |
+          ./julia-${JULIAVERSION}.${JULIAMINOR}/bin/julia -e 'using Pkg; Pkg.update(); Pkg.clone(pwd()); Pkg.build("NLPModels"); Pkg.test("NLPModels");'
+
+  build-mac-julia-1.5:
+    macos:
+      xcode: 11.7.0
+    working_directory: ~/NLPModels.jl
+    machine: true
+    environment:
+      JULIAVERSION: 1.5
+      JULIAMINOR: 3
+    steps:
+      - checkout
+      - run: |
+          wget https://julialang-s3.julialang.org/bin/mac/x64/${JULIAVERSION}/julia-${JULIAVERSION}.${JULIAMINOR}-mac64.tar.gz
+          tar zxf julia-${JULIAVERSION}.${JULIAMINOR}-mac64.tar.gz
+      - run: |
+          ./julia-${JULIAVERSION}.${JULIAMINOR}/bin/julia --code-coverage -e 'using Pkg; Pkg.update(); Pkg.activate(pwd()); Pkg.instantiate(); Pkg.build("NLPModels"); Pkg.test("NLPModels"; coverage=true);'
+      - run: |
+          ./julia-${JULIAVERSION}.${JULIAMINOR}/bin/julia -e 'using Pkg; Pkg.activate(pwd()); Pkg.instantiate(); Pkg.add("Coverage"); using Coverage; Codecov.submit(Coveralls.process_folder());'
+
+workflows:
+  version: 2
+  test-bot:
+    jobs:
+      - build-mac-julia-1.3
+      - build-mac-julia-1.5
