@@ -51,9 +51,9 @@ P = ic02(A_gpu, 'O')
 
 # Solve Py = x
 function ldiv!(y, P, x)
-  y .= x
-  sv2!('T', 'U', 1.0, P, y, 'O')
-  sv2!('N', 'U', 1.0, P, y, 'O')
+  copyto!(y, x)                        # Variant for CuSparseMatrixCSR
+  sv2!('T', 'U', 'N', 1.0, P, y, 'O')  # sv2!('N', 'L', 'N', 1.0, P, y, 'O')
+  sv2!('N', 'U', 'N', 1.0, P, y, 'O')  # sv2!('T', 'L', 'N', 1.0, P, y, 'O')
   return y
 end
 
@@ -76,9 +76,9 @@ P = ilu02(A_gpu, 'O')
 
 # Solve Py = x
 function ldiv!(y, P, x)
-  y .= x
-  sv2!('N', 'L', 1.0, P, y, 'O')
-  sv2!('N', 'U', 1.0, P, y, 'O', unit_diag=true)
+  copyto!(y, x)                        # Variant for CuSparseMatrixCSR
+  sv2!('N', 'L', 'N', 1.0, P, y, 'O')  # sv2!('N', 'L', 'U', 1.0, P, y, 'O')
+  sv2!('N', 'U', 'U', 1.0, P, y, 'O')  # sv2!('N', 'U', 'N', 1.0, P, y, 'O')
   return y
 end
 
