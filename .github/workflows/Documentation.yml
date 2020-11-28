@@ -1,27 +1,20 @@
 name: Documentation
-
 on:
   push:
     branches:
-      - 'master'
-    tags: '*'
+      - master
   pull_request:
-
+    types: [opened, synchronize, reopened]
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        julia-version: [1.5]
-        julia-arch: [x86]
-        os: [ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1.0.0
+      - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@latest
         with:
-          version: ${{ matrix.julia-version }}
+          version: '1'
       - name: Install dependencies
-        run: julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+        run: julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
       - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
