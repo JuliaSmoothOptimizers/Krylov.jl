@@ -12,8 +12,8 @@ using Krylov
 using LinearOperators
 using SuiteSparseMatrixCollection
 
-ufl_cg = filter(p -> p.structure == "unsymmetric" && p.type == "real" && (10000 ≤ p.rows ≤ 20000), ssmc)
-ufl_bicgstab = filter(p -> p.structure == "symmetric" && p.posDef == "yes" && p.type == "real" && (10000 ≤ p.rows ≤ 20000), ssmc)
+ufl_bicgstab = filter(p -> p.structure == "unsymmetric" && p.type == "real" && (10000 ≤ p.rows ≤ 20000), ssmc)
+ufl_cg = filter(p -> p.structure == "symmetric" && p.posDef == "yes" && p.type == "real" && (10000 ≤ p.rows ≤ 20000), ssmc)
 
 # fetch_ssmc(ufl_cg, format="MM")
 # fetch_ssmc(ufl_bicgstab, format="MM")
