@@ -60,7 +60,7 @@ function test_cr()
   for i = 1:5
     push!(B, rand(n), rand(n))
   end
-  b = B * ones(n)
+  b = copy(B * ones(n))
   (x, stats) = cr(B, b, rtol=1e-6)
   @test norm(x - ones(n)) ≤ cr_tol * norm(x)
   @test stats.solved
