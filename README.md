@@ -2,9 +2,9 @@
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.822073-blue.svg)](https://doi.org/10.5281/zenodo.822073)
 
-| **Documentation** | **Travis, AppVeyor and Cirrus build statuses** | **Coverage** |
+| **Documentation** | **Linux/macOS/Windows/FreeBSD** | **Coverage** |
 |:-----------------:|:----------------------------------------------:|:------------:|
-| [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaSmoothOptimizers.github.io/Krylov.jl/dev) | [![Build Status](https://img.shields.io/travis/JuliaSmoothOptimizers/Krylov.jl?logo=travis)](https://travis-ci.com/JuliaSmoothOptimizers/Krylov.jl) [![CircleCI](https://circleci.com/gh/JuliaSmoothOptimizers/Krylov.jl.svg?style=svg)](https://circleci.com/gh/JuliaSmoothOptimizers/Krylov.jl) [![Build status](https://img.shields.io/cirrus/github/JuliaSmoothOptimizers/Krylov.jl?logo=appveyor)](https://ci.appveyor.com/project/dpo/krylov-jl) [![Build Status](https://img.shields.io/cirrus/github/JuliaSmoothOptimizers/Krylov.jl?logo=Cirrus%20CI)](https://cirrus-ci.com/github/JuliaSmoothOptimizers/Krylov.jl) | [![Coverage Status](https://coveralls.io/repos/github/JuliaSmoothOptimizers/Krylov.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaSmoothOptimizers/Krylov.jl?branch=master) [![codecov.io](https://codecov.io/github/JuliaSmoothOptimizers/Krylov.jl/coverage.svg?branch=master)](https://codecov.io/github/JuliaSmoothOptimizers/Krylov.jl?branch=master) |
+| [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaSmoothOptimizers.github.io/Krylov.jl/dev) | ![CI](https://github.com/JuliaSmoothOptimizers/Krylov.jl/workflows/CI/badge.svg?branch=master) [![Build Status](https://img.shields.io/cirrus/github/JuliaSmoothOptimizers/Krylov.jl?logo=Cirrus%20CI)](https://cirrus-ci.com/github/JuliaSmoothOptimizers/Krylov.jl) | [![codecov.io](https://codecov.io/github/JuliaSmoothOptimizers/Krylov.jl/coverage.svg?branch=master)](https://codecov.io/github/JuliaSmoothOptimizers/Krylov.jl?branch=master) | [![codecov](https://codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl/branch/master/graph/badge.svg?token=iNeBvwvRZW)](https://codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl)
 
 ## Content
 
