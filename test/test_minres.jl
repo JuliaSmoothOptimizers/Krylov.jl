@@ -47,6 +47,16 @@ function test_minres()
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
+  # Shifted system
+  A, b = symmetric_indefinite()
+  λ = 2.0
+  (x, stats) = minres(A, b, λ=λ)
+  r = b - (A + λ*I) * x
+  resid = norm(r) / norm(b)
+  @printf("MINRES: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ minres_tol)
+  @test(stats.solved)
+
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = minres(A, b, M=M)

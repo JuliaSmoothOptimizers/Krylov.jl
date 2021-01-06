@@ -99,12 +99,12 @@ function minres_qlp(A, b :: AbstractVector{T};
     iter = iter + 1
 
     # Continue the preconditioned Lanczos process.
-    # M(A - λI)Vₖ = Vₖ₊₁Tₖ₊₁.ₖ
-    # βₖ₊₁vₖ₊₁ = M(A - λI)vₖ - αₖvₖ - βₖvₖ₋₁
+    # M(A + λI)Vₖ = Vₖ₊₁Tₖ₊₁.ₖ
+    # βₖ₊₁vₖ₊₁ = M(A + λI)vₖ - αₖvₖ - βₖvₖ₋₁
 
-    p = A * vₖ               # p ← Avₖ
+    p = A * vₖ              # p ← Avₖ
     if λ ≠ 0
-      @kaxpy!(n, -λ, vₖ, p)  # p ← p - λvₖ
+      @kaxpy!(n, λ, vₖ, p)  # p ← p + λvₖ
     end
 
     if iter ≥ 2
