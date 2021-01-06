@@ -127,7 +127,7 @@ function minres(A, b :: AbstractVector{T};
 
     # Generate next Lanczos vector.
     y = A * v
-    λ ≠ 0 && @kaxpy!(n, -λ, v, y)            # (y = y - λ * v)
+    λ ≠ 0 && @kaxpy!(n, λ, v, y)             # (y = y + λ * v)
     @kscal!(n, one(T) / β, y)
     iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y) # (y = y - β / oldβ * r1)
 
