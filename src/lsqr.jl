@@ -55,7 +55,9 @@ we solve the symmetric and quasi-definite system
     [ E    A ] [ r ]   [ b ]
     [ Aᵀ  -F ] [ x ] = [ 0 ],
 
-where E = M⁻¹  and F = N⁻¹.
+where E and F are symmetric and positive definite.
+LSMR is then equivalent to applying CG to `(AᵀE⁻¹A + F)y = AᵀE⁻¹b` with `r = E⁻¹(b - Ax)`.
+Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
 
 If `sqd` is set to `false` (the default), we solve the symmetric and
 indefinite system
@@ -63,8 +65,8 @@ indefinite system
     [ E    A ] [ r ]   [ b ]
     [ Aᵀ   0 ] [ x ] = [ 0 ].
 
-In this case, `N` can still be specified and indicates the norm
-in which `x` should be measured.
+In this case, `N` can still be specified and indicates the weighted norm in which `x` should be measured.
+`r` can be recovered by computing `E⁻¹(b - Ax)`.
 """
 function lsqr(A, b :: AbstractVector{T};
               M=opEye(), N=opEye(), sqd :: Bool=false,
