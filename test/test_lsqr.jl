@@ -56,6 +56,33 @@ function test_lsqr()
   @printf("LSQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lsqr_tol)
   @test(stats.solved)
+
+  # Test regularization
+  A, b, λ = regularization()
+  (x, stats) = lsqr(A, b, λ=λ)
+  r = b - A * x
+  resid = norm(A' * r - λ^2 * x) / norm(b)
+  @printf("LSQR: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ lsqr_tol)
+
+  # Test saddle-point systems
+  A, b, D = saddle_point()
+  D⁻¹ = inv(D)
+  (x, stats) = lsqr(A, b, M=D⁻¹)
+  r = D⁻¹ * (b - A * x)
+  resid = norm(A' * r) / norm(b)
+  @printf("LSQR: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ lsqr_tol)
+
+  # Test symmetric and quasi-definite systems
+  A, b, M, N = sqd()
+  M⁻¹ = inv(M)
+  N⁻¹ = inv(N)
+  (x, stats) = lsqr(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
+  r = M⁻¹ * (b - A * x)
+  resid = norm(A' * r - N * x) / norm(b)
+  @printf("LSQR: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ lsqr_tol)
 end
 
 test_lsqr()

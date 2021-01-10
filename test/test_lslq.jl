@@ -53,6 +53,33 @@ function test_lslq()
   @printf("LSLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lslq_tol)
   @test(stats.solved)
+
+  # Test regularization
+  A, b, λ = regularization()
+  (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, λ=λ)
+  r = b - A * x_lq
+  resid = norm(A' * r - λ^2 * x_lq) / norm(b)
+  @printf("LSLQ: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ lslq_tol)
+
+  # Test saddle-point systems
+  A, b, D = saddle_point()
+  D⁻¹ = inv(D)
+  (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, M=D⁻¹)
+  r = D⁻¹ * (b - A * x_lq)
+  resid = norm(A' * r) / norm(b)
+  @printf("LSLQ: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ lslq_tol)
+
+  # Test symmetric and quasi-definite systems
+  A, b, M, N = sqd()
+  M⁻¹ = inv(M)
+  N⁻¹ = inv(N)
+  (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
+  r = M⁻¹ * (b - A * x_lq)
+  resid = norm(A' * r - N * x_lq) / norm(b)
+  @printf("LSLQ: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ lslq_tol)
 end
 
 test_lslq()
