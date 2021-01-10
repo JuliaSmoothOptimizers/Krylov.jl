@@ -41,19 +41,25 @@ but is more stable.
 * `M::AbstractLinearOperator=opEye()`: a symmetric and positive definite dual preconditioner
 * `N::AbstractLinearOperator=opEye()`: a symmetric and positive definite primal preconditioner
 * `sqd::Bool=false` indicates whether or not we are solving a symmetric and quasi-definite augmented system
-  If `sqd = true`, we solve the symmetric and quasi-definite system
 
-      [ E    A ] [ r ]   [ b ]
-      [ Aᵀ  -F ] [ x ] = [ 0 ],
+If `sqd = true`, we solve the symmetric and quasi-definite system
 
-  where E = M⁻¹  and F = N⁻¹.
+    [ E    A ] [ r ]   [ b ]
+    [ Aᵀ  -F ] [ x ] = [ 0 ],
 
-  If `sqd = false`, we solve the symmetric and indefinite system
+where E and F are symmetric and positive definite.
+LSMR is then equivalent to applying SYMMLQ to `(AᵀE⁻¹A + F)y = AᵀE⁻¹b` with `r = E⁻¹(b - Ax)`.
+Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
 
-      [ E    A ] [ r ]   [ b ]
-      [ Aᵀ   0 ] [ x ] = [ 0 ].
+If `sqd` is set to `false` (the default), we solve the symmetric and
+indefinite system
 
-  In this case, `N` can still be specified and indicates the norm in which `x` and the forward error should be measured.
+    [ E    A ] [ r ]   [ b ]
+    [ Aᵀ   0 ] [ x ] = [ 0 ].
+
+In this case, `N` can still be specified and indicates the weighted norm in which `x` should be measured.
+`r` can be recovered by computing `E⁻¹(b - Ax)`.
+
 * `λ::Float64=0.0` is a regularization parameter (see the problem statement above)
 * `σ::Float64=0.0` is an underestimate of the smallest nonzero singular value of `A`---setting `σ` too large will result in an error in the course of the iterations
 * `atol::Float64=1.0e-8` is a stopping tolerance based on the residual
