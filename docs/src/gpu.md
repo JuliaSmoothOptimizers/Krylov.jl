@@ -43,7 +43,7 @@ can be applied directly on GPU thanks to efficient operators that take advantage
 ### Example with a symmetric positive-definite system
 
 ```julia
-using CUDA, Krylov
+using CUDA, Krylov, LinearOperators
 using CUDA.CUSPARSE, SparseArrays
 
 # LLᵀ ≈ A for CuSparseMatrixCSC matrices
@@ -68,7 +68,7 @@ opM = LinearOperator(T, n, n, true, true, x -> ldiv!(y, P, x))
 ### Example with a general square system
 
 ```julia
-using CUDA, Krylov
+using CUDA, Krylov, LinearOperators
 using CUDA.CUSPARSE, SparseArrays
 
 # LU ≈ A for CuSparseMatrixCSC matrices
