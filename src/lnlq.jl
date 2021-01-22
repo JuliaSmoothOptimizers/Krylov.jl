@@ -25,7 +25,10 @@
 export lnlq
 
 """
-    (x, y, stats) = lnlq(A, b; M, N, sqd, λ, atol, rtol, itmax, transfer_to_craig, verbose)
+    (x, y, stats) = lnlq(A, b :: AbstractVector{T};
+                         M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
+                         atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+                         transfer_to_craig :: Bool=true, verbose :: Int=0) where T <: AbstractFloat
 
 Find the least-norm solution of the consistent linear system
 
@@ -60,11 +63,11 @@ In this implementation, both the x and y-parts of the solution are returned.
 function lnlq(A, b :: AbstractVector{T};
               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-              transfer_to_craig :: Bool=true, verbose :: Bool=false) where T <: AbstractFloat
+              transfer_to_craig :: Bool=true, verbose :: Int=0) where T <: AbstractFloat
 
   m, n = size(A)
-  size(b, 1) == m || error("Inconsistent problem size")
-  verbose && @printf("LNLQ: system of %d equations in %d variables\n", m, n)
+  length(b) == m || error("Inconsistent problem size")
+  (verbose > 0) && @printf("LNLQ: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
   MisI = isa(M, opEye)
@@ -94,8 +97,14 @@ function lnlq(A, b :: AbstractVector{T};
   rNorms = [bNorm;]
   ε = atol + rtol * bNorm
 
-  iter = 1
+  iter = 0
   itmax == 0 && (itmax = m + n)
+
+  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
+  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
+
+  # Update iteration index
+  iter = iter + 1
 
   # Initialize generalized Golub-Kahan bidiagonalization.
   # β₁Mu₁ = b.
@@ -118,17 +127,18 @@ function lnlq(A, b :: AbstractVector{T};
   end
 
   # Set up workspace.
-  w̄ = copy(u)         # Direction w̄₁
-  cₖ = sₖ = zero(T)   # Givens sines and cosines used for the LQ factorization of (Lₖ)ᵀ
-  ζₖ₋₁ = zero(T)      # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
-  ηₖ = zero(T)        # Coefficient of M̅ₖ
+  w̄ = copy(u)        # Direction w̄₁
+  cₖ = sₖ = zero(T)  # Givens sines and cosines used for the LQ factorization of (Lₖ)ᵀ
+  ζₖ₋₁ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
+  ηₖ = zero(T)       # Coefficient of M̅ₖ
 
-  # Regularization.
+  # Variable used for the regularization.
   λₖ  = λ                 # λ₁ = λ
   cpₖ = spₖ = one(T)      # Givens sines and cosines used to zero out λₖ
   cdₖ = sdₖ = one(T)      # Givens sines and cosines used to define λₖ₊₁
   λ > 0 && (q = copy(v))  # Additional vector needed to update x, by definition q₀ = 0
 
+  # Initialize the regularization.
   if λ > 0
     #        k    2k      k   2k           k      2k
     # k   [  αₖ   λₖ ] [ cpₖ  spₖ ] = [  αhatₖ    0   ]
@@ -150,7 +160,7 @@ function lnlq(A, b :: AbstractVector{T};
   # [ •           •  •  βₖ]   [ •           •   •   •   0   ]
   # [ 0  •  •  •  •  0  αₖ]   [ 0   •   •   •   0   ηₖ ϵbarₖ]
 
-  ϵbarₖ = αhatₖ       # ϵbar₁ = αhat₁
+  ϵbarₖ = αhatₖ  # ϵbar₁ = αhat₁
 
   # Hₖ = Bₖ(Lₖ)ᵀ = [   Lₖ(Lₖ)ᵀ   ] ⟹ (Hₖ₋₁)ᵀ = [Lₖ₋₁Mₖ₋₁  0] Qₖ
   #                [ αₖβₖ₊₁(eₖ)ᵀ ]
@@ -166,9 +176,6 @@ function lnlq(A, b :: AbstractVector{T};
   solved_lq = solved_cg = false
   tired = iter ≥ itmax
   status = "unknown"
-
-  verbose && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  verbose && @printf("%5d  %7.1e\n", iter, bNorm)
 
   while !(solved_lq || solved_cg || tired)
 
@@ -221,6 +228,7 @@ function lnlq(A, b :: AbstractVector{T};
       NisI || @kscal!(n, 1 / αₖ₊₁, Nv)
     end
 
+    # Continue the regularization.
     if λ > 0
       #        k    2k      k   2k           k      2k
       # k   [  αₖ   λₖ ] [ cpₖ  spₖ ] = [  αhatₖ    0   ]
@@ -305,12 +313,12 @@ function lnlq(A, b :: AbstractVector{T};
     tired = iter ≥ itmax
     solved_lq = rNorm_lq ≤ ε
     solved_cg = transfer_to_craig && rNorm_cg ≤ ε
-    verbose && @printf("%5d  %7.1e\n", iter, rNorm_lq)
+    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
 
     # Update iteration index.
     iter = iter + 1
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
 
   if solved_cg
     if λ > 0
