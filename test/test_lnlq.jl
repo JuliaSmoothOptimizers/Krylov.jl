@@ -11,7 +11,7 @@ function test_lnlq()
 
   # Code coverage.
   A, b = kron_unsymmetric(4)
-  (x, y, stats) = lnlq(A, b, transfer_to_craig=false, verbose=true)
+  (x, y, stats) = lnlq(A, b, transfer_to_craig=false, verbose=1)
   show(stats)
 
   # Test b == 0
