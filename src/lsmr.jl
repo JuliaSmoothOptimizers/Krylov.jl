@@ -65,7 +65,7 @@ indefinite system
     [ E    A ] [ r ]   [ b ]
     [ Aᵀ   0 ] [ x ] = [ 0 ].
 
-In this case, `N` can still be specified and indicates the weighted norm in which `x` should be measured.
+In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᵀr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 """
 function lsmr(A, b :: AbstractVector{T};
