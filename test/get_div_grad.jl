@@ -1,7 +1,7 @@
 # Identity matrix.
 eye(n::Int) = sparse(1.0 * I, n, n)
 
-# Compute the energetic norm ‖r‖ₚ = √(rᵀPr) where P is a symmetric and positive definite matrix.
+# Compute the energy norm ‖r‖ₚ = √(rᵀPr) where P is a symmetric and positive definite matrix.
 metric(r, P) = sqrt(dot(r, P * r))
 
 # Based on Lars Ruthotto's initial implementation.
