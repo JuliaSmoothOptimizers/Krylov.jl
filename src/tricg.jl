@@ -4,7 +4,7 @@
 #
 # A. Montoison and D. Orban
 # TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems
-# Cahier du GERAD G-2020-41, GERAD, Montreal, 2020. doi:10.13140/RG.2.2.12344.16645
+# Cahier du GERAD G-2020-41, GERAD, Montréal, 2020. doi:10.13140/RG.2.2.12344.16645
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montréal, April 2020.
@@ -45,6 +45,10 @@ TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 
 Additional details can be displayed if verbose mode is enabled (verbose > 0).
 Information will be displayed every `verbose` iterations.
+
+#### Reference
+
+* A. Montoison and D. Orban, *TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems*, Cahier du GERAD G-2020-41, GERAD, Montréal, 2020.
 """
 function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),

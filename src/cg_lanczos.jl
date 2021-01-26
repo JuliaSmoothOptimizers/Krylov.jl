@@ -2,9 +2,8 @@
 # for a family of shifted systems of the form (A + αI) x = b.
 #
 # The implementation follows
-# A. Frommer and P. Maass, Fast CG-Based Methods for Tikhonov-Phillips
-# Regularization, SIAM Journal on Scientific Computing, 20(5),
-# pp. 1831-1850, 1999.
+# A. Frommer and P. Maass, Fast CG-Based Methods for Tikhonov-Phillips Regularization,
+# SIAM Journal on Scientific Computing, 20(5), pp. 1831--1850, 1999.
 #
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Princeton, NJ, March 2015.
@@ -26,6 +25,10 @@ The method does _not_ abort if A is not definite.
 
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
+
+#### Reference
+
+* A. Frommer and P. Maass, *Fast CG-Based Methods for Tikhonov-Phillips Regularization*, SIAM Journal on Scientific Computing, 20(5), pp. 1831--1850, 1999.
 """
 function cg_lanczos(A, b :: AbstractVector{T};
                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,

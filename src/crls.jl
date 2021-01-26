@@ -11,7 +11,7 @@
 #
 # D. C.-L. Fong, Minimum-Residual Methods for Sparse
 # Least-Squares using Golubg-Kahan Bidiagonalization,
-# Ph.D. Thesis, Stanford University, 2011
+# Ph.D. Thesis, Stanford University, 2011.
 #
 # with the difference that it also recurs r = b - Ax.
 #
@@ -40,6 +40,10 @@ This implementation recurs the residual r := b - Ax.
 CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr‖₂.
 It is formally equivalent to LSMR, though can be substantially less accurate,
 but simpler to implement.
+
+#### Reference
+
+* D. C.-L. Fong, *Minimum-Residual Methods for Sparse, Least-Squares using Golubg-Kahan Bidiagonalization*, Ph.D. Thesis, Stanford University, 2011..
 """
 function crls(A, b :: AbstractVector{T};
               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),

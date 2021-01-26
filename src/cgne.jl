@@ -16,7 +16,7 @@
 # names, and is described in
 #
 # J. E. Craig. The N-step iteration procedures.
-# Journal of Mathematics and Physics, 34(1):64--73, 1955.
+# Journal of Mathematics and Physics, 34(1), pp. 64--73, 1955.
 #
 # which is based on Craig's thesis from MIT:
 #
@@ -57,6 +57,11 @@ It is formally equivalent to CRAIG, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 
 A preconditioner M may be provided in the form of a linear operator.
+
+#### References
+
+* J. E. Craig, *The N-step iteration procedures*, Journal of Mathematics and Physics, 34(1), pp. 64--73, 1955.
+* J. E. Craig, *Iterations Procedures for Simultaneous Equations*, Ph.D. Thesis, Department of Electrical Engineering, MIT, 1954.
 """
 function cgne(A, b :: AbstractVector{T};
               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),

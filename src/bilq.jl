@@ -5,7 +5,7 @@
 #
 # A. Montoison and D. Orban
 # BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property.
-# Cahier du GERAD G-2019-71, GERAD, Montreal, 2019. doi:10.13140/RG.2.2.18287.59042
+# SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, February 2019.
@@ -24,6 +24,10 @@ When A is symmetric and b = c, BiLQ is equivalent to SYMMLQ.
 
 An option gives the possibility of transferring to the BiCG point,
 when it exists. The transfer is based on the residual norm.
+
+#### Reference
+
+* A. Montoison and D. Orban, *BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*, SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
 function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
               atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,

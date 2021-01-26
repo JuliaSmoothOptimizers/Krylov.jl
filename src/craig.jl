@@ -18,12 +18,12 @@
 #
 # C. C. Paige and M. A. Saunders, LSQR: An Algorithm for Sparse
 # Linear Equations and Sparse Least Squares, ACM Transactions on
-# Mathematical Software, Vol 8, No. 1, pp. 43-71, 1982.
+# Mathematical Software, 8(1), pp. 43--71, 1982.
 #
 # and
 #
-# M. A. Saunders, Solutions of Sparse Rectangular Systems Using
-# LSQR and CRAIG, BIT, No. 35, pp. 588-604, 1995.
+# M. A. Saunders, Solutions of Sparse Rectangular Systems Using LSQR and CRAIG,
+# BIT Numerical Mathematics, 35(4), pp. 588--604, 1995.
 #
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Montréal, QC, April 2015.
@@ -70,6 +70,11 @@ If `sqd = false`, CRAIG solves the symmetric and indefinite system
 In this case, M⁻¹ can still be specified and indicates the weighted norm in which residuals are measured.
 
 In this implementation, both the x and y-parts of the solution are returned.
+
+#### References
+
+* C. C. Paige and M. A. Saunders, *LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*, ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
+* M. A. Saunders, *Solutions of Sparse Rectangular Systems Using LSQR and CRAIG*, BIT Numerical Mathematics, 35(4), pp. 588--604, 1995.
 """
 function craig(A, b :: AbstractVector{T};
                M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),

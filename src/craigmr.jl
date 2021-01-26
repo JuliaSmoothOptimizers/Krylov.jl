@@ -14,9 +14,8 @@
 #
 # This method is equivalent to CRMR, and is described in
 #
-# M. Arioli and D. Orban, Iterative Methods for Symmetric
-# Quasi-Definite Linear Systems, Part I: Theory.
-# Cahier du GERAD G-2013-32, GERAD, Montreal QC, Canada, 2013.
+# D. Orban and M. Arioli. Iterative Solution of Symmetric Quasi-Definite Linear Systems,
+# Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
 #
 # D. Orban, The Projected Golub-Kahan Process for Constrained
 # Linear Least-Squares Problems. Cahier du GERAD G-2014-15,
@@ -64,6 +63,11 @@ CRAIGMR produces monotonic residuals ‖r‖₂.
 It is formally equivalent to CRMR, though can be slightly more accurate,
 and intricate to implement. Both the x- and y-parts of the solution are
 returned.
+
+#### References
+
+* D. Orban and M. Arioli. *Iterative Solution of Symmetric Quasi-Definite Linear Systems*, Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
+* D. Orban, *The Projected Golub-Kahan Process for Constrained, Linear Least-Squares Problems*. Cahier du GERAD G-2014-15, 2014.
 """
 function craigmr(A, b :: AbstractVector{T};
                  M=opEye(), N=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
