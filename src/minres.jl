@@ -12,8 +12,8 @@
 # This implementation follows the original implementation by
 # Michael Saunders described in
 #
-# C. C. Paige and M. A. Saunders, Solution of Sparse Indefinite Systems
-# of Linear Equations, SIAM Journal on Numerical Analysis, 12(4), 617-629, 1975.
+# C. C. Paige and M. A. Saunders, Solution of Sparse Indefinite Systems of Linear Equations,
+# SIAM Journal on Numerical Analysis, 12(4), pp 617--629, 1975.
 #
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Brussels, Belgium, June 2015.
@@ -48,6 +48,10 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr
 
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
+
+#### Reference
+
+* C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
 function minres(A, b :: AbstractVector{T};
                 M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,

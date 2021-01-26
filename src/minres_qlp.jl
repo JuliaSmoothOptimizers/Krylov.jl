@@ -3,13 +3,13 @@
 # This method is described in
 #
 # S.-C. T. Choi, Iterative methods for singular linear equations and least-squares problems.
-# PHD thesis, ICME, Stanford University, 2006.
+# Ph.D. thesis, ICME, Stanford University, 2006.
 #
 # S.-C. T. Choi, C. C. Paige and M. A. Saunders, MINRES-QLP: A Krylov subspace method for indefinite or singular symmetric systems.
 # SIAM Journal on Scientific Computing, Vol. 33(4), pp. 1810--1836, 2011.
 #
-# S.-C. T. Choi and M. A. Saunders, MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems.
-# ACM Transactions on Mathematical Software, 2014.
+# S.-C. T. Choi and M. A. Saunders, Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems.
+# ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, September 2019.
@@ -28,6 +28,12 @@ It is significantly more complex but can be more reliable than MINRES when A is 
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 M also indicates the weighted norm in which residuals are measured.
+
+#### References
+
+* S.-C. T. Choi, *Iterative methods for singular linear equations and least-squares problems*, Ph.D. thesis, ICME, Stanford University, 2006.
+* S.-C. T. Choi, C. C. Paige and M. A. Saunders, *MINRES-QLP: A Krylov subspace method for indefinite or singular symmetric systems*, SIAM Journal on Scientific Computing, Vol. 33(4), pp. 1810--1836, 2011.
+* S.-C. T. Choi and M. A. Saunders, *Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems*, ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014.
 """
 function minres_qlp(A, b :: AbstractVector{T};
                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),

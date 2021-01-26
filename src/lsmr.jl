@@ -67,6 +67,10 @@ indefinite system
 
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᵀr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
+
+#### Reference
+
+* D. C.-L. Fong and M. A. Saunders, *LSMR: An Iterative Algorithm for Sparse*, Least Squares Problems, SIAM Journal on Scientific Computing, 33(5), pp. 2950--2971, 2011.
 """
 function lsmr(A, b :: AbstractVector{T};
               M=opEye(), N=opEye(), sqd :: Bool=false,

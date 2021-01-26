@@ -67,6 +67,10 @@ indefinite system
 
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᵀr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
+
+#### Reference
+
+* C. C. Paige and M. A. Saunders, *LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*, ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
 """
 function lsqr(A, b :: AbstractVector{T};
               M=opEye(), N=opEye(), sqd :: Bool=false,

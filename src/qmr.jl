@@ -13,7 +13,7 @@
 #
 # A. Montoison and D. Orban
 # BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property.
-# Cahier du GERAD G-2019-71, GERAD, Montreal, 2019. doi:10.13140/RG.2.2.18287.59042
+# SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, May 2019.
@@ -29,6 +29,12 @@ Solve the square linear system Ax = b using the QMR method.
 
 QMR is based on the Lanczos biorthogonalization process.
 When A is symmetric and b = c, QMR is equivalent to MINRES.
+
+#### References
+
+* R. W. Freund and N. M. Nachtigal, *QMR : a quasi-minimal residual method for non-Hermitian linear systems*, Numerische mathematik, Vol. 60(1), pp. 315--339, 1991.
+* R. W. Freund and N. M. Nachtigal, *An implementation of the QMR method based on coupled two-term recurrences*, SIAM Journal on Scientific Computing, Vol. 15(2), pp. 313--337, 1994.
+* A. Montoison and D. Orban, *BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*, SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
 function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
              atol :: T=√eps(T), rtol :: T=√eps(T),

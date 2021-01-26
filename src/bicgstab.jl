@@ -35,6 +35,11 @@ Additional details can be displayed if verbose mode is enabled (verbose > 0).
 Information will be displayed every `verbose` iterations.
 
 This implementation allows a left preconditioner `M` and a right preconditioner `N`.
+
+#### References
+
+* H. A. van der Vorst, *Bi-CGSTAB: A fast and smoothly converging variant of Bi-CG for the solution of nonsymmetric linear systems*, SIAM Journal on Scientific and Statistical Computing, 13(2), pp. 631--644, 1992.
+* G. L.G. Sleijpen and D. R. Fokkema, *BiCGstab(ℓ) for linear equations involving unsymmetric matrices with complex spectrum*, Electronic Transactions on Numerical Analysis, 1, pp. 11--32, 1993.
 """
 function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
                   M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),

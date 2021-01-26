@@ -27,6 +27,11 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 - Left  preconditioning : M⁻¹Ax = M⁻¹b
 - Right preconditioning : AN⁻¹u = b with x = N⁻¹u
 - Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
+
+#### References
+
+* Y. Saad, *Iterative methods for sparse linear systems*, PWS Publishing Company, Boston, USA, 1996.
+* Y. Saad and K. Wu, *DQGMRES: a quasi minimal residual algorithm based on incomplete orthogonalization*, Numerical Linear Algebra with Applications, Vol. 3(4), pp. 329--343, 1996.
 """
 function dqgmres(A, b :: AbstractVector{T};
                  M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),

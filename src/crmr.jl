@@ -14,9 +14,8 @@
 #
 # This method is equivalent to Craig-MR, described in
 #
-# M. Arioli and D. Orban, Iterative Methods for Symmetric
-# Quasi-Definite Linear Systems, Part I: Theory.
-# Cahier du GERAD G-2013-32, GERAD, Montreal QC, Canada, 2013.
+# D. Orban and M. Arioli. Iterative Solution of Symmetric Quasi-Definite Linear Systems,
+# Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
 #
 # D. Orban, The Projected Golub-Kahan Process for Constrained
 # Linear Least-Squares Problems. Cahier du GERAD G-2014-15,
@@ -56,6 +55,11 @@ It is formally equivalent to CRAIG-MR, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 
 A preconditioner M may be provided in the form of a linear operator.
+
+#### References
+
+* D. Orban and M. Arioli, *Iterative Solution of Symmetric Quasi-Definite Linear Systems*, Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
+* D. Orban, *The Projected Golub-Kahan Process for Constrained Linear Least-Squares Problems*. Cahier du GERAD G-2014-15, 2014.
 """
 function crmr(A, b :: AbstractVector{T};
               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T),

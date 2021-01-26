@@ -29,6 +29,11 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 - Left  preconditioning : M⁻¹Ax = M⁻¹b
 - Right preconditioning : AN⁻¹u = b with x = N⁻¹u
 - Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
+
+#### References
+
+* Y. Saad, *Iterative methods for sparse linear systems*, PWS Publishing Company, Boston, USA, 1996.
+* Y. Saad, *Practical use of some krylov subspace methods for solving indefinite and nonsymmetric linear systems*, SIAM journal on scientific and statistical computing, 5(1), pp. 203--228, 1984.
 """
 function diom(A, b :: AbstractVector{T};
               M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,

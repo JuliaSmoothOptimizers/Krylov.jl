@@ -13,8 +13,10 @@
 # ill-conditioned or poorly scaled problems.
 #
 # This implementation is the standard formulation, as recommended by
+#
 # A. Björck, T. Elfving and Z. Strakos, Stability of Conjugate Gradient
 # and Lanczos Methods for Linear Least Squares Problems.
+# SIAM Journal on Matrix Analysis and Applications, 19(3), pp. 720--736, 1998.
 #
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Princeton, NJ, March 2015.
@@ -41,6 +43,10 @@ but is more stable.
 CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖Aᵀr‖₂.
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
+
+#### Reference
+
+* A. Björck, T. Elfving and Z. Strakos, *Stability of Conjugate Gradient and Lanczos Methods for Linear Least Squares Problems*, SIAM Journal on Matrix Analysis and Applications, 19(3), pp. 720--736, 1998.
 """
 function cgls(A, b :: AbstractVector{T};
               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),

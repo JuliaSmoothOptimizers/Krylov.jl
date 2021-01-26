@@ -100,8 +100,8 @@ The iterations stop as soon as one of the following conditions holds true:
 
 #### References
 
-* R. Estrin, D. Orban and M. A. Saunders, *Estimates of the 2-Norm Forward Error for SYMMLQ and CG*, Cahier du GERAD G-2016-70, GERAD, Montreal, 2016. DOI http://dx.doi.org/10.13140/RG.2.2.19581.77288.
-* R. Estrin, D. Orban and M. A. Saunders, *LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*, Cahier du GERAD G-2017-xx, GERAD, Montreal, 2017.
+* R. Estrin, D. Orban and M. A. Saunders, *Euclidean-norm error bounds for SYMMLQ and CG*, SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 235--253, 2019.
+* R. Estrin, D. Orban and M. A. Saunders, *LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*, SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 254--275, 2019.
 """
 function lslq(A, b :: AbstractVector{T};
               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),

@@ -8,11 +8,11 @@
 #
 # A. Buttari, D. Orban, D. Ruiz and D. Titley-Peloquin
 # A tridiagonalization method for symmetric saddle-point and quasi-definite systems.
-# Cahier du GERAD G-2018-42, GERAD, Montreal, 2018. doi:10.13140/RG.2.2.26337.20328
+# SIAM Journal on Scientific Computing, 41(5), pp. 409--432, 2019.
 #
 # A. Montoison and D. Orban
 # BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property.
-# Cahier du GERAD G-2019-71, GERAD, Montreal, 2019. doi:10.13140/RG.2.2.18287.59042
+# SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, November 2018.
@@ -35,6 +35,12 @@ In all cases, problems must be consistent.
 
 An option gives the possibility of transferring to the USYMCG point,
 when it exists. The transfer is based on the residual norm.
+
+#### References
+
+* M. A. Saunders, H. D. Simon, and E. L. Yip, *Two Conjugate-Gradient-Type Methods for Unsymmetric Linear Equations*, SIAM Journal on Numerical Analysis, 25(4), pp. 927--940, 1988.
+* A. Buttari, D. Orban, D. Ruiz and D. Titley-Peloquin, *A tridiagonalization method for symmetric saddle-point and quasi-definite systems*, SIAM Journal on Scientific Computing, 41(5), pp. 409--432, 2019.
+* A. Montoison and D. Orban, *BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*, SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
 function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,

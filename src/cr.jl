@@ -1,6 +1,10 @@
-# A truncated version of Stiefel’s Conjugate Residual method
-# cr(A, b, M, atol, rtol, γ, itmax, radius, verbose, linesearch) solves the linear system 'A * x = b' or the least-squares problem :
-# 'min ‖b - A * x‖²' within a region of fixed radius.
+# A truncated version of Stiefel’s Conjugate Residual method described in
+#
+# M. R. Hestenes and E. Stiefel. Methods of conjugate gradients for solving linear systems.
+# Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
+#
+# M-A. Dahito and D. Orban, The Conjugate Residual Method in Linesearch and Trust-Region Methods.
+# SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
 #
 # Marie-Ange Dahito, <marie-ange.dahito@polymtl.ca>
 # Montreal, QC, June 2017
@@ -12,11 +16,10 @@ export cr
                     M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T), itmax::Int=0,
                     radius::T=zero(T), verbose::Int=0, linesearch::Bool=false) where T <: AbstractFloat
 
-A truncated version of Stiefel’s Conjugate Residual method to solve the symmetric linear system Ax=b.
+A truncated version of Stiefel’s Conjugate Residual method to solve the symmetric linear system Ax = b or the least-squares problem min ‖b - Ax‖.
 The matrix A must be positive semi-definite.
 
-A preconditioner M may be provided in the form of a linear operator and is
-assumed to be symmetric and positive definite.
+A preconditioner M may be provided in the form of a linear operator and is assumed to be symmetric and positive definite.
 M also indicates the weighted norm in which residuals are measured.
 
 In a linesearch context, 'linesearch' must be set to 'true'.
@@ -24,6 +27,10 @@ In a linesearch context, 'linesearch' must be set to 'true'.
 If `itmax=0`, the default number of iterations is set to `2 * n`,
 with `n = length(b)`.
 
+#### References
+
+* M. R. Hestenes and E. Stiefel, *Methods of conjugate gradients for solving linear systems*, Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
+* M-A. Dahito and D. Orban, *The Conjugate Residual Method in Linesearch and Trust-Region Methods*, SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
 """
 function cr(A, b :: AbstractVector{T};
             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,

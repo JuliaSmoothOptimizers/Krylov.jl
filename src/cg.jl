@@ -5,6 +5,11 @@
 # monitoring ‖p‖, which would cost an extra norm computation per
 # iteration.
 #
+# This method is described in
+#
+# M. R. Hestenes and E. Stiefel. Methods of conjugate gradients for solving linear systems.
+# Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
+#
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Salt Lake City, UT, March 2015.
 
@@ -28,6 +33,9 @@ M also indicates the weighted norm in which residuals are measured.
 If `itmax=0`, the default number of iterations is set to `2 * n`,
 with `n = length(b)`.
 
+#### Reference
+
+* M. R. Hestenes and E. Stiefel, *Methods of conjugate gradients for solving linear systems*, Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
 """
 function cg(A, b :: AbstractVector{T};
             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
