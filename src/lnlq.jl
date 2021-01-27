@@ -59,6 +59,10 @@ If `sqd = false`, LNLQ solves the symmetric and indefinite system
 In this case, M can still be specified and indicates the weighted norm in which residuals are measured.
 
 In this implementation, both the x and y-parts of the solution are returned.
+
+#### Reference
+
+* R. Estrin, D. Orban, M.A. Saunders, *LNLQ: An Iterative Method for Least-Norm Problems with an Error Minimization Property*, SIAM Journal on Matrix Analysis and Applications, 40(3), pp. 1102--1124, 2019.
 """
 function lnlq(A, b :: AbstractVector{T};
               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
@@ -174,7 +178,7 @@ function lnlq(A, b :: AbstractVector{T};
 
   # Stopping criterion.
   solved_lq = solved_cg = false
-  tired = iter ≥ itmax
+  tired = false
   status = "unknown"
 
   while !(solved_lq || solved_cg || tired)
