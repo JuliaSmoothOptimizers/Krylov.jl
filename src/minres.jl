@@ -13,7 +13,7 @@
 # Michael Saunders described in
 #
 # C. C. Paige and M. A. Saunders, Solution of Sparse Indefinite Systems of Linear Equations,
-# SIAM Journal on Numerical Analysis, 12(4), pp 617--629, 1975.
+# SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 #
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Brussels, Belgium, June 2015.

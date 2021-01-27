@@ -2,9 +2,6 @@
 #
 # This method is described in
 #
-# Y. Saad, Iterative methods for sparse linear systems.
-# PWS Publishing Company, Boston, USA, 1996.
-#
 # P. Sonneveld, CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems.
 # SIAM Journal on Scientific and Statistical Computing, 10(1), pp. 36--52, 1989.
 #
@@ -37,9 +34,8 @@ TFQMR and BICGSTAB were developed to remedy this difficulty.»
 
 This implementation allows a left preconditioner M and a right preconditioner N.
 
-#### References
+#### Reference
 
-* Y. Saad, *Iterative methods for sparse linear systems*, PWS Publishing Company, Boston, USA, 1996.
 * P. Sonneveld, *CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems*, SIAM Journal on Scientific and Statistical Computing, 10(1), pp. 36--52, 1989.
 """
 function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,

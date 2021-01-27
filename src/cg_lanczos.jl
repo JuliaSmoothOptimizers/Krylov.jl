@@ -5,6 +5,9 @@
 # A. Frommer and P. Maass, Fast CG-Based Methods for Tikhonov-Phillips Regularization,
 # SIAM Journal on Scientific Computing, 20(5), pp. 1831--1850, 1999.
 #
+# C. C. Paige and M. A. Saunders, Solution of Sparse Indefinite Systems of Linear Equations,
+# SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
+#
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Princeton, NJ, March 2015.
 
@@ -26,9 +29,10 @@ The method does _not_ abort if A is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 
-#### Reference
+#### References
 
 * A. Frommer and P. Maass, *Fast CG-Based Methods for Tikhonov-Phillips Regularization*, SIAM Journal on Scientific Computing, 20(5), pp. 1831--1850, 1999.
+* C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
 function cg_lanczos(A, b :: AbstractVector{T};
                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
