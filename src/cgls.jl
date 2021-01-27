@@ -12,6 +12,11 @@
 # equivalent to LSQR though LSQR should be expected to be more stable on
 # ill-conditioned or poorly scaled problems.
 #
+# This method is described in
+#
+# M. R. Hestenes and E. Stiefel. Methods of conjugate gradients for solving linear systems.
+# Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
+#
 # This implementation is the standard formulation, as recommended by
 #
 # A. Björck, T. Elfving and Z. Strakos, Stability of Conjugate Gradient
@@ -44,8 +49,9 @@ CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖A�
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 
-#### Reference
+#### References
 
+* M. R. Hestenes and E. Stiefel. *Methods of conjugate gradients for solving linear systems*, Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
 * A. Björck, T. Elfving and Z. Strakos, *Stability of Conjugate Gradient and Lanczos Methods for Linear Least Squares Problems*, SIAM Journal on Matrix Analysis and Applications, 19(3), pp. 720--736, 1998.
 """
 function cgls(A, b :: AbstractVector{T};
