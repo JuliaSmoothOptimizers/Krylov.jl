@@ -202,11 +202,19 @@ function adjoint_pde(n :: Int=50, m :: Int=50)
   return A, b, c
 end
 
-# Poisson equation in polar coordinates.
+# Poisson equation in polar coordinates with homogeneous boundary conditions.
 function polar_poisson(n :: Int=50, m :: Int=50)
   f(r, θ) = -3.0 * cos(θ)
   g(r, θ) = 0.0
   A, b = polar_poisson(n, m, f, g)
+  return A, b
+end
+
+# Poisson equation in cartesian coordinates with homogeneous boundary conditions.
+function cartesian_poisson(n :: Int=50, m :: Int=50)
+  f(x, y) = - 2.0 * π * π * sin(π * x) * sin(π * y)
+  g(x, y) = 0.0
+  A, b = cartesian_poisson(n, m, f, g)
   return A, b
 end
 

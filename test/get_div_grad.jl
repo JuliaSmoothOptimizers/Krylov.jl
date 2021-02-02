@@ -96,26 +96,26 @@ function PDE(n, m, f, g, pde_coefs; dim_x=[0.0, 1.0], dim_y=[0.0, 1.0])
   # ∂z(xᵢ, yⱼ) / ∂x ≈ (zᵢ₊₁.ⱼ - zᵢ₋₁.ⱼ) / (2 * Δx)
   # ∂z(xᵢ, yⱼ) / ∂y ≈ (zᵢ.ⱼ₊₁ - zᵢ.ⱼ₋₁) / (2 * Δy)
   #
-  # uᵢ.ⱼ = u[i + m * (j-1)]
-  # bᵢ.ⱼ = f[i + m * (j-1)]
+  # uᵢ.ⱼ = u[i + n * (j-1)]
+  # bᵢ.ⱼ = f[i + n * (j-1)]
   #
-  # vᵢ.ⱼ = v[i + m * (j-1)]
-  # cᵢ.ⱼ = g[i + m * (j-1)]
+  # vᵢ.ⱼ = v[i + n * (j-1)]
+  # cᵢ.ⱼ = g[i + n * (j-1)]
   A = spzeros(n * m, n * m)
   for i = 1 : n
     for j = 1 : m
-      A[i + m*(j-1), i + m*(j-1)] = - 2*a / (Δx * Δx) - 2*b / (Δy * Δy) + e
+      A[i + n*(j-1), i + n*(j-1)] = - 2*a / (Δx * Δx) - 2*b / (Δy * Δy) + e
       if i ≥ 2
-        A[i + m*(j-1), (i-1) + m*(j-1)] = a / (Δx * Δx) - c / (2*Δx)
+        A[i + n*(j-1), (i-1) + n*(j-1)] = a / (Δx * Δx) - c / (2 * Δx)
       end
       if i ≤ n-1
-        A[i + m*(j-1), (i+1) + m*(j-1)] = a / (Δx * Δx) + c / (2*Δx)
+        A[i + n*(j-1), (i+1) + n*(j-1)] = a / (Δx * Δx) + c / (2 * Δx)
       end
       if j ≥ 2
-        A[i + m*(j-1), i + m*(j-2)] = b / (Δy * Δy) - d / (2*Δy)
+        A[i + n*(j-1), i + n*(j-2)] = b / (Δy * Δy) - d / (2 * Δy)
       end
       if j ≤ m-1
-        A[i + m*(j-1), i + m*j] = b / (Δy * Δy) + d / (2*Δy)
+        A[i + n*(j-1), i + n*j] = b / (Δy * Δy) + d / (2 * Δy)
       end
     end
   end
@@ -123,14 +123,14 @@ function PDE(n, m, f, g, pde_coefs; dim_x=[0.0, 1.0], dim_y=[0.0, 1.0])
   b = zeros(n * m)
   for i = 1 : n
     for j = 1 : m
-      b[i + m*(j-1)] = f(x[i], y[j])
+      b[i + n*(j-1)] = f(x[i], y[j])
     end
   end
 
   c = zeros(n * m)
   for i = 1 : n
     for j = 1 : m
-      c[i + m*(j-1)] = g(x[i], y[j])
+      c[i + n*(j-1)] = g(x[i], y[j])
     end
   end
 
@@ -154,7 +154,7 @@ function polar_poisson(n, m, f, g; R=1.0)
   A = spzeros(n * m, n * m)
   for k = 1 : m
     A[1+(k-1)*n : k*n, 1+(k-1)*n : k*n] = T - 2*D
-    if k ≤ m - 1
+    if k ≤ m-1
       A[1+k*n : (k+1)*n, 1+(k-1)*n : k*n] = D
       A[1+(k-1)*n : k*n, 1+k*n : (k+1)*n] = D
     end
@@ -163,11 +163,69 @@ function polar_poisson(n, m, f, g; R=1.0)
   A[1 : n, 1+(m-1)*n : m*n] = D
 
   b = zeros(n * m)
-  for j = 1 : m
-    for i = 1 : n-1
-      b[n*(j-1) + i] = Δr * Δr * f(r[i], θ[j])
+  for i = 1 : n
+    for j = 1 : m
+      b[i + n*(j-1)] = Δr * Δr * f(r[i], θ[j])
       if i == n
-        b[n*(j-1) + i] -= (1.0 + λ[n]) * g(r[n+1], θ[j])
+        b[i + n*(j-1)] -= (1.0 + λ[n]) * g(R, θ[j])
+      end
+    end
+  end
+
+  return A, b
+end
+
+# Model Poisson equation in cartesian coordinates
+function cartesian_poisson(n, m, f, g; dim_x=[0.0, 1.0], dim_y=[0.0, 1.0])
+  # Ω = ]xₗ,xᵣ[ × ]yₗ,yᵣ[
+  # Ω ∪ ∂Ω = [xₗ,xᵣ] × [yₗ,yᵣ]
+  xₗ = dim_x[1]
+  xᵣ = dim_x[2]
+
+  yₗ = dim_y[1]
+  yᵣ = dim_y[2]
+
+  # Uniform grid of Ω with n × m points
+  Δx = (xᵣ - xₗ) / (n + 1)
+  x = [xₗ + i * Δx for i = 1 : n]
+
+  Δy = (yᵣ - yₗ) / (m + 1)
+  y = [yₗ + j * Δy for j = 1 : m]
+
+  A = spzeros(n * m, n * m)
+  for i = 1 : n
+    for j = 1 : m
+      A[i + (j-1)*n, i + (j-1)*n] = - 2.0 / (Δx * Δx) - 2.0 / (Δy * Δy)
+      if i ≥ 2
+        A[i + (j-1)*n, i-1 + (j-1)*n] = 1.0 / (Δx * Δx)
+      end
+      if i ≤ n-1
+        A[i + (j-1)*n, i+1 + (j-1)*n] = 1.0 / (Δx * Δx)
+      end
+      if j ≥ 2
+        A[i + (j-1)*n, i + (j-2)*n] = 1.0 / (Δy * Δy)
+      end
+      if j ≤ m-1
+        A[i + (j-1)*n, i + j*n] = 1.0 / (Δy * Δy)
+      end
+    end
+  end
+
+  b = zeros(n * m)
+  for i = 1 : n
+    for j = 1 : m
+      b[i + (j-1)*n] = f(x[i], y[j])
+      if i == 1
+        b[i + (j-1)*n] -= g(xₗ, y[j]) / (Δx * Δx)
+      end
+      if i == n
+        b[i + (j-1)*n] -= g(xᵣ, y[j]) / (Δx * Δx)
+      end
+      if j == 1
+        b[i + (j-1)*n] -= g(x[i], yₗ) / (Δy * Δy)
+      end
+      if j == m
+        b[i + (j-1)*n] -= g(x[i], yᵣ) / (Δy * Δy)
       end
     end
   end

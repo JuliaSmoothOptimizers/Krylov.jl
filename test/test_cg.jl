@@ -92,6 +92,15 @@ function test_cg()
   A, b = square_inconsistent()
   x, stats = cg(A, b)
   @test stats.inconsistent
+
+  # Poisson equation in cartesian coordinates.
+  A, b = cartesian_poisson()
+  (x, stats) = cg(-A, -b)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @printf("CG: Relative residual: %8.1e\n", resid)
+  @test(resid ≤ cg_tol)
+  @test(stats.solved)
 end
 
 test_cg()

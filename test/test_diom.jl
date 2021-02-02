@@ -67,7 +67,7 @@ function test_diom()
 
   # Poisson equation in polar coordinates.
   A, b = polar_poisson()
-  (x, stats) = diom(A, b, memory=100)
+  (x, stats) = diom(A, b, memory=200)
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("DIOM: Relative residual: %8.1e\n", resid)
