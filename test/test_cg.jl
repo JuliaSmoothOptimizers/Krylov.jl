@@ -95,7 +95,7 @@ function test_cg()
 
   # Poisson equation in cartesian coordinates.
   A, b = cartesian_poisson()
-  (x, stats) = cg(-A, -b)
+  (x, stats) = cg(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("CG: Relative residual: %8.1e\n", resid)
