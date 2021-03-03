@@ -1,5 +1,3 @@
-using LinearAlgebra
-
 # Replace identity operator modelized with UniformScaling by opEye
 function wrap_uniformscaling(U)
   if U.λ == 1
