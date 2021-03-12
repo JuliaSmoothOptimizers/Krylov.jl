@@ -15,6 +15,20 @@ function test_aux()
   (c, s, ρ) = Krylov.sym_givens(0.0, -b)
   @test (c == 0.0) && (s == -1.0) && (ρ == b)
 
+  (c, s, ρ) = Krylov.sym_givens(Complex(0.0), Complex(0.0))
+  @test (c == 1.0) && (s == Complex(0.0)) && (ρ == Complex(0.0))
+
+  a = Complex(1.0, 1.0)
+  (c, s, ρ) = Krylov.sym_givens(a, Complex(0.0))
+  @test (c == 1.0) && (s == Complex(0.0)) && (ρ == a)
+  (c, s, ρ) = Krylov.sym_givens(-a, Complex(0.0))
+  @test (c == 1.0) && (s == Complex(0.0)) && (ρ == -a)
+
+  b = Complex(1.0, 1.0)
+  (c, s, ρ) = Krylov.sym_givens(Complex(0.0), b)
+  @test (c == 0.0) && (s == Complex(1.0)) && (ρ == b)
+  (c, s, ρ) = Krylov.sym_givens(Complex(0.0), -b)
+  @test (c == 0.0) && (s == Complex(1.0)) && (ρ == -b)
 
   # test roots of a quadratic
   roots = Krylov.roots_quadratic(0.0, 0.0, 0.0)
