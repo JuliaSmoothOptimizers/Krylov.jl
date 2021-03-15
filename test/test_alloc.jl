@@ -245,11 +245,12 @@ actual_usymqr_bytes = @allocated usymqr(Ao, b, c)
 @test actual_usymqr_bytes ≤ 1.1 * expected_usymqr_bytes
 
 # with (Ap, Aᵀq) preallocated, TRILQR needs:
-# - 9 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₁, wₖ
-storage_trilqr(n) = 9 * n
-storage_trilqr_bytes(n) = 8 * storage_trilqr(n)
+# - 5 m-vectors: vₖ₋₁, vₖ, t, wₖ₋₁, wₖ
+# - 4 n-vectors: uₖ₋₁, uₖ, x, d̅
+storage_trilqr(n, m) = 5 * m + 4 * n
+storage_trilqr_bytes(n, m) = 8 * storage_trilqr(n, m)
 
-expected_trilqr_bytes = storage_trilqr_bytes(n)
+expected_trilqr_bytes = storage_trilqr_bytes(n, n)
 trilqr(A, b, b)  # warmup
 actual_trilqr_bytes = @allocated trilqr(A, b, b)
 @test actual_trilqr_bytes ≤ 1.1 * expected_trilqr_bytes
