@@ -80,8 +80,7 @@ function minres!(A, b :: AbstractVector{T}, solver :: MinresSolver{S, T};
   eltype(A) == T || error("eltype(A) ≠ $T")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
-  # # Determine the storage type of b
-  # S = typeof(b)
+  # get data from solver
   x, r1, r2, w1, w2, err_vec = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.err_vec
   window = length(err_vec)
 
@@ -124,7 +123,6 @@ function minres!(A, b :: AbstractVector{T}, solver :: MinresSolver{S, T};
 
   xENorm² = zero(T)
   err_lbnd = zero(T)
-  # err_vec = zeros(T, window)
   err_vec .= 0
 
   iter = 0
