@@ -19,7 +19,7 @@
 # Brussels, Belgium, June 2015.
 # Montreal, August 2015.
 
-export minres
+export minres, minres!
 
 
 """
@@ -49,15 +49,27 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 
+It is also possible to use MINRES in-place
+
+    (x, stats) = minres!(A, b :: AbstractVector{T}, solver :: MinresSolver{S, T};
+                         M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
+                         rtol :: T=√eps(T)/100, etol :: T=√eps(T),
+                         itmax :: Int=0, conlim :: T=1/√eps(T),
+                         verbose :: Int=0) where {S, T <: AbstractFloat}
+
+where `solver` is a [`Krylov.MinresSolver`](@ref) used to store the vectors used by `minres!`.
+
 #### Reference
 
 * C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
-function minres(A, b :: AbstractVector{T};
-                M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
-                rtol :: T=√eps(T)/100, etol :: T=√eps(T),
-                window :: Int=5, itmax :: Int=0, conlim :: T=1/√eps(T),
-                verbose :: Int=0) where T <: AbstractFloat
+minres(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat = minres!(A, b, MinresSolver(b, window); kwargs...)
+
+function minres!(A, b :: AbstractVector{T}, solver :: MinresSolver{S, T};
+                 M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
+                 rtol :: T=√eps(T)/100, etol :: T=√eps(T),
+                 itmax :: Int=0, conlim :: T=1/√eps(T),
+                 verbose :: Int=0) where {S, T <: AbstractFloat}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -68,16 +80,18 @@ function minres(A, b :: AbstractVector{T};
   eltype(A) == T || error("eltype(A) ≠ $T")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # # Determine the storage type of b
+  # S = typeof(b)
+  x, r1, r2, w1, w2, err_vec = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.err_vec
+  window = length(err_vec)
 
   ϵM = eps(T)
-  x = kzeros(S, n)
+  x .= 0
   ctol = conlim > 0 ? 1 / conlim : zero(T)
 
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
-  r1 = copy(b)
+  r1 .= b
   v = M * r1
   β₁ = @kdot(m, r1, v)
   β₁ < 0 && error("Preconditioner is not positive definite")
@@ -97,9 +111,9 @@ function minres(A, b :: AbstractVector{T};
   γmin = T(Inf)
   cs = -one(T)
   sn = zero(T)
-  w1 = kzeros(S, n)
-  w2 = kzeros(S, n)
-  r2 = copy(r1)
+  w1 .= 0
+  w2 .= 0
+  r2 .= r1
 
   ANorm² = zero(T)
   ANorm = zero(T)
@@ -110,7 +124,8 @@ function minres(A, b :: AbstractVector{T};
 
   xENorm² = zero(T)
   err_lbnd = zero(T)
-  err_vec = zeros(T, window)
+  # err_vec = zeros(T, window)
+  err_vec .= 0
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
