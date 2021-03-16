@@ -63,13 +63,13 @@ where `solver` is a [`Krylov.MinresSolver`](@ref) used to store the vectors used
 
 * C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
-minres(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat = minres!(A, b, MinresSolver(b, window); kwargs...)
+minres(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat = minres!(A, b, MinresSolver(b); kwargs...)
 
-function minres!(A, b :: AbstractVector{T}, solver :: MinresSolver{S, T};
+function minres!(A, b :: AbstractVector{T}, solver :: MinresSolver{S};
                  M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
                  rtol :: T=√eps(T)/100, etol :: T=√eps(T),
-                 itmax :: Int=0, conlim :: T=1/√eps(T),
-                 verbose :: Int=0) where {S, T <: AbstractFloat}
+                 window :: Int=5, itmax :: Int=0, conlim :: T=1/√eps(T),
+                 verbose :: Int=0) where {T <: AbstractFloat, S<:AbstractVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -81,11 +81,10 @@ function minres!(A, b :: AbstractVector{T}, solver :: MinresSolver{S, T};
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # get data from solver
-  x, r1, r2, w1, w2, err_vec = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.err_vec
-  window = length(err_vec)
+  x, r1, r2, w1, w2 = solver.x, solver.r1, solver.r2, solver.w1, solver.w2
 
   ϵM = eps(T)
-  x .= 0
+  x .= zero(T)
   ctol = conlim > 0 ? 1 / conlim : zero(T)
 
   # Initialize Lanczos process.
@@ -110,8 +109,8 @@ function minres!(A, b :: AbstractVector{T}, solver :: MinresSolver{S, T};
   γmin = T(Inf)
   cs = -one(T)
   sn = zero(T)
-  w1 .= 0
-  w2 .= 0
+  w1 .= zero(T)
+  w2 .= zero(T)
   r2 .= r1
 
   ANorm² = zero(T)
@@ -123,7 +122,7 @@ function minres!(A, b :: AbstractVector{T}, solver :: MinresSolver{S, T};
 
   xENorm² = zero(T)
   err_lbnd = zero(T)
-  err_vec .= 0
+  err_vec = zeros(T, window)
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
