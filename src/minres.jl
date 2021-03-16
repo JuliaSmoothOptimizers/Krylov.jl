@@ -69,13 +69,8 @@ minres(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat = minres!(
 function minres!(A, b :: AbstractVector{T}, solver :: MinresSolver{S};
                  M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
                  rtol :: T=√eps(T)/100, etol :: T=√eps(T),
-<<<<<<< refs/remotes/JuliaSmoothOptimizers/master
                  itmax :: Int=0, conlim :: T=1/√eps(T),
                  verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
-=======
-                 window :: Int=5, itmax :: Int=0, conlim :: T=1/√eps(T),
-                 verbose :: Int=0) where {T <: AbstractFloat, S<:AbstractVector{T}}
->>>>>>> remove err vec
 
   m, n = size(A)
   m == n || error("System must be square")
