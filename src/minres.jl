@@ -27,7 +27,7 @@ export minres
                         M=opEye(), λ::T=zero(T), atol::T=√eps(T)/100,
                         rtol::T=√eps(T)/100, etol::T=√eps(T),
                         window::Int=5, itmax::Int=0, conlim::T=1/√eps(T),
-                        verbose::Int=0) where T <: AbstractFloat
+                        verbose::Int=0, history :: Bool=false) where T <: AbstractFloat
 
 Solve the shifted linear least-squares problem
 
@@ -57,7 +57,7 @@ function minres(A, b :: AbstractVector{T};
                 M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
                 rtol :: T=√eps(T)/100, etol :: T=√eps(T),
                 window :: Int=5, itmax :: Int=0, conlim :: T=1/√eps(T),
-                verbose :: Int=0) where T <: AbstractFloat
+                verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -89,7 +89,7 @@ function minres(A, b :: AbstractVector{T};
   δbar = zero(T)
   ϵ = zero(T)
   rNorm = β₁
-  rNorms = [β₁]
+  rNorms = history ? [β₁] : T[]
   ϕbar = β₁
   rhs1 = β₁
   rhs2 = zero(T)
@@ -105,7 +105,7 @@ function minres(A, b :: AbstractVector{T};
   ANorm = zero(T)
   Acond = zero(T)
   ArNorm = zero(T)
-  ArNorms = [ArNorm]
+  ArNorms = history ? [ArNorm] : T[]
   xNorm = zero(T)
 
   xENorm² = zero(T)
@@ -166,7 +166,7 @@ function minres(A, b :: AbstractVector{T};
     δbar = -cs * β
     root = sqrt(γbar * γbar + δbar * δbar)
     ArNorm = ϕbar * root  # = ‖Aᵀrₖ₋₁‖
-    push!(ArNorms, ArNorm)
+    history && push!(ArNorms, ArNorm)
 
     # Compute the next plane rotation.
     γ = sqrt(γbar * γbar + β * β)
@@ -211,7 +211,7 @@ function minres(A, b :: AbstractVector{T};
 
     test1 = rNorm / (ANorm * xNorm)
     test2 = root / ANorm
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     Acond = γmax / γmin
 
