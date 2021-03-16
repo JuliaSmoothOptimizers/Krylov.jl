@@ -1,0 +1,62 @@
+name: Breakage
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  break:
+    name: Breakage of ${{ matrix.pkg }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pkg: [CaNNOLeS, DCI, JSOSolvers, Percival]
+        pkgversion: ["master", "stable"]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: 1
+          arch: x64
+      - uses: actions/cache@v1
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Breakage test
+        env:
+          PKG: ${{ matrix.pkg }}
+          VERSION: ${{ matrix.pkgversion }}
+          GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
+        run: julia -e 'using Pkg; pkg"add Git, JSON"; include("test/test-breakage.jl")'
+  deploy:
+    needs: break
+    name: Deploying breakage information
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: 1
+          arch: x64
+      - uses: actions/cache@v1
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Breakage test
+        env:
+          GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
+        run: julia -e 'using Pkg; pkg"add Git, GitHub, JSON"; include("test/test-breakage-deploy.jl")'
