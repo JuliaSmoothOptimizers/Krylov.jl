@@ -5,16 +5,10 @@ abstract type KrylovSolver{T, S} end
 
 """
 Type for storing the vectors required by the in-place version of MINRES.
-The attributes are:
-- x 
-- r1 
-- r2 
-- w1 
-- w2 
 
 The outer constructor 
 
-    solver = MinresSolver(b :: AbstractVector{T}) where T <: AbstractFloat
+    solver = MinresSolver(b :: AbstractVector{T}, window :: Int=5) where T <: AbstractFloat
 
 may be used in order to create these vectors.
 """
