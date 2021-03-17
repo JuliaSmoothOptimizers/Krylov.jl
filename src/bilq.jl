@@ -15,7 +15,7 @@ export bilq
 """
     (x, stats) = bilq(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
                       atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
-                      itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                      itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the square linear system Ax = b using the BiLQ method.
 
@@ -31,7 +31,7 @@ when it exists. The transfer is based on the residual norm.
 """
 function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
               atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
-              itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -55,7 +55,7 @@ function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = [bNorm;]
+  rNorms = history ? [bNorm] : T[]
   ε = atol + rtol * bNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
@@ -203,7 +203,7 @@ function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
       ωₖ = βₖ₊₁ * sₖ * ζₖ₋₁
       rNorm_lq = sqrt(μₖ^2 * norm_vₖ^2 + ωₖ^2 * norm_vₖ₊₁^2 + 2 * μₖ * ωₖ * vₖᵀvₖ₊₁)
     end
-    push!(rNorms, rNorm_lq)
+    history && push!(rNorms, rNorm_lq)
 
     # Compute BiCG residual norm
     # ‖rₖ‖ = |ρₖ| * ‖vₖ₊₁‖

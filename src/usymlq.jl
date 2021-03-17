@@ -22,7 +22,7 @@ export usymlq
 """
     (x, stats) = usymlq(A, b::AbstractVector{T}, c::AbstractVector{T};
                         atol::T=√eps(T), rtol::T=√eps(T), transfer_to_usymcg::Bool=true,
-                        itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                        itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the linear system Ax = b using the USYMLQ method.
 
@@ -44,7 +44,7 @@ when it exists. The transfer is based on the residual norm.
 """
 function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
-                itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -68,7 +68,7 @@ function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = m+n)
 
-  rNorms = [bNorm;]
+  rNorms = history ? [bNorm] : T[]
   ε = atol + rtol * bNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
@@ -207,7 +207,7 @@ function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T};
       ωₖ = βₖ₊₁ * sₖ * ζₖ₋₁
       rNorm_lq = sqrt(μₖ^2 + ωₖ^2)
     end
-    push!(rNorms, rNorm_lq)
+    history && push!(rNorms, rNorm_lq)
 
     # Compute USYMCG residual norm
     # ‖rₖ‖ = |ρₖ|

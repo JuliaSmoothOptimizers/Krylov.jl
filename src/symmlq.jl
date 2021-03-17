@@ -17,7 +17,7 @@ export symmlq
                         M=opEye(), λ::T=zero(T), transfer_to_cg::Bool=true,
                         λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                         etol::T=√eps(T), window::Int=0, itmax::Int=0,
-                        conlim::T=1/√eps(T), verbose::Int=0) where T <: AbstractFloat
+                        conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the shifted linear system
 
@@ -39,7 +39,7 @@ function symmlq(A, b :: AbstractVector{T};
                 M=opEye(), λ :: T=zero(T), transfer_to_cg :: Bool=true,
                 λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                 etol :: T=√eps(T), window :: Int=0, itmax :: Int=0,
-                conlim :: T=1/√eps(T), verbose :: Int=0) where T <: AbstractFloat
+                conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -103,15 +103,15 @@ function symmlq(A, b :: AbstractVector{T};
 
   xNorm = zero(T)
   rNorm = β₁
-  rNorms = T[rNorm]
+  rNorms = history ? [rNorm] : T[]
 
   if γbar ≠ 0
     ζbar = η / γbar
     xcgNorm = abs(ζbar)
     rcgNorm = β₁ * abs(ζbar)
-    rcgNorms = Union{T, Missing}[rcgNorm]
+    rcgNorms = history ? Union{T, Missing}[rcgNorm] : Union{T, Missing}[]
   else
-    rcgNorms = Union{T, Missing}[missing]
+    rcgNorms = history ? Union{T, Missing}[missing] : Union{T, Missing}[]
   end
 
   errors = T[]
@@ -132,11 +132,11 @@ function symmlq(A, b :: AbstractVector{T};
     cw = ρbar / ρ
     sw = β / ρ
 
-    push!(errors, abs(β₁/λest))
+    history && push!(errors, abs(β₁/λest))
     if γbar ≠ 0
-      push!(errorscg, sqrt(errors[1]^2 - ζbar^2))
+      history && push!(errorscg, sqrt(errors[1]^2 - ζbar^2))
     else
-      push!(errorscg, missing)
+      history && push!(errorscg, missing)
     end
   end
 
@@ -203,15 +203,15 @@ function symmlq(A, b :: AbstractVector{T};
 
     rNorm = sqrt(γ * γ * ζ * ζ + ϵold * ϵold * ζold * ζold)
     xNorm = xNorm + ζ * ζ
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     if γbar ≠ 0
       ζbar = η / γbar
       rcgNorm = β * abs(s * ζ - c * ζbar)
       xcgNorm = xNorm + ζbar * ζbar
-      push!(rcgNorms, rcgNorm)
+      history && push!(rcgNorms, rcgNorm)
     else
-      push!(rcgNorms, missing)
+      history && push!(rcgNorms, missing)
     end
 
     if window > 0 && λest ≠ 0
@@ -230,9 +230,9 @@ function symmlq(A, b :: AbstractVector{T};
           if γbar ≠ 0
             theta = abs(@kdot(window, clist, sprod .* zlist))
             theta = zetabark * theta + abs(zetabark * ζbar * sprod[ix] * s) - zetabark^2
-            errorscg[iter-window+1] = sqrt(abs(errorscg[iter-window+1]^2 - 2*theta))
+            history && (errorscg[iter-window+1] = sqrt(abs(errorscg[iter-window+1]^2 - 2*theta)))
           else
-            errorscg[iter-window+1] = missing
+            history && (errorscg[iter-window+1] = missing)
           end
       end
 
@@ -245,13 +245,13 @@ function symmlq(A, b :: AbstractVector{T};
 
     if λest ≠ 0
       err = abs((ϵold * ζold + ψ * ζ) / ωbar)
-      push!(errors, err)
+      history && push!(errors, err)
 
       if γbar ≠ 0
         errcg = sqrt(abs(err * err - ζbar * ζbar))
-        push!(errorscg, errcg)
+        history && push!(errorscg, errcg)
       else
-        push!(errorscg, missing)
+        history && push!(errorscg, missing)
       end
 
       ρbar = sw * σbar - cw * (α - λest)

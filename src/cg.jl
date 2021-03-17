@@ -20,7 +20,7 @@ export cg
     (x, stats) = cg(A, b::AbstractVector{T};
                     M=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
                     itmax::Int=0, radius::T=zero(T), linesearch::Bool=false,
-                    verbose::Int=0) where T <: AbstractFloat
+                    verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 The conjugate gradient method to solve the symmetric linear system Ax=b.
 
@@ -40,7 +40,7 @@ with `n = length(b)`.
 function cg(A, b :: AbstractVector{T};
             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
             itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
-            verbose :: Int=0) where T <: AbstractFloat
+            verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
 
@@ -69,7 +69,7 @@ function cg(A, b :: AbstractVector{T};
   pAp = zero(T)
   rNorm = sqrt(γ)
   pNorm² = γ
-  rNorms = [rNorm;]
+  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
   display(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
@@ -117,7 +117,7 @@ function cg(A, b :: AbstractVector{T};
     z = M * r
     γ_next = @kdot(n, r, z)
     rNorm = sqrt(γ_next)
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     solved = (rNorm ≤ ε) || on_boundary
 

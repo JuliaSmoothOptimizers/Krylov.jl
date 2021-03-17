@@ -19,7 +19,7 @@ export minres_qlp
 """
     (x, stats) = minres_qlp(A, b::AbstractVector{T};
                             M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), λ::T=zero(T),
-                            itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                            itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
 solution on singular inconsistent systems (A + λI)x = b, where λ is a shift parameter.
@@ -37,7 +37,7 @@ M also indicates the weighted norm in which residuals are measured.
 """
 function minres_qlp(A, b :: AbstractVector{T};
                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
-                    itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+                    itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -72,7 +72,7 @@ function minres_qlp(A, b :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = [rNorm;]
+  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
   ArNorms = T[]
   κ = zero(T)
@@ -271,12 +271,12 @@ function minres_qlp(A, b :: AbstractVector{T};
     # Update ‖rₖ‖ estimate
     # ‖ rₖ ‖ = |ζbarₖ₊₁|
     rNorm = abs(ζbarₖ₊₁)
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     # Update ‖Arₖ₋₁‖ estimate
     # ‖ Arₖ₋₁ ‖ = |ζbarₖ| * √((λbarₖ)² + (γbarₖ)²)
     ArNorm = abs(ζbarₖ) * √(λbarₖ^2 + (cₖ₋₁ * βₖ₊₁)^2)
-    push!(ArNorms, ArNorm)
+    history && push!(ArNorms, ArNorm)
 
     # Update stopping criterion.
     iter == 1 && (κ = (atol + rtol * ArNorm) / 100)

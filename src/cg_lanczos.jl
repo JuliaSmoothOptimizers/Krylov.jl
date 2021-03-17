@@ -17,7 +17,7 @@ export cg_lanczos, cg_lanczos_shift_seq
 """
     (x, stats) = cg_lanczos(A, b::AbstractVector{T};
                             M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                            check_curvature::Bool=false, verbose::Int=0) where T <: AbstractFloat
+                            check_curvature::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 The Lanczos version of the conjugate gradient method to solve the
 symmetric linear system
@@ -36,7 +36,7 @@ assumed to be symmetric and positive definite.
 """
 function cg_lanczos(A, b :: AbstractVector{T};
                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                    check_curvature :: Bool=false, verbose :: Int=0) where T <: AbstractFloat
+                    check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
@@ -78,7 +78,7 @@ function cg_lanczos(A, b :: AbstractVector{T};
 
   # Define stopping tolerance.
   rNorm = σ
-  rNorms = [rNorm;]
+  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
@@ -121,7 +121,7 @@ function cg_lanczos(A, b :: AbstractVector{T};
     ω = ω * ω               # ωₖ = (βₖ₊₁ * γₖ)²
     @kaxpby!(n, σ, v, ω, p) # pₖ₊₁ = σₖ₊₁ * vₖ₊₁ + ωₖ * pₖ
     rNorm = abs(σ)          # ‖rₖ₊₁‖_M = |σₖ₊₁| because rₖ₊₁ = σₖ₊₁ * vₖ₊₁ and ‖vₖ₊₁‖_M = 1
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
     iter = iter + 1
     display(iter, verbose) && @printf("%5d  %8.1e\n", iter, rNorm)
     solved = rNorm ≤ ε
@@ -138,7 +138,7 @@ end
 """
     (x, stats) = cg_lanczos_shift_seq(A, b::AbstractVector{T}, shifts::AbstractVector{T};
                                       M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                                      check_curvature::Bool=false, verbose::Int=0) where T <: AbstractFloat
+                                      check_curvature::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 The Lanczos version of the conjugate gradient method to solve a family
 of shifted systems
@@ -152,7 +152,7 @@ assumed to be symmetric and positive definite.
 """
 function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVector{T};
                               M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                              check_curvature :: Bool=false, verbose :: Int=0) where T <: AbstractFloat
+                              check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
@@ -196,7 +196,7 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
 
   # Define stopping tolerance.
   rNorms = β * ones(T, nshifts)
-  rNorms_history = [rNorms;]
+  rNorms_history = history ? [rNorms;] : T[]
   ε = atol + rtol * β
 
   # Keep track of shifted systems that have converged.
@@ -261,7 +261,7 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
       converged[i] = rNorms[i] ≤ ε
     end
 
-    length(not_cv) > 0 && append!(rNorms_history, rNorms)
+    length(not_cv) > 0 && history && append!(rNorms_history, rNorms)
 
     # Is there a better way than to update this array twice per iteration?
     not_cv = check_curvature ? findall(.! (converged .| indefinite)) : findall(.! converged)

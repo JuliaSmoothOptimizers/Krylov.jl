@@ -32,7 +32,7 @@ export cgls
 """
     (x, stats) = cgls(A, b::AbstractVector{T};
                       M=opEye(), λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      radius::T=zero(T), itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                      radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the regularized linear least-squares problem
 
@@ -56,7 +56,7 @@ but simpler to implement.
 """
 function cgls(A, b :: AbstractVector{T};
               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-              radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+              radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -85,8 +85,8 @@ function cgls(A, b :: AbstractVector{T};
 
   rNorm  = bNorm
   ArNorm = sqrt(γ)
-  rNorms = [rNorm;]
-  ArNorms = [ArNorm;]
+  rNorms = history ? [rNorm] : T[]
+  ArNorms = history ? [ArNorm] : T[]
   ε = atol + rtol * ArNorm
   (verbose > 0) && @printf("%5s  %8s  %8s\n", "Aprod", "‖A'r‖", "‖r‖")
   display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm)
@@ -121,8 +121,8 @@ function cgls(A, b :: AbstractVector{T};
     γ = γ_next
     rNorm = @knrm2(m, r)  # Marginally faster than norm(r)
     ArNorm = sqrt(γ)
-    push!(rNorms, rNorm)
-    push!(ArNorms, ArNorm)
+    history && push!(rNorms, rNorm)
+    history && push!(ArNorms, ArNorm)
     iter = iter + 1
     display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm)
     solved = (ArNorm ≤ ε) | on_boundary

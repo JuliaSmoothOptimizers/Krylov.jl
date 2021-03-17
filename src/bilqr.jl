@@ -15,7 +15,7 @@ export bilqr
 """
     (x, t, stats) = bilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
                           atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
-                          itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                          itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Combine BiLQ and QMR to solve adjoint systems.
 
@@ -34,7 +34,7 @@ BiCG point, when it exists. The transfer is based on the residual norm.
 """
 function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
-               itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   n, m = size(A)
   m == n || error("Systems must be square")
@@ -62,8 +62,8 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = [bNorm;]
-  sNorms = [cNorm;]
+  rNorms = history ? [bNorm] : T[]
+  sNorms = history ? [cNorm] : T[]
   εL = atol + rtol * bNorm
   εQ = atol + rtol * cNorm
   (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
@@ -213,7 +213,7 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
         ωₖ = βₖ₊₁ * sₖ * ζₖ₋₁
         rNorm_lq = sqrt(μₖ^2 * norm_vₖ^2 + ωₖ^2 * norm_vₖ₊₁^2 + 2 * μₖ * ωₖ * vₖᵀvₖ₊₁)
       end
-      push!(rNorms, rNorm_lq)
+      history && push!(rNorms, rNorm_lq)
 
       # Update ‖vₖ‖
       norm_vₖ = norm_vₖ₊₁
@@ -287,7 +287,7 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
       # Compute QMR residual norm ‖sₖ₋₁‖ ≤ |ψbarₖ| * √τₖ
       sNorm = abs(ψbarₖ) * √τₖ
-      push!(sNorms, sNorm)
+      history && push!(sNorms, sNorm)
 
       # Update dual stopping criterion
       solved_qr_tol = sNorm ≤ εQ

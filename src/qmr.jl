@@ -23,7 +23,7 @@ export qmr
 """
     (x, stats) = qmr(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
                      atol::T=√eps(T), rtol::T=√eps(T),
-                     itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                     itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the square linear system Ax = b using the QMR method.
 
@@ -38,7 +38,7 @@ When A is symmetric and b = c, QMR is equivalent to MINRES.
 """
 function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
              atol :: T=√eps(T), rtol :: T=√eps(T),
-             itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+             itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -62,7 +62,7 @@ function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = [rNorm;]
+  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
@@ -209,7 +209,7 @@ function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
     # Compute ‖rₖ‖ ≤ |ζbarₖ₊₁|√τₖ₊₁
     rNorm = abs(ζbarₖ₊₁) * √τₖ₊₁
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     # Update directions for x.
     if iter ≥ 2

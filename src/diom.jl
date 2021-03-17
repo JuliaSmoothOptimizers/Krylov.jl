@@ -13,7 +13,7 @@ export diom
 """
     (x, stats) = diom(A, b::AbstractVector{T};
                       M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                      memory::Int=20, pivoting::Bool=false, verbose::Int=0) where T <: AbstractFloat
+                      memory::Int=20, pivoting::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system Ax = b using direct incomplete orthogonalization method.
 
@@ -33,7 +33,7 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 """
 function diom(A, b :: AbstractVector{T};
               M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-              memory :: Int=20, pivoting :: Bool=false, verbose :: Int=0) where T <: AbstractFloat
+              memory :: Int=20, pivoting :: Bool=false, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -59,7 +59,7 @@ function diom(A, b :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = [rNorm;]
+  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
@@ -183,7 +183,7 @@ function diom(A, b :: AbstractVector{T};
       # ‖ M⁻¹(b - Axₘ) ‖₂ = hₘ₊₁.ₘ * |ξₘ / hₘ₊₁.ₘ| = |ξₘ| with pivoting
       rNorm = abs(ξ)
     end
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     # Update stopping criterion.
     solved = rNorm ≤ ε

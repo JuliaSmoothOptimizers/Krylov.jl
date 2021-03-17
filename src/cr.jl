@@ -14,7 +14,7 @@ export cr
 """
     (x, stats) = cr(A, b::AbstractVector{T};
                     M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T), itmax::Int=0,
-                    radius::T=zero(T), verbose::Int=0, linesearch::Bool=false) where T <: AbstractFloat
+                    radius::T=zero(T), verbose::Int=0, linesearch::Bool=false, history::Bool=false) where T <: AbstractFloat
 
 A truncated version of Stiefel’s Conjugate Residual method to solve the symmetric linear system Ax = b or the least-squares problem min ‖b - Ax‖.
 The matrix A must be positive semi-definite.
@@ -34,7 +34,7 @@ with `n = length(b)`.
 """
 function cr(A, b :: AbstractVector{T};
             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
-            radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false) where T <: AbstractFloat
+            radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false) where T <: AbstractFloat
 
   linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
   n = size(b, 1) # size of the problem
@@ -63,7 +63,7 @@ function cr(A, b :: AbstractVector{T};
   itmax == 0 && (itmax = 2 * n)
 
   rNorm = sqrt(@kdot(n, r, b)) # ‖r‖
-  rNorms = [rNorm] # Values of ‖r‖
+  rNorms = history ? [rNorm] : T[] # Values of ‖r‖
   rNorm² = rNorm * rNorm
   pNorm = rNorm
   pNorm² = rNorm²
@@ -72,7 +72,7 @@ function cr(A, b :: AbstractVector{T};
   pAp = ρ
   abspAp = abs(pAp)
   ArNorm = @knrm2(n, Ar) # ‖Ar‖
-  ArNorms = [ArNorm]
+  ArNorms = history ? [ArNorm] : T[]
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s %8s %8s %8s\n", "Iter", "‖x‖", "‖r‖", "quad")
   display(iter, verbose) && @printf("    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
@@ -209,10 +209,10 @@ function cr(A, b :: AbstractVector{T};
     @kaxpy!(n, -α, Mq, r) # residual
     rNorm² = abs(rNorm² - α * ρ)
     rNorm = sqrt(rNorm²)
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
     Ar = A * r
     ArNorm = @knrm2(n, Ar)
-    push!(ArNorms, ArNorm)
+    history && push!(ArNorms, ArNorm)
 
     iter = iter + 1
     if display(iter, verbose)

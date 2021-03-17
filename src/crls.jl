@@ -24,7 +24,7 @@ export crls
 """
     (x, stats) = crls(A, b::AbstractVector{T};
                       M=opEye(), λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      radius::T=zero(T), itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                      radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the linear least-squares problem
 
@@ -47,7 +47,7 @@ but simpler to implement.
 """
 function crls(A, b :: AbstractVector{T};
               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-              radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+              radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -84,8 +84,8 @@ function crls(A, b :: AbstractVector{T};
   rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   ArNorm = @knrm2(n, Ar)  # Marginally faster than norm(Ar)
   λ > 0 && (γ += λ * ArNorm * ArNorm)
-  rNorms = [rNorm;]
-  ArNorms = [ArNorm;]
+  rNorms = history ? [rNorm] : T[]
+  ArNorms = history ? [ArNorm] : T[]
   ε = atol + rtol * ArNorm
   (verbose > 0) && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
   display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 3, ArNorm, rNorm)
@@ -145,8 +145,8 @@ function crls(A, b :: AbstractVector{T};
       rNorm = @knrm2(m, r)  # norm(r)
     end
     #     ArNorm = norm(Ar)
-    push!(rNorms, rNorm)
-    push!(ArNorms, ArNorm)
+    history && push!(rNorms, rNorm)
+    history && push!(ArNorms, ArNorm)
     iter = iter + 1
     display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 3 + 2 * iter, ArNorm, rNorm)
     solved = (ArNorm ≤ ε) || on_boundary

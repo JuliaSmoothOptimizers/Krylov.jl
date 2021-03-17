@@ -30,7 +30,7 @@ export craigmr
 """
     (x, y, stats) = craigmr(A, b::AbstractVector{T};
                             M=opEye(), N=opEye(), λ::T=zero(T), atol::T=√eps(T),
-                            rtol::T=√eps(T), itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                            rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system
 
@@ -71,7 +71,7 @@ returned.
 """
 function craigmr(A, b :: AbstractVector{T};
                  M=opEye(), N=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
-                 rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+                 rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -127,9 +127,9 @@ function craigmr(A, b :: AbstractVector{T};
   ρbar = α
   θ = zero(T)
   rNorm = ζbar
-  rNorms = [rNorm]
+  rNorms = history ? [rNorm] : T[]
   ArNorm = α
-  ArNorms = [ArNorm]
+  ArNorms = history ? [ArNorm] : T[]
 
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
@@ -176,7 +176,7 @@ function craigmr(A, b :: AbstractVector{T};
     ζ = c * ζbar
     ζbar = s * ζbar
     rNorm = abs(ζbar)
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     @kaxpby!(m, one(T)/ρ, wbar, -θ/ρ, w)  # w = (wbar - θ * w) / ρ
     @kaxpy!(m, ζ, w, y)             # y = y + ζ * w
@@ -188,7 +188,7 @@ function craigmr(A, b :: AbstractVector{T};
     α = sqrt(@kdot(n, v, Nv))
     Anorm² = Anorm² + α * α  # = ‖Lₖ‖
     ArNorm = α * β * abs(ζ/ρ)
-    push!(ArNorms, ArNorm)
+    history && push!(ArNorms, ArNorm)
 
     display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", 1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
 
