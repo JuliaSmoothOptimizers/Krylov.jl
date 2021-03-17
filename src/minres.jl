@@ -52,7 +52,7 @@ assumed to be symmetric and positive definite.
 
 It is also possible to use MINRES in-place
 
-    (x, stats) = minres!(A, b :: AbstractVector{T}, solver :: MinresSolver{S, T};
+    (x, stats) = minres!(solver :: MinresSolver{S, T}, A, b :: AbstractVector{T};
                          M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
                          rtol :: T=√eps(T)/100, etol :: T=√eps(T),
                          itmax :: Int=0, conlim :: T=1/√eps(T),
