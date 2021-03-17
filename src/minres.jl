@@ -27,7 +27,7 @@ export minres
                         M=opEye(), λ::T=zero(T), atol::T=√eps(T)/100,
                         rtol::T=√eps(T)/100, etol::T=√eps(T),
                         window::Int=5, itmax::Int=0, conlim::T=1/√eps(T),
-                        verbose::Int=0, history :: Bool=false) where T <: AbstractFloat
+                        verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the shifted linear least-squares problem
 

@@ -15,7 +15,7 @@ export trilqr
 """
     (x, t, stats) = trilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
                            atol::T=√eps(T), rtol::T=√eps(T), transfer_to_usymcg::Bool=true,
-                           itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                           itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Combine USYMLQ and USYMQR to solve adjoint systems.
 
@@ -34,7 +34,7 @@ USYMCG point, when it exists. The transfer is based on the residual norm.
 """
 function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
-                itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -62,8 +62,8 @@ function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = m+n)
 
-  rNorms = [bNorm;]
-  sNorms = [cNorm;]
+  rNorms = history ? [bNorm] : T[]
+  sNorms = history ? [cNorm] : T[]
   εL = atol + rtol * bNorm
   εQ = atol + rtol * cNorm
   ξ = zero(T)
@@ -203,7 +203,7 @@ function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
         ωₖ = βₖ₊₁ * sₖ * ζₖ₋₁
         rNorm_lq = sqrt(μₖ^2 + ωₖ^2)
       end
-      push!(rNorms, rNorm_lq)
+      history && push!(rNorms, rNorm_lq)
 
       # Compute USYMCG residual norm
       # ‖rₖ‖ = |ρₖ|
@@ -271,7 +271,7 @@ function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
       # Compute USYMQR residual norm ‖sₖ₋₁‖ = |ψbarₖ|.
       sNorm = abs(ψbarₖ)
-      push!(sNorms, sNorm)
+      history && push!(sNorms, sNorm)
 
       # Compute ‖Asₖ₋₁‖ = |ψbarₖ| * √((δbarₖ)² + (λbarₖ)²).
       AsNorm = abs(ψbarₖ) * √(δbarₖ^2 + (cₖ₋₁ * βₖ₊₁)^2)

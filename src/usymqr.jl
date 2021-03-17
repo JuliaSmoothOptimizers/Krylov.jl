@@ -22,7 +22,7 @@ export usymqr
 """
     (x, stats) = usymqr(A, b::AbstractVector{T}, c::AbstractVector{T};
                         atol::T=√eps(T), rtol::T=√eps(T),
-                        itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                        itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the linear system Ax = b using the USYMQR method.
 
@@ -41,7 +41,7 @@ USYMQR finds the minimum-norm solution if problems are inconsistent.
 """
 function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T),
-                itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -65,7 +65,7 @@ function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = m+n)
 
-  rNorms = [rNorm;]
+  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
   AᵀrNorms = T[]
   κ = zero(T)
@@ -188,11 +188,11 @@ function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
     # Compute ‖rₖ‖ = |ζbarₖ₊₁|.
     rNorm = abs(ζbarₖ₊₁)
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     # Compute ‖Aᵀrₖ₋₁‖ = |ζbarₖ| * √((δbarₖ)² + (λbarₖ)²).
     AᵀrNorm = abs(ζbarₖ) * √(δbarₖ^2 + (cₖ₋₁ * γₖ₊₁)^2)
-    push!(AᵀrNorms, AᵀrNorm)
+    history && push!(AᵀrNorms, AᵀrNorm)
 
     # Compute uₖ₊₁ and uₖ₊₁.
     @. vₖ₋₁ = vₖ # vₖ₋₁ ← vₖ

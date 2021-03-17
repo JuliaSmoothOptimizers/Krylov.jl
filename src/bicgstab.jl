@@ -18,7 +18,7 @@ export bicgstab
 """
     (x, stats) = bicgstab(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
                           M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
-                          itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                          itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the square linear system Ax = b using the BICGSTAB method.
 
@@ -43,7 +43,7 @@ This implementation allows a left preconditioner `M` and a right preconditioner 
 """
 function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
                   M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
-                  itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -80,7 +80,7 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = [rNorm;]
+  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "αₖ", "ωₖ")
   display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
@@ -120,7 +120,7 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
     # Compute residual norm ‖rₖ‖₂.
     rNorm = @knrm2(n, r)
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     # Update stopping criterion.
     solved = rNorm ≤ ε

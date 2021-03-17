@@ -32,7 +32,7 @@ export lsqr
                       atol::T=zero(T), rtol::T=zero(T),
                       etol::T=√eps(T), window::Int=5,
                       itmax::Int=0, conlim::T=1/√eps(T),
-                      radius::T=zero(T), verbose::Int=0) where T <: AbstractFloat
+                      radius::T=zero(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the regularized linear least-squares problem
 
@@ -78,7 +78,7 @@ function lsqr(A, b :: AbstractVector{T};
               atol :: T=zero(T), rtol :: T=zero(T),
               etol :: T=√eps(T), window :: Int=5,
               itmax :: Int=0, conlim :: T=1/√eps(T),
-              radius :: T=zero(T), verbose :: Int=0) where T <: AbstractFloat
+              radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -153,9 +153,9 @@ function lsqr(A, b :: AbstractVector{T};
   r1Norm = rNorm
   r2Norm = rNorm
   res2   = zero(T)
-  rNorms = [r2Norm]
+  rNorms = history ? [r2Norm] : T[]
   ArNorm = ArNorm0 = α * β
-  ArNorms = [ArNorm]
+  ArNorms = history ? [ArNorm] : T[]
 
   status = "unknown"
   on_boundary = false
@@ -258,13 +258,13 @@ function lsqr(A, b :: AbstractVector{T};
     rNorm = sqrt(res1 + res2)
 
     ArNorm = α * abs(τ)
-    push!(ArNorms, ArNorm)
+    history && push!(ArNorms, ArNorm)
 
     r1sq = rNorm * rNorm - λ² * xNorm²
     r1Norm = sqrt(abs(r1sq))
     r1sq < 0 && (r1Norm = -r1Norm)
     r2Norm = rNorm
-    push!(rNorms, r2Norm)
+    history && push!(rNorms, r2Norm)
 
     test1 = rNorm / β₁
     test2 = ArNorm / (Anorm * rNorm)

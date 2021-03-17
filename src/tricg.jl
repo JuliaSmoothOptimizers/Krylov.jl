@@ -15,7 +15,7 @@ export tricg
     (x, y, stats) = tricg(A, b::AbstractVector{T}, c::AbstractVector{T};
                           M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
                           spd::Bool=false, snd::Bool=false, flip::Bool=false,
-                          τ::T=one(T), ν::T=-one(T), itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                          τ::T=one(T), ν::T=-one(T), itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 TriCG solves the symmetric linear system
 
@@ -53,7 +53,7 @@ Information will be displayed every `verbose` iterations.
 function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
                spd :: Bool=false, snd :: Bool=false, flip :: Bool=false,
-               τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+               τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -117,7 +117,7 @@ function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
   # Compute ‖r₀‖² = (γ₁)² + (β₁)²
   rNorm = sqrt(γₖ^2 + βₖ^2)
-  rNorms = [rNorm;]
+  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
 
   (verbose > 0) && @printf("%5s  %7s  %8s  %7s  %7s\n", "k", "‖rₖ‖", "αₖ", "βₖ₊₁", "γₖ₊₁")
@@ -274,7 +274,7 @@ function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
     # Compute ‖rₖ‖² = (γₖ₊₁ζ₂ₖ₋₁)² + (βₖ₊₁ζ₂ₖ)²
     rNorm = sqrt((γₖ₊₁ * (π₂ₖ₋₁ - δₖ*π₂ₖ))^2 + (βₖ₊₁ * π₂ₖ)^2)
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     # Update βₖ, γₖ, π₂ₖ₋₃, π₂ₖ₋₂, d₂ₖ₋₃, d₂ₖ₋₂, δₖ₋₁, vₖ, uₖ.
     βₖ    = βₖ₊₁

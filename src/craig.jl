@@ -37,7 +37,7 @@ export craig
     (x, y, stats) = craig(A, b::AbstractVector{T};
                           M=opEye(), N=opEye(), sqd::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                           btol::T=√eps(T), rtol::T=√eps(T), conlim::T=1/√eps(T), itmax::Int=0,
-                          verbose::Int=0, transfer_to_lsqr::Bool=false) where T <: AbstractFloat
+                          verbose::Int=0, transfer_to_lsqr::Bool=false, history::Bool=false) where T <: AbstractFloat
 
 Find the least-norm solution of the consistent linear system
 
@@ -79,7 +79,7 @@ In this implementation, both the x and y-parts of the solution are returned.
 function craig(A, b :: AbstractVector{T};
                M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,
-               verbose :: Int=0, transfer_to_lsqr :: Bool=false) where T <: AbstractFloat
+               verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -138,7 +138,7 @@ function craig(A, b :: AbstractVector{T};
   itmax == 0 && (itmax = m + n)
 
   rNorm  = β₁
-  rNorms = [rNorm;]
+  rNorms = history ? [rNorm] : T[]
   ɛ_c = atol + rtol * rNorm   # Stopping tolerance for consistent systems.
   ɛ_i = atol                  # Stopping tolerance for inconsistent systems.
   ctol = conlim > 0 ? 1/conlim : zero(T)  # Stopping tolerance for ill-conditioned operators.
@@ -239,7 +239,7 @@ function craig(A, b :: AbstractVector{T};
     xNorm = sqrt(xNorm²)
     rNorm = β * abs(ξ)           # r = - β * ξ * u
     λ > 0 && (rNorm *= abs(c₁))  # r = -c₁ * β * ξ * u when λ > 0.
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
     iter = iter + 1
 
     bkwerr = rNorm / sqrt(β₁² + Anorm² * xNorm²)

@@ -1,9 +1,9 @@
 function test_crmr()
   crmr_tol = 1.0e-6
 
-  function test_crmr(A, b; λ=0.0, M=opEye())
+  function test_crmr(A, b; λ=0.0, M=opEye(), history=false)
     (nrow, ncol) = size(A)
-    (x, stats) = crmr(A, b, λ=λ, M=M)
+    (x, stats) = crmr(A, b, λ=λ, M=M, history=history)
     r = b - A * x
     if λ > 0
       s = r / sqrt(λ)
@@ -24,7 +24,7 @@ function test_crmr()
 
   # Underdetermined inconsistent.
   A, b = under_inconsistent()
-  (x, stats, resid) = test_crmr(A, b)
+  (x, stats, resid) = test_crmr(A, b, history=true)
   @test(stats.inconsistent)
   @test(stats.Aresiduals[end] ≤ crmr_tol)
 
@@ -38,7 +38,7 @@ function test_crmr()
 
   # Square inconsistent.
   A, b = square_inconsistent()
-  (x, stats, resid) = test_crmr(A, b)
+  (x, stats, resid) = test_crmr(A, b, history=true)
   @test(stats.inconsistent)
   @test(stats.Aresiduals[end] ≤ crmr_tol)
 
@@ -52,7 +52,7 @@ function test_crmr()
 
   # Overdetermined inconsistent.
   A, b = over_inconsistent()
-  (x, stats, resid) = test_crmr(A, b)
+  (x, stats, resid) = test_crmr(A, b, history=true)
   @test(stats.inconsistent)
   @test(stats.Aresiduals[end] ≤ crmr_tol)
 

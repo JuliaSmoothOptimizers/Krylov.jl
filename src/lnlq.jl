@@ -25,10 +25,10 @@
 export lnlq
 
 """
-    (x, y, stats) = lnlq(A, b :: AbstractVector{T};
-                         M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
-                         atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                         transfer_to_craig :: Bool=true, verbose :: Int=0) where T <: AbstractFloat
+    (x, y, stats) = lnlq(A, b::AbstractVector{T};
+                         M=opEye(), N=opEye(), sqd::Bool=false, λ::T=zero(T),
+                         atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                         transfer_to_craig::Bool=true, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Find the least-norm solution of the consistent linear system
 
@@ -67,7 +67,7 @@ In this implementation, both the x and y-parts of the solution are returned.
 function lnlq(A, b :: AbstractVector{T};
               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-              transfer_to_craig :: Bool=true, verbose :: Int=0) where T <: AbstractFloat
+              transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -98,7 +98,7 @@ function lnlq(A, b :: AbstractVector{T};
   bNorm = @knrm2(m, b)
   bNorm == 0 && return x, y, SimpleStats(true, false, [bNorm], T[], "x = 0 is a zero-residual solution")
 
-  rNorms = [bNorm;]
+  rNorms = history ? [bNorm] : T[]
   ε = atol + rtol * bNorm
 
   iter = 0
@@ -288,7 +288,7 @@ function lnlq(A, b :: AbstractVector{T};
     else
       rNorm_lq = abs(αhatₖ) * √((ϵbarₖ * ζbarₖ)^2 + (βhatₖ₊₁ * sₖ * ζₖ₋₁)^2)
     end
-    push!(rNorms, rNorm_lq)
+    history && push!(rNorms, rNorm_lq)
 
     # Compute residual norm ‖(rᶜ)ₖ‖ = |βₖ₊₁ * τₖ|
     if transfer_to_craig

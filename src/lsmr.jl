@@ -32,7 +32,7 @@ export lsmr
                       atol::T=zero(T), rtol::T=zero(T),
                       etol::T=√eps(T), window::Int=5,
                       itmax::Int=0, conlim::T=1/√eps(T),
-                      radius::T=zero(T), verbose::Int=0) where T <: AbstractFloat
+                      radius::T=zero(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the regularized linear least-squares problem
 
@@ -78,7 +78,7 @@ function lsmr(A, b :: AbstractVector{T};
               atol :: T=zero(T), rtol :: T=zero(T),
               etol :: T=√eps(T), window :: Int=5,
               itmax :: Int=0, conlim :: T=1/√eps(T),
-              radius :: T=zero(T), verbose :: Int=0) where T <: AbstractFloat
+              radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -146,9 +146,9 @@ function lsmr(A, b :: AbstractVector{T};
   # Items for use in stopping rules.
   ctol = conlim > 0 ? 1 / conlim : zero(T)
   rNorm = β
-  rNorms = [rNorm]
+  rNorms = history ? [rNorm] : T[]
   ArNorm = ArNorm0 = α * β
-  ArNorms = [ArNorm]
+  ArNorms = history ? [ArNorm] : T[]
 
   xENorm² = zero(T)
   err_lbnd = zero(T)
@@ -254,7 +254,7 @@ function lsmr(A, b :: AbstractVector{T};
     τd = (ζ - θtilde * τtildeold) / ρdold
     d = d + βcheck * βcheck
     rNorm = sqrt(d + (βd - τd)^2 + βdd * βdd)
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     # Estimate ‖A‖.
     Anorm² += β * β
@@ -268,7 +268,7 @@ function lsmr(A, b :: AbstractVector{T};
 
     # Test for convergence.
     ArNorm = abs(ζbar)
-    push!(ArNorms, ArNorm)
+    history && push!(ArNorms, ArNorm)
     xNorm = @knrm2(n, x)
 
     test1 = rNorm / β₁

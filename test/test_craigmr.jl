@@ -1,9 +1,9 @@
 function test_craigmr()
   craigmr_tol = 1.0e-6
 
-  function test_craigmr(A, b; λ=0.0)
+  function test_craigmr(A, b; λ=0.0, history=false)
     (nrow, ncol) = size(A)
-    (x, y, stats) = craigmr(A, b, λ=λ)
+    (x, y, stats) = craigmr(A, b, λ=λ, history=history)
     r = b - A * x
     Ar = A' * r
     # if λ > 0
@@ -27,7 +27,7 @@ function test_craigmr()
 
   # Underdetermined inconsistent.
   A, b = under_inconsistent()
-  (x, y, stats, resid) = test_craigmr(A, b)
+  (x, y, stats, resid) = test_craigmr(A, b, history=true)
   @test(norm(x - A' * y) ≤ craigmr_tol * norm(x))
   @test(stats.inconsistent)
   @test(stats.Aresiduals[end] ≤ craigmr_tol)
@@ -43,7 +43,7 @@ function test_craigmr()
 
   # Square inconsistent.
   A, b = square_inconsistent()
-  (x, y, stats, resid) = test_craigmr(A, b)
+  (x, y, stats, resid) = test_craigmr(A, b, history=true)
   @test(norm(x - A' * y) ≤ craigmr_tol * norm(x))
   @test(stats.inconsistent)
   @test(stats.Aresiduals[end] ≤ craigmr_tol)
@@ -59,7 +59,7 @@ function test_craigmr()
 
   # Overdetermined inconsistent.
   A, b = over_inconsistent()
-  (x, y, stats, resid) = test_craigmr(A, b)
+  (x, y, stats, resid) = test_craigmr(A, b, history=true)
   @test(norm(x - A' * y) ≤ craigmr_tol * norm(x))
   @test(stats.inconsistent)
   @test(stats.Aresiduals[end] ≤ craigmr_tol)

@@ -15,7 +15,7 @@ export trimr
     (x, y, stats) = trimr(A, b::AbstractVector{T}, c::AbstractVector{T};
                           M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
                           spd::Bool=false, snd::Bool=false, flip::Bool=false, sp::Bool=false,
-                          τ::T=one(T), ν::T=-one(T), itmax::Int=0, verbose::Int=0) where T <: AbstractFloat
+                          τ::T=one(T), ν::T=-one(T), itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 TriMR solves the symmetric linear system
 
@@ -54,7 +54,7 @@ Information will be displayed every `verbose` iterations.
 function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
                M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
                spd :: Bool=false, snd :: Bool=false, flip :: Bool=false, sp :: Bool=false,
-               τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0) where T <: AbstractFloat
+               τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -125,7 +125,7 @@ function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
   # Compute ‖r₀‖² = (γ₁)² + (β₁)²
   rNorm = sqrt(γₖ^2 + βₖ^2)
-  rNorms = [rNorm;]
+  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
 
   (verbose > 0) && @printf("%5s  %7s  %8s  %7s  %7s\n", "k", "‖rₖ‖", "αₖ", "βₖ₊₁", "γₖ₊₁")
@@ -358,7 +358,7 @@ function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
     # Compute ‖rₖ‖² = (πbar₂ₖ₊₁)² + (πbar₂ₖ₊₂)²
     rNorm = sqrt(πbar₂ₖ₊₁^2 + πbar₂ₖ₊₂^2)
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     # Update M⁻¹vₖ₋₁ and N⁻¹uₖ₋₁
     @. M⁻¹vₖ₋₁ = M⁻¹vₖ

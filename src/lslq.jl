@@ -10,7 +10,7 @@ export lslq
              M=opEye(), N=opEye(), sqd::Bool=false, λ::T=zero(T),
              atol::T=√eps(T), btol::T=√eps(T), etol::T=√eps(T),
              window::Int=5, utol::T=√eps(T), itmax::Int=0,
-             σ::T=zero(T), conlim::T=1/√eps(T), verbose::Int=0) where T <: AbstractFloat
+             σ::T=zero(T), conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the regularized linear least-squares problem
 
@@ -107,7 +107,7 @@ function lslq(A, b :: AbstractVector{T};
               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
               atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
               window :: Int=5, utol :: T=√eps(T), itmax :: Int=0,
-              σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Int=0) where T <: AbstractFloat
+              σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -194,9 +194,9 @@ function lslq(A, b :: AbstractVector{T};
   csig = -one(T)
 
   rNorm = β₁
-  rNorms = [rNorm]
+  rNorms = history ? [rNorm] : T[]
   ArNorm = α * β
-  ArNorms = [ArNorm]
+  ArNorms = history ? [ArNorm] : T[]
 
   iter = 0
   itmax == 0 && (itmax = m + n)
@@ -291,10 +291,10 @@ function lslq(A, b :: AbstractVector{T};
 
     # residual norm estimate
     rNorm = sqrt((ss * cp - ζ * η)^2 + (ss * sp)^2)
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
 
     ArNorm = sqrt((γ * ϵ * ζ)^2 + (δ * η * ζold)^2)
-    push!(ArNorms, ArNorm)
+    history && push!(ArNorms, ArNorm)
 
     # Compute ‖x_cg‖₂
     xcgNorm² = xlqNorm² + ζ̄ * ζ̄

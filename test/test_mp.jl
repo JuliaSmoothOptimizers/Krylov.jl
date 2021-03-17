@@ -13,18 +13,18 @@ function test_mp()
       λ = zero(T)
       if fn == :cg_lanczos_shift_seq
         shifts = [λ]
-        xs = @eval $fn($A, $b, $shifts)[1]
+        xs = @eval $fn($A, $b, $shifts, history=true)[1]
         x = xs[1]
       elseif fn in (:usymlq, :usymqr)
-        x = @eval $fn($A, $b, $c)[1]
+        x = @eval $fn($A, $b, $c, history=true)[1]
       elseif fn in (:trilqr, :bilqr)
-        x, t = @eval $fn($A, $b, $c)[1:2]
+        x, t = @eval $fn($A, $b, $c, history=true)[1:2]
       elseif fn in (:tricg, :trimr)
-        x, y = @eval $fn($A, $b, $c)[1:2]
+        x, y = @eval $fn($A, $b, $c, history=true)[1:2]
       elseif fn in (:lnlq, :craig, :craigmr)
-        x, y = @eval $fn($A, $b)[1:2]
+        x, y = @eval $fn($A, $b, history=true)[1:2]
       else
-        x = @eval $fn($A, $b)[1]
+        x = @eval $fn($A, $b, history=true)[1]
       end
       atol = √eps(T)
       rtol = √eps(T)
