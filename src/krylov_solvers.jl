@@ -21,8 +21,14 @@ mutable struct MinresSolver{T, S} <: KrylovSolver{T, S}
   err_vec :: Vector{T}
 end
 
-function MinresSolver(b :: AbstractVector{T}, window :: Int=5) where T <: AbstractFloat
-  n = length(b)
+function MinresSolver(A, b :: AbstractVector{T}; window :: Int=5) where T <: AbstractFloat
+  n, m = size(A)
   S = typeof(b)
-  return MinresSolver{T, S}(kzeros(S, n), kzeros(S, n), kzeros(S, n), kzeros(S, n), kzeros(S, n), zeros(T, window))
+  x  = S(undef, n)
+  r1 = S(undef, n)
+  r2 = S(undef, n)
+  w1 = S(undef, n)
+  w2 = S(undef, n)
+  err_vec = zeros(T, window)
+  return MinresSolver{T, S}(x, r1, r2, w1, w2, err_vec)
 end

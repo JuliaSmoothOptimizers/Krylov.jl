@@ -69,7 +69,7 @@ function test_minres()
 
   # in-place minres (minres!) with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
-  solver = MinresSolver(b)
+  solver = MinresSolver(A, b)
   (solver.x, stats) = minres!(solver, A, b, M=M)
   show(stats)
   r = b - A * solver.x

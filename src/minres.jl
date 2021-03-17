@@ -65,7 +65,7 @@ where `solver` is a [`Krylov.MinresSolver`](@ref) used to store the vectors used
 * C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
 @inline minres(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat = 
-  minres!(MinresSolver(b, window), A, b; kwargs...)
+  minres!(MinresSolver(A, b, window = window), A, b; kwargs...)
 
 function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
                  M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
