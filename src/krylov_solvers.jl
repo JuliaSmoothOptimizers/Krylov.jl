@@ -8,7 +8,7 @@ Type for storing the vectors required by the in-place version of MINRES.
 
 The outer constructor 
 
-    solver = MinresSolver(A, b :: AbstractVector{T}; window :: Int=5) where T <: AbstractFloat
+    opA, solver = MinresSolver(A, b :: AbstractVector{T}; window :: Int=5) where T <: AbstractFloat
 
 may be used in order to create these vectors.
 """
@@ -30,5 +30,6 @@ function MinresSolver(A, b :: AbstractVector{T}; window :: Int=5) where T <: Abs
   w1 = S(undef, n)
   w2 = S(undef, n)
   err_vec = zeros(T, window)
-  return MinresSolver{T, S}(x, r1, r2, w1, w2, err_vec)
+  opA = typeof(A) <: AbstractMatrix ? PreallocatedLinearOperator(A, storagetype=S, symmetric=true) : A
+  return opA, MinresSolver{T, S}(x, r1, r2, w1, w2, err_vec)
 end
