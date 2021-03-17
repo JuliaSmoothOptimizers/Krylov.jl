@@ -66,7 +66,7 @@ where `solver` is a [`Krylov.MinresSolver`](@ref) used to store the vectors used
 """
 function minres(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
   opA, solver = MinresSolver(A, b, window=window)
-  minres!(opA, b; kwargs...)
+  minres!(solver, opA, b; kwargs...)
 end
 
 function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
