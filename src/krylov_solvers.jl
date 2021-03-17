@@ -8,7 +8,7 @@ Type for storing the vectors required by the in-place version of MINRES.
 
 The outer constructor 
 
-    solver = MinresSolver(b :: AbstractVector{T}, window :: Int=5) where T <: AbstractFloat
+    solver = MinresSolver(A, b :: AbstractVector{T}; window :: Int=5) where T <: AbstractFloat
 
 may be used in order to create these vectors.
 """
