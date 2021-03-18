@@ -19,6 +19,7 @@ mutable struct MinresSolver{T, S} <: KrylovSolver{T, S}
   w1      :: S 
   w2      :: S
   err_vec :: Vector{T}
+  stats   :: SimpleStats{T}
 end
 
 function MinresSolver(A, b :: AbstractVector{T}; window :: Int=5) where T <: AbstractFloat
@@ -31,5 +32,6 @@ function MinresSolver(A, b :: AbstractVector{T}; window :: Int=5) where T <: Abs
   w2 = S(undef, n)
   err_vec = zeros(T, window)
   opA = typeof(A) <: AbstractMatrix ? PreallocatedLinearOperator(A, storagetype=S, symmetric=true) : A
-  return opA, MinresSolver{T, S}(x, r1, r2, w1, w2, err_vec)
+  stats = SimpleStats(false, true, T[], T[], "unknown")
+  return opA, MinresSolver{T, S}(x, r1, r2, w1, w2, err_vec, stats)
 end

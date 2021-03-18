@@ -54,7 +54,7 @@ for fn in (:usymlq, :usymqr, :tricg, :trimr, :trilqr, :bilqr)
 end
 
 # Variants where matrix-vector products with A are only required
-for fn in (:cg_lanczos, :cg, :cr, :minres_qlp, :symmlq, :cgs, :bicgstab, :diom, :dqgmres)
+for fn in (:cg_lanczos, :cg, :cr, :minres, :minres_qlp, :symmlq, :cgs, :bicgstab, :diom, :dqgmres)
   @eval begin
     $fn(A :: AbstractMatrix{T}, b :: SparseVector{T}; kwargs...) where T <: AbstractFloat =
       $fn(PreallocatedLinearOperator(A, symmetric=true), convert(Vector{T}, b); wrap_preconditioners(kwargs, Vector{T})...)

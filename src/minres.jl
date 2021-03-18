@@ -85,8 +85,9 @@ function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # get data from solver
-  x, r1, r2, w1, w2, err_vec = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.err_vec
+  x, r1, r2, w1, w2, err_vec, stats = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.err_vec, solver.stats
   window = length(err_vec)
+  rNorms, ArNorms = stats.residuals, stats.Aresiduals
 
   ϵM = eps(T)
   x .= zero(T)
@@ -98,7 +99,13 @@ function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
   v = M * r1
   β₁ = @kdot(m, r1, v)
   β₁ < 0 && error("Preconditioner is not positive definite")
-  β₁ == 0 && return (x, SimpleStats(true, true, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
+  if β₁ == 0
+    stats.solved, stats.inconsistent = true, true
+    stats.status = "x = 0 is a zero-residual solution"
+    history && push!(rNorms, β₁)
+    history && push!(ArNorms, zero(T))
+    return (x, stats)
+  end
   β₁ = sqrt(β₁)
   β = β₁
 
@@ -106,7 +113,8 @@ function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
   δbar = zero(T)
   ϵ = zero(T)
   rNorm = β₁
-  rNorms = history ? [β₁] : T[]
+  # rNorms = history ? [β₁] : T[]
+  history && push!(rNorms, β₁)
   ϕbar = β₁
   rhs1 = β₁
   rhs2 = zero(T)
@@ -122,7 +130,8 @@ function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
   ANorm = zero(T)
   Acond = zero(T)
   ArNorm = zero(T)
-  ArNorms = history ? [ArNorm] : T[]
+  # ArNorms = history ? [ArNorm] : T[]
+  history && push!(ArNorms, ArNorm)
   xNorm = zero(T)
 
   xENorm² = zero(T)
@@ -136,8 +145,12 @@ function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
   display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", 0, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
 
   tol = atol + rtol * β₁
+<<<<<<< master
   rNormtol = ratol + rrtol * β₁ 
   status = "unknown"
+=======
+  stats.status = "unknown"
+>>>>>>> stats inside MinresSolver
   solved = solved_mach = solved_lim = (rNorm ≤ rtol)
   tired  = iter ≥ itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
@@ -235,9 +248,11 @@ function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
 
     display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, test1, test2)
 
-    if iter == 1
+    if iter == 1 && β / β₁ ≤ 10 * ϵM
       # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-      β / β₁ ≤ 10 * ϵM && return (x, SimpleStats(true, true, [β₁], [zero(T)], "x is a minimum least-squares solution"))
+      stats.solved, stats.inconsistent = true, true
+      stats.status = "x is a minimum least-squares solution"
+      return (x, stats)
     end
 
     # Stopping conditions that do not depend on user input.
@@ -263,13 +278,15 @@ function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
   end
   (verbose > 0) && @printf("\n")
 
-  tired         && (status = "maximum number of iterations exceeded")
-  ill_cond_mach && (status = "condition number seems too large for this machine")
-  ill_cond_lim  && (status = "condition number exceeds tolerance")
-  solved        && (status = "found approximate minimum least-squares solution")
-  zero_resid    && (status = "found approximate zero-residual solution")
-  fwd_err       && (status = "truncated forward error small enough")
+  tired         && (stats.status = "maximum number of iterations exceeded")
+  ill_cond_mach && (stats.status = "condition number seems too large for this machine")
+  ill_cond_lim  && (stats.status = "condition number exceeds tolerance")
+  solved        && (stats.status = "found approximate minimum least-squares solution")
+  zero_resid    && (stats.status = "found approximate zero-residual solution")
+  fwd_err       && (stats.status = "truncated forward error small enough")
 
-  stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
+  stats.solved = solved
+  stats.inconsistent = !zero_resid
+
   return (x, stats)
 end
