@@ -1,19 +1,29 @@
+# Ref: https://securitylab.github.com/research/github-actions-preventing-pwn-requests
 name: Breakage
+
+# read-only repo token
+# no access to secrets
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
 
 jobs:
   break:
-    name: Breakage of ${{ matrix.pkg }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        pkg: [CaNNOLeS, DCI, JSOSolvers, Percival]
-        pkgversion: ["master", "stable"]
+        pkg: [
+          "JuliaSmoothOptimizers/CaNNOLeS.jl",
+          "JuliaSmoothOptimizers/DCI.jl",
+          "JuliaSmoothOptimizers/JSOSolvers.jl",
+          "JuliaSmoothOptimizers/Percival.jl"
+        ]
+        pkgversion: [latest, stable]
+
     steps:
       - uses: actions/checkout@v2
+
+      # Install Julia
       - uses: julia-actions/setup-julia@v1
         with:
           version: 1
@@ -29,34 +39,92 @@ jobs:
             ${{ runner.os }}-test-
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@v1
-      - name: Breakage test
+
+      # Breakage test
+      - name: 'Breakage of ${{ matrix.pkg }}, ${{ matrix.pkgversion }} version'
         env:
-          PKG: ${{ matrix.pkg }}
+          URL: ${{ matrix.pkg }}
           VERSION: ${{ matrix.pkgversion }}
-          GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
-        run: julia -e 'using Pkg; pkg"add Git, JSON"; include("test/test-breakage.jl")'
-  deploy:
+        run: |
+          set -v
+          mkdir -p ./pr
+          echo "${{ github.event.number }}" > ./pr/NR
+          git clone https://github.com/$URL
+          export PKG=$(echo $URL | cut -f2 -d/)
+          cd $PKG
+          if [ $VERSION == "stable" ]; then
+            TAG=$(git tag -l "v*" --sort=-creatordate | head -n1)
+            if [ -z "$TAG" ]; then
+              TAG="no_tag"
+            else
+              git checkout $TAG
+            fi
+          else
+            TAG=$VERSION
+          fi
+          export TAG
+          julia -e 'using Pkg;
+            PKG, TAG, VERSION = ENV["PKG"], ENV["TAG"], ENV["VERSION"]
+            joburl = joinpath(ENV["GITHUB_SERVER_URL"], ENV["GITHUB_REPOSITORY"], "actions/runs", ENV["GITHUB_RUN_ID"])
+            open("../pr/$PKG-$VERSION", "w") do io
+              try
+                TAG == "no_tag" && error("Not tag for $VERSION")
+                pkg"activate .";
+                pkg"instantiate";
+                pkg"dev ../";
+                pkg"build";
+                pkg"test";
+
+                print(io, "[![](https://img.shields.io/badge/$TAG-Pass-green)]($joburl)");
+              catch e
+                @error e;
+                print(io, "[![](https://img.shields.io/badge/$TAG-Fail-red)]($joburl)");
+              end;
+            end'
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: pr
+          path: pr/
+
+  upload:
     needs: break
-    name: Deploying breakage information
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
+
+      - uses: actions/download-artifact@v2
         with:
-          version: 1
-          arch: x64
-      - uses: actions/cache@v1
-        env:
-          cache-name: cache-artifacts
+          name: pr
+          path: pr/
+
+      - run: ls
+      - run: |
+          cd pr
+          echo "| Package name | latest | stable |" > MSG
+          echo "|--|--|--|" >> MSG
+          count=0
+          for file in *
+          do
+            [ "$file" == "NR" ] && continue
+            [ "$file" == "MSG" ] && continue
+            if [ $count == "0" ]; then
+              name=$(echo $file | cut -f1 -d-)
+              echo -n "| $name | "
+            else
+              echo -n "| "
+            fi
+            cat $file
+            if [ $count == "0" ]; then
+              echo -n " "
+              count=1
+            else
+              echo " |"
+              count=0
+            fi
+          done >> MSG
+
+      - uses: actions/upload-artifact@v2
         with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
-      - uses: julia-actions/julia-buildpkg@v1
-      - name: Breakage test
-        env:
-          GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
-        run: julia -e 'using Pkg; pkg"add Git, GitHub, JSON"; include("test/test-breakage-deploy.jl")'
+          name: pr
+          path: pr/
