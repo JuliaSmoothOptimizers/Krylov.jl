@@ -8,7 +8,7 @@ Type for storing the vectors required by the in-place version of MINRES.
 
 The outer constructor 
 
-    opA, solver = MinresSolver(A, b :: AbstractVector{T}; window :: Int=5) where T <: AbstractFloat
+    solver = MinresSolver(A, b :: AbstractVector{T}; window :: Int=5) where T <: AbstractFloat
 
 may be used in order to create these vectors.
 """
@@ -22,8 +22,8 @@ mutable struct MinresSolver{T, S} <: KrylovSolver{T, S}
   stats   :: SimpleStats{T}
 end
 
-function MinresSolver(opA :: PreallocatedLinearOperator{T}, b :: AbstractVector{T}; window :: Int=5) where T <: AbstractFloat
-  m, n = opA.nrow, opA.ncol
+function MinresSolver(A, b :: AbstractVector{T}; window :: Int=5) where T <: AbstractFloat
+  m, n = size(A)
   x = similar(b, n)
   r1 = similar(b, n)
   r2 = similar(b, n)
