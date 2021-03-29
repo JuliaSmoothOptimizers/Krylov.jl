@@ -48,6 +48,14 @@ function test_alloc()
   actual_minres_bytes = @allocated minres(A, b)
   @test actual_minres_bytes ≤ 1.1 * expected_minres_bytes
 
+<<<<<<< master
+=======
+  solver = MinresSolver(A, b)
+  minres!(solver, A, b)  # warmup
+  inplace_minres_bytes = @allocated minres!(solver, A, b)
+  @test inplace_minres_bytes == 0
+
+>>>>>>> Wrap allocations tests
   # without preconditioner and with Ap preallocated, DIOM needs:
   # - 2 n-vectors: x, x_old
   # - 2 (n*mem)-matrices: P, V
