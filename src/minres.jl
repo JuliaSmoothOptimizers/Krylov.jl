@@ -89,6 +89,7 @@ function minres(A, b :: AbstractVector{T};
   δbar = zero(T)
   ϵ = zero(T)
   rNorm = β₁
+  rNorm0 = rNorm
   rNorms = history ? [β₁] : T[]
   ϕbar = β₁
   rhs1 = β₁
@@ -233,7 +234,7 @@ function minres(A, b :: AbstractVector{T};
     tired = iter ≥ itmax
     ill_cond_lim = (one(T) / Acond ≤ ctol)
     solved_lim = (test2 ≤ tol)
-    zero_resid_lim = (test1 ≤ tol)
+    zero_resid_lim = (rNorm ≤ ϵA + ϵr * rNorm0)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
 
     zero_resid = zero_resid_mach | zero_resid_lim
