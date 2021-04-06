@@ -12,7 +12,8 @@ function test_bicgstab()
 
   # Symmetric indefinite variant.
   A, b = symmetric_indefinite()
-  (x, stats) = bicgstab(A, b)
+  solver = BicgstabSolver(A, b)
+  (x, stats) = bicgstab!(solver, A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("BICGSTAB: Relative residual: %8.1e\n", resid)

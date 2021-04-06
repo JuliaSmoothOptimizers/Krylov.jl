@@ -135,6 +135,11 @@ function test_alloc()
   actual_bicgstab_bytes = @allocated bicgstab(A, b)
   @test actual_bicgstab_bytes ≤ 1.1 * expected_bicgstab_bytes
 
+  solver = BicgstabSolver(A, b)
+  bicgstab!(solver, A, b)  # warmup
+  inplace_bicgstab_bytes = @allocated bicgstab!(solver, A, b)
+  @test (VERSION < v"1.5") || (inplace_bicgstab_bytes == 0)
+
   # with (Ap, Aᵀq) preallocated, CRAIGMR needs:
   # - 2 n-vector: x, v
   # - 4 m-vectors: y, u, w, wbar

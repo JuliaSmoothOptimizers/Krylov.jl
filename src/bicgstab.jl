@@ -13,7 +13,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montréal, October 2020.
 
-export bicgstab
+export bicgstab, bicgstab!
 
 """
     (x, stats) = bicgstab(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
@@ -41,9 +41,14 @@ This implementation allows a left preconditioner `M` and a right preconditioner 
 * H. A. van der Vorst, *Bi-CGSTAB: A fast and smoothly converging variant of Bi-CG for the solution of nonsymmetric linear systems*, SIAM Journal on Scientific and Statistical Computing, 13(2), pp. 631--644, 1992.
 * G. L.G. Sleijpen and D. R. Fokkema, *BiCGstab(ℓ) for linear equations involving unsymmetric matrices with complex spectrum*, Electronic Transactions on Numerical Analysis, 1, pp. 11--32, 1993.
 """
-function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
-                  M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
-                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function bicgstab(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = BicgstabSolver(A, b)
+  bicgstab!(solver, A, b; kwargs...)
+end
+
+function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T};
+                   c :: AbstractVector{T}=b, M=opEye(), N=opEye(), atol :: T=√eps(T),
+                   rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -55,19 +60,19 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   NisI = isa(N, opEye)
 
   # Check type consistency
+  eltype(S) == T || error("eltype(S) ≠ $T")
   eltype(A) == T || error("eltype(A) ≠ $T")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
-  # Determine the storage type of b
-  S = typeof(b)
-
   # Set up workspace.
-  x = kzeros(S, n)  # x₀
-  s = kzeros(S, n)  # s₀
-  v = kzeros(S, n)  # v₀
-  r = copy(M * b)   # r₀
-  p = copy(r)       # p₁
+  x, s, v, r, p, stats = solver.x, solver.s, solver.v, solver.r, solver.p, solver.stats
+
+  x .= zero(T) # x₀
+  s .= zero(T) # s₀
+  v .= zero(T) # v₀
+  r .= (M * b) # r₀
+  p .= r       # p₁
 
   α = one(T) # α₀
   ω = one(T) # ω₀
@@ -75,18 +80,27 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
-  rNorm == 0 && return (x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution"))
-
+  if rNorm == 0
+    stats.solved = true
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = history ? [rNorm] : T[]
+  rNorms = stats.residuals
+  !history && !isempty(rNorms) && (rNorms = T[])
+  history && push!(rNorms, rNorm)
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "αₖ", "ωₖ")
   display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
 
   next_ρ = @kdot(n, r, c)  # ρ₁ = ⟨r₀,r̅₀⟩
-  next_ρ == 0 && return (x, SimpleStats(false, false, [rNorm], T[], "Breakdown bᵀc = 0"))
+  if next_ρ == 0
+    stats.solved = false
+    stats.status = "Breakdown bᵀc = 0"
+    return (x, stats)
+  end
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -130,7 +144,7 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   end
   (verbose > 0) && @printf("\n")
 
-  status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+  stats.status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
+  stats.solved = solved
   return (x, stats)
 end
