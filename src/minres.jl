@@ -25,8 +25,8 @@ export minres
 """
     (x, stats) = minres(A, b::AbstractVector{T};
                         M=opEye(), λ::T=zero(T), atol::T=√eps(T)/100,
-                        rtol::T=√eps(T)/100, ratol :: T=√eps(T), 
-                        rrtol :: T=√eps(T), etol::T=√eps(T),
+                        rtol::T=√eps(T)/100, ratol :: T=zero(T), 
+                        rrtol :: T=zero(T), etol::T=√eps(T),
                         window::Int=5, itmax::Int=0, conlim::T=1/√eps(T),
                         verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
@@ -56,7 +56,7 @@ assumed to be symmetric and positive definite.
 """
 function minres(A, b :: AbstractVector{T};
                 M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
-                ratol :: T=√eps(T), rrtol :: T=√eps(T), etol :: T=√eps(T),
+                ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
                 window :: Int=5, itmax :: Int=0, conlim :: T=1/√eps(T),
                 verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
@@ -229,18 +229,21 @@ function minres(A, b :: AbstractVector{T};
     ill_cond_mach = (one(T) + one(T) / Acond ≤ one(T))
     solved_mach = (one(T) + test2 ≤ one(T))
     zero_resid_mach = (one(T) + test1 ≤ one(T))
+    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
     # solved_mach = (ϵx ≥ β₁)
 
     # Stopping conditions based on user-provided tolerances.
     tired = iter ≥ itmax
     ill_cond_lim = (one(T) / Acond ≤ ctol)
     solved_lim = (test2 ≤ tol)
-    zero_resid_lim = (test1 ≤ tol) || (rNorm ≤ rNormtol)
+    zero_resid_lim = (test1 ≤ tol)
+    resid_decrease_lim = (rNorm ≤ rNormtol)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
 
     zero_resid = zero_resid_mach | zero_resid_lim
+    resid_decrease = resid_decrease_mach | resid_decrease_lim
     ill_cond = ill_cond_mach | ill_cond_lim
-    solved = solved_mach | solved_lim | zero_resid | fwd_err
+    solved = solved_mach | solved_lim | zero_resid | fwd_err | resid_decrease
   end
   (verbose > 0) && @printf("\n")
 
