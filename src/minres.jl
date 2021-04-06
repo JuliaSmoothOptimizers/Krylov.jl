@@ -25,7 +25,8 @@ export minres
 """
     (x, stats) = minres(A, b::AbstractVector{T};
                         M=opEye(), λ::T=zero(T), atol::T=√eps(T)/100,
-                        rtol::T=√eps(T)/100, etol::T=√eps(T),
+                        rtol::T=√eps(T)/100, ratol :: T=√eps(T), 
+                        rrtol :: T=√eps(T), etol::T=√eps(T),
                         window::Int=5, itmax::Int=0, conlim::T=1/√eps(T),
                         verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
@@ -54,8 +55,8 @@ assumed to be symmetric and positive definite.
 * C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
 function minres(A, b :: AbstractVector{T};
-                M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
-                rtol :: T=√eps(T)/100, etol :: T=√eps(T),
+                M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
+                ratol :: T=√eps(T), rrtol :: T=√eps(T), etol :: T=√eps(T),
                 window :: Int=5, itmax :: Int=0, conlim :: T=1/√eps(T),
                 verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
 
@@ -89,7 +90,6 @@ function minres(A, b :: AbstractVector{T};
   δbar = zero(T)
   ϵ = zero(T)
   rNorm = β₁
-  rNorm0 = rNorm
   rNorms = history ? [β₁] : T[]
   ϕbar = β₁
   rhs1 = β₁
@@ -120,6 +120,7 @@ function minres(A, b :: AbstractVector{T};
   display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", 0, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
 
   tol = atol + rtol * β₁
+  rNormtol = ratol + rrtol * β₁ 
   status = "unknown"
   solved = solved_mach = solved_lim = (rNorm ≤ rtol)
   tired  = iter ≥ itmax
@@ -234,7 +235,7 @@ function minres(A, b :: AbstractVector{T};
     tired = iter ≥ itmax
     ill_cond_lim = (one(T) / Acond ≤ ctol)
     solved_lim = (test2 ≤ tol)
-    zero_resid_lim = (rNorm ≤ ϵA + ϵr * rNorm0)
+    zero_resid_lim = (test1 ≤ tol) || (rNorm ≤ rNormtol)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
 
     zero_resid = zero_resid_mach | zero_resid_lim
