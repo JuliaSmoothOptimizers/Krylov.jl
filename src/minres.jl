@@ -54,7 +54,8 @@ It is also possible to use MINRES in-place
 
     (x, stats) = minres!(solver :: MinresSolver{S, T}, opA, b :: AbstractVector{T};
                          M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
-                         rtol :: T=√eps(T)/100, etol :: T=√eps(T),
+                         rtol :: T=√eps(T)/100, ratol :: T=zero(T), 
+                         rrtol :: T=zero(T), etol :: T=√eps(T),
                          itmax :: Int=0, conlim :: T=1/√eps(T),
                          verbose :: Int=0) where {S, T <: AbstractFloat}
 
@@ -70,8 +71,8 @@ function minres(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <
 end
 
 function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
-                 M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
-                 rtol :: T=√eps(T)/100, etol :: T=√eps(T),
+                 M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
+                 ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
                  itmax :: Int=0, conlim :: T=1/√eps(T),
                  verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
 
@@ -143,12 +144,8 @@ function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
   display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", 0, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
 
   tol = atol + rtol * β₁
-<<<<<<< master
   rNormtol = ratol + rrtol * β₁ 
-  status = "unknown"
-=======
   stats.status = "unknown"
->>>>>>> stats inside MinresSolver
   solved = solved_mach = solved_lim = (rNorm ≤ rtol)
   tired  = iter ≥ itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
