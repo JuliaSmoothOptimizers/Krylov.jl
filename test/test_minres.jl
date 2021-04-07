@@ -57,15 +57,16 @@ function test_minres()
   @test(resid ≤ minres_tol)
   @test(stats.solved)
 
-  # Test with Jacobi (or diagonal) preconditioner
+  # test with Jacobi (or diagonal) preconditioner and history = true
   A, b, M = square_preconditioned()
-  (x, stats) = minres(A, b, M=M)
+  (x, stats) = minres(A, b, M=M, history=true)
   show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
   @printf("MINRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_tol)
   @test(stats.solved)
+  @test(length(stats.residuals) > 0)
 
   # in-place minres (minres!) with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()

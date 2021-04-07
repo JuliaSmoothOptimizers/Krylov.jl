@@ -89,6 +89,7 @@ function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
   x, r1, r2, w1, w2, err_vec, stats = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.err_vec, solver.stats
   window = length(err_vec)
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
+  !history && !isempty(rNorms) && (rNorms = T[])
 
   ϵM = eps(T)
   x .= zero(T)
