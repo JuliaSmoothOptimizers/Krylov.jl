@@ -3,7 +3,7 @@ function test_variants()
   @printf("Tests of variants:\n")
   for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne, :cr,
              :lnlq, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :bilq, :lsqr,
-             :minres, :minres!, :symmlq, :dqgmres, :diom, :cgs, :bicgstab, :usymqr,
+             :minres, :symmlq, :dqgmres, :diom, :cgs, :bicgstab, :usymqr,
              :minres_qlp, :qmr, :usymlq, :bilqr, :tricg, :trimr, :trilqr)
     @printf("%s ", string(fn))
     for T in (Float32, Float64, BigFloat)
@@ -26,13 +26,6 @@ function test_variants()
                 @eval $fn($A, $b, $c)
                 @eval $fn($transpose($A), $b, $c)
                 @eval $fn($adjoint($A), $b, $c)
-              end
-            elseif fn == :minres! 
-              if b != b_sparse
-                solver = eval(Symbol(uppercasefirst(string(fn))[1:end-1], "Solver"))(A, b)
-                @eval $fn($solver, $A, $b)
-                @eval $fn($solver, $transpose($A), $b)
-                @eval $fn($solver, $adjoint($A), $b)
               end
             else
               @eval $fn($A, $b)

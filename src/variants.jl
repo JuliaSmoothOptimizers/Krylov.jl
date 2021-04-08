@@ -64,22 +64,6 @@ for fn in (:cg_lanczos, :cg, :cr, :minres, :minres_qlp, :symmlq, :cgs, :bicgstab
   end
 end
 
-for fn in (:minres!,)
-  @eval begin
-    $fn(solver :: MinresSolver{T,S}, A :: AbstractMatrix{T}, b :: SparseVector{T}; kwargs...) where {S,T <: AbstractFloat} =
-      $fn(solver, PreallocatedLinearOperator(A, symmetric=true), convert(Vector{T}, b); wrap_preconditioners(kwargs, Vector{T})...)
-
-    $fn(solver :: MinresSolver{T,S}, A :: AbstractMatrix{T}, b :: AbstractVector{T}; kwargs...) where {S,T <: AbstractFloat} =
-      $fn(solver, PreallocatedLinearOperator(A, storagetype=typeof(b), symmetric=true), b; wrap_preconditioners(kwargs, typeof(b))...)
-
-    $fn(solver :: MinresSolver{T,S}, A :: LinearOperator{T}, b :: SparseVector{T}; kwargs...) where {S,T <: AbstractFloat} =
-      $fn(solver, A, convert(Vector{T}, b); wrap_preconditioners(kwargs, Vector{T})...)
-
-    $fn(solver :: MinresSolver{T,S}, A :: LinearOperator{T}, b :: AbstractVector{T}; kwargs...) where {S,T <: AbstractFloat} =
-      $fn(solver, A, b; wrap_preconditioners(kwargs, typeof(b))...)
-  end
-end
-
 # Variants for CG-LANCZOS-SHIFT-SEQ
 for fn in [:cg_lanczos_shift_seq]
   @eval begin
