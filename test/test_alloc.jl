@@ -51,7 +51,7 @@ function test_alloc()
   solver = MinresSolver(A, b)
   minres!(solver, A, b)  # warmup
   inplace_minres_bytes = @allocated minres!(solver, A, b)
-  @test inplace_minres_bytes == 0
+  @test (VERSION < v"1.5") || (inplace_minres_bytes == 0)
 
   # without preconditioner and with Ap preallocated, DIOM needs:
   # - 2 n-vectors: x, x_old
