@@ -52,7 +52,7 @@ assumed to be symmetric and positive definite.
 
 It is also possible to use MINRES in-place
 
-    (x, stats) = minres!(solver :: MinresSolver{S, T}, opA, b :: AbstractVector{T};
+    (x, stats) = minres!(solver :: MinresSolver{S, T}, A, b :: AbstractVector{T};
                          M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
                          rtol :: T=√eps(T)/100, ratol :: T=zero(T), 
                          rrtol :: T=zero(T), etol :: T=√eps(T),
@@ -60,7 +60,9 @@ It is also possible to use MINRES in-place
                          verbose :: Int=0) where {S, T <: AbstractFloat}
 
 where `solver` is a [`Krylov.MinresSolver`](@ref) used to store the vectors used by `minres!`.
-
+In this case, the user should be aware that A should be a  
+[PreallocatedLinearOperator](https://juliasmoothoptimizers.github.io/LinearOperators.jl/latest/reference/#LinearOperators.PreallocatedLinearOperator),
+otherwise there is no guarantee that there will be no allocations.
 #### Reference
 
 * C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
