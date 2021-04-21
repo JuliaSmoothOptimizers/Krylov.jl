@@ -8,7 +8,6 @@ makedocs(
   format = Documenter.HTML(assets = ["assets/style.css"], prettyurls = get(ENV, "CI", nothing) == "true"),
   sitename = "Krylov.jl",
   pages = ["Home" => "index.md",
-           "API" => "api.md",
            "Solvers" => "solvers.md",
            "GPU" => "gpu.md",
            "Matrix-free operators" => "matrix-free.md",
