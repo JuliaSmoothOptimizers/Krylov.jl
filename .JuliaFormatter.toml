@@ -1,0 +1,7 @@
+margin = 100
+indent = 2
+whitespace_typedefs = true
+whitespace_ops_in_indices = true
+remove_extra_newlines = true
+annotate_untyped_fields_with_any = false
+normalize_line_endings = "unix"
