@@ -80,7 +80,7 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("CRAIGMR: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @info @sprintf("CRAIGMR: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
   MisI = isa(M, opEye)
@@ -120,8 +120,8 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = m + n)
 
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n", "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
-  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", 1, β, α, β, α, 0, 1, Anorm²)
+  (verbose > 0) && @info @sprintf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n", "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", 1, β, α, β, α, 0, 1, Anorm²)
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   α == 0 && return (x, y, SimpleStats(true, false, [β], [zero(T)], "x = 0 is a minimum least-squares solution"))
@@ -196,7 +196,7 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
     ArNorm = α * β * abs(ζ/ρ)
     history && push!(ArNorms, ArNorm)
 
-    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", 1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
+    display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", 1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
 
     if α ≠ 0
       @kscal!(n, one(T)/α, v)

@@ -47,7 +47,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   n, m = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("MINRES-QLP: system of size %d\n", n)
+  (verbose > 0) && @info @sprintf("MINRES-QLP: system of size %d\n", n)
 
   # Tests M == Iₙ
   MisI = isa(M, opEye)
@@ -82,8 +82,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   ε = atol + rtol * rNorm
   ArNorms = T[]
   κ = zero(T)
-  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖")
-  display(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
+  (verbose > 0) && @info @sprintf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
   # Set up workspace.
   M⁻¹vₖ₋₁ .= zero(T)
@@ -303,7 +303,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     μbarₖ₋₁ = μbarₖ
     ζbarₖ = ζbarₖ₊₁
     βₖ = βₖ₊₁
-    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, ArNorm)
+    display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e\n", iter, rNorm, ArNorm)
   end
   (verbose > 0) && @printf("\n")
 

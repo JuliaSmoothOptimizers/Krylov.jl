@@ -53,7 +53,7 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
   n, m = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("BICGSTAB: system of size %d\n", n)
+  (verbose > 0) && @info @sprintf("BICGSTAB: system of size %d\n", n)
 
   # Check M == Iₘ and N == Iₙ
   MisI = isa(M, opEye)
@@ -88,8 +88,8 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
 
   rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "αₖ", "ωₖ")
-  display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
+  (verbose > 0) && @info @sprintf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "αₖ", "ωₖ")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
 
   next_ρ = @kdot(n, r, c)  # ρ₁ = ⟨r₀,r̅₀⟩
   next_ρ == 0 && return (x, SimpleStats(false, false, [rNorm], T[], "Breakdown bᵀc = 0"))
@@ -132,7 +132,7 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
-    display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
+    display(iter, verbose) && @info @sprintf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
   end
   (verbose > 0) && @printf("\n")
 

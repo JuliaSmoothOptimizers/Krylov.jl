@@ -81,7 +81,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   m, n = size(A)
   m == n || error("System must be square")
   size(b, 1) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("MINRES: system of size %d\n", n)
+  (verbose > 0) && @info @sprintf("MINRES: system of size %d\n", n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -145,8 +145,8 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %7s\n", "Aprod", "‖r‖", "‖Aᵀr‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "test2")
-  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", 0, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
+  (verbose > 0) && @info @sprintf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %7s\n", "Aprod", "‖r‖", "‖Aᵀr‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "test2")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", 0, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
 
   tol = atol + rtol * β₁
   rNormtol = ratol + rrtol * β₁ 
@@ -246,7 +246,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
 
     Acond = γmax / γmin
 
-    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, test1, test2)
+    display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, test1, test2)
 
     if iter == 1 && β / β₁ ≤ 10 * ϵM
       # Aᵀb = 0 so x = 0 is a minimum least-squares solution

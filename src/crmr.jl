@@ -72,7 +72,7 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("CRMR: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @info @sprintf("CRMR: system of %d equations in %d variables\n", m, n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -103,8 +103,8 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   ArNorms = history ? [ArNorm] : T[]
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
-  (verbose > 0) && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
-  display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm)
+  (verbose > 0) && @info @sprintf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
+  display(iter, verbose) && @info @sprintf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm)
 
   status = "unknown"
   solved = rNorm ≤ ɛ_c
@@ -134,7 +134,7 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(rNorms, rNorm)
     history && push!(ArNorms, ArNorm)
     iter = iter + 1
-    display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm)
+    display(iter, verbose) && @info @sprintf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm)
     solved = rNorm ≤ ɛ_c
     inconsistent = (rNorm > 100 * ɛ_c) && (ArNorm ≤ ɛ_i)
     tired = iter ≥ itmax

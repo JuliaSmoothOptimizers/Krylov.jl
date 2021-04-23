@@ -45,7 +45,7 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   m == n || error("Systems must be square")
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  (verbose > 0) && @printf("BILQR: systems of size %d\n", n)
+  (verbose > 0) && @info @sprintf("BILQR: systems of size %d\n", n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -73,8 +73,8 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   sNorms = history ? [cNorm] : T[]
   εL = atol + rtol * bNorm
   εQ = atol + rtol * cNorm
-  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
-  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
+  (verbose > 0) && @info @sprintf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
@@ -327,9 +327,9 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     tired = iter ≥ itmax
     breakdown = !solved_lq && !solved_cg && (qᵗp == 0)
 
-    display(iter, verbose) &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "", sNorm)
-    display(iter, verbose) && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
-    display(iter, verbose) && !solved_primal && !solved_dual && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
+    display(iter, verbose) &&  solved_primal && !solved_dual && @info @sprintf("%5d  %7s  %7.1e\n", iter, "", sNorm)
+    display(iter, verbose) && !solved_primal &&  solved_dual && @info @sprintf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
+    display(iter, verbose) && !solved_primal && !solved_dual && @info @sprintf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
   end
   (verbose > 0) && @printf("\n")
 

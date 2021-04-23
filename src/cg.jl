@@ -51,7 +51,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
-  (verbose > 0) && @printf("CG: system of %d equations in %d variables\n", n, n)
+  (verbose > 0) && @info @sprintf("CG: system of %d equations in %d variables\n", n, n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -76,8 +76,8 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   pNorm² = γ
   rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
-  display(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
+  (verbose > 0) && @info @sprintf("%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e\n", iter, rNorm)
 
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
@@ -107,8 +107,6 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
     # Compute step size to boundary if applicable.
     σ = radius > 0 ? maximum(to_boundary(x, p, radius, dNorm2=pNorm²)) : α
 
-    display(iter, verbose) && @printf("%8.1e  %8.1e  %8.1e\n", pAp, α, σ)
-
     # Move along p from x to the boundary if either
     # the next step leads outside the trust region or
     # we have nonpositive curvature.
@@ -135,7 +133,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
 
     iter = iter + 1
     tired = iter ≥ itmax
-    display(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
+    display(iter, verbose) && @info @sprintf("%5d  %7.1e  %8.1e  %8.1e  %8.1e\n", iter, rNorm, pAp, α, σ)
   end
   (verbose > 0) && @printf("\n")
 
