@@ -9,7 +9,6 @@ function test_craig()
     #   r = r - sqrt(λ) * s
     # end
     resid = norm(r) / norm(b)
-    @printf("CRAIG: residual: %7.1e\n", resid)
     return (x, y, stats, resid)
   end
 
@@ -26,7 +25,6 @@ function test_craig()
   A, b = under_inconsistent()
   (x, y, stats, resid) = test_craig(A, b)
   # @test(norm(x - A' * y) ≤ craig_tol * norm(x))
-  show(stats)
   @test(stats.inconsistent || stats.status == "condition number exceeds tolerance")
 
   # Square consistent.
@@ -69,7 +67,6 @@ function test_craig()
 
   # Code coverage.
   (x, y, stats) = craig(sparse(A), b, λ=1.0e-3)
-  show(stats)
 
   # Test b == 0
   A, b = zero_rhs()
@@ -84,7 +81,6 @@ function test_craig()
   s = λ * y
   r = b - (A * x + λ * s)
   resid = norm(r) / norm(b)
-  @printf("CRAIG: Relative residual: %8.1e\n", resid)
   @test(resid ≤ craig_tol)
   r2 = b - (A * A' + λ^2 * I) * y
   resid2 = norm(r2) / norm(b)
@@ -96,7 +92,6 @@ function test_craig()
   (x, y, stats) = craig(A, b, N=D⁻¹)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CRAIG: Relative residual: %8.1e\n", resid)
   @test(resid ≤ craig_tol)
   r2 = b - (A * D⁻¹ * A') * y
   resid2 = norm(r2) / norm(b)
@@ -105,10 +100,8 @@ function test_craig()
   # Test with preconditioners
   A, b, M⁻¹, N⁻¹ = two_preconditioners()
   (x, y, stats) = craig(A, b, M=M⁻¹, N=N⁻¹, sqd=false)
-  show(stats)
   r = b - A * x
   resid = sqrt(dot(r, M⁻¹ * r)) / norm(b)
-  @printf("CRAIG: Relative residual: %8.1e\n", resid)
   @test(resid ≤ craig_tol)
   @test(norm(x - N⁻¹ * A' * y) ≤ craig_tol * norm(x))
 
@@ -119,11 +112,12 @@ function test_craig()
   (x, y, stats) = craig(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
   r = b - (A * x + M * y)
   resid = norm(r) / norm(b)
-  @printf("CRAIG: Relative residual: %8.1e\n", resid)
   @test(resid ≤ craig_tol)
   r2 = b - (A * N⁻¹ * A' + M) * y
   resid2 = norm(r2) / norm(b)
   @test(resid2 ≤ craig_tol)
 end
 
-test_craig()
+@testset "craig" begin
+  test_craig()
+end

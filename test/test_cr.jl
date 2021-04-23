@@ -6,17 +6,14 @@ function test_cr()
   (x, stats) = cr(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cr_tol)
   @test(stats.solved)
 
   # Code coverage
   (x, stats) = cr(Matrix(A), b)
-  show(stats)
 
   radius = 0.75 * norm(x)
   (x, stats) = cr(A, b, radius=radius)
-  show(stats)
   @test(stats.solved)
   @test abs(norm(x) - radius) ≤ cr_tol * radius
 
@@ -30,7 +27,6 @@ function test_cr()
   xNorm = norm(x)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CR: Relative residual: %8.1e\n", resid)
   @test abs(xNorm - radius) ≤ cr_tol * radius
   @test(stats.solved)
   # case: ‖x*‖ < Δ
@@ -39,13 +35,11 @@ function test_cr()
   xNorm = norm(x)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cr_tol)
   @test(stats.solved)
 
   radius = 0.75 * xNorm
   (x, stats) = cr(A, b, radius=radius)
-  show(stats)
   @test(stats.solved)
   @test(abs(radius - norm(x)) ≤ cr_tol * radius)
 
@@ -74,12 +68,12 @@ function test_cr()
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = cr(A, b, M=M)
-  show(stats)
   r = b - A * x
   resid = sqrt(dot(r, M * r)) / norm(b)
-  @printf("CR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cr_tol)
   @test(stats.solved)
 end
 
-test_cr()
+@testset "cr" begin
+  test_cr()
+end

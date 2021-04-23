@@ -7,7 +7,6 @@ function test_usymlq()
   (x, stats) = usymlq(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
   @test(stats.solved)
 
@@ -17,7 +16,6 @@ function test_usymlq()
   (x, stats) = usymlq(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
   @test(stats.solved)
 
@@ -27,7 +25,6 @@ function test_usymlq()
   (x, stats) = usymlq(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
   @test(stats.solved)
 
@@ -37,13 +34,11 @@ function test_usymlq()
   (x, stats) = usymlq(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
   @test(stats.solved)
 
   # Code coverage.
   (x, stats) = usymlq(Matrix(A), b, c)
-  show(stats)
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
@@ -51,7 +46,6 @@ function test_usymlq()
   (x, stats) = usymlq(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
   @test(stats.solved)
 
@@ -61,7 +55,6 @@ function test_usymlq()
   (x, stats) = usymlq(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
   @test(stats.solved)
 
@@ -78,7 +71,6 @@ function test_usymlq()
   (x, stats) = usymlq(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
 
   # Square and consistent systems.
@@ -87,7 +79,6 @@ function test_usymlq()
   (x, stats) = usymlq(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
 
   # Overdetermined and consistent systems.
@@ -96,7 +87,6 @@ function test_usymlq()
   (x, stats) = usymlq(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
 
   # System that cause a breakdown with the orthogonal tridiagonalization process.
@@ -104,7 +94,6 @@ function test_usymlq()
   (x, stats) = usymlq(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
   @test(stats.solved)
 
@@ -113,9 +102,10 @@ function test_usymlq()
   (x, stats) = usymlq(A, b, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymlq_tol)
   @test(stats.solved)
 end
 
-test_usymlq()
+@testset "usymlq" begin
+  test_usymlq()
+end

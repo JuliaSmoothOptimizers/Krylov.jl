@@ -7,7 +7,6 @@ function test_lslq()
     (x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b)
     r = b - A * x
     resid = norm(A' * r) / norm(b)
-    @printf("LSLQ: Relative residual: %8.1e\n", resid)
     @test(resid ≤ lslq_tol)
     @test(stats.solved)
 
@@ -15,7 +14,6 @@ function test_lslq()
     (x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, λ=λ)
     r = b - A * x
     resid = norm(A' * r - λ * λ * x) / norm(b)
-    @printf("LSLQ: Relative residual: %8.1e\n", resid)
     @test(resid ≤ lslq_tol)
     @test(stats.solved)
   end
@@ -37,7 +35,6 @@ function test_lslq()
   (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0)
   (x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(Matrix(A), b)
   (x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(sparse(Matrix(A)), b)
-  show(stats)
 
   # Test b == 0
   (x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, zeros(size(A,1)))
@@ -47,10 +44,8 @@ function test_lslq()
   # Test with preconditioners
   A, b, M, N = two_preconditioners()
   (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, M=M, N=N)
-  show(stats)
   r = b - A * x_lq
   resid = sqrt(dot(r, M * r)) / norm(b)
-  @printf("LSLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lslq_tol)
   @test(stats.solved)
 
@@ -59,7 +54,6 @@ function test_lslq()
   (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, λ=λ)
   r = b - A * x_lq
   resid = norm(A' * r - λ^2 * x_lq) / norm(b)
-  @printf("LSLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lslq_tol)
 
   # Test saddle-point systems
@@ -68,7 +62,6 @@ function test_lslq()
   (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, M=D⁻¹)
   r = D⁻¹ * (b - A * x_lq)
   resid = norm(A' * r) / norm(b)
-  @printf("LSLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lslq_tol)
 
   # Test symmetric and quasi-definite systems
@@ -78,8 +71,9 @@ function test_lslq()
   (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
   r = M⁻¹ * (b - A * x_lq)
   resid = norm(A' * r - N * x_lq) / norm(b)
-  @printf("LSLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lslq_tol)
 end
 
-test_lslq()
+@testset "lslq" begin
+  test_lslq()
+end

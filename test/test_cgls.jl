@@ -6,14 +6,12 @@ function test_cgls()
 
     (x, stats) = cgls(A, b)
     resid = norm(A' * (A*x - b)) / norm(b)
-    @printf("CGLS: Relative residual: %8.1e\n", resid)
     @test(resid ≤ cgls_tol)
     @test(stats.solved)
 
     λ = 1.0e-3
     (x, stats) = cgls(A, b, λ=λ)
     resid = norm(A' * (A*x - b) + λ * x) / norm(b)
-    @printf("CGLS: Relative residual: %8.1e\n", resid)
     @test(resid ≤ cgls_tol)
     @test(stats.solved)
   end
@@ -30,7 +28,6 @@ function test_cgls()
 
   (x, stats) = cgls(A, b, M=M)
   resid = norm(A' * M * (A * x - b)) / sqrt(dot(b, M * b))
-  @printf("CGLS: Preconditioned residual: %8.1e\n", resid)
   @test resid ≤ cgls_tol
 
   # test trust-region constraint
@@ -49,7 +46,6 @@ function test_cgls()
   (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0)
   (x, stats) = cgls(Matrix(A), b)
   (x, stats) = cgls(sparse(Matrix(A)), b)
-  show(stats)
 
   # Test b == 0
   (x, stats) = cgls(A, zeros(size(A,1)))
@@ -57,4 +53,6 @@ function test_cgls()
   @test stats.status == "x = 0 is a zero-residual solution"
 end
 
-test_cgls()
+@testset "cgls" begin
+  test_cgls()
+end

@@ -6,7 +6,6 @@ function test_dqgmres()
   (x, stats) = dqgmres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ dqgmres_tol)
   @test(stats.solved)
 
@@ -15,7 +14,6 @@ function test_dqgmres()
   (x, stats) = dqgmres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ dqgmres_tol)
   @test(stats.solved)
 
@@ -24,7 +22,6 @@ function test_dqgmres()
   (x, stats) = dqgmres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ dqgmres_tol)
   @test(stats.solved)
 
@@ -33,20 +30,17 @@ function test_dqgmres()
   (x, stats) = dqgmres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ dqgmres_tol)
   @test(stats.solved)
 
   # Code coverage.
   (x, stats) = dqgmres(Matrix(A), b)
-  show(stats)
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
   (x, stats) = dqgmres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ dqgmres_tol)
   @test(stats.solved)
 
@@ -55,7 +49,6 @@ function test_dqgmres()
   (x, stats) = dqgmres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ 100 * dqgmres_tol)
   @test(stats.solved)
 
@@ -70,39 +63,34 @@ function test_dqgmres()
   (x, stats) = dqgmres(A, b, memory=100)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ dqgmres_tol)
   @test(stats.solved)
 
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = dqgmres(A, b, M=M)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ dqgmres_tol)
   @test(stats.solved)
 
   # Right preconditioning
   A, b, N = square_preconditioned()
   (x, stats) = dqgmres(A, b, N=N)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ dqgmres_tol)
   @test(stats.solved)
 
   # Split preconditioning
   A, b, M, N = two_preconditioners()
   (x, stats) = dqgmres(A, b, M=M, N=N)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DQGMRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ dqgmres_tol)
   @test(stats.solved)
 end
 
-test_dqgmres()
+@testset "dqgmres" begin
+  test_dqgmres()
+end

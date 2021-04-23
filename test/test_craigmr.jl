@@ -12,7 +12,6 @@ function test_craigmr()
     # end
     resid = norm(r) / norm(b)
     Aresid = norm(Ar) / (norm(A) * norm(b))
-    @printf("CRAIGMR: residual: %7.1e  least-squares: %7.1e\n", resid, Aresid)
     return (x, y, stats, resid, Aresid)
   end
 
@@ -74,7 +73,6 @@ function test_craigmr()
 
   # Code coverage.
   (x, y, stats) = craigmr(sparse(A), b, λ=1.0e-3)
-  show(stats)
 
   # Test b == 0
   A, b = zero_rhs()
@@ -86,13 +84,13 @@ function test_craigmr()
   # Test with preconditioners
   A, b, M, N = two_preconditioners()
   (x, y, stats) = craigmr(A, b, M=M, N=N)
-  show(stats)
   r = b - A * x
   resid = sqrt(dot(r, M * r)) / norm(b)
-  @printf("CRAIGMR: Relative residual: %8.1e\n", resid)
   @test(norm(x - N * A' * y) ≤ craigmr_tol * norm(x))
   @test(resid ≤ craigmr_tol)
   @test(stats.solved)
 end
 
-test_craigmr()
+@testset "craigmr" begin
+  test_craigmr()
+end

@@ -1,11 +1,9 @@
 function test_mp()
-  @printf("Tests of multi-precision methods:\n")
   n = 5
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos,
              :dqgmres, :diom, :cr, :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab,
              :craigmr, :crls, :symmlq, :minres, :cg_lanczos_shift_seq,
              :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr)
-    @printf("%s ", string(fn))
     for T in (Float16, Float32, Float64, BigFloat)
       A = spdiagm(-1 => -ones(T,n-1), 0 => 3*ones(T,n), 1 => -ones(T,n-1))
       b = ones(T, n)
@@ -46,9 +44,9 @@ function test_mp()
         @test eltype(y) == T
       end
     end
-    @printf("✔\n")
   end
-  @printf("\n")
 end
 
-test_mp()
+@testset "mp" begin
+  test_mp()
+end

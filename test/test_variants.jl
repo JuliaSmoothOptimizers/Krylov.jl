@@ -1,11 +1,9 @@
 # Tests of variants.jl
 function test_variants()
-  @printf("Tests of variants:\n")
   for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne, :cr,
              :lnlq, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :bilq, :lsqr,
              :minres, :symmlq, :dqgmres, :diom, :cgs, :bicgstab, :usymqr,
              :minres_qlp, :qmr, :usymlq, :bilqr, :tricg, :trimr, :trilqr)
-    @printf("%s ", string(fn))
     for T in (Float32, Float64, BigFloat)
       for S in (Int32, Int64)
         A_dense = Matrix{T}(I, 5, 5)
@@ -36,12 +34,8 @@ function test_variants()
         end
       end
     end
-    @printf("✔\n")
   end
-  println()
-  @printf("Tests of wrappers:\n")
   for wrapper in (:SymTridiagonal, :Symmetric, :Hermitian)
-    @printf("%s ", string(wrapper))
     for fn in (:cg_lanczos, :cg, :cr, :minres, :minres_qlp, :symmlq, :cgs, :bicgstab, :diom, :dqgmres, :cg_lanczos_shift_seq)
       for T in (Float32, Float64, BigFloat)
         for S in (Int32, Int64)
@@ -68,8 +62,9 @@ function test_variants()
         end
       end
     end
-    @printf("✔\n")
   end
 end
 
-test_variants()
+@testset "variants" begin
+  test_variants()
+end

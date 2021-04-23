@@ -6,7 +6,6 @@ function test_minres_qlp()
   (x, stats) = minres_qlp(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("MINRES-QLP: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_qlp_tol)
   @test(stats.solved)
 
@@ -15,20 +14,17 @@ function test_minres_qlp()
   (x, stats) = minres_qlp(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("MINRES-QLP: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_qlp_tol)
   @test(stats.solved)
 
   # Code coverage.
   (x, stats) = minres_qlp(Matrix(A), b)
-  show(stats)
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
   (x, stats) = minres_qlp(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("MINRES-QLP: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_qlp_tol)
   @test(stats.solved)
 
@@ -37,7 +33,6 @@ function test_minres_qlp()
   (x, stats) = minres_qlp(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("MINRES-QLP: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_qlp_tol)
   @test(stats.solved)
 
@@ -53,7 +48,6 @@ function test_minres_qlp()
   (x, stats) = minres_qlp(A, b, λ=λ)
   r = b - (A + λ*I) * x
   resid = norm(r) / norm(b)
-  @printf("MINRES-QLP: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_qlp_tol)
   @test(stats.solved)
 
@@ -65,12 +59,12 @@ function test_minres_qlp()
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = minres_qlp(A, b, M=M)
-  show(stats)
   r = b - A * x
   resid = sqrt(dot(r, M * r)) / norm(b)
-  @printf("MINRES-QLP: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_qlp_tol)
   @test(stats.solved)
 end
 
-test_minres_qlp()
+@testset "minres_qlp" begin
+  test_minres_qlp()
+end

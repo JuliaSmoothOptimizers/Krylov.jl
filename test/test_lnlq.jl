@@ -5,14 +5,12 @@ function test_lnlq()
     (x, y, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig)
     r = b - A * x
     resid = norm(r) / norm(b)
-    @printf("LNLQ: residual: %7.1e\n", resid)
     return (x, y, stats, resid)
   end
 
   # Code coverage.
   A, b = kron_unsymmetric(4)
-  (x, y, stats) = lnlq(A, b, transfer_to_craig=false, verbose=1)
-  show(stats)
+  (x, y, stats) = lnlq(A, b, transfer_to_craig=false)
 
   # Test b == 0
   A, b = zero_rhs()
@@ -55,7 +53,6 @@ function test_lnlq()
     s = λ * y
     r = b - (A * x + λ * s)
     resid = norm(r) / norm(b)
-    @printf("LNLQ: Relative residual: %8.1e\n", resid)
     @test(resid ≤ lnlq_tol)
     r2 = b - (A * A' + λ^2 * I) * y
     resid2 = norm(r2) / norm(b)
@@ -67,7 +64,6 @@ function test_lnlq()
     (x, y, stats) = lnlq(A, b, N=D⁻¹, transfer_to_craig=transfer_to_craig)
     r = b - A * x
     resid = norm(r) / norm(b)
-    @printf("LNLQ: Relative residual: %8.1e\n", resid)
     @test(resid ≤ lnlq_tol)
     r2 = b - (A * D⁻¹ * A') * y
     resid2 = norm(r2) / norm(b)
@@ -76,10 +72,8 @@ function test_lnlq()
     # Test with preconditioners
     A, b, M⁻¹, N⁻¹ = two_preconditioners()
     (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=false, transfer_to_craig=transfer_to_craig)
-    show(stats)
     r = b - A * x
     resid = sqrt(dot(r, M⁻¹ * r)) / norm(b)
-    @printf("LNLQ: Relative residual: %8.1e\n", resid)
     @test(resid ≤ lnlq_tol)
     @test(norm(x - N⁻¹ * A' * y) ≤ lnlq_tol * norm(x))
 
@@ -90,7 +84,6 @@ function test_lnlq()
     (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=true, transfer_to_craig=transfer_to_craig)
     r = b - (A * x + M * y)
     resid = norm(r) / norm(b)
-    @printf("LNLQ: Relative residual: %8.1e\n", resid)
     @test(resid ≤ lnlq_tol)
     r2 = b - (A * N⁻¹ * A' + M) * y
     resid2 = norm(r2) / norm(b)
@@ -98,4 +91,6 @@ function test_lnlq()
   end
 end
 
-test_lnlq()
+@testset "lnlq" begin
+  test_lnlq()
+end

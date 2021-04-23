@@ -97,4 +97,6 @@ function test_aux()
   Krylov.kones(Vector{Float64}, 10) == ones(10)
 end
 
-test_aux()
+@testset "aux" begin
+  test_aux()
+end

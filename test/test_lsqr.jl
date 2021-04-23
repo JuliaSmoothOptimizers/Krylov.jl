@@ -7,7 +7,6 @@ function test_lsqr()
     (x, stats) = lsqr(A, b)
     r = b - A * x
     resid = norm(A' * r) / norm(b)
-    @printf("LSQR: Relative residual: %8.1e\n", resid)
     @test(resid ≤ lsqr_tol)
     @test(stats.solved)
 
@@ -15,7 +14,6 @@ function test_lsqr()
     (x, stats) = lsqr(A, b, λ=λ)
     r = b - A * x
     resid = norm(A' * r - λ * λ * x) / norm(b)
-    @printf("LSQR: Relative residual: %8.1e\n", resid)
     @test(resid ≤ lsqr_tol)
     @test(stats.solved)
   end
@@ -39,7 +37,6 @@ function test_lsqr()
   (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0)
   (x, stats) = lsqr(Matrix(A), b)
   (x, stats) = lsqr(sparse(Matrix(A)), b)
-  show(stats)
 
   # Test b == 0
   A, b = zero_rhs()
@@ -50,10 +47,8 @@ function test_lsqr()
   # Test with preconditioners
   A, b, M, N = two_preconditioners()
   (x, stats) = lsqr(A, b, M=M, N=N)
-  show(stats)
   r = b - A * x
   resid = sqrt(dot(r, M * r)) / norm(b)
-  @printf("LSQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lsqr_tol)
   @test(stats.solved)
 
@@ -62,7 +57,6 @@ function test_lsqr()
   (x, stats) = lsqr(A, b, λ=λ)
   r = b - A * x
   resid = norm(A' * r - λ^2 * x) / norm(b)
-  @printf("LSQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lsqr_tol)
 
   # Test saddle-point systems
@@ -71,7 +65,6 @@ function test_lsqr()
   (x, stats) = lsqr(A, b, M=D⁻¹)
   r = D⁻¹ * (b - A * x)
   resid = norm(A' * r) / norm(b)
-  @printf("LSQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lsqr_tol)
 
   # Test symmetric and quasi-definite systems
@@ -81,8 +74,9 @@ function test_lsqr()
   (x, stats) = lsqr(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
   r = M⁻¹ * (b - A * x)
   resid = norm(A' * r - N * x) / norm(b)
-  @printf("LSQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ lsqr_tol)
 end
 
-test_lsqr()
+@testset "lsqr" begin
+  test_lsqr()
+end

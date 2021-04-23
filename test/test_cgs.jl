@@ -6,7 +6,6 @@ function test_cgs()
   (x, stats) = cgs(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CGS: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cgs_tol)
   @test(stats.solved)
 
@@ -15,7 +14,6 @@ function test_cgs()
   (x, stats) = cgs(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CGS: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cgs_tol)
   @test(stats.solved)
 
@@ -24,7 +22,6 @@ function test_cgs()
   (x, stats) = cgs(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CGS: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cgs_tol)
   @test(stats.solved)
 
@@ -33,20 +30,17 @@ function test_cgs()
   (x, stats) = cgs(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CGS: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cgs_tol)
   @test(stats.solved)
 
   # Code coverage.
   (x, stats) = cgs(sparse(A), b)
-  show(stats)
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
   (x, stats) = cgs(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CGS: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cgs_tol)
   @test(stats.solved)
 
@@ -59,32 +53,28 @@ function test_cgs()
   # Left preconditioning
   A, b, M = square_preconditioned()
   (x, stats) = cgs(A, b, M=M)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CGS: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cgs_tol)
   @test(stats.solved)
 
   # Right preconditioning
   A, b, N = square_preconditioned()
   (x, stats) = cgs(A, b, N=N)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CGS: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cgs_tol)
   @test(stats.solved)
 
   # Split preconditioning
   A, b, M, N = two_preconditioners()
   (x, stats) = cgs(A, b, M=M, N=N)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CGS: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cgs_tol)
   @test(stats.solved)
 end
 
-test_cgs()
+@testset "cgs" begin
+  test_cgs()
+end

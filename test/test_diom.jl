@@ -6,7 +6,6 @@ function test_diom()
   (x, stats) = diom(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DIOM: Relative residual: %8.1e\n", resid)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 
@@ -15,7 +14,6 @@ function test_diom()
   (x, stats) = diom(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DIOM: Relative residual: %8.1e\n", resid)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 
@@ -24,7 +22,6 @@ function test_diom()
   (x, stats) = diom(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DIOM: Relative residual: %8.1e\n", resid)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 
@@ -33,20 +30,17 @@ function test_diom()
   (x, stats) = diom(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DIOM: Relative residual: %8.1e\n", resid)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 
   # Code coverage.
   (x, stats) = diom(sparse(A), b)
-  show(stats)
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
   (x, stats) = diom(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DIOM: Relative residual: %8.1e\n", resid)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 
@@ -55,7 +49,6 @@ function test_diom()
   (x, stats) = diom(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DIOM: Relative residual: %8.1e\n", resid)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 
@@ -70,39 +63,34 @@ function test_diom()
   (x, stats) = diom(A, b, memory=200)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DIOM: Relative residual: %8.1e\n", resid)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = diom(A, b, M=M)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DIOM: Relative residual: %8.1e\n", resid)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 
   # Right preconditioning
   A, b, N = square_preconditioned()
   (x, stats) = diom(A, b, N=N)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DIOM: Relative residual: %8.1e\n", resid)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 
   # Split preconditioning
   A, b, M, N = two_preconditioners()
   (x, stats) = diom(A, b, M=M, N=N)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("DIOM: Relative residual: %8.1e\n", resid)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 end
 
-test_diom()
+@testset "diom" begin
+  test_diom()
+end

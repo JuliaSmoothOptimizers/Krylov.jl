@@ -14,7 +14,6 @@ function test_cg_lanczos()
 
   (x, stats) = cg_lanczos(A, b, itmax=n)
   resid = norm(b - A * x) / b_norm
-  @printf("CG_Lanczos: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cg_tol)
   @test(stats.solved)
 
@@ -29,11 +28,6 @@ function test_cg_lanczos()
   (x, stats) = cg_lanczos_shift_seq(A, b, shifts, itmax=n)
   r = residuals(A, b, shifts, x)
   resids = map(norm, r) / b_norm
-  @printf("CG_Lanczos: Relative residuals with shifts:")
-  for resid in resids
-    @printf(" %8.1e", resid)
-  end
-  @printf("\n")
   @test(all(resids .≤ cg_tol))
   @test(stats.solved)
 
@@ -44,8 +38,7 @@ function test_cg_lanczos()
 
   # Code coverage.
   (x, stats) = cg_lanczos(Matrix(A), b)
-  (x, stats) = cg_lanczos_shift_seq(Matrix(A), b, Float64.([1:6;]), verbose=1)
-  show(stats)
+  (x, stats) = cg_lanczos_shift_seq(Matrix(A), b, Float64.([1:6;]))
 
   # Test b == 0
   A, b = zero_rhs()
@@ -59,10 +52,8 @@ function test_cg_lanczos()
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = cg_lanczos(A, b, M=M)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CG_Lanczos: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cg_tol)
   @test(stats.solved)
 
@@ -70,13 +61,10 @@ function test_cg_lanczos()
   (x, stats) = cg_lanczos_shift_seq(A, b, shifts, M=M)
   r = residuals(A, b, shifts, x)
   resids = map(norm, r) / norm(b)
-  @printf("CG_Lanczos: Relative residuals with shifts:")
-  for resid in resids
-    @printf(" %8.1e", resid)
-  end
-  @printf("\n")
   @test(all(resids .≤ cg_tol))
   @test(stats.solved)
 end
 
-test_cg_lanczos()
+@testset "cg_lanczos" begin
+  test_cg_lanczos()
+end

@@ -7,7 +7,6 @@ function test_usymqr()
   (x, stats) = usymqr(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymqr_tol)
   @test(stats.solved)
 
@@ -17,7 +16,6 @@ function test_usymqr()
   (x, stats) = usymqr(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymqr_tol)
   @test(stats.solved)
 
@@ -27,7 +25,6 @@ function test_usymqr()
   (x, stats) = usymqr(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymqr_tol)
   @test(stats.solved)
 
@@ -37,13 +34,11 @@ function test_usymqr()
   (x, stats) = usymqr(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymqr_tol)
   @test(stats.solved)
 
   # Code coverage.
   (x, stats) = usymqr(Matrix(A), b, c)
-  show(stats)
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
@@ -51,7 +46,6 @@ function test_usymqr()
   (x, stats) = usymqr(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymqr_tol)
   @test(stats.solved)
 
@@ -61,7 +55,6 @@ function test_usymqr()
   (x, stats) = usymqr(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymqr_tol)
   @test(stats.solved)
 
@@ -78,7 +71,6 @@ function test_usymqr()
   (x, stats) = usymqr(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymqr_tol)
 
   # Underdetermined and inconsistent systems.
@@ -93,7 +85,6 @@ function test_usymqr()
   (x, stats) = usymqr(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymqr_tol)
 
   # Square and inconsistent systems.
@@ -108,7 +99,6 @@ function test_usymqr()
   (x, stats) = usymqr(A, b, c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymqr_tol)
 
   # Overdetermined and inconsistent systems.
@@ -122,9 +112,10 @@ function test_usymqr()
   (x, stats) = usymqr(A, b, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("USYMQR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ usymqr_tol)
   @test(stats.solved)
 end
 
-test_usymqr()
+@testset "usymqr" begin
+  test_usymqr()
+end
