@@ -7,14 +7,12 @@ function test_crls()
 
     (x, stats) = crls(A, b)
     resid = norm(A' * (A*x - b)) / norm(b)
-    @printf("CRLS: Relative residual: %8.1e\n", resid)
     @test(resid ≤ crls_tol)
     @test(stats.solved)
 
     λ = 1.0e-3
     (x, stats) = crls(A, b, λ=λ)
     resid = norm(A' * (A*x - b) + λ * x) / norm(b)
-    @printf("CRLS: Relative residual: %8.1e\n", resid)
     @test(resid ≤ crls_tol)
     @test(stats.solved)
   end
@@ -31,7 +29,6 @@ function test_crls()
 
   (x, stats) = crls(A, b, M=M)
   resid = norm(A' * M * (A * x - b)) / sqrt(dot(b, M * b))
-  @printf("CRLS: Preconditioned residual: %8.1e\n", resid)
   @test resid ≤ crls_tol
 
   # test trust-region constraint
@@ -50,7 +47,6 @@ function test_crls()
   (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0)
   (x, stats) = crls(Matrix(A), b)
   (x, stats) = crls(sparse(Matrix(A)), b)
-  show(stats)
 
   # Test b == 0
   A, b = zero_rhs()
@@ -72,4 +68,6 @@ function test_crls()
   @test norm(x) ⪅ radius
 end
 
-test_crls()
+@testset "crls" begin
+  test_crls()
+end

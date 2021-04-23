@@ -10,7 +10,6 @@ function test_crmr()
       r = r - sqrt(λ) * s
     end
     resid = norm(r) / norm(b)
-    @printf("CRMR: residual: %7.1e\n", resid)
     return (x, stats, resid)
   end
 
@@ -65,7 +64,6 @@ function test_crmr()
 
   # Code coverage.
   (x, stats, resid) = test_crmr(sparse(A), b, λ=1.0e-3)
-  show(stats)
 
   # Test b == 0
   A, b = zero_rhs()
@@ -86,4 +84,6 @@ function test_crmr()
   @test(norm(xI - xmin) ≤ cond(A) * crmr_tol * xmin_norm)
 end
 
-test_crmr()
+@testset "crmr" begin
+  test_crmr()
+end

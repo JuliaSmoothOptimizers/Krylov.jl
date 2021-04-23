@@ -6,17 +6,14 @@ function test_cg()
   (x, stats) = cg(A, b, itmax=10)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CG: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cg_tol)
   @test(stats.solved)
 
   # Code coverage.
   (x, stats) = cg(Matrix(A), b)
-  show(stats)
 
   radius = 0.75 * norm(x)
   (x, stats) = cg(A, b, radius=radius, itmax=10)
-  show(stats)
   @test(stats.solved)
   @test(abs(radius - norm(x)) ≤ cg_tol * radius)
 
@@ -25,13 +22,11 @@ function test_cg()
   (x, stats) = cg(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CG: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cg_tol)
   @test(stats.solved)
 
   radius = 0.75 * norm(x)
   (x, stats) = cg(A, b, radius=radius, itmax=10)
-  show(stats)
   @test(stats.solved)
   @test(abs(radius - norm(x)) ≤ cg_tol * radius)
 
@@ -59,10 +54,8 @@ function test_cg()
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = cg(A, b, M=M)
-  show(stats)
   r = b - A * x
   resid = sqrt(dot(r, M * r)) / norm(b)
-  @printf("CG: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cg_tol)
   @test(stats.solved)
 
@@ -84,7 +77,6 @@ function test_cg()
   x, stats = cg(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CG: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cg_tol)
   @test !stats.inconsistent
 
@@ -98,9 +90,10 @@ function test_cg()
   (x, stats) = cg(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("CG: Relative residual: %8.1e\n", resid)
   @test(resid ≤ cg_tol)
   @test(stats.solved)
 end
 
-test_cg()
+@testset "cg" begin
+  test_cg()
+end

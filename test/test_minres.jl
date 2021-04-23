@@ -6,7 +6,6 @@ function test_minres()
   (x, stats) = minres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("MINRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_tol)
   @test(stats.solved)
 
@@ -15,20 +14,17 @@ function test_minres()
   (x, stats) = minres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("MINRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_tol)
   @test(stats.solved)
 
   # Code coverage.
   (x, stats) = minres(Matrix(A), b)
-  show(stats)
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
   (x, stats) = minres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("MINRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_tol)
   @test(stats.solved)
 
@@ -37,7 +33,6 @@ function test_minres()
   (x, stats) = minres(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("MINRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ 100 * minres_tol)
   @test(stats.solved)
 
@@ -53,17 +48,14 @@ function test_minres()
   (x, stats) = minres(A, b, λ=λ)
   r = b - (A + λ*I) * x
   resid = norm(r) / norm(b)
-  @printf("MINRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_tol)
   @test(stats.solved)
 
   # test with Jacobi (or diagonal) preconditioner and history = true
   A, b, M = square_preconditioned()
   (x, stats) = minres(A, b, M=M, history=true)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("MINRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_tol)
   @test(stats.solved)
   @test(length(stats.residuals) > 0)
@@ -74,12 +66,12 @@ function test_minres()
   opA = PreallocatedLinearOperator(y, Symmetric(A))
   solver = MinresSolver(opA, b)
   x, stats = minres!(solver, opA, b, M=M)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("MINRES: Relative residual: %8.1e\n", resid)
   @test(resid ≤ minres_tol)
   @test(stats.solved)
 end
 
-test_minres()
+@testset "minres" begin
+  test_minres()
+end

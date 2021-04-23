@@ -7,7 +7,6 @@ function test_symmlq()
   (x, stats) = symmlq(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("SYMMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ symmlq_tol)
   @test(stats.solved)
 
@@ -16,21 +15,17 @@ function test_symmlq()
   (x, stats) = symmlq(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("SYMMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ symmlq_tol)
   @test(stats.solved)
 
   # Code coverage.
   (x, stats) = symmlq(Matrix(A), b)
-  show(stats)
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
   (x, stats) = symmlq(A, b, atol=1e-12, rtol=1e-12)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @show stats
-  @printf("SYMMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ 100 * symmlq_tol)
   @test(stats.solved)
 
@@ -39,10 +34,8 @@ function test_symmlq()
   (x, stats) = symmlq(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("SYMMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ symmlq_tol)
   @test(stats.solved)
-  show(stats)
 
   # Test b == 0
   A, b = zero_rhs()
@@ -59,32 +52,24 @@ function test_symmlq()
   xcg = cg(A, b)[1]
   err = norm(x_exact - xlq)
   errcg = norm(x_exact - xcg)
-  @printf("SYMMLQ    : true error: %8.1e\n", err)
-  @printf("SYMMLQ-CG : true error: %8.1e\n", errcg)
-  @printf("SYMMLQ    : err up-bnd : %8.1e\n", stats.errors[end])
-  @printf("SYMMLQ-CG : err up-bnd : %8.1e\n", stats.errorscg[end])
   @test( err ≤ stats.errors[end] )
   @test( errcg ≤ stats.errorscg[end])
   (x, stats) = symmlq(A, b, λest=λest, window=1, history=true)
-  @printf("SYMMLQ    : err up-bnd : %8.1e\n", stats.errors[end])
-  @printf("SYMMLQ-CG : err up-bnd : %8.1e\n", stats.errorscg[end])
   @test( err ≤ stats.errors[end] )
   @test( errcg ≤ stats.errorscg[end])
   (x, stats) = symmlq(A, b, λest=λest, window=5, history=true)
-  @printf("SYMMLQ    : err up-bnd : %8.1e\n", stats.errors[end])
-  @printf("SYMMLQ-CG : err up-bnd : %8.1e\n", stats.errorscg[end])
   @test( err ≤ stats.errors[end] )
   @test( errcg ≤ stats.errorscg[end])
 
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = symmlq(A, b, M=M)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("SYMMLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ symmlq_tol)
   @test(stats.solved)
 end
 
-test_symmlq()
+@testset "symmlq" begin
+  test_symmlq()
+end

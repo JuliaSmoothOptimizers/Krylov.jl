@@ -6,7 +6,6 @@ function test_bicgstab()
   (x, stats) = bicgstab(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BICGSTAB: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bicgstab_tol)
   @test(stats.solved)
 
@@ -15,7 +14,6 @@ function test_bicgstab()
   (x, stats) = bicgstab(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BICGSTAB: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bicgstab_tol)
   @test(stats.solved)
 
@@ -24,7 +22,6 @@ function test_bicgstab()
   (x, stats) = bicgstab(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BICGSTAB: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bicgstab_tol)
   @test(stats.solved)
 
@@ -33,29 +30,25 @@ function test_bicgstab()
   (x, stats) = bicgstab(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BICGSTAB: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bicgstab_tol)
   @test(stats.solved)
 
   # Code coverage.
-  (x, stats) = bicgstab(Matrix(A), b, verbose=1)
-  show(stats)
+  (x, stats) = bicgstab(Matrix(A), b)
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
   (x, stats) = bicgstab(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BICGSTAB: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bicgstab_tol)
   @test(stats.solved)
 
   # Symmetric indefinite variant, almost singular.
   A, b = almost_singular()
-  (x, stats) = bicgstab(A, b, verbose=25)
+  (x, stats) = bicgstab(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BICGSTAB: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bicgstab_tol)
   @test(stats.solved)
 
@@ -68,32 +61,28 @@ function test_bicgstab()
   # Left preconditioning
   A, b, M = square_preconditioned()
   (x, stats) = bicgstab(A, b, M=M)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BICGSTAB: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bicgstab_tol)
   @test(stats.solved)
 
   # Right preconditioning
   A, b, N = square_preconditioned()
   (x, stats) = bicgstab(A, b, N=N)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BICGSTAB: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bicgstab_tol)
   @test(stats.solved)
 
   # Split preconditioning
   A, b, M, N = two_preconditioners(500, 32)
   (x, stats) = bicgstab(A, b, M=M, N=N)
-  show(stats)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BICGSTAB: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bicgstab_tol)
   @test(stats.solved)
 end
 
-test_bicgstab()
+@testset "bicgstab" begin
+  test_bicgstab()
+end

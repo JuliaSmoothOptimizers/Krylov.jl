@@ -7,7 +7,6 @@ function test_trimr()
   r = b - A  * y
   s = c - A' * x
   resid = norm([r; s]) / norm([b; c])
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   # Test square adjoint systems.
@@ -16,7 +15,6 @@ function test_trimr()
   r = b - A  * y
   s = c - A' * x
   resid = norm([r; s]) / norm([b; c])
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   # Test overdetermined adjoint systems
@@ -25,7 +23,6 @@ function test_trimr()
   r = b - A  * y
   s = c - A' * x
   resid = norm([r; s]) / norm([b; c])
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   # Test adjoint ODEs.
@@ -34,7 +31,6 @@ function test_trimr()
   r = b - A  * y
   s = c - A' * x
   resid = norm([r; s]) / norm([b; c])
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   # Test adjoint PDEs.
@@ -43,7 +39,6 @@ function test_trimr()
   r = b - A  * y
   s = c - A' * x
   resid = norm([r; s]) / norm([b; c])
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   # Test saddle-point systems
@@ -59,7 +54,6 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = sqrt(dot(r, H⁻¹ * r)) / sqrt(dot(B, H⁻¹ * B))
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   (x, y, stats) = trimr(A, b, c, τ=1.0, ν=0.0)
@@ -67,7 +61,6 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = norm(r) / norm(B)
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   # Test symmetric and quasi-definite systems
@@ -78,12 +71,11 @@ function test_trimr()
   N⁻¹ = inv(N)
   H⁻¹ = BlockDiagonalOperator(M⁻¹, N⁻¹)
 
-  (x, y, stats) = trimr(A, b, c, M=M⁻¹, N=N⁻¹, verbose=1)
+  (x, y, stats) = trimr(A, b, c, M=M⁻¹, N=N⁻¹)
   K = [M A; A' -N]
   B = [b; c]
   r =  B - K * [x; y]
   resid = sqrt(dot(r, H⁻¹ * r)) / sqrt(dot(B, H⁻¹ * B))
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   (x, y, stats) = trimr(A, b, c)
@@ -91,7 +83,6 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = norm(r) / norm(B)
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   (x, y, stats) = trimr(A, b, c, M=M⁻¹, N=N⁻¹, flip=true)
@@ -99,7 +90,6 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = sqrt(dot(r, H⁻¹ * r)) / sqrt(dot(B, H⁻¹ * B))
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   (x, y, stats) = trimr(A, b, c, flip=true)
@@ -107,7 +97,6 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = norm(r) / norm(B)
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   τ = 12.0; ν =-0.7
@@ -116,7 +105,6 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = sqrt(dot(r, H⁻¹ * r)) / sqrt(dot(B, H⁻¹ * B))
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   (x, y, stats) = trimr(A, b, c, τ=τ, ν=ν)
@@ -124,7 +112,6 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = norm(r) / norm(B)
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   τ = -1e-6; ν =1e-8
@@ -133,7 +120,6 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = sqrt(dot(r, H⁻¹ * r)) / sqrt(dot(B, H⁻¹ * B))
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   (x, y, stats) = trimr(A, b, c, τ=τ, ν=ν)
@@ -141,7 +127,6 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = norm(r) / norm(B)
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   # Test symmetric positive definite systems
@@ -150,7 +135,6 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = sqrt(dot(r, H⁻¹ * r)) / sqrt(dot(B, H⁻¹ * B))
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   (x, y, stats) = trimr(A, b, c, spd=true)
@@ -158,7 +142,6 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = norm(r) / norm(B)
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   # Test symmetric negative definite systems
@@ -167,7 +150,6 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = sqrt(dot(r, H⁻¹ * r)) / sqrt(dot(B, H⁻¹ * B))
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 
   (x, y, stats) = trimr(A, b, c, snd=true)
@@ -175,8 +157,9 @@ function test_trimr()
   B = [b; c]
   r =  B - K * [x; y]
   resid = norm(r) / norm(B)
-  @printf("TriMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ trimr_tol)
 end
 
-test_trimr()
+@testset "trimr" begin
+  test_trimr()
+end

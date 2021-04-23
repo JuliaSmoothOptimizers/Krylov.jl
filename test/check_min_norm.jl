@@ -10,6 +10,5 @@ function check_min_norm(A, b, x; λ=0.0)
   QR = qr(AI')
   xmin = QR.Q * (QR.R' \ b)
   xmin_norm = norm(xmin)
-  @printf("‖x - xmin‖ = %7.1e\n", norm(xI - xmin))
   return (xI, xmin, xmin_norm)
 end

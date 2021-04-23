@@ -10,7 +10,6 @@ function test_cgne()
       r = r - sqrt(λ) * s
     end
     resid = norm(r) / norm(b)
-    @printf("CGNE: residual: %7.1e\n", resid)
     return (x, stats, resid)
   end
 
@@ -62,7 +61,6 @@ function test_cgne()
 
   # Code coverage.
   (x, stats, resid) = test_cgne(sparse(A), b, λ=1.0e-3)
-  show(stats)
 
   # Test b == 0
   A, b = zero_rhs()
@@ -91,4 +89,6 @@ function test_cgne()
   @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm)
 end
 
-test_cgne()
+@testset "cgne" begin
+  test_cgne()
+end

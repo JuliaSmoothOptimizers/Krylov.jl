@@ -6,7 +6,6 @@ function test_bilq()
   (x, stats) = bilq(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BILQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bilq_tol)
   @test(stats.solved)
 
@@ -15,7 +14,6 @@ function test_bilq()
   (x, stats) = bilq(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BILQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bilq_tol)
   @test(stats.solved)
 
@@ -24,7 +22,6 @@ function test_bilq()
   (x, stats) = bilq(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BILQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bilq_tol)
   @test(stats.solved)
 
@@ -33,20 +30,17 @@ function test_bilq()
   (x, stats) = bilq(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BILQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bilq_tol)
   @test(stats.solved)
 
   # Code coverage.
   (x, stats) = bilq(Matrix(A), b)
-  show(stats)
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
   (x, stats) = bilq(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BILQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bilq_tol)
   @test(stats.solved)
 
@@ -61,7 +55,6 @@ function test_bilq()
   (x, stats) = bilq(A, b, c=c)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BILQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bilq_tol)
   @test(stats.solved)
 
@@ -70,9 +63,10 @@ function test_bilq()
   (x, stats) = bilq(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("BiLQ: Relative residual: %8.1e\n", resid)
   @test(resid ≤ bilq_tol)
   @test(stats.solved)
 end
 
-test_bilq()
+@testset "bilq" begin
+  test_bilq()
+end

@@ -6,7 +6,6 @@ function test_qmr()
   (x, stats) = qmr(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("QMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ qmr_tol)
   @test(stats.solved)
 
@@ -15,7 +14,6 @@ function test_qmr()
   (x, stats) = qmr(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("QMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ qmr_tol)
   @test(stats.solved)
 
@@ -24,7 +22,6 @@ function test_qmr()
   (x, stats) = qmr(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("QMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ qmr_tol)
   @test(stats.solved)
 
@@ -33,20 +30,17 @@ function test_qmr()
   (x, stats) = qmr(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("QMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ qmr_tol)
   @test(stats.solved)
 
   # Code coverage.
   (x, stats) = qmr(Matrix(A), b)
-  show(stats)
 
   # Sparse Laplacian.
   A, b = sparse_laplacian()
   (x, stats) = qmr(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("QMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ qmr_tol)
   @test(stats.solved)
 
@@ -61,9 +55,10 @@ function test_qmr()
   (x, stats) = qmr(A, b)
   r = b - A * x
   resid = norm(r) / norm(b)
-  @printf("QMR: Relative residual: %8.1e\n", resid)
   @test(resid ≤ qmr_tol)
   @test(stats.solved)
 end
 
-test_qmr()
+@testset "qmr" begin
+  test_qmr()
+end

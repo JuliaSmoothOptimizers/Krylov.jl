@@ -335,4 +335,6 @@ function test_alloc()
   @test actual_trimr_bytes ≤ 1.1 * expected_trimr_bytes
 end
 
-test_alloc()
+@testset "alloc" begin
+  test_alloc()
+end
