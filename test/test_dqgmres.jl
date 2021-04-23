@@ -1,4 +1,4 @@
-function test_dqgmres()
+@testset "dqgmres" begin
   dqgmres_tol = 1.0e-6
 
   # Symmetric and positive definite system.
@@ -89,8 +89,4 @@ function test_dqgmres()
   resid = norm(r) / norm(b)
   @test(resid ≤ dqgmres_tol)
   @test(stats.solved)
-end
-
-@testset "dqgmres" begin
-  test_dqgmres()
 end

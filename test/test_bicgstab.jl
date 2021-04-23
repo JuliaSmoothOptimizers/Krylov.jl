@@ -1,4 +1,4 @@
-function test_bicgstab()
+@testset "bicgstab" begin
   bicgstab_tol = 1.0e-6
 
   # Symmetric and positive definite system.
@@ -81,8 +81,4 @@ function test_bicgstab()
   resid = norm(r) / norm(b)
   @test(resid ≤ bicgstab_tol)
   @test(stats.solved)
-end
-
-@testset "bicgstab" begin
-  test_bicgstab()
 end

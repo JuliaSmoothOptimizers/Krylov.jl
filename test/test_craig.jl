@@ -1,4 +1,4 @@
-function test_craig()
+@testset "craig" begin
   craig_tol = 1.0e-6
 
   function test_craig(A, b; λ=0.0)
@@ -116,8 +116,4 @@ function test_craig()
   r2 = b - (A * N⁻¹ * A' + M) * y
   resid2 = norm(r2) / norm(b)
   @test(resid2 ≤ craig_tol)
-end
-
-@testset "craig" begin
-  test_craig()
 end

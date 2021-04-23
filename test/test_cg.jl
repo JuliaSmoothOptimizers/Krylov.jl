@@ -1,4 +1,4 @@
-function test_cg()
+@testset "cg" begin
   cg_tol = 1.0e-6
 
   # Cubic spline matrix.
@@ -92,8 +92,4 @@ function test_cg()
   resid = norm(r) / norm(b)
   @test(resid ≤ cg_tol)
   @test(stats.solved)
-end
-
-@testset "cg" begin
-  test_cg()
 end

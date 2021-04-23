@@ -1,4 +1,4 @@
-function test_diom()
+@testset "diom" begin
   diom_tol = 1.0e-6
 
   # Symmetric and positive definite system.
@@ -89,8 +89,4 @@ function test_diom()
   resid = norm(r) / norm(b)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
-end
-
-@testset "diom" begin
-  test_diom()
 end

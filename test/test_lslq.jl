@@ -1,4 +1,4 @@
-function test_lslq()
+@testset "lslq" begin
   lslq_tol = 1.0e-5
 
   for npower = 1 : 4
@@ -72,8 +72,4 @@ function test_lslq()
   r = M⁻¹ * (b - A * x_lq)
   resid = norm(A' * r - N * x_lq) / norm(b)
   @test(resid ≤ lslq_tol)
-end
-
-@testset "lslq" begin
-  test_lslq()
 end

@@ -1,4 +1,4 @@
-function test_trilqr()
+@testset "trilqr" begin
   trilqr_tol = 1.0e-6
 
   # Test underdetermined adjoint systems.
@@ -85,8 +85,4 @@ function test_trilqr()
   Aresid_dual = norm(A * s) / norm(A * c)
   @test(Aresid_dual ≤ trilqr_tol)
   @test(stats.solved_dual)
-end
-
-@testset "trilqr" begin
-  test_trilqr()
 end

@@ -1,4 +1,4 @@
-function test_tricg()
+@testset "tricg" begin
   tricg_tol = 1.0e-6
 
   # Test saddle-point systems
@@ -118,8 +118,4 @@ function test_tricg()
   r =  B - K * [x; y]
   resid = norm(r) / norm(B)
   @test(resid ≤ tricg_tol)
-end
-
-@testset "tricg" begin
-  test_tricg()
 end

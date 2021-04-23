@@ -1,4 +1,4 @@
-function test_bilq()
+@testset "bilq" begin
   bilq_tol = 1.0e-6
 
   # Symmetric and positive definite system.
@@ -65,8 +65,4 @@ function test_bilq()
   resid = norm(r) / norm(b)
   @test(resid ≤ bilq_tol)
   @test(stats.solved)
-end
-
-@testset "bilq" begin
-  test_bilq()
 end

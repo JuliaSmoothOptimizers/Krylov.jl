@@ -1,4 +1,4 @@
-function test_qmr()
+@testset "qmr" begin
   qmr_tol = 1.0e-6
 
   # Symmetric and positive definite system.
@@ -57,8 +57,4 @@ function test_qmr()
   resid = norm(r) / norm(b)
   @test(resid ≤ qmr_tol)
   @test(stats.solved)
-end
-
-@testset "qmr" begin
-  test_qmr()
 end

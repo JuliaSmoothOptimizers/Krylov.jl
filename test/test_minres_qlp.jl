@@ -1,4 +1,4 @@
-function test_minres_qlp()
+@testset "minres_qlp" begin
   minres_qlp_tol = 1.0e-6
 
   # Cubic spline matrix.
@@ -63,8 +63,4 @@ function test_minres_qlp()
   resid = sqrt(dot(r, M * r)) / norm(b)
   @test(resid ≤ minres_qlp_tol)
   @test(stats.solved)
-end
-
-@testset "minres_qlp" begin
-  test_minres_qlp()
 end
