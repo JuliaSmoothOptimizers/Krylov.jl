@@ -1,4 +1,4 @@
-function test_lnlq()
+@testset "lnlq" begin
   lnlq_tol = 1.0e-6
 
   function test_lnlq(A, b,transfer_to_craig)
@@ -89,8 +89,4 @@ function test_lnlq()
     resid2 = norm(r2) / norm(b)
     @test(resid2 ≤ lnlq_tol)
   end
-end
-
-@testset "lnlq" begin
-  test_lnlq()
 end

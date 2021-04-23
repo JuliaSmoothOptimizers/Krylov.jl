@@ -1,4 +1,4 @@
-function test_cgne()
+@testset "cgne" begin
   cgne_tol = 1.0e-6
 
   function test_cgne(A, b; λ=0.0, M=opEye())
@@ -87,8 +87,4 @@ function test_cgne()
   @test(stats.solved)
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
   @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm)
-end
-
-@testset "cgne" begin
-  test_cgne()
 end

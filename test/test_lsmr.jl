@@ -1,4 +1,4 @@
-function test_lsmr()
+@testset "lsmr" begin
   lsmr_tol = 1.0e-5
 
   for npower = 1 : 4
@@ -75,8 +75,4 @@ function test_lsmr()
   r = M⁻¹ * (b - A * x)
   resid = norm(A' * r - N * x) / norm(b)
   @test(resid ≤ lsmr_tol)
-end
-
-@testset "lsmr" begin
-  test_lsmr()
 end

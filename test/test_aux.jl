@@ -1,4 +1,4 @@
-function test_aux()
+@testset "aux" begin
   # test Givens reflector corner cases
   (c, s, ρ) = Krylov.sym_givens(0.0, 0.0)
   @test (c == 1.0) && (s == 0.0) && (ρ == 0.0)
@@ -95,8 +95,4 @@ function test_aux()
   # test kzeros and kones
   Krylov.kzeros(Vector{Float64}, 10) == zeros(10)
   Krylov.kones(Vector{Float64}, 10) == ones(10)
-end
-
-@testset "aux" begin
-  test_aux()
 end

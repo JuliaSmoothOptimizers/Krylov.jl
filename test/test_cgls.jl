@@ -1,4 +1,4 @@
-function test_cgls()
+@testset "cgls" begin
   cgls_tol = 1.0e-5
 
   for npower = 1 : 4
@@ -51,8 +51,4 @@ function test_cgls()
   (x, stats) = cgls(A, zeros(size(A,1)))
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
-end
-
-@testset "cgls" begin
-  test_cgls()
 end

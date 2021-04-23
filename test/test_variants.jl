@@ -1,5 +1,4 @@
-# Tests of variants.jl
-function test_variants()
+@testset "variants" begin
   for fn in (:cg_lanczos, :cg_lanczos_shift_seq, :cg, :cgls, :cgne, :cr,
              :lnlq, :craig, :craigmr, :crls, :crmr, :lslq, :lsmr, :bilq, :lsqr,
              :minres, :symmlq, :dqgmres, :diom, :cgs, :bicgstab, :usymqr,
@@ -63,8 +62,4 @@ function test_variants()
       end
     end
   end
-end
-
-@testset "variants" begin
-  test_variants()
 end

@@ -1,4 +1,4 @@
-function test_usymqr()
+@testset "usymqr" begin
   usymqr_tol = 1.0e-6
 
   # Symmetric and positive definite system.
@@ -114,8 +114,4 @@ function test_usymqr()
   resid = norm(r) / norm(b)
   @test(resid ≤ usymqr_tol)
   @test(stats.solved)
-end
-
-@testset "usymqr" begin
-  test_usymqr()
 end

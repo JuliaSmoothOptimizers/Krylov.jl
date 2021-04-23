@@ -1,4 +1,4 @@
-function test_cr()
+@testset "cr" begin
   cr_tol = 1.0e-6
 
   # Symmetric and positive definite system.
@@ -72,8 +72,4 @@ function test_cr()
   resid = sqrt(dot(r, M * r)) / norm(b)
   @test(resid ≤ cr_tol)
   @test(stats.solved)
-end
-
-@testset "cr" begin
-  test_cr()
 end

@@ -1,4 +1,4 @@
-function test_minres()
+@testset "minres" begin
   minres_tol = 1.0e-5
 
   # Cubic spline matrix.
@@ -70,8 +70,4 @@ function test_minres()
   resid = norm(r) / norm(b)
   @test(resid ≤ minres_tol)
   @test(stats.solved)
-end
-
-@testset "minres" begin
-  test_minres()
 end

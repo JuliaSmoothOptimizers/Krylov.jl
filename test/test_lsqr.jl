@@ -1,4 +1,4 @@
-function test_lsqr()
+@testset "lsqr" begin
   lsqr_tol = 1.0e-5
 
   for npower = 1 : 4
@@ -75,8 +75,4 @@ function test_lsqr()
   r = M⁻¹ * (b - A * x)
   resid = norm(A' * r - N * x) / norm(b)
   @test(resid ≤ lsqr_tol)
-end
-
-@testset "lsqr" begin
-  test_lsqr()
 end

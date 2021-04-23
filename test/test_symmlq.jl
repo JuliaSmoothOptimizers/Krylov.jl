@@ -1,4 +1,4 @@
-function test_symmlq()
+@testset "symmlq" begin
   symmlq_tol = 1.0e-6
 
   # Symmetric and positive definite system.
@@ -68,8 +68,4 @@ function test_symmlq()
   resid = norm(r) / norm(b)
   @test(resid ≤ symmlq_tol)
   @test(stats.solved)
-end
-
-@testset "symmlq" begin
-  test_symmlq()
 end

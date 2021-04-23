@@ -1,4 +1,4 @@
-function test_mp()
+@testset "mp" begin
   n = 5
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos,
              :dqgmres, :diom, :cr, :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab,
@@ -45,8 +45,4 @@ function test_mp()
       end
     end
   end
-end
-
-@testset "mp" begin
-  test_mp()
 end

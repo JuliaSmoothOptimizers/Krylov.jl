@@ -1,4 +1,4 @@
-function test_trimr()
+@testset "trimr" begin
   trimr_tol = 1.0e-6
 
   # Test underdetermined adjoint systems.
@@ -158,8 +158,4 @@ function test_trimr()
   r =  B - K * [x; y]
   resid = norm(r) / norm(B)
   @test(resid ≤ trimr_tol)
-end
-
-@testset "trimr" begin
-  test_trimr()
 end

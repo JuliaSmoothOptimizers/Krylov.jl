@@ -1,4 +1,4 @@
-function test_crls()
+@testset "crls" begin
   ⪅(x,y) = (x ≈ y) || (x < y)
   crls_tol = 1.0e-5
 
@@ -66,8 +66,4 @@ function test_crls()
   @test stats.solved
   @test stats.status == "zero-curvature encountered"
   @test norm(x) ⪅ radius
-end
-
-@testset "crls" begin
-  test_crls()
 end

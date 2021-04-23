@@ -4,7 +4,7 @@ function residuals(A, b, shifts, x)
   return r
 end
 
-function test_cg_lanczos()
+@testset "cg_lanczos" begin
   cg_tol = 1.0e-6
   n = 10
 
@@ -63,8 +63,4 @@ function test_cg_lanczos()
   resids = map(norm, r) / norm(b)
   @test(all(resids .≤ cg_tol))
   @test(stats.solved)
-end
-
-@testset "cg_lanczos" begin
-  test_cg_lanczos()
 end

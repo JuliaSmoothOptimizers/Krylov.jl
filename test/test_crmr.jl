@@ -1,4 +1,4 @@
-function test_crmr()
+@testset "crmr" begin
   crmr_tol = 1.0e-6
 
   function test_crmr(A, b; λ=0.0, M=opEye(), history=false)
@@ -82,8 +82,4 @@ function test_crmr()
   @test(stats.solved)
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
   @test(norm(xI - xmin) ≤ cond(A) * crmr_tol * xmin_norm)
-end
-
-@testset "crmr" begin
-  test_crmr()
 end

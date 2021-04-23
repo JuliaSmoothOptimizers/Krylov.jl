@@ -1,4 +1,4 @@
-function test_bilqr()
+@testset "bilqr" begin
   bilqr_tol = 1.0e-6
 
   # Test square adjoint systems.
@@ -49,8 +49,4 @@ function test_bilqr()
   c = Float64.([mod(i+1,2) for i = 1:10])
   (x, t, stats) = bilqr(A, b, c)
   @test stats.status == "Breakdown bᵀc = 0"
-end
-
-@testset "bilqr" begin
-  test_bilqr()
 end

@@ -1,4 +1,4 @@
-function test_cgs()
+@testset "cgs" begin
   cgs_tol = 1.0e-6
 
   # Symmetric and positive definite system.
@@ -73,8 +73,4 @@ function test_cgs()
   resid = norm(r) / norm(b)
   @test(resid ≤ cgs_tol)
   @test(stats.solved)
-end
-
-@testset "cgs" begin
-  test_cgs()
 end

@@ -1,4 +1,4 @@
-function test_craigmr()
+@testset "craigmr" begin
   craigmr_tol = 1.0e-6
 
   function test_craigmr(A, b; λ=0.0, history=false)
@@ -89,8 +89,4 @@ function test_craigmr()
   @test(norm(x - N * A' * y) ≤ craigmr_tol * norm(x))
   @test(resid ≤ craigmr_tol)
   @test(stats.solved)
-end
-
-@testset "craigmr" begin
-  test_craigmr()
 end
