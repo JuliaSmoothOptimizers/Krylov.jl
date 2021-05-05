@@ -95,4 +95,10 @@
   # test kzeros and kones
   Krylov.kzeros(Vector{Float64}, 10) == zeros(10)
   Krylov.kones(Vector{Float64}, 10) == ones(10)
+
+  a = rand(10)
+  b = view(a, 1:4)
+  S = typeof(b)
+  Krylov.kzeros(S, 10) == zeros(10)
+  Krylov.kones(S, 10) == ones(10)
 end
