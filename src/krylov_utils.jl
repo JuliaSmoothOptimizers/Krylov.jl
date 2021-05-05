@@ -171,14 +171,13 @@ end
 
 Create an AbstractVector of storage type `S` of length `n` only composed of zero.
 """
-@inline kzeros(S, n) = fill!(S(undef, n), zero(eltype(S)))
-
+@inline kzeros(S, n) = S <: SubArray ? fill!(S.types[1](undef, n), zero(eltype(S))) : fill!(S(undef, n), zero(eltype(S)))
 """
     v = kones(S, n)
 
 Create an AbstractVector of storage type `S` of length `n` only composed of one.
 """
-@inline kones(S, n) = fill!(S(undef, n), one(eltype(S)))
+@inline kones(S, n) = S <: SubArray ? fill!(S.types[1](undef, n), one(eltype(S))) : fill!(similar(S, n), one(eltype(S)))
 
 @inline display(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
 
