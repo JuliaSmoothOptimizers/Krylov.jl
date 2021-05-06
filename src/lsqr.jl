@@ -22,7 +22,7 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Montreal, QC, May 2015.
 
-export lsqr
+export lsqr, lsqr!
 
 
 """
@@ -72,13 +72,18 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 
 * C. C. Paige and M. A. Saunders, *LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*, ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
 """
-function lsqr(A, b :: AbstractVector{T};
-              M=opEye(), N=opEye(), sqd :: Bool=false,
-              λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
-              atol :: T=zero(T), rtol :: T=zero(T),
-              etol :: T=√eps(T), window :: Int=5,
-              itmax :: Int=0, conlim :: T=1/√eps(T),
-              radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function lsqr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = LsqrSolver(A, b)
+  lsqr!(solver, A, b; kwargs...)
+end
+
+function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
+               M=opEye(), N=opEye(), sqd :: Bool=false,
+               λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
+               atol :: T=zero(T), rtol :: T=zero(T),
+               etol :: T=√eps(T), window :: Int=5,
+               itmax :: Int=0, conlim :: T=1/√eps(T),
+               radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -90,24 +95,25 @@ function lsqr(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  x, Nv, w, Mu = solver.x, solver.Nv, solver.w, solver.Mu
 
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = one(T))
   λ² = λ * λ
   ctol = conlim > 0 ? 1/conlim : zero(T)
-  x = kzeros(S, n)
+  x .= zeros(T)
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
-  Mu = copy(b)
+  Mu .= b
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
   β₁ == 0 && return (x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
@@ -116,7 +122,7 @@ function lsqr(A, b :: AbstractVector{T};
   @kscal!(m, one(T)/β₁, u)
   MisI || @kscal!(m, one(T)/β₁, Mu)
   Aᵀu = Aᵀ * u
-  Nv = copy(Aᵀu)
+  Nv .= Aᵀu
   v = N * Nv
   Anorm² = @kdot(n, v, Nv)
   Anorm = sqrt(Anorm²)
@@ -143,7 +149,7 @@ function lsqr(A, b :: AbstractVector{T};
   α == 0 && return (x, SimpleStats(true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
-  w = copy(v)
+  w .= v
 
   # Initialize other constants.
   ϕbar = β₁

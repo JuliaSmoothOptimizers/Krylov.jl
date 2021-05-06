@@ -93,12 +93,17 @@
   @test minimum(Krylov.to_boundary(x, d, 5.0, flip=true)) ≈ -2.209975124224178
 
   # test kzeros and kones
-  Krylov.kzeros(Vector{Float64}, 10) == zeros(10)
-  Krylov.kones(Vector{Float64}, 10) == ones(10)
+  @test Krylov.kzeros(Vector{Float64}, 10) == zeros(10)
+  @test Krylov.kones(Vector{Float64}, 10) == ones(10)
 
-  a = rand(10)
-  b = view(a, 1:4)
-  S = typeof(b)
-  Krylov.kzeros(S, 10) == zeros(10)
-  Krylov.kones(S, 10) == ones(10)
+  # test ktypeof
+  a = sprand(Float32, 10, 0.5)
+  b = view(a, 4:8)
+  @test Krylov.ktypeof(a) == Vector{Float32}
+  @test Krylov.ktypeof(b) == Vector{Float32}
+
+  a = sprand(Float64, 10, 0.5)
+  b = view(a, 4:8)
+  @test Krylov.ktypeof(a) == Vector{Float64}
+  @test Krylov.ktypeof(b) == Vector{Float64}
 end

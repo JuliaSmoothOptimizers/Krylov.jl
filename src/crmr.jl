@@ -24,7 +24,7 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Montreal, QC, April 2015.
 
-export crmr
+export crmr, crmr!
 
 
 """
@@ -61,9 +61,14 @@ A preconditioner M may be provided in the form of a linear operator.
 * D. Orban and M. Arioli, *Iterative Solution of Symmetric Quasi-Definite Linear Systems*, Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
 * D. Orban, *The Projected Golub-Kahan Process for Constrained Linear Least-Squares Problems*. Cahier du GERAD G-2014-15, 2014.
 """
-function crmr(A, b :: AbstractVector{T};
-              M=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
-              rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function crmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = CrmrSolver(A, b)
+  crmr!(solver, A, b; kwargs...)
+end
+
+function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
+               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
+               rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -71,23 +76,24 @@ function crmr(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  x, p, r = solver.x, solver.p, solver.r
 
-  x = kzeros(S, n)  # initial estimation x = 0
-  r = copy(M * b)   # initial residual r = M * (b - Ax) = M * b
+  x .= zero(T)  # initial estimation x = 0
+  r .= M * b    # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
   rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   λ > 0 && (s = copy(r))
   Aᵀr = Aᵀ * r # - λ * x0 if x0 ≠ 0.
-  p  = copy(Aᵀr)
-  γ  = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr)
+  p .= Aᵀr
+  γ = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr)
   λ > 0 && (γ += λ * rNorm * rNorm)
   iter = 0
   itmax == 0 && (itmax = m + n)

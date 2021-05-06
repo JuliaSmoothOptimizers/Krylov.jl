@@ -11,7 +11,7 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Princeton, NJ, March 2015.
 
-export cg_lanczos, cg_lanczos_shift_seq
+export cg_lanczos, cg_lanczos!, cg_lanczos_shift_seq, cg_lanczos_shift_seq!
 
 
 """
@@ -34,37 +34,43 @@ assumed to be symmetric and positive definite.
 * A. Frommer and P. Maass, *Fast CG-Based Methods for Tikhonov-Phillips Regularization*, SIAM Journal on Scientific Computing, 20(5), pp. 1831--1850, 1999.
 * C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
-function cg_lanczos(A, b :: AbstractVector{T};
-                    M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                    check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function cg_lanczos(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = CgLanczosSolver(A, b)
+  cg_lanczos!(solver, A, b; kwargs...)
+end
+
+function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
+                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+                     check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
   (verbose > 0) && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n)
-
-  # Determine the storage type of b
-  S = typeof(b)
 
   # Tests M == Iₙ
   MisI = isa(M, opEye)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
+  # Set up workspace.
+  x, Mv, Mv_prev, p = solver.x, solver.Mv, solver.Mv_prev, solver.p
+
   # Initial state.
-  x = kzeros(S, n)          # x₀
-  Mv = copy(b)              # Mv₁ ← b
+  x .= zero(T)              # x₀
+  Mv .= b                   # Mv₁ ← b
   v = M * Mv                # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv)) # β₁ = v₁ᵀ M v₁
   β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
-  p = copy(v)
+  p .= v
 
   # Initialize Lanczos process.
   # β₁Mv₁ = b
   @kscal!(n, one(T)/β, v)          # v₁  ←  v₁ / β₁
   MisI || @kscal!(n, one(T)/β, Mv) # Mv₁ ← Mv₁ / β₁
-  Mv_prev = copy(Mv)
+  Mv_prev .= Mv
 
   iter = 0
   itmax == 0 && (itmax = 2 * n)
@@ -150,9 +156,14 @@ The method does _not_ abort if A + αI is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVector{T};
-                              M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                              check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = CgLanczosShiftSolver(A, b, shifts)
+  cg_lanczos_shift_seq!(solver, A, b, shifts; kwargs...)
+end
+
+function cg_lanczos_shift_seq!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector{T}, shifts :: AbstractVector{T};
+                               M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+                               check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
@@ -160,52 +171,62 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
   nshifts = size(shifts, 1)
   (verbose > 0) && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts)
 
-  # Determine the storage type of b
-  S = typeof(b)
-
   # Tests M == Iₙ
   MisI = isa(M, opEye)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  ktypeof(shifts) == S || error("ktypeof(shifts) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+
+  # Set up workspace.
+  Mv, Mv_prev, x, p, σ, δhat, ω, γ = solver.Mv, solver.Mv_prev, solver.x, solver.p, solver.σ, solver.δhat, solver.ω, solver.γ
+  rNorms, indefinite, converged, not_cv = solver.rNorms, solver.indefinite, solver.converged, solver.not_cv
 
   # Initial state.
   ## Distribute x similarly to shifts.
-  x = [kzeros(S, n) for i = 1 : nshifts]  # x₀
-  Mv = copy(b)                            # Mv₁ ← b
+  for i = 1 : nshifts
+    x[i] .= zero(T)                       # x₀
+  end
+  Mv .= b                                 # Mv₁ ← b
   v = M * Mv                              # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv))               # β₁ = v₁ᵀ M v₁
   β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
 
   # Initialize each p to v.
-  p = [copy(v) for i = 1 : nshifts]
+  for i = 1 : nshifts
+    p[i] .= v
+  end
 
   # Initialize Lanczos process.
   # β₁Mv₁ = b
   @kscal!(n, one(T)/β, v)          # v₁  ←  v₁ / β₁
   MisI || @kscal!(n, one(T)/β, Mv) # Mv₁ ← Mv₁ / β₁
-  Mv_prev = copy(Mv)
+  Mv_prev .= Mv
 
   # Initialize some constants used in recursions below.
   ρ = one(T)
-  σ = β * ones(T, nshifts)
-  δhat = zeros(T, nshifts)
-  ω = zeros(T, nshifts)
-  γ = ones(T, nshifts)
+  σ .= β
+  δhat .= zero(T)
+  ω .= zero(T)
+  γ .= one(T)
 
   # Define stopping tolerance.
-  rNorms = β * ones(T, nshifts)
+  rNorms .= β
   rNorms_history = history ? [rNorms;] : T[]
   ε = atol + rtol * β
 
   # Keep track of shifted systems that have converged.
-  converged = rNorms .≤ ε
+  for i = 1 : nshifts
+    converged[i] = rNorms[i] ≤ ε
+    not_cv[i] = !converged[i]
+  end
   iter = 0
   itmax == 0 && (itmax = 2 * n)
 
   # Keep track of shifted systems with negative curvature if required.
-  indefinite = falses(nshifts)
+  indefinite .= false
 
   # Build format strings for printing.
   if display(iter, verbose)
@@ -215,7 +236,7 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
     local_printf(iter, rNorms...)
   end
 
-  solved = all(converged)
+  solved = sum(not_cv) == 0
   tired = iter ≥ itmax
   status = "unknown"
 
@@ -241,34 +262,39 @@ function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVecto
     MisI || (ρ = @kdot(n, v, v))
     for i = 1 : nshifts
       δhat[i] = δ + ρ * shifts[i]
-      γ[i] = 1 ./ (δhat[i] - ω[i] ./ γ[i])
+      γ[i] = 1 / (δhat[i] - ω[i] / γ[i])
     end
-    indefinite .|= (γ .≤ 0)
+    for i = 1 : nshifts
+      indefinite[i] |= γ[i] ≤ 0
+    end
 
     # Compute next CG iterate for each shifted system that has not yet converged.
     # Stop iterating on indefinite problems if requested.
-    not_cv = check_curvature ? findall(.! (converged .| indefinite)) : findall(.! converged)
+    for i = 1 : nshifts
+      not_cv[i] = check_curvature ? !(converged[i] || indefinite[i]) : !converged[i]
+      if not_cv[i]
+        @kaxpy!(n, γ[i], p[i], x[i])
+        ω[i] = β * γ[i]
+        σ[i] *= -ω[i]
+        ω[i] *= ω[i]
+        @kaxpby!(n, σ[i], v, ω[i], p[i])
 
-    for i in not_cv
-      @kaxpy!(n, γ[i], p[i], x[i])
-      ω[i] = β * γ[i]
-      σ[i] *= -ω[i]
-      ω[i] *= ω[i]
-      @kaxpby!(n, σ[i], v, ω[i], p[i])
-
-      # Update list of systems that have converged.
-      rNorms[i] = abs(σ[i])
-      converged[i] = rNorms[i] ≤ ε
+        # Update list of systems that have not converged.
+        rNorms[i] = abs(σ[i])
+        converged[i] = rNorms[i] ≤ ε
+      end
     end
 
     length(not_cv) > 0 && history && append!(rNorms_history, rNorms)
 
     # Is there a better way than to update this array twice per iteration?
-    not_cv = check_curvature ? findall(.! (converged .| indefinite)) : findall(.! converged)
+    for i = 1 : nshifts
+      not_cv[i] = check_curvature ? !(converged[i] || indefinite[i]) : !converged[i]
+    end
     iter = iter + 1
     display(iter, verbose) && local_printf(iter, rNorms...)
 
-    solved = length(not_cv) == 0
+    solved = sum(not_cv) == 0
     tired = iter ≥ itmax
   end
   (verbose > 0) && @printf("\n")

@@ -9,7 +9,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montréal, June 2020.
 
-export trimr
+export trimr, trimr!
 
 """
     (x, y, stats) = trimr(A, b::AbstractVector{T}, c::AbstractVector{T};
@@ -35,7 +35,7 @@ If `sp = true`, τ = 1, ν = 0 and the associated saddle-point linear system is 
 TriMR is based on the preconditioned orthogonal tridiagonalization process
 and its relation with the preconditioned block-Lanczos process.
 
-    [ M   O ]
+    [ M   0 ]
     [ 0   N ]
 
 indicates the weighted norm in which residuals are measured.
@@ -51,10 +51,15 @@ Information will be displayed every `verbose` iterations.
 
 * A. Montoison and D. Orban, *TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems*, Cahier du GERAD G-2020-41, GERAD, Montréal, 2020.
 """
-function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
-               M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
-               spd :: Bool=false, snd :: Bool=false, flip :: Bool=false, sp :: Bool=false,
-               τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = TrimrSolver(A, b)
+  trimr!(solver, A, b, c; kwargs...)
+end
+
+function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
+                M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
+                spd :: Bool=false, snd :: Bool=false, flip :: Bool=false, sp :: Bool=false,
+                τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -75,28 +80,31 @@ function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  ktypeof(c) == S || error("ktypeof(c) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = solver.yₖ, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ,  solver.xₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ
+  gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ = solver.gy₂ₖ₋₃, solver.gy₂ₖ₋₂, solver.gy₂ₖ₋₁, solver.gy₂ₖ, solver.gx₂ₖ₋₃, solver.gx₂ₖ₋₂, solver.gx₂ₖ₋₁, solver.gx₂ₖ
 
   # Initial solutions x₀ and y₀.
-  xₖ = kzeros(S, m)
-  yₖ = kzeros(S, n)
+  xₖ .= zero(T)
+  yₖ .= zero(T)
 
   iter = 0
   itmax == 0 && (itmax = m+n)
 
   # Initialize preconditioned orthogonal tridiagonalization process.
-  M⁻¹vₖ₋₁ = kzeros(S, m)  # v₀ = 0
-  N⁻¹uₖ₋₁ = kzeros(S, n)  # u₀ = 0
+  M⁻¹vₖ₋₁ .= zero(T)  # v₀ = 0
+  N⁻¹uₖ₋₁ .= zero(T)  # u₀ = 0
 
   # β₁Ev₁ = b ↔ β₁v₁ = Mb
-  M⁻¹vₖ = copy(b)
+  M⁻¹vₖ .= b
   vₖ = M * M⁻¹vₖ
   βₖ = sqrt(@kdot(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
   if βₖ ≠ 0
@@ -105,7 +113,7 @@ function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   end
 
   # γ₁Fu₁ = c ↔ γ₁u₁ = Nb
-  N⁻¹uₖ = copy(c)
+  N⁻¹uₖ .= c
   uₖ = N * N⁻¹uₖ
   γₖ = sqrt(@kdot(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
   if γₖ ≠ 0
@@ -114,14 +122,14 @@ function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   end
 
   # Initialize directions Gₖ such that (GₖRₖ)ᵀ = (Wₖ)ᵀ.
-  gx₂ₖ₋₃ = kzeros(S, m)
-  gy₂ₖ₋₃ = kzeros(S, n)
-  gx₂ₖ₋₂ = kzeros(S, m)
-  gy₂ₖ₋₂ = kzeros(S, n)
-  gx₂ₖ₋₁ = kzeros(S, m)
-  gy₂ₖ₋₁ = kzeros(S, n)
-  gx₂ₖ   = kzeros(S, m)
-  gy₂ₖ   = kzeros(S, n)
+  gx₂ₖ₋₃ .= zero(T)
+  gy₂ₖ₋₃ .= zero(T)
+  gx₂ₖ₋₂ .= zero(T)
+  gy₂ₖ₋₂ .= zero(T)
+  gx₂ₖ₋₁ .= zero(T)
+  gy₂ₖ₋₁ .= zero(T)
+  gx₂ₖ   .= zero(T)
+  gy₂ₖ   .= zero(T)
 
   # Compute ‖r₀‖² = (γ₁)² + (β₁)²
   rNorm = sqrt(γₖ^2 + βₖ^2)

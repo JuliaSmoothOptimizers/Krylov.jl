@@ -9,7 +9,7 @@
 #
 # Ron Estrin, <ronestrin756@gmail.com>
 
-export symmlq
+export symmlq, symmlq!
 
 
 """
@@ -35,34 +35,40 @@ assumed to be symmetric and positive definite.
 
 * C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
-function symmlq(A, b :: AbstractVector{T};
-                M=opEye(), λ :: T=zero(T), transfer_to_cg :: Bool=true,
-                λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-                etol :: T=√eps(T), window :: Int=0, itmax :: Int=0,
-                conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function symmlq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = SymmlqSolver(A, b)
+  symmlq!(solver, A, b; kwargs...)
+end
+
+function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
+                 M=opEye(), λ :: T=zero(T), transfer_to_cg :: Bool=true,
+                 λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
+                 etol :: T=√eps(T), window :: Int=0, itmax :: Int=0,
+                 conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
 
   m, n = size(A)
   m == n || error("System must be square")
   size(b, 1) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("SYMMLQ: system of size %d\n", n)
 
-  # Determine the storage type of b
-  S = typeof(b)
-
   # Test M == Iₘ
   MisI = isa(M, opEye)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
+  # Set up workspace.
+  x, Mvold, Mv, w̅ = solver.x, solver.Mvold, solver.Mv, solver.w̅
+
   ϵM = eps(T)
-  x = kzeros(S, n)
+  x .= zero(T)
   ctol = conlim > 0 ? 1 / conlim : zero(T)
 
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
-  Mvold = copy(b)
+  Mvold .= b
   vold = M * Mvold
   β₁ = @kdot(m, vold, Mvold)
   β₁ == 0 && return (x, SimpleStats(true, true, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
@@ -71,9 +77,9 @@ function symmlq(A, b :: AbstractVector{T};
   @kscal!(m, one(T) / β, vold)
   MisI || @kscal!(m, one(T) / β, Mvold)
 
-  w̅ = copy(vold)
+  w̅ .= vold
 
-  Mv = copy(A * vold)
+  Mv .= A * vold
   α = @kdot(m, vold, Mv) + λ
   @kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
   v = M * Mv

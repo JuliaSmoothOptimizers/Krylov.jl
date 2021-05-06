@@ -167,17 +167,34 @@ function to_boundary(x :: Vector{T}, d :: Vector{T},
 end
 
 """
+    S = ktypeof(v)
+
+Return a dense storage type `S` based on the type of `v`.
+"""
+function ktypeof(v :: AbstractVector)
+  S = typeof(v)
+  if S <: SubArray
+    S = S.types[1]  # SubArray
+  end
+  if S <: AbstractSparseVector
+    S = S <: SparseVector ? S.types[3] : S.types[2]  # SparseVector / CuSparseVector
+  end
+  return S
+end
+
+"""
     v = kzeros(S, n)
 
 Create an AbstractVector of storage type `S` of length `n` only composed of zero.
 """
-@inline kzeros(S, n) = S <: SubArray ? fill!(S.types[1](undef, n), zero(eltype(S))) : fill!(S(undef, n), zero(eltype(S)))
+@inline kzeros(S, n) = fill!(S(undef, n), zero(eltype(S)))
+
 """
     v = kones(S, n)
 
 Create an AbstractVector of storage type `S` of length `n` only composed of one.
 """
-@inline kones(S, n) = S <: SubArray ? fill!(S.types[1](undef, n), one(eltype(S))) : fill!(similar(S, n), one(eltype(S)))
+@inline kones(S, n) = fill!(S(undef, n), one(eltype(S)))
 
 @inline display(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
 

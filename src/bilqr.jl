@@ -10,7 +10,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, July 2019.
 
-export bilqr
+export bilqr, bilqr!
 
 """
     (x, t, stats) = bilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
@@ -32,9 +32,14 @@ BiCG point, when it exists. The transfer is based on the residual norm.
 
 * A. Montoison and D. Orban, *BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*, SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
-function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
-               atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
-               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = BilqrSolver(A, b)
+  bilqr!(solver, A, b, c; kwargs...)
+end
+
+function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
+                atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
+                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
 
   n, m = size(A)
   m == n || error("Systems must be square")
@@ -44,19 +49,21 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₃, wₖ₋₂ = solver.uₖ₋₁, solver.uₖ, solver.vₖ₋₁, solver.vₖ, solver.x, solver.t, solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂
 
   # Initial solution x₀ and residual norm ‖r₀‖ = ‖b - Ax₀‖.
-  x = kzeros(S, n)      # x₀
+  x .= zero(T)          # x₀
   bNorm = @knrm2(n, b)  # rNorm = ‖r₀‖
 
   # Initial solution t₀ and residual norm ‖s₀‖ = ‖c - Aᵀt₀‖.
-  t = kzeros(S, n)      # t₀
+  t .= zero(T)          # t₀
   cNorm = @knrm2(n, c)  # sNorm = ‖s₀‖
 
   iter = 0
@@ -76,21 +83,21 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   # Set up workspace.
   βₖ = √(abs(bᵗc))           # β₁γ₁ = bᵀc
   γₖ = bᵗc / βₖ              # β₁γ₁ = bᵀc
-  vₖ₋₁ = kzeros(S, n)        # v₀ = 0
-  uₖ₋₁ = kzeros(S, n)        # u₀ = 0
-  vₖ = b / βₖ                # v₁ = b / β₁
-  uₖ = c / γₖ                # u₁ = c / γ₁
+  vₖ₋₁ .= zero(T)            # v₀ = 0
+  uₖ₋₁ .= zero(T)            # u₀ = 0
+  vₖ .= b ./ βₖ              # v₁ = b / β₁
+  uₖ .= c ./ γₖ              # u₁ = c / γ₁
   cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
-  d̅ = kzeros(S, n)           # Last column of D̅ₖ = Vₖ(Qₖ)ᵀ
+  d̅ .= zero(T)               # Last column of D̅ₖ = Vₖ(Qₖ)ᵀ
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
   δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
   ψbarₖ₋₁ = ψₖ₋₁ = zero(T)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
   norm_vₖ = bNorm / βₖ       # ‖vₖ‖ is used for residual norm estimates
   ϵₖ₋₃ = λₖ₋₂ = zero(T)      # Components of Lₖ₋₁
-  wₖ₋₃ = kzeros(S, n)        # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᵀ
-  wₖ₋₂ = kzeros(S, n)        # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᵀ
+  wₖ₋₃ .= zero(T)            # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᵀ
+  wₖ₋₂ .= zero(T)            # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᵀ
   τₖ = zero(T)               # τₖ is used for the dual residual norm estimate
 
   # Stopping criterion.

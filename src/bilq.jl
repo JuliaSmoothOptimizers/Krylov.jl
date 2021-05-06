@@ -10,7 +10,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, February 2019.
 
-export bilq
+export bilq, bilq!
 
 """
     (x, stats) = bilq(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
@@ -29,9 +29,14 @@ when it exists. The transfer is based on the residual norm.
 
 * A. Montoison and D. Orban, *BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*, SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
-function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
-              atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
-              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function bilq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = BilqSolver(A, b)
+  bilq!(solver, A, b; kwargs...)
+end
+
+function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
+               atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
+               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -40,15 +45,17 @@ function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅ = solver.uₖ₋₁, solver.uₖ, solver.vₖ₋₁, solver.vₖ, solver.x, solver.d̅
 
   # Initial solution x₀ and residual norm ‖r₀‖.
-  x = kzeros(S, n)
+  x .= zero(T)
   bNorm = @knrm2(n, b)  # ‖r₀‖
   bNorm == 0 && return (x, SimpleStats(true, false, [bNorm], T[], "x = 0 is a zero-residual solution"))
 
@@ -64,16 +71,15 @@ function bilq(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
   bᵗc == 0 && return (x, SimpleStats(false, false, [bNorm], T[], "Breakdown bᵀc = 0"))
 
-  # Set up workspace.
   βₖ = √(abs(bᵗc))           # β₁γ₁ = bᵀc
   γₖ = bᵗc / βₖ              # β₁γ₁ = bᵀc
-  vₖ₋₁ = kzeros(S, n)        # v₀ = 0
-  uₖ₋₁ = kzeros(S, n)        # u₀ = 0
-  vₖ = b / βₖ                # v₁ = b / β₁
-  uₖ = c / γₖ                # u₁ = c / γ₁
+  vₖ₋₁ .= zero(T)            # v₀ = 0
+  uₖ₋₁ .= zero(T)            # u₀ = 0
+  vₖ .= b ./ βₖ              # v₁ = b / β₁
+  uₖ .= c ./ γₖ              # u₁ = c / γ₁
   cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
-  d̅ = kzeros(S, n)           # Last column of D̅ₖ = Vₖ(Qₖ)ᵀ
+  d̅ .= zero(T)               # Last column of D̅ₖ = Vₖ(Qₖ)ᵀ
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
   δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations

@@ -22,7 +22,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montréal, March 2019 -- Alès, January 2020.
 
-export lnlq
+export lnlq, lnlq!
 
 """
     (x, y, stats) = lnlq(A, b::AbstractVector{T};
@@ -64,10 +64,15 @@ In this implementation, both the x and y-parts of the solution are returned.
 
 * R. Estrin, D. Orban, M.A. Saunders, *LNLQ: An Iterative Method for Least-Norm Problems with an Error Minimization Property*, SIAM Journal on Matrix Analysis and Applications, 40(3), pp. 1102--1124, 2019.
 """
-function lnlq(A, b :: AbstractVector{T};
-              M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
-              atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-              transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function lnlq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = LnlqSolver(A, b)
+  lnlq!(solver, A, b; kwargs...)
+end
+
+function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
+               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
+               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+               transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -79,18 +84,19 @@ function lnlq(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  x, Nv, y, w̄, Mu = solver.x, solver.Nv, solver.y, solver.w̄, solver.Mu
 
   # Initial solutions (x₀, y₀) and residual norm ‖r₀‖.
-  x = kzeros(S, n)
-  y = kzeros(S, m)
+  x .= zero(T)
+  y .= zero(T)
 
   # When solving a SQD system, set regularization parameter λ = 1.
   sqd && (λ = one(T))
@@ -112,7 +118,7 @@ function lnlq(A, b :: AbstractVector{T};
 
   # Initialize generalized Golub-Kahan bidiagonalization.
   # β₁Mu₁ = b.
-  Mu = copy(b)
+  Mu .= b
   u  = M * Mu                 # u₁ = M⁻¹ * Mu₁
   βₖ = sqrt(@kdot(m, u, Mu))  # β₁ = ‖u₁‖_M
   if βₖ ≠ 0
@@ -122,7 +128,7 @@ function lnlq(A, b :: AbstractVector{T};
 
   # α₁Nv₁ = Aᵀu₁.
   Aᵀu = Aᵀ * u
-  Nv  = copy(Aᵀu)
+  Nv .= Aᵀu
   v   = N * Nv                 # v₁ = N⁻¹ * Nv₁
   αₖ  = sqrt(@kdot(n, v, Nv))  # α₁ = ‖v₁‖_N
   if αₖ ≠ 0
@@ -130,8 +136,7 @@ function lnlq(A, b :: AbstractVector{T};
     NisI || @kscal!(n, 1 / αₖ, Nv)
   end
 
-  # Set up workspace.
-  w̄ = copy(u)        # Direction w̄₁
+  w̄ .= u             # Direction w̄₁
   cₖ = sₖ = zero(T)  # Givens sines and cosines used for the LQ factorization of (Lₖ)ᵀ
   ζₖ₋₁ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
   ηₖ = zero(T)       # Coefficient of M̅ₖ

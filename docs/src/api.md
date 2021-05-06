@@ -11,8 +11,36 @@ Krylov.AdjointStats
 ## Solver Types
 
 ```@docs
-Krylov.KrylovSolver
-Krylov.MinresSolver
+KrylovSolver
+MinresSolver
+CgSolver
+CrSolver
+SymmlqSolver
+CgLanczosSolver
+CgLanczosShiftSolver
+MinresQlpSolver
+DqgmresSolver
+DiomSolver
+UsymlqSolver
+UsymqrSolver
+TricgSolver
+TrimrSolver
+TrilqrSolver
+CgsSolver
+BicgstabSolver
+BilqSolver
+QmrSolver
+BilqrSolver
+CglsSolver
+CrlsSolver
+CgneSolver
+CrmrSolver
+LslqSolver
+LsqrSolver
+LsmrSolver
+LnlqSolver
+CraigSolver
+CraigmrSolver
 ```
 
 ## Utilities
@@ -22,6 +50,7 @@ Krylov.roots_quadratic
 Krylov.sym_givens
 Krylov.to_boundary
 Krylov.vec2str
+Krylov.ktypeof
 Krylov.kzeros
 Krylov.kones
 ```

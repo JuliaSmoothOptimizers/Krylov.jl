@@ -17,7 +17,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, November 2018.
 
-export usymqr
+export usymqr, usymqr!
 
 """
     (x, stats) = usymqr(A, b::AbstractVector{T}, c::AbstractVector{T};
@@ -39,9 +39,14 @@ USYMQR finds the minimum-norm solution if problems are inconsistent.
 * A. Buttari, D. Orban, D. Ruiz and D. Titley-Peloquin, *A tridiagonalization method for symmetric saddle-point and quasi-definite systems*, SIAM Journal on Scientific Computing, 41(5), pp. 409--432, 2019.
 * A. Montoison and D. Orban, *BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*, SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
-function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
-                atol :: T=√eps(T), rtol :: T=√eps(T),
-                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = UsymqrSolver(A, b)
+  usymqr!(solver, A, b, c; kwargs...)
+end
+
+function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
+                 atol :: T=√eps(T), rtol :: T=√eps(T),
+                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -50,15 +55,17 @@ function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  vₖ₋₁, vₖ, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ = solver.vₖ₋₁, solver.vₖ, solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.uₖ₋₁, solver.uₖ
 
   # Initial solution x₀ and residual norm ‖r₀‖.
-  x = kzeros(S, n)
+  x .= zero(T)
   rNorm = @knrm2(m, b)
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
 
@@ -72,17 +79,16 @@ function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Aᵀrₖ₋₁‖")
   display(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
-  # Set up workspace.
   βₖ = @knrm2(m, b)           # β₁ = ‖v₁‖
   γₖ = @knrm2(n, c)           # γ₁ = ‖u₁‖
-  vₖ₋₁ = kzeros(S, m)         # v₀ = 0
-  uₖ₋₁ = kzeros(S, n)         # u₀ = 0
-  vₖ = b / βₖ                 # v₁ = b / β₁
-  uₖ = c / γₖ                 # u₁ = c / γ₁
+  vₖ₋₁ .= zero(T)             # v₀ = 0
+  uₖ₋₁ .= zero(T)             # u₀ = 0
+  vₖ .= b ./ βₖ               # v₁ = b / β₁
+  uₖ .= c ./ γₖ               # u₁ = c / γ₁
   cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
   sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-  wₖ₋₂ = kzeros(S, n)         # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
-  wₖ₋₁ = kzeros(S, n)         # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
+  wₖ₋₂ .= zero(T)             # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
+  wₖ₋₁ .= zero(T)             # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
   ζbarₖ = βₖ                  # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
 
   # Stopping criterion.

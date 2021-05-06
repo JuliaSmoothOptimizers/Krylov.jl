@@ -72,7 +72,7 @@ function minres(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <
   minres!(solver, A, b; kwargs...)
 end
 
-function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
+function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
                  M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
                  itmax :: Int=0, conlim :: T=1/√eps(T),
@@ -85,10 +85,12 @@ function minres!(solver :: MinresSolver{T, S}, A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
-  # get data from solver
+  # Set up workspace.
   x, r1, r2, w1, w2, err_vec, stats = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.err_vec, solver.stats
+
   window = length(err_vec)
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
   !history && !isempty(rNorms) && (rNorms = T[])
