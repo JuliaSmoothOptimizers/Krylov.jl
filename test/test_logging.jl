@@ -1,4 +1,4 @@
-function test_logging()
+@testset "logging" begin
   L   = get_div_grad(4, 4, 4)
   n   = size(L, 1)
   m   = div(n, 2)
@@ -40,8 +40,4 @@ function test_logging()
   usymlq(Au, c, b, verbose=1)
   tricg(Au, c, b, verbose=1)
   trimr(Au, c, b, verbose=1)
-end
-
-@testset "logging" begin
-  test_logging()
 end
