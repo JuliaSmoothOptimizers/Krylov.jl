@@ -64,7 +64,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  (verbose > 0) && @info @sprintf("TriMR: system of %d equations in %d variables\n", m+n, m+n)
+  (verbose > 0) && @info @sprintf("TriMR: system of %d equations in %d variables", m+n, m+n)
 
   # Check flip, sp, spd and snd parameters
   spd && flip && error("The matrix cannot be symmetric positive definite and symmetric quasi-definite !")
@@ -136,8 +136,8 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
 
-  (verbose > 0) && @info @sprintf("%5s  %7s  %8s  %7s  %7s\n", "k", "‖rₖ‖", "αₖ", "βₖ₊₁", "γₖ₊₁")
-  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %8s  %7.1e  %7.1e\n", iter, rNorm, " ✗ ✗ ✗ ✗", βₖ, γₖ)
+  (verbose > 0) && @info @sprintf("%5s  %7s  %8s  %7s  %7s", "k", "‖rₖ‖", "αₖ", "βₖ₊₁", "γₖ₊₁")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %8s  %7.1e  %7.1e", iter, rNorm, " ✗ ✗ ✗ ✗", βₖ, γₖ)
 
   # Set up workspace.
   old_s₁ₖ = old_s₂ₖ = old_s₃ₖ = old_s₄ₖ = zero(T)
@@ -407,7 +407,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     # Update stopping criterion.
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
-    display(iter, verbose) && @info @sprintf("%5d  %7.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, αₖ, βₖ₊₁, γₖ₊₁)
+    display(iter, verbose) && @info @sprintf("%5d  %7.1e  %8.1e  %7.1e  %7.1e", iter, rNorm, αₖ, βₖ₊₁, γₖ₊₁)
   end
   (verbose > 0) && @printf("\n")
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"

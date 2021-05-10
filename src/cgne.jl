@@ -74,7 +74,7 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  (verbose > 0) && @info @sprintf("CGNE: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @info @sprintf("CGNE: system of %d equations in %d variables", m, n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -113,8 +113,8 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   rNorms = history ? [rNorm] : T[]
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * pNorm  # Stopping tolerance for inconsistent systems.
-  (verbose > 0) && @info @sprintf("%5s  %8s\n", "Aprod", "‖r‖")
-  display(iter, verbose) && @info @sprintf("%5d  %8.2e\n", 1, rNorm)
+  (verbose > 0) && @info @sprintf("%5s  %8s", "Aprod", "‖r‖")
+  display(iter, verbose) && @info @sprintf("%5d  %8.2e", 1, rNorm)
 
   status = "unknown"
   solved = rNorm ≤ ɛ_c
@@ -142,7 +142,7 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
     rNorm = sqrt(γ_next)
     history && push!(rNorms, rNorm)
     iter = iter + 1
-    display(iter, verbose) && @info @sprintf("%5d  %8.2e\n", 1 + 2 * iter, rNorm)
+    display(iter, verbose) && @info @sprintf("%5d  %8.2e", 1 + 2 * iter, rNorm)
     solved = rNorm ≤ ɛ_c
     inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
     tired = iter ≥ itmax

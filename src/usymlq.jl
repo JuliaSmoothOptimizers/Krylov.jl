@@ -54,7 +54,7 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  (verbose > 0) && @info @sprintf("USYMLQ: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @info @sprintf("USYMLQ: system of %d equations in %d variables", m, n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -77,8 +77,8 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
 
   rNorms = history ? [bNorm] : T[]
   ε = atol + rtol * bNorm
-  (verbose > 0) && @info @sprintf("%5s  %7s\n", "k", "‖rₖ‖")
-  display(iter, verbose) && @info @sprintf("%5d  %7.1e\n", iter, bNorm)
+  (verbose > 0) && @info @sprintf("%5s  %7s", "k", "‖rₖ‖")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e", iter, bNorm)
 
   βₖ = @knrm2(m, b)          # β₁ = ‖v₁‖
   γₖ = @knrm2(n, c)          # γ₁ = ‖u₁‖
@@ -234,7 +234,7 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     solved_lq = rNorm_lq ≤ ε
     solved_cg = transfer_to_usymcg && (δbarₖ ≠ 0) && (rNorm_cg ≤ ε)
     tired = iter ≥ itmax
-    display(iter, verbose) && @info @sprintf("%5d  %7.1e\n", iter, rNorm_lq)
+    display(iter, verbose) && @info @sprintf("%5d  %7.1e", iter, rNorm_lq)
   end
   (verbose > 0) && @printf("\n")
 

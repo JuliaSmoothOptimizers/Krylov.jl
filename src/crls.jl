@@ -56,7 +56,7 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  (verbose > 0) && @info @sprintf("CRLS: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @info @sprintf("CRLS: system of %d equations in %d variables", m, n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -93,8 +93,8 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   rNorms = history ? [rNorm] : T[]
   ArNorms = history ? [ArNorm] : T[]
   ε = atol + rtol * ArNorm
-  (verbose > 0) && @info @sprintf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
-  display(iter, verbose) && @info @sprintf("%5d  %8.2e  %8.2e\n", 3, ArNorm, rNorm)
+  (verbose > 0) && @info @sprintf("%5s  %8s  %8s", "Aprod", "‖Aᵀr‖", "‖r‖")
+  display(iter, verbose) && @info @sprintf("%5d  %8.2e  %8.2e", 3, ArNorm, rNorm)
 
   status = "unknown"
   on_boundary = false
@@ -154,7 +154,7 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(rNorms, rNorm)
     history && push!(ArNorms, ArNorm)
     iter = iter + 1
-    display(iter, verbose) && @info @sprintf("%5d  %8.2e  %8.2e\n", 3 + 2 * iter, ArNorm, rNorm)
+    display(iter, verbose) && @info @sprintf("%5d  %8.2e  %8.2e", 3 + 2 * iter, ArNorm, rNorm)
     solved = (ArNorm ≤ ε) || on_boundary
     tired = iter ≥ itmax
   end

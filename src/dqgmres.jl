@@ -41,7 +41,7 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @info @sprintf("DQGMRES: system of size %d\n", n)
+  (verbose > 0) && @info @sprintf("DQGMRES: system of size %d", n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -64,8 +64,8 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
 
   rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
-  (verbose > 0) && @info @sprintf("%5s  %7s\n", "k", "‖rₖ‖")
-  display(iter, verbose) && @info @sprintf("%5d  %7.1e\n", iter, rNorm)
+  (verbose > 0) && @info @sprintf("%5s  %7s", "k", "‖rₖ‖")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e", iter, rNorm)
 
   # Set up workspace.
   mem = length(c)  # Memory.
@@ -170,7 +170,7 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
     # Update stopping criterion.
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
-    display(iter, verbose) && @info @sprintf("%5d  %7.1e\n", iter, rNorm)
+    display(iter, verbose) && @info @sprintf("%5d  %7.1e", iter, rNorm)
   end
   (verbose > 0) && @printf("\n")
 

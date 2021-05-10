@@ -44,8 +44,8 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  (verbose > 0) && @info @sprintf("TRILQR: primal system of %d equations in %d variables\n", m, n)
-  (verbose > 0) && @info @sprintf("TRILQR: dual system of %d equations in %d variables\n", n, m)
+  (verbose > 0) && @info @sprintf("TRILQR: primal system of %d equations in %d variables", m, n)
+  (verbose > 0) && @info @sprintf("TRILQR: dual system of %d equations in %d variables", n, m)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -74,8 +74,8 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   εL = atol + rtol * bNorm
   εQ = atol + rtol * cNorm
   ξ = zero(T)
-  (verbose > 0) && @info @sprintf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
-  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
+  (verbose > 0) && @info @sprintf("%5s  %7s  %7s", "k", "‖rₖ‖", "‖sₖ‖")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e", iter, bNorm, cNorm)
 
   # Set up workspace.
   βₖ = @knrm2(m, b)          # β₁ = ‖v₁‖
@@ -317,9 +317,9 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
 
     tired = iter ≥ itmax
 
-    display(iter, verbose) &&  solved_primal && !solved_dual && @info @sprintf("%5d  %7s  %7.1e\n", iter, "", sNorm)
-    display(iter, verbose) && !solved_primal &&  solved_dual && @info @sprintf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
-    display(iter, verbose) && !solved_primal && !solved_dual && @info @sprintf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
+    display(iter, verbose) &&  solved_primal && !solved_dual && @info @sprintf("%5d  %7s  %7.1e", iter, "", sNorm)
+    display(iter, verbose) && !solved_primal &&  solved_dual && @info @sprintf("%5d  %7.1e  %7s", iter, rNorm_lq, "")
+    display(iter, verbose) && !solved_primal && !solved_dual && @info @sprintf("%5d  %7.1e  %7.1e", iter, rNorm_lq, sNorm)
   end
   (verbose > 0) && @printf("\n")
 

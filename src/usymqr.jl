@@ -51,7 +51,7 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  (verbose > 0) && @info @sprintf("USYMQR: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @info @sprintf("USYMQR: system of %d equations in %d variables", m, n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -76,8 +76,8 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   ε = atol + rtol * rNorm
   AᵀrNorms = T[]
   κ = zero(T)
-  (verbose > 0) && @info @sprintf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Aᵀrₖ₋₁‖")
-  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
+  (verbose > 0) && @info @sprintf("%5s  %7s  %7s", "k", "‖rₖ‖", "‖Aᵀrₖ₋₁‖")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7s", iter, rNorm, "✗ ✗ ✗ ✗")
 
   βₖ = @knrm2(m, b)           # β₁ = ‖v₁‖
   γₖ = @knrm2(n, c)           # γ₁ = ‖u₁‖
@@ -232,7 +232,7 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     solved = rNorm ≤ ε
     inconsistent = !solved && AᵀrNorm ≤ κ
     tired = iter ≥ itmax
-    display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e\n", iter, rNorm, AᵀrNorm)
+    display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e", iter, rNorm, AᵀrNorm)
   end
   (verbose > 0) && @printf("\n")
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"

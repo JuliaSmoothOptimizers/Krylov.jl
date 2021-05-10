@@ -48,7 +48,7 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   n, m = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @info @sprintf("QMR: system of size %d\n", n)
+  (verbose > 0) && @info @sprintf("QMR: system of size %d", n)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -71,8 +71,8 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
 
   rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
-  (verbose > 0) && @info @sprintf("%5s  %7s\n", "k", "‖rₖ‖")
-  display(iter, verbose) && @info @sprintf("%5d  %7.1e\n", iter, rNorm)
+  (verbose > 0) && @info @sprintf("%5s  %7s", "k", "‖rₖ‖")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e", iter, rNorm)
 
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
@@ -232,7 +232,7 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     breakdown = !solved && (qᵗp == 0)
-    display(iter, verbose) && @info @sprintf("%5d  %7.1e\n", iter, rNorm)
+    display(iter, verbose) && @info @sprintf("%5d  %7.1e", iter, rNorm)
   end
   (verbose > 0) && @printf("\n")
 

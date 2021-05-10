@@ -88,7 +88,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  (verbose > 0) && @info @sprintf("CRAIG: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @info @sprintf("CRAIG: system of %d equations in %d variables", m, n)
 
   # Tests M == Iₘ and N == Iₙ
   MisI = isa(M, opEye)
@@ -148,8 +148,8 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   ɛ_c = atol + rtol * rNorm   # Stopping tolerance for consistent systems.
   ɛ_i = atol                  # Stopping tolerance for inconsistent systems.
   ctol = conlim > 0 ? 1/conlim : zero(T)  # Stopping tolerance for ill-conditioned operators.
-  (verbose > 0) && @info @sprintf("%5s  %8s  %8s  %8s  %8s  %8s  %7s\n", "Aprod", "‖r‖", "‖x‖", "‖A‖", "κ(A)", "α", "β")
-  display(iter, verbose) && @info @sprintf("%5d  %8.2e  %8.2e  %8.2e  %8.2e\n", 1, rNorm, xNorm, Anorm, Acond)
+  (verbose > 0) && @info @sprintf("%5s  %8s  %8s  %8s  %8s  %8s  %7s", "Aprod", "‖r‖", "‖x‖", "‖A‖", "κ(A)", "α", "β")
+  display(iter, verbose) && @info @sprintf("%5d  %8.2e  %8.2e  %8.2e  %8.2e", 1, rNorm, xNorm, Anorm, Acond)
 
   bkwerr = one(T)  # initial value of the backward error ‖r‖ / √(‖b‖² + ‖A‖² ‖x‖²)
 
@@ -252,7 +252,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
 
     ρ_prev = ρ   # Only differs from α if λ > 0.
 
-    display(iter, verbose) && @info @sprintf("%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8.1e  %7.1e\n", 1 + 2 * iter, rNorm, xNorm, Anorm, Acond, α, β)
+    display(iter, verbose) && @info @sprintf("%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8.1e  %7.1e", 1 + 2 * iter, rNorm, xNorm, Anorm, Acond, α, β)
 
     solved_lim = bkwerr ≤ btol
     solved_mach = one(T) + bkwerr ≤ one(T)

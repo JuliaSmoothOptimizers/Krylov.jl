@@ -87,7 +87,7 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
-  (verbose > 0) && @info @sprintf("LSMR: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @info @sprintf("LSMR: system of %d equations in %d variables", m, n)
 
   # Compute the adjoint of A
   Aᵀ = A'
@@ -163,8 +163,8 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = m + n)
 
-  (verbose > 0) && @info @sprintf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n", "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
-  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", 1, β₁, α, β₁, α, 0, 1, Anorm²)
+  (verbose > 0) && @info @sprintf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s", "Aprod", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
+  display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e", 1, β₁, α, β₁, α, 0, 1, Anorm²)
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   α == 0 && return (x, SimpleStats(true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
@@ -283,7 +283,7 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
     t1    = test1 / (one(T) + Anorm * xNorm / β₁)
     rNormtol  = btol + axtol * Anorm * xNorm / β₁
 
-    display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", 1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
+    display(iter, verbose) && @info @sprintf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e", 1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm²)
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
