@@ -22,7 +22,7 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Montreal, QC, May 2015.
 
-export lsmr
+export lsmr, lsmr!
 
 
 """
@@ -72,13 +72,18 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 
 * D. C.-L. Fong and M. A. Saunders, *LSMR: An Iterative Algorithm for Sparse*, Least Squares Problems, SIAM Journal on Scientific Computing, 33(5), pp. 2950--2971, 2011.
 """
-function lsmr(A, b :: AbstractVector{T};
-              M=opEye(), N=opEye(), sqd :: Bool=false,
-              λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
-              atol :: T=zero(T), rtol :: T=zero(T),
-              etol :: T=√eps(T), window :: Int=5,
-              itmax :: Int=0, conlim :: T=1/√eps(T),
-              radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function lsmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = LsmrSolver(A, b)
+  lsmr!(solver, A, b; kwargs...)
+end
+
+function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
+               M=opEye(), N=opEye(), sqd :: Bool=false,
+               λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
+               atol :: T=zero(T), rtol :: T=zero(T),
+               etol :: T=√eps(T), window :: Int=5,
+               itmax :: Int=0, conlim :: T=1/√eps(T),
+               radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -87,29 +92,30 @@ function lsmr(A, b :: AbstractVector{T};
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
-
   # Tests M == Iₙ and N == Iₘ
   MisI = isa(M, opEye)
   NisI = isa(N, opEye)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
+  # Set up workspace.
+  x, Nv, h, hbar, Mu = solver.x, solver.Nv, solver.h, solver.hbar, solver.Mu
+
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = one(T))
   ctol = conlim > 0 ? 1/conlim : zero(T)
-  x = kzeros(S, n)
+  x .= zero(T)
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
-  Mu = copy(b)
+  Mu .= b
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
   β₁ == 0 && return (x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
@@ -118,7 +124,7 @@ function lsmr(A, b :: AbstractVector{T};
   @kscal!(m, one(T)/β₁, u)
   MisI || @kscal!(m, one(T)/β₁, Mu)
   Aᵀu = Aᵀ * u
-  Nv = copy(Aᵀu)
+  Nv .= Aᵀu
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))
 
@@ -165,8 +171,8 @@ function lsmr(A, b :: AbstractVector{T};
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
 
-  h = copy(v)
-  hbar = kzeros(S, n)
+  h .= v
+  hbar .= zero(T)
 
   status = "unknown"
   on_boundary = false

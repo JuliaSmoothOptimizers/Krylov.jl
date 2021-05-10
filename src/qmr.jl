@@ -18,7 +18,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, May 2019.
 
-export qmr
+export qmr, qmr!
 
 """
     (x, stats) = qmr(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
@@ -36,9 +36,14 @@ When A is symmetric and b = c, QMR is equivalent to MINRES.
 * R. W. Freund and N. M. Nachtigal, *An implementation of the QMR method based on coupled two-term recurrences*, SIAM Journal on Scientific Computing, Vol. 15(2), pp. 313--337, 1994.
 * A. Montoison and D. Orban, *BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*, SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
-function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
-             atol :: T=√eps(T), rtol :: T=√eps(T),
-             itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function qmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = QmrSolver(A, b)
+  qmr!(solver, A, b; kwargs...)
+end
+
+function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
+              atol :: T=√eps(T), rtol :: T=√eps(T),
+              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -47,16 +52,18 @@ function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₂, wₖ₋₁ = solver.uₖ₋₁, solver.uₖ, solver.vₖ₋₁, solver.vₖ, solver.x, solver.wₖ₋₂, solver.wₖ₋₁
 
   # Initial solution x₀ and residual norm ‖r₀‖.
-  x = kzeros(S, n)
-  rNorm = @knrm2(n, b)  # rNorm = ‖r₀‖
+  x .= zero(T)
+  rNorm = @knrm2(n, b)  # ‖r₀‖
   rNorm == 0 && return (x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution"))
 
   iter = 0
@@ -71,17 +78,16 @@ function qmr(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
   bᵗc == 0 && return (x, SimpleStats(false, false, [rNorm], T[], "Breakdown bᵀc = 0"))
 
-  # Set up uorkspace.
   βₖ = √(abs(bᵗc))            # β₁γ₁ = bᵀc
   γₖ = bᵗc / βₖ               # β₁γ₁ = bᵀc
-  vₖ₋₁ = kzeros(S, n)         # v₀ = 0
-  uₖ₋₁ = kzeros(S, n)         # u₀ = 0
-  vₖ = b / βₖ                 # v₁ = b / β₁
-  uₖ = c / γₖ                 # u₁ = c / γ₁
+  vₖ₋₁ .= zero(T)             # v₀ = 0
+  uₖ₋₁ .= zero(T)             # u₀ = 0
+  vₖ .= b ./ βₖ               # v₁ = b / β₁
+  uₖ .= c ./ γₖ               # u₁ = c / γ₁
   cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
   sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-  wₖ₋₂ = kzeros(S, n)         # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
-  wₖ₋₁ = kzeros(S, n)         # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
+  wₖ₋₂ .= zero(T)             # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
+  wₖ₋₁ .= zero(T)             # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
   ζbarₖ = βₖ                  # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
   τₖ = @kdot(n, vₖ, vₖ)       # τₖ is used for the residual norm estimate
 

@@ -1,7 +1,7 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Montreal, QC, November 2016-January 2017.
 
-export lslq
+export lslq, lslq!
 
 
 """
@@ -103,11 +103,16 @@ The iterations stop as soon as one of the following conditions holds true:
 * R. Estrin, D. Orban and M. A. Saunders, *Euclidean-norm error bounds for SYMMLQ and CG*, SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 235--253, 2019.
 * R. Estrin, D. Orban and M. A. Saunders, *LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*, SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 254--275, 2019.
 """
-function lslq(A, b :: AbstractVector{T};
-              M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
-              atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
-              window :: Int=5, utol :: T=√eps(T), itmax :: Int=0,
-              σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function lslq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = LslqSolver(A, b)
+  lslq!(solver, A, b; kwargs...)
+end
+
+function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
+               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
+               atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
+               window :: Int=5, utol :: T=√eps(T), itmax :: Int=0,
+               σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -119,28 +124,29 @@ function lslq(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  x_lq, Nv, w̄, Mu = solver.x_lq, solver.Nv, solver.w̄, solver.Mu
 
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = one(T))
   λ² = λ * λ
   ctol = conlim > 0 ? 1/conlim : zero(T)
 
-  x_lq = kzeros(S, n)   # LSLQ point
+  x_lq .= zero(T)  # LSLQ point
   err_lbnds = T[]
   err_ubnds_lq = T[]
   err_ubnds_cg = T[]
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
-  Mu = copy(b)
+  Mu .= b
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
   β₁ == 0 && return (x_lq, kzeros(S, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
@@ -150,7 +156,7 @@ function lslq(A, b :: AbstractVector{T};
   @kscal!(m, one(T)/β₁, u)
   MisI || @kscal!(m, one(T)/β₁, Mu)
   Aᵀu = Aᵀ * u
-  Nv = copy(Aᵀu)
+  Nv .= Aᵀu
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))  # = α₁
 
@@ -173,7 +179,7 @@ function lslq(A, b :: AbstractVector{T};
   xcgNorm  = zero(T)
   xcgNorm² = zero(T)
 
-  w̄ = copy(v) # w̄₁ = v₁
+  w̄ .= v  # w̄₁ = v₁
 
   err_lbnd = zero(T)
   err_vec = zeros(T, window)
@@ -301,7 +307,7 @@ function lslq(A, b :: AbstractVector{T};
 
     if σ > 0 && iter > 0
       err_ubnd_cg = sqrt(ζ̃ * ζ̃ - ζ̄  * ζ̄ )
-      push!(err_ubnds_cg, err_ubnd_cg)
+      history && push!(err_ubnds_cg, err_ubnd_cg)
       fwd_err_ubnd = err_ubnd_cg ≤ utol * sqrt(xcgNorm²)
     end
 
@@ -327,7 +333,7 @@ function lslq(A, b :: AbstractVector{T};
     err_vec[mod(iter, window) + 1] = ζ
     if iter ≥ window
       err_lbnd = norm(err_vec)
-      push!(err_lbnds, err_lbnd)
+      history && push!(err_lbnds, err_lbnd)
       fwd_err_lbnd = err_lbnd ≤ etol * xlqNorm
     end
 
@@ -337,7 +343,7 @@ function lslq(A, b :: AbstractVector{T};
       ϵ̃ = -ω * c
       τ̃ = -τ * δ / ω
       ζ̃ = (τ̃ - ζ * η̃) / ϵ̃
-      push!(err_ubnds_lq, abs(ζ̃ ))
+      history && push!(err_ubnds_lq, abs(ζ̃ ))
     end
 
     # Stopping conditions that do not depend on user input.

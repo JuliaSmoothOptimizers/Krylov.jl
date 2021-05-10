@@ -13,7 +13,7 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Salt Lake City, UT, March 2015.
 
-export cg
+export cg, cg!
 
 
 """
@@ -37,10 +37,15 @@ with `n = length(b)`.
 
 * M. R. Hestenes and E. Stiefel, *Methods of conjugate gradients for solving linear systems*, Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
 """
-function cg(A, b :: AbstractVector{T};
-            M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
-            itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
-            verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function cg(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = CgSolver(A, b)
+  cg!(solver, A, b; kwargs...)
+end
+
+function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
+             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
+             itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
+             verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
 
@@ -50,16 +55,16 @@ function cg(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  x, r, p = solver.x, solver.r, solver.p
 
-  # Initial state.
-  x = kzeros(S, n)
-  r = copy(b)
+  x .= zero(T)
+  r .= b
   z = M * r
-  p = copy(z)
+  p .= z
   γ = @kdot(n, r, z)
   γ == 0 && return x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
 

@@ -10,7 +10,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, July 2019.
 
-export trilqr
+export trilqr, trilqr!
 
 """
     (x, t, stats) = trilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
@@ -32,9 +32,14 @@ USYMCG point, when it exists. The transfer is based on the residual norm.
 
 * A. Montoison and D. Orban, *BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*, SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
-function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
-                atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
-                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = TrilqrSolver(A, b)
+  trilqr!(solver, A, b, c; kwargs...)
+end
+
+function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
+                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
+                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -44,19 +49,21 @@ function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₃, wₖ₋₂ = solver.uₖ₋₁, solver.uₖ, solver.vₖ₋₁, solver.vₖ, solver.x, solver.t, solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂
 
   # Initial solution x₀ and residual r₀ = b - Ax₀.
-  x = kzeros(S, n)      # x₀
+  x .= zero(T)          # x₀
   bNorm = @knrm2(m, b)  # rNorm = ‖r₀‖
 
   # Initial solution y₀ and residual s₀ = c - Aᵀy₀.
-  t = kzeros(S, m)      # t₀
+  t .= zero(T)          # t₀
   cNorm = @knrm2(n, c)  # sNorm = ‖s₀‖
 
   iter = 0
@@ -73,20 +80,20 @@ function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T};
   # Set up workspace.
   βₖ = @knrm2(m, b)          # β₁ = ‖v₁‖
   γₖ = @knrm2(n, c)          # γ₁ = ‖u₁‖
-  vₖ₋₁ = kzeros(S, m)        # v₀ = 0
-  uₖ₋₁ = kzeros(S, n)        # u₀ = 0
-  vₖ = b / βₖ                # v₁ = b / β₁
-  uₖ = c / γₖ                # u₁ = c / γ₁
+  vₖ₋₁ .= zero(T)            # v₀ = 0
+  uₖ₋₁ .= zero(T)            # u₀ = 0
+  vₖ .= b ./ βₖ              # v₁ = b / β₁
+  uₖ .= c ./ γₖ              # u₁ = c / γ₁
   cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
-  d̅ = kzeros(S, n)           # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
+  d̅ .= zero(T)               # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
   δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
   ψbarₖ₋₁ = ψₖ₋₁ = zero(T)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
   ϵₖ₋₃ = λₖ₋₂ = zero(T)      # Components of Lₖ₋₁
-  wₖ₋₃ = kzeros(S, m)        # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᵀ
-  wₖ₋₂ = kzeros(S, m)        # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᵀ
+  wₖ₋₃ .= zero(T)            # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᵀ
+  wₖ₋₂ .= zero(T)            # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᵀ
 
   # Stopping criterion.
   inconsistent = false

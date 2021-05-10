@@ -24,7 +24,7 @@
   V, _ = qr(rand(4, 4))
   A = U * [Σ ; zeros(2, 4)] * V'
   b = ones(6)
-  (x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, σ=1 - 1.0e-10)
+  (x, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, σ=1 - 1.0e-10, history=true)
   @test isapprox(err_ubnds_lq[end], 0.0, atol=sqrt(eps(Float64)))
   @test isapprox(err_ubnds_cg[end], 0.0, atol=sqrt(eps(Float64)))
   x_exact = A \ b

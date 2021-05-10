@@ -30,7 +30,7 @@
 #
 # This implementation is strongly inspired from Mike Saunders's.
 
-export craig
+export craig, craig!
 
 
 """
@@ -76,10 +76,15 @@ In this implementation, both the x and y-parts of the solution are returned.
 * C. C. Paige and M. A. Saunders, *LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*, ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
 * M. A. Saunders, *Solutions of Sparse Rectangular Systems Using LSQR and CRAIG*, BIT Numerical Mathematics, 35(4), pp. 588--604, 1995.
 """
-function craig(A, b :: AbstractVector{T};
-               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
-               btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,
-               verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false) where T <: AbstractFloat
+function craig(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = CraigSolver(A, b)
+  craig!(solver, A, b; kwargs...)
+end
+
+function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
+                M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
+                btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,
+                verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -91,22 +96,23 @@ function craig(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  x, Nv, y, w, Mu = solver.x, solver.Nv, solver.y, solver.w, solver.Mu
 
-  x = kzeros(S, n)
-  y = kzeros(S, m)
+  x .= zero(T)
+  y .= zero(T)
 
   # When solving a SQD system, set regularization parameter λ = 1.
   sqd && (λ = one(T))
 
-  Mu = copy(b)
+  Mu .= b
   u = M * Mu
   β₁ = sqrt(@kdot(m, u, Mu))
   β₁ == 0 && return x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
@@ -122,8 +128,8 @@ function craig(A, b :: AbstractVector{T};
   @kscal!(m, one(T)/β₁, u)
   MisI || @kscal!(m, one(T)/β₁, Mu)
 
-  Nv = kzeros(S, n)
-  w = kzeros(S, m)  # Used to update y.
+  Nv .= zero(T)
+  w .= zero(T)  # Used to update y.
 
   λ > 0 && (w2 = kzeros(S, n))
 

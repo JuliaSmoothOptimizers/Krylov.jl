@@ -26,7 +26,7 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Montréal, QC, April 2015.
 
-export cgne
+export cgne, cgne!
 
 
 """
@@ -63,9 +63,14 @@ A preconditioner M may be provided in the form of a linear operator.
 * J. E. Craig, *The N-step iteration procedures*, Journal of Mathematics and Physics, 34(1), pp. 64--73, 1955.
 * J. E. Craig, *Iterations Procedures for Simultaneous Equations*, Ph.D. Thesis, Department of Electrical Engineering, MIT, 1954.
 """
-function cgne(A, b :: AbstractVector{T};
-              M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function cgne(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = CgneSolver(A, b)
+  cgne!(solver, A, b; kwargs...)
+end
+
+function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
+               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
+               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -73,16 +78,17 @@ function cgne(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  x, p, r = solver.x, solver.p, solver.r
 
-  x = kzeros(S, n)
-  r = copy(b)
+  x .= zero(T)
+  r .= b
   z = M * r
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
@@ -91,7 +97,7 @@ function cgne(A, b :: AbstractVector{T};
   # The following vector copy takes care of the case where A is a LinearOperator
   # with preallocation, so as to avoid overwriting vectors used later. In other
   # case, this should only add minimum overhead.
-  p = copy(Aᵀ * z)
+  p .= Aᵀ * z
 
   # Use ‖p‖ to detect inconsistent system.
   # An inconsistent system will necessarily have AA' singular.

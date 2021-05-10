@@ -8,7 +8,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, September 2018.
 
-export diom
+export diom, diom!
 
 """
     (x, stats) = diom(A, b::AbstractVector{T};
@@ -31,9 +31,14 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 
 * Y. Saad, *Practical use of some krylov subspace methods for solving indefinite and nonsymmetric linear systems*, SIAM journal on scientific and statistical computing, 5(1), pp. 203--228, 1984.
 """
-function diom(A, b :: AbstractVector{T};
-              M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-              memory :: Int=20, pivoting :: Bool=false, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function diom(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
+  solver = DiomSolver(A, b, memory=memory)
+  diom!(solver, A, b; kwargs...)
+end
+
+function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
+               M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+               pivoting :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -42,16 +47,17 @@ function diom(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
   isa(N, opEye) || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  x, x_old, P, V, L, H, p = solver.x, solver.x_old, solver.P, solver.V, solver.L, solver.H, solver.p
 
   # Initial solution x₀ and residual r₀.
-  x = kzeros(S, n)  # x₀
-  x_old = copy(x)
-  r₀ = M * b      # M⁻¹(b - Ax₀)
+  x .= zero(T)  # x₀
+  x_old .= x
+  r₀ = M * b  # M⁻¹(b - Ax₀)
   # Compute β.
   rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
@@ -64,16 +70,17 @@ function diom(A, b :: AbstractVector{T};
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
-  # Set up workspace.
-  mem = min(memory, itmax) # Memory.
-  V = [kzeros(S, n) for i = 1 : mem]  # Preconditioned Krylov vectors, orthogonal basis for {b, M⁻¹AN⁻¹b, (M⁻¹AN⁻¹)²b, ..., (M⁻¹AN⁻¹)ᵐ⁻¹b}.
-  P = [kzeros(S, n) for i = 1 : mem]  # Directions for x : Pₘ = Vₘ(Uₘ)⁻¹.
-  H = zeros(T, mem+2)                 # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
+  mem = length(L)  # Memory
+  for i = 1 : mem
+    V[i] .= zero(T)  # Preconditioned Krylov vectors, orthogonal basis for {M⁻¹b, M⁻¹AN⁻¹b, (M⁻¹AN⁻¹)²b, ..., (M⁻¹AN⁻¹)ᵐ⁻¹b}.
+    P[i] .= zero(T)  # Directions for x : Pₘ = Vₘ(Uₘ)⁻¹.
+  end
+  H .= zero(T)  # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
   # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
   # In addition of that, the last column of Uₘ is stored in H.
-  L = zeros(T, mem)        # Last mem Pivots of Lₘ.
-  p = BitArray(undef, mem) # Last mem permutations.
+  L .= zero(T)  # Last mem Pivots of Lₘ.
+  p .= false    # Last mem permutations.
 
   # Initial ξ₁ and V₁.
   ξ = rNorm

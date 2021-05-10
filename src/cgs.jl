@@ -8,7 +8,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, October 2018.
 
-export cgs
+export cgs, cgs!
 
 """
     (x, stats) = cgs(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
@@ -38,9 +38,14 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 
 * P. Sonneveld, *CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems*, SIAM Journal on Scientific and Statistical Computing, 10(1), pp. 36--52, 1989.
 """
-function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
-             M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
-             itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function cgs(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = CgsSolver(A, b)
+  cgs!(solver, A, b; kwargs...)
+end
+
+function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
+              M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
+              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -49,15 +54,16 @@ function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  ktypeof(c) == S || error("ktypeof(c) ≠ $S")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
   isa(N, opEye) || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  x, r, u, p, q = solver.x, solver.r, solver.u, solver.p, solver.q
 
-  # Initial solution x₀ and residual r₀.
-  x = kzeros(S, n)  # x₀
-  r = copy(M * b)   # r₀
+  x .= zero(T)  # x₀
+  r .= M * b    # r₀
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
@@ -75,10 +81,9 @@ function cgs(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
-  # Set up workspace.
-  u = copy(r)       # u₀
-  p = copy(r)       # p₀
-  q = kzeros(S, n)  # q₋₁
+  u .= r        # u₀
+  p .= r        # p₀
+  q .= zero(T)  # q₋₁
 
   # Stopping criterion.
   solved = rNorm ≤ ε

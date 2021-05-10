@@ -24,7 +24,7 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Montreal, QC, May 2015.
 
-export craigmr
+export craigmr, craigmr!
 
 
 """
@@ -69,9 +69,14 @@ returned.
 * D. Orban and M. Arioli. *Iterative Solution of Symmetric Quasi-Definite Linear Systems*, Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
 * D. Orban, *The Projected Golub-Kahan Process for Constrained, Linear Least-Squares Problems*. Cahier du GERAD G-2014-15, 2014.
 """
-function craigmr(A, b :: AbstractVector{T};
-                 M=opEye(), N=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
-                 rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function craigmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = CraigmrSolver(A, b)
+  craigmr!(solver, A, b; kwargs...)
+end
+
+function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
+                  M=opEye(), N=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
+                  rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -83,19 +88,20 @@ function craigmr(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  x, Nv, y, Mu, w, wbar = solver.x, solver.Nv, solver.y, solver.Mu, solver.w, solver.wbar
 
   # Compute y such that AAᵀy = b. Then recover x = Aᵀy.
-  x = kzeros(S, n)
-  y = kzeros(S, m)
-  Mu = copy(b)
+  x .= zero(T)
+  y .= zero(T)
+  Mu .= b
   u = M * Mu
   β = sqrt(@kdot(m, u, Mu))
   β == 0 && return (x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
@@ -106,7 +112,7 @@ function craigmr(A, b :: AbstractVector{T};
   MisI || @kscal!(m, one(T)/β, Mu)
   # α₁Nv₁ = Aᵀu₁.
   Aᵀu = Aᵀ * u
-  Nv = copy(Aᵀu)
+  Nv .= Aᵀu
   v = N * Nv
   α = sqrt(@kdot(n, v, Nv))
   Anorm² = α * α
@@ -134,9 +140,9 @@ function craigmr(A, b :: AbstractVector{T};
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
 
-  wbar = copy(u)
+  wbar .= u
   @kscal!(m, one(T)/α, wbar)
-  w = kzeros(S, m)
+  w .= zero(T)
 
   status = "unknown"
   solved = rNorm ≤ ɛ_c

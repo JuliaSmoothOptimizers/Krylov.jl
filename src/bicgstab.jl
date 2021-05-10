@@ -13,7 +13,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montréal, October 2020.
 
-export bicgstab
+export bicgstab, bicgstab!
 
 """
     (x, stats) = bicgstab(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
@@ -41,9 +41,14 @@ This implementation allows a left preconditioner `M` and a right preconditioner 
 * H. A. van der Vorst, *Bi-CGSTAB: A fast and smoothly converging variant of Bi-CG for the solution of nonsymmetric linear systems*, SIAM Journal on Scientific and Statistical Computing, 13(2), pp. 631--644, 1992.
 * G. L.G. Sleijpen and D. R. Fokkema, *BiCGstab(ℓ) for linear equations involving unsymmetric matrices with complex spectrum*, Electronic Transactions on Numerical Analysis, 1, pp. 11--32, 1993.
 """
-function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
-                  M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
-                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function bicgstab(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = BicgstabSolver(A, b)
+  bicgstab!(solver, A, b; kwargs...)
+end
+
+function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
+                   M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
+                   itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -56,18 +61,19 @@ function bicgstab(A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  ktypeof(c) == S || error("ktypeof(c) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
-  # Determine the storage type of b
-  S = typeof(b)
-
   # Set up workspace.
-  x = kzeros(S, n)  # x₀
-  s = kzeros(S, n)  # s₀
-  v = kzeros(S, n)  # v₀
-  r = copy(M * b)   # r₀
-  p = copy(r)       # p₁
+  x, s, v, r, p = solver.x, solver.s, solver.v, solver.r, solver.p
+
+  x .= zero(T) # x₀
+  s .= zero(T) # s₀
+  v .= zero(T) # v₀
+  r .= (M * b) # r₀
+  p .= r       # p₁
 
   α = one(T) # α₀
   ω = one(T) # ω₀

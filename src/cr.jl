@@ -9,7 +9,7 @@
 # Marie-Ange Dahito, <marie-ange.dahito@polymtl.ca>
 # Montreal, QC, June 2017
 
-export cr
+export cr, cr!
 
 """
     (x, stats) = cr(A, b::AbstractVector{T};
@@ -32,9 +32,14 @@ with `n = length(b)`.
 * M. R. Hestenes and E. Stiefel, *Methods of conjugate gradients for solving linear systems*, Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
 * M-A. Dahito and D. Orban, *The Conjugate Residual Method in Linesearch and Trust-Region Methods*, SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
 """
-function cr(A, b :: AbstractVector{T};
-            M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
-            radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false) where T <: AbstractFloat
+function cr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = CrSolver(A, b)
+  cr!(solver, A, b; kwargs...)
+end
+
+function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
+             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
+             radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
   n = size(b, 1) # size of the problem
@@ -43,20 +48,21 @@ function cr(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace 
+  x, r, p, q = solver.x, solver.r, solver.p, solver.q
 
   # Initial state.
-  x = kzeros(S, n)  # initial estimation x = 0
+  x .= zero(T)  # initial estimation x = 0
   xNorm = zero(T)
-  r = copy(M * b)  # initial residual r = M * (b - Ax) = M * b
+  r .= M * b  # initial residual r = M * (b - Ax) = M * b
   Ar = A * r
   ρ = @kdot(n, r, Ar)
   ρ == 0 && return (x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
-  p = copy(r)
-  q = copy(Ar)
+  p .= r
+  q .= Ar
   (verbose > 0) && (m = zero(T)) # quadratic model
 
   iter = 0

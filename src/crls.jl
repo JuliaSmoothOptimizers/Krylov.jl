@@ -18,7 +18,7 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Princeton, NJ, March 2015.
 
-export crls
+export crls, crls!
 
 
 """
@@ -45,9 +45,14 @@ but simpler to implement.
 
 * D. C.-L. Fong, *Minimum-Residual Methods for Sparse, Least-Squares using Golubg-Kahan Bidiagonalization*, Ph.D. Thesis, Stanford University, 2011.
 """
-function crls(A, b :: AbstractVector{T};
-              M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-              radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function crls(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = CrlsSolver(A, b)
+  crls!(solver, A, b; kwargs...)
+end
+
+function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
+               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
+               radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -55,26 +60,27 @@ function crls(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  x, p, Ar, r, Ap = solver.x, solver.p, solver.Ar, solver.r, solver.Ap
 
-  x = kzeros(S, n)
-  r  = copy(b)
+  x .= zero(T)
+  r .= b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
 
   Mr = M * r
-  Ar = copy(Aᵀ * Mr)  # - λ * x0 if x0 ≠ 0.
+  Ar .= Aᵀ * Mr  # - λ * x0 if x0 ≠ 0.
   s  = A * Ar
   Ms = M * s
 
-  p  = copy(Ar)
-  Ap = copy(s)
+  p  .= Ar
+  Ap .= s
   q  = Aᵀ * Ms # Ap
   λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
   γ  = @kdot(m, s, Ms)  # Faster than γ = dot(s, Ms)

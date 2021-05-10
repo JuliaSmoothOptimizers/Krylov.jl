@@ -14,7 +14,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, September 2019.
 
-export minres_qlp
+export minres_qlp, minres_qlp!
 
 """
     (x, stats) = minres_qlp(A, b::AbstractVector{T};
@@ -35,9 +35,14 @@ M also indicates the weighted norm in which residuals are measured.
 * S.-C. T. Choi, C. C. Paige and M. A. Saunders, *MINRES-QLP: A Krylov subspace method for indefinite or singular symmetric systems*, SIAM Journal on Scientific Computing, Vol. 33(4), pp. 1810--1836, 2011.
 * S.-C. T. Choi and M. A. Saunders, *Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems*, ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014.
 """
-function minres_qlp(A, b :: AbstractVector{T};
-                    M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
-                    itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function minres_qlp(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = MinresQlpSolver(A, b)
+  minres_qlp!(solver, A, b; kwargs...)
+end
+
+function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
+                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
+                     itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -49,16 +54,17 @@ function minres_qlp(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.x
 
   # Initial solution x₀
-  x = kzeros(S, n)
+  x .= zero(T)
 
   # β₁v₁ = Mb
-  M⁻¹vₖ = copy(b)
+  M⁻¹vₖ .= b
   vₖ = M * M⁻¹vₖ
   βₖ = sqrt(@kdot(n, vₖ, M⁻¹vₖ))
   if βₖ ≠ 0
@@ -80,14 +86,14 @@ function minres_qlp(A, b :: AbstractVector{T};
   display(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
   # Set up workspace.
-  M⁻¹vₖ₋₁ = kzeros(S, n)
+  M⁻¹vₖ₋₁ .= zero(T)
   ζbarₖ   = βₖ
   ξₖ₋₁    = zero(T)
   τₖ₋₂    = τₖ₋₁ = τₖ = zero(T)
   ψbarₖ₋₂ = zero(T)
   μbisₖ₋₂ = μbarₖ₋₁ = zero(T)
-  wₖ₋₁  = kzeros(S, n)
-  wₖ    = kzeros(S, n)
+  wₖ₋₁ .= zero(T)
+  wₖ   .= zero(T)
   cₖ₋₂  = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
   sₖ₋₂  = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
 

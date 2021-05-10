@@ -26,7 +26,7 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Princeton, NJ, March 2015.
 
-export cgls
+export cgls, cgls!
 
 
 """
@@ -54,9 +54,14 @@ but simpler to implement.
 * M. R. Hestenes and E. Stiefel. *Methods of conjugate gradients for solving linear systems*, Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
 * A. Björck, T. Elfving and Z. Strakos, *Stability of Conjugate Gradient and Lanczos Methods for Linear Least Squares Problems*, SIAM Journal on Matrix Analysis and Applications, 19(3), pp. 720--736, 1998.
 """
-function cgls(A, b :: AbstractVector{T};
-              M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-              radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where T <: AbstractFloat
+function cgls(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+  solver = CglsSolver(A, b)
+  cgls!(solver, A, b; kwargs...)
+end
+
+function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
+               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
+               radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")
@@ -64,21 +69,22 @@ function cgls(A, b :: AbstractVector{T};
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   isa(M, opEye) || eltype(M) == T || error("eltype(M) ≠ $T")
 
-  # Compute Aᵀ
+  # Compute the adjoint of A
   Aᵀ = A'
 
-  # Determine the storage type of b
-  S = typeof(b)
+  # Set up workspace.
+  x, p, r = solver.x, solver.p, solver.r
 
-  x = kzeros(S, n)
-  r = copy(b)
+  x .= zero(T)
+  r .= b
   bNorm = @knrm2(m, r)   # Marginally faster than norm(b)
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
   Mr = M * r
   s = Aᵀ * Mr
-  p = copy(s)
+  p .= s
   γ = @kdot(n, s, s)  # Faster than γ = dot(s, s)
   iter = 0
   itmax == 0 && (itmax = m + n)
