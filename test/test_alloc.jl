@@ -80,6 +80,7 @@ function test_alloc()
   solver = DiomSolver(A, b)
   diom!(solver, A, b)  # warmup
   inplace_diom_bytes = @allocated diom!(solver, A, b)
+  println(inplace_diom_bytes)
   @test (VERSION < v"1.5") || (inplace_diom_bytes == 208)
 
   # with Ap preallocated, CG_LANCZOS needs 4 n-vectors: x, v, v_prev, p
