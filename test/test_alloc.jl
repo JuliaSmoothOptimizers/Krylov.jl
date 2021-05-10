@@ -80,8 +80,7 @@ function test_alloc()
   solver = DiomSolver(A, b)
   diom!(solver, A, b)  # warmup
   inplace_diom_bytes = @allocated diom!(solver, A, b)
-  println(inplace_diom_bytes)
-  @test (VERSION < v"1.5") || (inplace_diom_bytes == 208)
+  @test (VERSION < v"1.5") || (inplace_diom_bytes ≤ 240)
 
   # with Ap preallocated, CG_LANCZOS needs 4 n-vectors: x, v, v_prev, p
   storage_cg_lanczos(n) = 4 * n
@@ -113,8 +112,7 @@ function test_alloc()
   solver = CgLanczosShiftSolver(A, b, shifts)
   cg_lanczos_shift_seq!(solver, A, b, shifts)  # warmup
   inplace_cg_lanczos_shift_seq_bytes = @allocated cg_lanczos_shift_seq!(solver, A, b, shifts)
-  println(inplace_cg_lanczos_shift_seq_bytes)
-  @test (VERSION < v"1.5") || (inplace_cg_lanczos_shift_seq_bytes == 320)
+  @test (VERSION < v"1.5") || (inplace_cg_lanczos_shift_seq_bytes ≤ 356)
 
   # without preconditioner and with Ap preallocated, DQGMRES needs:
   # - 1 n-vector: x
