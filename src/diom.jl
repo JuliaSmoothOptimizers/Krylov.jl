@@ -38,7 +38,7 @@ end
 
 function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
                M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-               pivoting :: Bool=false, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+               pivoting :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")

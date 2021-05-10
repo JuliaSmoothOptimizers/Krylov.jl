@@ -45,7 +45,7 @@ end
 function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
              M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
              itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
-             verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+             verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
 

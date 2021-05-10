@@ -45,7 +45,7 @@ end
 
 function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
               M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
-              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")

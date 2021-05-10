@@ -112,7 +112,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
                M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
                atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
                window :: Int=5, utol :: T=√eps(T), itmax :: Int=0,
-               σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+               σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")

@@ -83,7 +83,7 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
                atol :: T=zero(T), rtol :: T=zero(T),
                etol :: T=√eps(T), window :: Int=5,
                itmax :: Int=0, conlim :: T=1/√eps(T),
-               radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+               radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")

@@ -41,7 +41,7 @@ end
 
 function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
                      M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                     check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+                     check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
@@ -163,7 +163,7 @@ end
 
 function cg_lanczos_shift_seq!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector{T}, shifts :: AbstractVector{T};
                                M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                               check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+                               check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n = size(b, 1)
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")

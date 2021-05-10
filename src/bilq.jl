@@ -36,7 +36,7 @@ end
 
 function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
                atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
-               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n, m = size(A)
   m == n || error("System must be square")

@@ -72,7 +72,7 @@ end
 function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
                M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
                atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-               transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+               transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

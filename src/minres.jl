@@ -76,7 +76,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
                  M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
                  itmax :: Int=0, conlim :: T=1/√eps(T),
-                 verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+                 verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")

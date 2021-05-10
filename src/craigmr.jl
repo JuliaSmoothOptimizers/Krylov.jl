@@ -76,7 +76,7 @@ end
 
 function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
                   M=opEye(), N=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
-                  rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+                  rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")

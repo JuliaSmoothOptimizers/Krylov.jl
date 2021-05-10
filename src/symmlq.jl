@@ -44,7 +44,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
                  M=opEye(), λ :: T=zero(T), transfer_to_cg :: Bool=true,
                  λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                  etol :: T=√eps(T), window :: Int=0, itmax :: Int=0,
-                 conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+                 conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")

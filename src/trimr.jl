@@ -59,7 +59,7 @@ end
 function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
                 spd :: Bool=false, snd :: Bool=false, flip :: Bool=false, sp :: Bool=false,
-                τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+                τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

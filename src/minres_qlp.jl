@@ -42,7 +42,7 @@ end
 
 function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
                      M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
-                     itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {S, T <: AbstractFloat}
+                     itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n, m = size(A)
   m == n || error("System must be square")

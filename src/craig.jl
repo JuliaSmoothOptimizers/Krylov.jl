@@ -84,7 +84,7 @@ end
 function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
                 M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                 btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,
-                verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false) where {S, T <: AbstractFloat}
+                verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   size(b, 1) == m || error("Inconsistent problem size")

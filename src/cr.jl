@@ -39,7 +39,7 @@ end
 
 function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
              M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
-             radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false) where {S, T <: AbstractFloat}
+             radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
   n = size(b, 1) # size of the problem
