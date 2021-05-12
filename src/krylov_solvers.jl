@@ -857,6 +857,7 @@ mutable struct LnlqSolver{T,S} <: KrylovSolver{T,S}
   y  :: S
   w̄  :: S
   Mu :: S
+  q  :: Union{S, Nothing}
 
   function LnlqSolver(A, b)
     n, m = size(A)
@@ -867,7 +868,8 @@ mutable struct LnlqSolver{T,S} <: KrylovSolver{T,S}
     y  = S(undef, n)
     w̄  = S(undef, n)
     Mu = S(undef, n)
-    solver = new{T,S}(x, Nv, y, w̄, Mu)
+    q  = nothing
+    solver = new{T,S}(x, Nv, y, w̄, Mu, q)
     return solver
   end
 end
@@ -887,6 +889,7 @@ mutable struct CraigSolver{T,S} <: KrylovSolver{T,S}
   y  :: S
   w  :: S
   Mu :: S
+  w2 :: Union{S, Nothing}
 
   function CraigSolver(A, b)
     n, m = size(A)
@@ -897,7 +900,8 @@ mutable struct CraigSolver{T,S} <: KrylovSolver{T,S}
     y  = S(undef, n)
     w  = S(undef, n)
     Mu = S(undef, n)
-    solver = new{T,S}(x, Nv, y, w, Mu)
+    w2 = nothing
+    solver = new{T,S}(x, Nv, y, w, Mu, w2)
     return solver
   end
 end

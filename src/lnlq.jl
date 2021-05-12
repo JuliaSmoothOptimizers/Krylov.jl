@@ -91,15 +91,16 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   # Compute the adjoint of A
   Aᵀ = A'
 
+  # When solving a SQD system, set regularization parameter λ = 1.
+  sqd && (λ = one(T))
+
   # Set up workspace.
-  x, Nv, y, w̄, Mu = solver.x, solver.Nv, solver.y, solver.w̄, solver.Mu
+  (λ > 0) && isnothing(solver.q) && (solver.q = S(undef, n))
+  x, Nv, y, w̄, Mu, q = solver.x, solver.Nv, solver.y, solver.w̄, solver.Mu, solver.q
 
   # Initial solutions (x₀, y₀) and residual norm ‖r₀‖.
   x .= zero(T)
   y .= zero(T)
-
-  # When solving a SQD system, set regularization parameter λ = 1.
-  sqd && (λ = one(T))
 
   bNorm = @knrm2(m, b)
   bNorm == 0 && return x, y, SimpleStats(true, false, [bNorm], T[], "x = 0 is a zero-residual solution")
@@ -142,10 +143,10 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   ηₖ = zero(T)       # Coefficient of M̅ₖ
 
   # Variable used for the regularization.
-  λₖ  = λ                 # λ₁ = λ
-  cpₖ = spₖ = one(T)      # Givens sines and cosines used to zero out λₖ
-  cdₖ = sdₖ = one(T)      # Givens sines and cosines used to define λₖ₊₁
-  λ > 0 && (q = copy(v))  # Additional vector needed to update x, by definition q₀ = 0
+  λₖ  = λ             # λ₁ = λ
+  cpₖ = spₖ = one(T)  # Givens sines and cosines used to zero out λₖ
+  cdₖ = sdₖ = one(T)  # Givens sines and cosines used to define λₖ₊₁
+  λ > 0 && (q .= v)   # Additional vector needed to update x, by definition q₀ = 0
 
   # Initialize the regularization.
   if λ > 0

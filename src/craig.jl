@@ -103,14 +103,15 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   # Compute the adjoint of A
   Aᵀ = A'
 
+  # When solving a SQD system, set regularization parameter λ = 1.
+  sqd && (λ = one(T))
+
   # Set up workspace.
-  x, Nv, y, w, Mu = solver.x, solver.Nv, solver.y, solver.w, solver.Mu
+  (λ > 0) && isnothing(solver.w2) && (solver.w2 = S(undef, n))
+  x, Nv, y, w, Mu, w2 = solver.x, solver.Nv, solver.y, solver.w, solver.Mu, solver.w2
 
   x .= zero(T)
   y .= zero(T)
-
-  # When solving a SQD system, set regularization parameter λ = 1.
-  sqd && (λ = one(T))
 
   Mu .= b
   u = M * Mu
@@ -131,7 +132,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   Nv .= zero(T)
   w .= zero(T)  # Used to update y.
 
-  λ > 0 && (w2 = kzeros(S, n))
+  λ > 0 && (w2 .= zero(T))
 
   Anorm² = zero(T) # Estimate of ‖A‖²_F.
   Anorm  = zero(T)
