@@ -198,26 +198,26 @@ Create an AbstractVector of storage type `S` of length `n` only composed of one.
 
 @inline display(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
 
-@inline krylov_dot(n :: Int, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) where T <: BLAS.BlasReal = BLAS.dot(n, x, dx, y, dy)
-@inline krylov_dot(n :: Int, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) where T <: BLAS.BlasComplex = BLAS.dotc(n, x, dx, y, dy)
-@inline krylov_dot(n :: Int, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int) where T <: Number = dot(x, y)
+@inline krylov_dot(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasReal = BLAS.dot(n, x, dx, y, dy)
+@inline krylov_dot(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasComplex = BLAS.dotc(n, x, dx, y, dy)
+@inline krylov_dot(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: Number = dot(x, y)
 
-@inline krylov_norm2(n :: Int, x :: Vector{T}, dx :: Int) where T <: BLAS.BlasFloat = BLAS.nrm2(n, x, dx)
-@inline krylov_norm2(n :: Int, x :: AbstractVector{T}, dx :: Int) where T <: Number = norm(x)
+@inline krylov_norm2(n :: Integer, x :: Vector{T}, dx :: Integer) where T <: BLAS.BlasFloat = BLAS.nrm2(n, x, dx)
+@inline krylov_norm2(n :: Integer, x :: AbstractVector{T}, dx :: Integer) where T <: Number = norm(x)
 
-@inline krylov_scal!(n :: Int, s :: T, x :: Vector{T}, dx :: Int) where T <: BLAS.BlasFloat = BLAS.scal!(n, s, x, dx)
-@inline krylov_scal!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int) where T <: Number = (x .*= s)
+@inline krylov_scal!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer) where T <: BLAS.BlasFloat = BLAS.scal!(n, s, x, dx)
+@inline krylov_scal!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer) where T <: Number = (x .*= s)
 
-@inline krylov_axpy!(n :: Int, s :: T, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) where T <: BLAS.BlasFloat = BLAS.axpy!(n, s, x, dx, y, dy)
-@inline krylov_axpy!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int) where T <: Number = axpy!(s, x, y)
+@inline krylov_axpy!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.axpy!(n, s, x, dx, y, dy)
+@inline krylov_axpy!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: Number = axpy!(s, x, y)
 
-@inline krylov_axpby!(n :: Int, s :: T, x :: Vector{T}, dx :: Int, t :: T, y :: Vector{T}, dy :: Int) where T <: BLAS.BlasFloat = BLAS.axpby!(n, s, x, dx, t, y, dy)
-@inline krylov_axpby!(n :: Int, s :: T, x :: AbstractVector{T}, dx :: Int, t :: T, y :: AbstractVector{T}, dy :: Int) where T <: Number = axpby!(s, x, t, y)
+@inline krylov_axpby!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer, t :: T, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.axpby!(n, s, x, dx, t, y, dy)
+@inline krylov_axpby!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer, t :: T, y :: AbstractVector{T}, dy :: Integer) where T <: Number = axpby!(s, x, t, y)
 
-@inline krylov_copy!(n :: Int, x :: Vector{T}, dx :: Int, y :: Vector{T}, dy :: Int) where T <: BLAS.BlasFloat = BLAS.blascopy!(n, x, dx, y, dy)
-@inline krylov_copy!(n :: Int, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int) where T <: Number = copyto!(y, x)
+@inline krylov_copy!(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.blascopy!(n, x, dx, y, dy)
+@inline krylov_copy!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: Number = copyto!(y, x)
 
-function krylov_ref!(n :: Int, x :: AbstractVector{T}, dx :: Int, y :: AbstractVector{T}, dy :: Int, c :: T , s :: T) where T <: Number
+function krylov_ref!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer, c :: T , s :: T) where T <: Number
   # assume dx = dy
   @inbounds @simd for i = 1:dx:n
     xi = x[i]
