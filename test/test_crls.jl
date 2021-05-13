@@ -19,7 +19,7 @@
 
   # Test with preconditioning.
   Random.seed!(0)
-  A = rand(10, 6); b = rand(10)
+  A, b = over_inconsistent(10, 6)
   M = InverseLBFGSOperator(10, mem=4)
   for _ = 1 : 6
     s = rand(10)
@@ -64,6 +64,6 @@
   p = V[:,1]; b = A'\p
   (x, stats) = crls(A, b, radius=radius)
   @test stats.solved
-  @test stats.status == "zero-curvature encountered"
+  @test (stats.status == "zero-curvature encountered") || (stats.status == "on trust-region boundary")
   @test norm(x) ⪅ radius
 end

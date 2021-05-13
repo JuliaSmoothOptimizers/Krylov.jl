@@ -18,7 +18,7 @@
 
   # Test with preconditioning.
   Random.seed!(0)
-  A = rand(10, 6); b = rand(10)
+  A, b = over_inconsistent(10, 6)
   M = InverseLBFGSOperator(10, mem=4)
   for _ = 1 : 6
     s = rand(10)

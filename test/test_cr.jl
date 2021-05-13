@@ -19,6 +19,7 @@
 
   # Sparse Laplacian
   A, _ = sparse_laplacian()
+  Random.seed!(0)
   b = randn(size(A, 1))
   itmax = 0
   # case: ‖x*‖ > Δ
@@ -50,7 +51,6 @@
   n = 100
   itmax = 2 * n
   B = LBFGSOperator(n)
-  Random.seed!(0)
   for i = 1:5
     push!(B, rand(n), rand(n))
   end
