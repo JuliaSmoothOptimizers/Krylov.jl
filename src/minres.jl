@@ -52,14 +52,14 @@ assumed to be symmetric and positive definite.
 
 It is also possible to use MINRES in-place
 
-    (x, stats) = minres!(solver :: MinresSolver{S, T}, A, b :: AbstractVector{T};
+    (x, stats) = minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
                          M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
                          rtol :: T=√eps(T)/100, ratol :: T=zero(T), 
                          rrtol :: T=zero(T), etol :: T=√eps(T),
                          itmax :: Int=0, conlim :: T=1/√eps(T),
-                         verbose :: Int=0) where {S, T <: AbstractFloat}
+                         verbose :: Int=0) where {T <: AbstractFloat, S <: DenseVector{T}}
 
-where `solver` is a [`Krylov.MinresSolver`](@ref) used to store the vectors used by `minres!`.
+where `solver` is a `Krylov.MinresSolver` used to store the vectors used by `minres!`.
 In this case, the user should be aware that A should be a  
 [PreallocatedLinearOperator](https://juliasmoothoptimizers.github.io/LinearOperators.jl/latest/reference/#LinearOperators.PreallocatedLinearOperator),
 otherwise there is no guarantee that there will be no allocations.

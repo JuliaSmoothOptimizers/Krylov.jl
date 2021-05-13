@@ -1,0 +1,10 @@
+```@docs
+cgs
+bicgstab
+bilq
+qmr
+diom
+dqgmres
+usymlq
+usymqr
+```
