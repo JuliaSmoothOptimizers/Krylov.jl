@@ -10,8 +10,9 @@ abstract type KrylovSolver{T,S} end
 """
 Type for storing the vectors required by the in-place version of MINRES.
 
-The outer constructor
+The outer constructors
 
+    solver = MinresSolver(n, m, S; window :: Int=5)
     solver = MinresSolver(A, b; window :: Int=5)
 
 may be used in order to create these vectors.
@@ -25,10 +26,8 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
   err_vec :: Vector{T}
   stats   :: SimpleStats{T}
 
-  function MinresSolver(A, b; window :: Int=5)
-    m, n = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function MinresSolver(n, m, S; window :: Int=5)
+    T  = eltype(S)
     x  = S(undef, n)
     r1 = S(undef, n)
     r2 = S(undef, n)
@@ -39,13 +38,20 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, r1, r2, w1, w2, err_vec, stats)
     return solver
   end
+
+  function MinresSolver(A, b; window :: Int=5)
+    n, m = size(A)
+    S = ktypeof(b)
+    MinresSolver(n, m, S, window=window)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of CG.
 
-The outer constructor
+The outer constructors
 
+    solver = CgSolver(n, m, S)
     solver = CgSolver(A, b)
 
 may be used in order to create these vectors.
@@ -55,23 +61,28 @@ mutable struct CgSolver{T,S} <: KrylovSolver{T,S}
   r :: S
   p :: S
 
-  function CgSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function CgSolver(n, m, S)
+    T = eltype(S)
     x = S(undef, n)
     r = S(undef, n)
     p = S(undef, n)
     solver = new{T,S}(x, r, p)
     return solver
   end
+
+  function CgSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    CgSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of CR.
 
-The outer constructor
+The outer constructors
 
+    solver = CrSolver(n, m, S)
     solver = CrSolver(A, b)
 
 may be used in order to create these vectors.
@@ -82,10 +93,8 @@ mutable struct CrSolver{T,S} <: KrylovSolver{T,S}
   p :: S
   q :: S
 
-  function CrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function CrSolver(n, m, S)
+    T = eltype(S)
     x = S(undef, n)
     r = S(undef, n)
     p = S(undef, n)
@@ -93,13 +102,20 @@ mutable struct CrSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, r, p, q)
     return solver
   end
+
+  function CrSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    CrSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of SYMMLQ.
 
-The outer constructor
+The outer constructors
 
+    solver = SymmlqSolver(n, m, S)
     solver = SymmlqSolver(A, b)
 
 may be used in order to create these vectors.
@@ -110,10 +126,8 @@ mutable struct SymmlqSolver{T,S} <: KrylovSolver{T,S}
   Mv    :: S
   w̅     :: S
 
-  function SymmlqSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function SymmlqSolver(n, m, S)
+    T     = eltype(S)
     x     = S(undef, n)
     Mvold = S(undef, n)
     Mv    = S(undef, n)
@@ -121,13 +135,20 @@ mutable struct SymmlqSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, Mvold, Mv, w̅)
     return solver
   end
+
+  function SymmlqSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    SymmlqSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of CG-LANCZOS.
 
-The outer constructor
+The outer constructors
 
+    solver = CgLanczosSolver(n, m, S)
     solver = CgLanczosSolver(A, b)
 
 may be used in order to create these vectors.
@@ -138,10 +159,8 @@ mutable struct CgLanczosSolver{T,S} <: KrylovSolver{T,S}
   Mv_prev :: S
   p       :: S
 
-  function CgLanczosSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function CgLanczosSolver(n, m, S)
+    T       = eltype(S)
     x       = S(undef, n)
     Mv      = S(undef, n)
     Mv_prev = S(undef, n)
@@ -149,14 +168,21 @@ mutable struct CgLanczosSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, Mv, Mv_prev, p)
     return solver
   end
+
+  function CgLanczosSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    CgLanczosSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of CG-LANCZOS-SHIFT-SEQ.
 
-The outer constructor
+The outer constructors
 
-    solver = CgLanczosShiftSolver(A, b)
+    solver = CgLanczosShiftSolver(n, m, S, shifts)
+    solver = CgLanczosShiftSolver(A, b, shifts)
 
 may be used in order to create these vectors.
 """
@@ -174,11 +200,9 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
   converged  :: BitArray
   not_cv     :: BitArray
 
-  function CgLanczosShiftSolver(A, b, shifts)
-    n, m = size(A)
-    nshifts = length(shifts)
-    S = ktypeof(b)
-    T = eltype(b)
+  function CgLanczosShiftSolver(n, m, S, shifts)
+    nshifts    = length(shifts)
+    T          = eltype(S)
     Mv         = S(undef, n)
     Mv_prev    = S(undef, n)
     x          = [S(undef, n) for i = 1 : nshifts]
@@ -194,13 +218,20 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(Mv, Mv_prev, x, p, σ, δhat, ω, γ, rNorms, indefinite, converged, not_cv)
     return solver
   end
+
+  function CgLanczosShiftSolver(A, b, shifts)
+    n, m = size(A)
+    S = ktypeof(b)
+    CgLanczosShiftSolver(n, m, S, shifts)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of MINRES-QLP.
 
-The outer constructor
+The outer constructors
 
+    solver = MinresQlpSolver(n, m, S)
     solver = MinresQlpSolver(A, b)
 
 may be used in order to create these vectors.
@@ -212,10 +243,8 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
   M⁻¹vₖ   :: S
   x       :: S
 
-  function MinresQlpSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function MinresQlpSolver(n, m, S)
+    T       = eltype(S)
     wₖ₋₁    = S(undef, n)
     wₖ      = S(undef, n)
     M⁻¹vₖ₋₁ = S(undef, n)
@@ -224,13 +253,20 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x)
     return solver
   end
+
+  function MinresQlpSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    MinresQlpSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of DQGMRES.
 
-The outer constructor
+The outer constructors
 
+    solver = DqgmresSolver(n, m, S; memory :: Integer=20)
     solver = DqgmresSolver(A, b; memory :: Integer=20)
 
 may be used in order to create these vectors.
@@ -243,10 +279,8 @@ mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
   s :: Vector{T}
   H :: Vector{T}
 
-  function DqgmresSolver(A, b; memory :: Integer=20)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function DqgmresSolver(n, m, S; memory :: Integer=20)
+    T = eltype(S)
     x = S(undef, n)
     P = [S(undef, n) for i = 1 : memory]
     V = [S(undef, n) for i = 1 : memory]
@@ -256,13 +290,20 @@ mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, P, V, c, s, H)
     return solver
   end
+
+  function DqgmresSolver(A, b; memory :: Integer=20)
+    n, m = size(A)
+    S = ktypeof(b)
+    DqgmresSolver(n, m, S, memory=memory)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of DIOM.
 
-The outer constructor
+The outer constructors
 
+    solver = DiomSolver(n, m, S; memory :: Integer=20)
     solver = DiomSolver(A, b; memory :: Integer=20)
 
 may be used in order to create these vectors.
@@ -276,10 +317,8 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
   H     :: Vector{T}
   p     :: BitArray
 
-  function DiomSolver(A, b; memory :: Integer=20)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function DiomSolver(n, m, S; memory :: Integer=20)
+    T     = eltype(S)
     x     = S(undef, n)
     x_old = S(undef, n)
     P     = [S(undef, n) for i = 1 : memory]
@@ -290,13 +329,20 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, x_old, P, V, L, H, p)
     return solver
   end
+
+  function DiomSolver(A, b; memory :: Integer=20)
+    n, m = size(A)
+    S = ktypeof(b)
+    DiomSolver(n, m, S, memory=memory)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of USYMLQ.
 
-The outer constructor
+The outer constructors
 
+    solver = UsymlqSolver(n, m, S)
     solver = UsymlqSolver(A, b)
 
 may be used in order to create these vectors.
@@ -309,10 +355,8 @@ mutable struct UsymlqSolver{T,S} <: KrylovSolver{T,S}
   vₖ₋₁ :: S
   vₖ   :: S
 
-  function UsymlqSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function UsymlqSolver(n, m, S)
+    T    = eltype(S)
     uₖ₋₁ = S(undef, m)
     uₖ   = S(undef, m)
     x    = S(undef, m)
@@ -322,13 +366,20 @@ mutable struct UsymlqSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(uₖ₋₁, uₖ, x, d̅, vₖ₋₁, vₖ)
     return solver
   end
+
+  function UsymlqSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    UsymlqSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of USYMQR.
 
-The outer constructor
+The outer constructors
 
+    solver = UsymqrSolver(n, m, S)
     solver = UsymqrSolver(A, b)
 
 may be used in order to create these vectors.
@@ -342,10 +393,8 @@ mutable struct UsymqrSolver{T,S} <: KrylovSolver{T,S}
   uₖ₋₁ :: S
   uₖ   :: S
 
-  function UsymqrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function UsymqrSolver(n, m, S)
+    T    = eltype(S)
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
     x    = S(undef, m)
@@ -356,13 +405,20 @@ mutable struct UsymqrSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(vₖ₋₁, vₖ, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ)
     return solver
   end
+
+  function UsymqrSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    UsymqrSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of TRICG.
 
-The outer constructor
+The outer constructors
 
+    solver = TricgSolver(n, m, S)
     solver = TricgSolver(A, b)
 
 may be used in order to create these vectors.
@@ -379,10 +435,8 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
   gx₂ₖ₋₁  :: S
   gx₂ₖ    :: S
 
-  function TricgSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function TricgSolver(n, m, S)
+    T       = eltype(S)
     yₖ      = S(undef, m)
     N⁻¹uₖ₋₁ = S(undef, m)
     N⁻¹uₖ   = S(undef, m)
@@ -396,13 +450,20 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
     solver  = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, gx₂ₖ₋₁, gx₂ₖ)
     return solver
   end
+
+  function TricgSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    TricgSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of TRIMR.
 
-The outer constructor
+The outer constructors
 
+    solver = TrimrSolver(n, m, S)
     solver = TrimrSolver(A, b)
 
 may be used in order to create these vectors.
@@ -423,10 +484,8 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
   gx₂ₖ₋₁  :: S
   gx₂ₖ    :: S
 
-  function TrimrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function TrimrSolver(n, m, S)
+    T       = eltype(S)
     yₖ      = S(undef, m)
     N⁻¹uₖ₋₁ = S(undef, m)
     N⁻¹uₖ   = S(undef, m)
@@ -444,13 +503,20 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ)
     return solver
   end
+
+  function TrimrSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    TrimrSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of TRILQR.
 
-The outer constructor
+The outer constructors
 
+    solver = TrilqrSolver(n, m, S)
     solver = TrilqrSolver(A, b)
 
 may be used in order to create these vectors.
@@ -466,10 +532,8 @@ mutable struct TrilqrSolver{T,S} <: KrylovSolver{T,S}
   wₖ₋₃ :: S
   wₖ₋₂ :: S
 
-  function TrilqrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function TrilqrSolver(n, m, S)
+    T    = eltype(S)
     uₖ₋₁ = S(undef, m)
     uₖ   = S(undef, m)
     vₖ₋₁ = S(undef, n)
@@ -482,13 +546,20 @@ mutable struct TrilqrSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₃, wₖ₋₂)
     return solver
   end
+
+  function TrilqrSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    TrilqrSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of CGS.
 
-The outer constructor
+The outer constructorss
 
+    solver = CgsSolver(n, m, S)
     solver = CgsSolver(A, b)
 
 may be used in order to create these vectors.
@@ -500,10 +571,8 @@ mutable struct CgsSolver{T,S} <: KrylovSolver{T,S}
   p :: S
   q :: S
 
-  function CgsSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function CgsSolver(n, m, S)
+    T = eltype(S)
     x = S(undef, n)
     r = S(undef, n)
     u = S(undef, n)
@@ -512,13 +581,20 @@ mutable struct CgsSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, r, u, p, q)
     return solver
   end
+
+  function CgsSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    CgsSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of BICGSTAB.
 
-The outer constructor
+The outer constructors
 
+    solver = BicgstabSolver(n, m, S)
     solver = BicgstabSolver(A, b)
 
 may be used in order to create these vectors.
@@ -530,10 +606,8 @@ mutable struct BicgstabSolver{T,S} <: KrylovSolver{T,S}
   v :: S
   s :: S
 
-  function BicgstabSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function BicgstabSolver(n, m, S)
+    T = eltype(S)
     x = S(undef, n)
     r = S(undef, n)
     p = S(undef, n)
@@ -542,13 +616,20 @@ mutable struct BicgstabSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, r, p, v, s)
     return solver
   end
+
+  function BicgstabSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    BicgstabSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of BILQ.
 
-The outer constructor
+The outer constructors
 
+    solver = BilqSolver(n, m, S)
     solver = BilqSolver(A, b)
 
 may be used in order to create these vectors.
@@ -561,10 +642,8 @@ mutable struct BilqSolver{T,S} <: KrylovSolver{T,S}
   x    :: S
   d̅    :: S
 
-  function BilqSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function BilqSolver(n, m, S)
+    T    = eltype(S)
     uₖ₋₁ = S(undef, n)
     uₖ   = S(undef, n)
     vₖ₋₁ = S(undef, n)
@@ -574,13 +653,20 @@ mutable struct BilqSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅)
     return solver
   end
+
+  function BilqSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    BilqSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of QMR.
 
-The outer constructor
+The outer constructors
 
+    solver = QmrSolver(n, m, S)
     solver = QmrSolver(A, b)
 
 may be used in order to create these vectors.
@@ -594,10 +680,8 @@ mutable struct QmrSolver{T,S} <: KrylovSolver{T,S}
   wₖ₋₂ :: S
   wₖ₋₁ :: S
 
-  function QmrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function QmrSolver(n, m, S)
+    T    = eltype(S)
     uₖ₋₁ = S(undef, n)
     uₖ   = S(undef, n)
     vₖ₋₁ = S(undef, n)
@@ -608,13 +692,20 @@ mutable struct QmrSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₂, wₖ₋₁)
     return solver
   end
+
+  function QmrSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    QmrSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of BILQR.
 
-The outer constructor
+The outer constructors
 
+    solver = BilqrSolver(n, m, S)
     solver = BilqrSolver(A, b)
 
 may be used in order to create these vectors.
@@ -630,10 +721,8 @@ mutable struct BilqrSolver{T,S} <: KrylovSolver{T,S}
   wₖ₋₃ :: S
   wₖ₋₂ :: S
 
-  function BilqrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function BilqrSolver(n, m, S)
+    T    = eltype(S)
     uₖ₋₁ = S(undef, n)
     uₖ   = S(undef, n)
     vₖ₋₁ = S(undef, n)
@@ -646,13 +735,20 @@ mutable struct BilqrSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₃, wₖ₋₂)
     return solver
   end
+
+  function BilqrSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    BilqrSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of CGLS.
 
-The outer constructor
+The outer constructors
 
+    solver = CglsSolver(n, m, S)
     solver = CglsSolver(A, b)
 
 may be used in order to create these vectors.
@@ -662,23 +758,28 @@ mutable struct CglsSolver{T,S} <: KrylovSolver{T,S}
   p :: S
   r :: S
 
-  function CglsSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function CglsSolver(n, m, S)
+    T = eltype(S)
     x = S(undef, m)
     p = S(undef, m)
     r = S(undef, n)
     solver = new{T,S}(x, p, r)
     return solver
   end
+
+  function CglsSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    CglsSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of CRLS.
 
-The outer constructor
+The outer constructors
 
+    solver = CrlsSolver(n, m, S)
     solver = CrlsSolver(A, b)
 
 may be used in order to create these vectors.
@@ -690,10 +791,8 @@ mutable struct CrlsSolver{T,S} <: KrylovSolver{T,S}
   r  :: S
   Ap :: S
 
-  function CrlsSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function CrlsSolver(n, m, S)
+    T  = eltype(S)
     x  = S(undef, m)
     p  = S(undef, m)
     Ar = S(undef, m)
@@ -702,13 +801,20 @@ mutable struct CrlsSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, p, Ar, r, Ap)
     return solver
   end
+
+  function CrlsSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    CrlsSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of CGNE.
 
-The outer constructor
+The outer constructors
 
+    solver = CgneSolver(n, m, S)
     solver = CgneSolver(A, b)
 
 may be used in order to create these vectors.
@@ -718,23 +824,28 @@ mutable struct CgneSolver{T,S} <: KrylovSolver{T,S}
   p :: S
   r :: S
 
-  function CgneSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function CgneSolver(n, m, S)
+    T = eltype(S)
     x = S(undef, m)
     p = S(undef, m)
     r = S(undef, n)
     solver = new{T,S}(x, p, r)
     return solver
   end
+
+  function CgneSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    CgneSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of CRMR.
 
-The outer constructor
+The outer constructors
 
+    solver = CrmrSolver(n, m, S)
     solver = CrmrSolver(A, b)
 
 may be used in order to create these vectors.
@@ -744,23 +855,28 @@ mutable struct CrmrSolver{T,S} <: KrylovSolver{T,S}
   p :: S
   r :: S
 
-  function CrmrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function CrmrSolver(n, m, S)
+    T = eltype(S)
     x = S(undef, m)
     p = S(undef, m)
     r = S(undef, n)
     solver = new{T,S}(x, p, r)
     return solver
   end
+
+  function CrmrSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    CrmrSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of LSLQ.
 
-The outer constructor
+The outer constructors
 
+    solver = LslqSolver(n, m, S)
     solver = LslqSolver(A, b)
 
 may be used in order to create these vectors.
@@ -771,10 +887,8 @@ mutable struct LslqSolver{T,S} <: KrylovSolver{T,S}
   w̄    :: S
   Mu   :: S
 
-  function LslqSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function LslqSolver(n, m, S)
+    T    = eltype(S)
     x_lq = S(undef, m)
     Nv   = S(undef, m)
     w̄    = S(undef, m)
@@ -782,13 +896,20 @@ mutable struct LslqSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x_lq, Nv, w̄, Mu)
     return solver
   end
+
+  function LslqSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    LslqSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of LSQR.
 
-The outer constructor
+The outer constructors
 
+    solver = LsqrSolver(n, m, S)
     solver = LsqrSolver(A, b)
 
 may be used in order to create these vectors.
@@ -799,10 +920,8 @@ mutable struct LsqrSolver{T,S} <: KrylovSolver{T,S}
   w  :: S
   Mu :: S
 
-  function LsqrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function LsqrSolver(n, m, S)
+    T  = eltype(S)
     x  = S(undef, m)
     Nv = S(undef, m)
     w  = S(undef, m)
@@ -810,13 +929,20 @@ mutable struct LsqrSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, Nv, w, Mu)
     return solver
   end
+
+  function LsqrSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    LsqrSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of LSMR.
 
-The outer constructor
+The outer constructors
 
+    solver = LsmrSolver(n, m, S)
     solver = LsmrSolver(A, b)
 
 may be used in order to create these vectors.
@@ -828,10 +954,8 @@ mutable struct LsmrSolver{T,S} <: KrylovSolver{T,S}
   hbar :: S
   Mu   :: S
 
-  function LsmrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function LsmrSolver(n, m, S)
+    T    = eltype(S)
     x    = S(undef, m)
     Nv   = S(undef, m)
     h    = S(undef, m)
@@ -840,13 +964,20 @@ mutable struct LsmrSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, Nv, h, hbar, Mu)
     return solver
   end
+
+  function LsmrSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    LsmrSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of LNLQ.
 
-The outer constructor
+The outer constructors
 
+    solver = LnlqSolver(n, m, S)
     solver = LnlqSolver(A, b)
 
 may be used in order to create these vectors.
@@ -859,10 +990,8 @@ mutable struct LnlqSolver{T,S} <: KrylovSolver{T,S}
   Mu :: S
   q  :: Union{S, Nothing}
 
-  function LnlqSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function LnlqSolver(n, m, S)
+    T  = eltype(S)
     x  = S(undef, m)
     Nv = S(undef, m)
     y  = S(undef, n)
@@ -872,13 +1001,20 @@ mutable struct LnlqSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, Nv, y, w̄, Mu, q)
     return solver
   end
+
+  function LnlqSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    LnlqSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of CRAIG.
 
-The outer constructor
+The outer constructors
 
+    solver = CraigSolver(n, m, S)
     solver = CraigSolver(A, b)
 
 may be used in order to create these vectors.
@@ -891,10 +1027,8 @@ mutable struct CraigSolver{T,S} <: KrylovSolver{T,S}
   Mu :: S
   w2 :: Union{S, Nothing}
 
-  function CraigSolver(A, b)
-    n, m = size(A)
-    S  = ktypeof(b)
-    T  = eltype(b)
+  function CraigSolver(n, m, S)
+    T  = eltype(S)
     x  = S(undef, m)
     Nv = S(undef, m)
     y  = S(undef, n)
@@ -904,13 +1038,20 @@ mutable struct CraigSolver{T,S} <: KrylovSolver{T,S}
     solver = new{T,S}(x, Nv, y, w, Mu, w2)
     return solver
   end
+
+  function CraigSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    CraigSolver(n, m, S)
+  end
 end
 
 """
 Type for storing the vectors required by the in-place version of CRAIGMR.
 
-The outer constructor
+The outer constructors
 
+    solver = CraigmrSolver(n, m, S)
     solver = CraigmrSolver(A, b)
 
 may be used in order to create these vectors.
@@ -923,10 +1064,8 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
   w    :: S
   wbar :: S
 
-  function CraigmrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    T = eltype(b)
+  function CraigmrSolver(n, m, S)
+    T    = eltype(S)
     x    = S(undef, m)
     Nv   = S(undef, m)
     y    = S(undef, n)
@@ -935,5 +1074,11 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
     wbar = S(undef, n)
     solver = new{T,S}(x, Nv, y, Mu, w, wbar)
     return solver
+  end
+
+  function CraigmrSolver(A, b)
+    n, m = size(A)
+    S = ktypeof(b)
+    CraigmrSolver(n, m, S)
   end
 end
