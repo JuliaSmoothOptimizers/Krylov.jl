@@ -111,9 +111,9 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   @kscal!(m, one(T)/β, u)
   MisI || @kscal!(m, one(T)/β, Mu)
   # α₁Nv₁ = Aᵀu₁.
-  Aᵀu = Aᵀ * u
+  mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
-  v = N * Nv
+  mul!(v, N, Nv)
   α = sqrt(@kdot(n, v, Nv))
   Anorm² = α * α
 
@@ -154,9 +154,9 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
 
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-    Av = A * v
+    mul!(Av, A, v)
     @kaxpby!(m, one(T), Av, -α, Mu)
-    u = M * Mu
+    mul!(u, M, Mu)
     β = sqrt(@kdot(m, u, Mu))
     if β ≠ 0
       @kscal!(m, one(T)/β, u)
@@ -188,9 +188,9 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
     @kaxpy!(m, ζ, w, y)             # y = y + ζ * w
 
     # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    Aᵀu = Aᵀ * u
+    mul!(Aᵀu, Aᵀ, u)
     @kaxpby!(n, one(T), Aᵀu, -β, Nv)
-    v = N * Nv
+    mul!(v, N, Nv)
     α = sqrt(@kdot(n, v, Nv))
     Anorm² = Anorm² + α * α  # = ‖Lₖ‖
     ArNorm = α * β * abs(ζ/ρ)

@@ -89,7 +89,7 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
 
   x .= zero(T)
   r .= b
-  z = M * r
+  mul!(z, M, r)
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
   λ > 0 && (s = copy(r))
@@ -122,17 +122,17 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   tired = iter ≥ itmax
 
   while ! (solved || inconsistent || tired)
-    q = A * p
+    mul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)
     δ = @kdot(n, p, p)   # Faster than dot(p, p)
     λ > 0 && (δ += λ * @kdot(m, s, s))
     α = γ / δ
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
-    z = M * r
+    mul!(z, M, r)
     γ_next = @kdot(m, r, z)  # Faster than γ_next = dot(r, z)
     β = γ_next / γ
-    Aᵀz = Aᵀ * z
+    mul!(Aᵀz, Aᵀ, z)
     @kaxpby!(n, one(T), Aᵀz, β, p)  # Faster than p = Aᵀz + β * p
     pNorm = @knrm2(n, p)
     if λ > 0

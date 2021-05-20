@@ -59,11 +59,11 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  x, r, p = solver.x, solver.r, solver.p
+  x, r, p, Ap, z = solver.x, solver.r, solver.p, solver.Ap, solver.z
 
   x .= zero(T)
   r .= b
-  z = M * r
+  mul!(z, M, r)
   p .= z
   γ = @kdot(n, r, z)
   γ == 0 && return x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
@@ -88,7 +88,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   status = "unknown"
 
   while !(solved || tired || zero_curvature)
-    Ap = A * p
+    mul!(Ap, A, p)
     pAp = @kdot(n, p, Ap)
     if (pAp ≤ eps(T) * pNorm²) && (radius == 0)
       if abs(pAp) ≤ eps(T) * pNorm²
@@ -119,7 +119,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
 
     @kaxpy!(n,  α,  p, x)
     @kaxpy!(n, -α, Ap, r)
-    z = M * r
+    mul!(z, M, r)
     γ_next = @kdot(n, r, z)
     rNorm = sqrt(γ_next)
     history && push!(rNorms, rNorm)

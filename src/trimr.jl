@@ -89,8 +89,11 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   Aᵀ = A'
 
   # Set up workspace.
-  yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = solver.yₖ, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ,  solver.xₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ
+  !MisI && isempty(solver.vₖ) && (solver.vₖ = S(undef, m))
+  !NisI && isempty(solver.uₖ) && (solver.uₖ = S(undef, n))
+  yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = solver.yₖ, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.p, solver.xₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.q
   gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ = solver.gy₂ₖ₋₃, solver.gy₂ₖ₋₂, solver.gy₂ₖ₋₁, solver.gy₂ₖ, solver.gx₂ₖ₋₃, solver.gx₂ₖ₋₂, solver.gx₂ₖ₋₁, solver.gx₂ₖ
+  uₖ, vₖ = solver.uₖ, solver.vₖ
 
   # Initial solutions x₀ and y₀.
   xₖ .= zero(T)
@@ -105,7 +108,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
 
   # β₁Ev₁ = b ↔ β₁v₁ = Mb
   M⁻¹vₖ .= b
-  vₖ = M * M⁻¹vₖ
+  mul!(vₖ, M, M⁻¹vₖ)
   βₖ = sqrt(@kdot(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
   if βₖ ≠ 0
     @kscal!(m, 1 / βₖ, M⁻¹vₖ)
@@ -114,7 +117,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
 
   # γ₁Fu₁ = c ↔ γ₁u₁ = Nb
   N⁻¹uₖ .= c
-  uₖ = N * N⁻¹uₖ
+  mul!(uₖ, N, N⁻¹uₖ)
   γₖ = sqrt(@kdot(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
   if γₖ ≠ 0
     @kscal!(n, 1 / γₖ, N⁻¹uₖ)
@@ -171,8 +174,8 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     # AUₖ  = EVₖTₖ    + βₖ₊₁Evₖ₊₁(eₖ)ᵀ = EVₖ₊₁Tₖ₊₁.ₖ
     # AᵀVₖ = FUₖ(Tₖ)ᵀ + γₖ₊₁Fuₖ₊₁(eₖ)ᵀ = FUₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    q = A  * uₖ  # Forms Evₖ₊₁ : q ← Auₖ
-    p = Aᵀ * vₖ  # Forms Fuₖ₊₁ : p ← Aᵀvₖ
+    mul!(q, A , uₖ)  # Forms Evₖ₊₁ : q ← Auₖ
+    mul!(p, Aᵀ, vₖ)  # Forms Fuₖ₊₁ : p ← Aᵀvₖ
 
     if iter ≥ 2
       @kaxpy!(m, -γₖ, M⁻¹vₖ₋₁, q)  # q ← q - γₖ * M⁻¹vₖ₋₁
@@ -188,8 +191,8 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     NisI || (uₐᵤₓ .= uₖ)  # Tempory storage for uₖ
 
     # Compute vₖ₊₁ and uₖ₊₁
-    vₖ₊₁ = M * q  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
-    uₖ₊₁ = N * p  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - αₖuₖ
+    mul!(vₖ₊₁, M, q)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
+    mul!(uₖ₊₁, N, p)  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - αₖuₖ
 
     βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
     γₖ₊₁ = sqrt(@kdot(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F

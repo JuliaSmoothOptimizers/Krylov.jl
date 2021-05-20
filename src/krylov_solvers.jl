@@ -21,8 +21,10 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
   x       :: S
   r1      :: S
   r2      :: S
-  w1      :: S 
+  w1      :: S
   w2      :: S
+  v       :: S
+  y       :: S
   err_vec :: Vector{T}
   stats   :: SimpleStats{T}
 
@@ -33,9 +35,11 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
     r2 = S(undef, n)
     w1 = S(undef, n)
     w2 = S(undef, n)
+    v  = S(undef, 0)
+    y  = S(undef, 0)
     err_vec = zeros(T, window)
     stats = SimpleStats(false, true, T[], T[], "unknown")
-    solver = new{T,S}(x, r1, r2, w1, w2, err_vec, stats)
+    solver = new{T,S}(x, r1, r2, w1, w2, v, y, err_vec, stats)
     return solver
   end
 
@@ -57,9 +61,11 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct CgSolver{T,S} <: KrylovSolver{T,S}
-  x :: S
-  r :: S
-  p :: S
+  x  :: S
+  r  :: S
+  p  :: S
+  Ap :: S
+  z  :: Union{Nothing, S}
 
   function CgSolver(n, m, S)
     T = eltype(S)
@@ -242,6 +248,8 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
   M⁻¹vₖ₋₁ :: S
   M⁻¹vₖ   :: S
   x       :: S
+  p       :: S
+  vₖ      :: Union{Nothing, S}
 
   function MinresQlpSolver(n, m, S)
     T       = eltype(S)
@@ -250,7 +258,7 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
     M⁻¹vₖ₋₁ = S(undef, n)
     M⁻¹vₖ   = S(undef, n)
     x       = S(undef, n)
-    solver = new{T,S}(wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x)
+    solver = new{T,S}(wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ)
     return solver
   end
 
@@ -350,20 +358,24 @@ may be used in order to create these vectors.
 mutable struct UsymlqSolver{T,S} <: KrylovSolver{T,S}
   uₖ₋₁ :: S
   uₖ   :: S
+  p    :: S
   x    :: S
   d̅    :: S
   vₖ₋₁ :: S
   vₖ   :: S
+  q    :: S
 
   function UsymlqSolver(n, m, S)
     T    = eltype(S)
     uₖ₋₁ = S(undef, m)
     uₖ   = S(undef, m)
+    p    = S(undef, m)
     x    = S(undef, m)
     d̅    = S(undef, m)
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
-    solver = new{T,S}(uₖ₋₁, uₖ, x, d̅, vₖ₋₁, vₖ)
+    q    = S(undef, n)
+    solver = new{T,S}(uₖ₋₁, uₖ, p, x, d̅, vₖ₋₁, vₖ, q)
     return solver
   end
 
@@ -387,22 +399,26 @@ may be used in order to create these vectors.
 mutable struct UsymqrSolver{T,S} <: KrylovSolver{T,S}
   vₖ₋₁ :: S
   vₖ   :: S
+  q    :: S
   x    :: S
   wₖ₋₂ :: S
   wₖ₋₁ :: S
   uₖ₋₁ :: S
   uₖ   :: S
+  p    :: S
 
   function UsymqrSolver(n, m, S)
     T    = eltype(S)
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
+    q    = S(undef, n)
     x    = S(undef, m)
     wₖ₋₂ = S(undef, m)
     wₖ₋₁ = S(undef, m)
     uₖ₋₁ = S(undef, m)
     uₖ   = S(undef, m)
-    solver = new{T,S}(vₖ₋₁, vₖ, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ)
+    p    = S(undef, m)
+    solver = new{T,S}(vₖ₋₁, vₖ, q, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p)
     return solver
   end
 
@@ -427,27 +443,35 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
   yₖ      :: S
   N⁻¹uₖ₋₁ :: S
   N⁻¹uₖ   :: S
+  p       :: S
   gy₂ₖ₋₁  :: S
   gy₂ₖ    :: S
   xₖ      :: S
   M⁻¹vₖ₋₁ :: S
   M⁻¹vₖ   :: S
+  q       :: S
   gx₂ₖ₋₁  :: S
   gx₂ₖ    :: S
+  uₖ      :: Union{Nothing, S}
+  vₖ      :: Union{Nothing, S}
 
   function TricgSolver(n, m, S)
     T       = eltype(S)
     yₖ      = S(undef, m)
     N⁻¹uₖ₋₁ = S(undef, m)
     N⁻¹uₖ   = S(undef, m)
+    p       = S(undef, m)
     gy₂ₖ₋₁  = S(undef, m)
     gy₂ₖ    = S(undef, m)
     xₖ      = S(undef, n)
     M⁻¹vₖ₋₁ = S(undef, n)
     M⁻¹vₖ   = S(undef, n)
+    q       = S(undef, n)
     gx₂ₖ₋₁  = S(undef, n)
     gx₂ₖ    = S(undef, n)
-    solver  = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, gx₂ₖ₋₁, gx₂ₖ)
+    uₖ      = nothing
+    vₖ      = nothing
+    solver  = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ)
     return solver
   end
 
@@ -472,6 +496,7 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
   yₖ      :: S
   N⁻¹uₖ₋₁ :: S
   N⁻¹uₖ   :: S
+  p       :: S
   gy₂ₖ₋₃  :: S
   gy₂ₖ₋₂  :: S
   gy₂ₖ₋₁  :: S
@@ -479,16 +504,20 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
   xₖ      :: S
   M⁻¹vₖ₋₁ :: S
   M⁻¹vₖ   :: S
+  q       :: S
   gx₂ₖ₋₃  :: S
   gx₂ₖ₋₂  :: S
   gx₂ₖ₋₁  :: S
   gx₂ₖ    :: S
+  uₖ      :: Union{Nothing, S}
+  vₖ      :: Union{Nothing, S}
 
   function TrimrSolver(n, m, S)
     T       = eltype(S)
     yₖ      = S(undef, m)
     N⁻¹uₖ₋₁ = S(undef, m)
     N⁻¹uₖ   = S(undef, m)
+    p       = S(undef, m)
     gy₂ₖ₋₃  = S(undef, m)
     gy₂ₖ₋₂  = S(undef, m)
     gy₂ₖ₋₁  = S(undef, m)
@@ -496,11 +525,14 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
     xₖ      = S(undef, n)
     M⁻¹vₖ₋₁ = S(undef, n)
     M⁻¹vₖ   = S(undef, n)
+    q       = S(undef, n)
     gx₂ₖ₋₃  = S(undef, n)
     gx₂ₖ₋₂  = S(undef, n)
     gx₂ₖ₋₁  = S(undef, n)
     gx₂ₖ    = S(undef, n)
-    solver = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ)
+    uₖ      = nothing
+    vₖ      = nothing
+    solver = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ)
     return solver
   end
 
@@ -524,8 +556,10 @@ may be used in order to create these vectors.
 mutable struct TrilqrSolver{T,S} <: KrylovSolver{T,S}
   uₖ₋₁ :: S
   uₖ   :: S
+  p    :: S
   vₖ₋₁ :: S
   vₖ   :: S
+  q    :: S
   x    :: S
   t    :: S
   d̅    :: S
@@ -536,14 +570,16 @@ mutable struct TrilqrSolver{T,S} <: KrylovSolver{T,S}
     T    = eltype(S)
     uₖ₋₁ = S(undef, m)
     uₖ   = S(undef, m)
+    p    = S(undef, m)
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
+    q    = S(undef, n)
     x    = S(undef, m)
     t    = S(undef, n)
     d̅    = S(undef, m)
     wₖ₋₃ = S(undef, n)
     wₖ₋₂ = S(undef, n)
-    solver = new{T,S}(uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₃, wₖ₋₂)
+    solver = new{T,S}(uₖ₋₁, uₖ, p, vₖ₋₁, vₖ, q, x, t, d̅, wₖ₋₃, wₖ₋₂)
     return solver
   end
 
@@ -637,8 +673,10 @@ may be used in order to create these vectors.
 mutable struct BilqSolver{T,S} <: KrylovSolver{T,S}
   uₖ₋₁ :: S
   uₖ   :: S
+  q    :: S
   vₖ₋₁ :: S
   vₖ   :: S
+  p    :: S
   x    :: S
   d̅    :: S
 
@@ -646,11 +684,13 @@ mutable struct BilqSolver{T,S} <: KrylovSolver{T,S}
     T    = eltype(S)
     uₖ₋₁ = S(undef, n)
     uₖ   = S(undef, n)
+    q    = S(undef, n)
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
+    p    = S(undef, n)
     x    = S(undef, n)
     d̅    = S(undef, n)
-    solver = new{T,S}(uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅)
+    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, d̅)
     return solver
   end
 
@@ -674,8 +714,10 @@ may be used in order to create these vectors.
 mutable struct QmrSolver{T,S} <: KrylovSolver{T,S}
   uₖ₋₁ :: S
   uₖ   :: S
+  q    :: S
   vₖ₋₁ :: S
   vₖ   :: S
+  p    :: S
   x    :: S
   wₖ₋₂ :: S
   wₖ₋₁ :: S
@@ -684,12 +726,14 @@ mutable struct QmrSolver{T,S} <: KrylovSolver{T,S}
     T    = eltype(S)
     uₖ₋₁ = S(undef, n)
     uₖ   = S(undef, n)
+    q    = S(undef, n)
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
+    p    = S(undef, n)
     x    = S(undef, n)
     wₖ₋₂ = S(undef, n)
     wₖ₋₁ = S(undef, n)
-    solver = new{T,S}(uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₂, wₖ₋₁)
+    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, wₖ₋₂, wₖ₋₁)
     return solver
   end
 
@@ -713,8 +757,10 @@ may be used in order to create these vectors.
 mutable struct BilqrSolver{T,S} <: KrylovSolver{T,S}
   uₖ₋₁ :: S
   uₖ   :: S
+  q    :: S
   vₖ₋₁ :: S
   vₖ   :: S
+  p    :: S
   x    :: S
   t    :: S
   d̅    :: S
@@ -725,14 +771,16 @@ mutable struct BilqrSolver{T,S} <: KrylovSolver{T,S}
     T    = eltype(S)
     uₖ₋₁ = S(undef, n)
     uₖ   = S(undef, n)
+    q    = S(undef, n)
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
+    p    = S(undef, n)
     x    = S(undef, n)
     t    = S(undef, n)
     d̅    = S(undef, n)
     wₖ₋₃ = S(undef, n)
     wₖ₋₂ = S(undef, n)
-    solver = new{T,S}(uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₃, wₖ₋₂)
+    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, t, d̅, wₖ₋₃, wₖ₋₂)
     return solver
   end
 

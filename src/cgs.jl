@@ -93,18 +93,18 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
 
   while !(solved || tired || breakdown)
 
-    y = N * p                     # yₖ = N⁻¹pₖ
-    t = A * y                     # tₖ = Ayₖ
-    v = M * t                     # vₖ = M⁻¹tₖ
+    mul!(y, N, p)                 # yₖ = N⁻¹pₖ
+    mul!(t, A, y)                 # tₖ = Ayₖ
+    mul!(v, M, t)                 # vₖ = M⁻¹tₖ
     σ = @kdot(n, v, c)            # σₖ = ⟨ M⁻¹AN⁻¹pₖ,̅r₀ ⟩
     α = ρ / σ                     # αₖ = ρₖ / σₖ
     @kcopy!(n, u, q)              # qₖ = uₖ
     @kaxpy!(n, -α, v, q)          # qₖ = qₖ - αₖ * M⁻¹AN⁻¹pₖ
     @kaxpy!(n, one(T), q, u)      # uₖ₊½ = uₖ + qₖ
-    z = N * u                     # zₖ = N⁻¹uₖ₊½
+    mul!(z, N, u)                 # zₖ = N⁻¹uₖ₊½
     @kaxpy!(n, α, z, x)           # xₖ₊₁ = xₖ + αₖ * N⁻¹(uₖ + qₖ)
-    s = A * z                     # sₖ = Azₖ
-    w = M * s                     # wₖ = M⁻¹sₖ
+    mul!(s, A, z)                 # sₖ = Azₖ
+    mul!(w, M, s)                 # wₖ = M⁻¹sₖ
     @kaxpy!(n, -α, w, r)          # rₖ₊₁ = rₖ - αₖ * M⁻¹AN⁻¹(uₖ + qₖ)
     ρ_next = @kdot(n, r, c)       # ρₖ₊₁ = ⟨ rₖ₊₁,̅r₀ ⟩
     β = ρ_next / ρ                # βₖ = ρₖ₊₁ / ρₖ

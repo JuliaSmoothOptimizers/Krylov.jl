@@ -61,7 +61,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   # Initial state.
   x .= zero(T)              # x₀
   Mv .= b                   # Mv₁ ← b
-  v = M * Mv                # v₁ = M⁻¹ * Mv₁
+  mul!(v, M, Mv)            # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv)) # β₁ = v₁ᵀ M v₁
   β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
   p .= v
@@ -98,7 +98,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   while ! (solved || tired || (check_curvature & indefinite))
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-    Mv_next = A * v          # Mvₖ₊₁ ← Avₖ
+    mul!(Mv_next, A, v)      # Mvₖ₊₁ ← Avₖ
     δ = @kdot(n, v, Mv_next) # δₖ = vₖᵀ A vₖ
 
     # Check curvature. Exit fast if requested.
@@ -113,7 +113,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
       @. Mv_prev = Mv                  # Mvₖ₋₁ ← Mvₖ
     end
     @. Mv = Mv_next                    # Mvₖ ← Mvₖ₊₁
-    v = M * Mv                         # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
+    mul!(v, M, Mv)                     # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
     β = sqrt(@kdot(n, v, Mv))          # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
     @kscal!(n, one(T)/β, v)            # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
     MisI || @kscal!(n, one(T)/β, Mv)   # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
@@ -190,7 +190,7 @@ function cg_lanczos_shift_seq!(solver :: CgLanczosShiftSolver{T,S}, A, b :: Abst
     x[i] .= zero(T)                       # x₀
   end
   Mv .= b                                 # Mv₁ ← b
-  v = M * Mv                              # v₁ = M⁻¹ * Mv₁
+  mul!(v, M, Mv)                          # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv))               # β₁ = v₁ᵀ M v₁
   β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
 
@@ -244,7 +244,7 @@ function cg_lanczos_shift_seq!(solver :: CgLanczosShiftSolver{T,S}, A, b :: Abst
   while ! (solved || tired)
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-    Mv_next = A * v                    # Mvₖ₊₁ ← Avₖ
+    mul!(Mv_next, A, v)                # Mvₖ₊₁ ← Avₖ
     δ = @kdot(n, v, Mv_next)           # δₖ = vₖᵀ A vₖ
     @kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
     if iter > 0
@@ -252,7 +252,7 @@ function cg_lanczos_shift_seq!(solver :: CgLanczosShiftSolver{T,S}, A, b :: Abst
       @. Mv_prev = Mv                  # Mvₖ₋₁ ← Mvₖ
     end
     @. Mv = Mv_next                    # Mvₖ ← Mvₖ₊₁
-    v = M * Mv                         # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
+    mul!(v, M, Mv)                     # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
     β = sqrt(@kdot(n, v, Mv))          # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
     @kscal!(n, one(T)/β, v)            # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
     MisI || @kscal!(n, one(T)/β, Mv)   # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁

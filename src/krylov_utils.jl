@@ -228,6 +228,8 @@ function krylov_ref!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: A
   return x, y
 end
 
+@inline kmul!(y, A, x) = isa(A, AbstractLinearOperator) ? y = A * x : mul!(y, A, x)
+
 # the macros are just for readability, so we don't have to write the increments (always equal to 1)
 
 macro kdot(n, x, y)

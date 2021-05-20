@@ -86,12 +86,12 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   x, p, r = solver.x, solver.p, solver.r
 
   x .= zero(T)  # initial estimation x = 0
-  r .= M * b    # initial residual r = M * (b - Ax) = M * b
+  mul!(r, M, b) # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
   rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   λ > 0 && (s = copy(r))
-  Aᵀr = Aᵀ * r # - λ * x0 if x0 ≠ 0.
+  mul!(Aᵀr, Aᵀ, r)  # - λ * x0 if x0 ≠ 0.
   p .= Aᵀr
   γ = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr)
   λ > 0 && (γ += λ * rNorm * rNorm)
@@ -112,14 +112,14 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   tired = iter ≥ itmax
 
   while ! (solved || inconsistent || tired)
-    q = A * p
+    mul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s
-    Mq = M * q
+    mul!(Mq, M, q)
     α = γ / @kdot(m, q, Mq)    # Compute qᵗ * M * q
     @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p
     @kaxpy!(m, -α, Mq, r)      # Faster than  r =  r - α * Mq
     rNorm = @knrm2(m, r)       # norm(r)
-    Aᵀr = Aᵀ * r
+    mul!(Aᵀr, Aᵀ, r)
     γ_next = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ_next = dot(Aᵀr, Aᵀr)
     λ > 0 && (γ_next += λ * rNorm * rNorm)
     β = γ_next / γ

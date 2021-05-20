@@ -54,7 +54,7 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
 
   # Initial solution x₀ and residual r₀.
   x .= zero(T)  # x₀
-  r₀ = M * b    # M⁻¹(b - Ax₀)
+  mul!(r₀, M, b)  # M⁻¹(b - Ax₀)
   # Compute β
   rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
@@ -101,9 +101,9 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
     next_pos = mod(iter, mem) + 1 # Position corresponding to vₘ₊₁ in the circular stack V.
 
     # Incomplete Arnoldi procedure.
-    z = N * V[pos] # N⁻¹vₘ, forms pₘ
-    t = A * z      # AN⁻¹vₘ
-    w = M * t      # M⁻¹AN⁻¹vₘ, forms vₘ₊₁
+    mul!(z, N, V[pos])  # N⁻¹vₘ, forms pₘ
+    mul!(t, A, z)       # AN⁻¹vₘ
+    mul!(w, M, t)       # M⁻¹AN⁻¹vₘ, forms vₘ₊₁
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
       diag = iter - i + 2

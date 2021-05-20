@@ -114,7 +114,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   y .= zero(T)
 
   Mu .= b
-  u = M * Mu
+  mul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
   β₁ == 0 && return x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
   β₁² = β₁^2
@@ -170,9 +170,9 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   while ! (solved || inconsistent || ill_cond || tired)
     # Generate the next Golub-Kahan vectors
     # 1. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    Aᵀu = Aᵀ * u
+    mul!(Aᵀu, Aᵀ, u)
     @kaxpby!(n, one(T), Aᵀu, -β, Nv)
-    v = N * Nv
+    mul!(v, N, Nv)
     α = sqrt(@kdot(n, v, Nv))
     if α == 0
       inconsistent = true
@@ -213,9 +213,9 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
     Dnorm² += @knrm2(m, w)
 
     # 2. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-    Av = A * v
+    mul!(Av, A, v)
     @kaxpby!(m, one(T), Av, -α, Mu)
-    u = M * Mu
+    mul!(u, M, Mu)
     β = sqrt(@kdot(m, u, Mu))
     if β ≠ 0
       @kscal!(m, one(T)/β, u)

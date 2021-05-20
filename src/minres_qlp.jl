@@ -58,14 +58,15 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.x
+  !MisI && isempty(solver.vₖ) && (solver.vₖ = S(undef, n))
+  wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.x, solver.p, solver.vₖ
 
   # Initial solution x₀
   x .= zero(T)
 
   # β₁v₁ = Mb
   M⁻¹vₖ .= b
-  vₖ = M * M⁻¹vₖ
+  mul!(vₖ, M, M⁻¹vₖ)
   βₖ = sqrt(@kdot(n, vₖ, M⁻¹vₖ))
   if βₖ ≠ 0
     @kscal!(n, 1 / βₖ, M⁻¹vₖ)
@@ -114,7 +115,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     # M(A + λI)Vₖ = Vₖ₊₁Tₖ₊₁.ₖ
     # βₖ₊₁vₖ₊₁ = M(A + λI)vₖ - αₖvₖ - βₖvₖ₋₁
 
-    p = A * vₖ              # p ← Avₖ
+    mul!(p, A, vₖ)          # p ← Avₖ
     if λ ≠ 0
       @kaxpy!(n, λ, vₖ, p)  # p ← p + λvₖ
     end
@@ -128,7 +129,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     @kaxpy!(n, -αₖ, M⁻¹vₖ, p)  # p ← p - αₖM⁻¹vₖ
 
     MisI || (vₐᵤₓ .= vₖ)  # Tempory storage for vₖ
-    vₖ₊₁ = M * p          # βₖ₊₁vₖ₊₁ = MAvₖ - γₖvₖ₋₁ - αₖvₖ
+    mul!(vₖ₊₁, M, p)      # βₖ₊₁vₖ₊₁ = MAvₖ - γₖvₖ₋₁ - αₖvₖ
 
     βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, p))
 

@@ -89,7 +89,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  x, r1, r2, w1, w2, err_vec, stats = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.err_vec, solver.stats
+  x, r1, r2, w1, w2, v, y, err_vec, stats = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.v, solver.y, solver.err_vec, solver.stats
 
   window = length(err_vec)
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
@@ -102,7 +102,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
   r1 .= b
-  v = M * r1
+  mul!(v, M, r1)
   β₁ = @kdot(m, r1, v)
   β₁ < 0 && error("Preconditioner is not positive definite")
   if β₁ == 0
@@ -161,7 +161,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
     iter = iter + 1
 
     # Generate next Lanczos vector.
-    y = A * v
+    mul!(y, A, v)
     λ ≠ 0 && @kaxpy!(n, λ, v, y)             # (y = y + λ * v)
     @kscal!(n, one(T) / β, y)
     iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y) # (y = y - β / oldβ * r1)
@@ -182,7 +182,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
 
     @. r1 = r2
     @. r2 = y
-    v = M * r2
+    mul!(v, M, r2)
     oldβ = β
     β = @kdot(n, r2, v)
     β < 0 && error("Preconditioner is not positive definite")

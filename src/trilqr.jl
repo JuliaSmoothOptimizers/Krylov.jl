@@ -56,7 +56,8 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   Aᵀ = A'
 
   # Set up workspace.
-  uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₃, wₖ₋₂ = solver.uₖ₋₁, solver.uₖ, solver.vₖ₋₁, solver.vₖ, solver.x, solver.t, solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂
+  uₖ₋₁, uₖ, p, vₖ₋₁, vₖ, q = solver.uₖ₋₁, solver.uₖ, solver.p, solver.vₖ₋₁, solver.vₖ, solver.q
+  x, t, d̅, wₖ₋₃, wₖ₋₂ = solver.x, solver.t, solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂
 
   # Initial solution x₀ and residual r₀ = b - Ax₀.
   x .= zero(T)          # x₀
@@ -114,8 +115,8 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
     # AᵀVₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    q = A  * uₖ  # Forms vₖ₊₁ : q ← Auₖ
-    p = Aᵀ * vₖ  # Forms uₖ₊₁ : p ← Aᵀvₖ
+    mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
+    mul!(p, Aᵀ, vₖ)  # Forms uₖ₊₁ : p ← Aᵀvₖ
 
     @kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁

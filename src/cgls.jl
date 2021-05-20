@@ -82,8 +82,8 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
   r .= b
   bNorm = @knrm2(m, r)   # Marginally faster than norm(b)
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
-  Mr = M * r
-  s = Aᵀ * Mr
+  mul!(Mr, M, r)
+  mul!(s, Aᵀ, Mr)
   p .= s
   γ = @kdot(n, s, s)  # Faster than γ = dot(s, s)
   iter = 0
@@ -103,8 +103,8 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
   tired = iter ≥ itmax
 
   while ! (solved || tired)
-    q = A * p
-    Mq = M * q
+    mul!(q, A, p)
+    mul!(Mq, M, q)
     δ = @kdot(m, q, Mq)   # Faster than α = γ / dot(q, q)
     λ > 0 && (δ += λ * @kdot(n, p, p))
     α = γ / δ
@@ -118,8 +118,8 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
 
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
-    Mr = M * r
-    s = Aᵀ * Mr
+    mul!(Mr, M, r)
+    mul!(s, Aᵀ, Mr)
     λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x
     γ_next = @kdot(n, s, s)  # Faster than γ_next = dot(s, s)
     β = γ_next / γ

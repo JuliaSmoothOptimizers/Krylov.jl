@@ -65,7 +65,7 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   Aᵀ = A'
 
   # Set up workspace.
-  uₖ₋₁, uₖ, x, d̅, vₖ₋₁, vₖ = solver.uₖ₋₁, solver.uₖ, solver.x, solver.d̅, solver.vₖ₋₁, solver.vₖ
+  uₖ₋₁, uₖ, p, x, d̅, vₖ₋₁, vₖ, q = solver.uₖ₋₁, solver.uₖ, solver.p, solver.x, solver.d̅, solver.vₖ₋₁, solver.vₖ, solver.q
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
@@ -107,8 +107,8 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
     # AᵀVₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    q = A  * uₖ  # Forms vₖ₊₁ : q ← Auₖ
-    p = Aᵀ * vₖ  # Forms uₖ₊₁ : p ← Aᵀvₖ
+    mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
+    mul!(p, Aᵀ, vₖ)  # Forms uₖ₊₁ : p ← Aᵀvₖ
 
     @kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁

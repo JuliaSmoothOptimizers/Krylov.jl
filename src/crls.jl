@@ -74,14 +74,14 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
 
-  Mr = M * r
-  Ar .= Aᵀ * Mr  # - λ * x0 if x0 ≠ 0.
-  s  = A * Ar
-  Ms = M * s
+  mul!(Mr, M, r)
+  mul!(Ar, Aᵀ, Mr)  # - λ * x0 if x0 ≠ 0.
+  mul!(s, A, Ar)
+  mul!(Ms, M, s)
 
   p  .= Ar
   Ap .= s
-  q  = Aᵀ * Ms # Ap
+  mul!(q, Aᵀ, Ms)  # Ap
   λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
   γ  = @kdot(m, s, Ms)  # Faster than γ = dot(s, Ms)
   iter = 0
@@ -132,16 +132,16 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
     solved = psd || on_boundary
     solved && continue
     @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap
-    s = A * Ar
-    Ms = M * s
+    mul!(s, A, Ar)
+    mul!(Ms, M, s)
     γ_next = @kdot(m, s, Ms)   # Faster than γ_next = dot(s, s)
     λ > 0 && (γ_next += λ * ArNorm * ArNorm)
     β = γ_next / γ
 
     @kaxpby!(n, one(T), Ar, β, p)    # Faster than  p = Ar + β *  p
     @kaxpby!(m, one(T), s, β, Ap)    # Faster than Ap =  s + β * Ap
-    MAp = M * Ap
-    q = Aᵀ * MAp
+    mul!(MAp, M, Ap)
+    mul!(q, Aᵀ, MAp)
     λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
 
     γ = γ_next

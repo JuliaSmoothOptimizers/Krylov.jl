@@ -59,7 +59,7 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   Aᵀ = A'
 
   # Set up workspace.
-  uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₂, wₖ₋₁ = solver.uₖ₋₁, solver.uₖ, solver.vₖ₋₁, solver.vₖ, solver.x, solver.wₖ₋₂, solver.wₖ₋₁
+  uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, wₖ₋₂, wₖ₋₁ = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p, solver.x, solver.wₖ₋₂, solver.wₖ₋₁
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
@@ -105,8 +105,8 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
     # AVₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
     # AᵀUₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    q = A  * vₖ  # Forms vₖ₊₁ : q ← Avₖ
-    p = Aᵀ * uₖ  # Forms uₖ₊₁ : p ← Aᵀuₖ
+    mul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
+    mul!(p, Aᵀ, uₖ)  # Forms uₖ₊₁ : p ← Aᵀuₖ
 
     @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁

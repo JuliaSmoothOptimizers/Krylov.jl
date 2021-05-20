@@ -105,16 +105,16 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
     iter = iter + 1
     ρ = next_ρ
 
-    y = N * p                            # yₖ = N⁻¹pₖ
-    q = A * y                            # qₖ = Ayₖ
-    Mq = M * q; @kcopy!(n, Mq, v)        # vₖ = M⁻¹qₖ
+    mul!(y, N, p)                        # yₖ = N⁻¹pₖ
+    mul!(q, A, y)                        # qₖ = Ayₖ
+    mul!(Mq, M, q); @kcopy!(n, Mq, v)    # vₖ = M⁻¹qₖ
     α = ρ / @kdot(n, v, c)               # αₖ = ⟨rₖ₋₁,r̅₀⟩ / ⟨vₖ,r̅₀⟩
     @kcopy!(n, r, s)                     # sₖ = rₖ₋₁
     @kaxpy!(n, -α, v, s)                 # sₖ = sₖ - αₖvₖ
     @kaxpy!(n, α, y, x)                  # xₐᵤₓ = xₖ₋₁ + αₖyₖ
-    z = N * s                            # zₖ = N⁻¹sₖ
-    d = A * z                            # dₖ = Azₖ
-    t = M * d                            # tₖ = M⁻¹dₖ
+    mul!(z, N, s)                        # zₖ = N⁻¹sₖ
+    mul!(d, A, z)                        # dₖ = Azₖ
+    mul!(t, M, d)                        # tₖ = M⁻¹dₖ
     ω = @kdot(n, t, s) / @kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
     @kaxpy!(n, ω, z, x)                  # xₖ = xₐᵤₓ + ωₖzₖ
     @kcopy!(n, s, r)                     # rₖ = sₖ
