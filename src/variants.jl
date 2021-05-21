@@ -26,15 +26,15 @@ function wrap_preconditioners(kwargs, S)
 end
 
 # Variants where matrix-vector products with A and Aᵀ are required
-for fn in (:cgls, :cgne, :lnlq, :craig, :craigmr, :crls, :crmr, :lslq, :lsqr, :lsmr, :bilq, :qmr)
+for fn in (:cgls, :cgne, :lnlq, :craig, :craigmr, :crls, :crmr, :lslq, :lsqr, :lsmr)
   @eval begin
     $fn(A :: AbstractMatrix{T}, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat =
       $fn(PreallocatedLinearOperator(A, storagetype=ktypeof(b)), b; wrap_preconditioners(kwargs, ktypeof(b))...)
   end
 end
 
-# Variants for USYMLQ, USYMQR, TriCG, TriMR, TriLQR and BiLQR
-for fn in (:usymlq, :usymqr, :tricg, :trimr, :trilqr, :bilqr)
+# Variants for TriCG, TriMR
+for fn in (:tricg, :trimr)
   @eval begin
     $fn(A :: AbstractMatrix{T}, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat =
       $fn(PreallocatedLinearOperator(A, storagetype=ktypeof(b)), b, c; wrap_preconditioners(kwargs, ktypeof(b))...)

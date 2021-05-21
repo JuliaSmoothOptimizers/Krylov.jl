@@ -56,7 +56,8 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   Aᵀ = A'
 
   # Set up workspace.
-  uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₃, wₖ₋₂ = solver.uₖ₋₁, solver.uₖ, solver.vₖ₋₁, solver.vₖ, solver.x, solver.t, solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂
+  uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
+  x, t, d̅, wₖ₋₃, wₖ₋₂ = solver.x, solver.t, solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂
 
   # Initial solution x₀ and residual norm ‖r₀‖ = ‖b - Ax₀‖.
   x .= zero(T)          # x₀
@@ -119,8 +120,8 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     # AVₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
     # AᵀUₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    q = A  * vₖ  # Forms vₖ₊₁ : q ← Avₖ
-    p = Aᵀ * uₖ  # Forms uₖ₊₁ : p ← Aᵀuₖ
+    mul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
+    mul!(p, Aᵀ, uₖ)  # Forms uₖ₊₁ : p ← Aᵀuₖ
 
     @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
