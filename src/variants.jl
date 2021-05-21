@@ -3,10 +3,10 @@ function wrap_uniformscaling(U)
   if U.λ == 1
     return opEye()
   else
-    @printf("-------------------------------------------------------------------------------------------\n")
-    @printf("Diagonal preconditioners modeled with UniformScaling are not recommended.\n")
-    @printf("They allocate a new vector at each operator-vector products, which is not memory efficient.\n")
-    @printf("-------------------------------------------------------------------------------------------\n")
+    @warn @sprintf("-------------------------------------------------------------------------------------------")
+    @warn @sprintf("Diagonal preconditioners modeled with UniformScaling are not recommended.")
+    @warn @sprintf("They allocate a new vector at each operator-vector products, which is not memory efficient.")
+    @warn @sprintf("-------------------------------------------------------------------------------------------")
     return U
   end
 end
