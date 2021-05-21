@@ -37,18 +37,19 @@ function test_alloc()
   inplace_symmlq_bytes = @allocated symmlq!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_symmlq_bytes == 672)
 
-  # without preconditioner and with Ap preallocated, CG needs 3 n-vectors: x, r, p
-  storage_cg(n) = 3 * n
+  # CG needs:
+  # 4 n-vectors: x, r, p, Ap
+  storage_cg(n) = 4 * n
   storage_cg_bytes(n) = 8 * storage_cg(n)
 
   expected_cg_bytes = storage_cg_bytes(n)
-  cg(A, b)  # warmup
-  actual_cg_bytes = @allocated cg(A, b)
+  cg(L, b)  # warmup
+  actual_cg_bytes = @allocated cg(L, b)
   @test actual_cg_bytes ≤ 1.1 * expected_cg_bytes
 
-  solver = CgSolver(A, b)
-  cg!(solver, A, b)  # warmup
-  inplace_cg_bytes = @allocated cg!(solver, A, b)
+  solver = CgSolver(L, b)
+  cg!(solver, L, b)  # warmup
+  inplace_cg_bytes = @allocated cg!(solver, L, b)
   @test (VERSION < v"1.5") || (inplace_cg_bytes == 208)
 
   # without preconditioner and with Ap preallocated, MINRES needs 5 n-vectors: x, r1, r2, w1, w2
