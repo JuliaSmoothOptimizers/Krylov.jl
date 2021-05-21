@@ -57,16 +57,20 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct CgSolver{T,S} <: KrylovSolver{T,S}
-  x :: S
-  r :: S
-  p :: S
+  x  :: S
+  r  :: S
+  p  :: S
+  Ap :: S
+  z  :: Union{S, Nothing}
 
   function CgSolver(n, m, S)
-    T = eltype(S)
-    x = S(undef, n)
-    r = S(undef, n)
-    p = S(undef, n)
-    solver = new{T,S}(x, r, p)
+    T  = eltype(S)
+    x  = S(undef, n)
+    r  = S(undef, n)
+    p  = S(undef, n)
+    Ap = S(undef, n)
+    z  = nothing
+    solver = new{T,S}(x, r, p, Ap, z)
     return solver
   end
 

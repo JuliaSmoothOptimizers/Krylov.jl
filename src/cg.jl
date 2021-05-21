@@ -49,21 +49,27 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
 
   linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
 
-  n = size(b, 1)
-  (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
+  n, m = size(A)
+  m == n || error("System must be square")
+  length(b) == n || error("Inconsistent problem size")
   (verbose > 0) && @printf("CG: system of %d equations in %d variables\n", n, n)
+
+  # Tests M == Iₙ
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  x, r, p = solver.x, solver.r, solver.p
+  !MisI && isnothing(solver.z) && (solver.z = S(undef, n))
+  x, r, p, Ap = solver.x, solver.r, solver.p, solver.Ap
+  z = MisI ? r : solver.z
 
   x .= zero(T)
   r .= b
-  z = M * r
+  MisI || mul!(z, M, r)
   p .= z
   γ = @kdot(n, r, z)
   γ == 0 && return x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
@@ -88,7 +94,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   status = "unknown"
 
   while !(solved || tired || zero_curvature)
-    Ap = A * p
+    mul!(Ap, A, p)
     pAp = @kdot(n, p, Ap)
     if (pAp ≤ eps(T) * pNorm²) && (radius == 0)
       if abs(pAp) ≤ eps(T) * pNorm²
@@ -119,7 +125,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
 
     @kaxpy!(n,  α,  p, x)
     @kaxpy!(n, -α, Ap, r)
-    z = M * r
+    MisI || mul!(z, M, r)
     γ_next = @kdot(n, r, z)
     rNorm = sqrt(γ_next)
     history && push!(rNorms, rNorm)
