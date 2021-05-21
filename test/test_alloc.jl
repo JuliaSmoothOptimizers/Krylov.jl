@@ -136,18 +136,19 @@ function test_alloc()
   inplace_dqgmres_bytes = @allocated dqgmres!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_dqgmres_bytes == 208)
 
-  # without preconditioner and with Ap preallocated, CR needs 4 n-vectors: x, r, p, q
-  storage_cr(n) = 4 * n
+  # CR needs:
+  # 5 n-vectors: x, r, p, q, Ar
+  storage_cr(n) = 5 * n
   storage_cr_bytes(n) = 8 * storage_cr(n)
 
   expected_cr_bytes = storage_cr_bytes(n)
-  cr(A, b, rtol=1e-6)  # warmup
-  actual_cr_bytes = @allocated cr(A, b, rtol=1e-6)
+  cr(L, b, rtol=1e-6)  # warmup
+  actual_cr_bytes = @allocated cr(L, b, rtol=1e-6)
   @test actual_cr_bytes ≤ 1.1 * expected_cr_bytes
 
-  solver = CrSolver(A, b)
-  cr!(solver, A, b, rtol=1e-6)  # warmup
-  inplace_cr_bytes = @allocated cr!(solver, A, b, rtol=1e-6)
+  solver = CrSolver(L, b)
+  cr!(solver, L, b, rtol=1e-6)  # warmup
+  inplace_cr_bytes = @allocated cr!(solver, L, b, rtol=1e-6)
   @test (VERSION < v"1.5") || (inplace_cr_bytes == 208)
 
   # without preconditioner and with (Ap, Aᵀq) preallocated, CRMR needs:

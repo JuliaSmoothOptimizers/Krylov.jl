@@ -46,19 +46,24 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
   (verbose > 0) && @printf("CR: system of %d equations in %d variables\n", n, n)
 
+  # Tests M == Iₙ
+  MisI = isa(M, opEye) || (M == I)
+
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
-  # Set up workspace 
-  x, r, p, q = solver.x, solver.r, solver.p, solver.q
+  # Set up workspace
+  !MisI && isnothing(solver.Mq) && (solver.Mq = S(undef, n))
+  x, r, p, q, Ar = solver.x, solver.r, solver.p, solver.q, solver.Ar
+  Mq = MisI ? q : solver.Mq
 
   # Initial state.
   x .= zero(T)  # initial estimation x = 0
   xNorm = zero(T)
-  r .= M * b  # initial residual r = M * (b - Ax) = M * b
-  Ar = A * r
+  MisI ? r .= b : mul!(r, M, b)  # initial residual r = M * (b - Ax) = M * b
+  mul!(Ar, A, r)
   ρ = @kdot(n, r, Ar)
   ρ == 0 && return (x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
   p .= r
@@ -102,7 +107,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
     elseif pAp ≤ 0 && radius == 0
       error("Indefinite system and no trust region")
     end
-    Mq = M * q
+    MisI || mul!(Mq, M, q)
 
     if radius > 0
       (verbose > 0) && @printf("radius = %8.1e > 0 and ‖x‖ = %8.1e\n", radius, xNorm)
@@ -216,7 +221,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
     rNorm² = abs(rNorm² - α * ρ)
     rNorm = sqrt(rNorm²)
     history && push!(rNorms, rNorm)
-    Ar = A * r
+    mul!(Ar, A, r)
     ArNorm = @knrm2(n, Ar)
     history && push!(ArNorms, ArNorm)
 
