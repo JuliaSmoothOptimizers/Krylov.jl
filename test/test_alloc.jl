@@ -2,9 +2,11 @@ function test_alloc()
   L   = get_div_grad(32, 32, 32)
   n   = size(L, 1)
   m   = div(n, 2)
-  A   = PreallocatedLinearOperator(L) # Dimension n x n
-  Au  = PreallocatedLinearOperator(L[1:m,:]) # Dimension m x n
-  Ao  = PreallocatedLinearOperator(L[:,1:m]) # Dimension n x m
+  Lu  = L[1:m,:]
+  Lo  = L[:,1:m]
+  A   = PreallocatedLinearOperator(L)   # Dimension n x n
+  Au  = PreallocatedLinearOperator(Lu)  # Dimension m x n
+  Ao  = PreallocatedLinearOperator(Lo)  # Dimension n x m
   b   = Ao * ones(m) # Dimension n
   c   = Au * ones(n) # Dimension m
   mem = 10
@@ -334,66 +336,66 @@ function test_alloc()
   inplace_lsmr_bytes = @allocated lsmr!(solver, Ao, b)
   @test (VERSION < v"1.5") || (inplace_lsmr_bytes == 336)
 
-  # with (Ap, Aᵀq) preallocated, USYMQR needs:
-  # - 5 m-vectors: vₖ₋₁, vₖ, x, wₖ₋₁, wₖ
-  # - 2 n-vectors: uₖ₋₁, uₖ
-  storage_usymqr(n, m) = 5 * m + 2 * n
+  # USYMQR needs:
+  # - 6 m-vectors: vₖ₋₁, vₖ, x, wₖ₋₁, wₖ, p 
+  # - 3 n-vectors: uₖ₋₁, uₖ, q
+  storage_usymqr(n, m) = 6 * m + 3 * n
   storage_usymqr_bytes(n, m) = 8 * storage_usymqr(n, m)
 
   expected_usymqr_bytes = storage_usymqr_bytes(n, m)
-  (x, stats) = usymqr(Ao, b, c) # warmup
-  actual_usymqr_bytes = @allocated usymqr(Ao, b, c)
+  (x, stats) = usymqr(Lo, b, c) # warmup
+  actual_usymqr_bytes = @allocated usymqr(Lo, b, c)
   @test actual_usymqr_bytes ≤ 1.1 * expected_usymqr_bytes
 
-  solver = UsymqrSolver(Ao, b)
-  usymqr!(solver, Ao, b, c)  # warmup
-  inplace_usymqr_bytes = @allocated usymqr!(solver, Ao, b, c)
+  solver = UsymqrSolver(Lo, b)
+  usymqr!(solver, Lo, b, c)  # warmup
+  inplace_usymqr_bytes = @allocated usymqr!(solver, Lo, b, c)
   @test (VERSION < v"1.5") || (inplace_usymqr_bytes == 208)
 
-  # with (Ap, Aᵀq) preallocated, TRILQR needs:
-  # - 5 m-vectors: vₖ₋₁, vₖ, t, wₖ₋₁, wₖ
-  # - 4 n-vectors: uₖ₋₁, uₖ, x, d̅
-  storage_trilqr(n, m) = 5 * m + 4 * n
+  # TRILQR needs:
+  # - 6 m-vectors: vₖ₋₁, vₖ, t, wₖ₋₁, wₖ, q
+  # - 5 n-vectors: uₖ₋₁, uₖ, x, d̅, p
+  storage_trilqr(n, m) = 6 * m + 5 * n
   storage_trilqr_bytes(n, m) = 8 * storage_trilqr(n, m)
 
   expected_trilqr_bytes = storage_trilqr_bytes(n, n)
-  trilqr(A, b, b)  # warmup
-  actual_trilqr_bytes = @allocated trilqr(A, b, b)
+  trilqr(L, b, b)  # warmup
+  actual_trilqr_bytes = @allocated trilqr(L, b, b)
   @test actual_trilqr_bytes ≤ 1.1 * expected_trilqr_bytes
 
-  solver = TrilqrSolver(A, b)
-  trilqr!(solver, A, b, b)  # warmup
-  inplace_trilqr_bytes = @allocated trilqr!(solver, A, b, b)
+  solver = TrilqrSolver(L, b)
+  trilqr!(solver, L, b, b)  # warmup
+  inplace_trilqr_bytes = @allocated trilqr!(solver, L, b, b)
   @test (VERSION < v"1.5") || (inplace_trilqr_bytes == 208)
 
-  # with (Ap, Aᵀq) preallocated, BILQ needs:
-  # - 6 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅
-  storage_bilq(n) = 6 * n
+  # BILQ needs:
+  # - 8 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅, p, q
+  storage_bilq(n) = 8 * n
   storage_bilq_bytes(n) = 8 * storage_bilq(n)
 
   expected_bilq_bytes = storage_bilq_bytes(n)
-  bilq(A, b)  # warmup
-  actual_bilq_bytes = @allocated bilq(A, b)
+  bilq(L, b)  # warmup
+  actual_bilq_bytes = @allocated bilq(L, b)
   @test actual_bilq_bytes ≤ 1.1 * expected_bilq_bytes
 
-  solver = BilqSolver(A, b)
-  bilq!(solver, A, b)  # warmup
-  inplace_bilq_bytes = @allocated bilq!(solver, A, b)
+  solver = BilqSolver(L, b)
+  bilq!(solver, L, b)  # warmup
+  inplace_bilq_bytes = @allocated bilq!(solver, L, b)
   @test (VERSION < v"1.5") || (inplace_bilq_bytes == 208)
 
-  # with (Ap, Aᵀq) preallocated, BILQR needs:
-  # - 9 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₁, wₖ
-  storage_bilqr(n) = 9 * n
+  # BILQR needs:
+  # - 11 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₁, wₖ, p, q
+  storage_bilqr(n) = 11 * n
   storage_bilqr_bytes(n) = 8 * storage_bilqr(n)
 
   expected_bilqr_bytes = storage_bilqr_bytes(n)
-  bilqr(A, b, b)  # warmup
-  actual_bilqr_bytes = @allocated bilqr(A, b, b)
+  bilqr(L, b, b)  # warmup
+  actual_bilqr_bytes = @allocated bilqr(L, b, b)
   @test actual_bilqr_bytes ≤ 1.1 * expected_bilqr_bytes
 
-  solver = BilqrSolver(A, b)
-  bilqr!(solver, A, b, b)  # warmup
-  inplace_bilqr_bytes = @allocated bilqr!(solver, A, b, b)
+  solver = BilqrSolver(L, b)
+  bilqr!(solver, L, b, b)  # warmup
+  inplace_bilqr_bytes = @allocated bilqr!(solver, L, b, b)
   @test (VERSION < v"1.5") || (inplace_bilqr_bytes == 208)
 
   # with Ap preallocated, MINRES-QLP needs:
@@ -411,35 +413,35 @@ function test_alloc()
   inplace_minres_qlp_bytes = @allocated minres_qlp!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_minres_qlp_bytes == 208)
 
-  # with (Ap, Aᵗp) preallocated, QMR needs:
-  # - 7 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₁, wₖ
-  storage_qmr(n) = 7 * n
+  # QMR needs:
+  # - 9 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₁, wₖ, p, q
+  storage_qmr(n) = 9 * n
   storage_qmr_bytes(n) = 8 * storage_qmr(n)
 
   expected_qmr_bytes = storage_qmr_bytes(n)
-  qmr(A, b)  # warmup
-  actual_qmr_bytes = @allocated qmr(A, b)
+  qmr(L, b)  # warmup
+  actual_qmr_bytes = @allocated qmr(L, b)
   @test actual_qmr_bytes ≤ 1.1 * expected_qmr_bytes
 
-  solver = QmrSolver(A, b)
-  qmr!(solver, A, b)  # warmup
-  inplace_qmr_bytes = @allocated qmr!(solver, A, b)
+  solver = QmrSolver(L, b)
+  qmr!(solver, L, b)  # warmup
+  inplace_qmr_bytes = @allocated qmr!(solver, L, b)
   @test (VERSION < v"1.5") || (inplace_qmr_bytes == 208)
 
-  # with (Ap, Aᵀp) preallocated, USYMLQ needs:
-  # - 4 n-vectors: uₖ₋₁, uₖ, x, d̅
-  # - 2 m-vectors: vₖ₋₁, vₖ
-  storage_usymlq(n, m) = 4 * n + 2 * m
+  # USYMLQ needs:
+  # - 5 n-vectors: uₖ₋₁, uₖ, x, d̅, p
+  # - 3 m-vectors: vₖ₋₁, vₖ, q
+  storage_usymlq(n, m) = 5 * n + 3 * m
   storage_usymlq_bytes(n, m) = 8 * storage_usymlq(n, m)
 
   expected_usymlq_bytes = storage_usymlq_bytes(n, m)
-  usymlq(Au, c, b)  # warmup
-  actual_usymlq_bytes = @allocated usymlq(Au, c, b)
+  usymlq(Lu, c, b)  # warmup
+  actual_usymlq_bytes = @allocated usymlq(Lu, c, b)
   @test actual_usymlq_bytes ≤ 1.1 * expected_usymlq_bytes
 
-  solver = UsymlqSolver(Au, c)
-  usymlq!(solver, Au, c, b)  # warmup
-  inplace_usymlq_bytes = @allocated usymlq!(solver, Au, c, b)
+  solver = UsymlqSolver(Lu, c)
+  usymlq!(solver, Lu, c, b)  # warmup
+  inplace_usymlq_bytes = @allocated usymlq!(solver, Lu, c, b)
   @test (VERSION < v"1.5") || (inplace_usymlq_bytes == 208)
 
   # with (Ap, Aᵀp) preallocated, TriCG needs:
