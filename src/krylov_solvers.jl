@@ -23,6 +23,8 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
   r2      :: S
   w1      :: S
   w2      :: S
+  y       :: S
+  v       :: Union{S, Nothing}
   err_vec :: Vector{T}
   stats   :: SimpleStats{T}
 
@@ -33,9 +35,11 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
     r2 = S(undef, n)
     w1 = S(undef, n)
     w2 = S(undef, n)
+    y  = S(undef, n)
+    v  = nothing
     err_vec = zeros(T, window)
     stats = SimpleStats(false, true, T[], T[], "unknown")
-    solver = new{T,S}(x, r1, r2, w1, w2, err_vec, stats)
+    solver = new{T,S}(x, r1, r2, w1, w2, y, v, err_vec, stats)
     return solver
   end
 

@@ -52,18 +52,19 @@ function test_alloc()
   inplace_cg_bytes = @allocated cg!(solver, L, b)
   @test (VERSION < v"1.5") || (inplace_cg_bytes == 208)
 
-  # without preconditioner and with Ap preallocated, MINRES needs 5 n-vectors: x, r1, r2, w1, w2
-  storage_minres(n) = 5 * n
+  # MINRES needs:
+  # 6 n-vectors: x, r1, r2, w1, w2, y
+  storage_minres(n) = 6 * n
   storage_minres_bytes(n) = 8 * storage_minres(n)
 
   expected_minres_bytes = storage_minres_bytes(n)
-  minres(A, b)  # warmup
-  actual_minres_bytes = @allocated minres(A, b)
+  minres(L, b)  # warmup
+  actual_minres_bytes = @allocated minres(L, b)
   @test actual_minres_bytes ≤ 1.1 * expected_minres_bytes
 
-  solver = MinresSolver(A, b)
-  minres!(solver, A, b)  # warmup
-  inplace_minres_bytes = @allocated minres!(solver, A, b)
+  solver = MinresSolver(L, b)
+  minres!(solver, L, b)  # warmup
+  inplace_minres_bytes = @allocated minres!(solver, L, b)
   @test (VERSION < v"1.5") || (inplace_minres_bytes == 0)
 
   # without preconditioner and with Ap preallocated, DIOM needs:
