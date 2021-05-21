@@ -447,27 +447,35 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
   yₖ      :: S
   N⁻¹uₖ₋₁ :: S
   N⁻¹uₖ   :: S
+  p       :: S
   gy₂ₖ₋₁  :: S
   gy₂ₖ    :: S
   xₖ      :: S
   M⁻¹vₖ₋₁ :: S
   M⁻¹vₖ   :: S
+  q       :: S
   gx₂ₖ₋₁  :: S
   gx₂ₖ    :: S
+  uₖ      :: Union{Nothing, S}
+  vₖ      :: Union{Nothing, S}
 
   function TricgSolver(n, m, S)
     T       = eltype(S)
     yₖ      = S(undef, m)
     N⁻¹uₖ₋₁ = S(undef, m)
     N⁻¹uₖ   = S(undef, m)
+    p       = S(undef, m)
     gy₂ₖ₋₁  = S(undef, m)
     gy₂ₖ    = S(undef, m)
     xₖ      = S(undef, n)
     M⁻¹vₖ₋₁ = S(undef, n)
     M⁻¹vₖ   = S(undef, n)
+    q       = S(undef, n)
     gx₂ₖ₋₁  = S(undef, n)
     gx₂ₖ    = S(undef, n)
-    solver  = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, gx₂ₖ₋₁, gx₂ₖ)
+    uₖ      = nothing
+    vₖ      = nothing
+    solver  = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ)
     return solver
   end
 
@@ -492,6 +500,7 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
   yₖ      :: S
   N⁻¹uₖ₋₁ :: S
   N⁻¹uₖ   :: S
+  p       :: S
   gy₂ₖ₋₃  :: S
   gy₂ₖ₋₂  :: S
   gy₂ₖ₋₁  :: S
@@ -499,16 +508,20 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
   xₖ      :: S
   M⁻¹vₖ₋₁ :: S
   M⁻¹vₖ   :: S
+  q       :: S
   gx₂ₖ₋₃  :: S
   gx₂ₖ₋₂  :: S
   gx₂ₖ₋₁  :: S
   gx₂ₖ    :: S
+  uₖ      :: Union{Nothing, S}
+  vₖ      :: Union{Nothing, S}
 
   function TrimrSolver(n, m, S)
     T       = eltype(S)
     yₖ      = S(undef, m)
     N⁻¹uₖ₋₁ = S(undef, m)
     N⁻¹uₖ   = S(undef, m)
+    p       = S(undef, m)
     gy₂ₖ₋₃  = S(undef, m)
     gy₂ₖ₋₂  = S(undef, m)
     gy₂ₖ₋₁  = S(undef, m)
@@ -516,11 +529,14 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
     xₖ      = S(undef, n)
     M⁻¹vₖ₋₁ = S(undef, n)
     M⁻¹vₖ   = S(undef, n)
+    q       = S(undef, n)
     gx₂ₖ₋₃  = S(undef, n)
     gx₂ₖ₋₂  = S(undef, n)
     gx₂ₖ₋₁  = S(undef, n)
     gx₂ₖ    = S(undef, n)
-    solver = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ)
+    uₖ      = nothing
+    vₖ      = nothing
+    solver = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ)
     return solver
   end
 
