@@ -86,8 +86,9 @@ function test_alloc()
   inplace_diom_bytes = @allocated diom!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_diom_bytes ≤ 240)
 
-  # with Ap preallocated, CG_LANCZOS needs 4 n-vectors: x, v, v_prev, p
-  storage_cg_lanczos(n) = 4 * n
+  # CG_LANCZOS needs:
+  # 5 n-vectors: x, Mv, Mv_prev, p, Mv_next
+  storage_cg_lanczos(n) = 5 * n
   storage_cg_lanczos_bytes(n) = 8 * storage_cg_lanczos(n)
 
   expected_cg_lanczos_bytes = storage_cg_lanczos_bytes(n)
@@ -100,12 +101,12 @@ function test_alloc()
   inplace_cg_lanczos_bytes = @allocated cg_lanczos!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_cg_lanczos_bytes == 144)
 
-  # with Ap preallocated, CG_LANCZOS_SHIFT_SEQ needs:
-  # - 2 n-vectors: v, v_prev
+  # CG_LANCZOS_SHIFT_SEQ needs:
+  # - 3 n-vectors: Mv, Mv_prev, Mv_next
   # - 2 (n*nshifts)-matrices: x, p
   # - 5 nshifts-vectors: σ, δhat, ω, γ, rNorms
   # - 3 nshifts-bitArray: indefinite, converged, not_cv
-  storage_cg_lanczos_shift_seq(n, nshifts) = (2 * n) + (2 * n * nshifts) + (5 * nshifts) + (3 * nshifts / 64)
+  storage_cg_lanczos_shift_seq(n, nshifts) = (3 * n) + (2 * n * nshifts) + (5 * nshifts) + (3 * nshifts / 64)
   storage_cg_lanczos_shift_seq_bytes(n, nshifts) = 8 * storage_cg_lanczos_shift_seq(n, nshifts)
 
   expected_cg_lanczos_shift_seq_bytes = storage_cg_lanczos_shift_seq_bytes(n, nshifts)
