@@ -75,8 +75,8 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   sp  && flip && error("The matrix cannot be symmetric quasi-definite and a saddle-point !")
 
   # Check M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye)
-  NisI = isa(N, opEye)
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -89,8 +89,14 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   Aᵀ = A'
 
   # Set up workspace.
-  yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = solver.yₖ, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ,  solver.xₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ
+  !MisI && isnothing(solver.vₖ) && (solver.vₖ = S(undef, m))
+  !NisI && isnothing(solver.uₖ) && (solver.uₖ = S(undef, n))
+  yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = solver.yₖ, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.p, solver.xₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.q
   gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ = solver.gy₂ₖ₋₃, solver.gy₂ₖ₋₂, solver.gy₂ₖ₋₁, solver.gy₂ₖ, solver.gx₂ₖ₋₃, solver.gx₂ₖ₋₂, solver.gx₂ₖ₋₁, solver.gx₂ₖ
+  vₖ = MisI ? M⁻¹vₖ : solver.vₖ
+  uₖ = NisI ? N⁻¹uₖ : solver.uₖ
+  vₖ₊₁ = MisI ? q : M⁻¹vₖ₋₁
+  uₖ₊₁ = NisI ? p : N⁻¹uₖ₋₁
 
   # Initial solutions x₀ and y₀.
   xₖ .= zero(T)
@@ -105,7 +111,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
 
   # β₁Ev₁ = b ↔ β₁v₁ = Mb
   M⁻¹vₖ .= b
-  vₖ = M * M⁻¹vₖ
+  MisI || mul!(vₖ, M, M⁻¹vₖ)
   βₖ = sqrt(@kdot(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
   if βₖ ≠ 0
     @kscal!(m, 1 / βₖ, M⁻¹vₖ)
@@ -114,7 +120,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
 
   # γ₁Fu₁ = c ↔ γ₁u₁ = Nb
   N⁻¹uₖ .= c
-  uₖ = N * N⁻¹uₖ
+  NisI || mul!(uₖ, N, N⁻¹uₖ)
   γₖ = sqrt(@kdot(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
   if γₖ ≠ 0
     @kscal!(n, 1 / γₖ, N⁻¹uₖ)
@@ -152,10 +158,6 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   snd  && (τ = -one(T) ; ν = -one(T))
   sp   && (τ =  one(T) ; ν = zero(T))
 
-  # Use (M⁻¹vₖ₋₁, N⁻¹uₖ₋₁) to store (vₖ, uₖ) when preconditioners M and N are provided
-  MisI ? (vₐᵤₓ = vₖ) : (vₐᵤₓ = M⁻¹vₖ₋₁)
-  NisI ? (uₐᵤₓ = uₖ) : (uₐᵤₓ = N⁻¹uₖ₋₁)
-
   # Stopping criterion.
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
@@ -171,8 +173,8 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     # AUₖ  = EVₖTₖ    + βₖ₊₁Evₖ₊₁(eₖ)ᵀ = EVₖ₊₁Tₖ₊₁.ₖ
     # AᵀVₖ = FUₖ(Tₖ)ᵀ + γₖ₊₁Fuₖ₊₁(eₖ)ᵀ = FUₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    q = A  * uₖ  # Forms Evₖ₊₁ : q ← Auₖ
-    p = Aᵀ * vₖ  # Forms Fuₖ₊₁ : p ← Aᵀvₖ
+    mul!(q, A , uₖ)  # Forms Evₖ₊₁ : q ← Auₖ
+    mul!(p, Aᵀ, vₖ)  # Forms Fuₖ₊₁ : p ← Aᵀvₖ
 
     if iter ≥ 2
       @kaxpy!(m, -γₖ, M⁻¹vₖ₋₁, q)  # q ← q - γₖ * M⁻¹vₖ₋₁
@@ -184,12 +186,9 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     @kaxpy!(m, -αₖ, M⁻¹vₖ, q)  # q ← q - αₖ * M⁻¹vₖ
     @kaxpy!(n, -αₖ, N⁻¹uₖ, p)  # p ← p - αₖ * N⁻¹uₖ
 
-    MisI || (vₐᵤₓ .= vₖ)  # Tempory storage for vₖ
-    NisI || (uₐᵤₓ .= uₖ)  # Tempory storage for uₖ
-
     # Compute vₖ₊₁ and uₖ₊₁
-    vₖ₊₁ = M * q  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
-    uₖ₊₁ = N * p  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - αₖuₖ
+    MisI || mul!(vₖ₊₁, M, q)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
+    NisI || mul!(uₖ₊₁, N, p)  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - αₖuₖ
 
     βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
     γₖ₊₁ = sqrt(@kdot(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F
@@ -313,9 +312,9 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     if iter == 1
       # [ δ₁  0  ] [ gx₁ gy₁ ] = [ v₁ 0  ]
       # [ σ₁  δ₂ ] [ gx₂ gy₂ ]   [ 0  u₁ ]
-      @. gx₂ₖ₋₁ = vₐᵤₓ / δ₂ₖ₋₁
+      @. gx₂ₖ₋₁ = vₖ / δ₂ₖ₋₁
       @. gx₂ₖ   = - σ₂ₖ₋₁ / δ₂ₖ * gx₂ₖ₋₁
-      @. gy₂ₖ   = uₐᵤₓ / δ₂ₖ
+      @. gy₂ₖ   = uₖ / δ₂ₖ
     elseif iter == 2
       # [ η₁ σ₂ δ₃ 0  ] [ gx₁ gy₁ ] = [ v₂ 0  ]
       # [ λ₁ η₂ σ₃ δ₄ ] [ gx₂ gy₂ ]   [ 0  u₂ ]
@@ -324,23 +323,23 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
       @kswap(gx₂ₖ₋₃, gx₂ₖ₋₁)
       @kswap(gx₂ₖ₋₂, gx₂ₖ)
       @kswap(gy₂ₖ₋₂, gy₂ₖ)
-      @. gx₂ₖ₋₁ = (vₐᵤₓ - η₂ₖ₋₃ * gx₂ₖ₋₃ - σ₂ₖ₋₂ * gx₂ₖ₋₂                 ) / δ₂ₖ₋₁
-      @. gx₂ₖ   = (     - λ₂ₖ₋₃ * gx₂ₖ₋₃ - η₂ₖ₋₂ * gx₂ₖ₋₂ - σ₂ₖ₋₁ * gx₂ₖ₋₁) / δ₂ₖ
-      @. gy₂ₖ₋₁ = (     - η₂ₖ₋₃ * gy₂ₖ₋₃ - σ₂ₖ₋₂ * gy₂ₖ₋₂                 ) / δ₂ₖ₋₁
-      @. gy₂ₖ   = (uₐᵤₓ - λ₂ₖ₋₃ * gy₂ₖ₋₃ - η₂ₖ₋₂ * gy₂ₖ₋₂ - σ₂ₖ₋₁ * gy₂ₖ₋₁) / δ₂ₖ
+      @. gx₂ₖ₋₁ = (vₖ - η₂ₖ₋₃ * gx₂ₖ₋₃ - σ₂ₖ₋₂ * gx₂ₖ₋₂                 ) / δ₂ₖ₋₁
+      @. gx₂ₖ   = (   - λ₂ₖ₋₃ * gx₂ₖ₋₃ - η₂ₖ₋₂ * gx₂ₖ₋₂ - σ₂ₖ₋₁ * gx₂ₖ₋₁) / δ₂ₖ
+      @. gy₂ₖ₋₁ = (   - η₂ₖ₋₃ * gy₂ₖ₋₃ - σ₂ₖ₋₂ * gy₂ₖ₋₂                 ) / δ₂ₖ₋₁
+      @. gy₂ₖ   = (uₖ - λ₂ₖ₋₃ * gy₂ₖ₋₃ - η₂ₖ₋₂ * gy₂ₖ₋₂ - σ₂ₖ₋₁ * gy₂ₖ₋₁) / δ₂ₖ
     else
       # μ₂ₖ₋₅ * gx₂ₖ₋₅ + λ₂ₖ₋₄ * gx₂ₖ₋₄ + η₂ₖ₋₃ * gx₂ₖ₋₃ + σ₂ₖ₋₂ * gx₂ₖ₋₂ + δ₂ₖ₋₁ * gx₂ₖ₋₁              = vₖ
       #                  μ₂ₖ₋₄ * gx₂ₖ₋₄ + λ₂ₖ₋₃ * gx₂ₖ₋₃ + η₂ₖ₋₂ * gx₂ₖ₋₂ + σ₂ₖ₋₁ * gx₂ₖ₋₁ + δ₂ₖ * gx₂ₖ = 0
       g₂ₖ₋₁ = g₂ₖ₋₅ = gx₂ₖ₋₃; g₂ₖ = g₂ₖ₋₄ = gx₂ₖ₋₂; g₂ₖ₋₃ = gx₂ₖ₋₁; g₂ₖ₋₂ = gx₂ₖ
-      @. g₂ₖ₋₁ = (vₐᵤₓ - μ₂ₖ₋₅ * g₂ₖ₋₅ - λ₂ₖ₋₄ * g₂ₖ₋₄ - η₂ₖ₋₃ * g₂ₖ₋₃ - σ₂ₖ₋₂ * g₂ₖ₋₂                ) / δ₂ₖ₋₁
-      @. g₂ₖ   = (                     - μ₂ₖ₋₄ * g₂ₖ₋₄ - λ₂ₖ₋₃ * g₂ₖ₋₃ - η₂ₖ₋₂ * g₂ₖ₋₂ - σ₂ₖ₋₁ * g₂ₖ₋₁) / δ₂ₖ
+      @. g₂ₖ₋₁ = (vₖ - μ₂ₖ₋₅ * g₂ₖ₋₅ - λ₂ₖ₋₄ * g₂ₖ₋₄ - η₂ₖ₋₃ * g₂ₖ₋₃ - σ₂ₖ₋₂ * g₂ₖ₋₂                ) / δ₂ₖ₋₁
+      @. g₂ₖ   = (                   - μ₂ₖ₋₄ * g₂ₖ₋₄ - λ₂ₖ₋₃ * g₂ₖ₋₃ - η₂ₖ₋₂ * g₂ₖ₋₂ - σ₂ₖ₋₁ * g₂ₖ₋₁) / δ₂ₖ
       @kswap(gx₂ₖ₋₃, gx₂ₖ₋₁)
       @kswap(gx₂ₖ₋₂, gx₂ₖ)
       # μ₂ₖ₋₅ * gy₂ₖ₋₅ + λ₂ₖ₋₄ * gy₂ₖ₋₄ + η₂ₖ₋₃ * gy₂ₖ₋₃ + σ₂ₖ₋₂ * gy₂ₖ₋₂ + δ₂ₖ₋₁ * gy₂ₖ₋₁              = 0
       #                  μ₂ₖ₋₄ * gy₂ₖ₋₄ + λ₂ₖ₋₃ * gy₂ₖ₋₃ + η₂ₖ₋₂ * gy₂ₖ₋₂ + σ₂ₖ₋₁ * gy₂ₖ₋₁ + δ₂ₖ * gy₂ₖ = uₖ
       g₂ₖ₋₁ = g₂ₖ₋₅ = gy₂ₖ₋₃; g₂ₖ = g₂ₖ₋₄ = gy₂ₖ₋₂; g₂ₖ₋₃ = gy₂ₖ₋₁; g₂ₖ₋₂ = gy₂ₖ
       @. g₂ₖ₋₁ = (     - μ₂ₖ₋₅ * g₂ₖ₋₅ - λ₂ₖ₋₄ * g₂ₖ₋₄ - η₂ₖ₋₃ * g₂ₖ₋₃ - σ₂ₖ₋₂ * g₂ₖ₋₂                ) / δ₂ₖ₋₁
-      @. g₂ₖ   = (uₐᵤₓ                 - μ₂ₖ₋₄ * g₂ₖ₋₄ - λ₂ₖ₋₃ * g₂ₖ₋₃ - η₂ₖ₋₂ * g₂ₖ₋₂ - σ₂ₖ₋₁ * g₂ₖ₋₁) / δ₂ₖ
+      @. g₂ₖ   = (uₖ                   - μ₂ₖ₋₄ * g₂ₖ₋₄ - λ₂ₖ₋₃ * g₂ₖ₋₃ - η₂ₖ₋₂ * g₂ₖ₋₂ - σ₂ₖ₋₁ * g₂ₖ₋₁) / δ₂ₖ
       @kswap(gy₂ₖ₋₃, gy₂ₖ₋₁)
       @kswap(gy₂ₖ₋₂, gy₂ₖ)
     end
@@ -368,6 +367,10 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     rNorm = sqrt(πbar₂ₖ₊₁^2 + πbar₂ₖ₊₂^2)
     history && push!(rNorms, rNorm)
 
+    # Update vₖ and uₖ
+    MisI || (vₖ .= vₖ₊₁)
+    NisI || (uₖ .= uₖ₊₁)
+
     # Update M⁻¹vₖ₋₁ and N⁻¹uₖ₋₁
     @. M⁻¹vₖ₋₁ = M⁻¹vₖ
     @. N⁻¹uₖ₋₁ = N⁻¹uₖ
@@ -375,10 +378,6 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     # Update M⁻¹vₖ and N⁻¹uₖ
     @. M⁻¹vₖ = q
     @. N⁻¹uₖ = p
-
-    # Update vₖ and uₖ
-    MisI || (vₖ = vₖ₊₁)
-    NisI || (uₖ = uₖ₊₁)
 
     # Update cosines and sines
     old_s₁ₖ = s₁ₖ

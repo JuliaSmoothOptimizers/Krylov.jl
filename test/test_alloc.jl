@@ -446,36 +446,36 @@ function test_alloc()
   inplace_usymlq_bytes = @allocated usymlq!(solver, Lu, c, b)
   @test (VERSION < v"1.5") || (inplace_usymlq_bytes == 208)
 
-  # with (Ap, Aᵀp) preallocated, TriCG needs:
-  # - 5 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₁, gy₂ₖ
-  # - 5 m-vectors: xₖ, vₖ₋₁, vₖ, gx₂ₖ₋₁, gx₂ₖ
-  storage_tricg(n, m) = 5 * n + 5 * m
+  # TriCG needs:
+  # - 6 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₁, gy₂ₖ, p
+  # - 6 m-vectors: xₖ, vₖ₋₁, vₖ, gx₂ₖ₋₁, gx₂ₖ, q
+  storage_tricg(n, m) = 6 * n + 6 * m
   storage_tricg_bytes(n, m) = 8 * storage_tricg(n, m)
 
   expected_tricg_bytes = storage_tricg_bytes(n, m)
-  tricg(Au, c, b)  # warmup
-  actual_tricg_bytes = @allocated tricg(Au, c, b)
+  tricg(Lu, c, b)  # warmup
+  actual_tricg_bytes = @allocated tricg(Lu, c, b)
   @test actual_tricg_bytes ≤ 1.1 * expected_tricg_bytes
 
-  solver = TricgSolver(Au, c)
-  tricg!(solver, Au, c, b)  # warmup
-  inplace_tricg_bytes = @allocated tricg!(solver, Au, c, b)
+  solver = TricgSolver(Lu, c)
+  tricg!(solver, Lu, c, b)  # warmup
+  inplace_tricg_bytes = @allocated tricg!(solver, Lu, c, b)
   @test (VERSION < v"1.5") || (inplace_tricg_bytes == 208)
 
-  # with (Ap, Aᵀp) preallocated, TriMR needs:
-  # - 7 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ
-  # - 7 m-vectors: xₖ, vₖ₋₁, vₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ
-  storage_trimr(n, m) = 7 * n + 7 * m
+  # TriMR needs:
+  # - 8 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, p
+  # - 8 m-vectors: xₖ, vₖ₋₁, vₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, q
+  storage_trimr(n, m) = 8 * n + 8 * m
   storage_trimr_bytes(n, m) = 8 * storage_trimr(n, m)
 
   expected_trimr_bytes = storage_trimr_bytes(n, m)
-  trimr(Au, c, b)  # warmup
-  actual_trimr_bytes = @allocated trimr(Au, c, b)
+  trimr(Lu, c, b)  # warmup
+  actual_trimr_bytes = @allocated trimr(Lu, c, b)
   @test actual_trimr_bytes ≤ 1.1 * expected_trimr_bytes
 
-  solver = TrimrSolver(Au, c)
-  trimr!(solver, Au, c, b)  # warmup
-  inplace_trimr_bytes = @allocated trimr!(solver, Au, c, b)
+  solver = TrimrSolver(Lu, c)
+  trimr!(solver, Lu, c, b)  # warmup
+  inplace_trimr_bytes = @allocated trimr!(solver, Lu, c, b)
   @test (VERSION < v"1.5") || (inplace_trimr_bytes == 208)
 end
 
