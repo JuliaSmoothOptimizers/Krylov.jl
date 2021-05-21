@@ -67,13 +67,13 @@ function test_alloc()
   inplace_minres_bytes = @allocated minres!(solver, L, b)
   @test (VERSION < v"1.5") || (inplace_minres_bytes == 0)
 
-  # without preconditioner and with Ap preallocated, DIOM needs:
-  # - 2 n-vectors: x, x_old
+  # DIOM needs:
+  # - 3 n-vectors: x, x_old, t
   # - 2 (n*mem)-matrices: P, V
   # - 1 mem-vector: L
   # - 1 (mem+2)-vector: H
   # - 1 mem-bitArray: p
-  storage_diom(mem, n) = (2 * n) + (2 * n * mem) + (mem) + (mem + 2) + (mem / 64)
+  storage_diom(mem, n) = (3 * n) + (2 * n * mem) + (mem) + (mem + 2) + (mem / 64)
   storage_diom_bytes(mem, n) = 8 * storage_diom(mem, n)
 
   expected_diom_bytes = storage_diom_bytes(mem, n)
@@ -118,12 +118,12 @@ function test_alloc()
   inplace_cg_lanczos_shift_seq_bytes = @allocated cg_lanczos_shift_seq!(solver, A, b, shifts)
   @test (VERSION < v"1.5") || (inplace_cg_lanczos_shift_seq_bytes ≤ 356)
 
-  # without preconditioner and with Ap preallocated, DQGMRES needs:
-  # - 1 n-vector: x
+  # DQGMRES needs:
+  # - 2 n-vectors: x, t
   # - 2 (n*mem)-matrices: P, V
   # - 2 mem-vectors: c, s
   # - 1 (mem+2)-vector: H
-  storage_dqgmres(mem, n) = (n) + (2 * n * mem) + (2 * mem) + (mem + 2)
+  storage_dqgmres(mem, n) = (2 * n) + (2 * n * mem) + (2 * mem) + (mem + 2)
   storage_dqgmres_bytes(mem, n) = 8 * storage_dqgmres(mem, n)
 
   expected_dqgmres_bytes = storage_dqgmres_bytes(mem, n)
