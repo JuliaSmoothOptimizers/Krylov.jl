@@ -285,6 +285,9 @@ may be used in order to create these vectors.
 """
 mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
   x :: S
+  t :: S
+  z :: Union{S, Nothing}
+  w :: Union{S, Nothing}
   P :: Vector{S}
   V :: Vector{S}
   c :: Vector{T}
@@ -294,12 +297,15 @@ mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
   function DqgmresSolver(n, m, S; memory :: Integer=20)
     T = eltype(S)
     x = S(undef, n)
+    t = S(undef, n)
+    z = nothing
+    w = nothing
     P = [S(undef, n) for i = 1 : memory]
     V = [S(undef, n) for i = 1 : memory]
     c = Vector{T}(undef, memory)
     s = Vector{T}(undef, memory)
     H = Vector{T}(undef, memory+2)
-    solver = new{T,S}(x, P, V, c, s, H)
+    solver = new{T,S}(x, t, z, w, P, V, c, s, H)
     return solver
   end
 
@@ -323,6 +329,9 @@ may be used in order to create these vectors.
 mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
   x     :: S
   x_old :: S
+  t     :: S
+  z     :: Union{S, Nothing}
+  w     :: Union{S, Nothing}
   P     :: Vector{S}
   V     :: Vector{S}
   L     :: Vector{T}
@@ -333,12 +342,15 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
     T     = eltype(S)
     x     = S(undef, n)
     x_old = S(undef, n)
+    t     = S(undef, n)
+    z     = nothing
+    w     = nothing
     P     = [S(undef, n) for i = 1 : memory]
     V     = [S(undef, n) for i = 1 : memory]
     L     = Vector{T}(undef, memory)
     H     = Vector{T}(undef, memory+2)
     p     = BitArray(undef, memory)
-    solver = new{T,S}(x, x_old, P, V, L, H, p)
+    solver = new{T,S}(x, x_old, t, z, w, P, V, L, H, p)
     return solver
   end
 

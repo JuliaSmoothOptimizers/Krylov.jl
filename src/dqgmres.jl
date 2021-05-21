@@ -43,18 +43,26 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("DQGMRES: system of size %d\n", n)
 
+  # Check M == Iₙ and N == Iₙ
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
+
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
-  isa(N, opEye) || (eltype(N) == T) || error("eltype(N) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Set up workspace.
-  x, P, V, c, s, H = solver.x, solver.P, solver.V, solver.c, solver.s, solver.H
+  !MisI && isnothing(solver.w) && (solver.w = S(undef, n))
+  !NisI && isnothing(solver.z) && (solver.z = S(undef, n))
+  x, t, P, V, c, s, H = solver.x, solver.t, solver.P, solver.V, solver.c, solver.s, solver.H
+  w  = MisI ? t : solver.w
+  r₀ = MisI ? b : solver.w
 
   # Initial solution x₀ and residual r₀.
   x .= zero(T)  # x₀
-  r₀ = M * b    # M⁻¹(b - Ax₀)
+  MisI || mul!(r₀, M, b)  # M⁻¹(b - Ax₀)
   # Compute β
   rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
@@ -101,9 +109,10 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
     next_pos = mod(iter, mem) + 1 # Position corresponding to vₘ₊₁ in the circular stack V.
 
     # Incomplete Arnoldi procedure.
-    z = N * V[pos] # N⁻¹vₘ, forms pₘ
-    t = A * z      # AN⁻¹vₘ
-    w = M * t      # M⁻¹AN⁻¹vₘ, forms vₘ₊₁
+    z = NisI ? V[pos] : solver.z
+    NisI || mul!(z, N, V[pos])  # N⁻¹vₘ, forms pₘ
+    mul!(t, A, z)               # AN⁻¹vₘ
+    MisI || mul!(w, M, t)       # M⁻¹AN⁻¹vₘ, forms vₘ₊₁
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
       diag = iter - i + 2
