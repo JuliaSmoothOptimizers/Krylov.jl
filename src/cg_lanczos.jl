@@ -43,12 +43,13 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
                      M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                      check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
-  n = size(b, 1)
-  (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
+  n, m = size(A)
+  m == n || error("System must be square")
+  length(b) == n || error("Inconsistent problem size")
   (verbose > 0) && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye)
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -56,12 +57,14 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  x, Mv, Mv_prev, p = solver.x, solver.Mv, solver.Mv_prev, solver.p
+  !MisI && isnothing(solver.v) && (solver.v = S(undef, n))
+  x, Mv, Mv_prev, p, Mv_next = solver.x, solver.Mv, solver.Mv_prev, solver.p, solver.Mv_next
+  v = MisI ? Mv : solver.v
 
   # Initial state.
   x .= zero(T)              # x₀
   Mv .= b                   # Mv₁ ← b
-  v = M * Mv                # v₁ = M⁻¹ * Mv₁
+  MisI || mul!(v, M, Mv)    # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv)) # β₁ = v₁ᵀ M v₁
   β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
   p .= v
@@ -98,7 +101,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   while ! (solved || tired || (check_curvature & indefinite))
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-    Mv_next = A * v          # Mvₖ₊₁ ← Avₖ
+    mul!(Mv_next, A, v)      # Mvₖ₊₁ ← Avₖ
     δ = @kdot(n, v, Mv_next) # δₖ = vₖᵀ A vₖ
 
     # Check curvature. Exit fast if requested.
@@ -113,7 +116,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
       @. Mv_prev = Mv                  # Mvₖ₋₁ ← Mvₖ
     end
     @. Mv = Mv_next                    # Mvₖ ← Mvₖ₊₁
-    v = M * Mv                         # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
+    MisI || mul!(v, M, Mv)             # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
     β = sqrt(@kdot(n, v, Mv))          # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
     @kscal!(n, one(T)/β, v)            # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
     MisI || @kscal!(n, one(T)/β, Mv)   # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
@@ -165,14 +168,15 @@ function cg_lanczos_shift_seq!(solver :: CgLanczosShiftSolver{T,S}, A, b :: Abst
                                M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                                check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
-  n = size(b, 1)
-  (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
+  n, m = size(A)
+  m == n || error("System must be square")
+  length(b) == n || error("Inconsistent problem size")
 
-  nshifts = size(shifts, 1)
+  nshifts = length(shifts)
   (verbose > 0) && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye)
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -181,8 +185,10 @@ function cg_lanczos_shift_seq!(solver :: CgLanczosShiftSolver{T,S}, A, b :: Abst
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  Mv, Mv_prev, x, p, σ, δhat, ω, γ = solver.Mv, solver.Mv_prev, solver.x, solver.p, solver.σ, solver.δhat, solver.ω, solver.γ
+  !MisI && isnothing(solver.v) && (solver.v = S(undef, n))
+  Mv, Mv_prev, Mv_next, x, p, σ, δhat, ω, γ = solver.Mv, solver.Mv_prev, solver.Mv_next, solver.x, solver.p, solver.σ, solver.δhat, solver.ω, solver.γ
   rNorms, indefinite, converged, not_cv = solver.rNorms, solver.indefinite, solver.converged, solver.not_cv
+  v = MisI ? Mv : solver.v
 
   # Initial state.
   ## Distribute x similarly to shifts.
@@ -190,7 +196,7 @@ function cg_lanczos_shift_seq!(solver :: CgLanczosShiftSolver{T,S}, A, b :: Abst
     x[i] .= zero(T)                       # x₀
   end
   Mv .= b                                 # Mv₁ ← b
-  v = M * Mv                              # v₁ = M⁻¹ * Mv₁
+  MisI || mul!(v, M, Mv)                  # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv))               # β₁ = v₁ᵀ M v₁
   β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
 
@@ -244,7 +250,7 @@ function cg_lanczos_shift_seq!(solver :: CgLanczosShiftSolver{T,S}, A, b :: Abst
   while ! (solved || tired)
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-    Mv_next = A * v                    # Mvₖ₊₁ ← Avₖ
+    mul!(Mv_next, A, v)                # Mvₖ₊₁ ← Avₖ
     δ = @kdot(n, v, Mv_next)           # δₖ = vₖᵀ A vₖ
     @kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
     if iter > 0
@@ -252,7 +258,7 @@ function cg_lanczos_shift_seq!(solver :: CgLanczosShiftSolver{T,S}, A, b :: Abst
       @. Mv_prev = Mv                  # Mvₖ₋₁ ← Mvₖ
     end
     @. Mv = Mv_next                    # Mvₖ ← Mvₖ₊₁
-    v = M * Mv                         # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
+    MisI || mul!(v, M, Mv)             # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
     β = sqrt(@kdot(n, v, Mv))          # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
     @kscal!(n, one(T)/β, v)            # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
     MisI || @kscal!(n, one(T)/β, Mv)   # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁

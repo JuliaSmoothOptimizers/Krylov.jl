@@ -170,6 +170,8 @@ mutable struct CgLanczosSolver{T,S} <: KrylovSolver{T,S}
   Mv      :: S
   Mv_prev :: S
   p       :: S
+  Mv_next :: S
+  v       :: Union{S, Nothing}
 
   function CgLanczosSolver(n, m, S)
     T       = eltype(S)
@@ -177,7 +179,9 @@ mutable struct CgLanczosSolver{T,S} <: KrylovSolver{T,S}
     Mv      = S(undef, n)
     Mv_prev = S(undef, n)
     p       = S(undef, n)
-    solver = new{T,S}(x, Mv, Mv_prev, p)
+    Mv_next = S(undef, n)
+    v       = nothing
+    solver = new{T,S}(x, Mv, Mv_prev, p, Mv_next, v)
     return solver
   end
 
@@ -201,6 +205,8 @@ may be used in order to create these vectors.
 mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
   Mv         :: S
   Mv_prev    :: S
+  Mv_next    :: S
+  v          :: Union{S, Nothing}
   x          :: Vector{S}
   p          :: Vector{S}
   σ          :: Vector{T}
@@ -217,6 +223,8 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
     T          = eltype(S)
     Mv         = S(undef, n)
     Mv_prev    = S(undef, n)
+    Mv_next    = S(undef, n)
+    v          = nothing
     x          = [S(undef, n) for i = 1 : nshifts]
     p          = [S(undef, n) for i = 1 : nshifts]
     σ          = Vector{T}(undef, nshifts)
@@ -227,7 +235,7 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
     indefinite = BitArray(undef, nshifts)
     converged  = BitArray(undef, nshifts)
     not_cv     = BitArray(undef, nshifts)
-    solver = new{T,S}(Mv, Mv_prev, x, p, σ, δhat, ω, γ, rNorms, indefinite, converged, not_cv)
+    solver = new{T,S}(Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, indefinite, converged, not_cv)
     return solver
   end
 
