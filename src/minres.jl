@@ -78,18 +78,23 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
                  itmax :: Int=0, conlim :: T=1/√eps(T),
                  verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
-  m, n = size(A)
+  n, m = size(A)
   m == n || error("System must be square")
-  size(b, 1) == m || error("Inconsistent problem size")
+  length(b) == n || error("Inconsistent problem size")
   (verbose > 0) && @printf("MINRES: system of size %d\n", n)
+
+  # Tests M == Iₙ
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  x, r1, r2, w1, w2, err_vec, stats = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.err_vec, solver.stats
+  !MisI && isnothing(solver.v) && (solver.v = S(undef, n))
+  x, r1, r2, w1, w2, y, err_vec, stats = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y, solver.err_vec, solver.stats
+  v = MisI ? r2 : solver.v
 
   window = length(err_vec)
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
@@ -102,7 +107,8 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
   r1 .= b
-  v = M * r1
+  r2 .= r1
+  MisI || mul!(v, M, r1)
   β₁ = @kdot(m, r1, v)
   β₁ < 0 && error("Preconditioner is not positive definite")
   if β₁ == 0
@@ -129,7 +135,6 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   sn = zero(T)
   w1 .= zero(T)
   w2 .= zero(T)
-  r2 .= r1
 
   ANorm² = zero(T)
   ANorm = zero(T)
@@ -161,7 +166,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
     iter = iter + 1
 
     # Generate next Lanczos vector.
-    y = A * v
+    mul!(y, A, v)
     λ ≠ 0 && @kaxpy!(n, λ, v, y)             # (y = y + λ * v)
     @kscal!(n, one(T) / β, y)
     iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y) # (y = y - β / oldβ * r1)
@@ -182,7 +187,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
 
     @. r1 = r2
     @. r2 = y
-    v = M * r2
+    MisI || mul!(v, M, r2)
     oldβ = β
     β = @kdot(n, r2, v)
     β < 0 && error("Preconditioner is not positive definite")
