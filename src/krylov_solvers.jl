@@ -250,6 +250,8 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
   M⁻¹vₖ₋₁ :: S
   M⁻¹vₖ   :: S
   x       :: S
+  p       :: S
+  vₖ      :: Union{S, Nothing}
 
   function MinresQlpSolver(n, m, S)
     T       = eltype(S)
@@ -258,7 +260,9 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
     M⁻¹vₖ₋₁ = S(undef, n)
     M⁻¹vₖ   = S(undef, n)
     x       = S(undef, n)
-    solver = new{T,S}(wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x)
+    p       = S(undef, n)
+    vₖ      = nothing
+    solver = new{T,S}(wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ)
     return solver
   end
 

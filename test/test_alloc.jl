@@ -400,9 +400,9 @@ function test_alloc()
   inplace_bilqr_bytes = @allocated bilqr!(solver, L, b, b)
   @test (VERSION < v"1.5") || (inplace_bilqr_bytes == 208)
 
-  # with Ap preallocated, MINRES-QLP needs:
-  # - 5 n-vectors: wₖ₋₁, wₖ, vₖ₋₁, vₖ, x
-  storage_minres_qlp(n) = 5 * n
+  # MINRES-QLP needs:
+  # - 6 n-vectors: wₖ₋₁, wₖ, vₖ₋₁, vₖ, x, p
+  storage_minres_qlp(n) = 6 * n
   storage_minres_qlp_bytes(n) = 8 * storage_minres_qlp(n)
 
   expected_minres_qlp_bytes = storage_minres_qlp_bytes(n)
