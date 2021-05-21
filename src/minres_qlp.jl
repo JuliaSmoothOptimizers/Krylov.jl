@@ -50,7 +50,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("MINRES-QLP: system of size %d\n", n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye)
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -58,14 +58,17 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.x
+  !MisI && isnothing(solver.vₖ) && (solver.vₖ = S(undef, n))
+  wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.x, solver.p
+  vₖ = MisI ? M⁻¹vₖ : solver.vₖ
+  vₖ₊₁ = MisI ? p : M⁻¹vₖ₋₁
 
   # Initial solution x₀
   x .= zero(T)
 
   # β₁v₁ = Mb
   M⁻¹vₖ .= b
-  vₖ = M * M⁻¹vₖ
+  MisI || mul!(vₖ, M, M⁻¹vₖ)
   βₖ = sqrt(@kdot(n, vₖ, M⁻¹vₖ))
   if βₖ ≠ 0
     @kscal!(n, 1 / βₖ, M⁻¹vₖ)
@@ -97,9 +100,6 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   cₖ₋₂  = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
   sₖ₋₂  = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
 
-  # Use M⁻¹vₖ₋₁ to store vₖ when a preconditioner is provided
-  MisI ? (vₐᵤₓ = vₖ) : (vₐᵤₓ = M⁻¹vₖ₋₁)
-
   # Stopping criterion.
   solved = rNorm ≤ ε
   inconsistent = false
@@ -114,7 +114,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     # M(A + λI)Vₖ = Vₖ₊₁Tₖ₊₁.ₖ
     # βₖ₊₁vₖ₊₁ = M(A + λI)vₖ - αₖvₖ - βₖvₖ₋₁
 
-    p = A * vₖ              # p ← Avₖ
+    mul!(p, A, vₖ)          # p ← Avₖ
     if λ ≠ 0
       @kaxpy!(n, λ, vₖ, p)  # p ← p + λvₖ
     end
@@ -127,8 +127,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
 
     @kaxpy!(n, -αₖ, M⁻¹vₖ, p)  # p ← p - αₖM⁻¹vₖ
 
-    MisI || (vₐᵤₓ .= vₖ)  # Tempory storage for vₖ
-    vₖ₊₁ = M * p          # βₖ₊₁vₖ₊₁ = MAvₖ - γₖvₖ₋₁ - αₖvₖ
+    MisI || mul!(vₖ₊₁, M, p)   # βₖ₊₁vₖ₊₁ = MAvₖ - γₖvₖ₋₁ - αₖvₖ
 
     βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, p))
 
@@ -245,13 +244,13 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     # Compute directions wₖ₋₂, ẘₖ₋₁ and w̄ₖ, last columns of Wₖ = Vₖ(Pₖ)ᵀ
     if iter == 1
       # w̅₁ = v₁
-      @. wₖ = vₐᵤₓ
+      @. wₖ = vₖ
     elseif iter == 2
       # [w̅ₖ₋₁ vₖ] [cpₖ  spₖ] = [ẘₖ₋₁ w̅ₖ] ⟷ ẘₖ₋₁ = cpₖ * w̅ₖ₋₁ + spₖ * vₖ
       #           [spₖ -cpₖ]             ⟷ w̅ₖ   = spₖ * w̅ₖ₋₁ - cpₖ * vₖ
       @kswap(wₖ₋₁, wₖ)
-      @. wₖ = spₖ * wₖ₋₁ - cpₖ * vₐᵤₓ
-      @kaxpby!(n, spₖ, vₐᵤₓ, cpₖ, wₖ₋₁)
+      @. wₖ = spₖ * wₖ₋₁ - cpₖ * vₖ
+      @kaxpby!(n, spₖ, vₖ, cpₖ, wₖ₋₁)
     else
       # [ẘₖ₋₂ w̄ₖ₋₁ vₖ] [cpₖ  0   spₖ] [1   0    0 ] = [wₖ₋₂ ẘₖ₋₁ w̄ₖ] ⟷ wₖ₋₂ = cpₖ * ẘₖ₋₂ + spₖ * vₖ
       #                [ 0   1    0 ] [0  cdₖ  sdₖ]                  ⟷ ẘₖ₋₁ = cdₖ * w̄ₖ₋₁ + sdₖ * (spₖ * ẘₖ₋₂ - cpₖ * vₖ)
@@ -260,19 +259,19 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
       w̄ₖ₋₁ = wₖ
       # Update the solution x
       @kaxpy!(n, cpₖ * τₖ₋₂, ẘₖ₋₂, x)
-      @kaxpy!(n, spₖ * τₖ₋₂, vₐᵤₓ, x)
+      @kaxpy!(n, spₖ * τₖ₋₂, vₖ, x)
       # Compute wₐᵤₓ = spₖ * ẘₖ₋₂ - cpₖ * vₖ
-      @kaxpby!(n, -cpₖ, vₐᵤₓ, spₖ, ẘₖ₋₂)
+      @kaxpby!(n, -cpₖ, vₖ, spₖ, ẘₖ₋₂)
       wₐᵤₓ = ẘₖ₋₂
       # Compute ẘₖ₋₁ and w̄ₖ
       @kref!(n, w̄ₖ₋₁, wₐᵤₓ, cdₖ, sdₖ)
       @kswap(wₖ₋₁, wₖ)
     end
 
-    # Update M⁻¹vₖ₋₁, M⁻¹vₖ and vₖ
-    @. M⁻¹vₖ₋₁ = M⁻¹vₖ
-    @. M⁻¹vₖ   = p
-    MisI || (vₖ = vₖ₊₁)
+    # Update vₖ, M⁻¹vₖ₋₁, M⁻¹vₖ
+    MisI || (vₖ .= vₖ₊₁)
+    M⁻¹vₖ₋₁ .= M⁻¹vₖ
+    M⁻¹vₖ .= p
 
     # Update ‖rₖ‖ estimate
     # ‖ rₖ ‖ = |ζbarₖ₊₁|
