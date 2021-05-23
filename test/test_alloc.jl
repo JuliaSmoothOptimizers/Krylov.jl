@@ -23,18 +23,19 @@ function test_alloc()
   UniformScaling_bytes = @allocated cg(L, b, M=M2)
   @test 0.99 * UniformScaling_bytes ≤ opEye_bytes ≤ 1.01 * UniformScaling_bytes
 
-  # without preconditioner and with Ap preallocated, SYMMLQ needs 4 n-vectors: x_lq, vold, v, w̅ (= x_cg)
-  storage_symmlq(n) = 4 * n
+  # SYMMLQ needs:
+  # 5 n-vectors: x, Mvold, Mv, Mv_next, w̅
+  storage_symmlq(n) = 5 * n
   storage_symmlq_bytes(n) = 8 * storage_symmlq(n)
 
   expected_symmlq_bytes = storage_symmlq_bytes(n)
-  symmlq(A, b)  # warmup
-  actual_symmlq_bytes = @allocated symmlq(A, b)
+  symmlq(L, b)  # warmup
+  actual_symmlq_bytes = @allocated symmlq(L, b)
   @test actual_symmlq_bytes ≤ 1.1 * expected_symmlq_bytes
 
-  solver = SymmlqSolver(A, b)
-  symmlq!(solver, A, b)  # warmup
-  inplace_symmlq_bytes = @allocated symmlq!(solver, A, b)
+  solver = SymmlqSolver(L, b)
+  symmlq!(solver, L, b)  # warmup
+  inplace_symmlq_bytes = @allocated symmlq!(solver, L, b)
   @test (VERSION < v"1.5") || (inplace_symmlq_bytes == 672)
 
   # CG needs:

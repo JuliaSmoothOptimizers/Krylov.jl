@@ -133,18 +133,22 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct SymmlqSolver{T,S} <: KrylovSolver{T,S}
-  x     :: S
-  Mvold :: S
-  Mv    :: S
-  w̅     :: S
+  x       :: S
+  Mvold   :: S
+  Mv      :: S
+  Mv_next :: S
+  w̅       :: S
+  v       :: Union{S, Nothing}
 
   function SymmlqSolver(n, m, S)
-    T     = eltype(S)
-    x     = S(undef, n)
-    Mvold = S(undef, n)
-    Mv    = S(undef, n)
-    w̅     = S(undef, n)
-    solver = new{T,S}(x, Mvold, Mv, w̅)
+    T       = eltype(S)
+    x       = S(undef, n)
+    Mvold   = S(undef, n)
+    Mv      = S(undef, n)
+    Mv_next = S(undef, n)
+    w̅       = S(undef, n)
+    v       = nothing
+    solver = new{T,S}(x, Mvold, Mv, Mv_next, w̅, v)
     return solver
   end
 
