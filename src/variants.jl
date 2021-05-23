@@ -32,11 +32,3 @@ for fn in (:cgls, :cgne, :lnlq, :craig, :craigmr, :crls, :crmr, :lslq, :lsqr, :l
       $fn(PreallocatedLinearOperator(A, storagetype=ktypeof(b)), b; wrap_preconditioners(kwargs, ktypeof(b))...)
   end
 end
-
-# Variants where matrix-vector products with A are only required
-for fn in (:cgs, :bicgstab)
-  @eval begin
-    $fn(A :: AbstractMatrix{T}, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat =
-      $fn(PreallocatedLinearOperator(A, storagetype=ktypeof(b), symmetric=true), b; wrap_preconditioners(kwargs, ktypeof(b))...)
-  end
-end

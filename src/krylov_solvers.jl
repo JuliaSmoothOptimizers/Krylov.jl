@@ -633,20 +633,26 @@ The outer constructorss
 may be used in order to create these vectors.
 """
 mutable struct CgsSolver{T,S} <: KrylovSolver{T,S}
-  x :: S
-  r :: S
-  u :: S
-  p :: S
-  q :: S
+  x  :: S
+  r  :: S
+  u  :: S
+  p  :: S
+  q  :: S
+  ts :: S
+  yz :: Union{Nothing, S}
+  vw :: Union{Nothing, S}
 
   function CgsSolver(n, m, S)
-    T = eltype(S)
-    x = S(undef, n)
-    r = S(undef, n)
-    u = S(undef, n)
-    p = S(undef, n)
-    q = S(undef, n)
-    solver = new{T,S}(x, r, u, p, q)
+    T  = eltype(S)
+    x  = S(undef, n)
+    r  = S(undef, n)
+    u  = S(undef, n)
+    p  = S(undef, n)
+    q  = S(undef, n)
+    ts = S(undef, n)
+    yz = nothing
+    vw = nothing
+    solver = new{T,S}(x, r, u, p, q, ts, yz, vw)
     return solver
   end
 
@@ -668,20 +674,26 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct BicgstabSolver{T,S} <: KrylovSolver{T,S}
-  x :: S
-  r :: S
-  p :: S
-  v :: S
-  s :: S
+  x  :: S
+  r  :: S
+  p  :: S
+  v  :: S
+  s  :: S
+  qd :: S
+  yz :: Union{Nothing, S}
+  t  :: Union{Nothing, S}
 
   function BicgstabSolver(n, m, S)
-    T = eltype(S)
-    x = S(undef, n)
-    r = S(undef, n)
-    p = S(undef, n)
-    v = S(undef, n)
-    s = S(undef, n)
-    solver = new{T,S}(x, r, p, v, s)
+    T  = eltype(S)
+    x  = S(undef, n)
+    r  = S(undef, n)
+    p  = S(undef, n)
+    v  = S(undef, n)
+    s  = S(undef, n)
+    qd = S(undef, n)
+    yz = nothing
+    t  = nothing
+    solver = new{T,S}(x, r, p, v, s, qd, yz, t)
     return solver
   end
 

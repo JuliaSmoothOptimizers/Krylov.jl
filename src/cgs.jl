@@ -52,18 +52,30 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("CGS: system of size %d\n", n)
 
+  # Check M == Iₙ and N == Iₙ
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
+
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
-  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
-  isa(N, opEye) || (eltype(N) == T) || error("eltype(N) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Set up workspace.
-  x, r, u, p, q = solver.x, solver.r, solver.u, solver.p, solver.q
+  !MisI && isnothing(solver.vw) && (solver.vw = S(undef, n))
+  !NisI && isnothing(solver.yz) && (solver.yz = S(undef, n))
+  x, r, u, p, q, ts = solver.x, solver.r, solver.u, solver.p, solver.q, solver.ts
+  t = s = solver.ts
+  v = MisI ? t : solver.vw
+  w = MisI ? s : solver.vw
+  y = NisI ? p : solver.yz
+  z = NisI ? u : solver.yz
 
-  x .= zero(T)  # x₀
-  r .= M * b    # r₀
+
+  x .= zero(T)   # x₀
+  mul!(r, M, b)  # r₀
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
@@ -93,18 +105,18 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
 
   while !(solved || tired || breakdown)
 
-    y = N * p                     # yₖ = N⁻¹pₖ
-    t = A * y                     # tₖ = Ayₖ
-    v = M * t                     # vₖ = M⁻¹tₖ
+    NisI || mul!(y, N, p)         # yₖ = N⁻¹pₖ
+    mul!(t, A, y)                 # tₖ = Ayₖ
+    MisI || mul!(v, M, t)         # vₖ = M⁻¹tₖ
     σ = @kdot(n, v, c)            # σₖ = ⟨ M⁻¹AN⁻¹pₖ,̅r₀ ⟩
     α = ρ / σ                     # αₖ = ρₖ / σₖ
     @kcopy!(n, u, q)              # qₖ = uₖ
     @kaxpy!(n, -α, v, q)          # qₖ = qₖ - αₖ * M⁻¹AN⁻¹pₖ
     @kaxpy!(n, one(T), q, u)      # uₖ₊½ = uₖ + qₖ
-    z = N * u                     # zₖ = N⁻¹uₖ₊½
+    NisI || mul!(z, N, u)         # zₖ = N⁻¹uₖ₊½
     @kaxpy!(n, α, z, x)           # xₖ₊₁ = xₖ + αₖ * N⁻¹(uₖ + qₖ)
-    s = A * z                     # sₖ = Azₖ
-    w = M * s                     # wₖ = M⁻¹sₖ
+    mul!(s, A, z)                 # sₖ = Azₖ
+    MisI || mul!(w, M, s)         # wₖ = M⁻¹sₖ
     @kaxpy!(n, -α, w, r)          # rₖ₊₁ = rₖ - αₖ * M⁻¹AN⁻¹(uₖ + qₖ)
     ρ_next = @kdot(n, r, c)       # ρₖ₊₁ = ⟨ rₖ₊₁,̅r₀ ⟩
     β = ρ_next / ρ                # βₖ = ρₖ₊₁ / ρₖ

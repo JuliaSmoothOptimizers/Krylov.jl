@@ -62,7 +62,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   # Initial state.
   x .= zero(T)  # initial estimation x = 0
   xNorm = zero(T)
-  MisI ? r .= b : mul!(r, M, b)  # initial residual r = M * (b - Ax) = M * b
+  mul!(r, M, b)  # initial residual r = M * (b - Ax) = M * b
   mul!(Ar, A, r)
   ρ = @kdot(n, r, Ar)
   ρ == 0 && return (x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
