@@ -169,32 +169,34 @@ function test_alloc()
   inplace_crmr_bytes = @allocated crmr!(solver, Au, c)
   @test (VERSION < v"1.5") || (inplace_crmr_bytes == 208)
 
-  # without preconditioner and with Ap preallocated, CGS needs 5 n-vectors: x, r, u, p, q
-  storage_cgs(n) = 5 * n
+  # CGS needs:
+  # 6 n-vectors: x, r, u, p, q, ts
+  storage_cgs(n) = 6 * n
   storage_cgs_bytes(n) = 8 * storage_cgs(n)
 
   expected_cgs_bytes = storage_cgs_bytes(n)
-  cgs(A, b)  # warmup
-  actual_cgs_bytes = @allocated cgs(A, b)
+  cgs(L, b)  # warmup
+  actual_cgs_bytes = @allocated cgs(L, b)
   @test actual_cgs_bytes ≤ 1.1 * expected_cgs_bytes
 
-  solver = CgsSolver(A, b)
-  cgs!(solver, A, b)  # warmup
-  inplace_cgs_bytes = @allocated cgs!(solver, A, b)
+  solver = CgsSolver(L, b)
+  cgs!(solver, L, b)  # warmup
+  inplace_cgs_bytes = @allocated cgs!(solver, L, b)
   @test (VERSION < v"1.5") || (inplace_cgs_bytes == 208)
 
-  # without preconditioner and with Ap preallocated, BICGSTAB needs 5 n-vectors: x, r, p, v, s
-  storage_bicgstab(n) = 5 * n
+  # BICGSTAB needs:
+  # 6 n-vectors: x, r, p, v, s, qd
+  storage_bicgstab(n) = 6 * n
   storage_bicgstab_bytes(n) = 8 * storage_bicgstab(n)
 
   expected_bicgstab_bytes = storage_bicgstab_bytes(n)
-  bicgstab(A, b)  # warmup
-  actual_bicgstab_bytes = @allocated bicgstab(A, b)
+  bicgstab(L, b)  # warmup
+  actual_bicgstab_bytes = @allocated bicgstab(L, b)
   @test actual_bicgstab_bytes ≤ 1.1 * expected_bicgstab_bytes
 
-  solver = BicgstabSolver(A, b)
-  bicgstab!(solver, A, b)  # warmup
-  inplace_bicgstab_bytes = @allocated bicgstab!(solver, A, b)
+  solver = BicgstabSolver(L, b)
+  bicgstab!(solver, L, b)  # warmup
+  inplace_bicgstab_bytes = @allocated bicgstab!(solver, L, b)
   @test (VERSION < v"1.5") || (inplace_bicgstab_bytes == 208)
 
   # with (Ap, Aᵀq) preallocated, CRAIGMR needs:
