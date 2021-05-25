@@ -44,6 +44,4 @@ include("lnlq.jl")
 include("craig.jl")
 include("craigmr.jl")
 
-include("variants.jl")
-
 end

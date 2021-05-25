@@ -886,17 +886,23 @@ mutable struct CrlsSolver{T,S} <: KrylovSolver{T,S}
   x  :: S
   p  :: S
   Ar :: S
+  q  :: S
   r  :: S
   Ap :: S
+  s  :: S
+  Ms :: Union{Nothing, S}
 
   function CrlsSolver(n, m, S)
     T  = eltype(S)
     x  = S(undef, m)
     p  = S(undef, m)
     Ar = S(undef, m)
+    q  = S(undef, m)
     r  = S(undef, n)
     Ap = S(undef, n)
-    solver = new{T,S}(x, p, Ar, r, Ap)
+    s  = S(undef, n)
+    Ms = nothing
+    solver = new{T,S}(x, p, Ar, q, r, Ap, s, Ms)
     return solver
   end
 
