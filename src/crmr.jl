@@ -71,27 +71,33 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
                rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
-  size(b, 1) == m || error("Inconsistent problem size")
+  length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("CRMR: system of %d equations in %d variables\n", m, n)
+
+  # Tests M == Iₙ
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
   # Set up workspace.
-  x, p, r = solver.x, solver.p, solver.r
+  !MisI   && isnothing(solver.Mq) && (solver.Mq = S(undef, m))
+  (λ > 0) && isnothing(solver.s)  && (solver.s  = S(undef, m))
+  x, p, Aᵀr, r, q, s = solver.x, solver.p, solver.Aᵀr, solver.r, solver.q, solver.s
+  Mq = MisI ? q : solver.Mq
 
   x .= zero(T)  # initial estimation x = 0
-  r .= M * b    # initial residual r = M * (b - Ax) = M * b
+  mul!(r, M, b) # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
   rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
-  λ > 0 && (s = copy(r))
-  Aᵀr = Aᵀ * r # - λ * x0 if x0 ≠ 0.
+  λ > 0 && (s .= r)
+  mul!(Aᵀr, Aᵀ, r)  # - λ * x0 if x0 ≠ 0.
   p .= Aᵀr
   γ = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr)
   λ > 0 && (γ += λ * rNorm * rNorm)
@@ -112,14 +118,14 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   tired = iter ≥ itmax
 
   while ! (solved || inconsistent || tired)
-    q = A * p
+    mul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s
-    Mq = M * q
+    MisI || mul!(Mq, M, q)
     α = γ / @kdot(m, q, Mq)    # Compute qᵗ * M * q
     @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p
     @kaxpy!(m, -α, Mq, r)      # Faster than  r =  r - α * Mq
     rNorm = @knrm2(m, r)       # norm(r)
-    Aᵀr = Aᵀ * r
+    mul!(Aᵀr, Aᵀ, r)
     γ_next = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ_next = dot(Aᵀr, Aᵀr)
     λ > 0 && (γ_next += λ * rNorm * rNorm)
     β = γ_next / γ
