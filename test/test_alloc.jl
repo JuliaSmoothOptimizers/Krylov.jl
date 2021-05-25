@@ -263,20 +263,20 @@ function test_alloc()
   inplace_craig_bytes = @allocated craig!(solver, Lu, c)
   @test (VERSION < v"1.5") || (inplace_craig_bytes == 208)
 
-  # without preconditioner and with (Ap, Aᵀq) preallocated, LSLQ needs:
-  # - 3 m-vectors: x_lq, v, w̄ (= x_cg)
-  # - 1 n-vector: u
-  storage_lslq(n, m) = 3 * m + n
+  # LSLQ needs:
+  # - 4 m-vectors: x_lq, v, Aᵀu, w̄ (= x_cg)
+  # - 2 n-vectors: u, Av
+  storage_lslq(n, m) = 4 * m + 2 * n
   storage_lslq_bytes(n, m) = 8 * storage_lslq(n, m)
 
   expected_lslq_bytes = storage_lslq_bytes(n, m)
-  (x, stats) = lslq(Ao, b)  # warmup
-  actual_lslq_bytes = @allocated lslq(Ao, b)
+  (x, stats) = lslq(Lo, b)  # warmup
+  actual_lslq_bytes = @allocated lslq(Lo, b)
   @test actual_lslq_bytes ≤ 1.02 * expected_lslq_bytes
 
-  solver = LslqSolver(Ao, b)
-  lslq!(solver, Ao, b)  # warmup
-  inplace_lslq_bytes = @allocated lslq!(solver, Ao, b)
+  solver = LslqSolver(Lo, b)
+  lslq!(solver, Lo, b)  # warmup
+  inplace_lslq_bytes = @allocated lslq!(solver, Lo, b)
   @test (VERSION < v"1.5") || (inplace_lslq_bytes == 576)
 
   # without preconditioner and with (Ap, Aᵀq) preallocated, CGLS needs:
@@ -295,25 +295,25 @@ function test_alloc()
   inplace_cgls_bytes = @allocated cgls!(solver, Ao, b)
   @test (VERSION < v"1.5") || (inplace_cgls_bytes == 208)
 
-  # without preconditioner and with (Ap, Aᵀq) preallocated, LSQR needs:
-  # - 3 m-vectors: x, v, w
-  # - 1 n-vector: u
-  storage_lsqr(n, m) = 3 * m + n
+  # LSQR needs:
+  # - 4 m-vectors: x, v, w, Aᵀu
+  # - 2 n-vectors: u, Av
+  storage_lsqr(n, m) = 4 * m + 2 * n
   storage_lsqr_bytes(n, m) = 8 * storage_lsqr(n, m)
 
   expected_lsqr_bytes = storage_lsqr_bytes(n, m)
-  (x, stats) = lsqr(Ao, b)  # warmup
-  actual_lsqr_bytes = @allocated lsqr(Ao, b)
+  (x, stats) = lsqr(Lo, b)  # warmup
+  actual_lsqr_bytes = @allocated lsqr(Lo, b)
   @test actual_lsqr_bytes ≤ 1.02 * expected_lsqr_bytes
 
-  solver = LsqrSolver(Ao, b)
-  lsqr!(solver, Ao, b)  # warmup
-  inplace_lsqr_bytes = @allocated lsqr!(solver, Ao, b)
+  solver = LsqrSolver(Lo, b)
+  lsqr!(solver, Lo, b)  # warmup
+  inplace_lsqr_bytes = @allocated lsqr!(solver, Lo, b)
   @test (VERSION < v"1.5") || (inplace_lsqr_bytes == 432)
 
   # without preconditioner and with (Ap, Aᵀq) preallocated, CRLS needs:
   # - 3 m-vectors: x, p, Ar
-  # - 2 n-vector: r, Ap
+  # - 2 n-vectors: r, Ap
   storage_crls(n, m) = 3 * m + 2 * n
   storage_crls_bytes(n, m) = 8 * storage_crls(n, m)
 
@@ -327,20 +327,20 @@ function test_alloc()
   inplace_crls_bytes = @allocated crls!(solver, Ao, b)
   @test (VERSION < v"1.5") || (inplace_crls_bytes == 208)
 
-  # without preconditioner and with (Ap, Aᵀq) preallocated, LSMR needs:
-  # - 4 m-vectors: x, v, h, hbar
-  # - 1 n-vector: u
-  storage_lsmr(n, m) = 4 * m + n
+  # LSMR needs:
+  # - 5 m-vectors: x, v, h, hbar, Aᵀu
+  # - 2 n-vectors: u, Av
+  storage_lsmr(n, m) = 5 * m + 2 * n
   storage_lsmr_bytes(n, m) = 8 * storage_lsmr(n, m)
 
   expected_lsmr_bytes = storage_lsmr_bytes(n, m)
-  (x, stats) = lsmr(Ao, b)  # warmup
-  actual_lsmr_bytes = @allocated lsmr(Ao, b)
+  (x, stats) = lsmr(Lo, b)  # warmup
+  actual_lsmr_bytes = @allocated lsmr(Lo, b)
   @test actual_lsmr_bytes ≤ 1.02 * expected_lsmr_bytes
 
-  solver = LsmrSolver(Ao, b)
-  lsmr!(solver, Ao, b)  # warmup
-  inplace_lsmr_bytes = @allocated lsmr!(solver, Ao, b)
+  solver = LsmrSolver(Lo, b)
+  lsmr!(solver, Lo, b)  # warmup
+  inplace_lsmr_bytes = @allocated lsmr!(solver, Lo, b)
   @test (VERSION < v"1.5") || (inplace_lsmr_bytes == 336)
 
   # USYMQR needs:

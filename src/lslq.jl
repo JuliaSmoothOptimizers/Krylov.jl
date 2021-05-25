@@ -115,12 +115,12 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
                σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
-  size(b, 1) == m || error("Inconsistent problem size")
+  length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("LSLQ: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₙ and N == Iₘ
-  MisI = isa(M, opEye)
-  NisI = isa(N, opEye)
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -132,7 +132,11 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   Aᵀ = A'
 
   # Set up workspace.
-  x_lq, Nv, w̄, Mu = solver.x_lq, solver.Nv, solver.w̄, solver.Mu
+  !MisI && isnothing(solver.u) && (solver.u = S(undef, n))
+  !NisI && isnothing(solver.v) && (solver.v = S(undef, m))
+  x_lq, Nv, Aᵀu, w̄, Mu, Av = solver.x_lq, solver.Nv, solver.Aᵀu, solver.w̄, solver.Mu, solver.Av
+  u = MisI ? Mu : solver.u
+  v = NisI ? Nv : solver.v
 
   # If solving an SQD system, set regularization to 1.
   sqd && (λ = one(T))
@@ -147,7 +151,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
   Mu .= b
-  u = M * Mu
+  MisI || mul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
   β₁ == 0 && return (x_lq, kzeros(S, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
                        SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
@@ -155,9 +159,9 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
 
   @kscal!(m, one(T)/β₁, u)
   MisI || @kscal!(m, one(T)/β₁, Mu)
-  Aᵀu = Aᵀ * u
+  mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
-  v = N * Nv
+  NisI || mul!(v, N, Nv)
   α = sqrt(@kdot(n, v, Nv))  # = α₁
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
@@ -222,18 +226,18 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
 
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-    Av = A * v
+    mul!(Av, A, v)
     @kaxpby!(m, one(T), Av, -α, Mu)
-    u = M * Mu
+    MisI || mul!(u, M, Mu)
     β = sqrt(@kdot(m, u, Mu))
     if β ≠ 0
       @kscal!(m, one(T)/β, u)
       MisI || @kscal!(m, one(T)/β, Mu)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-      Aᵀu = Aᵀ * u
+      mul!(Aᵀu, Aᵀ, u)
       @kaxpby!(n, one(T), Aᵀu, -β, Nv)
-      v = N * Nv
+      NisI || mul!(v, N, Nv)
       α = sqrt(@kdot(n, v, Nv))
       if α ≠ 0
         @kscal!(n, one(T)/α, v)
