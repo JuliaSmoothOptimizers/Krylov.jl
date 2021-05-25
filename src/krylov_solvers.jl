@@ -976,16 +976,24 @@ may be used in order to create these vectors.
 mutable struct LslqSolver{T,S} <: KrylovSolver{T,S}
   x_lq :: S
   Nv   :: S
+  Aᵀu  :: S
   w̄    :: S
   Mu   :: S
+  Av   :: S
+  u    :: Union{Nothing, S}
+  v    :: Union{Nothing, S}
 
   function LslqSolver(n, m, S)
     T    = eltype(S)
     x_lq = S(undef, m)
     Nv   = S(undef, m)
+    Aᵀu  = S(undef, m)
     w̄    = S(undef, m)
     Mu   = S(undef, n)
-    solver = new{T,S}(x_lq, Nv, w̄, Mu)
+    Av   = S(undef, n)
+    u    = nothing
+    v    = nothing
+    solver = new{T,S}(x_lq, Nv, Aᵀu, w̄, Mu, Av, u, v)
     return solver
   end
 
@@ -1007,18 +1015,26 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct LsqrSolver{T,S} <: KrylovSolver{T,S}
-  x  :: S
-  Nv :: S
-  w  :: S
-  Mu :: S
+  x   :: S
+  Nv  :: S
+  Aᵀu :: S
+  w   :: S
+  Mu  :: S
+  Av  :: S
+  u   :: Union{Nothing, S}
+  v   :: Union{Nothing, S}
 
   function LsqrSolver(n, m, S)
-    T  = eltype(S)
-    x  = S(undef, m)
-    Nv = S(undef, m)
-    w  = S(undef, m)
-    Mu = S(undef, n)
-    solver = new{T,S}(x, Nv, w, Mu)
+    T   = eltype(S)
+    x   = S(undef, m)
+    Nv  = S(undef, m)
+    Aᵀu = S(undef, m)
+    w   = S(undef, m)
+    Mu  = S(undef, n)
+    Av  = S(undef, n)
+    u   = nothing
+    v   = nothing
+    solver = new{T,S}(x, Nv, Aᵀu, w, Mu, Av, u, v)
     return solver
   end
 
@@ -1042,18 +1058,26 @@ may be used in order to create these vectors.
 mutable struct LsmrSolver{T,S} <: KrylovSolver{T,S}
   x    :: S
   Nv   :: S
+  Aᵀu  :: S
   h    :: S
   hbar :: S
   Mu   :: S
+  Av   :: S
+  u    :: Union{Nothing, S}
+  v    :: Union{Nothing, S}
 
   function LsmrSolver(n, m, S)
     T    = eltype(S)
     x    = S(undef, m)
     Nv   = S(undef, m)
+    Aᵀu  = S(undef, m)
     h    = S(undef, m)
     hbar = S(undef, m)
     Mu   = S(undef, n)
-    solver = new{T,S}(x, Nv, h, hbar, Mu)
+    Av   = S(undef, n)
+    u    = nothing
+    v    = nothing
+    solver = new{T,S}(x, Nv, Aᵀu, h, hbar, Mu, Av, u, v)
     return solver
   end
 
@@ -1188,7 +1212,6 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
     Av   = S(undef, n)
     u    = nothing
     v    = nothing
-
     solver = new{T,S}(x, Nv, Aᵀu, y, Mu, w, wbar, Av, u, v)
     return solver
   end
