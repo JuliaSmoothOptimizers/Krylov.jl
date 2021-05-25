@@ -60,7 +60,7 @@
 
     # Test saddle-point systems
     A, b, D = saddle_point()
-    D⁻¹ = PreallocatedLinearOperator(inv(D))
+    D⁻¹ = inv(D)
     (x, y, stats) = lnlq(A, b, N=D⁻¹, transfer_to_craig=transfer_to_craig)
     r = b - A * x
     resid = norm(r) / norm(b)
@@ -79,8 +79,8 @@
 
     # Test symmetric and quasi-definite systems
     A, b, M, N = sqd()
-    M⁻¹ = PreallocatedLinearOperator(inv(M))
-    N⁻¹ = PreallocatedLinearOperator(inv(N))
+    M⁻¹ = inv(M)
+    N⁻¹ = inv(N)
     (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=true, transfer_to_craig=transfer_to_craig)
     r = b - (A * x + M * y)
     resid = norm(r) / norm(b)

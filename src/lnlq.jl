@@ -79,8 +79,8 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("LNLQ: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye)
-  NisI = isa(N, opEye)
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -95,8 +95,12 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   sqd && (λ = one(T))
 
   # Set up workspace.
-  (λ > 0) && isnothing(solver.q) && (solver.q = S(undef, n))
-  x, Nv, y, w̄, Mu, q = solver.x, solver.Nv, solver.y, solver.w̄, solver.Mu, solver.q
+  !MisI   && isnothing(solver.u)  && (solver.u = S(undef, n))
+  !NisI   && isnothing(solver.v)  && (solver.v = S(undef, m))
+  (λ > 0) && isnothing(solver.q)  && (solver.q = S(undef, n))
+  x, Nv, Aᵀu, y, w̄, Mu, Av, q = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.w̄, solver.Mu, solver.Av, solver.q
+  u = MisI ? Mu : solver.u
+  v = NisI ? Nv : solver.v
 
   # Initial solutions (x₀, y₀) and residual norm ‖r₀‖.
   x .= zero(T)
@@ -120,7 +124,7 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   # Initialize generalized Golub-Kahan bidiagonalization.
   # β₁Mu₁ = b.
   Mu .= b
-  u  = M * Mu                 # u₁ = M⁻¹ * Mu₁
+  MisI || mul!(u, M, Mu)      # u₁ = M⁻¹ * Mu₁
   βₖ = sqrt(@kdot(m, u, Mu))  # β₁ = ‖u₁‖_M
   if βₖ ≠ 0
     @kscal!(m, 1 / βₖ, u)
@@ -128,10 +132,10 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   end
 
   # α₁Nv₁ = Aᵀu₁.
-  Aᵀu = Aᵀ * u
+  mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
-  v   = N * Nv                 # v₁ = N⁻¹ * Nv₁
-  αₖ  = sqrt(@kdot(n, v, Nv))  # α₁ = ‖v₁‖_N
+  NisI || mul!(v, N, Nv)      # v₁ = N⁻¹ * Nv₁
+  αₖ = sqrt(@kdot(n, v, Nv))  # α₁ = ‖v₁‖_N
   if αₖ ≠ 0
     @kscal!(n, 1 / αₖ, v)
     NisI || @kscal!(n, 1 / αₖ, Nv)
@@ -219,9 +223,9 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
     #      [ βₖ₊₁(eₖ)ᵀ ]
 
     # βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-    Av = A * v
+    mul!(Av, A, v)
     @kaxpby!(m, one(T), Av, -αₖ, Mu)
-    u = M * Mu                    # uₖ₊₁ = M⁻¹ * Muₖ₊₁
+    MisI || mul!(u, M, Mu)        # uₖ₊₁ = M⁻¹ * Muₖ₊₁
     βₖ₊₁ = sqrt(@kdot(m, u, Mu))  # βₖ₊₁ = ‖uₖ₊₁‖_M
     if βₖ₊₁ ≠ 0
       @kscal!(m, 1 / βₖ₊₁, u)
@@ -229,9 +233,9 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
     end
 
     # αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    Aᵀu = Aᵀ * u
+    mul!(Aᵀu, Aᵀ, u)
     @kaxpby!(n, one(T), Aᵀu, -βₖ₊₁, Nv)
-    v = N * Nv                    # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
+    NisI || mul!(v, N, Nv)        # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
     αₖ₊₁ = sqrt(@kdot(n, v, Nv))  # αₖ₊₁ = ‖vₖ₊₁‖_N
     if αₖ₊₁ ≠ 0
       @kscal!(n, 1 / αₖ₊₁, v)

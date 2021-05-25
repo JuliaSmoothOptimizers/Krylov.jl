@@ -79,12 +79,12 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
                   rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
-  size(b, 1) == m || error("Inconsistent problem size")
+  length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("CRAIGMR: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye)
-  NisI = isa(N, opEye)
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -96,13 +96,17 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   Aᵀ = A'
 
   # Set up workspace.
-  x, Nv, y, Mu, w, wbar = solver.x, solver.Nv, solver.y, solver.Mu, solver.w, solver.wbar
+  !MisI && isnothing(solver.u) && (solver.u = S(undef, n))
+  !NisI && isnothing(solver.v) && (solver.v = S(undef, m))
+  x, Nv, Aᵀu, y, Mu, w, wbar, Av = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.Mu, solver.w, solver.wbar, solver.Av
+  u = MisI ? Mu : solver.u
+  v = NisI ? Nv : solver.v
 
   # Compute y such that AAᵀy = b. Then recover x = Aᵀy.
   x .= zero(T)
   y .= zero(T)
   Mu .= b
-  u = M * Mu
+  MisI || mul!(u, M, Mu)
   β = sqrt(@kdot(m, u, Mu))
   β == 0 && return (x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
 
@@ -111,9 +115,9 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   @kscal!(m, one(T)/β, u)
   MisI || @kscal!(m, one(T)/β, Mu)
   # α₁Nv₁ = Aᵀu₁.
-  Aᵀu = Aᵀ * u
+  mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
-  v = N * Nv
+  NisI || mul!(v, N, Nv)
   α = sqrt(@kdot(n, v, Nv))
   Anorm² = α * α
 
@@ -154,9 +158,9 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
 
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-    Av = A * v
+    mul!(Av, A, v)
     @kaxpby!(m, one(T), Av, -α, Mu)
-    u = M * Mu
+    MisI || mul!(u, M, Mu)
     β = sqrt(@kdot(m, u, Mu))
     if β ≠ 0
       @kscal!(m, one(T)/β, u)
@@ -188,9 +192,9 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
     @kaxpy!(m, ζ, w, y)             # y = y + ζ * w
 
     # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    Aᵀu = Aᵀ * u
+    mul!(Aᵀu, Aᵀ, u)
     @kaxpby!(n, one(T), Aᵀu, -β, Nv)
-    v = N * Nv
+    NisI || mul!(v, N, Nv)
     α = sqrt(@kdot(n, v, Nv))
     Anorm² = Anorm² + α * α  # = ‖Lₖ‖
     ArNorm = α * β * abs(ζ/ρ)
@@ -212,8 +216,10 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   end
   (verbose > 0) && @printf("\n")
 
-  Aᵀy = Aᵀ * y
-  N⁻¹Aᵀy = N * Aᵀy
+  Aᵀy = Aᵀu
+  mul!(Aᵀy, Aᵀ, y)
+  N⁻¹Aᵀy = NisI ? Aᵀy : solver.v
+  mul!(N⁻¹Aᵀy, N, Aᵀy)
   @. x = N⁻¹Aᵀy
 
   status = tired ? "maximum number of iterations exceeded" : (solved ? "found approximate minimum-norm solution" : "found approximate minimum least-squares solution")
