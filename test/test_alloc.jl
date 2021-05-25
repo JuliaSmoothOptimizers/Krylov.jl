@@ -1,12 +1,9 @@
 function test_alloc()
-  L   = get_div_grad(32, 32, 32)
-  n   = size(L, 1)
+  A   = get_div_grad(32, 32, 32)  # Dimension n x n
+  n   = size(A, 1)
   m   = div(n, 2)
-  Lu  = L[1:m,:]
-  Lo  = L[:,1:m]
-  A   = PreallocatedLinearOperator(L)   # Dimension n x n
-  Au  = PreallocatedLinearOperator(Lu)  # Dimension m x n
-  Ao  = PreallocatedLinearOperator(Lo)  # Dimension n x m
+  Au  = A[1:m,:]  # Dimension m x n
+  Ao  = A[:,1:m]  # Dimension n x m
   b   = Ao * ones(m) # Dimension n
   c   = Au * ones(n) # Dimension m
   mem = 10
@@ -14,28 +11,19 @@ function test_alloc()
   shifts  = [1.0; 2.0; 3.0; 4.0; 5.0]
   nshifts = 5
 
-  # UniformScaling preconditioners I should work as OpEye()
-  M1 = opEye()
-  M2 = I
-  cg(L, b, M=M1) # warmup
-  cg(L, b, M=M2) # warmup
-  opEye_bytes = @allocated cg(L, b, M=M1)
-  UniformScaling_bytes = @allocated cg(L, b, M=M2)
-  @test 0.99 * UniformScaling_bytes ≤ opEye_bytes ≤ 1.01 * UniformScaling_bytes
-
   # SYMMLQ needs:
   # 5 n-vectors: x, Mvold, Mv, Mv_next, w̅
   storage_symmlq(n) = 5 * n
   storage_symmlq_bytes(n) = 8 * storage_symmlq(n)
 
   expected_symmlq_bytes = storage_symmlq_bytes(n)
-  symmlq(L, b)  # warmup
-  actual_symmlq_bytes = @allocated symmlq(L, b)
+  symmlq(A, b)  # warmup
+  actual_symmlq_bytes = @allocated symmlq(A, b)
   @test actual_symmlq_bytes ≤ 1.02 * expected_symmlq_bytes
 
-  solver = SymmlqSolver(L, b)
-  symmlq!(solver, L, b)  # warmup
-  inplace_symmlq_bytes = @allocated symmlq!(solver, L, b)
+  solver = SymmlqSolver(A, b)
+  symmlq!(solver, A, b)  # warmup
+  inplace_symmlq_bytes = @allocated symmlq!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_symmlq_bytes == 672)
 
   # CG needs:
@@ -44,13 +32,13 @@ function test_alloc()
   storage_cg_bytes(n) = 8 * storage_cg(n)
 
   expected_cg_bytes = storage_cg_bytes(n)
-  cg(L, b)  # warmup
-  actual_cg_bytes = @allocated cg(L, b)
+  cg(A, b)  # warmup
+  actual_cg_bytes = @allocated cg(A, b)
   @test actual_cg_bytes ≤ 1.02 * expected_cg_bytes
 
-  solver = CgSolver(L, b)
-  cg!(solver, L, b)  # warmup
-  inplace_cg_bytes = @allocated cg!(solver, L, b)
+  solver = CgSolver(A, b)
+  cg!(solver, A, b)  # warmup
+  inplace_cg_bytes = @allocated cg!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_cg_bytes == 208)
 
   # MINRES needs:
@@ -59,13 +47,13 @@ function test_alloc()
   storage_minres_bytes(n) = 8 * storage_minres(n)
 
   expected_minres_bytes = storage_minres_bytes(n)
-  minres(L, b)  # warmup
-  actual_minres_bytes = @allocated minres(L, b)
+  minres(A, b)  # warmup
+  actual_minres_bytes = @allocated minres(A, b)
   @test actual_minres_bytes ≤ 1.02 * expected_minres_bytes
 
-  solver = MinresSolver(L, b)
-  minres!(solver, L, b)  # warmup
-  inplace_minres_bytes = @allocated minres!(solver, L, b)
+  solver = MinresSolver(A, b)
+  minres!(solver, A, b)  # warmup
+  inplace_minres_bytes = @allocated minres!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_minres_bytes == 0)
 
   # DIOM needs:
@@ -78,13 +66,13 @@ function test_alloc()
   storage_diom_bytes(mem, n) = 8 * storage_diom(mem, n)
 
   expected_diom_bytes = storage_diom_bytes(mem, n)
-  diom(L, b, memory=mem)  # warmup
-  actual_diom_bytes = @allocated diom(L, b, memory=mem)
+  diom(A, b, memory=mem)  # warmup
+  actual_diom_bytes = @allocated diom(A, b, memory=mem)
   @test actual_diom_bytes ≤ 1.02 * expected_diom_bytes
 
-  solver = DiomSolver(L, b)
-  diom!(solver, L, b)  # warmup
-  inplace_diom_bytes = @allocated diom!(solver, L, b)
+  solver = DiomSolver(A, b)
+  diom!(solver, A, b)  # warmup
+  inplace_diom_bytes = @allocated diom!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_diom_bytes ≤ 240)
 
   # CG_LANCZOS needs:
@@ -93,13 +81,13 @@ function test_alloc()
   storage_cg_lanczos_bytes(n) = 8 * storage_cg_lanczos(n)
 
   expected_cg_lanczos_bytes = storage_cg_lanczos_bytes(n)
-  cg_lanczos(L, b)  # warmup
-  actual_cg_lanczos_bytes = @allocated cg_lanczos(L, b)
+  cg_lanczos(A, b)  # warmup
+  actual_cg_lanczos_bytes = @allocated cg_lanczos(A, b)
   @test actual_cg_lanczos_bytes ≤ 1.02 * expected_cg_lanczos_bytes
 
-  solver = CgLanczosSolver(L, b)
-  cg_lanczos!(solver, L, b)  # warmup
-  inplace_cg_lanczos_bytes = @allocated cg_lanczos!(solver, L, b)
+  solver = CgLanczosSolver(A, b)
+  cg_lanczos!(solver, A, b)  # warmup
+  inplace_cg_lanczos_bytes = @allocated cg_lanczos!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_cg_lanczos_bytes == 144)
 
   # CG_LANCZOS_SHIFT_SEQ needs:
@@ -111,13 +99,13 @@ function test_alloc()
   storage_cg_lanczos_shift_seq_bytes(n, nshifts) = 8 * storage_cg_lanczos_shift_seq(n, nshifts)
 
   expected_cg_lanczos_shift_seq_bytes = storage_cg_lanczos_shift_seq_bytes(n, nshifts)
-  cg_lanczos_shift_seq(L, b, shifts)  # warmup
-  actual_cg_lanczos_shift_seq_bytes = @allocated cg_lanczos_shift_seq(L, b, shifts)
+  cg_lanczos_shift_seq(A, b, shifts)  # warmup
+  actual_cg_lanczos_shift_seq_bytes = @allocated cg_lanczos_shift_seq(A, b, shifts)
   @test actual_cg_lanczos_shift_seq_bytes ≤ 1.02 * expected_cg_lanczos_shift_seq_bytes
 
-  solver = CgLanczosShiftSolver(L, b, shifts)
-  cg_lanczos_shift_seq!(solver, L, b, shifts)  # warmup
-  inplace_cg_lanczos_shift_seq_bytes = @allocated cg_lanczos_shift_seq!(solver, L, b, shifts)
+  solver = CgLanczosShiftSolver(A, b, shifts)
+  cg_lanczos_shift_seq!(solver, A, b, shifts)  # warmup
+  inplace_cg_lanczos_shift_seq_bytes = @allocated cg_lanczos_shift_seq!(solver, A, b, shifts)
   @test (VERSION < v"1.5") || (inplace_cg_lanczos_shift_seq_bytes ≤ 356)
 
   # DQGMRES needs:
@@ -129,13 +117,13 @@ function test_alloc()
   storage_dqgmres_bytes(mem, n) = 8 * storage_dqgmres(mem, n)
 
   expected_dqgmres_bytes = storage_dqgmres_bytes(mem, n)
-  dqgmres(L, b, memory=mem)  # warmup
-  actual_dqgmres_bytes = @allocated dqgmres(L, b, memory=mem)
+  dqgmres(A, b, memory=mem)  # warmup
+  actual_dqgmres_bytes = @allocated dqgmres(A, b, memory=mem)
   @test actual_dqgmres_bytes ≤ 1.02 * expected_dqgmres_bytes
 
-  solver = DqgmresSolver(L, b)
-  dqgmres!(solver, L, b)  # warmup
-  inplace_dqgmres_bytes = @allocated dqgmres!(solver, L, b)
+  solver = DqgmresSolver(A, b)
+  dqgmres!(solver, A, b)  # warmup
+  inplace_dqgmres_bytes = @allocated dqgmres!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_dqgmres_bytes == 208)
 
   # CR needs:
@@ -144,13 +132,13 @@ function test_alloc()
   storage_cr_bytes(n) = 8 * storage_cr(n)
 
   expected_cr_bytes = storage_cr_bytes(n)
-  cr(L, b, rtol=1e-6)  # warmup
-  actual_cr_bytes = @allocated cr(L, b, rtol=1e-6)
+  cr(A, b, rtol=1e-6)  # warmup
+  actual_cr_bytes = @allocated cr(A, b, rtol=1e-6)
   @test actual_cr_bytes ≤ 1.02 * expected_cr_bytes
 
-  solver = CrSolver(L, b)
-  cr!(solver, L, b, rtol=1e-6)  # warmup
-  inplace_cr_bytes = @allocated cr!(solver, L, b, rtol=1e-6)
+  solver = CrSolver(A, b)
+  cr!(solver, A, b, rtol=1e-6)  # warmup
+  inplace_cr_bytes = @allocated cr!(solver, A, b, rtol=1e-6)
   @test (VERSION < v"1.5") || (inplace_cr_bytes == 208)
 
   # CRMR needs:
@@ -160,13 +148,13 @@ function test_alloc()
   storage_crmr_bytes(n, m) = 8 * storage_crmr(n, m)
 
   expected_crmr_bytes = storage_crmr_bytes(n, m)
-  (x, stats) = crmr(Lu, c)  # warmup
-  actual_crmr_bytes = @allocated crmr(Lu, c)
+  (x, stats) = crmr(Au, c)  # warmup
+  actual_crmr_bytes = @allocated crmr(Au, c)
   @test actual_crmr_bytes ≤ 1.02 * expected_crmr_bytes
 
-  solver = CrmrSolver(Lu, c)
-  crmr!(solver, Lu, c)  # warmup
-  inplace_crmr_bytes = @allocated crmr!(solver, Lu, c)
+  solver = CrmrSolver(Au, c)
+  crmr!(solver, Au, c)  # warmup
+  inplace_crmr_bytes = @allocated crmr!(solver, Au, c)
   @test (VERSION < v"1.5") || (inplace_crmr_bytes == 208)
 
   # CGS needs:
@@ -175,13 +163,13 @@ function test_alloc()
   storage_cgs_bytes(n) = 8 * storage_cgs(n)
 
   expected_cgs_bytes = storage_cgs_bytes(n)
-  cgs(L, b)  # warmup
-  actual_cgs_bytes = @allocated cgs(L, b)
+  cgs(A, b)  # warmup
+  actual_cgs_bytes = @allocated cgs(A, b)
   @test actual_cgs_bytes ≤ 1.02 * expected_cgs_bytes
 
-  solver = CgsSolver(L, b)
-  cgs!(solver, L, b)  # warmup
-  inplace_cgs_bytes = @allocated cgs!(solver, L, b)
+  solver = CgsSolver(A, b)
+  cgs!(solver, A, b)  # warmup
+  inplace_cgs_bytes = @allocated cgs!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_cgs_bytes == 208)
 
   # BICGSTAB needs:
@@ -190,13 +178,13 @@ function test_alloc()
   storage_bicgstab_bytes(n) = 8 * storage_bicgstab(n)
 
   expected_bicgstab_bytes = storage_bicgstab_bytes(n)
-  bicgstab(L, b)  # warmup
-  actual_bicgstab_bytes = @allocated bicgstab(L, b)
+  bicgstab(A, b)  # warmup
+  actual_bicgstab_bytes = @allocated bicgstab(A, b)
   @test actual_bicgstab_bytes ≤ 1.02 * expected_bicgstab_bytes
 
-  solver = BicgstabSolver(L, b)
-  bicgstab!(solver, L, b)  # warmup
-  inplace_bicgstab_bytes = @allocated bicgstab!(solver, L, b)
+  solver = BicgstabSolver(A, b)
+  bicgstab!(solver, A, b)  # warmup
+  inplace_bicgstab_bytes = @allocated bicgstab!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_bicgstab_bytes == 208)
 
   # CRAIGMR needs:
@@ -206,13 +194,13 @@ function test_alloc()
   storage_craigmr_bytes(n, m) = 8 * storage_craigmr(n, m)
 
   expected_craigmr_bytes = storage_craigmr_bytes(n, m)
-  craigmr(Lu, c)  # warmup
-  actual_craigmr_bytes = @allocated craigmr(Lu, c)
+  craigmr(Au, c)  # warmup
+  actual_craigmr_bytes = @allocated craigmr(Au, c)
   @test actual_craigmr_bytes ≤ 1.02 * expected_craigmr_bytes
 
-  solver = CraigmrSolver(Lu, c)
-  craigmr!(solver, Lu, c)  # warmup
-  inplace_craigmr_bytes = @allocated craigmr!(solver, Lu, c)
+  solver = CraigmrSolver(Au, c)
+  craigmr!(solver, Au, c)  # warmup
+  inplace_craigmr_bytes = @allocated craigmr!(solver, Au, c)
   @test (VERSION < v"1.5") || (inplace_craigmr_bytes == 208)
 
   # CGNE needs:
@@ -222,13 +210,13 @@ function test_alloc()
   storage_cgne_bytes(n, m) = 8 * storage_cgne(n, m)
 
   expected_cgne_bytes = storage_cgne_bytes(n, m)
-  (x, stats) = cgne(Lu, c)  # warmup
-  actual_cgne_bytes = @allocated cgne(Lu, c)
+  (x, stats) = cgne(Au, c)  # warmup
+  actual_cgne_bytes = @allocated cgne(Au, c)
   @test actual_cgne_bytes ≤ 1.02 * expected_cgne_bytes
 
-  solver = CgneSolver(Lu, c)
-  cgne!(solver, Lu, c)  # warmup
-  inplace_cgne_bytes = @allocated cgne!(solver, Lu, c)
+  solver = CgneSolver(Au, c)
+  cgne!(solver, Au, c)  # warmup
+  inplace_cgne_bytes = @allocated cgne!(solver, Au, c)
   @test (VERSION < v"1.5") || (inplace_cgne_bytes == 208)
 
   # LNLQ needs:
@@ -238,13 +226,13 @@ function test_alloc()
   storage_lnlq_bytes(n, m) = 8 * storage_lnlq(n, m)
 
   expected_lnlq_bytes = storage_lnlq_bytes(n, m)
-  lnlq(Lu, c)  # warmup
-  actual_lnlq_bytes = @allocated lnlq(Lu, c)
+  lnlq(Au, c)  # warmup
+  actual_lnlq_bytes = @allocated lnlq(Au, c)
   @test actual_lnlq_bytes ≤ 1.02 * expected_lnlq_bytes
 
-  solver = LnlqSolver(Lu, c)
-  lnlq!(solver, Lu, c)  # warmup
-  inplace_lnlq_bytes = @allocated lnlq!(solver, Lu, c)
+  solver = LnlqSolver(Au, c)
+  lnlq!(solver, Au, c)  # warmup
+  inplace_lnlq_bytes = @allocated lnlq!(solver, Au, c)
   @test (VERSION < v"1.5") || (inplace_lnlq_bytes == 208)
 
   # CRAIG needs:
@@ -254,13 +242,13 @@ function test_alloc()
   storage_craig_bytes(n, m) = 8 * storage_craig(n, m)
 
   expected_craig_bytes = storage_craig_bytes(n, m)
-  craig(Lu, c)  # warmup
-  actual_craig_bytes = @allocated craig(Lu, c)
+  craig(Au, c)  # warmup
+  actual_craig_bytes = @allocated craig(Au, c)
   @test actual_craig_bytes ≤ 1.02 * expected_craig_bytes
 
-  solver = CraigSolver(Lu, c)
-  craig!(solver, Lu, c)  # warmup
-  inplace_craig_bytes = @allocated craig!(solver, Lu, c)
+  solver = CraigSolver(Au, c)
+  craig!(solver, Au, c)  # warmup
+  inplace_craig_bytes = @allocated craig!(solver, Au, c)
   @test (VERSION < v"1.5") || (inplace_craig_bytes == 208)
 
   # LSLQ needs:
@@ -270,13 +258,13 @@ function test_alloc()
   storage_lslq_bytes(n, m) = 8 * storage_lslq(n, m)
 
   expected_lslq_bytes = storage_lslq_bytes(n, m)
-  (x, stats) = lslq(Lo, b)  # warmup
-  actual_lslq_bytes = @allocated lslq(Lo, b)
+  (x, stats) = lslq(Ao, b)  # warmup
+  actual_lslq_bytes = @allocated lslq(Ao, b)
   @test actual_lslq_bytes ≤ 1.02 * expected_lslq_bytes
 
-  solver = LslqSolver(Lo, b)
-  lslq!(solver, Lo, b)  # warmup
-  inplace_lslq_bytes = @allocated lslq!(solver, Lo, b)
+  solver = LslqSolver(Ao, b)
+  lslq!(solver, Ao, b)  # warmup
+  inplace_lslq_bytes = @allocated lslq!(solver, Ao, b)
   @test (VERSION < v"1.5") || (inplace_lslq_bytes == 576)
 
   # CGLS needs:
@@ -286,13 +274,13 @@ function test_alloc()
   storage_cgls_bytes(n, m) = 8 * storage_cgls(n, m)
 
   expected_cgls_bytes = storage_cgls_bytes(n, m)
-  (x, stats) = cgls(Lo, b)  # warmup
-  actual_cgls_bytes = @allocated cgls(Lo, b)
+  (x, stats) = cgls(Ao, b)  # warmup
+  actual_cgls_bytes = @allocated cgls(Ao, b)
   @test actual_cgls_bytes ≤ 1.02 * expected_cgls_bytes
 
-  solver = CglsSolver(Lo, b)
-  cgls!(solver, Lo, b)  # warmup
-  inplace_cgls_bytes = @allocated cgls!(solver, Lo, b)
+  solver = CglsSolver(Ao, b)
+  cgls!(solver, Ao, b)  # warmup
+  inplace_cgls_bytes = @allocated cgls!(solver, Ao, b)
   @test (VERSION < v"1.5") || (inplace_cgls_bytes == 208)
 
   # LSQR needs:
@@ -302,13 +290,13 @@ function test_alloc()
   storage_lsqr_bytes(n, m) = 8 * storage_lsqr(n, m)
 
   expected_lsqr_bytes = storage_lsqr_bytes(n, m)
-  (x, stats) = lsqr(Lo, b)  # warmup
-  actual_lsqr_bytes = @allocated lsqr(Lo, b)
+  (x, stats) = lsqr(Ao, b)  # warmup
+  actual_lsqr_bytes = @allocated lsqr(Ao, b)
   @test actual_lsqr_bytes ≤ 1.02 * expected_lsqr_bytes
 
-  solver = LsqrSolver(Lo, b)
-  lsqr!(solver, Lo, b)  # warmup
-  inplace_lsqr_bytes = @allocated lsqr!(solver, Lo, b)
+  solver = LsqrSolver(Ao, b)
+  lsqr!(solver, Ao, b)  # warmup
+  inplace_lsqr_bytes = @allocated lsqr!(solver, Ao, b)
   @test (VERSION < v"1.5") || (inplace_lsqr_bytes == 432)
 
   # CRLS needs:
@@ -318,13 +306,13 @@ function test_alloc()
   storage_crls_bytes(n, m) = 8 * storage_crls(n, m)
 
   expected_crls_bytes = storage_crls_bytes(n, m)
-  (x, stats) = crls(Lo, b)  # warmup
-  actual_crls_bytes = @allocated crls(Lo, b)
+  (x, stats) = crls(Ao, b)  # warmup
+  actual_crls_bytes = @allocated crls(Ao, b)
   @test actual_crls_bytes ≤ 1.02 * expected_crls_bytes
 
-  solver = CrlsSolver(Lo, b)
-  crls!(solver, Lo, b)  # warmup
-  inplace_crls_bytes = @allocated crls!(solver, Lo, b)
+  solver = CrlsSolver(Ao, b)
+  crls!(solver, Ao, b)  # warmup
+  inplace_crls_bytes = @allocated crls!(solver, Ao, b)
   @test (VERSION < v"1.5") || (inplace_crls_bytes == 208)
 
   # LSMR needs:
@@ -334,13 +322,13 @@ function test_alloc()
   storage_lsmr_bytes(n, m) = 8 * storage_lsmr(n, m)
 
   expected_lsmr_bytes = storage_lsmr_bytes(n, m)
-  (x, stats) = lsmr(Lo, b)  # warmup
-  actual_lsmr_bytes = @allocated lsmr(Lo, b)
+  (x, stats) = lsmr(Ao, b)  # warmup
+  actual_lsmr_bytes = @allocated lsmr(Ao, b)
   @test actual_lsmr_bytes ≤ 1.02 * expected_lsmr_bytes
 
-  solver = LsmrSolver(Lo, b)
-  lsmr!(solver, Lo, b)  # warmup
-  inplace_lsmr_bytes = @allocated lsmr!(solver, Lo, b)
+  solver = LsmrSolver(Ao, b)
+  lsmr!(solver, Ao, b)  # warmup
+  inplace_lsmr_bytes = @allocated lsmr!(solver, Ao, b)
   @test (VERSION < v"1.5") || (inplace_lsmr_bytes == 336)
 
   # USYMQR needs:
@@ -350,13 +338,13 @@ function test_alloc()
   storage_usymqr_bytes(n, m) = 8 * storage_usymqr(n, m)
 
   expected_usymqr_bytes = storage_usymqr_bytes(n, m)
-  (x, stats) = usymqr(Lo, b, c) # warmup
-  actual_usymqr_bytes = @allocated usymqr(Lo, b, c)
+  (x, stats) = usymqr(Ao, b, c) # warmup
+  actual_usymqr_bytes = @allocated usymqr(Ao, b, c)
   @test actual_usymqr_bytes ≤ 1.02 * expected_usymqr_bytes
 
-  solver = UsymqrSolver(Lo, b)
-  usymqr!(solver, Lo, b, c)  # warmup
-  inplace_usymqr_bytes = @allocated usymqr!(solver, Lo, b, c)
+  solver = UsymqrSolver(Ao, b)
+  usymqr!(solver, Ao, b, c)  # warmup
+  inplace_usymqr_bytes = @allocated usymqr!(solver, Ao, b, c)
   @test (VERSION < v"1.5") || (inplace_usymqr_bytes == 208)
 
   # TRILQR needs:
@@ -366,13 +354,13 @@ function test_alloc()
   storage_trilqr_bytes(n, m) = 8 * storage_trilqr(n, m)
 
   expected_trilqr_bytes = storage_trilqr_bytes(n, n)
-  trilqr(L, b, b)  # warmup
-  actual_trilqr_bytes = @allocated trilqr(L, b, b)
+  trilqr(A, b, b)  # warmup
+  actual_trilqr_bytes = @allocated trilqr(A, b, b)
   @test actual_trilqr_bytes ≤ 1.02 * expected_trilqr_bytes
 
-  solver = TrilqrSolver(L, b)
-  trilqr!(solver, L, b, b)  # warmup
-  inplace_trilqr_bytes = @allocated trilqr!(solver, L, b, b)
+  solver = TrilqrSolver(A, b)
+  trilqr!(solver, A, b, b)  # warmup
+  inplace_trilqr_bytes = @allocated trilqr!(solver, A, b, b)
   @test (VERSION < v"1.5") || (inplace_trilqr_bytes == 208)
 
   # BILQ needs:
@@ -381,13 +369,13 @@ function test_alloc()
   storage_bilq_bytes(n) = 8 * storage_bilq(n)
 
   expected_bilq_bytes = storage_bilq_bytes(n)
-  bilq(L, b)  # warmup
-  actual_bilq_bytes = @allocated bilq(L, b)
+  bilq(A, b)  # warmup
+  actual_bilq_bytes = @allocated bilq(A, b)
   @test actual_bilq_bytes ≤ 1.02 * expected_bilq_bytes
 
-  solver = BilqSolver(L, b)
-  bilq!(solver, L, b)  # warmup
-  inplace_bilq_bytes = @allocated bilq!(solver, L, b)
+  solver = BilqSolver(A, b)
+  bilq!(solver, A, b)  # warmup
+  inplace_bilq_bytes = @allocated bilq!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_bilq_bytes == 208)
 
   # BILQR needs:
@@ -396,13 +384,13 @@ function test_alloc()
   storage_bilqr_bytes(n) = 8 * storage_bilqr(n)
 
   expected_bilqr_bytes = storage_bilqr_bytes(n)
-  bilqr(L, b, b)  # warmup
-  actual_bilqr_bytes = @allocated bilqr(L, b, b)
+  bilqr(A, b, b)  # warmup
+  actual_bilqr_bytes = @allocated bilqr(A, b, b)
   @test actual_bilqr_bytes ≤ 1.02 * expected_bilqr_bytes
 
-  solver = BilqrSolver(L, b)
-  bilqr!(solver, L, b, b)  # warmup
-  inplace_bilqr_bytes = @allocated bilqr!(solver, L, b, b)
+  solver = BilqrSolver(A, b)
+  bilqr!(solver, A, b, b)  # warmup
+  inplace_bilqr_bytes = @allocated bilqr!(solver, A, b, b)
   @test (VERSION < v"1.5") || (inplace_bilqr_bytes == 208)
 
   # MINRES-QLP needs:
@@ -411,13 +399,13 @@ function test_alloc()
   storage_minres_qlp_bytes(n) = 8 * storage_minres_qlp(n)
 
   expected_minres_qlp_bytes = storage_minres_qlp_bytes(n)
-  minres_qlp(L, b)  # warmup
-  actual_minres_qlp_bytes = @allocated minres_qlp(L, b)
+  minres_qlp(A, b)  # warmup
+  actual_minres_qlp_bytes = @allocated minres_qlp(A, b)
   @test actual_minres_qlp_bytes ≤ 1.02 * expected_minres_qlp_bytes
 
-  solver = MinresQlpSolver(L, b)
-  minres_qlp!(solver, L, b)  # warmup
-  inplace_minres_qlp_bytes = @allocated minres_qlp!(solver, L, b)
+  solver = MinresQlpSolver(A, b)
+  minres_qlp!(solver, A, b)  # warmup
+  inplace_minres_qlp_bytes = @allocated minres_qlp!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_minres_qlp_bytes == 208)
 
   # QMR needs:
@@ -426,13 +414,13 @@ function test_alloc()
   storage_qmr_bytes(n) = 8 * storage_qmr(n)
 
   expected_qmr_bytes = storage_qmr_bytes(n)
-  qmr(L, b)  # warmup
-  actual_qmr_bytes = @allocated qmr(L, b)
+  qmr(A, b)  # warmup
+  actual_qmr_bytes = @allocated qmr(A, b)
   @test actual_qmr_bytes ≤ 1.02 * expected_qmr_bytes
 
-  solver = QmrSolver(L, b)
-  qmr!(solver, L, b)  # warmup
-  inplace_qmr_bytes = @allocated qmr!(solver, L, b)
+  solver = QmrSolver(A, b)
+  qmr!(solver, A, b)  # warmup
+  inplace_qmr_bytes = @allocated qmr!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_qmr_bytes == 208)
 
   # USYMLQ needs:
@@ -442,13 +430,13 @@ function test_alloc()
   storage_usymlq_bytes(n, m) = 8 * storage_usymlq(n, m)
 
   expected_usymlq_bytes = storage_usymlq_bytes(n, m)
-  usymlq(Lu, c, b)  # warmup
-  actual_usymlq_bytes = @allocated usymlq(Lu, c, b)
+  usymlq(Au, c, b)  # warmup
+  actual_usymlq_bytes = @allocated usymlq(Au, c, b)
   @test actual_usymlq_bytes ≤ 1.02 * expected_usymlq_bytes
 
-  solver = UsymlqSolver(Lu, c)
-  usymlq!(solver, Lu, c, b)  # warmup
-  inplace_usymlq_bytes = @allocated usymlq!(solver, Lu, c, b)
+  solver = UsymlqSolver(Au, c)
+  usymlq!(solver, Au, c, b)  # warmup
+  inplace_usymlq_bytes = @allocated usymlq!(solver, Au, c, b)
   @test (VERSION < v"1.5") || (inplace_usymlq_bytes == 208)
 
   # TriCG needs:
@@ -458,13 +446,13 @@ function test_alloc()
   storage_tricg_bytes(n, m) = 8 * storage_tricg(n, m)
 
   expected_tricg_bytes = storage_tricg_bytes(n, m)
-  tricg(Lu, c, b)  # warmup
-  actual_tricg_bytes = @allocated tricg(Lu, c, b)
+  tricg(Au, c, b)  # warmup
+  actual_tricg_bytes = @allocated tricg(Au, c, b)
   @test actual_tricg_bytes ≤ 1.02 * expected_tricg_bytes
 
-  solver = TricgSolver(Lu, c)
-  tricg!(solver, Lu, c, b)  # warmup
-  inplace_tricg_bytes = @allocated tricg!(solver, Lu, c, b)
+  solver = TricgSolver(Au, c)
+  tricg!(solver, Au, c, b)  # warmup
+  inplace_tricg_bytes = @allocated tricg!(solver, Au, c, b)
   @test (VERSION < v"1.5") || (inplace_tricg_bytes == 208)
 
   # TriMR needs:
@@ -474,13 +462,13 @@ function test_alloc()
   storage_trimr_bytes(n, m) = 8 * storage_trimr(n, m)
 
   expected_trimr_bytes = storage_trimr_bytes(n, m)
-  trimr(Lu, c, b)  # warmup
-  actual_trimr_bytes = @allocated trimr(Lu, c, b)
+  trimr(Au, c, b)  # warmup
+  actual_trimr_bytes = @allocated trimr(Au, c, b)
   @test actual_trimr_bytes ≤ 1.02 * expected_trimr_bytes
 
-  solver = TrimrSolver(Lu, c)
-  trimr!(solver, Lu, c, b)  # warmup
-  inplace_trimr_bytes = @allocated trimr!(solver, Lu, c, b)
+  solver = TrimrSolver(Au, c)
+  trimr!(solver, Au, c, b)  # warmup
+  inplace_trimr_bytes = @allocated trimr!(solver, Au, c, b)
   @test (VERSION < v"1.5") || (inplace_trimr_bytes == 208)
 end
 

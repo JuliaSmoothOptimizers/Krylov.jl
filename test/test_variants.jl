@@ -36,32 +36,4 @@
       end
     end
   end
-  for wrapper in (:SymTridiagonal, :Symmetric, :Hermitian)
-    for fn in (:cg_lanczos, :cg, :cr, :minres, :minres_qlp, :symmlq, :cgs, :bicgstab, :diom, :dqgmres, :cg_lanczos_shift_seq)
-      for T in (Float32, Float64, BigFloat)
-        for S in (Int32, Int64)
-          A_dense = Matrix{T}(I, 5, 5)
-          A_sparse = convert(SparseMatrixCSC{T,S}, A_dense)
-          A_dense = @eval $wrapper($A_dense)
-          A_sparse = @eval $wrapper($A_sparse)
-          b_dense = ones(T, 5)
-          b_sparse = convert(SparseVector{T,S}, b_dense)
-          for A in (A_dense, A_sparse)
-            for b in (b_dense, b_sparse)
-              if fn == :cg_lanczos_shift_seq
-                shifts = [-one(T), one(T)]
-                @eval $fn($A, $b, $shifts)
-                @eval $fn($transpose($A), $b, $shifts)
-                @eval $fn($adjoint($A), $b, $shifts)
-              else
-                @eval $fn($A, $b)
-                @eval $fn($transpose($A), $b)
-                @eval $fn($adjoint($A), $b)
-              end
-            end
-          end
-        end
-      end
-    end
-  end
 end

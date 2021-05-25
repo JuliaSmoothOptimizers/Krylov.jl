@@ -24,7 +24,7 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
   w1      :: S
   w2      :: S
   y       :: S
-  v       :: Union{S, Nothing}
+  v       :: Union{Nothing, S}
   err_vec :: Vector{T}
   stats   :: SimpleStats{T}
 
@@ -65,7 +65,7 @@ mutable struct CgSolver{T,S} <: KrylovSolver{T,S}
   r  :: S
   p  :: S
   Ap :: S
-  z  :: Union{S, Nothing}
+  z  :: Union{Nothing, S}
 
   function CgSolver(n, m, S)
     T  = eltype(S)
@@ -101,7 +101,7 @@ mutable struct CrSolver{T,S} <: KrylovSolver{T,S}
   p  :: S
   q  :: S
   Ar :: S
-  Mq :: Union{S, Nothing}
+  Mq :: Union{Nothing, S}
 
   function CrSolver(n, m, S)
     T  = eltype(S)
@@ -138,7 +138,7 @@ mutable struct SymmlqSolver{T,S} <: KrylovSolver{T,S}
   Mv      :: S
   Mv_next :: S
   w̅       :: S
-  v       :: Union{S, Nothing}
+  v       :: Union{Nothing, S}
 
   function SymmlqSolver(n, m, S)
     T       = eltype(S)
@@ -175,7 +175,7 @@ mutable struct CgLanczosSolver{T,S} <: KrylovSolver{T,S}
   Mv_prev :: S
   p       :: S
   Mv_next :: S
-  v       :: Union{S, Nothing}
+  v       :: Union{Nothing, S}
 
   function CgLanczosSolver(n, m, S)
     T       = eltype(S)
@@ -210,7 +210,7 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
   Mv         :: S
   Mv_prev    :: S
   Mv_next    :: S
-  v          :: Union{S, Nothing}
+  v          :: Union{Nothing, S}
   x          :: Vector{S}
   p          :: Vector{S}
   σ          :: Vector{T}
@@ -267,7 +267,7 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
   M⁻¹vₖ   :: S
   x       :: S
   p       :: S
-  vₖ      :: Union{S, Nothing}
+  vₖ      :: Union{Nothing, S}
 
   function MinresQlpSolver(n, m, S)
     T       = eltype(S)
@@ -302,8 +302,8 @@ may be used in order to create these vectors.
 mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
   x :: S
   t :: S
-  z :: Union{S, Nothing}
-  w :: Union{S, Nothing}
+  z :: Union{Nothing, S}
+  w :: Union{Nothing, S}
   P :: Vector{S}
   V :: Vector{S}
   c :: Vector{T}
@@ -346,8 +346,8 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
   x     :: S
   x_old :: S
   t     :: S
-  z     :: Union{S, Nothing}
-  w     :: Union{S, Nothing}
+  z     :: Union{Nothing, S}
+  w     :: Union{Nothing, S}
   P     :: Vector{S}
   V     :: Vector{S}
   L     :: Vector{T}
@@ -589,12 +589,12 @@ mutable struct TrilqrSolver{T,S} <: KrylovSolver{T,S}
   uₖ₋₁ :: S
   uₖ   :: S
   p    :: S
+  d̅    :: S
+  x    :: S
   vₖ₋₁ :: S
   vₖ   :: S
   q    :: S
-  x    :: S
   t    :: S
-  d̅    :: S
   wₖ₋₃ :: S
   wₖ₋₂ :: S
 
@@ -603,15 +603,15 @@ mutable struct TrilqrSolver{T,S} <: KrylovSolver{T,S}
     uₖ₋₁ = S(undef, m)
     uₖ   = S(undef, m)
     p    = S(undef, m)
+    d̅    = S(undef, m)
+    x    = S(undef, m)
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
     q    = S(undef, n)
-    x    = S(undef, m)
     t    = S(undef, n)
-    d̅    = S(undef, m)
     wₖ₋₃ = S(undef, n)
     wₖ₋₂ = S(undef, n)
-    solver = new{T,S}(uₖ₋₁, uₖ, p, vₖ₋₁, vₖ, q, x, t, d̅, wₖ₋₃, wₖ₋₂)
+    solver = new{T,S}(uₖ₋₁, uₖ, p, d̅, x, vₖ₋₁, vₖ, q, t, wₖ₋₃, wₖ₋₂)
     return solver
   end
 
