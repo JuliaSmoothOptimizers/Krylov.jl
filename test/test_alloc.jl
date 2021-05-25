@@ -215,20 +215,20 @@ function test_alloc()
   inplace_craigmr_bytes = @allocated craigmr!(solver, Lu, c)
   @test (VERSION < v"1.5") || (inplace_craigmr_bytes == 208)
 
-  # without preconditioner and with (Ap, Aᵀq) preallocated, CGNE needs:
-  # - 2 n-vectors: x, p
-  # - 1 m-vector: r
-  storage_cgne(n, m) = 2 * n + m
+  # CGNE needs:
+  # - 3 n-vectors: x, p, Aᵀz
+  # - 2 m-vectors: r, q
+  storage_cgne(n, m) = 3 * n + 2 * m
   storage_cgne_bytes(n, m) = 8 * storage_cgne(n, m)
 
   expected_cgne_bytes = storage_cgne_bytes(n, m)
-  (x, stats) = cgne(Au, c)  # warmup
-  actual_cgne_bytes = @allocated cgne(Au, c)
+  (x, stats) = cgne(Lu, c)  # warmup
+  actual_cgne_bytes = @allocated cgne(Lu, c)
   @test actual_cgne_bytes ≤ 1.02 * expected_cgne_bytes
 
-  solver = CgneSolver(Au, c)
-  cgne!(solver, Au, c)  # warmup
-  inplace_cgne_bytes = @allocated cgne!(solver, Au, c)
+  solver = CgneSolver(Lu, c)
+  cgne!(solver, Lu, c)  # warmup
+  inplace_cgne_bytes = @allocated cgne!(solver, Lu, c)
   @test (VERSION < v"1.5") || (inplace_cgne_bytes == 208)
 
   # LNLQ needs:

@@ -73,31 +73,34 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
-  size(b, 1) == m || error("Inconsistent problem size")
+  length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("CGNE: system of %d equations in %d variables\n", m, n)
+
+  # Tests M == Iₙ
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  isa(M, opEye) || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
   # Set up workspace.
-  x, p, r = solver.x, solver.p, solver.r
+  !MisI   && isnothing(solver.z) && (solver.z = S(undef, m))
+  (λ > 0) && isnothing(solver.s) && (solver.s = S(undef, m))
+  x, p, Aᵀz, r, q, s = solver.x, solver.p, solver.Aᵀz, solver.r, solver.q, solver.s
+  z = MisI ? r : solver.z
 
   x .= zero(T)
   r .= b
-  z = M * r
+  MisI || mul!(z, M, r)
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
   rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
-  λ > 0 && (s = copy(r))
+  λ > 0 && (s .= r)
 
-  # The following vector copy takes care of the case where A is a LinearOperator
-  # with preallocation, so as to avoid overwriting vectors used later. In other
-  # case, this should only add minimum overhead.
-  p .= Aᵀ * z
+  mul!(p, Aᵀ, z)
 
   # Use ‖p‖ to detect inconsistent system.
   # An inconsistent system will necessarily have AA' singular.
@@ -122,17 +125,17 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   tired = iter ≥ itmax
 
   while ! (solved || inconsistent || tired)
-    q = A * p
+    mul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)
     δ = @kdot(n, p, p)   # Faster than dot(p, p)
     λ > 0 && (δ += λ * @kdot(m, s, s))
     α = γ / δ
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
-    z = M * r
+    MisI || mul!(z, M, r)
     γ_next = @kdot(m, r, z)  # Faster than γ_next = dot(r, z)
     β = γ_next / γ
-    Aᵀz = Aᵀ * z
+    mul!(Aᵀz, Aᵀ, z)
     @kaxpby!(n, one(T), Aᵀz, β, p)  # Faster than p = Aᵀz + β * p
     pNorm = @knrm2(n, p)
     if λ > 0
