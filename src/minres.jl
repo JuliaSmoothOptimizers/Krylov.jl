@@ -50,19 +50,6 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 
-It is also possible to use MINRES in-place
-
-    (x, stats) = minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
-                         M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100,
-                         rtol :: T=√eps(T)/100, ratol :: T=zero(T), 
-                         rrtol :: T=zero(T), etol :: T=√eps(T),
-                         itmax :: Int=0, conlim :: T=1/√eps(T),
-                         verbose :: Int=0) where {T <: AbstractFloat, S <: DenseVector{T}}
-
-where `solver` is a `Krylov.MinresSolver` used to store the vectors used by `minres!`.
-In this case, the user should be aware that A should be a  
-[PreallocatedLinearOperator](https://juliasmoothoptimizers.github.io/LinearOperators.jl/latest/reference/#LinearOperators.PreallocatedLinearOperator),
-otherwise there is no guarantee that there will be no allocations.
 #### Reference
 
 * C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
