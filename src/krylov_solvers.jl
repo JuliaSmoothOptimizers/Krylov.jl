@@ -957,16 +957,24 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct CrmrSolver{T,S} <: KrylovSolver{T,S}
-  x :: S
-  p :: S
-  r :: S
+  x   :: S
+  p   :: S
+  Aᵀr :: S
+  r   :: S
+  q   :: S
+  Mq  :: Union{Nothing, S}
+  s   :: Union{Nothing, S}
 
   function CrmrSolver(n, m, S)
     T = eltype(S)
-    x = S(undef, m)
-    p = S(undef, m)
-    r = S(undef, n)
-    solver = new{T,S}(x, p, r)
+    x   = S(undef, m)
+    p   = S(undef, m)
+    Aᵀr = S(undef, m)
+    r   = S(undef, n)
+    q   = S(undef, n)
+    Mq  = nothing
+    s   = nothing
+    solver = new{T,S}(x, p, Aᵀr, r, q, Mq, s)
     return solver
   end
 

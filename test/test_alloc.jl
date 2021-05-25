@@ -153,20 +153,20 @@ function test_alloc()
   inplace_cr_bytes = @allocated cr!(solver, L, b, rtol=1e-6)
   @test (VERSION < v"1.5") || (inplace_cr_bytes == 208)
 
-  # without preconditioner and with (Ap, Aᵀq) preallocated, CRMR needs:
-  # - 2 n-vectors: x, p
-  # - 1 m-vector: r
-  storage_crmr(n, m) = 2 * n + m
+  # CRMR needs:
+  # - 3 n-vectors: x, p, Aᵀr
+  # - 2 m-vectors: r, q
+  storage_crmr(n, m) = 3 * n + 2 * m
   storage_crmr_bytes(n, m) = 8 * storage_crmr(n, m)
 
   expected_crmr_bytes = storage_crmr_bytes(n, m)
-  (x, stats) = crmr(Au, c)  # warmup
-  actual_crmr_bytes = @allocated crmr(Au, c)
+  (x, stats) = crmr(Lu, c)  # warmup
+  actual_crmr_bytes = @allocated crmr(Lu, c)
   @test actual_crmr_bytes ≤ 1.02 * expected_crmr_bytes
 
-  solver = CrmrSolver(Au, c)
-  crmr!(solver, Au, c)  # warmup
-  inplace_crmr_bytes = @allocated crmr!(solver, Au, c)
+  solver = CrmrSolver(Lu, c)
+  crmr!(solver, Lu, c)  # warmup
+  inplace_crmr_bytes = @allocated crmr!(solver, Lu, c)
   @test (VERSION < v"1.5") || (inplace_crmr_bytes == 208)
 
   # CGS needs:
