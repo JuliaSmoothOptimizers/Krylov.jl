@@ -1075,22 +1075,30 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct LnlqSolver{T,S} <: KrylovSolver{T,S}
-  x  :: S
-  Nv :: S
-  y  :: S
-  w̄  :: S
-  Mu :: S
-  q  :: Union{S, Nothing}
+  x   :: S
+  Nv  :: S
+  Aᵀu :: S
+  y   :: S
+  w̄   :: S
+  Mu  :: S
+  Av  :: S
+  u   :: Union{Nothing, S}
+  v   :: Union{Nothing, S}
+  q   :: Union{Nothing, S}
 
   function LnlqSolver(n, m, S)
     T  = eltype(S)
-    x  = S(undef, m)
-    Nv = S(undef, m)
-    y  = S(undef, n)
-    w̄  = S(undef, n)
-    Mu = S(undef, n)
-    q  = nothing
-    solver = new{T,S}(x, Nv, y, w̄, Mu, q)
+    x   = S(undef, m)
+    Nv  = S(undef, m)
+    Aᵀu = S(undef, m)
+    y   = S(undef, n)
+    w̄   = S(undef, n)
+    Mu  = S(undef, n)
+    Av  = S(undef, n)
+    u   = nothing
+    v   = nothing
+    q   = nothing
+    solver = new{T,S}(x, Nv, Aᵀu, y, w̄, Mu, Av, u, v, q)
     return solver
   end
 
@@ -1112,22 +1120,30 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct CraigSolver{T,S} <: KrylovSolver{T,S}
-  x  :: S
-  Nv :: S
-  y  :: S
-  w  :: S
-  Mu :: S
-  w2 :: Union{S, Nothing}
+  x   :: S
+  Nv  :: S
+  Aᵀu :: S
+  y   :: S
+  w   :: S
+  Mu  :: S
+  Av  :: S
+  u   :: Union{Nothing, S}
+  v   :: Union{Nothing, S}
+  w2  :: Union{Nothing, S}
 
   function CraigSolver(n, m, S)
-    T  = eltype(S)
-    x  = S(undef, m)
-    Nv = S(undef, m)
-    y  = S(undef, n)
-    w  = S(undef, n)
-    Mu = S(undef, n)
-    w2 = nothing
-    solver = new{T,S}(x, Nv, y, w, Mu, w2)
+    T   = eltype(S)
+    x   = S(undef, m)
+    Nv  = S(undef, m)
+    Aᵀu = S(undef, m)
+    y   = S(undef, n)
+    w   = S(undef, n)
+    Mu  = S(undef, n)
+    Av  = S(undef, n)
+    u   = nothing
+    v   = nothing
+    w2  = nothing
+    solver = new{T,S}(x, Nv, Aᵀu, y, w, Mu, Av, u, v, w2)
     return solver
   end
 
@@ -1151,20 +1167,29 @@ may be used in order to create these vectors.
 mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
   x    :: S
   Nv   :: S
+  Aᵀu  :: S
   y    :: S
   Mu   :: S
   w    :: S
   wbar :: S
+  Av   :: S
+  u    :: Union{Nothing, S}
+  v    :: Union{Nothing, S}
 
   function CraigmrSolver(n, m, S)
     T    = eltype(S)
     x    = S(undef, m)
     Nv   = S(undef, m)
+    Aᵀu  = S(undef, m)
     y    = S(undef, n)
     Mu   = S(undef, n)
     w    = S(undef, n)
     wbar = S(undef, n)
-    solver = new{T,S}(x, Nv, y, Mu, w, wbar)
+    Av   = S(undef, n)
+    u    = nothing
+    v    = nothing
+
+    solver = new{T,S}(x, Nv, Aᵀu, y, Mu, w, wbar, Av, u, v)
     return solver
   end
 

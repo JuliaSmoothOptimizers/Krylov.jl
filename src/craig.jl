@@ -87,12 +87,12 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
                 verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
-  size(b, 1) == m || error("Inconsistent problem size")
+  length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("CRAIG: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye)
-  NisI = isa(N, opEye)
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -107,14 +107,18 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   sqd && (λ = one(T))
 
   # Set up workspace.
+  !MisI   && isnothing(solver.u)  && (solver.u  = S(undef, n))
+  !NisI   && isnothing(solver.v)  && (solver.v  = S(undef, m))
   (λ > 0) && isnothing(solver.w2) && (solver.w2 = S(undef, n))
-  x, Nv, y, w, Mu, w2 = solver.x, solver.Nv, solver.y, solver.w, solver.Mu, solver.w2
+  x, Nv, Aᵀu, y, w, Mu, Av, w2 = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.w, solver.Mu, solver.Av, solver.w2
+  u = MisI ? Mu : solver.u
+  v = NisI ? Nv : solver.v
 
   x .= zero(T)
   y .= zero(T)
 
   Mu .= b
-  u = M * Mu
+  MisI || mul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
   β₁ == 0 && return x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
   β₁² = β₁^2
@@ -170,9 +174,9 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   while ! (solved || inconsistent || ill_cond || tired)
     # Generate the next Golub-Kahan vectors
     # 1. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    Aᵀu = Aᵀ * u
+    mul!(Aᵀu, Aᵀ, u)
     @kaxpby!(n, one(T), Aᵀu, -β, Nv)
-    v = N * Nv
+    NisI || mul!(v, N, Nv)
     α = sqrt(@kdot(n, v, Nv))
     if α == 0
       inconsistent = true
@@ -213,9 +217,9 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
     Dnorm² += @knrm2(m, w)
 
     # 2. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-    Av = A * v
+    mul!(Av, A, v)
     @kaxpby!(m, one(T), Av, -α, Mu)
-    u = M * Mu
+    MisI || mul!(u, M, Mu)
     β = sqrt(@kdot(m, u, Mu))
     if β ≠ 0
       @kscal!(m, one(T)/β, u)

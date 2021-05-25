@@ -199,20 +199,20 @@ function test_alloc()
   inplace_bicgstab_bytes = @allocated bicgstab!(solver, L, b)
   @test (VERSION < v"1.5") || (inplace_bicgstab_bytes == 208)
 
-  # with (Ap, Aᵀq) preallocated, CRAIGMR needs:
-  # - 2 n-vector: x, v
-  # - 4 m-vectors: y, u, w, wbar
-  storage_craigmr(n, m) = 2 * n + 4 * m
+  # CRAIGMR needs:
+  # - 3 n-vectors: x, v, Aᵀu
+  # - 5 m-vectors: y, u, w, wbar, Av
+  storage_craigmr(n, m) = 3 * n + 5 * m
   storage_craigmr_bytes(n, m) = 8 * storage_craigmr(n, m)
 
   expected_craigmr_bytes = storage_craigmr_bytes(n, m)
-  craigmr(Au, c)  # warmup
-  actual_craigmr_bytes = @allocated craigmr(Au, c)
+  craigmr(Lu, c)  # warmup
+  actual_craigmr_bytes = @allocated craigmr(Lu, c)
   @test actual_craigmr_bytes ≤ 1.02 * expected_craigmr_bytes
 
-  solver = CraigmrSolver(Au, c)
-  craigmr!(solver, Au, c)  # warmup
-  inplace_craigmr_bytes = @allocated craigmr!(solver, Au, c)
+  solver = CraigmrSolver(Lu, c)
+  craigmr!(solver, Lu, c)  # warmup
+  inplace_craigmr_bytes = @allocated craigmr!(solver, Lu, c)
   @test (VERSION < v"1.5") || (inplace_craigmr_bytes == 208)
 
   # without preconditioner and with (Ap, Aᵀq) preallocated, CGNE needs:
@@ -231,36 +231,36 @@ function test_alloc()
   inplace_cgne_bytes = @allocated cgne!(solver, Au, c)
   @test (VERSION < v"1.5") || (inplace_cgne_bytes == 208)
 
-  # with (Ap, Aᵀq) preallocated, LNLQ needs:
-  # - 2 n-vector: x, v
-  # - 3 m-vectors: y, w̄, u
-  storage_lnlq(n, m) = 2 * n + 3 * m
+  # LNLQ needs:
+  # - 3 n-vectors: x, v, Aᵀu
+  # - 4 m-vectors: y, w̄, u, Av
+  storage_lnlq(n, m) = 3 * n + 4 * m
   storage_lnlq_bytes(n, m) = 8 * storage_lnlq(n, m)
 
   expected_lnlq_bytes = storage_lnlq_bytes(n, m)
-  lnlq(Au, c)  # warmup
-  actual_lnlq_bytes = @allocated lnlq(Au, c)
+  lnlq(Lu, c)  # warmup
+  actual_lnlq_bytes = @allocated lnlq(Lu, c)
   @test actual_lnlq_bytes ≤ 1.02 * expected_lnlq_bytes
 
-  solver = LnlqSolver(Au, c)
-  lnlq!(solver, Au, c)  # warmup
-  inplace_lnlq_bytes = @allocated lnlq!(solver, Au, c)
+  solver = LnlqSolver(Lu, c)
+  lnlq!(solver, Lu, c)  # warmup
+  inplace_lnlq_bytes = @allocated lnlq!(solver, Lu, c)
   @test (VERSION < v"1.5") || (inplace_lnlq_bytes == 208)
 
-  # with (Ap, Aᵀq) preallocated, CRAIG needs:
-  # - 2 n-vector: x, v
-  # - 3 m-vectors: y, w, u
-  storage_craig(n, m) = 2 * n + 3 * m
+  # CRAIG needs:
+  # - 3 n-vectors: x, v, Aᵀu
+  # - 4 m-vectors: y, w, u, Av
+  storage_craig(n, m) = 3 * n + 4 * m
   storage_craig_bytes(n, m) = 8 * storage_craig(n, m)
 
   expected_craig_bytes = storage_craig_bytes(n, m)
-  craig(Au, c)  # warmup
-  actual_craig_bytes = @allocated craig(Au, c)
+  craig(Lu, c)  # warmup
+  actual_craig_bytes = @allocated craig(Lu, c)
   @test actual_craig_bytes ≤ 1.02 * expected_craig_bytes
 
-  solver = CraigSolver(Au, c)
-  craig!(solver, Au, c)  # warmup
-  inplace_craig_bytes = @allocated craig!(solver, Au, c)
+  solver = CraigSolver(Lu, c)
+  craig!(solver, Lu, c)  # warmup
+  inplace_craig_bytes = @allocated craig!(solver, Lu, c)
   @test (VERSION < v"1.5") || (inplace_craig_bytes == 208)
 
   # without preconditioner and with (Ap, Aᵀq) preallocated, LSLQ needs:
