@@ -279,20 +279,20 @@ function test_alloc()
   inplace_lslq_bytes = @allocated lslq!(solver, Lo, b)
   @test (VERSION < v"1.5") || (inplace_lslq_bytes == 576)
 
-  # without preconditioner and with (Ap, Aᵀq) preallocated, CGLS needs:
-  # - 2 m-vectors: x, p
-  # - 1 n-vector: r
-  storage_cgls(n, m) = n + 2 * m
+  # CGLS needs:
+  # - 3 m-vectors: x, p, s
+  # - 2 n-vectors: r, q
+  storage_cgls(n, m) = 3 * m + 2 * n
   storage_cgls_bytes(n, m) = 8 * storage_cgls(n, m)
 
   expected_cgls_bytes = storage_cgls_bytes(n, m)
-  (x, stats) = cgls(Ao, b)  # warmup
-  actual_cgls_bytes = @allocated cgls(Ao, b)
+  (x, stats) = cgls(Lo, b)  # warmup
+  actual_cgls_bytes = @allocated cgls(Lo, b)
   @test actual_cgls_bytes ≤ 1.02 * expected_cgls_bytes
 
-  solver = CglsSolver(Ao, b)
-  cgls!(solver, Ao, b)  # warmup
-  inplace_cgls_bytes = @allocated cgls!(solver, Ao, b)
+  solver = CglsSolver(Lo, b)
+  cgls!(solver, Lo, b)  # warmup
+  inplace_cgls_bytes = @allocated cgls!(solver, Lo, b)
   @test (VERSION < v"1.5") || (inplace_cgls_bytes == 208)
 
   # LSQR needs:

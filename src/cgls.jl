@@ -64,26 +64,32 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
                radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
-  size(b, 1) == m || error("Inconsistent problem size")
+  length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("CGLS: system of %d equations in %d variables\n", m, n)
+
+  # Tests M == Iₙ
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  isa(M, opEye) || eltype(M) == T || error("eltype(M) ≠ $T")
+  MisI || eltype(M) == T || error("eltype(M) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
   # Set up workspace.
-  x, p, r = solver.x, solver.p, solver.r
+  !MisI && isnothing(solver.Mr) && (solver.Mr = S(undef, m))
+  x, p, s, r, q = solver.x, solver.p, solver.s, solver.r, solver.q
+  Mr = MisI ? r : solver.Mr
+  Mq = MisI ? q : solver.Mr
 
   x .= zero(T)
   r .= b
   bNorm = @knrm2(m, r)   # Marginally faster than norm(b)
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
-  Mr = M * r
-  s = Aᵀ * Mr
+  MisI || mul!(Mr, M, r)
+  mul!(s, Aᵀ, Mr)
   p .= s
   γ = @kdot(n, s, s)  # Faster than γ = dot(s, s)
   iter = 0
@@ -103,8 +109,8 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
   tired = iter ≥ itmax
 
   while ! (solved || tired)
-    q = A * p
-    Mq = M * q
+    mul!(q, A, p)
+    MisI || mul!(Mq, M, q)
     δ = @kdot(m, q, Mq)   # Faster than α = γ / dot(q, q)
     λ > 0 && (δ += λ * @kdot(n, p, p))
     α = γ / δ
@@ -118,8 +124,8 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
 
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
-    Mr = M * r
-    s = Aᵀ * Mr
+    MisI || mul!(Mr, M, r)
+    mul!(s, Aᵀ, Mr)
     λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x
     γ_next = @kdot(n, s, s)  # Faster than γ_next = dot(s, s)
     β = γ_next / γ
