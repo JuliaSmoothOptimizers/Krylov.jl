@@ -95,8 +95,8 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   sqd && (λ = one(T))
 
   # Set up workspace.
-  !MisI   && isnothing(solver.u)  && (solver.u = S(undef, n))
-  !NisI   && isnothing(solver.v)  && (solver.v = S(undef, m))
+  !MisI   && isnothing(solver.u)  && (solver.u = S(undef, m))
+  !NisI   && isnothing(solver.v)  && (solver.v = S(undef, n))
   (λ > 0) && isnothing(solver.q)  && (solver.q = S(undef, n))
   x, Nv, Aᵀu, y, w̄, Mu, Av, q = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.w̄, solver.Mu, solver.Av, solver.q
   u = MisI ? Mu : solver.u
