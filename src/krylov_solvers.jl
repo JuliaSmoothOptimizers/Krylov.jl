@@ -197,7 +197,7 @@ mutable struct CgLanczosSolver{T,S} <: KrylovSolver{T,S}
 end
 
 """
-Type for storing the vectors required by the in-place version of CG-LANCZOS-SHIFT-SEQ.
+Type for storing the vectors required by the in-place version of CG-LANCZOS with shifts.
 
 The outer constructors
 

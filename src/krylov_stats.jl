@@ -18,7 +18,7 @@ mutable struct SimpleStats{T} <: KrylovStats{T}
 end
 
 """
-Type for statistics returned by Lanczos solvers CG-LANCZOS and CG-LANCZOS-SHIFT-SEQ, the attributes are:
+Type for statistics returned by CG-LANCZOS, the attributes are:
 - solved
 - residuals
 - flagged

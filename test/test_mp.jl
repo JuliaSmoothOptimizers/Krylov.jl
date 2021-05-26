@@ -1,28 +1,26 @@
 @testset "mp" begin
   n = 5
-  for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos,
-             :dqgmres, :diom, :cr, :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab,
-             :craigmr, :crls, :symmlq, :minres, :cg_lanczos_shift_seq,
+  for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos, :dqgmres, :diom, :cr,
+             :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab, :craigmr, :crls, :symmlq, :minres,
              :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr)
     for T in (Float16, Float32, Float64, BigFloat)
       A = spdiagm(-1 => -ones(T,n-1), 0 => 3*ones(T,n), 1 => -ones(T,n-1))
       b = ones(T, n)
       c = - ones(T, n)
-      λ = zero(T)
-      if fn == :cg_lanczos_shift_seq
-        shifts = [λ]
-        xs = @eval $fn($A, $b, $shifts, history=true)[1]
-        x = xs[1]
-      elseif fn in (:usymlq, :usymqr)
-        x = @eval $fn($A, $b, $c, history=true)[1]
+      shifts = [-one(T), one(T)]
+      if fn in (:usymlq, :usymqr)
+        x, _ = @eval $fn($A, $b, $c)
       elseif fn in (:trilqr, :bilqr)
-        x, t = @eval $fn($A, $b, $c, history=true)[1:2]
+        x, t, _ = @eval $fn($A, $b, $c)
       elseif fn in (:tricg, :trimr)
-        x, y = @eval $fn($A, $b, $c, history=true)[1:2]
+        x, y, _ = @eval $fn($A, $b, $c)
       elseif fn in (:lnlq, :craig, :craigmr)
-        x, y = @eval $fn($A, $b, history=true)[1:2]
+        x, y, _ = @eval $fn($A, $b)
       else
-        x = @eval $fn($A, $b, history=true)[1]
+        x, _ = @eval $fn($A, $b)
+        if fn == :cg_lanczos
+          xs, _ = @eval $fn($A, $b, $shifts)
+        end
       end
       atol = √eps(T)
       rtol = √eps(T)
@@ -42,6 +40,11 @@
       if fn in (:lnlq, :craig, :craigmr)
         @test norm(A * A' * y - b) ≤ Κ * (atol + norm(b) * rtol)
         @test eltype(y) == T
+      end
+      if fn == :cg_lanczos
+        @test norm((A - I) * xs[1] - b) ≤ Κ * (atol + norm(b) * rtol)
+        @test norm((A + I) * xs[2] - b) ≤ Κ * (atol + norm(b) * rtol)
+        @test eltype(xs) == Vector{T}
       end
     end
   end

@@ -11,7 +11,7 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Princeton, NJ, March 2015.
 
-export cg_lanczos, cg_lanczos!, cg_lanczos_shift_seq, cg_lanczos_shift_seq!
+export cg_lanczos, cg_lanczos!
 
 
 """
@@ -145,9 +145,9 @@ end
 
 
 """
-    (x, stats) = cg_lanczos_shift_seq(A, b::AbstractVector{T}, shifts::AbstractVector{T};
-                                      M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                                      check_curvature::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+    (x, stats) = cg_lanczos(A, b::AbstractVector{T}, shifts::AbstractVector{T};
+                            M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                            check_curvature::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 The Lanczos version of the conjugate gradient method to solve a family
 of shifted systems
@@ -159,14 +159,14 @@ The method does _not_ abort if A + αI is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function cg_lanczos_shift_seq(A, b :: AbstractVector{T}, shifts :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function cg_lanczos(A, b :: AbstractVector{T}, shifts :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CgLanczosShiftSolver(A, b, shifts)
-  cg_lanczos_shift_seq!(solver, A, b, shifts; kwargs...)
+  cg_lanczos!(solver, A, b, shifts; kwargs...)
 end
 
-function cg_lanczos_shift_seq!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector{T}, shifts :: AbstractVector{T};
-                               M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                               check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector{T}, shifts :: AbstractVector{T};
+                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+                     check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n, m = size(A)
   m == n || error("System must be square")
