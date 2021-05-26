@@ -25,7 +25,7 @@ end
 
   shifts=Float64.([1:6;])
 
-  (x, stats) = cg_lanczos_shift_seq(A, b, shifts, itmax=n)
+  (x, stats) = cg_lanczos(A, b, shifts, itmax=n)
   r = residuals(A, b, shifts, x)
   resids = map(norm, r) / b_norm
   @test(all(resids .≤ cg_tol))
@@ -33,19 +33,19 @@ end
 
   # Test negative curvature detection.
   shifts = [-4.0; -3.0; 2.0]
-  (x, stats) = cg_lanczos_shift_seq(A, b, shifts, check_curvature=true, itmax=n)
+  (x, stats) = cg_lanczos(A, b, shifts, check_curvature=true, itmax=n)
   @test(stats.flagged == [true, true, false])
 
   # Code coverage.
   (x, stats) = cg_lanczos(Matrix(A), b)
-  (x, stats) = cg_lanczos_shift_seq(Matrix(A), b, Float64.([1:6;]))
+  (x, stats) = cg_lanczos(Matrix(A), b, Float64.([1:6;]))
 
   # Test b == 0
   A, b = zero_rhs()
   (x, stats) = cg_lanczos(A, b)
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
-  (x, stats) = cg_lanczos_shift_seq(A, zeros(size(A,1)), Float64.([1:6;]))
+  (x, stats) = cg_lanczos(A, zeros(size(A,1)), Float64.([1:6;]))
   @test x == [zeros(size(A,1)) for i=1:6]
   @test stats.status == "x = 0 is a zero-residual solution"
 
@@ -58,7 +58,7 @@ end
   @test(stats.solved)
 
   shifts = Float64.([1:10;])
-  (x, stats) = cg_lanczos_shift_seq(A, b, shifts, M=M)
+  (x, stats) = cg_lanczos(A, b, shifts, M=M)
   r = residuals(A, b, shifts, x)
   resids = map(norm, r) / norm(b)
   @test(all(resids .≤ cg_tol))
