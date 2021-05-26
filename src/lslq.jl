@@ -132,8 +132,8 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   Aᵀ = A'
 
   # Set up workspace.
-  !MisI && isnothing(solver.u) && (solver.u = S(undef, n))
-  !NisI && isnothing(solver.v) && (solver.v = S(undef, m))
+  !MisI && isnothing(solver.u) && (solver.u = S(undef, m))
+  !NisI && isnothing(solver.v) && (solver.v = S(undef, n))
   x_lq, Nv, Aᵀu, w̄, Mu, Av = solver.x_lq, solver.Nv, solver.Aᵀu, solver.w̄, solver.Mu, solver.Av
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
