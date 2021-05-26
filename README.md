@@ -4,7 +4,18 @@
 
 | **Documentation** | **Linux/macOS/Windows/FreeBSD** | **Coverage** |
 |:-----------------:|:-------------------------------:|:------------:|
-| [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaSmoothOptimizers.github.io/Krylov.jl/dev) | [![CI](https://github.com/JuliaSmoothOptimizers/Krylov.jl/workflows/CI/badge.svg?branch=master)](https://github.com/JuliaSmoothOptimizers/Krylov.jl/actions) [![Build Status](https://img.shields.io/cirrus/github/JuliaSmoothOptimizers/Krylov.jl?logo=Cirrus%20CI)](https://cirrus-ci.com/github/JuliaSmoothOptimizers/Krylov.jl) | [![codecov.io](https://codecov.io/github/JuliaSmoothOptimizers/Krylov.jl/coverage.svg?branch=master)](https://codecov.io/github/JuliaSmoothOptimizers/Krylov.jl?branch=master) | [![codecov](https://codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl/branch/master/graph/badge.svg?token=iNeBvwvRZW)](https://codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl)
+| [![docs-stable][docs-stable-img]][docs-stable-url] [![docs-dev][docs-dev-img]][docs-dev-url] | [![build-gh][build-gh-img]][build-gh-url] [![build-cirrus][build-cirrus-img]][build-cirrus-url] | [![codecov][codecov-img]][codecov-url] |
+
+[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
+[docs-stable-url]: https://JuliaSmoothOptimizers.github.io/Krylov.jl/stable
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-purple.svg
+[docs-dev-url]: https://JuliaSmoothOptimizers.github.io/Krylov.jl/dev
+[build-gh-img]: https://github.com/JuliaSmoothOptimizers/Krylov.jl/workflows/CI/badge.svg?branch=master
+[build-gh-url]: https://github.com/JuliaSmoothOptimizers/Krylov.jl/actions
+[build-cirrus-img]: https://img.shields.io/cirrus/github/JuliaSmoothOptimizers/Krylov.jl?logo=Cirrus%20CI
+[build-cirrus-url]: https://cirrus-ci.com/github/JuliaSmoothOptimizers/Krylov.jl
+[codecov-img]: https://codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl/branch/master/graph/badge.svg
+[codecov-url]: https://app.codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl
 
 ## Content
 
@@ -82,7 +93,7 @@ Iterative methods are recommended in either of the following situations:
 
 ## Features
 
-All solvers in Krylov.jl are compatible with **GPU** and work in any floating-point data type.
+All solvers in Krylov.jl have in-place version, are compatible with **GPU** and work in any floating-point data type.
 
 ## How to Install
 

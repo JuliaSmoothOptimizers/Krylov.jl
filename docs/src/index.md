@@ -72,7 +72,7 @@ Iterative methods are recommended in either of the following situations:
 
 ## Features
 
-All solvers in Krylov.jl are compatible with **GPU** and work in any floating-point data type.
+All solvers in Krylov.jl have in-place version, are compatible with **GPU** and work in any floating-point data type.
 
 ## How to Install
 
