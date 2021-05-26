@@ -103,8 +103,8 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
   Aᵀ = A'
 
   # Set up workspace.
-  !MisI && isnothing(solver.u) && (solver.u = S(undef, n))
-  !NisI && isnothing(solver.v) && (solver.v = S(undef, m))
+  !MisI && isnothing(solver.u) && (solver.u = S(undef, m))
+  !NisI && isnothing(solver.v) && (solver.v = S(undef, n))
   x, Nv, Aᵀu, h, hbar, Mu, Av = solver.x, solver.Nv, solver.Aᵀu, solver.h, solver.hbar, solver.Mu, solver.Av
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v

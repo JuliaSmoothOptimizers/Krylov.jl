@@ -103,8 +103,8 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   Aᵀ = A'
 
   # Set up workspace.
-  !MisI && isnothing(solver.u) && (solver.u = S(undef, n))
-  !NisI && isnothing(solver.v) && (solver.v = S(undef, m))
+  !MisI && isnothing(solver.u) && (solver.u = S(undef, m))
+  !NisI && isnothing(solver.v) && (solver.v = S(undef, n))
   x, Nv, Aᵀu, w, Mu, Av = solver.x, solver.Nv, solver.Aᵀu, solver.w, solver.Mu, solver.Av
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
