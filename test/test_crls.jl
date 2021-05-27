@@ -66,4 +66,11 @@
   @test stats.solved
   @test (stats.status == "zero-curvature encountered") || (stats.status == "on trust-region boundary")
   @test norm(x) ⪅ radius
+
+  # Test dimension of additional vectors
+  for transpose ∈ (false, true)
+    A, b, c, D = small_sp(transpose)
+    D⁻¹ = inv(D)
+    (x, stats) = crls(A, b, M=D⁻¹, λ=1.0)
+  end
 end

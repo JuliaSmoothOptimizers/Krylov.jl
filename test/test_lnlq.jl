@@ -88,5 +88,17 @@
     r2 = b - (A * N⁻¹ * A' + M) * y
     resid2 = norm(r2) / norm(b)
     @test(resid2 ≤ lnlq_tol)
+
+    # Test dimension of additional vectors
+    for transpose ∈ (false, true)
+      A, b, c, D = small_sp(transpose)
+      D⁻¹ = inv(D)
+      (x, y, stats) = lnlq(A', c, N=D⁻¹, transfer_to_craig=transfer_to_craig)
+
+      A, b, c, M, N = small_sqd(transpose)
+      M⁻¹ = inv(M)
+      N⁻¹ = inv(N)
+      (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=true, transfer_to_craig=transfer_to_craig)
+    end
   end
 end

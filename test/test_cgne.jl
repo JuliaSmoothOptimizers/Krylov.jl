@@ -87,4 +87,11 @@
   @test(stats.solved)
   (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
   @test(norm(xI - xmin) ≤ cond(A) * cgne_tol * xmin_norm)
+
+  # Test dimension of additional vectors
+  for transpose ∈ (false, true)
+    A, b, c, D = small_sp(transpose)
+    D⁻¹ = inv(D)
+    (x, stats) = cgne(A, b, M=D⁻¹, λ=1.0)
+  end
 end

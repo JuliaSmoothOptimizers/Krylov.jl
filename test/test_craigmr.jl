@@ -89,4 +89,16 @@
   @test(norm(x - N * A' * y) ≤ craigmr_tol * norm(x))
   @test(resid ≤ craigmr_tol)
   @test(stats.solved)
+
+  # Test dimension of additional vectors
+  for transpose ∈ (false, true)
+    A, b, c, D = small_sp(transpose)
+    D⁻¹ = inv(D)
+    (x, y, stats) = craigmr(A', c, N=D⁻¹)
+
+    # A, b, c, M, N = small_sqd(transpose)
+    # M⁻¹ = inv(M)
+    # N⁻¹ = inv(N)
+    # (x, y, stats) = craigmr(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
+  end
 end
