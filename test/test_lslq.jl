@@ -72,4 +72,16 @@
   r = M⁻¹ * (b - A * x_lq)
   resid = norm(A' * r - N * x_lq) / norm(b)
   @test(resid ≤ lslq_tol)
+
+  # Test dimension of additional vectors
+  for transpose ∈ (false, true)
+    A, b, c, D = small_sp(transpose)
+    D⁻¹ = inv(D)
+    (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, M=D⁻¹)
+
+    A, b, c, M, N = small_sqd(transpose)
+    M⁻¹ = inv(M)
+    N⁻¹ = inv(N)
+    (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) = lslq(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
+  end
 end

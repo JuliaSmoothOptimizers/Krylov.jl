@@ -250,7 +250,7 @@ function regularization(n :: Int=5)
   return A, b, λ
 end
 
-# Saddle-point systems.
+# Saddle-point systems with square A.
 function saddle_point(n :: Int=5)
   A = [2^(i/j)*j + (-1)^(i-j) * n*(i-1) for i = 1:n, j = 1:n]
   b = ones(n)
@@ -258,11 +258,34 @@ function saddle_point(n :: Int=5)
   return A, b, D
 end
 
-# Symmetric and quasi-definite systems.
+# Saddle-point systems with rectangular A.
+function small_sp(transpose :: Bool=false)
+  A = [1.0 0.0; 0.0 -1.0; 3.0 0.0]
+  A = transpose ? Matrix(A') : A
+  n, m = size(A)
+  b = ones(n)
+  c = -ones(m)
+  D = diagm(0 => [2.0 * i for i = 1:n])
+  return A, b, c, D
+end
+
+# Symmetric and quasi-definite systems with square A.
 function sqd(n :: Int=5)
   A = [2^(i/j)*j + (-1)^(i-j) * n*(i-1) for i = 1:n, j = 1:n]
   b = ones(n)
   M = diagm(0 => [3.0 * i for i = 1:n])
   N = diagm(0 => [5.0 * i for i = 1:n])
   return A, b, M, N
+end
+
+# Symmetric and quasi-definite systems with rectangular A.
+function small_sqd(transpose :: Bool=false)
+  A = [1.0 0.0; 0.0 -1.0; 3.0 0.0]
+  A = transpose ? Matrix(A') : A
+  n, m = size(A)
+  b = ones(n)
+  c = -ones(m)
+  M = diagm(0 => [3.0 * i for i = 1:n])
+  N = diagm(0 => [5.0 * i for i = 1:m])
+  return A, b, c, M, N
 end

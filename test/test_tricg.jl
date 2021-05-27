@@ -118,4 +118,12 @@
   r =  B - K * [x; y]
   resid = norm(r) / norm(B)
   @test(resid ≤ tricg_tol)
+
+  # Test dimension of additional vectors
+  for transpose ∈ (false, true)
+    A, b, c, M, N = small_sqd(transpose)
+    M⁻¹ = inv(M)
+    N⁻¹ = inv(N)
+    (x, y, stats) = tricg(A, b, c, M=M⁻¹, N=N⁻¹)
+  end
 end

@@ -51,4 +51,11 @@
   (x, stats) = cgls(A, zeros(size(A,1)))
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
+
+  # Test dimension of additional vectors
+  for transpose ∈ (false, true)
+    A, b, c, D = small_sp(transpose)
+    D⁻¹ = inv(D)
+    (x, stats) = cgls(A, b, M=D⁻¹, λ=1.0)
+  end
 end

@@ -75,4 +75,16 @@
   r = M⁻¹ * (b - A * x)
   resid = norm(A' * r - N * x) / norm(b)
   @test(resid ≤ lsmr_tol)
+
+  # Test dimension of additional vectors
+  for transpose ∈ (false, true)
+    A, b, c, D = small_sp(transpose)
+    D⁻¹ = inv(D)
+    (x, stats) = lsmr(A, b, M=D⁻¹)
+
+    A, b, c, M, N = small_sqd(transpose)
+    M⁻¹ = inv(M)
+    N⁻¹ = inv(N)
+    (x, stats) = lsmr(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
+  end
 end
