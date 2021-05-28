@@ -53,21 +53,21 @@ multipliers of the least-norm problem
 
     minimize ‖x‖  s.t.  Ax = b.
 
-Preconditioners M⁻¹ and N⁻¹ may be provided in the form of linear operators and are
-assumed to be symmetric and positive definite.
 If `sqd = true`, CRAIG solves the symmetric and quasi-definite system
 
-    [ -N   Aᵀ ] [ x ]   [ 0 ]
-    [  A   M  ] [ y ] = [ b ],
+    [ -F   Aᵀ ] [ x ]   [ 0 ]
+    [  A   E  ] [ y ] = [ b ],
 
-which is equivalent to applying CG to `(AN⁻¹Aᵀ + M)y = b` with `Nx = Aᵀy`.
+where E and F are symmetric and positive definite.
+CRAIG is then equivalent to applying CG to `(AF⁻¹Aᵀ + E)y = b` with `Fx = Aᵀy`.
+Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
 
 If `sqd = false`, CRAIG solves the symmetric and indefinite system
 
-    [ -N   Aᵀ ] [ x ]   [ 0 ]
+    [ -F   Aᵀ ] [ x ]   [ 0 ]
     [  A   0  ] [ y ] = [ b ].
 
-In this case, M⁻¹ can still be specified and indicates the weighted norm in which residuals are measured.
+In this case, M can still be specified and indicates the weighted norm in which residuals are measured.
 
 In this implementation, both the x and y-parts of the solution are returned.
 
