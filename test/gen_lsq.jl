@@ -22,7 +22,7 @@ function lstp(nrow :: Int, ncol :: Int, ndupl :: Int, npower :: Int, λ :: Real,
 
   α = norm(hy)
   hy /= α
-  HY = I - hy' * hy  # HY is nrow x nrow.
+  HY = I - 2 * hy' * hy  # HY is nrow x nrow.
   β = norm(hz)
   hz /= β
   HZ = I - hz' * hz  # HZ is ncol x ncol.
