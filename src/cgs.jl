@@ -64,8 +64,8 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Set up workspace.
-  !MisI && isnothing(solver.vw) && (solver.vw = S(undef, n))
-  !NisI && isnothing(solver.yz) && (solver.yz = S(undef, n))
+  allocate_if(!MisI, solver, :vw, S, n)
+  allocate_if(!NisI, solver, :yz, S, n)
   x, r, u, p, q, ts = solver.x, solver.r, solver.u, solver.p, solver.q, solver.ts
   t = s = solver.ts
   v = MisI ? t : solver.vw

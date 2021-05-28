@@ -56,8 +56,8 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Set up workspace.
-  !MisI && isnothing(solver.w) && (solver.w = S(undef, n))
-  !NisI && isnothing(solver.z) && (solver.z = S(undef, n))
+  allocate_if(!MisI, solver, :w, S, n)
+  allocate_if(!NisI, solver, :z, S, n)
   x, x_old, t, P, V, L, H, p = solver.x, solver.x_old, solver.t, solver.P, solver.V, solver.L, solver.H, solver.p
   w  = MisI ? t : solver.w
   r₀ = MisI ? b : solver.w

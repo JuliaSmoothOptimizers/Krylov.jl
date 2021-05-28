@@ -63,7 +63,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  !MisI && isnothing(solver.z) && (solver.z = S(undef, n))
+  allocate_if(!MisI, solver, :z, S, n)
   x, r, p, Ap = solver.x, solver.r, solver.p, solver.Ap
   z = MisI ? r : solver.z
 

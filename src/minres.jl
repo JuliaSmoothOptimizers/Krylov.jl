@@ -79,7 +79,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  !MisI && isnothing(solver.v) && (solver.v = S(undef, n))
+  allocate_if(!MisI, solver, :v, S, n)
   x, r1, r2, w1, w2, y, err_vec, stats = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y, solver.err_vec, solver.stats
   v = MisI ? r2 : solver.v
 

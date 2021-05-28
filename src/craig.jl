@@ -107,9 +107,9 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   sqd && (λ = one(T))
 
   # Set up workspace.
-  !MisI   && isnothing(solver.u)  && (solver.u  = S(undef, m))
-  !NisI   && isnothing(solver.v)  && (solver.v  = S(undef, n))
-  (λ > 0) && isnothing(solver.w2) && (solver.w2 = S(undef, n))
+  allocate_if(!MisI, solver, :u , S, m)
+  allocate_if(!NisI, solver, :v , S, n)
+  allocate_if(λ > 0, solver, :w2, S, n)
   x, Nv, Aᵀu, y, w, Mu, Av, w2 = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.w, solver.Mu, solver.Av, solver.w2
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v

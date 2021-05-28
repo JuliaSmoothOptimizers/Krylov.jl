@@ -196,6 +196,8 @@ Create an AbstractVector of storage type `S` of length `n` only composed of one.
 """
 @inline kones(S, n) = fill!(S(undef, n), one(eltype(S)))
 
+@inline allocate_if(bool, solver, v, S, n) = bool && isnothing(solver.:($v)) && (solver.:($v) = S(undef, n))
+
 @inline display(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
 
 @inline krylov_dot(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasReal = BLAS.dot(n, x, dx, y, dy)

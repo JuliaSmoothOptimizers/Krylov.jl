@@ -58,7 +58,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  !MisI && isnothing(solver.vₖ) && (solver.vₖ = S(undef, n))
+  allocate_if(!MisI, solver, :vₖ, S, n)
   wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.x, solver.p
   vₖ = MisI ? M⁻¹vₖ : solver.vₖ
   vₖ₊₁ = MisI ? p : M⁻¹vₖ₋₁

@@ -60,7 +60,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  !MisI && isnothing(solver.v) && (solver.v = S(undef, n))
+  allocate_if(!MisI, solver, :v, S, n)
   x, Mvold, Mv, Mv_next, w̅ = solver.x, solver.Mvold, solver.Mv, solver.Mv_next, solver.w̅
   v = MisI ? Mv : solver.v
   vold = MisI ? Mvold : solver.v

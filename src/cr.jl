@@ -55,7 +55,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace
-  !MisI && isnothing(solver.Mq) && (solver.Mq = S(undef, n))
+  allocate_if(!MisI, solver, :Mq, S, n)
   x, r, p, q, Ar = solver.x, solver.r, solver.p, solver.q, solver.Ar
   Mq = MisI ? q : solver.Mq
 

@@ -70,7 +70,7 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   Aᵀ = A'
 
   # Set up workspace.
-  !MisI && isnothing(solver.Ms) && (solver.Ms = S(undef, m))
+  allocate_if(!MisI, solver, :Ms, S, m)
   x, p, Ar, q, r, Ap, s = solver.x, solver.p, solver.Ar, solver.q, solver.r, solver.Ap, solver.s
   Ms  = MisI ? s  : solver.Ms
   Mr  = MisI ? r  : solver.Ms

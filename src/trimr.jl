@@ -89,8 +89,8 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   Aᵀ = A'
 
   # Set up workspace.
-  !MisI && isnothing(solver.vₖ) && (solver.vₖ = S(undef, m))
-  !NisI && isnothing(solver.uₖ) && (solver.uₖ = S(undef, n))
+  allocate_if(!MisI, solver, :vₖ, S, m)
+  allocate_if(!NisI, solver, :uₖ, S, n)
   yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = solver.yₖ, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.p, solver.xₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.q
   gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ = solver.gy₂ₖ₋₃, solver.gy₂ₖ₋₂, solver.gy₂ₖ₋₁, solver.gy₂ₖ, solver.gx₂ₖ₋₃, solver.gx₂ₖ₋₂, solver.gx₂ₖ₋₁, solver.gx₂ₖ
   vₖ = MisI ? M⁻¹vₖ : solver.vₖ
