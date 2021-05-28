@@ -50,8 +50,8 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
-  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Set up workspace.
   !MisI && isnothing(solver.w) && (solver.w = S(undef, n))
@@ -152,7 +152,7 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
       ipos = mod(i-1, mem) + 1 # Position corresponding to pᵢ in the circular stack P.
       diag = iter - i + 2
       if ipos == pos
-        # pₐᵤₓ ← -hₘ₋ₘₑₘ.ₘ * pₘ₋ₘₑₘ
+        # pₐᵤₓ ← -hₘ₋ₘₑₘ.ₘ * pₘ₋ₘₑₘ
         @kscal!(n, -H[diag], P[pos])
       else
         # pₐᵤₓ ← pₐᵤₓ - hᵢ.ₘ * pᵢ

@@ -1,6 +1,6 @@
 using GitHub, JSON, PkgBenchmark
 
-filename = (ARGS == [] ? "benchmarks.jl" : ARGS[1])  # gpu.jl, cg_bmark.jl, ...
+filename = (ARGS == [] ? "benchmarks.jl" : ARGS[1])  # gpu.jl, cg_bmark.jl, ...
 println("The benchmark script is ", filename)
 
 commit = benchmarkpkg("Krylov", script="benchmark/$filename")  # current state of repository

@@ -71,12 +71,12 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("MINRES: system of size %d\n", n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
   !MisI && isnothing(solver.v) && (solver.v = S(undef, n))
@@ -95,7 +95,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   # β₁ M v₁ = b.
   r1 .= b
   r2 .= r1
-  MisI || mul!(v, M, r1)
+  MisI || mul!(v, M, r1)
   β₁ = @kdot(m, r1, v)
   β₁ < 0 && error("Preconditioner is not positive definite")
   if β₁ == 0

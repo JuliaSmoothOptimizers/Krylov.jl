@@ -71,8 +71,8 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   spd && snd  && error("The matrix cannot be SPD and SND")
 
   # Check M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -129,7 +129,7 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   gx₂ₖ   .= zero(T)
   gy₂ₖ   .= zero(T)
 
-  # Compute ‖r₀‖² = (γ₁)² + (β₁)²
+  # Compute ‖r₀‖² = (γ₁)² + (β₁)²
   rNorm = sqrt(γₖ^2 + βₖ^2)
   rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
@@ -286,7 +286,7 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     @. M⁻¹vₖ = q
     @. N⁻¹uₖ = p
 
-    # Compute ‖rₖ‖² = (γₖ₊₁ζ₂ₖ₋₁)² + (βₖ₊₁ζ₂ₖ)²
+    # Compute ‖rₖ‖² = (γₖ₊₁ζ₂ₖ₋₁)² + (βₖ₊₁ζ₂ₖ)²
     rNorm = sqrt((γₖ₊₁ * (π₂ₖ₋₁ - δₖ*π₂ₖ))^2 + (βₖ₊₁ * π₂ₖ)^2)
     history && push!(rNorms, rNorm)
 

@@ -52,12 +52,12 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("SYMMLQ: system of size %d\n", n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
   !MisI && isnothing(solver.v) && (solver.v = S(undef, n))
@@ -85,7 +85,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   mul!(Mv, A, vold)
   α = @kdot(m, vold, Mv) + λ
   @kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
-  MisI || mul!(v, M, Mv)
+  MisI || mul!(v, M, Mv)
   β = @kdot(m, v, Mv)
   β < 0 && error("Preconditioner is not positive definite")
   β = sqrt(β)

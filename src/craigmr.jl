@@ -15,7 +15,7 @@
 # This method is equivalent to CRMR, and is described in
 #
 # D. Orban and M. Arioli. Iterative Solution of Symmetric Quasi-Definite Linear Systems,
-# Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
+# Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
 #
 # D. Orban, The Projected Golub-Kahan Process for Constrained
 # Linear Least-Squares Problems. Cahier du GERAD G-2014-15,
@@ -83,19 +83,19 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CRAIGMR: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
-  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Set up workspace.
+  # Set up workspace.
   !MisI && isnothing(solver.u) && (solver.u = S(undef, m))
   !NisI && isnothing(solver.v) && (solver.v = S(undef, n))
   x, Nv, Aᵀu, y, Mu, w, wbar, Av = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.Mu, solver.w, solver.wbar, solver.Av
@@ -106,7 +106,7 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   x .= zero(T)
   y .= zero(T)
   Mu .= b
-  MisI || mul!(u, M, Mu)
+  MisI || mul!(u, M, Mu)
   β = sqrt(@kdot(m, u, Mu))
   β == 0 && return (x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
 
@@ -117,7 +117,7 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   # α₁Nv₁ = Aᵀu₁.
   mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
-  NisI || mul!(v, N, Nv)
+  NisI || mul!(v, N, Nv)
   α = sqrt(@kdot(n, v, Nv))
   Anorm² = α * α
 
@@ -160,7 +160,7 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     mul!(Av, A, v)
     @kaxpby!(m, one(T), Av, -α, Mu)
-    MisI || mul!(u, M, Mu)
+    MisI || mul!(u, M, Mu)
     β = sqrt(@kdot(m, u, Mu))
     if β ≠ 0
       @kscal!(m, one(T)/β, u)
@@ -194,7 +194,7 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
     # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
     mul!(Aᵀu, Aᵀ, u)
     @kaxpby!(n, one(T), Aᵀu, -β, Nv)
-    NisI || mul!(v, N, Nv)
+    NisI || mul!(v, N, Nv)
     α = sqrt(@kdot(n, v, Nv))
     Anorm² = Anorm² + α * α  # = ‖Lₖ‖
     ArNorm = α * β * abs(ζ/ρ)

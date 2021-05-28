@@ -55,7 +55,7 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Set up workspace.
+  # Set up workspace.
   uₖ₋₁, uₖ, p, d̅, x = solver.uₖ₋₁, solver.uₖ, solver.p, solver.d̅, solver.x
   vₖ₋₁, vₖ, q, t, wₖ₋₃, wₖ₋₂ = solver.vₖ₋₁, solver.vₖ, solver.q, solver.t, solver.wₖ₋₃, solver.wₖ₋₂
 
@@ -85,15 +85,15 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   uₖ₋₁ .= zero(T)            # u₀ = 0
   vₖ .= b ./ βₖ              # v₁ = b / β₁
   uₖ .= c ./ γₖ              # u₁ = c / γ₁
-  cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
-  sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
+  cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
+  sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
   d̅ .= zero(T)               # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
   δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
   ψbarₖ₋₁ = ψₖ₋₁ = zero(T)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
   ϵₖ₋₃ = λₖ₋₂ = zero(T)      # Components of Lₖ₋₁
-  wₖ₋₃ .= zero(T)            # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᵀ
+  wₖ₋₃ .= zero(T)            # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᵀ
   wₖ₋₂ .= zero(T)            # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᵀ
 
   # Stopping criterion.
@@ -254,7 +254,7 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
         @kaxpy!(m, -λₖ₋₂, wₖ₋₂, wₖ₋₁)
         @. wₖ₋₁ = wₖ₋₁ / δₖ₋₁
       end
-      # wₖ₋₁ = (vₖ₋₁ - λₖ₋₂wₖ₋₂ - ϵₖ₋₃wₖ₋₃) / δₖ₋₁
+      # wₖ₋₁ = (vₖ₋₁ - λₖ₋₂wₖ₋₂ - ϵₖ₋₃wₖ₋₃) / δₖ₋₁
       if iter ≥ 4
         @kscal!(m, -ϵₖ₋₃, wₖ₋₃)
         wₖ₋₁ = wₖ₋₃
@@ -293,8 +293,8 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     end
 
     # Compute uₖ₊₁ and uₖ₊₁.
-    @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
-    @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
+    @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
+    @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
 
     if βₖ₊₁ ≠ zero(T)
       @. vₖ = q / βₖ₊₁  # βₖ₊₁vₖ₊₁ = q

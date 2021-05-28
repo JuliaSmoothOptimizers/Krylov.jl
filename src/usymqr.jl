@@ -8,7 +8,7 @@
 #
 # A. Buttari, D. Orban, D. Ruiz and D. Titley-Peloquin
 # A tridiagonalization method for symmetric saddle-point and quasi-definite systems.
-# SIAM Journal on Scientific Computing, 41(5), pp. 409--432, 2019.
+# SIAM Journal on Scientific Computing, 41(5), pp. 409--432, 2019.
 #
 # A. Montoison and D. Orban
 # BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property.
@@ -85,10 +85,10 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   uₖ₋₁ .= zero(T)             # u₀ = 0
   vₖ .= b ./ βₖ               # v₁ = b / β₁
   uₖ .= c ./ γₖ               # u₁ = c / γ₁
-  cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
-  sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-  wₖ₋₂ .= zero(T)             # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
-  wₖ₋₁ .= zero(T)             # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
+  cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+  sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+  wₖ₋₂ .= zero(T)             # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
+  wₖ₋₁ .= zero(T)             # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
   ζbarₖ = βₖ                  # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
 
   # Stopping criterion.
@@ -132,7 +132,7 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     #
     # If k = 1, we don't have any previous reflexion.
     # If k = 2, we apply the last reflexion.
-    # If k ≥ 3, we only apply the two previous reflexions.
+    # If k ≥ 3, we only apply the two previous reflexions.
 
     # Apply previous Givens reflections Qₖ₋₂.ₖ₋₁
     if iter ≥ 3
@@ -179,7 +179,7 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
       @kaxpy!(n, one(T), uₖ, wₖ)
       @. wₖ = wₖ / δₖ
     end
-    # wₖ = (uₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
+    # wₖ = (uₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
     if iter ≥ 3
       @kscal!(n, -ϵₖ₋₂, wₖ₋₂)
       wₖ = wₖ₋₂
@@ -192,7 +192,7 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     # xₖ ← xₖ₋₁ + ζₖ * wₖ
     @kaxpy!(n, ζₖ, wₖ, x)
 
-    # Compute ‖rₖ‖ = |ζbarₖ₊₁|.
+    # Compute ‖rₖ‖ = |ζbarₖ₊₁|.
     rNorm = abs(ζbarₖ₊₁)
     history && push!(rNorms, rNorm)
 
@@ -201,8 +201,8 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     history && push!(AᵀrNorms, AᵀrNorm)
 
     # Compute uₖ₊₁ and uₖ₊₁.
-    @. vₖ₋₁ = vₖ # vₖ₋₁ ← vₖ
-    @. uₖ₋₁ = uₖ # uₖ₋₁ ← uₖ
+    @. vₖ₋₁ = vₖ # vₖ₋₁ ← vₖ
+    @. uₖ₋₁ = uₖ # uₖ₋₁ ← uₖ
 
     if βₖ₊₁ ≠ zero(T)
       @. vₖ = q / βₖ₊₁ # βₖ₊₁vₖ₊₁ = q

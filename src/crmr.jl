@@ -15,7 +15,7 @@
 # This method is equivalent to Craig-MR, described in
 #
 # D. Orban and M. Arioli. Iterative Solution of Symmetric Quasi-Definite Linear Systems,
-# Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
+# Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
 #
 # D. Orban, The Projected Golub-Kahan Process for Constrained
 # Linear Least-Squares Problems. Cahier du GERAD G-2014-15,
@@ -75,17 +75,17 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CRMR: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
-  # Set up workspace.
+  # Set up workspace.
   !MisI   && isnothing(solver.Mq) && (solver.Mq = S(undef, m))
   (λ > 0) && isnothing(solver.s)  && (solver.s  = S(undef, m))
   x, p, Aᵀr, r, q, s = solver.x, solver.p, solver.Aᵀr, solver.r, solver.q, solver.s
@@ -120,7 +120,7 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   while ! (solved || inconsistent || tired)
     mul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s
-    MisI || mul!(Mq, M, q)
+    MisI || mul!(Mq, M, q)
     α = γ / @kdot(m, q, Mq)    # Compute qᵗ * M * q
     @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p
     @kaxpy!(m, -α, Mq, r)      # Faster than  r =  r - α * Mq

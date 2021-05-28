@@ -4,7 +4,7 @@
 # Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
 #
 # M-A. Dahito and D. Orban, The Conjugate Residual Method in Linesearch and Trust-Region Methods.
-# SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
+# SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
 #
 # Marie-Ange Dahito, <marie-ange.dahito@polymtl.ca>
 # Montreal, QC, June 2017
@@ -47,12 +47,12 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CR: system of %d equations in %d variables\n", n, n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace
   !MisI && isnothing(solver.Mq) && (solver.Mq = S(undef, n))
@@ -107,7 +107,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
     elseif pAp ≤ 0 && radius == 0
       error("Indefinite system and no trust region")
     end
-    MisI || mul!(Mq, M, q)
+    MisI || mul!(Mq, M, q)
 
     if radius > 0
       (verbose > 0) && @printf("radius = %8.1e > 0 and ‖x‖ = %8.1e\n", radius, xNorm)
