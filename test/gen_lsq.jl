@@ -1,8 +1,4 @@
 # A test problem coming from LSQR.
-
-using LinearOperators
-
-
 function lstp(nrow :: Int, ncol :: Int, ndupl :: Int, npower :: Int, λ :: Real, x :: Array)
 
   # LSTP  generates a sparse least-squares test problem of the form
@@ -24,12 +20,16 @@ function lstp(nrow :: Int, ncol :: Int, ndupl :: Int, npower :: Int, λ :: Real,
   hy = map(sin, [1:nrow;] * α)
   hz = map(cos, [1:ncol;] * β)
 
-  α = norm(hy); hy /= α; HY = opHouseholder(hy)  # HY is nrow x nrow.
-  β = norm(hz); hz /= β; HZ = opHouseholder(hz)  # HZ is ncol x ncol.
+  α = norm(hy)
+  hy /= α
+  HY = I - hy' * hy  # HY is nrow x nrow.
+  β = norm(hz)
+  hz /= β
+  HZ = I - hz' * hz  # HZ is ncol x ncol.
 
   # Set the diagonal matrix D containing the singular values of A.
   d = (div.(([0:ncol-1;] .+ ndupl), ndupl) * ndupl / ncol).^npower  # Integer div!
-  D = opDiagonal(nrow, ncol, d)
+  D = diagm(nrow, ncol, d)
   A = HY * D * HZ
 
   Acond = abs(d[ncol] / d[1])

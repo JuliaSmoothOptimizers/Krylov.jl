@@ -30,21 +30,6 @@
   @test(stats.solved)
   @test(abs(radius - norm(x)) ≤ cg_tol * radius)
 
-  opA = LinearOperator(A)
-  (xop, statsop) = cg(opA, b, radius=radius, itmax=10)
-  @test(abs(radius - norm(xop)) ≤ cg_tol * radius)
-
-  n = 100
-  B = LBFGSOperator(n)
-  Random.seed!(0)
-  for i = 1:5
-    push!(B, rand(n), rand(n))
-  end
-  b = B * ones(n)
-  (x, stats) = cg(B, b, itmax=2n)
-  @test norm(x - ones(n)) ≤ cg_tol * norm(x)
-  @test stats.solved
-
   # Test b == 0
   A, b = zero_rhs()
   (x, stats) = cg(A, b)

@@ -17,17 +17,10 @@
   end
 
   # Test with preconditioning.
-  Random.seed!(0)
-  A, b = over_inconsistent(10, 6)
-  M = InverseLBFGSOperator(10, mem=4)
-  for _ = 1 : 6
-    s = rand(10)
-    y = rand(10)
-    push!(M, s, y)
-  end
-
-  (x, stats) = cgls(A, b, M=M)
-  resid = norm(A' * M * (A * x - b)) / sqrt(dot(b, M * b))
+  A, b, M = saddle_point()
+  M⁻¹ = inv(M)
+  (x, stats) = cgls(A, b, M=M⁻¹)
+  resid = norm(A' * M⁻¹ * (A * x - b)) / sqrt(dot(b, M⁻¹ * b))
   @test resid ≤ cgls_tol
 
   # test trust-region constraint
@@ -37,10 +30,6 @@
   (x, stats) = cgls(A, b, radius=radius)
   @test(stats.solved)
   @test(abs(radius - norm(x)) ≤ cgls_tol * radius)
-
-  opA = LinearOperator(A)
-  (xop, statsop) = cgls(opA, b, radius=radius)
-  @test(abs(radius - norm(xop)) ≤ cgls_tol * radius)
 
   # Code coverage.
   (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0)

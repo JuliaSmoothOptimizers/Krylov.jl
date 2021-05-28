@@ -29,10 +29,6 @@
   @test(stats.solved)
   @test(abs(radius - norm(x)) ≤ lsmr_tol * radius)
 
-  opA = LinearOperator(A)
-  (xop, statsop) = lsmr(opA, b, radius=radius)
-  @test(abs(radius - norm(xop)) ≤ lsmr_tol * radius)
-
   # Code coverage.
   (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0)
   (x, stats) = lsmr(Matrix(A), b)
