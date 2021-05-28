@@ -86,8 +86,8 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   Aᵀ = A'
 
   # Set up workspace.
-  !MisI   && isnothing(solver.Mq) && (solver.Mq = S(undef, m))
-  (λ > 0) && isnothing(solver.s)  && (solver.s  = S(undef, m))
+  allocate_if(!MisI, solver, :Mq, S, m)
+  allocate_if(λ > 0, solver, :s , S, m)
   x, p, Aᵀr, r, q, s = solver.x, solver.p, solver.Aᵀr, solver.r, solver.q, solver.s
   Mq = MisI ? q : solver.Mq
 

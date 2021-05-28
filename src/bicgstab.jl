@@ -67,8 +67,8 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Set up workspace.
-  !MisI && isnothing(solver.t)  && (solver.t  = S(undef, n))
-  !NisI && isnothing(solver.yz) && (solver.yz = S(undef, n))
+  allocate_if(!MisI, solver, :t , S, n)
+  allocate_if(!NisI, solver, :yz, S, n)
   x, r, p, v, s, qd = solver.x, solver.r, solver.p, solver.v, solver.s, solver.qd
   q = d = solver.qd
   t = MisI ? d : solver.t

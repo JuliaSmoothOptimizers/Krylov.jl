@@ -54,8 +54,8 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Set up workspace.
-  !MisI && isnothing(solver.w) && (solver.w = S(undef, n))
-  !NisI && isnothing(solver.z) && (solver.z = S(undef, n))
+  allocate_if(!MisI, solver, :w, S, n)
+  allocate_if(!NisI, solver, :z, S, n)
   x, t, P, V, c, s, H = solver.x, solver.t, solver.P, solver.V, solver.c, solver.s, solver.H
   w  = MisI ? t : solver.w
   r₀ = MisI ? b : solver.w

@@ -88,8 +88,8 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   Aᵀ = A'
 
   # Set up workspace.
-  !MisI   && isnothing(solver.z) && (solver.z = S(undef, m))
-  (λ > 0) && isnothing(solver.s) && (solver.s = S(undef, m))
+  allocate_if(!MisI, solver, :z, S, m)
+  allocate_if(λ > 0, solver, :s, S, m)
   x, p, Aᵀz, r, q, s = solver.x, solver.p, solver.Aᵀz, solver.r, solver.q, solver.s
   z = MisI ? r : solver.z
 

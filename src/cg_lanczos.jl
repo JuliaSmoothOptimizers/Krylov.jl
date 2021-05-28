@@ -57,7 +57,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  !MisI && isnothing(solver.v) && (solver.v = S(undef, n))
+  allocate_if(!MisI, solver, :v, S, n)
   x, Mv, Mv_prev, p, Mv_next = solver.x, solver.Mv, solver.Mv_prev, solver.p, solver.Mv_next
   v = MisI ? Mv : solver.v
 
@@ -185,7 +185,7 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  !MisI && isnothing(solver.v) && (solver.v = S(undef, n))
+  allocate_if(!MisI, solver, :v, S, n)
   Mv, Mv_prev, Mv_next, x, p, σ, δhat, ω, γ = solver.Mv, solver.Mv_prev, solver.Mv_next, solver.x, solver.p, solver.σ, solver.δhat, solver.ω, solver.γ
   rNorms, indefinite, converged, not_cv = solver.rNorms, solver.indefinite, solver.converged, solver.not_cv
   v = MisI ? Mv : solver.v

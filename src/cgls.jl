@@ -79,7 +79,7 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
   Aᵀ = A'
 
   # Set up workspace.
-  !MisI && isnothing(solver.Mr) && (solver.Mr = S(undef, m))
+  allocate_if(!MisI, solver, :Mr, S, m)
   x, p, s, r, q = solver.x, solver.p, solver.s, solver.r, solver.q
   Mr = MisI ? r : solver.Mr
   Mq = MisI ? q : solver.Mr

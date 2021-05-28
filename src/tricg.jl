@@ -85,8 +85,8 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   Aᵀ = A'
 
   # Set up workspace.
-  !MisI && isnothing(solver.vₖ) && (solver.vₖ = S(undef, m))
-  !NisI && isnothing(solver.uₖ) && (solver.uₖ = S(undef, n))
+  allocate_if(!MisI, solver, :vₖ, S, m)
+  allocate_if(!NisI, solver, :uₖ, S, n)
   yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, xₖ, M⁻¹vₖ₋₁ = solver.yₖ, solver.N⁻¹uₖ₋₁, solver.p, solver.N⁻¹uₖ, solver.xₖ, solver.M⁻¹vₖ₋₁
   M⁻¹vₖ, q, gy₂ₖ₋₁, gy₂ₖ, gx₂ₖ₋₁, gx₂ₖ = solver.M⁻¹vₖ, solver.q, solver.gy₂ₖ₋₁, solver.gy₂ₖ, solver.gx₂ₖ₋₁, solver.gx₂ₖ
   vₖ = MisI ? M⁻¹vₖ : solver.vₖ
