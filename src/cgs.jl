@@ -53,15 +53,15 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   (verbose > 0) && @printf("CGS: system of size %d\n", n)
 
   # Check M == Iₙ and N == Iₙ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
-  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
-  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Set up workspace.
   !MisI && isnothing(solver.vw) && (solver.vw = S(undef, n))
@@ -109,7 +109,7 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
     mul!(t, A, y)                 # tₖ = Ayₖ
     MisI || mul!(v, M, t)         # vₖ = M⁻¹tₖ
     σ = @kdot(n, v, c)            # σₖ = ⟨ M⁻¹AN⁻¹pₖ,̅r₀ ⟩
-    α = ρ / σ                     # αₖ = ρₖ / σₖ
+    α = ρ / σ                     # αₖ = ρₖ / σₖ
     @kcopy!(n, u, q)              # qₖ = uₖ
     @kaxpy!(n, -α, v, q)          # qₖ = qₖ - αₖ * M⁻¹AN⁻¹pₖ
     @kaxpy!(n, one(T), q, u)      # uₖ₊½ = uₖ + qₖ
@@ -131,7 +131,7 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
     # Update iteration index.
     iter = iter + 1
 
-    # Compute residual norm ‖rₖ‖₂.
+    # Compute residual norm ‖rₖ‖₂.
     rNorm = @knrm2(n, r)
     history && push!(rNorms, rNorm)
 

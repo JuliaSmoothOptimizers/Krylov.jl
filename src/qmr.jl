@@ -84,10 +84,10 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   uₖ₋₁ .= zero(T)             # u₀ = 0
   vₖ .= b ./ βₖ               # v₁ = b / β₁
   uₖ .= c ./ γₖ               # u₁ = c / γ₁
-  cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
-  sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-  wₖ₋₂ .= zero(T)             # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
-  wₖ₋₁ .= zero(T)             # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
+  cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+  sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+  wₖ₋₂ .= zero(T)             # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
+  wₖ₋₁ .= zero(T)             # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
   ζbarₖ = βₖ                  # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
   τₖ = @kdot(n, vₖ, vₖ)       # τₖ is used for the residual norm estimate
 
@@ -133,7 +133,7 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
     #
     # If k = 1, we don't have any previous reflexion.
     # If k = 2, we apply the last reflexion.
-    # If k ≥ 3, we only apply the two previous reflexions.
+    # If k ≥ 3, we only apply the two previous reflexions.
 
     # Apply previous Givens reflections Qₖ₋₂.ₖ₋₁
     if iter ≥ 3
@@ -188,7 +188,7 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
       @kaxpy!(n, one(T), vₖ, wₖ)
       @. wₖ = wₖ / δₖ
     end
-    # wₖ = (vₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
+    # wₖ = (vₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
     if iter ≥ 3
       @kscal!(n, -ϵₖ₋₂, wₖ₋₂)
       wₖ = wₖ₋₂
@@ -202,8 +202,8 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
     @kaxpy!(n, ζₖ, wₖ, x)
 
     # Compute vₖ₊₁ and uₖ₊₁.
-    @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
-    @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
+    @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
+    @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
 
     if qᵗp ≠ zero(T)
       @. vₖ = q / βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
@@ -213,7 +213,7 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
     # Compute τₖ₊₁ = τₖ + ‖vₖ₊₁‖²
     τₖ₊₁ = τₖ + @kdot(n, vₖ, vₖ)
 
-    # Compute ‖rₖ‖ ≤ |ζbarₖ₊₁|√τₖ₊₁
+    # Compute ‖rₖ‖ ≤ |ζbarₖ₊₁|√τₖ₊₁
     rNorm = abs(ζbarₖ₊₁) * √τₖ₊₁
     history && push!(rNorms, rNorm)
 

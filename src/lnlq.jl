@@ -79,14 +79,14 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("LNLQ: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
-  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
@@ -118,7 +118,7 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
 
-  # Update iteration index
+  # Update iteration index
   iter = iter + 1
 
   # Initialize generalized Golub-Kahan bidiagonalization.
@@ -142,7 +142,7 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   end
 
   w̄ .= u             # Direction w̄₁
-  cₖ = sₖ = zero(T)  # Givens sines and cosines used for the LQ factorization of (Lₖ)ᵀ
+  cₖ = sₖ = zero(T)  # Givens sines and cosines used for the LQ factorization of (Lₖ)ᵀ
   ζₖ₋₁ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
   ηₖ = zero(T)       # Coefficient of M̅ₖ
 
@@ -292,7 +292,7 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
     # Compute w̄ₖ₊₁
     @kaxpby!(m, -cₖ₊₁, u, sₖ₊₁, w̄)
 
-    # Compute residual norm ‖(rᴸ)ₖ‖ = |αₖ| * √((ϵbarₖζbarₖ)² + (βₖ₊₁sₖζₖ₋₁)²)
+    # Compute residual norm ‖(rᴸ)ₖ‖ = |αₖ| * √((ϵbarₖζbarₖ)² + (βₖ₊₁sₖζₖ₋₁)²)
     if iter == 1
       rNorm_lq = bNorm
     else
@@ -300,7 +300,7 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
     end
     history && push!(rNorms, rNorm_lq)
 
-    # Compute residual norm ‖(rᶜ)ₖ‖ = |βₖ₊₁ * τₖ|
+    # Compute residual norm ‖(rᶜ)ₖ‖ = |βₖ₊₁ * τₖ|
     if transfer_to_craig
       rNorm_cg = abs(βhatₖ₊₁ * τₖ)
     end
@@ -363,6 +363,6 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   tired     && (status = "maximum number of iterations exceeded")
   solved_lq && (status = "solutions (xᴸ, yᴸ) good enough for the tolerances given")
   solved_cg && (status = "solutions (xᶜ, yᶜ) good enough for the tolerances given")
-  stats = SimpleStats(solved_lq || solved_cg, false, rNorms, T[], status)
+  stats = SimpleStats(solved_lq || solved_cg, false, rNorms, T[], status)
   return (x, y, stats)
 end

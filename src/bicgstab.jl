@@ -56,8 +56,8 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
   (verbose > 0) && @printf("BICGSTAB: system of size %d\n", n)
 
   # Check M == Iₙ and N == Iₙ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -123,14 +123,14 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
     MisI || mul!(t, M, d)                # tₖ = M⁻¹dₖ
     ω = @kdot(n, t, s) / @kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
     @kaxpy!(n, ω, z, x)                  # xₖ = xₐᵤₓ + ωₖzₖ
-    @kcopy!(n, s, r)                     # rₖ = sₖ
+    @kcopy!(n, s, r)                     # rₖ = sₖ
     @kaxpy!(n, -ω, t, r)                 # rₖ = rₖ - ωₖtₖ
     next_ρ = @kdot(n, r, c)              # ρₖ₊₁ = ⟨rₖ,r̅₀⟩
     β = (next_ρ / ρ) * (α / ω)           # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
     @kaxpy!(n, -ω, v, p)                 # pₐᵤₓ = pₖ - ωₖvₖ
     @kaxpby!(n, one(T), r, β, p)         # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
 
-    # Compute residual norm ‖rₖ‖₂.
+    # Compute residual norm ‖rₖ‖₂.
     rNorm = @knrm2(n, r)
     history && push!(rNorms, rNorm)
 

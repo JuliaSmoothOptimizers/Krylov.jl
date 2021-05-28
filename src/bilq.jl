@@ -77,8 +77,8 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
   uₖ₋₁ .= zero(T)            # u₀ = 0
   vₖ .= b ./ βₖ              # v₁ = b / β₁
   uₖ .= c ./ γₖ              # u₁ = c / γ₁
-  cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
-  sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
+  cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
+  sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
   d̅ .= zero(T)               # Last column of D̅ₖ = Vₖ(Qₖ)ᵀ
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
@@ -188,8 +188,8 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
     end
 
     # Compute vₖ₊₁ and uₖ₊₁.
-    @. vₖ₋₁ = vₖ # vₖ₋₁ ← vₖ
-    @. uₖ₋₁ = uₖ # uₖ₋₁ ← uₖ
+    @. vₖ₋₁ = vₖ # vₖ₋₁ ← vₖ
+    @. uₖ₋₁ = uₖ # uₖ₋₁ ← uₖ
 
     if qᵗp ≠ 0
       @. vₖ = q / βₖ₊₁ # βₖ₊₁vₖ₊₁ = q
@@ -211,7 +211,7 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
     end
     history && push!(rNorms, rNorm_lq)
 
-    # Compute BiCG residual norm
+    # Compute BiCG residual norm
     # ‖rₖ‖ = |ρₖ| * ‖vₖ₊₁‖
     if transfer_to_bicg && (δbarₖ ≠ 0)
       ζbarₖ = ηₖ / δbarₖ

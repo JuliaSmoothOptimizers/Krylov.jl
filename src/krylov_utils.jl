@@ -177,7 +177,7 @@ function ktypeof(v :: AbstractVector)
     S = S.types[1]  # SubArray
   end
   if S <: AbstractSparseVector
-    S = S <: SparseVector ? S.types[3] : S.types[2]  # SparseVector / CuSparseVector
+    S = S <: SparseVector ? S.types[3] : S.types[2]  # SparseVector / CuSparseVector
   end
   return S
 end

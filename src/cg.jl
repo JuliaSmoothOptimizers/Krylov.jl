@@ -55,12 +55,12 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CG: system of %d equations in %d variables\n", n, n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
   !MisI && isnothing(solver.z) && (solver.z = S(undef, n))
@@ -69,7 +69,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
 
   x .= zero(T)
   r .= b
-  MisI || mul!(z, M, r)
+  MisI || mul!(z, M, r)
   p .= z
   γ = @kdot(n, r, z)
   γ == 0 && return x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
@@ -125,7 +125,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
 
     @kaxpy!(n,  α,  p, x)
     @kaxpy!(n, -α, Ap, r)
-    MisI || mul!(z, M, r)
+    MisI || mul!(z, M, r)
     γ_next = @kdot(n, r, z)
     rNorm = sqrt(γ_next)
     history && push!(rNorms, rNorm)

@@ -50,14 +50,14 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("MINRES-QLP: system of size %d\n", n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
-  # Set up workspace.
+  # Set up workspace.
   !MisI && isnothing(solver.vₖ) && (solver.vₖ = S(undef, n))
   wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.x, solver.p
   vₖ = MisI ? M⁻¹vₖ : solver.vₖ
@@ -68,7 +68,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
 
   # β₁v₁ = Mb
   M⁻¹vₖ .= b
-  MisI || mul!(vₖ, M, M⁻¹vₖ)
+  MisI || mul!(vₖ, M, M⁻¹vₖ)
   βₖ = sqrt(@kdot(n, vₖ, M⁻¹vₖ))
   if βₖ ≠ 0
     @kscal!(n, 1 / βₖ, M⁻¹vₖ)
@@ -97,8 +97,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   μbisₖ₋₂ = μbarₖ₋₁ = zero(T)
   wₖ₋₁ .= zero(T)
   wₖ   .= zero(T)
-  cₖ₋₂  = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
-  sₖ₋₂  = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+  cₖ₋₂  = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+  sₖ₋₂  = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -106,7 +106,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   tired = iter ≥ itmax
   status = "unknown"
 
-  while !(solved || tired || inconsistent)
+  while !(solved || tired || inconsistent)
     # Update iteration index.
     iter = iter + 1
 
@@ -150,7 +150,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     #
     # If k = 1, we don't have any previous reflexion.
     # If k = 2, we apply the last reflexion.
-    # If k ≥ 3, we only apply the two previous reflexions.
+    # If k ≥ 3, we only apply the two previous reflexions.
 
     # Apply previous Givens reflections Qₖ₋₂.ₖ₋₁
     if iter ≥ 3

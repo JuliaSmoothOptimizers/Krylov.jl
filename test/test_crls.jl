@@ -64,7 +64,7 @@
   p = V[:,1]; b = A'\p
   (x, stats) = crls(A, b, radius=radius)
   @test stats.solved
-  @test (stats.status == "zero-curvature encountered") || (stats.status == "on trust-region boundary")
+  @test (stats.status == "zero-curvature encountered") || (stats.status == "on trust-region boundary")
   @test norm(x) ⪅ radius
 
   # Test dimension of additional vectors

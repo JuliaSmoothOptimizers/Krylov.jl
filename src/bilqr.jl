@@ -88,8 +88,8 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   uₖ₋₁ .= zero(T)            # u₀ = 0
   vₖ .= b ./ βₖ              # v₁ = b / β₁
   uₖ .= c ./ γₖ              # u₁ = c / γ₁
-  cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
-  sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
+  cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
+  sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
   d̅ .= zero(T)               # Last column of D̅ₖ = Vₖ(Qₖ)ᵀ
   ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
@@ -97,7 +97,7 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   ψbarₖ₋₁ = ψₖ₋₁ = zero(T)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
   norm_vₖ = bNorm / βₖ       # ‖vₖ‖ is used for residual norm estimates
   ϵₖ₋₃ = λₖ₋₂ = zero(T)      # Components of Lₖ₋₁
-  wₖ₋₃ .= zero(T)            # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᵀ
+  wₖ₋₃ .= zero(T)            # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᵀ
   wₖ₋₂ .= zero(T)            # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᵀ
   τₖ = zero(T)               # τₖ is used for the dual residual norm estimate
 
@@ -226,7 +226,7 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
       # Update ‖vₖ‖
       norm_vₖ = norm_vₖ₊₁
 
-      # Compute BiCG residual norm
+      # Compute BiCG residual norm
       # ‖rₖ‖ = |ρₖ| * ‖vₖ₊₁‖
       if transfer_to_bicg && (δbarₖ ≠ 0)
         ζbarₖ = ηₖ / δbarₖ
@@ -267,7 +267,7 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
         @kaxpy!(n, -λₖ₋₂, wₖ₋₂, wₖ₋₁)
         @. wₖ₋₁ = wₖ₋₁ / δₖ₋₁
       end
-      # wₖ₋₁ = (uₖ₋₁ - λₖ₋₂wₖ₋₂ - ϵₖ₋₃wₖ₋₃) / δₖ₋₁
+      # wₖ₋₁ = (uₖ₋₁ - λₖ₋₂wₖ₋₂ - ϵₖ₋₃wₖ₋₃) / δₖ₋₁
       if iter ≥ 4
         @kscal!(n, -ϵₖ₋₃, wₖ₋₃)
         wₖ₋₁ = wₖ₋₃
@@ -293,7 +293,7 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
       # Compute τₖ = τₖ₋₁ + ‖uₖ‖²
       τₖ += @kdot(n, uₖ, uₖ)
 
-      # Compute QMR residual norm ‖sₖ₋₁‖ ≤ |ψbarₖ| * √τₖ
+      # Compute QMR residual norm ‖sₖ₋₁‖ ≤ |ψbarₖ| * √τₖ
       sNorm = abs(ψbarₖ) * √τₖ
       history && push!(sNorms, sNorm)
 
@@ -304,8 +304,8 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     end
 
     # Compute vₖ₊₁ and uₖ₊₁.
-    @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
-    @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
+    @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
+    @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
 
     if qᵗp ≠ zero(T)
       @. vₖ = q / βₖ₊₁  # βₖ₊₁vₖ₊₁ = q

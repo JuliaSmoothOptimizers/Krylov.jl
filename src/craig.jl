@@ -91,14 +91,14 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CRAIG: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
-  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
@@ -106,7 +106,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   # When solving a SQD system, set regularization parameter λ = 1.
   sqd && (λ = one(T))
 
-  # Set up workspace.
+  # Set up workspace.
   !MisI   && isnothing(solver.u)  && (solver.u  = S(undef, m))
   !NisI   && isnothing(solver.v)  && (solver.v  = S(undef, n))
   (λ > 0) && isnothing(solver.w2) && (solver.w2 = S(undef, n))
@@ -163,7 +163,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   solved_lim = bkwerr ≤ btol
   solved_mach = one(T) + bkwerr ≤ one(T)
   solved_resid_tol = rNorm ≤ ɛ_c
-  solved_resid_lim = rNorm ≤ btol + atol * Anorm * xNorm / β₁
+  solved_resid_lim = rNorm ≤ btol + atol * Anorm * xNorm / β₁
   solved = solved_mach | solved_lim | solved_resid_tol | solved_resid_lim
 
   ill_cond = ill_cond_mach = ill_cond_lim = false

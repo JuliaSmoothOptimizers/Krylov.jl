@@ -59,12 +59,12 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CRLS: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = isa(M, opEye) || (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Compute the adjoint of A
   Aᵀ = A'
@@ -81,10 +81,10 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
 
-  MisI || mul!(Mr, M, r)
+  MisI || mul!(Mr, M, r)
   mul!(Ar, Aᵀ, Mr)  # - λ * x0 if x0 ≠ 0.
   mul!(s, A, Ar)
-  MisI || mul!(Ms, M, s)
+  MisI || mul!(Ms, M, s)
 
   p  .= Ar
   Ap .= s
@@ -140,14 +140,14 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
     solved && continue
     @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap
     mul!(s, A, Ar)
-    MisI || mul!(Ms, M, s)
+    MisI || mul!(Ms, M, s)
     γ_next = @kdot(m, s, Ms)   # Faster than γ_next = dot(s, s)
     λ > 0 && (γ_next += λ * ArNorm * ArNorm)
     β = γ_next / γ
 
     @kaxpby!(n, one(T), Ar, β, p)    # Faster than  p = Ar + β *  p
     @kaxpby!(m, one(T), s, β, Ap)    # Faster than Ap =  s + β * Ap
-    MisI || mul!(MAp, M, Ap)
+    MisI || mul!(MAp, M, Ap)
     mul!(q, Aᵀ, MAp)
     λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
 

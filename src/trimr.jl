@@ -75,8 +75,8 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   sp  && flip && error("The matrix cannot be symmetric quasi-definite and a saddle-point !")
 
   # Check M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = isa(M, opEye) || (M == I)
+  NisI = isa(N, opEye) || (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -137,7 +137,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   gx₂ₖ   .= zero(T)
   gy₂ₖ   .= zero(T)
 
-  # Compute ‖r₀‖² = (γ₁)² + (β₁)²
+  # Compute ‖r₀‖² = (γ₁)² + (β₁)²
   rNorm = sqrt(γₖ^2 + βₖ^2)
   rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
@@ -363,7 +363,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     # Update yₖ = Gyₖ * pₖ
     @. yₖ += π₂ₖ₋₁ * gy₂ₖ₋₁ + π₂ₖ * gy₂ₖ
 
-    # Compute ‖rₖ‖² = (πbar₂ₖ₊₁)² + (πbar₂ₖ₊₂)²
+    # Compute ‖rₖ‖² = (πbar₂ₖ₊₁)² + (πbar₂ₖ₊₂)²
     rNorm = sqrt(πbar₂ₖ₊₁^2 + πbar₂ₖ₊₂^2)
     history && push!(rNorms, rNorm)
 
