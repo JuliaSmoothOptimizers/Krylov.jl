@@ -45,9 +45,9 @@
   A, b, D = saddle_point()
   m, n = size(A)
   c = -b
-  D⁻¹ = inv(D)
+  D⁻¹ = sparse(inv(D))
   N⁻¹ = eye(n)
-  H⁻¹ = BlockDiagonalOperator(D⁻¹, N⁻¹)
+  H⁻¹ = blockdiag(D⁻¹, N⁻¹)
 
   (x, y, stats) = trimr(A, b, c, τ=1.0, ν=0.0, M=D⁻¹)
   K = [D A; A' zeros(n, n)]
@@ -67,9 +67,9 @@
   A, b, M, N = sqd()
   m, n = size(A)
   c = -b
-  M⁻¹ = inv(M)
-  N⁻¹ = inv(N)
-  H⁻¹ = BlockDiagonalOperator(M⁻¹, N⁻¹)
+  M⁻¹ = sparse(inv(M))
+  N⁻¹ = sparse(inv(N))
+  H⁻¹ = blockdiag(M⁻¹, N⁻¹)
 
   (x, y, stats) = trimr(A, b, c, M=M⁻¹, N=N⁻¹)
   K = [M A; A' -N]

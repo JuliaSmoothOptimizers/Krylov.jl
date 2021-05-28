@@ -1,7 +1,7 @@
 @testset "cgne" begin
   cgne_tol = 1.0e-6
 
-  function test_cgne(A, b; λ=0.0, M=opEye())
+  function test_cgne(A, b; λ=0.0, M=I)
     (nrow, ncol) = size(A)
     (x, stats) = cgne(A, b, λ=λ, M=M)
     r = b - A * x
@@ -81,7 +81,7 @@
   A = 0.5 * [19.0 17.0 15.0 13.0 11.0 9.0 7.0 5.0 3.0 1.0;
              2.0  2.0  2.0  2.0  2.0 2.0 2.0 2.0 2.0 2.0]
   b = [1.0; 0.0]
-  M = LinearOperator(Diagonal(1 ./ (A * A')))
+  M = Diagonal(1 ./ (A * A'))
   (x, stats, resid) = test_cgne(A, b, M=M)
   @test(resid ≤ cgne_tol)
   @test(stats.solved)
