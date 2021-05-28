@@ -25,7 +25,7 @@ function lstp(nrow :: Int, ncol :: Int, ndupl :: Int, npower :: Int, λ :: Real,
   HY = I - 2 * hy' * hy  # HY is nrow x nrow.
   β = norm(hz)
   hz /= β
-  HZ = I - hz' * hz  # HZ is ncol x ncol.
+  HZ = I - 2 * hz' * hz  # HZ is ncol x ncol.
 
   # Set the diagonal matrix D containing the singular values of A.
   d = (div.(([0:ncol-1;] .+ ndupl), ndupl) * ndupl / ncol).^npower  # Integer div!
