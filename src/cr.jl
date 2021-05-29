@@ -13,7 +13,7 @@ export cr, cr!
 
 """
     (x, stats) = cr(A, b::AbstractVector{T};
-                    M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T), itmax::Int=0,
+                    M=I, atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T), itmax::Int=0,
                     radius::T=zero(T), verbose::Int=0, linesearch::Bool=false, history::Bool=false) where T <: AbstractFloat
 
 A truncated version of Stiefel’s Conjugate Residual method to solve the symmetric linear system Ax = b or the least-squares problem min ‖b - Ax‖.
@@ -38,7 +38,7 @@ function cr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
 end
 
 function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
-             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
+             M=I, atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
              radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
@@ -47,7 +47,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CR: system of %d equations in %d variables\n", n, n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

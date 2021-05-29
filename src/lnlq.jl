@@ -26,7 +26,7 @@ export lnlq, lnlq!
 
 """
     (x, y, stats) = lnlq(A, b::AbstractVector{T};
-                         M=opEye(), N=opEye(), sqd::Bool=false, λ::T=zero(T),
+                         M=I, N=I, sqd::Bool=false, λ::T=zero(T),
                          atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                          transfer_to_craig::Bool=true, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
@@ -70,7 +70,7 @@ function lnlq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
 end
 
 function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
-               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
+               M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
                atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
@@ -79,8 +79,8 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("LNLQ: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = (M == I)
+  NisI = (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

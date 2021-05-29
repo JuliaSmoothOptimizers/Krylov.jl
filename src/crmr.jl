@@ -29,7 +29,7 @@ export crmr, crmr!
 
 """
     (x, stats) = crmr(A, b::AbstractVector{T};
-                      M=opEye(), λ::T=zero(T), atol::T=√eps(T),
+                      M=I, λ::T=zero(T), atol::T=√eps(T),
                       rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system
@@ -67,7 +67,7 @@ function crmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
 end
 
 function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
-               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
+               M=I, λ :: T=zero(T), atol :: T=√eps(T),
                rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
@@ -75,7 +75,7 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CRMR: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

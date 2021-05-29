@@ -29,7 +29,7 @@ export craigmr, craigmr!
 
 """
     (x, y, stats) = craigmr(A, b::AbstractVector{T};
-                            M=opEye(), N=opEye(), λ::T=zero(T), atol::T=√eps(T),
+                            M=I, N=I, λ::T=zero(T), atol::T=√eps(T),
                             rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system
@@ -75,7 +75,7 @@ function craigmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
 end
 
 function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
-                  M=opEye(), N=opEye(), λ :: T=zero(T), atol :: T=√eps(T),
+                  M=I, N=I, λ :: T=zero(T), atol :: T=√eps(T),
                   rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
@@ -83,8 +83,8 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CRAIGMR: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = (M == I)
+  NisI = (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

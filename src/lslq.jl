@@ -7,7 +7,7 @@ export lslq, lslq!
 """
     (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) =
         lslq(A, b::AbstractVector{T};
-             M=opEye(), N=opEye(), sqd::Bool=false, λ::T=zero(T),
+             M=I, N=I, sqd::Bool=false, λ::T=zero(T),
              atol::T=√eps(T), btol::T=√eps(T), etol::T=√eps(T),
              window::Int=5, utol::T=√eps(T), itmax::Int=0,
              σ::T=zero(T), conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
@@ -38,8 +38,8 @@ but is more stable.
 
 #### Optional arguments
 
-* `M::AbstractLinearOperator=opEye()`: a symmetric and positive definite dual preconditioner
-* `N::AbstractLinearOperator=opEye()`: a symmetric and positive definite primal preconditioner
+* `M::AbstractLinearOperator=I`: a symmetric and positive definite dual preconditioner
+* `N::AbstractLinearOperator=I`: a symmetric and positive definite primal preconditioner
 * `sqd::Bool=false` indicates whether or not we are solving a symmetric and quasi-definite augmented system
 
 If `sqd = true`, we solve the symmetric and quasi-definite system
@@ -109,7 +109,7 @@ function lslq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
 end
 
 function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
-               M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T),
+               M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
                atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
                window :: Int=5, utol :: T=√eps(T), itmax :: Int=0,
                σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
@@ -119,8 +119,8 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("LSLQ: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₙ and N == Iₘ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = (M == I)
+  NisI = (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

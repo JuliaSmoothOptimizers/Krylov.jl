@@ -13,7 +13,7 @@ export tricg, tricg!
 
 """
     (x, y, stats) = tricg(A, b::AbstractVector{T}, c::AbstractVector{T};
-                          M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
+                          M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                           spd::Bool=false, snd::Bool=false, flip::Bool=false,
                           τ::T=one(T), ν::T=-one(T), itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
@@ -56,7 +56,7 @@ function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) whe
 end
 
 function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
-                M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
+                M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                 spd :: Bool=false, snd :: Bool=false, flip :: Bool=false,
                 τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
@@ -71,8 +71,8 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   spd && snd  && error("The matrix cannot be SPD and SND")
 
   # Check M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = (M == I)
+  NisI = (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

@@ -31,7 +31,7 @@ export cgne, cgne!
 
 """
     (x, stats) = cgne(A, b::AbstractVector{T};
-                      M=opEye(), λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
+                      M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                       itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system
@@ -69,7 +69,7 @@ function cgne(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
 end
 
 function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
-               M=opEye(), λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
+               M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
@@ -77,7 +77,7 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CGNE: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

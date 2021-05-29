@@ -1,6 +1,6 @@
 module Krylov
 
-using LinearOperators, LinearAlgebra, SparseArrays, Printf
+using LinearAlgebra, SparseArrays, Printf
 
 include("krylov_stats.jl")
 include("krylov_utils.jl")

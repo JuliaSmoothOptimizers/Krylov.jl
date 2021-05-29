@@ -18,7 +18,7 @@ export minres_qlp, minres_qlp!
 
 """
     (x, stats) = minres_qlp(A, b::AbstractVector{T};
-                            M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), λ::T=zero(T),
+                            M=I, atol::T=√eps(T), rtol::T=√eps(T), λ::T=zero(T),
                             itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
@@ -41,7 +41,7 @@ function minres_qlp(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFlo
 end
 
 function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
-                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
+                     M=I, atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
                      itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n, m = size(A)
@@ -50,7 +50,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("MINRES-QLP: system of size %d\n", n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

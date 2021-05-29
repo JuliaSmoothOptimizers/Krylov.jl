@@ -24,7 +24,7 @@ export minres, minres!
 
 """
     (x, stats) = minres(A, b::AbstractVector{T};
-                        M=opEye(), λ::T=zero(T), atol::T=√eps(T)/100,
+                        M=I, λ::T=zero(T), atol::T=√eps(T)/100,
                         rtol::T=√eps(T)/100, ratol :: T=zero(T), 
                         rrtol :: T=zero(T), etol::T=√eps(T),
                         window::Int=5, itmax::Int=0, conlim::T=1/√eps(T),
@@ -60,7 +60,7 @@ function minres(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <
 end
 
 function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
-                 M=opEye(), λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
+                 M=I, λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
                  itmax :: Int=0, conlim :: T=1/√eps(T),
                  verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
@@ -71,7 +71,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("MINRES: system of size %d\n", n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

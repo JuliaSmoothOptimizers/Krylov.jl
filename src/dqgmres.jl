@@ -12,7 +12,7 @@ export dqgmres, dqgmres!
 
 """
     (x, stats) = dqgmres(A, b::AbstractVector{T};
-                         M=opEye(), N=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
+                         M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                          itmax::Int=0, memory::Int=20, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system Ax = b using DQGMRES method.
@@ -35,7 +35,7 @@ function dqgmres(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T
 end
 
 function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
-                  M=opEye(), N=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
+                  M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                   itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
@@ -44,8 +44,8 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("DQGMRES: system of size %d\n", n)
 
   # Check M == Iₙ and N == Iₙ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = (M == I)
+  NisI = (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
