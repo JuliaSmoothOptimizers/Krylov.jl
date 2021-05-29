@@ -18,7 +18,7 @@ export cg, cg!
 
 """
     (x, stats) = cg(A, b::AbstractVector{T};
-                    M=opEye(), atol::T=√eps(T), rtol::T=√eps(T),
+                    M=I, atol::T=√eps(T), rtol::T=√eps(T),
                     itmax::Int=0, radius::T=zero(T), linesearch::Bool=false,
                     verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
@@ -43,7 +43,7 @@ function cg(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
 end
 
 function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
-             M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T),
+             M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
              itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
              verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
@@ -55,7 +55,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CG: system of %d equations in %d variables\n", n, n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

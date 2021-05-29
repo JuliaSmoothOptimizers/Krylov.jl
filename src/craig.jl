@@ -35,7 +35,7 @@ export craig, craig!
 
 """
     (x, y, stats) = craig(A, b::AbstractVector{T};
-                          M=opEye(), N=opEye(), sqd::Bool=false, λ::T=zero(T), atol::T=√eps(T),
+                          M=I, N=I, sqd::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                           btol::T=√eps(T), rtol::T=√eps(T), conlim::T=1/√eps(T), itmax::Int=0,
                           verbose::Int=0, transfer_to_lsqr::Bool=false, history::Bool=false) where T <: AbstractFloat
 
@@ -82,7 +82,7 @@ function craig(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
 end
 
 function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
-                M=opEye(), N=opEye(), sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
+                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                 btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,
                 verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
@@ -91,8 +91,8 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CRAIG: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₘ and N == Iₙ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = (M == I)
+  NisI = (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

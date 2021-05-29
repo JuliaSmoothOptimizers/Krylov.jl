@@ -27,7 +27,7 @@ export lsqr, lsqr!
 
 """
     (x, stats) = lsqr(A, b::AbstractVector{T};
-                      M=opEye(), N=opEye(), sqd::Bool=false,
+                      M=I, N=I, sqd::Bool=false,
                       λ::T=zero(T), axtol::T=√eps(T), btol::T=√eps(T),
                       atol::T=zero(T), rtol::T=zero(T),
                       etol::T=√eps(T), window::Int=5,
@@ -78,7 +78,7 @@ function lsqr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
 end
 
 function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
-               M=opEye(), N=opEye(), sqd :: Bool=false,
+               M=I, N=I, sqd :: Bool=false,
                λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
                atol :: T=zero(T), rtol :: T=zero(T),
                etol :: T=√eps(T), window :: Int=5,
@@ -90,8 +90,8 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("LSQR: system of %d equations in %d variables\n", m, n)
 
   # Tests M == Iₙ and N == Iₘ
-  MisI = isa(M, opEye) || (M == I)
-  NisI = isa(N, opEye) || (N == I)
+  MisI = (M == I)
+  NisI = (N == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

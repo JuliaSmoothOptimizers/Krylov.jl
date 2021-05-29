@@ -16,7 +16,7 @@ export cg_lanczos, cg_lanczos!
 
 """
     (x, stats) = cg_lanczos(A, b::AbstractVector{T};
-                            M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                            M=I, atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                             check_curvature::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 The Lanczos version of the conjugate gradient method to solve the
@@ -40,7 +40,7 @@ function cg_lanczos(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFlo
 end
 
 function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
-                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+                     M=I, atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                      check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n, m = size(A)
@@ -49,7 +49,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -146,7 +146,7 @@ end
 
 """
     (x, stats) = cg_lanczos(A, b::AbstractVector{T}, shifts::AbstractVector{T};
-                            M=opEye(), atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                            M=I, atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                             check_curvature::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 The Lanczos version of the conjugate gradient method to solve a family
@@ -165,7 +165,7 @@ function cg_lanczos(A, b :: AbstractVector{T}, shifts :: AbstractVector{T}; kwar
 end
 
 function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector{T}, shifts :: AbstractVector{T};
-                     M=opEye(), atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+                     M=I, atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                      check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n, m = size(A)
@@ -176,7 +176,7 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   (verbose > 0) && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

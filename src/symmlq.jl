@@ -14,7 +14,7 @@ export symmlq, symmlq!
 
 """
     (x, stats) = symmlq(A, b::AbstractVector{T};
-                        M=opEye(), λ::T=zero(T), transfer_to_cg::Bool=true,
+                        M=I, λ::T=zero(T), transfer_to_cg::Bool=true,
                         λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                         etol::T=√eps(T), window::Int=0, itmax::Int=0,
                         conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
@@ -41,7 +41,7 @@ function symmlq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
 end
 
 function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
-                 M=opEye(), λ :: T=zero(T), transfer_to_cg :: Bool=true,
+                 M=I, λ :: T=zero(T), transfer_to_cg :: Bool=true,
                  λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                  etol :: T=√eps(T), window :: Int=0, itmax :: Int=0,
                  conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
@@ -52,7 +52,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("SYMMLQ: system of size %d\n", n)
 
   # Tests M == Iₙ
-  MisI = isa(M, opEye) || (M == I)
+  MisI = (M == I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
