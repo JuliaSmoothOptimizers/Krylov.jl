@@ -1,5 +1,5 @@
 @testset "lsqr" begin
-  lsqr_tol = 1.0e-5
+  lsqr_tol = 1.0e-4
 
   for npower = 1 : 4
     (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, npower, 0)  # No regularization.
