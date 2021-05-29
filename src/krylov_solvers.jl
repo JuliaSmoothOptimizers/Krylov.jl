@@ -201,7 +201,7 @@ Type for storing the vectors required by the in-place version of CG-LANCZOS with
 
 The outer constructors
 
-    solver = CgLanczosShiftSolver(n, m, S, shifts)
+    solver = CgLanczosShiftSolver(n, m, shifts, S)
     solver = CgLanczosShiftSolver(A, b, shifts)
 
 may be used in order to create these vectors.
@@ -222,7 +222,7 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
   converged  :: BitArray
   not_cv     :: BitArray
 
-  function CgLanczosShiftSolver(n, m, S, shifts)
+  function CgLanczosShiftSolver(n, m, shifts, S)
     nshifts    = length(shifts)
     T          = eltype(S)
     Mv         = S(undef, n)
@@ -246,7 +246,7 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
   function CgLanczosShiftSolver(A, b, shifts)
     n, m = size(A)
     S = ktypeof(b)
-    CgLanczosShiftSolver(n, m, S, shifts)
+    CgLanczosShiftSolver(n, m, shifts, S)
   end
 end
 
@@ -294,8 +294,8 @@ Type for storing the vectors required by the in-place version of DQGMRES.
 
 The outer constructors
 
-    solver = DqgmresSolver(n, m, S; memory :: Integer=20)
-    solver = DqgmresSolver(A, b; memory :: Integer=20)
+    solver = DqgmresSolver(n, m, memory, S)
+    solver = DqgmresSolver(A, b, memory)
 
 may be used in order to create these vectors.
 """
@@ -310,7 +310,7 @@ mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
   s :: Vector{T}
   H :: Vector{T}
 
-  function DqgmresSolver(n, m, S; memory :: Integer=20)
+  function DqgmresSolver(n, m, memory, S)
     T = eltype(S)
     x = S(undef, n)
     t = S(undef, n)
@@ -325,10 +325,10 @@ mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
     return solver
   end
 
-  function DqgmresSolver(A, b; memory :: Integer=20)
+  function DqgmresSolver(A, b, memory)
     n, m = size(A)
     S = ktypeof(b)
-    DqgmresSolver(n, m, S, memory=memory)
+    DqgmresSolver(n, m, memory, S)
   end
 end
 
@@ -337,8 +337,8 @@ Type for storing the vectors required by the in-place version of DIOM.
 
 The outer constructors
 
-    solver = DiomSolver(n, m, S; memory :: Integer=20)
-    solver = DiomSolver(A, b; memory :: Integer=20)
+    solver = DiomSolver(n, m, memory, S)
+    solver = DiomSolver(A, b, memory)
 
 may be used in order to create these vectors.
 """
@@ -354,7 +354,7 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
   H     :: Vector{T}
   p     :: BitArray
 
-  function DiomSolver(n, m, S; memory :: Integer=20)
+  function DiomSolver(n, m, memory, S)
     T     = eltype(S)
     x     = S(undef, n)
     x_old = S(undef, n)
@@ -370,10 +370,10 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
     return solver
   end
 
-  function DiomSolver(A, b; memory :: Integer=20)
+  function DiomSolver(A, b, memory)
     n, m = size(A)
     S = ktypeof(b)
-    DiomSolver(n, m, S, memory=memory)
+    DiomSolver(n, m, memory, S)
   end
 end
 

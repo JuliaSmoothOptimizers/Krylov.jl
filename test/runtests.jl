@@ -34,4 +34,5 @@ include("test_cr.jl")
 
 include("test_alloc.jl")
 include("test_mp.jl")
+include("test_inplace.jl")
 include("test_variants.jl")
