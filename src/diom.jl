@@ -32,7 +32,7 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 * Y. Saad, *Practical use of some krylov subspace methods for solving indefinite and nonsymmetric linear systems*, SIAM journal on scientific and statistical computing, 5(1), pp. 203--228, 1984.
 """
 function diom(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
-  solver = DiomSolver(A, b, memory=memory)
+  solver = DiomSolver(A, b, memory)
   diom!(solver, A, b; kwargs...)
 end
 

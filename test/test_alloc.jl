@@ -70,7 +70,7 @@ function test_alloc()
   actual_diom_bytes = @allocated diom(A, b, memory=mem)
   @test actual_diom_bytes ≤ 1.02 * expected_diom_bytes
 
-  solver = DiomSolver(A, b)
+  solver = DiomSolver(A, b, mem)
   diom!(solver, A, b)  # warmup
   inplace_diom_bytes = @allocated diom!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_diom_bytes ≤ 240)
@@ -121,7 +121,7 @@ function test_alloc()
   actual_dqgmres_bytes = @allocated dqgmres(A, b, memory=mem)
   @test actual_dqgmres_bytes ≤ 1.02 * expected_dqgmres_bytes
 
-  solver = DqgmresSolver(A, b)
+  solver = DqgmresSolver(A, b, mem)
   dqgmres!(solver, A, b)  # warmup
   inplace_dqgmres_bytes = @allocated dqgmres!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_dqgmres_bytes == 208)
