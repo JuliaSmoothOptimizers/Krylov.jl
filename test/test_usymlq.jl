@@ -96,12 +96,4 @@
   resid = norm(r) / norm(b)
   @test(resid ≤ usymlq_tol)
   @test(stats.solved)
-
-  # Poisson equation in polar coordinates.
-  A, b = polar_poisson()
-  (x, stats) = usymlq(A, b, b)
-  r = b - A * x
-  resid = norm(r) / norm(b)
-  @test(resid ≤ usymlq_tol)
-  @test(stats.solved)
 end
