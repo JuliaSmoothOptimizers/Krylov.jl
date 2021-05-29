@@ -24,7 +24,7 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
   w1      :: S
   w2      :: S
   y       :: S
-  v       :: Union{Nothing, S}
+  v       :: S
   err_vec :: Vector{T}
   stats   :: SimpleStats{T}
 
@@ -36,7 +36,7 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
     w1 = S(undef, n)
     w2 = S(undef, n)
     y  = S(undef, n)
-    v  = nothing
+    v  = S(undef, 0)
     err_vec = zeros(T, window)
     stats = SimpleStats(false, true, T[], T[], "unknown")
     solver = new{T,S}(x, r1, r2, w1, w2, y, v, err_vec, stats)
@@ -65,7 +65,7 @@ mutable struct CgSolver{T,S} <: KrylovSolver{T,S}
   r  :: S
   p  :: S
   Ap :: S
-  z  :: Union{Nothing, S}
+  z  :: S
 
   function CgSolver(n, m, S)
     T  = eltype(S)
@@ -73,7 +73,7 @@ mutable struct CgSolver{T,S} <: KrylovSolver{T,S}
     r  = S(undef, n)
     p  = S(undef, n)
     Ap = S(undef, n)
-    z  = nothing
+    z  = S(undef, 0)
     solver = new{T,S}(x, r, p, Ap, z)
     return solver
   end
@@ -101,7 +101,7 @@ mutable struct CrSolver{T,S} <: KrylovSolver{T,S}
   p  :: S
   q  :: S
   Ar :: S
-  Mq :: Union{Nothing, S}
+  Mq :: S
 
   function CrSolver(n, m, S)
     T  = eltype(S)
@@ -110,7 +110,7 @@ mutable struct CrSolver{T,S} <: KrylovSolver{T,S}
     p  = S(undef, n)
     q  = S(undef, n)
     Ar = S(undef, n)
-    Mq = nothing
+    Mq = S(undef, 0)
     solver = new{T,S}(x, r, p, q, Ar, Mq)
     return solver
   end
@@ -138,7 +138,7 @@ mutable struct SymmlqSolver{T,S} <: KrylovSolver{T,S}
   Mv      :: S
   Mv_next :: S
   w̅       :: S
-  v       :: Union{Nothing, S}
+  v       :: S
 
   function SymmlqSolver(n, m, S)
     T       = eltype(S)
@@ -147,7 +147,7 @@ mutable struct SymmlqSolver{T,S} <: KrylovSolver{T,S}
     Mv      = S(undef, n)
     Mv_next = S(undef, n)
     w̅       = S(undef, n)
-    v       = nothing
+    v       = S(undef, 0)
     solver = new{T,S}(x, Mvold, Mv, Mv_next, w̅, v)
     return solver
   end
@@ -175,7 +175,7 @@ mutable struct CgLanczosSolver{T,S} <: KrylovSolver{T,S}
   Mv_prev :: S
   p       :: S
   Mv_next :: S
-  v       :: Union{Nothing, S}
+  v       :: S
 
   function CgLanczosSolver(n, m, S)
     T       = eltype(S)
@@ -184,7 +184,7 @@ mutable struct CgLanczosSolver{T,S} <: KrylovSolver{T,S}
     Mv_prev = S(undef, n)
     p       = S(undef, n)
     Mv_next = S(undef, n)
-    v       = nothing
+    v       = S(undef, 0)
     solver = new{T,S}(x, Mv, Mv_prev, p, Mv_next, v)
     return solver
   end
@@ -210,7 +210,7 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
   Mv         :: S
   Mv_prev    :: S
   Mv_next    :: S
-  v          :: Union{Nothing, S}
+  v          :: S
   x          :: Vector{S}
   p          :: Vector{S}
   σ          :: Vector{T}
@@ -228,7 +228,7 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
     Mv         = S(undef, n)
     Mv_prev    = S(undef, n)
     Mv_next    = S(undef, n)
-    v          = nothing
+    v          = S(undef, 0)
     x          = [S(undef, n) for i = 1 : nshifts]
     p          = [S(undef, n) for i = 1 : nshifts]
     σ          = Vector{T}(undef, nshifts)
@@ -267,7 +267,7 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
   M⁻¹vₖ   :: S
   x       :: S
   p       :: S
-  vₖ      :: Union{Nothing, S}
+  vₖ      :: S
 
   function MinresQlpSolver(n, m, S)
     T       = eltype(S)
@@ -277,7 +277,7 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
     M⁻¹vₖ   = S(undef, n)
     x       = S(undef, n)
     p       = S(undef, n)
-    vₖ      = nothing
+    vₖ      = S(undef, 0)
     solver = new{T,S}(wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ)
     return solver
   end
@@ -302,8 +302,8 @@ may be used in order to create these vectors.
 mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
   x :: S
   t :: S
-  z :: Union{Nothing, S}
-  w :: Union{Nothing, S}
+  z :: S
+  w :: S
   P :: Vector{S}
   V :: Vector{S}
   c :: Vector{T}
@@ -314,8 +314,8 @@ mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
     T = eltype(S)
     x = S(undef, n)
     t = S(undef, n)
-    z = nothing
-    w = nothing
+    z = S(undef, 0)
+    w = S(undef, 0)
     P = [S(undef, n) for i = 1 : memory]
     V = [S(undef, n) for i = 1 : memory]
     c = Vector{T}(undef, memory)
@@ -346,8 +346,8 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
   x     :: S
   x_old :: S
   t     :: S
-  z     :: Union{Nothing, S}
-  w     :: Union{Nothing, S}
+  z     :: S
+  w     :: S
   P     :: Vector{S}
   V     :: Vector{S}
   L     :: Vector{T}
@@ -359,8 +359,8 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
     x     = S(undef, n)
     x_old = S(undef, n)
     t     = S(undef, n)
-    z     = nothing
-    w     = nothing
+    z     = S(undef, 0)
+    w     = S(undef, 0)
     P     = [S(undef, n) for i = 1 : memory]
     V     = [S(undef, n) for i = 1 : memory]
     L     = Vector{T}(undef, memory)
@@ -484,8 +484,8 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
   q       :: S
   gx₂ₖ₋₁  :: S
   gx₂ₖ    :: S
-  uₖ      :: Union{Nothing, S}
-  vₖ      :: Union{Nothing, S}
+  uₖ      :: S
+  vₖ      :: S
 
   function TricgSolver(n, m, S)
     T       = eltype(S)
@@ -501,8 +501,8 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
     q       = S(undef, n)
     gx₂ₖ₋₁  = S(undef, n)
     gx₂ₖ    = S(undef, n)
-    uₖ      = nothing
-    vₖ      = nothing
+    uₖ      = S(undef, 0)
+    vₖ      = S(undef, 0)
     solver  = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ)
     return solver
   end
@@ -541,8 +541,8 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
   gx₂ₖ₋₂  :: S
   gx₂ₖ₋₁  :: S
   gx₂ₖ    :: S
-  uₖ      :: Union{Nothing, S}
-  vₖ      :: Union{Nothing, S}
+  uₖ      :: S
+  vₖ      :: S
 
   function TrimrSolver(n, m, S)
     T       = eltype(S)
@@ -562,8 +562,8 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
     gx₂ₖ₋₂  = S(undef, n)
     gx₂ₖ₋₁  = S(undef, n)
     gx₂ₖ    = S(undef, n)
-    uₖ      = nothing
-    vₖ      = nothing
+    uₖ      = S(undef, 0)
+    vₖ      = S(undef, 0)
     solver = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ)
     return solver
   end
@@ -639,8 +639,8 @@ mutable struct CgsSolver{T,S} <: KrylovSolver{T,S}
   p  :: S
   q  :: S
   ts :: S
-  yz :: Union{Nothing, S}
-  vw :: Union{Nothing, S}
+  yz :: S
+  vw :: S
 
   function CgsSolver(n, m, S)
     T  = eltype(S)
@@ -650,8 +650,8 @@ mutable struct CgsSolver{T,S} <: KrylovSolver{T,S}
     p  = S(undef, n)
     q  = S(undef, n)
     ts = S(undef, n)
-    yz = nothing
-    vw = nothing
+    yz = S(undef, 0)
+    vw = S(undef, 0)
     solver = new{T,S}(x, r, u, p, q, ts, yz, vw)
     return solver
   end
@@ -680,8 +680,8 @@ mutable struct BicgstabSolver{T,S} <: KrylovSolver{T,S}
   v  :: S
   s  :: S
   qd :: S
-  yz :: Union{Nothing, S}
-  t  :: Union{Nothing, S}
+  yz :: S
+  t  :: S
 
   function BicgstabSolver(n, m, S)
     T  = eltype(S)
@@ -691,8 +691,8 @@ mutable struct BicgstabSolver{T,S} <: KrylovSolver{T,S}
     v  = S(undef, n)
     s  = S(undef, n)
     qd = S(undef, n)
-    yz = nothing
-    t  = nothing
+    yz = S(undef, 0)
+    t  = S(undef, 0)
     solver = new{T,S}(x, r, p, v, s, qd, yz, t)
     return solver
   end
@@ -851,7 +851,7 @@ mutable struct CglsSolver{T,S} <: KrylovSolver{T,S}
   s  :: S
   r  :: S
   q  :: S
-  Mr :: Union{Nothing, S}
+  Mr :: S
 
   function CglsSolver(n, m, S)
     T  = eltype(S)
@@ -860,7 +860,7 @@ mutable struct CglsSolver{T,S} <: KrylovSolver{T,S}
     s  = S(undef, m)
     r  = S(undef, n)
     q  = S(undef, n)
-    Mr = nothing
+    Mr = S(undef, 0)
     solver = new{T,S}(x, p, s, r, q, Mr)
     return solver
   end
@@ -890,7 +890,7 @@ mutable struct CrlsSolver{T,S} <: KrylovSolver{T,S}
   r  :: S
   Ap :: S
   s  :: S
-  Ms :: Union{Nothing, S}
+  Ms :: S
 
   function CrlsSolver(n, m, S)
     T  = eltype(S)
@@ -901,7 +901,7 @@ mutable struct CrlsSolver{T,S} <: KrylovSolver{T,S}
     r  = S(undef, n)
     Ap = S(undef, n)
     s  = S(undef, n)
-    Ms = nothing
+    Ms = S(undef, 0)
     solver = new{T,S}(x, p, Ar, q, r, Ap, s, Ms)
     return solver
   end
@@ -929,8 +929,8 @@ mutable struct CgneSolver{T,S} <: KrylovSolver{T,S}
   Aᵀz :: S
   r   :: S
   q   :: S
-  s   :: Union{Nothing, S}
-  z   :: Union{Nothing, S}
+  s   :: S
+  z   :: S
 
   function CgneSolver(n, m, S)
     T   = eltype(S)
@@ -939,8 +939,8 @@ mutable struct CgneSolver{T,S} <: KrylovSolver{T,S}
     Aᵀz = S(undef, m)
     r   = S(undef, n)
     q   = S(undef, n)
-    s   = nothing
-    z   = nothing
+    s   = S(undef, 0)
+    z   = S(undef, 0)
     solver = new{T,S}(x, p, Aᵀz, r, q, s, z)
     return solver
   end
@@ -968,8 +968,8 @@ mutable struct CrmrSolver{T,S} <: KrylovSolver{T,S}
   Aᵀr :: S
   r   :: S
   q   :: S
-  Mq  :: Union{Nothing, S}
-  s   :: Union{Nothing, S}
+  Mq  :: S
+  s   :: S
 
   function CrmrSolver(n, m, S)
     T = eltype(S)
@@ -978,8 +978,8 @@ mutable struct CrmrSolver{T,S} <: KrylovSolver{T,S}
     Aᵀr = S(undef, m)
     r   = S(undef, n)
     q   = S(undef, n)
-    Mq  = nothing
-    s   = nothing
+    Mq  = S(undef, 0)
+    s   = S(undef, 0)
     solver = new{T,S}(x, p, Aᵀr, r, q, Mq, s)
     return solver
   end
@@ -1008,8 +1008,8 @@ mutable struct LslqSolver{T,S} <: KrylovSolver{T,S}
   w̄    :: S
   Mu   :: S
   Av   :: S
-  u    :: Union{Nothing, S}
-  v    :: Union{Nothing, S}
+  u    :: S
+  v    :: S
 
   function LslqSolver(n, m, S)
     T    = eltype(S)
@@ -1019,8 +1019,8 @@ mutable struct LslqSolver{T,S} <: KrylovSolver{T,S}
     w̄    = S(undef, m)
     Mu   = S(undef, n)
     Av   = S(undef, n)
-    u    = nothing
-    v    = nothing
+    u    = S(undef, 0)
+    v    = S(undef, 0)
     solver = new{T,S}(x_lq, Nv, Aᵀu, w̄, Mu, Av, u, v)
     return solver
   end
@@ -1049,8 +1049,8 @@ mutable struct LsqrSolver{T,S} <: KrylovSolver{T,S}
   w   :: S
   Mu  :: S
   Av  :: S
-  u   :: Union{Nothing, S}
-  v   :: Union{Nothing, S}
+  u   :: S
+  v   :: S
 
   function LsqrSolver(n, m, S)
     T   = eltype(S)
@@ -1060,8 +1060,8 @@ mutable struct LsqrSolver{T,S} <: KrylovSolver{T,S}
     w   = S(undef, m)
     Mu  = S(undef, n)
     Av  = S(undef, n)
-    u   = nothing
-    v   = nothing
+    u   = S(undef, 0)
+    v   = S(undef, 0)
     solver = new{T,S}(x, Nv, Aᵀu, w, Mu, Av, u, v)
     return solver
   end
@@ -1091,8 +1091,8 @@ mutable struct LsmrSolver{T,S} <: KrylovSolver{T,S}
   hbar :: S
   Mu   :: S
   Av   :: S
-  u    :: Union{Nothing, S}
-  v    :: Union{Nothing, S}
+  u    :: S
+  v    :: S
 
   function LsmrSolver(n, m, S)
     T    = eltype(S)
@@ -1103,8 +1103,8 @@ mutable struct LsmrSolver{T,S} <: KrylovSolver{T,S}
     hbar = S(undef, m)
     Mu   = S(undef, n)
     Av   = S(undef, n)
-    u    = nothing
-    v    = nothing
+    u    = S(undef, 0)
+    v    = S(undef, 0)
     solver = new{T,S}(x, Nv, Aᵀu, h, hbar, Mu, Av, u, v)
     return solver
   end
@@ -1134,9 +1134,9 @@ mutable struct LnlqSolver{T,S} <: KrylovSolver{T,S}
   w̄   :: S
   Mu  :: S
   Av  :: S
-  u   :: Union{Nothing, S}
-  v   :: Union{Nothing, S}
-  q   :: Union{Nothing, S}
+  u   :: S
+  v   :: S
+  q   :: S
 
   function LnlqSolver(n, m, S)
     T  = eltype(S)
@@ -1147,9 +1147,9 @@ mutable struct LnlqSolver{T,S} <: KrylovSolver{T,S}
     w̄   = S(undef, n)
     Mu  = S(undef, n)
     Av  = S(undef, n)
-    u   = nothing
-    v   = nothing
-    q   = nothing
+    u   = S(undef, 0)
+    v   = S(undef, 0)
+    q   = S(undef, 0)
     solver = new{T,S}(x, Nv, Aᵀu, y, w̄, Mu, Av, u, v, q)
     return solver
   end
@@ -1179,9 +1179,9 @@ mutable struct CraigSolver{T,S} <: KrylovSolver{T,S}
   w   :: S
   Mu  :: S
   Av  :: S
-  u   :: Union{Nothing, S}
-  v   :: Union{Nothing, S}
-  w2  :: Union{Nothing, S}
+  u   :: S
+  v   :: S
+  w2  :: S
 
   function CraigSolver(n, m, S)
     T   = eltype(S)
@@ -1192,9 +1192,9 @@ mutable struct CraigSolver{T,S} <: KrylovSolver{T,S}
     w   = S(undef, n)
     Mu  = S(undef, n)
     Av  = S(undef, n)
-    u   = nothing
-    v   = nothing
-    w2  = nothing
+    u   = S(undef, 0)
+    v   = S(undef, 0)
+    w2  = S(undef, 0)
     solver = new{T,S}(x, Nv, Aᵀu, y, w, Mu, Av, u, v, w2)
     return solver
   end
@@ -1225,8 +1225,8 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
   w    :: S
   wbar :: S
   Av   :: S
-  u    :: Union{Nothing, S}
-  v    :: Union{Nothing, S}
+  u    :: S
+  v    :: S
 
   function CraigmrSolver(n, m, S)
     T    = eltype(S)
@@ -1238,8 +1238,8 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
     w    = S(undef, n)
     wbar = S(undef, n)
     Av   = S(undef, n)
-    u    = nothing
-    v    = nothing
+    u    = S(undef, 0)
+    v    = S(undef, 0)
     solver = new{T,S}(x, Nv, Aᵀu, y, Mu, w, wbar, Av, u, v)
     return solver
   end
