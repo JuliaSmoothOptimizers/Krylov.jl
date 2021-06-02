@@ -1,4 +1,4 @@
-## Matrix-free operators
+## [Matrix-free operators](@id matrix-free)
 
 All methods are matrix free, which means that you only need to provide operator-vector products.
 
