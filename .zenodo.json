@@ -2,6 +2,7 @@
   "description": "A Julia basket of hand-picked Krylov methods",
   "title": "Krylov.jl",
   "upload_type": "software",
+  "publication_date": "2019-02-06",
   "creators": [
     {
       "affiliation": "École Polytechnique/GERAD - Montréal",
