@@ -7,13 +7,14 @@
   b   = Ao * ones(m) # Dimension n
   c   = Au * ones(n) # Dimension m
   mem = 10
-  shifts  = [1.0; 2.0; 3.0; 4.0; 5.0]
+  shifts = [1.0; 2.0; 3.0; 4.0; 5.0]
+  nshifts = 5
 
   cg_solver = CgSolver(n, n, Vector{Float64})
   symmlq_solver = SymmlqSolver(n, n, Vector{Float64})
   minres_solver = MinresSolver(n, n, Vector{Float64})
   cg_lanczos_solver = CgLanczosSolver(n, n, Vector{Float64})
-  cg_lanczos_shift_solver = CgLanczosShiftSolver(n, n, shifts, Vector{Float64})
+  cg_lanczos_shift_solver = CgLanczosShiftSolver(n, n, nshifts, Vector{Float64})
   diom_solver = DiomSolver(n, n, mem, Vector{Float64})
   dqgmres_solver = DqgmresSolver(n, n, mem, Vector{Float64})
   cr_solver = CrSolver(n, n, Vector{Float64})

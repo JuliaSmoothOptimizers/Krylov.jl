@@ -201,8 +201,8 @@ Type for storing the vectors required by the in-place version of CG-LANCZOS with
 
 The outer constructors
 
-    solver = CgLanczosShiftSolver(n, m, shifts, S)
-    solver = CgLanczosShiftSolver(A, b, shifts)
+    solver = CgLanczosShiftSolver(n, m, nshifts, S)
+    solver = CgLanczosShiftSolver(A, b, nshifts)
 
 may be used in order to create these vectors.
 """
@@ -222,8 +222,7 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
   converged  :: BitArray
   not_cv     :: BitArray
 
-  function CgLanczosShiftSolver(n, m, shifts, S)
-    nshifts    = length(shifts)
+  function CgLanczosShiftSolver(n, m, nshifts, S)
     T          = eltype(S)
     Mv         = S(undef, n)
     Mv_prev    = S(undef, n)
@@ -243,10 +242,10 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
     return solver
   end
 
-  function CgLanczosShiftSolver(A, b, shifts)
+  function CgLanczosShiftSolver(A, b, nshifts)
     n, m = size(A)
     S = ktypeof(b)
-    CgLanczosShiftSolver(n, m, shifts, S)
+    CgLanczosShiftSolver(n, m, nshifts, S)
   end
 end
 

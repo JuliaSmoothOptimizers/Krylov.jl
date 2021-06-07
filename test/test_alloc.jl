@@ -103,7 +103,7 @@ function test_alloc()
   actual_cg_lanczos_shift_bytes = @allocated cg_lanczos(A, b, shifts)
   @test actual_cg_lanczos_shift_bytes ≤ 1.02 * expected_cg_lanczos_shift_bytes
 
-  solver = CgLanczosShiftSolver(A, b, shifts)
+  solver = CgLanczosShiftSolver(A, b, nshifts)
   cg_lanczos!(solver, A, b, shifts)  # warmup
   inplace_cg_lanczos_shift_bytes = @allocated cg_lanczos!(solver, A, b, shifts)
   @test (VERSION < v"1.5") || (inplace_cg_lanczos_shift_bytes ≤ 356)

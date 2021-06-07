@@ -160,7 +160,8 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
 function cg_lanczos(A, b :: AbstractVector{T}, shifts :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
-  solver = CgLanczosShiftSolver(A, b, shifts)
+  nshifts = length(shifts)
+  solver = CgLanczosShiftSolver(A, b, nshifts)
   cg_lanczos!(solver, A, b, shifts; kwargs...)
 end
 
