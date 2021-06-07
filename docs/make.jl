@@ -18,7 +18,7 @@ makedocs(
                                 "Saddle-point and symmetric quasi-definite systems" => "solvers/sp_sqd.md"],
            "In-place methods" => "inplace.md",
            "GPU" => "gpu.md",
-           "Matrix-free operators" => "matrix-free.md",
+           "Factorization-free operators" => "factorization-free.md",
            "Reference" => "reference.md",
           ]
 )
