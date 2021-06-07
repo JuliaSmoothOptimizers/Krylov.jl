@@ -1,6 +1,6 @@
-## [Matrix-free operators](@id matrix-free)
+## [Factorization-free operators](@id factorization-free)
 
-All methods are matrix free, which means that you only need to provide operator-vector products.
+All methods are factorization free, which means that you only need to provide operator-vector products.
 
 The `A`, `M` or `N` input arguments of Krylov.jl solvers can be any object that represents a linear operator. That object must implement `mul!`, for multiplication with a vector, `size()` and `eltype()`. For certain methods it must also implement `adjoint()`.
 
@@ -45,6 +45,7 @@ which is equivalent to solving the symmetric and positive-definite system
 \nabla^2 f(x_k) d  = -\nabla f(x_k).
 ```
 The system above can be solved with the conjugate gradient method as follows, using the explicit Hessian:
+
 ```@nlp
 using ForwardDiff, Krylov
 
@@ -86,6 +87,7 @@ At each iteration of the Gauss-Newton method applied to a nonlinear least-square
 where $J(x)$ is the Jacobian of $F$ at $x$.
 
 An appropriate iterative method to solve the above linear least-squares problems is LSMR. We could pass the explicit Jacobian to LSMR as follows:
+
 ```@nls
 using ForwardDiff, Krylov
 
@@ -99,6 +101,7 @@ d, stats = lsmr(J(xk), -F(xk))
 ```
 
 However, the explicit Jacobian can be replaced by a linear operator that only computes Jacobian-vector and transposed Jacobian-vector products:
+
 ```@example jacobian_operator
 using LinearAlgebra, ForwardDiff, LinearOperators, Krylov
 
@@ -116,5 +119,5 @@ lsmr(opJ, -F(xk))
 Note that preconditioners can be also implemented as abstract operators.
 For instance, we could compute the Cholesky factorization of $M$ and $N$ and create linear operators that perform the forward and backsolves.
 
-Krylov methods combined with matrix free operators allow to reduce computation time and memory requirements considerably by avoiding building and storing the system matrix.
-In the field of partial differential equations, the implementation of high-performance matrix free operators and assembly free preconditioning is a subject of active research.
+Krylov methods combined with factorization free operators allow to reduce computation time and memory requirements considerably by avoiding building and storing the system matrix.
+In the field of partial differential equations, the implementation of high-performance factorization free operators and assembly free preconditioning is a subject of active research.
