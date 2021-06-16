@@ -1,4 +1,6 @@
-using Test, Krylov, LinearAlgebra, SparseArrays, Printf, Random
+using LinearAlgebra, SparseArrays
+using Test, Printf, Random
+using LinearOperators, Krylov
 
 include("test_utils.jl")
 include("test_aux.jl")
@@ -35,3 +37,4 @@ include("test_cr.jl")
 include("test_alloc.jl")
 include("test_mp.jl")
 include("test_inplace.jl")
+include("test_operators.jl")
