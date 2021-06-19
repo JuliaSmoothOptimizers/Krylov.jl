@@ -73,6 +73,24 @@ mutable struct AdjointStats{T} <: KrylovStats{T}
   status :: String
 end
 
+"""
+Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the attributes are:
+- solved
+- inconsistent
+- residuals
+- error_bnd_x
+- error_bnd_y
+- status
+"""
+mutable struct LNLQStats{T} <: KrylovStats{T}
+  solved :: Bool
+  inconsistent :: Bool
+  residuals :: Vector{T}
+  error_bnd_x :: Vector{T}
+  error_bnd_y :: Vector{T}
+  status :: String
+end
+
 import Base.show
 
 special_fields = Dict(
