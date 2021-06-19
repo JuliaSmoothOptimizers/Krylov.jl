@@ -60,6 +60,10 @@ In this case, M can still be specified and indicates the weighted norm in which 
 
 In this implementation, both the x and y-parts of the solution are returned.
 
+`etolx` and `etoly` are tolerances on the upper bound of the distance to the solution ‖x-xₛ‖ and ‖y-yₛ‖, respectively.
+The bound is valid if λ>0 or σₐ>0 where σₐ should be strictly smaller than the smallest positive singular value.
+For instance σₐ:=(1-1e-7)σₘᵢₙ .
+
 #### Reference
 
 * R. Estrin, D. Orban, M.A. Saunders, *LNLQ: An Iterative Method for Least-Norm Problems with an Error Minimization Property*, SIAM Journal on Matrix Analysis and Applications, 40(3), pp. 1102--1124, 2019.
@@ -70,8 +74,8 @@ function lnlq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
 end
 
 function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
-               M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
-               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+               M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), σₐ :: T=zero(T),
+               atol :: T=√eps(T), rtol :: T=√eps(T), etolx :: T=√eps(T), etoly :: T=√eps(T), itmax :: Int=0,
                transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
@@ -102,6 +106,9 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
 
+  # Set up parameter σₑₛₜ for the error estimate on x and y
+  σₑₛₜ = √(σₐ^2 + λ^2)
+
   # Initial solutions (x₀, y₀) and residual norm ‖r₀‖.
   x .= zero(T)
   y .= zero(T)
@@ -110,6 +117,7 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   bNorm == 0 && return x, y, SimpleStats(true, false, [bNorm], T[], "x = 0 is a zero-residual solution")
 
   rNorms = history ? [bNorm] : T[]
+  xNorms, yNorms = T[], T[]
   ε = atol + rtol * bNorm
 
   iter = 0
@@ -191,6 +199,22 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   tired = false
   status = "unknown"
 
+  if σₑₛₜ > 0
+    τtildeₖ = βₖ / σₑₛₜ
+    ζtildeₖ = τtildeₖ / σₑₛₜ
+    err_x = τtildeₖ
+    err_y = ζtildeₖ
+
+    solved_lq = err_x <= etolx || err_y <= etoly
+    history && push!(xNorms, err_x)
+    history && push!(yNorms, err_y)
+
+    complex_error_bnd = false
+
+    ρbar = -σₑₛₜ
+    csig = -1
+  end
+
   while !(solved_lq || solved_cg || tired)
 
     # Update of (xᵃᵘˣ)ₖ = Vₖtₖ
@@ -267,6 +291,28 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
       αhatₖ₊₁ = αₖ₊₁
     end
 
+    if σₑₛₜ > 0 && !complex_error_bnd
+      μbar = -csig * αhatₖ
+      ρ = √(ρbar^2 + αhatₖ^2)
+      csig = ρbar / ρ
+      ssig = αhatₖ / ρ
+      ρbar = ssig * μbar + csig * σₑₛₜ
+      μbar = -csig * βhatₖ₊₁
+      θ = βhatₖ₊₁ * csig / ρbar
+      ωdisc = σₑₛₜ^2 - σₑₛₜ * βhatₖ₊₁ * θ
+      if ωdisc < 0
+        complex_error_bnd = true
+      else
+        ω = √ωdisc
+        τtildeₖ = - τₖ * βhatₖ₊₁ / ω
+      end
+
+      ρ = √(ρbar^2 + βhatₖ₊₁^2)
+      csig = ρbar / ρ
+      ssig = βhatₖ₊₁ / ρ
+      ρbar = ssig * μbar + csig * σₑₛₜ
+    end
+
     # Continue the LQ factorization of (Lₖ₊₁)ᵀ.
     # [ηₖ ϵbarₖ βₖ₊₁] [1     0     0 ] = [ηₖ  ϵₖ     0    ]
     # [0    0   αₖ₊₁] [0   cₖ₊₁  sₖ₊₁]   [0  ηₖ₊₁  ϵbarₖ₊₁]
@@ -291,6 +337,41 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
 
     # Compute w̄ₖ₊₁
     @kaxpby!(m, -cₖ₊₁, u, sₖ₊₁, w̄)
+
+    if σₑₛₜ > 0 && !complex_error_bnd
+      if transfer_to_craig
+        disc_x = τtildeₖ^2 - τₖ₊₁^2
+        if disc_x < 0
+          complex_error_bnd = true
+        else
+          err_x = √disc_x
+        end
+      else
+        disc_xL = τtildeₖ^2 - τₖ₊₁^2 + (τₖ₊₁ - ηₖ₊₁ * ζₖ)^2
+        if disc_xL < 0
+          complex_error_bnd = true
+        else
+          err_x = √disc_xL
+        end
+      end
+      ηtildeₖ = ω * sₖ₊₁
+      ϵtildeₖ = -ω * cₖ₊₁
+      ζtildeₖ = (τtildeₖ - ηtildeₖ * ζₖ) / ϵtildeₖ
+      
+      if transfer_to_craig
+        disc_y = ζtildeₖ^2 - ζbarₖ₊₁^2 
+        if disc_y < 0
+          complex_error_bnd = true
+        else
+          err_y = √disc_y
+        end
+      else
+        err_y = abs(ζtildeₖ)
+      end
+
+      history && push!(xNorms, err_x)
+      history && push!(yNorms, err_y)
+    end
 
     # Compute residual norm ‖(rᴸ)ₖ‖ = |αₖ| * √((ϵbarₖζbarₖ)² + (βₖ₊₁sₖζₖ₋₁)²)
     if iter == 1
@@ -327,6 +408,13 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
     tired = iter ≥ itmax
     solved_lq = rNorm_lq ≤ ε
     solved_cg = transfer_to_craig && rNorm_cg ≤ ε
+    if σₑₛₜ > 0
+      if transfer_to_craig
+        solved_cg = solved_cg || err_x <= etolx || err_y <= etoly
+      else
+        solved_lq = solved_lq || err_x <= etolx || err_y <= etoly
+      end
+    end
     display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
 
     # Update iteration index.
@@ -363,6 +451,6 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   tired     && (status = "maximum number of iterations exceeded")
   solved_lq && (status = "solutions (xᴸ, yᴸ) good enough for the tolerances given")
   solved_cg && (status = "solutions (xᶜ, yᶜ) good enough for the tolerances given")
-  stats = SimpleStats(solved_lq || solved_cg, false, rNorms, T[], status)
+  stats = LNLQStats(solved_lq || solved_cg, false, rNorms, xNorms, yNorms, status)
   return (x, y, stats)
 end
