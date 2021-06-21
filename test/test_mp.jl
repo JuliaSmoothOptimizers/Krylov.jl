@@ -1,4 +1,4 @@
-@testset "mp" begin
+@testset "multiprecision" begin
   n = 5
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos, :dqgmres, :diom, :cr,
              :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab, :craigmr, :crls, :symmlq, :minres,

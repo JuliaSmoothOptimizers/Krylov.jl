@@ -442,13 +442,13 @@ mutable struct UsymqrSolver{T,S} <: KrylovSolver{T,S}
     T    = eltype(S)
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
-    q    = S(undef, n)
+    q    = S(undef, 0)
     x    = S(undef, m)
     wₖ₋₂ = S(undef, m)
     wₖ₋₁ = S(undef, m)
     uₖ₋₁ = S(undef, m)
     uₖ   = S(undef, m)
-    p    = S(undef, m)
+    p    = S(undef, 0)
     solver = new{T,S}(vₖ₋₁, vₖ, q, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p)
     return solver
   end
