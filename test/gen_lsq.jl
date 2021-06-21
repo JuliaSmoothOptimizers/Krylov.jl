@@ -20,16 +20,12 @@ function lstp(nrow :: Int, ncol :: Int, ndupl :: Int, npower :: Int, λ :: Real,
   hy = map(sin, [1:nrow;] * α)
   hz = map(cos, [1:ncol;] * β)
 
-  α = norm(hy)
-  hy /= α
-  HY = I - 2 * hy' * hy  # HY is nrow x nrow.
-  β = norm(hz)
-  hz /= β
-  HZ = I - 2 * hz' * hz  # HZ is ncol x ncol.
+  α = norm(hy); hy /= α; HY = opHouseholder(hy)  # HY is nrow x nrow.
+  β = norm(hz); hz /= β; HZ = opHouseholder(hz)  # HZ is ncol x ncol.
 
   # Set the diagonal matrix D containing the singular values of A.
   d = (div.(([0:ncol-1;] .+ ndupl), ndupl) * ndupl / ncol).^npower  # Integer div!
-  D = diagm(nrow, ncol, d)
+  D = opDiagonal(nrow, ncol, d)
   A = HY * D * HZ
 
   Acond = abs(d[ncol] / d[1])

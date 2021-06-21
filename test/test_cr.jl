@@ -44,6 +44,17 @@
   @test(stats.solved)
   @test(abs(radius - norm(x)) ≤ cr_tol * radius)
 
+  n = 100
+  itmax = 2 * n
+  B = LBFGSOperator(n)
+  for i = 1:5
+    push!(B, rand(n), rand(n))
+  end
+  b = copy(B * ones(n))
+  (x, stats) = cr(B, b, rtol=1e-6)
+  @test norm(x - ones(n)) ≤ cr_tol * norm(x)
+  @test stats.solved
+
   # Test b == 0
   A, b = zero_rhs()
   (x, stats) = cr(A, b)

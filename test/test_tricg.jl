@@ -7,7 +7,7 @@
   c = -b
   D⁻¹ = sparse(inv(D))
   N⁻¹ = eye(n)
-  H⁻¹ = blockdiag(D⁻¹, N⁻¹)
+  H⁻¹ = BlockDiagonalOperator(D⁻¹, N⁻¹)
 
   (x, y, stats) = tricg(A, b, c, τ=1.0, ν=0.0, M=D⁻¹)
   K = [D A; A' zeros(n, n)]
@@ -29,7 +29,7 @@
   c = -b
   M⁻¹ = sparse(inv(M))
   N⁻¹ = sparse(inv(N))
-  H⁻¹ = blockdiag(M⁻¹, N⁻¹)
+  H⁻¹ = BlockDiagonalOperator(M⁻¹, N⁻¹)
 
   (x, y, stats) = tricg(A, b, c, M=M⁻¹, N=N⁻¹)
   K = [M A; A' -N]

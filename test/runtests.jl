@@ -1,4 +1,4 @@
-using Test, Krylov, LinearAlgebra, SparseArrays, Printf, Random
+using Test, Krylov, LinearAlgebra, SparseArrays, Printf, Random, LinearOperators
 
 include("test_utils.jl")
 include("test_aux.jl")
