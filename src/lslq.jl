@@ -112,7 +112,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
                atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
                window :: Int=5, utol :: T=√eps(T), itmax :: Int=0,
-               σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               σ :: T=zero(T), transfer_to_lsqr :: Bool=false, conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -153,8 +153,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   Mu .= b
   MisI || mul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0 && return (x_lq, kzeros(S, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
-                       SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
+  β₁ == 0 && return (x_lq, LSLQStats(true, false, [zero(T)], [zero(T)], err_lbnds, err_ubnds_lq, err_ubnds_cg, "x = 0 is a zero-residual solution"))
   β = β₁
 
   @kscal!(m, one(T)/β₁, u)
@@ -165,8 +164,8 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   α = sqrt(@kdot(n, v, Nv))  # = α₁
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0 && return (x_lq, kzeros(S, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
-                      SimpleStats(true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
+  α == 0 && return (x_lq, LSLQStats(true, false, [β₁], [zero(T)], err_lbnds, err_ubnds_lq, err_ubnds_cg, "x = 0 is a minimum least-squares solution"))
+  
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
 
@@ -369,9 +368,12 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   end
   (verbose > 0) && @printf("\n")
 
-  # compute LSQR point
-  @kaxpby!(n, one(T), x_lq, ζ̄ , w̄)
-  x_cg = w̄
+  if transfer_to_lsqr # compute LSQR point
+    @kaxpby!(n, one(T), x_lq, ζ̄ , w̄)
+    x = x_cg = w̄
+  else
+    x = x_lq
+  end
 
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
@@ -381,6 +383,6 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   fwd_err_lbnd  && (status = "forward error lower bound small enough")
   fwd_err_ubnd  && (status = "forward error upper bound small enough")
 
-  stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
-  return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats)
+  stats = LSLQStats(solved, !zero_resid, rNorms, ArNorms, err_lbnds, err_ubnds_lq, err_ubnds_cg, status)
+  return (x, stats)
 end
