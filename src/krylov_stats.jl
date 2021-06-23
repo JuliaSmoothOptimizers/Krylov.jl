@@ -74,18 +74,18 @@ mutable struct AdjointStats{T} <: KrylovStats{T}
 end
 
 """
-Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the attributes are:
+Type for statistics returned by the LNLQ method, the attributes are:
 - solved
-- inconsistent
 - residuals
+- error_with_bnd
 - error_bnd_x
 - error_bnd_y
 - status
 """
 mutable struct LNLQStats{T} <: KrylovStats{T}
   solved :: Bool
-  inconsistent :: Bool
   residuals :: Vector{T}
+  error_with_bnd :: Bool
   error_bnd_x :: Vector{T}
   error_bnd_y :: Vector{T}
   status :: String
@@ -100,7 +100,7 @@ special_fields = Dict(
   :Acond => "κ₂(A)",
 )
 
-for f in ["Simple", "Lanczos", "Symmlq", "Adjoint"]
+for f in ["Simple", "Lanczos", "Symmlq", "Adjoint", "LNLQ"]
   T = Meta.parse("Krylov." * f * "Stats{S}")
   @eval function show(io :: IO, stats :: $T) where S
     s  = $f * " stats\n"
