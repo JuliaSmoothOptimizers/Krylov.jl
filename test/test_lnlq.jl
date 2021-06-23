@@ -28,7 +28,7 @@
     @test(stats.solved)
     (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
     @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
-    (xₛ, yₛ, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σₐ=0.5)
+    (xₛ, yₛ, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σ=0.5)
     (xI, xmin, xmin_norm) = check_min_norm(A, b, xₛ)
     @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
 
@@ -40,7 +40,7 @@
     @test(stats.solved)
     (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
     @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
-    (xₛ, yₛ, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σₐ=0.5)
+    (xₛ, yₛ, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σ=0.5)
     (xI, xmin, xmin_norm) = check_min_norm(A, b, xₛ)
     @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
 
@@ -52,7 +52,7 @@
     @test(stats.solved)
     (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
     @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
-    (xₛ, yₛ, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σₐ=0.5)
+    (xₛ, yₛ, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σ=0.5)
     (xI, xmin, xmin_norm) = check_min_norm(A, b, xₛ)
     @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
 
@@ -74,7 +74,7 @@
     A, b, D = saddle_point()
     D⁻¹ = inv(D)
     (x, y, stats) = lnlq(A, b, N=D⁻¹, transfer_to_craig=transfer_to_craig)
-    (xₛ, yₛ, stats) = lnlq(A, b, N=D⁻¹, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σₐ=0.001)
+    (xₛ, yₛ, stats) = lnlq(A, b, N=D⁻¹, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σ=0.001)
     for (x, y) in ((x, y), (xₛ, yₛ))
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -87,7 +87,7 @@
     # Test with preconditioners
     A, b, M⁻¹, N⁻¹ = two_preconditioners()
     (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=false, transfer_to_craig=transfer_to_craig)
-    (xₛ, yₛ, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=false, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σₐ=0.5)
+    (xₛ, yₛ, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=false, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σ=0.5)
     for (x, y) in ((x, y), (xₛ, yₛ))
       r = b - A * x
       resid = sqrt(dot(r, M⁻¹ * r)) / norm(b)
@@ -100,7 +100,7 @@
     M⁻¹ = inv(M)
     N⁻¹ = inv(N)
     (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=true, transfer_to_craig=transfer_to_craig)
-    (xₛ, yₛ, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=true, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σₐ=0.5)
+    (xₛ, yₛ, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=true, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σ=0.5)
     for (x, y) in ((x, y), (xₛ, yₛ))
       r = b - (A * x + M * y)
       resid = norm(r) / norm(b)

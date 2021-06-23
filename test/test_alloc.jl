@@ -233,7 +233,7 @@ function test_alloc()
   solver = LnlqSolver(Au, c)
   lnlq!(solver, Au, c)  # warmup
   inplace_lnlq_bytes = @allocated lnlq!(solver, Au, c)
-  @test (VERSION < v"1.5") || (inplace_lnlq_bytes == 320)
+  @test (VERSION < v"1.5") || (inplace_lnlq_bytes == 304)
 
   # CRAIG needs:
   # - 3 n-vectors: x, v, Aᵀu

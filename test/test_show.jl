@@ -64,4 +64,18 @@
   status: t"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
+  solver = Krylov.LNLQStats(true, Float64[], false, Float64[], Float64[], "t")
+  io = IOBuffer()
+  show(io, solver)
+  showed = String(take!(io))
+  storage_type = typeof(solver)
+  expected = """LNLQ stats
+  solved: true
+  residuals: []
+  error with bnd: false
+  error bnd x: []
+  error bnd y: []
+  status: t"""
+  @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+
 end
