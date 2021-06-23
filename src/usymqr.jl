@@ -107,16 +107,8 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
     # AᵀVₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    if mul5
-      mul!(vₖ₋₁, A , uₖ, one(T), -γₖ)  # Forms vₖ₊₁ : vₖ₋₁ ← Auₖ  - γₖvₖ₋₁
-      mul!(uₖ₋₁, Aᵀ, vₖ, one(T), -βₖ)  # Forms uₖ₊₁ : uₖ₋₁ ← Aᵀvₖ - βₖuₖ₋₁
-    else
-      mul!(q, A , uₖ)  # q ← Auₖ
-      mul!(p, Aᵀ, vₖ)  # p ← Aᵀvₖ
-
-      @kaxpby!(m, one(T), q, -γₖ, vₖ₋₁)  # vₖ₋₁ ← q - γₖ * vₖ₋₁
-      @kaxpby!(n, one(T), p, -βₖ, uₖ₋₁)  # uₖ₋₁ ← p - βₖ * uₖ₋₁
-    end
+    @kaAxpby!(m, one(T), A , uₖ, -γₖ, vₖ₋₁, q, mul5)  # Forms vₖ₊₁ : vₖ₋₁ ← Auₖ  - γₖvₖ₋₁
+    @kaAxpby!(n, one(T), Aᵀ, vₖ, -βₖ, uₖ₋₁, p, mul5)  # Forms uₖ₊₁ : uₖ₋₁ ← Aᵀvₖ - βₖuₖ₋₁
 
     αₖ = @kdot(m, vₖ, vₖ₋₁)  # αₖ = (Auₖ- γₖvₖ₋₁)ᵀvₖ
 
