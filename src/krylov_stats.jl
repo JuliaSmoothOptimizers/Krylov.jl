@@ -85,7 +85,7 @@ special_fields = Dict(
 for f in ["Simple", "Lanczos", "Symmlq", "Adjoint"]
   T = Meta.parse("Krylov." * f * "Stats{S}")
   @eval function show(io :: IO, stats :: $T) where S
-    s  = "\n" * $f * " stats\n"
+    s  = $f * " stats\n"
     for field in fieldnames($T)
       field_name = if field ∈ keys(special_fields) 
         special_fields[field]
