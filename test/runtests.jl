@@ -2,6 +2,7 @@ using Test, Krylov, LinearAlgebra, SparseArrays, Printf, Random
 
 include("test_utils.jl")
 include("test_aux.jl")
+include("test_show.jl")
 
 include("test_bicgstab.jl")
 include("test_usymlq.jl")
