@@ -1,0 +1,29 @@
+---
+kind: pipeline
+name: linux - arm - Julia 1
+
+platform:
+  os: linux
+  arch: arm
+
+steps:
+- name: build
+  image: julia:1.-buster
+  commands:
+  - "julia --project=. --check-bounds=yes --color=yes -e 'using InteractiveUtils; versioninfo(verbose=true); using Pkg; Pkg.build(); Pkg.test()'"
+
+---
+kind: pipeline
+name: linux - arm64 - Julia 1
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+- name: build
+  image: julia:1-buster
+  commands:
+  - "julia --project=. --check-bounds=yes --color=yes -e 'using InteractiveUtils; versioninfo(verbose=true); using Pkg; Pkg.build(); Pkg.test()'"
+
+...
