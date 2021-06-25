@@ -207,7 +207,7 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
 
     # Update uₖ₋₁, vₖ₋₁, uₖ and vₖ.
     @kswap(uₖ₋₁, uₖ)
-    @kswap(vₖ₋₁, vₖ) 
+    @kswap(vₖ₋₁, vₖ)
 
     # Update directions for x.
     if iter ≥ 2
