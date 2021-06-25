@@ -424,9 +424,9 @@ function test_alloc()
   @test (VERSION < v"1.5") || (inplace_qmr_bytes == 208)
 
   # USYMLQ needs:
-  # - 5 n-vectors: uₖ₋₁, uₖ, x, d̅, p
-  # - 3 m-vectors: vₖ₋₁, vₖ, q
-  storage_usymlq(n, m) = 5 * n + 3 * m
+  # - 4 n-vectors: uₖ₋₁, uₖ, x, d̅
+  # - 2 m-vectors: vₖ₋₁, vₖ
+  storage_usymlq(n, m) = 4 * n + 2 * m
   storage_usymlq_bytes(n, m) = 8 * storage_usymlq(n, m)
 
   expected_usymlq_bytes = storage_usymlq_bytes(n, m)
