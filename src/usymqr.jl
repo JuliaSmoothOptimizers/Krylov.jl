@@ -21,7 +21,7 @@ export usymqr, usymqr!
 
 """
     (x, stats) = usymqr(A, b::AbstractVector{T}, c::AbstractVector{T};
-                        atol::T=√eps(T), rtol::T=√eps(T), mul5::Bool=true,
+                        atol::T=√eps(T), rtol::T=√eps(T),
                         itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the linear system Ax = b using the USYMQR method.
@@ -45,7 +45,7 @@ function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) wh
 end
 
 function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
-                 atol :: T=√eps(T), rtol :: T=√eps(T), mul5 :: Bool=true,
+                 atol :: T=√eps(T), rtol :: T=√eps(T),
                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
@@ -62,9 +62,7 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   Aᵀ = A'
 
   # Set up workspace.
-  allocate_if(!mul5, solver, :q, S, m)
-  allocate_if(!mul5, solver, :p, S, n)
-  vₖ₋₁, vₖ, q, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p = solver.vₖ₋₁, solver.vₖ, solver.q, solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.uₖ₋₁, solver.uₖ, solver.p
+  vₖ₋₁, vₖ, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ = solver.vₖ₋₁, solver.vₖ, solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.uₖ₋₁, solver.uₖ
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
@@ -107,8 +105,8 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
     # AᵀVₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    @kaAxpby!(m, one(T), A , uₖ, -γₖ, vₖ₋₁, q, mul5)  # Forms vₖ₊₁ : vₖ₋₁ ← Auₖ  - γₖvₖ₋₁
-    @kaAxpby!(n, one(T), Aᵀ, vₖ, -βₖ, uₖ₋₁, p, mul5)  # Forms uₖ₊₁ : uₖ₋₁ ← Aᵀvₖ - βₖuₖ₋₁
+    mul!(vₖ₋₁, A , uₖ, one(T), -γₖ)  # Forms vₖ₊₁ : vₖ₋₁ ← Auₖ  - γₖvₖ₋₁
+    mul!(uₖ₋₁, Aᵀ, vₖ, one(T), -βₖ)  # Forms uₖ₊₁ : uₖ₋₁ ← Aᵀvₖ - βₖuₖ₋₁
 
     αₖ = @kdot(m, vₖ, vₖ₋₁)  # αₖ = (Auₖ- γₖvₖ₋₁)ᵀvₖ
 

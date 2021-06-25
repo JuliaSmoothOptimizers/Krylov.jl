@@ -230,20 +230,6 @@ function krylov_ref!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: A
   return x, y
 end
 
-"""
-If `mul5` is set to `true`, the vector `y` is updated as `a*A*x + b*y`.
-If `mul5` is set to `false`, an auxiliary vector `tmp` is used to store `A*x` and `y` is updated as `a*tmp + b*y`.
-"""
-function krylov_aAxpby!(n :: Integer, a :: T, A, x :: AbstractVector{T}, b :: T, y :: AbstractVector{T}, tmp :: AbstractVector{T}, mul5 :: Bool) where T <: Number
-  if mul5
-    mul!(y, A, x, a, b)
-  else
-    mul!(tmp, A, x)
-    krylov_axpby!(n, a, tmp, 1, b, y, 1)
-  end
-  return y
-end
-
 # the macros are just for readability, so we don't have to write the increments (always equal to 1)
 
 macro kdot(n, x, y)
@@ -284,10 +270,6 @@ macro kref!(n, x, y, c, s)
   else
     return esc(:(reflect!($x, $y, $c, $s)))
   end
-end
-
-macro kaAxpby!(n, a, A, x, b, y, tmp, mul5)
-  return esc(:(krylov_aAxpby!($n, $a, $A, $x, $b, $y, $tmp, $mul5)))
 end
 
 """
