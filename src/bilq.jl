@@ -52,7 +52,7 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
   Aᵀ = A'
 
   # Set up workspace.
-  uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, d̅ = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p, solver.x, solver.d̅
+  uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅ = solver.uₖ₋₁, solver.uₖ, solver.vₖ₋₁, solver.vₖ, solver.x, solver.d̅
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
@@ -100,20 +100,23 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
     # AVₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
     # AᵀUₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    mul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
-    mul!(p, Aᵀ, uₖ)  # Forms uₖ₊₁ : p ← Aᵀuₖ
+    mul!(vₖ₋₁, A , vₖ, one(T), -γₖ)  # Forms vₖ₊₁ : vₖ₋₁ ← Avₖ  - γₖvₖ₋₁
+    mul!(uₖ₋₁, Aᵀ, uₖ, one(T), -βₖ)  # Forms uₖ₊₁ : uₖ₋₁ ← Aᵀuₖ - βₖuₖ₋₁
 
-    @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
-    @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
+    αₖ = @kdot(n, vₖ₋₁, uₖ)  # αₖ = (Avₖ- γₖvₖ₋₁)ᵀuₖ
 
-    αₖ = @kdot(n, q, uₖ)      # αₖ = qᵀuₖ
+    @kaxpy!(n, -αₖ, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ₋₁ - αₖ * vₖ
+    @kaxpy!(n, -αₖ, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ₋₁ - αₖ * uₖ
 
-    @kaxpy!(n, -αₖ, vₖ, q)    # q ← q - αₖ * vₖ
-    @kaxpy!(n, -αₖ, uₖ, p)    # p ← p - αₖ * uₖ
+    qᵗp = @kdot(n, uₖ₋₁, vₖ₋₁)  # qᵗp  = ⟨Avₖ - γₖvₖ₋₁ - αₖvₖ, Aᵀuₖ - βₖuₖ₋₁ -αₖuₖ⟩
+    βₖ₊₁ = √(abs(qᵗp))          # βₖ₊₁ = √(|qᵗp|)
+    γₖ₊₁ = qᵗp / βₖ₊₁           # γₖ₊₁ = qᵗp / βₖ₊₁
 
-    qᵗp = @kdot(n, p, q)      # qᵗp  = ⟨q,p⟩
-    βₖ₊₁ = √(abs(qᵗp))        # βₖ₊₁ = √(|qᵗp|)
-    γₖ₊₁ = qᵗp / βₖ₊₁         # γₖ₊₁ = qᵗp / βₖ₊₁
+    # Compute vₖ₊₁ and uₖ₊₁.
+    if qᵗp ≠ zero(T)
+      @. vₖ₋₁ = vₖ₋₁ / βₖ₊₁ # βₖ₊₁vₖ₊₁ = Avₖ  - γₖvₖ₋₁ - αₖvₖ
+      @. uₖ₋₁ = uₖ₋₁ / γₖ₊₁ # γₖ₊₁uₖ₊₁ = Aᵀuₖ - βₖuₖ₋₁ - αₖuₖ
+    end
 
     # Update the LQ factorization of Tₖ = L̅ₖQₖ.
     # [ α₁ γ₂ 0  •  •  •  0 ]   [ δ₁   0    •   •   •    •    0   ]
@@ -187,14 +190,9 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
       @kaxpby!(n, -cₖ, vₖ, sₖ, d̅)
     end
 
-    # Compute vₖ₊₁ and uₖ₊₁.
-    @. vₖ₋₁ = vₖ # vₖ₋₁ ← vₖ
-    @. uₖ₋₁ = uₖ # uₖ₋₁ ← uₖ
-
-    if qᵗp ≠ 0
-      @. vₖ = q / βₖ₊₁ # βₖ₊₁vₖ₊₁ = q
-      @. uₖ = p / γₖ₊₁ # γₖ₊₁uₖ₊₁ = p
-    end
+    # Update uₖ₋₁, vₖ₋₁, uₖ and vₖ.
+    @kswap(uₖ₋₁, uₖ)
+    @kswap(vₖ₋₁, vₖ)
 
     # Compute ⟨vₖ,vₖ₊₁⟩ and ‖vₖ₊₁‖
     vₖᵀvₖ₊₁ = @kdot(n, vₖ₋₁, vₖ)
