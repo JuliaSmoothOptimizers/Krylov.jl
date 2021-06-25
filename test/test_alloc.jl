@@ -364,8 +364,8 @@ function test_alloc()
   @test (VERSION < v"1.5") || (inplace_trilqr_bytes == 208)
 
   # BILQ needs:
-  # - 8 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅, p, q
-  storage_bilq(n) = 8 * n
+  # - 6 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅
+  storage_bilq(n) = 6 * n
   storage_bilq_bytes(n) = 8 * storage_bilq(n)
 
   expected_bilq_bytes = storage_bilq_bytes(n)
@@ -409,8 +409,8 @@ function test_alloc()
   @test (VERSION < v"1.5") || (inplace_minres_qlp_bytes == 208)
 
   # QMR needs:
-  # - 9 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₁, wₖ, p, q
-  storage_qmr(n) = 9 * n
+  # - 7 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₁, wₖ
+  storage_qmr(n) = 7 * n
   storage_qmr_bytes(n) = 8 * storage_qmr(n)
 
   expected_qmr_bytes = storage_qmr_bytes(n)
