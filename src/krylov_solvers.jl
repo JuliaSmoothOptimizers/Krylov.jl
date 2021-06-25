@@ -708,10 +708,8 @@ may be used in order to create these vectors.
 mutable struct BilqSolver{T,S} <: KrylovSolver{T,S}
   uₖ₋₁ :: S
   uₖ   :: S
-  q    :: S
   vₖ₋₁ :: S
   vₖ   :: S
-  p    :: S
   x    :: S
   d̅    :: S
 
@@ -719,13 +717,11 @@ mutable struct BilqSolver{T,S} <: KrylovSolver{T,S}
     T    = eltype(S)
     uₖ₋₁ = S(undef, n)
     uₖ   = S(undef, n)
-    q    = S(undef, n)
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
-    p    = S(undef, n)
     x    = S(undef, n)
     d̅    = S(undef, n)
-    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, d̅)
+    solver = new{T,S}(uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅)
     return solver
   end
 
@@ -749,10 +745,8 @@ may be used in order to create these vectors.
 mutable struct QmrSolver{T,S} <: KrylovSolver{T,S}
   uₖ₋₁ :: S
   uₖ   :: S
-  q    :: S
   vₖ₋₁ :: S
   vₖ   :: S
-  p    :: S
   x    :: S
   wₖ₋₂ :: S
   wₖ₋₁ :: S
@@ -761,14 +755,12 @@ mutable struct QmrSolver{T,S} <: KrylovSolver{T,S}
     T    = eltype(S)
     uₖ₋₁ = S(undef, n)
     uₖ   = S(undef, n)
-    q    = S(undef, n)
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
-    p    = S(undef, n)
     x    = S(undef, n)
     wₖ₋₂ = S(undef, n)
     wₖ₋₁ = S(undef, n)
-    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, wₖ₋₂, wₖ₋₁)
+    solver = new{T,S}(uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₂, wₖ₋₁)
     return solver
   end
 
