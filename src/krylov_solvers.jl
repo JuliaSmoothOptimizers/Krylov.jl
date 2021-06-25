@@ -432,26 +432,22 @@ may be used in order to create these vectors.
 mutable struct UsymqrSolver{T,S} <: KrylovSolver{T,S}
   vₖ₋₁ :: S
   vₖ   :: S
-  q    :: S
   x    :: S
   wₖ₋₂ :: S
   wₖ₋₁ :: S
   uₖ₋₁ :: S
   uₖ   :: S
-  p    :: S
 
   function UsymqrSolver(n, m, S)
     T    = eltype(S)
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
-    q    = S(undef, n)
     x    = S(undef, m)
     wₖ₋₂ = S(undef, m)
     wₖ₋₁ = S(undef, m)
     uₖ₋₁ = S(undef, m)
     uₖ   = S(undef, m)
-    p    = S(undef, m)
-    solver = new{T,S}(vₖ₋₁, vₖ, q, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p)
+    solver = new{T,S}(vₖ₋₁, vₖ, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ)
     return solver
   end
 

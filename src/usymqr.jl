@@ -62,7 +62,7 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   Aᵀ = A'
 
   # Set up workspace.
-  vₖ₋₁, vₖ, q, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p = solver.vₖ₋₁, solver.vₖ, solver.q, solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.uₖ₋₁, solver.uₖ, solver.p
+  vₖ₋₁, vₖ, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ = solver.vₖ₋₁, solver.vₖ, solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.uₖ₋₁, solver.uₖ
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
@@ -105,19 +105,24 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
     # AᵀVₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
-    mul!(p, Aᵀ, vₖ)  # Forms uₖ₊₁ : p ← Aᵀvₖ
+    mul!(vₖ₋₁, A , uₖ, one(T), -γₖ)  # Forms vₖ₊₁ : vₖ₋₁ ← Auₖ  - γₖvₖ₋₁
+    mul!(uₖ₋₁, Aᵀ, vₖ, one(T), -βₖ)  # Forms uₖ₊₁ : uₖ₋₁ ← Aᵀvₖ - βₖuₖ₋₁
 
-    @kaxpy!(m, -γₖ, vₖ₋₁, q) # q ← q - γₖ * vₖ₋₁
-    @kaxpy!(n, -βₖ, uₖ₋₁, p) # p ← p - βₖ * uₖ₋₁
+    αₖ = @kdot(m, vₖ, vₖ₋₁)  # αₖ = (Auₖ- γₖvₖ₋₁)ᵀvₖ
 
-    αₖ = @kdot(m, vₖ, q)     # αₖ = qᵀvₖ
+    @kaxpy!(m, -αₖ, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ₋₁ - αₖ * vₖ
+    @kaxpy!(n, -αₖ, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ₋₁ - αₖ * uₖ
 
-    @kaxpy!(m, -αₖ, vₖ, q)   # q ← q - αₖ * vₖ
-    @kaxpy!(n, -αₖ, uₖ, p)   # p ← p - αₖ * uₖ
+    βₖ₊₁ = @knrm2(m, vₖ₋₁)  # βₖ₊₁ = ‖vₖ₊₁‖
+    γₖ₊₁ = @knrm2(n, uₖ₋₁)  # γₖ₊₁ = ‖uₖ₊₁‖
 
-    βₖ₊₁ = @knrm2(m, q)      # βₖ₊₁ = ‖q‖
-    γₖ₊₁ = @knrm2(n, p)      # γₖ₊₁ = ‖p‖
+    # Compute uₖ₊₁ and uₖ₊₁.
+    if βₖ₊₁ ≠ zero(T)
+      @. vₖ₋₁ = vₖ₋₁ / βₖ₊₁ # βₖ₊₁vₖ₊₁ = Auₖ  - γₖvₖ₋₁ - αₖvₖ
+    end
+    if γₖ₊₁ ≠ zero(T)
+      @. uₖ₋₁ = uₖ₋₁ / γₖ₊₁ # γₖ₊₁uₖ₊₁ = Aᵀvₖ - βₖuₖ₋₁ - αₖuₖ
+    end
 
     # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
     #                                            [ Oᵀ ]
@@ -200,16 +205,9 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     AᵀrNorm = abs(ζbarₖ) * √(δbarₖ^2 + (cₖ₋₁ * γₖ₊₁)^2)
     history && push!(AᵀrNorms, AᵀrNorm)
 
-    # Compute uₖ₊₁ and uₖ₊₁.
-    @. vₖ₋₁ = vₖ # vₖ₋₁ ← vₖ
-    @. uₖ₋₁ = uₖ # uₖ₋₁ ← uₖ
-
-    if βₖ₊₁ ≠ zero(T)
-      @. vₖ = q / βₖ₊₁ # βₖ₊₁vₖ₊₁ = q
-    end
-    if γₖ₊₁ ≠ zero(T)
-      @. uₖ = p / γₖ₊₁ # γₖ₊₁uₖ₊₁ = p
-    end
+    # Update uₖ₋₁, vₖ₋₁, uₖ and vₖ.
+    @kswap(uₖ₋₁, uₖ)
+    @kswap(vₖ₋₁, vₖ) 
 
     # Update directions for x.
     if iter ≥ 2

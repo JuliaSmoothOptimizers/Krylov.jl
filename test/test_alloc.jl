@@ -332,9 +332,9 @@ function test_alloc()
   @test (VERSION < v"1.5") || (inplace_lsmr_bytes == 336)
 
   # USYMQR needs:
-  # - 6 m-vectors: vₖ₋₁, vₖ, x, wₖ₋₁, wₖ, p 
-  # - 3 n-vectors: uₖ₋₁, uₖ, q
-  storage_usymqr(n, m) = 6 * m + 3 * n
+  # - 5 m-vectors: vₖ₋₁, vₖ, x, wₖ₋₁, wₖ
+  # - 2 n-vectors: uₖ₋₁, uₖ
+  storage_usymqr(n, m) = 5 * m + 2 * n
   storage_usymqr_bytes(n, m) = 8 * storage_usymqr(n, m)
 
   expected_usymqr_bytes = storage_usymqr_bytes(n, m)
@@ -472,6 +472,6 @@ function test_alloc()
   @test (VERSION < v"1.5") || (inplace_trimr_bytes == 208)
 end
 
-@testset "alloc" begin
+@testset "allocations" begin
   test_alloc()
 end
