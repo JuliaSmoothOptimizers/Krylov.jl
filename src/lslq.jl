@@ -5,12 +5,12 @@ export lslq, lslq!
 
 
 """
-    (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) =
-        lslq(A, b::AbstractVector{T};
-             M=I, N=I, sqd::Bool=false, λ::T=zero(T),
-             atol::T=√eps(T), btol::T=√eps(T), etol::T=√eps(T),
-             window::Int=5, utol::T=√eps(T), itmax::Int=0,
-             σ::T=zero(T), conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+    (x, stats) = lslq(A, b::AbstractVector{T};
+                      M=I, N=I, sqd::Bool=false, λ::T=zero(T),
+                      atol::T=√eps(T), btol::T=√eps(T), etol::T=√eps(T),
+                      window::Int=5, utol::T=√eps(T), itmax::Int=0,
+                      σ::T=zero(T), transfer_to_lsqr::Bool=false, 
+                      conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the regularized linear least-squares problem
 
@@ -67,20 +67,22 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 * `etol::Float64=1.0e-8` is a stopping tolerance based on the lower bound on the error
 * `window::Int=5` is the number of iterations used to accumulate a lower bound on the error
 * `utol::Float64=1.0e-8` is a stopping tolerance based on the upper bound on the error
+* `σ::Float64=0.0` is a lower bound on the smallest singular value used to compute the error bound
+* `transfer_to_lsqr::Bool=false` return the CG solution estimate (i.e., the LSQR point) instead of the LQ estimate
 * `itmax::Int=0` is the maximum number of iterations (0 means no imposed limit)
 * `conlim::Float64=1.0e+8` is the limit on the estimated condition number of `A` beyond which the solution will be abandoned
 * `verbose::Int=0` determines verbosity.
 
 #### Return values
 
-`lslq()` returns the tuple `(x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats)` where
+`lslq()` returns the tuple `(x, stats)` where
 
-* `x_lq::Vector{Float64}` is the LQ solution estimate
-* `x_cg::Vector{Float64}` is the CG solution estimate (i.e., the LSQR point)
-* `err_lbnds::Vector{Float64}` is a vector of lower bounds on the LQ error---the vector is empty if `window` is set to zero
-* `err_ubnds_lq::Vector{Float64}` is a vector of upper bounds on the LQ error---the vector is empty if `σ == 0` is left at zero
-* `err_ubnds_cg::Vector{Float64}` is a vector of upper bounds on the CG error---the vector is empty if `σ == 0` is left at zero
-* `stats::SimpleStats` collects other statistics on the run.
+* `x::Vector{Float64}` is the LQ solution estimate
+* `stats::LSLQStats` collects other statistics on the run
+
+* `stats.err_lbnds::Vector{Float64}` is a vector of lower bounds on the LQ error---the vector is empty if `window` is set to zero
+* `stats.err_ubnds_lq::Vector{Float64}` is a vector of upper bounds on the LQ error---the vector is empty if `σ == 0` is left at zero
+* `stats.err_ubnds_cg::Vector{Float64}` is a vector of upper bounds on the CG error---the vector is empty if `σ == 0` is left at zero
 
 #### Stopping conditions
 
@@ -370,7 +372,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
 
   if transfer_to_lsqr # compute LSQR point
     @kaxpby!(n, one(T), x_lq, ζ̄ , w̄)
-    x = x_cg = w̄
+    x = w̄
   else
     x = x_lq
   end
