@@ -92,7 +92,7 @@
     x, y, stats = craig!(craig_solver, Au, c)
     @test stats.solved
 
-    x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats = lslq!(lslq_solver, Ao, b)
+    x, stats = lslq!(lslq_solver, Ao, b)
     @test stats.solved
 
     x, stats = cgls!(cgls_solver, Ao, b)

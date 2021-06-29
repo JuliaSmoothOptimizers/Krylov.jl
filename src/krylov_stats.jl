@@ -91,6 +91,28 @@ mutable struct LNLQStats{T} <: KrylovStats{T}
   status :: String
 end
 
+"""
+Type for statistics returned by the LSLQ method, the attributes are:
+- solved
+- inconsistent
+- residuals
+- Aresiduals
+- err_lbnds
+- err_ubnds_lq
+- err_ubnds_cg
+- status
+"""
+mutable struct LSLQStats{T} <: KrylovStats{T}
+  solved :: Bool
+  inconsistent :: Bool
+  residuals :: Vector{T}
+  Aresiduals :: Vector{T}
+  err_lbnds :: Vector{T}
+  err_ubnds_lq :: Vector{T}
+  err_ubnds_cg :: Vector{T}
+  status :: String
+end
+
 import Base.show
 
 special_fields = Dict(
@@ -98,9 +120,11 @@ special_fields = Dict(
   :errorscg => "errors (cg)",
   :Anorm => "‖A‖F",
   :Acond => "κ₂(A)",
+  :err_ubnds_lq => "error bound LQ",
+  :err_ubnds_cg => "error bound CG",
 )
 
-for f in ["Simple", "Lanczos", "Symmlq", "Adjoint", "LNLQ"]
+for f in ["Simple", "Lanczos", "Symmlq", "Adjoint", "LNLQ", "LSLQ"]
   T = Meta.parse("Krylov." * f * "Stats{S}")
   @eval function show(io :: IO, stats :: $T) where S
     s  = $f * " stats\n"

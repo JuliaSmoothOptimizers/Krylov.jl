@@ -5,12 +5,12 @@ export lslq, lslq!
 
 
 """
-    (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats) =
-        lslq(A, b::AbstractVector{T};
-             M=I, N=I, sqd::Bool=false, λ::T=zero(T),
-             atol::T=√eps(T), btol::T=√eps(T), etol::T=√eps(T),
-             window::Int=5, utol::T=√eps(T), itmax::Int=0,
-             σ::T=zero(T), conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+    (x, stats) = lslq(A, b::AbstractVector{T};
+                      M=I, N=I, sqd::Bool=false, λ::T=zero(T),
+                      atol::T=√eps(T), btol::T=√eps(T), etol::T=√eps(T),
+                      window::Int=5, utol::T=√eps(T), itmax::Int=0,
+                      σ::T=zero(T), transfer_to_lsqr::Bool=false, 
+                      conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the regularized linear least-squares problem
 
@@ -31,16 +31,11 @@ but is more stable.
 * it is possible to transition cheaply from the LSLQ iterate to the LSQR iterate if there is an advantage (there always is in terms of error)
 * if `A` is rank deficient, identify the minimum least-squares solution
 
-#### Input arguments
-
-* `A::AbstractLinearOperator`
-* `b::Vector{Float64}`
-
 #### Optional arguments
 
-* `M::AbstractLinearOperator=I`: a symmetric and positive definite dual preconditioner
-* `N::AbstractLinearOperator=I`: a symmetric and positive definite primal preconditioner
-* `sqd::Bool=false` indicates whether or not we are solving a symmetric and quasi-definite augmented system
+* `M`: a symmetric and positive definite dual preconditioner
+* `N`: a symmetric and positive definite primal preconditioner
+* `sqd` indicates whether or not we are solving a symmetric and quasi-definite augmented system
 
 If `sqd = true`, we solve the symmetric and quasi-definite system
 
@@ -60,27 +55,28 @@ indefinite system
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᵀr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 
-* `λ::Float64=0.0` is a regularization parameter (see the problem statement above)
-* `σ::Float64=0.0` is an underestimate of the smallest nonzero singular value of `A`---setting `σ` too large will result in an error in the course of the iterations
-* `atol::Float64=1.0e-8` is a stopping tolerance based on the residual
-* `btol::Float64=1.0e-8` is a stopping tolerance used to detect zero-residual problems
-* `etol::Float64=1.0e-8` is a stopping tolerance based on the lower bound on the error
-* `window::Int=5` is the number of iterations used to accumulate a lower bound on the error
-* `utol::Float64=1.0e-8` is a stopping tolerance based on the upper bound on the error
-* `itmax::Int=0` is the maximum number of iterations (0 means no imposed limit)
-* `conlim::Float64=1.0e+8` is the limit on the estimated condition number of `A` beyond which the solution will be abandoned
-* `verbose::Int=0` determines verbosity.
+* `λ` is a regularization parameter (see the problem statement above)
+* `σ` is an underestimate of the smallest nonzero singular value of `A`---setting `σ` too large will result in an error in the course of the iterations
+* `atol` is a stopping tolerance based on the residual
+* `btol` is a stopping tolerance used to detect zero-residual problems
+* `etol` is a stopping tolerance based on the lower bound on the error
+* `window` is the number of iterations used to accumulate a lower bound on the error
+* `utol` is a stopping tolerance based on the upper bound on the error
+* `transfer_to_lsqr` return the CG solution estimate (i.e., the LSQR point) instead of the LQ estimate
+* `itmax` is the maximum number of iterations (0 means no imposed limit)
+* `conlim` is the limit on the estimated condition number of `A` beyond which the solution will be abandoned
+* `verbose` determines verbosity.
 
 #### Return values
 
-`lslq()` returns the tuple `(x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats)` where
+`lslq` returns the tuple `(x, stats)` where
 
-* `x_lq::Vector{Float64}` is the LQ solution estimate
-* `x_cg::Vector{Float64}` is the CG solution estimate (i.e., the LSQR point)
-* `err_lbnds::Vector{Float64}` is a vector of lower bounds on the LQ error---the vector is empty if `window` is set to zero
-* `err_ubnds_lq::Vector{Float64}` is a vector of upper bounds on the LQ error---the vector is empty if `σ == 0` is left at zero
-* `err_ubnds_cg::Vector{Float64}` is a vector of upper bounds on the CG error---the vector is empty if `σ == 0` is left at zero
-* `stats::SimpleStats` collects other statistics on the run.
+* `x` is the LQ solution estimate
+* `stats` collects other statistics on the run in a LSLQStats
+
+* `stats.err_lbnds` is a vector of lower bounds on the LQ error---the vector is empty if `window` is set to zero
+* `stats.err_ubnds_lq` is a vector of upper bounds on the LQ error---the vector is empty if `σ == 0` is left at zero
+* `stats.err_ubnds_cg` is a vector of upper bounds on the CG error---the vector is empty if `σ == 0` is left at zero
 
 #### Stopping conditions
 
@@ -112,7 +108,8 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
                atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
                window :: Int=5, utol :: T=√eps(T), itmax :: Int=0,
-               σ :: T=zero(T), conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               σ :: T=zero(T), transfer_to_lsqr :: Bool=false,
+               conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -134,7 +131,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace.
   allocate_if(!MisI, solver, :u, S, m)
   allocate_if(!NisI, solver, :v, S, n)
-  x_lq, Nv, Aᵀu, w̄, Mu, Av = solver.x_lq, solver.Nv, solver.Aᵀu, solver.w̄, solver.Mu, solver.Av
+  x, Nv, Aᵀu, w̄, Mu, Av = solver.x, solver.Nv, solver.Aᵀu, solver.w̄, solver.Mu, solver.Av
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
 
@@ -143,7 +140,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   λ² = λ * λ
   ctol = conlim > 0 ? 1/conlim : zero(T)
 
-  x_lq .= zero(T)  # LSLQ point
+  x .= zero(T)  # LSLQ point
   err_lbnds = T[]
   err_ubnds_lq = T[]
   err_ubnds_cg = T[]
@@ -153,8 +150,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   Mu .= b
   MisI || mul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0 && return (x_lq, kzeros(S, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
-                       SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
+  β₁ == 0 && return (x, LSLQStats(true, false, [zero(T)], [zero(T)], err_lbnds, err_ubnds_lq, err_ubnds_cg, "x = 0 is a zero-residual solution"))
   β = β₁
 
   @kscal!(m, one(T)/β₁, u)
@@ -165,8 +161,8 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   α = sqrt(@kdot(n, v, Nv))  # = α₁
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0 && return (x_lq, kzeros(S, n), err_lbnds, err_ubnds_lq, err_ubnds_cg,
-                      SimpleStats(true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
+  α == 0 && return (x, LSLQStats(true, false, [β₁], [zero(T)], err_lbnds, err_ubnds_lq, err_ubnds_cg, "x = 0 is a minimum least-squares solution"))
+  
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
 
@@ -324,8 +320,8 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", 1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
 
     # update LSLQ point for next iteration
-    @kaxpy!(n, c * ζ, w̄, x_lq)
-    @kaxpy!(n, s * ζ, v, x_lq)
+    @kaxpy!(n, c * ζ, w̄, x)
+    @kaxpy!(n, s * ζ, v, x)
 
     # compute w̄
     @kaxpby!(n, -c, v, s, w̄)
@@ -369,9 +365,9 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   end
   (verbose > 0) && @printf("\n")
 
-  # compute LSQR point
-  @kaxpby!(n, one(T), x_lq, ζ̄ , w̄)
-  x_cg = w̄
+  if transfer_to_lsqr  # compute LSQR point
+    @kaxpy!(n, ζ̄ , w̄, x)
+  end
 
   tired         && (status = "maximum number of iterations exceeded")
   ill_cond_mach && (status = "condition number seems too large for this machine")
@@ -381,6 +377,6 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   fwd_err_lbnd  && (status = "forward error lower bound small enough")
   fwd_err_ubnd  && (status = "forward error upper bound small enough")
 
-  stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
-  return (x_lq, x_cg, err_lbnds, err_ubnds_lq, err_ubnds_cg, stats)
+  stats = LSLQStats(solved, !zero_resid, rNorms, ArNorms, err_lbnds, err_ubnds_lq, err_ubnds_cg, status)
+  return (x, stats)
 end
