@@ -114,7 +114,8 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
                atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
                window :: Int=5, utol :: T=√eps(T), itmax :: Int=0,
-               σ :: T=zero(T), transfer_to_lsqr :: Bool=false, conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               σ :: T=zero(T), transfer_to_lsqr :: Bool=false,
+               conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -136,7 +137,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace.
   allocate_if(!MisI, solver, :u, S, m)
   allocate_if(!NisI, solver, :v, S, n)
-  x_lq, Nv, Aᵀu, w̄, Mu, Av = solver.x_lq, solver.Nv, solver.Aᵀu, solver.w̄, solver.Mu, solver.Av
+  x, Nv, Aᵀu, w̄, Mu, Av = solver.x, solver.Nv, solver.Aᵀu, solver.w̄, solver.Mu, solver.Av
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
 
@@ -145,7 +146,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   λ² = λ * λ
   ctol = conlim > 0 ? 1/conlim : zero(T)
 
-  x_lq .= zero(T)  # LSLQ point
+  x .= zero(T)  # LSLQ point
   err_lbnds = T[]
   err_ubnds_lq = T[]
   err_ubnds_cg = T[]
@@ -155,7 +156,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   Mu .= b
   MisI || mul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0 && return (x_lq, LSLQStats(true, false, [zero(T)], [zero(T)], err_lbnds, err_ubnds_lq, err_ubnds_cg, "x = 0 is a zero-residual solution"))
+  β₁ == 0 && return (x, LSLQStats(true, false, [zero(T)], [zero(T)], err_lbnds, err_ubnds_lq, err_ubnds_cg, "x = 0 is a zero-residual solution"))
   β = β₁
 
   @kscal!(m, one(T)/β₁, u)
@@ -166,7 +167,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   α = sqrt(@kdot(n, v, Nv))  # = α₁
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0 && return (x_lq, LSLQStats(true, false, [β₁], [zero(T)], err_lbnds, err_ubnds_lq, err_ubnds_cg, "x = 0 is a minimum least-squares solution"))
+  α == 0 && return (x, LSLQStats(true, false, [β₁], [zero(T)], err_lbnds, err_ubnds_lq, err_ubnds_cg, "x = 0 is a minimum least-squares solution"))
   
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
@@ -325,8 +326,8 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", 1 + 2 * iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
 
     # update LSLQ point for next iteration
-    @kaxpy!(n, c * ζ, w̄, x_lq)
-    @kaxpy!(n, s * ζ, v, x_lq)
+    @kaxpy!(n, c * ζ, w̄, x)
+    @kaxpy!(n, s * ζ, v, x)
 
     # compute w̄
     @kaxpby!(n, -c, v, s, w̄)
@@ -370,11 +371,8 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   end
   (verbose > 0) && @printf("\n")
 
-  if transfer_to_lsqr # compute LSQR point
-    @kaxpby!(n, one(T), x_lq, ζ̄ , w̄)
-    x = w̄
-  else
-    x = x_lq
+  if transfer_to_lsqr  # compute LSQR point
+    @kaxpy!(n, ζ̄ , w̄, x)
   end
 
   tired         && (status = "maximum number of iterations exceeded")
