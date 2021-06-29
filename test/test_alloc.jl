@@ -440,9 +440,9 @@ function test_alloc()
   @test (VERSION < v"1.5") || (inplace_usymlq_bytes == 208)
 
   # TriCG needs:
-  # - 6 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₁, gy₂ₖ, p
-  # - 6 m-vectors: xₖ, vₖ₋₁, vₖ, gx₂ₖ₋₁, gx₂ₖ, q
-  storage_tricg(n, m) = 6 * n + 6 * m
+  # - 5 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₁, gy₂ₖ
+  # - 5 m-vectors: xₖ, vₖ₋₁, vₖ, gx₂ₖ₋₁, gx₂ₖ
+  storage_tricg(n, m) = 5 * n + 5 * m
   storage_tricg_bytes(n, m) = 8 * storage_tricg(n, m)
 
   expected_tricg_bytes = storage_tricg_bytes(n, m)
