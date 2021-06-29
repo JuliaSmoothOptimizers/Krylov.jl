@@ -468,13 +468,11 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
   yₖ      :: S
   N⁻¹uₖ₋₁ :: S
   N⁻¹uₖ   :: S
-  p       :: S
   gy₂ₖ₋₁  :: S
   gy₂ₖ    :: S
   xₖ      :: S
   M⁻¹vₖ₋₁ :: S
   M⁻¹vₖ   :: S
-  q       :: S
   gx₂ₖ₋₁  :: S
   gx₂ₖ    :: S
   uₖ      :: S
@@ -485,18 +483,16 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
     yₖ      = S(undef, m)
     N⁻¹uₖ₋₁ = S(undef, m)
     N⁻¹uₖ   = S(undef, m)
-    p       = S(undef, m)
     gy₂ₖ₋₁  = S(undef, m)
     gy₂ₖ    = S(undef, m)
     xₖ      = S(undef, n)
     M⁻¹vₖ₋₁ = S(undef, n)
     M⁻¹vₖ   = S(undef, n)
-    q       = S(undef, n)
     gx₂ₖ₋₁  = S(undef, n)
     gx₂ₖ    = S(undef, n)
     uₖ      = S(undef, 0)
     vₖ      = S(undef, 0)
-    solver  = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ)
+    solver  = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ)
     return solver
   end
 
