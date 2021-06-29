@@ -78,7 +78,7 @@
   status: t"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
-  solver = Krylov.LSLQStats(true, false, Float64[], Float64[], Float64[], Float64[], Float64[], "t")
+  solver = Krylov.LSLQStats(true, false, Float64[], Float64[], Float64[], false, Float64[], Float64[], "t")
   io = IOBuffer()
   show(io, solver)
   showed = String(take!(io))
@@ -89,6 +89,7 @@
   residuals: []
   Aresiduals: []
   err lbnds: []
+  error with bnd: false
   error bound LQ: []
   error bound CG: []
   status: t"""
