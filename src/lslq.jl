@@ -77,6 +77,7 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 * `stats.err_lbnds` is a vector of lower bounds on the LQ error---the vector is empty if `window` is set to zero
 * `stats.err_ubnds_lq` is a vector of upper bounds on the LQ error---the vector is empty if `σ == 0` is left at zero
 * `stats.err_ubnds_cg` is a vector of upper bounds on the CG error---the vector is empty if `σ == 0` is left at zero
+* `stats.error_with_bnd` is a boolean indicating whether there was an error in the upper bounds computation (cancellation errors, too large σ ...)
 
 #### Stopping conditions
 
@@ -150,7 +151,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   Mu .= b
   MisI || mul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0 && return (x, LSLQStats(true, false, [zero(T)], [zero(T)], err_lbnds, err_ubnds_lq, err_ubnds_cg, "x = 0 is a zero-residual solution"))
+  β₁ == 0 && return (x, LSLQStats(true, false, [zero(T)], [zero(T)], err_lbnds, false, err_ubnds_lq, err_ubnds_cg, "x = 0 is a zero-residual solution"))
   β = β₁
 
   @kscal!(m, one(T)/β₁, u)
@@ -161,7 +162,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   α = sqrt(@kdot(n, v, Nv))  # = α₁
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0 && return (x, LSLQStats(true, false, [β₁], [zero(T)], err_lbnds, err_ubnds_lq, err_ubnds_cg, "x = 0 is a minimum least-squares solution"))
+  α == 0 && return (x, LSLQStats(true, false, [β₁], [zero(T)], err_lbnds, false, err_ubnds_lq, err_ubnds_cg, "x = 0 is a minimum least-squares solution"))
   
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
@@ -183,6 +184,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
 
   err_lbnd = zero(T)
   err_vec = zeros(T, window)
+  complex_error_bnd = false
 
   # Initialize other constants.
   αL = α
@@ -264,7 +266,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     δ = sp * αL
     γ̄ = -cp * αL
 
-    if σ > 0
+    if σ > 0 && !complex_error_bnd
       # Continue QR factorization for error estimate
       μ̄ = -csig * γ
       (csig, ssig, ρ) = sym_givens(ρ̄, γ)
@@ -273,7 +275,8 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
 
       # determine component of eigenvector and Gauss-Radau parameter
       h = δ * csig / ρ̄
-      ω = sqrt(σ * (σ - δ * h))
+      disc = σ * (σ - δ * h)
+      disc < 0 ? complex_error_bnd = true : ω = sqrt(disc)
       (csig, ssig, ρ) = sym_givens(ρ̄, δ)
       ρ̄ = ssig * μ̄ + csig * σ
     end
@@ -305,10 +308,15 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     # Compute ‖x_cg‖₂
     xcgNorm² = xlqNorm² + ζ̄ * ζ̄
 
-    if σ > 0 && iter > 0
-      err_ubnd_cg = sqrt(ζ̃ * ζ̃ - ζ̄  * ζ̄ )
-      history && push!(err_ubnds_cg, err_ubnd_cg)
-      fwd_err_ubnd = err_ubnd_cg ≤ utol * sqrt(xcgNorm²)
+    if σ > 0 && iter > 0 && !complex_error_bnd
+      disc = ζ̃ * ζ̃ - ζ̄  * ζ̄ 
+      if disc < 0
+        complex_error_bnd = true
+      else
+        err_ubnd_cg = sqrt(disc)
+        history && push!(err_ubnds_cg, err_ubnd_cg)
+        fwd_err_ubnd = err_ubnd_cg ≤ utol * sqrt(xcgNorm²)
+      end
     end
 
     test1 = rNorm / β₁
@@ -338,7 +346,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     end
 
     # compute LQ forward error upper bound
-    if σ > 0
+    if σ > 0 && !complex_error_bnd
       η̃ = ω * s
       ϵ̃ = -ω * c
       τ̃ = -τ * δ / ω
@@ -377,6 +385,6 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   fwd_err_lbnd  && (status = "forward error lower bound small enough")
   fwd_err_ubnd  && (status = "forward error upper bound small enough")
 
-  stats = LSLQStats(solved, !zero_resid, rNorms, ArNorms, err_lbnds, err_ubnds_lq, err_ubnds_cg, status)
+  stats = LSLQStats(solved, !zero_resid, rNorms, ArNorms, err_lbnds, complex_error_bnd, err_ubnds_lq, err_ubnds_cg, status)
   return (x, stats)
 end

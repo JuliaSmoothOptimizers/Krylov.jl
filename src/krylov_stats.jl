@@ -98,6 +98,7 @@ Type for statistics returned by the LSLQ method, the attributes are:
 - residuals
 - Aresiduals
 - err_lbnds
+- error_with_bnd
 - err_ubnds_lq
 - err_ubnds_cg
 - status
@@ -108,6 +109,7 @@ mutable struct LSLQStats{T} <: KrylovStats{T}
   residuals :: Vector{T}
   Aresiduals :: Vector{T}
   err_lbnds :: Vector{T}
+  error_with_bnd :: Bool
   err_ubnds_lq :: Vector{T}
   err_ubnds_cg :: Vector{T}
   status :: String
