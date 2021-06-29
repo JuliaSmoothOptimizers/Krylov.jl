@@ -78,4 +78,20 @@
   status: t"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
+  solver = Krylov.LSLQStats(true, false, Float64[], Float64[], Float64[], Float64[], Float64[], "t")
+  io = IOBuffer()
+  show(io, solver)
+  showed = String(take!(io))
+  storage_type = typeof(solver)
+  expected = """LSLQ stats
+  solved: true
+  inconsistent: false
+  residuals: []
+  Aresiduals: []
+  err lbnds: []
+  error bound LQ: []
+  error bound CG: []
+  status: t"""
+  @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+
 end
