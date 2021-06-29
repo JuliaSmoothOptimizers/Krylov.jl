@@ -31,16 +31,11 @@ but is more stable.
 * it is possible to transition cheaply from the LSLQ iterate to the LSQR iterate if there is an advantage (there always is in terms of error)
 * if `A` is rank deficient, identify the minimum least-squares solution
 
-#### Input arguments
-
-* `A::AbstractLinearOperator`
-* `b::Vector{Float64}`
-
 #### Optional arguments
 
-* `M::AbstractLinearOperator=I`: a symmetric and positive definite dual preconditioner
-* `N::AbstractLinearOperator=I`: a symmetric and positive definite primal preconditioner
-* `sqd::Bool=false` indicates whether or not we are solving a symmetric and quasi-definite augmented system
+* `M`: a symmetric and positive definite dual preconditioner
+* `N`: a symmetric and positive definite primal preconditioner
+* `sqd` indicates whether or not we are solving a symmetric and quasi-definite augmented system
 
 If `sqd = true`, we solve the symmetric and quasi-definite system
 
@@ -60,29 +55,28 @@ indefinite system
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᵀr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 
-* `λ::Float64=0.0` is a regularization parameter (see the problem statement above)
-* `σ::Float64=0.0` is an underestimate of the smallest nonzero singular value of `A`---setting `σ` too large will result in an error in the course of the iterations
-* `atol::Float64=1.0e-8` is a stopping tolerance based on the residual
-* `btol::Float64=1.0e-8` is a stopping tolerance used to detect zero-residual problems
-* `etol::Float64=1.0e-8` is a stopping tolerance based on the lower bound on the error
-* `window::Int=5` is the number of iterations used to accumulate a lower bound on the error
-* `utol::Float64=1.0e-8` is a stopping tolerance based on the upper bound on the error
-* `σ::Float64=0.0` is a lower bound on the smallest singular value used to compute the error bound
-* `transfer_to_lsqr::Bool=false` return the CG solution estimate (i.e., the LSQR point) instead of the LQ estimate
-* `itmax::Int=0` is the maximum number of iterations (0 means no imposed limit)
-* `conlim::Float64=1.0e+8` is the limit on the estimated condition number of `A` beyond which the solution will be abandoned
-* `verbose::Int=0` determines verbosity.
+* `λ` is a regularization parameter (see the problem statement above)
+* `σ` is an underestimate of the smallest nonzero singular value of `A`---setting `σ` too large will result in an error in the course of the iterations
+* `atol` is a stopping tolerance based on the residual
+* `btol` is a stopping tolerance used to detect zero-residual problems
+* `etol` is a stopping tolerance based on the lower bound on the error
+* `window` is the number of iterations used to accumulate a lower bound on the error
+* `utol` is a stopping tolerance based on the upper bound on the error
+* `transfer_to_lsqr` return the CG solution estimate (i.e., the LSQR point) instead of the LQ estimate
+* `itmax` is the maximum number of iterations (0 means no imposed limit)
+* `conlim` is the limit on the estimated condition number of `A` beyond which the solution will be abandoned
+* `verbose` determines verbosity.
 
 #### Return values
 
-`lslq()` returns the tuple `(x, stats)` where
+`lslq` returns the tuple `(x, stats)` where
 
-* `x::Vector{Float64}` is the LQ solution estimate
-* `stats::LSLQStats` collects other statistics on the run
+* `x` is the LQ solution estimate
+* `stats` collects other statistics on the run in a LSLQStats
 
-* `stats.err_lbnds::Vector{Float64}` is a vector of lower bounds on the LQ error---the vector is empty if `window` is set to zero
-* `stats.err_ubnds_lq::Vector{Float64}` is a vector of upper bounds on the LQ error---the vector is empty if `σ == 0` is left at zero
-* `stats.err_ubnds_cg::Vector{Float64}` is a vector of upper bounds on the CG error---the vector is empty if `σ == 0` is left at zero
+* `stats.err_lbnds` is a vector of lower bounds on the LQ error---the vector is empty if `window` is set to zero
+* `stats.err_ubnds_lq` is a vector of upper bounds on the LQ error---the vector is empty if `σ == 0` is left at zero
+* `stats.err_ubnds_cg` is a vector of upper bounds on the CG error---the vector is empty if `σ == 0` is left at zero
 
 #### Stopping conditions
 
