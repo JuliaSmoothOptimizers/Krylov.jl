@@ -456,9 +456,9 @@ function test_alloc()
   @test (VERSION < v"1.5") || (inplace_tricg_bytes == 208)
 
   # TriMR needs:
-  # - 8 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, p
-  # - 8 m-vectors: xₖ, vₖ₋₁, vₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, q
-  storage_trimr(n, m) = 8 * n + 8 * m
+  # - 7 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ
+  # - 7 m-vectors: xₖ, vₖ₋₁, vₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ
+  storage_trimr(n, m) = 7 * n + 7 * m
   storage_trimr_bytes(n, m) = 8 * storage_trimr(n, m)
 
   expected_trimr_bytes = storage_trimr_bytes(n, m)
