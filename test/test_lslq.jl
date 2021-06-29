@@ -28,6 +28,10 @@
   @test x == zeros(size(A,1))
   @test stats.status == "x = 0 is a zero-residual solution"
 
+  # Test error in upper bound computation
+  (x, stats) = lslq(A, b, σ=1.)
+  @test stats.error_with_bnd
+
   for transfer_to_lsqr ∈ (false, true)
     # Test with smallest singular value estimate
     Σ = diagm(0 => 1:4)
