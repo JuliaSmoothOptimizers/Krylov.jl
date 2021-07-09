@@ -4,10 +4,10 @@ filename = (ARGS == [] ? "benchmarks.jl" : ARGS[1])  # gpu.jl, cg_bmark.jl, ...
 println("The benchmark script is ", filename)
 
 commit = benchmarkpkg("Krylov", script="benchmark/$filename")  # current state of repository
-master = benchmarkpkg("Krylov", "master", script="benchmark/$filename")
-judgement = judge(commit, master)
+main = benchmarkpkg("Krylov", "main", script="benchmark/$filename")
+judgement = judge(commit, main)
 export_markdown("judgement.md", judgement)
-export_markdown("master.md", master)
+export_markdown("main.md", main)
 export_markdown("commit.md", commit)
 
 gist_json = JSON.parse("""
@@ -18,8 +18,8 @@ gist_json = JSON.parse("""
             "judgement.md": {
                 "content": "$(escape_string(sprint(export_markdown, judgement)))"
             },
-            "master.md": {
-                "content": "$(escape_string(sprint(export_markdown, master)))"
+            "main.md": {
+                "content": "$(escape_string(sprint(export_markdown, main)))"
             },
             "commit.md": {
                 "content": "$(escape_string(sprint(export_markdown, commit)))"
