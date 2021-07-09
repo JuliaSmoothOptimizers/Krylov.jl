@@ -8,18 +8,18 @@
 [docs-stable-url]: https://JuliaSmoothOptimizers.github.io/Krylov.jl/stable
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-purple.svg
 [docs-dev-url]: https://JuliaSmoothOptimizers.github.io/Krylov.jl/dev
-[build-gh-img]: https://github.com/JuliaSmoothOptimizers/Krylov.jl/workflows/CI/badge.svg?branch=master
+[build-gh-img]: https://github.com/JuliaSmoothOptimizers/Krylov.jl/workflows/CI/badge.svg?branch=main
 [build-gh-url]: https://github.com/JuliaSmoothOptimizers/Krylov.jl/actions
 [build-cirrus-img]: https://img.shields.io/cirrus/github/JuliaSmoothOptimizers/Krylov.jl?logo=Cirrus%20CI
 [build-cirrus-url]: https://cirrus-ci.com/github/JuliaSmoothOptimizers/Krylov.jl
-[codecov-img]: https://codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl/branch/master/graph/badge.svg
+[codecov-img]: https://codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl/branch/main/graph/badge.svg
 [codecov-url]: https://app.codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl
 [doi-img]: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.822073-blue.svg
 [doi-url]: https://doi.org/10.5281/zenodo.822073
 
 ## How to Cite
 
-If you use Krylov.jl in your work, please cite using the format given in [`CITATION.bib`](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/master/CITATION.bib).
+If you use Krylov.jl in your work, please cite using the format given in [`CITATION.bib`](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/CITATION.bib).
 
 ## Content
 
