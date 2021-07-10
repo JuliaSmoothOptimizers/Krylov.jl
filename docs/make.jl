@@ -23,4 +23,4 @@ makedocs(
           ]
 )
 
-deploydocs(repo = "github.com/JuliaSmoothOptimizers/Krylov.jl.git")
+deploydocs(repo = "github.com/JuliaSmoothOptimizers/Krylov.jl.git", devbranch = "main")
