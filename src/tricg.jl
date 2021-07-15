@@ -3,8 +3,8 @@
 # This method is described in
 #
 # A. Montoison and D. Orban
-# TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems
-# Cahier du GERAD G-2020-41, GERAD, Montréal, 2020. doi:10.13140/RG.2.2.12344.16645
+# TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems.
+# SIAM Journal on Scientific Computing, 43(4), pp. 2502--2525, 2021.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montréal, April 2020.
@@ -48,7 +48,7 @@ Information will be displayed every `verbose` iterations.
 
 #### Reference
 
-* A. Montoison and D. Orban, *TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems*, Cahier du GERAD G-2020-41, GERAD, Montréal, 2020.
+* A. Montoison and D. Orban, *TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems*, SIAM Journal on Scientific Computing, 43(4), pp. 2502--2525, 2021.
 """
 function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = TricgSolver(A, b)
