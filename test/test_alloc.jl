@@ -188,9 +188,9 @@ function test_alloc()
   @test (VERSION < v"1.5") || (inplace_bicgstab_bytes == 208)
 
   # CRAIGMR needs:
-  # - 3 n-vectors: x, v, Aᵀu
+  # - 4 n-vectors: x, v, Aᵀu, d
   # - 5 m-vectors: y, u, w, wbar, Av
-  storage_craigmr(n, m) = 3 * n + 5 * m
+  storage_craigmr(n, m) = 4 * n + 5 * m
   storage_craigmr_bytes(n, m) = 8 * storage_craigmr(n, m)
 
   expected_craigmr_bytes = storage_craigmr_bytes(n, m)

@@ -1199,6 +1199,7 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
   x    :: S
   Nv   :: S
   Aᵀu  :: S
+  d    :: S
   y    :: S
   Mu   :: S
   w    :: S
@@ -1206,12 +1207,14 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
   Av   :: S
   u    :: S
   v    :: S
+  q    :: S
 
   function CraigmrSolver(n, m, S)
     T    = eltype(S)
     x    = S(undef, m)
     Nv   = S(undef, m)
     Aᵀu  = S(undef, m)
+    d    = S(undef, m)
     y    = S(undef, n)
     Mu   = S(undef, n)
     w    = S(undef, n)
@@ -1219,7 +1222,8 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
     Av   = S(undef, n)
     u    = S(undef, 0)
     v    = S(undef, 0)
-    solver = new{T,S}(x, Nv, Aᵀu, y, Mu, w, wbar, Av, u, v)
+    q    = S(undef, 0)
+    solver = new{T,S}(x, Nv, Aᵀu, d, y, Mu, w, wbar, Av, u, v, q)
     return solver
   end
 
