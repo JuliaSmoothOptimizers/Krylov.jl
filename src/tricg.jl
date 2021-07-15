@@ -263,12 +263,12 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, M⁻¹vₖ₋₁))  # βₖ₊₁ = ‖vₖ₊₁‖_E
     γₖ₊₁ = sqrt(@kdot(n, uₖ₊₁, N⁻¹uₖ₋₁))  # γₖ₊₁ = ‖uₖ₊₁‖_F
 
-    if βₖ₊₁ ≠ zero(T)
+    if βₖ₊₁ ≠ 0
       @kscal!(m, one(T) / βₖ₊₁, M⁻¹vₖ₋₁)
       MisI || @kscal!(m, one(T) / βₖ₊₁, vₖ₊₁)
     end
 
-    if γₖ₊₁ ≠ zero(T)
+    if γₖ₊₁ ≠ 0
       @kscal!(n, one(T) / γₖ₊₁, N⁻¹uₖ₋₁)
       NisI || @kscal!(n, one(T) / γₖ₊₁, uₖ₊₁)
     end
