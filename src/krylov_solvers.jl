@@ -517,7 +517,6 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
   yₖ      :: S
   N⁻¹uₖ₋₁ :: S
   N⁻¹uₖ   :: S
-  p       :: S
   gy₂ₖ₋₃  :: S
   gy₂ₖ₋₂  :: S
   gy₂ₖ₋₁  :: S
@@ -525,20 +524,20 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
   xₖ      :: S
   M⁻¹vₖ₋₁ :: S
   M⁻¹vₖ   :: S
-  q       :: S
   gx₂ₖ₋₃  :: S
   gx₂ₖ₋₂  :: S
   gx₂ₖ₋₁  :: S
   gx₂ₖ    :: S
   uₖ      :: S
+  uₖ₊₁    :: S
   vₖ      :: S
+  vₖ₊₁    :: S
 
   function TrimrSolver(n, m, S)
     T       = eltype(S)
     yₖ      = S(undef, m)
     N⁻¹uₖ₋₁ = S(undef, m)
     N⁻¹uₖ   = S(undef, m)
-    p       = S(undef, m)
     gy₂ₖ₋₃  = S(undef, m)
     gy₂ₖ₋₂  = S(undef, m)
     gy₂ₖ₋₁  = S(undef, m)
@@ -546,14 +545,15 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
     xₖ      = S(undef, n)
     M⁻¹vₖ₋₁ = S(undef, n)
     M⁻¹vₖ   = S(undef, n)
-    q       = S(undef, n)
     gx₂ₖ₋₃  = S(undef, n)
     gx₂ₖ₋₂  = S(undef, n)
     gx₂ₖ₋₁  = S(undef, n)
     gx₂ₖ    = S(undef, n)
     uₖ      = S(undef, 0)
+    uₖ₊₁    = S(undef, 0)
     vₖ      = S(undef, 0)
-    solver = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ)
+    vₖ₊₁    = S(undef, 0)
+    solver = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, uₖ, uₖ₊₁, vₖ, vₖ₊₁)
     return solver
   end
 

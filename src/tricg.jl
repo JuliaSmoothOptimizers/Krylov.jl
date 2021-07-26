@@ -109,7 +109,7 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   M⁻¹vₖ .= b
   MisI || mul!(vₖ, M, M⁻¹vₖ)
   βₖ = sqrt(@kdot(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
-  if βₖ ≠ 0
+  if βₖ ≠ zero(T)
     @kscal!(m, 1 / βₖ, M⁻¹vₖ)
     MisI || @kscal!(m, 1 / βₖ, vₖ)
   end
@@ -118,7 +118,7 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   N⁻¹uₖ .= c
   NisI || mul!(uₖ, N, N⁻¹uₖ)
   γₖ = sqrt(@kdot(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
-  if γₖ ≠ 0
+  if γₖ ≠ zero(T)
     @kscal!(n, 1 / γₖ, N⁻¹uₖ)
     NisI || @kscal!(n, 1 / γₖ, uₖ)
   end
