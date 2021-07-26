@@ -4,6 +4,8 @@ UsymqrSolver, TricgSolver, TrimrSolver, TrilqrSolver, CgsSolver, BicgstabSolver,
 BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CrlsSolver, CgneSolver, CrmrSolver,
 LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver
 
+export solve!
+
 "Abstract type for using Krylov solvers in-place"
 abstract type KrylovSolver{T,S} end
 
@@ -1247,5 +1249,41 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
     n, m = size(A)
     S = ktypeof(b)
     CraigmrSolver(n, m, S)
+  end
+end
+
+for (KS, fun) in [
+  (LsmrSolver          , :lsmr!      )
+  (CgsSolver           , :cgs!       )
+  (UsymlqSolver        , :usymlq!    )
+  (LnlqSolver          , :lnlq!      )
+  (BicgstabSolver      , :bicgstab!  )
+  (CrlsSolver          , :crls!      )
+  (LsqrSolver          , :lsqr!      )
+  (MinresSolver        , :minres!    )
+  (CgneSolver          , :cgne!      )
+  (DqgmresSolver       , :dqgmres!   )
+  (SymmlqSolver        , :symmlq!    )
+  (TrimrSolver         , :trimr!     )
+  (UsymqrSolver        , :usymqr!    )
+  (BilqrSolver         , :bilqr!     )
+  (CrSolver            , :cr!        )
+  (CraigmrSolver       , :craigmr!   )
+  (TricgSolver         , :tricg!     )
+  (CraigSolver         , :craig!     )
+  (DiomSolver          , :diom!      )
+  (LslqSolver          , :lslq!      )
+  (TrilqrSolver        , :trilqr!    )
+  (CrmrSolver          , :crmr!      )
+  (CgSolver            , :cg!        )
+  (CgLanczosShiftSolver, :cg_lanczos!)
+  (CglsSolver          , :cgls!      )
+  (CgLanczosSolver     , :cg_lanczos!)
+  (BilqSolver          , :bilq!      )
+  (MinresQlpSolver     , :minres_qlp!)
+  (QmrSolver           , :qmr!       )
+]
+  @eval begin
+    @inline solve!(solver :: $KS, args...; kwargs...) = $(fun)(solver, args...; kwargs...)
   end
 end
