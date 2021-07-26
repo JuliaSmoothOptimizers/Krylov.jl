@@ -47,152 +47,92 @@
     b  = 5 * b
     c  = 3 * c
 
-    x, stats = cg!(cg_solver, A, b)
-    @test stats.solved
     x, stats = solve!(cg_solver, A, b)
     @test stats.solved
 
-    x, stats = symmlq!(symmlq_solver, A, b)
-    @test stats.solved
     x, stats = solve!(symmlq_solver, A, b)
     @test stats.solved
 
-    x, stats = minres!(minres_solver, A, b)
-    @test stats.solved
     x, stats = solve!(minres_solver, A, b)
     @test stats.solved
 
-    x, stats = cg_lanczos!(cg_lanczos_solver, A, b)
-    @test stats.solved
     x, stats = solve!(cg_lanczos_solver, A, b)
     @test stats.solved
 
-    x, stats = cg_lanczos!(cg_lanczos_shift_solver, A, b, shifts)
-    @test stats.solved
     x, stats = solve!(cg_lanczos_shift_solver, A, b, shifts)
     @test stats.solved
 
-    x, stats = diom!(diom_solver, A, b)
-    @test stats.solved
     x, stats = solve!(diom_solver, A, b)
     @test stats.solved
 
-    x, stats = dqgmres!(dqgmres_solver, A, b)
-    @test stats.solved
     x, stats = solve!(dqgmres_solver, A, b)
     @test stats.solved
 
-    x, stats = cr!(cr_solver, A, b)
-    @test stats.solved
     x, stats = solve!(cr_solver, A, b)
     @test stats.solved
 
-    x, stats = crmr!(crmr_solver, Au, c)
-    @test stats.solved
     x, stats = solve!(crmr_solver, Au, c)
     @test stats.solved
 
-    x, stats = cgs!(cgs_solver, A, b)
-    @test stats.solved
     x, stats = solve!(cgs_solver, A, b)
     @test stats.solved
 
-    x, stats = bicgstab!(bicgstab_solver, A, b)
-    @test stats.solved
     x, stats = solve!(bicgstab_solver, A, b)
     @test stats.solved
 
-    x, y, stats = craigmr!(craigmr_solver, Au, c)
-    @test stats.solved
     x, y, stats = solve!(craigmr_solver, Au, c)
     @test stats.solved
 
-    x, stats = cgne!(cgne_solver, Au, c)
-    @test stats.solved
     x, stats = solve!(cgne_solver, Au, c)
     @test stats.solved
 
-    x, y, stats = lnlq!(lnlq_solver, Au, c)
-    @test stats.solved
     x, y, stats = solve!(lnlq_solver, Au, c)
     @test stats.solved
 
-    x, y, stats = craig!(craig_solver, Au, c)
-    @test stats.solved
     x, y, stats = solve!(craig_solver, Au, c)
     @test stats.solved
 
-    x, stats = lslq!(lslq_solver, Ao, b)
-    @test stats.solved
     x, stats = solve!(lslq_solver, Ao, b)
     @test stats.solved
 
-    x, stats = cgls!(cgls_solver, Ao, b)
-    @test stats.solved
     x, stats = solve!(cgls_solver, Ao, b)
     @test stats.solved
 
-    x, stats = lsqr!(lsqr_solver, Ao, b)
-    @test stats.solved
     x, stats = solve!(lsqr_solver, Ao, b)
     @test stats.solved
 
-    x, stats = crls!(crls_solver, Ao, b)
-    @test stats.solved
     x, stats = solve!(crls_solver, Ao, b)
     @test stats.solved
 
-    x, stats = lsmr!(lsmr_solver, Ao, b)
-    @test stats.solved
     x, stats = solve!(lsmr_solver, Ao, b)
     @test stats.solved
 
-    x, stats = usymqr!(usymqr_solver, Ao, b, c)
-    @test stats.solved
     x, stats = solve!(usymqr_solver, Ao, b, c)
     @test stats.solved
 
-    x, t, stats = trilqr!(trilqr_solver, A, b, b)
-    @test stats.solved_primal
-    @test stats.solved_dual
     x, t, stats = solve!(trilqr_solver, A, b, b)
     @test stats.solved_primal
     @test stats.solved_dual
 
-    x, stats = bilq!(bilq_solver, A, b)
-    @test stats.solved
     x, stats = solve!(bilq_solver, A, b)
     @test stats.solved
 
-    x, t, stats = bilqr!(bilqr_solver, A, b, b)
-    @test stats.solved_primal
-    @test stats.solved_dual
     x, t, stats = solve!(bilqr_solver, A, b, b)
     @test stats.solved_primal
     @test stats.solved_dual
 
-    x, stats = minres_qlp!(minres_qlp_solver, A, b)
-    @test stats.solved
     x, stats = solve!(minres_qlp_solver, A, b)
     @test stats.solved
 
-    x, stats = qmr!(qmr_solver, A, b)
-    @test stats.solved
     x, stats = solve!(qmr_solver, A, b)
     @test stats.solved
 
-    x, stats = usymlq!(usymlq_solver, Au, c, b)
-    @test stats.solved
     x, stats = solve!(usymlq_solver, Au, c, b)
     @test stats.solved
 
-    x, y, stats = tricg!(tricg_solver, Au, c, b)
-    @test stats.solved
     x, y, stats = solve!(tricg_solver, Au, c, b)
     @test stats.solved
 
-    x, y, stats = trimr!(trimr_solver, Au, c, b)
-    @test stats.solved
     x, y, stats = solve!(trimr_solver, Au, c, b)
     @test stats.solved
   end
