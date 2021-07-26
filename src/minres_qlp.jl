@@ -41,7 +41,7 @@ function minres_qlp(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFlo
 end
 
 function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
-                     M=I, atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
+                     M=I, atol :: T=√eps(T), rtol :: T=√eps(T), λ :: T=zero(T),
                      itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n, m = size(A)

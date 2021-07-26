@@ -89,14 +89,16 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   Aᵀ = A'
 
   # Set up workspace.
-  allocate_if(!MisI, solver, :vₖ, S, m)
-  allocate_if(!NisI, solver, :uₖ, S, n)
-  yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = solver.yₖ, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.p, solver.xₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.q
+  allocate_if(!MisI, solver, :vₖ   , S, m)
+  allocate_if(!MisI, solver, :vₖ₊₁ , S, m)
+  allocate_if(!NisI, solver, :uₖ   , S, n)
+  allocate_if(!NisI, solver, :uₖ₊₁ , S, n)
+  yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = solver.yₖ, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.xₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ
   gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ = solver.gy₂ₖ₋₃, solver.gy₂ₖ₋₂, solver.gy₂ₖ₋₁, solver.gy₂ₖ, solver.gx₂ₖ₋₃, solver.gx₂ₖ₋₂, solver.gx₂ₖ₋₁, solver.gx₂ₖ
   vₖ = MisI ? M⁻¹vₖ : solver.vₖ
   uₖ = NisI ? N⁻¹uₖ : solver.uₖ
-  vₖ₊₁ = MisI ? q : M⁻¹vₖ₋₁
-  uₖ₊₁ = NisI ? p : N⁻¹uₖ₋₁
+  vₖ₊₁ = MisI ? M⁻¹vₖ₋₁ : solver.vₖ₊₁
+  uₖ₊₁ = NisI ? N⁻¹uₖ₋₁ : solver.uₖ₊₁
 
   # Initial solutions x₀ and y₀.
   xₖ .= zero(T)
@@ -113,7 +115,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   M⁻¹vₖ .= b
   MisI || mul!(vₖ, M, M⁻¹vₖ)
   βₖ = sqrt(@kdot(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
-  if βₖ ≠ 0
+  if βₖ ≠ zero(T)
     @kscal!(m, 1 / βₖ, M⁻¹vₖ)
     MisI || @kscal!(m, 1 / βₖ, vₖ)
   end
@@ -122,7 +124,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   N⁻¹uₖ .= c
   NisI || mul!(uₖ, N, N⁻¹uₖ)
   γₖ = sqrt(@kdot(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
-  if γₖ ≠ 0
+  if γₖ ≠ zero(T)
     @kscal!(n, 1 / γₖ, N⁻¹uₖ)
     NisI || @kscal!(n, 1 / γₖ, uₖ)
   end
@@ -173,33 +175,28 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     # AUₖ  = EVₖTₖ    + βₖ₊₁Evₖ₊₁(eₖ)ᵀ = EVₖ₊₁Tₖ₊₁.ₖ
     # AᵀVₖ = FUₖ(Tₖ)ᵀ + γₖ₊₁Fuₖ₊₁(eₖ)ᵀ = FUₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
-    mul!(q, A , uₖ)  # Forms Evₖ₊₁ : q ← Auₖ
-    mul!(p, Aᵀ, vₖ)  # Forms Fuₖ₊₁ : p ← Aᵀvₖ
+    mul!(M⁻¹vₖ₋₁, A , uₖ, one(T), -γₖ)  # Forms Evₖ₊₁ : Evₖ₋₁ ← Auₖ  - γₖEvₖ₋₁
+    mul!(N⁻¹uₖ₋₁, Aᵀ, vₖ, one(T), -βₖ)  # Forms Fuₖ₊₁ : Fuₖ₋₁ ← Aᵀvₖ - βₖFuₖ₋₁
 
-    if iter ≥ 2
-      @kaxpy!(m, -γₖ, M⁻¹vₖ₋₁, q)  # q ← q - γₖ * M⁻¹vₖ₋₁
-      @kaxpy!(n, -βₖ, N⁻¹uₖ₋₁, p)  # p ← p - βₖ * N⁻¹uₖ₋₁
-    end
+    αₖ = @kdot(m, vₖ, M⁻¹vₖ₋₁)  # αₖ = (Auₖ- γₖEvₖ₋₁)ᵀvₖ
 
-    αₖ = @kdot(m, vₖ, q)  # αₖ = qᵀvₖ
-
-    @kaxpy!(m, -αₖ, M⁻¹vₖ, q)  # q ← q - αₖ * M⁻¹vₖ
-    @kaxpy!(n, -αₖ, N⁻¹uₖ, p)  # p ← p - αₖ * N⁻¹uₖ
+    @kaxpy!(m, -αₖ, M⁻¹vₖ, M⁻¹vₖ₋₁)  # Evₖ₋₁ ← Evₖ₋₁ - αₖ * Evₖ
+    @kaxpy!(n, -αₖ, N⁻¹uₖ, N⁻¹uₖ₋₁)  # Fuₖ₋₁ ← Fuₖ₋₁ - αₖ * Fuₖ
 
     # Compute vₖ₊₁ and uₖ₊₁
-    MisI || mul!(vₖ₊₁, M, q)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
-    NisI || mul!(uₖ₊₁, N, p)  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - αₖuₖ
+    MisI || mul!(vₖ₊₁, M, M⁻¹vₖ₋₁)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
+    NisI || mul!(uₖ₊₁, N, N⁻¹uₖ₋₁)  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - αₖuₖ
 
-    βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
-    γₖ₊₁ = sqrt(@kdot(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F
+    βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, M⁻¹vₖ₋₁))  # βₖ₊₁ = ‖vₖ₊₁‖_E
+    γₖ₊₁ = sqrt(@kdot(n, uₖ₊₁, N⁻¹uₖ₋₁))  # γₖ₊₁ = ‖uₖ₊₁‖_F
 
-    if βₖ₊₁ ≠ 0
-      @kscal!(m, one(T) / βₖ₊₁, q)
+    if βₖ₊₁ ≠ zero(T)
+      @kscal!(m, one(T) / βₖ₊₁, M⁻¹vₖ₋₁)
       MisI || @kscal!(m, one(T) / βₖ₊₁, vₖ₊₁)
     end
 
-    if γₖ₊₁ ≠ 0
-      @kscal!(n, one(T) / γₖ₊₁, p)
+    if γₖ₊₁ ≠ zero(T)
+      @kscal!(n, one(T) / γₖ₊₁, N⁻¹uₖ₋₁)
       NisI || @kscal!(n, one(T) / γₖ₊₁, uₖ₊₁)
     end
 
@@ -371,13 +368,15 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     MisI || (vₖ .= vₖ₊₁)
     NisI || (uₖ .= uₖ₊₁)
 
-    # Update M⁻¹vₖ₋₁ and N⁻¹uₖ₋₁
-    @. M⁻¹vₖ₋₁ = M⁻¹vₖ
-    @. N⁻¹uₖ₋₁ = N⁻¹uₖ
+    # Update N⁻¹uₖ₋₁, M⁻¹vₖ₋₁, N⁻¹uₖ and M⁻¹vₖ.
+    @kswap(M⁻¹vₖ₋₁, M⁻¹vₖ)
+    @kswap(N⁻¹uₖ₋₁, N⁻¹uₖ)
 
-    # Update M⁻¹vₖ and N⁻¹uₖ
-    @. M⁻¹vₖ = q
-    @. N⁻¹uₖ = p
+    # Update pointers impacted by the swaps.
+    MisI && (vₖ = M⁻¹vₖ)
+    MisI && (vₖ₊₁ = M⁻¹vₖ₋₁)
+    NisI && (uₖ = N⁻¹uₖ)
+    NisI && (uₖ₊₁ = N⁻¹uₖ₋₁)
 
     # Update cosines and sines
     old_s₁ₖ = s₁ₖ
