@@ -212,7 +212,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     # block-Lanczos formulation : [ τE    A ] Wₖ = [ E   0 ] Wₖ₊₁Sₖ₊₁.ₖ
     #                             [  Aᵀ  νF ]      [ 0   F ]
     #
-    # TriMR subproblem : min ‖ rₖ ‖ ↔ min ‖ Sₖ₊₁.ₖzₖ - β₁e₁ + γ₁e₂ ‖
+    # TriMR subproblem : min ‖ rₖ ‖ ↔ min ‖ Sₖ₊₁.ₖzₖ - β₁e₁ - γ₁e₂ ‖
     #
     # Update the QR factorization of Sₖ₊₁.ₖ = Qₖ [ Rₖ ].
     #                                            [ Oᵀ ]
