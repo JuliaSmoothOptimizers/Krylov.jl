@@ -113,7 +113,7 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   sqd && (λ = one(T))
   λ² = λ * λ
   ctol = conlim > 0 ? 1/conlim : zero(T)
-  x .= zeros(T)
+  x .= zero(T)
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
