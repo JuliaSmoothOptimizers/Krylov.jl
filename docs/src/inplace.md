@@ -29,7 +29,13 @@ x, stats = dqgmres!(dqgmres_solver, A2, b2)
 lsqr_solver = LsqrSolver(m, n, CuVector{Float32})
 x, stats = lsqr!(lsqr_solver, A3, b3)
 ```
-  
+
+A generic function `solve!` is also available and dispatches to the appropriate Krylov method.
+
+```@docs
+Krylov.solve!
+```
+
 ## Examples
 
 We illustrate the use of in-place Krylov solvers with two well-known optimization methods.

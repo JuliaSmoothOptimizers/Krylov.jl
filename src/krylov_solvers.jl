@@ -1252,6 +1252,13 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
   end
 end
 
+"""
+    solve!(solver, args..., kwargs...)
+
+Use in-place the Krylov method associated to `solver`.
+"""
+function solve! end
+
 for (KS, fun) in [
   (LsmrSolver          , :lsmr!      )
   (CgsSolver           , :cgs!       )
