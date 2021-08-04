@@ -1,4 +1,4 @@
-@testset "Increase coverage of show" begin
+@testset "show" begin
   solver = Krylov.SimpleStats(true, true, Float64[], Float64[], "t")
   io = IOBuffer()
   show(io, solver)

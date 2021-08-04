@@ -297,7 +297,7 @@ function test_alloc()
   solver = LsqrSolver(Ao, b)
   lsqr!(solver, Ao, b)  # warmup
   inplace_lsqr_bytes = @allocated lsqr!(solver, Ao, b)
-  @test (VERSION < v"1.5") || (inplace_lsqr_bytes == 432)
+  @test (VERSION < v"1.5") || (inplace_lsqr_bytes == 336)
 
   # CRLS needs:
   # - 4 m-vectors: x, p, Ar, q
