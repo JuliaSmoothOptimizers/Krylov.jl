@@ -182,7 +182,6 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  ktypeof(shifts) == S || error("ktypeof(shifts) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
