@@ -139,7 +139,7 @@ function test_alloc()
   solver = CrSolver(A, b)
   cr!(solver, A, b, rtol=1e-6)  # warmup
   inplace_cr_bytes = @allocated cr!(solver, A, b, rtol=1e-6)
-  @test (VERSION < v"1.5") || (inplace_cr_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_cr_bytes == 0)
 
   # CRMR needs:
   # - 3 n-vectors: x, p, Aᵀr

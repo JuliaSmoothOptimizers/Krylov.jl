@@ -106,6 +106,7 @@ mutable struct CrSolver{T,S} <: KrylovSolver{T,S}
   q  :: S
   Ar :: S
   Mq :: S
+  stats :: SimpleStats{T}
 
   function CrSolver(n, m, S)
     T  = eltype(S)
@@ -115,7 +116,8 @@ mutable struct CrSolver{T,S} <: KrylovSolver{T,S}
     q  = S(undef, n)
     Ar = S(undef, n)
     Mq = S(undef, 0)
-    solver = new{T,S}(x, r, p, q, Ar, Mq)
+    stats = SimpleStats(false, true, T[], T[], "unknown")
+    solver = new{T,S}(x, r, p, q, Ar, Mq, stats)
     return solver
   end
 
