@@ -80,12 +80,13 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
 
   # Set up workspace.
   allocate_if(!MisI, solver, :v, S, n)
-  x, r1, r2, w1, w2, y, err_vec, stats = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y, solver.err_vec, solver.stats
+  x, r1, r2, w1, w2, y = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y
+  err_vec, stats = solver.err_vec, solver.stats
+  rNorms, ArNorms = stats.residuals, stats.Aresiduals
+  reset!(stats)
   v = MisI ? r2 : solver.v
 
   window = length(err_vec)
-  rNorms, ArNorms = stats.residuals, stats.Aresiduals
-  !history && !isempty(rNorms) && (rNorms = T[])
 
   ϵM = eps(T)
   x .= zero(T)
@@ -277,8 +278,8 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   zero_resid    && (stats.status = "found approximate zero-residual solution")
   fwd_err       && (stats.status = "truncated forward error small enough")
 
+  # Update stats
   stats.solved = solved
   stats.inconsistent = !zero_resid
-
   return (x, stats)
 end

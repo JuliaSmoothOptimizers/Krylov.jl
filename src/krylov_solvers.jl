@@ -40,7 +40,7 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
     y  = S(undef, n)
     v  = S(undef, 0)
     err_vec = zeros(T, window)
-    stats = SimpleStats(false, true, T[], T[], "unknown")
+    stats = SimpleStats(false, false, T[], T[], "unknown")
     solver = new{T,S}(x, r1, r2, w1, w2, y, v, err_vec, stats)
     return solver
   end
@@ -77,7 +77,7 @@ mutable struct CgSolver{T,S} <: KrylovSolver{T,S}
     p  = S(undef, n)
     Ap = S(undef, n)
     z  = S(undef, 0)
-    stats = SimpleStats(false, true, T[], T[], "unknown")
+    stats = SimpleStats(false, false, T[], T[], "unknown")
     solver = new{T,S}(x, r, p, Ap, z, stats)
     return solver
   end
@@ -116,7 +116,7 @@ mutable struct CrSolver{T,S} <: KrylovSolver{T,S}
     q  = S(undef, n)
     Ar = S(undef, n)
     Mq = S(undef, 0)
-    stats = SimpleStats(false, true, T[], T[], "unknown")
+    stats = SimpleStats(false, false, T[], T[], "unknown")
     solver = new{T,S}(x, r, p, q, Ar, Mq, stats)
     return solver
   end

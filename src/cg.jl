@@ -65,8 +65,8 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace.
   allocate_if(!MisI, solver, :z, S, n)
   x, r, p, Ap, stats = solver.x, solver.r, solver.p, solver.Ap, solver.stats
-  rNorms = solver.stats.residuals
-  !history && !isempty(rNorms) && (rNorms = T[])
+  rNorms = stats.residuals
+  reset!(stats)
   z = MisI ? r : solver.z
 
   x .= zero(T)
@@ -74,6 +74,8 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   MisI || mul!(z, M, r)
   p .= z
   γ = @kdot(n, r, z)
+  rNorm = sqrt(γ)
+  history && push!(rNorms, rNorm)
   if γ == 0 
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
@@ -84,9 +86,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   itmax == 0 && (itmax = 2 * n)
 
   pAp = zero(T)
-  rNorm = sqrt(γ)
   pNorm² = γ
-  history && push!(rNorms, rNorm)
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
   display(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
@@ -156,6 +156,8 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   solved && (status == "unknown") && (status = "solution good enough given atol and rtol")
   zero_curvature && (status = "zero curvature detected")
   tired && (status = "maximum number of iterations exceeded")
+  
+  # Update stats
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status
