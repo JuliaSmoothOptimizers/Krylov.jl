@@ -57,10 +57,8 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace
   allocate_if(!MisI, solver, :Mq, S, n)
   x, r, p, q, Ar, stats = solver.x, solver.r, solver.p, solver.q, solver.Ar, solver.stats
-  rNorms = solver.stats.residuals
-  ArNorms = solver.stats.Aresiduals
-  !history && !isempty(rNorms) && (rNorms = T[])
-  !history && !isempty(ArNorms) && (ArNorms = T[])
+  rNorms, ArNorms = stats.residuals, stats.Aresiduals
+  reset!(stats)
   Mq = MisI ? q : solver.Mq
 
   # Initial state.
@@ -72,6 +70,8 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   if ρ == 0 
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
+    history && push!(rNorms, ρ)
+    history && push!(ArNorms, zero(T))
     return (x, stats)
   end
   p .= r
@@ -262,6 +262,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   end
   (verbose > 0) && @printf("\n")
 
+  # Update stats
   stats.status = npcurv ? "nonpositive curvature" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
   stats.solved = solved
   stats.inconsistent = false
