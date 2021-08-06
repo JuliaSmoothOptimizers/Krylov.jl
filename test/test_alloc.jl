@@ -39,7 +39,7 @@ function test_alloc()
   solver = CgSolver(A, b)
   cg!(solver, A, b)  # warmup
   inplace_cg_bytes = @allocated cg!(solver, A, b)
-  @test (VERSION < v"1.5") || (inplace_cg_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_cg_bytes == 0)
 
   # MINRES needs:
   # 6 n-vectors: x, r1, r2, w1, w2, y

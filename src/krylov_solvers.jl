@@ -68,6 +68,7 @@ mutable struct CgSolver{T,S} <: KrylovSolver{T,S}
   p  :: S
   Ap :: S
   z  :: S
+  stats :: SimpleStats{T}
 
   function CgSolver(n, m, S)
     T  = eltype(S)
@@ -76,7 +77,8 @@ mutable struct CgSolver{T,S} <: KrylovSolver{T,S}
     p  = S(undef, n)
     Ap = S(undef, n)
     z  = S(undef, 0)
-    solver = new{T,S}(x, r, p, Ap, z)
+    stats = SimpleStats(false, true, T[], T[], "unknown")
+    solver = new{T,S}(x, r, p, Ap, z, stats)
     return solver
   end
 
