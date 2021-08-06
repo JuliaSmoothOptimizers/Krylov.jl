@@ -56,7 +56,11 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
 
   # Set up workspace
   allocate_if(!MisI, solver, :Mq, S, n)
-  x, r, p, q, Ar = solver.x, solver.r, solver.p, solver.q, solver.Ar
+  x, r, p, q, Ar, stats = solver.x, solver.r, solver.p, solver.q, solver.Ar, solver.stats
+  rNorms = solver.stats.residuals
+  ArNorms = solver.stats.Aresiduals
+  !history && !isempty(rNorms) && (rNorms = T[])
+  !history && !isempty(ArNorms) && (ArNorms = T[])
   Mq = MisI ? q : solver.Mq
 
   # Initial state.
@@ -65,7 +69,11 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   mul!(r, M, b)  # initial residual r = M * (b - Ax) = M * b
   mul!(Ar, A, r)
   ρ = @kdot(n, r, Ar)
-  ρ == 0 && return (x, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
+  if ρ == 0 
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
   p .= r
   q .= Ar
   (verbose > 0) && (m = zero(T)) # quadratic model
@@ -74,7 +82,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   itmax == 0 && (itmax = 2 * n)
 
   rNorm = sqrt(@kdot(n, r, b)) # ‖r‖
-  rNorms = history ? [rNorm] : T[] # Values of ‖r‖
+  history && push!(rNorms, rNorm) # Values of ‖r‖
   rNorm² = rNorm * rNorm
   pNorm = rNorm
   pNorm² = rNorm²
@@ -83,7 +91,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   pAp = ρ
   abspAp = abs(pAp)
   ArNorm = @knrm2(n, Ar) # ‖Ar‖
-  ArNorms = history ? [ArNorm] : T[]
+  history && push!(ArNorms, ArNorm)
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s %8s %8s %8s\n", "Iter", "‖x‖", "‖r‖", "quad")
   display(iter, verbose) && @printf("    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
@@ -100,7 +108,9 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
       if (pAp ≤ γ * pNorm²) || (ρ ≤ γ * rNorm²)
         npcurv = true
         (verbose > 0) && @printf("nonpositive curvature detected: pᵀAp = %8.1e and rᵀAr = %8.1e\n", pAp, ρ)
-        stats = SimpleStats(solved, false, rNorms, ArNorms, "nonpositive curvature")
+        stats.solved = solved
+        stats.inconsistent = false
+        stats.status = "nonpositive curvature"
         iter == 0 && return (b, stats)
         return (x, stats)
       end
@@ -252,7 +262,8 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   end
   (verbose > 0) && @printf("\n")
 
-  status = npcurv ? "nonpositive curvature" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
-  stats = SimpleStats(solved, false, rNorms, ArNorms, status)
+  stats.status = npcurv ? "nonpositive curvature" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
+  stats.solved = solved
+  stats.inconsistent = false
   return (x, stats)
 end
