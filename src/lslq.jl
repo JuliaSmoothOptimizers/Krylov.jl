@@ -1,3 +1,21 @@
+# An implementation of LSLQ for the solution of the
+# over-determined linear least-squares problem
+#
+#  minimize ‖Ax - b‖₂
+#
+# equivalently, of the normal equations
+#
+#  AᵀAx = Aᵀb.
+#
+# LSLQ is formally equivalent to applying SYMMLQ to the normal equations
+# but should be more stable.
+#
+# This method is described in
+#
+# R. Estrin, D. Orban and M.A. Saunders
+# LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property
+# SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 254--275, 2019.
+#
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Montreal, QC, November 2016-January 2017.
 
@@ -14,12 +32,12 @@ export lslq, lslq!
 
 Solve the regularized linear least-squares problem
 
-    minimize ‖b - Ax‖₂² + λ² ‖x‖₂²
+    minimize ‖b - Ax‖₂² + λ²‖x‖₂²
 
 using the LSLQ method, where λ ≥ 0 is a regularization parameter.
 LSLQ is formally equivalent to applying SYMMLQ to the normal equations
 
-    (AᵀA + λ² I) x = Aᵀb
+    (AᵀA + λ²I) x = Aᵀb
 
 but is more stable.
 
@@ -43,6 +61,10 @@ If `sqd = true`, we solve the symmetric and quasi-definite system
     [ Aᵀ  -F ] [ x ] = [ 0 ],
 
 where E and F are symmetric and positive definite.
+The system above represents the optimality conditions of
+
+    minimize ‖b - Ax‖²_E⁻¹ + ‖x‖²_F.
+
 LSLQ is then equivalent to applying SYMMLQ to `(AᵀE⁻¹A + F)y = AᵀE⁻¹b` with `r = E⁻¹(b - Ax)`.
 Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
 
@@ -51,6 +73,10 @@ indefinite system
 
     [ E    A ] [ r ]   [ b ]
     [ Aᵀ   0 ] [ x ] = [ 0 ].
+
+The system above represents the optimality conditions of
+
+    minimize ‖b - Ax‖²_E⁻¹.
 
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᵀr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.

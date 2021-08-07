@@ -1,7 +1,7 @@
 # An implementation of LSMR for the solution of the
 # over-determined linear least-squares problem
 #
-#  minimize ‖Ax - b‖
+#  minimize ‖Ax - b‖₂
 #
 # equivalently, of the normal equations
 #
@@ -36,12 +36,12 @@ export lsmr, lsmr!
 
 Solve the regularized linear least-squares problem
 
-    minimize ‖b - Ax‖₂² + λ² ‖x‖₂²
+    minimize ‖b - Ax‖₂² + λ²‖x‖₂²
 
 using the LSMR method, where λ ≥ 0 is a regularization parameter.
 LSQR is formally equivalent to applying MINRES to the normal equations
 
-    (AᵀA + λ² I) x = Aᵀb
+    (AᵀA + λ²I) x = Aᵀb
 
 (and therefore to CRLS) but is more stable.
 
@@ -56,6 +56,10 @@ we solve the symmetric and quasi-definite system
     [ Aᵀ  -F ] [ x ] = [ 0 ],
 
 where E and F are symmetric and positive definite.
+The system above represents the optimality conditions of
+
+    minimize ‖b - Ax‖²_E⁻¹ + ‖x‖²_F.
+
 LSMR is then equivalent to applying MINRES to `(AᵀE⁻¹A + F)y = AᵀE⁻¹b` with `r = E⁻¹(b - Ax)`.
 Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
 
@@ -64,6 +68,10 @@ indefinite system
 
     [ E    A ] [ r ]   [ b ]
     [ Aᵀ   0 ] [ x ] = [ 0 ].
+
+The system above represents the optimality conditions of
+
+    minimize ‖b - Ax‖²_E⁻¹.
 
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᵀr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
