@@ -1,9 +1,9 @@
-@testset "show" begin
-  solver = Krylov.SimpleStats(true, true, Float64[], Float64[], "t")
+@testset "stats" begin
+  stats = Krylov.SimpleStats(true, true, Float64[], Float64[], "t")
   io = IOBuffer()
-  show(io, solver)
+  show(io, stats)
   showed = String(take!(io))
-  storage_type = typeof(solver)
+  storage_type = typeof(stats)
   expected = """Simple stats
   solved: true
   inconsistent: true
@@ -11,12 +11,13 @@
   Aresiduals: []
   status: t"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  Krylov.reset!(stats)
 
-  solver = Krylov.LanczosStats(true, Float64[], Bool[], NaN, NaN,"t")
+  stats = Krylov.LanczosStats(true, Float64[], Bool[], NaN, NaN,"t")
   io = IOBuffer()
-  show(io, solver)
+  show(io, stats)
   showed = String(take!(io))
-  storage_type = typeof(solver)
+  storage_type = typeof(stats)
   expected = """Lanczos stats
   solved: true
   residuals: []
@@ -25,8 +26,9 @@
   κ₂(A): NaN
   status: t"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  Krylov.reset!(stats)
 
-  solver = Krylov.SymmlqStats(
+  stats = Krylov.SymmlqStats(
     true,
     Float64[],
     Union{Float64,Missing}[],
@@ -37,9 +39,9 @@
     "t",
   )
   io = IOBuffer()
-  show(io, solver)
+  show(io, stats)
   showed = String(take!(io))
-  storage_type = typeof(solver)
+  storage_type = typeof(stats)
   expected = """Symmlq stats
   solved: true
   residuals: []
@@ -50,12 +52,13 @@
   κ₂(A): NaN
   status: t"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  Krylov.reset!(stats)
 
-  solver = Krylov.AdjointStats(true, true, Float64[], Float64[],"t")
+  stats = Krylov.AdjointStats(true, true, Float64[], Float64[],"t")
   io = IOBuffer()
-  show(io, solver)
+  show(io, stats)
   showed = String(take!(io))
-  storage_type = typeof(solver)
+  storage_type = typeof(stats)
   expected = """Adjoint stats
   solved primal: true
   solved dual: true
@@ -63,12 +66,13 @@
   residuals dual: []
   status: t"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  Krylov.reset!(stats)
 
-  solver = Krylov.LNLQStats(true, Float64[], false, Float64[], Float64[], "t")
+  stats = Krylov.LNLQStats(true, Float64[], false, Float64[], Float64[], "t")
   io = IOBuffer()
-  show(io, solver)
+  show(io, stats)
   showed = String(take!(io))
-  storage_type = typeof(solver)
+  storage_type = typeof(stats)
   expected = """LNLQ stats
   solved: true
   residuals: []
@@ -77,12 +81,13 @@
   error bnd y: []
   status: t"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  Krylov.reset!(stats)
 
-  solver = Krylov.LSLQStats(true, false, Float64[], Float64[], Float64[], false, Float64[], Float64[], "t")
+  stats = Krylov.LSLQStats(true, false, Float64[], Float64[], Float64[], false, Float64[], Float64[], "t")
   io = IOBuffer()
-  show(io, solver)
+  show(io, stats)
   showed = String(take!(io))
-  storage_type = typeof(solver)
+  storage_type = typeof(stats)
   expected = """LSLQ stats
   solved: true
   inconsistent: false
@@ -94,5 +99,6 @@
   error bound CG: []
   status: t"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  Krylov.reset!(stats)
 
 end

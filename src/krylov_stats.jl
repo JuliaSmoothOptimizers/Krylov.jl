@@ -10,11 +10,16 @@ Type for statistics returned by the majority of Krylov solvers, the attributes a
 - status
 """
 mutable struct SimpleStats{T} <: KrylovStats{T}
-  solved :: Bool
+  solved       :: Bool
   inconsistent :: Bool
-  residuals :: Vector{T}
-  Aresiduals :: Vector{T}
-  status :: String
+  residuals    :: Vector{T}
+  Aresiduals   :: Vector{T}
+  status       :: String
+end
+
+function reset!(stats :: SimpleStats)
+  empty!(stats.residuals)
+  empty!(stats.Aresiduals)
 end
 
 """
@@ -27,12 +32,17 @@ Type for statistics returned by CG-LANCZOS, the attributes are:
 - status
 """
 mutable struct LanczosStats{T} <: KrylovStats{T}
-  solved :: Bool
-  residuals :: Array{T}
-  flagged :: Union{Bool, Array{Bool,1}, BitArray{1}}
-  Anorm :: T
-  Acond :: T
-  status :: String
+  solved    :: Bool
+  residuals :: VecOrMat{T}
+  flagged   :: Union{Bool, Vector{Bool}, BitVector}
+  Anorm     :: T
+  Acond     :: T
+  status    :: String
+end
+
+function reset!(stats :: LanczosStats)
+  empty!(stats.residuals)
+  isa(stats.flagged, AbstractVector) && empty!(stats.flagged)
 end
 
 """
@@ -47,14 +57,21 @@ Type for statistics returned by SYMMLQ, the attributes are:
 - status
 """
 mutable struct SymmlqStats{T} <: KrylovStats{T}
-  solved :: Bool
-  residuals :: Array{T}
-  residualscg :: Array{Union{T, Missing}}
-  errors :: Array{T}
-  errorscg :: Array{Union{T, Missing}}
-  Anorm :: T
-  Acond :: T
-  status :: String
+  solved      :: Bool
+  residuals   :: Vector{T}
+  residualscg :: Vector{Union{T, Missing}}
+  errors      :: Vector{T}
+  errorscg    :: Vector{Union{T, Missing}}
+  Anorm       :: T
+  Acond       :: T
+  status      :: String
+end
+
+function reset!(stats :: SymmlqStats)
+  empty!(stats.residuals)
+  empty!(stats.residualscg)
+  empty!(stats.errors)
+  empty!(stats.errorscg)
 end
 
 """
@@ -66,11 +83,16 @@ Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the at
 - status
 """
 mutable struct AdjointStats{T} <: KrylovStats{T}
-  solved_primal :: Bool
-  solved_dual :: Bool
+  solved_primal    :: Bool
+  solved_dual      :: Bool
   residuals_primal :: Vector{T}
-  residuals_dual :: Vector{T}
-  status :: String
+  residuals_dual   :: Vector{T}
+  status           :: String
+end
+
+function reset!(stats :: AdjointStats)
+  empty!(stats.residuals_primal)
+  empty!(stats.residuals_dual)
 end
 
 """
@@ -83,12 +105,18 @@ Type for statistics returned by the LNLQ method, the attributes are:
 - status
 """
 mutable struct LNLQStats{T} <: KrylovStats{T}
-  solved :: Bool
-  residuals :: Vector{T}
+  solved         :: Bool
+  residuals      :: Vector{T}
   error_with_bnd :: Bool
-  error_bnd_x :: Vector{T}
-  error_bnd_y :: Vector{T}
-  status :: String
+  error_bnd_x    :: Vector{T}
+  error_bnd_y    :: Vector{T}
+  status         :: String
+end
+
+function reset!(stats :: LNLQStats)
+  empty!(stats.residuals)
+  empty!(stats.error_bnd_x)
+  empty!(stats.error_bnd_y)
 end
 
 """
@@ -104,15 +132,23 @@ Type for statistics returned by the LSLQ method, the attributes are:
 - status
 """
 mutable struct LSLQStats{T} <: KrylovStats{T}
-  solved :: Bool
-  inconsistent :: Bool
-  residuals :: Vector{T}
-  Aresiduals :: Vector{T}
-  err_lbnds :: Vector{T}
+  solved         :: Bool
+  inconsistent   :: Bool
+  residuals      :: Vector{T}
+  Aresiduals     :: Vector{T}
+  err_lbnds      :: Vector{T}
   error_with_bnd :: Bool
-  err_ubnds_lq :: Vector{T}
-  err_ubnds_cg :: Vector{T}
-  status :: String
+  err_ubnds_lq   :: Vector{T}
+  err_ubnds_cg   :: Vector{T}
+  status         :: String
+end
+
+function reset!(stats :: LSLQStats)
+  empty!(stats.residuals)
+  empty!(stats.Aresiduals)
+  empty!(stats.err_lbnds)
+  empty!(stats.err_ubnds_lq)
+  empty!(stats.err_ubnds_cg)
 end
 
 import Base.show
@@ -138,7 +174,7 @@ for f in ["Simple", "Lanczos", "Symmlq", "Adjoint", "LNLQ", "LSLQ"]
       end
       s *=  " " * field_name * ":"
       statfield = getfield(stats, field)
-      if typeof(statfield) <: AbstractVector && eltype(statfield) <: Union{Missing, AbstractFloat}
+      if isa(statfield, AbstractVector) && eltype(statfield) <: Union{Missing, AbstractFloat}
         s *= @sprintf " %s\n" vec2str(statfield)
       else
         s *= @sprintf " %s\n" statfield
