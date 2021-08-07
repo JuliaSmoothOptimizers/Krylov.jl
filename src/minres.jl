@@ -32,11 +32,11 @@ export minres, minres!
 
 Solve the shifted linear least-squares problem
 
-    minimize ‖b - (A + λ I)x‖₂²
+    minimize ‖b - (A + λI)x‖₂²
 
 or the shifted linear system
 
-    (A + λ I) x = b
+    (A + λI) x = b
 
 using the MINRES method, where λ ≥ 0 is a shift parameter,
 where A is square and symmetric.

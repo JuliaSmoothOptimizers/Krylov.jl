@@ -1,7 +1,7 @@
 # An implementation of CGLS for the solution of the
 # over-determined linear least-squares problem
 #
-#  minimize ‖Ax - b‖
+#  minimize ‖Ax - b‖₂
 #
 # equivalently, of the normal equations
 #
@@ -36,7 +36,7 @@ export cgls, cgls!
 
 Solve the regularized linear least-squares problem
 
-    minimize ‖b - Ax‖₂² + λ ‖x‖₂²
+    minimize ‖b - Ax‖₂² + λ‖x‖₂²
 
 using the Conjugate Gradient (CG) method, where λ ≥ 0 is a regularization
 parameter. This method is equivalent to applying CG to the normal equations

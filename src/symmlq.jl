@@ -21,7 +21,7 @@ export symmlq, symmlq!
 
 Solve the shifted linear system
 
-    (A + λ I) x = b
+    (A + λI) x = b
 
 using the SYMMLQ method, where λ is a shift parameter,
 and A is square and symmetric.
