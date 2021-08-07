@@ -1,4 +1,4 @@
-@testset "inplace solvers" begin
+@testset "solvers" begin
   A   = get_div_grad(4, 4, 4)  # Dimension n x n
   n   = size(A, 1)
   m   = div(n, 2)

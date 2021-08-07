@@ -2,7 +2,7 @@ using Test, Krylov, LinearAlgebra, SparseArrays, Printf, Random
 
 include("test_utils.jl")
 include("test_aux.jl")
-include("test_show.jl")
+include("test_stats.jl")
 
 include("test_bicgstab.jl")
 include("test_usymlq.jl")
@@ -35,4 +35,4 @@ include("test_cr.jl")
 
 include("test_alloc.jl")
 include("test_mp.jl")
-include("test_inplace.jl")
+include("test_solvers.jl")
