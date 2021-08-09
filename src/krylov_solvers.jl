@@ -600,6 +600,7 @@ mutable struct TrilqrSolver{T,S} <: KrylovSolver{T,S}
   t    :: S
   wₖ₋₃ :: S
   wₖ₋₂ :: S
+  stats :: AdjointStats{T}
 
   function TrilqrSolver(n, m, S)
     T    = eltype(S)
@@ -614,7 +615,8 @@ mutable struct TrilqrSolver{T,S} <: KrylovSolver{T,S}
     t    = S(undef, n)
     wₖ₋₃ = S(undef, n)
     wₖ₋₂ = S(undef, n)
-    solver = new{T,S}(uₖ₋₁, uₖ, p, d̅, x, vₖ₋₁, vₖ, q, t, wₖ₋₃, wₖ₋₂)
+    stats = AdjointStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(uₖ₋₁, uₖ, p, d̅, x, vₖ₋₁, vₖ, q, t, wₖ₋₃, wₖ₋₂, stats)
     return solver
   end
 
