@@ -65,7 +65,8 @@ The system above represents the optimality conditions of
 
     minimize ‖b - Ax‖²_E⁻¹ + ‖x‖²_F.
 
-LSLQ is then equivalent to applying SYMMLQ to `(AᵀE⁻¹A + F)y = AᵀE⁻¹b` with `r = E⁻¹(b - Ax)`.
+For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᵀKx`.
+LSLQ is then equivalent to applying SYMMLQ to `(AᵀE⁻¹A + F)x = AᵀE⁻¹b` with `r = E⁻¹(b - Ax)`.
 Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
 
 If `sqd` is set to `false` (the default), we solve the symmetric and

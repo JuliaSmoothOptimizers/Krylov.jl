@@ -39,7 +39,7 @@ Solve the regularized linear least-squares problem
     minimize ‖b - Ax‖₂² + λ²‖x‖₂²
 
 using the LSMR method, where λ ≥ 0 is a regularization parameter.
-LSQR is formally equivalent to applying MINRES to the normal equations
+LSMR is formally equivalent to applying MINRES to the normal equations
 
     (AᵀA + λ²I) x = Aᵀb
 
@@ -60,7 +60,8 @@ The system above represents the optimality conditions of
 
     minimize ‖b - Ax‖²_E⁻¹ + ‖x‖²_F.
 
-LSMR is then equivalent to applying MINRES to `(AᵀE⁻¹A + F)y = AᵀE⁻¹b` with `r = E⁻¹(b - Ax)`.
+For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᵀKx`.
+LSMR is then equivalent to applying MINRES to `(AᵀE⁻¹A + F)x = AᵀE⁻¹b` with `r = E⁻¹(b - Ax)`.
 Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
 
 If `sqd` is set to `false` (the default), we solve the symmetric and
