@@ -128,6 +128,18 @@ special_fields = Dict(
 
 for f in ["Simple", "Lanczos", "Symmlq", "Adjoint", "LNLQ", "LSLQ"]
   T = Meta.parse("Krylov." * f * "Stats{S}")
+
+  @eval function reset!(stats :: $T) where S
+    nfield = length($T.types)
+    for i = 1 : nfield
+      field = fieldname($T, i)
+      statfield = getfield(stats, field)
+      if isa(statfield, AbstractVector)
+        empty!(statfield)
+      end
+    end
+  end
+
   @eval function show(io :: IO, stats :: $T) where S
     s  = $f * " stats\n"
     nfield = length($T.types)
@@ -147,19 +159,5 @@ for f in ["Simple", "Lanczos", "Symmlq", "Adjoint", "LNLQ", "LSLQ"]
       end
     end
     print(io, s)
-  end
-end
-
-for f in ["Simple", "Lanczos", "Symmlq", "Adjoint", "LNLQ", "LSLQ"]
-  T = Meta.parse("Krylov." * f * "Stats{S}")
-  @eval function reset!(stats :: $T) where S
-    nfield = length($T.types)
-    for i = 1 : nfield
-      field = fieldname($T, i)
-      statfield = getfield(stats, field)
-      if isa(statfield, AbstractVector)
-        empty!(statfield)
-      end
-    end
   end
 end
