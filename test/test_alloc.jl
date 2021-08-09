@@ -391,7 +391,7 @@ function test_alloc()
   solver = BilqrSolver(A, b)
   bilqr!(solver, A, b, b)  # warmup
   inplace_bilqr_bytes = @allocated bilqr!(solver, A, b, b)
-  @test (VERSION < v"1.5") || (inplace_bilqr_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_bilqr_bytes == 0)
 
   # MINRES-QLP needs:
   # - 6 n-vectors: wₖ₋₁, wₖ, vₖ₋₁, vₖ, x, p

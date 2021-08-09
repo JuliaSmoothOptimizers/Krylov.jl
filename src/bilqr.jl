@@ -57,7 +57,8 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
 
   # Set up workspace.
   uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
-  x, t, d̅, wₖ₋₃, wₖ₋₂ = solver.x, solver.t, solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂
+  x, t, d̅, wₖ₋₃, wₖ₋₂, stats = solver.x, solver.t, solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂, solver.stats
+  reset!(stats)
 
   # Initial solution x₀ and residual norm ‖r₀‖ = ‖b - Ax₀‖.
   x .= zero(T)          # x₀
@@ -70,8 +71,9 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = history ? [bNorm] : T[]
-  sNorms = history ? [cNorm] : T[]
+  rNorms, sNorms = stats.residuals_primal, stats.residuals_dual
+  history && push!(rNorms, bNorm)
+  history && push!(sNorms, cNorm)
   εL = atol + rtol * bNorm
   εQ = atol + rtol * cNorm
   (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
@@ -79,7 +81,12 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
 
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
-  bᵗc == 0 && return (x, t, AdjointStats(false, false, [bNorm], [cNorm], "Breakdown bᵀc = 0"))
+  if bᵗc == 0
+    stats.solved_primal = false
+    stats.solved_dual = false
+    stats.status = "Breakdown bᵀc = 0"
+    return (x, t, stats)
+  end
 
   # Set up workspace.
   βₖ = √(abs(bᵗc))           # β₁γ₁ = bᵀc
@@ -356,6 +363,10 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
    solved_cg_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᶜ and a dual solution t good enough given atol and rtol")
    solved_lq_tol  && solved_qr_mach && (status = "Found a primal solution xᴸ good enough given atol and rtol and an approximate zero-residual dual solutions t")
    solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
-  stats = AdjointStats(solved_primal, solved_dual, rNorms, sNorms, status)
+
+  # Update stats
+  stats.status = status
+  stats.solved_primal = solved_primal
+  stats.solved_dual = solved_dual
   return (x, t, stats)
 end

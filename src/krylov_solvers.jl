@@ -813,6 +813,7 @@ mutable struct BilqrSolver{T,S} <: KrylovSolver{T,S}
   d̅    :: S
   wₖ₋₃ :: S
   wₖ₋₂ :: S
+  stats :: AdjointStats{T}
 
   function BilqrSolver(n, m, S)
     T    = eltype(S)
@@ -827,7 +828,8 @@ mutable struct BilqrSolver{T,S} <: KrylovSolver{T,S}
     d̅    = S(undef, n)
     wₖ₋₃ = S(undef, n)
     wₖ₋₂ = S(undef, n)
-    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, t, d̅, wₖ₋₃, wₖ₋₂)
+    stats = AdjointStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, t, d̅, wₖ₋₃, wₖ₋₂, stats)
     return solver
   end
 
