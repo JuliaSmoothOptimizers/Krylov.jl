@@ -289,3 +289,13 @@ function small_sqd(transpose :: Bool=false)
   N = diagm(0 => [5.0 * i for i = 1:m])
   return A, b, c, M, N
 end
+
+# Check that a KrylovStats is reset.
+function check_reset(stats :: KS) where KS <: Krylov.KrylovStats
+  for field in fieldnames(KS)
+    statsfield = getfield(stats, field)
+    if isa(statsfield, AbstractVector)
+      @test isempty(statsfield)
+    end
+  end
+end
