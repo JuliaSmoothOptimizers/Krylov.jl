@@ -56,8 +56,9 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   Aᵀ = A'
 
   # Set up workspace.
-  uₖ₋₁, uₖ, p, d̅, x = solver.uₖ₋₁, solver.uₖ, solver.p, solver.d̅, solver.x
+  uₖ₋₁, uₖ, p, d̅, x, stats = solver.uₖ₋₁, solver.uₖ, solver.p, solver.d̅, solver.x, solver.stats
   vₖ₋₁, vₖ, q, t, wₖ₋₃, wₖ₋₂ = solver.vₖ₋₁, solver.vₖ, solver.q, solver.t, solver.wₖ₋₃, solver.wₖ₋₂
+  reset!(stats)
 
   # Initial solution x₀ and residual r₀ = b - Ax₀.
   x .= zero(T)          # x₀
@@ -70,8 +71,9 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   iter = 0
   itmax == 0 && (itmax = m+n)
 
-  rNorms = history ? [bNorm] : T[]
-  sNorms = history ? [cNorm] : T[]
+  rNorms, sNorms = stats.residuals_primal, stats.residuals_dual
+  history && push!(rNorms, bNorm)
+  history && push!(sNorms, cNorm)
   εL = atol + rtol * bNorm
   εQ = atol + rtol * cNorm
   ξ = zero(T)
@@ -345,6 +347,10 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
    solved_cg_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᶜ and a dual solution t good enough given atol and rtol")
    solved_lq_tol  && solved_qr_mach && (status = "Found a primal solution xᴸ good enough given atol and rtol and an approximate zero-residual dual solutions t")
    solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
-  stats = AdjointStats(solved_primal, solved_dual, rNorms, sNorms, status)
+
+  # Update stats
+  stats.status = status
+  stats.solved_primal = solved_primal
+  stats.solved_dual = solved_dual
   return (x, t, stats)
 end

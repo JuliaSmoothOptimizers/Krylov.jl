@@ -361,7 +361,7 @@ function test_alloc()
   solver = TrilqrSolver(A, b)
   trilqr!(solver, A, b, b)  # warmup
   inplace_trilqr_bytes = @allocated trilqr!(solver, A, b, b)
-  @test (VERSION < v"1.5") || (inplace_trilqr_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_trilqr_bytes == 0)
 
   # BILQ needs:
   # - 8 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅, p, q
