@@ -421,7 +421,7 @@ function test_alloc()
   solver = QmrSolver(A, b)
   qmr!(solver, A, b)  # warmup
   inplace_qmr_bytes = @allocated qmr!(solver, A, b)
-  @test (VERSION < v"1.5") || (inplace_qmr_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_qmr_bytes == 0)
 
   # USYMLQ needs:
   # - 5 n-vectors: uₖ₋₁, uₖ, x, d̅, p
