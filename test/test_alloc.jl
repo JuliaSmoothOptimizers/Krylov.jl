@@ -217,7 +217,7 @@ function test_alloc()
   solver = CgneSolver(Au, c)
   cgne!(solver, Au, c)  # warmup
   inplace_cgne_bytes = @allocated cgne!(solver, Au, c)
-  @test (VERSION < v"1.5") || (inplace_cgne_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_cgne_bytes == 0)
 
   # LNLQ needs:
   # - 3 n-vectors: x, v, Aᵀu
