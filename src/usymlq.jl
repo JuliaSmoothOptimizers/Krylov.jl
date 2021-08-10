@@ -65,17 +65,25 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   Aᵀ = A'
 
   # Set up workspace.
-  uₖ₋₁, uₖ, p, x, d̅, vₖ₋₁, vₖ, q = solver.uₖ₋₁, solver.uₖ, solver.p, solver.x, solver.d̅, solver.vₖ₋₁, solver.vₖ, solver.q
+  uₖ₋₁, uₖ, p, x, d̅ = solver.uₖ₋₁, solver.uₖ, solver.p, solver.x, solver.d̅
+  vₖ₋₁, vₖ, q, stats = solver.vₖ₋₁, solver.vₖ, solver.q, solver.stats
+  reset!(stats)
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
   bNorm = @knrm2(m, b)
-  bNorm == 0 && return (x, SimpleStats(true, false, [bNorm], T[], "x = 0 is a zero-residual solution"))
+  rNorms = stats.residuals
+  history && push!(rNorms, bNorm)
+  if bNorm == 0
+    stats.solved = true
+    stats.inconsistent = false
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
 
   iter = 0
   itmax == 0 && (itmax = m+n)
 
-  rNorms = history ? [bNorm] : T[]
   ε = atol + rtol * bNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
@@ -247,6 +255,10 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   tired     && (status = "maximum number of iterations exceeded")
   solved_lq && (status = "solution xᴸ good enough given atol and rtol")
   solved_cg && (status = "solution xᶜ good enough given atol and rtol")
-  stats = SimpleStats(solved_lq || solved_cg, false, rNorms, T[], status)
+
+  # Update stats
+  stats.solved = solved_lq || solved_cg
+  stats.inconsistent = false
+  stats.status = status
   return (x, stats)
 end

@@ -437,7 +437,7 @@ function test_alloc()
   solver = UsymlqSolver(Au, c)
   usymlq!(solver, Au, c, b)  # warmup
   inplace_usymlq_bytes = @allocated usymlq!(solver, Au, c, b)
-  @test (VERSION < v"1.5") || (inplace_usymlq_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_usymlq_bytes == 0)
 
   # TriCG needs:
   # - 6 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₁, gy₂ₖ, p
