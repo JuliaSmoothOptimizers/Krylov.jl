@@ -115,6 +115,9 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   allocate_if(!MisI, solver, :u, S, m)
   allocate_if(!NisI, solver, :v, S, n)
   x, Nv, Aᵀu, w, Mu, Av = solver.x, solver.Nv, solver.Aᵀu, solver.w, solver.Mu, solver.Av
+  stats = solver.stats
+  rNorms, ArNorms = stats.residuals, stats.Aresiduals
+  reset!(stats)
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
 
@@ -129,7 +132,13 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   Mu .= b
   MisI || mul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0 && return (x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
+  if β₁ == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a zero-residual solution"
+    history && push!(rNorms, zero(T))
+    history && push!(ArNorms, zero(T))
+    return (x, stats)
+  end
   β = β₁
 
   @kscal!(m, one(T)/β₁, u)
@@ -158,8 +167,19 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %7s\n", "Aprod", "α", "β", "‖r‖", "‖Aᵀr‖", "compat", "backwrd", "‖A‖", "κ(A)")
   display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", 1, β₁, α, β₁, α, 0, 1, Anorm, Acond)
 
+  rNorm = β₁
+  r1Norm = rNorm
+  r2Norm = rNorm
+  res2   = zero(T)
+  history && push!(rNorms, r2Norm)
+  ArNorm = ArNorm0 = α * β
+  history && push!(ArNorms, ArNorm)
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0 && return (x, SimpleStats(true, false, [β₁], [zero(T)], "x = 0 is a minimum least-squares solution"))
+  if α == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a minimum least-squares solution"
+    return (x, stats)
+  end
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
   w .= v
@@ -168,13 +188,6 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   ϕbar = β₁
   ρbar = α
   # θ = 0.0
-  rNorm = ϕbar
-  r1Norm = rNorm
-  r2Norm = rNorm
-  res2   = zero(T)
-  rNorms = history ? [r2Norm] : T[]
-  ArNorm = ArNorm0 = α * β
-  ArNorms = history ? [ArNorm] : T[]
 
   status = "unknown"
   on_boundary = false
@@ -320,6 +333,9 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   fwd_err       && (status = "truncated forward error small enough")
   on_boundary   && (status = "on trust-region boundary")
 
-  stats = SimpleStats(solved, !zero_resid, rNorms, ArNorms, status)
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = !zero_resid
+  stats.status = status
   return (x, stats)
 end
