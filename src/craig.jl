@@ -111,6 +111,9 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   allocate_if(!NisI, solver, :v , S, n)
   allocate_if(λ > 0, solver, :w2, S, n)
   x, Nv, Aᵀu, y, w, Mu, Av, w2 = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.w, solver.Mu, solver.Av, solver.w2
+  stats = solver.stats
+  rNorms = stats.residuals
+  reset!(stats)
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
 
@@ -120,7 +123,13 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   Mu .= b
   MisI || mul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0 && return x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution")
+  rNorm  = β₁
+  history && push!(rNorms, rNorm)
+  if β₁ == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a zero-residual solution"
+    return x, y, stats
+  end
   β₁² = β₁^2
   β = β₁
   θ = β₁      # θ will differ from β when there is regularization (λ > 0).
@@ -148,8 +157,6 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = m + n)
 
-  rNorm  = β₁
-  rNorms = history ? [rNorm] : T[]
   ɛ_c = atol + rtol * rNorm   # Stopping tolerance for consistent systems.
   ɛ_i = atol                  # Stopping tolerance for inconsistent systems.
   ctol = conlim > 0 ? 1/conlim : zero(T)  # Stopping tolerance for ill-conditioned operators.
@@ -287,6 +294,9 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   ill_cond_lim  && (status = "condition number exceeds tolerance")
   inconsistent  && (status = "system may be inconsistent")
 
-  stats = SimpleStats(solved, inconsistent, rNorms, T[], status)
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = inconsistent
+  stats.status = status
   return (x, y, stats)
 end

@@ -1193,16 +1193,17 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct CraigSolver{T,S} <: KrylovSolver{T,S}
-  x   :: S
-  Nv  :: S
-  Aᵀu :: S
-  y   :: S
-  w   :: S
-  Mu  :: S
-  Av  :: S
-  u   :: S
-  v   :: S
-  w2  :: S
+  x     :: S
+  Nv    :: S
+  Aᵀu   :: S
+  y     :: S
+  w     :: S
+  Mu    :: S
+  Av    :: S
+  u     :: S
+  v     :: S
+  w2    :: S
+  stats :: SimpleStats{T}
 
   function CraigSolver(n, m, S)
     T   = eltype(S)
@@ -1216,7 +1217,8 @@ mutable struct CraigSolver{T,S} <: KrylovSolver{T,S}
     u   = S(undef, 0)
     v   = S(undef, 0)
     w2  = S(undef, 0)
-    solver = new{T,S}(x, Nv, Aᵀu, y, w, Mu, Av, u, v, w2)
+    stats = SimpleStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(x, Nv, Aᵀu, y, w, Mu, Av, u, v, w2, stats)
     return solver
   end
 
