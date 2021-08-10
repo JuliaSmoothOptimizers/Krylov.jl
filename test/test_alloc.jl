@@ -185,7 +185,7 @@ function test_alloc()
   solver = BicgstabSolver(A, b)
   bicgstab!(solver, A, b)  # warmup
   inplace_bicgstab_bytes = @allocated bicgstab!(solver, A, b)
-  @test (VERSION < v"1.5") || (inplace_bicgstab_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_bicgstab_bytes == 0)
 
   # CRAIGMR needs:
   # - 3 n-vectors: x, v, Aᵀu

@@ -689,14 +689,15 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct BicgstabSolver{T,S} <: KrylovSolver{T,S}
-  x  :: S
-  r  :: S
-  p  :: S
-  v  :: S
-  s  :: S
-  qd :: S
-  yz :: S
-  t  :: S
+  x     :: S
+  r     :: S
+  p     :: S
+  v     :: S
+  s     :: S
+  qd    :: S
+  yz    :: S
+  t     :: S
+  stats :: SimpleStats{T}
 
   function BicgstabSolver(n, m, S)
     T  = eltype(S)
@@ -708,7 +709,8 @@ mutable struct BicgstabSolver{T,S} <: KrylovSolver{T,S}
     qd = S(undef, n)
     yz = S(undef, 0)
     t  = S(undef, 0)
-    solver = new{T,S}(x, r, p, v, s, qd, yz, t)
+    stats = SimpleStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(x, r, p, v, s, qd, yz, t, stats)
     return solver
   end
 

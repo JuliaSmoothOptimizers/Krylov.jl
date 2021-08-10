@@ -69,7 +69,8 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
   # Set up workspace.
   allocate_if(!MisI, solver, :t , S, n)
   allocate_if(!NisI, solver, :yz, S, n)
-  x, r, p, v, s, qd = solver.x, solver.r, solver.p, solver.v, solver.s, solver.qd
+  x, r, p, v, s, qd, stats = solver.x, solver.r, solver.p, solver.v, solver.s, solver.qd, solver.stats
+  reset!(stats)
   q = d = solver.qd
   t = MisI ? d : solver.t
   y = NisI ? p : solver.yz
@@ -87,18 +88,27 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
-  rNorm == 0 && return (x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution"))
+  rNorms = stats.residuals
+  history && push!(rNorms, rNorm)
+  if rNorm == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "αₖ", "ωₖ")
   display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
 
   next_ρ = @kdot(n, r, c)  # ρ₁ = ⟨r₀,r̅₀⟩
-  next_ρ == 0 && return (x, SimpleStats(false, false, [rNorm], T[], "Breakdown bᵀc = 0"))
+  if next_ρ == 0
+    stats.solved, stats.inconsistent = false, false
+    stats.status = "Breakdown bᵀc = 0"
+    return (x, stats)
+  end
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -143,6 +153,10 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
   (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = false
+  stats.status = status
   return (x, stats)
 end
