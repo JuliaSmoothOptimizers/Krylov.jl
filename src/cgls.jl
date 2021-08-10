@@ -80,14 +80,22 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
 
   # Set up workspace.
   allocate_if(!MisI, solver, :Mr, S, m)
-  x, p, s, r, q = solver.x, solver.p, solver.s, solver.r, solver.q
+  x, p, s, r, q, stats = solver.x, solver.p, solver.s, solver.r, solver.q, solver.stats
+  rNorms, ArNorms = stats.residuals, stats.Aresiduals
+  reset!(stats)
   Mr = MisI ? r : solver.Mr
   Mq = MisI ? q : solver.Mr
 
   x .= zero(T)
   r .= b
   bNorm = @knrm2(m, r)   # Marginally faster than norm(b)
-  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
+  if bNorm == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a zero-residual solution"
+    history && push!(rNorms, zero(T))
+    history && push!(ArNorms, zero(T))
+    return x, stats
+  end
   MisI || mul!(Mr, M, r)
   mul!(s, Aᵀ, Mr)
   p .= s
@@ -97,8 +105,8 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
 
   rNorm  = bNorm
   ArNorm = sqrt(γ)
-  rNorms = history ? [rNorm] : T[]
-  ArNorms = history ? [ArNorm] : T[]
+  history && push!(rNorms, rNorm)
+  history && push!(ArNorms, ArNorm)
   ε = atol + rtol * ArNorm
   (verbose > 0) && @printf("%5s  %8s  %8s\n", "Aprod", "‖A'r‖", "‖r‖")
   display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm)
@@ -143,6 +151,9 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("\n")
 
   status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, ArNorms, status)
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = false
+  stats.status = status
   return (x, stats)
 end
