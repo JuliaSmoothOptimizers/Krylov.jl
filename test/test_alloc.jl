@@ -155,7 +155,7 @@ function test_alloc()
   solver = CrmrSolver(Au, c)
   crmr!(solver, Au, c)  # warmup
   inplace_crmr_bytes = @allocated crmr!(solver, Au, c)
-  @test (VERSION < v"1.5") || (inplace_crmr_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_crmr_bytes == 0)
 
   # CGS needs:
   # 6 n-vectors: x, r, u, p, q, ts

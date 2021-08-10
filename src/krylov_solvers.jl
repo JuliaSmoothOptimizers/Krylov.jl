@@ -1000,13 +1000,14 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct CrmrSolver{T,S} <: KrylovSolver{T,S}
-  x   :: S
-  p   :: S
-  Aᵀr :: S
-  r   :: S
-  q   :: S
-  Mq  :: S
-  s   :: S
+  x     :: S
+  p     :: S
+  Aᵀr   :: S
+  r     :: S
+  q     :: S
+  Mq    :: S
+  s     :: S
+  stats :: SimpleStats{T}
 
   function CrmrSolver(n, m, S)
     T = eltype(S)
@@ -1017,7 +1018,8 @@ mutable struct CrmrSolver{T,S} <: KrylovSolver{T,S}
     q   = S(undef, n)
     Mq  = S(undef, 0)
     s   = S(undef, 0)
-    solver = new{T,S}(x, p, Aᵀr, r, q, Mq, s)
+    stats = SimpleStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(x, p, Aᵀr, r, q, Mq, s, stats)
     return solver
   end
 
