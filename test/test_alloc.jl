@@ -406,7 +406,7 @@ function test_alloc()
   solver = MinresQlpSolver(A, b)
   minres_qlp!(solver, A, b)  # warmup
   inplace_minres_qlp_bytes = @allocated minres_qlp!(solver, A, b)
-  @test (VERSION < v"1.5") || (inplace_minres_qlp_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_minres_qlp_bytes == 0)
 
   # QMR needs:
   # - 9 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₁, wₖ, p, q
