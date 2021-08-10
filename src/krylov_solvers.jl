@@ -648,14 +648,15 @@ The outer constructorss
 may be used in order to create these vectors.
 """
 mutable struct CgsSolver{T,S} <: KrylovSolver{T,S}
-  x  :: S
-  r  :: S
-  u  :: S
-  p  :: S
-  q  :: S
-  ts :: S
-  yz :: S
-  vw :: S
+  x     :: S
+  r     :: S
+  u     :: S
+  p     :: S
+  q     :: S
+  ts    :: S
+  yz    :: S
+  vw    :: S
+  stats :: SimpleStats{T}
 
   function CgsSolver(n, m, S)
     T  = eltype(S)
@@ -667,7 +668,8 @@ mutable struct CgsSolver{T,S} <: KrylovSolver{T,S}
     ts = S(undef, n)
     yz = S(undef, 0)
     vw = S(undef, 0)
-    solver = new{T,S}(x, r, u, p, q, ts, yz, vw)
+    stats = SimpleStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(x, r, u, p, q, ts, yz, vw, stats)
     return solver
   end
 

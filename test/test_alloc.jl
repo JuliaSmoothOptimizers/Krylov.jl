@@ -170,7 +170,7 @@ function test_alloc()
   solver = CgsSolver(A, b)
   cgs!(solver, A, b)  # warmup
   inplace_cgs_bytes = @allocated cgs!(solver, A, b)
-  @test (VERSION < v"1.5") || (inplace_cgs_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_cgs_bytes == 0)
 
   # BICGSTAB needs:
   # 6 n-vectors: x, r, p, v, s, qd
