@@ -357,7 +357,8 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
   V     :: Vector{S}
   L     :: Vector{T}
   H     :: Vector{T}
-  p     :: BitArray
+  p     :: BitVector
+  stats :: SimpleStats{T}
 
   function DiomSolver(n, m, memory, S)
     T     = eltype(S)
@@ -370,8 +371,9 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
     V     = [S(undef, n) for i = 1 : memory]
     L     = Vector{T}(undef, memory)
     H     = Vector{T}(undef, memory+2)
-    p     = BitArray(undef, memory)
-    solver = new{T,S}(x, x_old, t, z, w, P, V, L, H, p)
+    p     = BitVector(undef, memory)
+    stats = SimpleStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(x, x_old, t, z, w, P, V, L, H, p, stats)
     return solver
   end
 
