@@ -249,7 +249,7 @@ function test_alloc()
   solver = CraigSolver(Au, c)
   craig!(solver, Au, c)  # warmup
   inplace_craig_bytes = @allocated craig!(solver, Au, c)
-  @test (VERSION < v"1.5") || (inplace_craig_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_craig_bytes == 0)
 
   # LSLQ needs:
   # - 4 m-vectors: x_lq, v, Aᵀu, w̄ (= x_cg)
