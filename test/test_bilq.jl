@@ -65,4 +65,11 @@
   resid = norm(r) / norm(b)
   @test(resid ≤ bilq_tol)
   @test(stats.solved)
+
+  # Test bᵀc == 0
+  A = rand(10, 10)
+  b = Float64.([mod(i,2) for i = 1:10])
+  c = Float64.([mod(i+1,2) for i = 1:10])
+  (x, stats) = bilq(A, b, c=c)
+  @test stats.status == "Breakdown bᵀc = 0"
 end

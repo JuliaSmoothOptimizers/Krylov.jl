@@ -730,6 +730,7 @@ mutable struct BilqSolver{T,S} <: KrylovSolver{T,S}
   p    :: S
   x    :: S
   d̅    :: S
+  stats :: SimpleStats{T}
 
   function BilqSolver(n, m, S)
     T    = eltype(S)
@@ -741,7 +742,8 @@ mutable struct BilqSolver{T,S} <: KrylovSolver{T,S}
     p    = S(undef, n)
     x    = S(undef, n)
     d̅    = S(undef, n)
-    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, d̅)
+    stats = SimpleStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, d̅, stats)
     return solver
   end
 
