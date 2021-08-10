@@ -62,19 +62,26 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   Aᵀ = A'
 
   # Set up workspace.
-  vₖ₋₁, vₖ, q, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p = solver.vₖ₋₁, solver.vₖ, solver.q, solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.uₖ₋₁, solver.uₖ, solver.p
+  vₖ₋₁, vₖ, q, x, wₖ₋₂, wₖ₋₁ = solver.vₖ₋₁, solver.vₖ, solver.q, solver.x, solver.wₖ₋₂, solver.wₖ₋₁
+  uₖ₋₁, uₖ, p, stats = solver.uₖ₋₁, solver.uₖ, solver.p, solver.stats
+  reset!(stats)
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
   rNorm = @knrm2(m, b)
-  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
+  rNorms, AᵀrNorms = stats.residuals, stats.Aresiduals
+  history && push!(rNorms, rNorm)
+  if rNorm == 0
+    stats.solved = true
+    stats.inconsistent = false
+    stats.status = "x = 0 is a zero-residual solution"
+    return x, stats
+  end
 
   iter = 0
   itmax == 0 && (itmax = m+n)
 
-  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
-  AᵀrNorms = T[]
   κ = zero(T)
   (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Aᵀrₖ₋₁‖")
   display(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
@@ -236,6 +243,10 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   end
   (verbose > 0) && @printf("\n")
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = SimpleStats(solved, inconsistent, rNorms, AᵀrNorms, status)
+
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = inconsistent
+  stats. status = status
   return (x, stats)
 end

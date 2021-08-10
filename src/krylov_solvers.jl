@@ -445,6 +445,7 @@ mutable struct UsymqrSolver{T,S} <: KrylovSolver{T,S}
   uₖ₋₁ :: S
   uₖ   :: S
   p    :: S
+  stats :: SimpleStats{T}
 
   function UsymqrSolver(n, m, S)
     T    = eltype(S)
@@ -457,7 +458,8 @@ mutable struct UsymqrSolver{T,S} <: KrylovSolver{T,S}
     uₖ₋₁ = S(undef, m)
     uₖ   = S(undef, m)
     p    = S(undef, m)
-    solver = new{T,S}(vₖ₋₁, vₖ, q, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p)
+    stats = SimpleStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(vₖ₋₁, vₖ, q, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, stats)
     return solver
   end
 
