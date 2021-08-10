@@ -72,6 +72,9 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace.
   allocate_if(!MisI, solver, :Ms, S, m)
   x, p, Ar, q, r, Ap, s = solver.x, solver.p, solver.Ar, solver.q, solver.r, solver.Ap, solver.s
+  stats = solver.stats
+  rNorms, ArNorms = stats.residuals, stats.Aresiduals
+  reset!(stats)
   Ms  = MisI ? s  : solver.Ms
   Mr  = MisI ? r  : solver.Ms
   MAp = MisI ? Ap : solver.Ms
@@ -79,7 +82,14 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   x .= zero(T)
   r .= b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
-  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
+  rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
+  history && push!(rNorms, rNorm)
+  if bNorm == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a zero-residual solution"
+    history && push!(ArNorms, zero(T))
+    return (x, stats)
+  end
 
   MisI || mul!(Mr, M, r)
   mul!(Ar, Aᵀ, Mr)  # - λ * x0 if x0 ≠ 0.
@@ -94,11 +104,9 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = m + n)
 
-  rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   ArNorm = @knrm2(n, Ar)  # Marginally faster than norm(Ar)
   λ > 0 && (γ += λ * ArNorm * ArNorm)
-  rNorms = history ? [rNorm] : T[]
-  ArNorms = history ? [ArNorm] : T[]
+  history && push!(ArNorms, ArNorm)
   ε = atol + rtol * ArNorm
   (verbose > 0) && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
   display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 3, ArNorm, rNorm)
@@ -168,6 +176,9 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("\n")
 
   status = psd ? "zero-curvature encountered" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
-  stats = SimpleStats(solved, false, rNorms, ArNorms, status)
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = false
+  stats.status = status
   return (x, stats)
 end

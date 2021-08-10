@@ -908,14 +908,15 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct CrlsSolver{T,S} <: KrylovSolver{T,S}
-  x  :: S
-  p  :: S
-  Ar :: S
-  q  :: S
-  r  :: S
-  Ap :: S
-  s  :: S
-  Ms :: S
+  x     :: S
+  p     :: S
+  Ar    :: S
+  q     :: S
+  r     :: S
+  Ap    :: S
+  s     :: S
+  Ms    :: S
+  stats :: SimpleStats{T}
 
   function CrlsSolver(n, m, S)
     T  = eltype(S)
@@ -927,7 +928,8 @@ mutable struct CrlsSolver{T,S} <: KrylovSolver{T,S}
     Ap = S(undef, n)
     s  = S(undef, n)
     Ms = S(undef, 0)
-    solver = new{T,S}(x, p, Ar, q, r, Ap, s, Ms)
+    stats = SimpleStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(x, p, Ar, q, r, Ap, s, Ms, stats)
     return solver
   end
 

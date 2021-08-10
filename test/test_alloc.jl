@@ -313,7 +313,7 @@ function test_alloc()
   solver = CrlsSolver(Ao, b)
   crls!(solver, Ao, b)  # warmup
   inplace_crls_bytes = @allocated crls!(solver, Ao, b)
-  @test (VERSION < v"1.5") || (inplace_crls_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_crls_bytes == 0)
 
   # LSMR needs:
   # - 5 m-vectors: x, v, h, hbar, Aᵀu
