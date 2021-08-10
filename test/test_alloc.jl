@@ -281,7 +281,7 @@ function test_alloc()
   solver = CglsSolver(Ao, b)
   cgls!(solver, Ao, b)  # warmup
   inplace_cgls_bytes = @allocated cgls!(solver, Ao, b)
-  @test (VERSION < v"1.5") || (inplace_cgls_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_cgls_bytes == 0)
 
   # LSQR needs:
   # - 4 m-vectors: x, v, w, Aᵀu
