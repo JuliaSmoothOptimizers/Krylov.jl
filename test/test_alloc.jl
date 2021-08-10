@@ -345,7 +345,7 @@ function test_alloc()
   solver = UsymqrSolver(Ao, b)
   usymqr!(solver, Ao, b, c)  # warmup
   inplace_usymqr_bytes = @allocated usymqr!(solver, Ao, b, c)
-  @test (VERSION < v"1.5") || (inplace_usymqr_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_usymqr_bytes == 0)
 
   # TRILQR needs:
   # - 6 m-vectors: vₖ₋₁, vₖ, t, wₖ₋₁, wₖ, q
