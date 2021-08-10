@@ -59,7 +59,9 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
 
   # Set up workspace.
   allocate_if(!MisI, solver, :vₖ, S, n)
-  wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.x, solver.p
+  wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ
+  x, p, stats = solver.x, solver.p, solver.stats
+  reset!(stats)
   vₖ = MisI ? M⁻¹vₖ : solver.vₖ
   vₖ₊₁ = MisI ? p : M⁻¹vₖ₋₁
 
@@ -76,14 +78,18 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   end
 
   rNorm = βₖ
-  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
+  rNorms, ArNorms = stats.residuals, stats.Aresiduals
+  history && push!(rNorms, rNorm)
+  if rNorm == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
-  ArNorms = T[]
   κ = zero(T)
   (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖")
   display(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
@@ -315,6 +321,10 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status)
+
+ # Update stats
+  stats.solved = solved
+  stats.inconsistent = inconsistent
+  stats. status = status
   return (x, stats)
 end

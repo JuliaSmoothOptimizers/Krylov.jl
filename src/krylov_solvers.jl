@@ -271,6 +271,7 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
   x       :: S
   p       :: S
   vₖ      :: S
+  stats   :: SimpleStats{T}
 
   function MinresQlpSolver(n, m, S)
     T       = eltype(S)
@@ -281,7 +282,8 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
     x       = S(undef, n)
     p       = S(undef, n)
     vₖ      = S(undef, 0)
-    solver = new{T,S}(wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ)
+    stats = SimpleStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, stats)
     return solver
   end
 
