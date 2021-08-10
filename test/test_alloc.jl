@@ -453,7 +453,7 @@ function test_alloc()
   solver = TricgSolver(Au, c)
   tricg!(solver, Au, c, b)  # warmup
   inplace_tricg_bytes = @allocated tricg!(solver, Au, c, b)
-  @test (VERSION < v"1.5") || (inplace_tricg_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_tricg_bytes == 0)
 
   # TriMR needs:
   # - 8 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, p

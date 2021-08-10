@@ -491,6 +491,7 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
   gx₂ₖ    :: S
   uₖ      :: S
   vₖ      :: S
+  stats   :: SimpleStats{T}
 
   function TricgSolver(n, m, S)
     T       = eltype(S)
@@ -508,7 +509,8 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
     gx₂ₖ    = S(undef, n)
     uₖ      = S(undef, 0)
     vₖ      = S(undef, 0)
-    solver  = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ)
+    stats   = SimpleStats(false, false, T[], T[], "unknown")
+    solver  = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ, stats)
     return solver
   end
 
