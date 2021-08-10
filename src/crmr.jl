@@ -89,13 +89,22 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   allocate_if(!MisI, solver, :Mq, S, m)
   allocate_if(λ > 0, solver, :s , S, m)
   x, p, Aᵀr, r, q, s = solver.x, solver.p, solver.Aᵀr, solver.r, solver.q, solver.s
+  stats = solver.stats
+  rNorms, ArNorms = stats.residuals, stats.Aresiduals
+  reset!(stats)
   Mq = MisI ? q : solver.Mq
 
   x .= zero(T)  # initial estimation x = 0
   mul!(r, M, b) # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
-  bNorm == 0 && return x, SimpleStats(true, false, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution")
   rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
+  history && push!(rNorms, rNorm)
+  if bNorm == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a zero-residual solution"
+    history && push!(ArNorms, zero(T))
+    return x, stats
+  end
   λ > 0 && (s .= r)
   mul!(Aᵀr, Aᵀ, r)  # - λ * x0 if x0 ≠ 0.
   p .= Aᵀr
@@ -105,8 +114,7 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   itmax == 0 && (itmax = m + n)
 
   ArNorm = sqrt(γ)
-  rNorms = history ? [rNorm] : T[]
-  ArNorms = history ? [ArNorm] : T[]
+  history && push!(ArNorms, ArNorm)
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
   (verbose > 0) && @printf("%5s  %8s  %8s\n", "Aprod", "‖Aᵀr‖", "‖r‖")
@@ -148,6 +156,9 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent but least squares/norm solution found" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status)
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = inconsistent
+  stats.status = status
   return (x, stats)
 end
