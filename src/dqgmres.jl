@@ -56,7 +56,9 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace.
   allocate_if(!MisI, solver, :w, S, n)
   allocate_if(!NisI, solver, :z, S, n)
-  x, t, P, V, c, s, H = solver.x, solver.t, solver.P, solver.V, solver.c, solver.s, solver.H
+  x, t, P, V = solver.x, solver.t, solver.P, solver.V
+  c, s, H, stats = solver.c, solver.s, solver.H, solver.stats
+  reset!(stats)
   w  = MisI ? t : solver.w
   r₀ = MisI ? b : solver.w
 
@@ -65,12 +67,17 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   MisI || mul!(r₀, M, b)  # M⁻¹(b - Ax₀)
   # Compute β
   rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
-  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
+  rNorms = stats.residuals
+  history && push!(rNorms, rNorm)
+  if rNorm == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
@@ -182,8 +189,11 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
     display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
   end
   (verbose > 0) && @printf("\n")
-
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = false
+  stats.status = status
   return (x, stats)
 end

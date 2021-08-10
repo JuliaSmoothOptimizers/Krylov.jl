@@ -124,7 +124,7 @@ function test_alloc()
   solver = DqgmresSolver(A, b, mem)
   dqgmres!(solver, A, b)  # warmup
   inplace_dqgmres_bytes = @allocated dqgmres!(solver, A, b)
-  @test (VERSION < v"1.5") || (inplace_dqgmres_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_dqgmres_bytes == 0)
 
   # CR needs:
   # 5 n-vectors: x, r, p, q, Ar
