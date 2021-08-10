@@ -469,7 +469,7 @@ function test_alloc()
   solver = TrimrSolver(Au, c)
   trimr!(solver, Au, c, b)  # warmup
   inplace_trimr_bytes = @allocated trimr!(solver, Au, c, b)
-  @test (VERSION < v"1.5") || (inplace_trimr_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_trimr_bytes == 0)
 end
 
 @testset "alloc" begin
