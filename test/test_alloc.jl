@@ -329,7 +329,7 @@ function test_alloc()
   solver = LsmrSolver(Ao, b)
   lsmr!(solver, Ao, b)  # warmup
   inplace_lsmr_bytes = @allocated lsmr!(solver, Ao, b)
-  @test (VERSION < v"1.5") || (inplace_lsmr_bytes ≤ 336)
+  @test (VERSION < v"1.5") || (inplace_lsmr_bytes ≤ 128)
 
   # USYMQR needs:
   # - 6 m-vectors: vₖ₋₁, vₖ, x, wₖ₋₁, wₖ, p 
