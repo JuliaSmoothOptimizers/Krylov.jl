@@ -66,29 +66,38 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   # Set up workspace.
   allocate_if(!MisI, solver, :vw, S, n)
   allocate_if(!NisI, solver, :yz, S, n)
-  x, r, u, p, q, ts = solver.x, solver.r, solver.u, solver.p, solver.q, solver.ts
+  x, r, u, p, q, ts, stats = solver.x, solver.r, solver.u, solver.p, solver.q, solver.ts, solver.stats
+  reset!(stats)
   t = s = solver.ts
   v = MisI ? t : solver.vw
   w = MisI ? s : solver.vw
   y = NisI ? p : solver.yz
   z = NisI ? u : solver.yz
 
-
   x .= zero(T)   # x₀
   mul!(r, M, b)  # r₀
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
-  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
+  rNorms = stats.residuals
+  history && push!(rNorms, rNorm)
+  if rNorm == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
 
   # Compute ρ₀ = ⟨ r₀,̅r₀ ⟩
   ρ = @kdot(n, r, c)
-  ρ == 0 && return x, SimpleStats(false, false, [rNorm], T[], "Breakdown bᵀc = 0")
+  if ρ == 0
+    stats.solved, stats.inconsistent = false, false
+    stats.status = "Breakdown bᵀc = 0"
+    return (x, stats)
+  end
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
@@ -144,6 +153,10 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = false
+  stats.status = status
   return (x, stats)
 end
