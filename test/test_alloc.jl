@@ -376,7 +376,7 @@ function test_alloc()
   solver = BilqSolver(A, b)
   bilq!(solver, A, b)  # warmup
   inplace_bilq_bytes = @allocated bilq!(solver, A, b)
-  @test (VERSION < v"1.5") || (inplace_bilq_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_bilq_bytes == 0)
 
   # BILQR needs:
   # - 11 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₁, wₖ, p, q

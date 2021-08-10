@@ -52,24 +52,37 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
   Aᵀ = A'
 
   # Set up workspace.
-  uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, d̅ = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p, solver.x, solver.d̅
+  uₖ₋₁, uₖ, q, vₖ₋₁, vₖ = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ
+  p, x, d̅, stats = solver.p, solver.x, solver.d̅, solver.stats
+  reset!(stats)
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
   bNorm = @knrm2(n, b)  # ‖r₀‖
-  bNorm == 0 && return (x, SimpleStats(true, false, [bNorm], T[], "x = 0 is a zero-residual solution"))
+  rNorms = stats.residuals
+  history && push!(rNorms, bNorm)
+  if bNorm == 0
+    stats.solved = true
+    stats.inconsistent = false
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = history ? [bNorm] : T[]
   ε = atol + rtol * bNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
 
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
-  bᵗc == 0 && return (x, SimpleStats(false, false, [bNorm], T[], "Breakdown bᵀc = 0"))
+  if bᵗc == 0
+    stats.solved = false
+    stats.inconsistent = false
+    stats.status = "Breakdown bᵀc = 0"
+    return (x, stats)
+  end
 
   βₖ = √(abs(bᵗc))           # β₁γ₁ = bᵀc
   γₖ = bᵗc / βₖ              # β₁γ₁ = bᵀc
@@ -246,6 +259,10 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
   breakdown && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
   solved_lq && (status = "solution xᴸ good enough given atol and rtol")
   solved_cg && (status = "solution xᶜ good enough given atol and rtol")
-  stats = SimpleStats(solved_lq || solved_cg, false, rNorms, T[], status)
+
+  # Update stats
+  stats.solved = solved_lq || solved_cg
+  stats.inconsistent = false
+  stats.status = status
   return (x, stats)
 end
