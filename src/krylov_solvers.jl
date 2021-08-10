@@ -307,15 +307,16 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
-  x :: S
-  t :: S
-  z :: S
-  w :: S
-  P :: Vector{S}
-  V :: Vector{S}
-  c :: Vector{T}
-  s :: Vector{T}
-  H :: Vector{T}
+  x     :: S
+  t     :: S
+  z     :: S
+  w     :: S
+  P     :: Vector{S}
+  V     :: Vector{S}
+  c     :: Vector{T}
+  s     :: Vector{T}
+  H     :: Vector{T}
+  stats :: SimpleStats{T}
 
   function DqgmresSolver(n, m, memory, S)
     T = eltype(S)
@@ -328,7 +329,8 @@ mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
     c = Vector{T}(undef, memory)
     s = Vector{T}(undef, memory)
     H = Vector{T}(undef, memory+2)
-    solver = new{T,S}(x, t, z, w, P, V, c, s, H)
+    stats = SimpleStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(x, t, z, w, P, V, c, s, H, stats)
     return solver
   end
 
