@@ -772,6 +772,7 @@ mutable struct QmrSolver{T,S} <: KrylovSolver{T,S}
   x    :: S
   wₖ₋₂ :: S
   wₖ₋₁ :: S
+  stats :: SimpleStats{T}
 
   function QmrSolver(n, m, S)
     T    = eltype(S)
@@ -784,7 +785,8 @@ mutable struct QmrSolver{T,S} <: KrylovSolver{T,S}
     x    = S(undef, n)
     wₖ₋₂ = S(undef, n)
     wₖ₋₁ = S(undef, n)
-    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, wₖ₋₂, wₖ₋₁)
+    stats = SimpleStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, wₖ₋₂, wₖ₋₁, stats)
     return solver
   end
 

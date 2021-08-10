@@ -59,24 +59,37 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   Aᵀ = A'
 
   # Set up workspace.
-  uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, wₖ₋₂, wₖ₋₁ = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p, solver.x, solver.wₖ₋₂, solver.wₖ₋₁
+  uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
+  x, wₖ₋₂, wₖ₋₁, stats = solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.stats
+  reset!(stats)
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
   rNorm = @knrm2(n, b)  # ‖r₀‖
-  rNorm == 0 && return (x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution"))
+  rNorms = stats.residuals
+  history && push!(rNorms, rNorm)
+  if rNorm == 0
+    stats.solved = true
+    stats.inconsistent = false
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
-  bᵗc == 0 && return (x, SimpleStats(false, false, [rNorm], T[], "Breakdown bᵀc = 0"))
+  if bᵗc == 0
+    stats.solved = false
+    stats.inconsistent = false
+    stats.status = "Breakdown bᵀc = 0"
+    return (x, stats)
+  end
 
   βₖ = √(abs(bᵗc))            # β₁γ₁ = bᵀc
   γₖ = bᵗc / βₖ               # β₁γ₁ = bᵀc
@@ -239,6 +252,10 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   tired     && (status = "maximum number of iterations exceeded")
   breakdown && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
   solved    && (status = "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = false
+  stats.status = status
   return (x, stats)
 end
