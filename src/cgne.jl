@@ -90,14 +90,21 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace.
   allocate_if(!MisI, solver, :z, S, m)
   allocate_if(λ > 0, solver, :s, S, m)
-  x, p, Aᵀz, r, q, s = solver.x, solver.p, solver.Aᵀz, solver.r, solver.q, solver.s
+  x, p, Aᵀz, r, q, s, stats = solver.x, solver.p, solver.Aᵀz, solver.r, solver.q, solver.s, solver.stats
+  reset!(stats)
   z = MisI ? r : solver.z
 
   x .= zero(T)
   r .= b
   MisI || mul!(z, M, r)
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
-  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
+  rNorms = stats.residuals
+  history && push!(rNorms, rNorm)
+  if rNorm == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a zero-residual solution"
+    return x, stats
+  end
   λ > 0 && (s .= r)
 
   mul!(p, Aᵀ, z)
@@ -113,7 +120,6 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   iter = 0
   itmax == 0 && (itmax = m + n)
 
-  rNorms = history ? [rNorm] : T[]
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * pNorm  # Stopping tolerance for inconsistent systems.
   (verbose > 0) && @printf("%5s  %8s\n", "Aprod", "‖r‖")
@@ -153,6 +159,9 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent" : "solution good enough given atol and rtol")
-  stats = SimpleStats(solved, inconsistent, rNorms, T[], status)
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = inconsistent
+  stats.status = status
   return (x, stats)
 end
