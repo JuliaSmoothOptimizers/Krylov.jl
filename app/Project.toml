@@ -1,0 +1,9 @@
+name = "CKrylov"
+uuid = "4b4ec1ba-e703-4299-a852-2dcfc5813e64"
+authors = ["Alexis Montoison <alexis.montoison@polymtl.ca>"]
+version = "0.1.0"
+
+[deps]
+Krylov = "ba0b0d4f-ebba-5204-a429-3ac8c609bfb7"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
