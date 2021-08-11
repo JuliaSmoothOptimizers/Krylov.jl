@@ -201,7 +201,7 @@ function test_alloc()
   solver = CraigmrSolver(Au, c)
   craigmr!(solver, Au, c)  # warmup
   inplace_craigmr_bytes = @allocated craigmr!(solver, Au, c)
-  @test (VERSION < v"1.5") || (inplace_craigmr_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_craigmr_bytes == 0)
 
   # CGNE needs:
   # - 3 n-vectors: x, p, Aᵀz
