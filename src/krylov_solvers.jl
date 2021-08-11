@@ -1170,16 +1170,17 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct LnlqSolver{T,S} <: KrylovSolver{T,S}
-  x   :: S
-  Nv  :: S
-  Aᵀu :: S
-  y   :: S
-  w̄   :: S
-  Mu  :: S
-  Av  :: S
-  u   :: S
-  v   :: S
-  q   :: S
+  x     :: S
+  Nv    :: S
+  Aᵀu   :: S
+  y     :: S
+  w̄     :: S
+  Mu    :: S
+  Av    :: S
+  u     :: S
+  v     :: S
+  q     :: S
+  stats :: LNLQStats{T}
 
   function LnlqSolver(n, m, S)
     T  = eltype(S)
@@ -1193,7 +1194,8 @@ mutable struct LnlqSolver{T,S} <: KrylovSolver{T,S}
     u   = S(undef, 0)
     v   = S(undef, 0)
     q   = S(undef, 0)
-    solver = new{T,S}(x, Nv, Aᵀu, y, w̄, Mu, Av, u, v, q)
+    stats = LNLQStats(false, T[], false, T[], T[], "unknown")
+    solver = new{T,S}(x, Nv, Aᵀu, y, w̄, Mu, Av, u, v, q, stats)
     return solver
   end
 
