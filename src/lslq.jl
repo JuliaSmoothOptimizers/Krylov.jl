@@ -159,7 +159,10 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace.
   allocate_if(!MisI, solver, :u, S, m)
   allocate_if(!NisI, solver, :v, S, n)
-  x, Nv, Aᵀu, w̄, Mu, Av = solver.x, solver.Nv, solver.Aᵀu, solver.w̄, solver.Mu, solver.Av
+  x, Nv, Aᵀu, w̄, Mu, Av, stats = solver.x, solver.Nv, solver.Aᵀu, solver.w̄, solver.Mu, solver.Av, solver.stats
+  rNorms, ArNorms, err_lbnds = stats.residuals, stats.Aresiduals, stats.err_lbnds
+  err_ubnds_lq, err_ubnds_cg = stats.err_ubnds_lq, stats.err_ubnds_cg
+  reset!(stats)
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
 
@@ -169,16 +172,20 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   ctol = conlim > 0 ? 1/conlim : zero(T)
 
   x .= zero(T)  # LSLQ point
-  err_lbnds = T[]
-  err_ubnds_lq = T[]
-  err_ubnds_cg = T[]
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
   Mu .= b
   MisI || mul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
-  β₁ == 0 && return (x, LSLQStats(true, false, [zero(T)], [zero(T)], err_lbnds, false, err_ubnds_lq, err_ubnds_cg, "x = 0 is a zero-residual solution"))
+  if β₁ == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.error_with_bnd = false
+    history && push!(rNorms, zero(T))
+    history && push!(ArNorms, zero(T))
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
   β = β₁
 
   @kscal!(m, one(T)/β₁, u)
@@ -189,8 +196,14 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   α = sqrt(@kdot(n, v, Nv))  # = α₁
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0 && return (x, LSLQStats(true, false, [β₁], [zero(T)], err_lbnds, false, err_ubnds_lq, err_ubnds_cg, "x = 0 is a minimum least-squares solution"))
-  
+  if α == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.error_with_bnd = false
+    history && push!(rNorms, β₁)
+    history && push!(ArNorms, zero(T))
+    stats.status = "x = 0 is a minimum least-squares solution"
+    return (x, stats)
+  end
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
 
@@ -229,9 +242,9 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   csig = -one(T)
 
   rNorm = β₁
-  rNorms = history ? [rNorm] : T[]
+  history && push!(rNorms, rNorm)
   ArNorm = α * β
-  ArNorms = history ? [ArNorm] : T[]
+  history && push!(ArNorms, ArNorm)
 
   iter = 0
   itmax == 0 && (itmax = m + n)
@@ -393,8 +406,8 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     solved_lim = (test2 ≤ atol)
     zero_resid_lim = (test1 ≤ rtol)
 
-    ill_cond = ill_cond_mach | ill_cond_lim
-    solved = solved_mach | solved_lim | zero_resid_mach | zero_resid_lim | fwd_err_lbnd | fwd_err_ubnd
+    ill_cond = ill_cond_mach || ill_cond_lim
+    solved = solved_mach || solved_lim || zero_resid_mach || zero_resid_lim || fwd_err_lbnd || fwd_err_ubnd
 
     iter = iter + 1
   end
@@ -412,6 +425,10 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   fwd_err_lbnd  && (status = "forward error lower bound small enough")
   fwd_err_ubnd  && (status = "forward error upper bound small enough")
 
-  stats = LSLQStats(solved, !zero_resid, rNorms, ArNorms, err_lbnds, complex_error_bnd, err_ubnds_lq, err_ubnds_cg, status)
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = !zero_resid
+  stats.error_with_bnd = complex_error_bnd
+  stats.status = status
   return (x, stats)
 end
