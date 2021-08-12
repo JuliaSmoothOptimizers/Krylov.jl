@@ -83,4 +83,17 @@
     N⁻¹ = inv(N)
     (x, stats) = lsmr(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
   end
+
+  # Test callback function
+  function stop_cond(solver, A, b, iter, rNorms, ArNorms)
+    if iter ≥ 1
+      return true
+    else
+      return false
+    end
+  end
+
+  (x, stats) = lsmr(A,b,extra_sc = stop_cond)
+  @test stats.status == "extra stop condition triggered"
+
 end
