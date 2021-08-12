@@ -61,7 +61,9 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
 
   # Set up workspace.
   allocate_if(!MisI, solver, :v, S, n)
-  x, Mvold, Mv, Mv_next, w̅ = solver.x, solver.Mvold, solver.Mv, solver.Mv_next, solver.w̅
+  x, Mvold, Mv, Mv_next, w̅, stats = solver.x, solver.Mvold, solver.Mv, solver.Mv_next, solver.w̅, solver.stats
+  rNorms, rcgNorms, errors, errorscg = stats.residuals, stats.residualscg, stats.errors, stats.errorscg
+  reset!(stats)
   v = MisI ? Mv : solver.v
   vold = MisI ? Mvold : solver.v
 
@@ -74,7 +76,15 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   Mvold .= b
   MisI || mul!(vold, M, Mvold)
   β₁ = @kdot(m, vold, Mvold)
-  β₁ == 0 && return (x, SimpleStats(true, true, [zero(T)], [zero(T)], "x = 0 is a zero-residual solution"))
+  if β₁ == 0
+    stats.solved = true
+    stats.Anorm = T(NaN)
+    stats.Acond = T(NaN)
+    history && push!(rNorms, zero(T))
+    history && push!(rcgNorms, zero(T))
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
   β₁ = sqrt(β₁)
   β = β₁
   @kscal!(m, one(T) / β, vold)
@@ -112,19 +122,17 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
 
   xNorm = zero(T)
   rNorm = β₁
-  rNorms = history ? [rNorm] : T[]
+  history && push!(rNorms, rNorm)
 
   if γbar ≠ 0
     ζbar = η / γbar
     xcgNorm = abs(ζbar)
     rcgNorm = β₁ * abs(ζbar)
-    rcgNorms = history ? Union{T, Missing}[rcgNorm] : Union{T, Missing}[]
+    history && push!(rcgNorms, rcgNorm)
   else
-    rcgNorms = history ? Union{T, Missing}[missing] : Union{T, Missing}[]
+    history && push!(rcgNorms, missing)
   end
 
-  errors = T[]
-  errorscg = Union{T, Missing}[]
   err = T(Inf)
   errcg = T(Inf)
 
@@ -159,7 +167,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   status = "unknown"
   solved_lq = solved_mach = solved_lim = (rNorm ≤ tol)
   solved_cg = (γbar ≠ 0) && transfer_to_cg && rcgNorm ≤ tol
-  tired  = iter ≥ itmax
+  tired = iter ≥ itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
   solved = zero_resid = solved_lq || solved_cg
   fwd_err = false
@@ -319,6 +327,11 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   solved        && (status = "found approximate solution")
   solved_lq     && (status = "solution xᴸ good enough given atol and rtol")
   solved_cg     && (status = "solution xᶜ good enough given atol and rtol")
-  stats = SymmlqStats(solved, rNorms, rcgNorms, errors, errorscg, ANorm, Acond, status)
+
+  # Update stats
+  stats.solved = solved
+  stats.Anorm = ANorm
+  stats.Acond = Acond
+  stats.status = status
   return (x, stats)
 end
