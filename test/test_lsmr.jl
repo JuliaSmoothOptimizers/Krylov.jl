@@ -86,7 +86,6 @@
 
   # Test callback function
   function test_callback(solver, iter, rNorms, ArNorms)
-    @test iter == 1
     if iter >= 1
       return true
     else
@@ -94,7 +93,8 @@
     end
   end
 
-  (x, stats) = lsmr(A,b,callback = test_callback)
+  (x, stats) = lsmr(A,b,callback = test_callback, history=true)
   @test stats.status == "extra stop condition triggered"
+  @test length(stats.residuals) == 2
 
 end
