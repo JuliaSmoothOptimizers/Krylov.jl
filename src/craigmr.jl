@@ -5,7 +5,7 @@
 #
 # The method seeks to solve the minimum-norm problem
 #
-#  min ‖x‖  s.t.  Ax = b,
+#  min ‖x‖₂  s.t.  x ∈ argmin ‖Ax - b‖₂,
 #
 # and is equivalent to applying the conjugate residual method
 # to the linear system
@@ -34,13 +34,13 @@ export craigmr, craigmr!
 
 Solve the consistent linear system
 
-    Ax + λs = b
+    Ax + λ²y = b
 
 using the CRAIGMR method, where λ ≥ 0 is a regularization parameter.
 This method is equivalent to applying the Conjugate Residuals method
 to the normal equations of the second kind
 
-    (AAᵀ + λ²I)y = b
+    (AAᵀ + λ²I) y = b
 
 but is more stable. When λ = 0, this method solves the minimum-norm problem
 
@@ -48,7 +48,7 @@ but is more stable. When λ = 0, this method solves the minimum-norm problem
 
 When λ > 0, this method solves the problem
 
-    min ‖(x,s)‖₂  s.t.  Ax + λs = b.
+    min ‖(x,y)‖₂  s.t.  Ax + λ²y = b.
 
 If `sqd = true`, CRAIGMR solves the symmetric and quasi-definite system
 
@@ -56,6 +56,11 @@ If `sqd = true`, CRAIGMR solves the symmetric and quasi-definite system
     [  A   E  ] [ y ] = [ b ],
 
 where E and F are symmetric and positive definite.
+The system above represents the optimality conditions of
+
+    min ‖x‖_F + ‖y‖_E  s.t.  Ax + Ey = b.
+
+For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᵀKx`.
 CRAIGMR is then equivalent to applying MINRES to `(AF⁻¹Aᵀ + E)y = b` with `Fx = Aᵀy`.
 Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
 
@@ -64,7 +69,11 @@ If `sqd = false`, CRAIGMR solves the symmetric and indefinite system
     [ -F   Aᵀ ] [ x ]   [ 0 ]
     [  A   0  ] [ y ] = [ b ].
 
-In this case, M can still be specified and indicates the weighted norm in which residuals are measured.
+The system above represents the optimality conditions of
+
+    min ‖x‖_F  s.t.  Ax = b.
+
+In this case, `M` can still be specified and indicates the weighted norm in which residuals are measured.
 
 CRAIGMR produces monotonic residuals ‖r‖₂.
 It is formally equivalent to CRMR, though can be slightly more accurate,

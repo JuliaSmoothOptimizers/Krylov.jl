@@ -4,7 +4,7 @@
 #
 # The method seeks to solve the minimum-norm problem
 #
-#  min ‖x‖  s.t.  Ax = b,
+#  min ‖x‖₂  s.t.  Ax = b,
 #
 # and is equivalent to applying the SYMMLQ method
 # to the linear system
@@ -32,7 +32,7 @@ export lnlq, lnlq!
 
 Find the least-norm solution of the consistent linear system
 
-    Ax + λs = b
+    Ax + λ²y = b
 
 using the LNLQ method, where λ ≥ 0 is a regularization parameter.
 
@@ -40,7 +40,7 @@ For a system in the form Ax = b, LNLQ method is equivalent to applying
 SYMMLQ to AAᵀy = b and recovering x = Aᵀy but is more stable.
 Note that y are the Lagrange multipliers of the least-norm problem
 
-    minimize ‖x‖  s.t.  Ax = b.
+    minimize ‖x‖₂  s.t.  Ax = b.
 
 If `sqd = true`, LNLQ solves the symmetric and quasi-definite system
 
@@ -48,6 +48,11 @@ If `sqd = true`, LNLQ solves the symmetric and quasi-definite system
     [  A   E  ] [ y ] = [ b ],
 
 where E and F are symmetric and positive definite.
+The system above represents the optimality conditions of
+
+    min ‖x‖_F + ‖y‖_E  s.t.  Ax + Ey = b.
+
+For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᵀKx`.
 LNLQ is then equivalent to applying SYMMLQ to `(AF⁻¹Aᵀ + E)y = b` with `Fx = Aᵀy`.
 Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
 
@@ -56,7 +61,11 @@ If `sqd = false`, LNLQ solves the symmetric and indefinite system
     [ -F   Aᵀ ] [ x ]   [ 0 ]
     [  A   0  ] [ y ] = [ b ].
 
-In this case, M can still be specified and indicates the weighted norm in which residuals are measured.
+The system above represents the optimality conditions of
+
+    minimize ‖x‖_F  s.t.  Ax = b.
+
+In this case, `M` can still be specified and indicates the weighted norm in which residuals are measured.
 
 In this implementation, both the x and y-parts of the solution are returned.
 
