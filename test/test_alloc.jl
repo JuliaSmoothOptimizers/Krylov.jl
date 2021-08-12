@@ -265,7 +265,7 @@ function test_alloc()
   solver = LslqSolver(Ao, b)
   lslq!(solver, Ao, b)  # warmup
   inplace_lslq_bytes = @allocated lslq!(solver, Ao, b)
-  @test (VERSION < v"1.5") || (inplace_lslq_bytes ≤ 608)
+  @test (VERSION < v"1.5") || (inplace_lslq_bytes ≤ 128)
 
   # CGLS needs:
   # - 3 m-vectors: x, p, s
