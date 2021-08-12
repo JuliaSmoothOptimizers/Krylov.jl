@@ -77,6 +77,9 @@ The system above represents the optimality conditions of
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᵀr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 
+In order to use callback follow this example :
+callback = example_callback(solver, iter, rNorms, ArNorms)
+
 #### Reference
 
 * D. C.-L. Fong and M. A. Saunders, *LSMR: An Iterative Algorithm for Sparse*, Least Squares Problems, SIAM Journal on Scientific Computing, 33(5), pp. 2950--2971, 2011.
@@ -93,11 +96,7 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
                etol :: T=√eps(T), window :: Int=5,
                itmax :: Int=0, conlim :: T=1/√eps(T),
                radius :: T=zero(T), verbose :: Int=0, history :: Bool=false,
-               extra_sc :: Union{Nothing, Function}=nothing) where {T <: AbstractFloat, S <: DenseVector{T}}
-
-  if extra_sc !== nothing
-    history = true
-  end
+               callback :: F = (args...) -> false ) where {T <: AbstractFloat, S <: DenseVector{T}, F <: Function}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -209,9 +208,9 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
   ill_cond = ill_cond_mach = ill_cond_lim = false
   zero_resid = zero_resid_mach = zero_resid_lim = false
   fwd_err = false
-  extra_sc_bool = false
+  user_requested_exit = false
 
-  while ! (solved || tired || ill_cond)
+  while ! (solved || tired || ill_cond || user_requested_exit)
     iter = iter + 1
 
     # Generate next Golub-Kahan vectors.
@@ -329,23 +328,22 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
 
     # Stopping condition callback
-    if extra_sc !== nothing
-      extra_sc_bool = extra_sc(solver, A, b, iter, rNorms, ArNorms)
-    end
+    # History must be set to true to have access to rNorms and ArNorms
+    user_requested_exit = callback(solver, iter, rNorms, ArNorms)
 
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | solved_opt | zero_resid_mach | zero_resid_lim | fwd_err | on_boundary
   end
   (verbose > 0) && @printf("\n")
 
-  tired         && (status = "maximum number of iterations exceeded")
-  ill_cond_mach && (status = "condition number seems too large for this machine")
-  ill_cond_lim  && (status = "condition number exceeds tolerance")
-  solved        && (status = "found approximate minimum least-squares solution")
-  zero_resid    && (status = "found approximate zero-residual solution")
-  fwd_err       && (status = "truncated forward error small enough")
-  on_boundary   && (status = "on trust-region boundary")
-  extra_sc_bool && (status = "extra stop condition triggered")
+  tired               && (status = "maximum number of iterations exceeded")
+  ill_cond_mach       && (status = "condition number seems too large for this machine")
+  ill_cond_lim        && (status = "condition number exceeds tolerance")
+  solved              && (status = "found approximate minimum least-squares solution")
+  zero_resid          && (status = "found approximate zero-residual solution")
+  fwd_err             && (status = "truncated forward error small enough")
+  on_boundary         && (status = "on trust-region boundary")
+  user_requested_exit && (status = "extra stop condition triggered")
 
   # Update stats
   stats.solved = solved
