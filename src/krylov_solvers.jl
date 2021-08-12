@@ -145,6 +145,7 @@ mutable struct SymmlqSolver{T,S} <: KrylovSolver{T,S}
   Mv_next :: S
   w̅       :: S
   v       :: S
+  stats   :: SymmlqStats{T}
 
   function SymmlqSolver(n, m, S)
     T       = eltype(S)
@@ -154,7 +155,8 @@ mutable struct SymmlqSolver{T,S} <: KrylovSolver{T,S}
     Mv_next = S(undef, n)
     w̅       = S(undef, n)
     v       = S(undef, 0)
-    solver = new{T,S}(x, Mvold, Mv, Mv_next, w̅, v)
+    stats = SymmlqStats(false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), "unknown")
+    solver = new{T,S}(x, Mvold, Mv, Mv_next, w̅, v, stats)
     return solver
   end
 
