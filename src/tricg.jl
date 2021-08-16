@@ -96,8 +96,8 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   uₖ₊₁ = NisI ? p : uₖ
 
   stats = solver.stats
-  reset!(stats)
   rNorms = stats.residuals
+  reset!(stats)
 
   # Initial solutions x₀ and y₀.
   xₖ .= zero(T)

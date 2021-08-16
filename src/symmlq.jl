@@ -35,16 +35,16 @@ assumed to be symmetric and positive definite.
 
 * C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
-function symmlq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
-  solver = SymmlqSolver(A, b)
+function symmlq(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
+  solver = SymmlqSolver(A, b, window=window)
   symmlq!(solver, A, b; kwargs...)
 end
 
 function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
                  M=I, λ :: T=zero(T), transfer_to_cg :: Bool=true,
                  λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-                 etol :: T=√eps(T), window :: Int=0, itmax :: Int=0,
-                 conlim :: T=1/√eps(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                 etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
+                 verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -61,8 +61,10 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
 
   # Set up workspace.
   allocate_if(!MisI, solver, :v, S, n)
-  x, Mvold, Mv, Mv_next, w̅, stats = solver.x, solver.Mvold, solver.Mv, solver.Mv_next, solver.w̅, solver.stats
-  rNorms, rcgNorms, errors, errorscg = stats.residuals, stats.residualscg, stats.errors, stats.errorscg
+  x, Mvold, Mv, Mv_next, w̅ = solver.x, solver.Mvold, solver.Mv, solver.Mv_next, solver.w̅
+  clist, zlist, sprod, stats = solver.clist, solver.zlist, solver.sprod, solver.stats
+  rNorms, rcgNorms = stats.residuals, stats.residualscg
+  errors, errorscg = stats.errors, stats.errorscg
   reset!(stats)
   v = MisI ? Mv : solver.v
   vold = MisI ? Mvold : solver.v
@@ -136,9 +138,10 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   err = T(Inf)
   errcg = T(Inf)
 
-  clist = zeros(T, window)
-  zlist = zeros(T, window)
-  sprod = ones(T, window)
+  window = length(clist)
+  clist .= zeros(T)
+  zlist .= zeros(T)
+  sprod .= one(T)
 
   if λest ≠ 0
     # Start QR factorization of Tₖ - λest I
@@ -233,7 +236,9 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
 
     if window > 0 && λest ≠ 0
       if iter < window && window > 1
-         sprod[iter+1:end] = sprod[iter+1:end] * s
+        for i = iter+1 : window
+          sprod[i] = s * sprod[i]
+        end
       end
 
       ix = ((iter-1) % window) + 1
@@ -241,11 +246,11 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
       zlist[ix] = ζ
 
       if iter ≥ window
-          jx = mod(iter,window) + 1
+          jx = mod(iter, window) + 1
           zetabark = zlist[jx] / clist[jx]
 
           if γbar ≠ 0
-            theta = abs(@kdot(window, clist, sprod .* zlist))
+            theta = abs(sum(clist[i] * sprod[i] * zlist[i] for i = 1 : window))
             theta = zetabark * theta + abs(zetabark * ζbar * sprod[ix] * s) - zetabark^2
             history && (errorscg[iter-window+1] = sqrt(abs(errorscg[iter-window+1]^2 - 2*theta)))
           else
@@ -253,9 +258,9 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
           end
       end
 
-      ix = ((iter) % window) + 1
+      ix = (iter % window) + 1
       if iter ≥ window && window > 1
-         sprod = sprod / sprod[(ix % window) + 1]
+         sprod .= sprod ./ sprod[(ix % window) + 1]
          sprod[ix] = sprod[mod(ix-2, window)+1] * s
       end
     end
@@ -287,7 +292,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
 
     Acond = γmax / γmin
     ANorm = sqrt(ANorm²)
-    test1 = rNorm/(ANorm * xNorm)
+    test1 = rNorm / (ANorm * xNorm)
 
     display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, β, c, s, ANorm, Acond, test1)
 

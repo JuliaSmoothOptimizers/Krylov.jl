@@ -86,8 +86,6 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   reset!(stats)
   v = MisI ? r2 : solver.v
 
-  window = length(err_vec)
-
   ϵM = eps(T)
   x .= zero(T)
   ctol = conlim > 0 ? 1 / conlim : zero(T)
@@ -133,6 +131,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
 
   xENorm² = zero(T)
   err_lbnd = zero(T)
+  window = length(err_vec)
   err_vec .= zero(T)
 
   iter = 0
@@ -271,15 +270,16 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   end
   (verbose > 0) && @printf("\n")
 
-  tired         && (stats.status = "maximum number of iterations exceeded")
-  ill_cond_mach && (stats.status = "condition number seems too large for this machine")
-  ill_cond_lim  && (stats.status = "condition number exceeds tolerance")
-  solved        && (stats.status = "found approximate minimum least-squares solution")
-  zero_resid    && (stats.status = "found approximate zero-residual solution")
-  fwd_err       && (stats.status = "truncated forward error small enough")
+  tired         && (status = "maximum number of iterations exceeded")
+  ill_cond_mach && (status = "condition number seems too large for this machine")
+  ill_cond_lim  && (status = "condition number exceeds tolerance")
+  solved        && (status = "found approximate minimum least-squares solution")
+  zero_resid    && (status = "found approximate zero-residual solution")
+  fwd_err       && (status = "truncated forward error small enough")
 
   # Update stats
   stats.solved = solved
   stats.inconsistent = !zero_resid
+  stats.status = status
   return (x, stats)
 end

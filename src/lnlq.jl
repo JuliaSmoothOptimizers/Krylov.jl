@@ -118,7 +118,13 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   y .= zero(T)
 
   bNorm = @knrm2(m, b)
-  bNorm == 0 && return x, y, LNLQStats(true, [bNorm], false, T[], T[], "x = 0 is a zero-residual solution")
+  if bNorm == 0
+    stats.solved = true
+    stats.error_with_bnd = false
+    history && push!(rNorms, bNorm)
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, y, stats)
+  end
 
   history && push!(rNorms, bNorm)
   ε = atol + rtol * bNorm

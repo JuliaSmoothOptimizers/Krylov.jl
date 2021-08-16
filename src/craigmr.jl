@@ -242,6 +242,6 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   # Update stats
   stats.solved = solved
   stats.inconsistent = inconsistent
-  stats. status = status
+  stats.status = status
   return (x, y, stats)
 end

@@ -265,7 +265,7 @@ function test_alloc()
   solver = LslqSolver(Ao, b)
   lslq!(solver, Ao, b)  # warmup
   inplace_lslq_bytes = @allocated lslq!(solver, Ao, b)
-  @test (VERSION < v"1.5") || (inplace_lslq_bytes ≤ 128)
+  @test (VERSION < v"1.5") || (inplace_lslq_bytes == 0)
 
   # CGLS needs:
   # - 3 m-vectors: x, p, s
@@ -297,7 +297,7 @@ function test_alloc()
   solver = LsqrSolver(Ao, b)
   lsqr!(solver, Ao, b)  # warmup
   inplace_lsqr_bytes = @allocated lsqr!(solver, Ao, b)
-  @test (VERSION < v"1.5") || (inplace_lsqr_bytes ≤ 128)
+  @test (VERSION < v"1.5") || (inplace_lsqr_bytes == 0)
 
   # CRLS needs:
   # - 4 m-vectors: x, p, Ar, q
@@ -329,7 +329,7 @@ function test_alloc()
   solver = LsmrSolver(Ao, b)
   lsmr!(solver, Ao, b)  # warmup
   inplace_lsmr_bytes = @allocated lsmr!(solver, Ao, b)
-  @test (VERSION < v"1.5") || (inplace_lsmr_bytes ≤ 128)
+  @test (VERSION < v"1.5") || (inplace_lsmr_bytes == 0)
 
   # USYMQR needs:
   # - 6 m-vectors: vₖ₋₁, vₖ, x, wₖ₋₁, wₖ, p 

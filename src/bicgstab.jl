@@ -70,6 +70,7 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
   allocate_if(!MisI, solver, :t , S, n)
   allocate_if(!NisI, solver, :yz, S, n)
   x, r, p, v, s, qd, stats = solver.x, solver.r, solver.p, solver.v, solver.s, solver.qd, solver.stats
+  rNorms = stats.residuals
   reset!(stats)
   q = d = solver.qd
   t = MisI ? d : solver.t
@@ -88,7 +89,6 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
-  rNorms = stats.residuals
   history && push!(rNorms, rNorm)
   if rNorm == 0
     stats.solved, stats.inconsistent = true, false

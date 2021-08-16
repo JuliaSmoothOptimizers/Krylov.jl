@@ -64,12 +64,12 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   # Set up workspace.
   vₖ₋₁, vₖ, q, x, wₖ₋₂, wₖ₋₁ = solver.vₖ₋₁, solver.vₖ, solver.q, solver.x, solver.wₖ₋₂, solver.wₖ₋₁
   uₖ₋₁, uₖ, p, stats = solver.uₖ₋₁, solver.uₖ, solver.p, solver.stats
+  rNorms, AᵀrNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
   rNorm = @knrm2(m, b)
-  rNorms, AᵀrNorms = stats.residuals, stats.Aresiduals
   history && push!(rNorms, rNorm)
   if rNorm == 0
     stats.solved = true
@@ -247,6 +247,6 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   # Update stats
   stats.solved = solved
   stats.inconsistent = inconsistent
-  stats. status = status
+  stats.status = status
   return (x, stats)
 end

@@ -58,6 +58,7 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   # Set up workspace.
   uₖ₋₁, uₖ, p, d̅, x, stats = solver.uₖ₋₁, solver.uₖ, solver.p, solver.d̅, solver.x, solver.stats
   vₖ₋₁, vₖ, q, t, wₖ₋₃, wₖ₋₂ = solver.vₖ₋₁, solver.vₖ, solver.q, solver.t, solver.wₖ₋₃, solver.wₖ₋₂
+  rNorms, sNorms = stats.residuals_primal, stats.residuals_dual
   reset!(stats)
 
   # Initial solution x₀ and residual r₀ = b - Ax₀.
@@ -71,7 +72,6 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   iter = 0
   itmax == 0 && (itmax = m+n)
 
-  rNorms, sNorms = stats.residuals_primal, stats.residuals_dual
   history && push!(rNorms, bNorm)
   history && push!(sNorms, cNorm)
   εL = atol + rtol * bNorm
@@ -332,21 +332,21 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     @kaxpy!(n, ζbarₖ, d̅, x)
   end
 
-   tired                            && (status = "maximum number of iterations exceeded")
-   solved_lq_tol  && !solved_dual   && (status = "Only the primal solution xᴸ is good enough given atol and rtol")
-   solved_cg_tol  && !solved_dual   && (status = "Only the primal solution xᶜ is good enough given atol and rtol")
-  !solved_primal  && solved_qr_tol  && (status = "Only the dual solution t is good enough given atol and rtol")
-   solved_lq_tol  && solved_qr_tol  && (status = "Both primal and dual solutions (xᴸ, t) are good enough given atol and rtol")
-   solved_cg_tol  && solved_qr_tol  && (status = "Both primal and dual solutions (xᶜ, t) are good enough given atol and rtol")
-   solved_lq_mach && !solved_dual   && (status = "Only found approximate zero-residual primal solution xᴸ")
-   solved_cg_mach && !solved_dual   && (status = "Only found approximate zero-residual primal solution xᶜ")
-  !solved_primal  && solved_qr_mach && (status = "Only found approximate zero-residual dual solution t")
-   solved_lq_mach && solved_qr_mach && (status = "Found approximate zero-residual primal and dual solutions (xᴸ, t)")
-   solved_cg_mach && solved_qr_mach && (status = "Found approximate zero-residual primal and dual solutions (xᶜ, t)")
-   solved_lq_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᴸ and a dual solution t good enough given atol and rtol")
-   solved_cg_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᶜ and a dual solution t good enough given atol and rtol")
-   solved_lq_tol  && solved_qr_mach && (status = "Found a primal solution xᴸ good enough given atol and rtol and an approximate zero-residual dual solutions t")
-   solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
+  tired                            && (status = "maximum number of iterations exceeded")
+  solved_lq_tol  && !solved_dual   && (status = "Only the primal solution xᴸ is good enough given atol and rtol")
+  solved_cg_tol  && !solved_dual   && (status = "Only the primal solution xᶜ is good enough given atol and rtol")
+  !solved_primal && solved_qr_tol  && (status = "Only the dual solution t is good enough given atol and rtol")
+  solved_lq_tol  && solved_qr_tol  && (status = "Both primal and dual solutions (xᴸ, t) are good enough given atol and rtol")
+  solved_cg_tol  && solved_qr_tol  && (status = "Both primal and dual solutions (xᶜ, t) are good enough given atol and rtol")
+  solved_lq_mach && !solved_dual   && (status = "Only found approximate zero-residual primal solution xᴸ")
+  solved_cg_mach && !solved_dual   && (status = "Only found approximate zero-residual primal solution xᶜ")
+  !solved_primal && solved_qr_mach && (status = "Only found approximate zero-residual dual solution t")
+  solved_lq_mach && solved_qr_mach && (status = "Found approximate zero-residual primal and dual solutions (xᴸ, t)")
+  solved_cg_mach && solved_qr_mach && (status = "Found approximate zero-residual primal and dual solutions (xᶜ, t)")
+  solved_lq_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᴸ and a dual solution t good enough given atol and rtol")
+  solved_cg_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᶜ and a dual solution t good enough given atol and rtol")
+  solved_lq_tol  && solved_qr_mach && (status = "Found a primal solution xᴸ good enough given atol and rtol and an approximate zero-residual dual solutions t")
+  solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
 
   # Update stats
   stats.status = status
