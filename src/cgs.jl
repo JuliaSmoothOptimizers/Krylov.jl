@@ -67,6 +67,7 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   allocate_if(!MisI, solver, :vw, S, n)
   allocate_if(!NisI, solver, :yz, S, n)
   x, r, u, p, q, ts, stats = solver.x, solver.r, solver.u, solver.p, solver.q, solver.ts, solver.stats
+  rNorms = stats.residuals
   reset!(stats)
   t = s = solver.ts
   v = MisI ? t : solver.vw
@@ -79,7 +80,6 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
-  rNorms = stats.residuals
   history && push!(rNorms, rNorm)
   if rNorm == 0
     stats.solved, stats.inconsistent = true, false

@@ -67,12 +67,12 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   # Set up workspace.
   uₖ₋₁, uₖ, p, x, d̅ = solver.uₖ₋₁, solver.uₖ, solver.p, solver.x, solver.d̅
   vₖ₋₁, vₖ, q, stats = solver.vₖ₋₁, solver.vₖ, solver.q, solver.stats
+  rNorms = stats.residuals
   reset!(stats)
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
   bNorm = @knrm2(m, b)
-  rNorms = stats.residuals
   history && push!(rNorms, bNorm)
   if bNorm == 0
     stats.solved = true

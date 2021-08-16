@@ -81,8 +81,8 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 
 * C. C. Paige and M. A. Saunders, *LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*, ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
 """
-function lsqr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
-  solver = LsqrSolver(A, b)
+function lsqr(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
+  solver = LsqrSolver(A, b, window=window)
   lsqr!(solver, A, b; kwargs...)
 end
 
@@ -90,8 +90,7 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
                M=I, N=I, sqd :: Bool=false,
                λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
                atol :: T=zero(T), rtol :: T=zero(T),
-               etol :: T=√eps(T), window :: Int=5,
-               itmax :: Int=0, conlim :: T=1/√eps(T),
+               etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
                radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
@@ -114,8 +113,8 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace.
   allocate_if(!MisI, solver, :u, S, m)
   allocate_if(!NisI, solver, :v, S, n)
-  x, Nv, Aᵀu, w, Mu, Av = solver.x, solver.Nv, solver.Aᵀu, solver.w, solver.Mu, solver.Av
-  stats = solver.stats
+  x, Nv, Aᵀu, w = solver.x, solver.Nv, solver.Aᵀu, solver.w
+  Mu, Av, err_vec, stats = solver.Mu, solver.Av, solver.err_vec, solver.stats
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
   u = MisI ? Mu : solver.u
@@ -159,7 +158,8 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
 
   xENorm² = zero(T)
   err_lbnd = zero(T)
-  err_vec = zeros(T, window)
+  window = length(err_vec)
+  err_vec .= zero(T)
 
   iter = 0
   itmax == 0 && (itmax = m + n)

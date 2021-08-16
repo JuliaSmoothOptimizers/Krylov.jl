@@ -60,6 +60,7 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
   allocate_if(!NisI, solver, :z, S, n)
   x, x_old, t, P, V = solver.x, solver.x_old, solver.t, solver.P, solver.V
   L, H, p, stats = solver.L, solver.H, solver.p, solver.stats
+  rNorms = stats.residuals
   reset!(stats)
   w  = MisI ? t : solver.w
   r₀ = MisI ? b : solver.w
@@ -70,7 +71,6 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
   MisI || mul!(r₀, M, b)  # M⁻¹(b - Ax₀)
   # Compute β.
   rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
-  rNorms = stats.residuals
   history && push!(rNorms, rNorm)
   if rNorm == 0
     stats.solved, stats.inconsistent = true, false

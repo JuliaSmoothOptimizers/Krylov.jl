@@ -61,6 +61,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   allocate_if(!MisI, solver, :vₖ, S, n)
   wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ
   x, p, stats = solver.x, solver.p, solver.stats
+  rNorms, ArNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
   vₖ = MisI ? M⁻¹vₖ : solver.vₖ
   vₖ₊₁ = MisI ? p : M⁻¹vₖ₋₁
@@ -78,7 +79,6 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   end
 
   rNorm = βₖ
-  rNorms, ArNorms = stats.residuals, stats.Aresiduals
   history && push!(rNorms, rNorm)
   if rNorm == 0
     stats.solved, stats.inconsistent = true, false
@@ -325,6 +325,6 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
  # Update stats
   stats.solved = solved
   stats.inconsistent = inconsistent
-  stats. status = status
+  stats.status = status
   return (x, stats)
 end

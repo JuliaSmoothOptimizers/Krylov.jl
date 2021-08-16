@@ -101,8 +101,8 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   uₖ₊₁ = NisI ? p : N⁻¹uₖ₋₁
 
   stats = solver.stats
-  reset!(stats)
   rNorms = stats.residuals
+  reset!(stats)
 
   # Initial solutions x₀ and y₀.
   xₖ .= zero(T)

@@ -79,7 +79,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   if γ == 0 
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
-    return x, stats
+    return (x, stats)
   end
 
   iter = 0

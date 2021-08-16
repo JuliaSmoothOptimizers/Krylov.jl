@@ -262,9 +262,11 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   end
   (verbose > 0) && @printf("\n")
 
+  status = npcurv ? "nonpositive curvature" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
+
   # Update stats
-  stats.status = npcurv ? "nonpositive curvature" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
   stats.solved = solved
   stats.inconsistent = false
+  stats.status = status
   return (x, stats)
 end
