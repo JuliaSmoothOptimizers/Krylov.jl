@@ -110,8 +110,8 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   allocate_if(!MisI, solver, :u , S, m)
   allocate_if(!NisI, solver, :v , S, n)
   allocate_if(λ > 0, solver, :w2, S, n)
-  x, Nv, Aᵀu, y, w, Mu, Av, w2 = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.w, solver.Mu, solver.Av, solver.w2
-  stats = solver.stats
+  x, Nv, Aᵀu, y, w = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.w
+  Mu, Av, w2, stats = solver.Mu, solver.Av, solver.w2, solver.stats
   rNorms = stats.residuals
   reset!(stats)
   u = MisI ? Mu : solver.u
@@ -128,7 +128,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   if β₁ == 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
-    return x, y, stats
+    return (x, y, stats)
   end
   β₁² = β₁^2
   β = β₁

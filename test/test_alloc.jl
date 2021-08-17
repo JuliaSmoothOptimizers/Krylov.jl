@@ -24,7 +24,7 @@ function test_alloc()
   solver = SymmlqSolver(A, b)
   symmlq!(solver, A, b)  # warmup
   inplace_symmlq_bytes = @allocated symmlq!(solver, A, b)
-  @test (VERSION < v"1.5") || (inplace_symmlq_bytes ≤ 672)
+  @test (VERSION < v"1.5") || (inplace_symmlq_bytes ≤ 624)
 
   # CG needs:
   # 4 n-vectors: x, r, p, Ap
@@ -201,7 +201,7 @@ function test_alloc()
   solver = CraigmrSolver(Au, c)
   craigmr!(solver, Au, c)  # warmup
   inplace_craigmr_bytes = @allocated craigmr!(solver, Au, c)
-  @test (VERSION < v"1.5") || (inplace_craigmr_bytes ≤ 208)
+  @test (VERSION < v"1.5") || (inplace_craigmr_bytes == 0)
 
   # CGNE needs:
   # - 3 n-vectors: x, p, Aᵀz
@@ -233,7 +233,7 @@ function test_alloc()
   solver = LnlqSolver(Au, c)
   lnlq!(solver, Au, c)  # warmup
   inplace_lnlq_bytes = @allocated lnlq!(solver, Au, c)
-  @test (VERSION < v"1.5") || (inplace_lnlq_bytes ≤ 304)
+  @test (VERSION < v"1.5") || (inplace_lnlq_bytes == 0)
 
   # CRAIG needs:
   # - 3 n-vectors: x, v, Aᵀu
@@ -265,7 +265,7 @@ function test_alloc()
   solver = LslqSolver(Ao, b)
   lslq!(solver, Ao, b)  # warmup
   inplace_lslq_bytes = @allocated lslq!(solver, Ao, b)
-  @test (VERSION < v"1.5") || (inplace_lslq_bytes ≤ 608)
+  @test (VERSION < v"1.5") || (inplace_lslq_bytes == 0)
 
   # CGLS needs:
   # - 3 m-vectors: x, p, s
@@ -297,7 +297,7 @@ function test_alloc()
   solver = LsqrSolver(Ao, b)
   lsqr!(solver, Ao, b)  # warmup
   inplace_lsqr_bytes = @allocated lsqr!(solver, Ao, b)
-  @test (VERSION < v"1.5") || (inplace_lsqr_bytes ≤ 128)
+  @test (VERSION < v"1.5") || (inplace_lsqr_bytes == 0)
 
   # CRLS needs:
   # - 4 m-vectors: x, p, Ar, q
@@ -329,7 +329,7 @@ function test_alloc()
   solver = LsmrSolver(Ao, b)
   lsmr!(solver, Ao, b)  # warmup
   inplace_lsmr_bytes = @allocated lsmr!(solver, Ao, b)
-  @test (VERSION < v"1.5") || (inplace_lsmr_bytes ≤ 128)
+  @test (VERSION < v"1.5") || (inplace_lsmr_bytes == 0)
 
   # USYMQR needs:
   # - 6 m-vectors: vₖ₋₁, vₖ, x, wₖ₋₁, wₖ, p 

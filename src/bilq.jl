@@ -54,12 +54,13 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
   # Set up workspace.
   uₖ₋₁, uₖ, q, vₖ₋₁, vₖ = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ
   p, x, d̅, stats = solver.p, solver.x, solver.d̅, solver.stats
+  rNorms = stats.residuals
   reset!(stats)
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
   bNorm = @knrm2(n, b)  # ‖r₀‖
-  rNorms = stats.residuals
+
   history && push!(rNorms, bNorm)
   if bNorm == 0
     stats.solved = true

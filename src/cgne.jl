@@ -91,6 +91,7 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   allocate_if(!MisI, solver, :z, S, m)
   allocate_if(λ > 0, solver, :s, S, m)
   x, p, Aᵀz, r, q, s, stats = solver.x, solver.p, solver.Aᵀz, solver.r, solver.q, solver.s, solver.stats
+  rNorms = stats.residuals
   reset!(stats)
   z = MisI ? r : solver.z
 
@@ -98,15 +99,13 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   r .= b
   MisI || mul!(z, M, r)
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
-  rNorms = stats.residuals
   history && push!(rNorms, rNorm)
   if rNorm == 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
-    return x, stats
+    return (x, stats)
   end
   λ > 0 && (s .= r)
-
   mul!(p, Aᵀ, z)
 
   # Use ‖p‖ to detect inconsistent system.
@@ -159,6 +158,7 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent" : "solution good enough given atol and rtol")
+
   # Update stats
   stats.solved = solved
   stats.inconsistent = inconsistent

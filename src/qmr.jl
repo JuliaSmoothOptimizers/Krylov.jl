@@ -61,12 +61,12 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   # Set up workspace.
   uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
   x, wₖ₋₂, wₖ₋₁, stats = solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.stats
+  rNorms = stats.residuals
   reset!(stats)
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(T)
   rNorm = @knrm2(n, b)  # ‖r₀‖
-  rNorms = stats.residuals
   history && push!(rNorms, rNorm)
   if rNorm == 0
     stats.solved = true

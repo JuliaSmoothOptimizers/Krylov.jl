@@ -102,7 +102,10 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   allocate_if(!MisI, solver, :u, S, m)
   allocate_if(!NisI, solver, :v, S, n)
   allocate_if(λ > 0, solver, :q, S, n)
-  x, Nv, Aᵀu, y, w̄, Mu, Av, q = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.w̄, solver.Mu, solver.Av, solver.q
+  x, Nv, Aᵀu, y, w̄ = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.w̄
+  Mu, Av, q, stats = solver.Mu, solver.Av, solver.q, solver.stats
+  rNorms, xNorms, yNorms = stats.residuals, stats.error_bnd_x, stats.error_bnd_y
+  reset!(stats)
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
 
@@ -115,10 +118,15 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   y .= zero(T)
 
   bNorm = @knrm2(m, b)
-  bNorm == 0 && return x, y, LNLQStats(true, [bNorm], false, T[], T[], "x = 0 is a zero-residual solution")
+  if bNorm == 0
+    stats.solved = true
+    stats.error_with_bnd = false
+    history && push!(rNorms, bNorm)
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, y, stats)
+  end
 
-  rNorms = history ? [bNorm] : T[]
-  xNorms, yNorms = T[], T[]
+  history && push!(rNorms, bNorm)
   ε = atol + rtol * bNorm
 
   iter = 0
@@ -438,6 +446,10 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   tired     && (status = "maximum number of iterations exceeded")
   solved_lq && (status = "solutions (xᴸ, yᴸ) good enough for the tolerances given")
   solved_cg && (status = "solutions (xᶜ, yᶜ) good enough for the tolerances given")
-  stats = LNLQStats(solved_lq || solved_cg, rNorms, complex_error_bnd, xNorms, yNorms, status)
+
+  # Update stats
+  stats.solved = solved_lq || solved_cg
+  stats.error_with_bnd = complex_error_bnd
+  stats.status = status
   return (x, y, stats)
 end

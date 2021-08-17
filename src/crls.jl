@@ -71,8 +71,8 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
 
   # Set up workspace.
   allocate_if(!MisI, solver, :Ms, S, m)
-  x, p, Ar, q, r, Ap, s = solver.x, solver.p, solver.Ar, solver.q, solver.r, solver.Ap, solver.s
-  stats = solver.stats
+  x, p, Ar, q = solver.x, solver.p, solver.Ar, solver.q
+  r, Ap, s, stats = solver.r, solver.Ap, solver.s, solver.stats
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
   Ms  = MisI ? s  : solver.Ms
@@ -176,6 +176,7 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("\n")
 
   status = psd ? "zero-curvature encountered" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
+
   # Update stats
   stats.solved = solved
   stats.inconsistent = false

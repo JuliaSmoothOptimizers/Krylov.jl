@@ -98,7 +98,10 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace.
   allocate_if(!MisI, solver, :u, S, m)
   allocate_if(!NisI, solver, :v, S, n)
-  x, Nv, Aᵀu, y, Mu, w, wbar, Av = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.Mu, solver.w, solver.wbar, solver.Av
+  x, Nv, Aᵀu, y, Mu = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.Mu
+  w, wbar, Av, stats = solver.w, solver.wbar, solver.Av, solver.stats
+  rNorms, ArNorms = stats.residuals, stats.Aresiduals
+  reset!(stats)
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
 
@@ -108,7 +111,13 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   Mu .= b
   MisI || mul!(u, M, Mu)
   β = sqrt(@kdot(m, u, Mu))
-  β == 0 && return (x, y, SimpleStats(true, false, [zero(T)], T[], "x = 0 is a zero-residual solution"))
+  if β == 0
+    stats.solved, stats.inconsistent = true, false
+    history && push!(rNorms, β)
+    history && push!(ArNorms, zero(T))
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, y, stats)
+  end
 
   # Initialize Golub-Kahan process.
   # β₁Mu₁ = b.
@@ -128,7 +137,13 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", 1, β, α, β, α, 0, 1, Anorm²)
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
-  α == 0 && return (x, y, SimpleStats(true, false, [β], [zero(T)], "x = 0 is a minimum least-squares solution"))
+  if α == 0
+    stats.solved, stats.inconsistent = true, false
+    history && push!(rNorms, β)
+    history && push!(ArNorms, zero(T))
+    stats.status = "x = 0 is a minimum least-squares solution"
+    return (x, y, stats)
+  end
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
 
@@ -137,9 +152,9 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   ρbar = α
   θ = zero(T)
   rNorm = ζbar
-  rNorms = history ? [rNorm] : T[]
+  history && push!(rNorms, rNorm)
   ArNorm = α
-  ArNorms = history ? [ArNorm] : T[]
+  history && push!(ArNorms, ArNorm)
 
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
@@ -223,6 +238,10 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   @. x = N⁻¹Aᵀy
 
   status = tired ? "maximum number of iterations exceeded" : (solved ? "found approximate minimum-norm solution" : "found approximate minimum least-squares solution")
-  stats = SimpleStats(solved, inconsistent, rNorms, ArNorms, status)
+
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = inconsistent
+  stats.status = status
   return (x, y, stats)
 end

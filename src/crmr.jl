@@ -88,8 +88,8 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace.
   allocate_if(!MisI, solver, :Mq, S, m)
   allocate_if(λ > 0, solver, :s , S, m)
-  x, p, Aᵀr, r, q, s = solver.x, solver.p, solver.Aᵀr, solver.r, solver.q, solver.s
-  stats = solver.stats
+  x, p, Aᵀr, r = solver.x, solver.p, solver.Aᵀr, solver.r
+  q, s, stats = solver.q, solver.s, solver.stats
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
   Mq = MisI ? q : solver.Mq
@@ -103,7 +103,7 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(ArNorms, zero(T))
-    return x, stats
+    return (x, stats)
   end
   λ > 0 && (s .= r)
   mul!(Aᵀr, Aᵀ, r)  # - λ * x0 if x0 ≠ 0.
@@ -156,6 +156,7 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent but least squares/norm solution found" : "solution good enough given atol and rtol")
+
   # Update stats
   stats.solved = solved
   stats.inconsistent = inconsistent

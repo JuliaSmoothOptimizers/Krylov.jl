@@ -94,7 +94,7 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(rNorms, zero(T))
     history && push!(ArNorms, zero(T))
-    return x, stats
+    return (x, stats)
   end
   MisI || mul!(Mr, M, r)
   mul!(s, Aᵀ, Mr)
@@ -151,6 +151,7 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("\n")
 
   status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
+
   # Update stats
   stats.solved = solved
   stats.inconsistent = false
