@@ -191,6 +191,7 @@ mutable struct CgLanczosSolver{T,S} <: KrylovSolver{T,S}
   p       :: S
   Mv_next :: S
   v       :: S
+  stats   :: LanczosStats{T}
 
   function CgLanczosSolver(n, m, S)
     T       = eltype(S)
@@ -200,7 +201,8 @@ mutable struct CgLanczosSolver{T,S} <: KrylovSolver{T,S}
     p       = S(undef, n)
     Mv_next = S(undef, n)
     v       = S(undef, 0)
-    solver = new{T,S}(x, Mv, Mv_prev, p, Mv_next, v)
+    stats = LanczosStats(false, T[], false, T(NaN), T(NaN), "unknown")
+    solver = new{T,S}(x, Mv, Mv_prev, p, Mv_next, v, stats)
     return solver
   end
 
