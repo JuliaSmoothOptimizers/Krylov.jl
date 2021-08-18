@@ -77,18 +77,10 @@ The system above represents the optimality conditions of
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᵀr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 
-In order to use callback follow this example :
-callback = example_callback(solver, iter)
+The callback is called as `callback(solver, iter)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
-function example_callback(solver, iter)
-  if #your stopping condition is true"
-    return true
-  else
-    return false
-  end
-end
-
-History must be set to true to have access to rNorms and ArNorms in the callback
+Note that `history` should be set to `true` to have access to `rNorms` and `ArNorms` in the callback.
 
 #### Reference
 
