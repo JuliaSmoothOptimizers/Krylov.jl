@@ -78,7 +78,17 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 
 In order to use callback follow this example :
-callback = example_callback(solver, iter, rNorms, ArNorms)
+callback = example_callback(solver, iter)
+
+function example_callback(solver, iter)
+  if #your stopping condition is true"
+    return true
+  else
+    return false
+  end
+end
+
+History must be set to true to have access to rNorms and ArNorms in the callback
 
 #### Reference
 
@@ -327,9 +337,7 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
     zero_resid_lim = (test1 ≤ rNormtol)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
 
-    # Stopping condition callback
-    # History must be set to true to have access to rNorms and ArNorms
-    user_requested_exit = callback(solver, iter, rNorms, ArNorms)
+    user_requested_exit = callback(solver, iter)
 
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | solved_opt | zero_resid_mach | zero_resid_lim | fwd_err | on_boundary
@@ -343,7 +351,7 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
   zero_resid          && (status = "found approximate zero-residual solution")
   fwd_err             && (status = "truncated forward error small enough")
   on_boundary         && (status = "on trust-region boundary")
-  user_requested_exit && (status = "extra stop condition triggered")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update stats
   stats.solved = solved

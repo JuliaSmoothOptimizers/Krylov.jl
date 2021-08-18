@@ -85,16 +85,12 @@
   end
 
   # Test callback function
-  function test_callback(solver, iter, rNorms, ArNorms)
-    if iter >= 1
-      return true
-    else
-      return false
-    end
+  function test_callback(solver, iter)
+    return iter ≥ 1
   end
 
-  (x, stats) = lsmr(A,b,callback = test_callback, history=true)
-  @test stats.status == "extra stop condition triggered"
+  (x, stats) = lsmr(A, b, callback = test_callback, history = true)
+  @test stats.status == "user-requested exit"
   @test length(stats.residuals) == 2
 
 end
