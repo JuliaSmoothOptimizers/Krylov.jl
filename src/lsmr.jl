@@ -26,13 +26,14 @@ export lsmr, lsmr!
 
 
 """
-    (x, stats) = lsmr(A, b::AbstractVector{T};
-                      M=I, N=I, sqd::Bool=false,
-                      λ::T=zero(T), axtol::T=√eps(T), btol::T=√eps(T),
-                      atol::T=zero(T), rtol::T=zero(T),
-                      etol::T=√eps(T), window::Int=5,
-                      itmax::Int=0, conlim::T=1/√eps(T),
-                      radius::T=zero(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+(x, stats) = lsmr(A, b::AbstractVector{T};
+                  M=I, N=I, sqd::Bool=false,
+                  λ::T=zero(T), axtol::T=√eps(T), btol::T=√eps(T),
+                  atol::T=zero(T), rtol::T=zero(T),
+                  etol::T=√eps(T), window::Int=5,
+                  itmax::Int=0, conlim::T=1/√eps(T),
+                  radius::T=zero(T), verbose::Int=0,
+                  history::Bool=false, callback::Function=(args...) -> false) where T <: AbstractFloat
 
 Solve the regularized linear least-squares problem
 
@@ -97,7 +98,7 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
                atol :: T=zero(T), rtol :: T=zero(T),
                etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
                radius :: T=zero(T), verbose :: Int=0, history :: Bool=false,
-               callback :: F = (args...) -> false ) where {T <: AbstractFloat, S <: DenseVector{T}, F <: Function}
+               callback :: Function = (args...) -> false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -329,7 +330,7 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
     zero_resid_lim = (test1 ≤ rNormtol)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
 
-    user_requested_exit = callback(solver, iter)
+    user_requested_exit = callback(solver, iter) :: Bool
 
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | solved_opt | zero_resid_mach | zero_resid_lim | fwd_err | on_boundary
