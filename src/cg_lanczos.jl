@@ -58,7 +58,10 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
 
   # Set up workspace.
   allocate_if(!MisI, solver, :v, S, n)
-  x, Mv, Mv_prev, p, Mv_next = solver.x, solver.Mv, solver.Mv_prev, solver.p, solver.Mv_next
+  x, Mv, Mv_prev = solver.x, solver.Mv, solver.Mv_prev
+  p, Mv_next, stats = solver.p, solver.Mv_next, solver.stats
+  rNorms = stats.residuals
+  reset!(stats)
   v = MisI ? Mv : solver.v
 
   # Initial state.
@@ -66,7 +69,17 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   Mv .= b                   # Mv₁ ← b
   MisI || mul!(v, M, Mv)    # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv)) # β₁ = v₁ᵀ M v₁
-  β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
+  σ = β
+  rNorm = σ
+  history && push!(rNorms, rNorm)
+  if β == 0
+    stats.solved = true
+    stats.Anorm = zero(T)
+    stats.Acond = zero(T)
+    stats.flagged = false
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
   p .= v
 
   # Initialize Lanczos process.
@@ -79,15 +92,12 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   itmax == 0 && (itmax = 2 * n)
 
   # Initialize some constants used in recursions below.
-  σ = β
   ω = zero(T)
   γ = one(T)
   Anorm2 = zero(T)
   β_prev = zero(T)
 
   # Define stopping tolerance.
-  rNorm = σ
-  rNorms = history ? [rNorm] : T[]
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
@@ -139,7 +149,12 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (check_curvature & indefinite) ? "negative curvature" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, rNorms, indefinite, sqrt(Anorm2), zero(T), status)  # TODO: Estimate Acond.
+
+  # Update stats. TODO: Estimate Acond.
+  stats.solved = solved
+  stats.Anorm = sqrt(Anorm2)
+  stats.flagged = indefinite
+  stats.status = status
   return (x, stats)
 end
 

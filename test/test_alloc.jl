@@ -105,7 +105,7 @@ function test_alloc()
   solver = CgLanczosSolver(A, b)
   cg_lanczos!(solver, A, b)  # warmup
   inplace_cg_lanczos_bytes = @allocated cg_lanczos!(solver, A, b)
-  @test (VERSION < v"1.5") || (inplace_cg_lanczos_bytes ≤ 144)
+  @test (VERSION < v"1.5") || (inplace_cg_lanczos_bytes == 0)
 
   # CG_LANCZOS with shifts needs:
   # - 3 n-vectors: Mv, Mv_prev, Mv_next
