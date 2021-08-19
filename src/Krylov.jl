@@ -15,6 +15,7 @@ include("minres.jl")
 include("minres_qlp.jl")
 
 include("dqgmres.jl")
+include("gmres.jl")
 include("diom.jl")
 
 include("usymlq.jl")
