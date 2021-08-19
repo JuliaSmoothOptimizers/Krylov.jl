@@ -14,9 +14,10 @@ include("cg_lanczos.jl")
 include("minres.jl")
 include("minres_qlp.jl")
 
+include("diom.jl")
+include("fom.jl")
 include("dqgmres.jl")
 include("gmres.jl")
-include("diom.jl")
 
 include("usymlq.jl")
 include("usymqr.jl")
