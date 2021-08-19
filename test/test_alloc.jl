@@ -126,6 +126,21 @@ function test_alloc()
   inplace_dqgmres_bytes = @allocated dqgmres!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_dqgmres_bytes == 0)
 
+  # GMRES needs:
+  # - 1 n-vector: x
+  # - 1 n*(iter)-matrix: V
+  # - 2 iter-vectors: c, s
+  # - 1 (iter+1)-vector: z
+  # - 1 (iter*iter) upper-triangular matrix: H
+  storage_gmres(iter, n) = (n) + (n * iter) + (2 * iter) + (iter + 1) + (iter * (iter+1) / 2)
+  storage_gmres_bytes(iter, n) = 8 * storage_gmres(iter, n)
+
+  (x, stats) = gmres(A, b)  # warmup
+  iter = length(stats.residuals) - 1
+  expected_gmres_bytes = storage_gmres_bytes(iter, n)
+  actual_gmres_bytes = @allocated gmres(A, b)
+  @test expected_gmres_bytes ≤ actual_gmres_bytes ≤ 1.02 * expected_gmres_bytes
+
   # CR needs:
   # 5 n-vectors: x, r, p, q, Ar
   storage_cr(n) = 5 * n
