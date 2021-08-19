@@ -6,7 +6,7 @@ function test_alloc()
   Ao  = A[:,1:m]  # Dimension n x m
   b   = Ao * ones(m) # Dimension n
   c   = Au * ones(n) # Dimension m
-  mem = 10
+  mem = 120
 
   shifts  = [1.0; 2.0; 3.0; 4.0; 5.0]
   nshifts = 5
@@ -127,19 +127,22 @@ function test_alloc()
   @test (VERSION < v"1.5") || (inplace_dqgmres_bytes == 0)
 
   # GMRES needs:
-  # - 1 n-vector: x
-  # - 1 n*(iter)-matrix: V
-  # - 2 iter-vectors: c, s
-  # - 1 (iter+1)-vector: z
-  # - 1 (iter*iter) upper-triangular matrix: H
-  storage_gmres(iter, n) = (n) + (n * iter) + (2 * iter) + (iter + 1) + (iter * (iter+1) / 2)
+  # - 2 n-vectors: x, w
+  # - 1 n*(mem)-matrix: V
+  # - 3 mem-vectors: c, s, z
+  # - 1 (mem*(mem+1)/2)-vector: R
+  storage_gmres(mem, n) = (2 * n) + (n * mem) + (3 * mem) + (mem * (mem+1) / 2)
   storage_gmres_bytes(iter, n) = 8 * storage_gmres(iter, n)
 
-  (x, stats) = gmres(A, b)  # warmup
-  iter = length(stats.residuals) - 1
-  expected_gmres_bytes = storage_gmres_bytes(iter, n)
-  actual_gmres_bytes = @allocated gmres(A, b)
+  expected_gmres_bytes = storage_gmres_bytes(mem, n)
+  gmres(A, b, memory=mem)  # warmup
+  actual_gmres_bytes = @allocated gmres(A, b, memory=mem)
   @test expected_gmres_bytes ≤ actual_gmres_bytes ≤ 1.02 * expected_gmres_bytes
+
+  solver = GmresSolver(A, b, mem)
+  gmres!(solver, A, b)  # warmup
+  inplace_gmres_bytes = @allocated gmres!(solver, A, b)
+  @test (VERSION < v"1.5") || (inplace_gmres_bytes == 0)
 
   # CR needs:
   # 5 n-vectors: x, r, p, q, Ar

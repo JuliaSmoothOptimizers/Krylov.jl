@@ -43,6 +43,7 @@ LsmrSolver
 LnlqSolver
 CraigSolver
 CraigmrSolver
+GmresSolver
 ```
 
 ## Utilities

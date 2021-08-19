@@ -17,6 +17,7 @@
   cg_lanczos_shift_solver = CgLanczosShiftSolver(n, n, nshifts, Vector{Float64})
   diom_solver = DiomSolver(n, n, mem, Vector{Float64})
   dqgmres_solver = DqgmresSolver(n, n, mem, Vector{Float64})
+  gmres_solver = GmresSolver(n, n, mem, Vector{Float64})
   cr_solver = CrSolver(n, n, Vector{Float64})
   crmr_solver = CrmrSolver(m, n, Vector{Float64})
   cgs_solver = CgsSolver(n, n, Vector{Float64})
@@ -66,6 +67,9 @@
     @test stats.solved
 
     x, stats = solve!(dqgmres_solver, A, b)
+    @test stats.solved
+
+    x, stats = solve!(gmres_solver, A, b)
     @test stats.solved
 
     x, stats = solve!(cr_solver, A, b)
