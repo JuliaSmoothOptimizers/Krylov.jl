@@ -2,7 +2,8 @@ export KrylovSolver, MinresSolver, CgSolver, CrSolver, SymmlqSolver, CgLanczosSo
 CgLanczosShiftSolver, MinresQlpSolver, DqgmresSolver, DiomSolver, UsymlqSolver,
 UsymqrSolver, TricgSolver, TrimrSolver, TrilqrSolver, CgsSolver, BicgstabSolver,
 BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CrlsSolver, CgneSolver, CrmrSolver,
-LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver, GmresSolver
+LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
+GmresSolver, FomSolver
 
 export solve!
 
@@ -1362,6 +1363,51 @@ mutable struct GmresSolver{T,S} <: KrylovSolver{T,S}
 end
 
 """
+Type for storing the vectors required by the in-place version of FOM.
+
+The outer constructors
+
+    solver = FomSolver(n, m, memory, S)
+    solver = FomSolver(A, b, memory)
+
+may be used in order to create these vectors.
+"""
+mutable struct FomSolver{T,S} <: KrylovSolver{T,S}
+  x     :: S
+  w     :: S
+  p     :: S
+  q     :: S
+  V     :: Vector{S}
+  l     :: Vector{T}
+  z     :: Vector{T}
+  U     :: Vector{T}
+  perm  :: BitVector
+  stats :: SimpleStats{T}
+
+  function FomSolver(n, m, memory, S)
+    T = eltype(S)
+    x = S(undef, n)
+    w = S(undef, n)
+    p = S(undef, 0)
+    q = S(undef, 0)
+    V = [S(undef, n) for i = 1 : memory]
+    l = Vector{T}(undef, memory)
+    z = Vector{T}(undef, memory)
+    U = Vector{T}(undef, div(memory * (memory+1), 2))
+    perm = BitVector(undef, memory)
+    stats = SimpleStats(false, false, T[], T[], "unknown")
+    solver = new{T,S}(x, w, p, q, V, l, z, U, perm, stats)
+    return solver
+  end
+
+  function FomSolver(A, b, memory)
+    n, m = size(A)
+    S = ktypeof(b)
+    FomSolver(n, m, memory, S)
+  end
+end
+
+"""
     solve!(solver, args...; kwargs...)
 
 Use the in-place Krylov method associated to `solver`.
@@ -1399,6 +1445,7 @@ for (KS, fun) in [
   (MinresQlpSolver     , :minres_qlp!)
   (QmrSolver           , :qmr!       )
   (GmresSolver         , :gmres!     )
+  (FomSolver           , :fom!       )
 ]
   @eval begin
     @inline solve!(solver :: $KS, args...; kwargs...) = $(fun)(solver, args...; kwargs...)

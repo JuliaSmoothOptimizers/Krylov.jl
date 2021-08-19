@@ -61,7 +61,7 @@ function test_alloc()
   # - 2 (n*mem)-matrices: P, V
   # - 1 mem-vector: L
   # - 1 (mem+2)-vector: H
-  # - 1 mem-bitArray: p
+  # - 1 mem-bitVector: p
   storage_diom(mem, n) = (3 * n) + (2 * n * mem) + (mem) + (mem + 2) + (mem / 64)
   storage_diom_bytes(mem, n) = 8 * storage_diom(mem, n)
 
@@ -76,19 +76,23 @@ function test_alloc()
   @test (VERSION < v"1.5") || (inplace_diom_bytes == 0)
 
   # FOM needs:
-  # - 1 n-vector: x
-  # - 1 (n*iter)-matrix: V
-  # - 2 iter-vectors: l, z
-  # - 1 (iter*iter) upper-triangular matrix: H
-  # - 1 iter-bitArray: p
-  storage_fom(iter, n) = (n) + (n * iter) + (2 * iter) + (iter * (iter+1) / 2) + (iter / 64)
-  storage_fom_bytes(iter, n) = 8 * storage_fom(iter, n)
+  # - 2 n-vectors: x, w
+  # - 1 (n*mem)-matrix: V
+  # - 2 mem-vectors: l, z
+  # - 1 (mem*(mem+1)/2)-vector: U
+  # - 1 mem-bitVector: perm
+  storage_fom(mem, n) = (2 * n) + (n * mem) + (2 * mem) + (mem * (mem+1) / 2) + (mem / 64)
+  storage_fom_bytes(mem, n) = 8 * storage_fom(mem, n)
 
-  (x, stats) = fom(A, b)  # warmup
-  iter = length(stats.residuals) - 1
-  expected_fom_bytes = storage_fom_bytes(iter, n)
-  actual_fom_bytes = @allocated fom(A, b)
-  @test actual_fom_bytes ≤ 1.02 * expected_fom_bytes
+  expected_fom_bytes = storage_fom_bytes(mem, n)
+  fom(A, b, memory=mem)  # warmup
+  actual_fom_bytes = @allocated fom(A, b, memory=mem)
+  @test expected_fom_bytes ≤ actual_fom_bytes ≤ 1.02 * expected_fom_bytes
+
+  solver = FomSolver(A, b, mem)
+  fom!(solver, A, b)  # warmup
+  inplace_fom_bytes = @allocated fom!(solver, A, b)
+  @test (VERSION < v"1.5") || (inplace_fom_bytes == 0)
 
   # CG_LANCZOS needs:
   # 5 n-vectors: x, Mv, Mv_prev, p, Mv_next
@@ -147,7 +151,7 @@ function test_alloc()
   # - 3 mem-vectors: c, s, z
   # - 1 (mem*(mem+1)/2)-vector: R
   storage_gmres(mem, n) = (2 * n) + (n * mem) + (3 * mem) + (mem * (mem+1) / 2)
-  storage_gmres_bytes(iter, n) = 8 * storage_gmres(iter, n)
+  storage_gmres_bytes(mem, n) = 8 * storage_gmres(mem, n)
 
   expected_gmres_bytes = storage_gmres_bytes(mem, n)
   gmres(A, b, memory=mem)  # warmup

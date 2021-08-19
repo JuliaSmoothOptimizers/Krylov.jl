@@ -10,56 +10,93 @@
 
 export fom
 
-"""Solve the consistent linear system Ax = b using FOM method.
+"""
+    (x, stats) = fom(A, b::AbstractVector{T};
+                     M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
+                     reorthogonalization::Bool=false, itmax::Int=0,
+                     pivoting::Bool=false, memory::Int=20,
+                     verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
-FOM algorithm is based on the Arnoldi orthogonalization process.
+Solve the linear system Ax = b using FOM method.
 
-When x₀ ≠ 0 (restarted version), FOM resolves A * Δx = r₀ with r₀ = b - Ax₀ and returns x = x₀ + Δx.
+FOM algorithm is based on the Arnoldi process and a Galerkin condition.
 
 This implementation allows a left preconditioner M and a right preconditioner N.
 - Left  preconditioning : M⁻¹Ax = M⁻¹b
 - Right preconditioning : AN⁻¹u = b with x = N⁻¹u
 - Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
+
+#### Reference
+
+* Y. Saad, *Krylov subspace methods for solving unsymmetric linear systems*, Mathematics of computation, Vol. 37(155), pp. 105--126, 1981.
 """
-function fom(A :: AbstractLinearOperator, b :: AbstractVector{T};
-             x0 :: AbstractVector{T}=zeros(T, size(A,1)),
-             M :: AbstractLinearOperator=opEye(),
-             N :: AbstractLinearOperator=opEye(),
-             atol :: T=√eps(T), rtol :: T=√eps(T),
-             pivoting :: Bool=false, reorthogonalization :: Bool=false,
-             itmax :: Int=0, verbose :: Bool=false) where T <: AbstractFloat
+function fom(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
+  solver = FomSolver(A, b, memory)
+  fom!(solver, A, b; kwargs...)
+end
+
+function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
+              M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
+              pivoting :: Bool=false, reorthogonalization :: Bool=false,
+              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  verbose && @printf("FOM: system of size %d\n", n)
+  (verbose > 0) && @printf("FOM: system of size %d\n", n)
+
+  # Check M == Iₙ and N == Iₙ
+  MisI = (M == I)
+  NisI = (N == I)
+
+  # Check type consistency
+  eltype(A) == T || error("eltype(A) ≠ $T")
+  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
+  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
+
+  # Set up workspace.
+  allocate_if(!MisI, solver, :q, S, n)
+  allocate_if(!NisI, solver, :p, S, n)
+  x, w, V, z = solver.x, solver.w, solver.V, solver.z
+  l, U, perm, stats = solver.l, solver.U, solver.perm, solver.stats
+  rNorms = stats.residuals
+  reset!(stats)
+  q  = MisI ? w : solver.q
+  r₀ = MisI ? b : solver.q
 
   # Initial solution x₀ and residual r₀.
-  x = x0 # x₀
-  r₀ = A * x0
-  @. r₀ = -r₀ + b
-  r₀ = M * r₀ # r₀ = M⁻¹(b - Ax₀)
-
-  # Compute β
-  rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
-  rNorm == 0 && return x, SimpleStats(true, false, [rNorm], T[], "x = 0 is a zero-residual solution")
+  x .= zero(T)            # x₀
+  MisI || mul!(r₀, M, b)  # M⁻¹(b - Ax₀)
+  β = @knrm2(n, r₀)       # β = ‖r₀‖₂
+  rNorm = β
+  history && push!(rNorms, β)
+  if β == 0
+    stats.solved, stats.inconsistent = true, false
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  rNorms = [rNorm;]
   ε = atol + rtol * rNorm
-  verbose && @printf("%5d  %7.1e\n", iter, rNorm)
+  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
+  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
-  # Set up workspace.
-  V  = Vector{T}[zeros(T, n)] # Preconditioned Krylov vectors, orthogonal basis for {r₀, M⁻¹AN⁻¹r₀, (M⁻¹AN⁻¹)²r₀, ..., (M⁻¹AN⁻¹)ᵐ⁻¹r₀}.
-  l  = T[]         # Coefficients used for the factorization LₖUₖ = Hₖ.
-  H  = Vector{T}[] # Hessenberg matrix Hₖ.
-  z  = T[]         # Right-hand of the least squares problem Hₖyₖ = βe₁ ⟺ Uₖyₖ = zₖ with Lₖzₖ = βe₁.
-  p = BitArray(undef, 0) # Row permutations.
+  # Initialize workspace.
+  nr = 0           # Number of coefficients stored in Uₖ.
+  mem = length(l)  # Memory
+  for i = 1 : mem
+    V[i] .= zero(T)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, r₀).
+  end
+  l .= zero(T)   # Lower unit triangular matrix Lₖ.
+  U .= zero(T)   # Upper triangular matrix Uₖ.
+  z .= zero(T)   # Right-hand of the subproblem Hₖyₖ = βe₁ ⟺ Uₖyₖ = zₖ with Lₖzₖ = βe₁.
+  perm .= false  # Row permutations.
 
   # Initial ζ₁ and V₁.
-  push!(z, rNorm)
+  z[1] = β
   @. V[1] = r₀ / rNorm
 
   # Stopping criterion
@@ -72,44 +109,49 @@ function fom(A :: AbstractLinearOperator, b :: AbstractVector{T};
     # Update iteration index
     iter = iter + 1
 
-    # Update workspace
-    push!(H, zeros(T, iter))
-    push!(l, zero(T))
-    push!(p, false)
-
-    # Arnoldi procedure
-    NV = N * V[iter] # N⁻¹vₖ
-    AV = A * NV      # AN⁻¹vₖ
-    MV = M * AV      # M⁻¹AN⁻¹vₖ
-    for i = 1 : iter
-      H[iter][i] = @kdot(n, V[i], MV)
-      @kaxpy!(n, -H[iter][i], V[i], MV)
+    # Update workspace if more storage is required
+    if iter > mem
+      for i = 1 : iter
+        push!(U, zero(T))
+      end
+      push!(l, zero(T))
+      push!(z, zero(T))
+      push!(perm, false)
     end
 
-    # Reorthogonalization
+    # Continue the Arnoldi process.
+    p = NisI ? V[iter] : solver.p
+    NisI || mul!(p, N, V[iter])  # p ← N⁻¹vₖ
+    mul!(w, A, p)                # w ← AN⁻¹vₖ
+    MisI || mul!(q, M, w)        # q ← M⁻¹AN⁻¹vₖ
+    for i = 1 : iter
+      U[nr+i] = @kdot(n, V[i], q)    # hᵢₖ = qᵀvᵢ
+      @kaxpy!(n, -U[nr+i], V[i], q)  # q ← q - hᵢₖvᵢ
+    end
+
+    # Reorthogonalization of the Krylov basis.
     if reorthogonalization
       for i = 1 : iter
-        Htmp =  @kdot(n, V[i], MV)
-        H[iter][i] += Htmp
-        @kaxpy!(n, -Htmp, V[i], MV)
+        Htmp = @kdot(n, V[i], q)
+        U[nr+i] += Htmp
+        @kaxpy!(n, -Htmp, V[i], q)
       end
     end
 
     # Compute hₖ₊₁.ₖ
-    Hbis = @knrm2(n, MV) # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+    Hbis = @knrm2(n, q)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
 
-    # Update the LU factorization of H.
+    # Update the LU factorization of Hₖ.
     if iter ≥ 2
-      push!(z, zero(T))
       for i = 2 : iter
-        if p[i-1]
+        if perm[i-1]
           # The rows i-1 and i are permuted.
-          H[iter][i-1], H[iter][i] = H[iter][i], H[iter][i-1]
+          U[nr+i-1], U[nr+i] = U[nr+i], U[nr+i-1]
         end
         # uᵢ.ₖ ← hᵢ.ₖ - lᵢ.ᵢ₋₁ * uᵢ₋₁.ₖ
-        H[iter][i] = H[iter][i] - l[i-1] * H[iter][i-1]
+        U[nr+i] = U[nr+i] - l[i-1] * U[nr+i-1]
       end
-      if p[iter-1]
+      if perm[iter-1]
         # ζₖ = ζₖ₋₁
         z[iter] = z[iter-1]
         # ζₖ₋₁ = 0
@@ -121,54 +163,68 @@ function fom(A :: AbstractLinearOperator, b :: AbstractVector{T};
     end
 
     # Determine if interchange between hₖ₊₁.ₖ and uₖ.ₖ is needed and compute next pivot lₖ₊₁.ₖ.
-    if pivoting && abs(H[iter][iter]) < Hbis
-      p[iter] = true
+    if pivoting && abs(U[nr+iter]) < Hbis
+      perm[iter] = true
       # lₖ₊₁.ₖ = uₖ.ₖ / hₖ₊₁.ₖ
-      l[iter] = H[iter][iter] / Hbis
+      l[iter] = U[nr+iter] / Hbis
       # uₖ.ₖ ← hₖ₊₁.ₖ
-      H[iter][iter] = Hbis
+      U[nr+iter] = Hbis
       # ‖ M⁻¹(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ζₖ / hₖ₊₁.ₖ| = |ζₖ| with pivoting
       rNorm = abs(z[iter])
     else
-      p[iter] = false
+      perm[iter] = false
       # lₖ₊₁.ₖ = hₖ₊₁.ₖ / uₖ.ₖ
-      l[iter] = Hbis / H[iter][iter]
+      l[iter] = Hbis / U[nr+iter]
       # ‖ M⁻¹(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ζₖ / uₖ.ₖ| without pivoting
-      rNorm = Hbis * abs(z[iter] / H[iter][iter])
+      rNorm = Hbis * abs(z[iter] / U[nr+iter])
     end
 
     # Update residual norm estimate.
-    push!(rNorms, rNorm)
+    history && push!(rNorms, rNorm)
+
+    # Update the number of coefficients in Uₖ
+    nr = nr + iter
 
     # Update stopping criterion.
-    solved = rNorm ≤ ε || Hbis == zero(T) # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
+    solved = rNorm ≤ ε
     tired = iter ≥ itmax
-    verbose && @printf("%5d  %7.1e\n", iter, rNorm)
+    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
     # Compute vₖ₊₁.
     if !(solved || tired)
-       push!(V, zeros(T, n))
-       @. V[iter+1] = MV / Hbis # Normalization of vₖ₊₁
+      if iter ≥ mem
+        push!(V, S(undef, n))
+      end
+      @. V[iter+1] = q / Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
     end
-
   end
-  verbose && @printf("\n")
+  (verbose > 0) && @printf("\n")
 
-  # Compute yₖ by solving Uₖyₖ = zₖ with backward substitution
-  # We will overwrite zₖ with yₖ
-  y = z
-  y[iter] = z[iter] / H[iter][iter]
-  for i = iter-1 : -1 : 1
-    y[i] = (z[i] - sum(H[k][i] * y[k] for k = i+1 : iter)) / H[i][i]
+  # Compute yₖ by solving Uₖyₖ = zₖ with backward substitution.
+  y = z  # yᵢ = zᵢ
+  for i = iter : -1 : 1
+    pos = nr + i - iter
+    for j = iter : -1 : i+1
+      y[i] = y[i] - U[pos] * y[j]  # yᵢ ← yᵢ - uᵢⱼyⱼ
+      pos = pos - j + 1
+    end
+    y[i] = y[i] / U[pos]  # yᵢ ← yᵢ / rᵢᵢ
   end
 
-  # Form xₖ = x₀ + Vₖyₖ
+  # Form xₖ = N⁻¹Vₖyₖ
   for i = 1 : iter
-    Dᵢ = N * V[i] # Needed with right preconditioning
-    @kaxpy!(n, y[i], Dᵢ, x)
+    @kaxpy!(n, y[i], V[i], x)
+  end
+  if !NisI
+    @kswap(x, solver.p)
+    mul!(x, N, solver.p)
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = SimpleStats(solved, false, rNorms, T[], status)
+
+  # Update stats
+  stats.solved = solved
+  stats.inconsistent = false
+  stats.status = status
   return (x, stats)
 end

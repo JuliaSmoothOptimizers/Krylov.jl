@@ -6,6 +6,7 @@ usymqr
 cgs
 bicgstab
 diom
+fom
 dqgmres
 gmres
 ```
