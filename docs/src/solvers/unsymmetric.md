@@ -1,10 +1,11 @@
 ```@docs
-cgs
-bicgstab
 bilq
 qmr
-diom
-dqgmres
 usymlq
 usymqr
+cgs
+bicgstab
+diom
+dqgmres
+gmres
 ```

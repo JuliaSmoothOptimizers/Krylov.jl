@@ -70,7 +70,7 @@
   A, b, M = square_preconditioned()
   (x, stats) = diom(A, b, M=M)
   r = b - A * x
-  resid = norm(r) / norm(b)
+  resid = norm(M * r) / norm(M * b)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 
@@ -86,7 +86,7 @@
   A, b, M, N = two_preconditioners()
   (x, stats) = diom(A, b, M=M, N=N)
   r = b - A * x
-  resid = norm(r) / norm(b)
+  resid = norm(M * r) / norm(M * b)
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 end
