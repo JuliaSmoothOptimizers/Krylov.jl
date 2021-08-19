@@ -8,7 +8,7 @@
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, December 2018.
 
-export fom
+export fom, fom!
 
 """
     (x, stats) = fom(A, b::AbstractVector{T};
