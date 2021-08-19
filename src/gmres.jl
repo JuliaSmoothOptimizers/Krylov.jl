@@ -196,9 +196,11 @@ function gmres!(solver :: GmresSolver{T,S}, A, b :: AbstractVector{T};
 
   # Form xₖ = N⁻¹Vₖyₖ
   for i = 1 : iter
-    d = NisI ? V[i] : solver.p
-    NisI || mul!(d, N, V[i])
-    @kaxpy!(n, y[i], d, x)
+    @kaxpy!(n, y[i], V[i], x)
+  end
+  if !NisI
+    @kswap(x, solver.p)
+    mul!(x, N, solver.p)
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
