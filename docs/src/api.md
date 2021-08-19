@@ -21,8 +21,10 @@ SymmlqSolver
 CgLanczosSolver
 CgLanczosShiftSolver
 MinresQlpSolver
-DqgmresSolver
 DiomSolver
+FomSolver
+DqgmresSolver
+GmresSolver
 UsymlqSolver
 UsymqrSolver
 TricgSolver
@@ -43,7 +45,6 @@ LsmrSolver
 LnlqSolver
 CraigSolver
 CraigmrSolver
-GmresSolver
 ```
 
 ## Utilities
