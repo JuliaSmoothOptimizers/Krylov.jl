@@ -75,6 +75,21 @@ function test_alloc()
   inplace_diom_bytes = @allocated diom!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_diom_bytes == 0)
 
+  # FOM needs:
+  # - 1 n-vector: x
+  # - 1 (n*iter)-matrix: V
+  # - 2 iter-vectors: l, z
+  # - 1 (iter*iter) upper-triangular matrix: H
+  # - 1 iter-bitArray: p
+  storage_fom(iter, n) = (n) + (n * iter) + (2 * iter) + (iter * (iter+1) / 2) + (iter / 64)
+  storage_fom_bytes(iter, n) = 8 * storage_fom(iter, n)
+
+  (x, stats) = fom(A, b)  # warmup
+  iter = length(stats.residuals) - 1
+  expected_fom_bytes = storage_fom_bytes(iter, n)
+  actual_fom_bytes = @allocated fom(A, b)
+  @test actual_fom_bytes ≤ 1.02 * expected_fom_bytes
+
   # CG_LANCZOS needs:
   # 5 n-vectors: x, Mv, Mv_prev, p, Mv_next
   storage_cg_lanczos(n) = 5 * n
