@@ -87,7 +87,7 @@ function gmres!(solver :: GmresSolver{T,S}, A, b :: AbstractVector{T};
   nr = 0           # Number of coefficients stored in Rₖ.
   mem = length(c)  # Memory
   for i = 1 : mem
-    V[i] .= zero(T)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, r₀).
+    V[i] .= zero(T)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
   end
   s .= zero(T)  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
   c .= zero(T)  # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.

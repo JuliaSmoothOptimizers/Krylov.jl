@@ -362,7 +362,6 @@ may be used in order to create these vectors.
 """
 mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
   x     :: S
-  x_old :: S
   t     :: S
   z     :: S
   w     :: S
@@ -370,13 +369,11 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
   V     :: Vector{S}
   L     :: Vector{T}
   H     :: Vector{T}
-  p     :: BitVector
   stats :: SimpleStats{T}
 
   function DiomSolver(n, m, memory, S)
     T     = eltype(S)
     x     = S(undef, n)
-    x_old = S(undef, n)
     t     = S(undef, n)
     z     = S(undef, 0)
     w     = S(undef, 0)
@@ -384,9 +381,8 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
     V     = [S(undef, n) for i = 1 : memory]
     L     = Vector{T}(undef, memory)
     H     = Vector{T}(undef, memory+2)
-    p     = BitVector(undef, memory)
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(x, x_old, t, z, w, P, V, L, H, p, stats)
+    solver = new{T,S}(x, t, z, w, P, V, L, H, stats)
     return solver
   end
 
@@ -1381,7 +1377,6 @@ mutable struct FomSolver{T,S} <: KrylovSolver{T,S}
   l     :: Vector{T}
   z     :: Vector{T}
   U     :: Vector{T}
-  perm  :: BitVector
   stats :: SimpleStats{T}
 
   function FomSolver(n, m, memory, S)
@@ -1394,9 +1389,8 @@ mutable struct FomSolver{T,S} <: KrylovSolver{T,S}
     l = Vector{T}(undef, memory)
     z = Vector{T}(undef, memory)
     U = Vector{T}(undef, div(memory * (memory+1), 2))
-    perm = BitVector(undef, memory)
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(x, w, p, q, V, l, z, U, perm, stats)
+    solver = new{T,S}(x, w, p, q, V, l, z, U, stats)
     return solver
   end
 

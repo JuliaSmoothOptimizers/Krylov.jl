@@ -85,8 +85,8 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace.
   mem = length(c)  # Memory.
   for i = 1 : mem
-    V[i] .= zero(T)  # Preconditioned Krylov vectors, orthogonal basis for {M⁻¹b, M⁻¹AN⁻¹b, (M⁻¹AN⁻¹)²b, ..., (M⁻¹AN⁻¹)ᵐ⁻¹b}.
-    P[i] .= zero(T)  # Directions for x : Pₘ = Vₘ(Rₘ)⁻¹.
+    V[i] .= zero(T)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
+    P[i] .= zero(T)  # Directions for x : Pₘ = N⁻¹Vₘ(Rₘ)⁻¹.
   end
   s .= zero(T)  # Last mem Givens sines used for the factorization QₘRₘ = Hₘ.
   c .= zero(T)  # Last mem Givens cosines used for the factorization QₘRₘ = Hₘ.
@@ -123,7 +123,7 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
       diag = iter - i + 2
-      H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₘ = < M⁻¹AN⁻¹vₘ , vᵢ >
+      H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₘ = ⟨M⁻¹AN⁻¹vₘ , vᵢ⟩
       @kaxpy!(n, -H[diag], V[ipos], w) # w ← w - hᵢ.ₘ * vᵢ
     end
     # Compute hₘ₊₁.ₘ and vₘ₊₁.
@@ -154,7 +154,7 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
     γₘ₊₁ = s[pos] * γₘ
     γₘ   = c[pos] * γₘ
 
-    # Compute the direction pₘ, the last column of Pₘ = Vₘ(Rₘ)⁻¹.
+    # Compute the direction pₘ, the last column of Pₘ = N⁻¹Vₘ(Rₘ)⁻¹.
     for i = max(1,iter-mem) : iter-1
       ipos = mod(i-1, mem) + 1 # Position corresponding to pᵢ in the circular stack P.
       diag = iter - i + 2
