@@ -14,8 +14,7 @@ export fom, fom!
     (x, stats) = fom(A, b::AbstractVector{T};
                      M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                      reorthogonalization::Bool=false, itmax::Int=0,
-                     pivoting::Bool=false, memory::Int=20,
-                     verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                     memory::Int=20, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the linear system Ax = b using FOM method.
 
@@ -37,8 +36,8 @@ end
 
 function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-              pivoting :: Bool=false, reorthogonalization :: Bool=false,
-              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+              reorthogonalization :: Bool=false, itmax :: Int=0,
+              verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -59,7 +58,7 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
   allocate_if(!MisI, solver, :q, S, n)
   allocate_if(!NisI, solver, :p, S, n)
   x, w, V, z = solver.x, solver.w, solver.V, solver.z
-  l, U, perm, stats = solver.l, solver.U, solver.perm, solver.stats
+  l, U, stats = solver.l, solver.U, solver.stats
   rNorms = stats.residuals
   reset!(stats)
   q  = MisI ? w : solver.q
@@ -88,12 +87,11 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
   nr = 0           # Number of coefficients stored in Uₖ.
   mem = length(l)  # Memory
   for i = 1 : mem
-    V[i] .= zero(T)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, r₀).
+    V[i] .= zero(T)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
   end
-  l .= zero(T)   # Lower unit triangular matrix Lₖ.
-  U .= zero(T)   # Upper triangular matrix Uₖ.
-  z .= zero(T)   # Right-hand of the subproblem Hₖyₖ = βe₁ ⟺ Uₖyₖ = zₖ with Lₖzₖ = βe₁.
-  perm .= false  # Row permutations.
+  l .= zero(T)  # Lower unit triangular matrix Lₖ.
+  U .= zero(T)  # Upper triangular matrix Uₖ.
+  z .= zero(T)  # Solution of Lₖzₖ = βe₁.
 
   # Initial ζ₁ and V₁.
   z[1] = β
@@ -116,7 +114,6 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
       end
       push!(l, zero(T))
       push!(z, zero(T))
-      push!(perm, false)
     end
 
     # Continue the Arnoldi process.
@@ -144,42 +141,18 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
     # Update the LU factorization of Hₖ.
     if iter ≥ 2
       for i = 2 : iter
-        if perm[i-1]
-          # The rows i-1 and i are permuted.
-          U[nr+i-1], U[nr+i] = U[nr+i], U[nr+i-1]
-        end
         # uᵢ.ₖ ← hᵢ.ₖ - lᵢ.ᵢ₋₁ * uᵢ₋₁.ₖ
         U[nr+i] = U[nr+i] - l[i-1] * U[nr+i-1]
       end
-      if perm[iter-1]
-        # ζₖ = ζₖ₋₁
-        z[iter] = z[iter-1]
-        # ζₖ₋₁ = 0
-        z[iter-1] = zero(T)
-      else
-        # ζₖ = -lₖ.ₖ₋₁ * ζₖ₋₁
-        z[iter] = - l[iter-1] * z[iter-1]
-      end
+      # ζₖ = -lₖ.ₖ₋₁ * ζₖ₋₁
+      z[iter] = - l[iter-1] * z[iter-1]
     end
-
-    # Determine if interchange between hₖ₊₁.ₖ and uₖ.ₖ is needed and compute next pivot lₖ₊₁.ₖ.
-    if pivoting && abs(U[nr+iter]) < Hbis
-      perm[iter] = true
-      # lₖ₊₁.ₖ = uₖ.ₖ / hₖ₊₁.ₖ
-      l[iter] = U[nr+iter] / Hbis
-      # uₖ.ₖ ← hₖ₊₁.ₖ
-      U[nr+iter] = Hbis
-      # ‖ M⁻¹(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ζₖ / hₖ₊₁.ₖ| = |ζₖ| with pivoting
-      rNorm = abs(z[iter])
-    else
-      perm[iter] = false
-      # lₖ₊₁.ₖ = hₖ₊₁.ₖ / uₖ.ₖ
-      l[iter] = Hbis / U[nr+iter]
-      # ‖ M⁻¹(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ζₖ / uₖ.ₖ| without pivoting
-      rNorm = Hbis * abs(z[iter] / U[nr+iter])
-    end
+    # lₖ₊₁.ₖ = hₖ₊₁.ₖ / uₖ.ₖ
+    l[iter] = Hbis / U[nr+iter]
 
     # Update residual norm estimate.
+    # ‖ M⁻¹(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ζₖ / uₖ.ₖ|
+    rNorm = Hbis * abs(z[iter] / U[nr+iter])
     history && push!(rNorms, rNorm)
 
     # Update the number of coefficients in Uₖ
@@ -200,6 +173,7 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
   end
   (verbose > 0) && @printf("\n")
 
+  # Hₖyₖ = βe₁ ⟺ LₖUₖyₖ = βe₁ ⟺ Uₖyₖ = zₖ.
   # Compute yₖ by solving Uₖyₖ = zₖ with backward substitution.
   y = z  # yᵢ = zᵢ
   for i = iter : -1 : 1

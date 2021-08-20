@@ -57,12 +57,11 @@ function test_alloc()
   @test (VERSION < v"1.5") || (inplace_minres_bytes == 0)
 
   # DIOM needs:
-  # - 3 n-vectors: x, x_old, t
+  # - 2 n-vectors: x, t
   # - 2 (n*mem)-matrices: P, V
   # - 1 mem-vector: L
   # - 1 (mem+2)-vector: H
-  # - 1 mem-bitVector: p
-  storage_diom(mem, n) = (3 * n) + (2 * n * mem) + (mem) + (mem + 2) + (mem / 64)
+  storage_diom(mem, n) = (2 * n) + (2 * n * mem) + (mem) + (mem + 2)
   storage_diom_bytes(mem, n) = 8 * storage_diom(mem, n)
 
   expected_diom_bytes = storage_diom_bytes(mem, n)
@@ -80,8 +79,7 @@ function test_alloc()
   # - 1 (n*mem)-matrix: V
   # - 2 mem-vectors: l, z
   # - 1 (mem*(mem+1)/2)-vector: U
-  # - 1 mem-bitVector: perm
-  storage_fom(mem, n) = (2 * n) + (n * mem) + (2 * mem) + (mem * (mem+1) / 2) + (mem / 64)
+  storage_fom(mem, n) = (2 * n) + (n * mem) + (2 * mem) + (mem * (mem+1) / 2)
   storage_fom_bytes(mem, n) = 8 * storage_fom(mem, n)
 
   expected_fom_bytes = storage_fom_bytes(mem, n)

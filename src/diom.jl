@@ -13,7 +13,7 @@ export diom, diom!
 """
     (x, stats) = diom(A, b::AbstractVector{T};
                       M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                      memory::Int=20, pivoting::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                      memory::Int=20, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system Ax = b using direct incomplete orthogonalization method.
 
@@ -38,7 +38,7 @@ end
 
 function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
                M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-               pivoting :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -58,8 +58,8 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
   # Set up workspace.
   allocate_if(!MisI, solver, :w, S, n)
   allocate_if(!NisI, solver, :z, S, n)
-  x, x_old, t, P, V = solver.x, solver.x_old, solver.t, solver.P, solver.V
-  L, H, p, stats = solver.L, solver.H, solver.p, solver.stats
+  x, t, P, V = solver.x, solver.t, solver.P, solver.V
+  L, H, stats = solver.L, solver.H, solver.stats
   rNorms = stats.residuals
   reset!(stats)
   w  = MisI ? t : solver.w
@@ -67,7 +67,6 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
 
   # Initial solution x₀ and residual r₀.
   x .= zero(T)  # x₀
-  x_old .= x
   MisI || mul!(r₀, M, b)  # M⁻¹(b - Ax₀)
   # Compute β.
   rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
@@ -87,15 +86,14 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
 
   mem = length(L)  # Memory
   for i = 1 : mem
-    V[i] .= zero(T)  # Preconditioned Krylov vectors, orthogonal basis for {M⁻¹b, M⁻¹AN⁻¹b, (M⁻¹AN⁻¹)²b, ..., (M⁻¹AN⁻¹)ᵐ⁻¹b}.
-    P[i] .= zero(T)  # Directions for x : Pₘ = Vₘ(Uₘ)⁻¹.
+    V[i] .= zero(T)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
+    P[i] .= zero(T)  # Directions for x : Pₘ = N⁻¹Vₘ(Uₘ)⁻¹.
   end
   H .= zero(T)  # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
   # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
   # In addition of that, the last column of Uₘ is stored in H.
-  L .= zero(T)  # Last mem Pivots of Lₘ.
-  p .= false    # Last mem permutations.
+  L .= zero(T)  # Last mem pivots of Lₘ.
 
   # Initial ξ₁ and V₁.
   ξ = rNorm
@@ -123,7 +121,7 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
       diag = iter - i + 2
-      H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₘ = < M⁻¹AN⁻¹vₘ , vᵢ >
+      H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₘ = ⟨M⁻¹AN⁻¹vₘ , vᵢ⟩
       @kaxpy!(n, -H[diag], V[ipos], w) # w ← w - hᵢ.ₘ * vᵢ
     end
     # Compute hₘ₊₁.ₘ and vₘ₊₁.
@@ -143,21 +141,17 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
         lpos = mod(i-1, mem) + 1 # Position corresponding to lᵢ.ᵢ₋₁ in the circular stack L.
         diag = iter - i + 2
         next_diag = diag + 1
-        if p[lpos]
-          # The rows i-1 and i are permuted.
-          H[diag], H[next_diag] = H[next_diag], H[diag]
-        end
         # uᵢ.ₘ ← hᵢ.ₘ - lᵢ.ᵢ₋₁ * uᵢ₋₁.ₘ
         H[diag] = H[diag] - L[lpos] * H[next_diag]
       end
       # Compute ξₘ the last component of zₘ = β(Lₘ)⁻¹e₁.
-      if !p[pos] # p[pos] ⇒ ξₘ = ξₘ₋₁
-        # ξₘ = -lₘ.ₘ₋₁ * ξₘ₋₁
-        ξ = - L[pos] * ξ
-      end
+      # ξₘ = -lₘ.ₘ₋₁ * ξₘ₋₁
+      ξ = - L[pos] * ξ
     end
+    # Compute next pivot lₘ₊₁.ₘ = hₘ₊₁.ₘ / uₘ.ₘ
+    L[next_pos] = H[1] / H[2]
 
-    # Compute the direction pₘ, the last column of Pₘ = Vₘ(Uₘ)⁻¹.
+    # Compute the direction pₘ, the last column of Pₘ = N⁻¹Vₘ(Uₘ)⁻¹.
     for i = max(1,iter-mem) : iter-1
       ipos = mod(i-1, mem) + 1 # Position corresponding to pᵢ in the circular stack P.
       diag = iter - i + 2
@@ -171,41 +165,16 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
     end
     # pₐᵤₓ ← pₐᵤₓ + N⁻¹vₘ
     @kaxpy!(n, one(T), z, P[pos])
+    # pₘ = pₐᵤₓ / uₘ.ₘ
+    @. P[pos] = P[pos] / H[2]
 
-    # Determine if interchange between hₘ₊₁.ₘ and uₘ.ₘ is needed and compute next pivot lₘ₊₁.ₘ.
-    if pivoting && abs(H[2]) < H[1]
-      p[next_pos] = true
-      # pₘ = pₐᵤₓ / hₘ₊₁.ₘ
-      @. P[pos] = P[pos] / H[1]
-      # lₘ₊₁.ₘ = uₘ.ₘ / hₘ₊₁.ₘ
-      L[next_pos] = H[2] / H[1]
-    else
-      p[next_pos] = false
-      # pₘ = pₐᵤₓ / uₘ.ₘ
-      @. P[pos] = P[pos] / H[2]
-      # lₘ₊₁.ₘ = hₘ₊₁.ₘ / uₘ.ₘ
-      L[next_pos] = H[1] / H[2]
-    end
+    # Update solution xₘ.
+    # xₘ = xₘ₋₁ + ξₘ * pₘ
+    @kaxpy!(n, ξ, P[pos], x)
 
-    # Compute solution xₘ.
-    if p[pos]
-      # xₘ = xₘ₋ₙ + ξₘ₋ₙ * pₘ
-      # x_old = xₘ₋ₙ, with m-n is the last iteration without permutation at the next step
-      @. x = x_old + ξ * P[pos]
-    else
-      # xₘ = xₘ₋₁ + ξₘ * pₘ
-      @kaxpy!(n, ξ, P[pos], x)
-    end
-
-    # Update x_old and residual norm.
-    if !p[next_pos]
-      @. x_old = x
-      # ‖ M⁻¹(b - Axₘ) ‖₂ = hₘ₊₁.ₘ * |ξₘ / uₘ.ₘ| without pivoting
-      rNorm = H[1] * abs(ξ / H[2])
-    else
-      # ‖ M⁻¹(b - Axₘ) ‖₂ = hₘ₊₁.ₘ * |ξₘ / hₘ₊₁.ₘ| = |ξₘ| with pivoting
-      rNorm = abs(ξ)
-    end
+    # Compute residual norm.
+    # ‖ M⁻¹(b - Axₘ) ‖₂ = hₘ₊₁.ₘ * |ξₘ / uₘ.ₘ|
+    rNorm = H[1] * abs(ξ / H[2])
     history && push!(rNorms, rNorm)
 
     # Update stopping criterion.
