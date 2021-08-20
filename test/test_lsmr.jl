@@ -93,4 +93,18 @@
   @test stats.status == "user-requested exit"
   @test length(stats.residuals) == 2
 
+  f1(solver, iter) = iter ≥ 1
+
+  (x, stats) = lsmr(A, b, callback = f1, history = true)
+  @test stats.status == "user-requested exit"
+  @test length(stats.residuals) == 2
+
+  (x, stats) = lsmr(A, b, callback = (args...) -> true, history = true)
+  @test stats.status == "user-requested exit"
+
+  (x, stats) = lsmr(A, b, callback = (args...) -> begin return true; end, history = true)
+  @test stats.status == "user-requested exit"
+
+  @test_throws TypeError lsmr(A, b, callback = (args...) -> "string", history = true)
+  
 end

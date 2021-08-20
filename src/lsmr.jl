@@ -26,7 +26,7 @@ export lsmr, lsmr!
 
 
 """
-(x, stats) = lsmr(A, b::AbstractVector{T};
+    (x, stats) = lsmr(A, b::AbstractVector{T};
                   M=I, N=I, sqd::Bool=false,
                   λ::T=zero(T), axtol::T=√eps(T), btol::T=√eps(T),
                   atol::T=zero(T), rtol::T=zero(T),
