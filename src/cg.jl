@@ -40,6 +40,7 @@ with `n = length(b)`.
 function cg(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CgSolver(A, b)
   cg!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
@@ -86,7 +87,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   if γ == 0 
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
 
   iter = 0
@@ -171,5 +172,5 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status
-  return (x, stats)
+  return solver
 end

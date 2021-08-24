@@ -37,6 +37,7 @@ assumed to be symmetric and positive definite.
 function cg_lanczos(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CgLanczosSolver(A, b)
   cg_lanczos!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
@@ -77,7 +78,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
     stats.Anorm = zero(T)
     stats.indefinite = false
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
   p .= v
 
@@ -154,7 +155,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   stats.Anorm = sqrt(Anorm2)
   stats.indefinite = indefinite
   stats.status = status
-  return (x, stats)
+  return solver
 end
 
 
@@ -177,6 +178,7 @@ function cg_lanczos(A, b :: AbstractVector{T}, shifts :: AbstractVector{T}; kwar
   nshifts = length(shifts)
   solver = CgLanczosShiftSolver(A, b, nshifts)
   cg_lanczos!(solver, A, b, shifts; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector{T}, shifts :: AbstractVector{T};
@@ -229,7 +231,7 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   if β == 0
     stats.solved = true
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
 
   # Initialize each p to v.
@@ -341,5 +343,5 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   # Update stats. TODO: Estimate Anorm and Acond.
   stats.solved = solved
   stats.status = status
-  return (x, stats)
+  return solver
 end

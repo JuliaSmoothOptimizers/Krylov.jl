@@ -57,6 +57,7 @@ but simpler to implement.
 function cgls(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CglsSolver(A, b)
   cgls!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
@@ -94,7 +95,7 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(rNorms, zero(T))
     history && push!(ArNorms, zero(T))
-    return (x, stats)
+    return solver
   end
   MisI || mul!(Mr, M, r)
   mul!(s, Aᵀ, Mr)
@@ -156,5 +157,5 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status
-  return (x, stats)
+  return solver
 end

@@ -57,6 +57,7 @@ assumed to be symmetric and positive definite.
 function minres(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
   solver = MinresSolver(A, b, window=window)
   minres!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
@@ -102,7 +103,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(rNorms, β₁)
     history && push!(ArNorms, zero(T))
-    return (x, stats)
+    return solver
   end
   β₁ = sqrt(β₁)
   β = β₁
@@ -244,7 +245,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
       # Aᵀb = 0 so x = 0 is a minimum least-squares solution
       stats.solved, stats.inconsistent = true, true
       stats.status = "x is a minimum least-squares solution"
-      return (x, stats)
+      return solver
     end
 
     # Stopping conditions that do not depend on user input.
@@ -281,5 +282,5 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = !zero_resid
   stats.status = status
-  return (x, stats)
+  return solver
 end

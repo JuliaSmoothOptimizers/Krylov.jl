@@ -34,6 +34,7 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 function diom(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
   solver = DiomSolver(A, b, memory)
   diom!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
@@ -74,7 +75,7 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
   if rNorm == 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
 
   iter = 0
@@ -189,5 +190,5 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status
-  return (x, stats)
+  return solver
 end

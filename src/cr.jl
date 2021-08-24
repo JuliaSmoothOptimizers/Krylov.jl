@@ -35,6 +35,7 @@ with `n = length(b)`.
 function cr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CrSolver(A, b)
   cr!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
@@ -72,7 +73,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(rNorms, ρ)
     history && push!(ArNorms, zero(T))
-    return (x, stats)
+    return solver
   end
   p .= r
   q .= Ar
@@ -111,8 +112,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
         stats.solved = solved
         stats.inconsistent = false
         stats.status = "nonpositive curvature"
-        iter == 0 && return (b, stats)
-        return (x, stats)
+        return solver
       end
     elseif pAp ≤ 0 && radius == 0
       error("Indefinite system and no trust region")
@@ -268,5 +268,5 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status
-  return (x, stats)
+  return solver
 end

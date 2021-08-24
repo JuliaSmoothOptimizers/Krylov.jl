@@ -35,6 +35,7 @@ USYMCG point, when it exists. The transfer is based on the residual norm.
 function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = TrilqrSolver(A, b)
   trilqr!(solver, A, b, c; kwargs...)
+  return (solver.x, solver.t, solver.stats)
 end
 
 function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
@@ -352,5 +353,5 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   stats.status = status
   stats.solved_primal = solved_primal
   stats.solved_dual = solved_dual
-  return (x, t, stats)
+  return solver
 end

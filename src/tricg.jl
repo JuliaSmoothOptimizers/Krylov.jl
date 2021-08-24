@@ -53,6 +53,7 @@ Information will be displayed every `verbose` iterations.
 function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = TricgSolver(A, b)
   tricg!(solver, A, b, c; kwargs...)
+  return (solver.x, solver.y, solver.stats)
 end
 
 function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
@@ -87,8 +88,8 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   # Set up workspace.
   allocate_if(!MisI, solver, :vₖ, S, m)
   allocate_if(!NisI, solver, :uₖ, S, n)
-  yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p = solver.yₖ, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.p
-  xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = solver.xₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.q
+  yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p = solver.y, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.p
+  xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = solver.x, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.q
   gy₂ₖ₋₁, gy₂ₖ, gx₂ₖ₋₁, gx₂ₖ = solver.gy₂ₖ₋₁, solver.gy₂ₖ, solver.gx₂ₖ₋₁, solver.gx₂ₖ
   vₖ = MisI ? M⁻¹vₖ : solver.vₖ
   uₖ = NisI ? N⁻¹uₖ : solver.uₖ
@@ -316,5 +317,5 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status
-  return (xₖ, yₖ, stats)
+  return solver
 end

@@ -71,6 +71,7 @@ For instance σ:=(1-1e-7)σₘᵢₙ .
 function lnlq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = LnlqSolver(A, b)
   lnlq!(solver, A, b; kwargs...)
+  return (solver.x, solver.y, solver.stats)
 end
 
 function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
@@ -123,7 +124,7 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
     stats.error_with_bnd = false
     history && push!(rNorms, bNorm)
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, y, stats)
+    return solver
   end
 
   history && push!(rNorms, bNorm)
@@ -451,5 +452,5 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved_lq || solved_cg
   stats.error_with_bnd = complex_error_bnd
   stats.status = status
-  return (x, y, stats)
+  return solver
 end

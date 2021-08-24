@@ -79,6 +79,7 @@ In this implementation, both the x and y-parts of the solution are returned.
 function craig(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CraigSolver(A, b)
   craig!(solver, A, b; kwargs...)
+  return (solver.x, solver.y, solver.stats)
 end
 
 function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
@@ -128,7 +129,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   if β₁ == 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, y, stats)
+    return solver
   end
   β₁² = β₁^2
   β = β₁
@@ -298,5 +299,5 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status
-  return (x, y, stats)
+  return solver
 end

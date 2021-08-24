@@ -60,9 +60,8 @@ Afterward CRAIGMR solves the symmetric and quasi-definite system
 which is equivalent to applying MINRES to (M + AN⁻¹Aᵀ)y = b.
 
 CRAIGMR produces monotonic residuals ‖r‖₂.
-It is formally equivalent to CRMR, though can be slightly more accurate,
-and intricate to implement. Both the x- and y-parts of the solution are
-returned.
+It is formally equivalent to CRMR, though can be slightly more accurate, and intricate to implement.
+Both the x- and y-parts of the solution are returned.
 
 #### References
 
@@ -72,6 +71,7 @@ returned.
 function craigmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CraigmrSolver(A, b)
   craigmr!(solver, A, b; kwargs...)
+  return (solver.x, solver.y, solver.stats)
 end
 
 function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
@@ -116,7 +116,7 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(rNorms, β)
     history && push!(ArNorms, zero(T))
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, y, stats)
+    return solver
   end
 
   # Initialize Golub-Kahan process.
@@ -142,7 +142,7 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(rNorms, β)
     history && push!(ArNorms, zero(T))
     stats.status = "x = 0 is a minimum least-squares solution"
-    return (x, y, stats)
+    return solver
   end
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
@@ -243,5 +243,5 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status
-  return (x, y, stats)
+  return solver
 end

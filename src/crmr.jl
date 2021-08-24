@@ -50,7 +50,7 @@ When λ > 0, this method solves the problem
 
     min ‖(x,s)‖₂  s.t. Ax + √λs = b.
 
-CGMR produces monotonic residuals ‖r‖₂.
+CRMR produces monotonic residuals ‖r‖₂.
 It is formally equivalent to CRAIG-MR, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 
@@ -64,6 +64,7 @@ A preconditioner M may be provided in the form of a linear operator.
 function crmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CrmrSolver(A, b)
   crmr!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
@@ -103,7 +104,7 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(ArNorms, zero(T))
-    return (x, stats)
+    return solver
   end
   λ > 0 && (s .= r)
   mul!(Aᵀr, Aᵀ, r)  # - λ * x0 if x0 ≠ 0.
@@ -161,5 +162,5 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status
-  return (x, stats)
+  return solver
 end

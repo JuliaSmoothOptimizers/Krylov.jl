@@ -45,6 +45,7 @@ when it exists. The transfer is based on the residual norm.
 function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = UsymlqSolver(A, b)
   usymlq!(solver, A, b, c; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
@@ -78,7 +79,7 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     stats.solved = true
     stats.inconsistent = false
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
 
   iter = 0
@@ -260,5 +261,5 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   stats.solved = solved_lq || solved_cg
   stats.inconsistent = false
   stats.status = status
-  return (x, stats)
+  return solver
 end

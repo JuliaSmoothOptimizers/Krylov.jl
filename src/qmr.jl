@@ -39,6 +39,7 @@ When A is symmetric and b = c, QMR is equivalent to MINRES.
 function qmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = QmrSolver(A, b)
   qmr!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
@@ -72,7 +73,7 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
     stats.solved = true
     stats.inconsistent = false
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
 
   iter = 0
@@ -88,7 +89,7 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
     stats.solved = false
     stats.inconsistent = false
     stats.status = "Breakdown bᵀc = 0"
-    return (x, stats)
+    return solver
   end
 
   βₖ = √(abs(bᵗc))            # β₁γ₁ = bᵀc
@@ -257,5 +258,5 @@ function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status
-  return (x, stats)
+  return solver
 end

@@ -44,6 +44,7 @@ This implementation allows a left preconditioner `M` and a right preconditioner 
 function bicgstab(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = BicgstabSolver(A, b)
   bicgstab!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
@@ -93,7 +94,7 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
   if rNorm == 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
 
   iter = 0
@@ -107,7 +108,7 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
   if next_ρ == 0
     stats.solved, stats.inconsistent = false, false
     stats.status = "Breakdown bᵀc = 0"
-    return (x, stats)
+    return solver
   end
 
   # Stopping criterion.
@@ -158,5 +159,5 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status
-  return (x, stats)
+  return solver
 end

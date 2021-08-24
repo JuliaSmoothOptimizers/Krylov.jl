@@ -42,6 +42,7 @@ USYMQR finds the minimum-norm solution if problems are inconsistent.
 function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = UsymqrSolver(A, b)
   usymqr!(solver, A, b, c; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
@@ -75,7 +76,7 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     stats.solved = true
     stats.inconsistent = false
     stats.status = "x = 0 is a zero-residual solution"
-    return x, stats
+    return solver
   end
 
   iter = 0
@@ -248,5 +249,5 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status
-  return (x, stats)
+  return solver
 end

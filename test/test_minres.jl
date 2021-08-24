@@ -63,8 +63,8 @@
   # in-place minres (minres!) with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   solver = MinresSolver(A, b)
-  x, stats = minres!(solver, A, b, M=M)
-  r = b - A * x
+  minres!(solver, A, b, M=M)
+  r = b - A * solver.x
   resid = norm(r) / norm(b)
   @test(resid ≤ minres_tol)
   @test(stats.solved)

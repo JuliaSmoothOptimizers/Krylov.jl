@@ -35,6 +35,7 @@ BiCG point, when it exists. The transfer is based on the residual norm.
 function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = BilqrSolver(A, b)
   bilqr!(solver, A, b, c; kwargs...)
+  return (solver.x, solver.t, solver.stats)
 end
 
 function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
@@ -85,7 +86,7 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     stats.solved_primal = false
     stats.solved_dual = false
     stats.status = "Breakdown bᵀc = 0"
-    return (x, t, stats)
+    return solver
   end
 
   # Set up workspace.
@@ -368,5 +369,5 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   stats.status = status
   stats.solved_primal = solved_primal
   stats.solved_dual = solved_dual
-  return (x, t, stats)
+  return solver
 end

@@ -32,6 +32,7 @@ when it exists. The transfer is based on the residual norm.
 function bilq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = BilqSolver(A, b)
   bilq!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
@@ -66,7 +67,7 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
     stats.solved = true
     stats.inconsistent = false
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
 
   iter = 0
@@ -82,7 +83,7 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
     stats.solved = false
     stats.inconsistent = false
     stats.status = "Breakdown bᵀc = 0"
-    return (x, stats)
+    return solver
   end
 
   βₖ = √(abs(bᵗc))           # β₁γ₁ = bᵀc
@@ -265,5 +266,5 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
   stats.solved = solved_lq || solved_cg
   stats.inconsistent = false
   stats.status = status
-  return (x, stats)
+  return solver
 end
