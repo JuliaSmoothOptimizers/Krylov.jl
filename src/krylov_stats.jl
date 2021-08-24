@@ -17,6 +17,11 @@ mutable struct SimpleStats{T} <: KrylovStats{T}
   status       :: String
 end
 
+function reset!(stats :: SimpleStats)
+  empty!(stats.residuals)
+  empty!(stats.Aresiduals)
+end
+
 """
 Type for statistics returned by CG-LANCZOS, the attributes are:
 - solved
@@ -33,6 +38,11 @@ mutable struct LanczosStats{T} <: KrylovStats{T}
   Anorm     :: T
   Acond     :: T
   status    :: String
+end
+
+function reset!(stats :: LanczosStats)
+  empty!(stats.residuals)
+  isa(stats.flagged, AbstractVector) && empty!(stats.flagged)
 end
 
 """
@@ -57,6 +67,13 @@ mutable struct SymmlqStats{T} <: KrylovStats{T}
   status      :: String
 end
 
+function reset!(stats :: SymmlqStats)
+  empty!(stats.residuals)
+  empty!(stats.residualscg)
+  empty!(stats.errors)
+  empty!(stats.errorscg)
+end
+
 """
 Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the attributes are:
 - solved_primal
@@ -71,6 +88,11 @@ mutable struct AdjointStats{T} <: KrylovStats{T}
   residuals_primal :: Vector{T}
   residuals_dual   :: Vector{T}
   status           :: String
+end
+
+function reset!(stats :: AdjointStats)
+  empty!(stats.residuals_primal)
+  empty!(stats.residuals_dual)
 end
 
 """
@@ -89,6 +111,12 @@ mutable struct LNLQStats{T} <: KrylovStats{T}
   error_bnd_x    :: Vector{T}
   error_bnd_y    :: Vector{T}
   status         :: String
+end
+
+function reset!(stats :: LNLQStats)
+  empty!(stats.residuals)
+  empty!(stats.error_bnd_x)
+  empty!(stats.error_bnd_y)
 end
 
 """
@@ -115,6 +143,14 @@ mutable struct LSLQStats{T} <: KrylovStats{T}
   status         :: String
 end
 
+function reset!(stats :: LSLQStats)
+  empty!(stats.residuals)
+  empty!(stats.Aresiduals)
+  empty!(stats.err_lbnds)
+  empty!(stats.err_ubnds_lq)
+  empty!(stats.err_ubnds_cg)
+end
+
 import Base.show
 
 special_fields = Dict(
@@ -128,17 +164,6 @@ special_fields = Dict(
 
 for f in ["Simple", "Lanczos", "Symmlq", "Adjoint", "LNLQ", "LSLQ"]
   T = Meta.parse("Krylov." * f * "Stats{S}")
-
-  @eval function reset!(stats :: $T) where S
-    nfield = length($T.types)
-    for i = 1 : nfield
-      field = fieldname($T, i)
-      statfield = getfield(stats, field)
-      if isa(statfield, AbstractVector)
-        empty!(statfield)
-      end
-    end
-  end
 
   @eval function show(io :: IO, stats :: $T) where S
     s  = $f * " stats\n"

@@ -24,7 +24,7 @@ function test_alloc()
   solver = SymmlqSolver(A, b)
   symmlq!(solver, A, b)  # warmup
   inplace_symmlq_bytes = @allocated symmlq!(solver, A, b)
-  @test (VERSION < v"1.5") || (inplace_symmlq_bytes ≤ 624)
+  @test (VERSION < v"1.5") || (inplace_symmlq_bytes ≤ 192)
 
   # CG needs:
   # 4 n-vectors: x, r, p, Ap
