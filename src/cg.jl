@@ -72,7 +72,6 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
 
   restart && (Δx .= x)
   x .= zero(T)
-  r .= zero(T)
   if restart
     mul!(r, A, Δx)
     @kaxpby!(n, one(T), b, -one(T), r)
