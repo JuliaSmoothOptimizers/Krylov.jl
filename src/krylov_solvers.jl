@@ -623,7 +623,7 @@ mutable struct TrilqrSolver{T,S} <: KrylovSolver{T,S}
   vₖ₋₁  :: S
   vₖ    :: S
   q     :: S
-  t     :: S
+  y     :: S
   wₖ₋₃  :: S
   wₖ₋₂  :: S
   stats :: AdjointStats{T}
@@ -638,11 +638,11 @@ mutable struct TrilqrSolver{T,S} <: KrylovSolver{T,S}
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
     q    = S(undef, n)
-    t    = S(undef, n)
+    y    = S(undef, n)
     wₖ₋₃ = S(undef, n)
     wₖ₋₂ = S(undef, n)
     stats = AdjointStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(uₖ₋₁, uₖ, p, d̅, x, vₖ₋₁, vₖ, q, t, wₖ₋₃, wₖ₋₂, stats)
+    solver = new{T,S}(uₖ₋₁, uₖ, p, d̅, x, vₖ₋₁, vₖ, q, y, wₖ₋₃, wₖ₋₂, stats)
     return solver
   end
 
@@ -845,7 +845,7 @@ mutable struct BilqrSolver{T,S} <: KrylovSolver{T,S}
   vₖ    :: S
   p     :: S
   x     :: S
-  t     :: S
+  y     :: S
   d̅     :: S
   wₖ₋₃  :: S
   wₖ₋₂  :: S
@@ -860,12 +860,12 @@ mutable struct BilqrSolver{T,S} <: KrylovSolver{T,S}
     vₖ   = S(undef, n)
     p    = S(undef, n)
     x    = S(undef, n)
-    t    = S(undef, n)
+    y    = S(undef, n)
     d̅    = S(undef, n)
     wₖ₋₃ = S(undef, n)
     wₖ₋₂ = S(undef, n)
     stats = AdjointStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, t, d̅, wₖ₋₃, wₖ₋₂, stats)
+    solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, y, d̅, wₖ₋₃, wₖ₋₂, stats)
     return solver
   end
 
