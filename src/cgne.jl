@@ -66,6 +66,7 @@ A preconditioner M may be provided in the form of a linear operator.
 function cgne(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CgneSolver(A, b)
   cgne!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
@@ -103,7 +104,7 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   if rNorm == 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
   λ > 0 && (s .= r)
   mul!(p, Aᵀ, z)
@@ -163,5 +164,5 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status
-  return (x, stats)
+  return solver
 end

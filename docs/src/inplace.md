@@ -15,20 +15,23 @@ Given an operator `A` and a right-hand side `b`, you can create a `KrylovSolver`
 For example, use `S = Vector{Float64}` if you want to solve linear systems in double precision on the CPU and `S = CuVector{Float32}` if you want to solve linear systems in single precision on an Nvidia GPU.
 
 !!! note
-    `DiomSolver`, `DqgmresSolver` and `CgLanczosShiftSolver` require an additional argument (`memory` or `nshifts`).
+    `DiomSolver`, `FomSolver`, `DqgmresSolver`, `GmresSolver` and `CgLanczosShiftSolver` require an additional argument (`memory` or `nshifts`).
 
 The workspace is always the first argument of the in-place methods:
 
 ```@solvers
 minres_solver = MinresSolver(n, n, Vector{Float64})
-x, stats = minres!(minres_solver, A1, b1)
+minres!(minres_solver, A1, b1)
 
 dqgmres_solver = DqgmresSolver(n, n, memory, Vector{BigFloat})
-x, stats = dqgmres!(dqgmres_solver, A2, b2)
+dqgmres!(dqgmres_solver, A2, b2)
 
 lsqr_solver = LsqrSolver(m, n, CuVector{Float32})
-x, stats = lsqr!(lsqr_solver, A3, b3)
+lsqr!(lsqr_solver, A3, b3)
 ```
+
+In-place methods return an updated workspace `solver`.
+Solutions and statistics can be recovered with `solver.x`, `solver.y`, `solver.t` and `solver.stats`.
 
 A generic function `solve!` is also available and dispatches to the appropriate Krylov method.
 
@@ -55,16 +58,17 @@ function newton(∇f, ∇²f, x₀; itmax = 200, tol = 1e-8)
     iter = 0
     S = typeof(x)
     solver = CgSolver(n, n, S)
+    Δx = solver.x
 
     solved = false
     tired = false
 
     while !(solved || tired)
  
-        Hx = ∇²f(x)                       # Compute ∇²f(xₖ)
-        Δx, stats = cg!(solver, Hx, -gx)  # Solve ∇²f(xₖ)Δx = -∇f(xₖ)
-        x = x + Δx                        # Update xₖ₊₁ = xₖ + Δx
-        gx = ∇f(x)                        # ∇f(xₖ₊₁)
+        Hx = ∇²f(x)           # Compute ∇²f(xₖ)
+        cg!(solver, Hx, -gx)  # Solve ∇²f(xₖ)Δx = -∇f(xₖ)
+        x = x + Δx            # Update xₖ₊₁ = xₖ + Δx
+        gx = ∇f(x)            # ∇f(xₖ₊₁)
         
         iter += 1
         solved = norm(gx) ≤ tol
@@ -89,17 +93,18 @@ function gauss_newton(F, JF, x₀; itmax = 200, tol = 1e-8)
     iter = 0
     S = typeof(x)
     solver = LsmrSolver(m, n, S)
+    Δx = solver.x
 
     solved = false
     tired = false
 
     while !(solved || tired)
  
-        Jx = JF(x)                          # Compute J(xₖ)
-        Δx, stats = lsmr!(solver, Jx, -Fx)  # Minimize ‖J(xₖ)Δx + F(xₖ)‖
-        x = x + Δx                          # Update xₖ₊₁ = xₖ + Δx
-        Fx_old = Fx                         # F(xₖ)
-        Fx = F(x)                           # F(xₖ₊₁)
+        Jx = JF(x)              # Compute J(xₖ)
+        lsmr!(solver, Jx, -Fx)  # Minimize ‖J(xₖ)Δx + F(xₖ)‖
+        x = x + Δx              # Update xₖ₊₁ = xₖ + Δx
+        Fx_old = Fx             # F(xₖ)
+        Fx = F(x)               # F(xₖ₊₁)
         
         iter += 1
         solved = norm(Fx - Fx_old) / norm(Fx) ≤ tol

@@ -49,99 +49,99 @@
     b  = 5 * b
     c  = 3 * c
 
-    x, stats = solve!(cg_solver, A, b)
-    @test stats.solved
+    solver = solve!(cg_solver, A, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(symmlq_solver, A, b)
-    @test stats.solved
+    solver = solve!(symmlq_solver, A, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(minres_solver, A, b)
-    @test stats.solved
+    solver = solve!(minres_solver, A, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(cg_lanczos_solver, A, b)
-    @test stats.solved
+    solver = solve!(cg_lanczos_solver, A, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(cg_lanczos_shift_solver, A, b, shifts)
-    @test stats.solved
+    solver = solve!(cg_lanczos_shift_solver, A, b, shifts)
+    @test solver.stats.solved
 
-    x, stats = solve!(diom_solver, A, b)
-    @test stats.solved
+    solver = solve!(diom_solver, A, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(fom_solver, A, b)
-    @test stats.solved
+    solver = solve!(fom_solver, A, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(dqgmres_solver, A, b)
-    @test stats.solved
+    solver = solve!(dqgmres_solver, A, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(gmres_solver, A, b)
-    @test stats.solved
+    solver = solve!(gmres_solver, A, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(cr_solver, A, b)
-    @test stats.solved
+    solver = solve!(cr_solver, A, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(crmr_solver, Au, c)
-    @test stats.solved
+    solver = solve!(crmr_solver, Au, c)
+    @test solver.stats.solved
 
-    x, stats = solve!(cgs_solver, A, b)
-    @test stats.solved
+    solver = solve!(cgs_solver, A, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(bicgstab_solver, A, b)
-    @test stats.solved
+    solver = solve!(bicgstab_solver, A, b)
+    @test solver.stats.solved
 
-    x, y, stats = solve!(craigmr_solver, Au, c)
-    @test stats.solved
+    solver = solve!(craigmr_solver, Au, c)
+    @test solver.stats.solved
 
-    x, stats = solve!(cgne_solver, Au, c)
-    @test stats.solved
+    solver = solve!(cgne_solver, Au, c)
+    @test solver.stats.solved
 
-    x, y, stats = solve!(lnlq_solver, Au, c)
-    @test stats.solved
+    solver = solve!(lnlq_solver, Au, c)
+    @test solver.stats.solved
 
-    x, y, stats = solve!(craig_solver, Au, c)
-    @test stats.solved
+    solver = solve!(craig_solver, Au, c)
+    @test solver.stats.solved
 
-    x, stats = solve!(lslq_solver, Ao, b)
-    @test stats.solved
+    solver = solve!(lslq_solver, Ao, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(cgls_solver, Ao, b)
-    @test stats.solved
+    solver = solve!(cgls_solver, Ao, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(lsqr_solver, Ao, b)
-    @test stats.solved
+    solver = solve!(lsqr_solver, Ao, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(crls_solver, Ao, b)
-    @test stats.solved
+    solver = solve!(crls_solver, Ao, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(lsmr_solver, Ao, b)
-    @test stats.solved
+    solver = solve!(lsmr_solver, Ao, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(usymqr_solver, Ao, b, c)
-    @test stats.solved
+    solver = solve!(usymqr_solver, Ao, b, c)
+    @test solver.stats.solved
 
-    x, t, stats = solve!(trilqr_solver, A, b, b)
-    @test stats.solved_primal
-    @test stats.solved_dual
+    solver = solve!(trilqr_solver, A, b, b)
+    @test solver.stats.solved_primal
+    @test solver.stats.solved_dual
 
-    x, stats = solve!(bilq_solver, A, b)
-    @test stats.solved
+    solver = solve!(bilq_solver, A, b)
+    @test solver.stats.solved
 
-    x, t, stats = solve!(bilqr_solver, A, b, b)
-    @test stats.solved_primal
-    @test stats.solved_dual
+    solver = solve!(bilqr_solver, A, b, b)
+    @test solver.stats.solved_primal
+    @test solver.stats.solved_dual
 
-    x, stats = solve!(minres_qlp_solver, A, b)
-    @test stats.solved
+    solver = solve!(minres_qlp_solver, A, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(qmr_solver, A, b)
-    @test stats.solved
+    solver = solve!(qmr_solver, A, b)
+    @test solver.stats.solved
 
-    x, stats = solve!(usymlq_solver, Au, c, b)
-    @test stats.solved
+    solver = solve!(usymlq_solver, Au, c, b)
+    @test solver.stats.solved
 
-    x, y, stats = solve!(tricg_solver, Au, c, b)
-    @test stats.solved
+    solver = solve!(tricg_solver, Au, c, b)
+    @test solver.stats.solved
 
-    x, y, stats = solve!(trimr_solver, Au, c, b)
-    @test stats.solved
+    solver = solve!(trimr_solver, Au, c, b)
+    @test solver.stats.solved
   end
 end

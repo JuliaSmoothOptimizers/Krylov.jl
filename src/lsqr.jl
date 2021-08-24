@@ -84,6 +84,7 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 function lsqr(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
   solver = LsqrSolver(A, b, window=window)
   lsqr!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
@@ -136,7 +137,7 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(rNorms, zero(T))
     history && push!(ArNorms, zero(T))
-    return (x, stats)
+    return solver
   end
   β = β₁
 
@@ -178,7 +179,7 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   if α == 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a minimum least-squares solution"
-    return (x, stats)
+    return solver
   end
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
@@ -337,5 +338,5 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = !zero_resid
   stats.status = status
-  return (x, stats)
+  return solver
 end

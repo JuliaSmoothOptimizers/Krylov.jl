@@ -38,6 +38,7 @@ assumed to be symmetric and positive definite.
 function symmlq(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
   solver = SymmlqSolver(A, b, window=window)
   symmlq!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
@@ -85,7 +86,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(rNorms, zero(T))
     history && push!(rcgNorms, zero(T))
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
   β₁ = sqrt(β₁)
   β = β₁
@@ -338,5 +339,5 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   stats.Anorm = ANorm
   stats.Acond = Acond
   stats.status = status
-  return (x, stats)
+  return solver
 end

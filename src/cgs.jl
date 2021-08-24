@@ -41,6 +41,7 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 function cgs(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CgsSolver(A, b)
   cgs!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
@@ -84,7 +85,7 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   if rNorm == 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
 
   # Compute ρ₀ = ⟨ r₀,̅r₀ ⟩
@@ -92,7 +93,7 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   if ρ == 0
     stats.solved, stats.inconsistent = false, false
     stats.status = "Breakdown bᵀc = 0"
-    return (x, stats)
+    return solver
   end
 
   iter = 0
@@ -158,5 +159,5 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status
-  return (x, stats)
+  return solver
 end

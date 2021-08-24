@@ -38,6 +38,7 @@ M also indicates the weighted norm in which residuals are measured.
 function minres_qlp(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = MinresQlpSolver(A, b)
   minres_qlp!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
@@ -83,7 +84,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   if rNorm == 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
 
   iter = 0
@@ -326,5 +327,5 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status
-  return (x, stats)
+  return solver
 end

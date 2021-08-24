@@ -32,6 +32,7 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 function dqgmres(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
   solver = DqgmresSolver(A, b, memory)
   dqgmres!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
@@ -72,7 +73,7 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   if rNorm == 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
 
   iter = 0
@@ -195,5 +196,5 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status
-  return (x, stats)
+  return solver
 end

@@ -48,6 +48,7 @@ but simpler to implement.
 function crls(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CrlsSolver(A, b)
   crls!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
@@ -88,7 +89,7 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(ArNorms, zero(T))
-    return (x, stats)
+    return solver
   end
 
   MisI || mul!(Mr, M, r)
@@ -181,5 +182,5 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status
-  return (x, stats)
+  return solver
 end

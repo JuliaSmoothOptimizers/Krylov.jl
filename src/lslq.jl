@@ -130,6 +130,7 @@ The iterations stop as soon as one of the following conditions holds true:
 function lslq(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
   solver = LslqSolver(A, b, window=window)
   lslq!(solver, A, b; kwargs...)
+  return (solver.x, solver.stats)
 end
 
 function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
@@ -185,7 +186,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(rNorms, zero(T))
     history && push!(ArNorms, zero(T))
     stats.status = "x = 0 is a zero-residual solution"
-    return (x, stats)
+    return solver
   end
   β = β₁
 
@@ -203,7 +204,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(rNorms, β₁)
     history && push!(ArNorms, zero(T))
     stats.status = "x = 0 is a minimum least-squares solution"
-    return (x, stats)
+    return solver
   end
   @kscal!(n, one(T)/α, v)
   NisI || @kscal!(n, one(T)/α, Nv)
@@ -432,5 +433,5 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   stats.inconsistent = !zero_resid
   stats.error_with_bnd = complex_error_bnd
   stats.status = status
-  return (x, stats)
+  return solver
 end

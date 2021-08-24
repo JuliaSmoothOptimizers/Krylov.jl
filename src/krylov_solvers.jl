@@ -497,13 +497,13 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
-  yₖ      :: S
+  y       :: S
   N⁻¹uₖ₋₁ :: S
   N⁻¹uₖ   :: S
   p       :: S
   gy₂ₖ₋₁  :: S
   gy₂ₖ    :: S
-  xₖ      :: S
+  x       :: S
   M⁻¹vₖ₋₁ :: S
   M⁻¹vₖ   :: S
   q       :: S
@@ -515,13 +515,13 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
 
   function TricgSolver(n, m, S)
     T       = eltype(S)
-    yₖ      = S(undef, m)
+    y       = S(undef, m)
     N⁻¹uₖ₋₁ = S(undef, m)
     N⁻¹uₖ   = S(undef, m)
     p       = S(undef, m)
     gy₂ₖ₋₁  = S(undef, m)
     gy₂ₖ    = S(undef, m)
-    xₖ      = S(undef, n)
+    x       = S(undef, n)
     M⁻¹vₖ₋₁ = S(undef, n)
     M⁻¹vₖ   = S(undef, n)
     q       = S(undef, n)
@@ -530,7 +530,7 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
     uₖ      = S(undef, 0)
     vₖ      = S(undef, 0)
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ, stats)
+    solver = new{T,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ, stats)
     return solver
   end
 
@@ -552,7 +552,7 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
-  yₖ      :: S
+  y       :: S
   N⁻¹uₖ₋₁ :: S
   N⁻¹uₖ   :: S
   p       :: S
@@ -560,7 +560,7 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
   gy₂ₖ₋₂  :: S
   gy₂ₖ₋₁  :: S
   gy₂ₖ    :: S
-  xₖ      :: S
+  x       :: S
   M⁻¹vₖ₋₁ :: S
   M⁻¹vₖ   :: S
   q       :: S
@@ -574,7 +574,7 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
 
   function TrimrSolver(n, m, S)
     T       = eltype(S)
-    yₖ      = S(undef, m)
+    y       = S(undef, m)
     N⁻¹uₖ₋₁ = S(undef, m)
     N⁻¹uₖ   = S(undef, m)
     p       = S(undef, m)
@@ -582,7 +582,7 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
     gy₂ₖ₋₂  = S(undef, m)
     gy₂ₖ₋₁  = S(undef, m)
     gy₂ₖ    = S(undef, m)
-    xₖ      = S(undef, n)
+    x       = S(undef, n)
     M⁻¹vₖ₋₁ = S(undef, n)
     M⁻¹vₖ   = S(undef, n)
     q       = S(undef, n)
@@ -593,7 +593,7 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
     uₖ      = S(undef, 0)
     vₖ      = S(undef, 0)
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ, stats)
+    solver = new{T,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ, stats)
     return solver
   end
 
