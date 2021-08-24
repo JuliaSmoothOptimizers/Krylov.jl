@@ -18,7 +18,7 @@ export cg, cg!
 
 """
     (x, stats) = cg(A, b::AbstractVector{T};
-                    M=I, atol::T=√eps(T), rtol::T=√eps(T),
+                    M=I, atol::T=√eps(T), rtol::T=√eps(T), restart::Bool=false,
                     itmax::Int=0, radius::T=zero(T), linesearch::Bool=false,
                     verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
@@ -43,7 +43,7 @@ function cg(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
 end
 
 function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
-             M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
+             M=I, atol :: T=√eps(T), rtol :: T=√eps(T), restart :: Bool=false,
              itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
              verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
@@ -63,14 +63,22 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  allocate_if(!MisI, solver, :z, S, n)
-  x, r, p, Ap, stats = solver.x, solver.r, solver.p, solver.Ap, solver.stats
+  allocate_if(!MisI  , solver, :z , S, n)
+  allocate_if(restart, solver, :Δx, S, n)
+  Δx, x, r, p, Ap, stats = solver.Δx, solver.x, solver.r, solver.p, solver.Ap, solver.stats
   rNorms = stats.residuals
   reset!(stats)
   z = MisI ? r : solver.z
 
+  restart && (Δx .= x)
   x .= zero(T)
-  r .= b
+  r .= zero(T)
+  if restart
+    mul!(r, A, Δx)
+    @kaxpby!(n, one(T), b, -one(T), r)
+  else
+    r .= b
+  end
   MisI || mul!(z, M, r)
   p .= z
   γ = @kdot(n, r, z)
@@ -156,7 +164,10 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   solved && (status == "unknown") && (status = "solution good enough given atol and rtol")
   zero_curvature && (status = "zero curvature detected")
   tired && (status = "maximum number of iterations exceeded")
-  
+
+  # Update x
+  restart && @kaxpy!(n, one(T), Δx, x)
+
   # Update stats
   stats.solved = solved
   stats.inconsistent = inconsistent

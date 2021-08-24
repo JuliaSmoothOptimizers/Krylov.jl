@@ -64,6 +64,7 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct CgSolver{T,S} <: KrylovSolver{T,S}
+  Δx    :: S
   x     :: S
   r     :: S
   p     :: S
@@ -73,13 +74,14 @@ mutable struct CgSolver{T,S} <: KrylovSolver{T,S}
 
   function CgSolver(n, m, S)
     T  = eltype(S)
+    Δx = S(undef, 0)
     x  = S(undef, n)
     r  = S(undef, n)
     p  = S(undef, n)
     Ap = S(undef, n)
     z  = S(undef, 0)
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(x, r, p, Ap, z, stats)
+    solver = new{T,S}(Δx, x, r, p, Ap, z, stats)
     return solver
   end
 
