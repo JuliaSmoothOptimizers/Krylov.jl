@@ -235,9 +235,9 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
   ω          :: Vector{T}
   γ          :: Vector{T}
   rNorms     :: Vector{T}
-  indefinite :: BitArray
-  converged  :: BitArray
-  not_cv     :: BitArray
+  converged  :: BitVector
+  not_cv     :: BitVector
+  stats      :: LanczosShiftStats{T}
 
   function CgLanczosShiftSolver(n, m, nshifts, S)
     T          = eltype(S)
@@ -252,10 +252,11 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
     ω          = Vector{T}(undef, nshifts)
     γ          = Vector{T}(undef, nshifts)
     rNorms     = Vector{T}(undef, nshifts)
-    indefinite = BitArray(undef, nshifts)
-    converged  = BitArray(undef, nshifts)
-    not_cv     = BitArray(undef, nshifts)
-    solver = new{T,S}(Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, indefinite, converged, not_cv)
+    indefinite = BitVector(undef, nshifts)
+    converged  = BitVector(undef, nshifts)
+    not_cv     = BitVector(undef, nshifts)
+    stats = LanczosShiftStats(false, [T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), "unknown")
+    solver = new{T,S}(Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
     return solver
   end
 

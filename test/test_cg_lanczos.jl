@@ -34,7 +34,7 @@ end
   # Test negative curvature detection.
   shifts = [-4.0; -3.0; 2.0]
   (x, stats) = cg_lanczos(A, b, shifts, check_curvature=true, itmax=n)
-  @test(stats.flagged == [true, true, false])
+  @test(stats.indefinite == [true, true, false])
 
   # Code coverage.
   (x, stats) = cg_lanczos(Matrix(A), b)

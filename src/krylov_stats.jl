@@ -26,23 +26,46 @@ end
 Type for statistics returned by CG-LANCZOS, the attributes are:
 - solved
 - residuals
-- flagged
+- indefinite
 - Anorm
 - Acond
 - status
 """
 mutable struct LanczosStats{T} <: KrylovStats{T}
-  solved    :: Bool
-  residuals :: VecOrMat{T}
-  flagged   :: Union{Bool, Vector{Bool}, BitVector}
-  Anorm     :: T
-  Acond     :: T
-  status    :: String
+  solved     :: Bool
+  residuals  :: Vector{T}
+  indefinite :: Bool
+  Anorm      :: T
+  Acond      :: T
+  status     :: String
 end
 
 function reset!(stats :: LanczosStats)
   empty!(stats.residuals)
-  isa(stats.flagged, AbstractVector) && empty!(stats.flagged)
+end
+
+"""
+Type for statistics returned by CG-LANCZOS with shifts, the attributes are:
+- solved
+- residuals
+- indefinite
+- Anorm
+- Acond
+- status
+"""
+mutable struct LanczosShiftStats{T} <: KrylovStats{T}
+  solved     :: Bool
+  residuals  :: Vector{Vector{T}}
+  indefinite :: BitVector
+  Anorm      :: T
+  Acond      :: T
+  status     :: String
+end
+
+function reset!(stats :: LanczosShiftStats)
+  for vec in stats.residuals
+    empty!(vec)
+  end
 end
 
 """
@@ -162,7 +185,7 @@ special_fields = Dict(
   :err_ubnds_cg => "error bound CG",
 )
 
-for f in ["Simple", "Lanczos", "Symmlq", "Adjoint", "LNLQ", "LSLQ"]
+for f in ["Simple", "Lanczos", "LanczosShift", "Symmlq", "Adjoint", "LNLQ", "LSLQ"]
   T = Meta.parse("Krylov." * f * "Stats{S}")
 
   @eval function show(io :: IO, stats :: $T) where S

@@ -111,7 +111,7 @@ function test_alloc()
   # - 3 n-vectors: Mv, Mv_prev, Mv_next
   # - 2 (n*nshifts)-matrices: x, p
   # - 5 nshifts-vectors: σ, δhat, ω, γ, rNorms
-  # - 3 nshifts-bitArray: indefinite, converged, not_cv
+  # - 3 nshifts-bitVector: indefinite, converged, not_cv
   storage_cg_lanczos_shift(n, nshifts) = (3 * n) + (2 * n * nshifts) + (5 * nshifts) + (3 * nshifts / 64)
   storage_cg_lanczos_shift_bytes(n, nshifts) = 8 * storage_cg_lanczos_shift(n, nshifts)
 
@@ -123,7 +123,7 @@ function test_alloc()
   solver = CgLanczosShiftSolver(A, b, nshifts)
   cg_lanczos!(solver, A, b, shifts)  # warmup
   inplace_cg_lanczos_shift_bytes = @allocated cg_lanczos!(solver, A, b, shifts)
-  @test (VERSION < v"1.5") || (inplace_cg_lanczos_shift_bytes ≤ 356)
+  @test (VERSION < v"1.5") || (inplace_cg_lanczos_shift_bytes == 0)
 
   # DQGMRES needs:
   # - 2 n-vectors: x, t
