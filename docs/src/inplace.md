@@ -31,7 +31,7 @@ lsqr!(lsqr_solver, A3, b3)
 ```
 
 In-place methods return an updated workspace `solver`.
-Solutions and statistics can be recovered with `solver.x`, `solver.y`, `solver.t` and `solver.stats`.
+Solutions and statistics can be recovered with `solver.x`, `solver.y` and `solver.stats`.
 
 A generic function `solve!` is also available and dispatches to the appropriate Krylov method.
 
