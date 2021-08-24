@@ -139,8 +139,8 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   errcg = T(Inf)
 
   window = length(clist)
-  clist .= zeros(T)
-  zlist .= zeros(T)
+  clist .= zero(T)
+  zlist .= zero(T)
   sprod .= one(T)
 
   if λest ≠ 0
