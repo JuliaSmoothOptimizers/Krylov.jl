@@ -13,6 +13,7 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
+  @test (@allocated Krylov.reset!(stats)) == 0
 
   stats = Krylov.LanczosStats(true, Float64[3.0], Bool[false, true], NaN, NaN,"t")
   io = IOBuffer()
@@ -29,6 +30,7 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
+  @test (@allocated Krylov.reset!(stats)) == 0
 
   stats = Krylov.SymmlqStats(true, Float64[4.0], Union{Float64,Missing}[5.0, missing], Float64[6.0], Union{Float64,Missing}[7.0, missing], NaN, NaN, "t")
   io = IOBuffer()
@@ -47,6 +49,7 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
+  @test (@allocated Krylov.reset!(stats)) == 0
 
   stats = Krylov.AdjointStats(true, true, Float64[8.0], Float64[9.0],"t")
   io = IOBuffer()
@@ -62,6 +65,7 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
+  @test (@allocated Krylov.reset!(stats)) == 0
 
   stats = Krylov.LNLQStats(true, Float64[10.0], false, Float64[11.0], Float64[12.0], "t")
   io = IOBuffer()
@@ -78,6 +82,7 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
+  @test (@allocated Krylov.reset!(stats)) == 0
 
   stats = Krylov.LSLQStats(true, false, Float64[13.0], Float64[14.0], Float64[15.0], false, Float64[16.0], Float64[17.0], "t")
   io = IOBuffer()
@@ -97,5 +102,5 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
-
+  @test (@allocated Krylov.reset!(stats)) == 0
 end
