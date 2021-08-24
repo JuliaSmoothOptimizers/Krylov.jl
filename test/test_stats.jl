@@ -15,7 +15,7 @@
   check_reset(stats)
   @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
 
-  stats = Krylov.LanczosStats(true, Float64[3.0], Bool[false, true], NaN, NaN,"t")
+  stats = Krylov.LanczosStats(true, Float64[3.0], true, NaN, NaN, "t")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -23,13 +23,29 @@
   expected = """Lanczos stats
   solved: true
   residuals: [ 3.0e+00 ]
-  flagged: Bool[0, 1]
+  indefinite: true
   ‖A‖F: NaN
   κ₂(A): NaN
   status: t"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
+  @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
+
+  stats = Krylov.LanczosShiftStats(true, [Float64[0.9, 0.5], Float64[0.6, 0.4, 0.1]], BitVector([false, true]), NaN, NaN, "t")
+  io = IOBuffer()
+  show(io, stats)
+  showed = String(take!(io))
+  storage_type = typeof(stats)
+  expected = """LanczosShift stats
+  solved: true
+  residuals: [[0.9, 0.5], [0.6, 0.4, 0.1]]
+  indefinite: Bool[0, 1]
+  ‖A‖F: NaN
+  κ₂(A): NaN
+  status: t"""
+  @test (VERSION < v"1.5") || strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  Krylov.reset!(stats)
   @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
 
   stats = Krylov.SymmlqStats(true, Float64[4.0], Union{Float64,Missing}[5.0, missing], Float64[6.0], Union{Float64,Missing}[7.0, missing], NaN, NaN, "t")
@@ -51,7 +67,7 @@
   check_reset(stats)
   @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
 
-  stats = Krylov.AdjointStats(true, true, Float64[8.0], Float64[9.0],"t")
+  stats = Krylov.AdjointStats(true, true, Float64[8.0], Float64[9.0], "t")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))

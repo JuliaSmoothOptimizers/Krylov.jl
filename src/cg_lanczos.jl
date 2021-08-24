@@ -75,8 +75,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   if β == 0
     stats.solved = true
     stats.Anorm = zero(T)
-    stats.Acond = zero(T)
-    stats.flagged = false
+    stats.indefinite = false
     stats.status = "x = 0 is a zero-residual solution"
     return (x, stats)
   end
@@ -153,7 +152,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   # Update stats. TODO: Estimate Acond.
   stats.solved = solved
   stats.Anorm = sqrt(Anorm2)
-  stats.flagged = indefinite
+  stats.indefinite = indefinite
   stats.status = status
   return (x, stats)
 end
@@ -201,8 +200,12 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
 
   # Set up workspace.
   allocate_if(!MisI, solver, :v, S, n)
-  Mv, Mv_prev, Mv_next, x, p, σ, δhat, ω, γ = solver.Mv, solver.Mv_prev, solver.Mv_next, solver.x, solver.p, solver.σ, solver.δhat, solver.ω, solver.γ
-  rNorms, indefinite, converged, not_cv = solver.rNorms, solver.indefinite, solver.converged, solver.not_cv
+  Mv, Mv_prev, Mv_next = solver.Mv, solver.Mv_prev, solver.Mv_next
+  x, p, σ, δhat = solver.x, solver.p, solver.σ, solver.δhat
+  ω, γ, rNorms, converged = solver.ω, solver.γ, solver.rNorms, solver.converged
+  not_cv, stats = solver.not_cv, solver.stats
+  rNorms_history, indefinite = stats.residuals, stats.indefinite
+  reset!(stats)
   v = MisI ? Mv : solver.v
 
   # Initial state.
@@ -213,7 +216,21 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   Mv .= b                                 # Mv₁ ← b
   MisI || mul!(v, M, Mv)                  # v₁ = M⁻¹ * Mv₁
   β = sqrt(@kdot(n, v, Mv))               # β₁ = v₁ᵀ M v₁
-  β == 0 && return x, LanczosStats(true, [zero(T)], false, zero(T), zero(T), "x = 0 is a zero-residual solution")
+  rNorms .= β
+  if history
+    for i = 1 : nshifts
+      push!(rNorms_history[i], rNorms[i])
+    end
+  end
+
+  # Keep track of shifted systems with negative curvature if required.
+  indefinite .= false
+
+  if β == 0
+    stats.solved = true
+    stats.status = "x = 0 is a zero-residual solution"
+    return (x, stats)
+  end
 
   # Initialize each p to v.
   for i = 1 : nshifts
@@ -234,8 +251,6 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   γ .= one(T)
 
   # Define stopping tolerance.
-  rNorms .= β
-  rNorms_history = history ? [rNorms;] : T[]
   ε = atol + rtol * β
 
   # Keep track of shifted systems that have converged.
@@ -245,9 +260,6 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   end
   iter = 0
   itmax == 0 && (itmax = 2 * n)
-
-  # Keep track of shifted systems with negative curvature if required.
-  indefinite .= false
 
   # Build format strings for printing.
   if display(iter, verbose)
@@ -306,7 +318,11 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
       end
     end
 
-    length(not_cv) > 0 && history && append!(rNorms_history, rNorms)
+    if length(not_cv) > 0 && history
+      for i = 1 : nshifts
+        not_cv[i] && push!(rNorms_history[i], rNorms[i])
+      end
+    end
 
     # Is there a better way than to update this array twice per iteration?
     for i = 1 : nshifts
@@ -321,6 +337,9 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
-  stats = LanczosStats(solved, permutedims(reshape(rNorms_history, nshifts, round(Int, sum(size(rNorms_history))/nshifts))), indefinite, zero(T), zero(T), status)  # TODO: Estimate Anorm and Acond.
+
+  # Update stats. TODO: Estimate Anorm and Acond.
+  stats.solved = solved
+  stats.status = status
   return (x, stats)
 end

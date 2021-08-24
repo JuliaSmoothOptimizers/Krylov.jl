@@ -4,6 +4,7 @@
 Krylov.KrylovStats
 Krylov.SimpleStats
 Krylov.LanczosStats
+Krylov.LanczosShiftStats
 Krylov.SymmlqStats
 Krylov.AdjointStats
 Krylov.LNLQStats
