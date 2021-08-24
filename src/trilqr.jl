@@ -1,5 +1,5 @@
 # An implementation of TRILQR for the solution of square or
-# rectangular consistent linear adjoint systems Ax = b and Aᵀt = c.
+# rectangular consistent linear adjoint systems Ax = b and Aᵀy = c.
 #
 # This method is described in
 #
@@ -13,17 +13,17 @@
 export trilqr, trilqr!
 
 """
-    (x, t, stats) = trilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
+    (x, y, stats) = trilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
                            atol::T=√eps(T), rtol::T=√eps(T), transfer_to_usymcg::Bool=true,
                            itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Combine USYMLQ and USYMQR to solve adjoint systems.
 
-    [0  A] [t] = [b]
+    [0  A] [y] = [b]
     [Aᵀ 0] [x]   [c]
 
 USYMLQ is used for solving primal system `Ax = b`.
-USYMQR is used for solving dual system `Aᵀt = c`.
+USYMQR is used for solving dual system `Aᵀy = c`.
 
 An option gives the possibility of transferring from the USYMLQ point to the
 USYMCG point, when it exists. The transfer is based on the residual norm.
@@ -57,7 +57,7 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
 
   # Set up workspace.
   uₖ₋₁, uₖ, p, d̅, x, stats = solver.uₖ₋₁, solver.uₖ, solver.p, solver.d̅, solver.x, solver.stats
-  vₖ₋₁, vₖ, q, t, wₖ₋₃, wₖ₋₂ = solver.vₖ₋₁, solver.vₖ, solver.q, solver.t, solver.wₖ₋₃, solver.wₖ₋₂
+  vₖ₋₁, vₖ, q, t, wₖ₋₃, wₖ₋₂ = solver.vₖ₋₁, solver.vₖ, solver.q, solver.y, solver.wₖ₋₃, solver.wₖ₋₂
   rNorms, sNorms = stats.residuals_primal, stats.residuals_dual
   reset!(stats)
 

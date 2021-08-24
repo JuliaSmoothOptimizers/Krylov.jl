@@ -1,5 +1,5 @@
 # An implementation of BILQR for the solution of square
-# consistent linear adjoint systems Ax = b and Aᵀt = c.
+# consistent linear adjoint systems Ax = b and Aᵀy = c.
 #
 # This method is described in
 #
@@ -13,17 +13,17 @@
 export bilqr, bilqr!
 
 """
-    (x, t, stats) = bilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
+    (x, y, stats) = bilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
                           atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
                           itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Combine BiLQ and QMR to solve adjoint systems.
 
-    [0  A] [t] = [b]
+    [0  A] [y] = [b]
     [Aᵀ 0] [x]   [c]
 
 BiLQ is used for solving primal system `Ax = b`.
-QMR is used for solving dual system `Aᵀt = c`.
+QMR is used for solving dual system `Aᵀy = c`.
 
 An option gives the possibility of transferring from the BiLQ point to the
 BiCG point, when it exists. The transfer is based on the residual norm.
@@ -57,7 +57,7 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
 
   # Set up workspace.
   uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
-  x, t, d̅, wₖ₋₃, wₖ₋₂, stats = solver.x, solver.t, solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂, solver.stats
+  x, t, d̅, wₖ₋₃, wₖ₋₂, stats = solver.x, solver.y, solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂, solver.stats
   rNorms, sNorms = stats.residuals_primal, stats.residuals_dual
   reset!(stats)
 
