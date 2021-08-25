@@ -321,6 +321,7 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
+  Δx    :: S
   x     :: S
   t     :: S
   z     :: S
@@ -333,18 +334,19 @@ mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
   stats :: SimpleStats{T}
 
   function DqgmresSolver(n, m, memory, S)
-    T = eltype(S)
-    x = S(undef, n)
-    t = S(undef, n)
-    z = S(undef, 0)
-    w = S(undef, 0)
-    P = [S(undef, n) for i = 1 : memory]
-    V = [S(undef, n) for i = 1 : memory]
-    c = Vector{T}(undef, memory)
-    s = Vector{T}(undef, memory)
-    H = Vector{T}(undef, memory+2)
+    T  = eltype(S)
+    Δx = S(undef, 0)
+    x  = S(undef, n)
+    t  = S(undef, n)
+    z  = S(undef, 0)
+    w  = S(undef, 0)
+    P  = [S(undef, n) for i = 1 : memory]
+    V  = [S(undef, n) for i = 1 : memory]
+    c  = Vector{T}(undef, memory)
+    s  = Vector{T}(undef, memory)
+    H  = Vector{T}(undef, memory+2)
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(x, t, z, w, P, V, c, s, H, stats)
+    solver = new{T,S}(Δx, x, t, z, w, P, V, c, s, H, stats)
     return solver
   end
 
@@ -366,6 +368,7 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
+  Δx    :: S
   x     :: S
   t     :: S
   z     :: S
@@ -377,17 +380,18 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
   stats :: SimpleStats{T}
 
   function DiomSolver(n, m, memory, S)
-    T     = eltype(S)
-    x     = S(undef, n)
-    t     = S(undef, n)
-    z     = S(undef, 0)
-    w     = S(undef, 0)
-    P     = [S(undef, n) for i = 1 : memory]
-    V     = [S(undef, n) for i = 1 : memory]
-    L     = Vector{T}(undef, memory)
-    H     = Vector{T}(undef, memory+2)
+    T  = eltype(S)
+    Δx = S(undef, 0)
+    x  = S(undef, n)
+    t  = S(undef, n)
+    z  = S(undef, 0)
+    w  = S(undef, 0)
+    P  = [S(undef, n) for i = 1 : memory]
+    V  = [S(undef, n) for i = 1 : memory]
+    L  = Vector{T}(undef, memory)
+    H  = Vector{T}(undef, memory+2)
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(x, t, z, w, P, V, L, H, stats)
+    solver = new{T,S}(Δx, x, t, z, w, P, V, L, H, stats)
     return solver
   end
 
@@ -1329,6 +1333,7 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct GmresSolver{T,S} <: KrylovSolver{T,S}
+  Δx    :: S
   x     :: S
   w     :: S
   p     :: S
@@ -1341,18 +1346,19 @@ mutable struct GmresSolver{T,S} <: KrylovSolver{T,S}
   stats :: SimpleStats{T}
 
   function GmresSolver(n, m, memory, S)
-    T = eltype(S)
-    x = S(undef, n)
-    w = S(undef, n)
-    p = S(undef, 0)
-    q = S(undef, 0)
-    V = [S(undef, n) for i = 1 : memory]
-    c = Vector{T}(undef, memory)
-    s = Vector{T}(undef, memory)
-    z = Vector{T}(undef, memory)
-    R = Vector{T}(undef, div(memory * (memory+1), 2))
+    T  = eltype(S)
+    Δx = S(undef, 0)
+    x  = S(undef, n)
+    w  = S(undef, n)
+    p  = S(undef, 0)
+    q  = S(undef, 0)
+    V  = [S(undef, n) for i = 1 : memory]
+    c  = Vector{T}(undef, memory)
+    s  = Vector{T}(undef, memory)
+    z  = Vector{T}(undef, memory)
+    R  = Vector{T}(undef, div(memory * (memory+1), 2))
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(x, w, p, q, V, c, s, z, R, stats)
+    solver = new{T,S}(Δx, x, w, p, q, V, c, s, z, R, stats)
     return solver
   end
 
@@ -1374,6 +1380,7 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct FomSolver{T,S} <: KrylovSolver{T,S}
+  Δx    :: S
   x     :: S
   w     :: S
   p     :: S
@@ -1385,17 +1392,18 @@ mutable struct FomSolver{T,S} <: KrylovSolver{T,S}
   stats :: SimpleStats{T}
 
   function FomSolver(n, m, memory, S)
-    T = eltype(S)
-    x = S(undef, n)
-    w = S(undef, n)
-    p = S(undef, 0)
-    q = S(undef, 0)
-    V = [S(undef, n) for i = 1 : memory]
-    l = Vector{T}(undef, memory)
-    z = Vector{T}(undef, memory)
-    U = Vector{T}(undef, div(memory * (memory+1), 2))
+    T  = eltype(S)
+    Δx = S(undef, 0)
+    x  = S(undef, n)
+    w  = S(undef, n)
+    p  = S(undef, 0)
+    q  = S(undef, 0)
+    V  = [S(undef, n) for i = 1 : memory]
+    l  = Vector{T}(undef, memory)
+    z  = Vector{T}(undef, memory)
+    U  = Vector{T}(undef, div(memory * (memory+1), 2))
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(x, w, p, q, V, l, z, U, stats)
+    solver = new{T,S}(Δx, x, w, p, q, V, l, z, U, stats)
     return solver
   end
 

@@ -66,6 +66,16 @@
   @test(resid ≤ diom_tol)
   @test(stats.solved)
 
+  # Test restart
+  A, b = cartesian_poisson()
+  solver = DiomSolver(A, b, 20)
+  solver.x .= 0.5
+  diom!(solver, A, b, restart=true)
+  r = b - A * solver.x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ diom_tol)
+  @test(stats.solved)
+
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = diom(A, b, M=M)

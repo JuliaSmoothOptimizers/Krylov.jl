@@ -13,7 +13,8 @@ export dqgmres, dqgmres!
 """
     (x, stats) = dqgmres(A, b::AbstractVector{T};
                          M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
-                         itmax::Int=0, memory::Int=20, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                         restart::Bool=false, itmax::Int=0, memory::Int=20,
+                         verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system Ax = b using DQGMRES method.
 
@@ -37,7 +38,8 @@ end
 
 function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
                   M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                  restart :: Bool=false, itmax :: Int=0,
+                  verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -55,18 +57,26 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Set up workspace.
-  allocate_if(!MisI, solver, :w, S, n)
-  allocate_if(!NisI, solver, :z, S, n)
-  x, t, P, V = solver.x, solver.t, solver.P, solver.V
+  allocate_if(!MisI  , solver, :w , S, n)
+  allocate_if(!NisI  , solver, :z , S, n)
+  allocate_if(restart, solver, :Δx, S, n)
+  Δx, x, t, P, V = solver.Δx, solver.x, solver.t, solver.P, solver.V
   c, s, H, stats = solver.c, solver.s, solver.H, solver.stats
   rNorms = stats.residuals
   reset!(stats)
   w  = MisI ? t : solver.w
-  r₀ = MisI ? b : solver.w
+  r₀ = MisI ? t : solver.w
 
   # Initial solution x₀ and residual r₀.
+  restart && (Δx .= x)
   x .= zero(T)  # x₀
-  MisI || mul!(r₀, M, b)  # M⁻¹(b - Ax₀)
+  if restart
+    mul!(t, A, Δx)
+    @kaxpby!(n, one(T), b, -one(T), t)
+  else
+    t .= b
+  end
+  MisI || mul!(r₀, M, t)  # M⁻¹(b - Ax₀)
   # Compute β
   rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
   history && push!(rNorms, rNorm)
@@ -191,6 +201,9 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   end
   (verbose > 0) && @printf("\n")
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+
+  # Update x
+  restart && @kaxpy!(n, one(T), Δx, x)
 
   # Update stats
   stats.solved = solved

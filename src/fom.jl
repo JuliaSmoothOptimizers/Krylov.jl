@@ -14,7 +14,8 @@ export fom, fom!
     (x, stats) = fom(A, b::AbstractVector{T};
                      M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                      reorthogonalization::Bool=false, itmax::Int=0,
-                     memory::Int=20, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                     restart::Bool=false, memory::Int=20,
+                     verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the linear system Ax = b using FOM method.
 
@@ -38,7 +39,7 @@ end
 function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
               reorthogonalization :: Bool=false, itmax :: Int=0,
-              verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+              restart :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -56,18 +57,26 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
 
   # Set up workspace.
-  allocate_if(!MisI, solver, :q, S, n)
-  allocate_if(!NisI, solver, :p, S, n)
-  x, w, V, z = solver.x, solver.w, solver.V, solver.z
+  allocate_if(!MisI  , solver, :q , S, n)
+  allocate_if(!NisI  , solver, :p , S, n)
+  allocate_if(restart, solver, :Δx, S, n)
+  Δx, x, w, V, z = solver.Δx, solver.x, solver.w, solver.V, solver.z
   l, U, stats = solver.l, solver.U, solver.stats
   rNorms = stats.residuals
   reset!(stats)
   q  = MisI ? w : solver.q
-  r₀ = MisI ? b : solver.q
+  r₀ = MisI ? w : solver.q
 
   # Initial solution x₀ and residual r₀.
+  restart && (Δx .= x)
   x .= zero(T)            # x₀
-  MisI || mul!(r₀, M, b)  # M⁻¹(b - Ax₀)
+  if restart
+    mul!(w, A, Δx)
+    @kaxpby!(n, one(T), b, -one(T), w)
+  else
+    w .= b
+  end
+  MisI || mul!(r₀, M, w)  # M⁻¹(b - Ax₀)
   β = @knrm2(n, r₀)       # β = ‖r₀‖₂
   rNorm = β
   history && push!(rNorms, β)
@@ -196,6 +205,9 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+
+  # Update x
+  restart && @kaxpy!(n, one(T), Δx, x)
 
   # Update stats
   stats.solved = solved
