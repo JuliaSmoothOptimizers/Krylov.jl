@@ -60,8 +60,9 @@ Afterward CRAIGMR solves the symmetric and quasi-definite system
 which is equivalent to applying MINRES to (M + AN⁻¹Aᵀ)y = b.
 
 CRAIGMR produces monotonic residuals ‖r‖₂.
-It is formally equivalent to CRMR, though can be slightly more accurate, and intricate to implement.
-Both the x- and y-parts of the solution are returned.
+It is formally equivalent to CRMR, though can be slightly more accurate,
+and intricate to implement. Both the x- and y-parts of the solution are
+returned.
 
 #### References
 
