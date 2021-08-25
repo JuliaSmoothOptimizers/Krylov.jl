@@ -27,13 +27,13 @@ export lsmr, lsmr!
 
 """
     (x, stats) = lsmr(A, b::AbstractVector{T};
-                  M=I, N=I, sqd::Bool=false,
-                  λ::T=zero(T), axtol::T=√eps(T), btol::T=√eps(T),
-                  atol::T=zero(T), rtol::T=zero(T),
-                  etol::T=√eps(T), window::Int=5,
-                  itmax::Int=0, conlim::T=1/√eps(T),
-                  radius::T=zero(T), verbose::Int=0,
-                  history::Bool=false, callback::Function=(args...) -> false) where T <: AbstractFloat
+                      M=I, N=I, sqd::Bool=false,
+                      λ::T=zero(T), axtol::T=√eps(T), btol::T=√eps(T),
+                      atol::T=zero(T), rtol::T=zero(T),
+                      etol::T=√eps(T), window::Int=5,
+                      itmax::Int=0, conlim::T=1/√eps(T),
+                      radius::T=zero(T), verbose::Int=0,
+                      history::Bool=false, callback::Function=(args...) -> false) where T <: AbstractFloat
 
 Solve the regularized linear least-squares problem
 
