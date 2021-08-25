@@ -66,6 +66,16 @@
   @test(resid ≤ gmres_tol)
   @test(stats.solved)
 
+  # Test restart
+  A, b = cartesian_poisson()
+  solver = GmresSolver(A, b, 20)
+  solver.x .= 0.5
+  gmres!(solver, A, b, restart=true)
+  r = b - A * solver.x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ gmres_tol)
+  @test(stats.solved)
+
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = gmres(A, b, M=M)

@@ -66,6 +66,16 @@
   @test(resid ≤ fom_tol)
   @test(stats.solved)
 
+  # Test restart
+  A, b = cartesian_poisson()
+  solver = FomSolver(A, b, 20)
+  solver.x .= 0.5
+  fom!(solver, A, b, restart=true)
+  r = b - A * solver.x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ fom_tol)
+  @test(stats.solved)
+
   # Test with Jacobi (or diagonal) preconditioner
   A, b, M = square_preconditioned()
   (x, stats) = fom(A, b, M=M)
