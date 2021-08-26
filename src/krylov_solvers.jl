@@ -1452,7 +1452,7 @@ function statistics end
 """
     solved(solver)
 
-Return a boolean that determine if the Krylov method associated to `solver` succeeded to solve the linear system.
+Return a boolean that determines whether the Krylov method associated to `solver` succeeded.
 """
 function solved end
 
