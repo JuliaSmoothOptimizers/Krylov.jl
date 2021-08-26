@@ -5,7 +5,7 @@ BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CrlsSolver, CgneSolver, CrmrSolv
 LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
 GmresSolver, FomSolver
 
-export solve!
+export solve!, solution, statistics, solved
 
 "Abstract type for using Krylov solvers in-place"
 abstract type KrylovSolver{T,S} end
@@ -1435,41 +1435,66 @@ Use the in-place Krylov method associated to `solver`.
 """
 function solve! end
 
-for (KS, fun) in [
-  (LsmrSolver          , :lsmr!      )
-  (CgsSolver           , :cgs!       )
-  (UsymlqSolver        , :usymlq!    )
-  (LnlqSolver          , :lnlq!      )
-  (BicgstabSolver      , :bicgstab!  )
-  (CrlsSolver          , :crls!      )
-  (LsqrSolver          , :lsqr!      )
-  (MinresSolver        , :minres!    )
-  (CgneSolver          , :cgne!      )
-  (DqgmresSolver       , :dqgmres!   )
-  (SymmlqSolver        , :symmlq!    )
-  (TrimrSolver         , :trimr!     )
-  (UsymqrSolver        , :usymqr!    )
-  (BilqrSolver         , :bilqr!     )
-  (CrSolver            , :cr!        )
-  (CraigmrSolver       , :craigmr!   )
-  (TricgSolver         , :tricg!     )
-  (CraigSolver         , :craig!     )
-  (DiomSolver          , :diom!      )
-  (LslqSolver          , :lslq!      )
-  (TrilqrSolver        , :trilqr!    )
-  (CrmrSolver          , :crmr!      )
-  (CgSolver            , :cg!        )
-  (CgLanczosShiftSolver, :cg_lanczos!)
-  (CglsSolver          , :cgls!      )
-  (CgLanczosSolver     , :cg_lanczos!)
-  (BilqSolver          , :bilq!      )
-  (MinresQlpSolver     , :minres_qlp!)
-  (QmrSolver           , :qmr!       )
-  (GmresSolver         , :gmres!     )
-  (FomSolver           , :fom!       )
+"""
+    solution(solver)
+
+Return the solution(s) stored in the `solver`.
+"""
+function solution end
+
+"""
+    statistics(solver)
+
+Return the statistics stored in the `solver`.
+"""
+function statistics end
+
+"""
+    solved(solver)
+
+Return a boolean that determine if the Krylov method associated to `solver` succeeded to solve the linear system.
+"""
+function solved end
+
+for (KS, fun, nbsol) in [
+  (LsmrSolver          , :lsmr!      , 1)
+  (CgsSolver           , :cgs!       , 1)
+  (UsymlqSolver        , :usymlq!    , 1)
+  (LnlqSolver          , :lnlq!      , 2)
+  (BicgstabSolver      , :bicgstab!  , 1)
+  (CrlsSolver          , :crls!      , 1)
+  (LsqrSolver          , :lsqr!      , 1)
+  (MinresSolver        , :minres!    , 1)
+  (CgneSolver          , :cgne!      , 1)
+  (DqgmresSolver       , :dqgmres!   , 1)
+  (SymmlqSolver        , :symmlq!    , 1)
+  (TrimrSolver         , :trimr!     , 2)
+  (UsymqrSolver        , :usymqr!    , 1)
+  (BilqrSolver         , :bilqr!     , 2)
+  (CrSolver            , :cr!        , 1)
+  (CraigmrSolver       , :craigmr!   , 2)
+  (TricgSolver         , :tricg!     , 2)
+  (CraigSolver         , :craig!     , 2)
+  (DiomSolver          , :diom!      , 1)
+  (LslqSolver          , :lslq!      , 1)
+  (TrilqrSolver        , :trilqr!    , 2)
+  (CrmrSolver          , :crmr!      , 1)
+  (CgSolver            , :cg!        , 1)
+  (CgLanczosShiftSolver, :cg_lanczos!, 1)
+  (CglsSolver          , :cgls!      , 1)
+  (CgLanczosSolver     , :cg_lanczos!, 1)
+  (BilqSolver          , :bilq!      , 1)
+  (MinresQlpSolver     , :minres_qlp!, 1)
+  (QmrSolver           , :qmr!       , 1)
+  (GmresSolver         , :gmres!     , 1)
+  (FomSolver           , :fom!       , 1)
 ]
   @eval begin
     @inline solve!(solver :: $KS, args...; kwargs...) = $(fun)(solver, args...; kwargs...)
+    ($nbsol == 1) && @inline solution(solver :: $KS) = solver.x
+    ($nbsol == 2) && @inline solution(solver :: $KS) = solver.x, solver.y
+    @inline statistics(solver :: $KS) = solver.stats
+    @inline solved(solver :: $KS) = solver.stats.solved
   end
 end
 
