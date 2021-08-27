@@ -290,6 +290,13 @@ function small_sqd(transpose :: Bool=false)
   return A, b, c, M, N
 end
 
+# Test restart feature with linear systems of size n³.
+function restart(n :: Int=32)
+  A = get_div_grad(n, n, n)
+  b = A * ones(n^3)
+  return A, b
+end
+
 # Check that a KrylovStats is reset.
 function check_reset(stats :: KS) where KS <: Krylov.KrylovStats
   for field in fieldnames(KS)

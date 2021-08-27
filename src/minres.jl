@@ -27,7 +27,8 @@ export minres, minres!
                         M=I, λ::T=zero(T), atol::T=√eps(T)/100,
                         rtol::T=√eps(T)/100, ratol :: T=zero(T), 
                         rrtol :: T=zero(T), etol::T=√eps(T),
-                        window::Int=5, itmax::Int=0, conlim::T=1/√eps(T),
+                        window::Int=5, itmax::Int=0,
+                        conlim::T=1/√eps(T), restart::Bool=false,
                         verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the shifted linear least-squares problem
@@ -63,7 +64,7 @@ end
 function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
                  M=I, λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
-                 itmax :: Int=0, conlim :: T=1/√eps(T),
+                 itmax :: Int=0, conlim :: T=1/√eps(T), restart :: Bool=false,
                  verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n, m = size(A)
@@ -80,20 +81,29 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  allocate_if(!MisI, solver, :v, S, n)
-  x, r1, r2, w1, w2, y = solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y
+  allocate_if(!MisI  , solver, :v , S, n)
+  allocate_if(restart, solver, :Δx, S, n)
+  Δx, x, r1, r2, w1, w2, y = solver.Δx, solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y
   err_vec, stats = solver.err_vec, solver.stats
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
   v = MisI ? r2 : solver.v
 
   ϵM = eps(T)
-  x .= zero(T)
   ctol = conlim > 0 ? 1 / conlim : zero(T)
+
+  # Initial solution x₀
+  restart && (Δx .= x)
+  x .= zero(T)
 
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
-  r1 .= b
+  if restart
+    mul!(r1, A, Δx)
+    @kaxpby!(n, one(T), b, -one(T), r1)
+  else
+    r1 .= b
+  end
   r2 .= r1
   MisI || mul!(v, M, r1)
   β₁ = @kdot(m, r1, v)
@@ -150,7 +160,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   zero_resid = zero_resid_mach = zero_resid_lim = (rNorm ≤ tol)
   fwd_err = false
 
-  while ! (solved || tired || ill_cond)
+  while !(solved || tired || ill_cond)
     iter = iter + 1
 
     # Generate next Lanczos vector.
@@ -277,6 +287,9 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   solved        && (status = "found approximate minimum least-squares solution")
   zero_resid    && (status = "found approximate zero-residual solution")
   fwd_err       && (status = "truncated forward error small enough")
+
+  # Update x
+  restart && @kaxpy!(n, one(T), Δx, x)
 
   # Update stats
   stats.solved = solved

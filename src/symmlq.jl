@@ -17,7 +17,8 @@ export symmlq, symmlq!
                         M=I, λ::T=zero(T), transfer_to_cg::Bool=true,
                         λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                         etol::T=√eps(T), window::Int=0, itmax::Int=0,
-                        conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                        conlim::T=1/√eps(T), restart::Bool=false,
+                        verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the shifted linear system
 
@@ -44,7 +45,8 @@ end
 function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
                  M=I, λ :: T=zero(T), transfer_to_cg :: Bool=true,
                  λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-                 etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
+                 etol :: T=√eps(T), itmax :: Int=0,
+                 conlim :: T=1/√eps(T), restart :: Bool=false,
                  verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
@@ -61,9 +63,10 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  allocate_if(!MisI, solver, :v, S, n)
+  allocate_if(!MisI  , solver, :v , S, n)
+  allocate_if(restart, solver, :Δx, S, n)
   x, Mvold, Mv, Mv_next, w̅ = solver.x, solver.Mvold, solver.Mv, solver.Mv_next, solver.w̅
-  clist, zlist, sprod, stats = solver.clist, solver.zlist, solver.sprod, solver.stats
+  Δx, clist, zlist, sprod, stats = solver.Δx, solver.clist, solver.zlist, solver.sprod, solver.stats
   rNorms, rcgNorms = stats.residuals, stats.residualscg
   errors, errorscg = stats.errors, stats.errorscg
   reset!(stats)
@@ -71,12 +74,20 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   vold = MisI ? Mvold : solver.v
 
   ϵM = eps(T)
-  x .= zero(T)
   ctol = conlim > 0 ? 1 / conlim : zero(T)
+
+  # Initial solution x₀
+  restart && (Δx .= x)
+  x .= zero(T)
 
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
-  Mvold .= b
+  if restart
+    mul!(Mvold, A, Δx)
+    @kaxpby!(n, one(T), b, -one(T), Mvold)
+  else
+    Mvold .= b
+  end
   MisI || mul!(vold, M, Mvold)
   β₁ = @kdot(m, vold, Mvold)
   if β₁ == 0
@@ -333,6 +344,9 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   solved        && (status = "found approximate solution")
   solved_lq     && (status = "solution xᴸ good enough given atol and rtol")
   solved_cg     && (status = "solution xᶜ good enough given atol and rtol")
+
+  # Update x
+  restart && @kaxpy!(n, one(T), Δx, x)
 
   # Update stats
   stats.solved = solved

@@ -63,4 +63,15 @@
   resid = sqrt(dot(r, M * r)) / norm(b)
   @test(resid ≤ minres_qlp_tol)
   @test(stats.solved)
+
+  # Test restart
+  A, b = restart()
+  solver = MinresQlpSolver(A, b)
+  minres_qlp!(solver, A, b, itmax=50)
+  @test !solver.stats.solved
+  minres_qlp!(solver, A, b, restart=true)
+  r = b - A * solver.x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ minres_qlp_tol)
+  @test solver.stats.solved
 end

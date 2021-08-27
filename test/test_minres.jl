@@ -68,4 +68,15 @@
   resid = norm(r) / norm(b)
   @test(resid ≤ minres_tol)
   @test(stats.solved)
+
+  # Test restart
+  A, b = restart()
+  solver = MinresSolver(A, b)
+  minres!(solver, A, b, itmax=50)
+  @test !solver.stats.solved
+  minres!(solver, A, b, restart=true)
+  r = b - A * solver.x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ minres_tol)
+  @test solver.stats.solved
 end
