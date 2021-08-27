@@ -79,11 +79,13 @@
   @test(stats.solved)
 
   # Test restart
+  A, b = restart()
   solver = CgSolver(A, b)
-  solver.x .= 1.0
+  cg!(solver, A, b, itmax=50)
+  @test !solver.stats.solved
   cg!(solver, A, b, restart=true)
   r = b - A * solver.x
   resid = norm(r) / norm(b)
   @test(resid ≤ cg_tol)
-  @test(stats.solved)
+  @test solver.stats.solved
 end
