@@ -96,14 +96,16 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   restart && (Δx .= x)
   x .= zero(T)
 
-  # Initialize Lanczos process.
-  # β₁ M v₁ = b.
   if restart
     mul!(r1, A, Δx)
+    (λ ≠ 0) && @kaxpy!(n, λ, Δx, r1)
     @kaxpby!(n, one(T), b, -one(T), r1)
   else
     r1 .= b
   end
+
+  # Initialize Lanczos process.
+  # β₁ M v₁ = b.
   r2 .= r1
   MisI || mul!(v, M, r1)
   β₁ = @kdot(m, r1, v)

@@ -80,14 +80,16 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   restart && (Δx .= x)
   x .= zero(T)
 
-  # Initialize Lanczos process.
-  # β₁ M v₁ = b.
   if restart
     mul!(Mvold, A, Δx)
+    (λ ≠ 0) && @kaxpy!(n, λ, Δx, Mvold)
     @kaxpby!(n, one(T), b, -one(T), Mvold)
   else
     Mvold .= b
   end
+
+  # Initialize Lanczos process.
+  # β₁ M v₁ = b.
   MisI || mul!(vold, M, Mvold)
   β₁ = @kdot(m, vold, Mvold)
   if β₁ == 0
