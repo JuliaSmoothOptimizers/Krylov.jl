@@ -74,13 +74,15 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   restart && (Δx .= x)
   x .= zero(T)
 
-  # β₁v₁ = Mb
   if restart
     mul!(M⁻¹vₖ, A, Δx)
+    (λ ≠ 0) && @kaxpy!(n, λ, Δx, M⁻¹vₖ)
     @kaxpby!(n, one(T), b, -one(T), M⁻¹vₖ)
   else
     M⁻¹vₖ .= b
   end
+
+  # β₁v₁ = Mb
   MisI || mul!(vₖ, M, M⁻¹vₖ)
   βₖ = sqrt(@kdot(n, vₖ, M⁻¹vₖ))
   if βₖ ≠ 0
