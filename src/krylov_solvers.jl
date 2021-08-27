@@ -21,6 +21,7 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
+  Δx      :: S
   x       :: S
   r1      :: S
   r2      :: S
@@ -33,6 +34,7 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
 
   function MinresSolver(n, m, S; window :: Int=5)
     T  = eltype(S)
+    Δx = S(undef, 0)
     x  = S(undef, n)
     r1 = S(undef, n)
     r2 = S(undef, n)
@@ -42,7 +44,7 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
     v  = S(undef, 0)
     err_vec = zeros(T, window)
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(x, r1, r2, w1, w2, y, v, err_vec, stats)
+    solver = new{T,S}(Δx, x, r1, r2, w1, w2, y, v, err_vec, stats)
     return solver
   end
 
@@ -142,6 +144,7 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct SymmlqSolver{T,S} <: KrylovSolver{T,S}
+  Δx      :: S
   x       :: S
   Mvold   :: S
   Mv      :: S
@@ -155,6 +158,7 @@ mutable struct SymmlqSolver{T,S} <: KrylovSolver{T,S}
 
   function SymmlqSolver(n, m, S; window :: Int=5)
     T       = eltype(S)
+    Δx      = S(undef, 0)
     x       = S(undef, n)
     Mvold   = S(undef, n)
     Mv      = S(undef, n)
@@ -165,7 +169,7 @@ mutable struct SymmlqSolver{T,S} <: KrylovSolver{T,S}
     zlist   = zeros(T, window)
     sprod   = ones(T, window)
     stats = SymmlqStats(false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), "unknown")
-    solver = new{T,S}(x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, stats)
+    solver = new{T,S}(Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, stats)
     return solver
   end
 
@@ -280,6 +284,7 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
+  Δx      :: S
   wₖ₋₁    :: S
   wₖ      :: S
   M⁻¹vₖ₋₁ :: S
@@ -291,6 +296,7 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
 
   function MinresQlpSolver(n, m, S)
     T       = eltype(S)
+    Δx      = S(undef, 0)
     wₖ₋₁    = S(undef, n)
     wₖ      = S(undef, n)
     M⁻¹vₖ₋₁ = S(undef, n)
@@ -299,7 +305,7 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
     p       = S(undef, n)
     vₖ      = S(undef, 0)
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, stats)
+    solver = new{T,S}(Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, stats)
     return solver
   end
 

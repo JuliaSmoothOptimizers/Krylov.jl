@@ -68,4 +68,15 @@
   resid = norm(r) / norm(b)
   @test(resid ≤ symmlq_tol)
   @test(stats.solved)
+
+  # Test restart
+  A, b = restart()
+  solver = SymmlqSolver(A, b)
+  symmlq!(solver, A, b, itmax=50)
+  @test !solver.stats.solved
+  symmlq!(solver, A, b, restart=true)
+  r = b - A * solver.x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ symmlq_tol)
+  @test solver.stats.solved
 end

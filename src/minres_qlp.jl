@@ -19,7 +19,8 @@ export minres_qlp, minres_qlp!
 """
     (x, stats) = minres_qlp(A, b::AbstractVector{T};
                             M=I, atol::T=√eps(T), rtol::T=√eps(T), λ::T=zero(T),
-                            itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                            itmax::Int=0, restart::Bool=false,
+                            verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
 solution on singular inconsistent systems (A + λI)x = b, where λ is a shift parameter.
@@ -43,7 +44,8 @@ end
 
 function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
-                     itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                     itmax :: Int=0, restart :: Bool=false,
+                     verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -59,19 +61,26 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
 
   # Set up workspace.
-  allocate_if(!MisI, solver, :vₖ, S, n)
+  allocate_if(!MisI  , solver, :vₖ, S, n)
+  allocate_if(restart, solver, :Δx, S, n)
   wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ
-  x, p, stats = solver.x, solver.p, solver.stats
+  Δx, x, p, stats = solver.Δx, solver.x, solver.p, solver.stats
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
   vₖ = MisI ? M⁻¹vₖ : solver.vₖ
   vₖ₊₁ = MisI ? p : M⁻¹vₖ₋₁
 
   # Initial solution x₀
+  restart && (Δx .= x)
   x .= zero(T)
 
   # β₁v₁ = Mb
-  M⁻¹vₖ .= b
+  if restart
+    mul!(M⁻¹vₖ, A, Δx)
+    @kaxpby!(n, one(T), b, -one(T), M⁻¹vₖ)
+  else
+    M⁻¹vₖ .= b
+  end
   MisI || mul!(vₖ, M, M⁻¹vₖ)
   βₖ = sqrt(@kdot(n, vₖ, M⁻¹vₖ))
   if βₖ ≠ 0
@@ -322,6 +331,9 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   end
 
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+
+  # Update x
+  restart && @kaxpy!(n, one(T), Δx, x)
 
  # Update stats
   stats.solved = solved
