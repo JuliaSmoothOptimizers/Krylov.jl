@@ -14,7 +14,7 @@ jobs:
       matrix:
         pkg: [
           "JuliaSmoothOptimizers/CaNNOLeS.jl",
-          "JuliaSmoothOptimizers/DCI.jl",
+          "JuliaSmoothOptimizers/DCISolver.jl",
           "JuliaSmoothOptimizers/JSOSolvers.jl",
           "JuliaSmoothOptimizers/Percival.jl"
         ]
