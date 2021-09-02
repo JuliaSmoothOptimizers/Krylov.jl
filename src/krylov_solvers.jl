@@ -519,6 +519,8 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
   q       :: S
   gx₂ₖ₋₁  :: S
   gx₂ₖ    :: S
+  Δx      :: S
+  Δy      :: S
   uₖ      :: S
   vₖ      :: S
   stats   :: SimpleStats{T}
@@ -537,10 +539,12 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
     q       = S(undef, n)
     gx₂ₖ₋₁  = S(undef, n)
     gx₂ₖ    = S(undef, n)
+    Δx      = S(undef, 0)
+    Δy      = S(undef, 0)
     uₖ      = S(undef, 0)
     vₖ      = S(undef, 0)
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ, stats)
+    solver = new{T,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, stats)
     return solver
   end
 
@@ -578,6 +582,8 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
   gx₂ₖ₋₂  :: S
   gx₂ₖ₋₁  :: S
   gx₂ₖ    :: S
+  Δx      :: S
+  Δy      :: S
   uₖ      :: S
   vₖ      :: S
   stats   :: SimpleStats{T}
@@ -600,10 +606,12 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
     gx₂ₖ₋₂  = S(undef, n)
     gx₂ₖ₋₁  = S(undef, n)
     gx₂ₖ    = S(undef, n)
+    Δx      = S(undef, 0)
+    Δy      = S(undef, 0)
     uₖ      = S(undef, 0)
     vₖ      = S(undef, 0)
     stats = SimpleStats(false, false, T[], T[], "unknown")
-    solver = new{T,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, uₖ, vₖ, stats)
+    solver = new{T,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, stats)
     return solver
   end
 

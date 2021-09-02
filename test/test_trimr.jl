@@ -166,4 +166,15 @@
     N⁻¹ = inv(N)
     (x, y, stats) = trimr(A, b, c, M=M⁻¹, N=N⁻¹)
   end
+
+  # Test restart
+  A, b = restart()
+  solver = TrimrSolver(A, b)
+  trimr!(solver, A, b, b, itmax=20)
+  @test !solver.stats.solved
+  trimr!(solver, A, b, b, restart=true)
+  r = [b - solver.x - A * solver.y; b - A' * solver.x + solver.y]
+  resid = norm(r) / norm([b; b])
+  @test(resid ≤ trimr_tol)
+  @test solver.stats.solved
 end

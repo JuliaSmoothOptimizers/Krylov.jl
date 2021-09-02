@@ -15,7 +15,8 @@ export trimr, trimr!
     (x, y, stats) = trimr(A, b::AbstractVector{T}, c::AbstractVector{T};
                           M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                           spd::Bool=false, snd::Bool=false, flip::Bool=false, sp::Bool=false,
-                          τ::T=one(T), ν::T=-one(T), itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                          τ::T=one(T), ν::T=-one(T), itmax::Int=0, verbose::Int=0,
+                          restart::Bool=false, history::Bool=false) where T <: AbstractFloat
 
 TriMR solves the symmetric linear system
 
@@ -60,7 +61,8 @@ end
 function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                 spd :: Bool=false, snd :: Bool=false, flip :: Bool=false, sp :: Bool=false,
-                τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0,
+                restart :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -85,27 +87,35 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
   MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
   NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
+  restart && (τ ≠ 0) && !MisI && error("Restart with preconditioners is not supported.")
+  restart && (ν ≠ 0) && !NisI && error("Restart with preconditioners is not supported.")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
   # Set up workspace.
-  allocate_if(!MisI, solver, :vₖ, S, m)
-  allocate_if(!NisI, solver, :uₖ, S, n)
-  yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p = solver.y, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.p
-  xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = solver.x, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.q
+  allocate_if(!MisI  , solver, :vₖ, S, m)
+  allocate_if(!NisI  , solver, :uₖ, S, n)
+  allocate_if(restart, solver, :Δx, S, m)
+  allocate_if(restart, solver, :Δy, S, n)
+  Δy, yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p = solver.Δy, solver.y, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.p
+  Δx, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = solver.Δx, solver.x, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.q
   gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ = solver.gy₂ₖ₋₃, solver.gy₂ₖ₋₂, solver.gy₂ₖ₋₁, solver.gy₂ₖ
   gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ = solver.gx₂ₖ₋₃, solver.gx₂ₖ₋₂, solver.gx₂ₖ₋₁, solver.gx₂ₖ
   vₖ = MisI ? M⁻¹vₖ : solver.vₖ
   uₖ = NisI ? N⁻¹uₖ : solver.uₖ
   vₖ₊₁ = MisI ? q : M⁻¹vₖ₋₁
   uₖ₊₁ = NisI ? p : N⁻¹uₖ₋₁
+  b₀ = restart ? q : b
+  c₀ = restart ? p : c
 
   stats = solver.stats
   rNorms = stats.residuals
   reset!(stats)
 
   # Initial solutions x₀ and y₀.
+  restart && (Δx .= xₖ)
+  restart && (Δy .= yₖ)
   xₖ .= zero(T)
   yₖ .= zero(T)
 
@@ -116,8 +126,19 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   M⁻¹vₖ₋₁ .= zero(T)  # v₀ = 0
   N⁻¹uₖ₋₁ .= zero(T)  # u₀ = 0
 
+  # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
+  # [  Aᵀ  νI ] [ yₖ ]   [ c - AᵀΔx - νΔy ]   [ c₀ ]
+  if restart
+    mul!(b₀, A, Δy)
+    (τ ≠ 0) && @kaxpy!(m, τ, Δx, b₀)
+    @kaxpby!(m, one(T), b, -one(T), b₀)
+    mul!(c₀, Aᵀ, Δx)
+    (ν ≠ 0) && @kaxpy!(n, ν, Δy, c₀)
+    @kaxpby!(n, one(T), c, -one(T), c₀)
+  end
+
   # β₁Ev₁ = b ↔ β₁v₁ = Mb
-  M⁻¹vₖ .= b
+  M⁻¹vₖ .= b₀
   MisI || mul!(vₖ, M, M⁻¹vₖ)
   βₖ = sqrt(@kdot(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
   if βₖ ≠ 0
@@ -126,7 +147,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   end
 
   # γ₁Fu₁ = c ↔ γ₁u₁ = Nb
-  N⁻¹uₖ .= c
+  N⁻¹uₖ .= c₀
   NisI || mul!(uₖ, N, N⁻¹uₖ)
   γₖ = sqrt(@kdot(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
   if γₖ ≠ 0
@@ -417,6 +438,10 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   end
   (verbose > 0) && @printf("\n")
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+
+  # Update x and y
+  restart && @kaxpy!(m, one(T), Δx, xₖ)
+  restart && @kaxpy!(n, one(T), Δy, yₖ)
 
   # Update stats
   stats.solved = solved
