@@ -30,13 +30,21 @@ lsqr_solver = LsqrSolver(m, n, CuVector{Float32})
 lsqr!(lsqr_solver, A3, b3)
 ```
 
-In-place methods return an updated `solver` workspace.
-Solutions and statistics can be recovered via `solver.x`, `solver.y` and `solver.stats`.
-
 A generic function `solve!` is also available and dispatches to the appropriate Krylov method.
 
 ```@docs
 Krylov.solve!
+```
+
+In-place methods return an updated `solver` workspace.
+Solutions and statistics can be recovered via `solver.x`, `solver.y` and `solver.stats`.
+Functions `solution` and `statistics` can be also used.
+
+```@docs
+Krylov.num_solution
+Krylov.solution
+Krylov.statistics
+Krylov.solved
 ```
 
 ## Examples

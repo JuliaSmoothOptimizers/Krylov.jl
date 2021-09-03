@@ -5,7 +5,7 @@ BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CrlsSolver, CgneSolver, CrmrSolv
 LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
 GmresSolver, FomSolver
 
-export solve!, solution, statistics, solved
+export solve!, solution, num_solution, statistics, solved, solved_primal, solved_dual
 
 "Abstract type for using Krylov solvers in-place"
 abstract type KrylovSolver{T,S} end
@@ -1443,6 +1443,13 @@ Return the solution(s) stored in the `solver`.
 function solution end
 
 """
+    num_solution(solver)
+
+Return the number of solutions stored in the `solver`.
+"""
+function num_solution end
+
+"""
     statistics(solver)
 
 Return the statistics stored in the `solver`.
@@ -1493,8 +1500,15 @@ for (KS, fun, nbsol) in [
     @inline solve!(solver :: $KS, args...; kwargs...) = $(fun)(solver, args...; kwargs...)
     ($nbsol == 1) && @inline solution(solver :: $KS) = solver.x
     ($nbsol == 2) && @inline solution(solver :: $KS) = solver.x, solver.y
+    @inline num_solution(solver :: $KS) = $nbsol
     @inline statistics(solver :: $KS) = solver.stats
-    @inline solved(solver :: $KS) = solver.stats.solved
+    if $KS ∈ (BilqrSolver, TrilqrSolver)
+      @inline solved_primal(solver :: $KS) = solver.stats.solved_primal
+      @inline solved_dual(solver :: $KS) = solver.stats.solved_dual
+      @inline solved(solver :: $KS) = solved_primal(solver) && solved_dual(solver)
+    else
+      @inline solved(solver :: $KS) = solver.stats.solved
+    end
   end
 end
 
