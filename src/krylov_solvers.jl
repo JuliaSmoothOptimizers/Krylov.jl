@@ -1472,3 +1472,38 @@ for (KS, fun) in [
     @inline solve!(solver :: $KS, args...; kwargs...) = $(fun)(solver, args...; kwargs...)
   end
 end
+
+function show(io :: IO, solver :: KrylovSolver)
+  workspace = typeof(solver)
+  name_solver = workspace.name.wrapper
+  precision = workspace.parameters[1]
+  architecture = workspace.parameters[2] <: Vector ? "CPU" : "GPU"
+  @printf(io, "┌%s┬%s┬%s┐\n", "─"^20, "─"^26, "─"^18)
+  @printf(io, "│%20s│%26s│%18s│\n", name_solver, "Precision: $precision", "Architecture: $architecture")
+  @printf(io, "├%s┼%s┼%s┤\n", "─"^20, "─"^26, "─"^18)
+  @printf(io, "│%20s│%26s│%18s│\n", "Attribute", "Type", "Size")
+  @printf(io, "├%s┼%s┼%s┤\n", "─"^20, "─"^26, "─"^18)
+  for i=1:fieldcount(typeof(solver))-1 # show stats seperately
+    type_i = fieldtype(typeof(solver), i)
+    name_i = fieldname(typeof(solver), i)
+    len = if type_i <: AbstractVector
+      field_i = getfield(solver, name_i)
+      ni = length(field_i)
+      if eltype(type_i) <: AbstractVector
+        "$(ni) x $(length(field_i[1]))"
+      else
+        length(field_i)
+      end
+    else
+      0
+    end
+    if name_i in [:w̅, :w̄, :d̅] 
+      @printf(io, "│%21s│%26s│%18s│\n", string(name_i), type_i, len)
+    else
+      @printf(io, "│%20s│%26s│%18s│\n", string(name_i), type_i, len)
+    end
+  end
+  @printf(io, "└%s┴%s┴%s┘\n","─"^20,"─"^26,"─"^18)
+  print(io, solver.stats)
+end
+
