@@ -25,7 +25,7 @@ where
 * `type` is the operator element type;
 * `nrow` and `ncol` are its dimensions;
 * `symmetric` and `hermitian` should be set to `true` or `false`;
-* `prod(v)`, `tprod(w)` and `ctprod(u)` are called when writing `A * v`, `tranpose(A) * w`, and `A' * u`, respectively.
+* `prod(y, v, α, β)`, `tprod(y, w, α, β)` and `ctprod(u, w, α, β)` are called when writing `mul!(y, A, v, α, β)`, `mul!(y, tranpose(A), w, α, β)`, and `mul!(y, A', u, α, β)`, respectively.
 
 See the [tutorial](https://juliasmoothoptimizers.github.io/JSOTutorials.jl/linear-operators/introduction-to-linear-operators/introduction-to-linear-operators.html) and the detailed [documentation](https://juliasmoothoptimizers.github.io/LinearOperators.jl/latest/) for more informations on `LinearOperators.jl`.
 
@@ -71,8 +71,8 @@ f(x) = (x[1] - 1)^2 + (x[2] - 2)^2 + (x[3] - 3)^2 + (x[4] - 4)^2
 
 g(x) = ForwardDiff.gradient(f, x)
 
-H(v) = ForwardDiff.derivative(t -> g(xk + t * v), 0.0)
-opH = LinearOperator(Float64, 4, 4, true, true, v -> H(v))
+H(y, v) = ForwardDiff.derivative!(y, t -> g(xk + t * v), 0)
+opH = LinearOperator(Float64, 4, 4, true, true, (y, v, α, β) -> H(y, v))
 
 cg(opH, -g(xk))
 ```
@@ -109,9 +109,11 @@ xk = ones(2)
 
 F(x) = [x[1]^4 - 3; exp(x[2]) - 2; log(x[1]) - x[2]^2]
 
-J(v) = ForwardDiff.derivative(t -> F(xk + t * v), 0)
-Jᵀ(u) = ForwardDiff.gradient(x -> dot(F(x), u), xk)
-opJ = LinearOperator(Float64, 3, 2, false, false, v -> J(v), w -> Jᵀ(w), u -> Jᵀ(u))
+J(y, v) = ForwardDiff.derivative!(y, t -> F(xk + t * v), 0)
+Jᵀ(y, u) = ForwardDiff.gradient!(y, x -> dot(F(x), u), xk)
+opJ = LinearOperator(Float64, 3, 2, false, false, (y, v, α, β) -> J(y, v),
+                                                  (y, w, α, β) -> Jᵀ(y, w),
+                                                  (y, u, α, β) -> Jᵀ(y, u))
 
 lsmr(opJ, -F(xk))
 ```
