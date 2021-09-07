@@ -5,7 +5,7 @@ makedocs(
   doctest = true,
   linkcheck = true,
   strict = false,
-  format = Documenter.HTML(assets = ["assets/style.css"], prettyurls = get(ENV, "CI", nothing) == "true"),
+  format = Documenter.HTML(assets = ["assets/style.css"], ansicolor=true, prettyurls = get(ENV, "CI", nothing) == "true"),
   sitename = "Krylov.jl",
   pages = ["Home" => "index.md",
            "API" => "api.md",
@@ -19,7 +19,8 @@ makedocs(
            "In-place methods" => "inplace.md",
            "GPU" => "gpu.md",
            "Factorization-free operators" => "factorization-free.md",
-           "Reference" => "reference.md",
+           "Tutorial" => "examples.md",
+           "Reference" => "reference.md"
           ]
 )
 
