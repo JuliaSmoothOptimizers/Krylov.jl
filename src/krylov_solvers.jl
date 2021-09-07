@@ -1497,7 +1497,7 @@ function show(io :: IO, solver :: KrylovSolver)
     else
       0
     end
-    if name_i in [:w̅, :w̄, :d̅] 
+    if name_i in [:w̅, :w̄, :d̅]
       @printf(io, "│%21s│%26s│%18s│\n", string(name_i), type_i, len)
     else
       @printf(io, "│%20s│%26s│%18s│\n", string(name_i), type_i, len)
