@@ -50,100 +50,135 @@
     c  = 3 * c
 
     solver = solve!(cg_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(symmlq_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(minres_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(cg_lanczos_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(cg_lanczos_shift_solver, A, b, shifts)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(diom_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(fom_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(dqgmres_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(gmres_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(cr_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(crmr_solver, Au, c)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(cgs_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(bicgstab_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(craigmr_solver, Au, c)
+    @test nsolution(solver) == 2
     @test solved(solver)
 
     solver = solve!(cgne_solver, Au, c)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(lnlq_solver, Au, c)
+    @test nsolution(solver) == 2
     @test solved(solver)
 
     solver = solve!(craig_solver, Au, c)
+    @test nsolution(solver) == 2
     @test solved(solver)
 
     solver = solve!(lslq_solver, Ao, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(cgls_solver, Ao, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(lsqr_solver, Ao, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(crls_solver, Ao, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(lsmr_solver, Ao, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(usymqr_solver, Ao, b, c)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(trilqr_solver, A, b, b)
+    @test nsolution(solver) == 2
+    @test solved_primal(solver)
+    @test solved_dual(solver)
     @test solved(solver)
 
     solver = solve!(bilq_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(bilqr_solver, A, b, b)
+    @test nsolution(solver) == 2
+    @test solved_primal(solver)
+    @test solved_dual(solver)
     @test solved(solver)
 
     solver = solve!(minres_qlp_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(qmr_solver, A, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(usymlq_solver, Au, c, b)
+    @test nsolution(solver) == 1
     @test solved(solver)
 
     solver = solve!(tricg_solver, Au, c, b)
+    @test nsolution(solver) == 2
     @test solved(solver)
 
     solver = solve!(trimr_solver, Au, c, b)
+    @test nsolution(solver) == 2
     @test solved(solver)
   end
 
-  if VERSION >= v"1.5" && VERSION < v"1.7"
+  if VERSION ≥ v"1.5" && VERSION < v"1.7"
 
     io = IOBuffer()
     show(io, cg_solver)

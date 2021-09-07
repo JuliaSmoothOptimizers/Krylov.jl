@@ -41,7 +41,7 @@ Solutions and statistics can be recovered via `solver.x`, `solver.y` and `solver
 Functions `solution` and `statistics` can be also used.
 
 ```@docs
-Krylov.num_solution
+Krylov.nsolution
 Krylov.solution
 Krylov.statistics
 Krylov.solved
