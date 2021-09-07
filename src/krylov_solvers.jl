@@ -5,7 +5,7 @@ BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CrlsSolver, CgneSolver, CrmrSolv
 LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
 GmresSolver, FomSolver
 
-export solve!, solution, num_solution, statistics, solved, solved_primal, solved_dual
+export solve!, solution, nsolution, statistics, solved, solved_primal, solved_dual
 
 "Abstract type for using Krylov solvers in-place"
 abstract type KrylovSolver{T,S} end
@@ -1439,15 +1439,17 @@ function solve! end
     solution(solver)
 
 Return the solution(s) stored in the `solver`.
+Optionally you can specify which solution you want to recover,
+`solution(solver, 1)` returns `x` and `solution(solver, 2)` returns `y`.
 """
 function solution end
 
 """
-    num_solution(solver)
+    nsolution(solver)
 
-Return the number of solutions stored in the `solver`.
+Return the number of outputs of `solution(solver)`.
 """
-function num_solution end
+function nsolution end
 
 """
     statistics(solver)
@@ -1463,7 +1465,7 @@ Return a boolean that determines whether the Krylov method associated to `solver
 """
 function solved end
 
-for (KS, fun, nbsol) in [
+for (KS, fun, nsol) in [
   (LsmrSolver          , :lsmr!      , 1)
   (CgsSolver           , :cgs!       , 1)
   (UsymlqSolver        , :usymlq!    , 1)
@@ -1498,10 +1500,10 @@ for (KS, fun, nbsol) in [
 ]
   @eval begin
     @inline solve!(solver :: $KS, args...; kwargs...) = $(fun)(solver, args...; kwargs...)
-    ($nbsol == 1) && @inline solution(solver :: $KS) = solver.x
-    ($nbsol == 2) && @inline solution(solver :: $KS) = solver.x, solver.y
-    @inline num_solution(solver :: $KS) = $nbsol
-    @inline statistics(solver :: $KS) = solver.stats
+    @inline nsolution(solver :: $KS) = $nsol
+    ($nsol == 1) && @inline solution(solver :: $KS) = solver.x
+    ($nsol == 2) && @inline solution(solver :: $KS) = solver.x, solver.y
+    @inline solution(solver :: $KS, p :: Integer) = solution(solver)[p]
     if $KS ∈ (BilqrSolver, TrilqrSolver)
       @inline solved_primal(solver :: $KS) = solver.stats.solved_primal
       @inline solved_dual(solver :: $KS) = solver.stats.solved_dual
@@ -1545,4 +1547,3 @@ function show(io :: IO, solver :: KrylovSolver)
   @printf(io, "└%s┴%s┴%s┘\n","─"^20,"─"^26,"─"^18)
   print(io, solver.stats)
 end
-
