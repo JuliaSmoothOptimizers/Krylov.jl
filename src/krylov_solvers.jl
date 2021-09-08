@@ -1459,11 +1459,11 @@ Return the statistics stored in the `solver`.
 function statistics end
 
 """
-    solved(solver)
+    issolved(solver)
 
 Return a boolean that determines whether the Krylov method associated to `solver` succeeded.
 """
-function solved end
+function issolved end
 
 for (KS, fun, nsol) in [
   (LsmrSolver          , :lsmr!      , 1)
