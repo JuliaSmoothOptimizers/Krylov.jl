@@ -50,132 +50,200 @@
     c  = 3 * c
 
     solver = solve!(cg_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(symmlq_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(minres_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(cg_lanczos_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(cg_lanczos_shift_solver, A, b, shifts)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(diom_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(fom_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(dqgmres_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(gmres_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(cr_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(crmr_solver, Au, c)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(cgs_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(bicgstab_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(craigmr_solver, Au, c)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 2
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(cgne_solver, Au, c)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(lnlq_solver, Au, c)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
+    @test solution(solver, 2) === solver.y
     @test nsolution(solver) == 2
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(craig_solver, Au, c)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
+    @test solution(solver, 2) === solver.y
     @test nsolution(solver) == 2
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(lslq_solver, Ao, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(cgls_solver, Ao, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(lsqr_solver, Ao, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(crls_solver, Ao, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(lsmr_solver, Ao, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(usymqr_solver, Ao, b, c)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(trilqr_solver, A, b, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
+    @test solution(solver, 2) === solver.y
     @test nsolution(solver) == 2
-    @test solved_primal(solver)
-    @test solved_dual(solver)
-    @test solved(solver)
+    @test issolved_primal(solver)
+    @test issolved_dual(solver)
+    @test issolved(solver)
 
     solver = solve!(bilq_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(bilqr_solver, A, b, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
+    @test solution(solver, 2) === solver.y
     @test nsolution(solver) == 2
-    @test solved_primal(solver)
-    @test solved_dual(solver)
-    @test solved(solver)
+    @test issolved_primal(solver)
+    @test issolved_dual(solver)
+    @test issolved(solver)
 
     solver = solve!(minres_qlp_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(qmr_solver, A, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(usymlq_solver, Au, c, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(tricg_solver, Au, c, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
+    @test solution(solver, 2) === solver.y
     @test nsolution(solver) == 2
-    @test solved(solver)
+    @test issolved(solver)
 
     solver = solve!(trimr_solver, Au, c, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
+    @test solution(solver, 2) === solver.y
     @test nsolution(solver) == 2
-    @test solved(solver)
+    @test issolved(solver)
   end
 
   if VERSION ≥ v"1.5" && VERSION < v"1.7"

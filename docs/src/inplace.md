@@ -44,7 +44,7 @@ Functions `solution` and `statistics` can be also used.
 Krylov.nsolution
 Krylov.solution
 Krylov.statistics
-Krylov.solved
+Krylov.issolved
 ```
 
 ## Examples

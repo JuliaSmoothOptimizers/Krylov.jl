@@ -5,7 +5,7 @@ BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CrlsSolver, CgneSolver, CrmrSolv
 LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
 GmresSolver, FomSolver
 
-export solve!, solution, nsolution, statistics, solved, solved_primal, solved_dual
+export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual
 
 "Abstract type for using Krylov solvers in-place"
 abstract type KrylovSolver{T,S} end
@@ -1500,16 +1500,18 @@ for (KS, fun, nsol) in [
 ]
   @eval begin
     @inline solve!(solver :: $KS, args...; kwargs...) = $(fun)(solver, args...; kwargs...)
+    @inline statistics(solver :: $KS) = solver.stats
     @inline nsolution(solver :: $KS) = $nsol
     ($nsol == 1) && @inline solution(solver :: $KS) = solver.x
     ($nsol == 2) && @inline solution(solver :: $KS) = solver.x, solver.y
-    @inline solution(solver :: $KS, p :: Integer) = solution(solver)[p]
+    ($nsol == 1) && @inline solution(solver :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
+    ($nsol == 2) && @inline solution(solver :: $KS, p :: Integer) = (1 ≤ p ≤ 2) ? solution(solver)[p] : error("solution(solver) has only two outputs.")
     if $KS ∈ (BilqrSolver, TrilqrSolver)
-      @inline solved_primal(solver :: $KS) = solver.stats.solved_primal
-      @inline solved_dual(solver :: $KS) = solver.stats.solved_dual
-      @inline solved(solver :: $KS) = solved_primal(solver) && solved_dual(solver)
+      @inline issolved_primal(solver :: $KS) = solver.stats.solved_primal
+      @inline issolved_dual(solver :: $KS) = solver.stats.solved_dual
+      @inline issolved(solver :: $KS) = issolved_primal(solver) && issolved_dual(solver)
     else
-      @inline solved(solver :: $KS) = solver.stats.solved
+      @inline issolved(solver :: $KS) = solver.stats.solved
     end
   end
 end
