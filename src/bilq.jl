@@ -19,7 +19,8 @@ export bilq, bilq!
 
 Solve the square linear system Ax = b using the BiLQ method.
 
-BiLQ is based on the Lanczos biorthogonalization process.
+BiLQ is based on the Lanczos biorthogonalization process and requires two initial vectors `b` and `c`.
+The relation bᵀc ≠ 0 must be satisfied and by default `c = b`.
 When A is symmetric and b = c, BiLQ is equivalent to SYMMLQ.
 
 An option gives the possibility of transferring to the BiCG point,
