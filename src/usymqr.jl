@@ -26,7 +26,8 @@ export usymqr, usymqr!
 
 Solve the linear system Ax = b using the USYMQR method.
 
-USYMQR is based on a tridiagonalization process for unsymmetric matrices.
+USYMQR is based on the orthogonal tridiagonalization process and requires two initial vectors `b` and `c`.
+The vector `c` is only used to initialize the process and and a default value can be `b` or `Aᵀb` depending on the shape of `A`.
 The residual norm ‖b - Ax‖ monotonously decreases in USYMQR.
 It's considered as a generalization of MINRES.
 
