@@ -19,6 +19,7 @@ makedocs(
            "In-place methods" => "inplace.md",
            "GPU" => "gpu.md",
            "Factorization-free operators" => "factorization-free.md",
+           "Tips and tricks" => "tips_tricks.md",
            "Tutorial" => "examples.md",
            "Reference" => "reference.md"
           ]
