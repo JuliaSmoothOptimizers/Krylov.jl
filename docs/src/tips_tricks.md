@@ -57,6 +57,8 @@ end
 and wrapped inside a linear operator to solve symmetric linear systems
 
 ```julia
+using LinearOperators
+
 n, m = size(A)
 sym = herm = true
 T = eltype(A)
