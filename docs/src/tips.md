@@ -10,18 +10,20 @@ OPENBLAS_NUM_THREADS=N julia  # Set the number of OpenBLAS threads to N
 MKL_NUM_THREADS=N julia       # Set the number of MKL threads to N
 ```
 
-If you don't know the number of threads available on your computer, you can obtain it with
+If you don't know the maximum number of threads available on your computer, you can obtain it with
 
 ```julia
-N = Sys.CPU_THREADS
+NMAX = Sys.CPU_THREADS
 ```
 
 and define the number of OpenBLAS/MKL threads at runtine with
 
 ```julia
-BLAS.set_num_threads(N)
+BLAS.set_num_threads(N)  # 1 ≤ N ≤ NMAX
 BLAS.get_num_threads()
 ```
+
+The recommended number of BLAS threads is the number of physical and not logical cores, which is in general `N = NMAX / 2`.
 
 By default Julia ships with OpenBLAS but it's also possible to use Intel MKL BLAS and LAPACK with [MKL.jl](https://github.com/JuliaLinearAlgebra/MKL.jl).
 
@@ -69,9 +71,9 @@ To enable multi-threading with Julia, you can start julia with the environment v
 
 ```shell
 julia -t auto  # alternative: --threads auto
-julia -t 4     # alternative: --threads 4
+julia -t N     # alternative: --threads N
 
-JULIA_NUM_THREADS=4 julia
+JULIA_NUM_THREADS=N julia
 ```
 
 Thereafter, you can verify the number of threads usable by Julia
@@ -80,3 +82,5 @@ Thereafter, you can verify the number of threads usable by Julia
 using Base.Threads
 nthreads()
 ```
+
+![benchmarks](https://github.com/JuliaSmoothOptimizers/Krylov.jl/tree/main/docs/src/graphics/julia_vs_mkl.svg)
