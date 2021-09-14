@@ -83,4 +83,7 @@ using Base.Threads
 nthreads()
 ```
 
-![benchmarks](https://github.com/JuliaSmoothOptimizers/Krylov.jl/tree/main/docs/src/graphics/julia_vs_mkl.svg)
+The following benchmarks illustrate the time required in seconds to compute 1000 sparse matrix-vector products with symmetric matrices of the SuiteSparse Matrix Collection.
+The computer used for the benchmarks has 2 physical cores and Julia was launched with `JULIA_NUM_THREADS=2`.
+
+![benchmarks](./graphics/julia_vs_mkl.svg)
