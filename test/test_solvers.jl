@@ -322,11 +322,12 @@
     │                   v│           Vector{Float64}│                 0│
     │             err_vec│           Vector{Float64}│                 5│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
+    Minres stats
     solved: true
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: found approximate zero-residual solution"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
