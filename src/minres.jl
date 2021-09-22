@@ -85,7 +85,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   allocate_if(restart, solver, :Δx, S, n)
   Δx, x, r1, r2, w1, w2, y = solver.Δx, solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y
   err_vec, stats = solver.err_vec, solver.stats
-  rNorms, ArNorms = stats.residuals, stats.Aresiduals
+  rNorms, ArNorms, Aconds = stats.residuals, stats.Aresiduals, stats.Acond
   reset!(stats)
   v = MisI ? r2 : solver.v
 
@@ -115,6 +115,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(rNorms, β₁)
     history && push!(ArNorms, zero(T))
+    history && push!(Aconds, zero(T))
     return solver
   end
   β₁ = sqrt(β₁)
@@ -138,6 +139,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   ANorm² = zero(T)
   ANorm = zero(T)
   Acond = zero(T)
+  history && push!(Aconds, Acond)
   ArNorm = zero(T)
   history && push!(ArNorms, ArNorm)
   xNorm = zero(T)
@@ -250,6 +252,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(rNorms, rNorm)
 
     Acond = γmax / γmin
+    history && push!(Aconds, Acond)
 
     display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, test1, test2)
 

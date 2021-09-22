@@ -30,7 +30,7 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
   y       :: S
   v       :: S
   err_vec :: Vector{T}
-  stats   :: SimpleStats{T}
+  stats   :: MinresStats{T}
 
   function MinresSolver(n, m, S; window :: Int=5)
     T  = eltype(S)
@@ -43,7 +43,7 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
     y  = S(undef, n)
     v  = S(undef, 0)
     err_vec = zeros(T, window)
-    stats = SimpleStats(false, false, T[], T[], "unknown")
+    stats = MinresStats(false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(Δx, x, r1, r2, w1, w2, y, v, err_vec, stats)
     return solver
   end

@@ -82,6 +82,25 @@ mutable struct SymmlqStats{T} <: KrylovStats{T}
 end
 
 """
+Type for statistics returned by MINRES, the attributes are:
+- solved
+- inconsistent
+- residuals
+- Aresiduals
+- Acond
+- status
+"""
+mutable struct MinresStats{T} <: KrylovStats{T}
+  solved       :: Bool
+  inconsistent :: Bool
+  residuals    :: Vector{T}
+  Aresiduals   :: Vector{T}
+  Acond        :: Vector{T}
+  status       :: String
+end
+
+
+"""
 Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the attributes are:
 - solved_primal
 - solved_dual
@@ -150,7 +169,7 @@ special_fields = Dict(
   :err_ubnds_cg => "error bound CG",
 )
 
-for f in ["Simple", "Adjoint", "LNLQ", "LSLQ", "Lanczos", "Symmlq"]
+for f in ["Simple", "Adjoint", "LNLQ", "LSLQ", "Lanczos", "Symmlq", "Minres"]
   T = Meta.parse("Krylov." * f * "Stats{S}")
 
   @eval function empty_field!(stats :: $T, i, ::Type{Vector{Si}}) where {S, Si}
@@ -168,7 +187,7 @@ for f in ["Simple", "Adjoint", "LNLQ", "LSLQ", "Lanczos", "Symmlq"]
   end
 end
 
-for f in ["Simple", "Lanczos", "LanczosShift", "Symmlq", "Adjoint", "LNLQ", "LSLQ"]
+for f in ["Simple", "Lanczos", "LanczosShift", "Symmlq", "Adjoint", "LNLQ", "LSLQ", "Minres"]
   T = Meta.parse("Krylov." * f * "Stats{S}")
 
   @eval function show(io :: IO, stats :: $T) where S
