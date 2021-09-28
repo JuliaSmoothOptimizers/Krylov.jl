@@ -60,7 +60,7 @@ end
 # Operator that model P⁻¹
 n = length(b_gpu)
 T = eltype(b_gpu)
-opM = LinearOperator(T, n, n, true, true, (y, x, α, β) -> ldiv!(y, P, x))
+opM = LinearOperator(T, n, n, true, true, (y, x) -> ldiv!(y, P, x))
 
 # Solve a symmetric positive definite system with an incomplete Cholesky preconditioner on GPU
 (x, stats) = cg(A_gpu, b_gpu, M=opM)
@@ -86,7 +86,7 @@ end
 # Operator that model P⁻¹
 n = length(b_gpu)
 T = eltype(b_gpu)
-opM = LinearOperator(T, n, n, false, false, (y, x, α, β) -> ldiv!(y, P, x))
+opM = LinearOperator(T, n, n, false, false, (y, x) -> ldiv!(y, P, x))
 
 # Solve an unsymmetric system with an incomplete LU preconditioner on GPU
 (x, stats) = bicgstab(A_gpu, b_gpu, M=opM)

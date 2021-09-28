@@ -64,7 +64,7 @@ using LinearOperators
 n, m = size(A)
 sym = herm = true
 T = eltype(A)
-opA = LinearOperator(T, n, m, sym, herm, (y, v, α, β) -> threaded_mul!(y, A, v))
+opA = LinearOperator(T, n, m, sym, herm, (y, v) -> threaded_mul!(y, A, v))
 ```
 
 To enable multi-threading with Julia, you can start julia with the environment variable `JULIA_NUM_THREADS` or the options `-t` and `--threads`

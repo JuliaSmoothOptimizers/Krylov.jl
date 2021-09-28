@@ -195,7 +195,7 @@ c = -b
 # [D   A] [x] = [b]
 # [Aᵀ  0] [y]   [c]
 llt_D = cholesky(D)
-opD⁻¹ = LinearOperator(Float64, 5, 5, true, true, (y, v, α, β) -> ldiv!(y, llt_D, v))
+opD⁻¹ = LinearOperator(Float64, 5, 5, true, true, (y, v) -> ldiv!(y, llt_D, v))
 opH⁻¹ = BlockDiagonalOperator(opD⁻¹, eye(n))
 (x, y, stats) = trimr(A, b, c, M=opD⁻¹, sp=true)
 K = [D A; A' zeros(n,n)]
@@ -225,8 +225,8 @@ resid = norm(r)
 # [Aᵀ -N] [y]   [c]
 ldlt_M = ldl(M)
 ldlt_N = ldl(N)
-opM⁻¹ = LinearOperator(Float64, size(M,1), size(M,2), true, true, (y, v, α, β) -> ldiv!(y, ldlt_M, v))
-opN⁻¹ = LinearOperator(Float64, size(N,1), size(N,2), true, true, (y, v, α, β) -> ldiv!(y, ldlt_N, v))
+opM⁻¹ = LinearOperator(Float64, size(M,1), size(M,2), true, true, (y, v) -> ldiv!(y, ldlt_M, v))
+opN⁻¹ = LinearOperator(Float64, size(N,1), size(N,2), true, true, (y, v) -> ldiv!(y, ldlt_N, v))
 opH⁻¹ = BlockDiagonalOperator(opM⁻¹, opN⁻¹)
 (x, y, stats) = trimr(A, b, c, M=opM⁻¹, N=opN⁻¹, verbose=1)
 K = [M A; A' -N]
@@ -256,9 +256,9 @@ F = ilu(A, τ = 0.05)
 
 # Solve Ax = b with BICGSTAB and an incomplete LU factorization
 # Remark: CGS can be used in the same way
-opM = LinearOperator(Float64, n, n, false, false, (y, v, α, β) -> forward_substitution!(y, F, v))
-opN = LinearOperator(Float64, n, n, false, false, (y, v, α, β) -> backward_substitution!(y, F, v))
-opP = LinearOperator(Float64, n, n, false, false, (y, v, α, β) -> ldiv!(y, F, v))
+opM = LinearOperator(Float64, n, n, false, false, (y, v) -> forward_substitution!(y, F, v))
+opN = LinearOperator(Float64, n, n, false, false, (y, v) -> backward_substitution!(y, F, v))
+opP = LinearOperator(Float64, n, n, false, false, (y, v) -> ldiv!(y, F, v))
 
 # Without preconditioning
 x, stats = bicgstab(A, b, history=true)
@@ -305,9 +305,9 @@ F = ilu0(A)
 
 # Solve Ax = b with DQGMRES and an ILU(0) preconditioner
 # Remark: DIOM, FOM and GMRES can be used in the same way
-opM = LinearOperator(Float64, n, n, false, false, (y, v, α, β) -> forward_substitution!(y, F, v))
-opN = LinearOperator(Float64, n, n, false, false, (y, v, α, β) -> backward_substitution!(y, F, v))
-opP = LinearOperator(Float64, n, n, false, false, (y, v, α, β) -> ldiv!(y, F, v))
+opM = LinearOperator(Float64, n, n, false, false, (y, v) -> forward_substitution!(y, F, v))
+opN = LinearOperator(Float64, n, n, false, false, (y, v) -> backward_substitution!(y, F, v))
+opP = LinearOperator(Float64, n, n, false, false, (y, v) -> ldiv!(y, F, v))
 
 # Without preconditioning
 x, stats = dqgmres(A, b, memory=50, history=true)
