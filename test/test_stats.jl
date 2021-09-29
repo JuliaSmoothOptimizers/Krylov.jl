@@ -1,5 +1,5 @@
 @testset "stats" begin
-  stats = Krylov.SimpleStats(true, true, Float64[1.0], Float64[2.0], "t")
+  stats = Krylov.SimpleStats(true, true, Float64[1.0], Float64[2.0], Float64[], "t")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -9,6 +9,7 @@
   inconsistent: true
   residuals: [ 1.0e+00 ]
   Aresiduals: [ 2.0e+00 ]
+  κ₂(A): []
   status: t"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)

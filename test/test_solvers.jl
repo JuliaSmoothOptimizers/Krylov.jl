@@ -269,6 +269,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -322,7 +323,7 @@
     │                   v│           Vector{Float64}│                 0│
     │             err_vec│           Vector{Float64}│                 5│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Minres stats
+    Simple stats
     solved: true
     inconsistent: false
     residuals: []
@@ -412,6 +413,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -439,6 +441,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -467,6 +470,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -495,6 +499,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -519,6 +524,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -544,6 +550,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -570,6 +577,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -596,6 +604,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -624,6 +633,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: found approximate minimum-norm solution"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -649,6 +659,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -706,6 +717,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough for the tolerances given"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -761,6 +773,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -788,6 +801,7 @@
     inconsistent: true
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: found approximate minimum least-squares solution"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -814,6 +828,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -842,6 +857,7 @@
     inconsistent: true
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: found approximate minimum least-squares solution"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -869,6 +885,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -924,6 +941,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution xᶜ good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -979,6 +997,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -1006,6 +1025,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -1032,6 +1052,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution xᶜ good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -1066,6 +1087,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
@@ -1104,6 +1126,7 @@
     inconsistent: false
     residuals: []
     Aresiduals: []
+    κ₂(A): []
     status: solution good enough given atol and rtol"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   end
