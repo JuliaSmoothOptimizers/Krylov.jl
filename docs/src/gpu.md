@@ -43,10 +43,14 @@ can be applied directly on GPU thanks to efficient operators that take advantage
 ### Example with a symmetric positive-definite system
 
 ```julia
-using CUDA, Krylov, LinearOperators
-using CUDA.CUSPARSE, SparseArrays
+using SparseArrays, Krylov, LinearOperators
+using CUDA, CUDA.CUSPARSE
 
-# LLᵀ ≈ A for CuSparseMatrixCSC matrices
+# Transfer the linear system from the CPU to the GPU
+A_gpu = CuSparseMatrixCSC(A_cpu)  # A = CuSparseMatrixCSR(A_cpu)
+b_gpu = CuVector(b_cpu)
+
+# LLᵀ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
 P = ic02(A_gpu, 'O')
 
 # Solve Py = x
@@ -60,7 +64,8 @@ end
 # Operator that model P⁻¹
 n = length(b_gpu)
 T = eltype(b_gpu)
-opM = LinearOperator(T, n, n, true, true, (y, x) -> ldiv!(y, P, x))
+symmetric = hermitian = true
+opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv!(y, P, x))
 
 # Solve a symmetric positive definite system with an incomplete Cholesky preconditioner on GPU
 (x, stats) = cg(A_gpu, b_gpu, M=opM)
@@ -69,10 +74,20 @@ opM = LinearOperator(T, n, n, true, true, (y, x) -> ldiv!(y, P, x))
 ### Example with a general square system
 
 ```julia
-using CUDA, Krylov, LinearOperators
-using CUDA.CUSPARSE, SparseArrays
+using SparseArrays, Krylov, LinearOperators
+using CUDA, CUDA.CUSPARSE, CUDA.CUSOLVER
 
-# LU ≈ A for CuSparseMatrixCSC matrices
+# Optional -- Compute a permutation vector p such that A[p,:] has no zero diagonal
+p = zfd(A_cpu, 'O')
+p .+= 1
+A_cpu = A_cpu[p,:]
+b_cpu = b_cpu[p]
+
+# Transfer the linear system from the CPU to the GPU
+A_gpu = CuSparseMatrixCSC(A_cpu)  # A = CuSparseMatrixCSR(A_cpu)
+b_gpu = CuVector(b_cpu)
+
+# LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
 P = ilu02(A_gpu, 'O')
 
 # Solve Py = x
@@ -86,7 +101,8 @@ end
 # Operator that model P⁻¹
 n = length(b_gpu)
 T = eltype(b_gpu)
-opM = LinearOperator(T, n, n, false, false, (y, x) -> ldiv!(y, P, x))
+symmetric = hermitian = false
+opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv!(y, P, x))
 
 # Solve an unsymmetric system with an incomplete LU preconditioner on GPU
 (x, stats) = bicgstab(A_gpu, b_gpu, M=opM)
