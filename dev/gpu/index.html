@@ -22,10 +22,14 @@ A_gpu = CuSparseMatrixCSC(A_cpu)
 b_gpu = CuVector(b_cpu)
 
 # Solve a rectangular and sparse system on GPU
-x, stats = lsmr(A_gpu, b_gpu)</code></pre><p>Optimized operator-vector products that exploit GPU features can be also used by means of linear operators.</p><p>Preconditioners, especially incomplete Cholesky or Incomplete LU factorizations that involve triangular solves, can be applied directly on GPU thanks to efficient operators that take advantage of CUSPARSE routines.</p><h3 id="Example-with-a-symmetric-positive-definite-system"><a class="docs-heading-anchor" href="#Example-with-a-symmetric-positive-definite-system">Example with a symmetric positive-definite system</a><a id="Example-with-a-symmetric-positive-definite-system-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-a-symmetric-positive-definite-system" title="Permalink"></a></h3><pre><code class="language-julia hljs">using CUDA, Krylov, LinearOperators
-using CUDA.CUSPARSE, SparseArrays
+x, stats = lsmr(A_gpu, b_gpu)</code></pre><p>Optimized operator-vector products that exploit GPU features can be also used by means of linear operators.</p><p>Preconditioners, especially incomplete Cholesky or Incomplete LU factorizations that involve triangular solves, can be applied directly on GPU thanks to efficient operators that take advantage of CUSPARSE routines.</p><h3 id="Example-with-a-symmetric-positive-definite-system"><a class="docs-heading-anchor" href="#Example-with-a-symmetric-positive-definite-system">Example with a symmetric positive-definite system</a><a id="Example-with-a-symmetric-positive-definite-system-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-a-symmetric-positive-definite-system" title="Permalink"></a></h3><pre><code class="language-julia hljs">using SparseArrays, Krylov, LinearOperators
+using CUDA, CUDA.CUSPARSE
 
-# LLᵀ ≈ A for CuSparseMatrixCSC matrices
+# Transfer the linear system from the CPU to the GPU
+A_gpu = CuSparseMatrixCSC(A_cpu)  # A = CuSparseMatrixCSR(A_cpu)
+b_gpu = CuVector(b_cpu)
+
+# LLᵀ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
 P = ic02(A_gpu, &#39;O&#39;)
 
 # Solve Py = x
@@ -39,13 +43,24 @@ end
 # Operator that model P⁻¹
 n = length(b_gpu)
 T = eltype(b_gpu)
-opM = LinearOperator(T, n, n, true, true, (y, x) -&gt; ldiv!(y, P, x))
+symmetric = hermitian = true
+opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -&gt; ldiv!(y, P, x))
 
 # Solve a symmetric positive definite system with an incomplete Cholesky preconditioner on GPU
-(x, stats) = cg(A_gpu, b_gpu, M=opM)</code></pre><h3 id="Example-with-a-general-square-system"><a class="docs-heading-anchor" href="#Example-with-a-general-square-system">Example with a general square system</a><a id="Example-with-a-general-square-system-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-a-general-square-system" title="Permalink"></a></h3><pre><code class="language-julia hljs">using CUDA, Krylov, LinearOperators
-using CUDA.CUSPARSE, SparseArrays
+(x, stats) = cg(A_gpu, b_gpu, M=opM)</code></pre><h3 id="Example-with-a-general-square-system"><a class="docs-heading-anchor" href="#Example-with-a-general-square-system">Example with a general square system</a><a id="Example-with-a-general-square-system-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-a-general-square-system" title="Permalink"></a></h3><pre><code class="language-julia hljs">using SparseArrays, Krylov, LinearOperators
+using CUDA, CUDA.CUSPARSE, CUDA.CUSOLVER
 
-# LU ≈ A for CuSparseMatrixCSC matrices
+# Optional -- Compute a permutation vector p such that A[p,:] has no zero diagonal
+p = zfd(A_cpu, &#39;O&#39;)
+p .+= 1
+A_cpu = A_cpu[p,:]
+b_cpu = b_cpu[p]
+
+# Transfer the linear system from the CPU to the GPU
+A_gpu = CuSparseMatrixCSC(A_cpu)  # A = CuSparseMatrixCSR(A_cpu)
+b_gpu = CuVector(b_cpu)
+
+# LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
 P = ilu02(A_gpu, &#39;O&#39;)
 
 # Solve Py = x
@@ -59,7 +74,8 @@ end
 # Operator that model P⁻¹
 n = length(b_gpu)
 T = eltype(b_gpu)
-opM = LinearOperator(T, n, n, false, false, (y, x) -&gt; ldiv!(y, P, x))
+symmetric = hermitian = false
+opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -&gt; ldiv!(y, P, x))
 
 # Solve an unsymmetric system with an incomplete LU preconditioner on GPU
-(x, stats) = bicgstab(A_gpu, b_gpu, M=opM)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../inplace/">« In-place methods</a><a class="docs-footer-nextpage" href="../factorization-free/">Factorization-free operators »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.7 on <span class="colophon-date" title="Thursday 30 September 2021 14:05">Thursday 30 September 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+(x, stats) = bicgstab(A_gpu, b_gpu, M=opM)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../inplace/">« In-place methods</a><a class="docs-footer-nextpage" href="../factorization-free/">Factorization-free operators »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.9 on <span class="colophon-date" title="Tuesday 19 October 2021 15:41">Tuesday 19 October 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
