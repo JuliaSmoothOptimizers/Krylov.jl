@@ -269,6 +269,20 @@ function small_sp(transpose :: Bool=false)
   return A, b, c, D
 end
 
+# Generalized saddle-point systems with rectangular A and B.
+function gsp(transpose :: Bool=false)
+  A = [1.0 0.0; 0.0 -1.0; 3.0 0.0]
+  A = transpose ? Matrix(A') : A
+  B = [0.0 2.0 4.0; -3.0 0.0 0.0]
+  B = transpose ? Matrix(B') : B
+  n, m = size(A)
+  b = ones(n)
+  c = -ones(m)
+  M = diagm(0 => [2.0 * i for i = 1:n])
+  N = diagm(0 => [16.0 * i for i = 1:m])
+  return A, B, b, c, M, N
+end
+
 # Symmetric and quasi-definite systems with square A.
 function sqd(n :: Int=5)
   A = [2^(i/j)*j + (-1)^(i-j) * n*(i-1) for i = 1:n, j = 1:n]

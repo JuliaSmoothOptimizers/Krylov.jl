@@ -19,6 +19,8 @@ include("fom.jl")
 include("dqgmres.jl")
 include("gmres.jl")
 
+include("gpmr.jl")
+
 include("usymlq.jl")
 include("usymqr.jl")
 include("tricg.jl")

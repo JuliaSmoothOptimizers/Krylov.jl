@@ -51,13 +51,21 @@ Overdetermined sytems are less common but also occur.
 
 where **_A_** can have any shape.
 
-5 - Saddle-point or symmetric quasi-definite (SQD) systems
+5 - Saddle-point and symmetric quasi-definite (SQD) systems
 
 ```math
   \begin{bmatrix} M & \phantom{-}A \\ A^T & -N \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \left(\begin{bmatrix} b \\ 0 \end{bmatrix},\begin{bmatrix} 0 \\ c \end{bmatrix},\begin{bmatrix} b \\ c \end{bmatrix}\right)
 ```
 
 where **_A_** can have any shape.
+
+6 - Generalized saddle-point and unsymmetric partitioned systems
+
+```math
+  \begin{bmatrix} M & A \\ B & N \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix}
+```
+
+where **_A_** can have any shape and **_B_** has the shape of **_Aᵀ_**.
 
 Krylov solvers are particularly appropriate in situations where such problems must be solved but a factorization is not possible, either because:
 * **_A_** is not available explicitly,

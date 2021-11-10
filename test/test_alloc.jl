@@ -6,7 +6,7 @@ function test_alloc()
   Ao  = A[:,1:m]  # Dimension n x m
   b   = Ao * ones(m) # Dimension n
   c   = Au * ones(n) # Dimension m
-  mem = 120
+  mem = 200
 
   shifts  = [1.0; 2.0; 3.0; 4.0; 5.0]
   nshifts = 5
@@ -505,6 +505,27 @@ function test_alloc()
   trimr!(solver, Au, c, b)  # warmup
   inplace_trimr_bytes = @allocated trimr!(solver, Au, c, b)
   @test (VERSION < v"1.5") || (inplace_trimr_bytes == 0)
+
+  # GPMR needs:
+  # - 2 n-vectors: x, q
+  # - 2 m-vectors: y, p
+  # - 1 (n*mem)-matrix: V
+  # - 1 (m*mem)-matrix: U
+  # - 1 (2*mem)-vector: zt
+  # - 2 (4*mem)-vectors: gc, gs
+  # - 1 (mem*(2mem+1))-vector: R
+  storage_gpmr(mem, n, m) = (mem + 2) * (n + m) + mem * (2 * mem + 11)
+  storage_gpmr_bytes(mem, n, m) = 8 * storage_gpmr(mem, n, m)
+
+  expected_gpmr_bytes = storage_gpmr_bytes(mem, n, m)
+  gpmr(Ao, Au, b, c, memory=mem, λ=1.0, μ=-1.0)  # warmup
+  actual_gpmr_bytes = @allocated gpmr(Ao, Au, b, c, memory=mem, λ=1.0, μ=-1.0)
+  @test expected_gpmr_bytes ≤ actual_gpmr_bytes ≤ 1.02 * expected_gpmr_bytes
+
+  solver = GpmrSolver(Ao, b, mem)
+  gpmr!(solver, Ao, Au, b, c, λ=1.0, μ=-1.0)  # warmup
+  inplace_gpmr_bytes = @allocated gpmr!(solver, Ao, Au, b, c, λ=1.0, μ=-1.0)
+  @test (VERSION < v"1.5") || (inplace_gpmr_bytes == 0)
 end
 
 @testset "alloc" begin

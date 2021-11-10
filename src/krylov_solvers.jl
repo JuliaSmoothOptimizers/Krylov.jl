@@ -3,7 +3,7 @@ CgLanczosShiftSolver, MinresQlpSolver, DqgmresSolver, DiomSolver, UsymlqSolver,
 UsymqrSolver, TricgSolver, TrimrSolver, TrilqrSolver, CgsSolver, BicgstabSolver,
 BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CrlsSolver, CgneSolver, CrmrSolver,
 LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
-GmresSolver, FomSolver
+GmresSolver, FomSolver, GpmrSolver
 
 export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual
 
@@ -1429,6 +1429,65 @@ mutable struct FomSolver{T,S} <: KrylovSolver{T,S}
 end
 
 """
+Type for storing the vectors required by the in-place version of GPMR.
+
+The outer constructors
+
+    solver = GpmrSolver(n, m, memory, S)
+    solver = GpmrSolver(A, b, memory)
+
+may be used in order to create these vectors.
+"""
+mutable struct GpmrSolver{T,S} <: KrylovSolver{T,S}
+  wA    :: S
+  wB    :: S
+  dA    :: S
+  dB    :: S
+  Δx    :: S
+  Δy    :: S
+  x     :: S
+  y     :: S
+  q     :: S
+  p     :: S
+  V     :: Vector{S}
+  U     :: Vector{S}
+  gs    :: Vector{T}
+  gc    :: Vector{T}
+  zt    :: Vector{T}
+  R     :: Vector{T}
+  stats :: SimpleStats{T}
+
+  function GpmrSolver(n, m, memory, S)
+    T  = eltype(S)
+    wA = S(undef, 0)
+    wB = S(undef, 0)
+    dA = S(undef, n)
+    dB = S(undef, m)
+    Δx = S(undef, 0)
+    Δy = S(undef, 0)
+    x  = S(undef, n)
+    y  = S(undef, m)
+    q  = S(undef, 0)
+    p  = S(undef, 0)
+    V  = [S(undef, n) for i = 1 : memory]
+    U  = [S(undef, m) for i = 1 : memory]
+    gs = Vector{T}(undef, 4 * memory)
+    gc = Vector{T}(undef, 4 * memory)
+    zt = Vector{T}(undef, 2 * memory)
+    R  = Vector{T}(undef, memory * (2memory + 1))
+    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    solver = new{T,S}(wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, stats)
+    return solver
+  end
+
+  function GpmrSolver(A, b, memory)
+    n, m = size(A)
+    S = ktypeof(b)
+    GpmrSolver(n, m, memory, S)
+  end
+end
+
+"""
     solve!(solver, args...; kwargs...)
 
 Use the in-place Krylov method associated to `solver`.
@@ -1497,6 +1556,7 @@ for (KS, fun, nsol) in [
   (QmrSolver           , :qmr!       , 1)
   (GmresSolver         , :gmres!     , 1)
   (FomSolver           , :fom!       , 1)
+  (GpmrSolver          , :gpmr!      , 2)
 ]
   @eval begin
     @inline solve!(solver :: $KS, args...; kwargs...) = $(fun)(solver, args...; kwargs...)
