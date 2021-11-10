@@ -41,6 +41,7 @@
   usymlq_solver = UsymlqSolver(m, n, Vector{Float64})
   tricg_solver = TricgSolver(m, n, Vector{Float64})
   trimr_solver = TrimrSolver(m, n, Vector{Float64})
+  gpmr_solver = GpmrSolver(n, m, mem, Vector{Float64})
   
   for i = 1 : 3
     A  = i * A
@@ -239,6 +240,13 @@
     @test issolved(solver)
 
     solver = solve!(trimr_solver, Au, c, b)
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
+    @test solution(solver, 2) === solver.y
+    @test nsolution(solver) == 2
+    @test issolved(solver)
+
+    solver = solve!(gpmr_solver, Ao, Au, b, c)
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test solution(solver, 2) === solver.y
@@ -1120,6 +1128,41 @@
     │                  Δy│           Vector{Float64}│                 0│
     │                  uₖ│           Vector{Float64}│                 0│
     │                  vₖ│           Vector{Float64}│                 0│
+    └────────────────────┴──────────────────────────┴──────────────────┘
+    Simple stats
+    solved: true
+    inconsistent: false
+    residuals: []
+    Aresiduals: []
+    κ₂(A): []
+    status: solution good enough given atol and rtol"""
+    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+
+    io = IOBuffer()
+    show(io, gpmr_solver)
+    showed = String(take!(io))
+    expected = """
+    ┌────────────────────┬──────────────────────────┬──────────────────┐
+    │          GpmrSolver│        Precision: Float64│ Architecture: CPU│
+    ├────────────────────┼──────────────────────────┼──────────────────┤
+    │           Attribute│                      Type│              Size│
+    ├────────────────────┼──────────────────────────┼──────────────────┤
+    │                  wA│           Vector{Float64}│                 0│
+    │                  wB│           Vector{Float64}│                 0│
+    │                  dA│           Vector{Float64}│                64│
+    │                  dB│           Vector{Float64}│                32│
+    │                  Δx│           Vector{Float64}│                 0│
+    │                  Δy│           Vector{Float64}│                 0│
+    │                   x│           Vector{Float64}│                64│
+    │                   y│           Vector{Float64}│                32│
+    │                   q│           Vector{Float64}│                 0│
+    │                   p│           Vector{Float64}│                 0│
+    │                   V│   Vector{Vector{Float64}}│           10 x 64│
+    │                   U│   Vector{Vector{Float64}}│           10 x 32│
+    │                  gs│           Vector{Float64}│                40│
+    │                  gc│           Vector{Float64}│                40│
+    │                  zt│           Vector{Float64}│                20│
+    │                   R│           Vector{Float64}│               210│
     └────────────────────┴──────────────────────────┴──────────────────┘
     Simple stats
     solved: true
