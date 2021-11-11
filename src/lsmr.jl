@@ -89,7 +89,7 @@ Note that `history` should be set to `true` to have access to `rNorms` and `ArNo
 
 #### Reference
 
-* D. C.-L. Fong and M. A. Saunders, *LSMR: An Iterative Algorithm for Sparse*, Least Squares Problems, SIAM Journal on Scientific Computing, 33(5), pp. 2950--2971, 2011.
+* D. C.-L. Fong and M. A. Saunders, *LSMR: An Iterative Algorithm for Sparse Least Squares Problems*, SIAM Journal on Scientific Computing, 33(5), pp. 2950--2971, 2011.
 """
 function lsmr(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
   solver = LsmrSolver(A, b, window=window)
