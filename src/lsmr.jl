@@ -49,6 +49,10 @@ LSMR is formally equivalent to applying MINRES to the normal equations
 LSMR produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr‖₂.
 It is formally equivalent to CRLS, though can be substantially more accurate.
 
+LSMR can be also used to find a null vector of a singular matrix A
+by solving the problem `min ‖Aᵀx - b‖` with any nonzero vector `b`.
+At a minimizer, the residual vector `r = b - Aᵀx` will satisfy `Ar = 0`.
+
 Preconditioners M and N may be provided in the form of linear operators and are
 assumed to be symmetric and positive definite. If `sqd` is set to `true`,
 we solve the symmetric and quasi-definite system
