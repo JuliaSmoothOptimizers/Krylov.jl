@@ -26,7 +26,7 @@ export usymlq, usymlq!
 
 Solve the linear system Ax = b using the USYMLQ method.
 
-USYMLQ is based on the orthogonal tridiagonalization process and requires two initial vectors `b` and `c`.
+USYMLQ is based on the orthogonal tridiagonalization process and requires two initial nonzero vectors `b` and `c`.
 The vector `c` is only used to initialize the process and a default value can be `b` or `Aᵀb` depending on the shape of `A`.
 The error norm ‖x - x*‖ monotonously decreases in USYMLQ.
 It's considered as a generalization of SYMMLQ.

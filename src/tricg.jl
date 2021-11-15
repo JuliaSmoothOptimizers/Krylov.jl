@@ -24,7 +24,9 @@ TriCG solves the symmetric linear system
     [  Aᵀ  νF ] [ y ]   [ c ],
 
 where τ and ν are real numbers, E = M⁻¹ ≻ 0 and F = N⁻¹ ≻ 0.
-TriCG could breakdown if `τ = 0` or `ν = 0`. It's recommended to use TriMR in these cases.
+`b` and `c` must be both nonzero.
+TriCG could breakdown if `τ = 0` or `ν = 0`.
+It's recommended to use TriMR in these cases.
 
 By default, TriCG solves symmetric and quasi-definite linear systems with τ = 1 and ν = -1.
 If `flip = true`, TriCG solves another known variant of SQD systems where τ = -1 and ν = 1.
@@ -139,6 +141,8 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   if βₖ ≠ 0
     @kscal!(m, 1 / βₖ, M⁻¹vₖ)
     MisI || @kscal!(m, 1 / βₖ, vₖ)
+  else
+    error("b must be nonzero")
   end
 
   # γ₁Fu₁ = c ↔ γ₁u₁ = Nb
@@ -148,6 +152,8 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   if γₖ ≠ 0
     @kscal!(n, 1 / γₖ, N⁻¹uₖ)
     NisI || @kscal!(n, 1 / γₖ, uₖ)
+  else
+    error("c must be nonzero")
   end
 
   # Initialize directions Gₖ such that Lₖ(Gₖ)ᵀ = (Wₖ)ᵀ

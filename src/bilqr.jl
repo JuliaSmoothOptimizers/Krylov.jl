@@ -22,6 +22,7 @@ Combine BiLQ and QMR to solve adjoint systems.
     [0  A] [y] = [b]
     [Aᵀ 0] [x]   [c]
 
+The relation `bᵀc ≠ 0` must be satisfied.
 BiLQ is used for solving primal system `Ax = b`.
 QMR is used for solving dual system `Aᵀy = c`.
 

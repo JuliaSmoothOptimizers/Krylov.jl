@@ -23,7 +23,8 @@ TriMR solves the symmetric linear system
     [ τE    A ] [ x ] = [ b ]
     [  Aᵀ  νF ] [ y ]   [ c ],
 
-where τ and ν are real numbers, E = M⁻¹ ≻ 0 and F = N⁻¹ ≻ 0.
+where τ and ν are real numbers, E = M⁻¹ ≻ 0, F = N⁻¹ ≻ 0.
+`b` and `c` must be both nonzero.
 TriMR handles saddle-point systems (`τ = 0` or `ν = 0`) and adjoint systems (`τ = 0` and `ν = 0`) without any risk of breakdown.
 
 By default, TriMR solves symmetric and quasi-definite linear systems with τ = 1 and ν = -1.
@@ -144,6 +145,8 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   if βₖ ≠ 0
     @kscal!(m, 1 / βₖ, M⁻¹vₖ)
     MisI || @kscal!(m, 1 / βₖ, vₖ)
+  else
+    error("b must be nonzero")
   end
 
   # γ₁Fu₁ = c ↔ γ₁u₁ = Nb
@@ -153,6 +156,8 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   if γₖ ≠ 0
     @kscal!(n, 1 / γₖ, N⁻¹uₖ)
     NisI || @kscal!(n, 1 / γₖ, uₖ)
+  else
+    error("c must be nonzero")
   end
 
   # Initialize directions Gₖ such that (GₖRₖ)ᵀ = (Wₖ)ᵀ.
