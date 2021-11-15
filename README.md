@@ -84,7 +84,7 @@ where **_A_** can have any shape.
 
 where **_A_** can have any shape.
 
-6 - Generalized saddle-point and unsymmetric partitioned systems
+6. Generalized saddle-point and unsymmetric partitioned systems
 
 <p align="center">
   [<b><i>M</i></b>&nbsp;&nbsp;&nbsp;<b><i>A</i></b>]&nbsp; [<b><i>x</i></b>]            =           [<b><i>b</i></b>]
@@ -93,6 +93,7 @@ where **_A_** can have any shape.
 </p>
 
 where **_A_** can have any shape and **_B_** has the shape of **_Aᵀ_**.
+**_A_**, **_B_**, **_b_** and **_c_** must be all nonzero.
 
 Krylov solvers are particularly appropriate in situations where such problems must be solved but a factorization is not possible, either because:
 * **_A_** is not available explicitly,

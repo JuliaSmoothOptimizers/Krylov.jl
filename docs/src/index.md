@@ -66,6 +66,7 @@ where **_A_** can have any shape.
 ```
 
 where **_A_** can have any shape and **_B_** has the shape of **_Aᵀ_**.
+**_A_**, **_B_**, **_b_** and **_c_** must be all nonzero.
 
 Krylov solvers are particularly appropriate in situations where such problems must be solved but a factorization is not possible, either because:
 * **_A_** is not available explicitly,

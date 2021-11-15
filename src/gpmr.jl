@@ -25,7 +25,7 @@ GPMR solves the unsymmetric partitioned linear system
 
 where λ and μ are real numbers.
 `A` can have any shape and `B` has the shape of `Aᵀ`.
-`b` and `c` must be both nonzero.
+`A`, `B`, `b` and `c` must be all nonzero.
 
 This implementation allows left and right block diagonal preconditioners
 
