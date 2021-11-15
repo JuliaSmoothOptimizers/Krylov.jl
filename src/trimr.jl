@@ -24,7 +24,7 @@ TriMR solves the symmetric linear system
     [  Aᵀ  νF ] [ y ]   [ c ],
 
 where τ and ν are real numbers, E = M⁻¹ ≻ 0, F = N⁻¹ ≻ 0.
-`b` and `c` must be both nonzero.
+`b` and `c` must both be nonzero.
 TriMR handles saddle-point systems (`τ = 0` or `ν = 0`) and adjoint systems (`τ = 0` and `ν = 0`) without any risk of breakdown.
 
 By default, TriMR solves symmetric and quasi-definite linear systems with τ = 1 and ν = -1.
