@@ -16,6 +16,8 @@ export cgs, cgs!
                      itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system Ax = b using conjugate gradient squared algorithm.
+CGS requires two initial vectors `b` and `c`.
+The relation `bᵀc ≠ 0` must be satisfied and by default `c = b`.
 
 From "Iterative Methods for Sparse Linear Systems (Y. Saad)" :
 

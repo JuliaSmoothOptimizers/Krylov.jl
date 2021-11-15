@@ -21,6 +21,8 @@ export bicgstab, bicgstab!
                           itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the square linear system Ax = b using the BICGSTAB method.
+BICGSTAB requires two initial vectors `b` and `c`.
+The relation `bᵀc ≠ 0` must be satisfied and by default `c = b`.
 
 The Biconjugate Gradient Stabilized method is a variant of BiCG, like CGS,
 but using different updates for the Aᵀ-sequence in order to obtain smoother
