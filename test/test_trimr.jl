@@ -159,6 +159,12 @@
   resid = norm(r) / norm(B)
   @test(resid ≤ trimr_tol)
 
+  # Test b=0 or c=0
+  c .= 0
+  @test_throws ErrorException("c must be nonzero") trimr(A, b, c)
+  b .= 0
+  @test_throws ErrorException("b must be nonzero") trimr(A, b, c)
+
   # Test dimension of additional vectors
   for transpose ∈ (false, true)
     A, b, c, M, N = small_sqd(transpose)
