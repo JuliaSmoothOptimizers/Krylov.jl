@@ -35,6 +35,12 @@
     res = norm(d - K * [x; y])
     resid = norm(P⁻¹ * r) / norm(P⁻¹ * d)
     @test(resid ≤ gpmr_tol)
+
+    # Test b=0 or c=0
+    c .= 0
+    @test_throws ErrorException("c must be nonzero") gpmr(A, B, b, c)
+    b .= 0
+    @test_throws ErrorException("b must be nonzero") gpmr(A, B, b, c)
   end
 
   # Test underdetermined adjoint systems.
