@@ -24,6 +24,8 @@ GPMR solves the unsymmetric partitioned linear system
     [  B  μI ] [ y ]   [ c ],
 
 where λ and μ are real numbers.
+`A` can have any shape and `B` has the shape of `Aᵀ`.
+`b` and `c` must be both nonzero.
 
 This implementation allows left and right block diagonal preconditioners
 
@@ -37,11 +39,12 @@ and can solve
 
 when `CE = M⁻¹` and `DF = N⁻¹`.
 
-By default, GPMR solves unsymmetric linear systems with λ = 1 and μ = 1.
+By default, GPMR solves unsymmetric linear systems with `λ = 1` and `μ = 1`.
 If `gsp = true`, `λ = 1`, `μ = 0` and the associated generalized saddle point system is solved.
 `λ` and `μ` are also keyword arguments that can be directly modified for more specific problems.
 
 GPMR is based on the orthogonal Hessenberg reduction process and its relations with the block-Arnoldi process.
+The residual norm ‖rₖ‖ is monotonically decreasing in GPMR.
 
 GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
@@ -148,6 +151,7 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
     b₀ = q
   end
   β = @knrm2(m, b₀)
+  β ≠ 0 || error("b must be nonzero")
   @. V[1] = b₀ / β
 
   # γu₁ = Dc
@@ -156,6 +160,7 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
     c₀ = p
   end
   γ = @knrm2(n, c₀)
+  γ ≠ 0 || error("c must be nonzero")
   @. U[1] = c₀ / γ
 
   # Compute ‖r₀‖² = γ² + β²
