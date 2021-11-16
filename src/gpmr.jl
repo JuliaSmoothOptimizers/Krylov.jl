@@ -54,7 +54,7 @@ Information will be displayed every `verbose` iterations.
 
 #### Reference
 
-* A. Montoison and D. Orban, *GPMR: An Iterative Method for Unsymmetric Partitioned Linear Systems*, Cahier du GERAD G-2021-62, GERAD, Montréal, 2021.
+* A. Montoison and D. Orban, [*GPMR: An Iterative Method for Unsymmetric Partitioned Linear Systems*](https://dx.doi.org/10.13140/RG.2.2.24069.68326), Cahier du GERAD G-2021-62, GERAD, Montréal, 2021.
 """
 function gpmr(A, B, b :: AbstractVector{T}, c :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
   solver = GpmrSolver(A, b, memory)
