@@ -38,7 +38,7 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 
 #### Reference
 
-* P. Sonneveld, *CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems*, SIAM Journal on Scientific and Statistical Computing, 10(1), pp. 36--52, 1989.
+* P. Sonneveld, [*CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems*](https://doi.org/10.1137/0910004), SIAM Journal on Scientific and Statistical Computing, 10(1), pp. 36--52, 1989.
 """
 function cgs(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CgsSolver(A, b)

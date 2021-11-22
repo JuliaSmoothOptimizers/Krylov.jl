@@ -60,7 +60,7 @@ A preconditioner M may be provided in the form of a linear operator.
 
 #### References
 
-* J. E. Craig, *The N-step iteration procedures*, Journal of Mathematics and Physics, 34(1), pp. 64--73, 1955.
+* J. E. Craig, [*The N-step iteration procedures*](https://doi.org/10.1002/sapm195534164), Journal of Mathematics and Physics, 34(1), pp. 64--73, 1955.
 * J. E. Craig, *Iterations Procedures for Simultaneous Equations*, Ph.D. Thesis, Department of Electrical Engineering, MIT, 1954.
 """
 function cgne(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat

@@ -28,7 +28,7 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 
 #### Reference
 
-* Y. Saad and K. Wu, *DQGMRES: a quasi minimal residual algorithm based on incomplete orthogonalization*, Numerical Linear Algebra with Applications, Vol. 3(4), pp. 329--343, 1996.
+* Y. Saad and K. Wu, [*DQGMRES: a quasi minimal residual algorithm based on incomplete orthogonalization*](https://doi.org/10.1002/(SICI)1099-1506(199607/08)3:4%3C329::AID-NLA86%3E3.0.CO;2-8), Numerical Linear Algebra with Applications, Vol. 3(4), pp. 329--343, 1996.
 """
 function dqgmres(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
   solver = DqgmresSolver(A, b, memory)

@@ -31,8 +31,8 @@ assumed to be symmetric and positive definite.
 
 #### References
 
-* A. Frommer and P. Maass, *Fast CG-Based Methods for Tikhonov-Phillips Regularization*, SIAM Journal on Scientific Computing, 20(5), pp. 1831--1850, 1999.
-* C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
+* A. Frommer and P. Maass, [*Fast CG-Based Methods for Tikhonov-Phillips Regularization*](https://doi.org/10.1137/S1064827596313310), SIAM Journal on Scientific Computing, 20(5), pp. 1831--1850, 1999.
+* C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
 function cg_lanczos(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CgLanczosSolver(A, b)

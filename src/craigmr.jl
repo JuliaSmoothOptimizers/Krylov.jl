@@ -66,8 +66,8 @@ returned.
 
 #### References
 
-* D. Orban and M. Arioli. *Iterative Solution of Symmetric Quasi-Definite Linear Systems*, Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
-* D. Orban, *The Projected Golub-Kahan Process for Constrained, Linear Least-Squares Problems*. Cahier du GERAD G-2014-15, 2014.
+* D. Orban and M. Arioli. [*Iterative Solution of Symmetric Quasi-Definite Linear Systems*](https://doi.org/10.1137/1.9781611974737), Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
+* D. Orban, [*The Projected Golub-Kahan Process for Constrained, Linear Least-Squares Problems*](https://dx.doi.org/10.13140/RG.2.2.17443.99360). Cahier du GERAD G-2014-15, 2014.
 """
 function craigmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CraigmrSolver(A, b)

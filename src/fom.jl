@@ -28,7 +28,7 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 
 #### Reference
 
-* Y. Saad, *Krylov subspace methods for solving unsymmetric linear systems*, Mathematics of computation, Vol. 37(155), pp. 105--126, 1981.
+* Y. Saad, [*Krylov subspace methods for solving unsymmetric linear systems*](https://doi.org/10.1090/S0025-5718-1981-0616364-6), Mathematics of computation, Vol. 37(155), pp. 105--126, 1981.
 """
 function fom(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
   solver = FomSolver(A, b, memory)

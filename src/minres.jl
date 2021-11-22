@@ -53,7 +53,7 @@ assumed to be symmetric and positive definite.
 
 #### Reference
 
-* C. C. Paige and M. A. Saunders, *Solution of Sparse Indefinite Systems of Linear Equations*, SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
+* C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
 function minres(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
   solver = MinresSolver(A, b, window=window)

@@ -51,7 +51,7 @@ Information will be displayed every `verbose` iterations.
 
 #### Reference
 
-* A. Montoison and D. Orban, *TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems*, SIAM Journal on Scientific Computing, 43(4), pp. 2502--2525, 2021.
+* A. Montoison and D. Orban, [*TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems*](https://doi.org/10.1137/20M1363030), SIAM Journal on Scientific Computing, 43(4), pp. 2502--2525, 2021.
 """
 function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = TrimrSolver(A, b)

@@ -124,8 +124,8 @@ The iterations stop as soon as one of the following conditions holds true:
 
 #### References
 
-* R. Estrin, D. Orban and M. A. Saunders, *Euclidean-norm error bounds for SYMMLQ and CG*, SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 235--253, 2019.
-* R. Estrin, D. Orban and M. A. Saunders, *LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*, SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 254--275, 2019.
+* R. Estrin, D. Orban and M. A. Saunders, [*Euclidean-norm error bounds for SYMMLQ and CG*](https://doi.org/10.1137/16M1094816), SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 235--253, 2019.
+* R. Estrin, D. Orban and M. A. Saunders, [*LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*](https://doi.org/10.1137/17M1113552), SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 254--275, 2019.
 """
 function lslq(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
   solver = LslqSolver(A, b, window=window)
