@@ -66,7 +66,7 @@ For instance σ:=(1-1e-7)σₘᵢₙ .
 
 #### Reference
 
-* R. Estrin, D. Orban, M.A. Saunders, *LNLQ: An Iterative Method for Least-Norm Problems with an Error Minimization Property*, SIAM Journal on Matrix Analysis and Applications, 40(3), pp. 1102--1124, 2019.
+* R. Estrin, D. Orban, M.A. Saunders, [*LNLQ: An Iterative Method for Least-Norm Problems with an Error Minimization Property*](https://doi.org/10.1137/18M1194948), SIAM Journal on Matrix Analysis and Applications, 40(3), pp. 1102--1124, 2019.
 """
 function lnlq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = LnlqSolver(A, b)

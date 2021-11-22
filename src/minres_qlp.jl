@@ -33,8 +33,8 @@ M also indicates the weighted norm in which residuals are measured.
 #### References
 
 * S.-C. T. Choi, *Iterative methods for singular linear equations and least-squares problems*, Ph.D. thesis, ICME, Stanford University, 2006.
-* S.-C. T. Choi, C. C. Paige and M. A. Saunders, *MINRES-QLP: A Krylov subspace method for indefinite or singular symmetric systems*, SIAM Journal on Scientific Computing, Vol. 33(4), pp. 1810--1836, 2011.
-* S.-C. T. Choi and M. A. Saunders, *Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems*, ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014.
+* S.-C. T. Choi, C. C. Paige and M. A. Saunders, [*MINRES-QLP: A Krylov subspace method for indefinite or singular symmetric systems*](https://doi.org/10.1137/100787921), SIAM Journal on Scientific Computing, Vol. 33(4), pp. 1810--1836, 2011.
+* S.-C. T. Choi and M. A. Saunders, [*Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems*](https://doi.org/10.1145/2527267), ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014.
 """
 function minres_qlp(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = MinresQlpSolver(A, b)

@@ -33,9 +33,9 @@ When `A` is symmetric and `b = c`, QMR is equivalent to MINRES.
 
 #### References
 
-* R. W. Freund and N. M. Nachtigal, *QMR : a quasi-minimal residual method for non-Hermitian linear systems*, Numerische mathematik, Vol. 60(1), pp. 315--339, 1991.
-* R. W. Freund and N. M. Nachtigal, *An implementation of the QMR method based on coupled two-term recurrences*, SIAM Journal on Scientific Computing, Vol. 15(2), pp. 313--337, 1994.
-* A. Montoison and D. Orban, *BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*, SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
+* R. W. Freund and N. M. Nachtigal, [*QMR : a quasi-minimal residual method for non-Hermitian linear systems*](https://doi.org/10.1007/BF01385726), Numerische mathematik, Vol. 60(1), pp. 315--339, 1991.
+* R. W. Freund and N. M. Nachtigal, [*An implementation of the QMR method based on coupled two-term recurrences*](https://doi.org/10.1137/0915022), SIAM Journal on Scientific Computing, Vol. 15(2), pp. 313--337, 1994.
+* A. Montoison and D. Orban, [*BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*](https://doi.org/10.1137/19M1290991), SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
 function qmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = QmrSolver(A, b)

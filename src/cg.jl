@@ -35,7 +35,7 @@ with `n = length(b)`.
 
 #### Reference
 
-* M. R. Hestenes and E. Stiefel, *Methods of conjugate gradients for solving linear systems*, Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
+* M. R. Hestenes and E. Stiefel, [*Methods of conjugate gradients for solving linear systems*](https://doi.org/10.6028/jres.049.044), Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
 """
 function cg(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CgSolver(A, b)

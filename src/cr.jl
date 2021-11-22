@@ -1,7 +1,10 @@
 # A truncated version of Stiefel’s Conjugate Residual method described in
 #
-# M. R. Hestenes and E. Stiefel. Methods of conjugate gradients for solving linear systems.
+# M. R. Hestenes and E. Stiefel, Methods of conjugate gradients for solving linear systems.
 # Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
+#
+# E. Stiefel, Relaxationsmethoden bester Strategie zur Losung linearer Gleichungssysteme.
+# Commentarii Mathematici Helvetici, 29(1), pp. 157--179, 1955.
 #
 # M-A. Dahito and D. Orban, The Conjugate Residual Method in Linesearch and Trust-Region Methods.
 # SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
@@ -29,8 +32,9 @@ with `n = length(b)`.
 
 #### References
 
-* M. R. Hestenes and E. Stiefel, *Methods of conjugate gradients for solving linear systems*, Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
-* M-A. Dahito and D. Orban, *The Conjugate Residual Method in Linesearch and Trust-Region Methods*, SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
+* M. R. Hestenes and E. Stiefel, [*Methods of conjugate gradients for solving linear systems*](https://doi.org/10.6028/jres.049.044), Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
+* E. Stiefel, [*Relaxationsmethoden bester Strategie zur Losung linearer Gleichungssysteme*](https://doi.org/10.1007/BF02564277), Commentarii Mathematici Helvetici, 29(1), pp. 157--179, 1955.
+* M-A. Dahito and D. Orban, [*The Conjugate Residual Method in Linesearch and Trust-Region Methods*](https://doi.org/10.1137/18M1204255), SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
 """
 function cr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CrSolver(A, b)
@@ -43,8 +47,9 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
              radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
 
   linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
-  n = size(b, 1) # size of the problem
-  (size(A, 1) == n & size(A, 2) == n) || error("Inconsistent problem size")
+  n, m = size(A)
+  m == n || error("System must be square")
+  length(b) == n || error("Inconsistent problem size")
   (verbose > 0) && @printf("CR: system of %d equations in %d variables\n", n, n)
 
   # Tests M == Iₙ

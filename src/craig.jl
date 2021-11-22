@@ -73,8 +73,8 @@ In this implementation, both the x and y-parts of the solution are returned.
 
 #### References
 
-* C. C. Paige and M. A. Saunders, *LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*, ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
-* M. A. Saunders, *Solutions of Sparse Rectangular Systems Using LSQR and CRAIG*, BIT Numerical Mathematics, 35(4), pp. 588--604, 1995.
+* C. C. Paige and M. A. Saunders, [*LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*](https://doi.org/10.1145/355984.355989), ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
+* M. A. Saunders, [*Solutions of Sparse Rectangular Systems Using LSQR and CRAIG*](https://doi.org/10.1007/BF01739829), BIT Numerical Mathematics, 35(4), pp. 588--604, 1995.
 """
 function craig(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   solver = CraigSolver(A, b)
