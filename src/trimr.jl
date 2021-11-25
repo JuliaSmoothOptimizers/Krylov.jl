@@ -149,7 +149,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     error("b must be nonzero")
   end
 
-  # γ₁Fu₁ = c ↔ γ₁u₁ = Nb
+  # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
   N⁻¹uₖ .= c₀
   NisI || mul!(uₖ, N, N⁻¹uₖ)
   γₖ = sqrt(@kdot(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
