@@ -24,7 +24,9 @@ for path in paths
   name = split(path, '/')[end]
   A = MatrixMarket.mmread(path * "/$name.mtx")
   n, m = size(A)
-  b = ones(n)
-  rtol = 1.0e-8
-  SUITE["UFL"][name] = @benchmarkable cg($A, $b, atol=0.0, rtol=$rtol, itmax=$n)
+  if eltype(A) == Float64
+    b = ones(n)
+    rtol = 1.0e-8
+    SUITE["UFL"][name] = @benchmarkable cg($A, $b, atol=0.0, rtol=$rtol, itmax=$n)
+  end
 end
