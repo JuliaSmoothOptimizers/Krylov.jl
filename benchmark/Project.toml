@@ -1,5 +1,6 @@
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Git = "d7ba0133-e1db-5d97-8f8c-041e4b3a1eb2"
 GitHub = "bc5e4493-9b4d-5f90-b8aa-2b2bcaad7a26"
