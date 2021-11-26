@@ -1,5 +1,5 @@
 # Krylov.jl: A Julia basket of hand-picked Krylov methods
- 
+
 | **Documentation** | **Linux/macOS/Windows/FreeBSD** | **Coverage** | **DOI** |
 |:-----------------:|:-------------------------------:|:------------:|:-------:|
 | [![docs-stable][docs-stable-img]][docs-stable-url] [![docs-dev][docs-dev-img]][docs-dev-url] | [![build-gh][build-gh-img]][build-gh-url] [![build-cirrus][build-cirrus-img]][build-cirrus-url] | [![codecov][codecov-img]][codecov-url] | [![doi][doi-img]][doi-url] |

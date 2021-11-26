@@ -1,5 +1,5 @@
 using BenchmarkTools
-using LinearAlgebra, SparseArrays
+using LinearAlgebra, SparseArrays, Krylov
 using MatrixMarket, SuiteSparseMatrixCollection
 
 include("../test/get_div_grad.jl")
