@@ -320,3 +320,14 @@ function check_reset(stats :: KS) where KS <: Krylov.KrylovStats
     end
   end
 end
+
+# Compute a Jacobi preconditioner.
+function jacobi(A; T=Float64, pd=true)
+  n, m = size(A)
+  J = zeros(T, n)
+  for i = 1 : n
+    J[i] = (A[i,i] == 0) ? one(T) : (pd ? 1 / abs(A[i,i]) : 1 / A[i,i])
+  end
+  P⁻¹ = Diagonal(J)
+  return P⁻¹
+end
