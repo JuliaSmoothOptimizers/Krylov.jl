@@ -63,8 +63,8 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   eltype(A) == T || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
-  MisI || (eltype(M) == T) || error("eltype(M) ≠ $T")
-  NisI || (eltype(N) == T) || error("eltype(N) ≠ $T")
+  MisI || (promote_type(eltype(M), T) == T) || error("eltype(M) can't be promoted to $T")
+  NisI || (promote_type(eltype(N), T) == T) || error("eltype(N) can't be promoted to $T")
 
   # Set up workspace.
   allocate_if(!MisI, solver, :vw, S, n)
