@@ -55,4 +55,28 @@
       end
     end
   end
+
+  A = get_div_grad(4, 4, 4)
+  B = A'
+  b = ones(64)
+  c = -ones(64)
+  P = jacobi(A, T=Float32)
+  @test eltype(A) ≠ eltype(P)
+  @test promote_type(eltype(A), eltype(P)) == eltype(A)
+  shifts = [-1.0, 1.0]
+  for fn in (:cg, :cgls, :cgne, :cgs, :crmr, :cg_lanczos, :dqgmres, :diom, :cr, :gpmr, :lslq, :lsqr, :lsmr, :lnlq,
+             :craig, :bicgstab, :craigmr, :crls, :symmlq, :minres, :minres_qlp, :tricg, :trimr, :gmres, :fom)
+    if fn in (:tricg, :trimr)
+      @eval $fn($A, $b, $c, M=$P, N=$P)
+    elseif fn == :gpmr
+      @eval $fn($A, $B, $b, $c, C=$P, D=$P, E=$P, F=$P)
+    elseif fn in (:lnlq, :craig, :craigmr, :lnlq, :craig, :craigmr, :cgs, :bicgstab, :diom, :dqgmres, :fom, :gmres)
+      @eval $fn($A, $b, M=$P, N=$P)
+    else
+      @eval $fn($A, $b, M=$P)
+      if fn == :cg_lanczos
+        @eval $fn($A, $b, $shifts, M=$P)
+      end
+    end
+  end
 end
