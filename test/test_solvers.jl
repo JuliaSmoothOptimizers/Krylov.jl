@@ -254,7 +254,7 @@
     @test issolved(solver)
   end
 
-  if VERSION ≥ v"1.5" && VERSION < v"1.7"
+  if VERSION < v"1.8.0-DEV.1090"
 
     io = IOBuffer()
     show(io, cg_solver)
