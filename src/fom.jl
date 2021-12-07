@@ -36,6 +36,13 @@ function fom(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: 
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = fom!(solver::FomSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`fom`](@ref).
+
+See [`FomSolver`](@ref) for more details about the `solver`.
+"""
 function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
               reorthogonalization :: Bool=false, itmax :: Int=0,

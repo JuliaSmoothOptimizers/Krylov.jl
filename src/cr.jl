@@ -42,6 +42,13 @@ function cr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = cr!(solver::CrSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`cr`](@ref).
+
+See [`CrSolver`](@ref) for more details about the `solver`.
+"""
 function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
              radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}

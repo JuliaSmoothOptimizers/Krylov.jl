@@ -40,6 +40,13 @@ function cg_lanczos(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFlo
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = cg_lanczos!(solver::CgLanczosSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`cg_lanczos`](@ref) without shifts.
+
+See [`CgLanczosSolver`](@ref) for more details about the `solver`.
+"""
 function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                      check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
@@ -181,6 +188,13 @@ function cg_lanczos(A, b :: AbstractVector{T}, shifts :: AbstractVector{T}; kwar
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = cg_lanczos!(solver::CgLanczosShiftSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`cg_lanczos`](@ref) with shifts.
+
+See [`CgLanczosShiftSolver`](@ref) for more details about the `solver`.
+"""
 function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector{T}, shifts :: AbstractVector{T};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                      check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}

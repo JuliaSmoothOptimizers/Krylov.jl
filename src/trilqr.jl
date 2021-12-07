@@ -38,6 +38,13 @@ function trilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) wh
   return (solver.x, solver.y, solver.stats)
 end
 
+"""
+    solver = trilqr!(solver::TrilqrSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`trilqr`](@ref).
+
+See [`TrilqrSolver`](@ref) for more details about the `solver`.
+"""
 function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
                  atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}

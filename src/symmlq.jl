@@ -42,6 +42,13 @@ function symmlq(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = symmlq!(solver::SymmlqSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`symmlq`](@ref).
+
+See [`SymmlqSolver`](@ref) for more details about the `solver`.
+"""
 function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
                  M=I, λ :: T=zero(T), transfer_to_cg :: Bool=true,
                  λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),

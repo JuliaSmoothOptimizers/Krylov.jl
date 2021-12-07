@@ -46,6 +46,13 @@ function cgs(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = cgs!(solver::CgsSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`cgs`](@ref).
+
+See [`CgsSolver`](@ref) for more details about the `solver`.
+"""
 function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}

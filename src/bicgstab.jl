@@ -49,6 +49,13 @@ function bicgstab(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = bicgstab!(solver::BicgstabSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`bicgstab`](@ref).
+
+See [`BicgstabSolver`](@ref) for more details about the `solver`.
+"""
 function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
                    M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                    itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}

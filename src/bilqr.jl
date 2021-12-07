@@ -39,6 +39,13 @@ function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) whe
   return (solver.x, solver.y, solver.stats)
 end
 
+"""
+    solver = bilqr!(solver::BilqrSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`bilqr`](@ref).
+
+See [`BilqrSolver`](@ref) for more details about the `solver`.
+"""
 function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}

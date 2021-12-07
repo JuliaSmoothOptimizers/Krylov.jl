@@ -43,6 +43,13 @@ function cg(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = cg!(solver::CgSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`cg`](@ref).
+
+See [`CgSolver`](@ref) for more details about the `solver`.
+"""
 function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T), restart :: Bool=false,
              itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,

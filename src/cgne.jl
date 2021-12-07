@@ -69,6 +69,13 @@ function cgne(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = cgne!(solver::CgneSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`cgne`](@ref).
+
+See [`CgneSolver`](@ref) for more details about the `solver`.
+"""
 function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}

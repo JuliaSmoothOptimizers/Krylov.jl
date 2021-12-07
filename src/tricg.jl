@@ -59,6 +59,13 @@ function tricg(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) whe
   return (solver.x, solver.y, solver.stats)
 end
 
+"""
+    solver = tricg!(solver::TricgSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`tricg`](@ref).
+
+See [`TricgSolver`](@ref) for more details about the `solver`.
+"""
 function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                 spd :: Bool=false, snd :: Bool=false, flip :: Bool=false,

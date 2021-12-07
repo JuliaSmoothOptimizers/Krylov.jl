@@ -51,6 +51,13 @@ function crls(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = crls!(solver::CrlsSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`crls`](@ref).
+
+See [`CrlsSolver`](@ref) for more details about the `solver`.
+"""
 function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}

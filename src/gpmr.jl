@@ -62,6 +62,13 @@ function gpmr(A, B, b :: AbstractVector{T}, c :: AbstractVector{T}; memory :: In
   return (solver.x, solver.y, solver.stats)
 end
 
+"""
+    solver = gpmr!(solver::GpmrSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`gpmr`](@ref).
+
+See [`GpmrSolver`](@ref) for more details about the `solver`.
+"""
 function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: AbstractVector{T};
                C=I, D=I, E=I, F=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                gsp :: Bool=false, reorthogonalization :: Bool=false, itmax :: Int=0,

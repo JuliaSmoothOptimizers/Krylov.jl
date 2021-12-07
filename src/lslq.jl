@@ -133,6 +133,13 @@ function lslq(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: 
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = lslq!(solver::LslqSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`lslq`](@ref).
+
+See [`LslqSolver`](@ref) for more details about the `solver`.
+"""
 function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
                atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),

@@ -87,6 +87,13 @@ function lsqr(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: 
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = lsqr!(solver::LsqrSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`lsqr`](@ref).
+
+See [`LsqrSolver`](@ref) for more details about the `solver`.
+"""
 function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
                M=I, N=I, sqd :: Bool=false,
                λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),

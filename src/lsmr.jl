@@ -97,6 +97,13 @@ function lsmr(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: 
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = lsmr!(solver::LsmrSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`lsmr`](@ref).
+
+See [`LsmrSolver`](@ref) for more details about the `solver`.
+"""
 function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
                M=I, N=I, sqd :: Bool=false,
                λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
