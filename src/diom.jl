@@ -48,9 +48,9 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("DIOM: system of size %d\n", n)
 
-  # Check M == Iₙ and N == Iₙ
-  MisI = (M == I)
-  NisI = (N == I)
+  # Check M = Iₙ and N = Iₙ
+  MisI = (M === I)
+  NisI = (N === I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

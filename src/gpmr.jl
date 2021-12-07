@@ -77,10 +77,10 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
   (verbose > 0) && @printf("GPMR: system of %d equations in %d variables\n", m+n, m+n)
 
   # Check C = E = Iₘ and D = F = Iₙ
-  CisI = (C == I)
-  DisI = (D == I)
-  EisI = (E == I)
-  FisI = (F == I)
+  CisI = (C === I)
+  DisI = (D === I)
+  EisI = (E === I)
+  FisI = (F === I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

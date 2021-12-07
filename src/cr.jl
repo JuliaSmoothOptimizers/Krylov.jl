@@ -52,8 +52,8 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   length(b) == n || error("Inconsistent problem size")
   (verbose > 0) && @printf("CR: system of %d equations in %d variables\n", n, n)
 
-  # Tests M == Iₙ
-  MisI = (M == I)
+  # Tests M = Iₙ
+  MisI = (M === I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

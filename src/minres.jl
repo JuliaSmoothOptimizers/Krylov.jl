@@ -72,8 +72,8 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   length(b) == n || error("Inconsistent problem size")
   (verbose > 0) && @printf("MINRES: system of size %d\n", n)
 
-  # Tests M == Iₙ
-  MisI = (M == I)
+  # Tests M = Iₙ
+  MisI = (M === I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

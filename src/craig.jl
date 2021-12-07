@@ -91,9 +91,9 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("CRAIG: system of %d equations in %d variables\n", m, n)
 
-  # Tests M == Iₘ and N == Iₙ
-  MisI = (M == I)
-  NisI = (N == I)
+  # Tests M = Iₘ and N = Iₙ
+  MisI = (M === I)
+  NisI = (N === I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

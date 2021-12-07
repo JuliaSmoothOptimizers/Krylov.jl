@@ -52,8 +52,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("MINRES-QLP: system of size %d\n", n)
 
-  # Tests M == Iₙ
-  MisI = (M == I)
+  # Tests M = Iₙ
+  MisI = (M === I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

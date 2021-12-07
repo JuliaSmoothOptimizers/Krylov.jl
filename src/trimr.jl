@@ -78,9 +78,9 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   snd && sp   && error("The matrix cannot be symmetric negative definite and a saddle-point !")
   sp  && flip && error("The matrix cannot be symmetric quasi-definite and a saddle-point !")
 
-  # Check M == Iₘ and N == Iₙ
-  MisI = (M == I)
-  NisI = (N == I)
+  # Check M = Iₘ and N = Iₙ
+  MisI = (M === I)
+  NisI = (N === I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
