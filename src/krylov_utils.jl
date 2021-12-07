@@ -1,4 +1,10 @@
 """
+    FloatOrComplex{T}
+Union type of `T` and `Complex{T}` where T is an [`AbstractFloat`](@ref).
+"""
+const FloatOrComplex{T} = Union{T, Complex{T}} where T <: AbstractFloat
+
+"""
     (c, s, ρ) = sym_givens(a, b)
 
 Numerically stable symmetric Givens reflection.
