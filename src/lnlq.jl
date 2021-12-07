@@ -74,6 +74,13 @@ function lnlq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   return (solver.x, solver.y, solver.stats)
 end
 
+"""
+    solver = lnlq!(solver::LnlqSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`lnlq`](@ref).
+
+See [`LnlqSolver`](@ref) for more details about the `solver`.
+"""
 function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
                atol :: T=√eps(T), rtol :: T=√eps(T), etolx :: T=√eps(T), etoly :: T=√eps(T), itmax :: Int=0,

@@ -59,6 +59,13 @@ function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) whe
   return (solver.x, solver.y, solver.stats)
 end
 
+"""
+    solver = trimr!(solver::TrimrSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`trimr`](@ref).
+
+See [`TrimrSolver`](@ref) for more details about the `solver`.
+"""
 function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
                 M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                 spd :: Bool=false, snd :: Bool=false, flip :: Bool=false, sp :: Bool=false,

@@ -43,6 +43,13 @@ function qmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = qmr!(solver::QmrSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`qmr`](@ref).
+
+See [`QmrSolver`](@ref) for more details about the `solver`.
+"""
 function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
               atol :: T=√eps(T), rtol :: T=√eps(T),
               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}

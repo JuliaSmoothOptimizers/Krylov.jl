@@ -46,6 +46,13 @@ function usymqr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) wh
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = usymqr!(solver::UsymqrSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`usymqr`](@ref).
+
+See [`UsymqrSolver`](@ref) for more details about the `solver`.
+"""
 function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
                  atol :: T=√eps(T), rtol :: T=√eps(T),
                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}

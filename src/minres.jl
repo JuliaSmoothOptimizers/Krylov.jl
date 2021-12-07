@@ -61,6 +61,13 @@ function minres(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = minres!(solver::MinresSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`minres`](@ref).
+
+See [`MinresSolver`](@ref) for more details about the `solver`.
+"""
 function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
                  M=I, λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),

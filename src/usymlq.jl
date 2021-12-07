@@ -49,6 +49,13 @@ function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) wh
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = usymlq!(solver::UsymlqSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`usymlq`](@ref).
+
+See [`UsymlqSolver`](@ref) for more details about the `solver`.
+"""
 function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
                  atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}

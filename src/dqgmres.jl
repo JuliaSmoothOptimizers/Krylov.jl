@@ -36,6 +36,13 @@ function dqgmres(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = dqgmres!(solver::DqgmresSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`dqgmres`](@ref).
+
+See [`DqgmresSolver`](@ref) for more details about the `solver`.
+"""
 function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
                   M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                   restart :: Bool=false, itmax :: Int=0,

@@ -42,6 +42,13 @@ function minres_qlp(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFlo
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = minres_qlp!(solver::MinresQlpSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`minres_qlp`](@ref).
+
+See [`MinresQlpSolver`](@ref) for more details about the `solver`.
+"""
 function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
                      itmax :: Int=0, restart :: Bool=false,

@@ -82,6 +82,13 @@ function craig(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   return (solver.x, solver.y, solver.stats)
 end
 
+"""
+    solver = craig!(solver::CraigSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`craig`](@ref).
+
+See [`CraigSolver`](@ref) for more details about the `solver`.
+"""
 function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
                 M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                 btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,

@@ -36,6 +36,13 @@ function bilq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
   return (solver.x, solver.stats)
 end
 
+"""
+    solver = bilq!(solver::BilqSolver, args...; kwargs...)
+
+where `args` and `kwargs` are arguments and keyword arguments of [`bilq`](@ref).
+
+See [`BilqSolver`](@ref) for more details about the `solver`.
+"""
 function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
                atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
