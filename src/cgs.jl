@@ -55,9 +55,9 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("CGS: system of size %d\n", n)
 
-  # Check M == Iₙ and N == Iₙ
-  MisI = (M == I)
-  NisI = (N == I)
+  # Check M = Iₙ and N = Iₙ
+  MisI = (M === I)
+  NisI = (N === I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

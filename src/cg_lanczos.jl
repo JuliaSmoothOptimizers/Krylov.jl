@@ -49,8 +49,8 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   length(b) == n || error("Inconsistent problem size")
   (verbose > 0) && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n)
 
-  # Tests M == Iₙ
-  MisI = (M == I)
+  # Tests M = Iₙ
+  MisI = (M === I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
@@ -192,8 +192,8 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   nshifts = length(shifts)
   (verbose > 0) && @printf("CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts)
 
-  # Tests M == Iₙ
-  MisI = (M == I)
+  # Tests M = Iₙ
+  MisI = (M === I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")

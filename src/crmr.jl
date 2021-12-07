@@ -75,8 +75,8 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("CRMR: system of %d equations in %d variables\n", m, n)
 
-  # Tests M == Iₙ
-  MisI = (M == I)
+  # Tests M = Iₙ
+  MisI = (M === I)
 
   # Check type consistency
   eltype(A) == T || error("eltype(A) ≠ $T")
