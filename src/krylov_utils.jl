@@ -219,17 +219,6 @@ Create an AbstractVector of storage type `S` of length `n` only composed of one.
 @inline krylov_copy!(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.blascopy!(n, x, dx, y, dy)
 @inline krylov_copy!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: Number = copyto!(y, x)
 
-function krylov_ref!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer, c :: T , s :: T) where T <: Number
-  # assume dx = dy
-  @inbounds @simd for i = 1:dx:n
-    xi = x[i]
-    yi = y[i]
-    x[i] = c * xi + s * yi
-    y[i] = s * xi - c * yi
-  end
-  return x, y
-end
-
 # the macros are just for readability, so we don't have to write the increments (always equal to 1)
 
 macro kdot(n, x, y)
@@ -265,11 +254,7 @@ macro kswap(x, y)
 end
 
 macro kref!(n, x, y, c, s)
-  if VERSION < v"1.5"
-    return esc(:(krylov_ref!($n, $x, 1, $y, 1, $c, $s)))
-  else
-    return esc(:(reflect!($x, $y, $c, $s)))
-  end
+  return esc(:(reflect!($x, $y, $c, $s)))
 end
 
 """
