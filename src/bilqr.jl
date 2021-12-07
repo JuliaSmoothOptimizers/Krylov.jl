@@ -13,9 +13,12 @@
 export bilqr, bilqr!
 
 """
-    (x, y, stats) = bilqr(A, b::AbstractVector{T}, c::AbstractVector{T};
+    (x, y, stats) = bilqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                           atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
-                          itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                          itmax::Int=0, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Combine BiLQ and QMR to solve adjoint systems.
 
@@ -33,15 +36,15 @@ BiCG point, when it exists. The transfer is based on the residual norm.
 
 * A. Montoison and D. Orban, [*BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*](https://doi.org/10.1137/19M1290991), SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
-function bilqr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function bilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = BilqrSolver(A, b)
   bilqr!(solver, A, b, c; kwargs...)
   return (solver.x, solver.y, solver.stats)
 end
 
-function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
+function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
-                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("Systems must be square")

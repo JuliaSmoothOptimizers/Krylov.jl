@@ -30,9 +30,12 @@ export cgls, cgls!
 
 
 """
-    (x, stats) = cgls(A, b::AbstractVector{T};
+    (x, stats) = cgls(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                      radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the regularized linear least-squares problem
 
@@ -54,15 +57,15 @@ but simpler to implement.
 * M. R. Hestenes and E. Stiefel. [*Methods of conjugate gradients for solving linear systems*](https://doi.org/10.6028/jres.049.044), Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
 * A. Björck, T. Elfving and Z. Strakos, [*Stability of Conjugate Gradient and Lanczos Methods for Linear Least Squares Problems*](https://doi.org/10.1137/S089547989631202X), SIAM Journal on Matrix Analysis and Applications, 19(3), pp. 720--736, 1998.
 """
-function cgls(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function cgls(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CglsSolver(A, b)
   cgls!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
+function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-               radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

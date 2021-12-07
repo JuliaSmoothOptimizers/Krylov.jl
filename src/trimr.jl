@@ -12,11 +12,14 @@
 export trimr, trimr!
 
 """
-    (x, y, stats) = trimr(A, b::AbstractVector{T}, c::AbstractVector{T};
+    (x, y, stats) = trimr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                           M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                           spd::Bool=false, snd::Bool=false, flip::Bool=false, sp::Bool=false,
                           τ::T=one(T), ν::T=-one(T), itmax::Int=0, verbose::Int=0,
-                          restart::Bool=false, history::Bool=false) where T <: AbstractFloat
+                          restart::Bool=false, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 TriMR solves the symmetric linear system
 
@@ -53,17 +56,17 @@ Information will be displayed every `verbose` iterations.
 
 * A. Montoison and D. Orban, [*TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems*](https://doi.org/10.1137/20M1363030), SIAM Journal on Scientific Computing, 43(4), pp. 2502--2525, 2021.
 """
-function trimr(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = TrimrSolver(A, b)
   trimr!(solver, A, b, c; kwargs...)
   return (solver.x, solver.y, solver.stats)
 end
 
-function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
+function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                 M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                 spd :: Bool=false, snd :: Bool=false, flip :: Bool=false, sp :: Bool=false,
                 τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0,
-                restart :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                restart :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

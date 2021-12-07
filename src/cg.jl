@@ -17,10 +17,13 @@ export cg, cg!
 
 
 """
-    (x, stats) = cg(A, b::AbstractVector{T};
+    (x, stats) = cg(A, b::AbstractVector{FC};
                     M=I, atol::T=√eps(T), rtol::T=√eps(T), restart::Bool=false,
                     itmax::Int=0, radius::T=zero(T), linesearch::Bool=false,
-                    verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                    verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 The conjugate gradient method to solve the symmetric linear system Ax=b.
 
@@ -37,16 +40,16 @@ with `n = length(b)`.
 
 * M. R. Hestenes and E. Stiefel, [*Methods of conjugate gradients for solving linear systems*](https://doi.org/10.6028/jres.049.044), Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
 """
-function cg(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function cg(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CgSolver(A, b)
   cg!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
+function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T), restart :: Bool=false,
              itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
-             verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+             verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
 

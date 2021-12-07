@@ -17,10 +17,13 @@
 export minres_qlp, minres_qlp!
 
 """
-    (x, stats) = minres_qlp(A, b::AbstractVector{T};
+    (x, stats) = minres_qlp(A, b::AbstractVector{FC};
                             M=I, atol::T=√eps(T), rtol::T=√eps(T), λ::T=zero(T),
                             itmax::Int=0, restart::Bool=false,
-                            verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                            verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
 solution on singular inconsistent systems (A + λI)x = b, where λ is a shift parameter.
@@ -36,16 +39,16 @@ M also indicates the weighted norm in which residuals are measured.
 * S.-C. T. Choi, C. C. Paige and M. A. Saunders, [*MINRES-QLP: A Krylov subspace method for indefinite or singular symmetric systems*](https://doi.org/10.1137/100787921), SIAM Journal on Scientific Computing, Vol. 33(4), pp. 1810--1836, 2011.
 * S.-C. T. Choi and M. A. Saunders, [*Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems*](https://doi.org/10.1145/2527267), ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014.
 """
-function minres_qlp(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function minres_qlp(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = MinresQlpSolver(A, b)
   minres_qlp!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
+function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{FC};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T), λ ::T=zero(T),
                      itmax :: Int=0, restart :: Bool=false,
-                     verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                     verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")

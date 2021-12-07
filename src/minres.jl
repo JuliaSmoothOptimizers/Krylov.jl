@@ -23,13 +23,16 @@ export minres, minres!
 
 
 """
-    (x, stats) = minres(A, b::AbstractVector{T};
+    (x, stats) = minres(A, b::AbstractVector{FC};
                         M=I, λ::T=zero(T), atol::T=√eps(T)/100,
                         rtol::T=√eps(T)/100, ratol :: T=zero(T), 
                         rrtol :: T=zero(T), etol::T=√eps(T),
                         window::Int=5, itmax::Int=0,
                         conlim::T=1/√eps(T), restart::Bool=false,
-                        verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                        verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the shifted linear least-squares problem
 
@@ -55,17 +58,17 @@ assumed to be symmetric and positive definite.
 
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
-function minres(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
+function minres(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = MinresSolver(A, b, window=window)
   minres!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
+function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
                  itmax :: Int=0, conlim :: T=1/√eps(T), restart :: Bool=false,
-                 verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                 verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")

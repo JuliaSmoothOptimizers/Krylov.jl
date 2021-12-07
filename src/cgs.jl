@@ -11,9 +11,12 @@
 export cgs, cgs!
 
 """
-    (x, stats) = cgs(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
+    (x, stats) = cgs(A, b::AbstractVector{FC}; c::AbstractVector{FC}=b,
                      M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
-                     itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                     itmax::Int=0, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the consistent linear system Ax = b using conjugate gradient squared algorithm.
 CGS requires two initial vectors `b` and `c`.
@@ -40,15 +43,15 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 
 * P. Sonneveld, [*CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems*](https://doi.org/10.1137/0910004), SIAM Journal on Scientific and Statistical Computing, 10(1), pp. 36--52, 1989.
 """
-function cgs(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function cgs(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CgsSolver(A, b)
   cgs!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
+function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

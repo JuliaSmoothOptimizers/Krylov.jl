@@ -15,9 +15,12 @@
 export cr, cr!
 
 """
-    (x, stats) = cr(A, b::AbstractVector{T};
+    (x, stats) = cr(A, b::AbstractVector{FC};
                     M=I, atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T), itmax::Int=0,
-                    radius::T=zero(T), verbose::Int=0, linesearch::Bool=false, history::Bool=false) where T <: AbstractFloat
+                    radius::T=zero(T), verbose::Int=0, linesearch::Bool=false, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 A truncated version of Stiefel’s Conjugate Residual method to solve the symmetric linear system Ax = b or the least-squares problem min ‖b - Ax‖.
 The matrix A must be positive semi-definite.
@@ -36,15 +39,15 @@ with `n = length(b)`.
 * E. Stiefel, [*Relaxationsmethoden bester Strategie zur Losung linearer Gleichungssysteme*](https://doi.org/10.1007/BF02564277), Commentarii Mathematici Helvetici, 29(1), pp. 157--179, 1955.
 * M-A. Dahito and D. Orban, [*The Conjugate Residual Method in Linesearch and Trust-Region Methods*](https://doi.org/10.1137/18M1204255), SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
 """
-function cr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function cr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CrSolver(A, b)
   cr!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
+function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
-             radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+             radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
   n, m = size(A)

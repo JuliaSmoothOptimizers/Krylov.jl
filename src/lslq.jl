@@ -23,12 +23,15 @@ export lslq, lslq!
 
 
 """
-    (x, stats) = lslq(A, b::AbstractVector{T};
+    (x, stats) = lslq(A, b::AbstractVector{FC};
                       M=I, N=I, sqd::Bool=false, λ::T=zero(T),
                       atol::T=√eps(T), btol::T=√eps(T), etol::T=√eps(T),
                       window::Int=5, utol::T=√eps(T), itmax::Int=0,
                       σ::T=zero(T), transfer_to_lsqr::Bool=false, 
-                      conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                      conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the regularized linear least-squares problem
 
@@ -127,18 +130,18 @@ The iterations stop as soon as one of the following conditions holds true:
 * R. Estrin, D. Orban and M. A. Saunders, [*Euclidean-norm error bounds for SYMMLQ and CG*](https://doi.org/10.1137/16M1094816), SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 235--253, 2019.
 * R. Estrin, D. Orban and M. A. Saunders, [*LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*](https://doi.org/10.1137/17M1113552), SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 254--275, 2019.
 """
-function lslq(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
+function lslq(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = LslqSolver(A, b, window=window)
   lslq!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
+function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
                atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
                utol :: T=√eps(T), itmax :: Int=0, σ :: T=zero(T),
                transfer_to_lsqr :: Bool=false, conlim :: T=1/√eps(T),
-               verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

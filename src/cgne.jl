@@ -30,9 +30,12 @@ export cgne, cgne!
 
 
 """
-    (x, stats) = cgne(A, b::AbstractVector{T};
+    (x, stats) = cgne(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                      itmax::Int=0, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the consistent linear system
 
@@ -63,15 +66,15 @@ A preconditioner M may be provided in the form of a linear operator.
 * J. E. Craig, [*The N-step iteration procedures*](https://doi.org/10.1002/sapm195534164), Journal of Mathematics and Physics, 34(1), pp. 64--73, 1955.
 * J. E. Craig, *Iterations Procedures for Simultaneous Equations*, Ph.D. Thesis, Department of Electrical Engineering, MIT, 1954.
 """
-function cgne(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function cgne(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CgneSolver(A, b)
   cgne!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
+function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

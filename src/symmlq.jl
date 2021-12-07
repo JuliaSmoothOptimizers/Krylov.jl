@@ -13,12 +13,15 @@ export symmlq, symmlq!
 
 
 """
-    (x, stats) = symmlq(A, b::AbstractVector{T};
+    (x, stats) = symmlq(A, b::AbstractVector{FC};
                         M=I, λ::T=zero(T), transfer_to_cg::Bool=true,
                         λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                         etol::T=√eps(T), window::Int=0, itmax::Int=0,
                         conlim::T=1/√eps(T), restart::Bool=false,
-                        verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                        verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the shifted linear system
 
@@ -36,18 +39,18 @@ assumed to be symmetric and positive definite.
 
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
-function symmlq(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
+function symmlq(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = SymmlqSolver(A, b, window=window)
   symmlq!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
+function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, λ :: T=zero(T), transfer_to_cg :: Bool=true,
                  λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                  etol :: T=√eps(T), itmax :: Int=0,
                  conlim :: T=1/√eps(T), restart :: Bool=false,
-                 verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                 verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

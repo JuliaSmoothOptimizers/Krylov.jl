@@ -26,14 +26,17 @@ export lsmr, lsmr!
 
 
 """
-    (x, stats) = lsmr(A, b::AbstractVector{T};
+    (x, stats) = lsmr(A, b::AbstractVector{FC};
                       M=I, N=I, sqd::Bool=false,
                       λ::T=zero(T), axtol::T=√eps(T), btol::T=√eps(T),
                       atol::T=zero(T), rtol::T=zero(T),
                       etol::T=√eps(T), window::Int=5,
                       itmax::Int=0, conlim::T=1/√eps(T),
                       radius::T=zero(T), verbose::Int=0,
-                      history::Bool=false, callback::Function=(args...) -> false) where T <: AbstractFloat
+                      history::Bool=false, callback::Function=(args...) -> false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the regularized linear least-squares problem
 
@@ -91,19 +94,19 @@ Note that `history` should be set to `true` to have access to `rNorms` and `ArNo
 
 * D. C.-L. Fong and M. A. Saunders, [*LSMR: An Iterative Algorithm for Sparse Least Squares Problems*](https://doi.org/10.1137/10079687X), SIAM Journal on Scientific Computing, 33(5), pp. 2950--2971, 2011.
 """
-function lsmr(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
+function lsmr(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = LsmrSolver(A, b, window=window)
   lsmr!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
+function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, sqd :: Bool=false,
                λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
                atol :: T=zero(T), rtol :: T=zero(T),
                etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
                radius :: T=zero(T), verbose :: Int=0, history :: Bool=false,
-               callback :: Function = (args...) -> false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

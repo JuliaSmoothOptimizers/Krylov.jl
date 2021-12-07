@@ -34,10 +34,13 @@ export craig, craig!
 
 
 """
-    (x, y, stats) = craig(A, b::AbstractVector{T};
+    (x, y, stats) = craig(A, b::AbstractVector{FC};
                           M=I, N=I, sqd::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                           btol::T=√eps(T), rtol::T=√eps(T), conlim::T=1/√eps(T), itmax::Int=0,
-                          verbose::Int=0, transfer_to_lsqr::Bool=false, history::Bool=false) where T <: AbstractFloat
+                          verbose::Int=0, transfer_to_lsqr::Bool=false, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Find the least-norm solution of the consistent linear system
 
@@ -76,16 +79,16 @@ In this implementation, both the x and y-parts of the solution are returned.
 * C. C. Paige and M. A. Saunders, [*LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*](https://doi.org/10.1145/355984.355989), ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
 * M. A. Saunders, [*Solutions of Sparse Rectangular Systems Using LSQR and CRAIG*](https://doi.org/10.1007/BF01739829), BIT Numerical Mathematics, 35(4), pp. 588--604, 1995.
 """
-function craig(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function craig(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CraigSolver(A, b)
   craig!(solver, A, b; kwargs...)
   return (solver.x, solver.y, solver.stats)
 end
 
-function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
+function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
                 M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                 btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,
-                verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

@@ -15,9 +15,12 @@ export cg_lanczos, cg_lanczos!
 
 
 """
-    (x, stats) = cg_lanczos(A, b::AbstractVector{T};
+    (x, stats) = cg_lanczos(A, b::AbstractVector{FC};
                             M=I, atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                            check_curvature::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                            check_curvature::Bool=false, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 The Lanczos version of the conjugate gradient method to solve the
 symmetric linear system
@@ -34,15 +37,15 @@ assumed to be symmetric and positive definite.
 * A. Frommer and P. Maass, [*Fast CG-Based Methods for Tikhonov-Phillips Regularization*](https://doi.org/10.1137/S1064827596313310), SIAM Journal on Scientific Computing, 20(5), pp. 1831--1850, 1999.
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
-function cg_lanczos(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function cg_lanczos(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CgLanczosSolver(A, b)
   cg_lanczos!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
+function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{FC};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                     check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                     check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -160,9 +163,12 @@ end
 
 
 """
-    (x, stats) = cg_lanczos(A, b::AbstractVector{T}, shifts::AbstractVector{T};
+    (x, stats) = cg_lanczos(A, b::AbstractVector{FC}, shifts::AbstractVector{FC};
                             M=I, atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                            check_curvature::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                            check_curvature::Bool=false, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 The Lanczos version of the conjugate gradient method to solve a family
 of shifted systems
@@ -174,16 +180,16 @@ The method does _not_ abort if A + αI is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 """
-function cg_lanczos(A, b :: AbstractVector{T}, shifts :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function cg_lanczos(A, b :: AbstractVector{FC}, shifts :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   nshifts = length(shifts)
   solver = CgLanczosShiftSolver(A, b, nshifts)
   cg_lanczos!(solver, A, b, shifts; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector{T}, shifts :: AbstractVector{T};
+function cg_lanczos!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: AbstractVector{FC};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                     check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                     check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")

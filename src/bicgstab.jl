@@ -16,9 +16,12 @@
 export bicgstab, bicgstab!
 
 """
-    (x, stats) = bicgstab(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
+    (x, stats) = bicgstab(A, b::AbstractVector{FC}; c::AbstractVector{FC}=b,
                           M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
-                          itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                          itmax::Int=0, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the square linear system Ax = b using the BICGSTAB method.
 BICGSTAB requires two initial vectors `b` and `c`.
@@ -43,15 +46,15 @@ This implementation allows a left preconditioner `M` and a right preconditioner 
 * H. A. van der Vorst, [*Bi-CGSTAB: A fast and smoothly converging variant of Bi-CG for the solution of nonsymmetric linear systems*](https://doi.org/10.1137/0913035), SIAM Journal on Scientific and Statistical Computing, 13(2), pp. 631--644, 1992.
 * G. L.G. Sleijpen and D. R. Fokkema, *BiCGstab(ℓ) for linear equations involving unsymmetric matrices with complex spectrum*, Electronic Transactions on Numerical Analysis, 1, pp. 11--32, 1993.
 """
-function bicgstab(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function bicgstab(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = BicgstabSolver(A, b)
   bicgstab!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
+function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
                    M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-                   itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                   itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")

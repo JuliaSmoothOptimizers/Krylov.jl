@@ -28,9 +28,12 @@ export craigmr, craigmr!
 
 
 """
-    (x, y, stats) = craigmr(A, b::AbstractVector{T};
+    (x, y, stats) = craigmr(A, b::AbstractVector{FC};
                             M=I, N=I, λ::T=zero(T), atol::T=√eps(T),
-                            rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                            rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the consistent linear system
 
@@ -69,15 +72,15 @@ returned.
 * D. Orban and M. Arioli. [*Iterative Solution of Symmetric Quasi-Definite Linear Systems*](https://doi.org/10.1137/1.9781611974737), Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
 * D. Orban, [*The Projected Golub-Kahan Process for Constrained, Linear Least-Squares Problems*](https://dx.doi.org/10.13140/RG.2.2.17443.99360). Cahier du GERAD G-2014-15, 2014.
 """
-function craigmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function craigmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CraigmrSolver(A, b)
   craigmr!(solver, A, b; kwargs...)
   return (solver.x, solver.y, solver.stats)
 end
 
-function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
+function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                   M=I, N=I, λ :: T=zero(T), atol :: T=√eps(T),
-                  rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                  rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

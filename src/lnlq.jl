@@ -25,10 +25,13 @@
 export lnlq, lnlq!
 
 """
-    (x, y, stats) = lnlq(A, b::AbstractVector{T};
+    (x, y, stats) = lnlq(A, b::AbstractVector{FC};
                          M=I, N=I, sqd::Bool=false, λ::T=zero(T), σ::T=zero(T),
                          atol::T=√eps(T), rtol::T=√eps(T), etolx::T=√eps(T), etoly::T=√eps(T), itmax::Int=0,
-                         transfer_to_craig::Bool=true, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                         transfer_to_craig::Bool=true, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Find the least-norm solution of the consistent linear system
 
@@ -68,16 +71,16 @@ For instance σ:=(1-1e-7)σₘᵢₙ .
 
 * R. Estrin, D. Orban, M.A. Saunders, [*LNLQ: An Iterative Method for Least-Norm Problems with an Error Minimization Property*](https://doi.org/10.1137/18M1194948), SIAM Journal on Matrix Analysis and Applications, 40(3), pp. 1102--1124, 2019.
 """
-function lnlq(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function lnlq(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = LnlqSolver(A, b)
   lnlq!(solver, A, b; kwargs...)
   return (solver.x, solver.y, solver.stats)
 end
 
-function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
+function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
                atol :: T=√eps(T), rtol :: T=√eps(T), etolx :: T=√eps(T), etoly :: T=√eps(T), itmax :: Int=0,
-               transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

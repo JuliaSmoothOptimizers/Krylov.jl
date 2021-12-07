@@ -22,9 +22,12 @@ export crls, crls!
 
 
 """
-    (x, stats) = crls(A, b::AbstractVector{T};
+    (x, stats) = crls(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                      radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the linear least-squares problem
 
@@ -45,15 +48,15 @@ but simpler to implement.
 
 * D. C.-L. Fong, *Minimum-Residual Methods for Sparse, Least-Squares using Golubg-Kahan Bidiagonalization*, Ph.D. Thesis, Stanford University, 2011.
 """
-function crls(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function crls(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CrlsSolver(A, b)
   crls!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
+function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-               radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

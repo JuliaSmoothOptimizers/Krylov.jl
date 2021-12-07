@@ -11,10 +11,13 @@
 export diom, diom!
 
 """
-    (x, stats) = diom(A, b::AbstractVector{T};
+    (x, stats) = diom(A, b::AbstractVector{FC};
                       M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                       restart::Bool=false, itmax::Int=0, memory::Int=20,
-                      verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                      verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the consistent linear system Ax = b using direct incomplete orthogonalization method.
 
@@ -32,16 +35,16 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 
 * Y. Saad, [*Practical use of some krylov subspace methods for solving indefinite and nonsymmetric linear systems*](https://doi.org/10.1137/0905015), SIAM journal on scientific and statistical computing, 5(1), pp. 203--228, 1984.
 """
-function diom(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
+function diom(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
   solver = DiomSolver(A, b, memory)
   diom!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
+function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                restart :: Bool=false, itmax :: Int=0,
-               verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

@@ -12,11 +12,14 @@
 export gpmr, gpmr!
 
 """
-    (x, y, stats) = gpmr(A, B, b::AbstractVector{T}, c::AbstractVector{T};
+    (x, y, stats) = gpmr(A, B, b::AbstractVector{FC}, c::AbstractVector{FC};
                          C=I, D=I, E=I, F=I, atol::T=√eps(T), rtol::T=√eps(T),
                          gsp::Bool=false, reorthogonalization::Bool=false, itmax::Int=0,
                          restart::Bool=false, λ::T=one(T), μ::T=one(T),
-                         verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                         verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 GPMR solves the unsymmetric partitioned linear system
 
@@ -56,17 +59,17 @@ Information will be displayed every `verbose` iterations.
 
 * A. Montoison and D. Orban, [*GPMR: An Iterative Method for Unsymmetric Partitioned Linear Systems*](https://dx.doi.org/10.13140/RG.2.2.24069.68326), Cahier du GERAD G-2021-62, GERAD, Montréal, 2021.
 """
-function gpmr(A, B, b :: AbstractVector{T}, c :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
+function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
   solver = GpmrSolver(A, b, memory)
   gpmr!(solver, A, B, b, c; kwargs...)
   return (solver.x, solver.y, solver.stats)
 end
 
-function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: AbstractVector{T};
+function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                C=I, D=I, E=I, F=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                gsp :: Bool=false, reorthogonalization :: Bool=false, itmax :: Int=0,
                restart :: Bool=false, λ :: T=one(T), μ :: T=one(T),
-               verbose :: Int=0, history::Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               verbose :: Int=0, history::Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   s, t = size(B)

@@ -21,9 +21,12 @@
 export qmr, qmr!
 
 """
-    (x, stats) = qmr(A, b::AbstractVector{T}; c::AbstractVector{T}=b,
+    (x, stats) = qmr(A, b::AbstractVector{FC}; c::AbstractVector{FC}=b,
                      atol::T=√eps(T), rtol::T=√eps(T),
-                     itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                     itmax::Int=0, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the square linear system Ax = b using the QMR method.
 
@@ -37,15 +40,15 @@ When `A` is symmetric and `b = c`, QMR is equivalent to MINRES.
 * R. W. Freund and N. M. Nachtigal, [*An implementation of the QMR method based on coupled two-term recurrences*](https://doi.org/10.1137/0915022), SIAM Journal on Scientific Computing, Vol. 15(2), pp. 313--337, 1994.
 * A. Montoison and D. Orban, [*BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*](https://doi.org/10.1137/19M1290991), SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
-function qmr(A, b :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function qmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = QmrSolver(A, b)
   qmr!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function qmr!(solver :: QmrSolver{T,S}, A, b :: AbstractVector{T}; c :: AbstractVector{T}=b,
+function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
               atol :: T=√eps(T), rtol :: T=√eps(T),
-              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")

@@ -26,13 +26,16 @@ export lsqr, lsqr!
 
 
 """
-    (x, stats) = lsqr(A, b::AbstractVector{T};
+    (x, stats) = lsqr(A, b::AbstractVector{FC};
                       M=I, N=I, sqd::Bool=false,
                       λ::T=zero(T), axtol::T=√eps(T), btol::T=√eps(T),
                       atol::T=zero(T), rtol::T=zero(T),
                       etol::T=√eps(T), window::Int=5,
                       itmax::Int=0, conlim::T=1/√eps(T),
-                      radius::T=zero(T), verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                      radius::T=zero(T), verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the regularized linear least-squares problem
 
@@ -81,18 +84,18 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 
 * C. C. Paige and M. A. Saunders, [*LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*](https://doi.org/10.1145/355984.355989), ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
 """
-function lsqr(A, b :: AbstractVector{T}; window :: Int=5, kwargs...) where T <: AbstractFloat
+function lsqr(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = LsqrSolver(A, b, window=window)
   lsqr!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
+function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, sqd :: Bool=false,
                λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
                atol :: T=zero(T), rtol :: T=zero(T),
                etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
-               radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+               radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

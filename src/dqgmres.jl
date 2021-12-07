@@ -11,10 +11,13 @@
 export dqgmres, dqgmres!
 
 """
-    (x, stats) = dqgmres(A, b::AbstractVector{T};
+    (x, stats) = dqgmres(A, b::AbstractVector{FC};
                          M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                          restart::Bool=false, itmax::Int=0, memory::Int=20,
-                         verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                         verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the consistent linear system Ax = b using DQGMRES method.
 
@@ -30,16 +33,16 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 
 * Y. Saad and K. Wu, [*DQGMRES: a quasi minimal residual algorithm based on incomplete orthogonalization*](https://doi.org/10.1002/(SICI)1099-1506(199607/08)3:4%3C329::AID-NLA86%3E3.0.CO;2-8), Numerical Linear Algebra with Applications, Vol. 3(4), pp. 329--343, 1996.
 """
-function dqgmres(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
+function dqgmres(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
   solver = DqgmresSolver(A, b, memory)
   dqgmres!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
+function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                   M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                   restart :: Bool=false, itmax :: Int=0,
-                  verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                  verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

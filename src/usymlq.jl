@@ -20,9 +20,12 @@
 export usymlq, usymlq!
 
 """
-    (x, stats) = usymlq(A, b::AbstractVector{T}, c::AbstractVector{T};
+    (x, stats) = usymlq(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                         atol::T=√eps(T), rtol::T=√eps(T), transfer_to_usymcg::Bool=true,
-                        itmax::Int=0, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                        itmax::Int=0, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the linear system Ax = b using the USYMLQ method.
 
@@ -43,15 +46,15 @@ when it exists. The transfer is based on the residual norm.
 * A. Buttari, D. Orban, D. Ruiz and D. Titley-Peloquin, [*A tridiagonalization method for symmetric saddle-point and quasi-definite systems*](https://doi.org/10.1137/18M1194900), SIAM Journal on Scientific Computing, 41(5), pp. 409--432, 2019.
 * A. Montoison and D. Orban, [*BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*](https://doi.org/10.1137/19M1290991), SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
-function usymlq(A, b :: AbstractVector{T}, c :: AbstractVector{T}; kwargs...) where T <: AbstractFloat
+function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = UsymlqSolver(A, b)
   usymlq!(solver, A, b, c; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: AbstractVector{T};
+function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                  atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
-                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
