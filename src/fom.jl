@@ -11,10 +11,13 @@
 export fom, fom!
 
 """
-    (x, stats) = fom(A, b::AbstractVector{T}; memory::Int=20,
+    (x, stats) = fom(A, b::AbstractVector{FC}; memory::Int=20,
                      M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                      reorthogonalization::Bool=false, itmax::Int=0,
-                     restart::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                     restart::Bool=false, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the linear system Ax = b using FOM method.
 
@@ -31,7 +34,7 @@ Full reorthogonalization is available with the `reorthogonalization` option.
 
 * Y. Saad, [*Krylov subspace methods for solving unsymmetric linear systems*](https://doi.org/10.1090/S0025-5718-1981-0616364-6), Mathematics of computation, Vol. 37(155), pp. 105--126, 1981.
 """
-function fom(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
+function fom(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
   solver = FomSolver(A, b, memory)
   fom!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
@@ -47,10 +50,10 @@ It's required to create a `FomSolver` and can't be changed later.
 
 See [`FomSolver`](@ref) for more details about the `solver`.
 """
-function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
+function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
               reorthogonalization :: Bool=false, itmax :: Int=0,
-              restart :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+              restart :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

@@ -11,10 +11,13 @@
 export gmres, gmres!
 
 """
-    (x, stats) = gmres(A, b::AbstractVector{T}; memory::Int=20,
+    (x, stats) = gmres(A, b::AbstractVector{FC}; memory::Int=20,
                        M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                        reorthogonalization::Bool=false, itmax::Int=0,
-                       restart::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                       restart::Bool=false, verbose::Int=0, history::Bool=false)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`FC` is `T` or `Complex{T}`.
 
 Solve the linear system Ax = b using GMRES method.
 
@@ -31,7 +34,7 @@ Full reorthogonalization is available with the `reorthogonalization` option.
 
 * Y. Saad and M. H. Schultz, [*GMRES: A Generalized Minimal Residual Algorithm for Solving Nonsymmetric Linear Systems*](https://doi.org/10.1137/0907058), SIAM Journal on Scientific and Statistical Computing, Vol. 7(3), pp. 856--869, 1986.
 """
-function gmres(A, b :: AbstractVector{T}; memory :: Int=20, kwargs...) where T <: AbstractFloat
+function gmres(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
   solver = GmresSolver(A, b, memory)
   gmres!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
@@ -47,10 +50,10 @@ It's required to create a `GmresSolver` and can't be changed later.
 
 See [`GmresSolver`](@ref) for more details about the `solver`.
 """
-function gmres!(solver :: GmresSolver{T,S}, A, b :: AbstractVector{T};
+function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                 M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                 reorthogonalization :: Bool=false, itmax :: Int=0,
-                restart :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
+                restart :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
