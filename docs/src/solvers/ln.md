@@ -1,3 +1,6 @@
+```@meta
+# Least-norm problems
+```
 ```@docs
 cgne
 cgne!

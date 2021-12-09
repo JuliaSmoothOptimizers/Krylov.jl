@@ -1,3 +1,6 @@
+```@meta
+# Symmetric positive definite linear systems
+```
 ```@docs
 cg
 cg!

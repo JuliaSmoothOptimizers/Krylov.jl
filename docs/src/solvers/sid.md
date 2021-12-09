@@ -1,3 +1,6 @@
+```@meta
+# Symmetric indefinite linear systems
+```
 ```@docs
 symmlq
 symmlq!
