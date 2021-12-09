@@ -179,8 +179,8 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
   zt[1] = β
   zt[2] = γ
 
-  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "hₖ₊₁.ₖ", "fₖ₊₁.ₖ")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7s  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗")
 
   # Determine λ and μ associated to generalized saddle point systems.
   gsp && (λ = one(T) ; μ = zero(T))
@@ -356,7 +356,7 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
     # Update stopping criterion.
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
-    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, Haux, Faux)
 
     # Compute vₖ₊₁ and uₖ₊₁
     if !(solved || tired)
@@ -365,8 +365,21 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
         push!(U, S(undef, n))
         push!(zt, zero(T), zero(T))
       end
-      @. V[k+1] = q / Haux  # hₖ₊₁.ₖvₖ₊₁ = q
-      @. U[k+1] = p / Faux  # fₖ₊₁.ₖuₖ₊₁ = p
+
+      # hₖ₊₁.ₖ ≠ 0
+      if Haux ≠ 0
+        @. V[k+1] = q / Haux  # hₖ₊₁.ₖvₖ₊₁ = q
+      else
+        V[k+1] .= zero(T)  # hₖ₊₁.ₖ = 0 ⇔ vₖ₊₁ = 0
+      end
+
+      # fₖ₊₁.ₖ ≠ 0
+      if Faux ≠ 0
+        @. U[k+1] = p / Faux  # fₖ₊₁.ₖuₖ₊₁ = p
+      else
+        U[k+1] .= zero(T)  # fₖ₊₁.ₖ = 0 ⇔ uₖ₊₁ = 0
+      end
+
       zt[2k+1] = τbar₂ₖ₊₁
       zt[2k+2] = τbar₂ₖ₊₂
     end
