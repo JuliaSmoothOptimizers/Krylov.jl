@@ -1,3 +1,6 @@
+```@meta
+# Least-squares problems
+```
 ```@docs
 cgls
 cgls!

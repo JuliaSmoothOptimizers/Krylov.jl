@@ -1,3 +1,6 @@
+```@meta
+# Unsymmetric linear systems
+```
 ```@docs
 bilq
 bilq!
