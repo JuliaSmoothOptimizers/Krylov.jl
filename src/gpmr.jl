@@ -363,14 +363,16 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
       if Haux ≠ 0
         @. V[k+1] = q / Haux  # hₖ₊₁.ₖvₖ₊₁ = q
       else
-        V[k+1] .= zero(T)  # hₖ₊₁.ₖ = 0 ⇔ vₖ₊₁ = 0
+        # Breakdown -- hₖ₊₁.ₖ = ‖q‖₂ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
+        V[k+1] .= zero(T)  # vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
       end
 
       # fₖ₊₁.ₖ ≠ 0
       if Faux ≠ 0
         @. U[k+1] = p / Faux  # fₖ₊₁.ₖuₖ₊₁ = p
       else
-        U[k+1] .= zero(T)  # fₖ₊₁.ₖ = 0 ⇔ uₖ₊₁ = 0
+        # Breakdown -- fₖ₊₁.ₖ = ‖p‖₂ = 0 and Bvₖ ∈ Span{u₁, ..., uₖ}
+        U[k+1] .= zero(T)  # uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
       end
 
       zt[2k+1] = τbar₂ₖ₊₁
