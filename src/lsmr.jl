@@ -345,7 +345,8 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
     user_requested_exit = callback(solver, iter) :: Bool
 
     ill_cond = ill_cond_mach | ill_cond_lim
-    solved = solved_mach | solved_lim | solved_opt | zero_resid_mach | zero_resid_lim | fwd_err | on_boundary
+    zero_resid = zero_resid_mach | zero_resid_lim
+    solved = solved_mach | solved_lim | solved_opt | zero_resid | fwd_err | on_boundary
   end
   (verbose > 0) && @printf("\n")
 
