@@ -417,7 +417,8 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     zero_resid_lim = (test1 ≤ rtol)
 
     ill_cond = ill_cond_mach || ill_cond_lim
-    solved = solved_mach || solved_lim || zero_resid_mach || zero_resid_lim || fwd_err_lbnd || fwd_err_ubnd
+    zero_resid = zero_resid_mach || zero_resid_lim
+    solved = solved_mach || solved_lim || zero_resid || fwd_err_lbnd || fwd_err_ubnd
 
     iter = iter + 1
   end
