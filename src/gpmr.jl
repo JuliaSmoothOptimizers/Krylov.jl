@@ -367,7 +367,7 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
       end
 
       # hₖ₊₁.ₖ ≠ 0
-      if Haux ≠ 0
+      if Haux > eps(T)
         @. V[k+1] = q / Haux  # hₖ₊₁.ₖvₖ₊₁ = q
       else
         # Breakdown -- hₖ₊₁.ₖ = ‖q‖₂ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
@@ -375,7 +375,7 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
       end
 
       # fₖ₊₁.ₖ ≠ 0
-      if Faux ≠ 0
+      if Faux > eps(T)
         @. U[k+1] = p / Faux  # fₖ₊₁.ₖuₖ₊₁ = p
       else
         # Breakdown -- fₖ₊₁.ₖ = ‖p‖₂ = 0 and Bvₖ ∈ Span{u₁, ..., uₖ}

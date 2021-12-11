@@ -41,6 +41,17 @@
     @test_throws ErrorException("c must be nonzero") gpmr(A, B, b, c)
     b .= 0
     @test_throws ErrorException("b must be nonzero") gpmr(A, B, b, c)
+
+    # Test breakdowns
+    A, b, c = ssy_mo_breakdown(transpose)
+    λ = 1.0
+    μ = -1.0
+    K = [I A; A' -I]
+    d = [b; c]
+    x, y, stats = gpmr(A, A', b, c, λ=λ, μ=μ)
+    r =  d - K * [x; y]
+    resid = norm(r) / norm(d)
+    @test(resid ≤ gpmr_tol)
   end
 
   # Test underdetermined adjoint systems.
