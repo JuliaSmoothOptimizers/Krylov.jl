@@ -806,11 +806,11 @@
     └────────────────────┴──────────────────────────┴──────────────────┘
     Simple stats
     solved: true
-    inconsistent: true
+    inconsistent: false
     residuals: []
     Aresiduals: []
     κ₂(A): []
-    status: found approximate minimum least-squares solution"""
+    status: found approximate zero-residual solution"""
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
