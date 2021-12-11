@@ -331,3 +331,16 @@ function jacobi(A; T=Float64, pd=true)
   P⁻¹ = Diagonal(J)
   return P⁻¹
 end
+
+# Generate a breakdown in the orthogonal tridiagonalization process and the orthogonal Hessenberg reduction process.
+function ssy_mo_breakdown(transpose :: Bool=false)
+  if transpose
+    A = [1.0 -1.0; 0.0 1.0; -1.0 0.0]
+  else
+    A = [1.0 0.0 -1.0; -1.0 1.0 0.0]
+  end
+  n, m = size(A)
+  b = ones(n)
+  c = ones(m)
+  return A, b, c
+end
