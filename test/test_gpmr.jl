@@ -52,6 +52,16 @@
     r =  d - K * [x; y]
     resid = norm(r) / norm(d)
     @test(resid ≤ gpmr_tol)
+
+    # Test inconsistent linear systems
+    A, b, c = ssy_mo_breakdown(transpose)
+    K = [I A; A' I]
+    d = [b; c]
+    n, m = size(K)
+    p = rank(K)
+    @test(p < n)
+    x, y, stats = gpmr(A, A', b, c)
+    @test(stats.inconsistent)
   end
 
   # Test underdetermined adjoint systems.
