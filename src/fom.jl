@@ -115,11 +115,12 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
   @. V[1] = r₀ / rNorm
 
   # Stopping criterion
+  breakdown = false
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
   status = "unknown"
 
-  while !(solved || tired)
+  while !(solved || tired || breakdown)
 
     # Update iteration index
     iter = iter + 1
@@ -176,12 +177,13 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
     nr = nr + iter
 
     # Update stopping criterion.
+    breakdown = Hbis ≤ eps(T)
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
     # Compute vₖ₊₁.
-    if !(solved || tired)
+    if !(solved || tired || breakdown)
       if iter ≥ mem
         push!(V, S(undef, n))
       end
@@ -211,14 +213,16 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
     mul!(x, N, solver.p)
   end
 
-  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  tired     && (status = "maximum number of iterations exceeded")
+  breakdown && (status = "found approximate least-squares solution")
+  solved    && (status = "solution good enough given atol and rtol")
 
   # Update x
   restart && @kaxpy!(n, one(T), Δx, x)
 
   # Update stats
   stats.solved = solved
-  stats.inconsistent = false
+  stats.inconsistent = !solved && breakdown
   stats.status = status
   return solver
 end
