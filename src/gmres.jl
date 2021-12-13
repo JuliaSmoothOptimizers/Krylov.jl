@@ -90,8 +90,8 @@ function gmres!(solver :: GmresSolver{T,S}, A, b :: AbstractVector{T};
   itmax == 0 && (itmax = 2*n)
 
   ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "hₖ₊₁.ₖ")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
   # Initialize workspace.
   nr = 0           # Number of coefficients stored in Rₖ.
@@ -181,7 +181,7 @@ function gmres!(solver :: GmresSolver{T,S}, A, b :: AbstractVector{T};
     breakdown = Hbis ≤ eps(T)
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
-    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, Hbis)
 
     # Compute vₖ₊₁
     if !(solved || tired || breakdown)
