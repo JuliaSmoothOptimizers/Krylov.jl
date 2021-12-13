@@ -397,7 +397,12 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
       zt[i] = zt[i] - R[pos] * zt[j]  # ζᵢ ← ζᵢ - rᵢ.ⱼζⱼ
       pos = pos - j + 1               # position of rᵢ.ⱼ₋₁
     end
-    zt[i] = zt[i] / R[pos]            # ζᵢ ← ζᵢ / rᵢ.ᵢ
+    # Rₖ can be singular is the system is inconsistent
+    if R[pos] ≤ eps(T)
+      zt[i] = zero(T)
+    else
+      zt[i] = zt[i] / R[pos]          # ζᵢ ← ζᵢ / rᵢ.ᵢ
+    end
   end
 
   # Compute xₖ and yₖ

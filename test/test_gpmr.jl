@@ -61,6 +61,9 @@
     p = rank(K)
     @test(p < n)
     x, y, stats = gpmr(A, A', b, c)
+    r =  d - K * [x; y]
+    Aresid = norm(K' * r) / norm(K' * d)
+    @test(Aresid ≤ gpmr_tol)
     @test(stats.inconsistent)
   end
 
