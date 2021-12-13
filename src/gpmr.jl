@@ -186,11 +186,12 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
   gsp && (λ = one(T) ; μ = zero(T))
 
   # Stopping criterion.
+  breakdown = false
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
   status = "unknown"
 
-  while !(solved || tired)
+  while !(solved || tired || breakdown)
 
     # Update iteration index.
     iter = iter + 1
@@ -354,12 +355,13 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
     nr = nr + 4k-1
 
     # Update stopping criterion.
+    breakdown = Faux ≤ eps(T) && Haux ≤ eps(T)
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, Haux, Faux)
 
     # Compute vₖ₊₁ and uₖ₊₁
-    if !(solved || tired)
+    if !(solved || tired || breakdown)
       if iter ≥ mem
         push!(V, S(undef, m))
         push!(U, S(undef, n))
@@ -414,11 +416,13 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
   restart && @kaxpy!(m, one(T), Δx, x)
   restart && @kaxpy!(n, one(T), Δy, y)
 
-  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  tired     && (status = "maximum number of iterations exceeded")
+  breakdown && (status = "found approximate least-squares solution")
+  solved    && (status = "solution good enough given atol and rtol")
 
   # Update stats
   stats.solved = solved
-  stats.inconsistent = false
+  stats.inconsistent = !solved && breakdown
   stats.status = status
   return solver
 end
