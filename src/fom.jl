@@ -207,7 +207,7 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
   end
 
   tired     && (status = "maximum number of iterations exceeded")
-  breakdown && (status = "found approximate least-squares solution")
+  breakdown && (status = "inconsistent linear system")
   solved    && (status = "solution good enough given atol and rtol")
 
   # Update x

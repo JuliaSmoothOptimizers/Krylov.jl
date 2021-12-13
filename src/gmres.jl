@@ -203,7 +203,12 @@ function gmres!(solver :: GmresSolver{T,S}, A, b :: AbstractVector{T};
       y[i] = y[i] - R[pos] * y[j]  # yᵢ ← yᵢ - rᵢⱼyⱼ
       pos = pos - j + 1
     end
-    y[i] = y[i] / R[pos]  # yᵢ ← yᵢ / rᵢᵢ
+    # Rₖ can be singular is the system is inconsistent
+    if R[pos] ≤ eps(T)
+      y[i] = zero(T)
+    else
+      y[i] = y[i] / R[pos]  # yᵢ ← yᵢ / rᵢᵢ
+    end
   end
 
   # Form xₖ = N⁻¹Vₖyₖ
