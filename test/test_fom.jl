@@ -52,6 +52,11 @@
   @test(resid ≤ 100 * fom_tol)
   @test(stats.solved)
 
+  # Singular system.
+  A, b = square_inconsistent()
+  (x, stats) = fom(A, b)
+  @test(stats.inconsistent)
+
   # Test b == 0
   A, b = zero_rhs()
   (x, stats) = fom(A, b)
