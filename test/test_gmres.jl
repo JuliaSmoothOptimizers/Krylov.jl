@@ -55,6 +55,9 @@
   # Singular system.
   A, b = square_inconsistent()
   (x, stats) = gmres(A, b)
+  r = b - A * x
+  Aresid = norm(A' * r) / norm(A' * b)
+  @test(Aresid ≤ gmres_tol)
   @test(stats.inconsistent)
 
   # Test b == 0
