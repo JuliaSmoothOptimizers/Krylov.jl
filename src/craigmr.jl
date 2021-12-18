@@ -5,7 +5,7 @@
 #
 # The method seeks to solve the minimum-norm problem
 #
-#  min ‖x‖₂  s.t.  x ∈ argmin ‖Ax - b‖₂,
+#  min ‖x‖  s.t.  x ∈ argmin ‖Ax - b‖,
 #
 # and is equivalent to applying the conjugate residual method
 # to the linear system
@@ -44,7 +44,7 @@ to the normal equations of the second kind
 
 but is more stable. When λ = 0, this method solves the minimum-norm problem
 
-    min ‖x‖₂  s.t.  x ∈ argmin ‖Ax - b‖₂.
+    min ‖x‖  s.t.  x ∈ argmin ‖Ax - b‖.
 
 When λ > 0, this method solves the problem
 
@@ -126,7 +126,7 @@ function craigmr!(solver :: CraigmrSolver{T,S}, A, b :: AbstractVector{T};
   allocate_if(!MisI, solver, :u, S, m)
   allocate_if(!NisI, solver, :v, S, n)
   allocate_if(λ > 0, solver, :q, S, n)
-  x, Nv, Aᵀu, y, Mu = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.Mu
+  x, Nv, Aᵀu, d, y, Mu = solver.x, solver.Nv, solver.Aᵀu, solver.d, solver.y, solver.Mu
   w, wbar, Av, q, stats = solver.w, solver.wbar, solver.Av, solver.q, solver.stats
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
   reset!(stats)

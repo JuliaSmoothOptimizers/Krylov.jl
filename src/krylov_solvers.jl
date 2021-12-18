@@ -1303,6 +1303,7 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
   x     :: S
   Nv    :: S
   Aᵀu   :: S
+  d     :: S
   y     :: S
   Mu    :: S
   w     :: S
@@ -1328,7 +1329,7 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
     v    = S(undef, 0)
     q    = S(undef, 0)
     stats = SimpleStats(false, false, T[], T[], T[], "unknown")
-    solver = new{T,S}(x, Nv, Aᵀu, y, Mu, w, wbar, Av, u, v, q, stats)
+    solver = new{T,S}(x, Nv, Aᵀu, d, y, Mu, w, wbar, Av, u, v, q, stats)
     return solver
   end
 
