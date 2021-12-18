@@ -116,8 +116,8 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
   history && push!(rNorms, rNorm)
   history && push!(ArNorms, ArNorm)
   ε = atol + rtol * ArNorm
-  (verbose > 0) && @printf("%5s  %8s  %8s\n", "Aprod", "‖A'r‖", "‖r‖")
-  display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 1, ArNorm, rNorm)
+  (verbose > 0) && @printf("%5s  %8s  %8s\n", "k", "‖Aᵀr‖", "‖r‖")
+  display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
 
   status = "unknown"
   on_boundary = false
@@ -152,7 +152,7 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(rNorms, rNorm)
     history && push!(ArNorms, ArNorm)
     iter = iter + 1
-    display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", 1 + 2 * iter, ArNorm, rNorm)
+    display(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
     solved = (ArNorm ≤ ε) | on_boundary
     tired = iter ≥ itmax
   end

@@ -129,8 +129,8 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
 
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * pNorm  # Stopping tolerance for inconsistent systems.
-  (verbose > 0) && @printf("%5s  %8s\n", "Aprod", "‖r‖")
-  display(iter, verbose) && @printf("%5d  %8.2e\n", 1, rNorm)
+  (verbose > 0) && @printf("%5s  %8s\n", "k", "‖r‖")
+  display(iter, verbose) && @printf("%5d  %8.2e\n", iter, rNorm)
 
   status = "unknown"
   solved = rNorm ≤ ɛ_c
@@ -158,7 +158,7 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
     rNorm = sqrt(γ_next)
     history && push!(rNorms, rNorm)
     iter = iter + 1
-    display(iter, verbose) && @printf("%5d  %8.2e\n", 1 + 2 * iter, rNorm)
+    display(iter, verbose) && @printf("%5d  %8.2e\n", iter, rNorm)
     solved = rNorm ≤ ɛ_c
     inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
     tired = iter ≥ itmax
