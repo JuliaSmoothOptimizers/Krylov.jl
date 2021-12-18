@@ -4,7 +4,7 @@
 #
 # The method seeks to solve the minimum-norm problem
 #
-#  min ‖x‖₂  s.t.  Ax = b,
+#  min ‖x‖  s.t.  Ax = b,
 #
 # and is equivalent to applying the SYMMLQ method
 # to the linear system
@@ -40,7 +40,7 @@ For a system in the form Ax = b, LNLQ method is equivalent to applying
 SYMMLQ to AAᵀy = b and recovering x = Aᵀy but is more stable.
 Note that y are the Lagrange multipliers of the least-norm problem
 
-    minimize ‖x‖₂  s.t.  Ax = b.
+    minimize ‖x‖  s.t.  Ax = b.
 
 If `sqd = true`, LNLQ solves the symmetric and quasi-definite system
 

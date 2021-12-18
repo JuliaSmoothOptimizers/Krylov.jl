@@ -6,7 +6,7 @@
 #
 # The method seeks to solve the minimum-norm problem
 #
-#  min ‖x‖₂  s.t.  Ax = b,
+#  min ‖x‖  s.t.  Ax = b,
 #
 # and is equivalent to applying the conjugate gradient method
 # to the linear system
@@ -51,7 +51,7 @@ For a system in the form Ax = b, Craig's method is equivalent to applying
 CG to AAᵀy = b and recovering x = Aᵀy. Note that y are the Lagrange
 multipliers of the least-norm problem
 
-    minimize ‖x‖₂  s.t.  Ax = b.
+    minimize ‖x‖  s.t.  Ax = b.
 
 If `sqd = true`, CRAIG solves the symmetric and quasi-definite system
 
