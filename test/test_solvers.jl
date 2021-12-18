@@ -628,6 +628,7 @@
     │                   x│           Vector{Float64}│                64│
     │                  Nv│           Vector{Float64}│                64│
     │                 Aᵀu│           Vector{Float64}│                64│
+    │                   d│           Vector{Float64}│                64│
     │                   y│           Vector{Float64}│                32│
     │                  Mu│           Vector{Float64}│                32│
     │                   w│           Vector{Float64}│                32│
@@ -635,6 +636,7 @@
     │                  Av│           Vector{Float64}│                32│
     │                   u│           Vector{Float64}│                 0│
     │                   v│           Vector{Float64}│                 0│
+    │                   q│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
     Simple stats
     solved: true
