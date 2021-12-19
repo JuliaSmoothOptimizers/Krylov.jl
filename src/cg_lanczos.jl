@@ -149,7 +149,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
     rNorm = abs(σ)          # ‖rₖ₊₁‖_M = |σₖ₊₁| because rₖ₊₁ = σₖ₊₁ * vₖ₊₁ and ‖vₖ₊₁‖_M = 1
     history && push!(rNorms, rNorm)
     iter = iter + 1
-    display(iter, verbose) && @printf("%5d  %8.1e\n", iter, rNorm)
+    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
   end

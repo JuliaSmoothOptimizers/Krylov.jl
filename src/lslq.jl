@@ -375,8 +375,6 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     t1    = test1 / (one(T) + Anorm * xlqNorm / β₁)
     rtol  = btol + atol * Anorm * xlqNorm / β₁
 
-    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
-
     # update LSLQ point for next iteration
     @kaxpy!(n, c * ζ, w̄, x)
     @kaxpy!(n, s * ζ, v, x)
@@ -421,6 +419,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     solved = solved_mach || solved_lim || zero_resid || fwd_err_lbnd || fwd_err_ubnd
 
     iter = iter + 1
+    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
   end
   (verbose > 0) && @printf("\n")
 
