@@ -110,8 +110,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
 
   ε = atol + rtol * rNorm
   κ = zero(T)
-  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖")
-  display(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁")
+  display(iter, verbose) && @printf("%5d  %7.1e  %7s  %7.1e\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ)
 
   # Set up workspace.
   M⁻¹vₖ₋₁ .= zero(T)
@@ -327,7 +327,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     μbarₖ₋₁ = μbarₖ
     ζbarₖ = ζbarₖ₊₁
     βₖ = βₖ₊₁
-    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, ArNorm)
+    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, βₖ₊₁)
   end
   (verbose > 0) && @printf("\n")
 
