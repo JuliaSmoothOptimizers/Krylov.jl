@@ -94,10 +94,6 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
   eltype(B) == T || error("eltype(B) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
-  CisI || (promote_type(eltype(C), T) == T) || error("eltype(C) can't be promoted to $T")
-  DisI || (promote_type(eltype(D), T) == T) || error("eltype(D) can't be promoted to $T")
-  EisI || (promote_type(eltype(E), T) == T) || error("eltype(E) can't be promoted to $T")
-  FisI || (promote_type(eltype(F), T) == T) || error("eltype(F) can't be promoted to $T")
   restart && (λ ≠ 0) && (!CisI || !EisI) && error("Restart with preconditioners is not supported.")
   restart && (μ ≠ 0) && (!DisI || !FisI) && error("Restart with preconditioners is not supported.")
 
