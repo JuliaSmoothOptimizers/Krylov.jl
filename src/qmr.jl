@@ -63,7 +63,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   (verbose > 0) && @printf("QMR: system of size %d\n", n)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
@@ -77,7 +77,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   reset!(stats)
 
   # Initial solution x₀ and residual norm ‖r₀‖.
-  x .= zero(T)
+  x .= zero(FC)
   rNorm = @knrm2(n, b)  # ‖r₀‖
   history && push!(rNorms, rNorm)
   if rNorm == 0
@@ -107,14 +107,14 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
 
   βₖ = √(abs(bᵗc))            # β₁γ₁ = bᵀc
   γₖ = bᵗc / βₖ               # β₁γ₁ = bᵀc
-  vₖ₋₁ .= zero(T)             # v₀ = 0
-  uₖ₋₁ .= zero(T)             # u₀ = 0
+  vₖ₋₁ .= zero(FC)            # v₀ = 0
+  uₖ₋₁ .= zero(FC)            # u₀ = 0
   vₖ .= b ./ βₖ               # v₁ = b / β₁
   uₖ .= c ./ γₖ               # u₁ = c / γ₁
-  cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
-  sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-  wₖ₋₂ .= zero(T)             # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
-  wₖ₋₁ .= zero(T)             # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
+  cₖ₋₂ = cₖ₋₁ = cₖ = zero(FC) # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+  sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC) # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+  wₖ₋₂ .= zero(FC)            # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
+  wₖ₋₁ .= zero(FC)            # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
   ζbarₖ = βₖ                  # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
   τₖ = @kdot(n, vₖ, vₖ)       # τₖ is used for the residual norm estimate
 
@@ -135,15 +135,15 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     mul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
     mul!(p, Aᵀ, uₖ)  # Forms uₖ₊₁ : p ← Aᵀuₖ
 
-    @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
+    @kaxpy!(n, -conj(γₖ), vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
 
     αₖ = @kdot(n, q, uₖ)      # αₖ = qᵀuₖ
 
-    @kaxpy!(n, -αₖ, vₖ, q)    # q ← q - αₖ * vₖ
+    @kaxpy!(n, -conj(αₖ), vₖ, q)    # q ← q - αₖ * vₖ
     @kaxpy!(n, -αₖ, uₖ, p)    # p ← p - αₖ * uₖ
 
-    qᵗp = @kdot(n, p, q)      # qᵗp  = ⟨q,p⟩
+    qᵗp = @kdot(n, q, p)      # qᵗp  = ⟨q,p⟩
     βₖ₊₁ = √(abs(qᵗp))        # βₖ₊₁ = √(|qᵗp|)
     γₖ₊₁ = qᵗp / βₖ₊₁         # γₖ₊₁ = qᵗp / βₖ₊₁
 
@@ -166,17 +166,17 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     if iter ≥ 3
       # [cₖ₋₂  sₖ₋₂] [0 ] = [  ϵₖ₋₂ ]
       # [sₖ₋₂ -cₖ₋₂] [γₖ]   [λbarₖ₋₁]
-      ϵₖ₋₂    =  sₖ₋₂ * γₖ
-      λbarₖ₋₁ = -cₖ₋₂ * γₖ
+      ϵₖ₋₂    =  sₖ₋₂ * conj(γₖ)
+      λbarₖ₋₁ = -cₖ₋₂ * conj(γₖ)
     end
 
     # Apply previous Givens reflections Qₖ₋₁.ₖ
     if iter ≥ 2
-      iter == 2 && (λbarₖ₋₁ = γₖ)
+      iter == 2 && (λbarₖ₋₁ = conj(γₖ))
       # [cₖ₋₁  sₖ₋₁] [λbarₖ₋₁] = [λₖ₋₁ ]
       # [sₖ₋₁ -cₖ₋₁] [   αₖ  ]   [δbarₖ]
-      λₖ₋₁  = cₖ₋₁ * λbarₖ₋₁ + sₖ₋₁ * αₖ
-      δbarₖ = sₖ₋₁ * λbarₖ₋₁ - cₖ₋₁ * αₖ
+      λₖ₋₁  = cₖ₋₁ * λbarₖ₋₁ + sₖ₋₁ * conj(αₖ)
+      δbarₖ = conj(sₖ₋₁) * λbarₖ₋₁ - cₖ₋₁ * conj(αₖ)
 
       # Update sₖ₋₂ and cₖ₋₂.
       sₖ₋₂ = sₖ₋₁
@@ -184,7 +184,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     end
 
     # Compute and apply current Givens reflection Qₖ.ₖ₊₁
-    iter == 1 && (δbarₖ = αₖ)
+    iter == 1 && (δbarₖ = conj(αₖ))
     # [cₖ  sₖ] [δbarₖ] = [δₖ]
     # [sₖ -cₖ] [βₖ₊₁ ]   [0 ]
     (cₖ, sₖ, δₖ) = sym_givens(δbarₖ, βₖ₊₁)
@@ -195,7 +195,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     # [cₖ  sₖ] [ζbarₖ] = [   ζₖ  ]
     # [sₖ -cₖ] [  0  ]   [ζbarₖ₊₁]
     ζₖ      = cₖ * ζbarₖ
-    ζbarₖ₊₁ = sₖ * ζbarₖ
+    ζbarₖ₊₁ = conj(sₖ) * ζbarₖ
 
     # Update sₖ₋₁ and cₖ₋₁.
     sₖ₋₁ = sₖ
@@ -205,14 +205,14 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     # w₁ = v₁ / δ₁
     if iter == 1
       wₖ = wₖ₋₁
-      @kaxpy!(n, one(T), vₖ, wₖ)
+      @kaxpy!(n, one(FC), vₖ, wₖ)
       @. wₖ = wₖ / δₖ
     end
     # w₂ = (v₂ - λ₁w₁) / δ₂
     if iter == 2
       wₖ = wₖ₋₂
       @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
-      @kaxpy!(n, one(T), vₖ, wₖ)
+      @kaxpy!(n, one(FC), vₖ, wₖ)
       @. wₖ = wₖ / δₖ
     end
     # wₖ = (vₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
@@ -220,7 +220,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
       @kscal!(n, -ϵₖ₋₂, wₖ₋₂)
       wₖ = wₖ₋₂
       @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
-      @kaxpy!(n, one(T), vₖ, wₖ)
+      @kaxpy!(n, one(FC), vₖ, wₖ)
       @. wₖ = wₖ / δₖ
     end
 
@@ -232,7 +232,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
     @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
 
-    if qᵗp ≠ zero(T)
+    if qᵗp ≠ zero(FC)
       @. vₖ = q / βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
       @. uₖ = p / γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
     end
@@ -241,7 +241,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     τₖ₊₁ = τₖ + @kdot(n, vₖ, vₖ)
 
     # Compute ‖rₖ‖ ≤ |ζbarₖ₊₁|√τₖ₊₁
-    rNorm = abs(ζbarₖ₊₁) * √τₖ₊₁
+    rNorm = abs(ζbarₖ₊₁) * √abs(τₖ₊₁)
     history && push!(rNorms, rNorm)
 
     # Update directions for x.
