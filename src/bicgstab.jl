@@ -73,7 +73,7 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
@@ -88,15 +88,15 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
   y = NisI ? p : solver.yz
   z = NisI ? s : solver.yz
 
-  x .= zero(T)   # x₀
-  s .= zero(T)   # s₀
-  v .= zero(T)   # v₀
+  x .= zero(FC)   # x₀
+  s .= zero(FC)   # s₀
+  v .= zero(FC)   # v₀
   mul!(r, M, b)  # r₀
   p .= r         # p₁
 
-  α = one(T) # α₀
-  ω = one(T) # ω₀
-  ρ = one(T) # ρ₀
+  α = one(FC) # α₀
+  ω = one(FC) # ω₀
+  ρ = one(FC) # ρ₀
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
@@ -111,10 +111,10 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
   itmax == 0 && (itmax = 2*n)
 
   ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "αₖ", "ωₖ")
-  display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
+  (verbose > 0) && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "‖αₖ‖", "‖ωₖ‖")
+  display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
 
-  next_ρ = @kdot(n, r, c)  # ρ₁ = ⟨r₀,r̅₀⟩
+  next_ρ = @kdot(n, c, r)  # ρ₁ = ⟨r̅₀,r₀⟩
   if next_ρ == 0
     stats.solved, stats.inconsistent = false, false
     stats.status = "Breakdown bᵀc = 0"
@@ -135,7 +135,7 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
     NisI || mul!(y, N, p)                # yₖ = N⁻¹pₖ
     mul!(q, A, y)                        # qₖ = Ayₖ
     mul!(v, M, q)                        # vₖ = M⁻¹qₖ
-    α = ρ / @kdot(n, v, c)               # αₖ = ⟨rₖ₋₁,r̅₀⟩ / ⟨vₖ,r̅₀⟩
+    α = ρ / @kdot(n, c, v)               # αₖ = ⟨r̅₀,rₖ₋₁⟩ / ⟨r̅₀,vₖ⟩
     @kcopy!(n, r, s)                     # sₖ = rₖ₋₁
     @kaxpy!(n, -α, v, s)                 # sₖ = sₖ - αₖvₖ
     @kaxpy!(n, α, y, x)                  # xₐᵤₓ = xₖ₋₁ + αₖyₖ
@@ -146,10 +146,10 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
     @kaxpy!(n, ω, z, x)                  # xₖ = xₐᵤₓ + ωₖzₖ
     @kcopy!(n, s, r)                     # rₖ = sₖ
     @kaxpy!(n, -ω, t, r)                 # rₖ = rₖ - ωₖtₖ
-    next_ρ = @kdot(n, r, c)              # ρₖ₊₁ = ⟨rₖ,r̅₀⟩
+    next_ρ = @kdot(n, c, r)              # ρₖ₊₁ = ⟨r̅₀,rₖ⟩
     β = (next_ρ / ρ) * (α / ω)           # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
     @kaxpy!(n, -ω, v, p)                 # pₐᵤₓ = pₖ - ωₖvₖ
-    @kaxpby!(n, one(T), r, β, p)         # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
+    @kaxpby!(n, one(FC), r, β, p)         # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
 
     # Compute residual norm ‖rₖ‖₂.
     rNorm = @knrm2(n, r)
@@ -159,7 +159,7 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
-    display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
+    display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
   end
   (verbose > 0) && @printf("\n")
 
