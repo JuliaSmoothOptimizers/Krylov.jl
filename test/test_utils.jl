@@ -103,7 +103,7 @@ end
 # Large-scale unsymmetric systems generated with Kronecker products.
 function kron_unsymmetric(n :: Int=64; FC=Float64)
   N = n^3
-  A = spdiagm(-1 => fill(-1.0, n - 1), 0 => fill(3.0, n), 1 => fill(-2.0, n - 1))
+  A = spdiagm(-1 => fill(-one(FC), n - 1), 0 => fill(FC(3.0), n), 1 => fill(FC(-2.0), n - 1))
   Id = eye(n)
   A = kron(A, Id) + kron(Id, A)
   A = kron(A, Id) + kron(Id, A)
@@ -115,16 +115,16 @@ end
 # Symmetric, indefinite and almost singular systems.
 function almost_singular(n :: Int=16; FC=Float64)
   A = get_div_grad(n, n, n)
-  A = A - 5 * I
-  b = A * ones(n^3)
+  A = FC.(A) - 5 * I
+  b = A * ones(FC, n^3)
   return A, b
 end
 
 # Symmetric, singular and consistent systems.
 function singular_consistent(n :: Int=10; FC=Float64)
-  A = [1.0*i*j for i=1:n, j=1:n] + 5 * eye(n)
-  A[:,1] .= A[:,2] .= A[2,:] .= A[1,:] .= 1.0
-  b = A * ones(n)
+  A = [FC(i*j) for i=1:n, j=1:n] + 5 * eye(n)
+  A[:,1] .= A[:,2] .= A[2,:] .= A[1,:] .= one(FC)
+  b = A * ones(FC, n)
   return A, b
 end
 
@@ -155,7 +155,7 @@ end
 # Underdetermined consistent adjoint systems.
 function underdetermined_adjoint(n :: Int=100, m :: Int=200; FC=Float64)
   n < m || error("Square or overdetermined system!")
-  A = [i == j ? 10.0 : i < j ? 1.0 : -1.0 for i=1:n, j=1:m]
+  A = [i == j ? FC(10.0) : i < j ? one(FC) : -one(FC) for i=1:n, j=1:m]
   b = A * [1:m;]
   c = A' * [-n:-1;]
   return A, b, c
@@ -163,7 +163,7 @@ end
 
 # Square consistent adjoint systems.
 function square_adjoint(n :: Int=100; FC=Float64)
-  A = [i == j ? 10.0 : i < j ? 1.0 : -1.0 for i=1:n, j=1:n]
+  A = [i == j ? FC(10.0) : i < j ? one(FC) : -one(FC) for i=1:n, j=1:n]
   b = A * [1:n;]
   c = A' * [-n:-1;]
   return A, b, c
@@ -171,16 +171,16 @@ end
 
 # Adjoint systems with Ax = b underdetermined consistent and Aᵀt = c overdetermined insconsistent.
 function rectangular_adjoint(n :: Int=10, m :: Int=25; FC=Float64)
-  Aᵀ, c = over_inconsistent(m, n)
+  Aᵀ, c = over_inconsistent(m, n; FC=FC)
   A = adjoint(Aᵀ)
-  b = A * ones(m)
+  b = A * ones(FC, m)
   return A, b, c
 end
 
 # Overdetermined consistent adjoint systems.
 function overdetermined_adjoint(n :: Int=200, m :: Int=100; FC=Float64)
   n > m || error("Underdetermined or square system!")
-  A = [i == j ? 10.0 : i < j ? 1.0 : -1.0 for i=1:n, j=1:m]
+  A = [i == j ? FC(10.0) : i < j ? one(FC) : -one(FC) for i=1:n, j=1:m]
   b = A * [1:m;]
   c = A' * [-n:-1;]
   return A, b, c
@@ -244,18 +244,18 @@ end
 
 # Square and preconditioned problems.
 function square_preconditioned(n :: Int=10; FC=Float64)
-  A   = ones(n, n) + (n-1) * eye(n)
-  b   = 10.0 * [1:n;]
-  M⁻¹ = 1/n * eye(n)
+  A   = ones(FC, n, n) + (n-1) * eye(n)
+  b   = FC(10.0) * [1:n;]
+  M⁻¹ = FC(1/n) * eye(n)
   return A, b, M⁻¹
 end
 
 # Square problems with two preconditioners.
 function two_preconditioners(n :: Int=10, m :: Int=20; FC=Float64)
-  A   = ones(n, n) + (n-1) * eye(n)
-  b   = ones(n)
-  M⁻¹ = 1/√n * eye(n)
-  N⁻¹ = 1/√m * eye(n)
+  A   = ones(FC, n, n) + (n-1) * eye(n)
+  b   = ones(FC, n)
+  M⁻¹ = FC(1/√n) * eye(n)
+  N⁻¹ = FC(1/√m) * eye(n)
   return A, b, M⁻¹, N⁻¹
 end
 
@@ -268,8 +268,8 @@ end
 
 # Regularized problems.
 function regularization(n :: Int=5; FC=Float64)
-  A = [2^(i/j)*j + (-1)^(i-j) * n*(i-1) for i = 1:n, j = 1:n]
-  b = ones(n)
+  A = FC[2^(i/j)*j + (-1)^(i-j) * n*(i-1) for i = 1:n, j = 1:n]
+  b = ones(FC, n)
   λ = 4.0
   return A, b, λ
 end
@@ -328,7 +328,7 @@ function small_sqd(transpose :: Bool=false; FC=Float64)
   return A, b, c, M, N
 end
 
-# Test restart feature with linear systems of size n³.
+# FCest restart feature with linear systems of size n³.
 function restart(n :: Int=32; FC=Float64)
   A = get_div_grad(n, n, n)
   b = A * ones(n^3)
