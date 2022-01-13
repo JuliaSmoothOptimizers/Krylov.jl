@@ -65,7 +65,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
@@ -81,10 +81,10 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Initial solution x₀ and residual r₀.
   restart && (Δx .= x)
-  x .= zero(T)            # x₀
+  x .= zero(FC)            # x₀
   if restart
     mul!(w, A, Δx)
-    @kaxpby!(n, one(T), b, -one(T), w)
+    @kaxpby!(n, one(FC), b, -one(FC), w)
   else
     w .= b
   end
@@ -110,12 +110,12 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   nr = 0           # Number of coefficients stored in Rₖ.
   mem = length(c)  # Memory
   for i = 1 : mem
-    V[i] .= zero(T)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
+    V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
   end
-  s .= zero(T)  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
+  s .= zero(FC)  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
   c .= zero(T)  # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
-  R .= zero(T)  # Upper triangular matrix Rₖ.
-  z .= zero(T)  # Right-hand of the least squares problem min ‖Hₖ₊₁.ₖyₖ - βe₁‖₂.
+  R .= zero(FC)  # Upper triangular matrix Rₖ.
+  z .= zero(FC)  # Right-hand of the least squares problem min ‖Hₖ₊₁.ₖyₖ - βe₁‖₂.
 
   # Initial ζ₁ and V₁
   z[1] = β
@@ -138,9 +138,9 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Update workspace if more storage is required
     if iter > mem
       for i = 1 : iter
-        push!(R, zero(T))
+        push!(R, zero(FC))
       end
-      push!(s, zero(T))
+      push!(s, zero(FC))
       push!(c, zero(T))
     end
 
@@ -172,7 +172,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # [sᵢ -cᵢ] [rᵢ₊₁.ₖ]   [r̄ᵢ₊₁.ₖ]
     for i = 1 : iter-1
       Rtmp      = c[i] * R[nr+i] + s[i] * R[nr+i+1]
-      R[nr+i+1] = s[i] * R[nr+i] - c[i] * R[nr+i+1]
+      R[nr+i+1] = conj(s[i]) * R[nr+i] - c[i] * R[nr+i+1]
       R[nr+i]   = Rtmp
     end
 
@@ -182,7 +182,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     (c[iter], s[iter], R[nr+iter]) = sym_givens(R[nr+iter], Hbis)
 
     # Update zₖ = (Qₖ)ᵀβe₁
-    ζₖ₊₁    = s[iter] * z[iter]
+    ζₖ₊₁    = conj(s[iter]) * z[iter]
     z[iter] = c[iter] * z[iter]
 
     # Update residual norm estimate.

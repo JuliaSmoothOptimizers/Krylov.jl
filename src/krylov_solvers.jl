@@ -1427,9 +1427,9 @@ mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   q     :: S
   V     :: Vector{S}
   c     :: Vector{T}
-  s     :: Vector{T}
-  z     :: Vector{T}
-  R     :: Vector{T}
+  s     :: Vector{FC}
+  z     :: Vector{FC}
+  R     :: Vector{FC}
   stats :: SimpleStats{T}
 
   function GmresSolver(n, m, memory, S)
@@ -1443,9 +1443,9 @@ mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     q  = S(undef, 0)
     V  = [S(undef, n) for i = 1 : memory]
     c  = Vector{T}(undef, memory)
-    s  = Vector{T}(undef, memory)
-    z  = Vector{T}(undef, memory)
-    R  = Vector{T}(undef, div(memory * (memory+1), 2))
+    s  = Vector{FC}(undef, memory)
+    z  = Vector{FC}(undef, memory)
+    R  = Vector{FC}(undef, div(memory * (memory+1), 2))
     stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,FC,S}(Δx, x, w, p, q, V, c, s, z, R, stats)
     return solver
