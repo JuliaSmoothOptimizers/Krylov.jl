@@ -1581,7 +1581,7 @@ for (KS, fun, nsol) in [
 end
 
 """
-    show(io, solver; show_stats)
+    show(io, solver; show_stats=true)
 
 Statistics of `solver` are displayed if `show_stats` is set to true.
 """
