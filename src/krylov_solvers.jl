@@ -1580,6 +1580,11 @@ for (KS, fun, nsol) in [
   end
 end
 
+"""
+    show(io, solver; show_stats)
+
+Statistics of `solver` are displayed if `show_stats` is set to true.
+"""
 function show(io :: IO, solver :: KrylovSolver; show_stats :: Bool=true)
   workspace = typeof(solver)
   name_solver = workspace.name.wrapper
