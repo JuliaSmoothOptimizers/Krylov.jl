@@ -90,6 +90,7 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   rNorm = @knrm2(n, r)
   history && push!(rNorms, rNorm)
   if rNorm == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     return solver
@@ -98,6 +99,7 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   # Compute ρ₀ = ⟨ r₀,̅r₀ ⟩
   ρ = @kdot(n, r, c)
   if ρ == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = false, false
     stats.status = "Breakdown bᵀc = 0"
     return solver
@@ -163,6 +165,7 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status

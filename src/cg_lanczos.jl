@@ -80,6 +80,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   rNorm = σ
   history && push!(rNorms, rNorm)
   if β == 0
+    stats.niter = 0
     stats.solved = true
     stats.Anorm = zero(T)
     stats.indefinite = false
@@ -157,6 +158,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   status = tired ? "maximum number of iterations exceeded" : (check_curvature & indefinite) ? "negative curvature" : "solution good enough given atol and rtol"
 
   # Update stats. TODO: Estimate Acond.
+  stats.niter = iter
   stats.solved = solved
   stats.Anorm = sqrt(Anorm2)
   stats.indefinite = indefinite
@@ -241,6 +243,7 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   indefinite .= false
 
   if β == 0
+    stats.niter = 0
     stats.solved = true
     stats.status = "x = 0 is a zero-residual solution"
     return solver
@@ -353,6 +356,7 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
 
   # Update stats. TODO: Estimate Anorm and Acond.
+  stats.niter = iter
   stats.solved = solved
   stats.status = status
   return solver

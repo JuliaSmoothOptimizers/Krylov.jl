@@ -99,6 +99,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   MisI || mul!(vold, M, Mvold)
   β₁ = @kdot(m, vold, Mvold)
   if β₁ == 0
+    stats.niter = 0
     stats.solved = true
     stats.Anorm = T(NaN)
     stats.Acond = T(NaN)
@@ -357,6 +358,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   restart && @kaxpy!(n, one(T), Δx, x)
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.Anorm = ANorm
   stats.Acond = Acond

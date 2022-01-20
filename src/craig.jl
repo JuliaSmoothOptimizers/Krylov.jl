@@ -141,6 +141,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   rNorm  = β₁
   history && push!(rNorms, rNorm)
   if β₁ == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     return solver
@@ -310,6 +311,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   inconsistent  && (status = "system may be inconsistent")
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status

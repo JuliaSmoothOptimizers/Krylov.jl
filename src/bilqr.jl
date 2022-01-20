@@ -91,6 +91,7 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
   if bᵗc == 0
+    stats.niter = 0
     stats.solved_primal = false
     stats.solved_dual = false
     stats.status = "Breakdown bᵀc = 0"
@@ -374,6 +375,7 @@ function bilqr!(solver :: BilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
 
   # Update stats
+  stats.niter = iter
   stats.status = status
   stats.solved_primal = solved_primal
   stats.solved_dual = solved_dual

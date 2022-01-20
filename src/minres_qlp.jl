@@ -99,6 +99,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   rNorm = βₖ
   history && push!(rNorms, rNorm)
   if rNorm == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     return solver
@@ -344,6 +345,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   restart && @kaxpy!(n, one(T), Δx, x)
 
  # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status

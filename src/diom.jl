@@ -88,6 +88,7 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
   rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
   history && push!(rNorms, rNorm)
   if rNorm == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     return solver
@@ -205,6 +206,7 @@ function diom!(solver :: DiomSolver{T,S}, A, b :: AbstractVector{T};
   restart && @kaxpy!(n, one(T), Δx, x)
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status

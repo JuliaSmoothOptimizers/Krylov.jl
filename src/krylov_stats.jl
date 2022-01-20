@@ -3,6 +3,7 @@ abstract type KrylovStats{T} end
 
 """
 Type for statistics returned by the majority of Krylov solvers, the attributes are:
+- niter
 - solved
 - inconsistent
 - residuals
@@ -11,6 +12,7 @@ Type for statistics returned by the majority of Krylov solvers, the attributes a
 - status
 """
 mutable struct SimpleStats{T} <: KrylovStats{T}
+  niter        :: Int
   solved       :: Bool
   inconsistent :: Bool
   residuals    :: Vector{T}
@@ -21,6 +23,7 @@ end
 
 """
 Type for statistics returned by CG-LANCZOS, the attributes are:
+- niter
 - solved
 - residuals
 - indefinite
@@ -29,6 +32,7 @@ Type for statistics returned by CG-LANCZOS, the attributes are:
 - status
 """
 mutable struct LanczosStats{T} <: KrylovStats{T}
+  niter      :: Int
   solved     :: Bool
   residuals  :: Vector{T}
   indefinite :: Bool
@@ -39,6 +43,7 @@ end
 
 """
 Type for statistics returned by CG-LANCZOS with shifts, the attributes are:
+- niter
 - solved
 - residuals
 - indefinite
@@ -47,6 +52,7 @@ Type for statistics returned by CG-LANCZOS with shifts, the attributes are:
 - status
 """
 mutable struct LanczosShiftStats{T} <: KrylovStats{T}
+  niter      :: Int
   solved     :: Bool
   residuals  :: Vector{Vector{T}}
   indefinite :: BitVector
@@ -63,6 +69,7 @@ end
 
 """
 Type for statistics returned by SYMMLQ, the attributes are:
+- niter
 - solved
 - residuals
 - residualscg
@@ -73,6 +80,7 @@ Type for statistics returned by SYMMLQ, the attributes are:
 - status
 """
 mutable struct SymmlqStats{T} <: KrylovStats{T}
+  niter       :: Int
   solved      :: Bool
   residuals   :: Vector{T}
   residualscg :: Vector{Union{T, Missing}}
@@ -85,6 +93,7 @@ end
 
 """
 Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the attributes are:
+- niter
 - solved_primal
 - solved_dual
 - residuals_primal
@@ -92,6 +101,7 @@ Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the at
 - status
 """
 mutable struct AdjointStats{T} <: KrylovStats{T}
+  niter            :: Int
   solved_primal    :: Bool
   solved_dual      :: Bool
   residuals_primal :: Vector{T}
@@ -101,6 +111,7 @@ end
 
 """
 Type for statistics returned by the LNLQ method, the attributes are:
+- niter
 - solved
 - residuals
 - error_with_bnd
@@ -109,6 +120,7 @@ Type for statistics returned by the LNLQ method, the attributes are:
 - status
 """
 mutable struct LNLQStats{T} <: KrylovStats{T}
+  niter          :: Int
   solved         :: Bool
   residuals      :: Vector{T}
   error_with_bnd :: Bool
@@ -119,6 +131,7 @@ end
 
 """
 Type for statistics returned by the LSLQ method, the attributes are:
+- niter
 - solved
 - inconsistent
 - residuals
@@ -130,6 +143,7 @@ Type for statistics returned by the LSLQ method, the attributes are:
 - status
 """
 mutable struct LSLQStats{T} <: KrylovStats{T}
+  niter          :: Int
   solved         :: Bool
   inconsistent   :: Bool
   residuals      :: Vector{T}

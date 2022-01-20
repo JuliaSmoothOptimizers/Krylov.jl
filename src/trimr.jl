@@ -454,6 +454,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   restart && @kaxpy!(n, one(T), Δy, yₖ)
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status

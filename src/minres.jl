@@ -117,6 +117,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   β₁ = @kdot(m, r1, v)
   β₁ < 0 && error("Preconditioner is not positive definite")
   if β₁ == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(rNorms, β₁)
@@ -264,6 +265,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
 
     if iter == 1 && β / β₁ ≤ 10 * ϵM
       # Aᵀb = 0 so x = 0 is a minimum least-squares solution
+      stats.niter = 0
       stats.solved, stats.inconsistent = true, true
       stats.status = "x is a minimum least-squares solution"
       return solver
@@ -303,6 +305,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   restart && @kaxpy!(n, one(T), Δx, x)
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = !zero_resid
   stats.status = status

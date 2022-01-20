@@ -186,6 +186,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   MisI || mul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
   if β₁ == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.error_with_bnd = false
     history && push!(rNorms, zero(T))
@@ -204,6 +205,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   if α == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.error_with_bnd = false
     history && push!(rNorms, β₁)
@@ -434,6 +436,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   fwd_err_ubnd  && (status = "forward error upper bound small enough")
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = !zero_resid
   stats.error_with_bnd = complex_error_bnd

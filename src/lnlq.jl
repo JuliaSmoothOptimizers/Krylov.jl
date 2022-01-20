@@ -134,6 +134,7 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
 
   bNorm = @knrm2(m, b)
   if bNorm == 0
+    stats.niter = 0
     stats.solved = true
     stats.error_with_bnd = false
     history && push!(rNorms, bNorm)
@@ -463,6 +464,7 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   solved_cg && (status = "solutions (xᶜ, yᶜ) good enough for the tolerances given")
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved_lq || solved_cg
   stats.error_with_bnd = complex_error_bnd
   stats.status = status

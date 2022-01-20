@@ -92,6 +92,7 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   history && push!(rNorms, rNorm)
   if bNorm == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(ArNorms, zero(T))
@@ -185,6 +186,7 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
   status = psd ? "zero-curvature encountered" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status

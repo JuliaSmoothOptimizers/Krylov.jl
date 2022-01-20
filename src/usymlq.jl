@@ -84,6 +84,7 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   bNorm = @knrm2(m, b)
   history && push!(rNorms, bNorm)
   if bNorm == 0
+    stats.niter = 0
     stats.solved = true
     stats.inconsistent = false
     stats.status = "x = 0 is a zero-residual solution"
@@ -266,6 +267,7 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   solved_cg && (status = "solution xᶜ good enough given atol and rtol")
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved_lq || solved_cg
   stats.inconsistent = false
   stats.status = status
