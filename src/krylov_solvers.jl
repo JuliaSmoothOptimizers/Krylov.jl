@@ -1587,11 +1587,11 @@ for (KS, fun, nsol, nA, nAt) in [
   @eval begin
     @inline solve!(solver :: $KS, args...; kwargs...) = $(fun)(solver, args...; kwargs...)
     @inline statistics(solver :: $KS) = solver.stats
-    @inline niterations(solver :: $KS) = stats.niter
-    @inline Aprod(solver :: $KS) = $nA * stats.niter
-    @inline Atprod(solver :: $KS) = $nAt * stats.niter
+    @inline niterations(solver :: $KS) = solver.stats.niter
+    @inline Aprod(solver :: $KS) = $nA * solver.stats.niter
+    @inline Atprod(solver :: $KS) = $nAt * solver.stats.niter
     if $KS == GpmrSolver
-      @inline Bprod(solver :: $KS) = 1 * stats.niter
+      @inline Bprod(solver :: $KS) = solver.stats.niter
     end
     @inline nsolution(solver :: $KS) = $nsol
     ($nsol == 1) && @inline solution(solver :: $KS) = solver.x
