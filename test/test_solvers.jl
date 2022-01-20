@@ -257,7 +257,7 @@
   if VERSION < v"1.8.0-DEV.1090"
 
     io = IOBuffer()
-    show(io, cg_solver)
+    show(io, cg_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -272,17 +272,11 @@
     │                  Ap│           Vector{Float64}│                64│
     │                   z│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, symmlq_solver)
+    show(io, symmlq_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -301,19 +295,11 @@
     │               zlist│           Vector{Float64}│                 5│
     │               sprod│           Vector{Float64}│                 5│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Symmlq stats
-    solved: true
-    residuals: []
-    residuals (cg): []
-    errors: []
-    errors (cg): []
-    ‖A‖F: $(symmlq_solver.stats.Anorm)
-    κ₂(A): $(symmlq_solver.stats.Acond)
-    status: solution xᶜ good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, minres_solver)
+    show(io, minres_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -331,17 +317,11 @@
     │                   v│           Vector{Float64}│                 0│
     │             err_vec│           Vector{Float64}│                 5│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: found approximate zero-residual solution"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, cg_lanczos_solver)
+    show(io, cg_lanczos_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -356,17 +336,11 @@
     │             Mv_next│           Vector{Float64}│                64│
     │                   v│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Lanczos stats
-    solved: true
-    residuals: []
-    indefinite: false
-    ‖A‖F: $(cg_lanczos_solver.stats.Anorm)
-    κ₂(A): NaN
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, cg_lanczos_shift_solver)
+    show(io, cg_lanczos_shift_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -388,17 +362,11 @@
     │           converged│                 BitVector│                 5│
     │              not_cv│                 BitVector│                 5│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    LanczosShift stats
-    solved: true
-    residuals: [Float64[], Float64[], Float64[], Float64[], Float64[]]
-    indefinite: Bool[0, 0, 0, 0, 0]
-    ‖A‖F: NaN
-    κ₂(A): NaN
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, diom_solver)
+    show(io, diom_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -416,17 +384,11 @@
     │                   L│           Vector{Float64}│                10│
     │                   H│           Vector{Float64}│                12│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, fom_solver)
+    show(io, fom_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -444,17 +406,11 @@
     │                   z│           Vector{Float64}│                10│
     │                   U│           Vector{Float64}│                55│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, dqgmres_solver)
+    show(io, dqgmres_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -473,17 +429,11 @@
     │                   s│           Vector{Float64}│                10│
     │                   H│           Vector{Float64}│                12│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, gmres_solver)
+    show(io, gmres_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -502,17 +452,11 @@
     │                   z│           Vector{Float64}│                10│
     │                   R│           Vector{Float64}│                55│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, cr_solver)
+    show(io, cr_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -527,17 +471,11 @@
     │                  Ar│           Vector{Float64}│                64│
     │                  Mq│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, crmr_solver)
+    show(io, crmr_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -553,17 +491,11 @@
     │                  Mq│           Vector{Float64}│                 0│
     │                   s│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, cgs_solver)
+    show(io, cgs_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -580,17 +512,11 @@
     │                  yz│           Vector{Float64}│                 0│
     │                  vw│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, bicgstab_solver)
+    show(io, bicgstab_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -607,17 +533,11 @@
     │                  yz│           Vector{Float64}│                 0│
     │                   t│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, craigmr_solver)
+    show(io, craigmr_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -638,17 +558,11 @@
     │                   v│           Vector{Float64}│                 0│
     │                   q│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: found approximate minimum-norm solution"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, cgne_solver)
+    show(io, cgne_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -664,17 +578,11 @@
     │                   s│           Vector{Float64}│                 0│
     │                   z│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, lnlq_solver)
+    show(io, lnlq_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -693,17 +601,11 @@
     │                   v│           Vector{Float64}│                 0│
     │                   q│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    LNLQ stats
-    solved: true
-    residuals: []
-    error with bnd: false
-    error bnd x: []
-    error bnd y: []
-    status: solutions (xᶜ, yᶜ) good enough for the tolerances given"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, craig_solver)
+    show(io, craig_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -722,17 +624,11 @@
     │                   v│           Vector{Float64}│                 0│
     │                  w2│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough for the tolerances given"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, lslq_solver)
+    show(io, lslq_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -750,20 +646,11 @@
     │                   v│           Vector{Float64}│                 0│
     │             err_vec│           Vector{Float64}│                 5│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    LSLQ stats
-    solved: true
-    inconsistent: true
-    residuals: []
-    Aresiduals: []
-    err lbnds: []
-    error with bnd: false
-    error bound LQ: []
-    error bound CG: []
-    status: found approximate minimum least-squares solution"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, cgls_solver)
+    show(io, cgls_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -778,17 +665,11 @@
     │                   q│           Vector{Float64}│                64│
     │                  Mr│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, lsqr_solver)
+    show(io, lsqr_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -806,17 +687,11 @@
     │                   v│           Vector{Float64}│                 0│
     │             err_vec│           Vector{Float64}│                 5│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: found approximate zero-residual solution"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, crls_solver)
+    show(io, crls_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -833,17 +708,11 @@
     │                   s│           Vector{Float64}│                64│
     │                  Ms│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, lsmr_solver)
+    show(io, lsmr_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -862,17 +731,11 @@
     │                   v│           Vector{Float64}│                 0│
     │             err_vec│           Vector{Float64}│                 5│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: found approximate zero-residual solution"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, usymqr_solver)
+    show(io, usymqr_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -890,17 +753,11 @@
     │                  uₖ│           Vector{Float64}│                32│
     │                   p│           Vector{Float64}│                32│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, trilqr_solver)
+    show(io, trilqr_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -920,16 +777,11 @@
     │                wₖ₋₃│           Vector{Float64}│                64│
     │                wₖ₋₂│           Vector{Float64}│                64│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Adjoint stats
-    solved primal: true
-    solved dual: true
-    residuals primal: []
-    residuals dual: []
-    status: Both primal and dual solutions (xᶜ, t) are good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, bilq_solver)
+    show(io, bilq_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -946,17 +798,11 @@
     │                   x│           Vector{Float64}│                64│
     │                   d̅│           Vector{Float64}│                64│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution xᶜ good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, bilqr_solver)
+    show(io, bilqr_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -976,16 +822,11 @@
     │                wₖ₋₃│           Vector{Float64}│                64│
     │                wₖ₋₂│           Vector{Float64}│                64│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Adjoint stats
-    solved primal: true
-    solved dual: true
-    residuals primal: []
-    residuals dual: []
-    status: Both primal and dual solutions (xᶜ, t) are good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, minres_qlp_solver)
+    show(io, minres_qlp_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -1002,17 +843,11 @@
     │                   p│           Vector{Float64}│                64│
     │                  vₖ│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, qmr_solver)
+    show(io, qmr_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -1030,17 +865,11 @@
     │                wₖ₋₂│           Vector{Float64}│                64│
     │                wₖ₋₁│           Vector{Float64}│                64│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, usymlq_solver)
+    show(io, usymlq_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -1057,17 +886,11 @@
     │                  vₖ│           Vector{Float64}│                32│
     │                   q│           Vector{Float64}│                32│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution xᶜ good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, tricg_solver)
+    show(io, tricg_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -1092,17 +915,11 @@
     │                  uₖ│           Vector{Float64}│                 0│
     │                  vₖ│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, trimr_solver)
+    show(io, trimr_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -1131,17 +948,11 @@
     │                  uₖ│           Vector{Float64}│                 0│
     │                  vₖ│           Vector{Float64}│                 0│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
 
     io = IOBuffer()
-    show(io, gpmr_solver)
+    show(io, gpmr_solver, show_stats=false)
     showed = String(take!(io))
     expected = """
     ┌────────────────────┬──────────────────────────┬──────────────────┐
@@ -1166,13 +977,7 @@
     │                  zt│           Vector{Float64}│                20│
     │                   R│           Vector{Float64}│               210│
     └────────────────────┴──────────────────────────┴──────────────────┘
-    Simple stats
-    solved: true
-    inconsistent: false
-    residuals: []
-    Aresiduals: []
-    κ₂(A): []
-    status: solution good enough given atol and rtol"""
+    """
     @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   end
 end

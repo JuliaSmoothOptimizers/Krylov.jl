@@ -1580,7 +1580,7 @@ for (KS, fun, nsol) in [
   end
 end
 
-function show(io :: IO, solver :: KrylovSolver)
+function show(io :: IO, solver :: KrylovSolver; show_stats :: Bool=true)
   workspace = typeof(solver)
   name_solver = workspace.name.wrapper
   precision = workspace.parameters[1]
@@ -1611,5 +1611,5 @@ function show(io :: IO, solver :: KrylovSolver)
     end
   end
   @printf(io, "└%s┴%s┴%s┘\n","─"^20,"─"^26,"─"^18)
-  print(io, solver.stats)
+  show_stats && print(io, solver.stats)
 end
