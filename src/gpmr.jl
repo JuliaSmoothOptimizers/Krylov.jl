@@ -422,6 +422,7 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
   solved    && (status = "solution good enough given atol and rtol")
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = !solved && breakdown
   stats.status = status

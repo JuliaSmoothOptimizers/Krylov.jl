@@ -51,96 +51,160 @@
     c  = 3 * c
 
     solver = solve!(cg_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(symmlq_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(minres_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(cg_lanczos_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(cg_lanczos_shift_solver, A, b, shifts)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(diom_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(fom_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(dqgmres_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(gmres_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(cr_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(crmr_solver, Au, c)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(cgs_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == 2 * niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(bicgstab_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == 2 * niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(craigmr_solver, Au, c)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 2
     @test issolved(solver)
 
     solver = solve!(cgne_solver, Au, c)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(lnlq_solver, Au, c)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test solution(solver, 2) === solver.y
@@ -148,6 +212,10 @@
     @test issolved(solver)
 
     solver = solve!(craig_solver, Au, c)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test solution(solver, 2) === solver.y
@@ -155,42 +223,70 @@
     @test issolved(solver)
 
     solver = solve!(lslq_solver, Ao, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(cgls_solver, Ao, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(lsqr_solver, Ao, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(crls_solver, Ao, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(lsmr_solver, Ao, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(usymqr_solver, Ao, b, c)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(trilqr_solver, A, b, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test solution(solver, 2) === solver.y
@@ -200,12 +296,20 @@
     @test issolved(solver)
 
     solver = solve!(bilq_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(bilqr_solver, A, b, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test solution(solver, 2) === solver.y
@@ -215,24 +319,40 @@
     @test issolved(solver)
 
     solver = solve!(minres_qlp_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(qmr_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(usymlq_solver, Au, c, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test nsolution(solver) == 1
     @test issolved(solver)
 
     solver = solve!(tricg_solver, Au, c, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test solution(solver, 2) === solver.y
@@ -240,6 +360,10 @@
     @test issolved(solver)
 
     solver = solve!(trimr_solver, Au, c, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test solution(solver, 2) === solver.y
@@ -247,6 +371,11 @@
     @test issolved(solver)
 
     solver = solve!(gpmr_solver, Ao, Au, b, c)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
+    @test Bprod(solver) == niter
     @test statistics(solver) === solver.stats
     @test solution(solver, 1) === solver.x
     @test solution(solver, 2) === solver.y

@@ -79,7 +79,8 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   mul!(r, M, b)  # initial residual r = M * (b - Ax) = M * b
   mul!(Ar, A, r)
   ρ = @kdot(n, r, Ar)
-  if ρ == 0 
+  if ρ == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(rNorms, ρ)
@@ -276,6 +277,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   status = npcurv ? "nonpositive curvature" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = false
   stats.status = status

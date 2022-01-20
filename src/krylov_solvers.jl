@@ -5,7 +5,8 @@ BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CrlsSolver, CgneSolver, CrmrSolv
 LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
 GmresSolver, FomSolver, GpmrSolver
 
-export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual
+export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual,
+niterations, Aprod, Atprod, Bprod
 
 "Abstract type for using Krylov solvers in-place"
 abstract type KrylovSolver{T,S} end
@@ -43,7 +44,7 @@ mutable struct MinresSolver{T,S} <: KrylovSolver{T,S}
     y  = S(undef, n)
     v  = S(undef, 0)
     err_vec = zeros(T, window)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(Δx, x, r1, r2, w1, w2, y, v, err_vec, stats)
     return solver
   end
@@ -82,7 +83,7 @@ mutable struct CgSolver{T,S} <: KrylovSolver{T,S}
     p  = S(undef, n)
     Ap = S(undef, n)
     z  = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(Δx, x, r, p, Ap, z, stats)
     return solver
   end
@@ -121,7 +122,7 @@ mutable struct CrSolver{T,S} <: KrylovSolver{T,S}
     q  = S(undef, n)
     Ar = S(undef, n)
     Mq = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(x, r, p, q, Ar, Mq, stats)
     return solver
   end
@@ -168,7 +169,7 @@ mutable struct SymmlqSolver{T,S} <: KrylovSolver{T,S}
     clist   = zeros(T, window)
     zlist   = zeros(T, window)
     sprod   = ones(T, window)
-    stats = SymmlqStats(false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), "unknown")
+    stats = SymmlqStats(0, false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), "unknown")
     solver = new{T,S}(Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, stats)
     return solver
   end
@@ -207,7 +208,7 @@ mutable struct CgLanczosSolver{T,S} <: KrylovSolver{T,S}
     p       = S(undef, n)
     Mv_next = S(undef, n)
     v       = S(undef, 0)
-    stats = LanczosStats(false, T[], false, T(NaN), T(NaN), "unknown")
+    stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), "unknown")
     solver = new{T,S}(x, Mv, Mv_prev, p, Mv_next, v, stats)
     return solver
   end
@@ -261,7 +262,7 @@ mutable struct CgLanczosShiftSolver{T,S} <: KrylovSolver{T,S}
     indefinite = BitVector(undef, nshifts)
     converged  = BitVector(undef, nshifts)
     not_cv     = BitVector(undef, nshifts)
-    stats = LanczosShiftStats(false, [T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), "unknown")
+    stats = LanczosShiftStats(0, false, [T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), "unknown")
     solver = new{T,S}(Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
     return solver
   end
@@ -304,7 +305,7 @@ mutable struct MinresQlpSolver{T,S} <: KrylovSolver{T,S}
     x       = S(undef, n)
     p       = S(undef, n)
     vₖ      = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, stats)
     return solver
   end
@@ -351,7 +352,7 @@ mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
     c  = Vector{T}(undef, memory)
     s  = Vector{T}(undef, memory)
     H  = Vector{T}(undef, memory+2)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(Δx, x, t, z, w, P, V, c, s, H, stats)
     return solver
   end
@@ -396,7 +397,7 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
     V  = [S(undef, n) for i = 1 : memory]
     L  = Vector{T}(undef, memory)
     H  = Vector{T}(undef, memory+2)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(Δx, x, t, z, w, P, V, L, H, stats)
     return solver
   end
@@ -439,7 +440,7 @@ mutable struct UsymlqSolver{T,S} <: KrylovSolver{T,S}
     vₖ₋₁ = S(undef, n)
     vₖ   = S(undef, n)
     q    = S(undef, n)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(uₖ₋₁, uₖ, p, x, d̅, vₖ₋₁, vₖ, q, stats)
     return solver
   end
@@ -484,7 +485,7 @@ mutable struct UsymqrSolver{T,S} <: KrylovSolver{T,S}
     uₖ₋₁ = S(undef, m)
     uₖ   = S(undef, m)
     p    = S(undef, m)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(vₖ₋₁, vₖ, q, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, stats)
     return solver
   end
@@ -543,7 +544,7 @@ mutable struct TricgSolver{T,S} <: KrylovSolver{T,S}
     Δy      = S(undef, 0)
     uₖ      = S(undef, 0)
     vₖ      = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, stats)
     return solver
   end
@@ -610,7 +611,7 @@ mutable struct TrimrSolver{T,S} <: KrylovSolver{T,S}
     Δy      = S(undef, 0)
     uₖ      = S(undef, 0)
     vₖ      = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, stats)
     return solver
   end
@@ -659,7 +660,7 @@ mutable struct TrilqrSolver{T,S} <: KrylovSolver{T,S}
     y    = S(undef, n)
     wₖ₋₃ = S(undef, n)
     wₖ₋₂ = S(undef, n)
-    stats = AdjointStats(false, false, T[], T[], "unknown")
+    stats = AdjointStats(0, false, false, T[], T[], "unknown")
     solver = new{T,S}(uₖ₋₁, uₖ, p, d̅, x, vₖ₋₁, vₖ, q, y, wₖ₋₃, wₖ₋₂, stats)
     return solver
   end
@@ -702,7 +703,7 @@ mutable struct CgsSolver{T,S} <: KrylovSolver{T,S}
     ts = S(undef, n)
     yz = S(undef, 0)
     vw = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(x, r, u, p, q, ts, yz, vw, stats)
     return solver
   end
@@ -745,7 +746,7 @@ mutable struct BicgstabSolver{T,S} <: KrylovSolver{T,S}
     qd = S(undef, n)
     yz = S(undef, 0)
     t  = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(x, r, p, v, s, qd, yz, t, stats)
     return solver
   end
@@ -788,7 +789,7 @@ mutable struct BilqSolver{T,S} <: KrylovSolver{T,S}
     p    = S(undef, n)
     x    = S(undef, n)
     d̅    = S(undef, n)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, d̅, stats)
     return solver
   end
@@ -833,7 +834,7 @@ mutable struct QmrSolver{T,S} <: KrylovSolver{T,S}
     x    = S(undef, n)
     wₖ₋₂ = S(undef, n)
     wₖ₋₁ = S(undef, n)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, wₖ₋₂, wₖ₋₁, stats)
     return solver
   end
@@ -882,7 +883,7 @@ mutable struct BilqrSolver{T,S} <: KrylovSolver{T,S}
     d̅    = S(undef, n)
     wₖ₋₃ = S(undef, n)
     wₖ₋₂ = S(undef, n)
-    stats = AdjointStats(false, false, T[], T[], "unknown")
+    stats = AdjointStats(0, false, false, T[], T[], "unknown")
     solver = new{T,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, x, y, d̅, wₖ₋₃, wₖ₋₂, stats)
     return solver
   end
@@ -921,7 +922,7 @@ mutable struct CglsSolver{T,S} <: KrylovSolver{T,S}
     r  = S(undef, n)
     q  = S(undef, n)
     Mr = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(x, p, s, r, q, Mr, stats)
     return solver
   end
@@ -964,7 +965,7 @@ mutable struct CrlsSolver{T,S} <: KrylovSolver{T,S}
     Ap = S(undef, n)
     s  = S(undef, n)
     Ms = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(x, p, Ar, q, r, Ap, s, Ms, stats)
     return solver
   end
@@ -1005,7 +1006,7 @@ mutable struct CgneSolver{T,S} <: KrylovSolver{T,S}
     q   = S(undef, n)
     s   = S(undef, 0)
     z   = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(x, p, Aᵀz, r, q, s, z, stats)
     return solver
   end
@@ -1046,7 +1047,7 @@ mutable struct CrmrSolver{T,S} <: KrylovSolver{T,S}
     q   = S(undef, n)
     Mq  = S(undef, 0)
     s   = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(x, p, Aᵀr, r, q, Mq, s, stats)
     return solver
   end
@@ -1091,7 +1092,7 @@ mutable struct LslqSolver{T,S} <: KrylovSolver{T,S}
     u   = S(undef, 0)
     v   = S(undef, 0)
     err_vec = zeros(T, window)
-    stats = LSLQStats(false, false, T[], T[], T[], false, T[], T[], "unknown")
+    stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], "unknown")
     solver = new{T,S}(x, Nv, Aᵀu, w̄, Mu, Av, u, v, err_vec, stats)
     return solver
   end
@@ -1136,7 +1137,7 @@ mutable struct LsqrSolver{T,S} <: KrylovSolver{T,S}
     u   = S(undef, 0)
     v   = S(undef, 0)
     err_vec = zeros(T, window)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(x, Nv, Aᵀu, w, Mu, Av, u, v, err_vec, stats)
     return solver
   end
@@ -1183,7 +1184,7 @@ mutable struct LsmrSolver{T,S} <: KrylovSolver{T,S}
     u    = S(undef, 0)
     v    = S(undef, 0)
     err_vec = zeros(T, window)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(x, Nv, Aᵀu, h, hbar, Mu, Av, u, v, err_vec, stats)
     return solver
   end
@@ -1230,7 +1231,7 @@ mutable struct LnlqSolver{T,S} <: KrylovSolver{T,S}
     u   = S(undef, 0)
     v   = S(undef, 0)
     q   = S(undef, 0)
-    stats = LNLQStats(false, T[], false, T[], T[], "unknown")
+    stats = LNLQStats(0, false, T[], false, T[], T[], "unknown")
     solver = new{T,S}(x, Nv, Aᵀu, y, w̄, Mu, Av, u, v, q, stats)
     return solver
   end
@@ -1277,7 +1278,7 @@ mutable struct CraigSolver{T,S} <: KrylovSolver{T,S}
     u   = S(undef, 0)
     v   = S(undef, 0)
     w2  = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(x, Nv, Aᵀu, y, w, Mu, Av, u, v, w2, stats)
     return solver
   end
@@ -1328,7 +1329,7 @@ mutable struct CraigmrSolver{T,S} <: KrylovSolver{T,S}
     u    = S(undef, 0)
     v    = S(undef, 0)
     q    = S(undef, 0)
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(x, Nv, Aᵀu, d, y, Mu, w, wbar, Av, u, v, q, stats)
     return solver
   end
@@ -1375,7 +1376,7 @@ mutable struct GmresSolver{T,S} <: KrylovSolver{T,S}
     s  = Vector{T}(undef, memory)
     z  = Vector{T}(undef, memory)
     R  = Vector{T}(undef, div(memory * (memory+1), 2))
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(Δx, x, w, p, q, V, c, s, z, R, stats)
     return solver
   end
@@ -1420,7 +1421,7 @@ mutable struct FomSolver{T,S} <: KrylovSolver{T,S}
     l  = Vector{T}(undef, memory)
     z  = Vector{T}(undef, memory)
     U  = Vector{T}(undef, div(memory * (memory+1), 2))
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(Δx, x, w, p, q, V, l, z, U, stats)
     return solver
   end
@@ -1479,7 +1480,7 @@ mutable struct GpmrSolver{T,S} <: KrylovSolver{T,S}
     gc = Vector{T}(undef, 4 * memory)
     zt = Vector{T}(undef, 2 * memory)
     R  = Vector{T}(undef, memory * (2memory + 1))
-    stats = SimpleStats(false, false, T[], T[], T[], "unknown")
+    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,S}(wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, stats)
     return solver
   end
@@ -1528,43 +1529,70 @@ Return a boolean that determines whether the Krylov method associated to `solver
 """
 function issolved end
 
-for (KS, fun, nsol) in [
-  (LsmrSolver          , :lsmr!      , 1)
-  (CgsSolver           , :cgs!       , 1)
-  (UsymlqSolver        , :usymlq!    , 1)
-  (LnlqSolver          , :lnlq!      , 2)
-  (BicgstabSolver      , :bicgstab!  , 1)
-  (CrlsSolver          , :crls!      , 1)
-  (LsqrSolver          , :lsqr!      , 1)
-  (MinresSolver        , :minres!    , 1)
-  (CgneSolver          , :cgne!      , 1)
-  (DqgmresSolver       , :dqgmres!   , 1)
-  (SymmlqSolver        , :symmlq!    , 1)
-  (TrimrSolver         , :trimr!     , 2)
-  (UsymqrSolver        , :usymqr!    , 1)
-  (BilqrSolver         , :bilqr!     , 2)
-  (CrSolver            , :cr!        , 1)
-  (CraigmrSolver       , :craigmr!   , 2)
-  (TricgSolver         , :tricg!     , 2)
-  (CraigSolver         , :craig!     , 2)
-  (DiomSolver          , :diom!      , 1)
-  (LslqSolver          , :lslq!      , 1)
-  (TrilqrSolver        , :trilqr!    , 2)
-  (CrmrSolver          , :crmr!      , 1)
-  (CgSolver            , :cg!        , 1)
-  (CgLanczosShiftSolver, :cg_lanczos!, 1)
-  (CglsSolver          , :cgls!      , 1)
-  (CgLanczosSolver     , :cg_lanczos!, 1)
-  (BilqSolver          , :bilq!      , 1)
-  (MinresQlpSolver     , :minres_qlp!, 1)
-  (QmrSolver           , :qmr!       , 1)
-  (GmresSolver         , :gmres!     , 1)
-  (FomSolver           , :fom!       , 1)
-  (GpmrSolver          , :gpmr!      , 2)
+"""
+    niterations(solver)
+
+Return the number of iterations performed by the Krylov method associated to `solver`.
+"""
+function niterations end
+
+"""
+    Aprod(solver)
+
+Return the number of operator-vector products with `A` performed by the Krylov method associated to `solver`.
+"""
+function Aprod end
+
+"""
+    Atprod(solver)
+
+Return the number of operator-vector products with `A'` performed by the Krylov method associated to `solver`.
+"""
+function Atprod end
+
+for (KS, fun, nsol, nA, nAt) in [
+  (LsmrSolver          , :lsmr!      , 1, 1, 1)
+  (CgsSolver           , :cgs!       , 1, 2, 0)
+  (UsymlqSolver        , :usymlq!    , 1, 1, 1)
+  (LnlqSolver          , :lnlq!      , 2, 1, 1)
+  (BicgstabSolver      , :bicgstab!  , 1, 2, 0)
+  (CrlsSolver          , :crls!      , 1, 1, 1)
+  (LsqrSolver          , :lsqr!      , 1, 1, 1)
+  (MinresSolver        , :minres!    , 1, 1, 0)
+  (CgneSolver          , :cgne!      , 1, 1, 1)
+  (DqgmresSolver       , :dqgmres!   , 1, 1, 0)
+  (SymmlqSolver        , :symmlq!    , 1, 1, 0)
+  (TrimrSolver         , :trimr!     , 2, 1, 1)
+  (UsymqrSolver        , :usymqr!    , 1, 1, 1)
+  (BilqrSolver         , :bilqr!     , 2, 1, 1)
+  (CrSolver            , :cr!        , 1, 1, 0)
+  (CraigmrSolver       , :craigmr!   , 2, 1, 1)
+  (TricgSolver         , :tricg!     , 2, 1, 1)
+  (CraigSolver         , :craig!     , 2, 1, 1)
+  (DiomSolver          , :diom!      , 1, 1, 0)
+  (LslqSolver          , :lslq!      , 1, 1, 1)
+  (TrilqrSolver        , :trilqr!    , 2, 1, 1)
+  (CrmrSolver          , :crmr!      , 1, 1, 1)
+  (CgSolver            , :cg!        , 1, 1, 0)
+  (CgLanczosShiftSolver, :cg_lanczos!, 1, 1, 0)
+  (CglsSolver          , :cgls!      , 1, 1, 1)
+  (CgLanczosSolver     , :cg_lanczos!, 1, 1, 0)
+  (BilqSolver          , :bilq!      , 1, 1, 1)
+  (MinresQlpSolver     , :minres_qlp!, 1, 1, 0)
+  (QmrSolver           , :qmr!       , 1, 1, 1)
+  (GmresSolver         , :gmres!     , 1, 1, 0)
+  (FomSolver           , :fom!       , 1, 1, 0)
+  (GpmrSolver          , :gpmr!      , 2, 1, 0)
 ]
   @eval begin
     @inline solve!(solver :: $KS, args...; kwargs...) = $(fun)(solver, args...; kwargs...)
     @inline statistics(solver :: $KS) = solver.stats
+    @inline niterations(solver :: $KS) = stats.niter
+    @inline Aprod(solver :: $KS) = $nA * stats.niter
+    @inline Atprod(solver :: $KS) = $nAt * stats.niter
+    if $KS == GpmrSolver
+      @inline Bprod(solver :: $KS) = 1 * stats.niter
+    end
     @inline nsolution(solver :: $KS) = $nsol
     ($nsol == 1) && @inline solution(solver :: $KS) = solver.x
     ($nsol == 2) && @inline solution(solver :: $KS) = solver.x, solver.y

@@ -86,6 +86,7 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
   rNorm = β
   history && push!(rNorms, β)
   if β == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     return solver
@@ -219,6 +220,7 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
   restart && @kaxpy!(n, one(T), Δx, x)
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = !solved && breakdown
   stats.status = status

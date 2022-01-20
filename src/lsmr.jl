@@ -148,6 +148,7 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
   MisI || mul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
   if β₁ == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     history && push!(rNorms, zero(T))
@@ -204,6 +205,7 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   if α == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a minimum least-squares solution"
     return solver
@@ -358,6 +360,7 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
   user_requested_exit && (status = "user-requested exit")
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = !zero_resid
   stats.status = status

@@ -357,6 +357,7 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
 
   # Update stats
+  stats.niter = iter
   stats.status = status
   stats.solved_primal = solved_primal
   stats.solved_dual = solved_dual

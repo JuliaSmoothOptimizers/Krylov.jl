@@ -108,6 +108,7 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
   history && push!(rNorms, rNorm)
   if rNorm == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     return solver
@@ -167,6 +168,7 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent" : "solution good enough given atol and rtol")
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status

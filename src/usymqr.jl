@@ -81,6 +81,7 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   rNorm = @knrm2(m, b)
   history && push!(rNorms, rNorm)
   if rNorm == 0
+    stats.niter = 0
     stats.solved = true
     stats.inconsistent = false
     stats.status = "x = 0 is a zero-residual solution"
@@ -254,6 +255,7 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status

@@ -90,7 +90,8 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   γ = @kdot(n, r, z)
   rNorm = sqrt(γ)
   history && push!(rNorms, rNorm)
-  if γ == 0 
+  if γ == 0
+    stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
     return solver
@@ -175,6 +176,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   restart && @kaxpy!(n, one(T), Δx, x)
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status

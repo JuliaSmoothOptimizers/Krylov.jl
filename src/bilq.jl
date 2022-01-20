@@ -72,6 +72,7 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
 
   history && push!(rNorms, bNorm)
   if bNorm == 0
+    stats.niter = 0
     stats.solved = true
     stats.inconsistent = false
     stats.status = "x = 0 is a zero-residual solution"
@@ -88,6 +89,7 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
   # Initialize the Lanczos biorthogonalization process.
   bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
   if bᵗc == 0
+    stats.niter = 0
     stats.solved = false
     stats.inconsistent = false
     stats.status = "Breakdown bᵀc = 0"
@@ -271,6 +273,7 @@ function bilq!(solver :: BilqSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstra
   solved_cg && (status = "solution xᶜ good enough given atol and rtol")
 
   # Update stats
+  stats.niter = iter
   stats.solved = solved_lq || solved_cg
   stats.inconsistent = false
   stats.status = status
