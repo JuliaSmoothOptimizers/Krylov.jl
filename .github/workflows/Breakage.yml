@@ -16,7 +16,8 @@ jobs:
           "JuliaSmoothOptimizers/CaNNOLeS.jl",
           "JuliaSmoothOptimizers/DCISolver.jl",
           "JuliaSmoothOptimizers/JSOSolvers.jl",
-          "JuliaSmoothOptimizers/Percival.jl"
+          "JuliaSmoothOptimizers/Percival.jl",
+          "JuliaSmoothOptimizers/RipQP.jl"
         ]
         pkgversion: [latest, stable]
 
