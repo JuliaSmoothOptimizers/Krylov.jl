@@ -452,12 +452,12 @@ if λ &gt; 0.0
   @printf(&quot;Error in y: %7.1e\n&quot;, norm(λ * y - xy_exact[n+1:n+m]) / norm(xy_exact[n+1:n+m]))
 end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">CRAIG: system of 5 equations in 8 variables
     k       ‖r‖       ‖x‖       ‖A‖      κ(A)         α        β
-    0  1.03e+01  0.00e+00  0.00e+00  0.00e+00
-    1  5.47e-01  2.76e+00  3.74e+00  3.74e+00   3.7e+00  2.0e-01
-    2  1.72e-01  2.81e+00  3.89e+00  5.50e+00   1.0e+00  3.2e-01
-    3  3.99e-02  2.83e+00  3.93e+00  6.86e+00   5.4e-01  1.3e-01
-    4  1.51e-02  2.83e+00  4.01e+00  8.10e+00   7.6e-01  2.9e-01
-    5  5.46e-10  2.83e+00  4.06e+00  9.21e+00   6.2e-01  2.3e-08
+    0  8.23e+00  0.00e+00  0.00e+00  0.00e+00
+    1  3.92e-01  2.74e+00  3.01e+00  3.01e+00   3.0e+00  1.4e-01
+    2  1.32e-01  2.80e+00  3.09e+00  4.37e+00   6.6e-01  2.2e-01
+    3  2.09e-02  2.81e+00  3.22e+00  5.62e+00   9.0e-01  1.4e-01
+    4  3.11e-02  2.81e+00  3.29e+00  6.64e+00   3.9e-01  5.7e-01
+    5  3.54e-10  2.81e+00  3.32e+00  8.04e+00   4.1e-01  4.7e-09
 
 Simple stats
  niter: 5
@@ -467,10 +467,10 @@ Simple stats
  Aresiduals: []
  κ₂(A): []
  status: solution good enough for the tolerances given
-Primal feasibility: 5.3e-11
-Dual   feasibility: 1.8e-16
-Error in x: 5.2e-11
-Error in y: 3.2e-11</code></pre><h2 id="CRAIGMR"><a class="docs-heading-anchor" href="#CRAIGMR">CRAIGMR</a><a id="CRAIGMR-1"></a><a class="docs-heading-anchor-permalink" href="#CRAIGMR" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Krylov, HarwellRutherfordBoeing, SuiteSparseMatrixCollection
+Primal feasibility: 4.3e-11
+Dual   feasibility: 1.7e-16
+Error in x: 4.2e-11
+Error in y: 2.7e-11</code></pre><h2 id="CRAIGMR"><a class="docs-heading-anchor" href="#CRAIGMR">CRAIGMR</a><a id="CRAIGMR-1"></a><a class="docs-heading-anchor-permalink" href="#CRAIGMR" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Krylov, HarwellRutherfordBoeing, SuiteSparseMatrixCollection
 using LinearAlgebra, Printf
 
 ssmc = ssmc_db(verbose=false)
@@ -631,4 +631,4 @@ Simple stats
  κ₂(A): []
  status: truncated forward error small enough
 LSMR: Relative residual:  4.3e-08
-LSMR: ‖x‖:  9.4e+03</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tips/">« Performance tips</a><a class="docs-footer-nextpage" href="../reference/">Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.12 on <span class="colophon-date" title="Friday 21 January 2022 22:29">Friday 21 January 2022</span>. Using Julia version 1.7.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+LSMR: ‖x‖:  9.4e+03</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tips/">« Performance tips</a><a class="docs-footer-nextpage" href="../reference/">Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.12 on <span class="colophon-date" title="Saturday 22 January 2022 00:59">Saturday 22 January 2022</span>. Using Julia version 1.7.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
