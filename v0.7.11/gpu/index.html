@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>GPU · Krylov.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><script src="../../copy.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/style.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Krylov.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">Krylov.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../api/">API</a></li><li><span class="tocitem">Krylov methods</span><ul><li><a class="tocitem" href="../solvers/spd/">Symmetric positive definite linear systems</a></li><li><a class="tocitem" href="../solvers/sid/">Symmetric indefinite linear systems</a></li><li><a class="tocitem" href="../solvers/unsymmetric/">Unsymmetric linear systems</a></li><li><a class="tocitem" href="../solvers/ln/">Least-norm problems</a></li><li><a class="tocitem" href="../solvers/ls/">Least-squares problems</a></li><li><a class="tocitem" href="../solvers/as/">Adjoint systems</a></li><li><a class="tocitem" href="../solvers/sp_sqd/">Saddle-point and symmetric quasi-definite systems</a></li><li><a class="tocitem" href="../solvers/gsp/">Generalized saddle-point and unsymmetric partitioned systems</a></li></ul></li><li><a class="tocitem" href="../inplace/">In-place methods</a></li><li class="is-active"><a class="tocitem" href>GPU</a><ul class="internal"><li><a class="tocitem" href="#GPU-support"><span>GPU support</span></a></li></ul></li><li><a class="tocitem" href="../factorization-free/">Factorization-free operators</a></li><li><a class="tocitem" href="../tips/">Performance tips</a></li><li><a class="tocitem" href="../examples/">Tutorial</a></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>GPU</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>GPU</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/master/docs/src/gpu.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h2 id="GPU-support"><a class="docs-heading-anchor" href="#GPU-support">GPU support</a><a id="GPU-support-1"></a><a class="docs-heading-anchor-permalink" href="#GPU-support" title="Permalink"></a></h2><p>All solvers in Krylov.jl can be used with <code>CuArrays</code> and allow computations with Nvidia GPU. Problems stored in CPU format (<code>Matrix</code> and <code>Vector</code>) must first be converted to GPU format (<code>CuMatrix</code> and <code>CuVector</code>).</p><pre><code class="language-julia hljs">using CUDA, Krylov
+
+# CPU Arrays
+A_cpu = rand(20, 20)
+b_cpu = rand(20)
+
+# GPU Arrays
+A_gpu = CuMatrix(A_cpu)
+b_gpu = CuVector(b_cpu)
+
+# Solve a square and dense system on GPU
+x, stats = bilq(A_gpu, b_gpu)</code></pre><p>Sparse matrices have a specific storage on GPU (<code>CuSparseMatrixCSC</code> or <code>CuSparseMatrixCSR</code>):</p><pre><code class="language-julia hljs">using CUDA, Krylov
+using CUDA.CUSPARSE, SparseArrays
+
+# CPU Arrays
+A_cpu = sprand(200, 100, 0.3)
+b_cpu = rand(200)
+
+# GPU Arrays
+A_gpu = CuSparseMatrixCSC(A_cpu)
+b_gpu = CuVector(b_cpu)
+
+# Solve a rectangular and sparse system on GPU
+x, stats = lsmr(A_gpu, b_gpu)</code></pre><p>Optimized operator-vector products that exploit GPU features can be also used by means of linear operators.</p><p>Preconditioners, especially incomplete Cholesky or Incomplete LU factorizations that involve triangular solves, can be applied directly on GPU thanks to efficient operators that take advantage of CUSPARSE routines.</p><h3 id="Example-with-a-symmetric-positive-definite-system"><a class="docs-heading-anchor" href="#Example-with-a-symmetric-positive-definite-system">Example with a symmetric positive-definite system</a><a id="Example-with-a-symmetric-positive-definite-system-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-a-symmetric-positive-definite-system" title="Permalink"></a></h3><pre><code class="language-julia hljs">using SparseArrays, Krylov, LinearOperators
+using CUDA, CUDA.CUSPARSE
+
+# Transfer the linear system from the CPU to the GPU
+A_gpu = CuSparseMatrixCSC(A_cpu)  # A = CuSparseMatrixCSR(A_cpu)
+b_gpu = CuVector(b_cpu)
+
+# LLᵀ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+P = ic02(A_gpu, &#39;O&#39;)
+
+# Solve Py = x
+function ldiv!(y, P, x)
+  copyto!(y, x)                        # Variant for CuSparseMatrixCSR
+  sv2!(&#39;T&#39;, &#39;U&#39;, &#39;N&#39;, 1.0, P, y, &#39;O&#39;)  # sv2!(&#39;N&#39;, &#39;L&#39;, &#39;N&#39;, 1.0, P, y, &#39;O&#39;)
+  sv2!(&#39;N&#39;, &#39;U&#39;, &#39;N&#39;, 1.0, P, y, &#39;O&#39;)  # sv2!(&#39;T&#39;, &#39;L&#39;, &#39;N&#39;, 1.0, P, y, &#39;O&#39;)
+  return y
+end
+
+# Operator that model P⁻¹
+n = length(b_gpu)
+T = eltype(b_gpu)
+symmetric = hermitian = true
+opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -&gt; ldiv!(y, P, x))
+
+# Solve a symmetric positive definite system with an incomplete Cholesky preconditioner on GPU
+(x, stats) = cg(A_gpu, b_gpu, M=opM)</code></pre><h3 id="Example-with-a-general-square-system"><a class="docs-heading-anchor" href="#Example-with-a-general-square-system">Example with a general square system</a><a id="Example-with-a-general-square-system-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-a-general-square-system" title="Permalink"></a></h3><pre><code class="language-julia hljs">using SparseArrays, Krylov, LinearOperators
+using CUDA, CUDA.CUSPARSE, CUDA.CUSOLVER
+
+# Optional -- Compute a permutation vector p such that A[p,:] has no zero diagonal
+p = zfd(A_cpu, &#39;O&#39;)
+p .+= 1
+A_cpu = A_cpu[p,:]
+b_cpu = b_cpu[p]
+
+# Transfer the linear system from the CPU to the GPU
+A_gpu = CuSparseMatrixCSC(A_cpu)  # A = CuSparseMatrixCSR(A_cpu)
+b_gpu = CuVector(b_cpu)
+
+# LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+P = ilu02(A_gpu, &#39;O&#39;)
+
+# Solve Py = x
+function ldiv!(y, P, x)
+  copyto!(y, x)                        # Variant for CuSparseMatrixCSR
+  sv2!(&#39;N&#39;, &#39;L&#39;, &#39;N&#39;, 1.0, P, y, &#39;O&#39;)  # sv2!(&#39;N&#39;, &#39;L&#39;, &#39;U&#39;, 1.0, P, y, &#39;O&#39;)
+  sv2!(&#39;N&#39;, &#39;U&#39;, &#39;U&#39;, 1.0, P, y, &#39;O&#39;)  # sv2!(&#39;N&#39;, &#39;U&#39;, &#39;N&#39;, 1.0, P, y, &#39;O&#39;)
+  return y
+end
+
+# Operator that model P⁻¹
+n = length(b_gpu)
+T = eltype(b_gpu)
+symmetric = hermitian = false
+opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -&gt; ldiv!(y, P, x))
+
+# Solve an unsymmetric system with an incomplete LU preconditioner on GPU
+(x, stats) = bicgstab(A_gpu, b_gpu, M=opM)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../inplace/">« In-place methods</a><a class="docs-footer-nextpage" href="../factorization-free/">Factorization-free operators »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.12 on <span class="colophon-date" title="Saturday 22 January 2022 01:14">Saturday 22 January 2022</span>. Using Julia version 1.7.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
