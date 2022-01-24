@@ -95,26 +95,26 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Initialize the Lanczos biorthogonalization process.
-  bᵗc = @kdot(n, b, c)  # ⟨b,c⟩
-  if bᵗc == 0
+  cᵗb = @kdot(n, c, b)  # ⟨c,b⟩
+  if cᵗb == 0
     stats.solved = false
     stats.inconsistent = false
     stats.status = "Breakdown bᵀc = 0"
     return solver
   end
 
-  βₖ = √(abs(bᵗc))            # β₁γ₁ = bᵀc
-  γₖ = bᵗc / βₖ               # β₁γ₁ = bᵀc
-  vₖ₋₁ .= zero(FC)            # v₀ = 0
-  uₖ₋₁ .= zero(FC)            # u₀ = 0
-  vₖ .= b ./ βₖ               # v₁ = b / β₁
-  uₖ .= c ./ γₖ               # u₁ = c / γ₁
-  cₖ₋₂ = cₖ₋₁ = cₖ = zero(FC) # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
-  sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC) # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-  wₖ₋₂ .= zero(FC)            # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
-  wₖ₋₁ .= zero(FC)            # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
-  ζbarₖ = βₖ                  # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
-  τₖ = @kdot(n, vₖ, vₖ)       # τₖ is used for the residual norm estimate
+  βₖ = √(abs(cᵗb))             # β₁γ₁ = cᵀb
+  γₖ = cᵗb / βₖ                # β₁γ₁ = cᵀb
+  vₖ₋₁ .= zero(FC)             # v₀ = 0
+  uₖ₋₁ .= zero(FC)             # u₀ = 0
+  vₖ .= b ./ βₖ                # v₁ = b / β₁
+  uₖ .= c ./ conj(γₖ)          # u₁ = c / γ̄₁
+  cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+  sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+  wₖ₋₂ .= zero(FC)             # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
+  wₖ₋₁ .= zero(FC)             # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
+  ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
+  τₖ = real(@kdot(n, vₖ, vₖ))  # τₖ is used for the residual norm estimate
 
   # Stopping criterion.
   solved    = rNorm ≤ ε
@@ -128,22 +128,22 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
 
     # Continue the Lanczos biorthogonalization process.
     # AVₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
-    # AᵀUₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
+    # AᵀUₖ = Uₖ(Tₖ)ᵀ + γ̄ₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
 
     mul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
     mul!(p, Aᵀ, uₖ)  # Forms uₖ₊₁ : p ← Aᵀuₖ
 
-    @kaxpy!(n, -conj(γₖ), vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
-    @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
+    @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
+    @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
 
-    αₖ = @kdot(n, q, uₖ)      # αₖ = qᵀuₖ
+    αₖ = @kdot(n, uₖ, q)      # αₖ = ⟨uₖ,q⟩
 
-    @kaxpy!(n, -conj(αₖ), vₖ, q)    # q ← q - αₖ * vₖ
-    @kaxpy!(n, -αₖ, uₖ, p)    # p ← p - αₖ * uₖ
+    @kaxpy!(n, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
+    @kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
 
-    qᵗp = @kdot(n, q, p)      # qᵗp  = ⟨q,p⟩
-    βₖ₊₁ = √(abs(qᵗp))        # βₖ₊₁ = √(|qᵗp|)
-    γₖ₊₁ = qᵗp / βₖ₊₁         # γₖ₊₁ = qᵗp / βₖ₊₁
+    pᵗq = @kdot(n, p, q)      # pᵗq  = ⟨p,q⟩
+    βₖ₊₁ = √(abs(pᵗq))        # βₖ₊₁ = √(|pᵗq|)
+    γₖ₊₁ = pᵗq / βₖ₊₁         # γₖ₊₁ = pᵗq / βₖ₊₁
 
     # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
     #                                            [ Oᵀ ]
@@ -163,18 +163,18 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     # Apply previous Givens reflections Qₖ₋₂.ₖ₋₁
     if iter ≥ 3
       # [cₖ₋₂  sₖ₋₂] [0 ] = [  ϵₖ₋₂ ]
-      # [sₖ₋₂ -cₖ₋₂] [γₖ]   [λbarₖ₋₁]
-      ϵₖ₋₂    =  sₖ₋₂ * conj(γₖ)
-      λbarₖ₋₁ = -cₖ₋₂ * conj(γₖ)
+      # [s̄ₖ₋₂ -cₖ₋₂] [γₖ]   [λbarₖ₋₁]
+      ϵₖ₋₂    =  sₖ₋₂ * γₖ
+      λbarₖ₋₁ = -cₖ₋₂ * γₖ
     end
 
     # Apply previous Givens reflections Qₖ₋₁.ₖ
     if iter ≥ 2
-      iter == 2 && (λbarₖ₋₁ = conj(γₖ))
+      iter == 2 && (λbarₖ₋₁ = γₖ)
       # [cₖ₋₁  sₖ₋₁] [λbarₖ₋₁] = [λₖ₋₁ ]
-      # [sₖ₋₁ -cₖ₋₁] [   αₖ  ]   [δbarₖ]
-      λₖ₋₁  = cₖ₋₁ * λbarₖ₋₁ + sₖ₋₁ * conj(αₖ)
-      δbarₖ = conj(sₖ₋₁) * λbarₖ₋₁ - cₖ₋₁ * conj(αₖ)
+      # [s̄ₖ₋₁ -cₖ₋₁] [   αₖ  ]   [δbarₖ]
+      λₖ₋₁  =      cₖ₋₁  * λbarₖ₋₁ + sₖ₋₁ * αₖ
+      δbarₖ = conj(sₖ₋₁) * λbarₖ₋₁ - cₖ₋₁ * αₖ
 
       # Update sₖ₋₂ and cₖ₋₂.
       sₖ₋₂ = sₖ₋₁
@@ -182,17 +182,17 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     end
 
     # Compute and apply current Givens reflection Qₖ.ₖ₊₁
-    iter == 1 && (δbarₖ = conj(αₖ))
+    iter == 1 && (δbarₖ = αₖ)
     # [cₖ  sₖ] [δbarₖ] = [δₖ]
-    # [sₖ -cₖ] [βₖ₊₁ ]   [0 ]
+    # [s̄ₖ -cₖ] [βₖ₊₁ ]   [0 ]
     (cₖ, sₖ, δₖ) = sym_givens(δbarₖ, βₖ₊₁)
 
     # Update z̅ₖ₊₁ = Qₖ.ₖ₊₁ [ z̄ₖ ]
     #                      [ 0  ]
     #
     # [cₖ  sₖ] [ζbarₖ] = [   ζₖ  ]
-    # [sₖ -cₖ] [  0  ]   [ζbarₖ₊₁]
-    ζₖ      = cₖ * ζbarₖ
+    # [s̄ₖ -cₖ] [  0  ]   [ζbarₖ₊₁]
+    ζₖ      =      cₖ  * ζbarₖ
     ζbarₖ₊₁ = conj(sₖ) * ζbarₖ
 
     # Update sₖ₋₁ and cₖ₋₁.
@@ -230,16 +230,16 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
     @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
 
-    if qᵗp ≠ zero(FC)
-      @. vₖ = q / βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
-      @. uₖ = p / γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
+    if pᵗq ≠ zero(FC)
+      @. vₖ = q / βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
+      @. uₖ = p / conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
     end
 
     # Compute τₖ₊₁ = τₖ + ‖vₖ₊₁‖²
-    τₖ₊₁ = τₖ + @kdot(n, vₖ, vₖ)
+    τₖ₊₁ = τₖ + real(@kdot(n, vₖ, vₖ))
 
     # Compute ‖rₖ‖ ≤ |ζbarₖ₊₁|√τₖ₊₁
-    rNorm = abs(ζbarₖ₊₁) * √abs(τₖ₊₁)
+    rNorm = abs(ζbarₖ₊₁) * √τₖ₊₁
     history && push!(rNorms, rNorm)
 
     # Update directions for x.
@@ -256,7 +256,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     # Update stopping criterion.
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
-    breakdown = !solved && (qᵗp == 0)
+    breakdown = !solved && (pᵗq == 0)
     display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
   end
   (verbose > 0) && @printf("\n")
