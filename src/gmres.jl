@@ -108,7 +108,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
   end
   s .= zero(FC)  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
-  c .= zero(T)  # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
+  c .= zero(T)   # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
   R .= zero(FC)  # Upper triangular matrix Rₖ.
   z .= zero(FC)  # Right-hand of the least squares problem min ‖Hₖ₊₁.ₖyₖ - βe₁‖₂.
 
@@ -161,21 +161,21 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Update the QR factorization of Hₖ₊₁.ₖ.
     # Apply previous Givens reflections Ωᵢ.
     # [cᵢ  sᵢ] [ r̄ᵢ.ₖ ] = [ rᵢ.ₖ ]
-    # [sᵢ -cᵢ] [rᵢ₊₁.ₖ]   [r̄ᵢ₊₁.ₖ]
+    # [s̄ᵢ -cᵢ] [rᵢ₊₁.ₖ]   [r̄ᵢ₊₁.ₖ]
     for i = 1 : iter-1
-      Rtmp      = c[i] * R[nr+i] + s[i] * R[nr+i+1]
+      Rtmp      =      c[i]  * R[nr+i] + s[i] * R[nr+i+1]
       R[nr+i+1] = conj(s[i]) * R[nr+i] - c[i] * R[nr+i+1]
       R[nr+i]   = Rtmp
     end
 
     # Compute and apply current Givens reflection Ωₖ.
     # [cₖ  sₖ] [ r̄ₖ.ₖ ] = [rₖ.ₖ]
-    # [sₖ -cₖ] [hₖ₊₁.ₖ]   [ 0  ]
+    # [s̄ₖ -cₖ] [hₖ₊₁.ₖ]   [ 0  ]
     (c[iter], s[iter], R[nr+iter]) = sym_givens(R[nr+iter], Hbis)
 
     # Update zₖ = (Qₖ)ᵀβe₁
     ζₖ₊₁    = conj(s[iter]) * z[iter]
-    z[iter] = c[iter] * z[iter]
+    z[iter] =      c[iter]  * z[iter]
 
     # Update residual norm estimate.
     # ‖ M⁻¹(b - Axₖ) ‖₂ = |ζₖ₊₁|
@@ -195,7 +195,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     if !(solved || tired || breakdown)
       if iter ≥ mem
         push!(V, S(undef, n))
-        push!(z, zero(T))
+        push!(z, zero(FC))
       end
       @. V[iter+1] = q / Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
       z[iter+1] = ζₖ₊₁
@@ -213,7 +213,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
     # Rₖ can be singular is the system is inconsistent
     if abs(R[pos]) ≤ eps(T)
-      y[i] = zero(T)
+      y[i] = zero(FC)
     else
       y[i] = y[i] / R[pos]  # yᵢ ← yᵢ / rᵢᵢ
     end
@@ -233,7 +233,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   solved    && (status = "solution good enough given atol and rtol")
 
   # Update x
-  restart && @kaxpy!(n, one(T), Δx, x)
+  restart && @kaxpy!(n, one(FC), Δx, x)
 
   # Update stats
   stats.solved = solved
