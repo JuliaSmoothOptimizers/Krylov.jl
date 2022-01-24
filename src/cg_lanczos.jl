@@ -30,7 +30,7 @@ symmetric linear system
 The method does _not_ abort if A is not definite.
 
 A preconditioner M may be provided in the form of a linear operator and is
-assumed to be symmetric and positive definite.
+assumed to be hermitian and positive definite.
 
 #### References
 
@@ -63,7 +63,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
   MisI = (M === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $T")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
@@ -75,10 +75,10 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
   v = MisI ? Mv : solver.v
 
   # Initial state.
-  x .= zero(T)              # x₀
-  Mv .= b                   # Mv₁ ← b
-  MisI || mul!(v, M, Mv)    # v₁ = M⁻¹ * Mv₁
-  β = sqrt(@kdot(n, v, Mv)) # β₁ = v₁ᵀ M v₁
+  x .= zero(FC)                    # x₀
+  Mv .= b                          # Mv₁ ← b
+  MisI || mul!(v, M, Mv)           # v₁ = M⁻¹ * Mv₁
+  β = real(sqrt(@kdot(n, v, Mv)))  # β₁ = v₁ᵀ M v₁
   σ = β
   rNorm = σ
   history && push!(rNorms, rNorm)
@@ -94,8 +94,8 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
 
   # Initialize Lanczos process.
   # β₁Mv₁ = b
-  @kscal!(n, one(T)/β, v)          # v₁  ←  v₁ / β₁
-  MisI || @kscal!(n, one(T)/β, Mv) # Mv₁ ← Mv₁ / β₁
+  @kscal!(n, one(FC) / β, v)           # v₁  ←  v₁ / β₁
+  MisI || @kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
   Mv_prev .= Mv
 
   iter = 0
@@ -121,12 +121,12 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
   while ! (solved || tired || (check_curvature & indefinite))
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-    mul!(Mv_next, A, v)      # Mvₖ₊₁ ← Avₖ
-    δ = @kdot(n, v, Mv_next) # δₖ = vₖᵀ A vₖ
+    mul!(Mv_next, A, v)             # Mvₖ₊₁ ← Avₖ
+    δ = real(@kdot(n, v, Mv_next))  # δₖ = vₖᵀ A vₖ
 
     # Check curvature. Exit fast if requested.
     # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ A pₖ.
-    γ = 1 / (δ - ω / γ)      # γₖ = δₖ - ωₖ₋₁ / γₖ₋₁
+    γ = one(T) / (δ - ω / γ)  # γₖ = 1 / (δₖ - ωₖ₋₁ / γₖ₋₁)
     indefinite |= (γ ≤ 0)
     (check_curvature & indefinite) && continue
 
@@ -135,12 +135,12 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
       @kaxpy!(n, -β, Mv_prev, Mv_next) # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
       @. Mv_prev = Mv                  # Mvₖ₋₁ ← Mvₖ
     end
-    @. Mv = Mv_next                    # Mvₖ ← Mvₖ₊₁
-    MisI || mul!(v, M, Mv)             # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
-    β = sqrt(@kdot(n, v, Mv))          # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
-    @kscal!(n, one(T)/β, v)            # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-    MisI || @kscal!(n, one(T)/β, Mv)   # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
-    Anorm2 += β_prev^2 + β^2 + δ^2     # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
+    @. Mv = Mv_next                      # Mvₖ ← Mvₖ₊₁
+    MisI || mul!(v, M, Mv)               # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
+    β = real(sqrt(@kdot(n, v, Mv)))      # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+    @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+    MisI || @kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+    Anorm2 += β_prev^2 + β^2 + δ^2       # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
     β_prev = β
 
     # Compute next CG iterate.
