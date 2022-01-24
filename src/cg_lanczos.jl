@@ -169,7 +169,7 @@ end
 
 
 """
-    (x, stats) = cg_lanczos(A, b::AbstractVector{FC}, shifts::AbstractVector{FC};
+    (x, stats) = cg_lanczos(A, b::AbstractVector{FC}, shifts::AbstractVector{T};
                             M=I, atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                             check_curvature::Bool=false, verbose::Int=0, history::Bool=false)
 
@@ -184,9 +184,9 @@ of shifted systems
 The method does _not_ abort if A + αI is not definite.
 
 A preconditioner M may be provided in the form of a linear operator and is
-assumed to be symmetric and positive definite.
+assumed to be hermitian and positive definite.
 """
-function cg_lanczos(A, b :: AbstractVector{FC}, shifts :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
+function cg_lanczos(A, b :: AbstractVector{FC}, shifts :: AbstractVector{T}; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
   nshifts = length(shifts)
   solver = CgLanczosShiftSolver(A, b, nshifts)
   cg_lanczos!(solver, A, b, shifts; kwargs...)
@@ -200,7 +200,7 @@ where `args` and `kwargs` are arguments and keyword arguments of [`cg_lanczos`](
 
 See [`CgLanczosShiftSolver`](@ref) for more details about the `solver`.
 """
-function cg_lanczos!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: AbstractVector{FC};
+function cg_lanczos!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: AbstractVector{T};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                      check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
@@ -215,7 +215,7 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVec
   MisI = (M === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
@@ -231,11 +231,11 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVec
   # Initial state.
   ## Distribute x similarly to shifts.
   for i = 1 : nshifts
-    x[i] .= zero(T)                       # x₀
+    x[i] .= zero(FC)                      # x₀
   end
   Mv .= b                                 # Mv₁ ← b
   MisI || mul!(v, M, Mv)                  # v₁ = M⁻¹ * Mv₁
-  β = sqrt(@kdot(n, v, Mv))               # β₁ = v₁ᵀ M v₁
+  β = real(sqrt(@kdot(n, v, Mv)))         # β₁ = v₁ᵀ M v₁
   rNorms .= β
   if history
     for i = 1 : nshifts
@@ -259,8 +259,8 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVec
 
   # Initialize Lanczos process.
   # β₁Mv₁ = b
-  @kscal!(n, one(T)/β, v)          # v₁  ←  v₁ / β₁
-  MisI || @kscal!(n, one(T)/β, Mv) # Mv₁ ← Mv₁ / β₁
+  @kscal!(n, one(FC) / β, v)           # v₁  ←  v₁ / β₁
+  MisI || @kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
   Mv_prev .= Mv
 
   # Initialize some constants used in recursions below.
@@ -297,22 +297,22 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVec
   while ! (solved || tired)
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-    mul!(Mv_next, A, v)                # Mvₖ₊₁ ← Avₖ
-    δ = @kdot(n, v, Mv_next)           # δₖ = vₖᵀ A vₖ
-    @kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
+    mul!(Mv_next, A, v)                  # Mvₖ₊₁ ← Avₖ
+    δ = real(@kdot(n, v, Mv_next))       # δₖ = vₖᵀ A vₖ
+    @kaxpy!(n, -δ, Mv, Mv_next)          # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
     if iter > 0
-      @kaxpy!(n, -β, Mv_prev, Mv_next) # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
-      @. Mv_prev = Mv                  # Mvₖ₋₁ ← Mvₖ
+      @kaxpy!(n, -β, Mv_prev, Mv_next)   # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
+      @. Mv_prev = Mv                    # Mvₖ₋₁ ← Mvₖ
     end
-    @. Mv = Mv_next                    # Mvₖ ← Mvₖ₊₁
-    MisI || mul!(v, M, Mv)             # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
-    β = sqrt(@kdot(n, v, Mv))          # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
-    @kscal!(n, one(T)/β, v)            # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-    MisI || @kscal!(n, one(T)/β, Mv)   # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+    @. Mv = Mv_next                      # Mvₖ ← Mvₖ₊₁
+    MisI || mul!(v, M, Mv)               # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
+    β = real(sqrt(@kdot(n, v, Mv)))      # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+    @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+    MisI || @kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
 
     # Check curvature: vₖᵀ(A + sᵢI)vₖ = vₖᵀAvₖ + sᵢ‖vₖ‖² = δₖ + ρₖ * sᵢ with ρₖ = ‖vₖ‖².
     # It is possible to show that σₖ² (δₖ + ρₖ * sᵢ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ (A + sᵢ I) pₖ.
-    MisI || (ρ = @kdot(n, v, v))
+    MisI || (ρ = real(@kdot(n, v, v)))
     for i = 1 : nshifts
       δhat[i] = δ + ρ * shifts[i]
       γ[i] = 1 / (δhat[i] - ω[i] / γ[i])
