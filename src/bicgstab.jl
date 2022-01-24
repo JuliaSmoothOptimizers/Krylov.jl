@@ -88,9 +88,9 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
   y = NisI ? p : solver.yz
   z = NisI ? s : solver.yz
 
-  x .= zero(FC)   # x₀
-  s .= zero(FC)   # s₀
-  v .= zero(FC)   # v₀
+  x .= zero(FC)  # x₀
+  s .= zero(FC)  # s₀
+  v .= zero(FC)  # v₀
   mul!(r, M, b)  # r₀
   p .= r         # p₁
 
@@ -111,7 +111,7 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
   itmax == 0 && (itmax = 2*n)
 
   ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "‖αₖ‖", "‖ωₖ‖")
+  (verbose > 0) && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "|αₖ|", "|ωₖ|")
   display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
 
   next_ρ = @kdot(n, c, r)  # ρ₁ = ⟨r̅₀,r₀⟩
@@ -149,7 +149,7 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
     next_ρ = @kdot(n, c, r)              # ρₖ₊₁ = ⟨r̅₀,rₖ⟩
     β = (next_ρ / ρ) * (α / ω)           # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
     @kaxpy!(n, -ω, v, p)                 # pₐᵤₓ = pₖ - ωₖvₖ
-    @kaxpby!(n, one(FC), r, β, p)         # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
+    @kaxpby!(n, one(FC), r, β, p)        # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
 
     # Compute residual norm ‖rₖ‖₂.
     rNorm = @knrm2(n, r)
