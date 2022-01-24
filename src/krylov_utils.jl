@@ -92,6 +92,9 @@ function sym_givens(a :: Complex{T}, b :: Complex{T}) where T <: AbstractFloat
   return (c, s, ρ)
 end
 
+@inline sym_givens(a :: Complex{T}, b :: T) where T <: AbstractFloat = sym_givens(a, Complex{T}(b))
+@inline sym_givens(a :: T, b :: Complex{T}) where T <: AbstractFloat = sym_givens(Complex{T}(a), b)
+
 """
     roots = roots_quadratic(q₂, q₁, q₀; nitref)
 
@@ -215,12 +218,17 @@ Create an AbstractVector of storage type `S` of length `n` only composed of one.
 
 @inline krylov_scal!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer) where T <: BLAS.BlasFloat = BLAS.scal!(n, s, x, dx)
 @inline krylov_scal!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer) where T <: Number = (x .*= s)
+@inline krylov_scal!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer) where T <: AbstractFloat = krylov_scal!(n, Complex{T}(s), x, dx)
 
 @inline krylov_axpy!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.axpy!(n, s, x, dx, y, dy)
 @inline krylov_axpy!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: Number = axpy!(s, x, y)
+@inline krylov_axpy!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = krylov_axpy!(n, Complex{T}(s), x, dx, y, dy)
 
 @inline krylov_axpby!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer, t :: T, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.axpby!(n, s, x, dx, t, y, dy)
 @inline krylov_axpby!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer, t :: T, y :: AbstractVector{T}, dy :: Integer) where T <: Number = axpby!(s, x, t, y)
+@inline krylov_axpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: Complex{T}, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = krylov_axpby!(n, Complex{T}(s), x, dx, t, y, dy)
+@inline krylov_axpby!(n :: Integer, s :: Complex{T}, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: T, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = krylov_axpby!(n, s, x, dx, Complex{T}(t), y, dy)
+@inline krylov_axpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: T, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = krylov_axpby!(n, Complex{T}(s), x, dx, Complex{T}(t), y, dy)
 
 @inline krylov_copy!(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.blascopy!(n, x, dx, y, dy)
 @inline krylov_copy!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: Number = copyto!(y, x)
