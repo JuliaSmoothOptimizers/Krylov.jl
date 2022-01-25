@@ -1,88 +1,93 @@
 @testset "minres_qlp" begin
   minres_qlp_tol = 1.0e-6
 
-  # Cubic spline matrix.
-  A, b = symmetric_definite()
-  (x, stats) = minres_qlp(A, b)
-  r = b - A * x
-  resid = norm(r) / norm(b)
-  @test(resid ≤ minres_qlp_tol)
-  @test(stats.solved)
+  for FC in (Float64,)
+    @testset "Data Type: $FC" begin
 
-  # Symmetric indefinite variant.
-  A, b = symmetric_indefinite()
-  (x, stats) = minres_qlp(A, b)
-  r = b - A * x
-  resid = norm(r) / norm(b)
-  @test(resid ≤ minres_qlp_tol)
-  @test(stats.solved)
+      # Cubic spline matrix.
+      A, b = symmetric_definite()
+      (x, stats) = minres_qlp(A, b)
+      r = b - A * x
+      resid = norm(r) / norm(b)
+      @test(resid ≤ minres_qlp_tol)
+      @test(stats.solved)
 
-  # Code coverage.
-  (x, stats) = minres_qlp(Matrix(A), b)
+      # Symmetric indefinite variant.
+      A, b = symmetric_indefinite()
+      (x, stats) = minres_qlp(A, b)
+      r = b - A * x
+      resid = norm(r) / norm(b)
+      @test(resid ≤ minres_qlp_tol)
+      @test(stats.solved)
 
-  # Sparse Laplacian.
-  A, b = sparse_laplacian()
-  (x, stats) = minres_qlp(A, b)
-  r = b - A * x
-  resid = norm(r) / norm(b)
-  @test(resid ≤ minres_qlp_tol)
-  @test(stats.solved)
+      # Code coverage.
+      (x, stats) = minres_qlp(Matrix(A), b)
 
-  # Symmetric indefinite variant, almost singular.
-  A, b = almost_singular()
-  (x, stats) = minres_qlp(A, b)
-  r = b - A * x
-  resid = norm(r) / norm(b)
-  @test(resid ≤ minres_qlp_tol)
-  @test(stats.solved)
+      # Sparse Laplacian.
+      A, b = sparse_laplacian()
+      (x, stats) = minres_qlp(A, b)
+      r = b - A * x
+      resid = norm(r) / norm(b)
+      @test(resid ≤ minres_qlp_tol)
+      @test(stats.solved)
 
-  # Test b == 0
-  A, b = zero_rhs()
-  (x, stats) = minres_qlp(A, b)
-  @test x == zeros(size(A,1))
-  @test stats.status == "x = 0 is a zero-residual solution"
+      # Symmetric indefinite variant, almost singular.
+      A, b = almost_singular()
+      (x, stats) = minres_qlp(A, b)
+      r = b - A * x
+      resid = norm(r) / norm(b)
+      @test(resid ≤ minres_qlp_tol)
+      @test(stats.solved)
 
-  # Shifted system
-  A, b = symmetric_indefinite()
-  λ = 2.0
-  (x, stats) = minres_qlp(A, b, λ=λ)
-  r = b - (A + λ*I) * x
-  resid = norm(r) / norm(b)
-  @test(resid ≤ minres_qlp_tol)
-  @test(stats.solved)
+      # Test b == 0
+      A, b = zero_rhs()
+      (x, stats) = minres_qlp(A, b)
+      @test x == zeros(size(A,1))
+      @test stats.status == "x = 0 is a zero-residual solution"
 
-  # Singular inconsistent system
-  A, b = square_inconsistent()
-  (x, stats) = minres_qlp(A, b)
-  r = b - A * x
-  Aresid = norm(A*r) / norm(A*b)
-  @test(Aresid ≤ minres_qlp_tol)
-  @test stats.inconsistent
+      # Singular inconsistent system
+      A, b = square_inconsistent()
+      (x, stats) = minres_qlp(A, b)
+      r = b - A * x
+      Aresid = norm(A*r) / norm(A*b)
+      @test(Aresid ≤ minres_qlp_tol)
+      @test stats.inconsistent
 
-  # Symmetric inconsistent system
-  A, b = symmetric_inconsistent()
-  (x, stats) = minres_qlp(A, b)
-  r = b - A * x
-  Aresid = norm(A*r) / norm(A*b)
-  @test(Aresid ≤ minres_qlp_tol)
-  @test stats.inconsistent
+      # Symmetric inconsistent system
+      A, b = symmetric_inconsistent()
+      (x, stats) = minres_qlp(A, b)
+      r = b - A * x
+      Aresid = norm(A*r) / norm(A*b)
+      @test(Aresid ≤ minres_qlp_tol)
+      @test stats.inconsistent
 
-  # Test with Jacobi (or diagonal) preconditioner
-  A, b, M = square_preconditioned()
-  (x, stats) = minres_qlp(A, b, M=M)
-  r = b - A * x
-  resid = sqrt(dot(r, M * r)) / norm(b)
-  @test(resid ≤ minres_qlp_tol)
-  @test(stats.solved)
+      # Shifted system
+      A, b = symmetric_indefinite()
+      λ = 2.0
+      (x, stats) = minres_qlp(A, b, λ=λ)
+      r = b - (A + λ*I) * x
+      resid = norm(r) / norm(b)
+      @test(resid ≤ minres_qlp_tol)
+      @test(stats.solved)
 
-  # Test restart
-  A, b = restart()
-  solver = MinresQlpSolver(A, b)
-  minres_qlp!(solver, A, b, itmax=50)
-  @test !solver.stats.solved
-  minres_qlp!(solver, A, b, restart=true)
-  r = b - A * solver.x
-  resid = norm(r) / norm(b)
-  @test(resid ≤ minres_qlp_tol)
-  @test solver.stats.solved
+      # Test with Jacobi (or diagonal) preconditioner
+      A, b, M = square_preconditioned()
+      (x, stats) = minres_qlp(A, b, M=M)
+      r = b - A * x
+      resid = sqrt(dot(r, M * r)) / norm(b)
+      @test(resid ≤ minres_qlp_tol)
+      @test(stats.solved)
+
+      # Test restart
+      A, b = restart()
+      solver = MinresQlpSolver(A, b)
+      minres_qlp!(solver, A, b, itmax=50)
+      @test !solver.stats.solved
+      minres_qlp!(solver, A, b, restart=true)
+      r = b - A * solver.x
+      resid = norm(r) / norm(b)
+      @test(resid ≤ minres_qlp_tol)
+      @test solver.stats.solved
+    end
+  end
 end
