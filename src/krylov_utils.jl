@@ -213,6 +213,9 @@ Create an AbstractVector of storage type `S` of length `n` only composed of one.
 @inline krylov_dot(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasComplex = BLAS.dotc(n, x, dx, y, dy)
 @inline krylov_dot(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: Number = dot(x, y)
 
+@inline krylov_dotr(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: AbstractFloat = krylov_dot(n, x, dx, y, dy)
+@inline krylov_dotr(n :: Integer, x :: AbstractVector{Complex{T}}, dx :: Integer, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = real(krylov_dot(n, x, dx, y, dy))
+
 @inline krylov_norm2(n :: Integer, x :: Vector{T}, dx :: Integer) where T <: BLAS.BlasFloat = BLAS.nrm2(n, x, dx)
 @inline krylov_norm2(n :: Integer, x :: AbstractVector{T}, dx :: Integer) where T <: Number = norm(x)
 
@@ -237,6 +240,10 @@ Create an AbstractVector of storage type `S` of length `n` only composed of one.
 
 macro kdot(n, x, y)
   return esc(:(krylov_dot($n, $x, 1, $y, 1)))
+end
+
+macro kdotr(n, x, y)
+  return esc(:(krylov_dotr($n, $x, 1, $y, 1)))
 end
 
 macro knrm2(n, x)
