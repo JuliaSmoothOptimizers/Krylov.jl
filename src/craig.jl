@@ -136,7 +136,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   y .= zero(T)
 
   Mu .= b
-  MisI || mul!(u, M, Mu)
+  MisI || @kmul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
   rNorm  = β₁
   history && push!(rNorms, rNorm)
@@ -197,9 +197,9 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   while ! (solved || inconsistent || ill_cond || tired)
     # Generate the next Golub-Kahan vectors
     # 1. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    mul!(Aᵀu, Aᵀ, u)
+    @kmul!(Aᵀu, Aᵀ, u)
     @kaxpby!(n, one(T), Aᵀu, -β, Nv)
-    NisI || mul!(v, N, Nv)
+    NisI || @kmul!(v, N, Nv)
     α = sqrt(@kdot(n, v, Nv))
     if α == 0
       inconsistent = true
@@ -240,9 +240,9 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
     Dnorm² += @knrm2(m, w)
 
     # 2. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-    mul!(Av, A, v)
+    @kmul!(Av, A, v)
     @kaxpby!(m, one(T), Av, -α, Mu)
-    MisI || mul!(u, M, Mu)
+    MisI || @kmul!(u, M, Mu)
     β = sqrt(@kdot(m, u, Mu))
     if β ≠ 0
       @kscal!(m, one(T)/β, u)

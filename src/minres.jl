@@ -103,7 +103,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   x .= zero(T)
 
   if restart
-    mul!(r1, A, Δx)
+    @kmul!(r1, A, Δx)
     (λ ≠ 0) && @kaxpy!(n, λ, Δx, r1)
     @kaxpby!(n, one(T), b, -one(T), r1)
   else
@@ -113,7 +113,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
   r2 .= r1
-  MisI || mul!(v, M, r1)
+  MisI || @kmul!(v, M, r1)
   β₁ = @kdot(m, r1, v)
   β₁ < 0 && error("Preconditioner is not positive definite")
   if β₁ == 0
@@ -175,7 +175,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
     iter = iter + 1
 
     # Generate next Lanczos vector.
-    mul!(y, A, v)
+    @kmul!(y, A, v)
     λ ≠ 0 && @kaxpy!(n, λ, v, y)             # (y = y + λ * v)
     @kscal!(n, one(T) / β, y)
     iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y) # (y = y - β / oldβ * r1)
@@ -196,7 +196,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
 
     @. r1 = r2
     @. r2 = y
-    MisI || mul!(v, M, r2)
+    MisI || @kmul!(v, M, r2)
     oldβ = β
     β = @kdot(n, r2, v)
     β < 0 && error("Preconditioner is not positive definite")

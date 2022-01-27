@@ -76,8 +76,8 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   # Initial state.
   x .= zero(T)  # initial estimation x = 0
   xNorm = zero(T)
-  mul!(r, M, b)  # initial residual r = M * (b - Ax) = M * b
-  mul!(Ar, A, r)
+  @kmul!(r, M, b)  # initial residual r = M * (b - Ax) = M * b
+  @kmul!(Ar, A, r)
   ρ = @kdot(n, r, Ar)
   if ρ == 0
     stats.niter = 0
@@ -129,7 +129,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
     elseif pAp ≤ 0 && radius == 0
       error("Indefinite system and no trust region")
     end
-    MisI || mul!(Mq, M, q)
+    MisI || @kmul!(Mq, M, q)
 
     if radius > 0
       (verbose > 0) && @printf("radius = %8.1e > 0 and ‖x‖ = %8.1e\n", radius, xNorm)
@@ -243,7 +243,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
     rNorm² = abs(rNorm² - α * ρ)
     rNorm = sqrt(rNorm²)
     history && push!(rNorms, rNorm)
-    mul!(Ar, A, r)
+    @kmul!(Ar, A, r)
     ArNorm = @knrm2(n, Ar)
     history && push!(ArNorms, ArNorm)
 

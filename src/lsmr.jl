@@ -145,7 +145,7 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
   Mu .= b
-  MisI || mul!(u, M, Mu)
+  MisI || @kmul!(u, M, Mu)
   β₁ = sqrt(@kdot(m, u, Mu))
   if β₁ == 0
     stats.niter = 0
@@ -159,9 +159,9 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
 
   @kscal!(m, one(T)/β₁, u)
   MisI || @kscal!(m, one(T)/β₁, Mu)
-  mul!(Aᵀu, Aᵀ, u)
+  @kmul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
-  NisI || mul!(v, N, Nv)
+  NisI || @kmul!(v, N, Nv)
   α = sqrt(@kdot(n, v, Nv))
 
   ζbar = α * β
@@ -230,18 +230,18 @@ function lsmr!(solver :: LsmrSolver{T,S}, A, b :: AbstractVector{T};
 
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-    mul!(Av, A, v)
+    @kmul!(Av, A, v)
     @kaxpby!(m, one(T), Av, -α, Mu)
-    MisI || mul!(u, M, Mu)
+    MisI || @kmul!(u, M, Mu)
     β = sqrt(@kdot(m, u, Mu))
     if β ≠ 0
       @kscal!(m, one(T)/β, u)
       MisI || @kscal!(m, one(T)/β, Mu)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-      mul!(Aᵀu, Aᵀ, u)
+      @kmul!(Aᵀu, Aᵀ, u)
       @kaxpby!(n, one(T), Aᵀu, -β, Nv)
-      NisI || mul!(v, N, Nv)
+      NisI || @kmul!(v, N, Nv)
       α = sqrt(@kdot(n, v, Nv))
       if α ≠ 0
         @kscal!(n, one(T)/α, v)

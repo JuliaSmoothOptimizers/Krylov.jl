@@ -80,12 +80,12 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   restart && (Δx .= x)
   x .= zero(T)
   if restart
-    mul!(r, A, Δx)
+    @kmul!(r, A, Δx)
     @kaxpby!(n, one(T), b, -one(T), r)
   else
     r .= b
   end
-  MisI || mul!(z, M, r)
+  MisI || @kmul!(z, M, r)
   p .= z
   γ = @kdot(n, r, z)
   rNorm = sqrt(γ)
@@ -115,7 +115,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   status = "unknown"
 
   while !(solved || tired || zero_curvature)
-    mul!(Ap, A, p)
+    @kmul!(Ap, A, p)
     pAp = @kdot(n, p, Ap)
     if (pAp ≤ eps(T) * pNorm²) && (radius == 0)
       if abs(pAp) ≤ eps(T) * pNorm²
@@ -146,7 +146,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
 
     @kaxpy!(n,  α,  p, x)
     @kaxpy!(n, -α, Ap, r)
-    MisI || mul!(z, M, r)
+    MisI || @kmul!(z, M, r)
     γ_next = @kdot(n, r, z)
     rNorm = sqrt(γ_next)
     history && push!(rNorms, rNorm)

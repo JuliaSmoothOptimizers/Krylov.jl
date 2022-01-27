@@ -87,7 +87,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   x .= zero(T)
 
   if restart
-    mul!(Mvold, A, Δx)
+    @kmul!(Mvold, A, Δx)
     (λ ≠ 0) && @kaxpy!(n, λ, Δx, Mvold)
     @kaxpby!(n, one(T), b, -one(T), Mvold)
   else
@@ -96,7 +96,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
 
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
-  MisI || mul!(vold, M, Mvold)
+  MisI || @kmul!(vold, M, Mvold)
   β₁ = @kdot(m, vold, Mvold)
   if β₁ == 0
     stats.niter = 0
@@ -115,10 +115,10 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
 
   w̅ .= vold
 
-  mul!(Mv, A, vold)
+  @kmul!(Mv, A, vold)
   α = @kdot(m, vold, Mv) + λ
   @kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
-  MisI || mul!(v, M, Mv)
+  MisI || @kmul!(v, M, Mv)
   β = @kdot(m, v, Mv)
   β < 0 && error("Preconditioner is not positive definite")
   β = sqrt(β)
@@ -212,13 +212,13 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
 
     # Generate next Lanczos vector
     oldβ = β
-    mul!(Mv_next, A, v)
+    @kmul!(Mv_next, A, v)
     α = @kdot(m, v, Mv_next) + λ
     @kaxpy!(m, -oldβ, Mvold, Mv_next)
     @. Mvold = Mv
     @kaxpy!(m, -α, Mv, Mv_next)
     @. Mv = Mv_next
-    MisI || mul!(v, M, Mv)
+    MisI || @kmul!(v, M, Mv)
     β = @kdot(m, v, Mv)
     β < 0 && error("Preconditioner is not positive definite")
     β = sqrt(β)

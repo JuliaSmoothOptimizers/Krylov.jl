@@ -76,12 +76,12 @@ function gmres!(solver :: GmresSolver{T,S}, A, b :: AbstractVector{T};
   restart && (Δx .= x)
   x .= zero(T)            # x₀
   if restart
-    mul!(w, A, Δx)
+    @kmul!(w, A, Δx)
     @kaxpby!(n, one(T), b, -one(T), w)
   else
     w .= b
   end
-  MisI || mul!(r₀, M, w)  # M⁻¹(b - Ax₀)
+  MisI || @kmul!(r₀, M, w)  # M⁻¹(b - Ax₀)
   β = @knrm2(n, r₀)       # β = ‖r₀‖₂
   rNorm = β
   history && push!(rNorms, β)
@@ -136,9 +136,9 @@ function gmres!(solver :: GmresSolver{T,S}, A, b :: AbstractVector{T};
 
     # Continue the Arnoldi process.
     p = NisI ? V[iter] : solver.p
-    NisI || mul!(p, N, V[iter])  # p ← N⁻¹vₖ
-    mul!(w, A, p)                # w ← AN⁻¹vₖ
-    MisI || mul!(q, M, w)        # q ← M⁻¹AN⁻¹vₖ
+    NisI || @kmul!(p, N, V[iter])  # p ← N⁻¹vₖ
+    @kmul!(w, A, p)                # w ← AN⁻¹vₖ
+    MisI || @kmul!(q, M, w)        # q ← M⁻¹AN⁻¹vₖ
     for i = 1 : iter
       R[nr+i] = @kdot(n, V[i], q)    # hᵢₖ = qᵀvᵢ
       @kaxpy!(n, -R[nr+i], V[i], q)  # q ← q - hᵢₖvᵢ
@@ -223,7 +223,7 @@ function gmres!(solver :: GmresSolver{T,S}, A, b :: AbstractVector{T};
   end
   if !NisI
     solver.p .= x
-    mul!(x, N, solver.p)
+    @kmul!(x, N, solver.p)
   end
 
   tired     && (status = "maximum number of iterations exceeded")

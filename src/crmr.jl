@@ -102,7 +102,7 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   Mq = MisI ? q : solver.Mq
 
   x .= zero(T)  # initial estimation x = 0
-  mul!(r, M, b) # initial residual r = M * (b - Ax) = M * b
+  @kmul!(r, M, b) # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   history && push!(rNorms, rNorm)
@@ -114,7 +114,7 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
     return solver
   end
   λ > 0 && (s .= r)
-  mul!(Aᵀr, Aᵀ, r)  # - λ * x0 if x0 ≠ 0.
+  @kmul!(Aᵀr, Aᵀ, r)  # - λ * x0 if x0 ≠ 0.
   p .= Aᵀr
   γ = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr)
   λ > 0 && (γ += λ * rNorm * rNorm)
@@ -134,14 +134,14 @@ function crmr!(solver :: CrmrSolver{T,S}, A, b :: AbstractVector{T};
   tired = iter ≥ itmax
 
   while ! (solved || inconsistent || tired)
-    mul!(q, A, p)
+    @kmul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s
-    MisI || mul!(Mq, M, q)
+    MisI || @kmul!(Mq, M, q)
     α = γ / @kdot(m, q, Mq)    # Compute qᵗ * M * q
     @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p
     @kaxpy!(m, -α, Mq, r)      # Faster than  r =  r - α * Mq
     rNorm = @knrm2(m, r)       # norm(r)
-    mul!(Aᵀr, Aᵀ, r)
+    @kmul!(Aᵀr, Aᵀ, r)
     γ_next = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ_next = dot(Aᵀr, Aᵀr)
     λ > 0 && (γ_next += λ * rNorm * rNorm)
     β = γ_next / γ

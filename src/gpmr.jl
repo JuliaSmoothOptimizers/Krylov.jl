@@ -139,10 +139,10 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
   # [ λI   A ] [ xₖ ] = [ b - λΔx - AΔy ] = [ b₀ ]
   # [  B  μI ] [ yₖ ]   [ c - BΔx - μΔy ]   [ c₀ ]
   if restart
-    mul!(b₀, A, Δy)
+    @kmul!(b₀, A, Δy)
     (λ ≠ 0) && @kaxpy!(m, λ, Δx, b₀)
     @kaxpby!(m, one(T), b, -one(T), b₀)
-    mul!(c₀, B, Δx)
+    @kmul!(c₀, B, Δx)
     (μ ≠ 0) && @kaxpy!(n, μ, Δy, c₀)
     @kaxpby!(n, one(T), c, -one(T), c₀)
   end
@@ -150,7 +150,7 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
   # Initialize the orthogonal Hessenberg reduction process.
   # βv₁ = Cb
   if !CisI
-    mul!(q, C, b₀)
+    @kmul!(q, C, b₀)
     b₀ = q
   end
   β = @knrm2(m, b₀)
@@ -159,7 +159,7 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
 
   # γu₁ = Dc
   if !DisI
-    mul!(p, D, c₀)
+    @kmul!(p, D, c₀)
     c₀ = p
   end
   γ = @knrm2(n, c₀)
@@ -211,12 +211,12 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
     # DBEVₖ = UₖFₖ + fₖ₊₁.ₖ * uₖ₊₁(eₖ)ᵀ = Uₖ₊₁Fₖ₊₁.ₖ
     wA = FisI ? U[iter] : solver.wA
     wB = EisI ? V[iter] : solver.wB
-    FisI || mul!(wA, F, U[iter])  # wA = Fuₖ
-    EisI || mul!(wB, E, V[iter])  # wB = Evₖ
-    mul!(dA, A, wA)               # dA = AFuₖ
-    mul!(dB, B, wB)               # dB = BEvₖ
-    CisI || mul!(q, C, dA)        # q  = CAFuₖ
-    DisI || mul!(p, D, dB)        # p  = DBEvₖ
+    FisI || @kmul!(wA, F, U[iter])  # wA = Fuₖ
+    EisI || @kmul!(wB, E, V[iter])  # wB = Evₖ
+    @kmul!(dA, A, wA)               # dA = AFuₖ
+    @kmul!(dB, B, wB)               # dB = BEvₖ
+    CisI || @kmul!(q, C, dA)        # q  = CAFuₖ
+    DisI || @kmul!(p, D, dB)        # p  = DBEvₖ
 
     for i = 1 : iter
       hᵢₖ = @kdot(m, V[i], q)    # hᵢ.ₖ = vᵢAuₖ
@@ -408,11 +408,11 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
   end
   if !EisI
     wB .= x
-    mul!(x, E, wB)
+    @kmul!(x, E, wB)
   end
   if !FisI
     wA .= y
-    mul!(y, F, wA)
+    @kmul!(y, F, wA)
   end
   restart && @kaxpy!(m, one(T), Δx, x)
   restart && @kaxpy!(n, one(T), Δy, y)

@@ -76,12 +76,12 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
   restart && (Δx .= x)
   x .= zero(T)  # x₀
   if restart
-    mul!(t, A, Δx)
+    @kmul!(t, A, Δx)
     @kaxpby!(n, one(T), b, -one(T), t)
   else
     t .= b
   end
-  MisI || mul!(r₀, M, t)  # M⁻¹(b - Ax₀)
+  MisI || @kmul!(r₀, M, t)  # M⁻¹(b - Ax₀)
   # Compute β
   rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
   history && push!(rNorms, rNorm)
@@ -134,9 +134,9 @@ function dqgmres!(solver :: DqgmresSolver{T,S}, A, b :: AbstractVector{T};
 
     # Incomplete Arnoldi procedure.
     z = NisI ? V[pos] : solver.z
-    NisI || mul!(z, N, V[pos])  # N⁻¹vₘ, forms pₘ
-    mul!(t, A, z)               # AN⁻¹vₘ
-    MisI || mul!(w, M, t)       # M⁻¹AN⁻¹vₘ, forms vₘ₊₁
+    NisI || @kmul!(z, N, V[pos])  # N⁻¹vₘ, forms pₘ
+    @kmul!(t, A, z)               # AN⁻¹vₘ
+    MisI || @kmul!(w, M, t)       # M⁻¹AN⁻¹vₘ, forms vₘ₊₁
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
       diag = iter - i + 2

@@ -99,14 +99,14 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
     return solver
   end
 
-  MisI || mul!(Mr, M, r)
-  mul!(Ar, Aᵀ, Mr)  # - λ * x0 if x0 ≠ 0.
-  mul!(s, A, Ar)
-  MisI || mul!(Ms, M, s)
+  MisI || @kmul!(Mr, M, r)
+  @kmul!(Ar, Aᵀ, Mr)  # - λ * x0 if x0 ≠ 0.
+  @kmul!(s, A, Ar)
+  MisI || @kmul!(Ms, M, s)
 
   p  .= Ar
   Ap .= s
-  mul!(q, Aᵀ, Ms)  # Ap
+  @kmul!(q, Aᵀ, Ms)  # Ap
   λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
   γ  = @kdot(m, s, Ms)  # Faster than γ = dot(s, Ms)
   iter = 0
@@ -137,7 +137,7 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
         psd = true # det(AᵀA) = 0
         p = Ar # p = Aᵀr
         pNorm² = ArNorm * ArNorm
-        mul!(q, Aᵀ, s)
+        @kmul!(q, Aᵀ, s)
         α = min(ArNorm^2 / γ, maximum(to_boundary(x, p, radius, flip = false, dNorm2 = pNorm²))) # the quadratic is minimal in the direction Aᵀr for α = ‖Ar‖²/γ
       else
         pNorm² = pNorm * pNorm
@@ -155,16 +155,16 @@ function crls!(solver :: CrlsSolver{T,S}, A, b :: AbstractVector{T};
     solved = psd || on_boundary
     solved && continue
     @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap
-    mul!(s, A, Ar)
-    MisI || mul!(Ms, M, s)
+    @kmul!(s, A, Ar)
+    MisI || @kmul!(Ms, M, s)
     γ_next = @kdot(m, s, Ms)   # Faster than γ_next = dot(s, s)
     λ > 0 && (γ_next += λ * ArNorm * ArNorm)
     β = γ_next / γ
 
     @kaxpby!(n, one(T), Ar, β, p)    # Faster than  p = Ar + β *  p
     @kaxpby!(m, one(T), s, β, Ap)    # Faster than Ap =  s + β * Ap
-    MisI || mul!(MAp, M, Ap)
-    mul!(q, Aᵀ, MAp)
+    MisI || @kmul!(MAp, M, Ap)
+    @kmul!(q, Aᵀ, MAp)
     λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
 
     γ = γ_next

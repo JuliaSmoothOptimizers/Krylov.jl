@@ -157,7 +157,7 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   # Initialize generalized Golub-Kahan bidiagonalization.
   # β₁Mu₁ = b.
   Mu .= b
-  MisI || mul!(u, M, Mu)      # u₁ = M⁻¹ * Mu₁
+  MisI || @kmul!(u, M, Mu)      # u₁ = M⁻¹ * Mu₁
   βₖ = sqrt(@kdot(m, u, Mu))  # β₁ = ‖u₁‖_M
   if βₖ ≠ 0
     @kscal!(m, 1 / βₖ, u)
@@ -165,9 +165,9 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   end
 
   # α₁Nv₁ = Aᵀu₁.
-  mul!(Aᵀu, Aᵀ, u)
+  @kmul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
-  NisI || mul!(v, N, Nv)      # v₁ = N⁻¹ * Nv₁
+  NisI || @kmul!(v, N, Nv)      # v₁ = N⁻¹ * Nv₁
   αₖ = sqrt(@kdot(n, v, Nv))  # α₁ = ‖v₁‖_N
   if αₖ ≠ 0
     @kscal!(n, 1 / αₖ, v)
@@ -270,9 +270,9 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
     #      [ βₖ₊₁(eₖ)ᵀ ]
 
     # βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-    mul!(Av, A, v)
+    @kmul!(Av, A, v)
     @kaxpby!(m, one(T), Av, -αₖ, Mu)
-    MisI || mul!(u, M, Mu)        # uₖ₊₁ = M⁻¹ * Muₖ₊₁
+    MisI || @kmul!(u, M, Mu)        # uₖ₊₁ = M⁻¹ * Muₖ₊₁
     βₖ₊₁ = sqrt(@kdot(m, u, Mu))  # βₖ₊₁ = ‖uₖ₊₁‖_M
     if βₖ₊₁ ≠ 0
       @kscal!(m, 1 / βₖ₊₁, u)
@@ -280,9 +280,9 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
     end
 
     # αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    mul!(Aᵀu, Aᵀ, u)
+    @kmul!(Aᵀu, Aᵀ, u)
     @kaxpby!(n, one(T), Aᵀu, -βₖ₊₁, Nv)
-    NisI || mul!(v, N, Nv)        # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
+    NisI || @kmul!(v, N, Nv)        # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
     αₖ₊₁ = sqrt(@kdot(n, v, Nv))  # αₖ₊₁ = ‖vₖ₊₁‖_N
     if αₖ₊₁ ≠ 0
       @kscal!(n, 1 / αₖ₊₁, v)

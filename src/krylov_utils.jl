@@ -219,6 +219,8 @@ Create an AbstractVector of storage type `S` of length `n` only composed of one.
 @inline krylov_copy!(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.blascopy!(n, x, dx, y, dy)
 @inline krylov_copy!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: Number = copyto!(y, x)
 
+@inline krylov_mul!(y :: AbstractVector{T}, op, x :: AbstractVector{T}) where T <: Number = mul!(y, op, x)
+
 # the macros are just for readability, so we don't have to write the increments (always equal to 1)
 
 macro kdot(n, x, y)
@@ -255,6 +257,10 @@ end
 
 macro kref!(n, x, y, c, s)
   return esc(:(reflect!($x, $y, $c, $s)))
+end
+
+macro kmul!(y, op, x)
+  return esc(:(krylov_mul!($y, $op, $x)))
 end
 
 """

@@ -104,8 +104,8 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(ArNorms, zero(T))
     return solver
   end
-  MisI || mul!(Mr, M, r)
-  mul!(s, Aᵀ, Mr)
+  MisI || @kmul!(Mr, M, r)
+  @kmul!(s, Aᵀ, Mr)
   p .= s
   γ = @kdot(n, s, s)  # Faster than γ = dot(s, s)
   iter = 0
@@ -125,8 +125,8 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
   tired = iter ≥ itmax
 
   while ! (solved || tired)
-    mul!(q, A, p)
-    MisI || mul!(Mq, M, q)
+    @kmul!(q, A, p)
+    MisI || @kmul!(Mq, M, q)
     δ = @kdot(m, q, Mq)   # Faster than α = γ / dot(q, q)
     λ > 0 && (δ += λ * @kdot(n, p, p))
     α = γ / δ
@@ -140,8 +140,8 @@ function cgls!(solver :: CglsSolver{T,S}, A, b :: AbstractVector{T};
 
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
-    MisI || mul!(Mr, M, r)
-    mul!(s, Aᵀ, Mr)
+    MisI || @kmul!(Mr, M, r)
+    @kmul!(s, Aᵀ, Mr)
     λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x
     γ_next = @kdot(n, s, s)  # Faster than γ_next = dot(s, s)
     β = γ_next / γ

@@ -81,7 +81,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   x .= zero(T)
 
   if restart
-    mul!(M⁻¹vₖ, A, Δx)
+    @kmul!(M⁻¹vₖ, A, Δx)
     (λ ≠ 0) && @kaxpy!(n, λ, Δx, M⁻¹vₖ)
     @kaxpby!(n, one(T), b, -one(T), M⁻¹vₖ)
   else
@@ -89,7 +89,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   end
 
   # β₁v₁ = Mb
-  MisI || mul!(vₖ, M, M⁻¹vₖ)
+  MisI || @kmul!(vₖ, M, M⁻¹vₖ)
   βₖ = sqrt(@kdot(n, vₖ, M⁻¹vₖ))
   if βₖ ≠ 0
     @kscal!(n, 1 / βₖ, M⁻¹vₖ)
@@ -139,7 +139,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     # M(A + λI)Vₖ = Vₖ₊₁Tₖ₊₁.ₖ
     # βₖ₊₁vₖ₊₁ = M(A + λI)vₖ - αₖvₖ - βₖvₖ₋₁
 
-    mul!(p, A, vₖ)          # p ← Avₖ
+    @kmul!(p, A, vₖ)          # p ← Avₖ
     if λ ≠ 0
       @kaxpy!(n, λ, vₖ, p)  # p ← p + λvₖ
     end
@@ -152,7 +152,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
 
     @kaxpy!(n, -αₖ, M⁻¹vₖ, p)  # p ← p - αₖM⁻¹vₖ
 
-    MisI || mul!(vₖ₊₁, M, p)   # βₖ₊₁vₖ₊₁ = MAvₖ - γₖvₖ₋₁ - αₖvₖ
+    MisI || @kmul!(vₖ₊₁, M, p)   # βₖ₊₁vₖ₊₁ = MAvₖ - γₖvₖ₋₁ - αₖvₖ
 
     βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, p))
 

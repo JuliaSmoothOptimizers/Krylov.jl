@@ -84,7 +84,7 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
   z = NisI ? u : solver.yz
 
   x .= zero(T)   # x₀
-  mul!(r, M, b)  # r₀
+  @kmul!(r, M, b)  # r₀
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
@@ -124,18 +124,18 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
 
   while !(solved || tired || breakdown)
 
-    NisI || mul!(y, N, p)         # yₖ = N⁻¹pₖ
-    mul!(t, A, y)                 # tₖ = Ayₖ
-    MisI || mul!(v, M, t)         # vₖ = M⁻¹tₖ
+    NisI || @kmul!(y, N, p)         # yₖ = N⁻¹pₖ
+    @kmul!(t, A, y)                 # tₖ = Ayₖ
+    MisI || @kmul!(v, M, t)         # vₖ = M⁻¹tₖ
     σ = @kdot(n, v, c)            # σₖ = ⟨ M⁻¹AN⁻¹pₖ,̅r₀ ⟩
     α = ρ / σ                     # αₖ = ρₖ / σₖ
     @kcopy!(n, u, q)              # qₖ = uₖ
     @kaxpy!(n, -α, v, q)          # qₖ = qₖ - αₖ * M⁻¹AN⁻¹pₖ
     @kaxpy!(n, one(T), q, u)      # uₖ₊½ = uₖ + qₖ
-    NisI || mul!(z, N, u)         # zₖ = N⁻¹uₖ₊½
+    NisI || @kmul!(z, N, u)         # zₖ = N⁻¹uₖ₊½
     @kaxpy!(n, α, z, x)           # xₖ₊₁ = xₖ + αₖ * N⁻¹(uₖ + qₖ)
-    mul!(s, A, z)                 # sₖ = Azₖ
-    MisI || mul!(w, M, s)         # wₖ = M⁻¹sₖ
+    @kmul!(s, A, z)                 # sₖ = Azₖ
+    MisI || @kmul!(w, M, s)         # wₖ = M⁻¹sₖ
     @kaxpy!(n, -α, w, r)          # rₖ₊₁ = rₖ - αₖ * M⁻¹AN⁻¹(uₖ + qₖ)
     ρ_next = @kdot(n, r, c)       # ρₖ₊₁ = ⟨ rₖ₊₁,̅r₀ ⟩
     β = ρ_next / ρ                # βₖ = ρₖ₊₁ / ρₖ

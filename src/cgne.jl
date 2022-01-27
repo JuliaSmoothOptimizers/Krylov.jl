@@ -104,7 +104,7 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
 
   x .= zero(T)
   r .= b
-  MisI || mul!(z, M, r)
+  MisI || @kmul!(z, M, r)
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
   history && push!(rNorms, rNorm)
   if rNorm == 0
@@ -114,7 +114,7 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
     return solver
   end
   λ > 0 && (s .= r)
-  mul!(p, Aᵀ, z)
+  @kmul!(p, Aᵀ, z)
 
   # Use ‖p‖ to detect inconsistent system.
   # An inconsistent system will necessarily have AA' singular.
@@ -138,17 +138,17 @@ function cgne!(solver :: CgneSolver{T,S}, A, b :: AbstractVector{T};
   tired = iter ≥ itmax
 
   while ! (solved || inconsistent || tired)
-    mul!(q, A, p)
+    @kmul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)
     δ = @kdot(n, p, p)   # Faster than dot(p, p)
     λ > 0 && (δ += λ * @kdot(m, s, s))
     α = γ / δ
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
-    MisI || mul!(z, M, r)
+    MisI || @kmul!(z, M, r)
     γ_next = @kdot(m, r, z)  # Faster than γ_next = dot(r, z)
     β = γ_next / γ
-    mul!(Aᵀz, Aᵀ, z)
+    @kmul!(Aᵀz, Aᵀ, z)
     @kaxpby!(n, one(T), Aᵀz, β, p)  # Faster than p = Aᵀz + β * p
     pNorm = @knrm2(n, p)
     if λ > 0
