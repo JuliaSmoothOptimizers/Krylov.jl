@@ -26,6 +26,8 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 - Right preconditioning : AN⁻¹u = b with x = N⁻¹u
 - Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
 
+Full reorthogonalization is available with the `reorthogonalization` option.
+
 #### Reference
 
 * Y. Saad, [*Krylov subspace methods for solving unsymmetric linear systems*](https://doi.org/10.1090/S0025-5718-1981-0616364-6), Mathematics of computation, Vol. 37(155), pp. 105--126, 1981.

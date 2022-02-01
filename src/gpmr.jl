@@ -49,6 +49,8 @@ The residual norm ‖rₖ‖ is monotonically decreasing in GPMR.
 GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
 
+Full reorthogonalization is available with the `reorthogonalization` option.
+
 Additional details can be displayed if verbose mode is enabled (verbose > 0).
 Information will be displayed every `verbose` iterations.
 
