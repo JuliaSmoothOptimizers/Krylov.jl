@@ -185,7 +185,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
   itmax == 0 && (itmax = 2 * n)
 
   (verbose > 0) && @printf("%5s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "k", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1")
-  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, β, cold, sold, ANorm, Acond)
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, β, cold, sold, ANorm, Acond)
 
   tol = atol + rtol * β₁
   status = "unknown"
@@ -315,7 +315,7 @@ function symmlq!(solver :: SymmlqSolver{T,S}, A, b :: AbstractVector{T};
     ANorm = sqrt(ANorm²)
     test1 = rNorm / (ANorm * xNorm)
 
-    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, β, c, s, ANorm, Acond, test1)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, β, c, s, ANorm, Acond, test1)
 
     # Reset variables
     ϵold = ϵ

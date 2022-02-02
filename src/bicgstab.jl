@@ -110,7 +110,7 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
 
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "αₖ", "ωₖ")
-  display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
 
   next_ρ = @kdot(n, r, c)  # ρ₁ = ⟨r₀,r̅₀⟩
   if next_ρ == 0
@@ -158,7 +158,7 @@ function bicgstab!(solver :: BicgstabSolver{T,S}, A, b :: AbstractVector{T}; c :
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
-    display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, α, ω)
   end
   (verbose > 0) && @printf("\n")
 

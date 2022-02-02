@@ -260,7 +260,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   itmax == 0 && (itmax = m + n)
 
   (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "k", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²", "κ(A)", "‖xL‖")
-  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm², Acond, xlqNorm)
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm², Acond, xlqNorm)
 
   status = "unknown"
   solved = solved_mach = solved_lim = (rNorm ≤ atol)
@@ -419,7 +419,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     solved = solved_mach || solved_lim || zero_resid || fwd_err_lbnd || fwd_err_ubnd
 
     iter = iter + 1
-    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
   end
   (verbose > 0) && @printf("\n")
 

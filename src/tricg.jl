@@ -173,7 +173,7 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   ε = atol + rtol * rNorm
 
   (verbose > 0) && @printf("%5s  %7s  %8s  %7s  %7s\n", "k", "‖rₖ‖", "αₖ", "βₖ₊₁", "γₖ₊₁")
-  display(iter, verbose) && @printf("%5d  %7.1e  %8s  %7.1e  %7.1e\n", iter, rNorm, " ✗ ✗ ✗ ✗", βₖ, γₖ)
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8s  %7.1e  %7.1e\n", iter, rNorm, " ✗ ✗ ✗ ✗", βₖ, γₖ)
 
   # Set up workspace.
   d₂ₖ₋₃ = d₂ₖ₋₂ = zero(T)
@@ -340,7 +340,7 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     # Update stopping criterion.
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
-    display(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, αₖ, βₖ₊₁, γₖ₊₁)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, αₖ, βₖ₊₁, γₖ₊₁)
   end
   (verbose > 0) && @printf("\n")
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
