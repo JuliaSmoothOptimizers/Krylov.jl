@@ -149,7 +149,7 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   itmax == 0 && (itmax = m + n)
 
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
 
   # Update iteration index
   iter = iter + 1
@@ -426,7 +426,7 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
         solved_lq = solved_lq || err_x ≤ etolx || err_y ≤ etoly
       end
     end
-    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
 
     # Update iteration index.
     iter = iter + 1

@@ -96,7 +96,7 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
 
   ε = atol + rtol * bNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
 
   βₖ = @knrm2(m, b)          # β₁ = ‖v₁‖
   γₖ = @knrm2(n, c)          # γ₁ = ‖u₁‖
@@ -252,7 +252,7 @@ function usymlq!(solver :: UsymlqSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
     solved_lq = rNorm_lq ≤ ε
     solved_cg = transfer_to_usymcg && (δbarₖ ≠ 0) && (rNorm_cg ≤ ε)
     tired = iter ≥ itmax
-    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
   end
   (verbose > 0) && @printf("\n")
 

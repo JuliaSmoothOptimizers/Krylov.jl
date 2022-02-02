@@ -104,7 +104,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
   pNorm² = γ
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
-  display(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
 
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
@@ -134,7 +134,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
     # Compute step size to boundary if applicable.
     σ = radius > 0 ? maximum(to_boundary(x, p, radius, dNorm2=pNorm²)) : α
 
-    display(iter, verbose) && @printf("%8.1e  %8.1e  %8.1e\n", pAp, α, σ)
+    kdisplay(iter, verbose) && @printf("%8.1e  %8.1e  %8.1e\n", pAp, α, σ)
 
     # Move along p from x to the boundary if either
     # the next step leads outside the trust region or
@@ -162,7 +162,7 @@ function cg!(solver :: CgSolver{T,S}, A, b :: AbstractVector{T};
 
     iter = iter + 1
     tired = iter ≥ itmax
-    display(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
   end
   (verbose > 0) && @printf("\n")
 

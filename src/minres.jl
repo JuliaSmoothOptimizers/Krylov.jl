@@ -160,7 +160,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
   itmax == 0 && (itmax = 2*n)
 
   (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %7s\n", "k", "‖r‖", "‖Aᵀr‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "test2")
-  display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
 
   tol = atol + rtol * β₁
   rNormtol = ratol + rrtol * β₁ 
@@ -261,7 +261,7 @@ function minres!(solver :: MinresSolver{T,S}, A, b :: AbstractVector{T};
     Acond = γmax / γmin
     history && push!(Aconds, Acond)
 
-    display(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, test1, test2)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, test1, test2)
 
     if iter == 1 && β / β₁ ≤ 10 * ϵM
       # Aᵀb = 0 so x = 0 is a minimum least-squares solution

@@ -177,7 +177,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
   ɛ_i = atol                  # Stopping tolerance for inconsistent systems.
   ctol = conlim > 0 ? 1/conlim : zero(T)  # Stopping tolerance for ill-conditioned operators.
   (verbose > 0) && @printf("%5s  %8s  %8s  %8s  %8s  %8s  %7s\n", "k", "‖r‖", "‖x‖", "‖A‖", "κ(A)", "α", "β")
-  display(iter, verbose) && @printf("%5d  %8.2e  %8.2e  %8.2e  %8.2e\n", iter, rNorm, xNorm, Anorm, Acond)
+  kdisplay(iter, verbose) && @printf("%5d  %8.2e  %8.2e  %8.2e  %8.2e\n", iter, rNorm, xNorm, Anorm, Acond)
 
   bkwerr = one(T)  # initial value of the backward error ‖r‖ / √(‖b‖² + ‖A‖² ‖x‖²)
 
@@ -280,7 +280,7 @@ function craig!(solver :: CraigSolver{T,S}, A, b :: AbstractVector{T};
 
     ρ_prev = ρ   # Only differs from α if λ > 0.
 
-    display(iter, verbose) && @printf("%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8.1e  %7.1e\n", iter, rNorm, xNorm, Anorm, Acond, α, β)
+    kdisplay(iter, verbose) && @printf("%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8.1e  %7.1e\n", iter, rNorm, xNorm, Anorm, Acond, α, β)
 
     solved_lim = bkwerr ≤ btol
     solved_mach = one(T) + bkwerr ≤ one(T)

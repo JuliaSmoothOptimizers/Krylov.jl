@@ -110,7 +110,7 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
 
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
   u .= r        # u₀
   p .= r        # p₀
@@ -158,7 +158,7 @@ function cgs!(solver :: CgsSolver{T,S}, A, b :: AbstractVector{T}; c :: Abstract
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
-    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
   end
   (verbose > 0) && @printf("\n")
 

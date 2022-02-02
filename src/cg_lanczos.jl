@@ -107,7 +107,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
   # Define stopping tolerance.
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
   indefinite = false
   solved = rNorm ≤ ε
@@ -149,7 +149,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,S}, A, b :: AbstractVector{T};
     rNorm = abs(σ)          # ‖rₖ₊₁‖_M = |σₖ₊₁| because rₖ₊₁ = σₖ₊₁ * vₖ₊₁ and ‖vₖ₊₁‖_M = 1
     history && push!(rNorms, rNorm)
     iter = iter + 1
-    display(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
   end
@@ -279,7 +279,7 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
   itmax == 0 && (itmax = 2 * n)
 
   # Build format strings for printing.
-  if display(iter, verbose)
+  if kdisplay(iter, verbose)
     fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n"
     # precompile printf for our particular format
     local_printf(data...) = Core.eval(Main, :(@printf($fmt, $(data)...)))
@@ -346,7 +346,7 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,S}, A, b :: AbstractVector
       not_cv[i] = check_curvature ? !(converged[i] || indefinite[i]) : !converged[i]
     end
     iter = iter + 1
-    display(iter, verbose) && local_printf(iter, rNorms...)
+    kdisplay(iter, verbose) && local_printf(iter, rNorms...)
 
     solved = sum(not_cv) == 0
     tired = iter ≥ itmax

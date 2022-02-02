@@ -107,7 +107,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
   history && push!(ArNorms, ArNorm)
   ε = atol + rtol * rNorm
   (verbose > 0) && @printf("%5s %8s %8s %8s\n", "k", "‖x‖", "‖r‖", "quad")
-  display(iter, verbose) && @printf("    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
+  kdisplay(iter, verbose) && @printf("    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
 
   descent = pr > 0 # pᵀr > 0 means p is a descent direction
   solved = rNorm ≤ ε
@@ -248,7 +248,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(ArNorms, ArNorm)
 
     iter = iter + 1
-    if display(iter, verbose)
+    if kdisplay(iter, verbose)
       m = m - α * pr + α^2 * pAp / 2
       @printf("    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
     end
