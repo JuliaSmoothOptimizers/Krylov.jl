@@ -109,7 +109,6 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   itmax == 0 && (itmax = 2*n)
 
   ε = atol + rtol * rNorm
-  κ = zero(T)
   (verbose > 0) && @printf("%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁")
   display(iter, verbose) && @printf("%5d  %7.1e  %7s  %7.1e\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ)
 
@@ -309,9 +308,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(ArNorms, ArNorm)
 
     # Update stopping criterion.
-    iter == 1 && (κ = (atol + rtol * ArNorm) / 100)
     solved = rNorm ≤ ε
-    inconsistent = !solved && ArNorm ≤ κ
+    inconsistent = abs(μbarₖ) ≤ √eps(T)
     tired = iter ≥ itmax
 
     # Update variables

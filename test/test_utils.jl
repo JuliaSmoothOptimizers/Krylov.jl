@@ -61,6 +61,13 @@ function square_inconsistent(n :: Int=10)
   return A, b
 end
 
+# Symmetric and inconsistent system.
+function symmetric_inconsistent()
+  A = [3.0 2.0 -1.0 5.0; 2.0 -2.0 4.0 0.0; -1.0 4.0 1.0 3.0; 5.0 0.0 3.0 5.0]
+  b = [1.0; -8.0; 5.0; 2.0]
+  return A, b
+end
+
 # Overdetermined and consistent systems.
 function over_consistent(n :: Int=25, m :: Int=10)
   n > m || error("Underdetermined or square system!")

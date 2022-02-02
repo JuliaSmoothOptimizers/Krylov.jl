@@ -54,6 +54,17 @@
   # Singular inconsistent system
   A, b = square_inconsistent()
   (x, stats) = minres_qlp(A, b)
+  r = b - A * x
+  Aresid = norm(A*r) / norm(A*b)
+  @test(Aresid ≤ minres_qlp_tol)
+  @test stats.inconsistent
+
+  # Symmetric inconsistent system
+  A, b = symmetric_inconsistent()
+  (x, stats) = minres_qlp(A, b)
+  r = b - A * x
+  Aresid = norm(A*r) / norm(A*b)
+  @test(Aresid ≤ minres_qlp_tol)
   @test stats.inconsistent
 
   # Test with Jacobi (or diagonal) preconditioner
