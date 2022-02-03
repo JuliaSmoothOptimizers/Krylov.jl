@@ -18,7 +18,10 @@ export diom, diom!
 
 Solve the consistent linear system Ax = b using direct incomplete orthogonalization method.
 
-DIOM is similar to CG with partial reorthogonalization.
+DIOM only orthogonalizes the new vectors of the Krylov basis against the `memory` most recent vectors.
+If `memory = 2`, DIOM is theoretically equivalent to CG.
+If `k ≤ memory` where `k` is the number of iterations, DIOM is theoretically equivalent to FOM.
+Otherwise, DIOM interpolates between CG and FOM and is similar to CG with partial reorthogonalization.
 
 An advantage of DIOM is that nonsymmetric or symmetric indefinite or both nonsymmetric
 and indefinite systems of linear equations can be handled by this single algorithm.
