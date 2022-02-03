@@ -11,9 +11,9 @@
 export diom, diom!
 
 """
-    (x, stats) = diom(A, b::AbstractVector{T};
+    (x, stats) = diom(A, b::AbstractVector{T}; memory::Int=20,
                       M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
-                      restart::Bool=false, itmax::Int=0, memory::Int=20,
+                      restart::Bool=false, itmax::Int=0,
                       verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the consistent linear system Ax = b using direct incomplete orthogonalization method.
@@ -42,6 +42,9 @@ end
     solver = diom!(solver::DiomSolver, args...; kwargs...)
 
 where `args` and `kwargs` are arguments and keyword arguments of [`diom`](@ref).
+
+Note that the `memory` keyword argument is the only exception.
+It's required to create a `DiomSolver` and can't be changed later.
 
 See [`DiomSolver`](@ref) for more details about the `solver`.
 """

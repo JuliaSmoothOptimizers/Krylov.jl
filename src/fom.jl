@@ -11,11 +11,10 @@
 export fom, fom!
 
 """
-    (x, stats) = fom(A, b::AbstractVector{T};
+    (x, stats) = fom(A, b::AbstractVector{T}; memory::Int=20,
                      M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                      reorthogonalization::Bool=false, itmax::Int=0,
-                     restart::Bool=false, memory::Int=20,
-                     verbose::Int=0, history::Bool=false) where T <: AbstractFloat
+                     restart::Bool=false, verbose::Int=0, history::Bool=false) where T <: AbstractFloat
 
 Solve the linear system Ax = b using FOM method.
 
@@ -42,6 +41,9 @@ end
     solver = fom!(solver::FomSolver, args...; kwargs...)
 
 where `args` and `kwargs` are arguments and keyword arguments of [`fom`](@ref).
+
+Note that the `memory` keyword argument is the only exception.
+It's required to create a `FomSolver` and can't be changed later.
 
 See [`FomSolver`](@ref) for more details about the `solver`.
 """
