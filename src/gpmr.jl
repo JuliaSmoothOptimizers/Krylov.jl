@@ -12,7 +12,7 @@
 export gpmr, gpmr!
 
 """
-    (x, y, stats) = gpmr(A, B, b::AbstractVector{T}, c::AbstractVector{T};
+    (x, y, stats) = gpmr(A, B, b::AbstractVector{T}, c::AbstractVector{T}; memory::Int=20,
                          C=I, D=I, E=I, F=I, atol::T=√eps(T), rtol::T=√eps(T),
                          gsp::Bool=false, reorthogonalization::Bool=false, itmax::Int=0,
                          restart::Bool=false, λ::T=one(T), μ::T=one(T),
@@ -68,6 +68,9 @@ end
     solver = gpmr!(solver::GpmrSolver, args...; kwargs...)
 
 where `args` and `kwargs` are arguments and keyword arguments of [`gpmr`](@ref).
+
+Note that the `memory` keyword argument is the only exception.
+It's required to create a `GpmrSolver` and can't be changed later.
 
 See [`GpmrSolver`](@ref) for more details about the `solver`.
 """
