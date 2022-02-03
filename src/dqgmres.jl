@@ -21,6 +21,11 @@ Solve the consistent linear system Ax = b using DQGMRES method.
 DQGMRES algorithm is based on the incomplete Arnoldi orthogonalization process
 and computes a sequence of approximate solutions with the quasi-minimal residual property.
 
+DQGMRES only orthogonalizes the new vectors of the Krylov basis against the `memory` most recent vectors.
+If `memory = 2`, DQGMRES is theoretically equivalent to MINRES.
+If `k ≤ memory` where `k` is the number of iterations, DQGMRES is theoretically equivalent to GMRES.
+Otherwise, DQGMRES interpolates between MINRES and GMRES and is similar to MINRES with partial reorthogonalization.
+
 This implementation allows a left preconditioner M and a right preconditioner N.
 - Left  preconditioning : M⁻¹Ax = M⁻¹b
 - Right preconditioning : AN⁻¹u = b with x = N⁻¹u
