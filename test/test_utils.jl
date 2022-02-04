@@ -3,14 +3,14 @@ include("gen_lsq.jl")
 include("check_min_norm.jl")
 
 # Symmetric and positive definite systems.
-function symmetric_definite(n :: Int=10)
+function symmetric_definite(n :: Int=10; FC=Float64)
   A = spdiagm(-1 => ones(n-1), 0 => 4*ones(n), 1 => ones(n-1))
   b = A * [1:n;]
   return A, b
 end
 
 # Symmetric and indefinite systems.
-function symmetric_indefinite(n :: Int=10)
+function symmetric_indefinite(n :: Int=10; FC=Float64)
   A = spdiagm(-1 => ones(n-1), 0 => 4*ones(n), 1 => ones(n-1))
   A = A - 3 * I
   b = A * [1:n;]
@@ -18,21 +18,21 @@ function symmetric_indefinite(n :: Int=10)
 end
 
 # Nonsymmetric and positive definite systems.
-function nonsymmetric_definite(n :: Int=10)
+function nonsymmetric_definite(n :: Int=10; FC=Float64)
   A = [i == j ? 1.0*n : i < j ? 1.0 : -1.0 for i=1:n, j=1:n]
   b = A * [1:n;]
   return A, b
 end
 
 # Nonsymmetric and indefinite systems.
-function nonsymmetric_indefinite(n :: Int=10)
+function nonsymmetric_indefinite(n :: Int=10; FC=Float64)
   A = [i == j ? n*(-1.0)^(i*j) : i < j ? 1.0 : -1.0 for i=1:n, j=1:n]
   b = A * [1:n;]
   return A, b
 end
 
 # Underdetermined and consistent systems.
-function under_consistent(n :: Int=10, m :: Int=25)
+function under_consistent(n :: Int=10, m :: Int=25; FC=Float64)
   n < m || error("Square or overdetermined system!")
   A = [i/j - j/i for i=1:n, j=1:m]
   b = A * ones(m)
@@ -40,7 +40,7 @@ function under_consistent(n :: Int=10, m :: Int=25)
 end
 
 # Underdetermined and inconsistent systems.
-function under_inconsistent(n :: Int=10, m :: Int=25)
+function under_inconsistent(n :: Int=10, m :: Int=25; FC=Float64)
   n < m || error("Square or overdetermined system!")
   A = ones(n, m)
   b = [i == 1 ? -1.0 : 1.0*i for i=1:n]
@@ -48,14 +48,14 @@ function under_inconsistent(n :: Int=10, m :: Int=25)
 end
 
 # Square and consistent systems.
-function square_consistent(n :: Int=10)
+function square_consistent(n :: Int=10; FC=Float64)
   A = [i/j - j/i for i=1:n, j=1:n]
   b = A * ones(n)
   return A, b
 end
 
 # Square and inconsistent systems.
-function square_inconsistent(n :: Int=10)
+function square_inconsistent(n :: Int=10; FC=Float64)
   A = eye(n); A[1, 1] = 0.0
   b = ones(n)
   return A, b
@@ -69,7 +69,7 @@ function symmetric_inconsistent()
 end
 
 # Overdetermined and consistent systems.
-function over_consistent(n :: Int=25, m :: Int=10)
+function over_consistent(n :: Int=25, m :: Int=10; FC=Float64)
   n > m || error("Underdetermined or square system!")
   A = [i/j - j/i for i=1:n, j=1:m]
   b = A * ones(m)
@@ -77,7 +77,7 @@ function over_consistent(n :: Int=25, m :: Int=10)
 end
 
 # Overdetermined and inconsistent systems.
-function over_inconsistent(n :: Int=25, m :: Int=10)
+function over_inconsistent(n :: Int=25, m :: Int=10; FC=Float64)
   n > m || error("Underdetermined or square system!")
   A = ones(n, m)
   b = [i == 1 ? -1.0 : 1.0*i for i=1:n]
@@ -85,14 +85,14 @@ function over_inconsistent(n :: Int=25, m :: Int=10)
 end
 
 # Sparse Laplacian.
-function sparse_laplacian(n :: Int=16)
+function sparse_laplacian(n :: Int=16; FC=Float64)
   A = get_div_grad(n, n, n)
   b = ones(n^3)
   return A, b
 end
 
 # Large-scale unsymmetric systems generated with Kronecker products.
-function kron_unsymmetric(n :: Int=64)
+function kron_unsymmetric(n :: Int=64; FC=Float64)
   N = n^3
   A = spdiagm(-1 => fill(-1.0, n - 1), 0 => fill(3.0, n), 1 => fill(-2.0, n - 1))
   Id = eye(n)
@@ -104,7 +104,7 @@ function kron_unsymmetric(n :: Int=64)
 end
 
 # Symmetric, indefinite and almost singular systems.
-function almost_singular(n :: Int=16)
+function almost_singular(n :: Int=16; FC=Float64)
   A = get_div_grad(n, n, n)
   A = A - 5 * I
   b = A * ones(n^3)
@@ -112,7 +112,7 @@ function almost_singular(n :: Int=16)
 end
 
 # Symmetric, singular and consistent systems.
-function singular_consistent(n :: Int=10)
+function singular_consistent(n :: Int=10; FC=Float64)
   A = [1.0*i*j for i=1:n, j=1:n] + 5 * eye(n)
   A[:,1] .= A[:,2] .= A[2,:] .= A[1,:] .= 1.0
   b = A * ones(n)
@@ -120,7 +120,7 @@ function singular_consistent(n :: Int=10)
 end
 
 # System that cause a breakdown with the symmetric Lanczos process.
-function symmetric_breakdown()
+function symmetric_breakdown(; FC=Float64)
   A = [0.0 1.0; 1.0 0.0]
   b = [1.0; 0.0]
   return A, b
@@ -128,15 +128,23 @@ end
 
 # System that cause a breakdown with the Lanczos biorthogonalization
 # and the orthogonal tridiagonalization processes.
-function unsymmetric_breakdown()
+function unsymmetric_breakdown(; FC=Float64)
   A = [0.0 1.0; -1.0 0.0]
   b = [1.0; 0.0]
   c = [-1.0; 0.0]
   return A, b, c
 end
 
+# Initial vectors that cause a breakdown with the Lanczos biorthogonalization process.
+function bc_breakdown(; FC=Float64)
+  A = [1.0 2.0; 3.0 4.0]
+  b = [0.0; 1.0]
+  c = [1.0; 0.0]
+  return A, b, c
+end
+
 # Underdetermined consistent adjoint systems.
-function underdetermined_adjoint(n :: Int=100, m :: Int=200)
+function underdetermined_adjoint(n :: Int=100, m :: Int=200; FC=Float64)
   n < m || error("Square or overdetermined system!")
   A = [i == j ? 10.0 : i < j ? 1.0 : -1.0 for i=1:n, j=1:m]
   b = A * [1:m;]
@@ -145,7 +153,7 @@ function underdetermined_adjoint(n :: Int=100, m :: Int=200)
 end
 
 # Square consistent adjoint systems.
-function square_adjoint(n :: Int=100)
+function square_adjoint(n :: Int=100; FC=Float64)
   A = [i == j ? 10.0 : i < j ? 1.0 : -1.0 for i=1:n, j=1:n]
   b = A * [1:n;]
   c = A' * [-n:-1;]
@@ -153,7 +161,7 @@ function square_adjoint(n :: Int=100)
 end
 
 # Adjoint systems with Ax = b underdetermined consistent and Aᵀt = c overdetermined insconsistent.
-function rectangular_adjoint(n :: Int=10, m :: Int=25)
+function rectangular_adjoint(n :: Int=10, m :: Int=25; FC=Float64)
   Aᵀ, c = over_inconsistent(m, n)
   A = transpose(Aᵀ)
   b = A * ones(m)
@@ -161,7 +169,7 @@ function rectangular_adjoint(n :: Int=10, m :: Int=25)
 end
 
 # Overdetermined consistent adjoint systems.
-function overdetermined_adjoint(n :: Int=200, m :: Int=100)
+function overdetermined_adjoint(n :: Int=200, m :: Int=100; FC=Float64)
   n > m || error("Underdetermined or square system!")
   A = [i == j ? 10.0 : i < j ? 1.0 : -1.0 for i=1:n, j=1:m]
   b = A * [1:m;]
@@ -170,7 +178,7 @@ function overdetermined_adjoint(n :: Int=200, m :: Int=100)
 end
 
 # Adjoint ODEs.
-function adjoint_ode(n :: Int=50)
+function adjoint_ode(n :: Int=50; FC=Float64)
   χ₁ = χ₂ = χ₃ = 1.0
   # Primal ODE
   # χ₁ * d²U(x)/dx² + χ₂ * dU(x)/dx + χ₃ * U(x) = f(x)
@@ -189,7 +197,7 @@ function adjoint_ode(n :: Int=50)
 end
 
 # Adjoint PDEs.
-function adjoint_pde(n :: Int=50, m :: Int=50)
+function adjoint_pde(n :: Int=50, m :: Int=50; FC=Float64)
   κ₁ = 5.0
   κ₂ = 20.0
   κ₃ = 0.0
@@ -210,7 +218,7 @@ function adjoint_pde(n :: Int=50, m :: Int=50)
 end
 
 # Poisson equation in polar coordinates with homogeneous boundary conditions.
-function polar_poisson(n :: Int=50, m :: Int=50)
+function polar_poisson(n :: Int=50, m :: Int=50; FC=Float64)
   f(r, θ) = -3.0 * cos(θ)
   g(r, θ) = 0.0
   A, b = polar_poisson(n, m, f, g)
@@ -218,7 +226,7 @@ function polar_poisson(n :: Int=50, m :: Int=50)
 end
 
 # Poisson equation in cartesian coordinates with homogeneous boundary conditions.
-function cartesian_poisson(n :: Int=50, m :: Int=50)
+function cartesian_poisson(n :: Int=50, m :: Int=50; FC=Float64)
   f(x, y) = - 2.0 * π * π * sin(π * x) * sin(π * y)
   g(x, y) = 0.0
   A, b = cartesian_poisson(n, m, f, g)
@@ -226,7 +234,7 @@ function cartesian_poisson(n :: Int=50, m :: Int=50)
 end
 
 # Square and preconditioned problems.
-function square_preconditioned(n :: Int=10)
+function square_preconditioned(n :: Int=10; FC=Float64)
   A   = ones(n, n) + (n-1) * eye(n)
   b   = 10.0 * [1:n;]
   M⁻¹ = 1/n * eye(n)
@@ -234,7 +242,7 @@ function square_preconditioned(n :: Int=10)
 end
 
 # Square problems with two preconditioners.
-function two_preconditioners(n :: Int=10, m :: Int=20)
+function two_preconditioners(n :: Int=10, m :: Int=20; FC=Float64)
   A   = ones(n, n) + (n-1) * eye(n)
   b   = ones(n)
   M⁻¹ = 1/√n * eye(n)
@@ -243,14 +251,14 @@ function two_preconditioners(n :: Int=10, m :: Int=20)
 end
 
 # Random Ax = b with b == 0.
-function zero_rhs(n :: Int=10)
+function zero_rhs(n :: Int=10; FC=Float64)
   A = rand(n, n)
   b = zeros(n)
   return A, b
 end
 
 # Regularized problems.
-function regularization(n :: Int=5)
+function regularization(n :: Int=5; FC=Float64)
   A = [2^(i/j)*j + (-1)^(i-j) * n*(i-1) for i = 1:n, j = 1:n]
   b = ones(n)
   λ = 4.0
@@ -258,7 +266,7 @@ function regularization(n :: Int=5)
 end
 
 # Saddle-point systems with square A.
-function saddle_point(n :: Int=5)
+function saddle_point(n :: Int=5; FC=Float64)
   A = [2^(i/j)*j + (-1)^(i-j) * n*(i-1) for i = 1:n, j = 1:n]
   b = ones(n)
   D = diagm(0 => [2.0 * i for i = 1:n])
@@ -266,7 +274,7 @@ function saddle_point(n :: Int=5)
 end
 
 # Saddle-point systems with rectangular A.
-function small_sp(transpose :: Bool=false)
+function small_sp(transpose :: Bool=false; FC=Float64)
   A = [1.0 0.0; 0.0 -1.0; 3.0 0.0]
   A = transpose ? Matrix(A') : A
   n, m = size(A)
@@ -277,7 +285,7 @@ function small_sp(transpose :: Bool=false)
 end
 
 # Generalized saddle-point systems with rectangular A and B.
-function gsp(transpose :: Bool=false)
+function gsp(transpose :: Bool=false; FC=Float64)
   A = [1.0 0.0; 0.0 -1.0; 3.0 0.0]
   A = transpose ? Matrix(A') : A
   B = [0.0 2.0 4.0; -3.0 0.0 0.0]
@@ -291,7 +299,7 @@ function gsp(transpose :: Bool=false)
 end
 
 # Symmetric and quasi-definite systems with square A.
-function sqd(n :: Int=5)
+function sqd(n :: Int=5; FC=Float64)
   A = [2^(i/j)*j + (-1)^(i-j) * n*(i-1) for i = 1:n, j = 1:n]
   b = ones(n)
   M = diagm(0 => [3.0 * i for i = 1:n])
@@ -300,7 +308,7 @@ function sqd(n :: Int=5)
 end
 
 # Symmetric and quasi-definite systems with rectangular A.
-function small_sqd(transpose :: Bool=false)
+function small_sqd(transpose :: Bool=false; FC=Float64)
   A = [1.0 0.0; 0.0 -1.0; 3.0 0.0]
   A = transpose ? Matrix(A') : A
   n, m = size(A)
@@ -312,10 +320,23 @@ function small_sqd(transpose :: Bool=false)
 end
 
 # Test restart feature with linear systems of size n³.
-function restart(n :: Int=32)
+function restart(n :: Int=32; FC=Float64)
   A = get_div_grad(n, n, n)
   b = A * ones(n^3)
   return A, b
+end
+
+# Generate a breakdown in the orthogonal tridiagonalization process and the orthogonal Hessenberg reduction process.
+function ssy_mo_breakdown(transpose :: Bool=false; FC=Float64)
+  if transpose
+    A = [1.0 -1.0; 0.0 1.0; -1.0 0.0]
+  else
+    A = [1.0 0.0 -1.0; -1.0 1.0 0.0]
+  end
+  n, m = size(A)
+  b = ones(n)
+  c = ones(m)
+  return A, b, c
 end
 
 # Check that a KrylovStats is reset.
@@ -326,28 +347,4 @@ function check_reset(stats :: KS) where KS <: Krylov.KrylovStats
       @test isempty(statsfield)
     end
   end
-end
-
-# Compute a Jacobi preconditioner.
-function jacobi(A; T=Float64, pd=true)
-  n, m = size(A)
-  J = zeros(T, n)
-  for i = 1 : n
-    J[i] = (A[i,i] == 0) ? one(T) : (pd ? 1 / abs(A[i,i]) : 1 / A[i,i])
-  end
-  P⁻¹ = Diagonal(J)
-  return P⁻¹
-end
-
-# Generate a breakdown in the orthogonal tridiagonalization process and the orthogonal Hessenberg reduction process.
-function ssy_mo_breakdown(transpose :: Bool=false)
-  if transpose
-    A = [1.0 -1.0; 0.0 1.0; -1.0 0.0]
-  else
-    A = [1.0 0.0 -1.0; -1.0 1.0 0.0]
-  end
-  n, m = size(A)
-  b = ones(n)
-  c = ones(m)
-  return A, b, c
 end

@@ -17,7 +17,7 @@ end
     @testset "Data Type: $FC" begin
 
       # Underdetermined consistent.
-      A, b = under_consistent()
+      A, b = under_consistent(FC=FC)
       (x, stats, resid) = test_crmr(A, b)
       @test(resid ≤ crmr_tol)
       @test(stats.solved)
@@ -25,13 +25,13 @@ end
       @test(norm(xI - xmin) ≤ cond(A) * crmr_tol * xmin_norm)
 
       # Underdetermined inconsistent.
-      A, b = under_inconsistent()
+      A, b = under_inconsistent(FC=FC)
       (x, stats, resid) = test_crmr(A, b, history=true)
       @test(stats.inconsistent)
       @test(stats.Aresiduals[end] ≤ crmr_tol)
 
       # Square consistent.
-      A, b = square_consistent()
+      A, b = square_consistent(FC=FC)
       (x, stats, resid) = test_crmr(A, b)
       @test(resid ≤ crmr_tol)
       @test(stats.solved)
@@ -39,13 +39,13 @@ end
       @test(norm(xI - xmin) ≤ cond(A) * crmr_tol * xmin_norm)
 
       # Square inconsistent.
-      A, b = square_inconsistent()
+      A, b = square_inconsistent(FC=FC)
       (x, stats, resid) = test_crmr(A, b, history=true)
       @test(stats.inconsistent)
       @test(stats.Aresiduals[end] ≤ crmr_tol)
 
       # Overdetermined consistent.
-      A, b = over_consistent()
+      A, b = over_consistent(FC=FC)
       (x, stats, resid) = test_crmr(A, b)
       @test(resid ≤ crmr_tol)
       @test(stats.solved)
@@ -53,7 +53,7 @@ end
       @test(norm(xI - xmin) ≤ cond(A) * crmr_tol * xmin_norm)
 
       # Overdetermined inconsistent.
-      A, b = over_inconsistent()
+      A, b = over_inconsistent(FC=FC)
       (x, stats, resid) = test_crmr(A, b, history=true)
       @test(stats.inconsistent)
       @test(stats.Aresiduals[end] ≤ crmr_tol)
@@ -65,13 +65,10 @@ end
       (xI, xmin, xmin_norm) = check_min_norm(A, b, x, λ=1.0e-3)
       @test(norm(xI - xmin) ≤ cond(A) * crmr_tol * xmin_norm)
 
-      # Code coverage.
-      (x, stats, resid) = test_crmr(sparse(A), b, λ=1.0e-3)
-
       # Test b == 0
-      A, b = zero_rhs()
+      A, b = zero_rhs(FC=FC)
       (x, stats) = crmr(A, b)
-      @test x == zeros(size(A,2))
+      @test norm(x) == 0
       @test stats.status == "x = 0 is a zero-residual solution"
 
       # Test preconditioner with an under-determined problem:
@@ -88,7 +85,7 @@ end
 
       # Test dimension of additional vectors
       for transpose ∈ (false, true)
-        A, b, c, D = small_sp(transpose)
+        A, b, c, D = small_sp(transpose, FC=FC)
         D⁻¹ = inv(D)
         (x, stats) = crmr(A, b, M=D⁻¹, λ=1.0)
       end

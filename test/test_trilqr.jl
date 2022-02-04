@@ -5,7 +5,7 @@
     @testset "Data Type: $FC" begin
 
       # Test underdetermined adjoint systems.
-      A, b, c = underdetermined_adjoint()
+      A, b, c = underdetermined_adjoint(FC=FC)
       (x, t, stats) = trilqr(A, b, c)
 
       r = b - A * x
@@ -19,7 +19,7 @@
       @test(stats.solved_dual)
 
       # Test square adjoint systems.
-      A, b, c = square_adjoint()
+      A, b, c = square_adjoint(FC=FC)
       (x, t, stats) = trilqr(A, b, c)
 
       r = b - A * x
@@ -33,7 +33,7 @@
       @test(stats.solved_dual)
 
       # Test overdetermined adjoint systems
-      A, b, c = overdetermined_adjoint()
+      A, b, c = overdetermined_adjoint(FC=FC)
       (x, t, stats) = trilqr(A, b, c)
 
       r = b - A * x
@@ -47,7 +47,7 @@
       @test(stats.solved_dual)
 
       # Test adjoint ODEs.
-      A, b, c = adjoint_ode()
+      A, b, c = adjoint_ode(FC=FC)
       (x, t, stats) = trilqr(A, b, c)
 
       r = b - A * x
@@ -61,7 +61,7 @@
       @test(stats.solved_dual)
 
       # Test adjoint PDEs.
-      A, b, c = adjoint_pde()
+      A, b, c = adjoint_pde(FC=FC)
       (x, t, stats) = trilqr(A, b, c)
 
       r = b - A * x
@@ -75,7 +75,7 @@
       @test(stats.solved_dual)
 
       # Test consistent Ax = b and inconsistent Aᵀt = c.
-      A, b, c = rectangular_adjoint()
+      A, b, c = rectangular_adjoint(FC=FC)
       (x, t, stats) = trilqr(A, b, c)
 
       r = b - A * x

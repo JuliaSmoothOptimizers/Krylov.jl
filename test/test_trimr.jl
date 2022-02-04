@@ -5,7 +5,7 @@
     @testset "Data Type: $FC" begin
 
       # Test underdetermined adjoint systems.
-      A, b, c = underdetermined_adjoint()
+      A, b, c = underdetermined_adjoint(FC=FC)
       (x, y, stats) = trimr(A, b, c, τ=0.0, ν=0.0)
       r = b - A  * y
       s = c - A' * x
@@ -13,7 +13,7 @@
       @test(resid ≤ trimr_tol)
 
       # Test square adjoint systems.
-      A, b, c = square_adjoint()
+      A, b, c = square_adjoint(FC=FC)
       (x, y, stats) = trimr(A, b, c, τ=0.0, ν=0.0)
       r = b - A  * y
       s = c - A' * x
@@ -21,7 +21,7 @@
       @test(resid ≤ trimr_tol)
 
       # Test overdetermined adjoint systems
-      A, b, c = overdetermined_adjoint()
+      A, b, c = overdetermined_adjoint(FC=FC)
       (x, y, stats) = trimr(A, b, c, τ=0.0, ν=0.0)
       r = b - A  * y
       s = c - A' * x
@@ -29,7 +29,7 @@
       @test(resid ≤ trimr_tol)
 
       # Test adjoint ODEs.
-      A, b, c = adjoint_ode()
+      A, b, c = adjoint_ode(FC=FC)
       (x, y, stats) = trimr(A, b, c, τ=0.0, ν=0.0)
       r = b - A  * y
       s = c - A' * x
@@ -37,7 +37,7 @@
       @test(resid ≤ trimr_tol)
 
       # Test adjoint PDEs.
-      A, b, c = adjoint_pde()
+      A, b, c = adjoint_pde(FC=FC)
       (x, y, stats) = trimr(A, b, c, τ=0.0, ν=0.0)
       r = b - A  * y
       s = c - A' * x
@@ -45,7 +45,7 @@
       @test(resid ≤ trimr_tol)
 
       # Test saddle-point systems
-      A, b, D = saddle_point()
+      A, b, D = saddle_point(FC=FC)
       m, n = size(A)
       c = -b
       D⁻¹ = sparse(inv(D))
@@ -67,7 +67,7 @@
       @test(resid ≤ trimr_tol)
 
       # Test symmetric and quasi-definite systems
-      A, b, M, N = sqd()
+      A, b, M, N = sqd(FC=FC)
       m, n = size(A)
       c = -b
       M⁻¹ = sparse(inv(M))
@@ -170,14 +170,14 @@
 
       # Test dimension of additional vectors
       for transpose ∈ (false, true)
-        A, b, c, M, N = small_sqd(transpose)
+        A, b, c, M, N = small_sqd(transpose, FC=FC)
         M⁻¹ = inv(M)
         N⁻¹ = inv(N)
         (x, y, stats) = trimr(A, b, c, M=M⁻¹, N=N⁻¹)
       end
 
       # Test restart
-      A, b = restart()
+      A, b = restart(FC=FC)
       solver = TrimrSolver(A, b)
       trimr!(solver, A, b, b, itmax=20)
       @test !solver.stats.solved
