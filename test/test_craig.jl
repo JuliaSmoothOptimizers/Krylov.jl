@@ -16,7 +16,7 @@ end
     @testset "Data Type: $FC" begin
 
       # Underdetermined consistent.
-      A, b = under_consistent()
+      A, b = under_consistent(FC=FC)
       (x, y, stats, resid) = test_craig(A, b)
       @test(norm(x - A' * y) ≤ craig_tol * norm(x))
       @test(resid ≤ craig_tol)
@@ -25,13 +25,13 @@ end
       @test(norm(xI - xmin) ≤ cond(A) * craig_tol * xmin_norm)
 
       # Underdetermined inconsistent.
-      A, b = under_inconsistent()
+      A, b = under_inconsistent(FC=FC)
       (x, y, stats, resid) = test_craig(A, b)
       # @test(norm(x - A' * y) ≤ craig_tol * norm(x))
       @test(stats.inconsistent || stats.status == "condition number exceeds tolerance")
 
       # Square consistent.
-      A, b = square_consistent()
+      A, b = square_consistent(FC=FC)
       (x, y, stats, resid) = test_craig(A, b)
       @test(norm(x - A' * y) ≤ craig_tol * norm(x))
       @test(resid ≤ craig_tol)
@@ -40,13 +40,13 @@ end
       @test(norm(xI - xmin) ≤ cond(A) * craig_tol * xmin_norm)
 
       # Square inconsistent.
-      A, b = square_inconsistent()
+      A, b = square_inconsistent(FC=FC)
       (x, y, stats, resid) = test_craig(A, b)
       # @test(norm(x - A' * y) ≤ craig_tol * norm(x))
       @test(stats.inconsistent || stats.status == "condition number exceeds tolerance")
 
       # Overdetermined consistent.
-      A, b = over_consistent()
+      A, b = over_consistent(FC=FC)
       (x, y, stats, resid) = test_craig(A, b)
       @test(norm(x - A' * y) ≤ craig_tol * norm(x))
       @test(resid ≤ craig_tol)
@@ -55,7 +55,7 @@ end
       @test(norm(xI - xmin) ≤ cond(A) * craig_tol * xmin_norm)
 
       # Overdetermined inconsistent.
-      A, b = over_inconsistent()
+      A, b = over_inconsistent(FC=FC)
       (x, y, stats, resid) = test_craig(A, b)
       # @test(norm(x - A' * y) ≤ craig_tol * norm(x))
       @test(stats.inconsistent || stats.status == "condition number exceeds tolerance")
@@ -68,18 +68,15 @@ end
       # (xI, xmin, xmin_norm) = check_min_norm(A, b, x, λ=1.0e-3)
       # @test(norm(xI - xmin) ≤ cond(A) * craig_tol * xmin_norm)
 
-      # Code coverage.
-      (x, y, stats) = craig(sparse(A), b, λ=1.0e-3)
-
       # Test b == 0
-      A, b = zero_rhs()
+      A, b = zero_rhs(FC=FC)
       (x, y, stats) = craig(A, b, λ=1.0e-3)
-      @test x == zeros(size(A,2))
-      @test y == zeros(size(A,1))
+      @test norm(x) == 0
+      @test norm(y) == 0
       @test stats.status == "x = 0 is a zero-residual solution"
 
       # Test regularization
-      A, b, λ = regularization()
+      A, b, λ = regularization(FC=FC)
       (x, y, stats) = craig(A, b, λ=λ)
       s = λ * y
       r = b - (A * x + λ * s)
@@ -90,7 +87,7 @@ end
       @test(resid2 ≤ craig_tol)
 
       # Test saddle-point systems
-      A, b, D = saddle_point()
+      A, b, D = saddle_point(FC=FC)
       D⁻¹ = inv(D)
       (x, y, stats) = craig(A, b, N=D⁻¹)
       r = b - A * x
@@ -101,7 +98,7 @@ end
       @test(resid2 ≤ craig_tol)
 
       # Test with preconditioners
-      A, b, M⁻¹, N⁻¹ = two_preconditioners()
+      A, b, M⁻¹, N⁻¹ = two_preconditioners(FC=FC)
       (x, y, stats) = craig(A, b, M=M⁻¹, N=N⁻¹, sqd=false)
       r = b - A * x
       resid = sqrt(dot(r, M⁻¹ * r)) / norm(b)
@@ -109,7 +106,7 @@ end
       @test(norm(x - N⁻¹ * A' * y) ≤ craig_tol * norm(x))
 
       # Test symmetric and quasi-definite systems
-      A, b, M, N = sqd()
+      A, b, M, N = sqd(FC=FC)
       M⁻¹ = inv(M)
       N⁻¹ = inv(N)
       (x, y, stats) = craig(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
@@ -122,11 +119,11 @@ end
 
       # Test dimension of additional vectors
       for transpose ∈ (false, true)
-        A, b, c, D = small_sp(transpose)
+        A, b, c, D = small_sp(transpose, FC=FC)
         D⁻¹ = inv(D)
         (x, y, stats) = craig(A', c, N=D⁻¹)
 
-        A, b, c, M, N = small_sqd(transpose)
+        A, b, c, M, N = small_sqd(transpose, FC=FC)
         M⁻¹ = inv(M)
         N⁻¹ = inv(N)
         (x, y, stats) = craig(A, b, M=M⁻¹, N=N⁻¹, sqd=true)

@@ -5,7 +5,7 @@
     @testset "Data Type: $FC" begin
 
       for transpose ∈ (false, true)
-        A, B, b, c, M, N = gsp(transpose)
+        A, B, b, c, M, N = gsp(transpose, FC=FC)
         K = [I A; B I]
         d = [b; c]
 
@@ -46,7 +46,7 @@
         @test_throws ErrorException("b must be nonzero") gpmr(A, B, b, c)
 
         # Test breakdowns
-        A, b, c = ssy_mo_breakdown(transpose)
+        A, b, c = ssy_mo_breakdown(transpose, FC=FC)
         λ = 1.0
         μ = -1.0
         K = [I A; A' -I]
@@ -57,7 +57,7 @@
         @test(resid ≤ gpmr_tol)
 
         # Test inconsistent linear systems
-        A, b, c = ssy_mo_breakdown(transpose)
+        A, b, c = ssy_mo_breakdown(transpose, FC=FC)
         K = [I A; A' I]
         d = [b; c]
         n, m = size(K)
@@ -71,7 +71,7 @@
       end
 
       # Test underdetermined adjoint systems.
-      A, b, c = underdetermined_adjoint()
+      A, b, c = underdetermined_adjoint(FC=FC)
       (x, y, stats) = gpmr(A, A', b, c, λ=0.0, μ=0.0)
       r = b - A  * y
       s = c - A' * x
@@ -79,7 +79,7 @@
       @test(resid ≤ gpmr_tol)
 
       # Test square adjoint systems.
-      A, b, c = square_adjoint()
+      A, b, c = square_adjoint(FC=FC)
       (x, y, stats) = gpmr(A, A', b, c, λ=0.0, μ=0.0)
       r = b - A  * y
       s = c - A' * x
@@ -87,7 +87,7 @@
       @test(resid ≤ gpmr_tol)
 
       # Test overdetermined adjoint systems
-      A, b, c = overdetermined_adjoint()
+      A, b, c = overdetermined_adjoint(FC=FC)
       (x, y, stats) = gpmr(A, A', b, c, λ=0.0, μ=0.0)
       r = b - A  * y
       s = c - A' * x
@@ -95,7 +95,7 @@
       @test(resid ≤ gpmr_tol)
 
       # Test adjoint ODEs.
-      A, b, c = adjoint_ode()
+      A, b, c = adjoint_ode(FC=FC)
       (x, y, stats) = gpmr(A, A', b, c, λ=0.0, μ=0.0)
       r = b - A  * y
       s = c - A' * x
@@ -103,7 +103,7 @@
       @test(resid ≤ gpmr_tol)
 
       # Test adjoint PDEs.
-      A, b, c = adjoint_pde()
+      A, b, c = adjoint_pde(FC=FC)
       (x, y, stats) = gpmr(A, A', b, c, λ=0.0, μ=0.0)
       r = b - A  * y
       s = c - A' * x
@@ -111,7 +111,7 @@
       @test(resid ≤ gpmr_tol)
 
       # Test saddle-point systems
-      A, b, D = saddle_point()
+      A, b, D = saddle_point(FC=FC)
       m, n = size(A)
       c = -b
       D⁻¹ = sparse(inv(D))
@@ -158,7 +158,7 @@
       @test(resid ≤ gpmr_tol)
 
       # Test symmetric and quasi-definite systems
-      A, b, M, N = sqd()
+      A, b, M, N = sqd(FC=FC)
       m, n = size(A)
       c = -b
       M⁻¹ = sparse(inv(M))
@@ -266,7 +266,7 @@
 
       # Test dimension of additional vectors
       for transpose ∈ (false, true)
-        A, b, c, M, N = small_sqd(transpose)
+        A, b, c, M, N = small_sqd(transpose, FC=FC)
         M⁻¹ = inv(M)
         N⁻¹ = inv(N)
         (x, y, stats) = gpmr(A, A', b, c, E=M⁻¹, F=N⁻¹)
@@ -274,7 +274,7 @@
       end
 
       # Test restart
-      A, b = restart()
+      A, b = restart(FC=FC)
       solver = GpmrSolver(A, b, 20)
       gpmr!(solver, A, A', b, b, itmax=20)
       @test !issolved(solver)

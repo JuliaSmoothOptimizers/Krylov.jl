@@ -5,7 +5,7 @@
     @testset "Data Type: $FC" begin
 
       # Symmetric and positive definite system.
-      A, b = symmetric_definite()
+      A, b = symmetric_definite(FC=FC)
       (x, stats) = bicgstab(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -13,7 +13,7 @@
       @test(stats.solved)
 
       # Symmetric indefinite variant.
-      A, b = symmetric_indefinite()
+      A, b = symmetric_indefinite(FC=FC)
       (x, stats) = bicgstab(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -21,7 +21,7 @@
       @test(stats.solved)
 
       # Nonsymmetric and positive definite systems.
-      A, b = nonsymmetric_definite()
+      A, b = nonsymmetric_definite(FC=FC)
       (x, stats) = bicgstab(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -29,18 +29,15 @@
       @test(stats.solved)
 
       # Nonsymmetric indefinite variant.
-      A, b = nonsymmetric_indefinite()
+      A, b = nonsymmetric_indefinite(FC=FC)
       (x, stats) = bicgstab(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
       @test(resid ≤ bicgstab_tol)
       @test(stats.solved)
 
-      # Code coverage.
-      (x, stats) = bicgstab(Matrix(A), b)
-
       # Sparse Laplacian.
-      A, b = sparse_laplacian()
+      A, b = sparse_laplacian(FC=FC)
       (x, stats) = bicgstab(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -48,7 +45,7 @@
       @test(stats.solved)
 
       # Symmetric indefinite variant, almost singular.
-      A, b = almost_singular()
+      A, b = almost_singular(FC=FC)
       (x, stats) = bicgstab(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -56,13 +53,13 @@
       @test(stats.solved)
 
       # Test b == 0
-      A, b = zero_rhs()
+      A, b = zero_rhs(FC=FC)
       (x, stats) = bicgstab(A, b)
-      @test x == zeros(size(A,1))
+      @test norm(x) == 0
       @test stats.status == "x = 0 is a zero-residual solution"
 
       # Left preconditioning
-      A, b, M = square_preconditioned()
+      A, b, M = square_preconditioned(FC=FC)
       (x, stats) = bicgstab(A, b, M=M)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -70,7 +67,7 @@
       @test(stats.solved)
 
       # Right preconditioning
-      A, b, N = square_preconditioned()
+      A, b, N = square_preconditioned(FC=FC)
       (x, stats) = bicgstab(A, b, N=N)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -86,9 +83,7 @@
       @test(stats.solved)
 
       # Test bᵀc == 0
-      A = rand(10, 10)
-      b = Float64.([mod(i,2) for i = 1:10])
-      c = Float64.([mod(i+1,2) for i = 1:10])
+      A, b, c = bc_breakdown(FC=FC)
       (x, stats) = bicgstab(A, b, c=c)
       @test stats.status == "Breakdown bᵀc = 0"
     end

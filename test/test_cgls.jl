@@ -20,7 +20,7 @@
       end
 
       # Test with preconditioning.
-      A, b, M = saddle_point()
+      A, b, M = saddle_point(FC=FC)
       M⁻¹ = inv(M)
       (x, stats) = cgls(A, b, M=M⁻¹)
       resid = norm(A' * M⁻¹ * (A * x - b)) / sqrt(dot(b, M⁻¹ * b))
@@ -34,19 +34,15 @@
       @test(stats.solved)
       @test(abs(radius - norm(x)) ≤ cgls_tol * radius)
 
-      # Code coverage.
-      (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0)
-      (x, stats) = cgls(Matrix(A), b)
-      (x, stats) = cgls(sparse(Matrix(A)), b)
-
       # Test b == 0
-      (x, stats) = cgls(A, zeros(size(A,1)))
-      @test x == zeros(size(A,1))
+      A, b = zero_rhs(FC=FC)
+      (x, stats) = cgls(A, b)
+      @test norm(x) == 0
       @test stats.status == "x = 0 is a zero-residual solution"
 
       # Test dimension of additional vectors
       for transpose ∈ (false, true)
-        A, b, c, D = small_sp(transpose)
+        A, b, c, D = small_sp(transpose, FC=FC)
         D⁻¹ = inv(D)
         (x, stats) = cgls(A, b, M=D⁻¹, λ=1.0)
       end

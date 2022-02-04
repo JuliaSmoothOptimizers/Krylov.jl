@@ -16,15 +16,15 @@ end
       (x, y, stats) = lnlq(A, b, transfer_to_craig=false)
 
       # Test b == 0
-      A, b = zero_rhs()
+      A, b = zero_rhs(FC=FC)
       (x, y, stats) = lnlq(A, b)
-      @test x == zeros(size(A, 2))
-      @test y == zeros(size(A, 1))
+      @test norm(x) == 0
+      @test norm(y) == 0
       @test stats.status == "x = 0 is a zero-residual solution"
 
       for transfer_to_craig ∈ (false, true)
         # Underdetermined consistent.
-        A, b = under_consistent()
+        A, b = under_consistent(FC=FC)
         (x, y, stats, resid) = test_lnlq(A, b, transfer_to_craig)
         @test(norm(x - A' * y) ≤ lnlq_tol * norm(x))
         @test(resid ≤ lnlq_tol)
@@ -36,7 +36,7 @@ end
         @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
 
         # Square consistent.
-        A, b = square_consistent()
+        A, b = square_consistent(FC=FC)
         (x, y, stats, resid) = test_lnlq(A, b, transfer_to_craig)
         @test(norm(x - A' * y) ≤ lnlq_tol * norm(x))
         @test(resid ≤ lnlq_tol)
@@ -48,7 +48,7 @@ end
         @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
 
         # Overdetermined consistent.
-        A, b = over_consistent()
+        A, b = over_consistent(FC=FC)
         (x, y, stats, resid) = test_lnlq(A, b, transfer_to_craig)
         @test(norm(x - A' * y) ≤ lnlq_tol * norm(x))
         @test(resid ≤ lnlq_tol)
@@ -60,7 +60,7 @@ end
         @test(norm(xI - xmin) ≤ cond(A) * lnlq_tol * xmin_norm)
 
         # Test regularization
-        A, b, λ = regularization()
+        A, b, λ = regularization(FC=FC)
         (x, y, stats) = lnlq(A, b, λ=λ, transfer_to_craig=transfer_to_craig, etolx=0.0, etoly=0.0)
         (xₛ, yₛ, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, etolx=1e-10, etoly=1e-10, λ=λ)
         for (x, y) in ((x, y), (xₛ, yₛ))
@@ -74,7 +74,7 @@ end
         end
 
         # Test saddle-point systems
-        A, b, D = saddle_point()
+        A, b, D = saddle_point(FC=FC)
         D⁻¹ = inv(D)
         (x, y, stats) = lnlq(A, b, N=D⁻¹, transfer_to_craig=transfer_to_craig)
         (xₛ, yₛ, stats) = lnlq(A, b, N=D⁻¹, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σ=0.001)
@@ -88,7 +88,7 @@ end
         end
 
         # Test with preconditioners
-        A, b, M⁻¹, N⁻¹ = two_preconditioners()
+        A, b, M⁻¹, N⁻¹ = two_preconditioners(FC=FC)
         (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=false, transfer_to_craig=transfer_to_craig)
         (xₛ, yₛ, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=false, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σ=0.5)
         for (x, y) in ((x, y), (xₛ, yₛ))
@@ -99,7 +99,7 @@ end
         end
 
         # Test symmetric and quasi-definite systems
-        A, b, M, N = sqd()
+        A, b, M, N = sqd(FC=FC)
         M⁻¹ = inv(M)
         N⁻¹ = inv(N)
         (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=true, transfer_to_craig=transfer_to_craig)
@@ -115,11 +115,11 @@ end
 
         # Test dimension of additional vectors
         for transpose ∈ (false, true)
-          A, b, c, D = small_sp(transpose)
+          A, b, c, D = small_sp(transpose, FC=FC)
           D⁻¹ = inv(D)
           (x, y, stats) = lnlq(A', c, N=D⁻¹, transfer_to_craig=transfer_to_craig)
 
-          A, b, c, M, N = small_sqd(transpose)
+          A, b, c, M, N = small_sqd(transpose, FC=FC)
           M⁻¹ = inv(M)
           N⁻¹ = inv(N)
           (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=true, transfer_to_craig=transfer_to_craig)
