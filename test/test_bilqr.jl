@@ -5,7 +5,7 @@
     @testset "Data Type: $FC" begin
 
       # Test square adjoint systems.
-      A, b, c = square_adjoint()
+      A, b, c = square_adjoint(FC=FC)
       (x, t, stats) = bilqr(A, b, c)
 
       r = b - A * x
@@ -19,7 +19,7 @@
       @test(stats.solved_dual)
 
       # Test adjoint ODEs.
-      A, b, c = adjoint_ode()
+      A, b, c = adjoint_ode(FC=FC)
       (x, t, stats) = bilqr(A, b, c)
 
       r = b - A * x
@@ -33,7 +33,7 @@
       @test(stats.solved_dual)
 
       # Test adjoint PDEs.
-      A, b, c = adjoint_pde()
+      A, b, c = adjoint_pde(FC=FC)
       (x, t, stats) = bilqr(A, b, c)
 
       r = b - A * x
@@ -47,9 +47,7 @@
       @test(stats.solved_dual)
 
       # Test bᵀc == 0
-      A = rand(10, 10)
-      b = Float64.([mod(i,2) for i = 1:10])
-      c = Float64.([mod(i+1,2) for i = 1:10])
+      A, b, c = bc_breakdown(FC=FC)
       (x, t, stats) = bilqr(A, b, c)
       @test stats.status == "Breakdown bᵀc = 0"
     end

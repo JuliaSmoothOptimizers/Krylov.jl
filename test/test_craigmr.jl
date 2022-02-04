@@ -19,7 +19,7 @@ end
     @testset "Data Type: $FC" begin
 
       # Underdetermined consistent.
-      A, b = under_consistent()
+      A, b = under_consistent(FC=FC)
       (x, y, stats, resid, Aresid) = test_craigmr(A, b)
       @test(norm(x - A' * y) ≤ craigmr_tol * norm(x))
       @test(resid ≤ craigmr_tol)
@@ -28,14 +28,14 @@ end
       @test(norm(xI - xmin) ≤ cond(A) * craigmr_tol * xmin_norm)
 
       # Underdetermined inconsistent.
-      A, b = under_inconsistent()
+      A, b = under_inconsistent(FC=FC)
       (x, y, stats, resid) = test_craigmr(A, b, history=true)
       @test(norm(x - A' * y) ≤ craigmr_tol * norm(x))
       @test(stats.inconsistent)
       @test(stats.Aresiduals[end] ≤ craigmr_tol)
 
       # Square consistent.
-      A, b = square_consistent()
+      A, b = square_consistent(FC=FC)
       (x, y, stats, resid) = test_craigmr(A, b)
       @test(norm(x - A' * y) ≤ craigmr_tol * norm(x))
       @test(resid ≤ craigmr_tol)
@@ -44,14 +44,14 @@ end
       @test(norm(xI - xmin) ≤ cond(A) * craigmr_tol * xmin_norm)
 
       # Square inconsistent.
-      A, b = square_inconsistent()
+      A, b = square_inconsistent(FC=FC)
       (x, y, stats, resid) = test_craigmr(A, b, history=true)
       @test(norm(x - A' * y) ≤ craigmr_tol * norm(x))
       @test(stats.inconsistent)
       @test(stats.Aresiduals[end] ≤ craigmr_tol)
 
       # Overdetermined consistent.
-      A, b = over_consistent()
+      A, b = over_consistent(FC=FC)
       (x, y, stats, resid) = test_craigmr(A, b)
       @test(norm(x - A' * y) ≤ craigmr_tol * norm(x))
       @test(resid ≤ craigmr_tol)
@@ -60,7 +60,7 @@ end
       @test(norm(xI - xmin) ≤ cond(A) * craigmr_tol * xmin_norm)
 
       # Overdetermined inconsistent.
-      A, b = over_inconsistent()
+      A, b = over_inconsistent(FC=FC)
       (x, y, stats, resid) = test_craigmr(A, b, history=true)
       @test(norm(x - A' * y) ≤ craigmr_tol * norm(x))
       @test(stats.inconsistent)
@@ -78,14 +78,14 @@ end
       (x, y, stats) = craigmr(sparse(A), b, λ=1.0e-3)
 
       # Test b == 0
-      A, b = zero_rhs()
+      A, b = zero_rhs(FC=FC)
       (x, y, stats) = craigmr(A, b, λ=1.0e-3)
-      @test x == zeros(size(A,2))
-      @test y == zeros(size(A,1))
+      @test norm(x) == 0
+      @test norm(y) == 0
       @test stats.status == "x = 0 is a zero-residual solution"
 
       # Test regularization
-      A, b, λ = regularization()
+      A, b, λ = regularization(FC=FC)
       (x, y, stats) = craigmr(A, b, λ=λ)
       s = λ * y
       r = b - (A * x + λ * s)
@@ -96,7 +96,7 @@ end
       @test(resid2 ≤ craigmr_tol)
 
       # Test saddle-point systems
-      A, b, D = saddle_point()
+      A, b, D = saddle_point(FC=FC)
       D⁻¹ = inv(D)
       (x, y, stats) = craigmr(A, b, N=D⁻¹)
       r = b - A * x
@@ -107,7 +107,7 @@ end
       @test(resid2 ≤ craigmr_tol)
 
       # Test with preconditioners
-      A, b, M⁻¹, N⁻¹ = two_preconditioners()
+      A, b, M⁻¹, N⁻¹ = two_preconditioners(FC=FC)
       (x, y, stats) = craigmr(A, b, M=M⁻¹, N=N⁻¹, sqd=false)
       r = b - A * x
       resid = sqrt(dot(r, M⁻¹ * r)) / norm(b)
@@ -115,7 +115,7 @@ end
       @test(norm(x - N⁻¹ * A' * y) ≤ craigmr_tol * norm(x))
 
       # Test symmetric and quasi-definite systems
-      A, b, M, N = sqd()
+      A, b, M, N = sqd(FC=FC)
       M⁻¹ = inv(M)
       N⁻¹ = inv(N)
       (x, y, stats) = craigmr(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
@@ -132,7 +132,7 @@ end
         D⁻¹ = inv(D)
         (x, y, stats) = craigmr(A', c, N=D⁻¹)
 
-        A, b, c, M, N = small_sqd(transpose)
+        A, b, c, M, N = small_sqd(transpose, FC=FC)
         M⁻¹ = inv(M)
         N⁻¹ = inv(N)
         (x, y, stats) = craigmr(A, b, M=M⁻¹, N=N⁻¹, sqd=true)

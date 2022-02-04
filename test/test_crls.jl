@@ -21,7 +21,7 @@
       end
 
       # Test with preconditioning.
-      A, b, M = saddle_point()
+      A, b, M = saddle_point(FC=FC)
       M⁻¹ = inv(M)
       (x, stats) = crls(A, b, M=M⁻¹)
       resid = norm(A' * M⁻¹ * (A * x - b)) / sqrt(dot(b, M⁻¹ * b))
@@ -35,15 +35,10 @@
       @test(stats.solved)
       @test(abs(radius - norm(x)) ≤ crls_tol * radius)
 
-      # Code coverage.
-      (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, 3, 0)
-      (x, stats) = crls(Matrix(A), b)
-      (x, stats) = crls(sparse(Matrix(A)), b)
-
       # Test b == 0
-      A, b = zero_rhs()
+      A, b = zero_rhs(FC=FC)
       (x, stats) = crls(A, b)
-      @test x == zeros(size(A,1))
+      @test norm(x) == 0
       @test stats.status == "x = 0 is a zero-residual solution"
 
       # Test A positive semi-definite
@@ -61,7 +56,7 @@
 
       # Test dimension of additional vectors
       for transpose ∈ (false, true)
-        A, b, c, D = small_sp(transpose)
+        A, b, c, D = small_sp(transpose, FC=FC)
         D⁻¹ = inv(D)
         (x, stats) = crls(A, b, M=D⁻¹, λ=1.0)
       end

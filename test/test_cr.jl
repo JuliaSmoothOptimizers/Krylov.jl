@@ -5,7 +5,7 @@
     @testset "Data Type: $FC" begin
 
       # Symmetric and positive definite system.
-      A, b = symmetric_definite()
+      A, b = symmetric_definite(FC=FC)
       (x, stats) = cr(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -21,7 +21,7 @@
       @test abs(norm(x) - radius) ≤ cr_tol * radius
 
       # Sparse Laplacian
-      A, _ = sparse_laplacian()
+      A, _ = sparse_laplacian(FC=FC)
       Random.seed!(0)
       b = randn(size(A, 1))
       itmax = 0
@@ -48,13 +48,13 @@
       @test(abs(radius - norm(x)) ≤ cr_tol * radius)
 
       # Test b == 0
-      A, b = zero_rhs()
+      A, b = zero_rhs(FC=FC)
       (x, stats) = cr(A, b)
-      @test x == zeros(size(A,1))
+      @test norm(x) == 0
       @test stats.status == "x = 0 is a zero-residual solution"
 
       # Test with Jacobi (or diagonal) preconditioner
-      A, b, M = square_preconditioned()
+      A, b, M = square_preconditioned(FC=FC)
       (x, stats) = cr(A, b, M=M)
       r = b - A * x
       resid = sqrt(dot(r, M * r)) / norm(b)
