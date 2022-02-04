@@ -6,7 +6,7 @@
 
       # Symmetric and positive definite system.
       n = 10
-      A, b = symmetric_definite()
+      A, b = symmetric_definite(FC=FC)
       (x, stats) = symmlq(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -14,18 +14,15 @@
       @test(stats.solved)
 
       # Symmetric indefinite variant.
-      A, b = symmetric_indefinite()
+      A, b = symmetric_indefinite(FC=FC)
       (x, stats) = symmlq(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
       @test(resid ≤ symmlq_tol)
       @test(stats.solved)
 
-      # Code coverage.
-      (x, stats) = symmlq(Matrix(A), b)
-
       # Sparse Laplacian.
-      A, b = sparse_laplacian()
+      A, b = sparse_laplacian(FC=FC)
       (x, stats) = symmlq(A, b, atol=1e-12, rtol=1e-12)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -33,7 +30,7 @@
       @test(stats.solved)
 
       # System that cause a breakdown with the symmetric Lanczos process.
-      A, b = symmetric_breakdown()
+      A, b = symmetric_breakdown(FC=FC)
       (x, stats) = symmlq(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -41,9 +38,9 @@
       @test(stats.solved)
 
       # Test b == 0
-      A, b = zero_rhs()
+      A, b = zero_rhs(FC=FC)
       (x, stats) = symmlq(A, b)
-      @test x == b
+      @test norm(x) == 0
       @test stats.status == "x = 0 is a zero-residual solution"
 
       # Test error estimate
@@ -65,7 +62,7 @@
       @test( errcg ≤ stats.errorscg[end])
 
       # Test with Jacobi (or diagonal) preconditioner
-      A, b, M = square_preconditioned()
+      A, b, M = square_preconditioned(FC=FC)
       (x, stats) = symmlq(A, b, M=M)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -73,7 +70,7 @@
       @test(stats.solved)
 
       # Test restart
-      A, b = restart()
+      A, b = restart(FC=FC)
       solver = SymmlqSolver(A, b)
       symmlq!(solver, A, b, itmax=50)
       @test !solver.stats.solved
