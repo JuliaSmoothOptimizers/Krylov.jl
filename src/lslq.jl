@@ -241,7 +241,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
   βL = β
   ρ̄ = -σ
   γ̄ = α
-  ss = β₁
+  ψ = β₁
   c = -one(T)
   s = zero(T)
   δ = -one(T)
@@ -310,7 +310,7 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     #
     #       k   k+1     k   k+1      k  k+1
     # k   [ c'   s' ] [ γ̄      ] = [ γ   δ  ]
-    # k+1 [ s'  -c' ] [ β   α⁺ ]   [     γ̄ ]
+    # k+1 [ s'  -c' ] [ β   α⁺ ]   [     γ̄  ]
     (cp, sp, γ) = sym_givens(γ̄, βL)
     τ = -τ * δ / γ  # forward substitution for t
     δ = sp * αL
@@ -349,11 +349,14 @@ function lslq!(solver :: LslqSolver{T,S}, A, b :: AbstractVector{T};
     ζ̄ = ζ / c
 
     # residual norm estimate
-    rNorm = sqrt((ss * cp - ζ * η)^2 + (ss * sp)^2)
+    rNorm = sqrt((ψ * cp - ζold * η)^2 + (ψ * sp)^2)
     history && push!(rNorms, rNorm)
 
     ArNorm = sqrt((γ * ϵ * ζ)^2 + (δ * η * ζold)^2)
     history && push!(ArNorms, ArNorm)
+
+    # Compute ψₖ
+    ψ = ψ * sp
 
     # Compute ‖x_cg‖₂
     xcgNorm² = xlqNorm² + ζ̄ * ζ̄
