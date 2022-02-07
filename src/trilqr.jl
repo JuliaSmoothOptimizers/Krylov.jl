@@ -292,7 +292,7 @@ function trilqr!(solver :: TrilqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
       history && push!(sNorms, sNorm)
 
       # Compute ‖Asₖ₋₁‖ = |ψbarₖ| * √((δbarₖ)² + (λbarₖ)²).
-      AsNorm = abs(ψbarₖ) * √(δbarₖ^2 + (cₖ₋₁ * βₖ₊₁)^2)
+      AsNorm = abs(ψbarₖ) * √(δbarₖ^2 + (cₖ * βₖ₊₁)^2)
 
       # Update dual stopping criterion
       iter == 1 && (ξ = atol + rtol * AsNorm)
