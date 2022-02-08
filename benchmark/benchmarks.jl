@@ -2,7 +2,8 @@ using BenchmarkTools
 using LinearAlgebra, SparseArrays, Krylov
 using MatrixMarket, SuiteSparseMatrixCollection
 
-include("../test/get_div_grad.jl")
+krylov_problem = joinpath(dirname(pathof(Krylov)), "..", "test", "get_div_grad.jl")
+include(krylov_problem)
 
 ssmc = ssmc_db()
 ufl_posdef = ssmc[(ssmc.numerical_symmetry .== 1) .& (ssmc.positive_definite .== true) .& (ssmc.real .== true) .& (ssmc.binary .== false) .& (ssmc.nrows .≤ 500), :]
