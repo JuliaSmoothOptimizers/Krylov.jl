@@ -264,7 +264,13 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
     @kaxpby!(n, one(T), Ar, β, q)
 
     pNorm² = rNorm² + 2 * β * pr - 2 * β * α * pAp + β^2 * pNorm²
-    pNorm = (pNorm² < eps(T)) ? zero(T) : sqrt(pNorm²)
+    if pNorm² > sqrt(eps(T))
+      pNorm = sqrt(pNorm²)
+    elseif abs(pNorm²) ≤ sqrt(eps(T))
+      pNorm = zero(T)
+    else
+      error("cr encountered numerical issues")
+    end
     pr = rNorm² + β * pr - β * α * pAp # pᵀr
     abspr = abs(pr)
     pAp = ρ + β^2 * pAp # pᵀq
