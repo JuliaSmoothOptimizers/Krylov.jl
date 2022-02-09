@@ -272,7 +272,7 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
       stats.niter = iter
       stats.solved = solved
       stats.inconsistent = false
-      stats.status = "solver incountered numerical issues"
+      stats.status = "solver encountered numerical issues"
       return solver
     end
     pr = rNorm² + β * pr - β * α * pAp # pᵀr
