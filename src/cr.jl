@@ -269,7 +269,11 @@ function cr!(solver :: CrSolver{T,S}, A, b :: AbstractVector{T};
     elseif abs(pNorm²) ≤ sqrt(eps(T))
       pNorm = zero(T)
     else
-      error("cr encountered numerical issues")
+      stats.niter = iter
+      stats.solved = solved
+      stats.inconsistent = false
+      stats.status = "solver incountered numerical issues"
+      return solver
     end
     pr = rNorm² + β * pr - β * α * pAp # pᵀr
     abspr = abs(pr)
