@@ -64,13 +64,16 @@ pipeline {
   stages {
     stage('clone repo') {
       when {
-        expression { REPO_EXISTS == 'false' }
+        expression { REPO_EXISTS == 'false' && env.comment }
       }
       steps {
         sh 'git clone https://${GITHUB_AUTH}@github.com/$org/$repo.git'
       }
     }
     stage('checkout on new branch') {
+      when {
+        expression { env.comment }
+      }
       steps {
         dir(WORKSPACE + "/$repo") {
           sh '''
@@ -87,6 +90,9 @@ pipeline {
       }
     }
     stage('run benchmarks') {
+      when {
+        expression {env.comment}
+      }
       steps {
         script {
           def data = env.comment.tokenize(' ')
@@ -95,9 +101,9 @@ pipeline {
           }
         }
         dir(WORKSPACE + "/$repo") {
-        sh "mkdir -p $HOME/benchmarks/${org}/${repo}"
-        sh "qsub -N ${repo}_${pullrequest} -V -cwd -o $HOME/benchmarks/${org}/${repo}/${pullrequest}_${BUILD_NUMBER}_bmark_output.log -e $HOME/benchmarks/${org}/${repo}/${pullrequest}_${BUILD_NUMBER}_bmark_error.log benchmark/push_benchmarks.sh $bmarkFile"
-        }   
+          sh "mkdir -p $HOME/benchmarks/${org}/${repo}"
+          sh "qsub -N ${repo}_${pullrequest} -V -cwd -o $HOME/benchmarks/${org}/${repo}/${pullrequest}_${BUILD_NUMBER}_bmark_output.log -e $HOME/benchmarks/${org}/${repo}/${pullrequest}_${BUILD_NUMBER}_bmark_error.log benchmark/push_benchmarks.sh $bmarkFile"  
+        }
       }
     }
   }
@@ -106,13 +112,7 @@ pipeline {
       echo "SUCCESS!"  
     }
     cleanup {
-      dir(WORKSPACE + "/$repo") {
       sh 'printenv'
-      sh '''
-      git clean -fd
-      git checkout main
-      '''
-      }
     }
   }
 }
