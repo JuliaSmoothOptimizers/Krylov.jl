@@ -1,5 +1,9 @@
 def bmarkFile = 'run_benchmarks.jl'
 def prNumber = BRANCH_NAME.tokenize("PR-")[0]
+if (!$org) {
+  currentBuild.result = 'SUCCESS'
+  return
+}
 pipeline {
   agent any
   environment {
