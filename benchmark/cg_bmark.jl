@@ -14,6 +14,7 @@ using SuiteSparseMatrixCollection
 
 include("../test/get_div_grad.jl")
 
+ssmc = ssmc_db()
 # ufl_posdef = filter(p -> p.structure == "symmetric" && p.posDef == "yes" && p.type == "real" && p.rows ≤ 2_000, ssmc)
 ufl_posdef = filter(p -> p.structure == "symmetric" && p.posDef == "yes" && p.type == "real" && p.rows ≤ 100, ssmc)
 
