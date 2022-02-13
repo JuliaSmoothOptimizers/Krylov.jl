@@ -1,4 +1,4 @@
-def bmarkFile = 'run_benchmarks.jl'
+def bmarkFile = 'benchmarks.jl'
 def prNumber = BRANCH_NAME.tokenize("PR-")[0]
 pipeline {
   agent any
@@ -87,11 +87,26 @@ pipeline {
             git checkout $LOCAL_BRANCH_NAME --
           '''
         }
+        sh "git clone https://github.com/ProofOfConceptForJuliSmoothOptimizers/BenchmarkSetup.git || true"
+      }
+    }
+    stage('setup benchmark repository') {
+      when {
+        expression { env.comment }
+      }
+      steps {
+        dir(WORKSPACE + "/BenchmarkSetup") {
+          sh '''
+            git fetch origin
+            git checkout krylov-complex
+            git pull --ff-only origin krylov-complex
+          '''
+        }   
       }
     }
     stage('run benchmarks') {
       when {
-        expression {env.comment}
+        expression { env.comment }
       }
       steps {
         script {
@@ -101,9 +116,9 @@ pipeline {
           }
         }
         dir(WORKSPACE + "/$repo") {
-          sh "mkdir -p $HOME/benchmarks/${org}/${repo}"
-          sh "qsub -N ${repo}_${pullrequest} -V -cwd -o $HOME/benchmarks/${org}/${repo}/${pullrequest}_${BUILD_NUMBER}_bmark_output.log -e $HOME/benchmarks/${org}/${repo}/${pullrequest}_${BUILD_NUMBER}_bmark_error.log benchmark/push_benchmarks.sh $bmarkFile"  
-        }
+        sh "mkdir -p $HOME/benchmarks/${org}/${repo}"
+        sh "qsub -N ${repo}_${pullrequest} -V -cwd -o $HOME/benchmarks/${org}/${repo}/${pullrequest}_${BUILD_NUMBER}_bmark_output.log -e $HOME/benchmarks/${org}/${repo}/${pullrequest}_${BUILD_NUMBER}_bmark_error.log ../BenchmarkSetup/benchmark/push_benchmarks.sh $bmarkFile"
+        }   
       }
     }
   }
@@ -116,4 +131,3 @@ pipeline {
     }
   }
 }
-
