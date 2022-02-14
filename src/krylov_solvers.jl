@@ -1550,7 +1550,7 @@ Return the number of operator-vector products with `A'` performed by the Krylov 
 """
 function Atprod end
 
-for (KS, fun, nsol, nA, nAt) in [
+list_solvers = [
   (LsmrSolver          , :lsmr!      , 1, 1, 1)
   (CgsSolver           , :cgs!       , 1, 2, 0)
   (UsymlqSolver        , :usymlq!    , 1, 1, 1)
@@ -1584,6 +1584,8 @@ for (KS, fun, nsol, nA, nAt) in [
   (FomSolver           , :fom!       , 1, 1, 0)
   (GpmrSolver          , :gpmr!      , 2, 1, 0)
 ]
+
+for (KS, fun, nsol, nA, nAt) in list_solvers
   @eval begin
     @inline solve!(solver :: $KS, args...; kwargs...) = $(fun)(solver, args...; kwargs...)
     @inline statistics(solver :: $KS) = solver.stats
@@ -1604,6 +1606,20 @@ for (KS, fun, nsol, nA, nAt) in [
       @inline issolved(solver :: $KS) = issolved_primal(solver) && issolved_dual(solver)
     else
       @inline issolved(solver :: $KS) = solver.stats.solved
+    end
+  end
+end
+
+using Requires
+
+@init begin
+  @require LLSModels = "39f5bc3e-5160-4bf8-ac48-504fd2534d24" begin
+    for (KS, fun, nsol, nA, nAt) in list_solvers
+      ofun = Symbol(split(string(fun), "!")[1])
+      @eval begin
+        @inline $(ofun)(lls::LLSModels.LLSModel, args...; kwargs...) = $(ofun)(lls.A, lls.b, args...; kwargs...)
+        @inline $(fun)(solver :: $KS, lls::LLSModels.LLSModel, args...; kwargs...) = $(fun)(solver, lls.A, lls.b, args...; kwargs...)
+      end
     end
   end
 end
