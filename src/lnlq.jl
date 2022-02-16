@@ -42,28 +42,30 @@ Note that y are the Lagrange multipliers of the least-norm problem
 
     minimize ‖x‖  s.t.  Ax = b.
 
-If `sqd = true`, LNLQ solves the symmetric and quasi-definite system
+If `λ > 0`, LNLQ solves the symmetric and quasi-definite system
 
-    [ -F   Aᵀ ] [ x ]   [ 0 ]
-    [  A   E  ] [ y ] = [ b ],
+    [ -F    Aᵀ ] [ x ]   [ 0 ]
+    [  A  λ²E  ] [ y ] = [ b ],
 
 where E and F are symmetric and positive definite.
+Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
+If `sqd=true`, `λ` is set to the common value `1`.
+
 The system above represents the optimality conditions of
 
-    min ‖x‖_F + ‖y‖_E  s.t.  Ax + Ey = b.
+    min ‖x‖²_F + λ²‖y‖²_E  s.t.  Ax + λ²Ey = b.
 
 For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᵀKx`.
-LNLQ is then equivalent to applying SYMMLQ to `(AF⁻¹Aᵀ + E)y = b` with `Fx = Aᵀy`.
-Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
+LNLQ is then equivalent to applying SYMMLQ to `(AF⁻¹Aᵀ + λ²E)y = b` with `Fx = Aᵀy`.
 
-If `sqd = false`, LNLQ solves the symmetric and indefinite system
+If `λ = 0`, LNLQ solves the symmetric and indefinite system
 
     [ -F   Aᵀ ] [ x ]   [ 0 ]
     [  A   0  ] [ y ] = [ b ].
 
 The system above represents the optimality conditions of
 
-    minimize ‖x‖_F  s.t.  Ax = b.
+    minimize ‖x‖²_F  s.t.  Ax = b.
 
 In this case, `M` can still be specified and indicates the weighted norm in which residuals are measured.
 
@@ -99,6 +101,10 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("LNLQ: system of %d equations in %d variables\n", m, n)
 
+  # Check sqd and λ parameters
+  sqd && (λ ≠ 0) && error("sqd cannot be set to true if λ ≠ 0 !")
+  sqd && (λ = one(T))
+
   # Tests M = Iₘ and N = Iₙ
   MisI = (M === I)
   NisI = (N === I)
@@ -109,9 +115,6 @@ function lnlq!(solver :: LnlqSolver{T,S}, A, b :: AbstractVector{T};
 
   # Compute the adjoint of A
   Aᵀ = A'
-
-  # When solving a SQD system, set regularization parameter λ = 1.
-  sqd && (λ = one(T))
 
   # Set up workspace.
   allocate_if(!MisI, solver, :u, S, m)
