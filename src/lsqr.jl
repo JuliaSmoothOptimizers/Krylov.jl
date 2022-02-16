@@ -27,8 +27,8 @@ export lsqr, lsqr!
 
 """
     (x, stats) = lsqr(A, b::AbstractVector{T};
-                      M=I, N=I, sqd::Bool=false,
-                      λ::T=zero(T), axtol::T=√eps(T), btol::T=√eps(T),
+                      M=I, N=I, sqd::Bool=false, λ::T=zero(T),
+                      axtol::T=√eps(T), btol::T=√eps(T),
                       atol::T=zero(T), rtol::T=zero(T),
                       etol::T=√eps(T), window::Int=5,
                       itmax::Int=0, conlim::T=1/√eps(T),
@@ -48,24 +48,23 @@ LSQR is formally equivalent to applying CG to the normal equations
 LSQR produces monotonic residuals ‖r‖₂ but not optimality residuals ‖Aᵀr‖₂.
 It is formally equivalent to CGLS, though can be slightly more accurate.
 
-Preconditioners M and N may be provided in the form of linear operators and are
-assumed to be symmetric and positive definite. If `sqd` is set to `true`,
-we solve the symmetric and quasi-definite system
+If `λ > 0`, LSQR solves the symmetric and quasi-definite system
 
-    [ E    A ] [ r ]   [ b ]
-    [ Aᵀ  -F ] [ x ] = [ 0 ],
+    [ E      A ] [ r ]   [ b ]
+    [ Aᵀ  -λ²F ] [ x ] = [ 0 ],
 
 where E and F are symmetric and positive definite.
+Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
+If `sqd=true`, `λ` is set to the common value `1`.
+
 The system above represents the optimality conditions of
 
-    minimize ‖b - Ax‖²_E⁻¹ + ‖x‖²_F.
+    minimize ‖b - Ax‖²_E⁻¹ + λ²‖x‖²_F.
 
 For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᵀKx`.
-LSQR is then equivalent to applying CG to `(AᵀE⁻¹A + F)x = AᵀE⁻¹b` with `r = E⁻¹(b - Ax)`.
-Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
+LSQR is then equivalent to applying CG to `(AᵀE⁻¹A + λ²F)x = AᵀE⁻¹b` with `r = E⁻¹(b - Ax)`.
 
-If `sqd` is set to `false` (the default), we solve the symmetric and
-indefinite system
+If `λ = 0`, we solve the symmetric and indefinite system
 
     [ E    A ] [ r ]   [ b ]
     [ Aᵀ   0 ] [ x ] = [ 0 ].
@@ -95,8 +94,8 @@ where `args` and `kwargs` are arguments and keyword arguments of [`lsqr`](@ref).
 See [`LsqrSolver`](@ref) for more details about the `solver`.
 """
 function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
-               M=I, N=I, sqd :: Bool=false,
-               λ :: T=zero(T), axtol :: T=√eps(T), btol :: T=√eps(T),
+               M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
+               axtol :: T=√eps(T), btol :: T=√eps(T),
                atol :: T=zero(T), rtol :: T=zero(T),
                etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
                radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, S <: DenseVector{T}}
@@ -104,6 +103,10 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("LSQR: system of %d equations in %d variables\n", m, n)
+
+  # Check sqd and λ parameters
+  sqd && (λ ≠ 0) && error("sqd cannot be set to true if λ ≠ 0 !")
+  sqd && (λ = one(T))
 
   # Tests M = Iₙ and N = Iₘ
   MisI = (M === I)
@@ -126,8 +129,6 @@ function lsqr!(solver :: LsqrSolver{T,S}, A, b :: AbstractVector{T};
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
 
-  # If solving an SQD system, set regularization to 1.
-  sqd && (λ = one(T))
   λ² = λ * λ
   ctol = conlim > 0 ? 1/conlim : zero(T)
   x .= zero(T)
