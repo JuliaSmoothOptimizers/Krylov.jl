@@ -13,7 +13,7 @@ Some methods only require `A * v` products, whereas other ones also require `A' 
 | DIOM, FOM, DQGMRES, GMRES              | BiLQ, QMR, BiLQR, USYMLQ, USYMQR, TriLQR |
 | CGS, BICGSTAB                          | TriCG, TriMR, USYMLQR                    |
 
-We strongly recommend [LinearOperators.jl](https://github.com/JuliaSmoothOptimizers/LinearOperators.jl) to model matrix-free operators, but other packages such as [LinearMaps.jl](https://github.com/Jutho/LinearMaps.jl), [DiffEqOperators.jl](https://github.com/SciML/DiffEqOperators.jl) or your own operator can be used as well.
+We strongly recommend [LinearOperators.jl](https://github.com/JuliaSmoothOptimizers/LinearOperators.jl) to model matrix-free operators, but other packages such as [LinearMaps.jl](https://github.com/JuliaLinearAlgebra/LinearMaps.jl), [DiffEqOperators.jl](https://github.com/SciML/DiffEqOperators.jl) or your own operator can be used as well.
 
 With `LinearOperators.jl`, operators are defined as
 
