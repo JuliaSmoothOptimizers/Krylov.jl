@@ -110,6 +110,18 @@
       @test(resid2 ≤ lnlq_tol)
     end
 
+    λ = 4.0
+    (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, λ=λ, transfer_to_craig=transfer_to_craig)
+    (xₛ, yₛ, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, λ=λ, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σ=0.5)
+    for (x, y) in ((x, y), (xₛ, yₛ))
+      r = b - (A * x + λ^2 * M * y)
+      resid = norm(r) / norm(b)
+      @test(resid ≤ lnlq_tol)
+      r2 = b - (A * N⁻¹ * A' + λ^2 * M) * y
+      resid2 = norm(r2) / norm(b)
+      @test(resid2 ≤ lnlq_tol)
+    end
+
     # Test dimension of additional vectors
     for transpose ∈ (false, true)
       A, b, c, D = small_sp(transpose)

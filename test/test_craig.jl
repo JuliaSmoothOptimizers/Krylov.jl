@@ -117,6 +117,15 @@
   resid2 = norm(r2) / norm(b)
   @test(resid2 ≤ craig_tol)
 
+  λ = 4.0
+  (x, y, stats) = craig(A, b, M=M⁻¹, N=N⁻¹, λ=λ)
+  r = b - (A * x + λ^2 * M * y)
+  resid = norm(r) / norm(b)
+  @test(resid ≤ craig_tol)
+  r2 = b - (A * N⁻¹ * A' + λ^2 * M) * y
+  resid2 = norm(r2) / norm(b)
+  @test(resid2 ≤ craig_tol)
+
   # Test dimension of additional vectors
   for transpose ∈ (false, true)
     A, b, c, D = small_sp(transpose)
