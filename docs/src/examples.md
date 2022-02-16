@@ -504,11 +504,10 @@ b = MatrixMarket.mmread(joinpath(path[1], "$(matrix.name[1])_b.mtx"))[:]
 (m, n) = size(A)
 @printf("System size: %d rows and %d columns\n", m, n)
 
-# Define a regularization parameter and a preconditioner.
+# Define a regularization parameter.
 λ = 1.0e-3
-λ > 0.0 && (N = I / λ)
 
-(x, stats) = lsqr(A, b, λ=λ, sqd=λ > 0, atol=0.0, btol=0.0, N=N)
+(x, stats) = lsqr(A, b, λ=λ, atol=0.0, btol=0.0)
 show(stats)
 resid = norm(A' * (A * x - b) + λ * x) / norm(b)
 @printf("LSQR: Relative residual: %8.1e\n", resid)
@@ -531,11 +530,10 @@ b = MatrixMarket.mmread(joinpath(path[1], "$(matrix.name[1])_b.mtx"))[:]
 (m, n) = size(A)
 @printf("System size: %d rows and %d columns\n", m, n)
 
-# Define a regularization parameter and a preconditioner.
+# Define a regularization parameter.
 λ = 1.0e-3
-λ > 0.0 && (N = I / λ)
 
-(x, stats) = lsmr(A, b, λ=λ, sqd=λ > 0, atol=0.0, btol=0.0, N=N)
+(x, stats) = lsmr(A, b, λ=λ, atol=0.0, btol=0.0)
 show(stats)
 resid = norm(A' * (A * x - b) + λ * x) / norm(b)
 @printf("LSMR: Relative residual: %8.1e\n", resid)
