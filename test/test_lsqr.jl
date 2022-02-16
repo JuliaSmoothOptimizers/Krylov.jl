@@ -72,6 +72,12 @@
   resid = norm(A' * r - N * x) / norm(b)
   @test(resid ≤ lsqr_tol)
 
+  λ = 4.0
+  (x, stats) = lsqr(A, b, M=M⁻¹, N=N⁻¹, λ=λ)
+  r = M⁻¹ * (b - A * x)
+  resid = norm(A' * r - λ^2 * N * x) / norm(b)
+  @test(resid ≤ lsqr_tol)
+
   # Test dimension of additional vectors
   for transpose ∈ (false, true)
     A, b, c, D = small_sp(transpose)
