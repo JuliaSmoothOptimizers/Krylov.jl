@@ -8,6 +8,40 @@ GmresSolver, FomSolver, GpmrSolver
 export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual,
 niterations, Aprod, Atprod, Bprod
 
+const KRYLOV_SOLVERS = Dict(
+  :cg         => :CgSolver       ,
+  :cr         => :CrSolver       ,
+  :symmlq     => :SymmlqSolver   ,
+  :cg_lanczos => :CgLanczosSolver,
+  :minres     => :MinresSolver   ,
+  :minres_qlp => :MinresQlpSolver,
+  :diom       => :DiomSolver     ,
+  :fom        => :FomSolver      ,
+  :dqgmres    => :DqgmresSolver  ,
+  :gmres      => :GmresSolver    ,
+  :gpmr       => :GpmrSolver     ,
+  :usymlq     => :UsymlqSolver   ,
+  :usymqr     => :UsymqrSolver   ,
+  :tricg      => :TricgSolver    ,
+  :trimr      => :TrimrSolver    ,
+  :trilqr     => :TrilqrSolver   ,
+  :cgs        => :CgsSolver      ,
+  :bicgstab   => :BicgstabSolver ,
+  :bilq       => :BilqSolver     ,
+  :qmr        => :QmrSolver      ,
+  :bilqr      => :BilqrSolver    ,
+  :cgls       => :CglsSolver     ,
+  :crls       => :CrlsSolver     ,
+  :cgne       => :CgneSolver     ,
+  :crmr       => :CrmrSolver     ,
+  :lslq       => :LslqSolver     ,
+  :lsqr       => :LsqrSolver     ,
+  :lsmr       => :LsmrSolver     ,
+  :lnlq       => :LnlqSolver     ,
+  :craig      => :CraigSolver    ,
+  :craigmr    => :CraigmrSolver  ,
+)
+
 "Abstract type for using Krylov solvers in-place"
 abstract type KrylovSolver{T,S} end
 
