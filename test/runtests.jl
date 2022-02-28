@@ -1,4 +1,5 @@
 using Test, Krylov, LinearAlgebra, SparseArrays, Printf, Random
+import Krylov.KRYLOV_SOLVERS
 
 include("test_utils.jl")
 include("test_aux.jl")
