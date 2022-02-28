@@ -391,7 +391,7 @@ mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
     return solver
   end
 
-  function DqgmresSolver(A, b, memory)
+  function DqgmresSolver(A, b, memory = 20)
     n, m = size(A)
     S = ktypeof(b)
     DqgmresSolver(n, m, memory, S)
@@ -436,7 +436,7 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
     return solver
   end
 
-  function DiomSolver(A, b, memory)
+  function DiomSolver(A, b, memory = 20)
     n, m = size(A)
     S = ktypeof(b)
     DiomSolver(n, m, memory, S)
@@ -1415,7 +1415,7 @@ mutable struct GmresSolver{T,S} <: KrylovSolver{T,S}
     return solver
   end
 
-  function GmresSolver(A, b, memory)
+  function GmresSolver(A, b, memory = 20)
     n, m = size(A)
     S = ktypeof(b)
     GmresSolver(n, m, memory, S)
@@ -1460,7 +1460,7 @@ mutable struct FomSolver{T,S} <: KrylovSolver{T,S}
     return solver
   end
 
-  function FomSolver(A, b, memory)
+  function FomSolver(A, b, memory = 20)
     n, m = size(A)
     S = ktypeof(b)
     FomSolver(n, m, memory, S)
