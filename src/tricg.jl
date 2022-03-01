@@ -186,11 +186,12 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   snd  && (τ = -one(T) ; ν = -one(T))
 
   # Stopping criterion.
+  breakdown = false
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
   status = "unknown"
 
-  while !(solved || tired)
+  while !(solved || tired || breakdown)
     # Update iteration index.
     iter = iter + 1
 
@@ -310,12 +311,14 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
     γₖ₊₁ = sqrt(@kdot(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F
 
-    if βₖ₊₁ ≠ 0
+    # βₖ₊₁ ≠ 0
+    if βₖ₊₁ > eps(T)
       @kscal!(m, one(T) / βₖ₊₁, q)
       MisI || @kscal!(m, one(T) / βₖ₊₁, vₖ₊₁)
     end
 
-    if γₖ₊₁ ≠ 0
+    # γₖ₊₁ ≠ 0
+    if γₖ₊₁ > eps(T)
       @kscal!(n, one(T) / γₖ₊₁, p)
       NisI || @kscal!(n, one(T) / γₖ₊₁, uₖ₊₁)
     end
@@ -338,12 +341,16 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     δₖ₋₁  = δₖ
 
     # Update stopping criterion.
+    breakdown = βₖ₊₁ ≤ eps(T) && γₖ₊₁ ≤ eps(T)
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, αₖ, βₖ₊₁, γₖ₊₁)
   end
   (verbose > 0) && @printf("\n")
-  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+
+  tired     && (status = "maximum number of iterations exceeded")
+  breakdown && (status = "inconsistent linear system")
+  solved    && (status = "solution good enough given atol and rtol")
 
   # Update x and y
   restart && @kaxpy!(m, one(T), Δx, xₖ)
@@ -352,7 +359,7 @@ function tricg!(solver :: TricgSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   # Update stats
   stats.niter = iter
   stats.solved = solved
-  stats.inconsistent = false
+  stats.inconsistent = !solved && breakdown
   stats.status = status
   return solver
 end
