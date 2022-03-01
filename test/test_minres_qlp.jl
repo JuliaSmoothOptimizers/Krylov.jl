@@ -1,7 +1,7 @@
 @testset "minres_qlp" begin
   minres_qlp_tol = 1.0e-6
 
-  for FC in (Float64,)
+  for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
 
       # Cubic spline matrix.
