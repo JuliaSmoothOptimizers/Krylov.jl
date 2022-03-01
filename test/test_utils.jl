@@ -4,29 +4,38 @@ include("check_min_norm.jl")
 
 # Symmetric and positive definite systems.
 function symmetric_definite(n :: Int=10; FC=Float64)
-  A = spdiagm(-1 => ones(n-1), 0 => 4*ones(n), 1 => ones(n-1))
+  α = FC <: Complex ? im : 1
+  A = spdiagm(-1 => α * ones(FC, n-1), 0 => 4 * ones(FC, n), 1 => conj(α) * ones(FC, n-1))
   b = A * [1:n;]
   return A, b
 end
 
 # Symmetric and indefinite systems.
 function symmetric_indefinite(n :: Int=10; FC=Float64)
-  A = spdiagm(-1 => ones(n-1), 0 => 4*ones(n), 1 => ones(n-1))
-  A = A - 3 * I
+  α = FC <: Complex ? im : 1
+  A = spdiagm(-1 => α * ones(FC, n-1), 0 => ones(FC, n), 1 => conj(α) * ones(FC, n-1))
   b = A * [1:n;]
   return A, b
 end
 
 # Nonsymmetric and positive definite systems.
 function nonsymmetric_definite(n :: Int=10; FC=Float64)
-  A = [i == j ? 1.0*n : i < j ? 1.0 : -1.0 for i=1:n, j=1:n]
+  if FC <: Complex
+    A = [i == j ? n * one(FC) : im * one(FC) for i=1:n, j=1:n]
+  else
+    A = [i == j ? n * one(FC) : i < j ? one(FC) : -one(FC) for i=1:n, j=1:n]
+  end
   b = A * [1:n;]
   return A, b
 end
 
 # Nonsymmetric and indefinite systems.
 function nonsymmetric_indefinite(n :: Int=10; FC=Float64)
-  A = [i == j ? n*(-1.0)^(i*j) : i < j ? 1.0 : -1.0 for i=1:n, j=1:n]
+  if FC <: Complex
+    A = [i == j ? n * (-one(FC))^(i*j) : im * one(FC) for i=1:n, j=1:n]
+  else
+    A = [i == j ? n * (-one(FC))^(i*j) : i < j ? one(FC) : -one(FC) for i=1:n, j=1:n]
+  end
   b = A * [1:n;]
   return A, b
 end
@@ -34,30 +43,35 @@ end
 # Underdetermined and consistent systems.
 function under_consistent(n :: Int=10, m :: Int=25; FC=Float64)
   n < m || error("Square or overdetermined system!")
-  A = [i/j - j/i for i=1:n, j=1:m]
-  b = A * ones(m)
+  α = FC <: Complex ? im : 1
+  A = [i/j - α * j/i for i=1:n, j=1:m]
+  b = A * ones(FC, m)
   return A, b
 end
 
 # Underdetermined and inconsistent systems.
 function under_inconsistent(n :: Int=10, m :: Int=25; FC=Float64)
   n < m || error("Square or overdetermined system!")
-  A = ones(n, m)
-  b = [i == 1 ? -1.0 : 1.0*i for i=1:n]
+  α = FC <: Complex ? 1 + im : 1
+  A = α * ones(FC, n, m)
+  b = [i == 1 ? -one(FC) : i * one(FC) for i=1:n]
   return A, b
 end
 
 # Square and consistent systems.
 function square_consistent(n :: Int=10; FC=Float64)
-  A = [i/j - j/i for i=1:n, j=1:n]
-  b = A * ones(n)
+  α = FC <: Complex ? im : 1
+  A = FC[i/j - α * j/i for i=1:n, j=1:n]
+  b = A * ones(FC, n)
   return A, b
 end
 
 # Square and inconsistent systems.
 function square_inconsistent(n :: Int=10; FC=Float64)
-  A = eye(n); A[1, 1] = 0.0
-  b = ones(n)
+  α = FC <: Complex ? 1 + im : 1
+  A = Diagonal(α * ones(FC, n))
+  A[1, 1] = zero(FC)
+  b = ones(FC, n)
   return A, b
 end
 
@@ -71,16 +85,18 @@ end
 # Overdetermined and consistent systems.
 function over_consistent(n :: Int=25, m :: Int=10; FC=Float64)
   n > m || error("Underdetermined or square system!")
-  A = [i/j - j/i for i=1:n, j=1:m]
-  b = A * ones(m)
+  α = FC <: Complex ? im : 1
+  A = [i/j - α * j/i for i=1:n, j=1:m]
+  b = A * ones(FC, m)
   return A, b
 end
 
 # Overdetermined and inconsistent systems.
 function over_inconsistent(n :: Int=25, m :: Int=10; FC=Float64)
   n > m || error("Underdetermined or square system!")
-  A = ones(n, m)
-  b = [i == 1 ? -1.0 : 1.0*i for i=1:n]
+  α = FC <: Complex ? 1 + im : 1
+  A = α * ones(FC, n, m)
+  b = [i == 1 ? -one(FC) : i * one(FC) for i=1:n]
   return A, b
 end
 
@@ -163,7 +179,7 @@ end
 # Adjoint systems with Ax = b underdetermined consistent and Aᵀt = c overdetermined insconsistent.
 function rectangular_adjoint(n :: Int=10, m :: Int=25; FC=Float64)
   Aᵀ, c = over_inconsistent(m, n)
-  A = transpose(Aᵀ)
+  A = adjoint(Aᵀ)
   b = A * ones(m)
   return A, b, c
 end
@@ -252,8 +268,8 @@ end
 
 # Random Ax = b with b == 0.
 function zero_rhs(n :: Int=10; FC=Float64)
-  A = rand(n, n)
-  b = zeros(n)
+  A = rand(FC, n, n)
+  b = zeros(FC, n)
   return A, b
 end
 
