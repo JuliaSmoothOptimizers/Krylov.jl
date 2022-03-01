@@ -15,7 +15,7 @@ export gpmr, gpmr!
     (x, y, stats) = gpmr(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}; memory::Int=20,
                          C=I, D=I, E=I, F=I, atol::T=√eps(T), rtol::T=√eps(T),
                          gsp::Bool=false, reorthogonalization::Bool=false, itmax::Int=0,
-                         restart::Bool=false, λ::T=one(T), μ::T=one(T),
+                         restart::Bool=false, λ::FC=one(FC), μ::FC=one(FC),
                          verbose::Int=0, history::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -26,7 +26,7 @@ GPMR solves the unsymmetric partitioned linear system
     [ λI   A ] [ x ] = [ b ]
     [  B  μI ] [ y ]   [ c ],
 
-where λ and μ are real numbers.
+where λ and μ are real or complex numbers.
 `A` can have any shape and `B` has the shape of `Aᵀ`.
 `A`, `B`, `b` and `c` must be all nonzero.
 
@@ -80,7 +80,7 @@ See [`GpmrSolver`](@ref) for more details about the `solver`.
 function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                C=I, D=I, E=I, F=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                gsp :: Bool=false, reorthogonalization :: Bool=false, itmax :: Int=0,
-               restart :: Bool=false, λ :: T=one(T), μ :: T=one(T),
+               restart :: Bool=false, λ :: FC=one(FC), μ :: FC=one(FC),
                verbose :: Int=0, history::Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
@@ -98,8 +98,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   FisI = (F === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
-  eltype(B) == T || error("eltype(B) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
+  eltype(B) == FC || error("eltype(B) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
   restart && (λ ≠ 0) && (!CisI || !EisI) && error("Restart with preconditioners is not supported.")
@@ -125,8 +125,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   # Initial solutions x₀ and y₀.
   restart && (Δx .= x)
   restart && (Δy .= y)
-  x .= zero(T)
-  y .= zero(T)
+  x .= zero(FC)
+  y .= zero(FC)
 
   iter = 0
   itmax == 0 && (itmax = m+n)
@@ -134,25 +134,25 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   # Initialize workspace.
   nr = 0           # Number of coefficients stored in Rₖ
   mem = length(V)  # Memory
-  ωₖ = zero(T)     # Auxiliary variable to store fₖₖ
+  ωₖ = zero(FC)    # Auxiliary variable to store fₖₖ
   for i = 1 : mem
-    V[i] .= zero(T)
-    U[i] .= zero(T)
+    V[i] .= zero(FC)
+    U[i] .= zero(FC)
   end
-  gs .= zero(T)  # Givens sines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
-  gc .= zero(T)  # Givens cosines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
-  R  .= zero(T)  # Upper triangular matrix Rₖ.
-  zt .= zero(T)  # Rₖzₖ = tₖ with (tₖ, τbar₂ₖ₊₁, τbar₂ₖ₊₂) = (Qₖ)ᵀ(βe₁ + γe₂).
+  gs .= zero(FC)  # Givens sines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
+  gc .= zero(T)   # Givens cosines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
+  R  .= zero(FC)  # Upper triangular matrix Rₖ.
+  zt .= zero(FC)  # Rₖzₖ = tₖ with (tₖ, τbar₂ₖ₊₁, τbar₂ₖ₊₂) = (Qₖ)ᵀ(βe₁ + γe₂).
 
   # [ λI   A ] [ xₖ ] = [ b - λΔx - AΔy ] = [ b₀ ]
   # [  B  μI ] [ yₖ ]   [ c - BΔx - μΔy ]   [ c₀ ]
   if restart
     mul!(b₀, A, Δy)
     (λ ≠ 0) && @kaxpy!(m, λ, Δx, b₀)
-    @kaxpby!(m, one(T), b, -one(T), b₀)
+    @kaxpby!(m, one(FC), b, -one(FC), b₀)
     mul!(c₀, B, Δx)
     (μ ≠ 0) && @kaxpy!(n, μ, Δy, c₀)
-    @kaxpby!(n, one(T), c, -one(T), c₀)
+    @kaxpby!(n, one(FC), c, -one(FC), c₀)
   end
 
   # Initialize the orthogonal Hessenberg reduction process.
@@ -187,7 +187,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗")
 
   # Determine λ and μ associated to generalized saddle point systems.
-  gsp && (λ = one(T) ; μ = zero(T))
+  gsp && (λ = one(FC) ; μ = zero(FC))
 
   # Tolerance for breakdown detection.
   btol = eps(T)^(3/4)
@@ -209,10 +209,10 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     # Update workspace if more storage is required
     if iter > mem
       for i = 1 : 4k-1
-        push!(R, zero(T))
+        push!(R, zero(FC))
       end
       for i = 1 : 4
-        push!(gs, zero(T))
+        push!(gs, zero(FC))
         push!(gc, zero(T))
       end
     end
@@ -273,9 +273,9 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     #
     # Apply previous givens reflections when k ≥ 2
     # [ 1                ][ 1                ][ c₂.ᵢ  s₂.ᵢ       ][ c₁.ᵢ        s₁.ᵢ ] [ r̄₂ᵢ₋₁.₂ₖ₋₁  r̄₂ᵢ₋₁.₂ₖ ]   [ r₂ᵢ₋₁.₂ₖ₋₁  r₂ᵢ₋₁.₂ₖ ]
-    # [    c₄.ᵢ  s₄.ᵢ    ][    c₃.ᵢ     s₃.ᵢ ][ s₂.ᵢ -c₂.ᵢ       ][       1          ] [ r̄₂ᵢ.₂ₖ₋₁    r̄₂ᵢ.₂ₖ   ] = [ r₂ᵢ.₂ₖ₋₁    r₂ᵢ.₂ₖ   ]
-    # [    s₄.ᵢ -c₄.ᵢ    ][          1       ][             1    ][          1       ] [ ρ           hᵢ₊₁.ₖ   ]   [ r̄₂ᵢ₊₁.₂ₖ₋₁  r̄₂ᵢ₊₁.₂ₖ ]
-    # [                1 ][    s₃.ᵢ    -c₃.ᵢ ][                1 ][ s₁.ᵢ       -c₁.ᵢ ] [ fᵢ₊₁.ₖ      δ        ]   [ r̄₂ᵢ₊₂.₂ₖ₋₁  r̄₂ᵢ₊₂.₂ₖ ]
+    # [    c₄.ᵢ  s₄.ᵢ    ][    c₃.ᵢ     s₃.ᵢ ][ s̄₂.ᵢ -c₂.ᵢ       ][       1          ] [ r̄₂ᵢ.₂ₖ₋₁    r̄₂ᵢ.₂ₖ   ] = [ r₂ᵢ.₂ₖ₋₁    r₂ᵢ.₂ₖ   ]
+    # [    s̄₄.ᵢ -c₄.ᵢ    ][          1       ][             1    ][          1       ] [ ρ           hᵢ₊₁.ₖ   ]   [ r̄₂ᵢ₊₁.₂ₖ₋₁  r̄₂ᵢ₊₁.₂ₖ ]
+    # [                1 ][    s̄₃.ᵢ    -c₃.ᵢ ][                1 ][ s̄₁.ᵢ       -c₁.ᵢ ] [ fᵢ₊₁.ₖ      δ        ]   [ r̄₂ᵢ₊₂.₂ₖ₋₁  r̄₂ᵢ₊₂.₂ₖ ]
     #
     # r̄₁.₂ₖ₋₁ = 0, r̄₁.₂ₖ = h₁.ₖ, r̄₂.₂ₖ₋₁ = f₁.ₖ and r̄₂.₂ₖ = 0.
     # (ρ, δ) = (λ, μ) if i == k-1, (ρ, δ) = (0, 0) otherwise.
@@ -286,26 +286,26 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
 
         c₁ᵢ = gc[4i-3]
         s₁ᵢ = gs[4i-3]
-        rtmp            = c₁ᵢ * R[nrcol + 2i-1] + s₁ᵢ * αₖ
-        αₖ              = s₁ᵢ * R[nrcol + 2i-1] - c₁ᵢ * αₖ
+        rtmp            =      c₁ᵢ  * R[nrcol + 2i-1] + s₁ᵢ * αₖ
+        αₖ              = conj(s₁ᵢ) * R[nrcol + 2i-1] - c₁ᵢ * αₖ
         R[nrcol + 2i-1] = rtmp
 
         c₂ᵢ = gc[4i-2]
         s₂ᵢ = gs[4i-2]
-        rtmp            = c₂ᵢ * R[nrcol + 2i-1] + s₂ᵢ * R[nrcol + 2i]
-        R[nrcol + 2i]   = s₂ᵢ * R[nrcol + 2i-1] - c₂ᵢ * R[nrcol + 2i]
+        rtmp            =      c₂ᵢ  * R[nrcol + 2i-1] + s₂ᵢ * R[nrcol + 2i]
+        R[nrcol + 2i]   = conj(s₂ᵢ) * R[nrcol + 2i-1] - c₂ᵢ * R[nrcol + 2i]
         R[nrcol + 2i-1] = rtmp
 
         c₃ᵢ = gc[4i-1]
         s₃ᵢ = gs[4i-1]
-        rtmp          = c₃ᵢ * R[nrcol + 2i] + s₃ᵢ * αₖ
-        αₖ            = s₃ᵢ * R[nrcol + 2i] - c₃ᵢ * αₖ
+        rtmp          =      c₃ᵢ  * R[nrcol + 2i] + s₃ᵢ * αₖ
+        αₖ            = conj(s₃ᵢ) * R[nrcol + 2i] - c₃ᵢ * αₖ
         R[nrcol + 2i] = rtmp
 
         c₄ᵢ = gc[4i]
         s₄ᵢ = gs[4i]
-        rtmp            = c₄ᵢ * R[nrcol + 2i] + s₄ᵢ * R[nrcol + 2i+1]
-        R[nrcol + 2i+1] = s₄ᵢ * R[nrcol + 2i] - c₄ᵢ * R[nrcol + 2i+1]
+        rtmp            =      c₄ᵢ  * R[nrcol + 2i] + s₄ᵢ * R[nrcol + 2i+1]
+        R[nrcol + 2i+1] = conj(s₄ᵢ) * R[nrcol + 2i] - c₄ᵢ * R[nrcol + 2i+1]
         R[nrcol + 2i]   = rtmp
 
         flag ? ωₖ = αₖ : R[nrcol + 2i+2] = αₖ
@@ -314,16 +314,16 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
 
     # Compute and apply current givens reflections
     # [ 1                ][ 1                ][ c₂.ₖ  s₂.ₖ       ][ c₁.ₖ        s₁.ₖ ] [ r̄₂ₖ₋₁.₂ₖ₋₁  r̄₂ₖ₋₁.₂ₖ ]    [ r₂ₖ₋₁.₂ₖ₋₁  r₂ₖ₋₁.₂ₖ ]
-    # [    c₄.ₖ  s₄.ₖ    ][    c₃.ₖ     s₃.ₖ ][ s₂.ₖ -c₂.ₖ       ][       1          ] [ r̄₂ₖ.₂ₖ₋₁    r̄₂ₖ.₂ₖ   ] =  [             r₂ₖ.₂ₖ   ]
-    # [    s₄.ₖ -c₄.ₖ    ][          1       ][             1    ][          1       ] [             hₖ₊₁.ₖ   ]    [                      ]
-    # [                1 ][    s₃.ₖ    -c₃.ₖ ][                1 ][ s₁.ₖ       -c₁.ₖ ] [ fₖ₊₁.ₖ               ]    [                      ]
+    # [    c₄.ₖ  s₄.ₖ    ][    c₃.ₖ     s₃.ₖ ][ s̄₂.ₖ -c₂.ₖ       ][       1          ] [ r̄₂ₖ.₂ₖ₋₁    r̄₂ₖ.₂ₖ   ] =  [             r₂ₖ.₂ₖ   ]
+    # [    s̄₄.ₖ -c₄.ₖ    ][          1       ][             1    ][          1       ] [             hₖ₊₁.ₖ   ]    [                      ]
+    # [                1 ][    s̄₃.ₖ    -c₃.ₖ ][                1 ][ s̄₁.ₖ       -c₁.ₖ ] [ fₖ₊₁.ₖ               ]    [                      ]
     (c₁ₖ, s₁ₖ, R[nr₂ₖ₋₁ + 2k-1]) = sym_givens(R[nr₂ₖ₋₁ + 2k-1], Faux)  # annihilate fₖ₊₁.ₖ
-    θₖ             = s₁ₖ * R[nr₂ₖ + 2k-1]
-    R[nr₂ₖ + 2k-1] = c₁ₖ * R[nr₂ₖ + 2k-1]
+    θₖ             = conj(s₁ₖ) * R[nr₂ₖ + 2k-1]
+    R[nr₂ₖ + 2k-1] =      c₁ₖ  * R[nr₂ₖ + 2k-1]
 
     (c₂ₖ, s₂ₖ, R[nr₂ₖ₋₁ + 2k-1]) = sym_givens(R[nr₂ₖ₋₁ + 2k-1], ωₖ)  # annihilate ωₖ = r̄₂ₖ.₂ₖ₋₁
-    rtmp           = c₂ₖ * R[nr₂ₖ + 2k-1] + s₂ₖ * R[nr₂ₖ + 2k]
-    R[nr₂ₖ + 2k]   = s₂ₖ * R[nr₂ₖ + 2k-1] - c₂ₖ * R[nr₂ₖ + 2k]
+    rtmp           =      c₂ₖ  * R[nr₂ₖ + 2k-1] + s₂ₖ * R[nr₂ₖ + 2k]
+    R[nr₂ₖ + 2k]   = conj(s₂ₖ) * R[nr₂ₖ + 2k-1] - c₂ₖ * R[nr₂ₖ + 2k]
     R[nr₂ₖ + 2k-1] = rtmp
 
     (c₃ₖ, s₃ₖ, R[nr₂ₖ + 2k]) = sym_givens(R[nr₂ₖ + 2k], θₖ)  # annihilate Θₖ = r̄₂ₖ₊₂.₂ₖ
@@ -333,29 +333,29 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     # Update t̄ₖ = (τ₁, ..., τ₂ₖ, τbar₂ₖ₊₁, τbar₂ₖ₊₂).
     #
     # [ 1                ][ 1                ][ c₂.ₖ  s₂.ₖ       ][ c₁.ₖ        s₁.ₖ ] [ τbar₂ₖ₋₁ ]   [ τ₂ₖ₋₁    ]
-    # [    c₄.ₖ  s₄.ₖ    ][    c₃.ₖ     s₃.ₖ ][ s₂.ₖ -c₂.ₖ       ][       1          ] [ τbar₂ₖ   ] = [ τ₂ₖ      ]
-    # [    s₄.ₖ -c₄.ₖ    ][          1       ][             1    ][          1       ] [          ]   [ τbar₂ₖ₊₁ ]
-    # [                1 ][    s₃.ₖ    -c₃.ₖ ][                1 ][ s₁.ₖ       -c₁.ₖ ] [          ]   [ τbar₂ₖ₊₂ ]
-    τbar₂ₖ₊₂ = s₁ₖ * zt[2k-1]
-    zt[2k-1] = c₁ₖ * zt[2k-1]
+    # [    c₄.ₖ  s₄.ₖ    ][    c₃.ₖ     s₃.ₖ ][ s̄₂.ₖ -c₂.ₖ       ][       1          ] [ τbar₂ₖ   ] = [ τ₂ₖ      ]
+    # [    s̄₄.ₖ -c₄.ₖ    ][          1       ][             1    ][          1       ] [          ]   [ τbar₂ₖ₊₁ ]
+    # [                1 ][    s̄₃.ₖ    -c₃.ₖ ][                1 ][ s̄₁.ₖ       -c₁.ₖ ] [          ]   [ τbar₂ₖ₊₂ ]
+    τbar₂ₖ₊₂ = conj(s₁ₖ) * zt[2k-1]
+    zt[2k-1] =      c₁ₖ  * zt[2k-1]
 
-    τtmp     = c₂ₖ * zt[2k-1] + s₂ₖ * zt[2k]
-    zt[2k]   = s₂ₖ * zt[2k-1] - c₂ₖ * zt[2k]
+    τtmp     =      c₂ₖ  * zt[2k-1] + s₂ₖ * zt[2k]
+    zt[2k]   = conj(s₂ₖ) * zt[2k-1] - c₂ₖ * zt[2k]
     zt[2k-1] = τtmp
 
-    τtmp     = c₃ₖ * zt[2k] + s₃ₖ * τbar₂ₖ₊₂
-    τbar₂ₖ₊₂ = s₃ₖ * zt[2k] - c₃ₖ * τbar₂ₖ₊₂
+    τtmp     =      c₃ₖ  * zt[2k] + s₃ₖ * τbar₂ₖ₊₂
+    τbar₂ₖ₊₂ = conj(s₃ₖ) * zt[2k] - c₃ₖ * τbar₂ₖ₊₂
     zt[2k]   = τtmp
 
-    τbar₂ₖ₊₁ = s₄ₖ * zt[2k]
-    zt[2k]   = c₄ₖ * zt[2k]
+    τbar₂ₖ₊₁ = conj(s₄ₖ) * zt[2k]
+    zt[2k]   =      c₄ₖ  * zt[2k]
 
     # Update gc and gs vectors
     gc[4k-3], gc[4k-2], gc[4k-1], gc[4k] = c₁ₖ, c₂ₖ, c₃ₖ, c₄ₖ
     gs[4k-3], gs[4k-2], gs[4k-1], gs[4k] = s₁ₖ, s₂ₖ, s₃ₖ, s₄ₖ
 
-    # Compute ‖rₖ‖² = (τbar₂ₖ₊₁)² + (τbar₂ₖ₊₂)²
-    rNorm = sqrt(τbar₂ₖ₊₁^2 + τbar₂ₖ₊₂^2)
+    # Compute ‖rₖ‖² = |τbar₂ₖ₊₁|² + |τbar₂ₖ₊₂|²
+    rNorm = sqrt(abs2(τbar₂ₖ₊₁) + abs2(τbar₂ₖ₊₂))
     history && push!(rNorms, rNorm)
 
     # Update the number of coefficients in Rₖ.
@@ -372,7 +372,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
       if iter ≥ mem
         push!(V, S(undef, m))
         push!(U, S(undef, n))
-        push!(zt, zero(T), zero(T))
+        push!(zt, zero(FC), zero(FC))
       end
 
       # hₖ₊₁.ₖ ≠ 0
@@ -380,7 +380,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
         @. V[k+1] = q / Haux  # hₖ₊₁.ₖvₖ₊₁ = q
       else
         # Breakdown -- hₖ₊₁.ₖ = ‖q‖₂ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
-        V[k+1] .= zero(T)  # vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
+        V[k+1] .= zero(FC)  # vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
       end
 
       # fₖ₊₁.ₖ ≠ 0
@@ -388,7 +388,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
         @. U[k+1] = p / Faux  # fₖ₊₁.ₖuₖ₊₁ = p
       else
         # Breakdown -- fₖ₊₁.ₖ = ‖p‖₂ = 0 and Bvₖ ∈ Span{u₁, ..., uₖ}
-        U[k+1] .= zero(T)  # uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
+        U[k+1] .= zero(FC)  # uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
       end
 
       zt[2k+1] = τbar₂ₖ₊₁
@@ -406,7 +406,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     end
     # Rₖ can be singular if the system is inconsistent
     if abs(R[pos]) ≤ btol
-      zt[i] = zero(T)
+      zt[i] = zero(FC)
     else
       zt[i] = zt[i] / R[pos]          # ζᵢ ← ζᵢ / rᵢ.ᵢ
     end
@@ -425,8 +425,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     wA .= y
     mul!(y, F, wA)
   end
-  restart && @kaxpy!(m, one(T), Δx, x)
-  restart && @kaxpy!(n, one(T), Δy, y)
+  restart && @kaxpy!(m, one(FC), Δx, x)
+  restart && @kaxpy!(n, one(FC), Δy, y)
 
   tired     && (status = "maximum number of iterations exceeded")
   breakdown && (status = "found approximate least-squares solution")
