@@ -1,5 +1,5 @@
 # Identity matrix.
-eye(n::Int) = sparse(1.0 * I, n, n)
+eye(n::Int; FC=Float64) = sparse(one(FC) * I, n, n)
 
 # Compute the energy norm ‖r‖ₚ = √(rᵀPr) where P is a symmetric and positive definite matrix.
 metric(r, P) = sqrt(dot(r, P * r))
