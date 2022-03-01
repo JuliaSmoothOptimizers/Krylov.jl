@@ -66,7 +66,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
   MisI = (M === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
@@ -81,22 +81,22 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
 
   # Initial solution x₀
   restart && (Δx .= x)
-  x .= zero(T)
+  x .= zero(FC)
 
   if restart
     mul!(M⁻¹vₖ, A, Δx)
     (λ ≠ 0) && @kaxpy!(n, λ, Δx, M⁻¹vₖ)
-    @kaxpby!(n, one(T), b, -one(T), M⁻¹vₖ)
+    @kaxpby!(n, one(FC), b, -one(FC), M⁻¹vₖ)
   else
     M⁻¹vₖ .= b
   end
 
   # β₁v₁ = Mb
   MisI || mul!(vₖ, M, M⁻¹vₖ)
-  βₖ = sqrt(@kdot(n, vₖ, M⁻¹vₖ))
+  βₖ = sqrt(@kdotr(n, vₖ, M⁻¹vₖ))
   if βₖ ≠ 0
-    @kscal!(n, 1 / βₖ, M⁻¹vₖ)
-    MisI || @kscal!(n, 1 / βₖ, vₖ)
+    @kscal!(n, one(FC) / βₖ, M⁻¹vₖ)
+    MisI || @kscal!(n, one(FC) / βₖ, vₖ)
   end
 
   rNorm = βₖ
@@ -116,15 +116,15 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
   display(iter, verbose) && @printf("%5d  %7.1e  %7s  %7.1e\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ)
 
   # Set up workspace.
-  M⁻¹vₖ₋₁ .= zero(T)
+  M⁻¹vₖ₋₁ .= zero(FC)
   ζbarₖ   = βₖ
   ξₖ₋₁    = zero(T)
   τₖ₋₂    = τₖ₋₁ = τₖ = zero(T)
   ψbarₖ₋₂ = zero(T)
   μbisₖ₋₂ = μbarₖ₋₁ = zero(T)
-  wₖ₋₁ .= zero(T)
-  wₖ   .= zero(T)
-  cₖ₋₂  = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+  wₖ₋₁ .= zero(FC)
+  wₖ   .= zero(FC)
+  cₖ₋₂  = cₖ₋₁ = cₖ = one(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
   sₖ₋₂  = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
 
   # Stopping criterion.
@@ -150,17 +150,17 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
       @kaxpy!(n, -βₖ, M⁻¹vₖ₋₁, p) # p ← p - βₖ * M⁻¹vₖ₋₁
     end
 
-    αₖ = @kdot(n, vₖ, p)       # αₖ = pᵀvₖ
+    αₖ = @kdotr(n, vₖ, p)  # αₖ = ⟨vₖ,p⟩
 
     @kaxpy!(n, -αₖ, M⁻¹vₖ, p)  # p ← p - αₖM⁻¹vₖ
 
     MisI || mul!(vₖ₊₁, M, p)   # βₖ₊₁vₖ₊₁ = MAvₖ - γₖvₖ₋₁ - αₖvₖ
 
-    βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, p))
+    βₖ₊₁ = sqrt(@kdotr(m, vₖ₊₁, p))
 
     if βₖ₊₁ ≠ 0
-      @kscal!(m, one(T) / βₖ₊₁, vₖ₊₁)
-      MisI || @kscal!(m, one(T) / βₖ₊₁, p)
+      @kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
+      MisI || @kscal!(m, one(FC) / βₖ₊₁, p)
     end
 
     # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
@@ -306,8 +306,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     history && push!(rNorms, rNorm)
 
     # Update ‖Arₖ₋₁‖ estimate
-    # ‖ Arₖ₋₁ ‖ = |ζbarₖ| * √((λbarₖ)² + (γbarₖ)²)
-    ArNorm = abs(ζbarₖ) * √(λbarₖ^2 + (cₖ₋₁ * βₖ₊₁)^2)
+    # ‖ Arₖ₋₁ ‖ = |ζbarₖ| * √(|λbarₖ|² + |γbarₖ|²)
+    ArNorm = abs(ζbarₖ) * √(abs2(λbarₖ) + abs2(cₖ₋₁ * βₖ₊₁))
     history && push!(ArNorms, ArNorm)
 
     # Update stopping criterion.
@@ -344,7 +344,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
 
   # Update x
-  restart && @kaxpy!(n, one(T), Δx, x)
+  restart && @kaxpy!(n, one(FC), Δx, x)
 
  # Update stats
   stats.solved = solved
