@@ -196,6 +196,9 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
   snd  && (τ = -one(T) ; ν = -one(T))
   sp   && (τ =  one(T) ; ν = zero(T))
 
+  # Tolerance for breakdown detection.
+  btol = eps(T)^(3/4)
+
   # Stopping criterion.
   breakdown = false
   solved = rNorm ≤ ε
@@ -233,13 +236,13 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     γₖ₊₁ = sqrt(@kdot(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F
 
     # βₖ₊₁ ≠ 0
-    if βₖ₊₁ > eps(T)
+    if βₖ₊₁ > btol
       @kscal!(m, one(T) / βₖ₊₁, q)
       MisI || @kscal!(m, one(T) / βₖ₊₁, vₖ₊₁)
     end
 
     # γₖ₊₁ ≠ 0
-    if γₖ₊₁ > eps(T)
+    if γₖ₊₁ > btol
       @kscal!(n, one(T) / γₖ₊₁, p)
       NisI || @kscal!(n, one(T) / γₖ₊₁, uₖ₊₁)
     end
@@ -445,7 +448,7 @@ function trimr!(solver :: TrimrSolver{T,S}, A, b :: AbstractVector{T}, c :: Abst
     πbar₂ₖ   = πbar₂ₖ₊₂
 
     # Update stopping criterion.
-    breakdown = βₖ₊₁ ≤ eps(T) && γₖ₊₁ ≤ eps(T)
+    breakdown = βₖ₊₁ ≤ btol && γₖ₊₁ ≤ btol
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, αₖ, βₖ₊₁, γₖ₊₁)
