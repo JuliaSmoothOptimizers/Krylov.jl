@@ -93,7 +93,7 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
   restart && (τ ≠ 0) && !MisI && error("Restart with preconditioners is not supported.")
@@ -125,34 +125,34 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   # Initial solutions x₀ and y₀.
   restart && (Δx .= xₖ)
   restart && (Δy .= yₖ)
-  xₖ .= zero(T)
-  yₖ .= zero(T)
+  xₖ .= zero(FC)
+  yₖ .= zero(FC)
 
   iter = 0
   itmax == 0 && (itmax = m+n)
 
   # Initialize preconditioned orthogonal tridiagonalization process.
-  M⁻¹vₖ₋₁ .= zero(T)  # v₀ = 0
-  N⁻¹uₖ₋₁ .= zero(T)  # u₀ = 0
+  M⁻¹vₖ₋₁ .= zero(FC)  # v₀ = 0
+  N⁻¹uₖ₋₁ .= zero(FC)  # u₀ = 0
 
   # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
   # [  Aᵀ  νI ] [ yₖ ]   [ c - AᵀΔx - νΔy ]   [ c₀ ]
   if restart
     mul!(b₀, A, Δy)
     (τ ≠ 0) && @kaxpy!(m, τ, Δx, b₀)
-    @kaxpby!(m, one(T), b, -one(T), b₀)
+    @kaxpby!(m, one(FC), b, -one(FC), b₀)
     mul!(c₀, Aᵀ, Δx)
     (ν ≠ 0) && @kaxpy!(n, ν, Δy, c₀)
-    @kaxpby!(n, one(T), c, -one(T), c₀)
+    @kaxpby!(n, one(FC), c, -one(FC), c₀)
   end
 
   # β₁Ev₁ = b ↔ β₁v₁ = Mb
   M⁻¹vₖ .= b₀
   MisI || mul!(vₖ, M, M⁻¹vₖ)
-  βₖ = sqrt(@kdot(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
+  βₖ = sqrt(@kdotr(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
   if βₖ ≠ 0
-    @kscal!(m, 1 / βₖ, M⁻¹vₖ)
-    MisI || @kscal!(m, 1 / βₖ, vₖ)
+    @kscal!(m, one(FC) / βₖ, M⁻¹vₖ)
+    MisI || @kscal!(m, one(FC) / βₖ, vₖ)
   else
     error("b must be nonzero")
   end
@@ -160,36 +160,36 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
   N⁻¹uₖ .= c₀
   NisI || mul!(uₖ, N, N⁻¹uₖ)
-  γₖ = sqrt(@kdot(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
+  γₖ = sqrt(@kdotr(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
   if γₖ ≠ 0
-    @kscal!(n, 1 / γₖ, N⁻¹uₖ)
-    NisI || @kscal!(n, 1 / γₖ, uₖ)
+    @kscal!(n, one(FC) / γₖ, N⁻¹uₖ)
+    NisI || @kscal!(n, one(FC) / γₖ, uₖ)
   else
     error("c must be nonzero")
   end
 
   # Initialize directions Gₖ such that (GₖRₖ)ᵀ = (Wₖ)ᵀ.
-  gx₂ₖ₋₃ .= zero(T)
-  gy₂ₖ₋₃ .= zero(T)
-  gx₂ₖ₋₂ .= zero(T)
-  gy₂ₖ₋₂ .= zero(T)
-  gx₂ₖ₋₁ .= zero(T)
-  gy₂ₖ₋₁ .= zero(T)
-  gx₂ₖ   .= zero(T)
-  gy₂ₖ   .= zero(T)
+  gx₂ₖ₋₃ .= zero(FC)
+  gy₂ₖ₋₃ .= zero(FC)
+  gx₂ₖ₋₂ .= zero(FC)
+  gy₂ₖ₋₂ .= zero(FC)
+  gx₂ₖ₋₁ .= zero(FC)
+  gy₂ₖ₋₁ .= zero(FC)
+  gx₂ₖ   .= zero(FC)
+  gy₂ₖ   .= zero(FC)
 
   # Compute ‖r₀‖² = (γ₁)² + (β₁)²
   rNorm = sqrt(γₖ^2 + βₖ^2)
   history && push!(rNorms, rNorm)
   ε = atol + rtol * rNorm
 
-  (verbose > 0) && @printf("%5s  %7s  %8s  %7s  %7s\n", "k", "‖rₖ‖", "αₖ", "βₖ₊₁", "γₖ₊₁")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8s  %7.1e  %7.1e\n", iter, rNorm, " ✗ ✗ ✗ ✗", βₖ, γₖ)
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "βₖ₊₁", "γₖ₊₁")
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ, γₖ)
 
   # Set up workspace.
-  old_s₁ₖ = old_s₂ₖ = old_s₃ₖ = old_s₄ₖ = zero(T)
   old_c₁ₖ = old_c₂ₖ = old_c₃ₖ = old_c₄ₖ = zero(T)
-  σbar₂ₖ₋₂ = ηbar₂ₖ₋₃ = λbar₂ₖ₋₃ = μ₂ₖ₋₅ = λ₂ₖ₋₄ = μ₂ₖ₋₄ = zero(T)
+  old_s₁ₖ = old_s₂ₖ = old_s₃ₖ = old_s₄ₖ = zero(FC)
+  σbar₂ₖ₋₂ = ηbar₂ₖ₋₃ = λbar₂ₖ₋₃ = μ₂ₖ₋₅ = λ₂ₖ₋₄ = μ₂ₖ₋₄ = zero(FC)
   πbar₂ₖ₋₁ = βₖ
   πbar₂ₖ = γₖ
 
@@ -208,7 +208,7 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   tired = iter ≥ itmax
   status = "unknown"
 
-  θbarₖ = δbar₂ₖ₋₁ = δbar₂ₖ = σbar₂ₖ₋₁ = σbar₂ₖ = λbar₂ₖ₋₁ = ηbar₂ₖ₋₁ = zero(T)
+  θbarₖ = δbar₂ₖ₋₁ = δbar₂ₖ = σbar₂ₖ₋₁ = σbar₂ₖ = λbar₂ₖ₋₁ = ηbar₂ₖ₋₁ = zero(FC)
 
   while !(solved || tired || breakdown)
     # Update iteration index.
@@ -226,28 +226,28 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
       @kaxpy!(n, -βₖ, N⁻¹uₖ₋₁, p)  # p ← p - βₖ * N⁻¹uₖ₋₁
     end
 
-    αₖ = @kdot(m, vₖ, q)  # αₖ = qᵀvₖ
+    αₖ = @kdot(m, vₖ, q)  # αₖ = ⟨vₖ,q⟩
 
-    @kaxpy!(m, -αₖ, M⁻¹vₖ, q)  # q ← q - αₖ * M⁻¹vₖ
-    @kaxpy!(n, -αₖ, N⁻¹uₖ, p)  # p ← p - αₖ * N⁻¹uₖ
+    @kaxpy!(m, -     αₖ , M⁻¹vₖ, q)  # q ← q - αₖ * M⁻¹vₖ
+    @kaxpy!(n, -conj(αₖ), N⁻¹uₖ, p)  # p ← p - ᾱₖ * N⁻¹uₖ
 
     # Compute vₖ₊₁ and uₖ₊₁
     MisI || mul!(vₖ₊₁, M, q)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
-    NisI || mul!(uₖ₊₁, N, p)  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - αₖuₖ
+    NisI || mul!(uₖ₊₁, N, p)  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - ᾱₖuₖ
 
-    βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
-    γₖ₊₁ = sqrt(@kdot(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F
+    βₖ₊₁ = sqrt(@kdotr(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
+    γₖ₊₁ = sqrt(@kdotr(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F
 
     # βₖ₊₁ ≠ 0
     if βₖ₊₁ > btol
-      @kscal!(m, one(T) / βₖ₊₁, q)
-      MisI || @kscal!(m, one(T) / βₖ₊₁, vₖ₊₁)
+      @kscal!(m, one(FC) / βₖ₊₁, q)
+      MisI || @kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
     end
 
     # γₖ₊₁ ≠ 0
     if γₖ₊₁ > btol
-      @kscal!(n, one(T) / γₖ₊₁, p)
-      NisI || @kscal!(n, one(T) / γₖ₊₁, uₖ₊₁)
+      @kscal!(n, one(FC) / γₖ₊₁, p)
+      NisI || @kscal!(n, one(FC) / γₖ₊₁, uₖ₊₁)
     end
 
     # Notations : Wₖ = [w₁ ••• wₖ] = [v₁ 0  ••• vₖ 0 ]
@@ -264,94 +264,94 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     # Update the QR factorization of Sₖ₊₁.ₖ = Qₖ [ Rₖ ].
     #                                            [ Oᵀ ]
     if iter == 1
-      θbarₖ    = αₖ
+      θbarₖ    = conj(αₖ)
       δbar₂ₖ₋₁ = τ
       δbar₂ₖ   = ν
       σbar₂ₖ₋₁ = αₖ
       σbar₂ₖ   = βₖ₊₁
       λbar₂ₖ₋₁ = γₖ₊₁
-      ηbar₂ₖ₋₁ = zero(T)
+      ηbar₂ₖ₋₁ = zero(FC)
     else
       # Apply previous reflections
       #        [ 1                    ][ 1                    ][ c₂.ₖ₋₁  s₂.ₖ₋₁       ][ 1                    ]
-      # Ζₖ₋₁ = [    c₄.ₖ₋₁  s₄.ₖ₋₁    ][    c₃.ₖ₋₁     s₃.ₖ₋₁ ][ s₂.ₖ₋₁ -c₂.ₖ₋₁       ][    c₁.ₖ₋₁     s₁.ₖ₋₁ ]
-      #        [    s₄.ₖ₋₁ -c₄.ₖ₋₁    ][            1         ][                 1    ][            1         ]
-      #        [                    1 ][    s₃.ₖ₋₁    -c₃.ₖ₋₁ ][                    1 ][    s₁.ₖ₋₁    -c₁.ₖ₋₁ ]
+      # Ζₖ₋₁ = [    c₄.ₖ₋₁  s₄.ₖ₋₁    ][    c₃.ₖ₋₁     s₃.ₖ₋₁ ][ s̄₂.ₖ₋₁ -c₂.ₖ₋₁       ][    c₁.ₖ₋₁     s₁.ₖ₋₁ ]
+      #        [    s̄₄.ₖ₋₁ -c₄.ₖ₋₁    ][            1         ][                 1    ][            1         ]
+      #        [                    1 ][    s̄₃.ₖ₋₁    -c₃.ₖ₋₁ ][                    1 ][    s̄₁.ₖ₋₁    -c₁.ₖ₋₁ ]
       #
       #        [ δbar₂ₖ₋₃  σbar₂ₖ₋₃ ηbar₂ₖ₋₃ λbar₂ₖ₋₃  0      0  ]   [ δ₂ₖ₋₃   σ₂ₖ₋₃  η₂ₖ₋₃     λ₂ₖ₋₃     μ₂ₖ₋₃       0      ]
       # Ζₖ₋₁ * [ θbarₖ₋₁   δbar₂ₖ₋₂ σbar₂ₖ₋₂    0      0      0  ] = [  0      δ₂ₖ₋₂  σ₂ₖ₋₂     η₂ₖ₋₂     λ₂ₖ₋₂     μ₂ₖ₋₂    ]
       #        [    0         βₖ       τ        αₖ     0    γₖ₊₁ ]   [  0        0    δbar₂ₖ₋₁  σbar₂ₖ₋₁  ηbar₂ₖ₋₁  λbar₂ₖ₋₁ ]
-      #        [    γₖ        0        αₖ       ν     βₖ₊₁    0  ]   [  0        0    θbarₖ     δbar₂ₖ    σbar₂ₖ      0      ]
+      #        [    γₖ        0        ᾱₖ       ν     βₖ₊₁    0  ]   [  0        0    θbarₖ     δbar₂ₖ    σbar₂ₖ      0      ]
       #
       # [ 1                    ] [ ηbar₂ₖ₋₃ λbar₂ₖ₋₃  0      0  ]   [ ηbar₂ₖ₋₃  λbar₂ₖ₋₃    0        0   ]
       # [    c₁.ₖ₋₁     s₁.ₖ₋₁ ] [ σbar₂ₖ₋₂    0      0      0  ] = [ σbis₂ₖ₋₂  ηbis₂ₖ₋₂  λbis₂ₖ₋₂   0   ]
       # [            1         ] [    τ        αₖ     0    γₖ₊₁ ]   [   τ        αₖ         0       γₖ₊₁ ]
-      # [    s₁.ₖ₋₁    -c₁.ₖ₋₁ ] [    αₖ       ν     βₖ₊₁    0  ]   [  θbisₖ    δbis₂ₖ    σbis₂ₖ     0   ]
-      σbis₂ₖ₋₂ = old_c₁ₖ * σbar₂ₖ₋₂ + old_s₁ₖ * αₖ
-      ηbis₂ₖ₋₂ =                      old_s₁ₖ * ν
-      λbis₂ₖ₋₂ =                      old_s₁ₖ * βₖ₊₁
-      θbisₖ    = old_s₁ₖ * σbar₂ₖ₋₂ - old_c₁ₖ * αₖ
-      δbis₂ₖ   =                    - old_c₁ₖ * ν
-      σbis₂ₖ   =                    - old_c₁ₖ * βₖ₊₁
+      # [    s̄₁.ₖ₋₁    -c₁.ₖ₋₁ ] [    ᾱₖ       ν     βₖ₊₁    0  ]   [  θbisₖ    δbis₂ₖ    σbis₂ₖ     0   ]
+      σbis₂ₖ₋₂ =      old_c₁ₖ  * σbar₂ₖ₋₂ + old_s₁ₖ * conj(αₖ)
+      ηbis₂ₖ₋₂ =                            old_s₁ₖ * ν
+      λbis₂ₖ₋₂ =                            old_s₁ₖ * βₖ₊₁
+      θbisₖ    = conj(old_s₁ₖ) * σbar₂ₖ₋₂ - old_c₁ₖ * conj(αₖ)
+      δbis₂ₖ   =                          - old_c₁ₖ * ν
+      σbis₂ₖ   =                          - old_c₁ₖ * βₖ₊₁
       # [ c₂.ₖ₋₁  s₂.ₖ₋₁       ] [ ηbar₂ₖ₋₃  λbar₂ₖ₋₃    0        0   ]   [ η₂ₖ₋₃     λ₂ₖ₋₃     μ₂ₖ₋₃      0   ]
-      # [ s₂.ₖ₋₁ -c₂.ₖ₋₁       ] [ σbis₂ₖ₋₂  ηbis₂ₖ₋₂  λbis₂ₖ₋₂   0   ] = [ σhat₂ₖ₋₂  ηhat₂ₖ₋₂  λhat₂ₖ₋₂   0   ]
+      # [ s̄₂.ₖ₋₁ -c₂.ₖ₋₁       ] [ σbis₂ₖ₋₂  ηbis₂ₖ₋₂  λbis₂ₖ₋₂   0   ] = [ σhat₂ₖ₋₂  ηhat₂ₖ₋₂  λhat₂ₖ₋₂   0   ]
       # [                 1    ] [   τ        αₖ         0       γₖ₊₁ ]   [   τ        αₖ         0       γₖ₊₁ ]
       # [                    1 ] [  θbisₖ    δbis₂ₖ    σbis₂ₖ     0   ]   [  θbisₖ    δbis₂ₖ    σbis₂ₖ     0   ]
-      η₂ₖ₋₃    = old_c₂ₖ * ηbar₂ₖ₋₃ + old_s₂ₖ * σbis₂ₖ₋₂
-      λ₂ₖ₋₃    = old_c₂ₖ * λbar₂ₖ₋₃ + old_s₂ₖ * ηbis₂ₖ₋₂
-      μ₂ₖ₋₃    =                      old_s₂ₖ * λbis₂ₖ₋₂
-      σhat₂ₖ₋₂ = old_s₂ₖ * ηbar₂ₖ₋₃ - old_c₂ₖ * σbis₂ₖ₋₂
-      ηhat₂ₖ₋₂ = old_s₂ₖ * λbar₂ₖ₋₃ - old_c₂ₖ * ηbis₂ₖ₋₂
-      λhat₂ₖ₋₂ =                    - old_c₂ₖ * λbis₂ₖ₋₂
+      η₂ₖ₋₃    =      old_c₂ₖ  * ηbar₂ₖ₋₃ + old_s₂ₖ * σbis₂ₖ₋₂
+      λ₂ₖ₋₃    =      old_c₂ₖ  * λbar₂ₖ₋₃ + old_s₂ₖ * ηbis₂ₖ₋₂
+      μ₂ₖ₋₃    =                            old_s₂ₖ * λbis₂ₖ₋₂
+      σhat₂ₖ₋₂ = conj(old_s₂ₖ) * ηbar₂ₖ₋₃ - old_c₂ₖ * σbis₂ₖ₋₂
+      ηhat₂ₖ₋₂ = conj(old_s₂ₖ) * λbar₂ₖ₋₃ - old_c₂ₖ * ηbis₂ₖ₋₂
+      λhat₂ₖ₋₂ =                          - old_c₂ₖ * λbis₂ₖ₋₂
       # [ 1                    ] [ η₂ₖ₋₃     λ₂ₖ₋₃     μ₂ₖ₋₃      0   ]   [ η₂ₖ₋₃     λ₂ₖ₋₃     μ₂ₖ₋₃      0   ]
       # [    c₃.ₖ₋₁     s₃.ₖ₋₁ ] [ σhat₂ₖ₋₂  ηhat₂ₖ₋₂  λhat₂ₖ₋₂   0   ] = [ σtmp₂ₖ₋₂  ηtmp₂ₖ₋₂  λtmp₂ₖ₋₂   0   ]
       # [            1         ] [   τ        αₖ         0       γₖ₊₁ ]   [   τ        αₖ         0       γₖ₊₁ ]
-      # [    s₃.ₖ₋₁    -c₃.ₖ₋₁ ] [  θbisₖ    δbis₂ₖ    σbis₂ₖ     0   ]   [  θbarₖ    δbar₂ₖ    σbar₂ₖ     0   ]
-      σtmp₂ₖ₋₂ = old_c₃ₖ * σhat₂ₖ₋₂ + old_s₃ₖ * θbisₖ
-      ηtmp₂ₖ₋₂ = old_c₃ₖ * ηhat₂ₖ₋₂ + old_s₃ₖ * δbis₂ₖ
-      λtmp₂ₖ₋₂ = old_c₃ₖ * λhat₂ₖ₋₂ + old_s₃ₖ * σbis₂ₖ
-      θbarₖ    = old_s₃ₖ * σhat₂ₖ₋₂ - old_c₃ₖ * θbisₖ
-      δbar₂ₖ   = old_s₃ₖ * ηhat₂ₖ₋₂ - old_c₃ₖ * δbis₂ₖ
-      σbar₂ₖ   = old_s₃ₖ * λhat₂ₖ₋₂ - old_c₃ₖ * σbis₂ₖ
+      # [    s̄₃.ₖ₋₁    -c₃.ₖ₋₁ ] [  θbisₖ    δbis₂ₖ    σbis₂ₖ     0   ]   [  θbarₖ    δbar₂ₖ    σbar₂ₖ     0   ]
+      σtmp₂ₖ₋₂ =      old_c₃ₖ  * σhat₂ₖ₋₂ + old_s₃ₖ * θbisₖ
+      ηtmp₂ₖ₋₂ =      old_c₃ₖ  * ηhat₂ₖ₋₂ + old_s₃ₖ * δbis₂ₖ
+      λtmp₂ₖ₋₂ =      old_c₃ₖ  * λhat₂ₖ₋₂ + old_s₃ₖ * σbis₂ₖ
+      θbarₖ    = conj(old_s₃ₖ) * σhat₂ₖ₋₂ - old_c₃ₖ * θbisₖ
+      δbar₂ₖ   = conj(old_s₃ₖ) * ηhat₂ₖ₋₂ - old_c₃ₖ * δbis₂ₖ
+      σbar₂ₖ   = conj(old_s₃ₖ) * λhat₂ₖ₋₂ - old_c₃ₖ * σbis₂ₖ
       # [ 1                    ] [ η₂ₖ₋₃     λ₂ₖ₋₃     μ₂ₖ₋₃      0   ]   [ η₂ₖ₋₃     λ₂ₖ₋₃     μ₂ₖ₋₃       0      ]
       # [    c₄.ₖ₋₁  s₄.ₖ₋₁    ] [ σtmp₂ₖ₋₂  ηtmp₂ₖ₋₂  λtmp₂ₖ₋₂   0   ] = [ σ₂ₖ₋₂     η₂ₖ₋₂     λ₂ₖ₋₂     μ₂ₖ₋₂    ]
-      # [    s₄.ₖ₋₁ -c₄.ₖ₋₁    ] [   τ        αₖ         0       γₖ₊₁ ]   [ δbar₂ₖ₋₁  σbar₂ₖ₋₁  ηbar₂ₖ₋₁  λbar₂ₖ₋₁ ]
+      # [    s̄₄.ₖ₋₁ -c₄.ₖ₋₁    ] [   τ        αₖ         0       γₖ₊₁ ]   [ δbar₂ₖ₋₁  σbar₂ₖ₋₁  ηbar₂ₖ₋₁  λbar₂ₖ₋₁ ]
       # [                    1 ] [  θbarₖ    δbar₂ₖ    σbar₂ₖ     0   ]   [ θbarₖ     δbar₂ₖ    σbar₂ₖ      0      ]
-      σ₂ₖ₋₂    = old_c₄ₖ * σtmp₂ₖ₋₂ + old_s₄ₖ * τ
-      η₂ₖ₋₂    = old_c₄ₖ * ηtmp₂ₖ₋₂ + old_s₄ₖ * αₖ
-      λ₂ₖ₋₂    = old_c₄ₖ * λtmp₂ₖ₋₂
-      μ₂ₖ₋₂    =                      old_s₄ₖ * γₖ₊₁
-      δbar₂ₖ₋₁ = old_s₄ₖ * σtmp₂ₖ₋₂ - old_c₄ₖ * τ
-      σbar₂ₖ₋₁ = old_s₄ₖ * ηtmp₂ₖ₋₂ - old_c₄ₖ * αₖ
-      ηbar₂ₖ₋₁ = old_s₄ₖ * λtmp₂ₖ₋₂
-      λbar₂ₖ₋₁ =                    - old_c₄ₖ * γₖ₊₁
+      σ₂ₖ₋₂    =      old_c₄ₖ  * σtmp₂ₖ₋₂ + old_s₄ₖ * τ
+      η₂ₖ₋₂    =      old_c₄ₖ  * ηtmp₂ₖ₋₂ + old_s₄ₖ * αₖ
+      λ₂ₖ₋₂    =      old_c₄ₖ  * λtmp₂ₖ₋₂
+      μ₂ₖ₋₂    =                            old_s₄ₖ * γₖ₊₁
+      δbar₂ₖ₋₁ = conj(old_s₄ₖ) * σtmp₂ₖ₋₂ - old_c₄ₖ * τ
+      σbar₂ₖ₋₁ = conj(old_s₄ₖ) * ηtmp₂ₖ₋₂ - old_c₄ₖ * αₖ
+      ηbar₂ₖ₋₁ = conj(old_s₄ₖ) * λtmp₂ₖ₋₂
+      λbar₂ₖ₋₁ =                          - old_c₄ₖ * γₖ₊₁
     end
 
     # [ 1                ] [ δbar₂ₖ₋₁  σbar₂ₖ₋₁ ]   [ δbar₂ₖ₋₁  σbar₂ₖ₋₁ ]
     # [    c₁.ₖ     s₁.ₖ ] [  θbarₖ     δbar₂ₖ  ] = [   θₖ       δbar₂ₖ  ]
     # [          1       ] [   0         βₖ₊₁   ]   [   0         βₖ₊₁   ]
-    # [    s₁.ₖ    -c₁.ₖ ] [  γₖ₊₁        0     ]   [   0         gₖ     ]
+    # [    s̄₁.ₖ    -c₁.ₖ ] [  γₖ₊₁        0     ]   [   0         gₖ     ]
     (c₁ₖ, s₁ₖ, θₖ) = sym_givens(θbarₖ, γₖ₊₁)
-    gₖ     = s₁ₖ * δbar₂ₖ
-    δbar₂ₖ = c₁ₖ * δbar₂ₖ
+    gₖ     = conj(s₁ₖ) * δbar₂ₖ
+    δbar₂ₖ =      c₁ₖ  * δbar₂ₖ
 
     # [ c₂.ₖ  s₂.ₖ       ] [ δbar₂ₖ₋₁  σbar₂ₖ₋₁ ]   [ δ₂ₖ₋₁  σ₂ₖ₋₁  ]
-    # [ s₂.ₖ -c₂.ₖ       ] [   θₖ       δbar₂ₖ  ] = [  0     δbis₂ₖ ]
+    # [ s̄₂.ₖ -c₂.ₖ       ] [   θₖ       δbar₂ₖ  ] = [  0     δbis₂ₖ ]
     # [             1    ] [   0         βₖ₊₁   ]   [  0      βₖ₊₁  ]
     # [                1 ] [   0         gₖ     ]   [  0       gₖ   ]
     (c₂ₖ, s₂ₖ, δ₂ₖ₋₁) = sym_givens(δbar₂ₖ₋₁, θₖ)
-    σ₂ₖ₋₁  = c₂ₖ * σbar₂ₖ₋₁ + s₂ₖ * δbar₂ₖ
-    δbis₂ₖ = s₂ₖ * σbar₂ₖ₋₁ - c₂ₖ * δbar₂ₖ
+    σ₂ₖ₋₁  =      c₂ₖ  * σbar₂ₖ₋₁ + s₂ₖ * δbar₂ₖ
+    δbis₂ₖ = conj(s₂ₖ) * σbar₂ₖ₋₁ - c₂ₖ * δbar₂ₖ
 
     # [ 1                ] [ δ₂ₖ₋₁  σ₂ₖ₋₁  ]   [ δ₂ₖ₋₁  σ₂ₖ₋₁  ]
     # [    c₃.ₖ     s₃.ₖ ] [  0     δbis₂ₖ ] = [  0     δhat₂ₖ ]
     # [          1       ] [  0      βₖ₊₁  ]   [  0      βₖ₊₁  ]
-    # [    s₃.ₖ    -c₃.ₖ ] [  0       gₖ   ]   [  0       0    ]
+    # [    s̄₃.ₖ    -c₃.ₖ ] [  0       gₖ   ]   [  0       0    ]
     (c₃ₖ, s₃ₖ, δhat₂ₖ) = sym_givens(δbis₂ₖ, gₖ)
 
     # [ 1                ] [ δ₂ₖ₋₁  σ₂ₖ₋₁  ]   [ δ₂ₖ₋₁  σ₂ₖ₋₁ ]
     # [    c₄.ₖ  s₄.ₖ    ] [  0     δhat₂ₖ ] = [  0      δ₂ₖ  ]
-    # [    s₄.ₖ -c₄.ₖ    ] [  0      βₖ₊₁  ]   [  0       0   ]
+    # [    s̄₄.ₖ -c₄.ₖ    ] [  0      βₖ₊₁  ]   [  0       0   ]
     # [                1 ] [  0       0    ]   [  0       0   ]
     (c₄ₖ, s₄ₖ, δ₂ₖ) = sym_givens(δhat₂ₖ, βₖ₊₁)
 
@@ -392,17 +392,17 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     end
 
     # Update p̅ₖ = (Qₖ)ᵀ * (β₁e₁ + γ₁e₂)
-    πbis₂ₖ   = c₁ₖ * πbar₂ₖ
-    πbis₂ₖ₊₂ = s₁ₖ * πbar₂ₖ
+    πbis₂ₖ   =      c₁ₖ  * πbar₂ₖ
+    πbis₂ₖ₊₂ = conj(s₁ₖ) * πbar₂ₖ
     #
-    π₂ₖ₋₁  = c₂ₖ * πbar₂ₖ₋₁ + s₂ₖ * πbis₂ₖ
-    πhat₂ₖ = s₂ₖ * πbar₂ₖ₋₁ - c₂ₖ * πbis₂ₖ
+    π₂ₖ₋₁  =      c₂ₖ  * πbar₂ₖ₋₁ + s₂ₖ * πbis₂ₖ
+    πhat₂ₖ = conj(s₂ₖ) * πbar₂ₖ₋₁ - c₂ₖ * πbis₂ₖ
     #
-    πtmp₂ₖ   = c₃ₖ * πhat₂ₖ + s₃ₖ * πbis₂ₖ₊₂
-    πbar₂ₖ₊₂ = s₃ₖ * πhat₂ₖ - c₃ₖ * πbis₂ₖ₊₂
+    πtmp₂ₖ   =      c₃ₖ  * πhat₂ₖ + s₃ₖ * πbis₂ₖ₊₂
+    πbar₂ₖ₊₂ = conj(s₃ₖ) * πhat₂ₖ - c₃ₖ * πbis₂ₖ₊₂
     #
-    π₂ₖ      = c₄ₖ * πtmp₂ₖ
-    πbar₂ₖ₊₁ = s₄ₖ * πtmp₂ₖ
+    π₂ₖ      =      c₄ₖ  * πtmp₂ₖ
+    πbar₂ₖ₊₁ = conj(s₄ₖ) * πtmp₂ₖ
 
     # Update xₖ = Gxₖ * pₖ
     @. xₖ += π₂ₖ₋₁ * gx₂ₖ₋₁ + π₂ₖ * gx₂ₖ
@@ -410,8 +410,8 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     # Update yₖ = Gyₖ * pₖ
     @. yₖ += π₂ₖ₋₁ * gy₂ₖ₋₁ + π₂ₖ * gy₂ₖ
 
-    # Compute ‖rₖ‖² = (πbar₂ₖ₊₁)² + (πbar₂ₖ₊₂)²
-    rNorm = sqrt(πbar₂ₖ₊₁^2 + πbar₂ₖ₊₂^2)
+    # Compute ‖rₖ‖² = |πbar₂ₖ₊₁|² + |πbar₂ₖ₊₂|²
+    rNorm = sqrt(abs2(πbar₂ₖ₊₁) + abs2(πbar₂ₖ₊₂))
     history && push!(rNorms, rNorm)
 
     # Update vₖ and uₖ
@@ -454,7 +454,7 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     breakdown = βₖ₊₁ ≤ btol && γₖ₊₁ ≤ btol
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, αₖ, βₖ₊₁, γₖ₊₁)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ₊₁, γₖ₊₁)
   end
   (verbose > 0) && @printf("\n")
 
@@ -463,8 +463,8 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   solved    && (status = "solution good enough given atol and rtol")
 
   # Update x and y
-  restart && @kaxpy!(m, one(T), Δx, xₖ)
-  restart && @kaxpy!(n, one(T), Δy, yₖ)
+  restart && @kaxpy!(m, one(FC), Δx, xₖ)
+  restart && @kaxpy!(n, one(FC), Δy, yₖ)
 
   # Update stats
   stats.niter = iter
