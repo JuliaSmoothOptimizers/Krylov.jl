@@ -90,7 +90,7 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
   restart && (τ ≠ 0) && !MisI && error("Restart with preconditioners is not supported.")
@@ -121,34 +121,34 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   # Initial solutions x₀ and y₀.
   restart && (Δx .= xₖ)
   restart && (Δy .= yₖ)
-  xₖ .= zero(T)
-  yₖ .= zero(T)
+  xₖ .= zero(FC)
+  yₖ .= zero(FC)
 
   iter = 0
   itmax == 0 && (itmax = m+n)
 
   # Initialize preconditioned orthogonal tridiagonalization process.
-  M⁻¹vₖ₋₁ .= zero(T)  # v₀ = 0
-  N⁻¹uₖ₋₁ .= zero(T)  # u₀ = 0
+  M⁻¹vₖ₋₁ .= zero(FC)  # v₀ = 0
+  N⁻¹uₖ₋₁ .= zero(FC)  # u₀ = 0
 
   # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
   # [  Aᵀ  νI ] [ yₖ ]   [ c - AᵀΔx - νΔy ]   [ c₀ ]
   if restart
     mul!(b₀, A, Δy)
     (τ ≠ 0) && @kaxpy!(m, τ, Δx, b₀)
-    @kaxpby!(m, one(T), b, -one(T), b₀)
+    @kaxpby!(m, one(FC), b, -one(FC), b₀)
     mul!(c₀, Aᵀ, Δx)
     (ν ≠ 0) && @kaxpy!(n, ν, Δy, c₀)
-    @kaxpby!(n, one(T), c, -one(T), c₀)
+    @kaxpby!(n, one(FC), c, -one(FC), c₀)
   end
 
   # β₁Ev₁ = b ↔ β₁v₁ = Mb
   M⁻¹vₖ .= b₀
   MisI || mul!(vₖ, M, M⁻¹vₖ)
-  βₖ = sqrt(@kdot(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
+  βₖ = sqrt(@kdotr(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
   if βₖ ≠ 0
-    @kscal!(m, 1 / βₖ, M⁻¹vₖ)
-    MisI || @kscal!(m, 1 / βₖ, vₖ)
+    @kscal!(m, one(FC) / βₖ, M⁻¹vₖ)
+    MisI || @kscal!(m, one(FC) / βₖ, vₖ)
   else
     error("b must be nonzero")
   end
@@ -156,32 +156,32 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
   N⁻¹uₖ .= c₀
   NisI || mul!(uₖ, N, N⁻¹uₖ)
-  γₖ = sqrt(@kdot(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
+  γₖ = sqrt(@kdotr(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
   if γₖ ≠ 0
-    @kscal!(n, 1 / γₖ, N⁻¹uₖ)
-    NisI || @kscal!(n, 1 / γₖ, uₖ)
+    @kscal!(n, one(FC) / γₖ, N⁻¹uₖ)
+    NisI || @kscal!(n, one(FC) / γₖ, uₖ)
   else
     error("c must be nonzero")
   end
 
   # Initialize directions Gₖ such that Lₖ(Gₖ)ᵀ = (Wₖ)ᵀ
-  gx₂ₖ₋₁ .= zero(T)
-  gy₂ₖ₋₁ .= zero(T)
-  gx₂ₖ   .= zero(T)
-  gy₂ₖ   .= zero(T)
+  gx₂ₖ₋₁ .= zero(FC)
+  gy₂ₖ₋₁ .= zero(FC)
+  gx₂ₖ   .= zero(FC)
+  gy₂ₖ   .= zero(FC)
 
   # Compute ‖r₀‖² = (γ₁)² + (β₁)²
   rNorm = sqrt(γₖ^2 + βₖ^2)
   history && push!(rNorms, rNorm)
   ε = atol + rtol * rNorm
 
-  (verbose > 0) && @printf("%5s  %7s  %8s  %7s  %7s\n", "k", "‖rₖ‖", "αₖ", "βₖ₊₁", "γₖ₊₁")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8s  %7.1e  %7.1e\n", iter, rNorm, " ✗ ✗ ✗ ✗", βₖ, γₖ)
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "βₖ₊₁", "γₖ₊₁")
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ, γₖ)
 
   # Set up workspace.
   d₂ₖ₋₃ = d₂ₖ₋₂ = zero(T)
-  π₂ₖ₋₃ = π₂ₖ₋₂ = zero(T)
-  δₖ₋₁ = zero(T)
+  π₂ₖ₋₃ = π₂ₖ₋₂ = zero(FC)
+  δₖ₋₁ = zero(FC)
 
   # Determine τ and ν associated to SQD, SPD or SND systems.
   flip && (τ = -one(T) ; ν =  one(T))
@@ -213,10 +213,10 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
       @kaxpy!(n, -βₖ, N⁻¹uₖ₋₁, p)  # p ← p - βₖ * N⁻¹uₖ₋₁
     end
 
-    αₖ = @kdot(m, vₖ, q)  # αₖ = qᵀvₖ
+    αₖ = @kdot(m, vₖ, q)  # αₖ = ⟨vₖ,q⟩
 
-    @kaxpy!(m, -αₖ, M⁻¹vₖ, q)  # q ← q - αₖ * M⁻¹vₖ
-    @kaxpy!(n, -αₖ, N⁻¹uₖ, p)  # p ← p - αₖ * N⁻¹uₖ
+    @kaxpy!(m, -     αₖ , M⁻¹vₖ, q)  # q ← q - αₖ * M⁻¹vₖ
+    @kaxpy!(n, -conj(αₖ), N⁻¹uₖ, p)  # p ← p - ᾱₖ * N⁻¹uₖ
 
     # Update M⁻¹vₖ₋₁ and N⁻¹uₖ₋₁
     @. M⁻¹vₖ₋₁ = M⁻¹vₖ
@@ -236,26 +236,26 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     # Update the LDLᵀ factorization of Sₖ.ₖ.
     #
     # [ τ  α₁    γ₂ 0  •  •  •  •  0  ]
-    # [ α₁ ν  β₂       •           •  ]
+    # [ ᾱ₁ ν  β₂       •           •  ]
     # [    β₂ τ  α₂    γ₃ •        •  ]
-    # [ γ₂    α₂ ν  β₃       •     •  ]
+    # [ γ₂    ᾱ₂ ν  β₃       •     •  ]
     # [ 0        β₃ •  •     •  •  •  ]
     # [ •  •  γ₃    •  •  •        0  ]
     # [ •     •        •  •  •     γₖ ]
     # [ •        •  •     •  •  βₖ    ]
     # [ •           •        βₖ τ  αₖ ]
-    # [ 0  •  •  •  •  0  γₖ    αₖ ν  ]
+    # [ 0  •  •  •  •  0  γₖ    ᾱₖ ν  ]
     if iter == 1
       d₂ₖ₋₁ = τ
-      δₖ    = αₖ / d₂ₖ₋₁
-      d₂ₖ   = ν - δₖ^2 * d₂ₖ₋₁
+      δₖ    = conj(αₖ) / d₂ₖ₋₁
+      d₂ₖ   = ν - abs2(δₖ) * d₂ₖ₋₁
     else
       σₖ    = βₖ / d₂ₖ₋₂
       ηₖ    = γₖ / d₂ₖ₋₃
-      λₖ    = -(ηₖ * δₖ₋₁ * d₂ₖ₋₃) / d₂ₖ₋₂
-      d₂ₖ₋₁ = τ - σₖ^2 * d₂ₖ₋₂
-      δₖ    = (αₖ - λₖ * σₖ * d₂ₖ₋₂) / d₂ₖ₋₁
-      d₂ₖ   = ν - ηₖ^2 * d₂ₖ₋₃ - λₖ^2 * d₂ₖ₋₂ - δₖ^2 * d₂ₖ₋₁
+      λₖ    = -(ηₖ * conj(δₖ₋₁) * d₂ₖ₋₃) / d₂ₖ₋₂
+      d₂ₖ₋₁ = τ - abs2(σₖ) * d₂ₖ₋₂
+      δₖ    = (conj(αₖ) - λₖ * conj(σₖ) * d₂ₖ₋₂) / d₂ₖ₋₁
+      d₂ₖ   = ν - abs2(ηₖ) * d₂ₖ₋₃ - abs2(λₖ) * d₂ₖ₋₂ - abs2(δₖ) * d₂ₖ₋₁
     end
 
     # Solve LₖDₖpₖ = (β₁e₁ + γ₁e₂)
@@ -278,26 +278,26 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
       π₂ₖ   = -(δₖ * d₂ₖ₋₁ * π₂ₖ₋₁ + λₖ * d₂ₖ₋₂ * π₂ₖ₋₂ + ηₖ * d₂ₖ₋₃ * π₂ₖ₋₃) / d₂ₖ
     end
 
-    # Solve Lₖ(Gₖ)ᵀ = (Wₖ)ᵀ.
+    # Solve Gₖ = Wₖ(Lₖ)⁻ᵀ ⟷ L̄ₖ(Gₖ)ᵀ = (Wₖ)ᵀ.
     if iter == 1
       # [ 1  0 ] [ gx₁ gy₁ ] = [ v₁ 0  ]
-      # [ δ₁ 1 ] [ gx₂ gy₂ ]   [ 0  u₁ ]
+      # [ δ̄₁ 1 ] [ gx₂ gy₂ ]   [ 0  u₁ ]
       @. gx₂ₖ₋₁ = vₖ
-      @. gx₂ₖ   = - δₖ * gx₂ₖ₋₁
+      @. gx₂ₖ   = - conj(δₖ) * gx₂ₖ₋₁
       @. gy₂ₖ   = uₖ
     else
-      # [ 0  σₖ 1  0 ] [ gx₂ₖ₋₃ gy₂ₖ₋₃ ] = [ vₖ 0  ]
-      # [ ηₖ λₖ δₖ 1 ] [ gx₂ₖ₋₂ gy₂ₖ₋₂ ]   [ 0  uₖ ]
+      # [ 0  σ̄ₖ 1  0 ] [ gx₂ₖ₋₃ gy₂ₖ₋₃ ] = [ vₖ 0  ]
+      # [ η̄ₖ λ̄ₖ δ̄ₖ 1 ] [ gx₂ₖ₋₂ gy₂ₖ₋₂ ]   [ 0  uₖ ]
       #                [ gx₂ₖ₋₁ gy₂ₖ₋₁ ]
       #                [ gx₂ₖ   gy₂ₖ   ]
-      @. gx₂ₖ₋₁ = ηₖ * gx₂ₖ₋₁ + λₖ * gx₂ₖ
-      @. gy₂ₖ₋₁ = ηₖ * gy₂ₖ₋₁ + λₖ * gy₂ₖ
+      @. gx₂ₖ₋₁ = conj(ηₖ) * gx₂ₖ₋₁ + conj(λₖ) * gx₂ₖ
+      @. gy₂ₖ₋₁ = conj(ηₖ) * gy₂ₖ₋₁ + conj(λₖ) * gy₂ₖ
 
-      @. gx₂ₖ = vₖ - σₖ * gx₂ₖ
-      @. gy₂ₖ =    - σₖ * gy₂ₖ
+      @. gx₂ₖ = vₖ - conj(σₖ) * gx₂ₖ
+      @. gy₂ₖ =    - conj(σₖ) * gy₂ₖ
 
-      @. gx₂ₖ₋₁ =    - gx₂ₖ₋₁ - δₖ * gx₂ₖ
-      @. gy₂ₖ₋₁ = uₖ - gy₂ₖ₋₁ - δₖ * gy₂ₖ
+      @. gx₂ₖ₋₁ =    - gx₂ₖ₋₁ - conj(δₖ) * gx₂ₖ
+      @. gy₂ₖ₋₁ = uₖ - gy₂ₖ₋₁ - conj(δₖ) * gy₂ₖ
 
       # g₂ₖ₋₃ == g₂ₖ and g₂ₖ₋₂ == g₂ₖ₋₁
       @kswap(gx₂ₖ₋₁, gx₂ₖ)
@@ -312,29 +312,31 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
     # Compute vₖ₊₁ and uₖ₊₁
     MisI || mul!(vₖ₊₁, M, q)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
-    NisI || mul!(uₖ₊₁, N, p)  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - αₖuₖ
+    NisI || mul!(uₖ₊₁, N, p)  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - ᾱₖuₖ
 
-    βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
-    γₖ₊₁ = sqrt(@kdot(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F
+    βₖ₊₁ = sqrt(@kdotr(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
+    γₖ₊₁ = sqrt(@kdotr(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F
 
     # βₖ₊₁ ≠ 0
     if βₖ₊₁ > btol
-      @kscal!(m, one(T) / βₖ₊₁, q)
-      MisI || @kscal!(m, one(T) / βₖ₊₁, vₖ₊₁)
+      @kscal!(m, one(FC) / βₖ₊₁, q)
+      MisI || @kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
     end
 
     # γₖ₊₁ ≠ 0
     if γₖ₊₁ > btol
-      @kscal!(n, one(T) / γₖ₊₁, p)
-      NisI || @kscal!(n, one(T) / γₖ₊₁, uₖ₊₁)
+      @kscal!(n, one(FC) / γₖ₊₁, p)
+      NisI || @kscal!(n, one(FC) / γₖ₊₁, uₖ₊₁)
     end
 
     # Update M⁻¹vₖ and N⁻¹uₖ
     @. M⁻¹vₖ = q
     @. N⁻¹uₖ = p
 
-    # Compute ‖rₖ‖² = (γₖ₊₁ζ₂ₖ₋₁)² + (βₖ₊₁ζ₂ₖ)²
-    rNorm = sqrt((γₖ₊₁ * (π₂ₖ₋₁ - δₖ*π₂ₖ))^2 + (βₖ₊₁ * π₂ₖ)^2)
+    # Compute ‖rₖ‖² = |γₖ₊₁ζ₂ₖ₋₁|² + |βₖ₊₁ζ₂ₖ|²
+    ζ₂ₖ₋₁ = π₂ₖ₋₁ - conj(δₖ) * π₂ₖ
+    ζ₂ₖ   = π₂ₖ
+    rNorm = sqrt(abs2(γₖ₊₁ * ζ₂ₖ₋₁) + abs2(βₖ₊₁ * ζ₂ₖ))
     history && push!(rNorms, rNorm)
 
     # Update βₖ, γₖ, π₂ₖ₋₃, π₂ₖ₋₂, d₂ₖ₋₃, d₂ₖ₋₂, δₖ₋₁, vₖ, uₖ.
@@ -350,7 +352,7 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     breakdown = βₖ₊₁ ≤ btol && γₖ₊₁ ≤ btol
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, αₖ, βₖ₊₁, γₖ₊₁)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ₊₁, γₖ₊₁)
   end
   (verbose > 0) && @printf("\n")
 
@@ -359,8 +361,8 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   solved    && (status = "solution good enough given atol and rtol")
 
   # Update x and y
-  restart && @kaxpy!(m, one(T), Δx, xₖ)
-  restart && @kaxpy!(n, one(T), Δy, yₖ)
+  restart && @kaxpy!(m, one(FC), Δx, xₖ)
+  restart && @kaxpy!(n, one(FC), Δy, yₖ)
 
   # Update stats
   stats.niter = iter
