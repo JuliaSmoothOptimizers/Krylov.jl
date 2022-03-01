@@ -117,6 +117,9 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
   z[1] = β
   @. V[1] = r₀ / rNorm
 
+  # Tolerance for breakdown detection.
+  btol = eps(T)^(3/4)
+
   # Stopping criterion
   breakdown = false
   solved = rNorm ≤ ε
@@ -180,7 +183,7 @@ function fom!(solver :: FomSolver{T,S}, A, b :: AbstractVector{T};
     nr = nr + iter
 
     # Update stopping criterion.
-    breakdown = Hbis ≤ eps(T)
+    breakdown = Hbis ≤ btol
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, Hbis)
