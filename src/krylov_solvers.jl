@@ -360,7 +360,7 @@ The outer constructors
     solver = DqgmresSolver(A, b, memory = 20)
 
 may be used in order to create these vectors.
-`memory` is set to `n` if the given value is larger than `n`.
+`memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
   Δx    :: S
@@ -409,7 +409,7 @@ The outer constructors
     solver = DiomSolver(A, b, memory = 20)
 
 may be used in order to create these vectors.
-`memory` is set to `n` if the given value is larger than `n`.
+`memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
   Δx    :: S
@@ -1388,7 +1388,7 @@ The outer constructors
     solver = GmresSolver(A, b, memory = 20)
 
 may be used in order to create these vectors.
-`memory` is set to `n` if the given value is larger than `n`.
+`memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct GmresSolver{T,S} <: KrylovSolver{T,S}
   Δx    :: S
@@ -1437,7 +1437,7 @@ The outer constructors
     solver = FomSolver(A, b, memory = 20)
 
 may be used in order to create these vectors.
-`memory` is set to `n` if the given value is larger than `n`.
+`memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct FomSolver{T,S} <: KrylovSolver{T,S}
   Δx    :: S
@@ -1484,7 +1484,7 @@ The outer constructors
     solver = GpmrSolver(A, b, memory = 20)
 
 may be used in order to create these vectors.
-`memory` is set to `n + m` if the given value is larger than `n + m`.
+`memory` is set to `n + m` if the value given is larger than `n + m`.
 """
 mutable struct GpmrSolver{T,S} <: KrylovSolver{T,S}
   wA    :: S
