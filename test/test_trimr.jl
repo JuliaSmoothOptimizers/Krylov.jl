@@ -183,4 +183,25 @@
   resid = norm(r) / norm([b; b])
   @test(resid ≤ trimr_tol)
   @test solver.stats.solved
+
+  for transpose ∈ (false, true)
+    A, b, c = ssy_mo_breakdown(transpose)
+
+    # Test breakdowns
+    K = [I A; A' -I]
+    d = [b; c]
+    x, y, stats = trimr(A, b, c)
+    r = d - K * [x; y]
+    resid = norm(r) / norm(d)
+    @test(resid ≤ trimr_tol)
+
+    # Test inconsistent linear systems
+    K = [I A; A' I]
+    n, m = size(K)
+    p = rank(K)
+    @test(p < n)
+    τ = ν = 1.0
+    x, y, stats = trimr(A, b, c, τ=τ, ν=ν)
+    @test(stats.inconsistent)
+  end
 end
