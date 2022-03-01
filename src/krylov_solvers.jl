@@ -357,9 +357,10 @@ Type for storing the vectors required by the in-place version of DQGMRES.
 The outer constructors
 
     solver = DqgmresSolver(n, m, memory, S)
-    solver = DqgmresSolver(A, b, memory)
+    solver = DqgmresSolver(A, b, memory = 20)
 
 may be used in order to create these vectors.
+`memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
   Δx    :: S
@@ -375,6 +376,7 @@ mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
   stats :: SimpleStats{T}
 
   function DqgmresSolver(n, m, memory, S)
+    memory = min(n, memory)
     T  = eltype(S)
     Δx = S(undef, 0)
     x  = S(undef, n)
@@ -391,7 +393,7 @@ mutable struct DqgmresSolver{T,S} <: KrylovSolver{T,S}
     return solver
   end
 
-  function DqgmresSolver(A, b, memory)
+  function DqgmresSolver(A, b, memory = 20)
     n, m = size(A)
     S = ktypeof(b)
     DqgmresSolver(n, m, memory, S)
@@ -404,9 +406,10 @@ Type for storing the vectors required by the in-place version of DIOM.
 The outer constructors
 
     solver = DiomSolver(n, m, memory, S)
-    solver = DiomSolver(A, b, memory)
+    solver = DiomSolver(A, b, memory = 20)
 
 may be used in order to create these vectors.
+`memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
   Δx    :: S
@@ -421,6 +424,7 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
   stats :: SimpleStats{T}
 
   function DiomSolver(n, m, memory, S)
+    memory = min(n, memory)
     T  = eltype(S)
     Δx = S(undef, 0)
     x  = S(undef, n)
@@ -436,7 +440,7 @@ mutable struct DiomSolver{T,S} <: KrylovSolver{T,S}
     return solver
   end
 
-  function DiomSolver(A, b, memory)
+  function DiomSolver(A, b, memory = 20)
     n, m = size(A)
     S = ktypeof(b)
     DiomSolver(n, m, memory, S)
@@ -1381,9 +1385,10 @@ Type for storing the vectors required by the in-place version of GMRES.
 The outer constructors
 
     solver = GmresSolver(n, m, memory, S)
-    solver = GmresSolver(A, b, memory)
+    solver = GmresSolver(A, b, memory = 20)
 
 may be used in order to create these vectors.
+`memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct GmresSolver{T,S} <: KrylovSolver{T,S}
   Δx    :: S
@@ -1399,6 +1404,7 @@ mutable struct GmresSolver{T,S} <: KrylovSolver{T,S}
   stats :: SimpleStats{T}
 
   function GmresSolver(n, m, memory, S)
+    memory = min(n, memory)
     T  = eltype(S)
     Δx = S(undef, 0)
     x  = S(undef, n)
@@ -1415,7 +1421,7 @@ mutable struct GmresSolver{T,S} <: KrylovSolver{T,S}
     return solver
   end
 
-  function GmresSolver(A, b, memory)
+  function GmresSolver(A, b, memory = 20)
     n, m = size(A)
     S = ktypeof(b)
     GmresSolver(n, m, memory, S)
@@ -1428,9 +1434,10 @@ Type for storing the vectors required by the in-place version of FOM.
 The outer constructors
 
     solver = FomSolver(n, m, memory, S)
-    solver = FomSolver(A, b, memory)
+    solver = FomSolver(A, b, memory = 20)
 
 may be used in order to create these vectors.
+`memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct FomSolver{T,S} <: KrylovSolver{T,S}
   Δx    :: S
@@ -1445,6 +1452,7 @@ mutable struct FomSolver{T,S} <: KrylovSolver{T,S}
   stats :: SimpleStats{T}
 
   function FomSolver(n, m, memory, S)
+    memory = min(n, memory)
     T  = eltype(S)
     Δx = S(undef, 0)
     x  = S(undef, n)
@@ -1460,7 +1468,7 @@ mutable struct FomSolver{T,S} <: KrylovSolver{T,S}
     return solver
   end
 
-  function FomSolver(A, b, memory)
+  function FomSolver(A, b, memory = 20)
     n, m = size(A)
     S = ktypeof(b)
     FomSolver(n, m, memory, S)
@@ -1473,9 +1481,10 @@ Type for storing the vectors required by the in-place version of GPMR.
 The outer constructors
 
     solver = GpmrSolver(n, m, memory, S)
-    solver = GpmrSolver(A, b, memory)
+    solver = GpmrSolver(A, b, memory = 20)
 
 may be used in order to create these vectors.
+`memory` is set to `n + m` if the value given is larger than `n + m`.
 """
 mutable struct GpmrSolver{T,S} <: KrylovSolver{T,S}
   wA    :: S
@@ -1497,6 +1506,7 @@ mutable struct GpmrSolver{T,S} <: KrylovSolver{T,S}
   stats :: SimpleStats{T}
 
   function GpmrSolver(n, m, memory, S)
+    memory = min(n + m, memory)
     T  = eltype(S)
     wA = S(undef, 0)
     wB = S(undef, 0)
@@ -1519,7 +1529,7 @@ mutable struct GpmrSolver{T,S} <: KrylovSolver{T,S}
     return solver
   end
 
-  function GpmrSolver(A, b, memory)
+  function GpmrSolver(A, b, memory = 20)
     n, m = size(A)
     S = ktypeof(b)
     GpmrSolver(n, m, memory, S)
