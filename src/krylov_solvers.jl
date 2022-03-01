@@ -1530,10 +1530,10 @@ mutable struct GpmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   p     :: S
   V     :: Vector{S}
   U     :: Vector{S}
-  gs    :: Vector{T}
+  gs    :: Vector{FC}
   gc    :: Vector{T}
-  zt    :: Vector{T}
-  R     :: Vector{T}
+  zt    :: Vector{FC}
+  R     :: Vector{FC}
   stats :: SimpleStats{T}
 
   function GpmrSolver(n, m, memory, S)
@@ -1552,10 +1552,10 @@ mutable struct GpmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     p  = S(undef, 0)
     V  = [S(undef, n) for i = 1 : memory]
     U  = [S(undef, m) for i = 1 : memory]
-    gs = Vector{T}(undef, 4 * memory)
+    gs = Vector{FC}(undef, 4 * memory)
     gc = Vector{T}(undef, 4 * memory)
-    zt = Vector{T}(undef, 2 * memory)
-    R  = Vector{T}(undef, memory * (2memory + 1))
+    zt = Vector{FC}(undef, 2 * memory)
+    R  = Vector{FC}(undef, memory * (2memory + 1))
     stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,FC,S}(wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, stats)
     return solver
