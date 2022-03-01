@@ -127,7 +127,7 @@ function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
@@ -144,13 +144,13 @@ function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   v = NisI ? Nv : solver.v
 
   ctol = conlim > 0 ? 1/conlim : zero(T)
-  x .= zero(T)
+  x .= zero(FC)
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
   Mu .= b
   MisI || mul!(u, M, Mu)
-  β₁ = sqrt(@kdot(m, u, Mu))
+  β₁ = sqrt(@kdotr(m, u, Mu))
   if β₁ == 0
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
@@ -161,12 +161,12 @@ function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   end
   β = β₁
 
-  @kscal!(m, one(T)/β₁, u)
-  MisI || @kscal!(m, one(T)/β₁, Mu)
+  @kscal!(m, one(FC)/β₁, u)
+  MisI || @kscal!(m, one(FC)/β₁, Mu)
   mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
   NisI || mul!(v, N, Nv)
-  α = sqrt(@kdot(n, v, Nv))
+  α = sqrt(@kdotr(n, v, Nv))
 
   ζbar = α * β
   αbar = α
@@ -214,11 +214,11 @@ function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     stats.status = "x = 0 is a minimum least-squares solution"
     return solver
   end
-  @kscal!(n, one(T)/α, v)
-  NisI || @kscal!(n, one(T)/α, Nv)
+  @kscal!(n, one(FC)/α, v)
+  NisI || @kscal!(n, one(FC)/α, Nv)
 
   h .= v
-  hbar .= zero(T)
+  hbar .= zero(FC)
 
   status = "unknown"
   on_boundary = false
@@ -235,21 +235,21 @@ function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     mul!(Av, A, v)
-    @kaxpby!(m, one(T), Av, -α, Mu)
+    @kaxpby!(m, one(FC), Av, -α, Mu)
     MisI || mul!(u, M, Mu)
-    β = sqrt(@kdot(m, u, Mu))
+    β = sqrt(@kdotr(m, u, Mu))
     if β ≠ 0
-      @kscal!(m, one(T)/β, u)
-      MisI || @kscal!(m, one(T)/β, Mu)
+      @kscal!(m, one(FC)/β, u)
+      MisI || @kscal!(m, one(FC)/β, Mu)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
       mul!(Aᵀu, Aᵀ, u)
-      @kaxpby!(n, one(T), Aᵀu, -β, Nv)
+      @kaxpby!(n, one(FC), Aᵀu, -β, Nv)
       NisI || mul!(v, N, Nv)
-      α = sqrt(@kdot(n, v, Nv))
+      α = sqrt(@kdotr(n, v, Nv))
       if α ≠ 0
-        @kscal!(n, one(T)/α, v)
-        NisI || @kscal!(n, one(T)/α, Nv)
+        @kscal!(n, one(FC)/α, v)
+        NisI || @kscal!(n, one(FC)/α, Nv)
       end
     end
 
@@ -275,7 +275,7 @@ function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     # Update h, hbar and x.
     δ = θbar * ρ / (ρold * ρbarold) # δₖ = θbarₖ * ρₖ / (ρₖ₋₁ * ρbarₖ₋₁)
-    @kaxpby!(n, one(T), h, -δ, hbar)   # ĥₖ = hₖ - δₖ * ĥₖ₋₁
+    @kaxpby!(n, one(FC), h, -δ, hbar)   # ĥₖ = hₖ - δₖ * ĥₖ₋₁
 
     # if a trust-region constraint is given, compute step to the boundary
     # the step ϕ/ρ is not necessarily positive
@@ -288,7 +288,7 @@ function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
 
     @kaxpy!(n, σ, hbar, x) # xₖ = xₖ₋₁ + σₖ * ĥₖ
-    @kaxpby!(n, one(T), v, -θnew / ρ, h) # hₖ₊₁ = vₖ₊₁ - (θₖ₊₁/ρₖ) * hₖ
+    @kaxpby!(n, one(FC), v, -θnew / ρ, h) # hₖ₊₁ = vₖ₊₁ - (θₖ₊₁/ρₖ) * hₖ
 
     # Estimate ‖r‖.
     βacute =  chat * βdd
