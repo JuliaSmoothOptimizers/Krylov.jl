@@ -186,6 +186,9 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
   # Determine λ and μ associated to generalized saddle point systems.
   gsp && (λ = one(T) ; μ = zero(T))
 
+  # Tolerance for breakdown detection.
+  btol = eps(T)^(3/4)
+
   # Stopping criterion.
   breakdown = false
   solved = rNorm ≤ ε
@@ -356,7 +359,7 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
     nr = nr + 4k-1
 
     # Update stopping criterion.
-    breakdown = Faux ≤ eps(T) && Haux ≤ eps(T)
+    breakdown = Faux ≤ btol && Haux ≤ btol
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, Haux, Faux)
@@ -370,7 +373,7 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
       end
 
       # hₖ₊₁.ₖ ≠ 0
-      if Haux > eps(T)
+      if Haux > btol
         @. V[k+1] = q / Haux  # hₖ₊₁.ₖvₖ₊₁ = q
       else
         # Breakdown -- hₖ₊₁.ₖ = ‖q‖₂ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
@@ -378,7 +381,7 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
       end
 
       # fₖ₊₁.ₖ ≠ 0
-      if Faux > eps(T)
+      if Faux > btol
         @. U[k+1] = p / Faux  # fₖ₊₁.ₖuₖ₊₁ = p
       else
         # Breakdown -- fₖ₊₁.ₖ = ‖p‖₂ = 0 and Bvₖ ∈ Span{u₁, ..., uₖ}
@@ -399,7 +402,7 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs
       pos = pos - j + 1               # position of rᵢ.ⱼ₋₁
     end
     # Rₖ can be singular if the system is inconsistent
-    if abs(R[pos]) ≤ √eps(T)
+    if abs(R[pos]) ≤ btol
       zt[i] = zero(T)
     else
       zt[i] = zt[i] / R[pos]          # ζᵢ ← ζᵢ / rᵢ.ᵢ
