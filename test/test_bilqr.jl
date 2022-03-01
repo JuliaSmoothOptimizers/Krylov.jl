@@ -1,7 +1,7 @@
 @testset "bilqr" begin
   bilqr_tol = 1.0e-6
 
-  for FC in (Float64,)
+  for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
 
       # Test square adjoint systems.
