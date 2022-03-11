@@ -109,8 +109,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   itmax == 0 && (itmax = 2*n)
 
   ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s  %7.1e\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ)
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %8s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁", "Lₖ.ₖ")
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s  %7.1e  %8s\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, " ✗ ✗ ✗ ✗")
 
   # Set up workspace.
   M⁻¹vₖ₋₁ .= zero(T)
@@ -124,13 +124,17 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
   cₖ₋₂  = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
   sₖ₋₂  = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
 
+  # Tolerance for breakdown detection.
+  btol = eps(T)^(3/4)
+
   # Stopping criterion.
+  breakdown = false
   solved = rNorm ≤ ε
   inconsistent = false
   tired = iter ≥ itmax
   status = "unknown"
 
-  while !(solved || tired || inconsistent)
+  while !(solved || tired || inconsistent || breakdown)
     # Update iteration index.
     iter = iter + 1
 
@@ -155,7 +159,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
 
     βₖ₊₁ = sqrt(@kdot(m, vₖ₊₁, p))
 
-    if βₖ₊₁ ≠ 0
+    # βₖ₊₁.ₖ ≠ 0
+    if βₖ₊₁ > btol
       @kscal!(m, one(T) / βₖ₊₁, vₖ₊₁)
       MisI || @kscal!(m, one(T) / βₖ₊₁, p)
     end
@@ -308,8 +313,9 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     history && push!(ArNorms, ArNorm)
 
     # Update stopping criterion.
+    breakdown = βₖ₊₁ ≤ btol
     solved = rNorm ≤ ε
-    inconsistent = abs(μbarₖ) ≤ √eps(T)
+    inconsistent = abs(μbarₖ) ≤ btol || (breakdown && !solved)
     tired = iter ≥ itmax
 
     # Update variables
@@ -325,7 +331,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     μbarₖ₋₁ = μbarₖ
     ζbarₖ = ζbarₖ₊₁
     βₖ = βₖ₊₁
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, βₖ₊₁)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e\n", iter, rNorm, ArNorm, βₖ₊₁, μbarₖ)
   end
   (verbose > 0) && @printf("\n")
 
@@ -337,7 +343,9 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     @kaxpy!(n, τₖ, wₖ, x)
   end
 
-  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  tired        && (status = "maximum number of iterations exceeded")
+  inconsistent && (status = "found approximate minimum least-squares solution")
+  solved       && (status = "solution good enough given atol and rtol")
 
   # Update x
   restart && @kaxpy!(n, one(T), Δx, x)
