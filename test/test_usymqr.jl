@@ -1,7 +1,7 @@
 @testset "usymqr" begin
   usymqr_tol = 1.0e-6
 
-  for FC in (Float64,)
+  for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
 
       # Symmetric and positive definite system.
@@ -67,7 +67,7 @@
 
       # Underdetermined and consistent systems.
       A, b = under_consistent(FC=FC)
-      c = ones(25)
+      c = ones(FC, 25)
       (x, stats) = usymqr(A, b, c)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -75,13 +75,13 @@
 
       # Underdetermined and inconsistent systems.
       A, b = under_inconsistent(FC=FC)
-      c = [(-1.0)^i for i=1:25]
+      c = [iseven(i) ? one(FC) : -one(FC) for i=1:25]
       (x, stats) = usymqr(A, b, c)
       @test stats.inconsistent
 
       # Square and consistent systems.
       A, b = square_consistent(FC=FC)
-      c = ones(10)
+      c = ones(FC, 10)
       (x, stats) = usymqr(A, b, c)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -89,13 +89,13 @@
 
       # Square and inconsistent systems.
       A, b = square_inconsistent(FC=FC)
-      c = ones(10)
+      c = ones(FC, 10)
       (x, stats) = usymqr(A, b, c)
       @test stats.inconsistent
 
       # Overdetermined and consistent systems.
       A, b = over_consistent(FC=FC)
-      c = ones(10)
+      c = ones(FC, 10)
       (x, stats) = usymqr(A, b, c)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -103,7 +103,7 @@
 
       # Overdetermined and inconsistent systems.
       A, b = over_inconsistent(FC=FC)
-      c = [(-2.0)^i for i=1:10]
+      c = [2^i * (iseven(i) ? one(FC) : -one(FC)) for i=1:10]
       (x, stats) = usymqr(A, b, c)
       @test stats.inconsistent
 

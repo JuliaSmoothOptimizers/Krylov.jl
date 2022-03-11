@@ -66,7 +66,7 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   (verbose > 0) && @printf("USYMQR: system of %d equations in %d variables\n", m, n)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
@@ -80,7 +80,7 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   reset!(stats)
 
   # Initial solution x₀ and residual norm ‖r₀‖.
-  x .= zero(T)
+  x .= zero(FC)
   rNorm = @knrm2(m, b)
   history && push!(rNorms, rNorm)
   if rNorm == 0
@@ -99,17 +99,17 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Aᵀrₖ₋₁‖")
   kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
-  βₖ = @knrm2(m, b)           # β₁ = ‖v₁‖
-  γₖ = @knrm2(n, c)           # γ₁ = ‖u₁‖
-  vₖ₋₁ .= zero(T)             # v₀ = 0
-  uₖ₋₁ .= zero(T)             # u₀ = 0
-  vₖ .= b ./ βₖ               # v₁ = b / β₁
-  uₖ .= c ./ γₖ               # u₁ = c / γ₁
-  cₖ₋₂ = cₖ₋₁ = cₖ = one(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
-  sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-  wₖ₋₂ .= zero(T)             # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
-  wₖ₋₁ .= zero(T)             # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
-  ζbarₖ = βₖ                  # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
+  βₖ = @knrm2(m, b)            # β₁ = ‖v₁‖
+  γₖ = @knrm2(n, c)            # γ₁ = ‖u₁‖
+  vₖ₋₁ .= zero(FC)             # v₀ = 0
+  uₖ₋₁ .= zero(FC)             # u₀ = 0
+  vₖ .= b ./ βₖ                # v₁ = b / β₁
+  uₖ .= c ./ γₖ                # u₁ = c / γ₁
+  cₖ₋₂ = cₖ₋₁ = cₖ = one(T)    # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+  sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+  wₖ₋₂ .= zero(FC)             # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
+  wₖ₋₁ .= zero(FC)             # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
+  ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -131,10 +131,10 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     @kaxpy!(m, -γₖ, vₖ₋₁, q) # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p) # p ← p - βₖ * uₖ₋₁
 
-    αₖ = @kdot(m, vₖ, q)     # αₖ = qᵀvₖ
+    αₖ = @kdot(m, vₖ, q)     # αₖ = ⟨vₖ,q⟩
 
-    @kaxpy!(m, -αₖ, vₖ, q)   # q ← q - αₖ * vₖ
-    @kaxpy!(n, -αₖ, uₖ, p)   # p ← p - αₖ * uₖ
+    @kaxpy!(m, -     αₖ , vₖ, q)   # q ← q - αₖ * vₖ
+    @kaxpy!(n, -conj(αₖ), uₖ, p)   # p ← p - ᾱₖ * uₖ
 
     βₖ₊₁ = @knrm2(m, q)      # βₖ₊₁ = ‖q‖
     γₖ₊₁ = @knrm2(n, p)      # γₖ₊₁ = ‖p‖
@@ -157,7 +157,7 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     # Apply previous Givens reflections Qₖ₋₂.ₖ₋₁
     if iter ≥ 3
       # [cₖ₋₂  sₖ₋₂] [0 ] = [  ϵₖ₋₂ ]
-      # [sₖ₋₂ -cₖ₋₂] [γₖ]   [λbarₖ₋₁]
+      # [s̄ₖ₋₂ -cₖ₋₂] [γₖ]   [λbarₖ₋₁]
       ϵₖ₋₂    =  sₖ₋₂ * γₖ
       λbarₖ₋₁ = -cₖ₋₂ * γₖ
     end
@@ -166,37 +166,37 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     if iter ≥ 2
       iter == 2 && (λbarₖ₋₁ = γₖ)
       # [cₖ₋₁  sₖ₋₁] [λbarₖ₋₁] = [λₖ₋₁ ]
-      # [sₖ₋₁ -cₖ₋₁] [   αₖ  ]   [δbarₖ]
-      λₖ₋₁  = cₖ₋₁ * λbarₖ₋₁ + sₖ₋₁ * αₖ
-      δbarₖ = sₖ₋₁ * λbarₖ₋₁ - cₖ₋₁ * αₖ
+      # [s̄ₖ₋₁ -cₖ₋₁] [   αₖ  ]   [δbarₖ]
+      λₖ₋₁  =      cₖ₋₁  * λbarₖ₋₁ + sₖ₋₁ * αₖ
+      δbarₖ = conj(sₖ₋₁) * λbarₖ₋₁ - cₖ₋₁ * αₖ
     end
 
     # Compute and apply current Givens reflection Qₖ.ₖ₊₁
     iter == 1 && (δbarₖ = αₖ)
     # [cₖ  sₖ] [δbarₖ] = [δₖ]
-    # [sₖ -cₖ] [βₖ₊₁ ]   [0 ]
+    # [s̄ₖ -cₖ] [βₖ₊₁ ]   [0 ]
     (cₖ, sₖ, δₖ) = sym_givens(δbarₖ, βₖ₊₁)
 
     # Update z̅ₖ₊₁ = Qₖ.ₖ₊₁ [ z̄ₖ ]
     #                      [ 0  ]
     #
     # [cₖ  sₖ] [ζbarₖ] = [   ζₖ  ]
-    # [sₖ -cₖ] [  0  ]   [ζbarₖ₊₁]
-    ζₖ      = cₖ * ζbarₖ
-    ζbarₖ₊₁ = sₖ * ζbarₖ
+    # [s̄ₖ -cₖ] [  0  ]   [ζbarₖ₊₁]
+    ζₖ      =      cₖ  * ζbarₖ
+    ζbarₖ₊₁ = conj(sₖ) * ζbarₖ
 
     # Compute the direction wₖ, the last column of Wₖ = Uₖ(Rₖ)⁻¹ ⟷ (Rₖ)ᵀ(Wₖ)ᵀ = (Uₖ)ᵀ.
     # w₁ = u₁ / δ₁
     if iter == 1
       wₖ = wₖ₋₁
-      @kaxpy!(n, one(T), uₖ, wₖ)
+      @kaxpy!(n, one(FC), uₖ, wₖ)
       @. wₖ = wₖ / δₖ
     end
     # w₂ = (u₂ - λ₁w₁) / δ₂
     if iter == 2
       wₖ = wₖ₋₂
       @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
-      @kaxpy!(n, one(T), uₖ, wₖ)
+      @kaxpy!(n, one(FC), uₖ, wₖ)
       @. wₖ = wₖ / δₖ
     end
     # wₖ = (uₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
@@ -204,7 +204,7 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
       @kscal!(n, -ϵₖ₋₂, wₖ₋₂)
       wₖ = wₖ₋₂
       @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
-      @kaxpy!(n, one(T), uₖ, wₖ)
+      @kaxpy!(n, one(FC), uₖ, wₖ)
       @. wₖ = wₖ / δₖ
     end
 
@@ -216,8 +216,8 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     rNorm = abs(ζbarₖ₊₁)
     history && push!(rNorms, rNorm)
 
-    # Compute ‖Aᵀrₖ₋₁‖ = |ζbarₖ| * √((δbarₖ)² + (λbarₖ)²).
-    AᵀrNorm = abs(ζbarₖ) * √(δbarₖ^2 + (cₖ₋₁ * γₖ₊₁)^2)
+    # Compute ‖Aᵀrₖ₋₁‖ = |ζbarₖ| * √(|δbarₖ|² + |λbarₖ|²).
+    AᵀrNorm = abs(ζbarₖ) * √(abs2(δbarₖ) + abs2(cₖ₋₁ * γₖ₊₁))
     history && push!(AᵀrNorms, AᵀrNorm)
 
     # Compute uₖ₊₁ and uₖ₊₁.
