@@ -69,7 +69,7 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
@@ -85,10 +85,10 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Initial solution x₀ and residual r₀.
   restart && (Δx .= x)
-  x .= zero(T)  # x₀
+  x .= zero(FC)  # x₀
   if restart
     mul!(t, A, Δx)
-    @kaxpby!(n, one(T), b, -one(T), t)
+    @kaxpby!(n, one(FC), b, -one(FC), t)
   else
     t .= b
   end
@@ -113,12 +113,12 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # Set up workspace.
   mem = length(c)  # Memory.
   for i = 1 : mem
-    V[i] .= zero(T)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
-    P[i] .= zero(T)  # Directions for x : Pₘ = N⁻¹Vₘ(Rₘ)⁻¹.
+    V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
+    P[i] .= zero(FC)  # Directions for x : Pₘ = N⁻¹Vₘ(Rₘ)⁻¹.
   end
-  s .= zero(T)  # Last mem Givens sines used for the factorization QₘRₘ = Hₘ.
-  c .= zero(T)  # Last mem Givens cosines used for the factorization QₘRₘ = Hₘ.
-  H .= zero(T)  # Last column of the band hessenberg matrix Hₘ.
+  c .= zero(T)   # Last mem Givens cosines used for the factorization QₘRₘ = Hₘ.
+  s .= zero(FC)  # Last mem Givens sines used for the factorization QₘRₘ = Hₘ.
+  H .= zero(FC)  # Last column of the band hessenberg matrix Hₘ.
   # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
   # In addition of that, the last column of Rₘ is also stored in H.
@@ -161,7 +161,7 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
     # rₘ₋ₘₑₘ.ₘ ≠ 0 when m ≥ mem + 1
     if iter ≥ mem + 2
-      H[mem+2] = zero(T) # hₘ₋ₘₑₘ.ₘ = 0
+      H[mem+2] = zero(FC) # hₘ₋ₘₑₘ.ₘ = 0
     end
 
     # Update the QR factorization of H.
@@ -170,8 +170,8 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       irot_pos = mod(i-1, mem) + 1 # Position corresponding to cᵢ and sᵢ in circular stacks c and s.
       diag = iter - i + 1
       next_diag = diag + 1
-      H_aux        = c[irot_pos] * H[next_diag] + s[irot_pos] * H[diag]
-      H[diag]      = s[irot_pos] * H[next_diag] - c[irot_pos] * H[diag]
+      H_aux        =      c[irot_pos]  * H[next_diag] + s[irot_pos] * H[diag]
+      H[diag]      = conj(s[irot_pos]) * H[next_diag] - c[irot_pos] * H[diag]
       H[next_diag] = H_aux
     end
 
@@ -179,8 +179,8 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # [cₘ  sₘ] [ hₘ.ₘ ] = [ρₘ]
     # [sₘ -cₘ] [hₘ₊₁.ₘ]   [0 ]
     (c[pos], s[pos], H[2]) = sym_givens(H[2], H[1])
-    γₘ₊₁ = s[pos] * γₘ
-    γₘ   = c[pos] * γₘ
+    γₘ₊₁ = conj(s[pos]) * γₘ
+    γₘ   =      c[pos]  * γₘ
 
     # Compute the direction pₘ, the last column of Pₘ = N⁻¹Vₘ(Rₘ)⁻¹.
     for i = max(1,iter-mem) : iter-1
@@ -195,7 +195,7 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       end
     end
     # pₐᵤₓ ← pₐᵤₓ + N⁻¹vₘ
-    @kaxpy!(n, one(T), z, P[pos])
+    @kaxpy!(n, one(FC), z, P[pos])
     # pₘ = pₐᵤₓ / hₘ.ₘ
     @. P[pos] = P[pos] / H[2]
 
@@ -220,7 +220,7 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
 
   # Update x
-  restart && @kaxpy!(n, one(T), Δx, x)
+  restart && @kaxpy!(n, one(FC), Δx, x)
 
   # Update stats
   stats.niter = iter
