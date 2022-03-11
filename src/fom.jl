@@ -65,7 +65,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
@@ -81,10 +81,10 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Initial solution x₀ and residual r₀.
   restart && (Δx .= x)
-  x .= zero(T)            # x₀
+  x .= zero(FC)  # x₀
   if restart
     mul!(w, A, Δx)
-    @kaxpby!(n, one(T), b, -one(T), w)
+    @kaxpby!(n, one(FC), b, -one(FC), w)
   else
     w .= b
   end
@@ -110,11 +110,11 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   nr = 0           # Number of coefficients stored in Uₖ.
   mem = length(l)  # Memory
   for i = 1 : mem
-    V[i] .= zero(T)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
+    V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
   end
-  l .= zero(T)  # Lower unit triangular matrix Lₖ.
-  U .= zero(T)  # Upper triangular matrix Uₖ.
-  z .= zero(T)  # Solution of Lₖzₖ = βe₁.
+  l .= zero(FC)  # Lower unit triangular matrix Lₖ.
+  U .= zero(FC)  # Upper triangular matrix Uₖ.
+  z .= zero(FC)  # Solution of Lₖzₖ = βe₁.
 
   # Initial ζ₁ and V₁.
   z[1] = β
@@ -137,10 +137,10 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Update workspace if more storage is required
     if iter > mem
       for i = 1 : iter
-        push!(U, zero(T))
+        push!(U, zero(FC))
       end
-      push!(l, zero(T))
-      push!(z, zero(T))
+      push!(l, zero(FC))
+      push!(z, zero(FC))
     end
 
     # Continue the Arnoldi process.
@@ -227,7 +227,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   solved    && (status = "solution good enough given atol and rtol")
 
   # Update x
-  restart && @kaxpy!(n, one(T), Δx, x)
+  restart && @kaxpy!(n, one(FC), Δx, x)
 
   # Update stats
   stats.niter = iter
