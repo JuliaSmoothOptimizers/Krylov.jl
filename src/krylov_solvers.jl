@@ -342,8 +342,8 @@ mutable struct DqgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   P     :: Vector{S}
   V     :: Vector{S}
   c     :: Vector{T}
-  s     :: Vector{T}
-  H     :: Vector{T}
+  s     :: Vector{FC}
+  H     :: Vector{FC}
   stats :: SimpleStats{T}
 
   function DqgmresSolver(n, m, memory, S)
@@ -357,8 +357,8 @@ mutable struct DqgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     P  = [S(undef, n) for i = 1 : memory]
     V  = [S(undef, n) for i = 1 : memory]
     c  = Vector{T}(undef, memory)
-    s  = Vector{T}(undef, memory)
-    H  = Vector{T}(undef, memory+2)
+    s  = Vector{FC}(undef, memory)
+    H  = Vector{FC}(undef, memory+2)
     stats = SimpleStats(false, false, T[], T[], T[], "unknown")
     solver = new{T,FC,S}(Δx, x, t, z, w, P, V, c, s, H, stats)
     return solver
