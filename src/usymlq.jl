@@ -69,7 +69,7 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   (verbose > 0) && @printf("USYMLQ: system of %d equations in %d variables\n", m, n)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
@@ -83,7 +83,7 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   reset!(stats)
 
   # Initial solution x₀ and residual norm ‖r₀‖.
-  x .= zero(T)
+  x .= zero(FC)
   bNorm = @knrm2(m, b)
   history && push!(rNorms, bNorm)
   if bNorm == 0
@@ -101,18 +101,18 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
 
-  βₖ = @knrm2(m, b)          # β₁ = ‖v₁‖
-  γₖ = @knrm2(n, c)          # γ₁ = ‖u₁‖
-  vₖ₋₁ .= zero(T)            # v₀ = 0
-  uₖ₋₁ .= zero(T)            # u₀ = 0
-  vₖ .= b ./ βₖ              # v₁ = b / β₁
-  uₖ .= c ./ γₖ              # u₁ = c / γ₁
-  cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
-  sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
-  d̅ .= zero(T)               # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
-  ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
-  ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
-  δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and Lₖ modified over the course of two iterations
+  βₖ = @knrm2(m, b)           # β₁ = ‖v₁‖
+  γₖ = @knrm2(n, c)           # γ₁ = ‖u₁‖
+  vₖ₋₁ .= zero(FC)            # v₀ = 0
+  uₖ₋₁ .= zero(FC)            # u₀ = 0
+  vₖ .= b ./ βₖ               # v₁ = b / β₁
+  uₖ .= c ./ γₖ               # u₁ = c / γ₁
+  cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
+  sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
+  d̅ .= zero(FC)               # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
+  ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
+  ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
+  δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and Lₖ modified over the course of two iterations
 
   # Stopping criterion.
   solved_lq = bNorm ≤ ε
@@ -134,10 +134,10 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     @kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
 
-    αₖ = @kdot(m, q, vₖ)      # αₖ = qᵀvₖ
+    αₖ = @kdot(m, vₖ, q)      # αₖ = ⟨vₖ,q⟩
 
-    @kaxpy!(m, -αₖ, vₖ, q)    # q ← q - αₖ * vₖ
-    @kaxpy!(n, -αₖ, uₖ, p)    # p ← p - αₖ * uₖ
+    @kaxpy!(m, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
+    @kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
 
     βₖ₊₁ = @knrm2(m, q)       # βₖ₊₁ = ‖q‖
     γₖ₊₁ = @knrm2(n, p)       # γₖ₊₁ = ‖p‖
@@ -154,26 +154,26 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     if iter == 1
       δbarₖ = αₖ
     elseif iter == 2
-      # [δbar₁ γ₂] [c₂  s₂] = [δ₁   0  ]
+      # [δbar₁ γ₂] [c₂  s̄₂] = [δ₁   0  ]
       # [ β₂   α₂] [s₂ -c₂]   [λ₁ δbar₂]
       (cₖ, sₖ, δₖ₋₁) = sym_givens(δbarₖ₋₁, γₖ)
-      λₖ₋₁  = cₖ * βₖ + sₖ * αₖ
-      δbarₖ = sₖ * βₖ - cₖ * αₖ
+      λₖ₋₁  =      cₖ  * βₖ + sₖ * αₖ
+      δbarₖ = conj(sₖ) * βₖ - cₖ * αₖ
     else
-      # [0  βₖ  αₖ] [cₖ₋₁   sₖ₋₁   0] = [sₖ₋₁βₖ  -cₖ₋₁βₖ  αₖ]
+      # [0  βₖ  αₖ] [cₖ₋₁   s̄ₖ₋₁   0] = [sₖ₋₁βₖ  -cₖ₋₁βₖ  αₖ]
       #             [sₖ₋₁  -cₖ₋₁   0]
       #             [ 0      0     1]
       #
       # [ λₖ₋₂   δbarₖ₋₁  γₖ] [1   0   0 ] = [λₖ₋₂  δₖ₋₁    0  ]
-      # [sₖ₋₁βₖ  -cₖ₋₁βₖ  αₖ] [0   cₖ  sₖ]   [ϵₖ₋₂  λₖ₋₁  δbarₖ]
+      # [sₖ₋₁βₖ  -cₖ₋₁βₖ  αₖ] [0   cₖ  s̄ₖ]   [ϵₖ₋₂  λₖ₋₁  δbarₖ]
       #                       [0   sₖ -cₖ]
       (cₖ, sₖ, δₖ₋₁) = sym_givens(δbarₖ₋₁, γₖ)
       ϵₖ₋₂  =  sₖ₋₁ * βₖ
-      λₖ₋₁  = -cₖ₋₁ * cₖ * βₖ + sₖ * αₖ
-      δbarₖ = -cₖ₋₁ * sₖ * βₖ - cₖ * αₖ
+      λₖ₋₁  = -cₖ₋₁ *      cₖ  * βₖ + sₖ * αₖ
+      δbarₖ = -cₖ₋₁ * conj(sₖ) * βₖ - cₖ * αₖ
     end
 
-    # Compute ζₖ₋₁ and ζbarₖ, last components of the solution of Lₖz̅ₖ = β₁e₁
+    # Compute ζₖ₋₁ and ζbarₖ, last components of the solution of L̅ₖz̅ₖ = β₁e₁
     # [δbar₁] [ζbar₁] = [β₁]
     if iter == 1
       ηₖ = βₖ
@@ -196,8 +196,8 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     end
 
     # Relations for the directions dₖ₋₁ and d̅ₖ, the last two columns of D̅ₖ = Uₖ(Qₖ)ᵀ.
-    # [d̅ₖ₋₁ uₖ] [cₖ  sₖ] = [dₖ₋₁ d̅ₖ] ⟷ dₖ₋₁ = cₖ * d̅ₖ₋₁ + sₖ * uₖ
-    #           [sₖ -cₖ]             ⟷ d̅ₖ   = sₖ * d̅ₖ₋₁ - cₖ * uₖ
+    # [d̅ₖ₋₁ uₖ] [cₖ  s̄ₖ] = [dₖ₋₁ d̅ₖ] ⟷ dₖ₋₁ = cₖ * d̅ₖ₋₁ + sₖ * uₖ
+    #           [sₖ -cₖ]             ⟷ d̅ₖ   = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
     if iter ≥ 2
       # Compute solution xₖ.
       # (xᴸ)ₖ₋₁ ← (xᴸ)ₖ₋₂ + ζₖ₋₁ * dₖ₋₁
@@ -210,8 +210,8 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
       # d̅₁ = u₁
       @. d̅ = uₖ
     else
-      # d̅ₖ = sₖ * d̅ₖ₋₁ - cₖ * uₖ
-      @kaxpby!(n, -cₖ, uₖ, sₖ, d̅)
+      # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
+      @kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
     end
 
     # Compute uₖ₊₁ and uₖ₊₁.
@@ -226,19 +226,19 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     end
 
     # Compute USYMLQ residual norm
-    # ‖rₖ‖ = √((μₖ)² + (ωₖ)²)
+    # ‖rₖ‖ = √(|μₖ|² + |ωₖ|²)
     if iter == 1
       rNorm_lq = bNorm
     else
       μₖ = βₖ * (sₖ₋₁ * ζₖ₋₂ - cₖ₋₁ * cₖ * ζₖ₋₁) + αₖ * sₖ * ζₖ₋₁
       ωₖ = βₖ₊₁ * sₖ * ζₖ₋₁
-      rNorm_lq = sqrt(μₖ^2 + ωₖ^2)
+      rNorm_lq = sqrt(abs2(μₖ) + abs2(ωₖ))
     end
     history && push!(rNorms, rNorm_lq)
 
     # Compute USYMCG residual norm
     # ‖rₖ‖ = |ρₖ|
-    if transfer_to_usymcg && (δbarₖ ≠ 0)
+    if transfer_to_usymcg && (abs(δbarₖ) > eps(T))
       ζbarₖ = ηₖ / δbarₖ
       ρₖ = βₖ₊₁ * (sₖ * ζₖ₋₁ - cₖ * ζbarₖ)
       rNorm_cg = abs(ρₖ)
@@ -253,7 +253,7 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
 
     # Update stopping criterion.
     solved_lq = rNorm_lq ≤ ε
-    solved_cg = transfer_to_usymcg && (δbarₖ ≠ 0) && (rNorm_cg ≤ ε)
+    solved_cg = transfer_to_usymcg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ ε)
     tired = iter ≥ itmax
     kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
   end
