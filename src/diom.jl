@@ -69,7 +69,7 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
@@ -85,10 +85,10 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Initial solution x₀ and residual r₀.
   restart && (Δx .= x)
-  x .= zero(T)  # x₀
+  x .= zero(FC)  # x₀
   if restart
     mul!(t, A, Δx)
-    @kaxpby!(n, one(T), b, -one(T), t)
+    @kaxpby!(n, one(FC), b, -one(FC), t)
   else
     t .= b
   end
@@ -112,14 +112,14 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   mem = length(L)  # Memory
   for i = 1 : mem
-    V[i] .= zero(T)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
-    P[i] .= zero(T)  # Directions for x : Pₘ = N⁻¹Vₘ(Uₘ)⁻¹.
+    V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
+    P[i] .= zero(FC)  # Directions for x : Pₘ = N⁻¹Vₘ(Uₘ)⁻¹.
   end
-  H .= zero(T)  # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
+  H .= zero(FC)  # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
   # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
   # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
   # In addition of that, the last column of Uₘ is stored in H.
-  L .= zero(T)  # Last mem pivots of Lₘ.
+  L .= zero(FC)  # Last mem pivots of Lₘ.
 
   # Initial ξ₁ and V₁.
   ξ = rNorm
@@ -157,7 +157,7 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
     # It's possible that uₘ₋ₘₑₘ.ₘ ≠ 0 when m ≥ mem + 1
     if iter ≥ mem + 2
-      H[mem+2] = zero(T) # hₘ₋ₘₑₘ.ₘ = 0
+      H[mem+2] = zero(FC) # hₘ₋ₘₑₘ.ₘ = 0
     end
 
     # Update the LU factorization with partial pivoting of H.
@@ -190,7 +190,7 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
       end
     end
     # pₐᵤₓ ← pₐᵤₓ + N⁻¹vₘ
-    @kaxpy!(n, one(T), z, P[pos])
+    @kaxpy!(n, one(FC), z, P[pos])
     # pₘ = pₐᵤₓ / uₘ.ₘ
     @. P[pos] = P[pos] / H[2]
 
@@ -200,7 +200,7 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     # Compute residual norm.
     # ‖ M⁻¹(b - Axₘ) ‖₂ = hₘ₊₁.ₘ * |ξₘ / uₘ.ₘ|
-    rNorm = H[1] * abs(ξ / H[2])
+    rNorm = real(H[1]) * abs(ξ / H[2])
     history && push!(rNorms, rNorm)
 
     # Update stopping criterion.
@@ -212,7 +212,7 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
 
   # Update x
-  restart && @kaxpy!(n, one(T), Δx, x)
+  restart && @kaxpy!(n, one(FC), Δx, x)
 
   # Update stats
   stats.niter = iter
