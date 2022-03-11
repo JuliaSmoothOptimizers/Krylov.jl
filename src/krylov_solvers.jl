@@ -1476,9 +1476,9 @@ mutable struct FomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   p     :: S
   q     :: S
   V     :: Vector{S}
-  l     :: Vector{T}
-  z     :: Vector{T}
-  U     :: Vector{T}
+  l     :: Vector{FC}
+  z     :: Vector{FC}
+  U     :: Vector{FC}
   stats :: SimpleStats{T}
 
   function FomSolver(n, m, memory, S)
@@ -1491,9 +1491,9 @@ mutable struct FomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     p  = S(undef, 0)
     q  = S(undef, 0)
     V  = [S(undef, n) for i = 1 : memory]
-    l  = Vector{T}(undef, memory)
-    z  = Vector{T}(undef, memory)
-    U  = Vector{T}(undef, div(memory * (memory+1), 2))
+    l  = Vector{FC}(undef, memory)
+    z  = Vector{FC}(undef, memory)
+    U  = Vector{FC}(undef, div(memory * (memory+1), 2))
     stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
     solver = new{T,FC,S}(Δx, x, w, p, q, V, l, z, U, stats)
     return solver
