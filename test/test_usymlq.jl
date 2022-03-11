@@ -1,7 +1,7 @@
 @testset "usymlq" begin
   usymlq_tol = 1.0e-6
 
-  for FC in (Float64,)
+  for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
 
       # Symmetric and positive definite system.
@@ -67,7 +67,7 @@
 
       # Underdetermined and consistent systems.
       A, b = under_consistent(FC=FC)
-      c = ones(25)
+      c = ones(FC, 25)
       (x, stats) = usymlq(A, b, c)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -75,7 +75,7 @@
 
       # Square and consistent systems.
       A, b = square_consistent(FC=FC)
-      c = ones(10)
+      c = ones(FC, 10)
       (x, stats) = usymlq(A, b, c)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -83,7 +83,7 @@
 
       # Overdetermined and consistent systems.
       A, b = over_consistent(FC=FC)
-      c = ones(10)
+      c = ones(FC, 10)
       (x, stats) = usymlq(A, b, c)
       r = b - A * x
       resid = norm(r) / norm(b)
