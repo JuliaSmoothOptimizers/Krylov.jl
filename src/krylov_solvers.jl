@@ -389,13 +389,13 @@ mutable struct DiomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   w     :: S
   P     :: Vector{S}
   V     :: Vector{S}
-  L     :: Vector{T}
-  H     :: Vector{T}
+  L     :: Vector{FC}
+  H     :: Vector{FC}
   stats :: SimpleStats{T}
 
   function DiomSolver(n, m, memory, S)
-    FC  = eltype(S)
-    T   = real(FC)
+    FC = eltype(S)
+    T  = real(FC)
     Δx = S(undef, 0)
     x  = S(undef, n)
     t  = S(undef, n)
@@ -403,8 +403,8 @@ mutable struct DiomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     w  = S(undef, 0)
     P  = [S(undef, n) for i = 1 : memory]
     V  = [S(undef, n) for i = 1 : memory]
-    L  = Vector{T}(undef, memory)
-    H  = Vector{T}(undef, memory+2)
+    L  = Vector{FC}(undef, memory)
+    H  = Vector{FC}(undef, memory+2)
     stats = SimpleStats(false, false, T[], T[], T[], "unknown")
     solver = new{T,FC,S}(Δx, x, t, z, w, P, V, L, H, stats)
     return solver
