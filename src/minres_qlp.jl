@@ -265,7 +265,6 @@ function minres_qlp!(solver :: MinresQlpSolver{T,S}, A, b :: AbstractVector{T};
     else
       τₖ₋₂ = τₖ₋₁
       τₖ₋₂ = τₖ₋₂ * μbisₖ₋₂ / μₖ₋₂
-      τₖ₋₁ = τₖ
       τₖ₋₁ = (ξₖ₋₁ - ψₖ₋₂ * τₖ₋₂) / μbisₖ₋₁
       ξₖ   = ζₖ - ρₖ₋₂ * τₖ₋₂
       τₖ   = (ξₖ - ψbarₖ₋₁ * τₖ₋₁) / μbarₖ
