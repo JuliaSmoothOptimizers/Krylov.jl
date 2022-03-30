@@ -59,7 +59,7 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   (verbose > 0) && @printf("TRILQR: dual system of %d equations in %d variables\n", n, m)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
@@ -73,11 +73,11 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   reset!(stats)
 
   # Initial solution x₀ and residual r₀ = b - Ax₀.
-  x .= zero(T)          # x₀
+  x .= zero(FC)         # x₀
   bNorm = @knrm2(m, b)  # rNorm = ‖r₀‖
 
   # Initial solution y₀ and residual s₀ = c - Aᵀy₀.
-  t .= zero(T)          # t₀
+  t .= zero(FC)         # t₀
   cNorm = @knrm2(n, c)  # sNorm = ‖s₀‖
 
   iter = 0
@@ -92,22 +92,22 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   display(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
   # Set up workspace.
-  βₖ = @knrm2(m, b)          # β₁ = ‖v₁‖
-  γₖ = @knrm2(n, c)          # γ₁ = ‖u₁‖
-  vₖ₋₁ .= zero(T)            # v₀ = 0
-  uₖ₋₁ .= zero(T)            # u₀ = 0
-  vₖ .= b ./ βₖ              # v₁ = b / β₁
-  uₖ .= c ./ γₖ              # u₁ = c / γ₁
-  cₖ₋₁ = cₖ = -one(T)        # Givens cosines used for the LQ factorization of Tₖ
-  sₖ₋₁ = sₖ = zero(T)        # Givens sines used for the LQ factorization of Tₖ
-  d̅ .= zero(T)               # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
-  ζₖ₋₁ = ζbarₖ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
-  ζₖ₋₂ = ηₖ = zero(T)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
-  δbarₖ₋₁ = δbarₖ = zero(T)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
-  ψbarₖ₋₁ = ψₖ₋₁ = zero(T)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
-  ϵₖ₋₃ = λₖ₋₂ = zero(T)      # Components of Lₖ₋₁
-  wₖ₋₃ .= zero(T)            # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᵀ
-  wₖ₋₂ .= zero(T)            # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᵀ
+  βₖ = @knrm2(m, b)           # β₁ = ‖v₁‖
+  γₖ = @knrm2(n, c)           # γ₁ = ‖u₁‖
+  vₖ₋₁ .= zero(FC)            # v₀ = 0
+  uₖ₋₁ .= zero(FC)            # u₀ = 0
+  vₖ .= b ./ βₖ               # v₁ = b / β₁
+  uₖ .= c ./ γₖ               # u₁ = c / γ₁
+  cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
+  sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
+  d̅ .= zero(FC)               # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
+  ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
+  ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
+  δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
+  ψbarₖ₋₁ = ψₖ₋₁ = zero(FC)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
+  ϵₖ₋₃ = λₖ₋₂ = zero(FC)      # Components of Lₖ₋₁
+  wₖ₋₃ .= zero(FC)            # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᵀ
+  wₖ₋₂ .= zero(FC)            # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᵀ
 
   # Stopping criterion.
   inconsistent = false
@@ -134,10 +134,10 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     @kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
 
-    αₖ = @kdot(m, q, vₖ)      # αₖ = qᵀvₖ
+    αₖ = @kdot(m, vₖ, q)      # αₖ = ⟨vₖ,q⟩
 
-    @kaxpy!(m, -αₖ, vₖ, q)    # q ← q - αₖ * vₖ
-    @kaxpy!(n, -αₖ, uₖ, p)    # p ← p - αₖ * uₖ
+    @kaxpy!(m, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
+    @kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
 
     βₖ₊₁ = @knrm2(m, q)       # βₖ₊₁ = ‖q‖
     γₖ₊₁ = @knrm2(n, p)       # γₖ₊₁ = ‖p‖
@@ -154,27 +154,27 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     if iter == 1
       δbarₖ = αₖ
     elseif iter == 2
-      # [δbar₁ γ₂] [c₂  s₂] = [δ₁   0  ]
+      # [δbar₁ γ₂] [c₂  s̄₂] = [δ₁   0  ]
       # [ β₂   α₂] [s₂ -c₂]   [λ₁ δbar₂]
       (cₖ, sₖ, δₖ₋₁) = sym_givens(δbarₖ₋₁, γₖ)
-      λₖ₋₁  = cₖ * βₖ + sₖ * αₖ
-      δbarₖ = sₖ * βₖ - cₖ * αₖ
+      λₖ₋₁  =      cₖ  * βₖ + sₖ * αₖ
+      δbarₖ = conj(sₖ) * βₖ - cₖ * αₖ
     else
-      # [0  βₖ  αₖ] [cₖ₋₁   sₖ₋₁   0] = [sₖ₋₁βₖ  -cₖ₋₁βₖ  αₖ]
+      # [0  βₖ  αₖ] [cₖ₋₁   s̄ₖ₋₁   0] = [sₖ₋₁βₖ  -cₖ₋₁βₖ  αₖ]
       #             [sₖ₋₁  -cₖ₋₁   0]
       #             [ 0      0     1]
       #
       # [ λₖ₋₂   δbarₖ₋₁  γₖ] [1   0   0 ] = [λₖ₋₂  δₖ₋₁    0  ]
-      # [sₖ₋₁βₖ  -cₖ₋₁βₖ  αₖ] [0   cₖ  sₖ]   [ϵₖ₋₂  λₖ₋₁  δbarₖ]
+      # [sₖ₋₁βₖ  -cₖ₋₁βₖ  αₖ] [0   cₖ  s̄ₖ]   [ϵₖ₋₂  λₖ₋₁  δbarₖ]
       #                       [0   sₖ -cₖ]
       (cₖ, sₖ, δₖ₋₁) = sym_givens(δbarₖ₋₁, γₖ)
       ϵₖ₋₂  =  sₖ₋₁ * βₖ
-      λₖ₋₁  = -cₖ₋₁ * cₖ * βₖ + sₖ * αₖ
-      δbarₖ = -cₖ₋₁ * sₖ * βₖ - cₖ * αₖ
+      λₖ₋₁  = -cₖ₋₁ *      cₖ  * βₖ + sₖ * αₖ
+      δbarₖ = -cₖ₋₁ * conj(sₖ) * βₖ - cₖ * αₖ
     end
 
     if !solved_primal
-      # Compute ζₖ₋₁ and ζbarₖ, last components of the solution of Lₖz̅ₖ = β₁e₁
+      # Compute ζₖ₋₁ and ζbarₖ, last components of the solution of L̅ₖz̅ₖ = β₁e₁
       # [δbar₁] [ζbar₁] = [β₁]
       if iter == 1
         ηₖ = βₖ
@@ -197,8 +197,8 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
       end
 
       # Relations for the directions dₖ₋₁ and d̅ₖ, the last two columns of D̅ₖ = Uₖ(Qₖ)ᵀ.
-      # [d̅ₖ₋₁ uₖ] [cₖ  sₖ] = [dₖ₋₁ d̅ₖ] ⟷ dₖ₋₁ = cₖ * d̅ₖ₋₁ + sₖ * uₖ
-      #           [sₖ -cₖ]             ⟷ d̅ₖ   = sₖ * d̅ₖ₋₁ - cₖ * uₖ
+      # [d̅ₖ₋₁ uₖ] [cₖ  s̄ₖ] = [dₖ₋₁ d̅ₖ] ⟷ dₖ₋₁ = cₖ * d̅ₖ₋₁ + sₖ * uₖ
+      #           [sₖ -cₖ]             ⟷ d̅ₖ   = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
       if iter ≥ 2
         # Compute solution xₖ.
         # (xᴸ)ₖ ← (xᴸ)ₖ₋₁ + ζₖ₋₁ * dₖ₋₁
@@ -211,24 +211,24 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
         # d̅₁ = u₁
         @. d̅ = uₖ
       else
-        # d̅ₖ = sₖ * d̅ₖ₋₁ - cₖ * uₖ
-        @kaxpby!(n, -cₖ, uₖ, sₖ, d̅)
+        # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
+        @kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
       end
 
       # Compute USYMLQ residual norm
-      # ‖rₖ‖ = √((μₖ)² + (ωₖ)²)
+      # ‖rₖ‖ = √(|μₖ|² + |ωₖ|²)
       if iter == 1
         rNorm_lq = bNorm
       else
         μₖ = βₖ * (sₖ₋₁ * ζₖ₋₂ - cₖ₋₁ * cₖ * ζₖ₋₁) + αₖ * sₖ * ζₖ₋₁
         ωₖ = βₖ₊₁ * sₖ * ζₖ₋₁
-        rNorm_lq = sqrt(μₖ^2 + ωₖ^2)
+        rNorm_lq = sqrt(abs2(μₖ) + abs2(ωₖ))
       end
       history && push!(rNorms, rNorm_lq)
 
       # Compute USYMCG residual norm
       # ‖rₖ‖ = |ρₖ|
-      if transfer_to_usymcg && (δbarₖ ≠ 0)
+      if transfer_to_usymcg && (abs(δbarₖ) > eps(T))
         ζbarₖ = ηₖ / δbarₖ
         ρₖ = βₖ₊₁ * (sₖ * ζₖ₋₁ - cₖ * ζbarₖ)
         rNorm_cg = abs(ρₖ)
@@ -238,42 +238,44 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
       solved_lq_tol = rNorm_lq ≤ εL
       solved_lq_mach = rNorm_lq + 1 ≤ 1
       solved_lq = solved_lq_tol || solved_lq_mach
-      solved_cg_tol = transfer_to_usymcg && (δbarₖ ≠ 0) && (rNorm_cg ≤ εL)
-      solved_cg_mach = transfer_to_usymcg && (δbarₖ ≠ 0) && (rNorm_cg + 1 ≤ 1)
+      solved_cg_tol = transfer_to_usymcg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ εL)
+      solved_cg_mach = transfer_to_usymcg && (abs(δbarₖ) > eps(T)) && (rNorm_cg + 1 ≤ 1)
       solved_cg = solved_cg_tol || solved_cg_mach
       solved_primal = solved_lq || solved_cg
     end
 
     if !solved_dual
-      # Compute ψₖ₋₁ and ψbarₖ.
+      # Compute ψₖ₋₁ and ψbarₖ the last coefficients of h̅ₖ = Qₖγ₁e₁.
       if iter == 1
         ψbarₖ = γₖ
       else
+        # [cₖ  s̄ₖ] [ψbarₖ₋₁] = [ ψₖ₋₁ ]
+        # [sₖ -cₖ] [   0   ]   [ ψbarₖ]
         ψₖ₋₁  = cₖ * ψbarₖ₋₁
         ψbarₖ = sₖ * ψbarₖ₋₁
       end
 
-      # Compute the direction wₖ₋₁, the last column of Wₖ₋₁ = (Vₖ₋₁)(Lₖ₋₁)⁻ᵀ ⟷ (Lₖ₋₁)(Wₖ₋₁)ᵀ = (Vₖ₋₁)ᵀ.
-      # w₁ = v₁ / δ₁
+      # Compute the direction wₖ₋₁, the last column of Wₖ₋₁ = (Vₖ₋₁)(Lₖ₋₁)⁻ᵀ ⟷ (L̄ₖ₋₁)(Wₖ₋₁)ᵀ = (Vₖ₋₁)ᵀ.
+      # w₁ = v₁ / δ̄₁
       if iter == 2
         wₖ₋₁ = wₖ₋₂
-        @kaxpy!(m, one(T), vₖ₋₁, wₖ₋₁)
-        @. wₖ₋₁ = vₖ₋₁ / δₖ₋₁
+        @kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
+        @. wₖ₋₁ = vₖ₋₁ / conj(δₖ₋₁)
       end
-      # w₂ = (v₂ - λ₁w₁) / δ₂
+      # w₂ = (v₂ - λ̄₁w₁) / δ̄₂
       if iter == 3
         wₖ₋₁ = wₖ₋₃
-        @kaxpy!(m, one(T), vₖ₋₁, wₖ₋₁)
-        @kaxpy!(m, -λₖ₋₂, wₖ₋₂, wₖ₋₁)
-        @. wₖ₋₁ = wₖ₋₁ / δₖ₋₁
+        @kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
+        @kaxpy!(m, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
+        @. wₖ₋₁ = wₖ₋₁ / conj(δₖ₋₁)
       end
-      # wₖ₋₁ = (vₖ₋₁ - λₖ₋₂wₖ₋₂ - ϵₖ₋₃wₖ₋₃) / δₖ₋₁
+      # wₖ₋₁ = (vₖ₋₁ - λ̄ₖ₋₂wₖ₋₂ - ϵ̄ₖ₋₃wₖ₋₃) / δ̄ₖ₋₁
       if iter ≥ 4
-        @kscal!(m, -ϵₖ₋₃, wₖ₋₃)
+        @kscal!(m, -conj(ϵₖ₋₃), wₖ₋₃)
         wₖ₋₁ = wₖ₋₃
-        @kaxpy!(m, one(T), vₖ₋₁, wₖ₋₁)
-        @kaxpy!(m, -λₖ₋₂, wₖ₋₂, wₖ₋₁)
-        @. wₖ₋₁ = wₖ₋₁ / δₖ₋₁
+        @kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
+        @kaxpy!(m, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
+        @. wₖ₋₁ = wₖ₋₁ / conj(δₖ₋₁)
       end
 
       if iter ≥ 3
@@ -294,8 +296,8 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
       sNorm = abs(ψbarₖ)
       history && push!(sNorms, sNorm)
 
-      # Compute ‖Asₖ₋₁‖ = |ψbarₖ| * √((δbarₖ)² + (λbarₖ)²).
-      AsNorm = abs(ψbarₖ) * √(δbarₖ^2 + (cₖ₋₁ * βₖ₊₁)^2)
+      # Compute ‖Asₖ₋₁‖ = |ψbarₖ| * √(|δbarₖ|² + |λbarₖ|²).
+      AsNorm = abs(ψbarₖ) * √(abs2(δbarₖ) + abs2(cₖ₋₁ * βₖ₊₁))
 
       # Update dual stopping criterion
       iter == 1 && (ξ = atol + rtol * AsNorm)
