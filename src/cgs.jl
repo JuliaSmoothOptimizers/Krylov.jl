@@ -70,7 +70,7 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
@@ -86,7 +86,7 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   y = NisI ? p : solver.yz
   z = NisI ? u : solver.yz
 
-  x .= zero(T)   # x₀
+  x .= zero(FC)  # x₀
   mul!(r, M, b)  # r₀
 
   # Compute residual norm ‖r₀‖₂.
@@ -98,8 +98,8 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     return solver
   end
 
-  # Compute ρ₀ = ⟨ r₀,̅r₀ ⟩
-  ρ = @kdot(n, r, c)
+  # Compute ρ₀ = ⟨ r̅₀,r₀ ⟩
+  ρ = @kdot(n, c, r)
   if ρ == 0
     stats.solved, stats.inconsistent = false, false
     stats.status = "Breakdown bᵀc = 0"
@@ -115,7 +115,7 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
 
   u .= r        # u₀
   p .= r        # p₀
-  q .= zero(T)  # q₋₁
+  q .= zero(FC) # q₋₁
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -128,22 +128,22 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     NisI || mul!(y, N, p)         # yₖ = N⁻¹pₖ
     mul!(t, A, y)                 # tₖ = Ayₖ
     MisI || mul!(v, M, t)         # vₖ = M⁻¹tₖ
-    σ = @kdot(n, v, c)            # σₖ = ⟨ M⁻¹AN⁻¹pₖ,̅r₀ ⟩
+    σ = @kdot(n, c, v)            # σₖ = ⟨ r̅₀,M⁻¹AN⁻¹pₖ ⟩
     α = ρ / σ                     # αₖ = ρₖ / σₖ
     @kcopy!(n, u, q)              # qₖ = uₖ
     @kaxpy!(n, -α, v, q)          # qₖ = qₖ - αₖ * M⁻¹AN⁻¹pₖ
-    @kaxpy!(n, one(T), q, u)      # uₖ₊½ = uₖ + qₖ
+    @kaxpy!(n, one(FC), q, u)     # uₖ₊½ = uₖ + qₖ
     NisI || mul!(z, N, u)         # zₖ = N⁻¹uₖ₊½
     @kaxpy!(n, α, z, x)           # xₖ₊₁ = xₖ + αₖ * N⁻¹(uₖ + qₖ)
     mul!(s, A, z)                 # sₖ = Azₖ
     MisI || mul!(w, M, s)         # wₖ = M⁻¹sₖ
     @kaxpy!(n, -α, w, r)          # rₖ₊₁ = rₖ - αₖ * M⁻¹AN⁻¹(uₖ + qₖ)
-    ρ_next = @kdot(n, r, c)       # ρₖ₊₁ = ⟨ rₖ₊₁,̅r₀ ⟩
+    ρ_next = @kdot(n, c, r)       # ρₖ₊₁ = ⟨ r̅₀,rₖ₊₁ ⟩
     β = ρ_next / ρ                # βₖ = ρₖ₊₁ / ρₖ
     @kcopy!(n, r, u)              # uₖ₊₁ = rₖ₊₁
     @kaxpy!(n, β, q, u)           # uₖ₊₁ = uₖ₊₁ + βₖ * qₖ
-    @kaxpby!(n, one(T), q, β, p)  # pₐᵤₓ = qₖ + βₖ * pₖ
-    @kaxpby!(n, one(T), u, β, p)  # pₖ₊₁ = uₖ₊₁ + βₖ * pₐᵤₓ
+    @kaxpby!(n, one(FC), q, β, p) # pₐᵤₓ = qₖ + βₖ * pₖ
+    @kaxpby!(n, one(FC), u, β, p) # pₖ₊₁ = uₖ₊₁ + βₖ * pₐᵤₓ
 
     # Update ρ.
     ρ = ρ_next # ρₖ ← ρₖ₊₁
