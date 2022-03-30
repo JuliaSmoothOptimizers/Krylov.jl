@@ -116,7 +116,7 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
@@ -134,11 +134,11 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   v = NisI ? Nv : solver.v
 
   # Compute y such that AAᵀy = b. Then recover x = Aᵀy.
-  x .= zero(T)
-  y .= zero(T)
+  x .= zero(FC)
+  y .= zero(FC)
   Mu .= b
   MisI || mul!(u, M, Mu)
-  β = sqrt(@kdot(m, u, Mu))
+  β = sqrt(@kdotr(m, u, Mu))
   if β == 0
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
@@ -150,13 +150,13 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Initialize Golub-Kahan process.
   # β₁Mu₁ = b.
-  @kscal!(m, one(T)/β, u)
-  MisI || @kscal!(m, one(T)/β, Mu)
+  @kscal!(m, one(FC)/β, u)
+  MisI || @kscal!(m, one(FC)/β, Mu)
   # α₁Nv₁ = Aᵀu₁.
   mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
   NisI || mul!(v, N, Nv)
-  α = sqrt(@kdot(n, v, Nv))
+  α = sqrt(@kdotr(n, v, Nv))
   Anorm² = α * α
 
   iter = 0
@@ -174,8 +174,8 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     stats.status = "x = 0 is a minimum least-squares solution"
     return solver
   end
-  @kscal!(n, one(T)/α, v)
-  NisI || @kscal!(n, one(T)/α, Nv)
+  @kscal!(n, one(FC)/α, v)
+  NisI || @kscal!(n, one(FC)/α, Nv)
 
   # Regularization.
   λₖ  = λ             # λ₁ = λ
@@ -203,9 +203,9 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
 
   wbar .= u
-  @kscal!(m, one(T)/αhat, wbar)
-  w .= zero(T)
-  d .= zero(T)
+  @kscal!(m, one(FC)/αhat, wbar)
+  w .= zero(FC)
+  d .= zero(FC)
 
   status = "unknown"
   solved = rNorm ≤ ɛ_c
@@ -218,12 +218,12 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     mul!(Av, A, v)
-    @kaxpby!(m, one(T), Av, -α, Mu)
+    @kaxpby!(m, one(FC), Av, -α, Mu)
     MisI || mul!(u, M, Mu)
-    β = sqrt(@kdot(m, u, Mu))
+    β = sqrt(@kdotr(m, u, Mu))
     if β ≠ 0
-      @kscal!(m, one(T)/β, u)
-      MisI || @kscal!(m, one(T)/β, Mu)
+      @kscal!(m, one(FC)/β, u)
+      MisI || @kscal!(m, one(FC)/β, Mu)
     end
 
     Anorm² = Anorm² + β * β  # = ‖B_{k-1}‖²
@@ -254,24 +254,24 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     rNorm = abs(ζbar)
     history && push!(rNorms, rNorm)
 
-    @kaxpby!(m, one(T)/ρ, wbar, -θ/ρ, w)  # w = (wbar - θ * w) / ρ
-    @kaxpy!(m, ζ, w, y)                   # y = y + ζ * w
+    @kaxpby!(m, one(FC)/ρ, wbar, -θ/ρ, w)  # w = (wbar - θ * w) / ρ
+    @kaxpy!(m, ζ, w, y)                    # y = y + ζ * w
 
     if λ > 0
       # DₖRₖ = V̅ₖ with v̅ₖ = cpₖvₖ + spₖqₖ₋₁
       if iter == 1
-        @kaxpy!(n, one(T)/ρ, cpₖ * v, d)
+        @kaxpy!(n, one(FC)/ρ, cpₖ * v, d)
       else
-        @kaxpby!(n, one(T)/ρ, cpₖ * v, -θ/ρ, d)
-        @kaxpy!(n, one(T)/ρ, spₖ * q, d)
+        @kaxpby!(n, one(FC)/ρ, cpₖ * v, -θ/ρ, d)
+        @kaxpy!(n, one(FC)/ρ, spₖ * q, d)
         @kaxpby!(n, spₖ, v, -cpₖ, q)  # q̄ₖ ← spₖ * vₖ - cpₖ * qₖ₋₁
       end
     else
       # DₖRₖ = Vₖ
       if iter == 1
-        @kaxpy!(n, one(T)/ρ, v, d)
+        @kaxpy!(n, one(FC)/ρ, v, d)
       else
-        @kaxpby!(n, one(T)/ρ, v, -θ/ρ, d)
+        @kaxpby!(n, one(FC)/ρ, v, -θ/ρ, d)
       end
     end
 
@@ -280,9 +280,9 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
     mul!(Aᵀu, Aᵀ, u)
-    @kaxpby!(n, one(T), Aᵀu, -β, Nv)
+    @kaxpby!(n, one(FC), Aᵀu, -β, Nv)
     NisI || mul!(v, N, Nv)
-    α = sqrt(@kdot(n, v, Nv))
+    α = sqrt(@kdotr(n, v, Nv))
     Anorm² = Anorm² + α * α  # = ‖Lₖ‖
     ArNorm = α * β * abs(ζ/ρ)
     history && push!(ArNorms, ArNorm)
@@ -298,9 +298,9 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
 
     if α ≠ 0
-      @kscal!(n, one(T)/α, v)
-      NisI || @kscal!(n, one(T)/α, Nv)
-      @kaxpby!(m, one(T) / αhat, u, -βhat / αhat, wbar)  # wbar = (u - beta * wbar) / alpha
+      @kscal!(n, one(FC)/α, v)
+      NisI || @kscal!(n, one(FC)/α, Nv)
+      @kaxpby!(m, one(T)/αhat, u, -βhat / αhat, wbar)  # wbar = (u - beta * wbar) / alpha
     end
     θ    =  s * αhat
     ρbar = -c * αhat
