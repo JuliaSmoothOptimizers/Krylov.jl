@@ -121,7 +121,7 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
@@ -138,12 +138,12 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
 
-  x .= zero(T)
-  y .= zero(T)
+  x .= zero(FC)
+  y .= zero(FC)
 
   Mu .= b
   MisI || mul!(u, M, Mu)
-  β₁ = sqrt(@kdot(m, u, Mu))
+  β₁ = sqrt(@kdotr(m, u, Mu))
   rNorm  = β₁
   history && push!(rNorms, rNorm)
   if β₁ == 0
@@ -161,13 +161,13 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Initialize Golub-Kahan process.
   # β₁Mu₁ = b.
-  @kscal!(m, one(T)/β₁, u)
-  MisI || @kscal!(m, one(T)/β₁, Mu)
+  @kscal!(m, one(FC) / β₁, u)
+  MisI || @kscal!(m, one(FC) / β₁, Mu)
 
-  Nv .= zero(T)
-  w .= zero(T)  # Used to update y.
+  Nv .= zero(FC)
+  w .= zero(FC)  # Used to update y.
 
-  λ > 0 && (w2 .= zero(T))
+  λ > 0 && (w2 .= zero(FC))
 
   Anorm² = zero(T) # Estimate of ‖A‖²_F.
   Anorm  = zero(T)
@@ -204,15 +204,15 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Generate the next Golub-Kahan vectors
     # 1. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
     mul!(Aᵀu, Aᵀ, u)
-    @kaxpby!(n, one(T), Aᵀu, -β, Nv)
+    @kaxpby!(n, one(FC), Aᵀu, -β, Nv)
     NisI || mul!(v, N, Nv)
-    α = sqrt(@kdot(n, v, Nv))
+    α = sqrt(@kdotr(n, v, Nv))
     if α == 0
       inconsistent = true
       continue
     end
-    @kscal!(n, one(T)/α, v)
-    NisI || @kscal!(n, one(T)/α, Nv)
+    @kscal!(n, one(FC) / α, v)
+    NisI || @kscal!(n, one(FC) / α, Nv)
 
     Anorm² += α * α + λ * λ
 
@@ -240,19 +240,19 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
 
     # Recur y.
-    @kaxpby!(m, one(T), u, -θ/ρ_prev, w)  # w = u - θ/ρ_prev * w
+    @kaxpby!(m, one(FC), u, -θ/ρ_prev, w)  # w = u - θ/ρ_prev * w
     @kaxpy!(m, ξ/ρ, w, y)  # y = y + ξ/ρ * w
 
     Dnorm² += @knrm2(m, w)
 
     # 2. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     mul!(Av, A, v)
-    @kaxpby!(m, one(T), Av, -α, Mu)
+    @kaxpby!(m, one(FC), Av, -α, Mu)
     MisI || mul!(u, M, Mu)
-    β = sqrt(@kdot(m, u, Mu))
+    β = sqrt(@kdotr(m, u, Mu))
     if β ≠ 0
-      @kscal!(m, one(T)/β, u)
-      MisI || @kscal!(m, one(T)/β, Mu)
+      @kscal!(m, one(FC) / β, u)
+      MisI || @kscal!(m, one(FC) / β, Mu)
     end
 
     # Finish  updates from the first Givens rotation.
