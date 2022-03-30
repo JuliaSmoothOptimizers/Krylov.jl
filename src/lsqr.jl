@@ -116,7 +116,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
@@ -134,13 +134,13 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   λ² = λ * λ
   ctol = conlim > 0 ? 1/conlim : zero(T)
-  x .= zero(T)
+  x .= zero(FC)
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
   Mu .= b
   MisI || mul!(u, M, Mu)
-  β₁ = sqrt(@kdot(m, u, Mu))
+  β₁ = sqrt(@kdotr(m, u, Mu))
   if β₁ == 0
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
@@ -151,12 +151,12 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   end
   β = β₁
 
-  @kscal!(m, one(T)/β₁, u)
-  MisI || @kscal!(m, one(T)/β₁, Mu)
+  @kscal!(m, one(FC)/β₁, u)
+  MisI || @kscal!(m, one(FC)/β₁, Mu)
   mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
   NisI || mul!(v, N, Nv)
-  Anorm² = @kdot(n, v, Nv)
+  Anorm² = @kdotr(n, v, Nv)
   Anorm = sqrt(Anorm²)
   α = Anorm
   Acond  = zero(T)
@@ -192,14 +192,13 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     stats.status = "x = 0 is a minimum least-squares solution"
     return solver
   end
-  @kscal!(n, one(T)/α, v)
-  NisI || @kscal!(n, one(T)/α, Nv)
+  @kscal!(n, one(FC)/α, v)
+  NisI || @kscal!(n, one(FC)/α, Nv)
   w .= v
 
   # Initialize other constants.
   ϕbar = β₁
   ρbar = α
-  # θ = 0.0
 
   status = "unknown"
   on_boundary = false
@@ -219,23 +218,23 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     mul!(Av, A, v)
-    @kaxpby!(m, one(T), Av, -α, Mu)
+    @kaxpby!(m, one(FC), Av, -α, Mu)
     MisI || mul!(u, M, Mu)
-    β = sqrt(@kdot(m, u, Mu))
+    β = sqrt(@kdotr(m, u, Mu))
     if β ≠ 0
-      @kscal!(m, one(T)/β, u)
-      MisI || @kscal!(m, one(T)/β, Mu)
+      @kscal!(m, one(FC)/β, u)
+      MisI || @kscal!(m, one(FC)/β, Mu)
       Anorm² = Anorm² + α * α + β * β  # = ‖B_{k-1}‖²
       λ > 0 && (Anorm² += λ²)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
       mul!(Aᵀu, Aᵀ, u)
-      @kaxpby!(n, one(T), Aᵀu, -β, Nv)
+      @kaxpby!(n, one(FC), Aᵀu, -β, Nv)
       NisI || mul!(v, N, Nv)
-      α = sqrt(@kdot(n, v, Nv))
+      α = sqrt(@kdotr(n, v, Nv))
       if α ≠ 0
-        @kscal!(n, one(T)/α, v)
-        NisI || @kscal!(n, one(T)/α, Nv)
+        @kscal!(n, one(FC)/α, v)
+        NisI || @kscal!(n, one(FC)/α, Nv)
       end
     end
 
@@ -268,7 +267,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     τ = s * ϕ
     θ = s * α
     ρbar = -c * α
-    dNorm² += @kdot(n, w, w) / ρ^2
+    dNorm² += @kdotr(n, w, w) / ρ^2
 
     # if a trust-region constraint is give, compute step to the boundary
     # the step ϕ/ρ is not necessarily positive
@@ -281,7 +280,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
 
     @kaxpy!(n, σ, w, x)  # x = x + ϕ / ρ * w
-    @kaxpby!(n, one(T), v, -θ/ρ, w)  # w = v - θ / ρ * w
+    @kaxpby!(n, one(FC), v, -θ/ρ, w)  # w = v - θ / ρ * w
 
     # Use a plane rotation on the right to eliminate the super-diagonal
     # element (θ) of the upper-bidiagonal matrix.

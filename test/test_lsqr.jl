@@ -1,7 +1,7 @@
 @testset "lsqr" begin
   lsqr_tol = 1.0e-4
 
-  for FC in (Float64,)
+  for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
 
       for npower = 1 : 4
