@@ -164,7 +164,7 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
@@ -184,13 +184,13 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   λ² = λ * λ
   ctol = conlim > 0 ? 1/conlim : zero(T)
 
-  x .= zero(T)  # LSLQ point
+  x .= zero(FC)  # LSLQ point
 
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
   Mu .= b
   MisI || mul!(u, M, Mu)
-  β₁ = sqrt(@kdot(m, u, Mu))
+  β₁ = sqrt(@kdotr(m, u, Mu))
   if β₁ == 0
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
@@ -202,12 +202,12 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   end
   β = β₁
 
-  @kscal!(m, one(T)/β₁, u)
-  MisI || @kscal!(m, one(T)/β₁, Mu)
+  @kscal!(m, one(FC)/β₁, u)
+  MisI || @kscal!(m, one(FC)/β₁, Mu)
   mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
   NisI || mul!(v, N, Nv)
-  α = sqrt(@kdot(n, v, Nv))  # = α₁
+  α = sqrt(@kdotr(n, v, Nv))  # = α₁
 
   # Aᵀb = 0 so x = 0 is a minimum least-squares solution
   if α == 0
@@ -219,8 +219,8 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     stats.status = "x = 0 is a minimum least-squares solution"
     return solver
   end
-  @kscal!(n, one(T)/α, v)
-  NisI || @kscal!(n, one(T)/α, Nv)
+  @kscal!(n, one(FC)/α, v)
+  NisI || @kscal!(n, one(FC)/α, Nv)
 
   Anorm = α
   Anorm² = α * α
@@ -281,21 +281,21 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     mul!(Av, A, v)
-    @kaxpby!(m, one(T), Av, -α, Mu)
+    @kaxpby!(m, one(FC), Av, -α, Mu)
     MisI || mul!(u, M, Mu)
-    β = sqrt(@kdot(m, u, Mu))
+    β = sqrt(@kdotr(m, u, Mu))
     if β ≠ 0
-      @kscal!(m, one(T)/β, u)
-      MisI || @kscal!(m, one(T)/β, Mu)
+      @kscal!(m, one(FC)/β, u)
+      MisI || @kscal!(m, one(FC)/β, Mu)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
       mul!(Aᵀu, Aᵀ, u)
-      @kaxpby!(n, one(T), Aᵀu, -β, Nv)
+      @kaxpby!(n, one(FC), Aᵀu, -β, Nv)
       NisI || mul!(v, N, Nv)
-      α = sqrt(@kdot(n, v, Nv))
+      α = sqrt(@kdotr(n, v, Nv))
       if α ≠ 0
-        @kscal!(n, one(T)/α, v)
-        NisI || @kscal!(n, one(T)/α, Nv)
+        @kscal!(n, one(FC)/α, v)
+        NisI || @kscal!(n, one(FC)/α, Nv)
       end
 
       # rotate out regularization term if present
