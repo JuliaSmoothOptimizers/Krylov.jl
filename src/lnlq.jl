@@ -113,7 +113,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   NisI = (N === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
@@ -135,8 +135,8 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   complex_error_bnd = false
 
   # Initial solutions (x₀, y₀) and residual norm ‖r₀‖.
-  x .= zero(T)
-  y .= zero(T)
+  x .= zero(FC)
+  y .= zero(FC)
 
   bNorm = @knrm2(m, b)
   if bNorm == 0
@@ -163,32 +163,33 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # Initialize generalized Golub-Kahan bidiagonalization.
   # β₁Mu₁ = b.
   Mu .= b
-  MisI || mul!(u, M, Mu)      # u₁ = M⁻¹ * Mu₁
-  βₖ = sqrt(@kdot(m, u, Mu))  # β₁ = ‖u₁‖_M
+  MisI || mul!(u, M, Mu)       # u₁ = M⁻¹ * Mu₁
+  βₖ = sqrt(@kdotr(m, u, Mu))  # β₁ = ‖u₁‖_M
   if βₖ ≠ 0
-    @kscal!(m, 1 / βₖ, u)
-    MisI || @kscal!(m, 1 / βₖ, Mu)
+    @kscal!(m, one(FC) / βₖ, u)
+    MisI || @kscal!(m, one(FC) / βₖ, Mu)
   end
 
   # α₁Nv₁ = Aᵀu₁.
   mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
-  NisI || mul!(v, N, Nv)      # v₁ = N⁻¹ * Nv₁
-  αₖ = sqrt(@kdot(n, v, Nv))  # α₁ = ‖v₁‖_N
+  NisI || mul!(v, N, Nv)       # v₁ = N⁻¹ * Nv₁
+  αₖ = sqrt(@kdotr(n, v, Nv))  # α₁ = ‖v₁‖_N
   if αₖ ≠ 0
-    @kscal!(n, 1 / αₖ, v)
-    NisI || @kscal!(n, 1 / αₖ, Nv)
+    @kscal!(n, one(FC) / αₖ, v)
+    NisI || @kscal!(n, one(FC) / αₖ, Nv)
   end
 
-  w̄ .= u             # Direction w̄₁
-  cₖ = sₖ = zero(T)  # Givens sines and cosines used for the LQ factorization of (Lₖ)ᵀ
-  ζₖ₋₁ = zero(T)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
-  ηₖ = zero(T)       # Coefficient of M̅ₖ
+  w̄ .= u           # Direction w̄₁
+  cₖ = zero(T)     # Givens cosines used for the LQ factorization of (Lₖ)ᵀ
+  sₖ = zero(FC)    # Givens sines used for the LQ factorization of (Lₖ)ᵀ
+  ζₖ₋₁ = zero(FC)  # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
+  ηₖ = zero(FC)    # Coefficient of M̅ₖ
 
   # Variable used for the regularization.
   λₖ  = λ             # λ₁ = λ
   cpₖ = spₖ = one(T)  # Givens sines and cosines used to zero out λₖ
-  cdₖ = sdₖ = one(T)  # Givens sines and cosines used to define λₖ₊₁
+  cdₖ = sdₖ = one(FC) # Givens sines and cosines used to define λₖ₊₁
   λ > 0 && (q .= v)   # Additional vector needed to update x, by definition q₀ = 0
 
   # Initialize the regularization.
@@ -277,22 +278,22 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     # βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     mul!(Av, A, v)
-    @kaxpby!(m, one(T), Av, -αₖ, Mu)
-    MisI || mul!(u, M, Mu)        # uₖ₊₁ = M⁻¹ * Muₖ₊₁
-    βₖ₊₁ = sqrt(@kdot(m, u, Mu))  # βₖ₊₁ = ‖uₖ₊₁‖_M
+    @kaxpby!(m, one(FC), Av, -αₖ, Mu)
+    MisI || mul!(u, M, Mu)         # uₖ₊₁ = M⁻¹ * Muₖ₊₁
+    βₖ₊₁ = sqrt(@kdotr(m, u, Mu))  # βₖ₊₁ = ‖uₖ₊₁‖_M
     if βₖ₊₁ ≠ 0
-      @kscal!(m, 1 / βₖ₊₁, u)
-      MisI || @kscal!(m, 1 / βₖ₊₁, Mu)
+      @kscal!(m, one(FC) / βₖ₊₁, u)
+      MisI || @kscal!(m, one(FC) / βₖ₊₁, Mu)
     end
 
     # αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
     mul!(Aᵀu, Aᵀ, u)
-    @kaxpby!(n, one(T), Aᵀu, -βₖ₊₁, Nv)
-    NisI || mul!(v, N, Nv)        # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
-    αₖ₊₁ = sqrt(@kdot(n, v, Nv))  # αₖ₊₁ = ‖vₖ₊₁‖_N
+    @kaxpby!(n, one(FC), Aᵀu, -βₖ₊₁, Nv)
+    NisI || mul!(v, N, Nv)         # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
+    αₖ₊₁ = sqrt(@kdotr(n, v, Nv))  # αₖ₊₁ = ‖vₖ₊₁‖_N
     if αₖ₊₁ ≠ 0
-      @kscal!(n, 1 / αₖ₊₁, v)
-      NisI || @kscal!(n, 1 / αₖ₊₁, Nv)
+      @kscal!(n, one(FC) / αₖ₊₁, v)
+      NisI || @kscal!(n, one(FC) / αₖ₊₁, Nv)
     end
 
     # Continue the regularization.
@@ -390,11 +391,11 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
       history && push!(yNorms, err_y)
     end
 
-    # Compute residual norm ‖(rᴸ)ₖ‖ = |αₖ| * √((ϵbarₖζbarₖ)² + (βₖ₊₁sₖζₖ₋₁)²)
+    # Compute residual norm ‖(rᴸ)ₖ‖ = |αₖ| * √(|ϵbarₖζbarₖ|² + |βₖ₊₁sₖζₖ₋₁|²)
     if iter == 1
       rNorm_lq = bNorm
     else
-      rNorm_lq = abs(αhatₖ) * √((ϵbarₖ * ζbarₖ)^2 + (βhatₖ₊₁ * sₖ * ζₖ₋₁)^2)
+      rNorm_lq = abs(αhatₖ) * √(abs2(ϵbarₖ * ζbarₖ) + abs2(βhatₖ₊₁ * sₖ * ζₖ₋₁))
     end
     history && push!(rNorms, rNorm_lq)
 
