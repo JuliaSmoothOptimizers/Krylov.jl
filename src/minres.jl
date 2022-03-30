@@ -86,7 +86,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   MisI = (M === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
@@ -103,12 +103,12 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Initial solution x₀
   restart && (Δx .= x)
-  x .= zero(T)
+  x .= zero(FC)
 
   if restart
     mul!(r1, A, Δx)
     (λ ≠ 0) && @kaxpy!(n, λ, Δx, r1)
-    @kaxpby!(n, one(T), b, -one(T), r1)
+    @kaxpby!(n, one(FC), b, -one(FC), r1)
   else
     r1 .= b
   end
@@ -117,7 +117,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # β₁ M v₁ = b.
   r2 .= r1
   MisI || mul!(v, M, r1)
-  β₁ = @kdot(m, r1, v)
+  β₁ = @kdotr(m, r1, v)
   β₁ < 0 && error("Preconditioner is not positive definite")
   if β₁ == 0
     stats.niter = 0
@@ -143,8 +143,8 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   γmin = T(Inf)
   cs = -one(T)
   sn = zero(T)
-  w1 .= zero(T)
-  w2 .= zero(T)
+  w1 .= zero(FC)
+  w2 .= zero(FC)
 
   ANorm² = zero(T)
   ANorm = zero(T)
@@ -180,10 +180,10 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Generate next Lanczos vector.
     mul!(y, A, v)
     λ ≠ 0 && @kaxpy!(n, λ, v, y)             # (y = y + λ * v)
-    @kscal!(n, one(T) / β, y)
+    @kscal!(n, one(FC) / β, y)
     iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y) # (y = y - β / oldβ * r1)
 
-    α = @kdot(n, v, y) / β
+    α = real((@kdot(n, v, y) / β))
     @kaxpy!(n, -α / β, r2, y)  # y = y - α / β * r2
 
     # Compute w.
@@ -195,13 +195,13 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       w = w1
       @kaxpy!(n, -δ, w2, w)
     end
-    @kaxpy!(n, one(T) / β, v, w)
+    @kaxpy!(n, one(FC) / β, v, w)
 
     @. r1 = r2
     @. r2 = y
     MisI || mul!(v, M, r2)
     oldβ = β
-    β = @kdot(n, r2, v)
+    β = @kdotr(n, r2, v)
     β < 0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
     ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
@@ -225,7 +225,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     ϕbar = sn * ϕbar
 
     # Final update of w.
-    @kscal!(n, one(T) / γ, w)
+    @kscal!(n, one(FC) / γ, w)
 
     # Update x.
     @kaxpy!(n, ϕ, w, x)  # x = x + ϕ * w
@@ -305,7 +305,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   fwd_err       && (status = "truncated forward error small enough")
 
   # Update x
-  restart && @kaxpy!(n, one(T), Δx, x)
+  restart && @kaxpy!(n, one(FC), Δx, x)
 
   # Update stats
   stats.niter = iter

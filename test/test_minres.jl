@@ -1,7 +1,7 @@
 @testset "minres" begin
   minres_tol = 1.0e-5
 
-  for FC in (Float64,)
+  for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
 
       # Cubic spline matrix.
