@@ -82,7 +82,7 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   MisI = (M === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
@@ -96,7 +96,7 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   Mr = MisI ? r : solver.Mr
   Mq = MisI ? q : solver.Mr
 
-  x .= zero(T)
+  x .= zero(FC)
   r .= b
   bNorm = @knrm2(m, r)   # Marginally faster than norm(b)
   if bNorm == 0
@@ -109,7 +109,7 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   MisI || mul!(Mr, M, r)
   mul!(s, Aᵀ, Mr)
   p .= s
-  γ = @kdot(n, s, s)  # Faster than γ = dot(s, s)
+  γ = @kdotr(n, s, s)  # γ = sᵀs
   iter = 0
   itmax == 0 && (itmax = m + n)
 
@@ -129,8 +129,8 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   while ! (solved || tired)
     mul!(q, A, p)
     MisI || mul!(Mq, M, q)
-    δ = @kdot(m, q, Mq)   # Faster than α = γ / dot(q, q)
-    λ > 0 && (δ += λ * @kdot(n, p, p))
+    δ = @kdotr(m, q, Mq)  # δ = qᵀMq
+    λ > 0 && (δ += λ * @kdotr(n, p, p))  # δ = δ + pᵀp
     α = γ / δ
 
     # if a trust-region constraint is give, compute step to the boundary
@@ -145,9 +145,9 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     MisI || mul!(Mr, M, r)
     mul!(s, Aᵀ, Mr)
     λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x
-    γ_next = @kdot(n, s, s)  # Faster than γ_next = dot(s, s)
+    γ_next = @kdotr(n, s, s)   # γ_next = sᵀs
     β = γ_next / γ
-    @kaxpby!(n, one(T), s, β, p) # Faster than p = s + β * p
+    @kaxpby!(n, one(FC), s, β, p) # p = s + βp
     γ = γ_next
     rNorm = @knrm2(m, r)  # Marginally faster than norm(r)
     ArNorm = sqrt(γ)
