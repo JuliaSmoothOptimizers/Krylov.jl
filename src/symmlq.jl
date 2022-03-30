@@ -68,7 +68,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   MisI = (M === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
@@ -87,12 +87,12 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Initial solution x₀
   restart && (Δx .= x)
-  x .= zero(T)
+  x .= zero(FC)
 
   if restart
     mul!(Mvold, A, Δx)
     (λ ≠ 0) && @kaxpy!(n, λ, Δx, Mvold)
-    @kaxpby!(n, one(T), b, -one(T), Mvold)
+    @kaxpby!(n, one(FC), b, -one(FC), Mvold)
   else
     Mvold .= b
   end
@@ -100,7 +100,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
   MisI || mul!(vold, M, Mvold)
-  β₁ = @kdot(m, vold, Mvold)
+  β₁ = @kdotr(m, vold, Mvold)
   if β₁ == 0
     stats.niter = 0
     stats.solved = true
@@ -113,20 +113,20 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   end
   β₁ = sqrt(β₁)
   β = β₁
-  @kscal!(m, one(T) / β, vold)
-  MisI || @kscal!(m, one(T) / β, Mvold)
+  @kscal!(m, one(FC) / β, vold)
+  MisI || @kscal!(m, one(FC) / β, Mvold)
 
   w̅ .= vold
 
   mul!(Mv, A, vold)
-  α = @kdot(m, vold, Mv) + λ
+  α = @kdotr(m, vold, Mv) + λ
   @kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
   MisI || mul!(v, M, Mv)
-  β = @kdot(m, v, Mv)
+  β = @kdotr(m, v, Mv)
   β < 0 && error("Preconditioner is not positive definite")
   β = sqrt(β)
-  @kscal!(m, one(T) / β, v)
-  MisI || @kscal!(m, one(T) / β, Mv)
+  @kscal!(m, one(FC) / β, v)
+  MisI || @kscal!(m, one(FC) / β, Mv)
 
   # Start QR factorization
   γbar = α
@@ -216,17 +216,17 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Generate next Lanczos vector
     oldβ = β
     mul!(Mv_next, A, v)
-    α = @kdot(m, v, Mv_next) + λ
+    α = @kdotr(m, v, Mv_next) + λ
     @kaxpy!(m, -oldβ, Mvold, Mv_next)
     @. Mvold = Mv
     @kaxpy!(m, -α, Mv, Mv_next)
     @. Mv = Mv_next
     MisI || mul!(v, M, Mv)
-    β = @kdot(m, v, Mv)
+    β = @kdotr(m, v, Mv)
     β < 0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
-    @kscal!(m, one(T) / β, v)
-    MisI || @kscal!(m, one(T) / β, Mv)
+    @kscal!(m, one(FC) / β, v)
+    MisI || @kscal!(m, one(FC) / β, Mv)
 
     # Continue A norm estimate
     ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
@@ -358,7 +358,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   solved_cg     && (status = "solution xᶜ good enough given atol and rtol")
 
   # Update x
-  restart && @kaxpy!(n, one(T), Δx, x)
+  restart && @kaxpy!(n, one(FC), Δx, x)
 
   # Update stats
   stats.niter = iter
