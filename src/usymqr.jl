@@ -102,7 +102,7 @@ function usymqr!(solver :: UsymqrSolver{T,S}, A, b :: AbstractVector{T}, c :: Ab
   uₖ₋₁ .= zero(T)             # u₀ = 0
   vₖ .= b ./ βₖ               # v₁ = b / β₁
   uₖ .= c ./ γₖ               # u₁ = c / γ₁
-  cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)  # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+  cₖ₋₂ = cₖ₋₁ = cₖ = one(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
   sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
   wₖ₋₂ .= zero(T)             # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
   wₖ₋₁ .= zero(T)             # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
