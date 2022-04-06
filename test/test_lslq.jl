@@ -48,7 +48,7 @@
         A, b, M, N = two_preconditioners(FC=FC)
         (x_lq, stats) = lslq(A, b, M=M, N=N, transfer_to_lsqr=transfer_to_lsqr)
         r = b - A * x_lq
-        resid = sqrt(dot(r, M * r)) / norm(b)
+        resid = sqrt(real(dot(r, M * r))) / norm(b)
         @test(resid ≤ lslq_tol)
         @test(stats.solved)
 

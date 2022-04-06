@@ -101,7 +101,7 @@ end
       A, b, M⁻¹, N⁻¹ = two_preconditioners(FC=FC)
       (x, y, stats) = craig(A, b, M=M⁻¹, N=N⁻¹, sqd=false)
       r = b - A * x
-      resid = sqrt(dot(r, M⁻¹ * r)) / norm(b)
+      resid = sqrt(real(dot(r, M⁻¹ * r))) / norm(b)
       @test(resid ≤ craig_tol)
       @test(norm(x - N⁻¹ * A' * y) ≤ craig_tol * norm(x))
 

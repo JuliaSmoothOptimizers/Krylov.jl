@@ -72,7 +72,7 @@
 
       # Test underdetermined adjoint systems.
       A, b, c = underdetermined_adjoint(FC=FC)
-      (x, y, stats) = gpmr(A, A', b, c, λ=0.0, μ=0.0)
+      (x, y, stats) = gpmr(A, A', b, c, λ=zero(FC), μ=zero(FC))
       r = b - A  * y
       s = c - A' * x
       resid = norm([r; s]) / norm([b; c])
@@ -80,7 +80,7 @@
 
       # Test square adjoint systems.
       A, b, c = square_adjoint(FC=FC)
-      (x, y, stats) = gpmr(A, A', b, c, λ=0.0, μ=0.0)
+      (x, y, stats) = gpmr(A, A', b, c, λ=zero(FC), μ=zero(FC))
       r = b - A  * y
       s = c - A' * x
       resid = norm([r; s]) / norm([b; c])
@@ -88,7 +88,7 @@
 
       # Test overdetermined adjoint systems
       A, b, c = overdetermined_adjoint(FC=FC)
-      (x, y, stats) = gpmr(A, A', b, c, λ=0.0, μ=0.0)
+      (x, y, stats) = gpmr(A, A', b, c, λ=zero(FC), μ=zero(FC))
       r = b - A  * y
       s = c - A' * x
       resid = norm([r; s]) / norm([b; c])
@@ -138,7 +138,7 @@
       resid = norm(r) / norm(d)
       @test(resid ≤ gpmr_tol)
 
-        (x, y, stats) = gpmr(A, A', b, c, λ=0.0, μ=1.0, F=D⁻¹)
+      (x, y, stats) = gpmr(A, A', b, c, λ=0.0, μ=1.0, F=D⁻¹)
       K = [spzeros(m, m) A; A' D]
       d = [b; c]
       r =  d - K * [x; y]

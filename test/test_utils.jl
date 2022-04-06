@@ -68,8 +68,7 @@ end
 
 # Square and inconsistent systems.
 function square_inconsistent(n :: Int=10; FC=Float64)
-  α = FC <: Complex ? 1 + im : 1
-  A = Diagonal(α * ones(FC, n))
+  A = Diagonal(ones(FC, n))
   A[1, 1] = zero(FC)
   b = ones(FC, n)
   return A, b
