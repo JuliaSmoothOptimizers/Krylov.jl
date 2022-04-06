@@ -116,7 +116,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   wₖ₋₂ .= zero(FC)             # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
   wₖ₋₁ .= zero(FC)             # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
   ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
-  τₖ = real(@kdot(n, vₖ, vₖ))  # τₖ is used for the residual norm estimate
+  τₖ = @kdotr(n, vₖ, vₖ)       # τₖ is used for the residual norm estimate
 
   # Stopping criterion.
   solved    = rNorm ≤ ε
@@ -238,7 +238,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     end
 
     # Compute τₖ₊₁ = τₖ + ‖vₖ₊₁‖²
-    τₖ₊₁ = τₖ + real(@kdot(n, vₖ, vₖ))
+    τₖ₊₁ = τₖ + @kdotr(n, vₖ, vₖ)
 
     # Compute ‖rₖ‖ ≤ |ζbarₖ₊₁|√τₖ₊₁
     rNorm = abs(ζbarₖ₊₁) * √τₖ₊₁
