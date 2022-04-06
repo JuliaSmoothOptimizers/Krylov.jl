@@ -8,7 +8,7 @@ end
   cg_tol = 1.0e-6
   n = 10
 
-  for FC in (Float64,)
+  for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
 
       # Cubic splines matrix.

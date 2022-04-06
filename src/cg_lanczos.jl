@@ -75,10 +75,10 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
   v = MisI ? Mv : solver.v
 
   # Initial state.
-  x .= zero(FC)                    # x₀
-  Mv .= b                          # Mv₁ ← b
-  MisI || mul!(v, M, Mv)           # v₁ = M⁻¹ * Mv₁
-  β = real(sqrt(@kdot(n, v, Mv)))  # β₁ = v₁ᵀ M v₁
+  x .= zero(FC)               # x₀
+  Mv .= b                     # Mv₁ ← b
+  MisI || mul!(v, M, Mv)      # v₁ = M⁻¹ * Mv₁
+  β = sqrt(@kdotr(n, v, Mv))  # β₁ = v₁ᵀ M v₁
   σ = β
   rNorm = σ
   history && push!(rNorms, rNorm)
@@ -120,8 +120,8 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
   while ! (solved || tired || (check_curvature & indefinite))
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-    mul!(Mv_next, A, v)             # Mvₖ₊₁ ← Avₖ
-    δ = real(@kdot(n, v, Mv_next))  # δₖ = vₖᵀ A vₖ
+    mul!(Mv_next, A, v)        # Mvₖ₊₁ ← Avₖ
+    δ = @kdotr(n, v, Mv_next)  # δₖ = vₖᵀ A vₖ
 
     # Check curvature. Exit fast if requested.
     # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ A pₖ.
@@ -136,7 +136,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
     end
     @. Mv = Mv_next                      # Mvₖ ← Mvₖ₊₁
     MisI || mul!(v, M, Mv)               # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
-    β = real(sqrt(@kdot(n, v, Mv)))      # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+    β = sqrt(@kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
     @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
     MisI || @kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
     Anorm2 += β_prev^2 + β^2 + δ^2       # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
@@ -231,11 +231,11 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVec
   # Initial state.
   ## Distribute x similarly to shifts.
   for i = 1 : nshifts
-    x[i] .= zero(FC)                      # x₀
+    x[i] .= zero(FC)          # x₀
   end
-  Mv .= b                                 # Mv₁ ← b
-  MisI || mul!(v, M, Mv)                  # v₁ = M⁻¹ * Mv₁
-  β = real(sqrt(@kdot(n, v, Mv)))         # β₁ = v₁ᵀ M v₁
+  Mv .= b                     # Mv₁ ← b
+  MisI || mul!(v, M, Mv)      # v₁ = M⁻¹ * Mv₁
+  β = sqrt(@kdotr(n, v, Mv))  # β₁ = v₁ᵀ M v₁
   rNorms .= β
   if history
     for i = 1 : nshifts
@@ -298,7 +298,7 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVec
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
     mul!(Mv_next, A, v)                  # Mvₖ₊₁ ← Avₖ
-    δ = real(@kdot(n, v, Mv_next))       # δₖ = vₖᵀ A vₖ
+    δ = @kdotr(n, v, Mv_next)            # δₖ = vₖᵀ A vₖ
     @kaxpy!(n, -δ, Mv, Mv_next)          # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
     if iter > 0
       @kaxpy!(n, -β, Mv_prev, Mv_next)   # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
@@ -306,13 +306,13 @@ function cg_lanczos!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVec
     end
     @. Mv = Mv_next                      # Mvₖ ← Mvₖ₊₁
     MisI || mul!(v, M, Mv)               # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
-    β = real(sqrt(@kdot(n, v, Mv)))      # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+    β = sqrt(@kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
     @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
     MisI || @kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
 
     # Check curvature: vₖᵀ(A + sᵢI)vₖ = vₖᵀAvₖ + sᵢ‖vₖ‖² = δₖ + ρₖ * sᵢ with ρₖ = ‖vₖ‖².
     # It is possible to show that σₖ² (δₖ + ρₖ * sᵢ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ (A + sᵢ I) pₖ.
-    MisI || (ρ = real(@kdot(n, v, v)))
+    MisI || (ρ = @kdotr(n, v, v))
     for i = 1 : nshifts
       δhat[i] = δ + ρ * shifts[i]
       γ[i] = 1 / (δhat[i] - ω[i] / γ[i])
