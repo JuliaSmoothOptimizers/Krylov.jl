@@ -69,7 +69,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
   MisI = (M === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
@@ -81,16 +81,16 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
   z = MisI ? r : solver.z
 
   restart && (Δx .= x)
-  x .= zero(T)
+  x .= zero(FC)
   if restart
     mul!(r, A, Δx)
-    @kaxpby!(n, one(T), b, -one(T), r)
+    @kaxpby!(n, one(FC), b, -one(FC), r)
   else
     r .= b
   end
   MisI || mul!(z, M, r)
   p .= z
-  γ = @kdot(n, r, z)
+  γ = @kdotr(n, r, z)
   rNorm = sqrt(γ)
   history && push!(rNorms, rNorm)
   if γ == 0 
@@ -118,7 +118,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   while !(solved || tired || zero_curvature)
     mul!(Ap, A, p)
-    pAp = @kdot(n, p, Ap)
+    pAp = @kdotr(n, p, Ap)
     if (pAp ≤ eps(T) * pNorm²) && (radius == 0)
       if abs(pAp) ≤ eps(T) * pNorm²
         zero_curvature = true
@@ -149,7 +149,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
     @kaxpy!(n,  α,  p, x)
     @kaxpy!(n, -α, Ap, r)
     MisI || mul!(z, M, r)
-    γ_next = @kdot(n, r, z)
+    γ_next = @kdotr(n, r, z)
     rNorm = sqrt(γ_next)
     history && push!(rNorms, rNorm)
 
@@ -159,7 +159,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
       β = γ_next / γ
       pNorm² = γ_next + β^2 * pNorm²
       γ = γ_next
-      @kaxpby!(n, one(T), z, β, p)
+      @kaxpby!(n, one(FC), z, β, p)
     end
 
     iter = iter + 1
@@ -175,7 +175,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
   tired && (status = "maximum number of iterations exceeded")
 
   # Update x
-  restart && @kaxpy!(n, one(T), Δx, x)
+  restart && @kaxpy!(n, one(FC), Δx, x)
 
   # Update stats
   stats.solved = solved
