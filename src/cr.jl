@@ -66,7 +66,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   MisI = (M === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace
@@ -77,11 +77,11 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   Mq = MisI ? q : solver.Mq
 
   # Initial state.
-  x .= zero(T)  # initial estimation x = 0
+  x .= zero(FC)  # initial estimation x = 0
   xNorm = zero(T)
   mul!(r, M, b)  # initial residual r = M * (b - Ax) = M * b
   mul!(Ar, A, r)
-  ρ = @kdot(n, r, Ar)
+  ρ = @kdotr(n, r, Ar)
   if ρ == 0 
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
@@ -96,7 +96,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   iter = 0
   itmax == 0 && (itmax = 2 * n)
 
-  rNorm = sqrt(@kdot(n, r, b)) # ‖r‖
+  rNorm = sqrt(@kdotr(n, r, b)) # ‖r‖
   history && push!(rNorms, rNorm) # Values of ‖r‖
   rNorm² = rNorm * rNorm
   pNorm = rNorm
@@ -180,7 +180,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
       elseif pAp > 0 && ρ > 0 # no negative curvature
         (verbose > 0) && @printf("positive curvatures along p and r. pᵀAp = %8.1e and rᵀAr = %8.1e\n", pAp, ρ)
-        α = ρ / @kdot(n, q, Mq)
+        α = ρ / @kdotr(n, q, Mq)
         if α ≥ t1
           α = t1
           on_boundary = true
@@ -235,7 +235,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
       end
 
     elseif radius == 0
-      α = ρ / @kdot(n, q, Mq) # step
+      α = ρ / @kdotr(n, q, Mq) # step
     end
 
     @kaxpy!(n, α, p, x)
@@ -260,10 +260,10 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     (solved || tired) && continue
     ρbar = ρ
-    ρ = @kdot(n, r, Ar)
+    ρ = @kdotr(n, r, Ar)
     β = ρ / ρbar # step for the direction computation
-    @kaxpby!(n, one(T), r, β, p)
-    @kaxpby!(n, one(T), Ar, β, q)
+    @kaxpby!(n, one(FC), r, β, p)
+    @kaxpby!(n, one(FC), Ar, β, q)
 
     pNorm² = rNorm² + 2 * β * pr - 2 * β * α * pAp + β^2 * pNorm²
     pNorm = sqrt(pNorm²)
