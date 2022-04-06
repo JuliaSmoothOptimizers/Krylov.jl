@@ -44,7 +44,7 @@
       A, b, M = square_preconditioned(FC=FC)
       (x, stats) = cg(A, b, M=M)
       r = b - A * x
-      resid = sqrt(dot(r, M * r)) / norm(b)
+      resid = sqrt(real(dot(r, M * r))) / norm(b)
       @test(resid ≤ cg_tol)
       @test(stats.solved)
 
