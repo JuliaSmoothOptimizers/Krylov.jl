@@ -73,7 +73,7 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   MisI = (M === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
@@ -89,7 +89,7 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   Mr  = MisI ? r  : solver.Ms
   MAp = MisI ? Ap : solver.Ms
 
-  x .= zero(T)
+  x .= zero(FC)
   r .= b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
@@ -110,7 +110,7 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   Ap .= s
   mul!(q, Aᵀ, Ms)  # Ap
   λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
-  γ  = @kdot(m, s, Ms)  # Faster than γ = dot(s, Ms)
+  γ  = @kdotr(m, s, Ms)  # Faster than γ = dot(s, Ms)
   iter = 0
   itmax == 0 && (itmax = m + n)
 
@@ -128,14 +128,14 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   psd = false
 
   while ! (solved || tired)
-    qNorm² = @kdot(n, q, q) # dot(q, q)
+    qNorm² = @kdotr(n, q, q) # dot(q, q)
     α = γ / qNorm²
 
     # if a trust-region constraint is give, compute step to the boundary
     # (note that α > 0 in CRLS)
     if radius > 0
       pNorm = @knrm2(n, p)
-      if @knrm2(m, Ap)^2 ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is constant in the direction p
+      if @kdotr(m, Ap, Ap) ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is constant in the direction p
         psd = true # det(AᵀA) = 0
         p = Ar # p = Aᵀr
         pNorm² = ArNorm * ArNorm
@@ -159,23 +159,22 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap
     mul!(s, A, Ar)
     MisI || mul!(Ms, M, s)
-    γ_next = @kdot(m, s, Ms)   # Faster than γ_next = dot(s, s)
+    γ_next = @kdotr(m, s, Ms)   # Faster than γ_next = dot(s, s)
     λ > 0 && (γ_next += λ * ArNorm * ArNorm)
     β = γ_next / γ
 
-    @kaxpby!(n, one(T), Ar, β, p)    # Faster than  p = Ar + β *  p
-    @kaxpby!(m, one(T), s, β, Ap)    # Faster than Ap =  s + β * Ap
+    @kaxpby!(n, one(FC), Ar, β, p)    # Faster than  p = Ar + β *  p
+    @kaxpby!(m, one(FC), s, β, Ap)    # Faster than Ap =  s + β * Ap
     MisI || mul!(MAp, M, Ap)
     mul!(q, Aᵀ, MAp)
     λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
 
     γ = γ_next
     if λ > 0
-      rNorm = sqrt(@kdot(m, r, r) + λ * @kdot(n, x, x))
+      rNorm = sqrt(@kdotr(m, r, r) + λ * @kdotr(n, x, x))
     else
       rNorm = @knrm2(m, r)  # norm(r)
     end
-    #     ArNorm = norm(Ar)
     history && push!(rNorms, rNorm)
     history && push!(ArNorms, ArNorm)
     iter = iter + 1
