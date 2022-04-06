@@ -15,37 +15,39 @@
       # Code coverage
       (x, stats) = cr(Matrix(A), b)
 
-      radius = 0.75 * norm(x)
-      (x, stats) = cr(A, b, radius=radius)
-      @test(stats.solved)
-      @test abs(norm(x) - radius) ≤ cr_tol * radius
+      if FC == Float64
+        radius = 0.75 * norm(x)
+        (x, stats) = cr(A, b, radius=radius)
+        @test(stats.solved)
+        @test abs(norm(x) - radius) ≤ cr_tol * radius
 
-      # Sparse Laplacian
-      A, _ = sparse_laplacian(FC=FC)
-      Random.seed!(0)
-      b = randn(size(A, 1))
-      itmax = 0
-      # case: ‖x*‖ > Δ
-      radius = 10.
-      (x, stats) = cr(A, b, radius=radius)
-      xNorm = norm(x)
-      r = b - A * x
-      resid = norm(r) / norm(b)
-      @test abs(xNorm - radius) ≤ cr_tol * radius
-      @test(stats.solved)
-      # case: ‖x*‖ < Δ
-      radius = 30.
-      (x, stats) = cr(A, b, radius=radius)
-      xNorm = norm(x)
-      r = b - A * x
-      resid = norm(r) / norm(b)
-      @test(resid ≤ cr_tol)
-      @test(stats.solved)
+        # Sparse Laplacian
+        A, _ = sparse_laplacian(FC=FC)
+        Random.seed!(0)
+        b = randn(size(A, 1))
+        itmax = 0
+        # case: ‖x*‖ > Δ
+        radius = 10.
+        (x, stats) = cr(A, b, radius=radius)
+        xNorm = norm(x)
+        r = b - A * x
+        resid = norm(r) / norm(b)
+        @test abs(xNorm - radius) ≤ cr_tol * radius
+        @test(stats.solved)
+        # case: ‖x*‖ < Δ
+        radius = 30.
+        (x, stats) = cr(A, b, radius=radius)
+        xNorm = norm(x)
+        r = b - A * x
+        resid = norm(r) / norm(b)
+        @test(resid ≤ cr_tol)
+        @test(stats.solved)
 
-      radius = 0.75 * xNorm
-      (x, stats) = cr(A, b, radius=radius)
-      @test(stats.solved)
-      @test(abs(radius - norm(x)) ≤ cr_tol * radius)
+        radius = 0.75 * xNorm
+        (x, stats) = cr(A, b, radius=radius)
+        @test(stats.solved)
+        @test(abs(radius - norm(x)) ≤ cr_tol * radius)
+      end
 
       # Test b == 0
       A, b = zero_rhs(FC=FC)
@@ -57,7 +59,7 @@
       A, b, M = square_preconditioned(FC=FC)
       (x, stats) = cr(A, b, M=M)
       r = b - A * x
-      resid = sqrt(dot(r, M * r)) / norm(b)
+      resid = sqrt(real(dot(r, M * r))) / norm(b)
       @test(resid ≤ cr_tol)
       @test(stats.solved)
     end
