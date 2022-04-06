@@ -57,7 +57,7 @@ CRMR produces monotonic residuals ‖r‖₂.
 It is formally equivalent to CRAIG-MR, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 
-A preconditioner M may be provided in the form of a linear operator.
+A preconditioner M may be provided.
 
 #### References
 
@@ -89,7 +89,7 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   MisI = (M === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
@@ -104,7 +104,7 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   reset!(stats)
   Mq = MisI ? q : solver.Mq
 
-  x .= zero(T)  # initial estimation x = 0
+  x .= zero(FC) # initial estimation x = 0
   mul!(r, M, b) # initial residual r = M * (b - Ax) = M * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
@@ -119,7 +119,7 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   λ > 0 && (s .= r)
   mul!(Aᵀr, Aᵀ, r)  # - λ * x0 if x0 ≠ 0.
   p .= Aᵀr
-  γ = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr)
+  γ = @kdotr(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr)
   λ > 0 && (γ += λ * rNorm * rNorm)
   iter = 0
   itmax == 0 && (itmax = m + n)
@@ -140,18 +140,18 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     mul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s
     MisI || mul!(Mq, M, q)
-    α = γ / @kdot(m, q, Mq)    # Compute qᵗ * M * q
+    α = γ / @kdotr(m, q, Mq)   # Compute qᵗ * M * q
     @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p
     @kaxpy!(m, -α, Mq, r)      # Faster than  r =  r - α * Mq
     rNorm = @knrm2(m, r)       # norm(r)
     mul!(Aᵀr, Aᵀ, r)
-    γ_next = @kdot(n, Aᵀr, Aᵀr)  # Faster than γ_next = dot(Aᵀr, Aᵀr)
+    γ_next = @kdotr(n, Aᵀr, Aᵀr)  # Faster than γ_next = dot(Aᵀr, Aᵀr)
     λ > 0 && (γ_next += λ * rNorm * rNorm)
     β = γ_next / γ
 
-    @kaxpby!(n, one(T), Aᵀr, β, p)  # Faster than  p = Aᵀr + β * p
+    @kaxpby!(n, one(FC), Aᵀr, β, p)  # Faster than  p = Aᵀr + β * p
     if λ > 0
-      @kaxpby!(m, one(T), r, β, s) # s = r + β * s
+      @kaxpby!(m, one(FC), r, β, s) # s = r + β * s
     end
 
     γ = γ_next
