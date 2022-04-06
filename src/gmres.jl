@@ -126,6 +126,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Stopping criterion
   breakdown = false
+  inconsistent = false
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
   status = "unknown"
@@ -222,6 +223,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Rₖ can be singular if the system is inconsistent
     if abs(R[pos]) ≤ btol
       y[i] = zero(FC)
+      inconsistent = true
     else
       y[i] = y[i] / R[pos]  # yᵢ ← yᵢ / rᵢᵢ
     end
@@ -236,9 +238,9 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     mul!(x, N, solver.p)
   end
 
-  tired     && (status = "maximum number of iterations exceeded")
-  breakdown && (status = "found approximate least-squares solution")
-  solved    && (status = "solution good enough given atol and rtol")
+  tired        && (status = "maximum number of iterations exceeded")
+  solved       && (status = "solution good enough given atol and rtol")
+  inconsistent && (status = "found approximate least-squares solution")
 
   # Update x
   restart && @kaxpy!(n, one(FC), Δx, x)
@@ -246,7 +248,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # Update stats
   stats.niter = iter
   stats.solved = solved
-  stats.inconsistent = !solved && breakdown
+  stats.inconsistent = inconsistent
   stats.status = status
   return solver
 end
