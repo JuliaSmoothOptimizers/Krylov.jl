@@ -91,7 +91,7 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
   MisI = (M === I)
 
   # Check type consistency
-  eltype(A) == T || error("eltype(A) ≠ $T")
+  eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
@@ -105,7 +105,7 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
   reset!(stats)
   z = MisI ? r : solver.z
 
-  x .= zero(T)
+  x .= zero(FC)
   r .= b
   MisI || mul!(z, M, r)
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
@@ -125,7 +125,7 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # implementation, p is a substitute for A'u.
   pNorm = @knrm2(n, p)
 
-  γ = @kdot(m, r, z)  # Faster than γ = dot(r, z)
+  γ = @kdotr(m, r, z)  # Faster than γ = dot(r, z)
   iter = 0
   itmax == 0 && (itmax = m + n)
 
@@ -142,19 +142,19 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
   while ! (solved || inconsistent || tired)
     mul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)
-    δ = @kdot(n, p, p)   # Faster than dot(p, p)
-    λ > 0 && (δ += λ * @kdot(m, s, s))
+    δ = @kdotr(n, p, p)   # Faster than dot(p, p)
+    λ > 0 && (δ += λ * @kdotr(m, s, s))
     α = γ / δ
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
     MisI || mul!(z, M, r)
-    γ_next = @kdot(m, r, z)  # Faster than γ_next = dot(r, z)
+    γ_next = @kdotr(m, r, z)  # Faster than γ_next = dot(r, z)
     β = γ_next / γ
     mul!(Aᵀz, Aᵀ, z)
-    @kaxpby!(n, one(T), Aᵀz, β, p)  # Faster than p = Aᵀz + β * p
+    @kaxpby!(n, one(FC), Aᵀz, β, p)  # Faster than p = Aᵀz + β * p
     pNorm = @knrm2(n, p)
     if λ > 0
-      @kaxpby!(m, one(T), r, β, s)  # s = r + β * s
+      @kaxpby!(m, one(FC), r, β, s)  # s = r + β * s
     end
     γ = γ_next
     rNorm = sqrt(γ_next)
