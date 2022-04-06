@@ -93,7 +93,7 @@ end
         (xₛ, yₛ, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=false, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, σ=0.5)
         for (x, y) in ((x, y), (xₛ, yₛ))
           r = b - A * x
-          resid = sqrt(dot(r, M⁻¹ * r)) / norm(b)
+          resid = sqrt(real(dot(r, M⁻¹ * r))) / norm(b)
           @test(resid ≤ lnlq_tol)
           @test(norm(x - N⁻¹ * A' * y) ≤ lnlq_tol * norm(x))
         end

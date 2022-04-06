@@ -71,7 +71,7 @@
       A, b, M = square_preconditioned(FC=FC)
       (x, stats) = minres_qlp(A, b, M=M)
       r = b - A * x
-      resid = sqrt(dot(r, M * r)) / norm(b)
+      resid = sqrt(real(dot(r, M * r))) / norm(b)
       @test(resid ≤ minres_qlp_tol)
       @test(stats.solved)
 

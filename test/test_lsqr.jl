@@ -42,7 +42,7 @@
       A, b, M, N = two_preconditioners(FC=FC)
       (x, stats) = lsqr(A, b, M=M, N=N)
       r = b - A * x
-      resid = sqrt(dot(r, M * r)) / norm(b)
+      resid = sqrt(real(dot(r, M * r))) / norm(b)
       @test(resid ≤ lsqr_tol)
       @test(stats.solved)
 
