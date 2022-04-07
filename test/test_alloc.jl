@@ -1,20 +1,21 @@
-function test_alloc()
-  A   = get_div_grad(32, 32, 32)  # Dimension n x n
+function test_alloc(FC)
+  A   = FC.(get_div_grad(32, 32, 32))  # Dimension n x n
   n   = size(A, 1)
   m   = div(n, 2)
   Au  = A[1:m,:]  # Dimension m x n
   Ao  = A[:,1:m]  # Dimension n x m
-  b   = Ao * ones(m) # Dimension n
-  c   = Au * ones(n) # Dimension m
+  b   = Ao * ones(FC, m) # Dimension n
+  c   = Au * ones(FC, n) # Dimension m
   mem = 200
 
   shifts  = [1.0; 2.0; 3.0; 4.0; 5.0]
   nshifts = 5
+  nbits = sizeof(FC)  # 8 bits for Float64 and 16 bits for ComplexF64
 
   # SYMMLQ needs:
   # 5 n-vectors: x, Mvold, Mv, Mv_next, w̅
   storage_symmlq(n) = 5 * n
-  storage_symmlq_bytes(n) = 8 * storage_symmlq(n)
+  storage_symmlq_bytes(n) = nbits * storage_symmlq(n)
 
   expected_symmlq_bytes = storage_symmlq_bytes(n)
   symmlq(A, b)  # warmup
@@ -29,7 +30,7 @@ function test_alloc()
   # CG needs:
   # 4 n-vectors: x, r, p, Ap
   storage_cg(n) = 4 * n
-  storage_cg_bytes(n) = 8 * storage_cg(n)
+  storage_cg_bytes(n) = nbits * storage_cg(n)
 
   expected_cg_bytes = storage_cg_bytes(n)
   cg(A, b)  # warmup
@@ -44,7 +45,7 @@ function test_alloc()
   # MINRES needs:
   # 6 n-vectors: x, r1, r2, w1, w2, y
   storage_minres(n) = 6 * n
-  storage_minres_bytes(n) = 8 * storage_minres(n)
+  storage_minres_bytes(n) = nbits * storage_minres(n)
 
   expected_minres_bytes = storage_minres_bytes(n)
   minres(A, b)  # warmup
@@ -62,7 +63,7 @@ function test_alloc()
   # - 1 mem-vector: L
   # - 1 (mem+2)-vector: H
   storage_diom(mem, n) = (2 * n) + (2 * n * mem) + (mem) + (mem + 2)
-  storage_diom_bytes(mem, n) = 8 * storage_diom(mem, n)
+  storage_diom_bytes(mem, n) = nbits * storage_diom(mem, n)
 
   expected_diom_bytes = storage_diom_bytes(mem, n)
   diom(A, b, memory=mem)  # warmup
@@ -80,7 +81,7 @@ function test_alloc()
   # - 2 mem-vectors: l, z
   # - 1 (mem*(mem+1)/2)-vector: U
   storage_fom(mem, n) = (2 * n) + (n * mem) + (2 * mem) + (mem * (mem+1) / 2)
-  storage_fom_bytes(mem, n) = 8 * storage_fom(mem, n)
+  storage_fom_bytes(mem, n) = nbits * storage_fom(mem, n)
 
   expected_fom_bytes = storage_fom_bytes(mem, n)
   fom(A, b, memory=mem)  # warmup
@@ -95,7 +96,7 @@ function test_alloc()
   # CG_LANCZOS needs:
   # 5 n-vectors: x, Mv, Mv_prev, p, Mv_next
   storage_cg_lanczos(n) = 5 * n
-  storage_cg_lanczos_bytes(n) = 8 * storage_cg_lanczos(n)
+  storage_cg_lanczos_bytes(n) = nbits * storage_cg_lanczos(n)
 
   expected_cg_lanczos_bytes = storage_cg_lanczos_bytes(n)
   cg_lanczos(A, b)  # warmup
@@ -113,7 +114,7 @@ function test_alloc()
   # - 5 nshifts-vectors: σ, δhat, ω, γ, rNorms
   # - 3 nshifts-bitVector: indefinite, converged, not_cv
   storage_cg_lanczos_shift(n, nshifts) = (3 * n) + (2 * n * nshifts) + (5 * nshifts) + (3 * nshifts / 64)
-  storage_cg_lanczos_shift_bytes(n, nshifts) = 8 * storage_cg_lanczos_shift(n, nshifts)
+  storage_cg_lanczos_shift_bytes(n, nshifts) = nbits * storage_cg_lanczos_shift(n, nshifts)
 
   expected_cg_lanczos_shift_bytes = storage_cg_lanczos_shift_bytes(n, nshifts)
   cg_lanczos(A, b, shifts)  # warmup
@@ -131,7 +132,7 @@ function test_alloc()
   # - 2 mem-vectors: c, s
   # - 1 (mem+2)-vector: H
   storage_dqgmres(mem, n) = (2 * n) + (2 * n * mem) + (2 * mem) + (mem + 2)
-  storage_dqgmres_bytes(mem, n) = 8 * storage_dqgmres(mem, n)
+  storage_dqgmres_bytes(mem, n) = nbits * storage_dqgmres(mem, n)
 
   expected_dqgmres_bytes = storage_dqgmres_bytes(mem, n)
   dqgmres(A, b, memory=mem)  # warmup
@@ -149,7 +150,7 @@ function test_alloc()
   # - 3 mem-vectors: c, s, z
   # - 1 (mem*(mem+1)/2)-vector: R
   storage_gmres(mem, n) = (2 * n) + (n * mem) + (3 * mem) + (mem * (mem+1) / 2)
-  storage_gmres_bytes(mem, n) = 8 * storage_gmres(mem, n)
+  storage_gmres_bytes(mem, n) = nbits * storage_gmres(mem, n)
 
   expected_gmres_bytes = storage_gmres_bytes(mem, n)
   gmres(A, b, memory=mem)  # warmup
@@ -164,7 +165,7 @@ function test_alloc()
   # CR needs:
   # 5 n-vectors: x, r, p, q, Ar
   storage_cr(n) = 5 * n
-  storage_cr_bytes(n) = 8 * storage_cr(n)
+  storage_cr_bytes(n) = nbits * storage_cr(n)
 
   expected_cr_bytes = storage_cr_bytes(n)
   cr(A, b, rtol=1e-6)  # warmup
@@ -180,7 +181,7 @@ function test_alloc()
   # - 3 n-vectors: x, p, Aᵀr
   # - 2 m-vectors: r, q
   storage_crmr(n, m) = 3 * n + 2 * m
-  storage_crmr_bytes(n, m) = 8 * storage_crmr(n, m)
+  storage_crmr_bytes(n, m) = nbits * storage_crmr(n, m)
 
   expected_crmr_bytes = storage_crmr_bytes(n, m)
   (x, stats) = crmr(Au, c)  # warmup
@@ -195,7 +196,7 @@ function test_alloc()
   # CGS needs:
   # 6 n-vectors: x, r, u, p, q, ts
   storage_cgs(n) = 6 * n
-  storage_cgs_bytes(n) = 8 * storage_cgs(n)
+  storage_cgs_bytes(n) = nbits * storage_cgs(n)
 
   expected_cgs_bytes = storage_cgs_bytes(n)
   cgs(A, b)  # warmup
@@ -210,7 +211,7 @@ function test_alloc()
   # BICGSTAB needs:
   # 6 n-vectors: x, r, p, v, s, qd
   storage_bicgstab(n) = 6 * n
-  storage_bicgstab_bytes(n) = 8 * storage_bicgstab(n)
+  storage_bicgstab_bytes(n) = nbits * storage_bicgstab(n)
 
   expected_bicgstab_bytes = storage_bicgstab_bytes(n)
   bicgstab(A, b)  # warmup
@@ -226,7 +227,7 @@ function test_alloc()
   # - 4 n-vectors: x, v, Aᵀu, d
   # - 5 m-vectors: y, u, w, wbar, Av
   storage_craigmr(n, m) = 4 * n + 5 * m
-  storage_craigmr_bytes(n, m) = 8 * storage_craigmr(n, m)
+  storage_craigmr_bytes(n, m) = nbits * storage_craigmr(n, m)
 
   expected_craigmr_bytes = storage_craigmr_bytes(n, m)
   craigmr(Au, c)  # warmup
@@ -242,7 +243,7 @@ function test_alloc()
   # - 3 n-vectors: x, p, Aᵀz
   # - 2 m-vectors: r, q
   storage_cgne(n, m) = 3 * n + 2 * m
-  storage_cgne_bytes(n, m) = 8 * storage_cgne(n, m)
+  storage_cgne_bytes(n, m) = nbits * storage_cgne(n, m)
 
   expected_cgne_bytes = storage_cgne_bytes(n, m)
   (x, stats) = cgne(Au, c)  # warmup
@@ -258,7 +259,7 @@ function test_alloc()
   # - 3 n-vectors: x, v, Aᵀu
   # - 4 m-vectors: y, w̄, u, Av
   storage_lnlq(n, m) = 3 * n + 4 * m
-  storage_lnlq_bytes(n, m) = 8 * storage_lnlq(n, m)
+  storage_lnlq_bytes(n, m) = nbits * storage_lnlq(n, m)
 
   expected_lnlq_bytes = storage_lnlq_bytes(n, m)
   lnlq(Au, c)  # warmup
@@ -274,7 +275,7 @@ function test_alloc()
   # - 3 n-vectors: x, v, Aᵀu
   # - 4 m-vectors: y, w, u, Av
   storage_craig(n, m) = 3 * n + 4 * m
-  storage_craig_bytes(n, m) = 8 * storage_craig(n, m)
+  storage_craig_bytes(n, m) = nbits * storage_craig(n, m)
 
   expected_craig_bytes = storage_craig_bytes(n, m)
   craig(Au, c)  # warmup
@@ -290,7 +291,7 @@ function test_alloc()
   # - 4 m-vectors: x_lq, v, Aᵀu, w̄ (= x_cg)
   # - 2 n-vectors: u, Av
   storage_lslq(n, m) = 4 * m + 2 * n
-  storage_lslq_bytes(n, m) = 8 * storage_lslq(n, m)
+  storage_lslq_bytes(n, m) = nbits * storage_lslq(n, m)
 
   expected_lslq_bytes = storage_lslq_bytes(n, m)
   (x, stats) = lslq(Ao, b)  # warmup
@@ -306,7 +307,7 @@ function test_alloc()
   # - 3 m-vectors: x, p, s
   # - 2 n-vectors: r, q
   storage_cgls(n, m) = 3 * m + 2 * n
-  storage_cgls_bytes(n, m) = 8 * storage_cgls(n, m)
+  storage_cgls_bytes(n, m) = nbits * storage_cgls(n, m)
 
   expected_cgls_bytes = storage_cgls_bytes(n, m)
   (x, stats) = cgls(Ao, b)  # warmup
@@ -322,7 +323,7 @@ function test_alloc()
   # - 4 m-vectors: x, v, w, Aᵀu
   # - 2 n-vectors: u, Av
   storage_lsqr(n, m) = 4 * m + 2 * n
-  storage_lsqr_bytes(n, m) = 8 * storage_lsqr(n, m)
+  storage_lsqr_bytes(n, m) = nbits * storage_lsqr(n, m)
 
   expected_lsqr_bytes = storage_lsqr_bytes(n, m)
   (x, stats) = lsqr(Ao, b)  # warmup
@@ -338,7 +339,7 @@ function test_alloc()
   # - 4 m-vectors: x, p, Ar, q
   # - 3 n-vectors: r, Ap, s
   storage_crls(n, m) = 4 * m + 3 * n
-  storage_crls_bytes(n, m) = 8 * storage_crls(n, m)
+  storage_crls_bytes(n, m) = nbits * storage_crls(n, m)
 
   expected_crls_bytes = storage_crls_bytes(n, m)
   (x, stats) = crls(Ao, b)  # warmup
@@ -354,7 +355,7 @@ function test_alloc()
   # - 5 m-vectors: x, v, h, hbar, Aᵀu
   # - 2 n-vectors: u, Av
   storage_lsmr(n, m) = 5 * m + 2 * n
-  storage_lsmr_bytes(n, m) = 8 * storage_lsmr(n, m)
+  storage_lsmr_bytes(n, m) = nbits * storage_lsmr(n, m)
 
   expected_lsmr_bytes = storage_lsmr_bytes(n, m)
   (x, stats) = lsmr(Ao, b)  # warmup
@@ -370,7 +371,7 @@ function test_alloc()
   # - 6 m-vectors: vₖ₋₁, vₖ, x, wₖ₋₁, wₖ, p 
   # - 3 n-vectors: uₖ₋₁, uₖ, q
   storage_usymqr(n, m) = 6 * m + 3 * n
-  storage_usymqr_bytes(n, m) = 8 * storage_usymqr(n, m)
+  storage_usymqr_bytes(n, m) = nbits * storage_usymqr(n, m)
 
   expected_usymqr_bytes = storage_usymqr_bytes(n, m)
   (x, stats) = usymqr(Ao, b, c) # warmup
@@ -386,7 +387,7 @@ function test_alloc()
   # - 6 m-vectors: vₖ₋₁, vₖ, t, wₖ₋₁, wₖ, q
   # - 5 n-vectors: uₖ₋₁, uₖ, x, d̅, p
   storage_trilqr(n, m) = 6 * m + 5 * n
-  storage_trilqr_bytes(n, m) = 8 * storage_trilqr(n, m)
+  storage_trilqr_bytes(n, m) = nbits * storage_trilqr(n, m)
 
   expected_trilqr_bytes = storage_trilqr_bytes(n, n)
   trilqr(A, b, b)  # warmup
@@ -401,7 +402,7 @@ function test_alloc()
   # BILQ needs:
   # - 8 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, d̅, p, q
   storage_bilq(n) = 8 * n
-  storage_bilq_bytes(n) = 8 * storage_bilq(n)
+  storage_bilq_bytes(n) = nbits * storage_bilq(n)
 
   expected_bilq_bytes = storage_bilq_bytes(n)
   bilq(A, b)  # warmup
@@ -416,7 +417,7 @@ function test_alloc()
   # BILQR needs:
   # - 11 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, t, d̅, wₖ₋₁, wₖ, p, q
   storage_bilqr(n) = 11 * n
-  storage_bilqr_bytes(n) = 8 * storage_bilqr(n)
+  storage_bilqr_bytes(n) = nbits * storage_bilqr(n)
 
   expected_bilqr_bytes = storage_bilqr_bytes(n)
   bilqr(A, b, b)  # warmup
@@ -431,7 +432,7 @@ function test_alloc()
   # MINRES-QLP needs:
   # - 6 n-vectors: wₖ₋₁, wₖ, vₖ₋₁, vₖ, x, p
   storage_minres_qlp(n) = 6 * n
-  storage_minres_qlp_bytes(n) = 8 * storage_minres_qlp(n)
+  storage_minres_qlp_bytes(n) = nbits * storage_minres_qlp(n)
 
   expected_minres_qlp_bytes = storage_minres_qlp_bytes(n)
   minres_qlp(A, b)  # warmup
@@ -446,7 +447,7 @@ function test_alloc()
   # QMR needs:
   # - 9 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₁, wₖ, p, q
   storage_qmr(n) = 9 * n
-  storage_qmr_bytes(n) = 8 * storage_qmr(n)
+  storage_qmr_bytes(n) = nbits * storage_qmr(n)
 
   expected_qmr_bytes = storage_qmr_bytes(n)
   qmr(A, b)  # warmup
@@ -462,7 +463,7 @@ function test_alloc()
   # - 5 n-vectors: uₖ₋₁, uₖ, x, d̅, p
   # - 3 m-vectors: vₖ₋₁, vₖ, q
   storage_usymlq(n, m) = 5 * n + 3 * m
-  storage_usymlq_bytes(n, m) = 8 * storage_usymlq(n, m)
+  storage_usymlq_bytes(n, m) = nbits * storage_usymlq(n, m)
 
   expected_usymlq_bytes = storage_usymlq_bytes(n, m)
   usymlq(Au, c, b)  # warmup
@@ -478,7 +479,7 @@ function test_alloc()
   # - 6 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₁, gy₂ₖ, p
   # - 6 m-vectors: xₖ, vₖ₋₁, vₖ, gx₂ₖ₋₁, gx₂ₖ, q
   storage_tricg(n, m) = 6 * n + 6 * m
-  storage_tricg_bytes(n, m) = 8 * storage_tricg(n, m)
+  storage_tricg_bytes(n, m) = nbits * storage_tricg(n, m)
 
   expected_tricg_bytes = storage_tricg_bytes(n, m)
   tricg(Au, c, b)  # warmup
@@ -488,13 +489,14 @@ function test_alloc()
   solver = TricgSolver(Au, c)
   tricg!(solver, Au, c, b)  # warmup
   inplace_tricg_bytes = @allocated tricg!(solver, Au, c, b)
+  println(inplace_tricg_bytes)
   @test (VERSION < v"1.5") || (inplace_tricg_bytes == 0)
 
   # TriMR needs:
   # - 8 n-vectors: yₖ, uₖ₋₁, uₖ, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, p
   # - 8 m-vectors: xₖ, vₖ₋₁, vₖ, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, q
   storage_trimr(n, m) = 8 * n + 8 * m
-  storage_trimr_bytes(n, m) = 8 * storage_trimr(n, m)
+  storage_trimr_bytes(n, m) = nbits * storage_trimr(n, m)
 
   expected_trimr_bytes = storage_trimr_bytes(n, m)
   trimr(Au, c, b)  # warmup
@@ -515,19 +517,23 @@ function test_alloc()
   # - 2 (4*mem)-vectors: gc, gs
   # - 1 (mem*(2mem+1))-vector: R
   storage_gpmr(mem, n, m) = (mem + 2) * (n + m) + mem * (2 * mem + 11)
-  storage_gpmr_bytes(mem, n, m) = 8 * storage_gpmr(mem, n, m)
+  storage_gpmr_bytes(mem, n, m) = nbits * storage_gpmr(mem, n, m)
 
   expected_gpmr_bytes = storage_gpmr_bytes(mem, n, m)
-  gpmr(Ao, Au, b, c, memory=mem, λ=1.0, μ=-1.0)  # warmup
-  actual_gpmr_bytes = @allocated gpmr(Ao, Au, b, c, memory=mem, λ=1.0, μ=-1.0)
+  gpmr(Ao, Au, b, c, memory=mem, itmax=mem)  # warmup
+  actual_gpmr_bytes = @allocated gpmr(Ao, Au, b, c, memory=mem, itmax=mem)
   @test expected_gpmr_bytes ≤ actual_gpmr_bytes ≤ 1.02 * expected_gpmr_bytes
 
   solver = GpmrSolver(Ao, b, mem)
-  gpmr!(solver, Ao, Au, b, c, λ=1.0, μ=-1.0)  # warmup
-  inplace_gpmr_bytes = @allocated gpmr!(solver, Ao, Au, b, c, λ=1.0, μ=-1.0)
+  gpmr!(solver, Ao, Au, b, c, itmax=mem)  # warmup
+  inplace_gpmr_bytes = @allocated gpmr!(solver, Ao, Au, b, c, itmax=mem)
   @test (VERSION < v"1.5") || (inplace_gpmr_bytes == 0)
 end
 
 @testset "alloc" begin
-  test_alloc()
+  for FC in (Float64, ComplexF64)
+    @testset "Data Type: $FC" begin
+      test_alloc(FC)
+    end
+  end
 end
