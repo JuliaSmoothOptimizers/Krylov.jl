@@ -489,7 +489,6 @@ function test_alloc(FC)
   solver = TricgSolver(Au, c)
   tricg!(solver, Au, c, b)  # warmup
   inplace_tricg_bytes = @allocated tricg!(solver, Au, c, b)
-  println(inplace_tricg_bytes)
   @test (VERSION < v"1.5") || (inplace_tricg_bytes == 0)
 
   # TriMR needs:

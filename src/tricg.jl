@@ -219,8 +219,8 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     @kaxpy!(n, -conj(αₖ), N⁻¹uₖ, p)  # p ← p - ᾱₖ * N⁻¹uₖ
 
     # Update M⁻¹vₖ₋₁ and N⁻¹uₖ₋₁
-    @. M⁻¹vₖ₋₁ = M⁻¹vₖ
-    @. N⁻¹uₖ₋₁ = N⁻¹uₖ
+    M⁻¹vₖ₋₁ .= M⁻¹vₖ
+    N⁻¹uₖ₋₁ .= N⁻¹uₖ
 
     # Notations : Wₖ = [w₁ ••• wₖ] = [v₁ 0  ••• vₖ 0 ]
     #                                [0  u₁ ••• 0  uₖ]
@@ -305,10 +305,12 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     end
 
     # Update xₖ = Gxₖ * pₖ
-    @. xₖ += π₂ₖ₋₁ * gx₂ₖ₋₁ + π₂ₖ * gx₂ₖ
+    @kaxpy!(m, π₂ₖ₋₁, gx₂ₖ₋₁, xₖ)
+    @kaxpy!(m, π₂ₖ  , gx₂ₖ  , xₖ)
 
     # Update yₖ = Gyₖ * pₖ
-    @. yₖ += π₂ₖ₋₁ * gy₂ₖ₋₁ + π₂ₖ * gy₂ₖ
+    @kaxpy!(n, π₂ₖ₋₁, gy₂ₖ₋₁, yₖ)
+    @kaxpy!(n, π₂ₖ  , gy₂ₖ  , yₖ)
 
     # Compute vₖ₊₁ and uₖ₊₁
     MisI || mul!(vₖ₊₁, M, q)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
@@ -330,8 +332,8 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     end
 
     # Update M⁻¹vₖ and N⁻¹uₖ
-    @. M⁻¹vₖ = q
-    @. N⁻¹uₖ = p
+    M⁻¹vₖ .= q
+    N⁻¹uₖ .= p
 
     # Compute ‖rₖ‖² = |γₖ₊₁ζ₂ₖ₋₁|² + |βₖ₊₁ζ₂ₖ|²
     ζ₂ₖ₋₁ = π₂ₖ₋₁ - conj(δₖ) * π₂ₖ
