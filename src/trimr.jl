@@ -405,10 +405,12 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     πbar₂ₖ₊₁ = conj(s₄ₖ) * πtmp₂ₖ
 
     # Update xₖ = Gxₖ * pₖ
-    @. xₖ += π₂ₖ₋₁ * gx₂ₖ₋₁ + π₂ₖ * gx₂ₖ
+    @kaxpy!(m, π₂ₖ₋₁, gx₂ₖ₋₁, xₖ)
+    @kaxpy!(m, π₂ₖ  , gx₂ₖ  , xₖ)
 
     # Update yₖ = Gyₖ * pₖ
-    @. yₖ += π₂ₖ₋₁ * gy₂ₖ₋₁ + π₂ₖ * gy₂ₖ
+    @kaxpy!(n, π₂ₖ₋₁, gy₂ₖ₋₁, yₖ)
+    @kaxpy!(n, π₂ₖ  , gy₂ₖ  , yₖ)
 
     # Compute ‖rₖ‖² = |πbar₂ₖ₊₁|² + |πbar₂ₖ₊₂|²
     rNorm = sqrt(abs2(πbar₂ₖ₊₁) + abs2(πbar₂ₖ₊₂))
@@ -419,12 +421,12 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     NisI || (uₖ .= uₖ₊₁)
 
     # Update M⁻¹vₖ₋₁ and N⁻¹uₖ₋₁
-    @. M⁻¹vₖ₋₁ = M⁻¹vₖ
-    @. N⁻¹uₖ₋₁ = N⁻¹uₖ
+    M⁻¹vₖ₋₁ .= M⁻¹vₖ
+    N⁻¹uₖ₋₁ .= N⁻¹uₖ
 
     # Update M⁻¹vₖ and N⁻¹uₖ
-    @. M⁻¹vₖ = q
-    @. N⁻¹uₖ = p
+    M⁻¹vₖ .= q
+    N⁻¹uₖ .= p
 
     # Update cosines and sines
     old_s₁ₖ = s₁ₖ
