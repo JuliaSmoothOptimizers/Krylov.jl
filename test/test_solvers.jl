@@ -1,15 +1,16 @@
-@testset "solvers" begin
-  A   = get_div_grad(4, 4, 4)  # Dimension n x n
+function test_solvers(FC)
+  A   = FC.(get_div_grad(4, 4, 4))  # Dimension n x n
   n   = size(A, 1)
   m   = div(n, 2)
   Au  = A[1:m,:]  # Dimension m x n
   Ao  = A[:,1:m]  # Dimension n x m
-  b   = Ao * ones(m) # Dimension n
-  c   = Au * ones(n) # Dimension m
+  b   = Ao * ones(FC, m) # Dimension n
+  c   = Au * ones(FC, n) # Dimension m
   mem = 10
   shifts = [1.0; 2.0; 3.0; 4.0; 5.0]
   nshifts = 5
-  S = Vector{Float64}
+  T = real(FC)
+  S = Vector{FC}
 
   @eval begin
     cg_solver = $(KRYLOV_SOLVERS[:cg])($n, $n, $S)
@@ -386,730 +387,733 @@
     @test issolved(solver)
   end
 
-  if VERSION < v"1.8.0-DEV.1090"
+  io = IOBuffer()
+  show(io, cg_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌─────────┬───────────────┬─────────────────┐
+  │ CgSolver│Precision: $FC │Architecture: CPU│
+  ├─────────┼───────────────┼─────────────────┤
+  │Attribute│           Type│             Size│
+  ├─────────┼───────────────┼─────────────────┤
+  │       Δx│    Vector{$FC}│                0│
+  │        x│    Vector{$FC}│               64│
+  │        r│    Vector{$FC}│               64│
+  │        p│    Vector{$FC}│               64│
+  │       Ap│    Vector{$FC}│               64│
+  │        z│     Vector{$F}│                0│
+  └─────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, cg_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │            CgSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                  Δx│           Vector{Float64}│                 0│
-    │                   x│           Vector{Float64}│                64│
-    │                   r│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │                  Ap│           Vector{Float64}│                64│
-    │                   z│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, symmlq_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌────────────┬───────────────┬─────────────────┐
+  │SymmlqSolver│Precision: $FC │Architecture: CPU│
+  ├────────────┼───────────────┼─────────────────┤
+  │   Attribute│           Type│             Size│
+  ├────────────┼───────────────┼─────────────────┤
+  │          Δx│    Vector{$FC}│                0│
+  │           x│    Vector{$FC}│               64│
+  │       Mvold│    Vector{$FC}│               64│
+  │          Mv│    Vector{$FC}│               64│
+  │     Mv_next│    Vector{$FC}│               64│
+  │           w̅│    Vector{$FC}│               64│
+  │           v│    Vector{$FC}│                0│
+  │       clist│     Vector{$T}│                5│
+  │       zlist│     Vector{$T}│                5│
+  │       sprod│     Vector{$T}│                5│
+  └────────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, symmlq_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │        SymmlqSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                  Δx│           Vector{Float64}│                 0│
-    │                   x│           Vector{Float64}│                64│
-    │               Mvold│           Vector{Float64}│                64│
-    │                  Mv│           Vector{Float64}│                64│
-    │             Mv_next│           Vector{Float64}│                64│
-    │                   w̅│           Vector{Float64}│                64│
-    │                   v│           Vector{Float64}│                 0│
-    │               clist│           Vector{Float64}│                 5│
-    │               zlist│           Vector{Float64}│                 5│
-    │               sprod│           Vector{Float64}│                 5│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, minres_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌────────────┬───────────────┬─────────────────┐
+  │MinresSolver│Precision: $FC │Architecture: CPU│
+  ├────────────┼───────────────┼─────────────────┤
+  │   Attribute│           Type│             Size│
+  ├────────────┼───────────────┼─────────────────┤
+  │          Δx│    Vector{$FC}│                0│
+  │           x│    Vector{$FC}│               64│
+  │          r1│    Vector{$FC}│               64│
+  │          r2│    Vector{$FC}│               64│
+  │          w1│    Vector{$FC}│               64│
+  │          w2│    Vector{$FC}│               64│
+  │           y│    Vector{$FC}│               64│
+  │           v│    Vector{$FC}│                0│
+  │     err_vec│     Vector{$T}│                5│
+  └────────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, minres_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │        MinresSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                  Δx│           Vector{Float64}│                 0│
-    │                   x│           Vector{Float64}│                64│
-    │                  r1│           Vector{Float64}│                64│
-    │                  r2│           Vector{Float64}│                64│
-    │                  w1│           Vector{Float64}│                64│
-    │                  w2│           Vector{Float64}│                64│
-    │                   y│           Vector{Float64}│                64│
-    │                   v│           Vector{Float64}│                 0│
-    │             err_vec│           Vector{Float64}│                 5│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, cg_lanczos_solver, show_stats=false)
+  showed = String(take!(io))cted = """
+  ┌───────────────┬───────────────┬─────────────────┐
+  │CgLanczosSolver│Precision: $FC │Architecture: CPU│
+  ├───────────────┼───────────────┼─────────────────┤
+  │      Attribute│           Type│             Size│
+  ├───────────────┼───────────────┼─────────────────┤
+  │              x│    Vector{$FC}│               64│
+  │             Mv│    Vector{$FC}│               64│
+  │        Mv_prev│    Vector{$FC}│               64│
+  │              p│    Vector{$FC}│               64│
+  │        Mv_next│    Vector{$FC}│               64│
+  │              v│    Vector{$FC}│                0│
+  └───────────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
+  io = IOBuffer()
+  show(io, cg_lanczos_shift_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌────────────────────┬───────────────────┬─────────────────┐
+  │CgLanczosShiftSolver│    Precision: $FC │Architecture: CPU│
+  ├────────────────────┼───────────────────┼─────────────────┤
+  │           Attribute│               Type│             Size│
+  ├────────────────────┼───────────────────┼─────────────────┤
+  │                  Mv│        Vector{$FC}│               64│
+  │             Mv_prev│        Vector{$FC}│               64│
+  │             Mv_next│        Vector{$FC}│               64│
+  │                   v│        Vector{$FC}│                0│
+  │                   x│Vector{Vector{$FC}}│           5 x 64│
+  │                   p│Vector{Vector{$FC}}│           5 x 64│
+  │                   σ│         Vector{$T}│                5│
+  │                δhat│         Vector{$T}│                5│
+  │                   ω│         Vector{$T}│                5│
+  │                   γ│         Vector{$T}│                5│
+  │              rNorms│         Vector{$T}│                5│
+  │           converged│          BitVector│                5│
+  │              not_cv│          BitVector│                5│
+  └────────────────────┴───────────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, cg_lanczos_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │     CgLanczosSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                64│
-    │                  Mv│           Vector{Float64}│                64│
-    │             Mv_prev│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │             Mv_next│           Vector{Float64}│                64│
-    │                   v│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, diom_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌──────────┬───────────────────┬─────────────────┐
+  │DiomSolver│    Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────────┼─────────────────┤
+  │ Attribute│               Type│             Size│
+  ├──────────┼───────────────────┼─────────────────┤
+  │        Δx│        Vector{$FC}│                0│
+  │         x│        Vector{$FC}│               64│
+  │         t│        Vector{$FC}│               64│
+  │         z│        Vector{$FC}│                0│
+  │         w│        Vector{$FC}│                0│
+  │         P│Vector{Vector{$FC}}│          10 x 64│
+  │         V│Vector{Vector{$FC}}│          10 x 64│
+  │         L│        Vector{$FC}│               10│
+  │         H│        Vector{$FC}│               12│
+  └──────────┴───────────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, cg_lanczos_shift_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │CgLanczosShiftSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                  Mv│           Vector{Float64}│                64│
-    │             Mv_prev│           Vector{Float64}│                64│
-    │             Mv_next│           Vector{Float64}│                64│
-    │                   v│           Vector{Float64}│                 0│
-    │                   x│   Vector{Vector{Float64}}│            5 x 64│
-    │                   p│   Vector{Vector{Float64}}│            5 x 64│
-    │                   σ│           Vector{Float64}│                 5│
-    │                δhat│           Vector{Float64}│                 5│
-    │                   ω│           Vector{Float64}│                 5│
-    │                   γ│           Vector{Float64}│                 5│
-    │              rNorms│           Vector{Float64}│                 5│
-    │           converged│                 BitVector│                 5│
-    │              not_cv│                 BitVector│                 5│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, fom_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌─────────┬───────────────────┬─────────────────┐
+  │FomSolver│    Precision: $FC │Architecture: CPU│
+  ├─────────┼───────────────────┼─────────────────┤
+  │Attribute│               Type│             Size│
+  ├─────────┼───────────────────┼─────────────────┤
+  │       Δx│        Vector{$FC}│                0│
+  │        x│        Vector{$FC}│               64│
+  │        w│        Vector{$FC}│               64│
+  │        p│        Vector{$FC}│                0│
+  │        q│        Vector{$FC}│                0│
+  │        V│Vector{Vector{$FC}}│          10 x 64│
+  │        l│        Vector{$FC}│               10│
+  │        z│        Vector{$FC}│               10│
+  │        U│        Vector{$FC}│               55│
+  └─────────┴───────────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, diom_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │          DiomSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                  Δx│           Vector{Float64}│                 0│
-    │                   x│           Vector{Float64}│                64│
-    │                   t│           Vector{Float64}│                64│
-    │                   z│           Vector{Float64}│                 0│
-    │                   w│           Vector{Float64}│                 0│
-    │                   P│   Vector{Vector{Float64}}│           10 x 64│
-    │                   V│   Vector{Vector{Float64}}│           10 x 64│
-    │                   L│           Vector{Float64}│                10│
-    │                   H│           Vector{Float64}│                12│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, dqgmres_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌─────────────┬───────────────────┬─────────────────┐
+  │DqgmresSolver│    Precision: $FC │Architecture: CPU│
+  ├─────────────┼───────────────────┼─────────────────┤
+  │    Attribute│               Type│             Size│
+  ├─────────────┼───────────────────┼─────────────────┤
+  │           Δx│        Vector{$FC}│                0│
+  │            x│        Vector{$FC}│               64│
+  │            t│        Vector{$FC}│               64│
+  │            z│        Vector{$FC}│                0│
+  │            w│        Vector{$FC}│                0│
+  │            P│Vector{Vector{$FC}}│          10 x 64│
+  │            V│Vector{Vector{$FC}}│          10 x 64│
+  │            c│         Vector{$T}│               10│
+  │            s│        Vector{$FC}│               10│
+  │            H│        Vector{$FC}│               12│
+  └─────────────┴───────────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, fom_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │           FomSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                  Δx│           Vector{Float64}│                 0│
-    │                   x│           Vector{Float64}│                64│
-    │                   w│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                 0│
-    │                   q│           Vector{Float64}│                 0│
-    │                   V│   Vector{Vector{Float64}}│           10 x 64│
-    │                   l│           Vector{Float64}│                10│
-    │                   z│           Vector{Float64}│                10│
-    │                   U│           Vector{Float64}│                55│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, gmres_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌───────────┬───────────────────┬─────────────────┐
+  │GmresSolver│    Precision: $FC │Architecture: CPU│
+  ├───────────┼───────────────────┼─────────────────┤
+  │  Attribute│               Type│             Size│
+  ├───────────┼───────────────────┼─────────────────┤
+  │         Δx│        Vector{$FC}│                0│
+  │          x│        Vector{$FC}│               64│
+  │          w│        Vector{$FC}│               64│
+  │          p│        Vector{$FC}│                0│
+  │          q│        Vector{$FC}│                0│
+  │          V│Vector{Vector{$FC}}│          10 x 64│
+  │          c│         Vector{$T}│               10│
+  │          s│        Vector{$FC}│               10│
+  │          z│        Vector{$FC}│               10│
+  │          R│        Vector{$FC}│               55│
+  └───────────┴───────────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, dqgmres_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │       DqgmresSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                  Δx│           Vector{Float64}│                 0│
-    │                   x│           Vector{Float64}│                64│
-    │                   t│           Vector{Float64}│                64│
-    │                   z│           Vector{Float64}│                 0│
-    │                   w│           Vector{Float64}│                 0│
-    │                   P│   Vector{Vector{Float64}}│           10 x 64│
-    │                   V│   Vector{Vector{Float64}}│           10 x 64│
-    │                   c│           Vector{Float64}│                10│
-    │                   s│           Vector{Float64}│                10│
-    │                   H│           Vector{Float64}│                12│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, cr_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌─────────┬───────────────┬─────────────────┐
+  │ CrSolver│Precision: $FC │Architecture: CPU│
+  ├─────────┼───────────────┼─────────────────┤
+  │Attribute│           Type│             Size│
+  ├─────────┼───────────────┼─────────────────┤
+  │        x│    Vector{$FC}│               64│
+  │        r│    Vector{$FC}│               64│
+  │        p│    Vector{$FC}│               64│
+  │        q│    Vector{$FC}│               64│
+  │       Ar│    Vector{$FC}│               64│
+  │       Mq│    Vector{$FC}│                0│
+  └─────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, gmres_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │         GmresSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                  Δx│           Vector{Float64}│                 0│
-    │                   x│           Vector{Float64}│                64│
-    │                   w│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                 0│
-    │                   q│           Vector{Float64}│                 0│
-    │                   V│   Vector{Vector{Float64}}│           10 x 64│
-    │                   c│           Vector{Float64}│                10│
-    │                   s│           Vector{Float64}│                10│
-    │                   z│           Vector{Float64}│                10│
-    │                   R│           Vector{Float64}│                55│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, crmr_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌──────────┬───────────────┬─────────────────┐
+  │CrmrSolver│Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────┼─────────────────┤
+  │ Attribute│           Type│             Size│
+  ├──────────┼───────────────┼─────────────────┤
+  │         x│    Vector{$FC}│               64│
+  │         p│    Vector{$FC}│               64│
+  │       Aᵀr│    Vector{$FC}│               64│
+  │         r│    Vector{$FC}│               32│
+  │         q│    Vector{$FC}│               32│
+  │        Mq│    Vector{$FC}│                0│
+  │         s│    Vector{$FC}│                0│
+  └──────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, cr_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │            CrSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                64│
-    │                   r│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │                   q│           Vector{Float64}│                64│
-    │                  Ar│           Vector{Float64}│                64│
-    │                  Mq│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, cgs_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌─────────┬───────────────┬─────────────────┐
+  │CgsSolver│Precision: $FC │Architecture: CPU│
+  ├─────────┼───────────────┼─────────────────┤
+  │Attribute│           Type│             Size│
+  ├─────────┼───────────────┼─────────────────┤
+  │        x│    Vector{$FC}│               64│
+  │        r│    Vector{$FC}│               64│
+  │        u│    Vector{$FC}│               64│
+  │        p│    Vector{$FC}│               64│
+  │        q│    Vector{$FC}│               64│
+  │       ts│    Vector{$FC}│               64│
+  │       yz│    Vector{$FC}│                0│
+  │       vw│    Vector{$FC}│                0│
+  └─────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, crmr_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │          CrmrSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │                 Aᵀr│           Vector{Float64}│                64│
-    │                   r│           Vector{Float64}│                32│
-    │                   q│           Vector{Float64}│                32│
-    │                  Mq│           Vector{Float64}│                 0│
-    │                   s│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, bicgstab_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌──────────────┬───────────────┬─────────────────┐
+  │BicgstabSolver│Precision: $FC │Architecture: CPU│
+  ├──────────────┼───────────────┼─────────────────┤
+  │     Attribute│           Type│             Size│
+  ├──────────────┼───────────────┼─────────────────┤
+  │             x│    Vector{$FC}│               64│
+  │             r│    Vector{$FC}│               64│
+  │             p│    Vector{$FC}│               64│
+  │             v│    Vector{$FC}│               64│
+  │             s│    Vector{$FC}│               64│
+  │            qd│    Vector{$FC}│               64│
+  │            yz│    Vector{$FC}│                0│
+  │             t│    Vector{$FC}│                0│
+  └──────────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, cgs_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │           CgsSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                64│
-    │                   r│           Vector{Float64}│                64│
-    │                   u│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │                   q│           Vector{Float64}│                64│
-    │                  ts│           Vector{Float64}│                64│
-    │                  yz│           Vector{Float64}│                 0│
-    │                  vw│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, craigmr_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌─────────────┬───────────────┬─────────────────┐
+  │CraigmrSolver│Precision: $FC │Architecture: CPU│
+  ├─────────────┼───────────────┼─────────────────┤
+  │    Attribute│           Type│             Size│
+  ├─────────────┼───────────────┼─────────────────┤
+  │            x│    Vector{$FC}│               64│
+  │           Nv│    Vector{$FC}│               64│
+  │          Aᵀu│    Vector{$FC}│               64│
+  │            d│    Vector{$FC}│               64│
+  │            y│    Vector{$FC}│               32│
+  │           Mu│    Vector{$FC}│               32│
+  │            w│    Vector{$FC}│               32│
+  │         wbar│    Vector{$FC}│               32│
+  │           Av│    Vector{$FC}│               32│
+  │            u│    Vector{$FC}│                0│
+  │            v│    Vector{$FC}│                0│
+  │            q│    Vector{$FC}│                0│
+  └─────────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, bicgstab_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │      BicgstabSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                64│
-    │                   r│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │                   v│           Vector{Float64}│                64│
-    │                   s│           Vector{Float64}│                64│
-    │                  qd│           Vector{Float64}│                64│
-    │                  yz│           Vector{Float64}│                 0│
-    │                   t│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, cgne_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌──────────┬───────────────┬─────────────────┐
+  │CgneSolver│Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────┼─────────────────┤
+  │ Attribute│           Type│             Size│
+  ├──────────┼───────────────┼─────────────────┤
+  │         x│    Vector{$FC}│               64│
+  │         p│    Vector{$FC}│               64│
+  │       Aᵀz│    Vector{$FC}│               64│
+  │         r│    Vector{$FC}│               32│
+  │         q│    Vector{$FC}│               32│
+  │         s│    Vector{$FC}│                0│
+  │         z│    Vector{$FC}│                0│
+  └──────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, craigmr_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │       CraigmrSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                64│
-    │                  Nv│           Vector{Float64}│                64│
-    │                 Aᵀu│           Vector{Float64}│                64│
-    │                   d│           Vector{Float64}│                64│
-    │                   y│           Vector{Float64}│                32│
-    │                  Mu│           Vector{Float64}│                32│
-    │                   w│           Vector{Float64}│                32│
-    │                wbar│           Vector{Float64}│                32│
-    │                  Av│           Vector{Float64}│                32│
-    │                   u│           Vector{Float64}│                 0│
-    │                   v│           Vector{Float64}│                 0│
-    │                   q│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, lnlq_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌──────────┬───────────────┬─────────────────┐
+  │LnlqSolver│Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────┼─────────────────┤
+  │ Attribute│           Type│             Size│
+  ├──────────┼───────────────┼─────────────────┤
+  │         x│    Vector{$FC}│               64│
+  │        Nv│    Vector{$FC}│               64│
+  │       Aᵀu│    Vector{$FC}│               64│
+  │         y│    Vector{$FC}│               32│
+  │         w̄│    Vector{$FC}│               32│
+  │        Mu│    Vector{$FC}│               32│
+  │        Av│    Vector{$FC}│               32│
+  │         u│    Vector{$FC}│                0│
+  │         v│    Vector{$FC}│                0│
+  │         q│    Vector{$FC}│                0│
+  └──────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, cgne_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │          CgneSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │                 Aᵀz│           Vector{Float64}│                64│
-    │                   r│           Vector{Float64}│                32│
-    │                   q│           Vector{Float64}│                32│
-    │                   s│           Vector{Float64}│                 0│
-    │                   z│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, craig_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌───────────┬───────────────┬─────────────────┐
+  │CraigSolver│Precision: $FC │Architecture: CPU│
+  ├───────────┼───────────────┼─────────────────┤
+  │  Attribute│           Type│             Size│
+  ├───────────┼───────────────┼─────────────────┤
+  │          x│    Vector{$FC}│               64│
+  │         Nv│    Vector{$FC}│               64│
+  │        Aᵀu│    Vector{$FC}│               64│
+  │          y│    Vector{$FC}│               32│
+  │          w│    Vector{$FC}│               32│
+  │         Mu│    Vector{$FC}│               32│
+  │         Av│    Vector{$FC}│               32│
+  │          u│    Vector{$FC}│                0│
+  │          v│    Vector{$FC}│                0│
+  │         w2│    Vector{$FC}│                0│
+  └───────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, lnlq_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │          LnlqSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                64│
-    │                  Nv│           Vector{Float64}│                64│
-    │                 Aᵀu│           Vector{Float64}│                64│
-    │                   y│           Vector{Float64}│                32│
-    │                   w̄│           Vector{Float64}│                32│
-    │                  Mu│           Vector{Float64}│                32│
-    │                  Av│           Vector{Float64}│                32│
-    │                   u│           Vector{Float64}│                 0│
-    │                   v│           Vector{Float64}│                 0│
-    │                   q│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, lslq_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌──────────┬───────────────┬─────────────────┐
+  │LslqSolver│Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────┼─────────────────┤
+  │ Attribute│           Type│             Size│
+  ├──────────┼───────────────┼─────────────────┤
+  │         x│    Vector{$FC}│               32│
+  │        Nv│    Vector{$FC}│               32│
+  │       Aᵀu│    Vector{$FC}│               32│
+  │         w̄│    Vector{$FC}│               32│
+  │        Mu│    Vector{$FC}│               64│
+  │        Av│    Vector{$FC}│               64│
+  │         u│    Vector{$FC}│                0│
+  │         v│    Vector{$FC}│                0│
+  │   err_vec│     Vector{$T}│                5│
+  └──────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, craig_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │         CraigSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                64│
-    │                  Nv│           Vector{Float64}│                64│
-    │                 Aᵀu│           Vector{Float64}│                64│
-    │                   y│           Vector{Float64}│                32│
-    │                   w│           Vector{Float64}│                32│
-    │                  Mu│           Vector{Float64}│                32│
-    │                  Av│           Vector{Float64}│                32│
-    │                   u│           Vector{Float64}│                 0│
-    │                   v│           Vector{Float64}│                 0│
-    │                  w2│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, cgls_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌──────────┬───────────────┬─────────────────┐
+  │CglsSolver│Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────┼─────────────────┤
+  │ Attribute│           Type│             Size│
+  ├──────────┼───────────────┼─────────────────┤
+  │         x│    Vector{$FC}│               32│
+  │         p│    Vector{$FC}│               32│
+  │         s│    Vector{$FC}│               32│
+  │         r│    Vector{$FC}│               64│
+  │         q│    Vector{$FC}│               64│
+  │        Mr│    Vector{$FC}│                0│
+  └──────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, lslq_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │          LslqSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                32│
-    │                  Nv│           Vector{Float64}│                32│
-    │                 Aᵀu│           Vector{Float64}│                32│
-    │                   w̄│           Vector{Float64}│                32│
-    │                  Mu│           Vector{Float64}│                64│
-    │                  Av│           Vector{Float64}│                64│
-    │                   u│           Vector{Float64}│                 0│
-    │                   v│           Vector{Float64}│                 0│
-    │             err_vec│           Vector{Float64}│                 5│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, lsqr_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌──────────┬───────────────┬─────────────────┐
+  │LsqrSolver│Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────┼─────────────────┤
+  │ Attribute│           Type│             Size│
+  ├──────────┼───────────────┼─────────────────┤
+  │         x│    Vector{$FC}│               32│
+  │        Nv│    Vector{$FC}│               32│
+  │       Aᵀu│    Vector{$FC}│               32│
+  │         w│    Vector{$FC}│               32│
+  │        Mu│    Vector{$FC}│               64│
+  │        Av│    Vector{$FC}│               64│
+  │         u│    Vector{$FC}│                0│
+  │         v│    Vector{$FC}│                0│
+  │   err_vec│     Vector{$T}│                5│
+  └──────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, cgls_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │          CglsSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                32│
-    │                   p│           Vector{Float64}│                32│
-    │                   s│           Vector{Float64}│                32│
-    │                   r│           Vector{Float64}│                64│
-    │                   q│           Vector{Float64}│                64│
-    │                  Mr│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, crls_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌──────────┬───────────────┬─────────────────┐
+  │CrlsSolver│Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────┼─────────────────┤
+  │ Attribute│           Type│             Size│
+  ├──────────┼───────────────┼─────────────────┤
+  │         x│    Vector{$FC}│               32│
+  │         p│    Vector{$FC}│               32│
+  │        Ar│    Vector{$FC}│               32│
+  │         q│    Vector{$FC}│               32│
+  │         r│    Vector{$FC}│               64│
+  │        Ap│    Vector{$FC}│               64│
+  │         s│    Vector{$FC}│               64│
+  │        Ms│    Vector{$FC}│                0│
+  └──────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, lsqr_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │          LsqrSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                32│
-    │                  Nv│           Vector{Float64}│                32│
-    │                 Aᵀu│           Vector{Float64}│                32│
-    │                   w│           Vector{Float64}│                32│
-    │                  Mu│           Vector{Float64}│                64│
-    │                  Av│           Vector{Float64}│                64│
-    │                   u│           Vector{Float64}│                 0│
-    │                   v│           Vector{Float64}│                 0│
-    │             err_vec│           Vector{Float64}│                 5│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, lsmr_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌──────────┬───────────────┬─────────────────┐
+  │LsmrSolver│Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────┼─────────────────┤
+  │ Attribute│           Type│             Size│
+  ├──────────┼───────────────┼─────────────────┤
+  │         x│    Vector{$FC}│               32│
+  │        Nv│    Vector{$FC}│               32│
+  │       Aᵀu│    Vector{$FC}│               32│
+  │         h│    Vector{$FC}│               32│
+  │      hbar│    Vector{$FC}│               32│
+  │        Mu│    Vector{$FC}│               64│
+  │        Av│    Vector{$FC}│               64│
+  │         u│    Vector{$FC}│                0│
+  │         v│    Vector{$FC}│                0│
+  │   err_vec│     Vector{$T}│                5│
+  └──────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, crls_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │          CrlsSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                32│
-    │                   p│           Vector{Float64}│                32│
-    │                  Ar│           Vector{Float64}│                32│
-    │                   q│           Vector{Float64}│                32│
-    │                   r│           Vector{Float64}│                64│
-    │                  Ap│           Vector{Float64}│                64│
-    │                   s│           Vector{Float64}│                64│
-    │                  Ms│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, usymqr_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌────────────┬───────────────┬─────────────────┐
+  │UsymqrSolver│Precision: $FC │Architecture: CPU│
+  ├────────────┼───────────────┼─────────────────┤
+  │   Attribute│           Type│             Size│
+  ├────────────┼───────────────┼─────────────────┤
+  │        vₖ₋₁│    Vector{$FC}│               64│
+  │          vₖ│    Vector{$FC}│               64│
+  │           q│    Vector{$FC}│               64│
+  │           x│    Vector{$FC}│               32│
+  │        wₖ₋₂│    Vector{$FC}│               32│
+  │        wₖ₋₁│    Vector{$FC}│               32│
+  │        uₖ₋₁│    Vector{$FC}│               32│
+  │          uₖ│    Vector{$FC}│               32│
+  │           p│    Vector{$FC}│               32│
+  └────────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, lsmr_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │          LsmrSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   x│           Vector{Float64}│                32│
-    │                  Nv│           Vector{Float64}│                32│
-    │                 Aᵀu│           Vector{Float64}│                32│
-    │                   h│           Vector{Float64}│                32│
-    │                hbar│           Vector{Float64}│                32│
-    │                  Mu│           Vector{Float64}│                64│
-    │                  Av│           Vector{Float64}│                64│
-    │                   u│           Vector{Float64}│                 0│
-    │                   v│           Vector{Float64}│                 0│
-    │             err_vec│           Vector{Float64}│                 5│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, trilqr_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌────────────┬───────────────┬─────────────────┐
+  │TrilqrSolver│Precision: $FC │Architecture: CPU│
+  ├────────────┼───────────────┼─────────────────┤
+  │   Attribute│           Type│             Size│
+  ├────────────┼───────────────┼─────────────────┤
+  │        uₖ₋₁│    Vector{$FC}│               64│
+  │          uₖ│    Vector{$FC}│               64│
+  │           p│    Vector{$FC}│               64│
+  │           d̅│    Vector{$FC}│               64│
+  │           x│    Vector{$FC}│               64│
+  │        vₖ₋₁│    Vector{$FC}│               64│
+  │          vₖ│    Vector{$FC}│               64│
+  │           q│    Vector{$FC}│               64│
+  │           y│    Vector{$FC}│               64│
+  │        wₖ₋₃│    Vector{$FC}│               64│
+  │        wₖ₋₂│    Vector{$FC}│               64│
+  └────────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, usymqr_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │        UsymqrSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                vₖ₋₁│           Vector{Float64}│                64│
-    │                  vₖ│           Vector{Float64}│                64│
-    │                   q│           Vector{Float64}│                64│
-    │                   x│           Vector{Float64}│                32│
-    │                wₖ₋₂│           Vector{Float64}│                32│
-    │                wₖ₋₁│           Vector{Float64}│                32│
-    │                uₖ₋₁│           Vector{Float64}│                32│
-    │                  uₖ│           Vector{Float64}│                32│
-    │                   p│           Vector{Float64}│                32│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, bilq_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌──────────┬───────────────┬─────────────────┐
+  │BilqSolver│Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────┼─────────────────┤
+  │ Attribute│           Type│             Size│
+  ├──────────┼───────────────┼─────────────────┤
+  │      uₖ₋₁│    Vector{$FC}│               64│
+  │        uₖ│    Vector{$FC}│               64│
+  │         q│    Vector{$FC}│               64│
+  │      vₖ₋₁│    Vector{$FC}│               64│
+  │        vₖ│    Vector{$FC}│               64│
+  │         p│    Vector{$FC}│               64│
+  │         x│    Vector{$FC}│               64│
+  │         d̅│    Vector{$FC}│               64│
+  └──────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, trilqr_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │        TrilqrSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                uₖ₋₁│           Vector{Float64}│                64│
-    │                  uₖ│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │                   d̅│           Vector{Float64}│                64│
-    │                   x│           Vector{Float64}│                64│
-    │                vₖ₋₁│           Vector{Float64}│                64│
-    │                  vₖ│           Vector{Float64}│                64│
-    │                   q│           Vector{Float64}│                64│
-    │                   y│           Vector{Float64}│                64│
-    │                wₖ₋₃│           Vector{Float64}│                64│
-    │                wₖ₋₂│           Vector{Float64}│                64│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, bilqr_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌───────────┬───────────────┬─────────────────┐
+  │BilqrSolver│Precision: $FC │Architecture: CPU│
+  ├───────────┼───────────────┼─────────────────┤
+  │  Attribute│           Type│             Size│
+  ├───────────┼───────────────┼─────────────────┤
+  │       uₖ₋₁│    Vector{$FC}│               64│
+  │         uₖ│    Vector{$FC}│               64│
+  │          q│    Vector{$FC}│               64│
+  │       vₖ₋₁│    Vector{$FC}│               64│
+  │         vₖ│    Vector{$FC}│               64│
+  │          p│    Vector{$FC}│               64│
+  │          x│    Vector{$FC}│               64│
+  │          y│    Vector{$FC}│               64│
+  │          d̅│    Vector{$FC}│               64│
+  │       wₖ₋₃│    Vector{$FC}│               64│
+  │       wₖ₋₂│    Vector{$FC}│               64│
+  └───────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, bilq_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │          BilqSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                uₖ₋₁│           Vector{Float64}│                64│
-    │                  uₖ│           Vector{Float64}│                64│
-    │                   q│           Vector{Float64}│                64│
-    │                vₖ₋₁│           Vector{Float64}│                64│
-    │                  vₖ│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │                   x│           Vector{Float64}│                64│
-    │                   d̅│           Vector{Float64}│                64│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, minres_qlp_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌───────────────┬───────────────┬─────────────────┐
+  │MinresQlpSolver│Precision: $FC │Architecture: CPU│
+  ├───────────────┼───────────────┼─────────────────┤
+  │      Attribute│           Type│             Size│
+  ├───────────────┼───────────────┼─────────────────┤
+  │             Δx│    Vector{$FC}│                0│
+  │           wₖ₋₁│    Vector{$FC}│               64│
+  │             wₖ│    Vector{$FC}│               64│
+  │        M⁻¹vₖ₋₁│    Vector{$FC}│               64│
+  │          M⁻¹vₖ│    Vector{$FC}│               64│
+  │              x│    Vector{$FC}│               64│
+  │              p│    Vector{$FC}│               64│
+  │             vₖ│    Vector{$FC}│                0│
+  └───────────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, bilqr_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │         BilqrSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                uₖ₋₁│           Vector{Float64}│                64│
-    │                  uₖ│           Vector{Float64}│                64│
-    │                   q│           Vector{Float64}│                64│
-    │                vₖ₋₁│           Vector{Float64}│                64│
-    │                  vₖ│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │                   x│           Vector{Float64}│                64│
-    │                   y│           Vector{Float64}│                64│
-    │                   d̅│           Vector{Float64}│                64│
-    │                wₖ₋₃│           Vector{Float64}│                64│
-    │                wₖ₋₂│           Vector{Float64}│                64│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, qmr_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌─────────┬───────────────┬─────────────────┐
+  │QmrSolver│Precision: $FC │Architecture: CPU│
+  ├─────────┼───────────────┼─────────────────┤
+  │Attribute│           Type│             Size│
+  ├─────────┼───────────────┼─────────────────┤
+  │     uₖ₋₁│    Vector{$FC}│               64│
+  │       uₖ│    Vector{$FC}│               64│
+  │        q│    Vector{$FC}│               64│
+  │     vₖ₋₁│    Vector{$FC}│               64│
+  │       vₖ│    Vector{$FC}│               64│
+  │        p│    Vector{$FC}│               64│
+  │        x│    Vector{$FC}│               64│
+  │     wₖ₋₂│    Vector{$FC}│               64│
+  │     wₖ₋₁│    Vector{$FC}│               64│
+  └─────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, minres_qlp_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │     MinresQlpSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                  Δx│           Vector{Float64}│                 0│
-    │                wₖ₋₁│           Vector{Float64}│                64│
-    │                  wₖ│           Vector{Float64}│                64│
-    │             M⁻¹vₖ₋₁│           Vector{Float64}│                64│
-    │               M⁻¹vₖ│           Vector{Float64}│                64│
-    │                   x│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │                  vₖ│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, usymlq_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌────────────┬───────────────┬─────────────────┐
+  │UsymlqSolver│Precision: $FC │Architecture: CPU│
+  ├────────────┼───────────────┼─────────────────┤
+  │   Attribute│           Type│             Size│
+  ├────────────┼───────────────┼─────────────────┤
+  │        uₖ₋₁│    Vector{$FC}│               64│
+  │          uₖ│    Vector{$FC}│               64│
+  │           p│    Vector{$FC}│               64│
+  │           x│    Vector{$FC}│               64│
+  │           d̅│    Vector{$FC}│               64│
+  │        vₖ₋₁│    Vector{$FC}│               32│
+  │          vₖ│    Vector{$FC}│               32│
+  │           q│    Vector{$FC}│               32│
+  └────────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, qmr_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │           QmrSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                uₖ₋₁│           Vector{Float64}│                64│
-    │                  uₖ│           Vector{Float64}│                64│
-    │                   q│           Vector{Float64}│                64│
-    │                vₖ₋₁│           Vector{Float64}│                64│
-    │                  vₖ│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │                   x│           Vector{Float64}│                64│
-    │                wₖ₋₂│           Vector{Float64}│                64│
-    │                wₖ₋₁│           Vector{Float64}│                64│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, tricg_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌───────────┬───────────────┬─────────────────┐
+  │TricgSolver│Precision: $FC │Architecture: CPU│
+  ├───────────┼───────────────┼─────────────────┤
+  │  Attribute│           Type│             Size│
+  ├───────────┼───────────────┼─────────────────┤
+  │          y│    Vector{$FC}│               64│
+  │    N⁻¹uₖ₋₁│    Vector{$FC}│               64│
+  │      N⁻¹uₖ│    Vector{$FC}│               64│
+  │          p│    Vector{$FC}│               64│
+  │     gy₂ₖ₋₁│    Vector{$FC}│               64│
+  │       gy₂ₖ│    Vector{$FC}│               64│
+  │          x│    Vector{$FC}│               32│
+  │    M⁻¹vₖ₋₁│    Vector{$FC}│               32│
+  │      M⁻¹vₖ│    Vector{$FC}│               32│
+  │          q│    Vector{$FC}│               32│
+  │     gx₂ₖ₋₁│    Vector{$FC}│               32│
+  │       gx₂ₖ│    Vector{$FC}│               32│
+  │         Δx│    Vector{$FC}│                0│
+  │         Δy│    Vector{$FC}│                0│
+  │         uₖ│    Vector{$FC}│                0│
+  │         vₖ│    Vector{$FC}│                0│
+  └───────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, usymlq_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │        UsymlqSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                uₖ₋₁│           Vector{Float64}│                64│
-    │                  uₖ│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │                   x│           Vector{Float64}│                64│
-    │                   d̅│           Vector{Float64}│                64│
-    │                vₖ₋₁│           Vector{Float64}│                32│
-    │                  vₖ│           Vector{Float64}│                32│
-    │                   q│           Vector{Float64}│                32│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, trimr_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌───────────┬───────────────┬─────────────────┐
+  │TrimrSolver│Precision: $FC │Architecture: CPU│
+  ├───────────┼───────────────┼─────────────────┤
+  │  Attribute│           Type│             Size│
+  ├───────────┼───────────────┼─────────────────┤
+  │          y│    Vector{$FC}│               64│
+  │    N⁻¹uₖ₋₁│    Vector{$FC}│               64│
+  │      N⁻¹uₖ│    Vector{$FC}│               64│
+  │          p│    Vector{$FC}│               64│
+  │     gy₂ₖ₋₃│    Vector{$FC}│               64│
+  │     gy₂ₖ₋₂│    Vector{$FC}│               64│
+  │     gy₂ₖ₋₁│    Vector{$FC}│               64│
+  │       gy₂ₖ│    Vector{$FC}│               64│
+  │          x│    Vector{$FC}│               32│
+  │    M⁻¹vₖ₋₁│    Vector{$FC}│               32│
+  │      M⁻¹vₖ│    Vector{$FC}│               32│
+  │          q│    Vector{$FC}│               32│
+  │     gx₂ₖ₋₃│    Vector{$FC}│               32│
+  │     gx₂ₖ₋₂│    Vector{$FC}│               32│
+  │     gx₂ₖ₋₁│    Vector{$FC}│               32│
+  │       gx₂ₖ│    Vector{$FC}│               32│
+  │         Δx│    Vector{$FC}│                0│
+  │         Δy│    Vector{$FC}│                0│
+  │         uₖ│    Vector{$FC}│                0│
+  │         vₖ│    Vector{$FC}│                0│
+  └───────────┴───────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
-    io = IOBuffer()
-    show(io, tricg_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │         TricgSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   y│           Vector{Float64}│                64│
-    │             N⁻¹uₖ₋₁│           Vector{Float64}│                64│
-    │               N⁻¹uₖ│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │              gy₂ₖ₋₁│           Vector{Float64}│                64│
-    │                gy₂ₖ│           Vector{Float64}│                64│
-    │                   x│           Vector{Float64}│                32│
-    │             M⁻¹vₖ₋₁│           Vector{Float64}│                32│
-    │               M⁻¹vₖ│           Vector{Float64}│                32│
-    │                   q│           Vector{Float64}│                32│
-    │              gx₂ₖ₋₁│           Vector{Float64}│                32│
-    │                gx₂ₖ│           Vector{Float64}│                32│
-    │                  Δx│           Vector{Float64}│                 0│
-    │                  Δy│           Vector{Float64}│                 0│
-    │                  uₖ│           Vector{Float64}│                 0│
-    │                  vₖ│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  io = IOBuffer()
+  show(io, gpmr_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌──────────┬───────────────────┬─────────────────┐
+  │GpmrSolver│    Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────────┼─────────────────┤
+  │ Attribute│               Type│             Size│
+  ├──────────┼───────────────────┼─────────────────┤
+  │        wA│        Vector{$FC}│                0│
+  │        wB│        Vector{$FC}│                0│
+  │        dA│        Vector{$FC}│               64│
+  │        dB│        Vector{$FC}│               32│
+  │        Δx│        Vector{$FC}│                0│
+  │        Δy│        Vector{$FC}│                0│
+  │         x│        Vector{$FC}│               64│
+  │         y│        Vector{$FC}│               32│
+  │         q│        Vector{$FC}│                0│
+  │         p│        Vector{$FC}│                0│
+  │         V│Vector{Vector{$FC}}│          10 x 64│
+  │         U│Vector{Vector{$FC}}│          10 x 32│
+  │        gs│        Vector{$FC}│               40│
+  │        gc│         Vector{$T}│               40│
+  │        zt│        Vector{$FC}│               20│
+  │         R│        Vector{$FC}│              210│
+  └──────────┴───────────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
+end
 
-    io = IOBuffer()
-    show(io, trimr_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │         TrimrSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                   y│           Vector{Float64}│                64│
-    │             N⁻¹uₖ₋₁│           Vector{Float64}│                64│
-    │               N⁻¹uₖ│           Vector{Float64}│                64│
-    │                   p│           Vector{Float64}│                64│
-    │              gy₂ₖ₋₃│           Vector{Float64}│                64│
-    │              gy₂ₖ₋₂│           Vector{Float64}│                64│
-    │              gy₂ₖ₋₁│           Vector{Float64}│                64│
-    │                gy₂ₖ│           Vector{Float64}│                64│
-    │                   x│           Vector{Float64}│                32│
-    │             M⁻¹vₖ₋₁│           Vector{Float64}│                32│
-    │               M⁻¹vₖ│           Vector{Float64}│                32│
-    │                   q│           Vector{Float64}│                32│
-    │              gx₂ₖ₋₃│           Vector{Float64}│                32│
-    │              gx₂ₖ₋₂│           Vector{Float64}│                32│
-    │              gx₂ₖ₋₁│           Vector{Float64}│                32│
-    │                gx₂ₖ│           Vector{Float64}│                32│
-    │                  Δx│           Vector{Float64}│                 0│
-    │                  Δy│           Vector{Float64}│                 0│
-    │                  uₖ│           Vector{Float64}│                 0│
-    │                  vₖ│           Vector{Float64}│                 0│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
-
-    io = IOBuffer()
-    show(io, gpmr_solver, show_stats=false)
-    showed = String(take!(io))
-    expected = """
-    ┌────────────────────┬──────────────────────────┬──────────────────┐
-    │          GpmrSolver│        Precision: Float64│ Architecture: CPU│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │           Attribute│                      Type│              Size│
-    ├────────────────────┼──────────────────────────┼──────────────────┤
-    │                  wA│           Vector{Float64}│                 0│
-    │                  wB│           Vector{Float64}│                 0│
-    │                  dA│           Vector{Float64}│                64│
-    │                  dB│           Vector{Float64}│                32│
-    │                  Δx│           Vector{Float64}│                 0│
-    │                  Δy│           Vector{Float64}│                 0│
-    │                   x│           Vector{Float64}│                64│
-    │                   y│           Vector{Float64}│                32│
-    │                   q│           Vector{Float64}│                 0│
-    │                   p│           Vector{Float64}│                 0│
-    │                   V│   Vector{Vector{Float64}}│           10 x 64│
-    │                   U│   Vector{Vector{Float64}}│           10 x 32│
-    │                  gs│           Vector{Float64}│                40│
-    │                  gc│           Vector{Float64}│                40│
-    │                  zt│           Vector{Float64}│                20│
-    │                   R│           Vector{Float64}│               210│
-    └────────────────────┴──────────────────────────┴──────────────────┘
-    """
-    @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+@testset "solvers" begin
+  for FC in (Float64, ComplexF64)
+    @testset "Data Type: $FC" begin
+      test_solvers(FC)
+    end
   end
 end
