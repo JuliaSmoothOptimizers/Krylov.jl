@@ -1689,23 +1689,22 @@ end
 
 Statistics of `solver` are displayed if `show_stats` is set to true.
 """
-function show(io :: IO, solver :: KrylovSolver; show_stats :: Bool=true)
+function show(io :: IO, solver :: KrylovSolver{T,FC,S}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
   workspace = typeof(solver)
   name_solver = workspace.name.wrapper
   l1 = max(length(string(name_solver)), 9)  # length("Attribute") = 9
-  precision = workspace.parameters[2]
-  l2 = length(string(precision)) + 16  # length("Vector{Vector{}}") = 16
-  architecture = workspace.parameters[3] <: Vector ? "CPU" : "GPU"
+  l2 = length(string(S)) + 8  # length("Vector{}") = 8
+  architecture = S <: Vector ? "CPU" : "GPU"
   format = Printf.Format("│%$(l1)s│%$(l2)s│%18s│\n")
   format2 = Printf.Format("│%$(l1+1)s│%$(l2)s│%18s│\n")
   @printf(io, "┌%s┬%s┬%s┐\n", "─"^l1, "─"^l2, "─"^18)
-  Printf.format(io, format, name_solver, "Precision: $precision", "Architecture: $architecture")
+  Printf.format(io, format, name_solver, "Precision: $FC", "Architecture: $architecture")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^18)
   Printf.format(io, format, "Attribute", "Type", "Size")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^18)
-  for i=1:fieldcount(typeof(solver))-1 # show stats seperately
-    type_i = fieldtype(typeof(solver), i)
-    name_i = fieldname(typeof(solver), i)
+  for i=1:fieldcount(workspace)-1 # show stats seperately
+    type_i = fieldtype(workspace, i)
+    name_i = fieldname(workspace, i)
     len = if type_i <: AbstractVector
       field_i = getfield(solver, name_i)
       ni = length(field_i)
