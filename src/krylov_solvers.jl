@@ -1724,4 +1724,5 @@ function show(io :: IO, solver :: KrylovSolver{T,FC,S}; show_stats :: Bool=true)
   end
   @printf(io, "└%s┴%s┴%s┘\n","─"^l1,"─"^l2,"─"^18)
   show_stats && show(io, solver.stats)
+  return nothing
 end

@@ -401,7 +401,7 @@ function test_solvers(FC)
   │        r│    Vector{$FC}│               64│
   │        p│    Vector{$FC}│               64│
   │       Ap│    Vector{$FC}│               64│
-  │        z│     Vector{$F}│                0│
+  │        z│    Vector{$FC}│                0│
   └─────────┴───────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
@@ -453,7 +453,8 @@ function test_solvers(FC)
 
   io = IOBuffer()
   show(io, cg_lanczos_solver, show_stats=false)
-  showed = String(take!(io))cted = """
+  showed = String(take!(io))
+  expected = """
   ┌───────────────┬───────────────┬─────────────────┐
   │CgLanczosSolver│Precision: $FC │Architecture: CPU│
   ├───────────────┼───────────────┼─────────────────┤
@@ -468,6 +469,7 @@ function test_solvers(FC)
   └───────────────┴───────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
+
   io = IOBuffer()
   show(io, cg_lanczos_shift_solver, show_stats=false)
   showed = String(take!(io))
