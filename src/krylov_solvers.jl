@@ -6,7 +6,7 @@ LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
 GmresSolver, FomSolver, GpmrSolver
 
 export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual,
-niterations, Aprod, Atprod, Bprod
+niterations, Aprod, Atprod, Bprod, warm_start!
 
 const KRYLOV_SOLVERS = Dict(
   :cg         => :CgSolver       ,
@@ -66,6 +66,7 @@ mutable struct MinresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v       :: S
   err_vec :: Vector{T}
   stats   :: SimpleStats{T}
+  restart :: Bool
 
   function MinresSolver(n, m, S; window :: Int=5)
     FC = eltype(S)
@@ -80,7 +81,7 @@ mutable struct MinresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     v  = S(undef, 0)
     err_vec = zeros(T, window)
     stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(Δx, x, r1, r2, w1, w2, y, v, err_vec, stats)
+    solver = new{T,FC,S}(Δx, x, r1, r2, w1, w2, y, v, err_vec, stats, false)
     return solver
   end
 
@@ -1668,6 +1669,17 @@ for (KS, fun, nsol, nA, nAt) in [
     @inline Atprod(solver :: $KS) = $nAt * solver.stats.niter
     if $KS == GpmrSolver
       @inline Bprod(solver :: $KS) = solver.stats.niter
+    end
+    if $KS == MinresSolver
+      function warm_start!(solver :: $KS, x0)
+        if length(solver.Δx) == 0
+          S = typeof(solver.x)
+          n = length(solver.x)
+          allocate_if(true, solver, :Δx, S, n)
+        end
+        solver.Δx .= x0
+        solver.restart = true
+      end
     end
     @inline nsolution(solver :: $KS) = $nsol
     ($nsol == 1) && @inline solution(solver :: $KS) = solver.x
