@@ -28,8 +28,8 @@ export minres, minres!
                         rtol::T=√eps(T)/100, ratol :: T=zero(T), 
                         rrtol :: T=zero(T), etol::T=√eps(T),
                         window::Int=5, itmax::Int=0,
-                        conlim::T=1/√eps(T), restart::Bool=false,
-                        verbose::Int=0, history::Bool=false)
+                        conlim::T=1/√eps(T), verbose::Int=0,
+                        history::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -74,10 +74,11 @@ See [`MinresSolver`](@ref) for more details about the `solver`.
 function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
-                 itmax :: Int=0, conlim :: T=1/√eps(T), restart :: Bool=false,
-                 verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 itmax :: Int=0, conlim :: T=1/√eps(T), verbose :: Int=0,
+                 history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
+  restart = solver.restart
   m == n || error("System must be square")
   length(b) == n || error("Inconsistent problem size")
   (verbose > 0) && @printf("MINRES: system of size %d\n", n)
@@ -102,7 +103,6 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ctol = conlim > 0 ? 1 / conlim : zero(T)
 
   # Initial solution x₀
-  restart && (Δx .= x)
   x .= zero(FC)
 
   if restart
@@ -126,6 +126,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     history && push!(rNorms, β₁)
     history && push!(ArNorms, zero(T))
     history && push!(Aconds, zero(T))
+    solver.restart = false
     return solver
   end
   β₁ = sqrt(β₁)
@@ -271,6 +272,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       stats.niter = 0
       stats.solved, stats.inconsistent = true, true
       stats.status = "x is a minimum least-squares solution"
+      solver.restart = false
       return solver
     end
 
@@ -312,5 +314,6 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   stats.solved = solved
   stats.inconsistent = !zero_resid
   stats.status = status
+  solver.restart = false
   return solver
 end
