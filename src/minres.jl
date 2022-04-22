@@ -92,7 +92,6 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Set up workspace.
   allocate_if(!MisI  , solver, :v , S, n)
-  allocate_if(restart, solver, :Δx, S, n)
   Δx, x, r1, r2, w1, w2, y = solver.Δx, solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y
   err_vec, stats = solver.err_vec, solver.stats
   rNorms, ArNorms, Aconds = stats.residuals, stats.Aresiduals, stats.Acond
