@@ -93,6 +93,12 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
+
+  # Determine τ and ν associated to SQD, SPD or SND systems.
+  flip && (τ = -one(T) ; ν =  one(T))
+  spd  && (τ =  one(T) ; ν =  one(T))
+  snd  && (τ = -one(T) ; ν = -one(T))
+
   restart && (τ ≠ 0) && !MisI && error("Restart with preconditioners is not supported.")
   restart && (ν ≠ 0) && !NisI && error("Restart with preconditioners is not supported.")
 
@@ -182,11 +188,6 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   d₂ₖ₋₃ = d₂ₖ₋₂ = zero(T)
   π₂ₖ₋₃ = π₂ₖ₋₂ = zero(FC)
   δₖ₋₁ = zero(FC)
-
-  # Determine τ and ν associated to SQD, SPD or SND systems.
-  flip && (τ = -one(T) ; ν =  one(T))
-  spd  && (τ =  one(T) ; ν =  one(T))
-  snd  && (τ = -one(T) ; ν = -one(T))
 
   # Tolerance for breakdown detection.
   btol = eps(T)^(3/4)
