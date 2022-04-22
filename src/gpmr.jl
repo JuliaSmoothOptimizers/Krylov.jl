@@ -102,6 +102,10 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   eltype(B) == FC || error("eltype(B) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
+
+  # Determine λ and μ associated to generalized saddle point systems.
+  gsp && (λ = one(FC) ; μ = zero(FC))
+
   restart && (λ ≠ 0) && (!CisI || !EisI) && error("Restart with preconditioners is not supported.")
   restart && (μ ≠ 0) && (!DisI || !FisI) && error("Restart with preconditioners is not supported.")
 
@@ -185,9 +189,6 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
 
   (verbose > 0) && @printf("%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "hₖ₊₁.ₖ", "fₖ₊₁.ₖ")
   kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗")
-
-  # Determine λ and μ associated to generalized saddle point systems.
-  gsp && (λ = one(FC) ; μ = zero(FC))
 
   # Tolerance for breakdown detection.
   btol = eps(T)^(3/4)

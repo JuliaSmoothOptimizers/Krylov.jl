@@ -96,6 +96,13 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   eltype(A) == FC || error("eltype(A) ≠ $FC")
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
+
+  # Determine τ and ν associated to SQD, SPD or SND systems.
+  flip && (τ = -one(T) ; ν =  one(T))
+  spd  && (τ =  one(T) ; ν =  one(T))
+  snd  && (τ = -one(T) ; ν = -one(T))
+  sp   && (τ =  one(T) ; ν = zero(T))
+
   restart && (τ ≠ 0) && !MisI && error("Restart with preconditioners is not supported.")
   restart && (ν ≠ 0) && !NisI && error("Restart with preconditioners is not supported.")
 
@@ -192,12 +199,6 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   σbar₂ₖ₋₂ = ηbar₂ₖ₋₃ = λbar₂ₖ₋₃ = μ₂ₖ₋₅ = λ₂ₖ₋₄ = μ₂ₖ₋₄ = zero(FC)
   πbar₂ₖ₋₁ = βₖ
   πbar₂ₖ = γₖ
-
-  # Determine τ and ν associated to SQD, SPD or SND systems.
-  flip && (τ = -one(T) ; ν =  one(T))
-  spd  && (τ =  one(T) ; ν =  one(T))
-  snd  && (τ = -one(T) ; ν = -one(T))
-  sp   && (τ =  one(T) ; ν = zero(T))
 
   # Tolerance for breakdown detection.
   btol = eps(T)^(3/4)
