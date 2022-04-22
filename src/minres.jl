@@ -54,6 +54,12 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 
+MINRES can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) =  minres(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as the first `minres` method presented above.
+
 #### Reference
 
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
@@ -64,10 +70,17 @@ function minres(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC
   return (solver.x, solver.stats)
 end
 
-"""
-    solver = minres!(solver::MinresSolver, args...; kwargs...)
+function minres(A, b :: AbstractVector{FC}, x0 :: AbstractVector{FC0}; window :: Int=5, kwargs...) where {FC <: FloatOrComplex, FC0 <: FloatOrComplex}
+  solver = MinresSolver(A, b, window=window)
+  minres!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
 
-where `args` and `kwargs` are arguments and keyword arguments of [`minres`](@ref).
+"""
+    solver = minres!(solver::MinresSolver, A, b; kwargs...)
+    solver = minres!(solver::MinresSolver, A, b, x0; kwargs...)
+
+where `kwargs` are keyword arguments of [`minres`](@ref).
 
 See [`MinresSolver`](@ref) for more details about the `solver`.
 """
@@ -78,7 +91,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
-  restart = solver.restart
+  warm_start = solver.warm_start
   m == n || error("System must be square")
   length(b) == n || error("Inconsistent problem size")
   (verbose > 0) && @printf("MINRES: system of size %d\n", n)
@@ -104,7 +117,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # Initial solution x₀
   x .= zero(FC)
 
-  if restart
+  if warm_start
     mul!(r1, A, Δx)
     (λ ≠ 0) && @kaxpy!(n, λ, Δx, r1)
     @kaxpby!(n, one(FC), b, -one(FC), r1)
@@ -125,7 +138,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     history && push!(rNorms, β₁)
     history && push!(ArNorms, zero(T))
     history && push!(Aconds, zero(T))
-    solver.restart = false
+    solver.warm_start = false
     return solver
   end
   β₁ = sqrt(β₁)
@@ -271,7 +284,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       stats.niter = 0
       stats.solved, stats.inconsistent = true, true
       stats.status = "x is a minimum least-squares solution"
-      solver.restart = false
+      solver.warm_start = false
       return solver
     end
 
@@ -306,13 +319,19 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   fwd_err       && (status = "truncated forward error small enough")
 
   # Update x
-  restart && @kaxpy!(n, one(FC), Δx, x)
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
 
   # Update stats
   stats.niter = iter
   stats.solved = solved
   stats.inconsistent = !zero_resid
   stats.status = status
-  solver.restart = false
+  solver.warm_start = false
   return solver
+end
+
+function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0::AbstractVector{FC0};
+                 kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}, FC0 <: FloatOrComplex}
+  warm_start!(solver, x0)
+  return minres!(solver, A, b; kwargs...)
 end
