@@ -74,14 +74,16 @@
       solver = MinresSolver(A, b)
       minres!(solver, A, b, itmax=50)
       @test !solver.stats.solved
-      @test solver.restart == false
-      warm_start!(solver, solver.x)
-      @test solver.restart == true
-      minres!(solver, A, b)
-      @test solver.restart == false
-      r = b - A * solver.x
-      resid = norm(r) / norm(b)
-      @test(resid ≤ minres_tol)
+      @test solver.warm_start == false
+      (x, stats) = minres(A, b, solver.x)
+      r1 = b - A * x
+      minres!(solver, A, b, solver.x)
+      @test solver.warm_start == false
+      r2 = b - A * solver.x
+      resid1 = norm(r1) / norm(b)
+      resid2 = norm(r2) / norm(b)
+      @test(resid1 ≤ minres_tol)
+      @test(resid2 ≤ minres_tol)
       @test solver.stats.solved
     end
   end

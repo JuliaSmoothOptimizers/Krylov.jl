@@ -56,17 +56,17 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct MinresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
-  Δx      :: S
-  x       :: S
-  r1      :: S
-  r2      :: S
-  w1      :: S
-  w2      :: S
-  y       :: S
-  v       :: S
-  err_vec :: Vector{T}
-  restart :: Bool
-  stats   :: SimpleStats{T}
+  Δx         :: S
+  x          :: S
+  r1         :: S
+  r2         :: S
+  w1         :: S
+  w2         :: S
+  y          :: S
+  v          :: S
+  err_vec    :: Vector{T}
+  warm_start :: Bool
+  stats      :: SimpleStats{T}
 
   function MinresSolver(n, m, S; window :: Int=5)
     FC = eltype(S)
@@ -1672,13 +1672,14 @@ for (KS, fun, nsol, nA, nAt) in [
     end
     if $KS == MinresSolver
       function warm_start!(solver :: $KS, x0)
+        n = length(solver.x)
+        length(x0) == n || error("x0 should have size $n")
         if length(solver.Δx) == 0
           S = typeof(solver.x)
-          n = length(solver.x)
           allocate_if(true, solver, :Δx, S, n)
         end
         solver.Δx .= x0
-        solver.restart = true
+        solver.warm_start = true
       end
     end
     @inline nsolution(solver :: $KS) = $nsol
