@@ -58,7 +58,7 @@ MINRES can be warm-started from an initial guess `x0` with the method
 
     (x, stats) =  minres(A, b, x0; kwargs...)
 
-where `kwargs` are the same keyword arguments as the first `minres` method presented above.
+where `kwargs` are the same keyword arguments as above.
 
 #### Reference
 
