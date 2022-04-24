@@ -70,7 +70,7 @@ function minres(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC
   return (solver.x, solver.stats)
 end
 
-function minres(A, b :: AbstractVector{FC}, x0 :: AbstractVector{FC0}; window :: Int=5, kwargs...) where {FC <: FloatOrComplex, FC0 <: FloatOrComplex}
+function minres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = MinresSolver(A, b, window=window)
   minres!(solver, A, b, x0; kwargs...)
   return (solver.x, solver.stats)
@@ -330,7 +330,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   return solver
 end
 
-function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0::AbstractVector{FC0}; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}, FC0 <: FloatOrComplex}
+function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0::AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
   return minres!(solver, A, b; kwargs...)
 end
