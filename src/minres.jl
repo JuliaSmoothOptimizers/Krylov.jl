@@ -91,7 +91,6 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
-  warm_start = solver.warm_start
   m == n || error("System must be square")
   length(b) == n || error("Inconsistent problem size")
   (verbose > 0) && @printf("MINRES: system of size %d\n", n)
@@ -106,6 +105,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # Set up workspace.
   allocate_if(!MisI  , solver, :v , S, n)
   Δx, x, r1, r2, w1, w2, y = solver.Δx, solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y
+  warm_start = solver.warm_start
   err_vec, stats = solver.err_vec, solver.stats
   rNorms, ArNorms, Aconds = stats.residuals, stats.Aresiduals, stats.Acond
   reset!(stats)
@@ -330,8 +330,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   return solver
 end
 
-function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0::AbstractVector{FC0};
-                 kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}, FC0 <: FloatOrComplex}
+function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0::AbstractVector{FC0}; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}, FC0 <: FloatOrComplex}
   warm_start!(solver, x0)
   return minres!(solver, A, b; kwargs...)
 end
