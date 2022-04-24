@@ -64,15 +64,17 @@ where `kwargs` are the same keyword arguments as above.
 
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
-function minres(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
-  solver = MinresSolver(A, b, window=window)
-  minres!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
+function minres end
 
 function minres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = MinresSolver(A, b, window=window)
   minres!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
+
+function minres(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
+  solver = MinresSolver(A, b, window=window)
+  minres!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
 end
 
@@ -84,6 +86,13 @@ where `kwargs` are keyword arguments of [`minres`](@ref).
 
 See [`MinresSolver`](@ref) for more details about the `solver`.
 """
+function minres! end
+
+function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0::AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  return minres!(solver, A, b; kwargs...)
+end
+
 function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
@@ -328,9 +337,4 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   stats.status = status
   solver.warm_start = false
   return solver
-end
-
-function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0::AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
-  warm_start!(solver, x0)
-  return minres!(solver, A, b; kwargs...)
 end
