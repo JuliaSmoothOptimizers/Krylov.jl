@@ -14,7 +14,7 @@ export gmres, gmres!
     (x, stats) = gmres(A, b::AbstractVector{FC}; memory::Int=20,
                        M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                        reorthogonalization::Bool=false, itmax::Int=0,
-                       restart::Bool=false, verbose::Int=0, history::Bool=false)
+                       verbose::Int=0, history::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -30,10 +30,24 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 
 Full reorthogonalization is available with the `reorthogonalization` option.
 
+GMRES can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) =  gmres(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### Reference
 
 * Y. Saad and M. H. Schultz, [*GMRES: A Generalized Minimal Residual Algorithm for Solving Nonsymmetric Linear Systems*](https://doi.org/10.1137/0907058), SIAM Journal on Scientific and Statistical Computing, Vol. 7(3), pp. 856--869, 1986.
 """
+function gmres end
+
+function gmres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
+  solver = GmresSolver(A, b, memory)
+  gmres!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
+
 function gmres(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
   solver = GmresSolver(A, b, memory)
   gmres!(solver, A, b; kwargs...)
@@ -41,19 +55,27 @@ function gmres(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC
 end
 
 """
-    solver = gmres!(solver::GmresSolver, args...; kwargs...)
+    solver = gmres!(solver::GmresSolver, A, b; kwargs...)
+    solver = gmres!(solver::GmresSolver, A, b, x0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`gmres`](@ref).
+where `kwargs` are keyword arguments of [`gmres`](@ref).
 
 Note that the `memory` keyword argument is the only exception.
 It's required to create a `GmresSolver` and can't be changed later.
 
 See [`GmresSolver`](@ref) for more details about the `solver`.
 """
+function gmres! end
+
+function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0::AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  return gmres!(solver, A, b; kwargs...)
+end
+
 function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                 M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                 reorthogonalization :: Bool=false, itmax :: Int=0,
-                restart :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -71,18 +93,17 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # Set up workspace.
   allocate_if(!MisI  , solver, :q , S, n)
   allocate_if(!NisI  , solver, :p , S, n)
-  allocate_if(restart, solver, :Δx, S, n)
   Δx, x, w, V, z = solver.Δx, solver.x, solver.w, solver.V, solver.z
   c, s, R, stats = solver.c, solver.s, solver.R, solver.stats
+  warm_start = solver.warm_start
   rNorms = stats.residuals
   reset!(stats)
   q  = MisI ? w : solver.q
   r₀ = MisI ? w : solver.q
 
   # Initial solution x₀ and residual r₀.
-  restart && (Δx .= x)
   x .= zero(FC)            # x₀
-  if restart
+  if warm_start
     mul!(w, A, Δx)
     @kaxpby!(n, one(FC), b, -one(FC), w)
   else
@@ -96,6 +117,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
+    solver.warm_start = false
     return solver
   end
 
@@ -243,12 +265,13 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   inconsistent && (status = "found approximate least-squares solution")
 
   # Update x
-  restart && @kaxpy!(n, one(FC), Δx, x)
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
 
   # Update stats
   stats.niter = iter
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status
+  solver.warm_start = false
   return solver
 end
