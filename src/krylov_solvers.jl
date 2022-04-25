@@ -1421,17 +1421,18 @@ may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
-  Δx    :: S
-  x     :: S
-  w     :: S
-  p     :: S
-  q     :: S
-  V     :: Vector{S}
-  c     :: Vector{T}
-  s     :: Vector{FC}
-  z     :: Vector{FC}
-  R     :: Vector{FC}
-  stats :: SimpleStats{T}
+  Δx         :: S
+  x          :: S
+  w          :: S
+  p          :: S
+  q          :: S
+  V          :: Vector{S}
+  c          :: Vector{T}
+  s          :: Vector{FC}
+  z          :: Vector{FC}
+  R          :: Vector{FC}
+  warm_start :: Bool
+  stats      :: SimpleStats{T}
 
   function GmresSolver(n, m, memory, S)
     memory = min(n, memory)
@@ -1448,7 +1449,7 @@ mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     z  = Vector{FC}(undef, memory)
     R  = Vector{FC}(undef, div(memory * (memory+1), 2))
     stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(Δx, x, w, p, q, V, c, s, z, R, stats)
+    solver = new{T,FC,S}(Δx, x, w, p, q, V, c, s, z, R, false, stats)
     return solver
   end
 
@@ -1670,7 +1671,7 @@ for (KS, fun, nsol, nA, nAt) in [
     if $KS == GpmrSolver
       @inline Bprod(solver :: $KS) = solver.stats.niter
     end
-    if $KS == MinresSolver
+    if $KS == MinresSolver || $KS == GmresSolver
       function warm_start!(solver :: $KS, x0)
         n = length(solver.x)
         length(x0) == n || error("x0 should have size $n")

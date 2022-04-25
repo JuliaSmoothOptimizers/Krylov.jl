@@ -79,10 +79,16 @@
       solver = GmresSolver(A, b, 20)
       gmres!(solver, A, b, itmax=50)
       @test !solver.stats.solved
-      gmres!(solver, A, b, restart=true)
-      r = b - A * solver.x
-      resid = norm(r) / norm(b)
-      @test(resid ≤ gmres_tol)
+      @test solver.warm_start == false
+      (x, stats) = gmres(A, b, solver.x)
+      r1 = b - A * x
+      gmres!(solver, A, b, solver.x)
+      r2 = b - A * solver.x
+      @test solver.warm_start == false
+      resid1 = norm(r1) / norm(b)
+      resid2 = norm(r2) / norm(b)
+      @test(resid1 ≤ gmres_tol)
+      @test(resid2 ≤ gmres_tol)
       @test solver.stats.solved
 
       # Test with Jacobi (or diagonal) preconditioner
