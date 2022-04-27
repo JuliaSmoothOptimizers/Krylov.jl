@@ -32,7 +32,7 @@ Full reorthogonalization is available with the `reorthogonalization` option.
 
 GMRES can be warm-started from an initial guess `x0` with the method
 
-    (x, stats) =  gmres(A, b, x0; kwargs...)
+    (x, stats) = gmres(A, b, x0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
 
@@ -67,9 +67,10 @@ See [`GmresSolver`](@ref) for more details about the `solver`.
 """
 function gmres! end
 
-function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0::AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
-  return gmres!(solver, A, b; kwargs...)
+  gmres!(solver, A, b; kwargs...)
+  return solver
 end
 
 function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
@@ -91,8 +92,8 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
-  allocate_if(!MisI  , solver, :q , S, n)
-  allocate_if(!NisI  , solver, :p , S, n)
+  allocate_if(!MisI, solver, :q, S, n)
+  allocate_if(!NisI, solver, :p, S, n)
   Δx, x, w, V, z = solver.Δx, solver.x, solver.w, solver.V, solver.z
   c, s, R, stats = solver.c, solver.s, solver.R, solver.stats
   warm_start = solver.warm_start
@@ -102,7 +103,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   r₀ = MisI ? w : solver.q
 
   # Initial solution x₀ and residual r₀.
-  x .= zero(FC)            # x₀
+  x .= zero(FC)  # x₀
   if warm_start
     mul!(w, A, Δx)
     @kaxpby!(n, one(FC), b, -one(FC), w)
@@ -266,12 +267,12 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
   stats.solved = solved
   stats.inconsistent = inconsistent
   stats.status = status
-  solver.warm_start = false
   return solver
 end
