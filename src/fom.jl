@@ -14,7 +14,7 @@ export fom, fom!
     (x, stats) = fom(A, b::AbstractVector{FC}; memory::Int=20,
                      M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                      reorthogonalization::Bool=false, itmax::Int=0,
-                     restart::Bool=false, verbose::Int=0, history::Bool=false)
+                     verbose::Int=0, history::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -30,10 +30,24 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 
 Full reorthogonalization is available with the `reorthogonalization` option.
 
+FOM can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) = fom(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### Reference
 
 * Y. Saad, [*Krylov subspace methods for solving unsymmetric linear systems*](https://doi.org/10.1090/S0025-5718-1981-0616364-6), Mathematics of computation, Vol. 37(155), pp. 105--126, 1981.
 """
+function fom end
+
+function fom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
+  solver = FomSolver(A, b, memory)
+  fom!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
+
 function fom(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
   solver = FomSolver(A, b, memory)
   fom!(solver, A, b; kwargs...)
@@ -41,19 +55,28 @@ function fom(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <
 end
 
 """
-    solver = fom!(solver::FomSolver, args...; kwargs...)
+    solver = fom!(solver::FomSolver, A, b; kwargs...)
+    solver = fom!(solver::FomSolver, A, b, x0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`fom`](@ref).
+where `kwargs` are keyword arguments of [`fom`](@ref).
 
 Note that the `memory` keyword argument is the only exception.
 It's required to create a `FomSolver` and can't be changed later.
 
 See [`FomSolver`](@ref) for more details about the `solver`.
 """
+function fom! end
+
+function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  fom!(solver, A, b; kwargs...)
+  return solver
+end
+
 function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
               reorthogonalization :: Bool=false, itmax :: Int=0,
-              restart :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+              verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -69,20 +92,19 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
-  allocate_if(!MisI  , solver, :q , S, n)
-  allocate_if(!NisI  , solver, :p , S, n)
-  allocate_if(restart, solver, :Δx, S, n)
+  allocate_if(!MisI, solver, :q, S, n)
+  allocate_if(!NisI, solver, :p, S, n)
   Δx, x, w, V, z = solver.Δx, solver.x, solver.w, solver.V, solver.z
   l, U, stats = solver.l, solver.U, solver.stats
+  warm_start = solver.warm_start
   rNorms = stats.residuals
   reset!(stats)
   q  = MisI ? w : solver.q
   r₀ = MisI ? w : solver.q
 
   # Initial solution x₀ and residual r₀.
-  restart && (Δx .= x)
   x .= zero(FC)  # x₀
-  if restart
+  if warm_start
     mul!(w, A, Δx)
     @kaxpby!(n, one(FC), b, -one(FC), w)
   else
@@ -96,6 +118,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
+    solver.warm_start = false
     return solver
   end
 
@@ -227,7 +250,8 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   solved    && (status = "solution good enough given atol and rtol")
 
   # Update x
-  restart && @kaxpy!(n, one(FC), Δx, x)
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
