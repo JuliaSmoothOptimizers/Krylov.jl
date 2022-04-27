@@ -13,11 +13,10 @@ export symmlq, symmlq!
 
 
 """
-    (x, stats) = symmlq(A, b::AbstractVector{FC};
+    (x, stats) = symmlq(A, b::AbstractVector{FC}; window::Int=0,
                         M=I, λ::T=zero(T), transfer_to_cg::Bool=true,
                         λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                        etol::T=√eps(T), window::Int=0, itmax::Int=0,
-                        conlim::T=1/√eps(T), restart::Bool=false,
+                        etol::T=√eps(T), itmax::Int=0, conlim::T=1/√eps(T),
                         verbose::Int=0, history::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -35,10 +34,24 @@ SYMMLQ produces monotonic errors ‖x*-x‖₂.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 
+SYMMLQ can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) = symmlq(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### Reference
 
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
+function symmlq end
+
+function symmlq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, kwargs...) where FC <: FloatOrComplex
+  solver = SymmlqSolver(A, b, window=window)
+  symmlq!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
+
 function symmlq(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = SymmlqSolver(A, b, window=window)
   symmlq!(solver, A, b; kwargs...)
@@ -46,17 +59,25 @@ function symmlq(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC
 end
 
 """
-    solver = symmlq!(solver::SymmlqSolver, args...; kwargs...)
+    solver = symmlq!(solver::SymmlqSolver, A, b; kwargs...)
+    solver = symmlq!(solver::SymmlqSolver, A, b, x0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`symmlq`](@ref).
+where `kwargs` are keyword arguments of [`symmlq`](@ref).
 
 See [`SymmlqSolver`](@ref) for more details about the `solver`.
 """
+function symmlq! end
+
+function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  symmlq!(solver, A, b; kwargs...)
+  return solver
+end
+
 function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, λ :: T=zero(T), transfer_to_cg :: Bool=true,
                  λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-                 etol :: T=√eps(T), itmax :: Int=0,
-                 conlim :: T=1/√eps(T), restart :: Bool=false,
+                 etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
                  verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
@@ -72,10 +93,10 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
-  allocate_if(!MisI  , solver, :v , S, n)
-  allocate_if(restart, solver, :Δx, S, n)
+  allocate_if(!MisI, solver, :v, S, n)
   x, Mvold, Mv, Mv_next, w̅ = solver.x, solver.Mvold, solver.Mv, solver.Mv_next, solver.w̅
   Δx, clist, zlist, sprod, stats = solver.Δx, solver.clist, solver.zlist, solver.sprod, solver.stats
+  warm_start = solver.warm_start
   rNorms, rcgNorms = stats.residuals, stats.residualscg
   errors, errorscg = stats.errors, stats.errorscg
   reset!(stats)
@@ -86,10 +107,9 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ctol = conlim > 0 ? 1 / conlim : zero(T)
 
   # Initial solution x₀
-  restart && (Δx .= x)
   x .= zero(FC)
 
-  if restart
+  if warm_start
     mul!(Mvold, A, Δx)
     (λ ≠ 0) && @kaxpy!(n, λ, Δx, Mvold)
     @kaxpby!(n, one(FC), b, -one(FC), Mvold)
@@ -109,6 +129,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     history && push!(rNorms, zero(T))
     history && push!(rcgNorms, zero(T))
     stats.status = "x = 0 is a zero-residual solution"
+    solver.warm_start = false
     return solver
   end
   β₁ = sqrt(β₁)
@@ -358,7 +379,8 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   solved_cg     && (status = "solution xᶜ good enough given atol and rtol")
 
   # Update x
-  restart && @kaxpy!(n, one(FC), Δx, x)
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
