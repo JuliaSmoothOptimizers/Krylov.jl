@@ -18,8 +18,8 @@ export minres_qlp, minres_qlp!
 
 """
     (x, stats) = minres_qlp(A, b::AbstractVector{FC};
-                            M=I, atol::T=√eps(T), rtol::T=√eps(T), ctol::T=√eps(T),
-                            λ::T=zero(T), itmax::Int=0, restart::Bool=false,
+                            M=I, atol::T=√eps(T), rtol::T=√eps(T),
+                            ctol::T=√eps(T), λ::T=zero(T), itmax::Int=0,
                             verbose::Int=0, history::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -33,12 +33,26 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 M also indicates the weighted norm in which residuals are measured.
 
+MINRES-QLP can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) = minres_qlp(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### References
 
 * S.-C. T. Choi, *Iterative methods for singular linear equations and least-squares problems*, Ph.D. thesis, ICME, Stanford University, 2006.
 * S.-C. T. Choi, C. C. Paige and M. A. Saunders, [*MINRES-QLP: A Krylov subspace method for indefinite or singular symmetric systems*](https://doi.org/10.1137/100787921), SIAM Journal on Scientific Computing, Vol. 33(4), pp. 1810--1836, 2011.
 * S.-C. T. Choi and M. A. Saunders, [*Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems*](https://doi.org/10.1145/2527267), ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014.
 """
+function minres_qlp end
+
+function minres_qlp(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+  solver = MinresQlpSolver(A, b)
+  minres_qlp!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
+
 function minres_qlp(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = MinresQlpSolver(A, b)
   minres_qlp!(solver, A, b; kwargs...)
@@ -46,15 +60,24 @@ function minres_qlp(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrCo
 end
 
 """
-    solver = minres_qlp!(solver::MinresQlpSolver, args...; kwargs...)
+    solver = minres_qlp!(solver::MinresQlpSolver, A, b; kwargs...)
+    solver = minres_qlp!(solver::MinresQlpSolver, A, b, x0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`minres_qlp`](@ref).
+where `kwargs` are keyword arguments of [`minres_qlp`](@ref).
 
 See [`MinresQlpSolver`](@ref) for more details about the `solver`.
 """
+function minres_qlp! end
+
+function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  minres_qlp!(solver, A, b; kwargs...)
+  return solver
+end
+
 function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{FC};
-                     M=I, atol :: T=√eps(T), rtol :: T=√eps(T), ctol :: T=√eps(T),
-                     λ ::T=zero(T), itmax :: Int=0, restart :: Bool=false,
+                     M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
+                     ctol :: T=√eps(T), λ ::T=zero(T), itmax :: Int=0,
                      verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
@@ -70,20 +93,19 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
-  allocate_if(!MisI  , solver, :vₖ, S, n)
-  allocate_if(restart, solver, :Δx, S, n)
+  allocate_if(!MisI, solver, :vₖ, S, n)
   wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ
   Δx, x, p, stats = solver.Δx, solver.x, solver.p, solver.stats
+  warm_start = solver.warm_start
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
   vₖ = MisI ? M⁻¹vₖ : solver.vₖ
   vₖ₊₁ = MisI ? p : M⁻¹vₖ₋₁
 
   # Initial solution x₀
-  restart && (Δx .= x)
   x .= zero(FC)
 
-  if restart
+  if warm_start
     mul!(M⁻¹vₖ, A, Δx)
     (λ ≠ 0) && @kaxpy!(n, λ, Δx, M⁻¹vₖ)
     @kaxpby!(n, one(FC), b, -one(FC), M⁻¹vₖ)
@@ -105,6 +127,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
+    solver.warm_start = false
     return solver
   end
 
@@ -352,7 +375,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
   solved       && (status = "solution good enough given atol and rtol")
 
   # Update x
-  restart && @kaxpy!(n, one(FC), Δx, x)
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
  # Update stats
   stats.niter = iter
