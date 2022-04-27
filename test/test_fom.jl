@@ -71,17 +71,6 @@
       @test(resid ≤ fom_tol)
       @test(stats.solved)
 
-      # Test restart
-      A, b = restart(FC=FC)
-      solver = FomSolver(A, b, 20)
-      fom!(solver, A, b, itmax=50)
-      @test !solver.stats.solved
-      fom!(solver, A, b, restart=true)
-      r = b - A * solver.x
-      resid = norm(r) / norm(b)
-      @test(resid ≤ fom_tol)
-      @test solver.stats.solved
-
       # Test with Jacobi (or diagonal) preconditioner
       A, b, M = square_preconditioned(FC=FC)
       (x, stats) = fom(A, b, M=M)

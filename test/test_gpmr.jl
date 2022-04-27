@@ -272,17 +272,6 @@
         (x, y, stats) = gpmr(A, A', b, c, E=M⁻¹, F=N⁻¹)
         (x, y, stats) = gpmr(A, A', b, c, C=M⁻¹, D=N⁻¹)
       end
-
-      # Test restart
-      A, b = restart(FC=FC)
-      solver = GpmrSolver(A, b, 20)
-      gpmr!(solver, A, A', b, b, itmax=20)
-      @test !issolved(solver)
-      gpmr!(solver, A, A', b, b, restart=true)
-      r = [b - solver.x - A * solver.y; b - A' * solver.x - solver.y]
-      resid = norm(r) / norm([b; b])
-      @test(resid ≤ gpmr_tol)
-      @test issolved(solver)
     end
   end
 end

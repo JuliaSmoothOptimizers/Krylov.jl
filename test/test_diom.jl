@@ -66,17 +66,6 @@
       @test(resid ≤ diom_tol)
       @test(stats.solved)
 
-      # Test restart
-      A, b = restart(FC=FC)
-      solver = DiomSolver(A, b, 20)
-      diom!(solver, A, b, itmax=50)
-      @test !solver.stats.solved
-      diom!(solver, A, b, restart=true)
-      r = b - A * solver.x
-      resid = norm(r) / norm(b)
-      @test(resid ≤ diom_tol)
-      @test solver.stats.solved
-
       # Test with Jacobi (or diagonal) preconditioner
       A, b, M = square_preconditioned(FC=FC)
       (x, stats) = diom(A, b, M=M)

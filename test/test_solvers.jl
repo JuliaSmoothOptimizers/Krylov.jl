@@ -391,18 +391,19 @@ function test_solvers(FC)
   show(io, cg_solver, show_stats=false)
   showed = String(take!(io))
   expected = """
-  ┌─────────┬───────────────┬─────────────────┐
-  │ CgSolver│Precision: $FC │Architecture: CPU│
-  ├─────────┼───────────────┼─────────────────┤
-  │Attribute│           Type│             Size│
-  ├─────────┼───────────────┼─────────────────┤
-  │       Δx│    Vector{$FC}│                0│
-  │        x│    Vector{$FC}│               64│
-  │        r│    Vector{$FC}│               64│
-  │        p│    Vector{$FC}│               64│
-  │       Ap│    Vector{$FC}│               64│
-  │        z│    Vector{$FC}│                0│
-  └─────────┴───────────────┴─────────────────┘
+  ┌──────────┬───────────────┬─────────────────┐
+  │  CgSolver│Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────┼─────────────────┤
+  │ Attribute│           Type│             Size│
+  ├──────────┼───────────────┼─────────────────┤
+  │        Δx│    Vector{$FC}│                0│
+  │         x│    Vector{$FC}│               64│
+  │         r│    Vector{$FC}│               64│
+  │         p│    Vector{$FC}│               64│
+  │        Ap│    Vector{$FC}│               64│
+  │         z│    Vector{$FC}│                0│
+  │warm_start│           Bool│                0│
+  └──────────┴───────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
@@ -425,6 +426,7 @@ function test_solvers(FC)
   │       clist│     Vector{$T}│                5│
   │       zlist│     Vector{$T}│                5│
   │       sprod│     Vector{$T}│                5│
+  │  warm_start│           Bool│                0│
   └────────────┴───────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
@@ -515,6 +517,7 @@ function test_solvers(FC)
   │         V│Vector{Vector{$FC}}│          10 x 64│
   │         L│        Vector{$FC}│               10│
   │         H│        Vector{$FC}│               12│
+  │warm_start│               Bool│                0│
   └──────────┴───────────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
@@ -523,21 +526,22 @@ function test_solvers(FC)
   show(io, fom_solver, show_stats=false)
   showed = String(take!(io))
   expected = """
-  ┌─────────┬───────────────────┬─────────────────┐
-  │FomSolver│    Precision: $FC │Architecture: CPU│
-  ├─────────┼───────────────────┼─────────────────┤
-  │Attribute│               Type│             Size│
-  ├─────────┼───────────────────┼─────────────────┤
-  │       Δx│        Vector{$FC}│                0│
-  │        x│        Vector{$FC}│               64│
-  │        w│        Vector{$FC}│               64│
-  │        p│        Vector{$FC}│                0│
-  │        q│        Vector{$FC}│                0│
-  │        V│Vector{Vector{$FC}}│          10 x 64│
-  │        l│        Vector{$FC}│               10│
-  │        z│        Vector{$FC}│               10│
-  │        U│        Vector{$FC}│               55│
-  └─────────┴───────────────────┴─────────────────┘
+  ┌──────────┬───────────────────┬─────────────────┐
+  │ FomSolver│    Precision: $FC │Architecture: CPU│
+  ├──────────┼───────────────────┼─────────────────┤
+  │ Attribute│               Type│             Size│
+  ├──────────┼───────────────────┼─────────────────┤
+  │        Δx│        Vector{$FC}│                0│
+  │         x│        Vector{$FC}│               64│
+  │         w│        Vector{$FC}│               64│
+  │         p│        Vector{$FC}│                0│
+  │         q│        Vector{$FC}│                0│
+  │         V│Vector{Vector{$FC}}│          10 x 64│
+  │         l│        Vector{$FC}│               10│
+  │         z│        Vector{$FC}│               10│
+  │         U│        Vector{$FC}│               55│
+  │warm_start│               Bool│                0│
+  └──────────┴───────────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 
@@ -560,6 +564,7 @@ function test_solvers(FC)
   │            c│         Vector{$T}│               10│
   │            s│        Vector{$FC}│               10│
   │            H│        Vector{$FC}│               12│
+  │   warm_start│               Bool│                0│
   └─────────────┴───────────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
@@ -975,6 +980,7 @@ function test_solvers(FC)
   │              x│    Vector{$FC}│               64│
   │              p│    Vector{$FC}│               64│
   │             vₖ│    Vector{$FC}│                0│
+  │     warm_start│           Bool│                0│
   └───────────────┴───────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
@@ -1047,6 +1053,7 @@ function test_solvers(FC)
   │         Δy│    Vector{$FC}│                0│
   │         uₖ│    Vector{$FC}│                0│
   │         vₖ│    Vector{$FC}│                0│
+  │ warm_start│           Bool│                0│
   └───────────┴───────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
@@ -1080,6 +1087,7 @@ function test_solvers(FC)
   │         Δy│    Vector{$FC}│                0│
   │         uₖ│    Vector{$FC}│                0│
   │         vₖ│    Vector{$FC}│                0│
+  │ warm_start│           Bool│                0│
   └───────────┴───────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
@@ -1109,6 +1117,7 @@ function test_solvers(FC)
   │        gc│         Vector{$T}│               40│
   │        zt│        Vector{$FC}│               20│
   │         R│        Vector{$FC}│              210│
+  │warm_start│               Bool│                0│
   └──────────┴───────────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)

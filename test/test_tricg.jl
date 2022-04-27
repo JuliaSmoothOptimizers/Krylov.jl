@@ -136,17 +136,6 @@
         (x, y, stats) = tricg(A, b, c, M=M⁻¹, N=N⁻¹)
       end
 
-      # Test restart
-      A, b = restart(FC=FC)
-      solver = TricgSolver(A, b)
-      tricg!(solver, A, b, b, itmax=20)
-      @test !solver.stats.solved
-      tricg!(solver, A, b, b, restart=true)
-      r = [b - solver.x - A * solver.y; b - A' * solver.x + solver.y]
-      resid = norm(r) / norm([b; b])
-      @test(resid ≤ tricg_tol)
-      @test solver.stats.solved
-
       for transpose ∈ (false, true)
         A, b, c = ssy_mo_breakdown(transpose)
 

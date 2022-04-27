@@ -334,8 +334,8 @@ function small_sqd(transpose :: Bool=false; FC=Float64)
   return A, b, c, M, N
 end
 
-# Test restart feature with linear systems of size n³.
-function restart(n :: Int=32; FC=Float64)
+# Test warm-start feature with linear systems of size n³.
+function warm_start(n :: Int=8; FC=Float64)
   A = get_div_grad(n, n, n)
   b = A * ones(n^3)
   return A, b
