@@ -13,8 +13,7 @@ export diom, diom!
 """
     (x, stats) = diom(A, b::AbstractVector{FC}; memory::Int=20,
                       M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
-                      restart::Bool=false, itmax::Int=0,
-                      verbose::Int=0, history::Bool=false)
+                      itmax::Int=0, verbose::Int=0, history::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -34,10 +33,24 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 - Right preconditioning : AN⁻¹u = b with x = N⁻¹u
 - Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
 
+DIOM can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) = diom(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### Reference
 
 * Y. Saad, [*Practical use of some krylov subspace methods for solving indefinite and nonsymmetric linear systems*](https://doi.org/10.1137/0905015), SIAM journal on scientific and statistical computing, 5(1), pp. 203--228, 1984.
 """
+function diom end
+
+function diom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
+  solver = DiomSolver(A, b, memory)
+  diom!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
+
 function diom(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
   solver = DiomSolver(A, b, memory)
   diom!(solver, A, b; kwargs...)
@@ -45,19 +58,27 @@ function diom(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC 
 end
 
 """
-    solver = diom!(solver::DiomSolver, args...; kwargs...)
+    solver = diom!(solver::DiomSolver, A, b; kwargs...)
+    solver = diom!(solver::DiomSolver, A, b, x0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`diom`](@ref).
+where `kwargs` are keyword arguments of [`diom`](@ref).
 
 Note that the `memory` keyword argument is the only exception.
 It's required to create a `DiomSolver` and can't be changed later.
 
 See [`DiomSolver`](@ref) for more details about the `solver`.
 """
+function diom! end
+
+function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  diom!(solver, A, b; kwargs...)
+  return solver
+end
+
 function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-               restart :: Bool=false, itmax :: Int=0,
-               verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -73,20 +94,19 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
-  allocate_if(!MisI  , solver, :w , S, n)
-  allocate_if(!NisI  , solver, :z , S, n)
-  allocate_if(restart, solver, :Δx, S, n)
+  allocate_if(!MisI, solver, :w, S, n)
+  allocate_if(!NisI, solver, :z, S, n)
   Δx, x, t, P, V = solver.Δx, solver.x, solver.t, solver.P, solver.V
   L, H, stats = solver.L, solver.H, solver.stats
+  warm_start = solver.warm_start
   rNorms = stats.residuals
   reset!(stats)
   w  = MisI ? t : solver.w
   r₀ = MisI ? t : solver.w
 
   # Initial solution x₀ and residual r₀.
-  restart && (Δx .= x)
   x .= zero(FC)  # x₀
-  if restart
+  if warm_start
     mul!(t, A, Δx)
     @kaxpby!(n, one(FC), b, -one(FC), t)
   else
@@ -100,6 +120,7 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
+    solver.warm_start = false
     return solver
   end
 
@@ -212,7 +233,8 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
 
   # Update x
-  restart && @kaxpy!(n, one(FC), Δx, x)
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
