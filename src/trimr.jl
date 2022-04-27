@@ -15,8 +15,8 @@ export trimr, trimr!
     (x, y, stats) = trimr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                           M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                           spd::Bool=false, snd::Bool=false, flip::Bool=false, sp::Bool=false,
-                          τ::T=one(T), ν::T=-one(T), itmax::Int=0, verbose::Int=0,
-                          restart::Bool=false, history::Bool=false)
+                          τ::T=one(T), ν::T=-one(T), itmax::Int=0,
+                          verbose::Int=0, history::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -52,10 +52,24 @@ TriMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 Additional details can be displayed if verbose mode is enabled (verbose > 0).
 Information will be displayed every `verbose` iterations.
 
+TriMR can be warm-started from initial guesses `x0` and `y0` with the method
+
+    (x, y, stats) = trimr(A, b, c, x0, y0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### Reference
 
 * A. Montoison and D. Orban, [*TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems*](https://doi.org/10.1137/20M1363030), SIAM Journal on Scientific Computing, 43(4), pp. 2502--2525, 2021.
 """
+function trimr end
+
+function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+  solver = TrimrSolver(A, b)
+  trimr!(solver, A, b, c, x0, y0; kwargs...)
+  return (solver.x, solver.y, solver.stats)
+end
+
 function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = TrimrSolver(A, b)
   trimr!(solver, A, b, c; kwargs...)
@@ -63,17 +77,27 @@ function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) w
 end
 
 """
-    solver = trimr!(solver::TrimrSolver, args...; kwargs...)
+    solver = trimr!(solver::TrimrSolver, A, b, c; kwargs...)
+    solver = trimr!(solver::TrimrSolver, A, b, c, x0, y0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`trimr`](@ref).
+where `kwargs` are keyword arguments of [`trimr`](@ref).
 
 See [`TrimrSolver`](@ref) for more details about the `solver`.
 """
+function trimr! end
+
+function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
+                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0, y0)
+  trimr!(solver, A, b, c; kwargs...)
+  return solver
+end
+
 function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                 M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                 spd :: Bool=false, snd :: Bool=false, flip :: Bool=false, sp :: Bool=false,
-                τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0, verbose :: Int=0,
-                restart :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0,
+                verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -103,17 +127,16 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   snd  && (τ = -one(T) ; ν = -one(T))
   sp   && (τ =  one(T) ; ν = zero(T))
 
-  restart && (τ ≠ 0) && !MisI && error("Restart with preconditioners is not supported.")
-  restart && (ν ≠ 0) && !NisI && error("Restart with preconditioners is not supported.")
+  warm_start = solver.warm_start
+  warm_start && (τ ≠ 0) && !MisI && error("Warm-start with preconditioners is not supported.")
+  warm_start && (ν ≠ 0) && !NisI && error("Warm-start with preconditioners is not supported.")
 
   # Compute the adjoint of A
   Aᵀ = A'
 
   # Set up workspace.
-  allocate_if(!MisI  , solver, :vₖ, S, m)
-  allocate_if(!NisI  , solver, :uₖ, S, n)
-  allocate_if(restart, solver, :Δx, S, m)
-  allocate_if(restart, solver, :Δy, S, n)
+  allocate_if(!MisI, solver, :vₖ, S, m)
+  allocate_if(!NisI, solver, :uₖ, S, n)
   Δy, yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p = solver.Δy, solver.y, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.p
   Δx, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = solver.Δx, solver.x, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.q
   gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ = solver.gy₂ₖ₋₃, solver.gy₂ₖ₋₂, solver.gy₂ₖ₋₁, solver.gy₂ₖ
@@ -122,16 +145,14 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   uₖ = NisI ? N⁻¹uₖ : solver.uₖ
   vₖ₊₁ = MisI ? q : M⁻¹vₖ₋₁
   uₖ₊₁ = NisI ? p : N⁻¹uₖ₋₁
-  b₀ = restart ? q : b
-  c₀ = restart ? p : c
+  b₀ = warm_start ? q : b
+  c₀ = warm_start ? p : c
 
   stats = solver.stats
   rNorms = stats.residuals
   reset!(stats)
 
   # Initial solutions x₀ and y₀.
-  restart && (Δx .= xₖ)
-  restart && (Δy .= yₖ)
   xₖ .= zero(FC)
   yₖ .= zero(FC)
 
@@ -144,7 +165,7 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
   # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
   # [  Aᵀ  νI ] [ yₖ ]   [ c - AᵀΔx - νΔy ]   [ c₀ ]
-  if restart
+  if warm_start
     mul!(b₀, A, Δy)
     (τ ≠ 0) && @kaxpy!(m, τ, Δx, b₀)
     @kaxpby!(m, one(FC), b, -one(FC), b₀)
@@ -466,8 +487,9 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   solved    && (status = "solution good enough given atol and rtol")
 
   # Update x and y
-  restart && @kaxpy!(m, one(FC), Δx, xₖ)
-  restart && @kaxpy!(n, one(FC), Δy, yₖ)
+  warm_start && @kaxpy!(m, one(FC), Δx, xₖ)
+  warm_start && @kaxpy!(n, one(FC), Δy, yₖ)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
