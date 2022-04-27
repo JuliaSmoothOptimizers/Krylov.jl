@@ -76,17 +76,6 @@
       resid = norm(r) / norm(b)
       @test(resid ≤ cg_tol)
       @test(stats.solved)
-
-      # Test restart
-      A, b = restart(FC=FC)
-      solver = CgSolver(A, b)
-      cg!(solver, A, b, itmax=50)
-      @test !solver.stats.solved
-      cg!(solver, A, b, restart=true)
-      r = b - A * solver.x
-      resid = norm(r) / norm(b)
-      @test(resid ≤ cg_tol)
-      @test solver.stats.solved
     end
   end
 end

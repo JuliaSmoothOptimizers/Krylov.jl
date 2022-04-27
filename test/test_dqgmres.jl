@@ -66,17 +66,6 @@
       @test(resid ≤ dqgmres_tol)
       @test(stats.solved)
 
-      # Test restart
-      A, b = restart(FC=FC)
-      solver = DqgmresSolver(A, b, 20)
-      dqgmres!(solver, A, b, itmax=50)
-      @test !solver.stats.solved
-      dqgmres!(solver, A, b, restart=true)
-      r = b - A * solver.x
-      resid = norm(r) / norm(b)
-      @test(resid ≤ dqgmres_tol)
-      @test solver.stats.solved
-
       # Test with Jacobi (or diagonal) preconditioner
       A, b, M = square_preconditioned(FC=FC)
       (x, stats) = dqgmres(A, b, M=M)

@@ -74,23 +74,6 @@
       @test(resid ≤ gmres_tol)
       @test(stats.solved)
 
-      # Test restart
-      A, b = restart(FC=FC)
-      solver = GmresSolver(A, b, 20)
-      gmres!(solver, A, b, itmax=50)
-      @test !solver.stats.solved
-      @test solver.warm_start == false
-      (x, stats) = gmres(A, b, solver.x)
-      r1 = b - A * x
-      gmres!(solver, A, b, solver.x)
-      r2 = b - A * solver.x
-      @test solver.warm_start == false
-      resid1 = norm(r1) / norm(b)
-      resid2 = norm(r2) / norm(b)
-      @test(resid1 ≤ gmres_tol)
-      @test(resid2 ≤ gmres_tol)
-      @test solver.stats.solved
-
       # Test with Jacobi (or diagonal) preconditioner
       A, b, M = square_preconditioned(FC=FC)
       (x, stats) = gmres(A, b, M=M)
