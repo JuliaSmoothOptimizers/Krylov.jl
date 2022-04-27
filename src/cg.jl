@@ -18,7 +18,7 @@ export cg, cg!
 
 """
     (x, stats) = cg(A, b::AbstractVector{FC};
-                    M=I, atol::T=√eps(T), rtol::T=√eps(T), restart::Bool=false,
+                    M=I, atol::T=√eps(T), rtol::T=√eps(T),
                     itmax::Int=0, radius::T=zero(T), linesearch::Bool=false,
                     verbose::Int=0, history::Bool=false)
 
@@ -36,10 +36,24 @@ M also indicates the weighted norm in which residuals are measured.
 If `itmax=0`, the default number of iterations is set to `2 * n`,
 with `n = length(b)`.
 
+CG can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) = cg(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### Reference
 
 * M. R. Hestenes and E. Stiefel, [*Methods of conjugate gradients for solving linear systems*](https://doi.org/10.6028/jres.049.044), Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
 """
+function cg end
+
+function cg(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+  solver = CgSolver(A, b)
+  cg!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
+
 function cg(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CgSolver(A, b)
   cg!(solver, A, b; kwargs...)
@@ -47,14 +61,23 @@ function cg(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
 end
 
 """
-    solver = cg!(solver::CgSolver, args...; kwargs...)
+    solver = cg!(solver::CgSolver, A, b; kwargs...)
+    solver = cg!(solver::CgSolver, A, b, x0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`cg`](@ref).
+where `kwargs` are keyword arguments of [`cg`](@ref).
 
 See [`CgSolver`](@ref) for more details about the `solver`.
 """
+function cg! end
+
+function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  cg!(solver, A, b; kwargs...)
+  return solver
+end
+
 function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
-             M=I, atol :: T=√eps(T), rtol :: T=√eps(T), restart :: Bool=false,
+             M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
              itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
              verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
@@ -73,16 +96,15 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
-  allocate_if(!MisI  , solver, :z , S, n)
-  allocate_if(restart, solver, :Δx, S, n)
+  allocate_if(!MisI, solver, :z, S, n)
   Δx, x, r, p, Ap, stats = solver.Δx, solver.x, solver.r, solver.p, solver.Ap, solver.stats
+  warm_start = solver.warm_start
   rNorms = stats.residuals
   reset!(stats)
   z = MisI ? r : solver.z
 
-  restart && (Δx .= x)
   x .= zero(FC)
-  if restart
+  if warm_start
     mul!(r, A, Δx)
     @kaxpby!(n, one(FC), b, -one(FC), r)
   else
@@ -97,6 +119,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
+    solver.warm_start = false
     return solver
   end
 
@@ -176,7 +199,8 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
   tired && (status = "maximum number of iterations exceeded")
 
   # Update x
-  restart && @kaxpy!(n, one(FC), Δx, x)
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
