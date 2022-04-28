@@ -131,8 +131,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   gsp && (λ = one(FC) ; μ = zero(FC))
 
   warm_start = solver.warm_start
-  warm_start && (λ ≠ 0) && (!CisI || !EisI) && error("Warm-start with preconditioners is not supported.")
-  warm_start && (μ ≠ 0) && (!DisI || !FisI) && error("Warm-start with preconditioners is not supported.")
+  warm_start && (λ ≠ 0) && !EisI && error("Warm-start with right preconditioners is not supported.")
+  warm_start && (μ ≠ 0) && !FisI && error("Warm-start with right preconditioners is not supported.")
 
   # Set up workspace.
   allocate_if(!CisI, solver, :q , S, m)
@@ -169,32 +169,31 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   R  .= zero(FC)  # Upper triangular matrix Rₖ.
   zt .= zero(FC)  # Rₖzₖ = tₖ with (tₖ, τbar₂ₖ₊₁, τbar₂ₖ₊₂) = (Qₖ)ᵀ(βe₁ + γe₂).
 
-  # [ λI   A ] [ xₖ ] = [ b - λΔx - AΔy ] = [ b₀ ]
-  # [  B  μI ] [ yₖ ]   [ c - BΔx - μΔy ]   [ c₀ ]
-  if warm_start
-    mul!(b₀, A, Δy)
-    (λ ≠ 0) && @kaxpy!(m, λ, Δx, b₀)
-    @kaxpby!(m, one(FC), b, -one(FC), b₀)
-    mul!(c₀, B, Δx)
-    (μ ≠ 0) && @kaxpy!(n, μ, Δy, c₀)
-    @kaxpby!(n, one(FC), c, -one(FC), c₀)
-  end
+  # Warm-start
+  # [ Cb₀ ] = [ Cb -  λΔx - CAΔy ] because CM = Iₘ and DN = Iₙ
+  # [ Dc₀ ]   [ Dc - DBΔx - μΔy  ]
+
+  # Compute C(b - AΔy) - λΔx
+  warm_start && mul!(b₀, A, Δy)
+  warm_start && @kaxpby!(m, one(FC), b, -one(FC), b₀)
+  !CisI && mul!(q, C, b₀)
+  !CisI && (b₀ = q)
+  warm_start && (λ ≠ 0) && @kaxpy!(m, -λ, Δx, b₀)
+
+  # Compute D(c - BΔx) - μΔy
+  warm_start && mul!(c₀, B, Δx)
+  warm_start && @kaxpby!(n, one(FC), c, -one(FC), c₀)
+  !DisI && mul!(p, D, c₀)
+  !DisI && (c₀ = p)
+  warm_start && (μ ≠ 0) && @kaxpy!(n, -μ, Δy, c₀)
 
   # Initialize the orthogonal Hessenberg reduction process.
   # βv₁ = Cb
-  if !CisI
-    mul!(q, C, b₀)
-    b₀ = q
-  end
   β = @knrm2(m, b₀)
   β ≠ 0 || error("b must be nonzero")
   @. V[1] = b₀ / β
 
   # γu₁ = Dc
-  if !DisI
-    mul!(p, D, c₀)
-    c₀ = p
-  end
   γ = @knrm2(n, c₀)
   γ ≠ 0 || error("c must be nonzero")
   @. U[1] = c₀ / γ
