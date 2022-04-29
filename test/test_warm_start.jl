@@ -1,8 +1,11 @@
 function test_warm_start(FC)
   A, b = warm_start(FC=FC)
+  c = copy(b)
   n, m = size(A)
   x0 = 1.2 * ones(FC, n)
   y0 = 0.8 * ones(FC, n)
+  shifts = [1.0; 2.0; 3.0; 4.0; 5.0]
+  nshifts = 5
   tol = 1.0e-6
 
   x, y, stats = tricg(A, b, b, x0, y0)
@@ -57,6 +60,52 @@ function test_warm_start(FC)
   x, stats = gmres(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+
+  x, stats = bicgstab(A, b, x0)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+
+  x, stats = cgs(A, b, x0)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+
+  x, stats = bilq(A, b, x0)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+
+  x, stats = qmr(A, b, x0)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+
+  x, stats = usymlq(A, b, c, x0)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+
+  x, stats = usymqr(A, b, c, x0)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+
+  x, y, stats = bilqr(A, b, c, x0, y0)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+  s = c - A' * y
+  resid = norm(s) / norm(c)
+  @test(resid ≤ tol)
+
+  x, y, stats = trilqr(A, b, c, x0, y0)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+  s = c - A' * y
+  resid = norm(s) / norm(c)
   @test(resid ≤ tol)
 end
 
