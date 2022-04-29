@@ -34,12 +34,26 @@ QMR is based on the Lanczos biorthogonalization process and requires two initial
 The relation `bᵀc ≠ 0` must be satisfied and by default `c = b`.
 When `A` is symmetric and `b = c`, QMR is equivalent to MINRES.
 
+QMR can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) = qmr(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### References
 
 * R. W. Freund and N. M. Nachtigal, [*QMR : a quasi-minimal residual method for non-Hermitian linear systems*](https://doi.org/10.1007/BF01385726), Numerische mathematik, Vol. 60(1), pp. 315--339, 1991.
 * R. W. Freund and N. M. Nachtigal, [*An implementation of the QMR method based on coupled two-term recurrences*](https://doi.org/10.1137/0915022), SIAM Journal on Scientific Computing, Vol. 15(2), pp. 313--337, 1994.
 * A. Montoison and D. Orban, [*BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*](https://doi.org/10.1137/19M1290991), SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
+function qmr end
+
+function qmr(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+  solver = QmrSolver(A, b)
+  qmr!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
+
 function qmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = QmrSolver(A, b)
   qmr!(solver, A, b; kwargs...)
@@ -47,12 +61,21 @@ function qmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
 end
 
 """
-    solver = qmr!(solver::QmrSolver, args...; kwargs...)
+    solver = qmr!(solver::QmrSolver, A, b; kwargs...)
+    solver = qmr!(solver::QmrSolver, A, b, x0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`qmr`](@ref).
+where `kwargs` are keyword arguments of [`qmr`](@ref).
 
 See [`QmrSolver`](@ref) for more details about the `solver`.
 """
+function qmr! end
+
+function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  qmr!(solver, A, b; kwargs...)
+  return solver
+end
+
 function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
               atol :: T=√eps(T), rtol :: T=√eps(T),
               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
@@ -72,19 +95,28 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
 
   # Set up workspace.
   uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
-  x, wₖ₋₂, wₖ₋₁, stats = solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.stats
+  Δx, x, wₖ₋₂, wₖ₋₁, stats = solver.Δx, solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.stats
+  warm_start = solver.warm_start
   rNorms = stats.residuals
   reset!(stats)
+  r₀ = warm_start ? q : b
+
+  if warm_start
+    mul!(r₀, A, Δx)
+    @kaxpby!(n, one(FC), b, -one(FC), r₀)
+  end
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(FC)
-  rNorm = @knrm2(n, b)  # ‖r₀‖
+  rNorm = @knrm2(n, r₀)  # ‖r₀‖ = ‖b₀ - Ax₀‖
+
   history && push!(rNorms, rNorm)
   if rNorm == 0
     stats.niter = 0
     stats.solved = true
     stats.inconsistent = false
     stats.status = "x = 0 is a zero-residual solution"
+    solver.warm_start = false
     return solver
   end
 
@@ -96,20 +128,21 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Initialize the Lanczos biorthogonalization process.
-  cᵗb = @kdot(n, c, b)  # ⟨c,b⟩
+  cᵗb = @kdot(n, c, r₀)  # ⟨c,r₀⟩
   if cᵗb == 0
     stats.niter = 0
     stats.solved = false
     stats.inconsistent = false
     stats.status = "Breakdown bᵀc = 0"
+    solver.warm_start = false
     return solver
   end
 
-  βₖ = √(abs(cᵗb))             # β₁γ₁ = cᵀb
-  γₖ = cᵗb / βₖ                # β₁γ₁ = cᵀb
+  βₖ = √(abs(cᵗb))             # β₁γ₁ = cᵀ(b - Ax₀)
+  γₖ = cᵗb / βₖ                # β₁γ₁ = cᵀ(b - Ax₀)
   vₖ₋₁ .= zero(FC)             # v₀ = 0
   uₖ₋₁ .= zero(FC)             # u₀ = 0
-  vₖ .= b ./ βₖ                # v₁ = b / β₁
+  vₖ .= r₀ ./ βₖ               # v₁ = (b - Ax₀) / β₁
   uₖ .= c ./ conj(γₖ)          # u₁ = c / γ̄₁
   cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
   sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
@@ -266,6 +299,10 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   tired     && (status = "maximum number of iterations exceeded")
   breakdown && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
   solved    && (status = "solution good enough given atol and rtol")
+
+  # Update x
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
