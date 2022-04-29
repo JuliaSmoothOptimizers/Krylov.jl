@@ -40,12 +40,26 @@ In all cases, problems must be consistent.
 An option gives the possibility of transferring to the USYMCG point,
 when it exists. The transfer is based on the residual norm.
 
+USYMLQ can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) = usymlq(A, b, c, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### References
 
 * M. A. Saunders, H. D. Simon, and E. L. Yip, [*Two Conjugate-Gradient-Type Methods for Unsymmetric Linear Equations*](https://doi.org/10.1137/0725052), SIAM Journal on Numerical Analysis, 25(4), pp. 927--940, 1988.
 * A. Buttari, D. Orban, D. Ruiz and D. Titley-Peloquin, [*A tridiagonalization method for symmetric saddle-point and quasi-definite systems*](https://doi.org/10.1137/18M1194900), SIAM Journal on Scientific Computing, 41(5), pp. 409--432, 2019.
 * A. Montoison and D. Orban, [*BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*](https://doi.org/10.1137/19M1290991), SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
+function usymlq end
+
+function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+  solver = UsymlqSolver(A, b)
+  usymlq!(solver, A, b, c, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
+
 function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = UsymlqSolver(A, b)
   usymlq!(solver, A, b, c; kwargs...)
@@ -53,12 +67,22 @@ function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) 
 end
 
 """
-    solver = usymlq!(solver::UsymlqSolver, args...; kwargs...)
+    solver = usymlq!(solver::UsymlqSolver, A, b, c; kwargs...)
+    solver = usymlq!(solver::UsymlqSolver, A, b, c, x0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`usymlq`](@ref).
+where `kwargs` are keyword arguments of [`usymlq`](@ref).
 
 See [`UsymlqSolver`](@ref) for more details about the `solver`.
 """
+function usymlq! end
+
+function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
+                 x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  usymlq!(solver, A, b, c; kwargs...)
+  return solver
+end
+
 function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                  atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
@@ -77,14 +101,21 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   Aᵀ = A'
 
   # Set up workspace.
-  uₖ₋₁, uₖ, p, x, d̅ = solver.uₖ₋₁, solver.uₖ, solver.p, solver.x, solver.d̅
-  vₖ₋₁, vₖ, q, stats = solver.vₖ₋₁, solver.vₖ, solver.q, solver.stats
+  uₖ₋₁, uₖ, p, Δx, x = solver.uₖ₋₁, solver.uₖ, solver.p, solver.Δx, solver.x
+  vₖ₋₁, vₖ, q, d̅, stats = solver.vₖ₋₁, solver.vₖ, solver.q, solver.d̅, solver.stats
+  warm_start = solver.warm_start
   rNorms = stats.residuals
   reset!(stats)
+  r₀ = warm_start ? q : b
+
+  if warm_start
+    mul!(r₀, A, Δx)
+    @kaxpby!(n, one(FC), b, -one(FC), r₀)
+  end
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(FC)
-  bNorm = @knrm2(m, b)
+  bNorm = @knrm2(m, r₀)
   history && push!(rNorms, bNorm)
   if bNorm == 0
     stats.niter = 0
@@ -101,11 +132,11 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
 
-  βₖ = @knrm2(m, b)           # β₁ = ‖v₁‖
-  γₖ = @knrm2(n, c)           # γ₁ = ‖u₁‖
+  βₖ = @knrm2(m, r₀)          # β₁ = ‖v₁‖ = ‖r₀‖
+  γₖ = @knrm2(n, c)           # γ₁ = ‖u₁‖ = ‖c‖
   vₖ₋₁ .= zero(FC)            # v₀ = 0
   uₖ₋₁ .= zero(FC)            # u₀ = 0
-  vₖ .= b ./ βₖ               # v₁ = b / β₁
+  vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
   uₖ .= c ./ γₖ               # u₁ = c / γ₁
   cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
@@ -268,6 +299,10 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   tired     && (status = "maximum number of iterations exceeded")
   solved_lq && (status = "solution xᴸ good enough given atol and rtol")
   solved_cg && (status = "solution xᶜ good enough given atol and rtol")
+
+  # Update x
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
