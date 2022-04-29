@@ -41,11 +41,25 @@ Information will be displayed every `verbose` iterations.
 
 This implementation allows a left preconditioner `M` and a right preconditioner `N`.
 
+BICGSTAB can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) = bicgstab(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### References
 
 * H. A. van der Vorst, [*Bi-CGSTAB: A fast and smoothly converging variant of Bi-CG for the solution of nonsymmetric linear systems*](https://doi.org/10.1137/0913035), SIAM Journal on Scientific and Statistical Computing, 13(2), pp. 631--644, 1992.
 * G. L.G. Sleijpen and D. R. Fokkema, *BiCGstab(ℓ) for linear equations involving unsymmetric matrices with complex spectrum*, Electronic Transactions on Numerical Analysis, 1, pp. 11--32, 1993.
 """
+function bicgstab end
+
+function bicgstab(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+  solver = BicgstabSolver(A, b)
+  bicgstab!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
+
 function bicgstab(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = BicgstabSolver(A, b)
   bicgstab!(solver, A, b; kwargs...)
@@ -53,12 +67,21 @@ function bicgstab(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComp
 end
 
 """
-    solver = bicgstab!(solver::BicgstabSolver, args...; kwargs...)
+    solver = bicgstab!(solver::BicgstabSolver, A, b; kwargs...)
+    solver = bicgstab!(solver::BicgstabSolver, A, b, x0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`bicgstab`](@ref).
+where `kwargs` are keyword arguments of [`bicgstab`](@ref).
 
 See [`BicgstabSolver`](@ref) for more details about the `solver`.
 """
+function bicgstab! end
+
+function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  bicgstab!(solver, A, b; kwargs...)
+  return solver
+end
+
 function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
                    M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                    itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
@@ -80,19 +103,28 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # Set up workspace.
   allocate_if(!MisI, solver, :t , S, n)
   allocate_if(!NisI, solver, :yz, S, n)
-  x, r, p, v, s, qd, stats = solver.x, solver.r, solver.p, solver.v, solver.s, solver.qd, solver.stats
+  Δx, x, r, p, v, s, qd, stats = solver.Δx, solver.x, solver.r, solver.p, solver.v, solver.s, solver.qd, solver.stats
+  warm_start = solver.warm_start
   rNorms = stats.residuals
   reset!(stats)
   q = d = solver.qd
   t = MisI ? d : solver.t
   y = NisI ? p : solver.yz
   z = NisI ? s : solver.yz
+  r₀ = MisI ? r : solver.qd
 
-  x .= zero(FC)  # x₀
-  s .= zero(FC)  # s₀
-  v .= zero(FC)  # v₀
-  mul!(r, M, b)  # r₀
-  p .= r         # p₁
+  if warm_start
+    mul!(r₀, A, Δx)
+    @kaxpby!(n, one(FC), b, -one(FC), r₀)
+  else
+    r₀ .= b
+  end
+
+  x .= zero(FC)          # x₀
+  s .= zero(FC)          # s₀
+  v .= zero(FC)          # v₀
+  MisI || mul!(r, M, r₀) # r₀
+  p .= r                 # p₁
 
   α = one(FC) # α₀
   ω = one(FC) # ω₀
@@ -105,6 +137,7 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
+    solver.warm_start = false
     return solver
   end
 
@@ -120,6 +153,7 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
     stats.niter = 0
     stats.solved, stats.inconsistent = false, false
     stats.status = "Breakdown bᵀc = 0"
+    solver.warm_start = false
     return solver
   end
 
@@ -166,6 +200,10 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
   (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
+
+  # Update x
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
