@@ -39,10 +39,24 @@ TFQMR and BICGSTAB were developed to remedy this difficulty.»
 
 This implementation allows a left preconditioner M and a right preconditioner N.
 
+CGS can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) = cgs(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### Reference
 
 * P. Sonneveld, [*CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems*](https://doi.org/10.1137/0910004), SIAM Journal on Scientific and Statistical Computing, 10(1), pp. 36--52, 1989.
 """
+function cgs end
+
+function cgs(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+  solver = CgsSolver(A, b)
+  cgs!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
+
 function cgs(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CgsSolver(A, b)
   cgs!(solver, A, b; kwargs...)
@@ -50,12 +64,21 @@ function cgs(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
 end
 
 """
-    solver = cgs!(solver::CgsSolver, args...; kwargs...)
+    solver = cgs!(solver::CgsSolver, A, b; kwargs...)
+    solver = cgs!(solver::CgsSolver, A, b, x0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`cgs`](@ref).
+where `kwargs` are keyword arguments of [`cgs`](@ref).
 
 See [`CgsSolver`](@ref) for more details about the `solver`.
 """
+function cgs! end
+
+function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  cgs!(solver, A, b; kwargs...)
+  return solver
+end
+
 function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
@@ -77,7 +100,8 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   # Set up workspace.
   allocate_if(!MisI, solver, :vw, S, n)
   allocate_if(!NisI, solver, :yz, S, n)
-  x, r, u, p, q, ts, stats = solver.x, solver.r, solver.u, solver.p, solver.q, solver.ts, solver.stats
+  Δx, x, r, u, p, q, ts, stats = solver.Δx, solver.x, solver.r, solver.u, solver.p, solver.q, solver.ts, solver.stats
+  warm_start = solver.warm_start
   rNorms = stats.residuals
   reset!(stats)
   t = s = solver.ts
@@ -85,9 +109,17 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   w = MisI ? s : solver.vw
   y = NisI ? p : solver.yz
   z = NisI ? u : solver.yz
+  r₀ = MisI ? r : solver.ts
 
-  x .= zero(FC)  # x₀
-  mul!(r, M, b)  # r₀
+  if warm_start
+    mul!(r₀, A, Δx)
+    @kaxpby!(n, one(FC), b, -one(FC), r₀)
+  else
+    r₀ .= b
+  end
+
+  x .= zero(FC)           # x₀
+  MisI || mul!(r, M, r₀)  # r₀
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
@@ -96,6 +128,7 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
+    solver.warm_start = false
     return solver
   end
 
@@ -105,6 +138,7 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     stats.niter = 0
     stats.solved, stats.inconsistent = false, false
     stats.status = "Breakdown bᵀc = 0"
+    solver.warm_start =false
     return solver
   end
 
@@ -166,6 +200,10 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
+
+  # Update x
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
