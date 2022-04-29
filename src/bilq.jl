@@ -29,10 +29,24 @@ When `A` is symmetric and `b = c`, BiLQ is equivalent to SYMMLQ.
 An option gives the possibility of transferring to the BiCG point,
 when it exists. The transfer is based on the residual norm.
 
+BiLQ can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) = bilq(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### Reference
 
 * A. Montoison and D. Orban, [*BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*](https://doi.org/10.1137/19M1290991), SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
+function bilq end
+
+function bilq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+  solver = BilqSolver(A, b)
+  bilq!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
+
 function bilq(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = BilqSolver(A, b)
   bilq!(solver, A, b; kwargs...)
@@ -40,12 +54,21 @@ function bilq(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
 end
 
 """
-    solver = bilq!(solver::BilqSolver, args...; kwargs...)
+    solver = bilq!(solver::BilqSolver, A, b; kwargs...)
+    solver = bilq!(solver::BilqSolver, A, b, x0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`bilq`](@ref).
+where `kwargs` are keyword arguments of [`bilq`](@ref).
 
 See [`BilqSolver`](@ref) for more details about the `solver`.
 """
+function bilq! end
+
+function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  bilq!(solver, A, b; kwargs...)
+  return solver
+end
+
 function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
                atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
@@ -65,13 +88,20 @@ function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Ab
 
   # Set up workspace.
   uₖ₋₁, uₖ, q, vₖ₋₁, vₖ = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ
-  p, x, d̅, stats = solver.p, solver.x, solver.d̅, solver.stats
+  p, Δx, x, d̅, stats = solver.p, solver.Δx, solver.x, solver.d̅, solver.stats
+  warm_start = solver.warm_start
   rNorms = stats.residuals
   reset!(stats)
+  r₀ = warm_start ? q : b
+
+  if warm_start
+    mul!(r₀, A, Δx)
+    @kaxpby!(n, one(FC), b, -one(FC), r₀)
+  end
 
   # Initial solution x₀ and residual norm ‖r₀‖.
   x .= zero(FC)
-  bNorm = @knrm2(n, b)  # ‖r₀‖
+  bNorm = @knrm2(n, r₀)  # ‖r₀‖ = ‖b₀ - Ax₀‖
 
   history && push!(rNorms, bNorm)
   if bNorm == 0
@@ -79,6 +109,7 @@ function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Ab
     stats.solved = true
     stats.inconsistent = false
     stats.status = "x = 0 is a zero-residual solution"
+    solver.warm_start = false
     return solver
   end
 
@@ -90,20 +121,21 @@ function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Ab
   kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
 
   # Initialize the Lanczos biorthogonalization process.
-  cᵗb = @kdot(n, c, b)  # ⟨c,b⟩
+  cᵗb = @kdot(n, c, r₀)  # ⟨c,r₀⟩
   if cᵗb == 0
     stats.niter = 0
     stats.solved = false
     stats.inconsistent = false
     stats.status = "Breakdown bᵀc = 0"
+    solver.warm_start = false
     return solver
   end
 
-  βₖ = √(abs(cᵗb))            # β₁γ₁ = cᵀb
-  γₖ = cᵗb / βₖ               # β₁γ₁ = cᵀb
+  βₖ = √(abs(cᵗb))            # β₁γ₁ = cᵀ(b - Ax₀)
+  γₖ = cᵗb / βₖ               # β₁γ₁ = cᵀ(b - Ax₀)
   vₖ₋₁ .= zero(FC)            # v₀ = 0
   uₖ₋₁ .= zero(FC)            # u₀ = 0
-  vₖ .= b ./ βₖ               # v₁ = b / β₁
+  vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
   uₖ .= c ./ conj(γₖ)         # u₁ = c / γ̄₁
   cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
@@ -275,6 +307,10 @@ function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Ab
   breakdown && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
   solved_lq && (status = "solution xᴸ good enough given atol and rtol")
   solved_cg && (status = "solution xᶜ good enough given atol and rtol")
+
+  # Update x
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
