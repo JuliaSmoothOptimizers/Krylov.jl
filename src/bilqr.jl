@@ -32,10 +32,24 @@ QMR is used for solving dual system `Aᵀy = c`.
 An option gives the possibility of transferring from the BiLQ point to the
 BiCG point, when it exists. The transfer is based on the residual norm.
 
+BiLQR can be warm-started from initial guesses `x0` and `y0` with the method
+
+    (x, y, stats) = bilqr(A, b, c, x0, y0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### Reference
 
 * A. Montoison and D. Orban, [*BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*](https://doi.org/10.1137/19M1290991), SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
+function bilqr end
+
+function bilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+  solver = BilqrSolver(A, b)
+  bilqr!(solver, A, b, c, x0, y0; kwargs...)
+  return (solver.x, solver.y, solver.stats)
+end
+
 function bilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = BilqrSolver(A, b)
   bilqr!(solver, A, b, c; kwargs...)
@@ -43,12 +57,22 @@ function bilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) w
 end
 
 """
-    solver = bilqr!(solver::BilqrSolver, args...; kwargs...)
+    solver = bilqr!(solver::BilqrSolver, A, b, c; kwargs...)
+    solver = bilqr!(solver::BilqrSolver, A, b, c, x0, y0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`bilqr`](@ref).
+where `kwargs` are keyword arguments of [`bilqr`](@ref).
 
 See [`BilqrSolver`](@ref) for more details about the `solver`.
 """
+function bilqr! end
+
+function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
+                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0, y0)
+  bilqr!(solver, A, b, c; kwargs...)
+  return solver
+end
+
 function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
@@ -68,18 +92,29 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   Aᵀ = A'
 
   # Set up workspace.
-  uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
-  x, t, d̅, wₖ₋₃, wₖ₋₂, stats = solver.x, solver.y, solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂, solver.stats
+  uₖ₋₁, uₖ, q, vₖ₋₁, vₖ = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ
+  p, Δx, Δy, x, t = solver.p, solver.Δx, solver.Δy, solver.x, solver.y
+  d̅, wₖ₋₃, wₖ₋₂, stats = solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂, solver.stats
+  warm_start = solver.warm_start
   rNorms, sNorms = stats.residuals_primal, stats.residuals_dual
   reset!(stats)
+  r₀ = warm_start ? q : b
+  s₀ = warm_start ? p : c
+
+  if warm_start
+    mul!(r₀, A, Δx)
+    @kaxpby!(n, one(FC), b, -one(FC), r₀)
+    mul!(s₀, Aᵀ, Δy)
+    @kaxpby!(n, one(FC), c, -one(FC), s₀)
+  end
 
   # Initial solution x₀ and residual norm ‖r₀‖ = ‖b - Ax₀‖.
-  x .= zero(FC)         # x₀
-  bNorm = @knrm2(n, b)  # rNorm = ‖r₀‖
+  x .= zero(FC)          # x₀
+  bNorm = @knrm2(n, r₀)  # rNorm = ‖r₀‖
 
-  # Initial solution t₀ and residual norm ‖s₀‖ = ‖c - Aᵀt₀‖.
-  t .= zero(FC)         # t₀
-  cNorm = @knrm2(n, c)  # sNorm = ‖s₀‖
+  # Initial solution t₀ and residual norm ‖s₀‖ = ‖c - Aᵀy₀‖.
+  t .= zero(FC)          # t₀
+  cNorm = @knrm2(n, s₀)  # sNorm = ‖s₀‖
 
   iter = 0
   itmax == 0 && (itmax = 2*n)
@@ -92,22 +127,23 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
   # Initialize the Lanczos biorthogonalization process.
-  cᵗb = @kdot(n, c, b)  # ⟨c,b⟩
+  cᵗb = @kdot(n, s₀, r₀)  # ⟨s₀,r₀⟩ = ⟨c - Aᵀy₀,b - Ax₀⟩
   if cᵗb == 0
     stats.niter = 0
     stats.solved_primal = false
     stats.solved_dual = false
     stats.status = "Breakdown bᵀc = 0"
+    solver.warm_start = false
     return solver
   end
 
   # Set up workspace.
-  βₖ = √(abs(cᵗb))            # β₁γ₁ = cᵀb
-  γₖ = cᵗb / βₖ               # β₁γ₁ = cᵀb
+  βₖ = √(abs(cᵗb))            # β₁γ₁ = (c - Aᵀy₀)ᵀ(b - Ax₀)
+  γₖ = cᵗb / βₖ               # β₁γ₁ = (c - Aᵀy₀)ᵀ(b - Ax₀)
   vₖ₋₁ .= zero(FC)            # v₀ = 0
   uₖ₋₁ .= zero(FC)            # u₀ = 0
-  vₖ .= b ./ βₖ               # v₁ = b / β₁
-  uₖ .= c ./ conj(γₖ)         # u₁ = c / γ̄₁
+  vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
+  uₖ .= s₀ ./ conj(γₖ)        # u₁ = (c - Aᵀy₀) / γ̄₁
   cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
   d̅ .= zero(FC)               # Last column of D̅ₖ = Vₖ(Qₖ)ᵀ
@@ -379,6 +415,11 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   solved_cg_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᶜ and a dual solution t good enough given atol and rtol")
   solved_lq_tol  && solved_qr_mach && (status = "Found a primal solution xᴸ good enough given atol and rtol and an approximate zero-residual dual solutions t")
   solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
+
+  # Update x and y
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  warm_start && @kaxpy!(n, one(FC), Δy, t)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
