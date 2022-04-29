@@ -31,10 +31,24 @@ USYMQR is used for solving dual system `Aᵀy = c`.
 An option gives the possibility of transferring from the USYMLQ point to the
 USYMCG point, when it exists. The transfer is based on the residual norm.
 
+TriLQR can be warm-started from initial guesses `x0` and `y0` with the method
+
+    (x, y, stats) = trilqr(A, b, c, x0, y0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### Reference
 
 * A. Montoison and D. Orban, [*BiLQ: An Iterative Method for Nonsymmetric Linear Systems with a Quasi-Minimum Error Property*](https://doi.org/10.1137/19M1290991), SIAM Journal on Matrix Analysis and Applications, 41(3), pp. 1145--1166, 2020.
 """
+function trilqr end
+
+function trilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+  solver = TrilqrSolver(A, b)
+  trilqr!(solver, A, b, c, x0, y0; kwargs...)
+  return (solver.x, solver.y, solver.stats)
+end
+
 function trilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = TrilqrSolver(A, b)
   trilqr!(solver, A, b, c; kwargs...)
@@ -42,12 +56,22 @@ function trilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) 
 end
 
 """
-    solver = trilqr!(solver::TrilqrSolver, args...; kwargs...)
+    solver = trilqr!(solver::TrilqrSolver, A, b, c; kwargs...)
+    solver = trilqr!(solver::TrilqrSolver, A, b, c, x0, y0; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`trilqr`](@ref).
+where `kwargs` are keyword arguments of [`trilqr`](@ref).
 
 See [`TrilqrSolver`](@ref) for more details about the `solver`.
 """
+function trilqr! end
+
+function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
+                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0, y0)
+  trilqr!(solver, A, b, c; kwargs...)
+  return solver
+end
+
 function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                  atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
@@ -69,16 +93,26 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   # Set up workspace.
   uₖ₋₁, uₖ, p, d̅, x, stats = solver.uₖ₋₁, solver.uₖ, solver.p, solver.d̅, solver.x, solver.stats
   vₖ₋₁, vₖ, q, t, wₖ₋₃, wₖ₋₂ = solver.vₖ₋₁, solver.vₖ, solver.q, solver.y, solver.wₖ₋₃, solver.wₖ₋₂
+  Δx, Δy, warm_start = solver.Δx, solver.Δy, solver.warm_start
   rNorms, sNorms = stats.residuals_primal, stats.residuals_dual
   reset!(stats)
+  r₀ = warm_start ? q : b
+  s₀ = warm_start ? p : c
+
+  if warm_start
+    mul!(r₀, A, Δx)
+    @kaxpby!(n, one(FC), b, -one(FC), r₀)
+    mul!(s₀, Aᵀ, Δy)
+    @kaxpby!(n, one(FC), c, -one(FC), s₀)
+  end
 
   # Initial solution x₀ and residual r₀ = b - Ax₀.
-  x .= zero(FC)         # x₀
-  bNorm = @knrm2(m, b)  # rNorm = ‖r₀‖
+  x .= zero(FC)          # x₀
+  bNorm = @knrm2(m, r₀)  # rNorm = ‖r₀‖
 
   # Initial solution y₀ and residual s₀ = c - Aᵀy₀.
-  t .= zero(FC)         # t₀
-  cNorm = @knrm2(n, c)  # sNorm = ‖s₀‖
+  t .= zero(FC)          # t₀
+  cNorm = @knrm2(n, s₀)  # sNorm = ‖s₀‖
 
   iter = 0
   itmax == 0 && (itmax = m+n)
@@ -92,12 +126,12 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
   # Set up workspace.
-  βₖ = @knrm2(m, b)           # β₁ = ‖v₁‖
-  γₖ = @knrm2(n, c)           # γ₁ = ‖u₁‖
+  βₖ = @knrm2(m, r₀)          # β₁ = ‖r₀‖ = ‖v₁‖
+  γₖ = @knrm2(n, s₀)          # γ₁ = ‖s₀‖ = ‖u₁‖
   vₖ₋₁ .= zero(FC)            # v₀ = 0
   uₖ₋₁ .= zero(FC)            # u₀ = 0
-  vₖ .= b ./ βₖ               # v₁ = b / β₁
-  uₖ .= c ./ γₖ               # u₁ = c / γ₁
+  vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
+  uₖ .= s₀ ./ γₖ              # u₁ = (c - Aᵀy₀) / γ₁
   cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
   d̅ .= zero(FC)               # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
@@ -360,6 +394,11 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   solved_cg_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᶜ and a dual solution t good enough given atol and rtol")
   solved_lq_tol  && solved_qr_mach && (status = "Found a primal solution xᴸ good enough given atol and rtol and an approximate zero-residual dual solutions t")
   solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
+
+  # Update x and y
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  warm_start && @kaxpy!(m, one(FC), Δy, t)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
