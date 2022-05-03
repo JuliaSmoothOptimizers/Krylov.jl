@@ -1,6 +1,6 @@
 """
     FloatOrComplex{T}
-Union type of `T` and `Complex{T}` where T is an [`AbstractFloat`](@ref).
+Union type of `T` and `Complex{T}` where T is an `AbstractFloat`.
 """
 const FloatOrComplex{T} = Union{T, Complex{T}} where T <: AbstractFloat
 
