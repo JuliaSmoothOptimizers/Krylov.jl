@@ -1,6 +1,6 @@
 ## Warm Start
 
-Most Krylov methods in this module can use a starting point that might be closer from a solution.
+Most Krylov methods in this module accept a starting point as argument. The starting point is used as initial approximation to a solution.
 
 ```julia
 solver = CgSolver(n, n, S)
@@ -10,18 +10,18 @@ if !issolved(solver)
 end
 ```
 
-If the user has an initial guess `x0`, it can be also provided directly.
+If the user has an initial guess `x0`, it can be provided directly.
 
 ```julia
 cg(A, b, x0)
 ```
 
-It is also possible to use the `warm_start!` function directly on the solver.
+It is also possible to use the `warm_start!` function to feed the starting point into the solver.
 
 ```julia
 warm_start!(solver, x0)
 cg!(solver, A, b)
-# these two lines are equivalent to cg!(solver, A, b, x0)
+# the previous two lines are equivalent to cg!(solver, A, b, x0)
 ```
 
 If a Krylov method doesn't have the option to warm start, it can be still be done explicitly.
@@ -37,7 +37,7 @@ cg_lanczos!(solver, A, r)
 x = x₀ + Δx             # Ax = b
 ```
 
-Explicit restarts cannot be avoided with some block methods such as TRIMR due to the preconditioners.
+Explicit restarts cannot be avoided in certain block methods, such as TRIMR, due to the preconditioners.
 
 ```julia
 # [E  A] [x] = [b]
@@ -59,7 +59,7 @@ y = y₀ + Δy
 
 The storage requierements of Krylov methods based on the Arnoldi process, such as FOM and GMRES, increase as the iteration progresses.
 For very large problems, the storage costs become prohibitive after only few iterations and restarted variants FOM(k) and GMRES(k) are prefered.
-In this section, we present how GMRES(k) and FOM(k) can be implemented thanks to the warm start.
+In this section, we show how to use warm starts to implement GMRES(k) and FOM(k).
 
 ```julia
 k = 50
