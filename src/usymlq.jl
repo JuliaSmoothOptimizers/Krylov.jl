@@ -122,6 +122,7 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     stats.solved = true
     stats.inconsistent = false
     stats.status = "x = 0 is a zero-residual solution"
+    solver.warm_start = false
     return solver
   end
 
