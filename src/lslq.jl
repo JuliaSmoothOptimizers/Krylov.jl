@@ -131,6 +131,8 @@ The iterations stop as soon as one of the following conditions holds true:
 * R. Estrin, D. Orban and M. A. Saunders, [*Euclidean-norm error bounds for SYMMLQ and CG*](https://doi.org/10.1137/16M1094816), SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 235--253, 2019.
 * R. Estrin, D. Orban and M. A. Saunders, [*LSLQ: An Iterative Method for Linear Least-Squares with an Error Minimization Property*](https://doi.org/10.1137/17M1113552), SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 254--275, 2019.
 """
+function lslq end
+
 function lslq(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = LslqSolver(A, b, window=window)
   lslq!(solver, A, b; kwargs...)
@@ -138,12 +140,14 @@ function lslq(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <
 end
 
 """
-    solver = lslq!(solver::LslqSolver, args...; kwargs...)
+    solver = lslq!(solver::LslqSolver, A, b; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`lslq`](@ref).
+where `kwargs` are keyword arguments of [`lslq`](@ref).
 
 See [`LslqSolver`](@ref) for more details about the `solver`.
 """
+function lslq! end
+
 function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
                atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),

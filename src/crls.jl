@@ -48,6 +48,8 @@ but simpler to implement.
 
 * D. C.-L. Fong, *Minimum-Residual Methods for Sparse, Least-Squares using Golubg-Kahan Bidiagonalization*, Ph.D. Thesis, Stanford University, 2011.
 """
+function crls end
+
 function crls(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CrlsSolver(A, b)
   crls!(solver, A, b; kwargs...)
@@ -55,12 +57,14 @@ function crls(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
 end
 
 """
-    solver = crls!(solver::CrlsSolver, args...; kwargs...)
+    solver = crls!(solver::CrlsSolver, A, b; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`crls`](@ref).
+where `kwargs` are keyword arguments of [`crls`](@ref).
 
 See [`CrlsSolver`](@ref) for more details about the `solver`.
 """
+function crls! end
+
 function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}

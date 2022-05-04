@@ -90,6 +90,8 @@ In this implementation, both the x and y-parts of the solution are returned.
 * C. C. Paige and M. A. Saunders, [*LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*](https://doi.org/10.1145/355984.355989), ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
 * M. A. Saunders, [*Solutions of Sparse Rectangular Systems Using LSQR and CRAIG*](https://doi.org/10.1007/BF01739829), BIT Numerical Mathematics, 35(4), pp. 588--604, 1995.
 """
+function craig end
+
 function craig(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CraigSolver(A, b)
   craig!(solver, A, b; kwargs...)
@@ -97,12 +99,14 @@ function craig(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
 end
 
 """
-    solver = craig!(solver::CraigSolver, args...; kwargs...)
+    solver = craig!(solver::CraigSolver, A, b; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`craig`](@ref).
+where `kwargs` are keyword arguments of [`craig`](@ref).
 
 See [`CraigSolver`](@ref) for more details about the `solver`.
 """
+function craig! end
+
 function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
                 M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                 btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,

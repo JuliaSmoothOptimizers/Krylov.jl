@@ -39,6 +39,8 @@ with `n = length(b)`.
 * E. Stiefel, [*Relaxationsmethoden bester Strategie zur Losung linearer Gleichungssysteme*](https://doi.org/10.1007/BF02564277), Commentarii Mathematici Helvetici, 29(1), pp. 157--179, 1955.
 * M-A. Dahito and D. Orban, [*The Conjugate Residual Method in Linesearch and Trust-Region Methods*](https://doi.org/10.1137/18M1204255), SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
 """
+function cr end
+
 function cr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CrSolver(A, b)
   cr!(solver, A, b; kwargs...)
@@ -46,12 +48,14 @@ function cr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
 end
 
 """
-    solver = cr!(solver::CrSolver, args...; kwargs...)
+    solver = cr!(solver::CrSolver, A, b; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`cr`](@ref).
+where `kwargs` are keyword arguments of [`cr`](@ref).
 
 See [`CrSolver`](@ref) for more details about the `solver`.
 """
+function cr! end
+
 function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
              radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}

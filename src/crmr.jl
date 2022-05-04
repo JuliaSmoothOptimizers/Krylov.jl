@@ -64,6 +64,8 @@ A preconditioner M may be provided.
 * D. Orban and M. Arioli, [*Iterative Solution of Symmetric Quasi-Definite Linear Systems*](https://doi.org/10.1137/1.9781611974737), Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
 * D. Orban, [*The Projected Golub-Kahan Process for Constrained Linear Least-Squares Problems*](https://dx.doi.org/10.13140/RG.2.2.17443.99360). Cahier du GERAD G-2014-15, 2014.
 """
+function crmr end
+
 function crmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CrmrSolver(A, b)
   crmr!(solver, A, b; kwargs...)
@@ -71,12 +73,14 @@ function crmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
 end
 
 """
-    solver = crmr!(solver::CrmrSolver, args...; kwargs...)
+    solver = crmr!(solver::CrmrSolver, A, b; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`crmr`](@ref).
+where `kwargs` are keyword arguments of [`crmr`](@ref).
 
 See [`CrmrSolver`](@ref) for more details about the `solver`.
 """
+function crmr! end
+
 function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T),
                rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
