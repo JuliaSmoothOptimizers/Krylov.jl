@@ -66,6 +66,8 @@ A preconditioner M may be provided in the form of a linear operator.
 * J. E. Craig, [*The N-step iteration procedures*](https://doi.org/10.1002/sapm195534164), Journal of Mathematics and Physics, 34(1), pp. 64--73, 1955.
 * J. E. Craig, *Iterations Procedures for Simultaneous Equations*, Ph.D. Thesis, Department of Electrical Engineering, MIT, 1954.
 """
+function cgne end
+
 function cgne(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CgneSolver(A, b)
   cgne!(solver, A, b; kwargs...)
@@ -73,12 +75,14 @@ function cgne(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
 end
 
 """
-    solver = cgne!(solver::CgneSolver, args...; kwargs...)
+    solver = cgne!(solver::CgneSolver, A, b; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`cgne`](@ref).
+where `kwargs` are keyword arguments of [`cgne`](@ref).
 
 See [`CgneSolver`](@ref) for more details about the `solver`.
 """
+function cgne! end
+
 function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}

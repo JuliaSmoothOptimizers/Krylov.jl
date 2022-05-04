@@ -83,6 +83,8 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 
 * C. C. Paige and M. A. Saunders, [*LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*](https://doi.org/10.1145/355984.355989), ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
 """
+function lsqr end
+
 function lsqr(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = LsqrSolver(A, b, window=window)
   lsqr!(solver, A, b; kwargs...)
@@ -90,12 +92,14 @@ function lsqr(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <
 end
 
 """
-    solver = lsqr!(solver::LsqrSolver, args...; kwargs...)
+    solver = lsqr!(solver::LsqrSolver, A, b; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`lsqr`](@ref).
+where `kwargs` are keyword arguments of [`lsqr`](@ref).
 
 See [`LsqrSolver`](@ref) for more details about the `solver`.
 """
+function lsqr! end
+
 function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
                axtol :: T=√eps(T), btol :: T=√eps(T),

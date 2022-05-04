@@ -82,6 +82,8 @@ For instance σ:=(1-1e-7)σₘᵢₙ .
 
 * R. Estrin, D. Orban, M.A. Saunders, [*LNLQ: An Iterative Method for Least-Norm Problems with an Error Minimization Property*](https://doi.org/10.1137/18M1194948), SIAM Journal on Matrix Analysis and Applications, 40(3), pp. 1102--1124, 2019.
 """
+function lnlq end
+
 function lnlq(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = LnlqSolver(A, b)
   lnlq!(solver, A, b; kwargs...)
@@ -89,12 +91,14 @@ function lnlq(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
 end
 
 """
-    solver = lnlq!(solver::LnlqSolver, args...; kwargs...)
+    solver = lnlq!(solver::LnlqSolver, A, b; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`lnlq`](@ref).
+where `kwargs` are keyword arguments of [`lnlq`](@ref).
 
 See [`LnlqSolver`](@ref) for more details about the `solver`.
 """
+function lnlq! end
+
 function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
                atol :: T=√eps(T), rtol :: T=√eps(T), etolx :: T=√eps(T), etoly :: T=√eps(T), itmax :: Int=0,

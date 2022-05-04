@@ -93,6 +93,8 @@ Note that `history` should be set to `true` to have access to `rNorms` and `ArNo
 
 * D. C.-L. Fong and M. A. Saunders, [*LSMR: An Iterative Algorithm for Sparse Least Squares Problems*](https://doi.org/10.1137/10079687X), SIAM Journal on Scientific Computing, 33(5), pp. 2950--2971, 2011.
 """
+function lsmr end
+
 function lsmr(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = LsmrSolver(A, b, window=window)
   lsmr!(solver, A, b; kwargs...)
@@ -100,12 +102,14 @@ function lsmr(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <
 end
 
 """
-    solver = lsmr!(solver::LsmrSolver, args...; kwargs...)
+    solver = lsmr!(solver::LsmrSolver, A, b; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`lsmr`](@ref).
+where `kwargs` are keyword arguments of [`lsmr`](@ref).
 
 See [`LsmrSolver`](@ref) for more details about the `solver`.
 """
+function lsmr! end
+
 function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
                axtol :: T=√eps(T), btol :: T=√eps(T),

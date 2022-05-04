@@ -44,9 +44,9 @@ function cg_lanczos(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrCo
 end
 
 """
-    solver = cg_lanczos!(solver::CgLanczosSolver, args...; kwargs...)
+    solver = cg_lanczos!(solver::CgLanczosSolver, A, b; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`cg_lanczos`](@ref) without shifts.
+where `kwargs` are keyword arguments of [`cg_lanczos`](@ref) without shifts.
 
 See [`CgLanczosSolver`](@ref) for more details about the `solver`.
 """
@@ -196,9 +196,9 @@ function cg_lanczos(A, b :: AbstractVector{FC}, shifts :: AbstractVector{T}; kwa
 end
 
 """
-    solver = cg_lanczos!(solver::CgLanczosShiftSolver, args...; kwargs...)
+    solver = cg_lanczos!(solver::CgLanczosShiftSolver, A, b, shifts; kwargs...)
 
-where `args` and `kwargs` are arguments and keyword arguments of [`cg_lanczos`](@ref) with shifts.
+where `kwargs` are keyword arguments of [`cg_lanczos`](@ref) with shifts.
 
 See [`CgLanczosShiftSolver`](@ref) for more details about the `solver`.
 """
