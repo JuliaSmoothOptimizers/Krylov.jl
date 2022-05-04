@@ -6,7 +6,7 @@ Most Krylov methods in this module accept a starting point as argument. The star
 solver = CgSolver(n, n, S)
 cg!(solver, A, b, itmax=100)
 if !issolved(solver)
-  cg!(solver, A, b, solver.x, itmax=100) # the 4th argument tells cg! to start from solver.x
+  cg!(solver, A, b, solver.x, itmax=100) # cg! uses the approximate solution `solver.x` as starting point
 end
 ```
 
@@ -24,20 +24,20 @@ cg!(solver, A, b)
 # the previous two lines are equivalent to cg!(solver, A, b, x0)
 ```
 
-If a Krylov method doesn't have the option to warm start, it can be still be done explicitly.
+If a Krylov method doesn't have the option to warm start, it can still be done explicitly.
 We provide an example with `cg_lanczos!`.
 
 ```julia
 solver = CgLanczosSolver(n, n, S)
 cg_lanczos!(solver, A, b)
-x₀ = copy(solver.x)     # Ax₀ ≈ b
+x₀ = solver.x           # Ax₀ ≈ b
 r = b - A * x₀          # r = b - Ax₀
 cg_lanczos!(solver, A, r)
 Δx = solver.x           # AΔx = r
 x = x₀ + Δx             # Ax = b
 ```
 
-Explicit restarts cannot be avoided in certain block methods, such as TRIMR, due to the preconditioners.
+Explicit restarts cannot be avoided in certain block methods, such as TriMR, due to the preconditioners.
 
 ```julia
 # [E  A] [x] = [b]
