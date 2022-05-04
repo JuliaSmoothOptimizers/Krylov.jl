@@ -67,7 +67,7 @@ solver = GmresSolver(A, b, k)  # FomSolver(A, b, k)
 solver.x .= 0                  # solver.x .= x₀ 
 nrestart = 0
 while !issolved(solver) || nrestart ≤ 10
-  solve!(solver, A, b, x0, itmax=k)
+  solve!(solver, A, b, solver.x, itmax=k)
   nrestart += 1
 end
 ```
