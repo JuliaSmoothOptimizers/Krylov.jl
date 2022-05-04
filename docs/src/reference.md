@@ -1,12 +1,14 @@
 # Reference
 
-## Contents
-
-```@contents
-Pages = ["reference.md"]
-```
-
 ## Index
 
 ```@index
+```
+
+```@docs
+Krylov.FloatOrComplex
+Krylov.niterations
+Krylov.Aprod
+Krylov.Atprod
+Base.show
 ```
