@@ -1,35 +1,43 @@
 ## Warm Start
 
-Krylov methods that have the `restart` parameter can use the current state of the solver as its starting point.
+Most Krylov methods in this module can use a starting point that might be closer from a solution.
 
 ```julia
 solver = CgSolver(n, n, S)
 cg!(solver, A, b, itmax=100)
 if !issolved(solver)
-  cg!(solver, A, b, restart=true, itmax=100)
+  cg!(solver, A, b, solver.x, itmax=100) # the 4th argument tells cg! to start from solver.x
 end
 ```
 
-If the user has an initial guess, it can be also provided to the `solver`.
+If the user has an initial guess `x0`, it can be also provided directly.
 
 ```julia
-solver.x .= x₀
-cg!(solver, A, b, restart=true)
+cg(A, b, x0)
 ```
 
-If a Krylov method doesn't have the option `restart`, it can be restarted explicitly.
+It is also possible to use the `warm_start!` function directly on the solver.
 
 ```julia
-solver = BicgstabSolver(n, n, S)
-bicgstab!(solver, A, b)
+warm_start!(solver, x0)
+cg!(solver, A, b)
+# these two lines are equivalent to cg!(solver, A, b, x0)
+```
+
+If a Krylov method doesn't have the option to warm start, it can be still be done explicitly.
+We provide an example with `cg_lanczos!`.
+
+```julia
+solver = CgLanczosSolver(n, n, S)
+cg_lanczos!(solver, A, b)
 x₀ = copy(solver.x)     # Ax₀ ≈ b
 r = b - A * x₀          # r = b - Ax₀
-bicgstab!(solver, A, r)
+cg_lanczos!(solver, A, r)
 Δx = solver.x           # AΔx = r
 x = x₀ + Δx             # Ax = b
 ```
 
-Explicit restarts can't be avoid in same cases due to the preconditioners.
+Explicit restarts cannot be avoided with some block methods such as TRIMR due to the preconditioners.
 
 ```julia
 # [E  A] [x] = [b]
@@ -51,7 +59,7 @@ y = y₀ + Δy
 
 The storage requierements of Krylov methods based on the Arnoldi process, such as FOM and GMRES, increase as the iteration progresses.
 For very large problems, the storage costs become prohibitive after only few iterations and restarted variants FOM(k) and GMRES(k) are prefered.
-In this section, we present how GMRES(k) and FOM(k) can be implemented thanks to the `restart` option.
+In this section, we present how GMRES(k) and FOM(k) can be implemented thanks to the warm start.
 
 ```julia
 k = 50
@@ -59,7 +67,7 @@ solver = GmresSolver(A, b, k)  # FomSolver(A, b, k)
 solver.x .= 0                  # solver.x .= x₀ 
 nrestart = 0
 while !issolved(solver) || nrestart ≤ 10
-  solve!(solver, A, b, itmax=k, restart=true)
+  solve!(solver, A, b, x0, itmax=k)
   nrestart += 1
 end
 ```
