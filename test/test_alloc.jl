@@ -108,7 +108,7 @@ function test_alloc(FC)
   inplace_cg_lanczos_bytes = @allocated cg_lanczos!(solver, A, b)
   @test (VERSION < v"1.5") || (inplace_cg_lanczos_bytes == 0)
 
-  # CG_LANCZOS with shifts needs:
+  # CG_LANCZOS_SHIFT needs:
   # - 3 n-vectors: Mv, Mv_prev, Mv_next
   # - 2 (n*nshifts)-matrices: x, p
   # - 5 nshifts-vectors: σ, δhat, ω, γ, rNorms
@@ -117,13 +117,13 @@ function test_alloc(FC)
   storage_cg_lanczos_shift_bytes(n, nshifts) = nbits * storage_cg_lanczos_shift(n, nshifts)
 
   expected_cg_lanczos_shift_bytes = storage_cg_lanczos_shift_bytes(n, nshifts)
-  cg_lanczos(A, b, shifts)  # warmup
-  actual_cg_lanczos_shift_bytes = @allocated cg_lanczos(A, b, shifts)
+  cg_lanczos_shift(A, b, shifts)  # warmup
+  actual_cg_lanczos_shift_bytes = @allocated cg_lanczos_shift(A, b, shifts)
   @test expected_cg_lanczos_shift_bytes ≤ actual_cg_lanczos_shift_bytes ≤ 1.02 * expected_cg_lanczos_shift_bytes
 
   solver = CgLanczosShiftSolver(A, b, nshifts)
-  cg_lanczos!(solver, A, b, shifts)  # warmup
-  inplace_cg_lanczos_shift_bytes = @allocated cg_lanczos!(solver, A, b, shifts)
+  cg_lanczos_shift!(solver, A, b, shifts)  # warmup
+  inplace_cg_lanczos_shift_bytes = @allocated cg_lanczos_shift!(solver, A, b, shifts)
   @test (VERSION < v"1.5") || (inplace_cg_lanczos_shift_bytes == 0)
 
   # DQGMRES needs:

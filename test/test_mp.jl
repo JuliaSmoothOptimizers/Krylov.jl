@@ -2,7 +2,8 @@
   n = 5
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos, :dqgmres, :diom, :cr, :gpmr,
              :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab, :craigmr, :crls, :symmlq, :minres,
-             :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr, :gmres, :fom)
+             :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr, :gmres, :fom,
+             :cg_lanczos_shift)
     for T in (Float16, Float32, Float64, BigFloat)
       for FC in (T, Complex{T})
         A = spdiagm(-1 => -ones(FC,n-1), 0 => 3*ones(FC,n), 1 => -ones(FC,n-1))
@@ -20,16 +21,14 @@
           x, y, _ = @eval $fn($A, $B, $b, $c)
         elseif fn in (:lnlq, :craig, :craigmr)
           x, y, _ = @eval $fn($A, $b)
+        elseif fn == :cg_lanczos_shift
+          x, _ = @eval $fn($A, $b, $shifts)
         else
           x, _ = @eval $fn($A, $b)
-          if fn == :cg_lanczos
-            xs, _ = @eval $fn($A, $b, $shifts)
-          end
         end
         atol = √eps(T)
         rtol = √eps(T)
         Κ = (T == Float16 ? 10 : 1)
-        @test eltype(x) == FC
         if fn in (:tricg, :trimr)
           @test norm(x + A * y - b) ≤ Κ * (atol + norm([b; c]) * rtol)
           @test norm(A' * x - y - c) ≤ Κ * (atol + norm([b; c]) * rtol)
@@ -38,8 +37,13 @@
           @test norm(x + A * y - b) ≤ Κ * (atol + norm([b; c]) * rtol)
           @test norm(B * x + y - c) ≤ Κ * (atol + norm([b; c]) * rtol)
           @test eltype(y) == FC
+        elseif fn == :cg_lanczos_shift
+          @test norm((A - I) * x[1] - b) ≤ Κ * (atol + norm(b) * rtol)
+          @test norm((A + I) * x[2] - b) ≤ Κ * (atol + norm(b) * rtol)
+          @test eltype(x) == Vector{FC}
         else
           @test norm(A * x - b) ≤ Κ * (atol + norm(b) * rtol)
+          @test eltype(x) == FC
         end
         if fn in (:trilqr, :bilqr)
           @test norm(A' * t - c) ≤ Κ * (atol + norm(c) * rtol)
@@ -48,11 +52,6 @@
         if fn in (:lnlq, :craig, :craigmr)
           @test norm(A * A' * y - b) ≤ Κ * (atol + norm(b) * rtol)
           @test eltype(y) == FC
-        end
-        if fn == :cg_lanczos
-          @test norm((A - I) * xs[1] - b) ≤ Κ * (atol + norm(b) * rtol)
-          @test norm((A + I) * xs[2] - b) ≤ Κ * (atol + norm(b) * rtol)
-          @test eltype(xs) == Vector{FC}
         end
       end
     end

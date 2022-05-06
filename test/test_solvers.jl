@@ -44,8 +44,8 @@ function test_solvers(FC)
     tricg_solver = $(KRYLOV_SOLVERS[:tricg])($m, $n, $S)
     trimr_solver = $(KRYLOV_SOLVERS[:trimr])($m, $n, $S)
     gpmr_solver = $(KRYLOV_SOLVERS[:gpmr])($n, $m, $mem, $S)
+    cg_lanczos_shift_solver = $(KRYLOV_SOLVERS[:cg_lanczos_shift])($n, $m, $nshifts, $S)
   end
-  cg_lanczos_shift_solver = CgLanczosShiftSolver(n, n, nshifts, S)
 
   for i = 1 : 3
     A  = i * A
