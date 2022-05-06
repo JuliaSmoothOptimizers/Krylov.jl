@@ -11,6 +11,7 @@ include("cr.jl")
 
 include("symmlq.jl")
 include("cg_lanczos.jl")
+include("cg_lanczos_shift.jl")
 include("minres.jl")
 include("minres_qlp.jl")
 
