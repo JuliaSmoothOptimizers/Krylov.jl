@@ -61,7 +61,7 @@
       r = b - A * x
       resid = norm(r) / norm(b)
       @test(resid ≤ fom_tol)
-      @test(stats.solved)a
+      @test(stats.solved)
 
       # Left preconditioning
       A, b, M = square_preconditioned(FC=FC)
