@@ -273,8 +273,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
         Ftmp = @kdot(n, U[i], p)    # fₜₘₚ = pᵀuᵢ
         @kaxpy!(m, -Htmp, V[i], q)  # q ← q - hₜₘₚvᵢ
         @kaxpy!(n, -Ftmp, U[i], p)  # p ← p - fₜₘₚuᵢ
-        R[nr₂ₖ + 2i-1] += Htmp                               # hᵢ.ₖ = hᵢ.ₖ + hₜₘₚ
-        (iter < iter) ? R[nr₂ₖ₋₁ + 2i] += Ftmp : ωₖ += Ftmp  # fᵢ.ₖ = fᵢ.ₖ + fₜₘₚ
+        R[nr₂ₖ + 2i-1] += Htmp                            # hᵢ.ₖ = hᵢ.ₖ + hₜₘₚ
+        (i < iter) ? R[nr₂ₖ₋₁ + 2i] += Ftmp : ωₖ += Ftmp  # fᵢ.ₖ = fᵢ.ₖ + fₜₘₚ
       end
     end
 
