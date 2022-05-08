@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorial · Krylov.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.044/juliamono.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/style.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Krylov.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">Krylov.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../api/">API</a></li><li><span class="tocitem">Krylov methods</span><ul><li><a class="tocitem" href="../solvers/spd/">Symmetric positive definite linear systems</a></li><li><a class="tocitem" href="../solvers/sid/">Symmetric indefinite linear systems</a></li><li><a class="tocitem" href="../solvers/unsymmetric/">Unsymmetric linear systems</a></li><li><a class="tocitem" href="../solvers/ln/">Least-norm problems</a></li><li><a class="tocitem" href="../solvers/ls/">Least-squares problems</a></li><li><a class="tocitem" href="../solvers/as/">Adjoint systems</a></li><li><a class="tocitem" href="../solvers/sp_sqd/">Saddle-point and symmetric quasi-definite systems</a></li><li><a class="tocitem" href="../solvers/gsp/">Generalized saddle-point and unsymmetric partitioned systems</a></li></ul></li><li><a class="tocitem" href="../inplace/">In-place methods</a></li><li><a class="tocitem" href="../gpu/">GPU support</a></li><li><a class="tocitem" href="../warm_start/">Warm start</a></li><li><a class="tocitem" href="../factorization-free/">Factorization-free operators</a></li><li><a class="tocitem" href="../tips/">Performance tips</a></li><li class="is-active"><a class="tocitem" href>Tutorial</a><ul class="internal"><li><a class="tocitem" href="#CG"><span>CG</span></a></li><li><a class="tocitem" href="#CG-LANCZOS"><span>CG-LANCZOS</span></a></li><li><a class="tocitem" href="#SYMMLQ"><span>SYMMLQ</span></a></li><li><a class="tocitem" href="#MINRES-QLP"><span>MINRES-QLP</span></a></li><li><a class="tocitem" href="#TriCG"><span>TriCG</span></a></li><li><a class="tocitem" href="#TriMR"><span>TriMR</span></a></li><li><a class="tocitem" href="#BICGSTAB"><span>BICGSTAB</span></a></li><li><a class="tocitem" href="#DQGMRES"><span>DQGMRES</span></a></li><li><a class="tocitem" href="#CGNE"><span>CGNE</span></a></li><li><a class="tocitem" href="#CRMR"><span>CRMR</span></a></li><li><a class="tocitem" href="#CRAIG"><span>CRAIG</span></a></li><li><a class="tocitem" href="#CRAIGMR"><span>CRAIGMR</span></a></li><li><a class="tocitem" href="#CGLS"><span>CGLS</span></a></li><li><a class="tocitem" href="#CRLS"><span>CRLS</span></a></li><li><a class="tocitem" href="#LSQR"><span>LSQR</span></a></li><li><a class="tocitem" href="#LSMR"><span>LSMR</span></a></li></ul></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Tutorial</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorial</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/master/docs/src/examples.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h2 id="CG"><a class="docs-heading-anchor" href="#CG">CG</a><a id="CG-1"></a><a class="docs-heading-anchor-permalink" href="#CG" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Krylov, MatrixMarket, SuiteSparseMatrixCollection
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorial · Krylov.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.044/juliamono.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/style.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Krylov.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">Krylov.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../api/">API</a></li><li><span class="tocitem">Krylov methods</span><ul><li><a class="tocitem" href="../solvers/spd/">Symmetric positive definite linear systems</a></li><li><a class="tocitem" href="../solvers/sid/">Symmetric indefinite linear systems</a></li><li><a class="tocitem" href="../solvers/unsymmetric/">Unsymmetric linear systems</a></li><li><a class="tocitem" href="../solvers/ln/">Least-norm problems</a></li><li><a class="tocitem" href="../solvers/ls/">Least-squares problems</a></li><li><a class="tocitem" href="../solvers/as/">Adjoint systems</a></li><li><a class="tocitem" href="../solvers/sp_sqd/">Saddle-point and symmetric quasi-definite systems</a></li><li><a class="tocitem" href="../solvers/gsp/">Generalized saddle-point and unsymmetric partitioned systems</a></li></ul></li><li><a class="tocitem" href="../inplace/">In-place methods</a></li><li><a class="tocitem" href="../gpu/">GPU support</a></li><li><a class="tocitem" href="../warm_start/">Warm start</a></li><li><a class="tocitem" href="../factorization-free/">Factorization-free operators</a></li><li><a class="tocitem" href="../tips/">Performance tips</a></li><li class="is-active"><a class="tocitem" href>Tutorial</a><ul class="internal"><li><a class="tocitem" href="#CG"><span>CG</span></a></li><li><a class="tocitem" href="#CG-LANCZOS-SHIFT"><span>CG-LANCZOS-SHIFT</span></a></li><li><a class="tocitem" href="#SYMMLQ"><span>SYMMLQ</span></a></li><li><a class="tocitem" href="#MINRES-QLP"><span>MINRES-QLP</span></a></li><li><a class="tocitem" href="#TriCG"><span>TriCG</span></a></li><li><a class="tocitem" href="#TriMR"><span>TriMR</span></a></li><li><a class="tocitem" href="#BICGSTAB"><span>BICGSTAB</span></a></li><li><a class="tocitem" href="#DQGMRES"><span>DQGMRES</span></a></li><li><a class="tocitem" href="#CGNE"><span>CGNE</span></a></li><li><a class="tocitem" href="#CRMR"><span>CRMR</span></a></li><li><a class="tocitem" href="#CRAIG"><span>CRAIG</span></a></li><li><a class="tocitem" href="#CRAIGMR"><span>CRAIGMR</span></a></li><li><a class="tocitem" href="#CGLS"><span>CGLS</span></a></li><li><a class="tocitem" href="#CRLS"><span>CRLS</span></a></li><li><a class="tocitem" href="#LSQR"><span>LSQR</span></a></li><li><a class="tocitem" href="#LSMR"><span>LSMR</span></a></li></ul></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Tutorial</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorial</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/master/docs/src/examples.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h2 id="CG"><a class="docs-heading-anchor" href="#CG">CG</a><a id="CG-1"></a><a class="docs-heading-anchor-permalink" href="#CG" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Krylov, MatrixMarket, SuiteSparseMatrixCollection
 using LinearAlgebra, Printf
 
 ssmc = ssmc_db(verbose=false)
@@ -25,11 +25,11 @@ Simple stats
  Aresiduals: []
  κ₂(A): []
  status: solution good enough given atol and rtol
-Relative residual:  1.3e-08</code></pre><h2 id="CG-LANCZOS"><a class="docs-heading-anchor" href="#CG-LANCZOS">CG-LANCZOS</a><a id="CG-LANCZOS-1"></a><a class="docs-heading-anchor-permalink" href="#CG-LANCZOS" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Krylov, MatrixMarket, SuiteSparseMatrixCollection
+Relative residual:  1.3e-08</code></pre><h2 id="CG-LANCZOS-SHIFT"><a class="docs-heading-anchor" href="#CG-LANCZOS-SHIFT">CG-LANCZOS-SHIFT</a><a id="CG-LANCZOS-SHIFT-1"></a><a class="docs-heading-anchor-permalink" href="#CG-LANCZOS-SHIFT" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Krylov, MatrixMarket, SuiteSparseMatrixCollection
 using LinearAlgebra, Printf
 
 function residuals(A, b, shifts, x)
-  nshifts = size(shifts, 1)
+  nshifts = length(shifts)
   r = [ (b - A * x[i] - shifts[i] * x[i]) for i = 1 : nshifts ]
   return r
 end
@@ -37,38 +37,22 @@ ssmc = ssmc_db(verbose=false)
 matrix = ssmc_matrices(ssmc, &quot;HB&quot;, &quot;1138_bus&quot;)
 path = fetch_ssmc(matrix, format=&quot;MM&quot;)
 
-n = matrix.nrows[1]
 A = MatrixMarket.mmread(joinpath(path[1], &quot;$(matrix.name[1]).mtx&quot;))
+n, m = size(A)
 b = ones(n)
-b_norm = norm(b)
 
-# Solve Ax = b.
-(x, stats) = cg_lanczos(A, b)
-show(stats)
-r = b - A * x
-@printf(&quot;Relative residual without shift: %8.1e\n&quot;, norm(r) / norm(b))
-
-# Solve (A + αI)x = b sequentially.
+# Solve (A + αI)x = b.
 shifts = [1.0, 2.0, 3.0, 4.0]
-(x, stats) = cg_lanczos(A, b, shifts)
+(x, stats) = cg_lanczos_shift(A, b, shifts)
 show(stats)
 r = residuals(A, b, shifts, x)
-resids = map(norm, r) / b_norm
+resids = map(norm, r) / norm(b)
 @printf(&quot;Relative residuals with shifts:\n&quot;)
 for resid in resids
   @printf(&quot; %8.1e&quot;, resid)
 end
 @printf(&quot;\n&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr32"><span class="sgr1"> Downloading</span></span> artifact: HB/1138_bus.MM
 <span class="sgr32"><span class="sgr1"> Downloading</span></span> artifact: HB/1138_bus.MM
-Lanczos stats
- niter: 2276
- solved: false
- residuals: []
- indefinite: false
- ‖A‖F: 717601.3952476213
- κ₂(A): NaN
- status: maximum number of iterations exceeded
-Relative residual without shift:  9.4e-07
 LanczosShift stats
  niter: 726
  solved: true
@@ -452,12 +436,12 @@ if λ &gt; 0.0
   @printf(&quot;Error in y: %7.1e\n&quot;, norm(λ * y - xy_exact[n+1:n+m]) / norm(xy_exact[n+1:n+m]))
 end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">CRAIG: system of 5 equations in 8 variables
     k       ‖r‖       ‖x‖       ‖A‖      κ(A)         α        β
-    0  8.13e+00  0.00e+00  0.00e+00  0.00e+00
-    1  3.63e-01  2.70e+00  3.02e+00  3.02e+00   3.0e+00  1.3e-01
-    2  9.92e-02  2.72e+00  3.23e+00  4.57e+00   1.1e+00  3.0e-01
-    3  8.08e-03  2.72e+00  3.30e+00  5.75e+00   6.9e-01  5.6e-02
-    4  1.50e-02  2.72e+00  3.40e+00  6.83e+00   3.9e-01  7.1e-01
-    5  5.27e-10  2.72e+00  3.41e+00  8.46e+00   2.9e-01  1.0e-08
+    0  9.92e+00  0.00e+00  0.00e+00  0.00e+00
+    1  2.07e-01  2.80e+00  3.55e+00  3.55e+00   3.5e+00  7.4e-02
+    2  6.10e-02  2.80e+00  3.71e+00  5.25e+00   1.0e+00  3.1e-01
+    3  4.45e-02  2.81e+00  3.75e+00  6.55e+00   4.3e-01  3.2e-01
+    4  2.70e-02  2.81e+00  3.83e+00  7.95e+00   6.8e-01  4.1e-01
+    5  5.02e-10  2.81e+00  3.85e+00  9.09e+00   3.8e-01  7.2e-09
 
 Simple stats
  niter: 5
@@ -467,10 +451,10 @@ Simple stats
  Aresiduals: []
  κ₂(A): []
  status: solution good enough for the tolerances given
-Primal feasibility: 6.5e-11
-Dual   feasibility: 1.4e-16
-Error in x: 6.4e-11
-Error in y: 5.3e-11</code></pre><h2 id="CRAIGMR"><a class="docs-heading-anchor" href="#CRAIGMR">CRAIGMR</a><a id="CRAIGMR-1"></a><a class="docs-heading-anchor-permalink" href="#CRAIGMR" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Krylov, HarwellRutherfordBoeing, SuiteSparseMatrixCollection
+Primal feasibility: 5.1e-11
+Dual   feasibility: 2.3e-16
+Error in x: 5.0e-11
+Error in y: 3.9e-11</code></pre><h2 id="CRAIGMR"><a class="docs-heading-anchor" href="#CRAIGMR">CRAIGMR</a><a id="CRAIGMR-1"></a><a class="docs-heading-anchor-permalink" href="#CRAIGMR" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Krylov, HarwellRutherfordBoeing, SuiteSparseMatrixCollection
 using LinearAlgebra, Printf
 
 ssmc = ssmc_db(verbose=false)
@@ -629,4 +613,4 @@ Simple stats
  κ₂(A): []
  status: truncated forward error small enough
 LSMR: Relative residual:  2.4e-03
-LSMR: ‖x‖:  1.6e+04</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tips/">« Performance tips</a><a class="docs-footer-nextpage" href="../reference/">Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.16 on <span class="colophon-date" title="Thursday 5 May 2022 16:41">Thursday 5 May 2022</span>. Using Julia version 1.7.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+LSMR: ‖x‖:  1.6e+04</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tips/">« Performance tips</a><a class="docs-footer-nextpage" href="../reference/">Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.16 on <span class="colophon-date" title="Sunday 8 May 2022 21:37">Sunday 8 May 2022</span>. Using Julia version 1.7.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
