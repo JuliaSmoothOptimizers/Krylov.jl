@@ -14,7 +14,7 @@ export fom, fom!
     (x, stats) = fom(A, b::AbstractVector{FC}; memory::Int=20,
                      M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                      reorthogonalization::Bool=false, itmax::Int=0,
-                     verbose::Int=0, history::Bool=false)
+                     restart::Bool=false, verbose::Int=0, history::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -29,6 +29,10 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 - Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
 
 Full reorthogonalization is available with the `reorthogonalization` option.
+
+If `restart = true`, the restarted version FOM(k) is used with `k = memory`.
+If `restart = false`, the parameter `memory` should be used as a hint of the number of iterations to limit dynamic memory allocations.
+More storage will be allocated only if the number of iterations exceed `memory`.
 
 FOM can be warm-started from an initial guess `x0` with the method
 
@@ -76,7 +80,7 @@ end
 function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
               reorthogonalization :: Bool=false, itmax :: Int=0,
-              verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+              restart :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -92,8 +96,9 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
-  allocate_if(!MisI, solver, :q, S, n)
-  allocate_if(!NisI, solver, :p, S, n)
+  allocate_if(!MisI  , solver, :q , S, n)
+  allocate_if(!NisI  , solver, :p , S, n)
+  allocate_if(restart, solver, :Δx, S, n)
   Δx, x, w, V, z = solver.Δx, solver.x, solver.w, solver.V, solver.z
   l, U, stats = solver.l, solver.U, solver.stats
   warm_start = solver.warm_start
@@ -101,19 +106,26 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   reset!(stats)
   q  = MisI ? w : solver.q
   r₀ = MisI ? w : solver.q
+  xr = restart ? Δx : x
 
-  # Initial solution x₀ and residual r₀.
-  x .= zero(FC)  # x₀
+  # Initial solution x₀.
+  x .= zero(FC)
+
+  # Initial residual r₀.
   if warm_start
     mul!(w, A, Δx)
     @kaxpby!(n, one(FC), b, -one(FC), w)
+    restart && @kaxpy!(n, one(FC), Δx, x)
   else
     w .= b
   end
-  MisI || mul!(r₀, M, w)  # M⁻¹(b - Ax₀)
+  MisI || mul!(r₀, M, w)  # r₀ = M⁻¹(b - Ax₀)
   β = @knrm2(n, r₀)       # β = ‖r₀‖₂
+
   rNorm = β
   history && push!(rNorms, β)
+  ε = atol + rtol * rNorm
+
   if β == 0
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
@@ -122,26 +134,17 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     return solver
   end
 
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
-
-  ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "hₖ₊₁.ₖ")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
-
-  # Initialize workspace.
-  nr = 0           # Number of coefficients stored in Uₖ.
   mem = length(l)  # Memory
-  for i = 1 : mem
-    V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
-  end
-  l .= zero(FC)  # Lower unit triangular matrix Lₖ.
-  U .= zero(FC)  # Upper triangular matrix Uₖ.
-  z .= zero(FC)  # Solution of Lₖzₖ = βe₁.
+  npass = 0        # Number of pass
 
-  # Initial ζ₁ and V₁.
-  z[1] = β
-  @. V[1] = r₀ / rNorm
+  iter = 0        # Cumulative number of iterations
+  inner_iter = 0  # Number of iterations in a pass
+
+  itmax == 0 && (itmax = 2*n)
+  inner_itmax = itmax
+
+  (verbose > 0) && @printf("%5s  %5s  %7s  %7s\n", "pass", "k", "‖rₖ‖", "hₖ₊₁.ₖ")
+  kdisplay(iter, verbose) && @printf("%5d  %5d  %7.1e  %7s\n", npass, iter, rNorm, "✗ ✗ ✗ ✗")
 
   # Tolerance for breakdown detection.
   btol = eps(T)^(3/4)
@@ -150,107 +153,144 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   breakdown = false
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
+  inner_tired = inner_iter ≥ inner_itmax
   status = "unknown"
 
   while !(solved || tired || breakdown)
 
-    # Update iteration index
-    iter = iter + 1
-
-    # Update workspace if more storage is required
-    if iter > mem
-      for i = 1 : iter
-        push!(U, zero(FC))
-      end
-      push!(l, zero(FC))
-      push!(z, zero(FC))
+    # Initialize workspace.
+    nr = 0  # Number of coefficients stored in Uₖ.
+    for i = 1 : mem
+      V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹r₀).
     end
+    l .= zero(FC)  # Lower unit triangular matrix Lₖ.
+    U .= zero(FC)  # Upper triangular matrix Uₖ.
+    z .= zero(FC)  # Solution of Lₖzₖ = βe₁.
 
-    # Continue the Arnoldi process.
-    p = NisI ? V[iter] : solver.p
-    NisI || mul!(p, N, V[iter])  # p ← N⁻¹vₖ
-    mul!(w, A, p)                # w ← AN⁻¹vₖ
-    MisI || mul!(q, M, w)        # q ← M⁻¹AN⁻¹vₖ
-    for i = 1 : iter
-      U[nr+i] = @kdot(n, V[i], q)    # hᵢₖ = qᵀvᵢ
-      @kaxpy!(n, -U[nr+i], V[i], q)  # q ← q - hᵢₖvᵢ
-    end
-
-    # Reorthogonalization of the Krylov basis.
-    if reorthogonalization
-      for i = 1 : iter
-        Htmp = @kdot(n, V[i], q)
-        U[nr+i] += Htmp
-        @kaxpy!(n, -Htmp, V[i], q)
+    if restart
+      xr .= zero(FC)  # xr === Δx when restart is set to true
+      if npass ≥ 1
+        mul!(w, A, x)
+        @kaxpby!(n, one(FC), b, -one(FC), w)
+        MisI || mul!(r₀, M, w)
       end
     end
 
-    # Compute hₖ₊₁.ₖ
-    Hbis = @knrm2(n, q)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+    # Initial ζ₁ and V₁
+    β = @knrm2(n, r₀)
+    z[1] = β
+    @. V[1] = r₀ / rNorm
 
-    # Update the LU factorization of Hₖ.
-    if iter ≥ 2
-      for i = 2 : iter
-        # uᵢ.ₖ ← hᵢ.ₖ - lᵢ.ᵢ₋₁ * uᵢ₋₁.ₖ
-        U[nr+i] = U[nr+i] - l[i-1] * U[nr+i-1]
+    npass = npass + 1
+    inner_iter = 0
+    inner_tired = false
+
+    while !(solved || inner_tired || breakdown)
+
+      # Update iteration index
+      inner_iter = inner_iter + 1
+
+      # Update workspace if more storage is required and restart is set to false
+      if !restart && (inner_iter > mem)
+        for i = 1 : inner_iter
+          push!(U, zero(FC))
+        end
+        push!(l, zero(FC))
+        push!(z, zero(FC))
       end
-      # ζₖ = -lₖ.ₖ₋₁ * ζₖ₋₁
-      z[iter] = - l[iter-1] * z[iter-1]
+
+      # Continue the Arnoldi process.
+      p = NisI ? V[inner_iter] : solver.p
+      NisI || mul!(p, N, V[inner_iter])  # p ← N⁻¹vₖ
+      mul!(w, A, p)                      # w ← AN⁻¹vₖ
+      MisI || mul!(q, M, w)              # q ← M⁻¹AN⁻¹vₖ
+      for i = 1 : inner_iter
+        U[nr+i] = @kdot(n, V[i], q)      # hᵢₖ = qᵀvᵢ
+        @kaxpy!(n, -U[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
+      end
+
+      # Reorthogonalization of the Krylov basis.
+      if reorthogonalization
+        for i = 1 : inner_iter
+          Htmp = @kdot(n, V[i], q)
+          U[nr+i] += Htmp
+          @kaxpy!(n, -Htmp, V[i], q)
+        end
+      end
+
+      # Compute hₖ₊₁.ₖ
+      Hbis = @knrm2(n, q)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+
+      # Update the LU factorization of Hₖ.
+      if inner_iter ≥ 2
+        for i = 2 : inner_iter
+          # uᵢ.ₖ ← hᵢ.ₖ - lᵢ.ᵢ₋₁ * uᵢ₋₁.ₖ
+          U[nr+i] = U[nr+i] - l[i-1] * U[nr+i-1]
+        end
+        # ζₖ = -lₖ.ₖ₋₁ * ζₖ₋₁
+        z[inner_iter] = - l[inner_iter-1] * z[inner_iter-1]
+      end
+      # lₖ₊₁.ₖ = hₖ₊₁.ₖ / uₖ.ₖ
+      l[inner_iter] = Hbis / U[nr+inner_iter]
+
+      # Update residual norm estimate.
+      # ‖ M⁻¹(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ζₖ / uₖ.ₖ|
+      rNorm = Hbis * abs(z[inner_iter] / U[nr+inner_iter])
+      history && push!(rNorms, rNorm)
+
+      # Update the number of coefficients in Uₖ
+      nr = nr + inner_iter
+
+      # Update stopping criterion.
+      breakdown = Hbis ≤ btol
+      solved = rNorm ≤ ε
+      inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
+      kdisplay(iter+inner_iter, verbose) && @printf("%5d  %5d  %7.1e  %7.1e\n", npass, iter+inner_iter, rNorm, Hbis)
+
+      # Compute vₖ₊₁.
+      if !(solved || inner_tired || breakdown)
+        if !restart && (inner_iter ≥ mem)
+          push!(V, S(undef, n))
+        end
+        @. V[inner_iter+1] = q / Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
+      end
     end
-    # lₖ₊₁.ₖ = hₖ₊₁.ₖ / uₖ.ₖ
-    l[iter] = Hbis / U[nr+iter]
 
-    # Update residual norm estimate.
-    # ‖ M⁻¹(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ζₖ / uₖ.ₖ|
-    rNorm = Hbis * abs(z[iter] / U[nr+iter])
-    history && push!(rNorms, rNorm)
+    # Hₖyₖ = βe₁ ⟺ LₖUₖyₖ = βe₁ ⟺ Uₖyₖ = zₖ.
+    # Compute yₖ by solving Uₖyₖ = zₖ with backward substitution.
+    y = z  # yᵢ = zᵢ
+    for i = inner_iter : -1 : 1
+      pos = nr + i - inner_iter      # position of rᵢ.ₖ
+      for j = inner_iter : -1 : i+1
+        y[i] = y[i] - U[pos] * y[j]  # yᵢ ← yᵢ - uᵢⱼyⱼ
+        pos = pos - j + 1            # position of rᵢ.ⱼ₋₁
+      end
+      y[i] = y[i] / U[pos]  # yᵢ ← yᵢ / rᵢᵢ
+    end
 
-    # Update the number of coefficients in Uₖ
-    nr = nr + iter
+    # Form xₖ = N⁻¹Vₖyₖ
+    for i = 1 : inner_iter
+      @kaxpy!(n, y[i], V[i], xr)
+    end
+    if !NisI
+      solver.p .= xr
+      mul!(xr, N, solver.p)
+    end
+    restart && @kaxpy!(n, one(FC), xr, x)
 
-    # Update stopping criterion.
-    breakdown = Hbis ≤ btol
-    solved = rNorm ≤ ε
+    # Update inner_itmax, iter and tired variables.
+    inner_itmax = inner_itmax - inner_iter
+    iter = iter + inner_iter
     tired = iter ≥ itmax
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, Hbis)
-
-    # Compute vₖ₊₁.
-    if !(solved || tired || breakdown)
-      if iter ≥ mem
-        push!(V, S(undef, n))
-      end
-      @. V[iter+1] = q / Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
-    end
   end
   (verbose > 0) && @printf("\n")
-
-  # Hₖyₖ = βe₁ ⟺ LₖUₖyₖ = βe₁ ⟺ Uₖyₖ = zₖ.
-  # Compute yₖ by solving Uₖyₖ = zₖ with backward substitution.
-  y = z  # yᵢ = zᵢ
-  for i = iter : -1 : 1
-    pos = nr + i - iter
-    for j = iter : -1 : i+1
-      y[i] = y[i] - U[pos] * y[j]  # yᵢ ← yᵢ - uᵢⱼyⱼ
-      pos = pos - j + 1
-    end
-    y[i] = y[i] / U[pos]  # yᵢ ← yᵢ / rᵢᵢ
-  end
-
-  # Form xₖ = N⁻¹Vₖyₖ
-  for i = 1 : iter
-    @kaxpy!(n, y[i], V[i], x)
-  end
-  if !NisI
-    solver.p .= x
-    mul!(x, N, solver.p)
-  end
 
   tired     && (status = "maximum number of iterations exceeded")
   breakdown && (status = "inconsistent linear system")
   solved    && (status = "solution good enough given atol and rtol")
 
   # Update x
-  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  warm_start && !restart && @kaxpy!(n, one(FC), Δx, x)
   solver.warm_start = false
 
   # Update stats
