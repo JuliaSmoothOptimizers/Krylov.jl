@@ -1739,7 +1739,6 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
       else
         function warm_start!(solver :: $KS, x0)
           n = length(solver.x)
-          n = length(solver.x)
           S = typeof(solver.x)
           length(x0) == n || error("x0 should have size $n")
           allocate_if(true, solver, :Δx, S, n)
