@@ -36,14 +36,6 @@
       @test(resid ≤ gmres_tol)
       @test(stats.solved)
 
-      # Sparse Laplacian.
-      A, b = sparse_laplacian(FC=FC)
-      (x, stats) = gmres(A, b)
-      r = b - A * x
-      resid = norm(r) / norm(b)
-      @test(resid ≤ gmres_tol)
-      @test(stats.solved)
-
       # Symmetric indefinite variant, almost singular.
       A, b = almost_singular(FC=FC)
       (x, stats) = gmres(A, b)
@@ -74,7 +66,7 @@
       @test(resid ≤ gmres_tol)
       @test(stats.solved)
 
-      # Test with Jacobi (or diagonal) preconditioner
+      # Left preconditioning
       A, b, M = square_preconditioned(FC=FC)
       (x, stats) = gmres(A, b, M=M)
       r = b - A * x
@@ -97,6 +89,44 @@
       resid = norm(M * r) / norm(M * b)
       @test(resid ≤ gmres_tol)
       @test(stats.solved)
+
+      # Restart
+      for restart ∈ (false, true)
+        memory = 10
+
+        A, b = sparse_laplacian(FC=FC)
+        (x, stats) = gmres(A, b, restart=restart, memory=memory)
+        r = b - A * x
+        resid = norm(r) / norm(b)
+        @test(resid ≤ gmres_tol)
+        @test(stats.niter > memory)
+        @test(stats.solved)
+
+        M = Diagonal(1 ./ diag(A))
+        (x, stats) = gmres(A, b, M=M, restart=restart, memory=memory)
+        r = b - A * x
+        resid = norm(M * r) / norm(M * b)
+        @test(resid ≤ gmres_tol)
+        @test(stats.niter > memory)
+        @test(stats.solved)
+
+        N = Diagonal(1 ./ diag(A))
+        (x, stats) = gmres(A, b, N=N, restart=restart, memory=memory)
+        r = b - A * x
+        resid = norm(r) / norm(b)
+        @test(resid ≤ gmres_tol)
+        @test(stats.niter > memory)
+        @test(stats.solved)
+
+        N = Diagonal(1 ./ sqrt.(diag(A)))
+        N = Diagonal(1 ./ sqrt.(diag(A)))
+        (x, stats) = gmres(A, b, M=M, N=N, restart=restart, memory=memory)
+        r = b - A * x
+        resid = norm(M * r) / norm(M * b)
+        @test(resid ≤ gmres_tol)
+        @test(stats.niter > memory)
+        @test(stats.solved)
+      end
     end
   end
 end

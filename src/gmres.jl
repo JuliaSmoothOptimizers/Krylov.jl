@@ -14,7 +14,7 @@ export gmres, gmres!
     (x, stats) = gmres(A, b::AbstractVector{FC}; memory::Int=20,
                        M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                        reorthogonalization::Bool=false, itmax::Int=0,
-                       verbose::Int=0, history::Bool=false)
+                       restart::Bool=false, verbose::Int=0, history::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -29,6 +29,10 @@ This implementation allows a left preconditioner M and a right preconditioner N.
 - Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
 
 Full reorthogonalization is available with the `reorthogonalization` option.
+
+If `restart = true`, the restarted version GMRES(k) is used with `k = memory`.
+If `restart = false`, the parameter `memory` should be used as a hint of the number of iterations to limit dynamic memory allocations.
+More storage will be allocated only if the number of iterations exceed `memory`.
 
 GMRES can be warm-started from an initial guess `x0` with the method
 
@@ -76,7 +80,7 @@ end
 function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                 M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                 reorthogonalization :: Bool=false, itmax :: Int=0,
-                verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                restart :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -92,8 +96,9 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
-  allocate_if(!MisI, solver, :q, S, n)
-  allocate_if(!NisI, solver, :p, S, n)
+  allocate_if(!MisI  , solver, :q , S, n)
+  allocate_if(!NisI  , solver, :p , S, n)
+  allocate_if(restart, solver, :Δx, S, n)
   Δx, x, w, V, z = solver.Δx, solver.x, solver.w, solver.V, solver.z
   c, s, R, stats = solver.c, solver.s, solver.R, solver.stats
   warm_start = solver.warm_start
@@ -101,19 +106,26 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   reset!(stats)
   q  = MisI ? w : solver.q
   r₀ = MisI ? w : solver.q
+  xr = restart ? Δx : x
 
-  # Initial solution x₀ and residual r₀.
-  x .= zero(FC)  # x₀
+  # Initial solution x₀.
+  x .= zero(FC)
+
+  # Initial residual r₀.
   if warm_start
     mul!(w, A, Δx)
     @kaxpby!(n, one(FC), b, -one(FC), w)
+    restart && @kaxpy!(n, one(FC), Δx, x)
   else
     w .= b
   end
-  MisI || mul!(r₀, M, w)  # M⁻¹(b - Ax₀)
+  MisI || mul!(r₀, M, w)  # r₀ = M⁻¹(b - Ax₀)
   β = @knrm2(n, r₀)       # β = ‖r₀‖₂
+
   rNorm = β
   history && push!(rNorms, β)
+  ε = atol + rtol * rNorm
+
   if β == 0
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
@@ -122,27 +134,17 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     return solver
   end
 
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
-
-  ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "hₖ₊₁.ₖ")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
-
-  # Initialize workspace.
-  nr = 0           # Number of coefficients stored in Rₖ.
   mem = length(c)  # Memory
-  for i = 1 : mem
-    V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
-  end
-  s .= zero(FC)  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
-  c .= zero(T)   # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
-  R .= zero(FC)  # Upper triangular matrix Rₖ.
-  z .= zero(FC)  # Right-hand of the least squares problem min ‖Hₖ₊₁.ₖyₖ - βe₁‖₂.
+  npass = 0        # Number of pass
 
-  # Initial ζ₁ and V₁
-  z[1] = β
-  @. V[1] = r₀ / rNorm
+  iter = 0        # Cumulative number of iterations
+  inner_iter = 0  # Number of iterations in a pass
+
+  itmax == 0 && (itmax = 2*n)
+  inner_itmax = itmax
+
+  (verbose > 0) && @printf("%5s  %5s  %7s  %7s\n", "pass", "k", "‖rₖ‖", "hₖ₊₁.ₖ")
+  kdisplay(iter, verbose) && @printf("%5d  %5d  %7.1e  %7s\n", npass, iter, rNorm, "✗ ✗ ✗ ✗")
 
   # Tolerance for breakdown detection.
   btol = eps(T)^(3/4)
@@ -152,121 +154,159 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   inconsistent = false
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
+  inner_tired = inner_iter ≥ inner_itmax
   status = "unknown"
 
   while !(solved || tired || breakdown)
 
-    # Update iteration index
-    iter = iter + 1
-
-    # Update workspace if more storage is required
-    if iter > mem
-      for i = 1 : iter
-        push!(R, zero(FC))
-      end
-      push!(s, zero(FC))
-      push!(c, zero(T))
+    # Initialize workspace.
+    nr = 0  # Number of coefficients stored in Rₖ.
+    for i = 1 : mem
+      V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹r₀).
     end
+    s .= zero(FC)  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
+    c .= zero(T)   # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
+    R .= zero(FC)  # Upper triangular matrix Rₖ.
+    z .= zero(FC)  # Right-hand of the least squares problem min ‖Hₖ₊₁.ₖyₖ - βe₁‖₂.
 
-    # Continue the Arnoldi process.
-    p = NisI ? V[iter] : solver.p
-    NisI || mul!(p, N, V[iter])  # p ← N⁻¹vₖ
-    mul!(w, A, p)                # w ← AN⁻¹vₖ
-    MisI || mul!(q, M, w)        # q ← M⁻¹AN⁻¹vₖ
-    for i = 1 : iter
-      R[nr+i] = @kdot(n, V[i], q)    # hᵢₖ = qᵀvᵢ
-      @kaxpy!(n, -R[nr+i], V[i], q)  # q ← q - hᵢₖvᵢ
-    end
-
-    # Reorthogonalization of the Krylov basis.
-    if reorthogonalization
-      for i = 1 : iter
-        Htmp = @kdot(n, V[i], q)
-        R[nr+i] += Htmp
-        @kaxpy!(n, -Htmp, V[i], q)
+    if restart
+      xr .= zero(FC)  # xr === Δx when restart is set to true
+      if npass ≥ 1
+        mul!(w, A, x)
+        @kaxpby!(n, one(FC), b, -one(FC), w)
+        MisI || mul!(r₀, M, w)
       end
     end
 
-    # Compute hₖ₊₁.ₖ
-    Hbis = @knrm2(n, q)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+    # Initial ζ₁ and V₁
+    β = @knrm2(n, r₀)
+    z[1] = β
+    @. V[1] = r₀ / rNorm
 
-    # Update the QR factorization of Hₖ₊₁.ₖ.
-    # Apply previous Givens reflections Ωᵢ.
-    # [cᵢ  sᵢ] [ r̄ᵢ.ₖ ] = [ rᵢ.ₖ ]
-    # [s̄ᵢ -cᵢ] [rᵢ₊₁.ₖ]   [r̄ᵢ₊₁.ₖ]
-    for i = 1 : iter-1
-      Rtmp      =      c[i]  * R[nr+i] + s[i] * R[nr+i+1]
-      R[nr+i+1] = conj(s[i]) * R[nr+i] - c[i] * R[nr+i+1]
-      R[nr+i]   = Rtmp
+    npass = npass + 1
+    inner_iter = 0
+    inner_tired = false
+
+    while !(solved || inner_tired || breakdown)
+
+      # Update iteration index
+      inner_iter = inner_iter + 1
+
+      # Update workspace if more storage is required and restart is set to false
+      if !restart && (inner_iter > mem)
+        for i = 1 : inner_iter
+          push!(R, zero(FC))
+        end
+        push!(s, zero(FC))
+        push!(c, zero(T))
+      end
+
+      # Continue the Arnoldi process.
+      p = NisI ? V[inner_iter] : solver.p
+      NisI || mul!(p, N, V[inner_iter])  # p ← N⁻¹vₖ
+      mul!(w, A, p)                      # w ← AN⁻¹vₖ
+      MisI || mul!(q, M, w)              # q ← M⁻¹AN⁻¹vₖ
+      for i = 1 : inner_iter
+        R[nr+i] = @kdot(n, V[i], q)      # hᵢₖ = qᵀvᵢ
+        @kaxpy!(n, -R[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
+      end
+
+      # Reorthogonalization of the Krylov basis.
+      if reorthogonalization
+        for i = 1 : inner_iter
+          Htmp = @kdot(n, V[i], q)
+          R[nr+i] += Htmp
+          @kaxpy!(n, -Htmp, V[i], q)
+        end
+      end
+
+      # Compute hₖ₊₁.ₖ
+      Hbis = @knrm2(n, q)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+
+      # Update the QR factorization of Hₖ₊₁.ₖ.
+      # Apply previous Givens reflections Ωᵢ.
+      # [cᵢ  sᵢ] [ r̄ᵢ.ₖ ] = [ rᵢ.ₖ ]
+      # [s̄ᵢ -cᵢ] [rᵢ₊₁.ₖ]   [r̄ᵢ₊₁.ₖ]
+      for i = 1 : inner_iter-1
+        Rtmp      =      c[i]  * R[nr+i] + s[i] * R[nr+i+1]
+        R[nr+i+1] = conj(s[i]) * R[nr+i] - c[i] * R[nr+i+1]
+        R[nr+i]   = Rtmp
+      end
+
+      # Compute and apply current Givens reflection Ωₖ.
+      # [cₖ  sₖ] [ r̄ₖ.ₖ ] = [rₖ.ₖ]
+      # [s̄ₖ -cₖ] [hₖ₊₁.ₖ]   [ 0  ]
+      (c[inner_iter], s[inner_iter], R[nr+inner_iter]) = sym_givens(R[nr+inner_iter], Hbis)
+
+      # Update zₖ = (Qₖ)ᵀβe₁
+      ζₖ₊₁          = conj(s[inner_iter]) * z[inner_iter]
+      z[inner_iter] =      c[inner_iter]  * z[inner_iter]
+
+      # Update residual norm estimate.
+      # ‖ M⁻¹(b - Axₖ) ‖₂ = |ζₖ₊₁|
+      rNorm = abs(ζₖ₊₁)
+      history && push!(rNorms, rNorm)
+
+      # Update the number of coefficients in Rₖ
+      nr = nr + inner_iter
+
+      # Update stopping criterion.
+      breakdown = Hbis ≤ btol
+      solved = rNorm ≤ ε
+      inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
+      kdisplay(iter+inner_iter, verbose) && @printf("%5d  %5d  %7.1e  %7.1e\n", npass, iter+inner_iter, rNorm, Hbis)
+
+      # Compute vₖ₊₁
+      if !(solved || inner_tired || breakdown)
+        if !restart && (inner_iter ≥ mem)
+          push!(V, S(undef, n))
+          push!(z, zero(FC))
+        end
+        @. V[inner_iter+1] = q / Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
+        z[inner_iter+1] = ζₖ₊₁
+      end
     end
 
-    # Compute and apply current Givens reflection Ωₖ.
-    # [cₖ  sₖ] [ r̄ₖ.ₖ ] = [rₖ.ₖ]
-    # [s̄ₖ -cₖ] [hₖ₊₁.ₖ]   [ 0  ]
-    (c[iter], s[iter], R[nr+iter]) = sym_givens(R[nr+iter], Hbis)
+    # Compute yₖ by solving Rₖyₖ = zₖ with backward substitution.
+    y = z  # yᵢ = zᵢ
+    for i = inner_iter : -1 : 1
+      pos = nr + i - inner_iter      # position of rᵢ.ₖ
+      for j = inner_iter : -1 : i+1
+        y[i] = y[i] - R[pos] * y[j]  # yᵢ ← yᵢ - rᵢⱼyⱼ
+        pos = pos - j + 1            # position of rᵢ.ⱼ₋₁
+      end
+      # Rₖ can be singular if the system is inconsistent
+      if abs(R[pos]) ≤ btol
+        y[i] = zero(FC)
+        inconsistent = true
+      else
+        y[i] = y[i] / R[pos]  # yᵢ ← yᵢ / rᵢᵢ
+      end
+    end
 
-    # Update zₖ = (Qₖ)ᵀβe₁
-    ζₖ₊₁    = conj(s[iter]) * z[iter]
-    z[iter] =      c[iter]  * z[iter]
+    # Form xₖ = N⁻¹Vₖyₖ
+    for i = 1 : inner_iter
+      @kaxpy!(n, y[i], V[i], xr)
+    end
+    if !NisI
+      solver.p .= xr
+      mul!(xr, N, solver.p)
+    end
+    restart && @kaxpy!(n, one(FC), xr, x)
 
-    # Update residual norm estimate.
-    # ‖ M⁻¹(b - Axₖ) ‖₂ = |ζₖ₊₁|
-    rNorm = abs(ζₖ₊₁)
-    history && push!(rNorms, rNorm)
-
-    # Update the number of coefficients in Rₖ
-    nr = nr + iter
-
-    # Update stopping criterion.
-    breakdown = Hbis ≤ btol
-    solved = rNorm ≤ ε
+    # Update inner_itmax, iter and tired variables.
+    inner_itmax = inner_itmax - inner_iter
+    iter = iter + inner_iter
     tired = iter ≥ itmax
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, Hbis)
-
-    # Compute vₖ₊₁
-    if !(solved || tired || breakdown)
-      if iter ≥ mem
-        push!(V, S(undef, n))
-        push!(z, zero(FC))
-      end
-      @. V[iter+1] = q / Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
-      z[iter+1] = ζₖ₊₁
-    end
   end
   (verbose > 0) && @printf("\n")
-
-  # Compute yₖ by solving Rₖyₖ = zₖ with backward substitution.
-  y = z  # yᵢ = zᵢ
-  for i = iter : -1 : 1
-    pos = nr + i - iter
-    for j = iter : -1 : i+1
-      y[i] = y[i] - R[pos] * y[j]  # yᵢ ← yᵢ - rᵢⱼyⱼ
-      pos = pos - j + 1
-    end
-    # Rₖ can be singular if the system is inconsistent
-    if abs(R[pos]) ≤ btol
-      y[i] = zero(FC)
-      inconsistent = true
-    else
-      y[i] = y[i] / R[pos]  # yᵢ ← yᵢ / rᵢᵢ
-    end
-  end
-
-  # Form xₖ = N⁻¹Vₖyₖ
-  for i = 1 : iter
-    @kaxpy!(n, y[i], V[i], x)
-  end
-  if !NisI
-    solver.p .= x
-    mul!(x, N, solver.p)
-  end
 
   tired        && (status = "maximum number of iterations exceeded")
   solved       && (status = "solution good enough given atol and rtol")
   inconsistent && (status = "found approximate least-squares solution")
 
   # Update x
-  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  warm_start && !restart && @kaxpy!(n, one(FC), Δx, x)
   solver.warm_start = false
 
   # Update stats
