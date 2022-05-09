@@ -41,6 +41,17 @@ end
       resids = map(norm, r) / norm(b)
       @test(all(resids .≤ cg_lanczos_shift_tol))
       @test(stats.solved)
+
+      # Test user-stop
+      cb = (solver, A, b, shifts) -> begin
+        if sum(solver.not_cv) != 0
+          solver.stats.user = true
+        end
+      end
+      A, b = symmetric_definite(FC=FC)
+      shifts = [1.0; 2.0; 3.0; 4.0; 5.0; 6.0]
+      (x, stats) = cg_lanczos_shift(A, b, shifts, callback = cb)
+      @test stats.user
     end
   end
 end

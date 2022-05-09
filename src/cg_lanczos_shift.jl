@@ -208,7 +208,7 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
     solved = sum(not_cv) == 0
     tired = iter ≥ itmax
 
-    callback(A, b, solver, shifts)
+    callback(solver, A, b, shifts)
   end
   (verbose > 0) && @printf("\n")
 
