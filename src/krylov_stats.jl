@@ -49,6 +49,7 @@ Type for statistics returned by CG-LANCZOS with shifts, the attributes are:
 - indefinite
 - Anorm
 - Acond
+- user
 - status
 """
 mutable struct LanczosShiftStats{T} <: KrylovStats{T}
@@ -58,6 +59,7 @@ mutable struct LanczosShiftStats{T} <: KrylovStats{T}
   indefinite :: BitVector
   Anorm      :: T
   Acond      :: T
+  user       :: Bool
   status     :: String
 end
 

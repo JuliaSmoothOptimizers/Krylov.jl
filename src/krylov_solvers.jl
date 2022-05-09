@@ -306,7 +306,7 @@ mutable struct CgLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     indefinite = BitVector(undef, nshifts)
     converged  = BitVector(undef, nshifts)
     not_cv     = BitVector(undef, nshifts)
-    stats = LanczosShiftStats(0, false, [T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), "unknown")
+    stats = LanczosShiftStats(0, false, [T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), false, "unknown")
     solver = new{T,FC,S}(Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
     return solver
   end

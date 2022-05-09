@@ -54,7 +54,8 @@ function cg_lanczos_shift! end
 function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: AbstractVector{T};
                            M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                            itmax :: Int=0, check_curvature :: Bool=false,
-                           verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                           verbose :: Int=0, history :: Bool=false,
+                           callback = (args...) -> nothing) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -147,7 +148,7 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
   status = "unknown"
 
   # Main loop.
-  while ! (solved || tired)
+  while ! (solved || tired || stats.user)
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
     mul!(Mv_next, A, v)                  # Mvₖ₊₁ ← Avₖ
@@ -206,10 +207,18 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
 
     solved = sum(not_cv) == 0
     tired = iter ≥ itmax
+
+    callback(A, b, solver, shifts)
   end
   (verbose > 0) && @printf("\n")
 
-  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  status = if tired
+    "maximum number of iterations exceeded"
+  elseif stats.user
+    "user-requested stop"
+  else
+    "solution good enough given atol and rtol"
+  end
 
   # Update stats. TODO: Estimate Anorm and Acond.
   stats.niter = iter

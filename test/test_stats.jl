@@ -35,7 +35,7 @@
   check_reset(stats)
   @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
 
-  stats = Krylov.LanczosShiftStats(0, true, [Float64[0.9, 0.5], Float64[0.6, 0.4, 0.1]], BitVector([false, true]), NaN, NaN, "t")
+  stats = Krylov.LanczosShiftStats(0, true, [Float64[0.9, 0.5], Float64[0.6, 0.4, 0.1]], BitVector([false, true]), NaN, NaN, false, "t")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -47,6 +47,7 @@
   indefinite: Bool[0, 1]
   ‖A‖F: NaN
   κ₂(A): NaN
+  user: false
   status: t"""
   @test (VERSION < v"1.5") || strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
