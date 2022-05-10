@@ -148,8 +148,6 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   c₀ = warm_start ? dB : c
   q  = CisI ? dA : solver.q
   p  = DisI ? dB : solver.p
-  EΔx = EisI ? Δx : wB
-  FΔy = FisI ? Δy : wA
 
   # Initial solutions x₀ and y₀.
   x .= zero(FC)
@@ -172,22 +170,19 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   zt .= zero(FC)  # Rₖzₖ = tₖ with (tₖ, τbar₂ₖ₊₁, τbar₂ₖ₊₂) = (Qₖ)ᵀ(βe₁ + γe₂).
 
   # Warm-start
-  # If λ ≠ 0, Cb₀ = Cb - λΔx - CAΔy because CM = Iₘ and F = Iₙ
-  # If λ = 0, Cb₀ = Cb - CAFΔy
-  # if μ ≠ 0, Dc₀ = Dc - DBΔx - μΔy because DN = Iₙ and E = Iₘ
-  # if μ = 0, Dc₀ = Dc - DBEΔx
-
-  # Compute C(b - AΔy) - λΔx or C(b - AFΔy)
-  warm_start && !FisI && mul!(FΔy, F, Δy)
-  warm_start && mul!(b₀, A, FΔy)
+  # If λ ≠ 0, Cb₀ = Cb - CAΔy - λΔx because CM = Iₘ and E = Iₘ
+  # E ≠ Iₘ is only allowed when λ = 0 because E⁻¹Δx can't be computed to use CME = Iₘ
+  # Compute C(b - AΔy) - λΔx
+  warm_start && mul!(b₀, A, Δy)
   warm_start && @kaxpby!(m, one(FC), b, -one(FC), b₀)
   !CisI && mul!(q, C, b₀)
   !CisI && (b₀ = q)
   warm_start && (λ ≠ 0) && @kaxpy!(m, -λ, Δx, b₀)
 
-  # Compute D(c - BΔx) - μΔy or D(c - DBEΔx)
-  warm_start && !EisI && mul!(EΔx, E, Δx)
-  warm_start && mul!(c₀, B, EΔx)
+  # If μ ≠ 0, Dc₀ = Dc - DBΔx - μΔy because DN = Iₙ and F = Iₙ
+  # F ≠ Iₙ is only allowed when μ = 0 because F⁻¹Δy can't be computed to use DNF = Iₘ
+  # Compute D(c - BΔx) - μΔy
+  warm_start && mul!(c₀, B, Δx)
   warm_start && @kaxpby!(n, one(FC), c, -one(FC), c₀)
   !DisI && mul!(p, D, c₀)
   !DisI && (c₀ = p)
