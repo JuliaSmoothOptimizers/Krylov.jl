@@ -31,12 +31,24 @@ The method does _not_ abort if A is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be hermitian and positive definite.
 
+CG-LANCZOS can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) = cg_lanczos(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### References
 
 * A. Frommer and P. Maass, [*Fast CG-Based Methods for Tikhonov-Phillips Regularization*](https://doi.org/10.1137/S1064827596313310), SIAM Journal on Scientific Computing, 20(5), pp. 1831--1850, 1999.
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
 function cg_lanczos end
+
+function cg_lanczos(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+  solver = CgLanczosSolver(A, b)
+  cg_lanczos!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
 
 function cg_lanczos(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CgLanczosSolver(A, b)
@@ -46,12 +58,19 @@ end
 
 """
     solver = cg_lanczos!(solver::CgLanczosSolver, A, b; kwargs...)
+    solver = cg_lanczos!(solver::CgLanczosSolver, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`cg_lanczos`](@ref).
 
 See [`CgLanczosSolver`](@ref) for more details about the `solver`.
 """
 function cg_lanczos! end
+
+function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  cg_lanczos!(solver, A, b; kwargs...)
+  return solver
+end
 
 function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{FC};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
@@ -71,16 +90,22 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
 
   # Set up workspace.
   allocate_if(!MisI, solver, :v, S, n)
-  x, Mv, Mv_prev = solver.x, solver.Mv, solver.Mv_prev
+  Δx, x, Mv, Mv_prev = solver.Δx, solver.x, solver.Mv, solver.Mv_prev
   p, Mv_next, stats = solver.p, solver.Mv_next, solver.stats
+  warm_start = solver.warm_start
   rNorms = stats.residuals
   reset!(stats)
   v = MisI ? Mv : solver.v
 
   # Initial state.
-  x .= zero(FC)               # x₀
-  Mv .= b                     # Mv₁ ← b
-  MisI || mul!(v, M, Mv)      # v₁ = M⁻¹ * Mv₁
+  x .= zero(FC)
+  if warm_start
+    mul!(Mv, A, Δx)
+    @kaxpby!(n, one(FC), b, -one(FC), Mv)
+  else
+    Mv .= b
+  end
+  MisI || mul!(v, M, Mv)      # v₁ = M⁻¹r₀
   β = sqrt(@kdotr(n, v, Mv))  # β₁ = v₁ᵀ M v₁
   σ = β
   rNorm = σ
@@ -91,6 +116,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
     stats.Anorm = zero(T)
     stats.indefinite = false
     stats.status = "x = 0 is a zero-residual solution"
+    solver.warm_start = false
     return solver
   end
   p .= v
@@ -162,6 +188,10 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
   (verbose > 0) && @printf("\n")
 
   status = tired ? "maximum number of iterations exceeded" : (check_curvature & indefinite) ? "negative curvature" : "solution good enough given atol and rtol"
+
+  # Update x
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
   # Update stats. TODO: Estimate Acond.
   stats.niter = iter
