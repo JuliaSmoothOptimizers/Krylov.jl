@@ -33,6 +33,12 @@ In a linesearch context, 'linesearch' must be set to 'true'.
 If `itmax=0`, the default number of iterations is set to `2 * n`,
 with `n = length(b)`.
 
+CR can be warm-started from an initial guess `x0` with the method
+
+    (x, stats) = cr(A, b, x0; kwargs...)
+
+where `kwargs` are the same keyword arguments as above.
+
 #### References
 
 * M. R. Hestenes and E. Stiefel, [*Methods of conjugate gradients for solving linear systems*](https://doi.org/10.6028/jres.049.044), Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
@@ -40,6 +46,12 @@ with `n = length(b)`.
 * M-A. Dahito and D. Orban, [*The Conjugate Residual Method in Linesearch and Trust-Region Methods*](https://doi.org/10.1137/18M1204255), SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
 """
 function cr end
+
+function cr(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+  solver = CrSolver(A, b)
+  cr!(solver, A, b, x0; kwargs...)
+  return (solver.x, solver.stats)
+end
 
 function cr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CrSolver(A, b)
@@ -49,12 +61,19 @@ end
 
 """
     solver = cr!(solver::CrSolver, A, b; kwargs...)
+    solver = cr!(solver::CrSolver, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`cr`](@ref).
 
 See [`CrSolver`](@ref) for more details about the `solver`.
 """
 function cr! end
+
+function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+  warm_start!(solver, x0)
+  cr!(solver, A, b; kwargs...)
+  return solver
+end
 
 function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
@@ -75,23 +94,33 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Set up workspace
   allocate_if(!MisI, solver, :Mq, S, n)
-  x, r, p, q, Ar, stats = solver.x, solver.r, solver.p, solver.q, solver.Ar, solver.stats
+  Δx, x, r, p, q, Ar, stats = solver.Δx, solver.x, solver.r, solver.p, solver.q, solver.Ar, solver.stats
+  warm_start = solver.warm_start
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
   Mq = MisI ? q : solver.Mq
 
   # Initial state.
-  x .= zero(FC)  # initial estimation x = 0
-  xNorm = zero(T)
-  mul!(r, M, b)  # initial residual r = M * (b - Ax) = M * b
+  x .= zero(FC)
+  if warm_start
+    mul!(p, A, Δx)
+    @kaxpby!(n, one(FC), b, -one(FC), p)
+  else
+    p .= b
+  end
+  mul!(r, M, p)
   mul!(Ar, A, r)
   ρ = @kdotr(n, r, Ar)
+
+  rNorm = sqrt(@kdotr(n, r, p))   # ‖r‖
+  history && push!(rNorms, rNorm) # Values of ‖r‖
+
   if ρ == 0
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
     stats.status = "x = 0 is a zero-residual solution"
-    history && push!(rNorms, ρ)
     history && push!(ArNorms, zero(T))
+    solver.warm_start = false
     return solver
   end
   p .= r
@@ -101,8 +130,6 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   iter = 0
   itmax == 0 && (itmax = 2 * n)
 
-  rNorm = sqrt(@kdotr(n, r, b)) # ‖r‖
-  history && push!(rNorms, rNorm) # Values of ‖r‖
   rNorm² = rNorm * rNorm
   pNorm = rNorm
   pNorm² = rNorm²
@@ -110,6 +137,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   abspr = pr
   pAp = ρ
   abspAp = abs(pAp)
+  xNorm = zero(T)
   ArNorm = @knrm2(n, Ar) # ‖Ar‖
   history && push!(ArNorms, ArNorm)
   ε = atol + rtol * rNorm
@@ -280,6 +308,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
       stats.solved = solved
       stats.inconsistent = false
       stats.status = "solver encountered numerical issues"
+      solver.warm_start = false
       return solver
     end
     pr = rNorm² + β * pr - β * α * pAp # pᵀr
@@ -292,6 +321,10 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   (verbose > 0) && @printf("\n")
 
   status = npcurv ? "nonpositive curvature" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
+
+  # Update x
+  warm_start && @kaxpy!(n, one(FC), Δx, x)
+  solver.warm_start = false
 
   # Update stats
   stats.niter = iter
