@@ -145,17 +145,20 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct CrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
-  x     :: S
-  r     :: S
-  p     :: S
-  q     :: S
-  Ar    :: S
-  Mq    :: S
-  stats :: SimpleStats{T}
+  Δx         :: S
+  x          :: S
+  r          :: S
+  p          :: S
+  q          :: S
+  Ar         :: S
+  Mq         :: S
+  warm_start :: Bool
+  stats      :: SimpleStats{T}
 
   function CrSolver(n, m, S)
     FC = eltype(S)
     T  = real(FC)
+    Δx = S(undef, 0)
     x  = S(undef, n)
     r  = S(undef, n)
     p  = S(undef, n)
@@ -163,7 +166,7 @@ mutable struct CrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     Ar = S(undef, n)
     Mq = S(undef, 0)
     stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(x, r, p, q, Ar, Mq, stats)
+    solver = new{T,FC,S}(Δx, x, r, p, q, Ar, Mq, false, stats)
     return solver
   end
 
@@ -234,17 +237,20 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct CgLanczosSolver{T,FC,S} <: KrylovSolver{T,FC,S}
-  x       :: S
-  Mv      :: S
-  Mv_prev :: S
-  p       :: S
-  Mv_next :: S
-  v       :: S
-  stats   :: LanczosStats{T}
+  Δx         :: S
+  x          :: S
+  Mv         :: S
+  Mv_prev    :: S
+  p          :: S
+  Mv_next    :: S
+  v          :: S
+  warm_start :: Bool
+  stats      :: LanczosStats{T}
 
   function CgLanczosSolver(n, m, S)
     FC      = eltype(S)
     T       = real(FC)
+    Δx      = S(undef, 0)
     x       = S(undef, n)
     Mv      = S(undef, n)
     Mv_prev = S(undef, n)
@@ -252,7 +258,7 @@ mutable struct CgLanczosSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     Mv_next = S(undef, n)
     v       = S(undef, 0)
     stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), "unknown")
-    solver = new{T,FC,S}(x, Mv, Mv_prev, p, Mv_next, v, stats)
+    solver = new{T,FC,S}(Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
     return solver
   end
 
@@ -1681,7 +1687,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (TrimrSolver         , :trimr!           , 2, 1, 1, true )
   (UsymqrSolver        , :usymqr!          , 1, 1, 1, true )
   (BilqrSolver         , :bilqr!           , 2, 1, 1, true )
-  (CrSolver            , :cr!              , 1, 1, 0, false)
+  (CrSolver            , :cr!              , 1, 1, 0, true )
   (CraigmrSolver       , :craigmr!         , 2, 1, 1, false)
   (TricgSolver         , :tricg!           , 2, 1, 1, true )
   (CraigSolver         , :craig!           , 2, 1, 1, false)
@@ -1692,7 +1698,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (CgSolver            , :cg!              , 1, 1, 0, true )
   (CgLanczosShiftSolver, :cg_lanczos_shift!, 1, 1, 0, false)
   (CglsSolver          , :cgls!            , 1, 1, 1, false)
-  (CgLanczosSolver     , :cg_lanczos!      , 1, 1, 0, false)
+  (CgLanczosSolver     , :cg_lanczos!      , 1, 1, 0, true )
   (BilqSolver          , :bilq!            , 1, 1, 1, true )
   (MinresQlpSolver     , :minres_qlp!      , 1, 1, 0, true )
   (QmrSolver           , :qmr!             , 1, 1, 1, true )
