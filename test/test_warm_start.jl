@@ -37,6 +37,14 @@ function test_warm_start(FC)
   r = b - A * x
   @test(resid ≤ tol)
 
+  x, stats = cr(A, b, x0)
+  r = b - A * x
+  @test(resid ≤ tol)
+
+  x, stats = cg_lanczos(A, b, x0)
+  r = b - A * x
+  @test(resid ≤ tol)
+
   x, stats = minres(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
