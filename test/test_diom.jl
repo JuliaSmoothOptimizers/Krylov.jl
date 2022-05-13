@@ -46,7 +46,7 @@
 
       # Symmetric indefinite variant, almost singular.
       A, b = almost_singular(FC=FC)
-      (x, stats) = diom(A, b)
+      (x, stats) = diom(A, b, reorthogonalization=true)
       r = b - A * x
       resid = norm(r) / norm(b)
       @test(resid ≤ diom_tol)

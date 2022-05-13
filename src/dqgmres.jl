@@ -13,7 +13,8 @@ export dqgmres, dqgmres!
 """
     (x, stats) = dqgmres(A, b::AbstractVector{FC}; memory::Int=20,
                          M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
-                         itmax::Int=0, verbose::Int=0, history::Bool=false)
+                         reorthogonalization::Bool=false, itmax::Int=0,
+                         verbose::Int=0, history::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -27,6 +28,8 @@ DQGMRES only orthogonalizes the new vectors of the Krylov basis against the `mem
 If MINRES is well defined on `Ax = b` and `memory = 2`, DQGMRES is theoretically equivalent to MINRES.
 If `k ≤ memory` where `k` is the number of iterations, DQGMRES is theoretically equivalent to GMRES.
 Otherwise, DQGMRES interpolates between MINRES and GMRES and is similar to MINRES with partial reorthogonalization.
+
+Partial reorthogonalization is available with the `reorthogonalization` option.
 
 This implementation allows a left preconditioner M and a right preconditioner N.
 - Left  preconditioning : M⁻¹Ax = M⁻¹b
@@ -78,7 +81,8 @@ end
 
 function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                   M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                  reorthogonalization :: Bool=false, itmax :: Int=0,
+                  verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -175,6 +179,18 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₘ = ⟨M⁻¹AN⁻¹vₘ , vᵢ⟩
       @kaxpy!(n, -H[diag], V[ipos], w) # w ← w - hᵢ.ₘ * vᵢ
     end
+
+    # Partial reorthogonalization of the Krylov basis.
+    if reorthogonalization
+      for i = max(1, iter-mem+1) : iter
+        ipos = mod(i-1, mem) + 1
+        diag = iter - i + 2
+        Htmp = @kdot(n, w, V[ipos])
+        H[diag] += Htmp
+        @kaxpy!(n, -Htmp, V[ipos], w)
+      end
+    end
+
     # Compute hₘ₊₁.ₘ and vₘ₊₁.
     H[1] = @knrm2(n, w) # hₘ₊₁.ₘ = ‖vₘ₊₁‖₂
     if H[1] ≠ 0 # hₘ₊₁.ₘ = 0 ⇒ "lucky breakdown"
