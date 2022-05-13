@@ -46,10 +46,10 @@
 
       # Symmetric indefinite variant, almost singular.
       A, b = almost_singular(FC=FC)
-      (x, stats) = dqgmres(A, b)
+      (x, stats) = dqgmres(A, b, reorthogonalization=true)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ 100 * dqgmres_tol)
+      @test(resid ≤ dqgmres_tol)
       @test(stats.solved)
 
       # Test b == 0
