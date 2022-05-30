@@ -363,3 +363,10 @@ function check_reset(stats :: KS) where KS <: Krylov.KrylovStats
     end
   end
 end
+
+# Test callback function
+function test_callback_n2(solver, A, b; storage_vec = similar(solver.x, size(A,2)), tol = 0.1)
+  mul!(storage_vec, A, solver.x)
+  storage_vec .-= b
+  return norm(storage_vec) ≤ tol
+end
