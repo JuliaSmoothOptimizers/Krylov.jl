@@ -29,7 +29,8 @@ export minres, minres!
                         rrtol :: T=zero(T), etol::T=√eps(T),
                         window::Int=5, itmax::Int=0,
                         conlim::T=1/√eps(T), verbose::Int=0,
-                        history::Bool=false)
+                        history::Bool=false,
+                        callback::Function=(args...)->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -59,6 +60,9 @@ MINRES can be warm-started from an initial guess `x0` with the method
     (x, stats) = minres(A, b, x0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
+
+The callback is called as `callback(solver, A, b)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### Reference
 
@@ -98,7 +102,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
                  itmax :: Int=0, conlim :: T=1/√eps(T), verbose :: Int=0,
-                 history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 history :: Bool=false, callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -196,8 +200,9 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ill_cond = ill_cond_mach = ill_cond_lim = false
   zero_resid = zero_resid_mach = zero_resid_lim = (rNorm ≤ tol)
   fwd_err = false
+  user_requested_exit = false
 
-  while !(solved || tired || ill_cond)
+  while !(solved || tired || ill_cond || user_requested_exit)
     iter = iter + 1
 
     # Generate next Lanczos vector.
@@ -313,6 +318,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     zero_resid_lim = (test1 ≤ tol)
     resid_decrease_lim = (rNorm ≤ rNormtol)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
+    user_requested_exit = callback(solver, A, b) :: Bool
 
     zero_resid = zero_resid_mach | zero_resid_lim
     resid_decrease = resid_decrease_mach | resid_decrease_lim
@@ -321,12 +327,13 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   end
   (verbose > 0) && @printf("\n")
 
-  tired         && (status = "maximum number of iterations exceeded")
-  ill_cond_mach && (status = "condition number seems too large for this machine")
-  ill_cond_lim  && (status = "condition number exceeds tolerance")
-  solved        && (status = "found approximate minimum least-squares solution")
-  zero_resid    && (status = "found approximate zero-residual solution")
-  fwd_err       && (status = "truncated forward error small enough")
+  tired               && (status = "maximum number of iterations exceeded")
+  ill_cond_mach       && (status = "condition number seems too large for this machine")
+  ill_cond_lim        && (status = "condition number exceeds tolerance")
+  solved              && (status = "found approximate minimum least-squares solution")
+  zero_resid          && (status = "found approximate zero-residual solution")
+  fwd_err             && (status = "truncated forward error small enough")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)
