@@ -318,8 +318,8 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     zero_resid_lim = (test1 ≤ tol)
     resid_decrease_lim = (rNorm ≤ rNormtol)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
-    user_requested_exit = callback(solver, A, b) :: Bool
 
+    user_requested_exit = callback(solver, A, b) :: Bool
     zero_resid = zero_resid_mach | zero_resid_lim
     resid_decrease = resid_decrease_mach | resid_decrease_lim
     ill_cond = ill_cond_mach | ill_cond_lim
