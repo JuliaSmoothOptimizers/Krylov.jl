@@ -89,6 +89,18 @@
       resid = norm(M * r) / norm(M * b)
       @test(resid ≤ dqgmres_tol)
       @test(stats.solved)
+
+      # test callback function
+      A, b = sparse_laplacian(FC=FC)
+      solver = DqgmresSolver(A, b)
+      storage_vec = similar(b, size(A, 1))
+      tol = 1.0e-1
+      dqgmres!(solver, A, b, atol = 0.0, rtol = 0.0,
+              callback = (args...) -> test_callback_n2(args..., storage_vec = storage_vec, tol = tol))
+      @test solver.stats.status == "user-requested exit"
+      @test test_callback_n2(solver, A, b, storage_vec = storage_vec, tol = tol)
+
+      @test_throws TypeError dqgmres(A, b, callback = (args...) -> "string", history = true)
     end
   end
 end
