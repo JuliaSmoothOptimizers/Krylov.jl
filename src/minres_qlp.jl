@@ -20,7 +20,8 @@ export minres_qlp, minres_qlp!
     (x, stats) = minres_qlp(A, b::AbstractVector{FC};
                             M=I, atol::T=√eps(T), rtol::T=√eps(T),
                             ctol::T=√eps(T), λ::T=zero(T), itmax::Int=0,
-                            verbose::Int=0, history::Bool=false)
+                            verbose::Int=0, history::Bool=false,
+                            callback::Function=(args...)->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -38,6 +39,9 @@ MINRES-QLP can be warm-started from an initial guess `x0` with the method
     (x, stats) = minres_qlp(A, b, x0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
+
+The callback is called as `callback(solver, A, b)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### References
 
@@ -78,7 +82,8 @@ end
 function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{FC};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                      ctol :: T=√eps(T), λ ::T=zero(T), itmax :: Int=0,
-                     verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                     verbose :: Int=0, history :: Bool=false,
+                     callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -160,8 +165,9 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
   inconsistent = false
   tired = iter ≥ itmax
   status = "unknown"
+  user_requested_exit = false
 
-  while !(solved || tired || inconsistent || breakdown)
+  while !(solved || tired || inconsistent || breakdown || user_requested_exit)
     # Update iteration index.
     iter = iter + 1
 
@@ -340,6 +346,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     history && push!(ArNorms, ArNorm)
 
     # Update stopping criterion.
+    user_requested_exit = callback(solver, A, b) :: Bool
     breakdown = βₖ₊₁ ≤ btol
     solved = rNorm ≤ ε
     inconsistent = (ArNorm ≤ κ && abs(μbarₖ) ≤ ctol) || (breakdown && !solved)
@@ -370,9 +377,10 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     @kaxpy!(n, τₖ, wₖ, x)
   end
 
-  tired        && (status = "maximum number of iterations exceeded")
-  inconsistent && (status = "found approximate minimum least-squares solution")
-  solved       && (status = "solution good enough given atol and rtol")
+  tired               && (status = "maximum number of iterations exceeded")
+  inconsistent        && (status = "found approximate minimum least-squares solution")
+  solved              && (status = "solution good enough given atol and rtol")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)
