@@ -17,7 +17,8 @@ export symmlq, symmlq!
                         M=I, λ::T=zero(T), transfer_to_cg::Bool=true,
                         λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                         etol::T=√eps(T), itmax::Int=0, conlim::T=1/√eps(T),
-                        verbose::Int=0, history::Bool=false)
+                        verbose::Int=0, history::Bool=false,
+                        callback::Function=(args...)->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -39,6 +40,9 @@ SYMMLQ can be warm-started from an initial guess `x0` with the method
     (x, stats) = symmlq(A, b, x0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
+
+The callback is called as `callback(solver, A, b)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### Reference
 
@@ -78,7 +82,8 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, λ :: T=zero(T), transfer_to_cg :: Bool=true,
                  λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                  etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
-                 verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 verbose :: Int=0, history :: Bool=false,
+                 callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -219,8 +224,9 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ill_cond = ill_cond_mach = ill_cond_lim = false
   solved = zero_resid = solved_lq || solved_cg
   fwd_err = false
+  user_requested_exit = false
 
-  while ! (solved || tired || ill_cond)
+  while ! (solved || tired || ill_cond || user_requested_exit)
     iter = iter + 1
 
     # Continue QR factorization
@@ -359,6 +365,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     fwd_err = (err ≤ etol) || ((γbar ≠ 0) && (errcg ≤ etol))
     solved_lq = rNorm ≤ tol
     solved_cg = transfer_to_cg && (γbar ≠ 0) && rcgNorm ≤ tol
+    user_requested_exit = callback(solver, A, b) :: Bool
     zero_resid = solved_lq || solved_cg
     ill_cond = ill_cond_mach || ill_cond_lim
     solved = solved_mach || zero_resid || zero_resid_mach || zero_resid_lim || fwd_err
@@ -371,12 +378,13 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     @kaxpy!(m, ζbar, w̅, x)
   end
 
-  tired         && (status = "maximum number of iterations exceeded")
-  ill_cond_mach && (status = "condition number seems too large for this machine")
-  ill_cond_lim  && (status = "condition number exceeds tolerance")
-  solved        && (status = "found approximate solution")
-  solved_lq     && (status = "solution xᴸ good enough given atol and rtol")
-  solved_cg     && (status = "solution xᶜ good enough given atol and rtol")
+  tired               && (status = "maximum number of iterations exceeded")
+  ill_cond_mach       && (status = "condition number seems too large for this machine")
+  ill_cond_lim        && (status = "condition number exceeds tolerance")
+  solved              && (status = "found approximate solution")
+  solved_lq           && (status = "solution xᴸ good enough given atol and rtol")
+  solved_cg           && (status = "solution xᶜ good enough given atol and rtol")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)
