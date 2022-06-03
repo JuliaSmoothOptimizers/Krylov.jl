@@ -20,7 +20,8 @@ export cg, cg!
     (x, stats) = cg(A, b::AbstractVector{FC};
                     M=I, atol::T=√eps(T), rtol::T=√eps(T),
                     itmax::Int=0, radius::T=zero(T), linesearch::Bool=false,
-                    verbose::Int=0, history::Bool=false)
+                    verbose::Int=0, history::Bool=false,
+                    callback::Function=(args...)->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -41,6 +42,9 @@ CG can be warm-started from an initial guess `x0` with the method
     (x, stats) = cg(A, b, x0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
+
+The callback is called as `callback(solver, A, b)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### Reference
 
@@ -79,7 +83,8 @@ end
 function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
              itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
-             verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+             verbose :: Int=0, history :: Bool=false,
+             callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
 
@@ -137,10 +142,11 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
   inconsistent = false
   on_boundary = false
   zero_curvature = false
+  user_requested_exit = false
 
   status = "unknown"
 
-  while !(solved || tired || zero_curvature)
+  while !(solved || tired || zero_curvature || user_requested_exit)
     mul!(Ap, A, p)
     pAp = @kdotr(n, p, Ap)
     if (pAp ≤ eps(T) * pNorm²) && (radius == 0)
@@ -188,6 +194,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     iter = iter + 1
     tired = iter ≥ itmax
+    user_requested_exit = callback(solver, A, b) :: Bool
     kdisplay(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
   end
   (verbose > 0) && @printf("\n")
@@ -197,6 +204,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
   solved && (status == "unknown") && (status = "solution good enough given atol and rtol")
   zero_curvature && (status = "zero curvature detected")
   tired && (status = "maximum number of iterations exceeded")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)
