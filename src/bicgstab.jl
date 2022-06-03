@@ -18,7 +18,8 @@ export bicgstab, bicgstab!
 """
     (x, stats) = bicgstab(A, b::AbstractVector{FC}; c::AbstractVector{FC}=b,
                           M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
-                          itmax::Int=0, verbose::Int=0, history::Bool=false)
+                          itmax::Int=0, verbose::Int=0, history::Bool=false,
+                          callback::Function=(args...)->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -46,6 +47,9 @@ BICGSTAB can be warm-started from an initial guess `x0` with the method
     (x, stats) = bicgstab(A, b, x0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
+
+The callback is called as `callback(solver, A, b)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### References
 
@@ -84,7 +88,8 @@ end
 
 function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
                    M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-                   itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                   itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+                   callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -162,8 +167,9 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
   tired = iter ≥ itmax
   breakdown = false
   status = "unknown"
+  user_requested_exit = false
 
-  while !(solved || tired || breakdown)
+  while !(solved || tired || breakdown || user_requested_exit)
     # Update iteration index and ρ.
     iter = iter + 1
     ρ = next_ρ
@@ -192,6 +198,7 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
     history && push!(rNorms, rNorm)
 
     # Update stopping criterion.
+    user_requested_exit = callback(solver, A, b) :: Bool
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
@@ -199,7 +206,10 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
   end
   (verbose > 0) && @printf("\n")
 
-  status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
+  tired               && (status = "maximum number of iterations exceeded")
+  breakdown           && (status = "breakdown αₖ == 0")
+  solved              && (status = "solution good enough given atol and rtol")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)
