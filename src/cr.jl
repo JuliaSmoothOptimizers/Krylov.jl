@@ -17,7 +17,8 @@ export cr, cr!
 """
     (x, stats) = cr(A, b::AbstractVector{FC};
                     M=I, atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T), itmax::Int=0,
-                    radius::T=zero(T), verbose::Int=0, linesearch::Bool=false, history::Bool=false)
+                    radius::T=zero(T), verbose::Int=0, linesearch::Bool=false, history::Bool=false,
+                    callback :: Function = (args...) -> false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -38,6 +39,9 @@ CR can be warm-started from an initial guess `x0` with the method
     (x, stats) = cr(A, b, x0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
+
+The callback is called as `callback(solver, A, b)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### References
 
@@ -77,7 +81,8 @@ end
 
 function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
-             radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+             radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false,
+             callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
   n, m = size(A)
@@ -150,8 +155,9 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   on_boundary = false
   npcurv = false
   status = "unknown"
+  user_requested_exit = false
 
-  while ! (solved || tired)
+  while ! (solved || tired || user_requested_exit)
     if linesearch
       if (pAp ≤ γ * pNorm²) || (ρ ≤ γ * rNorm²)
         npcurv = true
@@ -288,10 +294,11 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
       @printf("    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
     end
 
+    user_requested_exit = callback(solver, A, b) :: Bool
     solved = (rNorm ≤ ε) || npcurv || on_boundary
     tired = iter ≥ itmax
 
-    (solved || tired) && continue
+    (solved || tired || user_requested_exit) && continue
     ρbar = ρ
     ρ = @kdotr(n, r, Ar)
     β = ρ / ρbar # step for the direction computation
@@ -320,7 +327,11 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   end
   (verbose > 0) && @printf("\n")
 
-  status = npcurv ? "nonpositive curvature" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
+  tired               && (status = "maximum number of iterations exceeded")
+  on_boundary         && (status = "on trust-region boundary")
+  npcurv              && (status = "nonpositive curvature")
+  solved              && (status = "solution good enough given atol and rtol")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)

@@ -62,6 +62,18 @@
       resid = sqrt(real(dot(r, M * r))) / norm(b)
       @test(resid ≤ cr_tol)
       @test(stats.solved)
+
+      
+      # test callback function
+      A, b = symmetric_definite(FC=FC)
+      solver = CrSolver(A, b)
+      storage_vec = similar(b, size(A, 1))
+      tol = 1.0e-1
+      cr!(solver, A, b, callback = (args...) -> test_callback_n2(args..., storage_vec = storage_vec, tol = tol))
+      @test solver.stats.status == "user-requested exit"
+      @test test_callback_n2(solver, A, b, storage_vec = storage_vec, tol = tol)
+
+      @test_throws TypeError cr(A, b, callback = (args...) -> "string", history = true)
     end
   end
 end
