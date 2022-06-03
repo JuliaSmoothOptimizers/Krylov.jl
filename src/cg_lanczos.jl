@@ -16,7 +16,8 @@ export cg_lanczos, cg_lanczos!
 """
     (x, stats) = cg_lanczos(A, b::AbstractVector{FC};
                             M=I, atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                            check_curvature::Bool=false, verbose::Int=0, history::Bool=false)
+                            check_curvature::Bool=false, verbose::Int=0, history::Bool=false,
+                            callback::Function=(args...)->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -36,6 +37,9 @@ CG-LANCZOS can be warm-started from an initial guess `x0` with the method
     (x, stats) = cg_lanczos(A, b, x0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
+
+The callback is called as `callback(solver, A, b)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### References
 
@@ -74,7 +78,8 @@ end
 
 function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{FC};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                     check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                     check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false,
+                     callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -145,9 +150,10 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
   status = "unknown"
+  user_requested_exit = false
 
   # Main loop.
-  while ! (solved || tired || (check_curvature & indefinite))
+  while ! (solved || tired || (check_curvature & indefinite) || user_requested_exit)
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
     mul!(Mv_next, A, v)        # Mvₖ₊₁ ← Avₖ
@@ -182,12 +188,16 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
     history && push!(rNorms, rNorm)
     iter = iter + 1
     kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+    user_requested_exit = callback(solver, A, b) :: Bool
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
   end
   (verbose > 0) && @printf("\n")
 
-  status = tired ? "maximum number of iterations exceeded" : (check_curvature & indefinite) ? "negative curvature" : "solution good enough given atol and rtol"
+  tired                          && (status = "maximum number of iterations exceeded")
+  (check_curvature & indefinite) && (status = "negative curvature")
+  solved                         && (status = "solution good enough given atol and rtol")
+  user_requested_exit            && (status = "user-requested exit")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)
