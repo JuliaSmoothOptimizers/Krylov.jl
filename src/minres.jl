@@ -30,7 +30,7 @@ export minres, minres!
                         window::Int=5, itmax::Int=0,
                         conlim::T=1/√eps(T), verbose::Int=0,
                         history::Bool=false,
-                        callback::Function=(args...)->false)
+                        callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -61,7 +61,7 @@ MINRES can be warm-started from an initial guess `x0` with the method
 
 where `kwargs` are the same keyword arguments as above.
 
-The callback is called as `callback(solver, A, b)` and should return `true` if the main loop should terminate,
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
 #### Reference
@@ -102,7 +102,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
                  itmax :: Int=0, conlim :: T=1/√eps(T), verbose :: Int=0,
-                 history :: Bool=false, callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 history :: Bool=false, callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -319,7 +319,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     resid_decrease_lim = (rNorm ≤ rNormtol)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
 
-    user_requested_exit = callback(solver, A, b) :: Bool
+    user_requested_exit = callback(solver) :: Bool
     zero_resid = zero_resid_mach | zero_resid_lim
     resid_decrease = resid_decrease_mach | resid_decrease_lim
     ill_cond = ill_cond_mach | ill_cond_lim

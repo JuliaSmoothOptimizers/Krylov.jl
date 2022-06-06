@@ -18,7 +18,7 @@ export cr, cr!
     (x, stats) = cr(A, b::AbstractVector{FC};
                     M=I, atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T), itmax::Int=0,
                     radius::T=zero(T), verbose::Int=0, linesearch::Bool=false, history::Bool=false,
-                    callback :: Function = (args...) -> false)
+                    callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -40,7 +40,7 @@ CR can be warm-started from an initial guess `x0` with the method
 
 where `kwargs` are the same keyword arguments as above.
 
-The callback is called as `callback(solver, A, b)` and should return `true` if the main loop should terminate,
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
 #### References
@@ -82,7 +82,7 @@ end
 function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
              radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false,
-             callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+             callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
   n, m = size(A)
@@ -294,7 +294,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
       @printf("    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
     end
 
-    user_requested_exit = callback(solver, A, b) :: Bool
+    user_requested_exit = callback(solver) :: Bool
     solved = (rNorm ≤ ε) || npcurv || on_boundary
     tired = iter ≥ itmax
 

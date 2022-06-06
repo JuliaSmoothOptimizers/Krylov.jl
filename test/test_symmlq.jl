@@ -71,14 +71,13 @@
 
       # test callback function
       solver = SymmlqSolver(A, b)
-      storage_vec = similar(b, size(A, 1))
       tol = 1.0
-      symmlq!(solver, A, b, atol = 0.0, rtol = 0.0,
-              callback = (args...) -> test_callback_n2(args..., storage_vec = storage_vec, tol = tol))
+      cb_n2 = TestCallbackN2(A, b, tol = tol)
+      symmlq!(solver, A, b, atol = 0.0, rtol = 0.0, callback = solver -> cb_n2(solver))
       @test solver.stats.status == "user-requested exit"
-      @test test_callback_n2(solver, A, b, storage_vec = storage_vec, tol = tol)
+      @test cb_n2(solver)
 
-      @test_throws TypeError symmlq(A, b, callback = (args...) -> "string", history = true)
+      @test_throws TypeError symmlq(A, b, callback = solver -> "string", history = true)
     end
   end
 end
