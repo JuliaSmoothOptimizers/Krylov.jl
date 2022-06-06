@@ -364,9 +364,17 @@ function check_reset(stats :: KS) where KS <: Krylov.KrylovStats
   end
 end
 
-# Test callback function
-function test_callback_n2(solver, A, b; storage_vec = similar(solver.x, size(A,1)), tol = 0.1)
-  mul!(storage_vec, A, solver.x)
-  storage_vec .-= b
-  return norm(storage_vec) ≤ tol
+# Test callback
+mutable struct TestCallbackN2{T, S, M}
+  A::M
+  b::S
+  storage_vec::S
+  tol::T
+end
+TestCallbackN2(A, b; tol = 0.1) = TestCallbackN2(A, b, similar(b), tol)
+
+function (cb_n2::TestCallbackN2)(solver)
+  mul!(cb_n2.storage_vec, cb_n2.A, solver.x)
+  cb_n2.storage_vec .-= cb_n2.b
+  return norm(cb_n2.storage_vec) ≤ cb_n2.tol
 end

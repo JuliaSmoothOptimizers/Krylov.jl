@@ -131,14 +131,13 @@
       # test callback function
       A, b = sparse_laplacian(FC=FC)
       solver = GmresSolver(A, b)
-      storage_vec = similar(b, size(A, 1))
       tol = 1.0
-      gmres!(solver, A, b, atol = 0.0, rtol = 0.0, restart = true,
-             callback = (args...) -> test_callback_n2(args..., storage_vec = storage_vec, tol = tol))
+      cb_n2 = TestCallbackN2(A, b, tol = tol)
+      gmres!(solver, A, b, atol = 0.0, rtol = 0.0, restart = true, callback = solver -> cb_n2(solver))
       @test solver.stats.status == "user-requested exit"
-      @test test_callback_n2(solver, A, b, storage_vec = storage_vec, tol = tol)
+      @test cb_n2(solver)
 
-      @test_throws TypeError gmres(A, b, callback = (args...) -> "string", history = true)
+      @test_throws TypeError gmres(A, b, callback = solver -> "string", history = true)
     end
   end
 end

@@ -15,7 +15,7 @@ export diom, diom!
                       M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                       reorthogonalization::Bool=false, itmax::Int=0,
                       verbose::Int=0, history::Bool=false,
-                      callback::Function=(args...)->false)
+                      callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -43,7 +43,7 @@ DIOM can be warm-started from an initial guess `x0` with the method
 
 where `kwargs` are the same keyword arguments as above.
 
-The callback is called as `callback(solver, A, b)` and should return `true` if the main loop should terminate,
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
 #### Reference
@@ -87,7 +87,7 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                reorthogonalization :: Bool=false, itmax :: Int=0,
                verbose :: Int=0, history :: Bool=false,
-               callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -247,7 +247,7 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     history && push!(rNorms, rNorm)
 
     # Update stopping criterion.
-    user_requested_exit = callback(solver, A, b) :: Bool
+    user_requested_exit = callback(solver) :: Bool
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)

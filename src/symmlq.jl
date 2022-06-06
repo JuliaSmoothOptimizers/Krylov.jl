@@ -18,7 +18,7 @@ export symmlq, symmlq!
                         λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                         etol::T=√eps(T), itmax::Int=0, conlim::T=1/√eps(T),
                         verbose::Int=0, history::Bool=false,
-                        callback::Function=(args...)->false)
+                        callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -41,7 +41,7 @@ SYMMLQ can be warm-started from an initial guess `x0` with the method
 
 where `kwargs` are the same keyword arguments as above.
 
-The callback is called as `callback(solver, A, b)` and should return `true` if the main loop should terminate,
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
 #### Reference
@@ -83,7 +83,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                  etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
                  verbose :: Int=0, history :: Bool=false,
-                 callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -365,7 +365,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     fwd_err = (err ≤ etol) || ((γbar ≠ 0) && (errcg ≤ etol))
     solved_lq = rNorm ≤ tol
     solved_cg = transfer_to_cg && (γbar ≠ 0) && rcgNorm ≤ tol
-    user_requested_exit = callback(solver, A, b) :: Bool
+    user_requested_exit = callback(solver) :: Bool
     zero_resid = solved_lq || solved_cg
     ill_cond = ill_cond_mach || ill_cond_lim
     solved = solved_mach || zero_resid || zero_resid_mach || zero_resid_lim || fwd_err

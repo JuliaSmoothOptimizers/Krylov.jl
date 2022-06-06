@@ -24,7 +24,7 @@ export qmr, qmr!
     (x, stats) = qmr(A, b::AbstractVector{FC}; c::AbstractVector{FC}=b,
                      atol::T=√eps(T), rtol::T=√eps(T),
                      itmax::Int=0, verbose::Int=0, history::Bool=false,
-                     callback::Function=(args...)->false)
+                     callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -41,7 +41,7 @@ QMR can be warm-started from an initial guess `x0` with the method
 
 where `kwargs` are the same keyword arguments as above.
 
-The callback is called as `callback(solver, A, b)` and should return `true` if the main loop should terminate,
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
 #### References
@@ -83,7 +83,7 @@ end
 function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
               atol :: T=√eps(T), rtol :: T=√eps(T),
               itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-              callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+              callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -295,7 +295,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     τₖ    = τₖ₊₁
 
     # Update stopping criterion.
-    user_requested_exit = callback(solver, A, b) :: Bool
+    user_requested_exit = callback(solver) :: Bool
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     breakdown = !solved && (pᵗq == 0)
