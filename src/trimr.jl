@@ -16,7 +16,8 @@ export trimr, trimr!
                           M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                           spd::Bool=false, snd::Bool=false, flip::Bool=false, sp::Bool=false,
                           τ::T=one(T), ν::T=-one(T), itmax::Int=0,
-                          verbose::Int=0, history::Bool=false)
+                          verbose::Int=0, history::Bool=false,
+                          callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -58,6 +59,9 @@ TriMR can be warm-started from initial guesses `x0` and `y0` with the method
 
 where `kwargs` are the same keyword arguments as above.
 
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
+
 #### Reference
 
 * A. Montoison and D. Orban, [*TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems*](https://doi.org/10.1137/20M1363030), SIAM Journal on Scientific Computing, 43(4), pp. 2502--2525, 2021.
@@ -97,7 +101,8 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
                 M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                 spd :: Bool=false, snd :: Bool=false, flip :: Bool=false, sp :: Bool=false,
                 τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0,
-                verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                verbose :: Int=0, history :: Bool=false,
+                callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -229,10 +234,11 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
   status = "unknown"
+  user_requested_exit = false
 
   θbarₖ = δbar₂ₖ₋₁ = δbar₂ₖ = σbar₂ₖ₋₁ = σbar₂ₖ = λbar₂ₖ₋₁ = ηbar₂ₖ₋₁ = zero(FC)
 
-  while !(solved || tired || breakdown)
+  while !(solved || tired || breakdown || user_requested_exit)
     # Update iteration index.
     iter = iter + 1
 
@@ -475,6 +481,7 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     πbar₂ₖ   = πbar₂ₖ₊₂
 
     # Update stopping criterion.
+    user_requested_exit = callback(solver) :: Bool
     breakdown = βₖ₊₁ ≤ btol && γₖ₊₁ ≤ btol
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
@@ -482,9 +489,10 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   end
   (verbose > 0) && @printf("\n")
 
-  tired     && (status = "maximum number of iterations exceeded")
-  breakdown && (status = "inconsistent linear system")
-  solved    && (status = "solution good enough given atol and rtol")
+  tired               && (status = "maximum number of iterations exceeded")
+  breakdown           && (status = "inconsistent linear system")
+  solved              && (status = "solution good enough given atol and rtol")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update x and y
   warm_start && @kaxpy!(m, one(FC), Δx, xₖ)
