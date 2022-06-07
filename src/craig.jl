@@ -37,7 +37,8 @@ export craig, craig!
     (x, y, stats) = craig(A, b::AbstractVector{FC};
                           M=I, N=I, sqd::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                           btol::T=√eps(T), rtol::T=√eps(T), conlim::T=1/√eps(T), itmax::Int=0,
-                          verbose::Int=0, transfer_to_lsqr::Bool=false, history::Bool=false)
+                          verbose::Int=0, transfer_to_lsqr::Bool=false, history::Bool=false,
+                          callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -85,6 +86,9 @@ In this case, `M` can still be specified and indicates the weighted norm in whic
 
 In this implementation, both the x and y-parts of the solution are returned.
 
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
+
 #### References
 
 * C. C. Paige and M. A. Saunders, [*LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*](https://doi.org/10.1145/355984.355989), ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
@@ -110,7 +114,8 @@ function craig! end
 function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
                 M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                 btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,
-                verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false,
+                callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -203,8 +208,9 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   inconsistent = false
   tired = iter ≥ itmax
+  user_requested_exit = false
 
-  while ! (solved || inconsistent || ill_cond || tired)
+  while ! (solved || inconsistent || ill_cond || tired || user_requested_exit)
     # Generate the next Golub-Kahan vectors
     # 1. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
     mul!(Aᵀu, Aᵀ, u)
@@ -302,6 +308,7 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
     ill_cond_lim = 1 / Acond ≤ ctol
     ill_cond = ill_cond_mach | ill_cond_lim
 
+    user_requested_exit = callback(solver) :: Bool
     inconsistent = false
     tired = iter ≥ itmax
   end
@@ -314,11 +321,12 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # TODO: update y
   end
 
-  tired         && (status = "maximum number of iterations exceeded")
-  solved        && (status = "solution good enough for the tolerances given")
-  ill_cond_mach && (status = "condition number seems too large for this machine")
-  ill_cond_lim  && (status = "condition number exceeds tolerance")
-  inconsistent  && (status = "system may be inconsistent")
+  tired               && (status = "maximum number of iterations exceeded")
+  solved              && (status = "solution good enough for the tolerances given")
+  ill_cond_mach       && (status = "condition number seems too large for this machine")
+  ill_cond_lim        && (status = "condition number exceeds tolerance")
+  inconsistent        && (status = "system may be inconsistent")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update stats
   stats.niter = iter
