@@ -96,6 +96,18 @@
       resid = norm(r) / norm(b)
       @test(resid ≤ usymlq_tol)
       @test(stats.solved)
+
+      # test callback function
+      A, b = over_consistent(FC=FC)
+      solver = UsymlqSolver(A, b)
+      c = similar(b, size(A, 2))
+      tol = 1.0e-1
+      cb_n2 = TestCallbackN2(A, b, tol = tol)
+      usymlq!(solver, A, b, c, atol = 0.0, rtol = 0.0, callback = solver -> cb_n2(solver))
+      @test solver.stats.status == "user-requested exit"
+      @test cb_n2(solver)
+
+      @test_throws TypeError usymlq(A, b, c, callback = solver -> "string", history = true)
     end
   end
 end

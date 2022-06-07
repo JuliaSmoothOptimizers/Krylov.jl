@@ -22,7 +22,8 @@ export usymlq, usymlq!
 """
     (x, stats) = usymlq(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                         atol::T=√eps(T), rtol::T=√eps(T), transfer_to_usymcg::Bool=true,
-                        itmax::Int=0, verbose::Int=0, history::Bool=false)
+                        itmax::Int=0, verbose::Int=0, history::Bool=false,
+                        callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -45,6 +46,9 @@ USYMLQ can be warm-started from an initial guess `x0` with the method
     (x, stats) = usymlq(A, b, c, x0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
+
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### References
 
@@ -85,7 +89,8 @@ end
 
 function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                  atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
-                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+                 callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -151,8 +156,9 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   solved_cg = false
   tired     = iter ≥ itmax
   status    = "unknown"
+  user_requested_exit = false
 
-  while !(solved_lq || solved_cg || tired)
+  while !(solved_lq || solved_cg || tired || user_requested_exit)
     # Update iteration index.
     iter = iter + 1
 
@@ -284,6 +290,7 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     δbarₖ₋₁ = δbarₖ
 
     # Update stopping criterion.
+    user_requested_exit = callback(solver) :: Bool
     solved_lq = rNorm_lq ≤ ε
     solved_cg = transfer_to_usymcg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ ε)
     tired = iter ≥ itmax
@@ -297,9 +304,10 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     @kaxpy!(n, ζbarₖ, d̅, x)
   end
 
-  tired     && (status = "maximum number of iterations exceeded")
-  solved_lq && (status = "solution xᴸ good enough given atol and rtol")
-  solved_cg && (status = "solution xᶜ good enough given atol and rtol")
+  tired               && (status = "maximum number of iterations exceeded")
+  solved_lq           && (status = "solution xᴸ good enough given atol and rtol")
+  solved_cg           && (status = "solution xᶜ good enough given atol and rtol")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)
