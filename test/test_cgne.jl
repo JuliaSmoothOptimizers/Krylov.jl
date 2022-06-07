@@ -94,6 +94,17 @@ end
         D⁻¹ = inv(D)
         (x, stats) = cgne(A, b, M=D⁻¹, λ=1.0)
       end
+
+      # test callback function
+      A, b = over_consistent(FC=FC)
+      solver = CgneSolver(A, b)
+      tol = 1.0e-1
+      cb_n2 = TestCallbackN2LN(A, b, real(zero(eltype(b))), tol = tol)
+      cgne!(solver, A, b, callback = solver -> cb_n2(solver))
+      @test solver.stats.status == "user-requested exit"
+      @test cb_n2(solver)
+
+      @test_throws TypeError cgne(A, b, callback = solver -> "string", history = true)
     end
   end
 end
