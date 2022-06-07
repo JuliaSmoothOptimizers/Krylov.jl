@@ -409,3 +409,21 @@ function (cb_n2::TestCallbackN2Shifts)(solver)
   r = residuals(cb_n2.A, cb_n2.b, cb_n2.shifts, solver.x)
   return all(map(norm, r) .≤ cb_n2.tol)
 end
+
+mutable struct TestCallbackN2LS{T, S, M}
+  A::M
+  b::S
+  λ::T
+  storage_vec1::S
+  storage_vec2::S
+  tol::T
+end
+TestCallbackN2LS(A, b, λ; tol = 0.1) = TestCallbackN2LS(A, b, λ, similar(b), similar(b, size(A, 2)), tol)
+
+function (cb_n2::TestCallbackN2LS)(solver)
+  mul!(cb_n2.storage_vec1, cb_n2.A, solver.x)
+  cb_n2.storage_vec1 .-= cb_n2.b
+  mul!(cb_n2.storage_vec2, cb_n2.A', cb_n2.storage_vec1)
+  cb_n2.storage_vec2 .+= cb_n2.λ .* solver.x
+  return norm(cb_n2.storage_vec2) ≤ cb_n2.tol
+end
