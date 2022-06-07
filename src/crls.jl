@@ -24,7 +24,8 @@ export crls, crls!
 """
     (x, stats) = crls(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false)
+                      radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
+                      callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -43,6 +44,9 @@ This implementation recurs the residual r := b - Ax.
 CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr‖₂.
 It is formally equivalent to LSMR, though can be substantially less accurate,
 but simpler to implement.
+
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### Reference
 
@@ -67,7 +71,8 @@ function crls! end
 
 function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-               radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+               callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -131,8 +136,9 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   solved = ArNorm ≤ ε
   tired = iter ≥ itmax
   psd = false
+  user_requested_exit = false
 
-  while ! (solved || tired)
+  while ! (solved || tired || user_requested_exit)
     qNorm² = @kdotr(n, q, q) # dot(q, q)
     α = γ / qNorm²
 
@@ -184,12 +190,17 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     history && push!(ArNorms, ArNorm)
     iter = iter + 1
     kdisplay(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
+    user_requested_exit = callback(solver) :: Bool
     solved = (ArNorm ≤ ε) || on_boundary
     tired = iter ≥ itmax
   end
   (verbose > 0) && @printf("\n")
 
-  status = psd ? "zero-curvature encountered" : (on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"))
+  tired               && (status = "maximum number of iterations exceeded")
+  solved              && (status = "solution good enough given atol and rtol")
+  psd                 && (status = "zero-curvature encountered")
+  on_boundary         && (status = "on trust-region boundary")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update stats
   stats.niter = iter
