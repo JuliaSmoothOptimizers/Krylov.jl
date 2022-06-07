@@ -88,28 +88,17 @@
         (x, stats) = lsmr(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
       end
 
-      # Test callback function
-      function test_callback(solver, iter)
-        return iter ≥ 1
-      end
+      # test callback function
+      A, b, M = saddle_point(FC=FC)
+      M⁻¹ = inv(M)
+      solver = LsmrSolver(A, b)
+      tol = 1.0e-1
+      cb_n2 = TestCallbackN2LS(A, b, zero(eltype(b)), tol = tol)
+      lsmr!(solver, A, b, M=M⁻¹, callback = solver -> cb_n2(solver))
+      @test solver.stats.status == "user-requested exit"
+      @test cb_n2(solver)
 
-      (x, stats) = lsmr(A, b, callback = test_callback, history = true)
-      @test stats.status == "user-requested exit"
-      @test length(stats.residuals) == 2
-
-      f1(solver, iter) = iter ≥ 1
-
-      (x, stats) = lsmr(A, b, callback = f1, history = true)
-      @test stats.status == "user-requested exit"
-      @test length(stats.residuals) == 2
-
-      (x, stats) = lsmr(A, b, callback = (args...) -> true, history = true)
-      @test stats.status == "user-requested exit"
-
-      (x, stats) = lsmr(A, b, callback = (args...) -> begin return true; end, history = true)
-      @test stats.status == "user-requested exit"
-
-      @test_throws TypeError lsmr(A, b, callback = (args...) -> "string", history = true)
+      @test_throws TypeError lsmr(A, b, M=M⁻¹, callback = solver -> "string", history = true)
     end
   end
 end
