@@ -32,7 +32,8 @@ export lsqr, lsqr!
                       atol::T=zero(T), rtol::T=zero(T),
                       etol::T=√eps(T), window::Int=5,
                       itmax::Int=0, conlim::T=1/√eps(T),
-                      radius::T=zero(T), verbose::Int=0, history::Bool=false)
+                      radius::T=zero(T), verbose::Int=0, history::Bool=false,
+                      callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -79,6 +80,9 @@ The system above represents the optimality conditions of
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᵀr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
+
 #### Reference
 
 * C. C. Paige and M. A. Saunders, [*LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*](https://doi.org/10.1145/355984.355989), ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
@@ -105,7 +109,8 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                axtol :: T=√eps(T), btol :: T=√eps(T),
                atol :: T=zero(T), rtol :: T=zero(T),
                etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
-               radius :: T=zero(T), verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               radius :: T=zero(T), verbose :: Int=0, history :: Bool=false,
+               callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -215,8 +220,9 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   zero_resid_mach = one(T) + rNorm / β₁ ≤ one(T)
   zero_resid = zero_resid_mach | zero_resid_lim
   fwd_err = false
+  user_requested_exit = false
 
-  while ! (solved || tired || ill_cond)
+  while ! (solved || tired || ill_cond || user_requested_exit)
     iter = iter + 1
 
     # Generate next Golub-Kahan vectors.
@@ -328,6 +334,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     zero_resid_mach = (one(T) + t1 ≤ one(T))
 
     # Stopping conditions based on user-provided tolerances.
+    user_requested_exit = callback(solver) :: Bool
     tired  = iter ≥ itmax
     ill_cond_lim = (test3 ≤ ctol)
     solved_lim = (test2 ≤ axtol)
@@ -341,13 +348,14 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   end
   (verbose > 0) && @printf("\n")
 
-  tired         && (status = "maximum number of iterations exceeded")
-  ill_cond_mach && (status = "condition number seems too large for this machine")
-  ill_cond_lim  && (status = "condition number exceeds tolerance")
-  solved        && (status = "found approximate minimum least-squares solution")
-  zero_resid    && (status = "found approximate zero-residual solution")
-  fwd_err       && (status = "truncated forward error small enough")
-  on_boundary   && (status = "on trust-region boundary")
+  tired               && (status = "maximum number of iterations exceeded")
+  ill_cond_mach       && (status = "condition number seems too large for this machine")
+  ill_cond_lim        && (status = "condition number exceeds tolerance")
+  solved              && (status = "found approximate minimum least-squares solution")
+  zero_resid          && (status = "found approximate zero-residual solution")
+  fwd_err             && (status = "truncated forward error small enough")
+  on_boundary         && (status = "on trust-region boundary")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update stats
   stats.niter = iter

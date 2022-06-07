@@ -87,6 +87,18 @@
         N⁻¹ = inv(N)
         (x, stats) = lsqr(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
       end
+
+      # test callback function
+      A, b, M = saddle_point(FC=FC)
+      M⁻¹ = inv(M)
+      solver = LsqrSolver(A, b)
+      tol = 1.0e-1
+      cb_n2 = TestCallbackN2LS(A, b, zero(eltype(b)), tol = tol)
+      lsqr!(solver, A, b, M=M⁻¹, callback = solver -> cb_n2(solver))
+      @test solver.stats.status == "user-requested exit"
+      @test cb_n2(solver)
+
+      @test_throws TypeError lsqr(A, b, M=M⁻¹, callback = solver -> "string", history = true)
     end
   end
 end
