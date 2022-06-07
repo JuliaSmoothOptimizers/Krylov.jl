@@ -13,7 +13,8 @@ export cgs, cgs!
 """
     (x, stats) = cgs(A, b::AbstractVector{FC}; c::AbstractVector{FC}=b,
                      M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
-                     itmax::Int=0, verbose::Int=0, history::Bool=false)
+                     itmax::Int=0, verbose::Int=0, history::Bool=false,
+                     callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -44,6 +45,9 @@ CGS can be warm-started from an initial guess `x0` with the method
     (x, stats) = cgs(A, b, x0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
+
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### Reference
 
@@ -81,7 +85,8 @@ end
 
 function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-              itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+              itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+              callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -158,8 +163,9 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   tired = iter ≥ itmax
   breakdown = false
   status = "unknown"
+  user_requested_exit = false
 
-  while !(solved || tired || breakdown)
+  while !(solved || tired || breakdown || user_requested_exit)
 
     NisI || mul!(y, N, p)         # yₖ = N⁻¹pₖ
     mul!(t, A, y)                 # tₖ = Ayₖ
@@ -192,6 +198,7 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     history && push!(rNorms, rNorm)
 
     # Update stopping criterion.
+    user_requested_exit = callback(solver) :: Bool
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
@@ -199,7 +206,10 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   end
   (verbose > 0) && @printf("\n")
 
-  status = tired ? "maximum number of iterations exceeded" : (breakdown ? "breakdown αₖ == 0" : "solution good enough given atol and rtol")
+  tired               && (status = "maximum number of iterations exceeded")
+  breakdown           && (status = "breakdown αₖ == 0")
+  solved              && (status = "solution good enough given atol and rtol")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)

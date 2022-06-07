@@ -78,6 +78,17 @@
       A, b, c = bc_breakdown(FC=FC)
       (x, stats) = cgs(A, b, c=c)
       @test stats.status == "Breakdown bᵀc = 0"
+
+      # test callback function
+      A, b = sparse_laplacian(FC=FC)
+      solver = CgsSolver(A, b)
+      tol = 1.0e-1
+      cb_n2 = TestCallbackN2(A, b, tol = tol)
+      cgs!(solver, A, b, atol = 0.0, rtol = 0.0, callback = solver -> cb_n2(solver))
+      @test solver.stats.status == "user-requested exit"
+      @test cb_n2(solver)
+
+      @test_throws TypeError cgs(A, b, callback = solver -> "string", history = true)
     end
   end
 end
