@@ -30,7 +30,8 @@ export craigmr, craigmr!
 """
     (x, y, stats) = craigmr(A, b::AbstractVector{FC};
                             M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
-                            rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false)
+                            rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
+                            callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -81,6 +82,9 @@ It is formally equivalent to CRMR, though can be slightly more accurate,
 and intricate to implement. Both the x- and y-parts of the solution are
 returned.
 
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
+
 #### References
 
 * D. Orban and M. Arioli. [*Iterative Solution of Symmetric Quasi-Definite Linear Systems*](https://doi.org/10.1137/1.9781611974737), Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
@@ -105,7 +109,8 @@ function craigmr! end
 
 function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                   M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
-                  rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                  rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+                  callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -215,8 +220,9 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   solved = rNorm ≤ ɛ_c
   inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
   tired  = iter ≥ itmax
+  user_requested_exit = false
 
-  while ! (solved || inconsistent || tired)
+  while ! (solved || inconsistent || tired || user_requested_exit)
     iter = iter + 1
 
     # Generate next Golub-Kahan vectors.
@@ -309,13 +315,17 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     θ    =  s * αhat
     ρbar = -c * αhat
 
+    user_requested_exit = callback(solver) :: Bool
     solved = rNorm ≤ ɛ_c
     inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
     tired  = iter ≥ itmax
   end
   (verbose > 0) && @printf("\n")
-
-  status = tired ? "maximum number of iterations exceeded" : (solved ? "found approximate minimum-norm solution" : "found approximate minimum least-squares solution")
+  
+  tired               && (status = "maximum number of iterations exceeded")
+  solved              && (status = "found approximate minimum-norm solution")
+  !tired && !solved   && (status = "found approximate minimum least-squares solution")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update stats
   stats.niter = iter
