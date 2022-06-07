@@ -136,6 +136,17 @@ end
           N⁻¹ = inv(N)
           (x, y, stats) = lnlq(A, b, M=M⁻¹, N=N⁻¹, sqd=true, transfer_to_craig=transfer_to_craig)
         end
+
+        # test callback function
+        A, b = over_consistent(FC=FC)
+        solver = LnlqSolver(A, b)
+        tol = 1.0e-1
+        cb_n2 = TestCallbackN2LN(A, b, real(zero(eltype(b))), tol = tol)
+        lnlq!(solver, A, b, callback = solver -> cb_n2(solver))
+        @test solver.stats.status == "user-requested exit"
+        @test cb_n2(solver)
+
+        @test_throws TypeError lnlq(A, b, callback = solver -> "string", history = true)
       end
     end
   end

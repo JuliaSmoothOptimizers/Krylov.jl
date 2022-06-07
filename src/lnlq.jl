@@ -28,7 +28,8 @@ export lnlq, lnlq!
     (x, y, stats) = lnlq(A, b::AbstractVector{FC};
                          M=I, N=I, sqd::Bool=false, λ::T=zero(T), σ::T=zero(T),
                          atol::T=√eps(T), rtol::T=√eps(T), etolx::T=√eps(T), etoly::T=√eps(T), itmax::Int=0,
-                         transfer_to_craig::Bool=true, verbose::Int=0, history::Bool=false)
+                         transfer_to_craig::Bool=true, verbose::Int=0, history::Bool=false,
+                         callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -78,6 +79,9 @@ In this implementation, both the x and y-parts of the solution are returned.
 The bound is valid if λ>0 or σ>0 where σ should be strictly smaller than the smallest positive singular value.
 For instance σ:=(1-1e-7)σₘᵢₙ .
 
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
+
 #### Reference
 
 * R. Estrin, D. Orban, M.A. Saunders, [*LNLQ: An Iterative Method for Least-Norm Problems with an Error Minimization Property*](https://doi.org/10.1137/18M1194948), SIAM Journal on Matrix Analysis and Applications, 40(3), pp. 1102--1124, 2019.
@@ -102,7 +106,8 @@ function lnlq! end
 function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
                atol :: T=√eps(T), rtol :: T=√eps(T), etolx :: T=√eps(T), etoly :: T=√eps(T), itmax :: Int=0,
-               transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false,
+               callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -234,6 +239,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   solved_lq = solved_cg = false
   tired = false
   status = "unknown"
+  user_requested_exit = false
 
   if σₑₛₜ > 0
     τtildeₖ = βₖ / σₑₛₜ
@@ -249,7 +255,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     csig = -one(T)
   end
 
-  while !(solved_lq || solved_cg || tired)
+  while !(solved_lq || solved_cg || tired || user_requested_exit)
 
     # Update of (xᵃᵘˣ)ₖ = Vₖtₖ
     if λ > 0
@@ -427,6 +433,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
 
     # Update stopping criterion.
+    user_requested_exit = callback(solver) :: Bool
     tired = iter ≥ itmax
     solved_lq = rNorm_lq ≤ ε
     solved_cg = transfer_to_craig && rNorm_cg ≤ ε
@@ -470,9 +477,10 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
   end
 
-  tired     && (status = "maximum number of iterations exceeded")
-  solved_lq && (status = "solutions (xᴸ, yᴸ) good enough for the tolerances given")
-  solved_cg && (status = "solutions (xᶜ, yᶜ) good enough for the tolerances given")
+  tired               && (status = "maximum number of iterations exceeded")
+  solved_lq           && (status = "solutions (xᴸ, yᴸ) good enough for the tolerances given")
+  solved_cg           && (status = "solutions (xᶜ, yᶜ) good enough for the tolerances given")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update stats
   stats.niter = iter
