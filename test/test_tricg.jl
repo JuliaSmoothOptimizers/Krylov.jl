@@ -155,6 +155,18 @@
         τ = ν = 1.0
         x, y, stats = tricg(A, b, c, τ=τ, ν=ν)
         @test(stats.inconsistent)
+
+        # test callback function
+        A, b, D = saddle_point(FC=FC)
+        c = -b
+        solver = TricgSolver(A, b)
+        tol = 1.0e-1
+        cb_n2 = TestCallbackN2SaddlePts(A, b, c, tol = tol)
+        tricg!(solver, A, b, c, callback = solver -> cb_n2(solver))
+        @test solver.stats.status == "user-requested exit"
+        @test cb_n2(solver)
+
+        @test_throws TypeError tricg(A, b, c, callback = solver -> "string", history = true)
       end
     end
   end
