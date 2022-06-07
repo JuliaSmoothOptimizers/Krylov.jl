@@ -443,3 +443,22 @@ function (cb_n2::TestCallbackN2LN)(solver)
   cb_n2.λ != 0 && (cb_n2.storage_vec .+= sqrt(cb_n2.λ) .* solver.s)
   return norm(cb_n2.storage_vec) ≤ cb_n2.tol
 end
+
+mutable struct TestCallbackN2SaddlePts{T, S, M}
+  A::M
+  b::S
+  c::S
+  storage_vec1::S
+  storage_vec2::S
+  tol::T
+end
+TestCallbackN2SaddlePts(A, b, c; tol = 0.1) = 
+  TestCallbackN2SaddlePts(A, b, c, similar(b), similar(c), tol)
+
+function (cb_n2::TestCallbackN2SaddlePts)(solver)
+  mul!(cb_n2.storage_vec1, cb_n2.A, solver.y)
+  cb_n2.storage_vec1 .+= solver.x .- cb_n2.b
+  mul!(cb_n2.storage_vec2, cb_n2.A', solver.x)
+  cb_n2.storage_vec2 .-= solver.y .+ cb_n2.c
+  return (norm(cb_n2.storage_vec1) ≤ cb_n2.tol && norm(cb_n2.storage_vec2) ≤ cb_n2.tol)
+end
