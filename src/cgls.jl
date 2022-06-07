@@ -32,7 +32,8 @@ export cgls, cgls!
 """
     (x, stats) = cgls(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false)
+                      radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
+                      callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -51,6 +52,9 @@ but is more stable.
 CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖Aᵀr‖₂.
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
+
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### References
 
@@ -76,7 +80,8 @@ function cgls! end
 
 function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-               radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+               callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -130,8 +135,9 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   on_boundary = false
   solved = ArNorm ≤ ε
   tired = iter ≥ itmax
+  user_requested_exit = false
 
-  while ! (solved || tired)
+  while ! (solved || tired || user_requested_exit)
     mul!(q, A, p)
     MisI || mul!(Mq, M, q)
     δ = @kdotr(m, q, Mq)  # δ = qᵀMq
@@ -160,12 +166,17 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     history && push!(ArNorms, ArNorm)
     iter = iter + 1
     kdisplay(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
+    user_requested_exit = callback(solver) :: Bool
     solved = (ArNorm ≤ ε) | on_boundary
     tired = iter ≥ itmax
   end
   (verbose > 0) && @printf("\n")
 
-  status = on_boundary ? "on trust-region boundary" : (tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol")
+  tired               && (status = "maximum number of iterations exceeded")
+  on_boundary         && (status = "on trust-region boundary")
+  solved              && (status = "solution good enough given atol and rtol")
+  user_requested_exit && (status = "user-requested exit")
+
 
   # Update stats
   stats.niter = iter

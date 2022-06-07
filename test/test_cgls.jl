@@ -46,6 +46,18 @@
         D⁻¹ = inv(D)
         (x, stats) = cgls(A, b, M=D⁻¹, λ=1.0)
       end
+
+      # test callback function
+      A, b, M = saddle_point(FC=FC)
+      M⁻¹ = inv(M)
+      solver = CglsSolver(A, b)
+      tol = 1.0e-1
+      cb_n2 = TestCallbackN2LS(A, b, zero(eltype(b)), tol = tol)
+      cgls!(solver, A, b, M=M⁻¹, callback = solver -> cb_n2(solver))
+      @test solver.stats.status == "user-requested exit"
+      @test cb_n2(solver)
+
+      @test_throws TypeError cgls(A, b, M=M⁻¹, callback = solver -> "string", history = true)
     end
   end
 end
