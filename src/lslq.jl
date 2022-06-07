@@ -28,7 +28,8 @@ export lslq, lslq!
                       atol::T=√eps(T), btol::T=√eps(T), etol::T=√eps(T),
                       window::Int=5, utol::T=√eps(T), itmax::Int=0,
                       σ::T=zero(T), transfer_to_lsqr::Bool=false, 
-                      conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false)
+                      conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false,
+                      callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -126,6 +127,9 @@ The iterations stop as soon as one of the following conditions holds true:
 * the lower bound on the LQ forward error is less than etol * ‖xᴸ‖
 * the upper bound on the CG forward error is less than utol * ‖xᶜ‖
 
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
+
 #### References
 
 * R. Estrin, D. Orban and M. A. Saunders, [*Euclidean-norm error bounds for SYMMLQ and CG*](https://doi.org/10.1137/16M1094816), SIAM Journal on Matrix Analysis and Applications, 40(1), pp. 235--253, 2019.
@@ -153,7 +157,8 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
                utol :: T=√eps(T), itmax :: Int=0, σ :: T=zero(T),
                transfer_to_lsqr :: Bool=false, conlim :: T=1/√eps(T),
-               verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               verbose :: Int=0, history :: Bool=false,
+               callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -279,8 +284,9 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   zero_resid = zero_resid_mach = zero_resid_lim = false
   fwd_err_lbnd = false
   fwd_err_ubnd = false
+  user_requested_exit = false
 
-  while ! (solved || tired || ill_cond)
+  while ! (solved || tired || ill_cond || user_requested_exit)
 
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
@@ -422,6 +428,7 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     zero_resid_mach = (one(T) + t1 ≤ one(T))
 
     # Stopping conditions based on user-provided tolerances.
+    user_requested_exit = callback(solver) :: Bool
     tired  = iter ≥ itmax
     ill_cond_lim = (test3 ≤ ctol)
     solved_lim = (test2 ≤ atol)
@@ -440,13 +447,14 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     @kaxpy!(n, ζ̄ , w̄, x)
   end
 
-  tired         && (status = "maximum number of iterations exceeded")
-  ill_cond_mach && (status = "condition number seems too large for this machine")
-  ill_cond_lim  && (status = "condition number exceeds tolerance")
-  solved        && (status = "found approximate minimum least-squares solution")
-  zero_resid    && (status = "found approximate zero-residual solution")
-  fwd_err_lbnd  && (status = "forward error lower bound small enough")
-  fwd_err_ubnd  && (status = "forward error upper bound small enough")
+  tired               && (status = "maximum number of iterations exceeded")
+  ill_cond_mach       && (status = "condition number seems too large for this machine")
+  ill_cond_lim        && (status = "condition number exceeds tolerance")
+  solved              && (status = "found approximate minimum least-squares solution")
+  zero_resid          && (status = "found approximate zero-residual solution")
+  fwd_err_lbnd        && (status = "forward error lower bound small enough")
+  fwd_err_ubnd        && (status = "forward error upper bound small enough")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update stats
   stats.niter = iter
