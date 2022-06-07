@@ -173,8 +173,8 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   (verbose > 0) && @printf("\n")
 
   tired               && (status = "maximum number of iterations exceeded")
-  on_boundary         && (status = "on trust-region boundary")
   solved              && (status = "solution good enough given atol and rtol")
+  on_boundary         && (status = "on trust-region boundary")
   user_requested_exit && (status = "user-requested exit")
 
 
