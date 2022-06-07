@@ -70,6 +70,18 @@
       A, b, c = bc_breakdown(FC=FC)
       (x, stats) = bilq(A, b, c=c)
       @test stats.status == "Breakdown bᵀc = 0"
+
+      
+      # test callback function
+      A, b = polar_poisson(FC=FC)
+      solver = BilqSolver(A, b)
+      tol = 1.0e-1
+      cb_n2 = TestCallbackN2(A, b, tol = tol)
+      bilq!(solver, A, b, callback = solver -> cb_n2(solver))
+      @test solver.stats.status == "user-requested exit"
+      @test cb_n2(solver)
+
+      @test_throws TypeError bilq(A, b, callback = solver -> "string", history = true)
     end
   end
 end

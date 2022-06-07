@@ -15,7 +15,8 @@ export bilq, bilq!
 """
     (x, stats) = bilq(A, b::AbstractVector{FC}; c::AbstractVector{FC}=b,
                       atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
-                      itmax::Int=0, verbose::Int=0, history::Bool=false)
+                      itmax::Int=0, verbose::Int=0, history::Bool=false,
+                      callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -34,6 +35,9 @@ BiLQ can be warm-started from an initial guess `x0` with the method
     (x, stats) = bilq(A, b, x0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
+
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### Reference
 
@@ -71,7 +75,8 @@ end
 
 function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
                atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
-               itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+               callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -151,8 +156,9 @@ function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Ab
   breakdown = false
   tired     = iter ≥ itmax
   status    = "unknown"
+  user_requested_exit = false
 
-  while !(solved_lq || solved_cg || tired || breakdown)
+  while !(solved_lq || solved_cg || tired || breakdown || user_requested_exit)
     # Update iteration index.
     iter = iter + 1
 
@@ -289,6 +295,7 @@ function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Ab
     norm_vₖ = norm_vₖ₊₁
 
     # Update stopping criterion.
+    user_requested_exit = callback(solver) :: Bool
     solved_lq = rNorm_lq ≤ ε
     solved_cg = transfer_to_bicg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ ε)
     tired = iter ≥ itmax
@@ -303,10 +310,11 @@ function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Ab
     @kaxpy!(n, ζbarₖ, d̅, x)
   end
 
-  tired     && (status = "maximum number of iterations exceeded")
-  breakdown && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
-  solved_lq && (status = "solution xᴸ good enough given atol and rtol")
-  solved_cg && (status = "solution xᶜ good enough given atol and rtol")
+  tired               && (status = "maximum number of iterations exceeded")
+  breakdown           && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
+  solved_lq           && (status = "solution xᴸ good enough given atol and rtol")
+  solved_cg           && (status = "solution xᶜ good enough given atol and rtol")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)
