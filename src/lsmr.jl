@@ -33,7 +33,7 @@ export lsmr, lsmr!
                       etol::T=√eps(T), window::Int=5,
                       itmax::Int=0, conlim::T=1/√eps(T),
                       radius::T=zero(T), verbose::Int=0,
-                      history::Bool=false, callback::Function=(args...) -> false)
+                      history::Bool=false, callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -84,10 +84,8 @@ The system above represents the optimality conditions of
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᵀr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 
-The callback is called as `callback(solver, iter)` and should return `true` if the main loop should terminate,
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
-
-Note that `history` should be set to `true` to have access to `rNorms` and `ArNorms` in the callback.
 
 #### Reference
 
@@ -116,7 +114,7 @@ function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                atol :: T=zero(T), rtol :: T=zero(T),
                etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
                radius :: T=zero(T), verbose :: Int=0, history :: Bool=false,
-               callback :: Function = (args...) -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -343,14 +341,13 @@ function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     zero_resid_mach = (one(T) + t1 ≤ one(T))
 
     # Stopping conditions based on user-provided tolerances.
+    user_requested_exit = callback(solver) :: Bool
     tired  = iter ≥ itmax
     ill_cond_lim = (test3 ≤ ctol)
     solved_lim = (test2 ≤ axtol)
     solved_opt = ArNorm ≤ atol + rtol * ArNorm0
     zero_resid_lim = (test1 ≤ rNormtol)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
-
-    user_requested_exit = callback(solver, iter) :: Bool
 
     ill_cond = ill_cond_mach | ill_cond_lim
     zero_resid = zero_resid_mach | zero_resid_lim
