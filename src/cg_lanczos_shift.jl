@@ -18,7 +18,8 @@ export cg_lanczos_shift, cg_lanczos_shift!
     (x, stats) = cg_lanczos_shift(A, b::AbstractVector{FC}, shifts::AbstractVector{T};
                                   M=I, atol::T=√eps(T), rtol::T=√eps(T),
                                   itmax::Int=0, check_curvature::Bool=false,
-                                  verbose::Int=0, history::Bool=false)
+                                  verbose::Int=0, history::Bool=false,
+                                  callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -32,6 +33,9 @@ The method does _not_ abort if A + αI is not definite.
 
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be hermitian and positive definite.
+
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 """
 function cg_lanczos_shift end
 
@@ -54,7 +58,8 @@ function cg_lanczos_shift! end
 function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: AbstractVector{T};
                            M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                            itmax :: Int=0, check_curvature :: Bool=false,
-                           verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                           verbose :: Int=0, history :: Bool=false,
+                           callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -145,9 +150,10 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
   solved = sum(not_cv) == 0
   tired = iter ≥ itmax
   status = "unknown"
+  user_requested_exit = false
 
   # Main loop.
-  while ! (solved || tired)
+  while ! (solved || tired || user_requested_exit)
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
     mul!(Mv_next, A, v)                  # Mvₖ₊₁ ← Avₖ
@@ -204,12 +210,15 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
     iter = iter + 1
     kdisplay(iter, verbose) && local_printf(iter, rNorms...)
 
+    user_requested_exit = callback(solver) :: Bool
     solved = sum(not_cv) == 0
     tired = iter ≥ itmax
   end
   (verbose > 0) && @printf("\n")
 
-  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  tired               && (status = "maximum number of iterations exceeded")
+  solved              && (status = "solution good enough given atol and rtol")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update stats. TODO: Estimate Anorm and Acond.
   stats.niter = iter

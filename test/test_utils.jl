@@ -396,3 +396,16 @@ function (cb_n2::TestCallbackN2Adjoint)(solver)
   cb_n2.storage_vec2 .-= cb_n2.c
   return (norm(cb_n2.storage_vec1) ≤ cb_n2.tol && norm(cb_n2.storage_vec2) ≤ cb_n2.tol)
 end
+
+mutable struct TestCallbackN2Shifts{T, S, M}
+  A::M
+  b::S
+  shifts::Vector{T}
+  tol::T
+end
+TestCallbackN2Shifts(A, b, shifts; tol = 0.1) = TestCallbackN2Shifts(A, b, shifts, tol)
+
+function (cb_n2::TestCallbackN2Shifts)(solver)
+  r = residuals(cb_n2.A, cb_n2.b, cb_n2.shifts, solver.x)
+  return all(map(norm, r) .≤ cb_n2.tol)
+end
