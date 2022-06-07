@@ -89,6 +89,17 @@ end
         D⁻¹ = inv(D)
         (x, stats) = crmr(A, b, M=D⁻¹, λ=1.0)
       end
+
+      # test callback function
+      A, b = over_consistent(FC=FC)
+      solver = CrmrSolver(A, b)
+      tol = 1.0e-1
+      cb_n2 = TestCallbackN2LN(A, b, real(zero(eltype(b))), tol = tol)
+      crmr!(solver, A, b, callback = solver -> cb_n2(solver))
+      @test solver.stats.status == "user-requested exit"
+      @test cb_n2(solver)
+
+      @test_throws TypeError crmr(A, b, callback = solver -> "string", history = true)
     end
   end
 end

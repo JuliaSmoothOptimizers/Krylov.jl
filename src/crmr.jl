@@ -30,7 +30,8 @@ export crmr, crmr!
 """
     (x, stats) = crmr(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T),
-                      rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false)
+                      rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
+                      callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -59,6 +60,9 @@ but simpler to implement. Only the x-part of the solution is returned.
 
 A preconditioner M may be provided.
 
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
+
 #### References
 
 * D. Orban and M. Arioli, [*Iterative Solution of Symmetric Quasi-Definite Linear Systems*](https://doi.org/10.1137/1.9781611974737), Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
@@ -83,7 +87,8 @@ function crmr! end
 
 function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T),
-               rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+               callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -139,8 +144,9 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   solved = rNorm ≤ ɛ_c
   inconsistent = (rNorm > 100 * ɛ_c) && (ArNorm ≤ ɛ_i)
   tired = iter ≥ itmax
+  user_requested_exit = false
 
-  while ! (solved || inconsistent || tired)
+  while ! (solved || inconsistent || tired || user_requested_exit)
     mul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s
     MisI || mul!(Mq, M, q)
@@ -164,13 +170,17 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     history && push!(ArNorms, ArNorm)
     iter = iter + 1
     kdisplay(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
+    user_requested_exit = callback(solver) :: Bool
     solved = rNorm ≤ ɛ_c
     inconsistent = (rNorm > 100 * ɛ_c) && (ArNorm ≤ ɛ_i)
     tired = iter ≥ itmax
   end
   (verbose > 0) && @printf("\n")
 
-  status = tired ? "maximum number of iterations exceeded" : (inconsistent ? "system probably inconsistent but least squares/norm solution found" : "solution good enough given atol and rtol")
+  tired               && (status = "maximum number of iterations exceeded")
+  solved              && (status = "solution good enough given atol and rtol")
+  inconsistent        && (status = "system probably inconsistent but least squares/norm solution found")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update stats
   stats.niter = iter
