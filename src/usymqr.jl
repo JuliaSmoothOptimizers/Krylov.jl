@@ -22,7 +22,8 @@ export usymqr, usymqr!
 """
     (x, stats) = usymqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                         atol::T=√eps(T), rtol::T=√eps(T),
-                        itmax::Int=0, verbose::Int=0, history::Bool=false)
+                        itmax::Int=0, verbose::Int=0, history::Bool=false,
+                        callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -42,6 +43,9 @@ USYMQR can be warm-started from an initial guess `x0` with the method
     (x, stats) = usymqr(A, b, c, x0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
+
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### References
 
@@ -82,7 +86,8 @@ end
 
 function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                  atol :: T=√eps(T), rtol :: T=√eps(T),
-                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+                 callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -148,8 +153,9 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   inconsistent = false
   tired = iter ≥ itmax
   status = "unknown"
+  user_requested_exit = false
 
-  while !(solved || tired || inconsistent)
+  while !(solved || tired || inconsistent || user_requested_exit)
     # Update iteration index.
     iter = iter + 1
 
@@ -281,13 +287,16 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
 
     # Update stopping criterion.
     iter == 1 && (κ = atol + rtol * AᵀrNorm)
+    user_requested_exit = callback(solver) :: Bool
     solved = rNorm ≤ ε
     inconsistent = !solved && AᵀrNorm ≤ κ
     tired = iter ≥ itmax
     kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, AᵀrNorm)
   end
   (verbose > 0) && @printf("\n")
-  status = tired ? "maximum number of iterations exceeded" : "solution good enough given atol and rtol"
+  tired               && (status = "maximum number of iterations exceeded")
+  solved              && (status = "solution good enough given atol and rtol")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)
