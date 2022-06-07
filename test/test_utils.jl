@@ -427,3 +427,19 @@ function (cb_n2::TestCallbackN2LS)(solver)
   cb_n2.storage_vec2 .+= cb_n2.λ .* solver.x
   return norm(cb_n2.storage_vec2) ≤ cb_n2.tol
 end
+
+mutable struct TestCallbackN2LN{T, S, M}
+  A::M
+  b::S
+  λ::T
+  storage_vec::S
+  tol::T
+end
+TestCallbackN2LN(A, b, λ; tol = 0.1) = TestCallbackN2LN(A, b, λ, similar(b), tol)
+
+function (cb_n2::TestCallbackN2LN)(solver)
+  mul!(cb_n2.storage_vec, cb_n2.A, solver.x)
+  cb_n2.storage_vec .-= cb_n2.b
+  cb_n2.λ != 0 && (cb_n2.storage_vec .+= sqrt(cb_n2.λ) .* solver.s)
+  return norm(cb_n2.storage_vec) ≤ cb_n2.tol
+end
