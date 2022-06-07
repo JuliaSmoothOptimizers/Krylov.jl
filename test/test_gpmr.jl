@@ -272,6 +272,16 @@
         (x, y, stats) = gpmr(A, A', b, c, E=M⁻¹, F=N⁻¹)
         (x, y, stats) = gpmr(A, A', b, c, C=M⁻¹, D=N⁻¹)
       end
+
+      # test callback function
+      # Not testing with an interesting callback because solver.x and solver.y are not updated 
+      # until the end of the algorithm (TODO: be able to evaluate solver.x and solver.y ?)
+      A, b, c = square_adjoint(FC=FC)
+      solver = GpmrSolver(A, b, 20)
+      gpmr!(solver, A, A', b, c, callback = solver -> true)
+      @test solver.stats.status == "user-requested exit"
+
+      @test_throws TypeError gpmr(A, A', b, c, callback = solver -> "string", history = true)
     end
   end
 end

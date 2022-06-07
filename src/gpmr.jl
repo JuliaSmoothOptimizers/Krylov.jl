@@ -16,7 +16,8 @@ export gpmr, gpmr!
                          C=I, D=I, E=I, F=I, atol::T=√eps(T), rtol::T=√eps(T),
                          gsp::Bool=false, reorthogonalization::Bool=false,
                          itmax::Int=0, λ::FC=one(FC), μ::FC=one(FC),
-                         verbose::Int=0, history::Bool=false)
+                         verbose::Int=0, history::Bool=false,
+                         callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -63,6 +64,9 @@ GPMR can be warm-started from initial guesses `x0` and `y0` with the method
 
 where `kwargs` are the same keyword arguments as above.
 
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
+
 #### Reference
 
 * A. Montoison and D. Orban, [*GPMR: An Iterative Method for Unsymmetric Partitioned Linear Systems*](https://dx.doi.org/10.13140/RG.2.2.24069.68326), Cahier du GERAD G-2021-62, GERAD, Montréal, 2021.
@@ -105,7 +109,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
                C=I, D=I, E=I, F=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                gsp :: Bool=false, reorthogonalization :: Bool=false,
                itmax :: Int=0, λ :: FC=one(FC), μ :: FC=one(FC),
-               verbose :: Int=0, history::Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               verbose :: Int=0, history::Bool=false,
+               callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   s, t = size(B)
@@ -220,8 +225,9 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
   status = "unknown"
+  user_requested_exit = false
 
-  while !(solved || tired || breakdown)
+  while !(solved || tired || breakdown || user_requested_exit)
 
     # Update iteration index.
     iter = iter + 1
@@ -385,13 +391,14 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     nr = nr + 4k-1
 
     # Update stopping criterion.
+    user_requested_exit = callback(solver) :: Bool
     breakdown = Faux ≤ btol && Haux ≤ btol
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
     kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, Haux, Faux)
 
     # Compute vₖ₊₁ and uₖ₊₁
-    if !(solved || tired || breakdown)
+    if !(solved || tired || breakdown || user_requested_exit)
       if iter ≥ mem
         push!(V, S(undef, m))
         push!(U, S(undef, n))
@@ -453,9 +460,10 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   warm_start && @kaxpy!(n, one(FC), Δy, y)
   solver.warm_start = false
 
-  tired        && (status = "maximum number of iterations exceeded")
-  solved       && (status = "solution good enough given atol and rtol")
-  inconsistent && (status = "found approximate least-squares solution")
+  tired               && (status = "maximum number of iterations exceeded")
+  solved              && (status = "solution good enough given atol and rtol")
+  inconsistent        && (status = "found approximate least-squares solution")
+  user_requested_exit && (status = "user-requested exit")
 
   # Update stats
   stats.niter = iter
