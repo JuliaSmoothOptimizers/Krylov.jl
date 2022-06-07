@@ -15,7 +15,8 @@ export bilqr, bilqr!
 """
     (x, y, stats) = bilqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                           atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
-                          itmax::Int=0, verbose::Int=0, history::Bool=false)
+                          itmax::Int=0, verbose::Int=0, history::Bool=false,
+                          callback::Function=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -37,6 +38,9 @@ BiLQR can be warm-started from initial guesses `x0` and `y0` with the method
     (x, y, stats) = bilqr(A, b, c, x0, y0; kwargs...)
 
 where `kwargs` are the same keyword arguments as above.
+
+The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
+and `false` otherwise.
 
 #### Reference
 
@@ -75,7 +79,8 @@ end
 
 function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
-                itmax :: Int=0, verbose :: Int=0, history :: Bool=false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+                callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("Systems must be square")
@@ -167,8 +172,9 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   tired = iter ≥ itmax
   breakdown = false
   status = "unknown"
+  user_requested_exit = false
 
-  while !((solved_primal && solved_dual) || tired || breakdown)
+  while !((solved_primal && solved_dual) || tired || breakdown || user_requested_exit)
     # Update iteration index.
     iter = iter + 1
 
@@ -384,6 +390,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     γₖ      = γₖ₊₁
     βₖ      = βₖ₊₁
 
+    user_requested_exit = callback(solver) :: Bool
     tired = iter ≥ itmax
     breakdown = !solved_lq && !solved_cg && (pᵗq == 0)
 
@@ -415,6 +422,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   solved_cg_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᶜ and a dual solution t good enough given atol and rtol")
   solved_lq_tol  && solved_qr_mach && (status = "Found a primal solution xᴸ good enough given atol and rtol and an approximate zero-residual dual solutions t")
   solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
+  user_requested_exit              && (status = "user-requested exit")
 
   # Update x and y
   warm_start && @kaxpy!(n, one(FC), Δx, x)
