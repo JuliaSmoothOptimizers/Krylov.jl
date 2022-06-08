@@ -21,6 +21,7 @@ makedocs(
            "GPU support" => "gpu.md",
            "Warm start" => "warm_start.md",
            "Factorization-free operators" => "factorization-free.md",
+           "Callbacks" => "callbacks.md",
            "Performance tips" => "tips.md",
            "Tutorial" => "examples.md",
            "Reference" => "reference.md"
