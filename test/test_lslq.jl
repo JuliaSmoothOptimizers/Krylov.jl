@@ -99,7 +99,7 @@
         solver = LslqSolver(A, b)
         tol = 1.0e-1
         cb_n2 = TestCallbackN2LS(A, b, zero(eltype(b)), tol = tol)
-        lslq!(solver, A, b, M=M⁻¹, callback = solver -> cb_n2(solver))
+        lslq!(solver, A, b, M=M⁻¹, callback = cb_n2)
         @test solver.stats.status == "user-requested exit"
         @test cb_n2(solver)
 

@@ -25,7 +25,7 @@ export crls, crls!
     (x, stats) = crls(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                       radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      callback::Function=solver->false)
+                      callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -72,7 +72,7 @@ function crls! end
 function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-               callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

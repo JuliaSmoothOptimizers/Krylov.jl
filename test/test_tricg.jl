@@ -162,7 +162,7 @@
         solver = TricgSolver(A, b)
         tol = 1.0e-1
         cb_n2 = TestCallbackN2SaddlePts(A, b, c, tol = tol)
-        tricg!(solver, A, b, c, callback = solver -> cb_n2(solver))
+        tricg!(solver, A, b, c, callback = cb_n2)
         @test solver.stats.status == "user-requested exit"
         @test cb_n2(solver)
 

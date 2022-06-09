@@ -152,7 +152,7 @@ end
       solver = CraigmrSolver(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2LN(A, b, real(zero(eltype(b))), tol = tol)
-      craigmr!(solver, A, b, callback = solver -> cb_n2(solver))
+      craigmr!(solver, A, b, callback = cb_n2)
       @test solver.stats.status == "user-requested exit"
       @test cb_n2(solver)
 

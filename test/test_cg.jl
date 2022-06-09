@@ -82,7 +82,7 @@
       solver = CgSolver(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2(A, b, tol = tol)
-      cg!(solver, A, b, callback = solver -> cb_n2(solver))
+      cg!(solver, A, b, callback = cb_n2)
       @test solver.stats.status == "user-requested exit"
       @test cb_n2(solver)
 

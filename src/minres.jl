@@ -30,7 +30,7 @@ export minres, minres!
                         window::Int=5, itmax::Int=0,
                         conlim::T=1/√eps(T), verbose::Int=0,
                         history::Bool=false,
-                        callback::Function=solver->false)
+                        callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -102,7 +102,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
                  itmax :: Int=0, conlim :: T=1/√eps(T), verbose :: Int=0,
-                 history :: Bool=false, callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 history :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")

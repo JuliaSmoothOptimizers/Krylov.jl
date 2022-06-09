@@ -21,7 +21,7 @@ export cg, cg!
                     M=I, atol::T=√eps(T), rtol::T=√eps(T),
                     itmax::Int=0, radius::T=zero(T), linesearch::Bool=false,
                     verbose::Int=0, history::Bool=false,
-                    callback::Function=solver->false)
+                    callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -84,7 +84,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
              itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
              verbose :: Int=0, history :: Bool=false,
-             callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+             callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
 
