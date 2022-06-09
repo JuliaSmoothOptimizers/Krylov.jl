@@ -38,7 +38,7 @@ export craig, craig!
                           M=I, N=I, sqd::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                           btol::T=√eps(T), rtol::T=√eps(T), conlim::T=1/√eps(T), itmax::Int=0,
                           verbose::Int=0, transfer_to_lsqr::Bool=false, history::Bool=false,
-                          callback::Function=solver->false)
+                          callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -115,7 +115,7 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
                 M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                 btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,
                 verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false,
-                callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

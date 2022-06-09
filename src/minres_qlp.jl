@@ -21,7 +21,7 @@ export minres_qlp, minres_qlp!
                             M=I, atol::T=√eps(T), rtol::T=√eps(T),
                             ctol::T=√eps(T), λ::T=zero(T), itmax::Int=0,
                             verbose::Int=0, history::Bool=false,
-                            callback::Function=solver->false)
+                            callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -83,7 +83,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                      ctol :: T=√eps(T), λ ::T=zero(T), itmax :: Int=0,
                      verbose :: Int=0, history :: Bool=false,
-                     callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                     callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")

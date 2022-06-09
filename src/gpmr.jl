@@ -17,7 +17,7 @@ export gpmr, gpmr!
                          gsp::Bool=false, reorthogonalization::Bool=false,
                          itmax::Int=0, λ::FC=one(FC), μ::FC=one(FC),
                          verbose::Int=0, history::Bool=false,
-                         callback::Function=solver->false)
+                         callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -110,7 +110,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
                gsp :: Bool=false, reorthogonalization :: Bool=false,
                itmax :: Int=0, λ :: FC=one(FC), μ :: FC=one(FC),
                verbose :: Int=0, history::Bool=false,
-               callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   s, t = size(B)

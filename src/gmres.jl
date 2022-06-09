@@ -15,7 +15,7 @@ export gmres, gmres!
                        M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                        reorthogonalization::Bool=false, itmax::Int=0,
                        restart::Bool=false, verbose::Int=0, history::Bool=false,
-                       callback::Function=solver->false)
+                       callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -85,7 +85,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                 M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                 reorthogonalization :: Bool=false, itmax :: Int=0,
                 restart :: Bool=false, verbose :: Int=0, history :: Bool=false,
-                callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

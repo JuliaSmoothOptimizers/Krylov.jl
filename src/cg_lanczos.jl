@@ -17,7 +17,7 @@ export cg_lanczos, cg_lanczos!
     (x, stats) = cg_lanczos(A, b::AbstractVector{FC};
                             M=I, atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                             check_curvature::Bool=false, verbose::Int=0, history::Bool=false,
-                            callback::Function=solver->false)
+                            callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -79,7 +79,7 @@ end
 function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{FC};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                      check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false,
-                     callback :: Function = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                     callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
