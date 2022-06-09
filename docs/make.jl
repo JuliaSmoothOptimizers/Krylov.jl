@@ -8,6 +8,7 @@ makedocs(
   format = Documenter.HTML(assets = ["assets/style.css"], ansicolor=true, prettyurls = get(ENV, "CI", nothing) == "true"),
   sitename = "Krylov.jl",
   pages = ["Home" => "index.md",
+           "Foundations of Krylov methods" => "foundations_krylov.md",
            "API" => "api.md",
            "Krylov methods" => ["Symmetric positive definite linear systems" => "solvers/spd.md",
                                 "Symmetric indefinite linear systems" => "solvers/sid.md",
