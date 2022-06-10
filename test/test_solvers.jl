@@ -591,6 +591,7 @@ function test_solvers(FC)
   │          z│        Vector{$FC}│               10│
   │          R│        Vector{$FC}│               55│
   │ warm_start│               Bool│                0│
+  │ inner_iter│              Int64│                0│
   └───────────┴───────────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
