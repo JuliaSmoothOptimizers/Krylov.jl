@@ -462,3 +462,11 @@ function (cb_n2::TestCallbackN2SaddlePts)(solver)
   cb_n2.storage_vec2 .-= solver.y .+ cb_n2.c
   return (norm(cb_n2.storage_vec1) ≤ cb_n2.tol && norm(cb_n2.storage_vec2) ≤ cb_n2.tol)
 end
+
+function restarted_gmres_callback_n2(solver::GmresSolver, A, b, stor, N, storage_vec, tol)
+  get_x_restarted_gmres!(solver, A, stor, N)
+  x = stor.x
+  mul!(storage_vec, A, x)
+  storage_vec .-= b
+  return (norm(storage_vec) ≤ tol)
+end

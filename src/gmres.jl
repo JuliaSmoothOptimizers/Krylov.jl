@@ -190,13 +190,14 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     @. V[1] = r₀ / rNorm
 
     npass = npass + 1
-    inner_iter = 0
+    solver.inner_iter = 0
     inner_tired = false
 
-    while !(solved || inner_tired || breakdown)
+    while !(solved || inner_tired || breakdown || user_requested_exit)
 
       # Update iteration index
-      inner_iter = inner_iter + 1
+      solver.inner_iter = solver.inner_iter + 1
+      inner_iter = solver.inner_iter
 
       # Update workspace if more storage is required and restart is set to false
       if !restart && (inner_iter > mem)
@@ -261,11 +262,11 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       resid_decrease_mach = (rNorm + one(T) ≤ one(T))
       
       # Update stopping criterion.
-      user_requested_exit = callback(solver) :: Bool
       resid_decrease_lim = rNorm ≤ ε
       breakdown = Hbis ≤ btol
       solved = resid_decrease_lim || resid_decrease_mach
       inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
+      solver.inner_iter = inner_iter
       kdisplay(iter+inner_iter, verbose) && @printf("%5d  %5d  %7.1e  %7.1e\n", npass, iter+inner_iter, rNorm, Hbis)
 
       # Compute vₖ₊₁
@@ -277,6 +278,8 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
         @. V[inner_iter+1] = q / Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
         z[inner_iter+1] = ζₖ₊₁
       end
+
+      user_requested_exit = callback(solver) :: Bool
     end
 
     # Compute yₖ by solving Rₖyₖ = zₖ with backward substitution.

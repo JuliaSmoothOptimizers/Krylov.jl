@@ -49,4 +49,6 @@ include("lnlq.jl")
 include("craig.jl")
 include("craigmr.jl")
 
+include("callback_utils.jl")
+
 end
