@@ -1,14 +1,14 @@
 ## Callbacks
 
-Each Krylov method is able to use a callback function that is called as `callback(solver)`, and that should return `true` if the main loop should terminate, and `false` otherwise.
+Each Krylov method is able to call a callback function as `callback(solver)` at each iteration. The callback should return `true` if the main loop should terminate, and `false` otherwise.
 If the method terminated because of the callback, the output status will be `"user-requested exit"`.
-For example, if the user has a function `my_callback(solver::MinresSolver)`, it can be used with:
+For example, if the user defines `my_callback(solver::MinresSolver)`, it can be passed to the solver using
 
 ```julia
 (x, stats) = minres(A, b, callback = my_callback)
 ```
 
-If you need to write a callback that uses variables that are not in the `MinresSolver`, it is possible to use an anonymous function:
+If you need to write a callback that uses variables that are not in the `MinresSolver`, use a closure:
 
 ```julia
 function my_callback2(solver::MinresSolver, A, b, storage_vec, tol::Float64)
@@ -21,7 +21,7 @@ storage_vec = similar(b)
 (x, stats) = minres(A, b, callback = solver -> my_callback2(solver, A, b, storage_vec, 0.1))
 ```
 
-You can also use a structure and call it as an anonymous function:
+Alternatively, use a structure and make it callable:
 
 ```julia
 mutable struct MyCallback3{S, M}
@@ -39,5 +39,5 @@ function (my_cb::MyCallback3)(solver)
 end
 
 my_cb = MyCallback3(A, b; tol = 0.1)
-(x, stats) = minres(A, b, callback = solver -> my_cb(solver))
+(x, stats) = minres(A, b, callback = my_cb)
 ```
