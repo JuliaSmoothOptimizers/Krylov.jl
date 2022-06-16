@@ -127,6 +127,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
   end
 
   rNorm = βₖ
+  ANorm² = zero(T)
+  ANorm = zero(T)
   history && push!(rNorms, rNorm)
   if rNorm == 0
     stats.niter = 0
@@ -141,8 +143,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
 
   ε = atol + rtol * rNorm
   κ = zero(T)
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁", "Rₖ.ₖ", "Lₖ.ₖ")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s  %7.1e  %7s  %8s\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗")
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %7.1e  %7.1e\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁", "Rₖ.ₖ", "Lₖ.ₖ")
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %7.1e\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗")
 
   # Set up workspace.
   M⁻¹vₖ₋₁ .= zero(FC)
@@ -197,6 +199,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
       @kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
       MisI || @kscal!(m, one(FC) / βₖ₊₁, p)
     end
+
+    ANorm² = ANorm² + αₖ * αₖ + βₖ * βₖ + βₖ₊₁ * βₖ₊₁
 
     # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
     #                                            [ Oᵀ ]
@@ -345,12 +349,27 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     iter == 1 && (κ = atol + ctol * ArNorm)
     history && push!(ArNorms, ArNorm)
 
+    ANorm = sqrt(ANorm²)
+    xNorm = @knrm2(n, x)
+    test1 = rNorm / (ANorm * xNorm)
+
     # Update stopping criterion.
-    user_requested_exit = callback(solver) :: Bool
-    breakdown = βₖ₊₁ ≤ btol
-    solved = rNorm ≤ ε
-    inconsistent = (ArNorm ≤ κ && abs(μbarₖ) ≤ ctol) || (breakdown && !solved)
+    # Stopping conditions that do not depend on user input.
+    # This is to guard against tolerances that are unreasonably small.
+    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+    zero_resid_mach = (one(T) + test1 ≤ one(T))
+
+    # Stopping conditions based on user-provided tolerances.
     tired = iter ≥ itmax
+    resid_decrease_lim = (rNorm ≤ ε)
+    # zero_resid_lim = (test1 ≤ ε)
+    breakdown = βₖ₊₁ ≤ btol
+
+    user_requested_exit = callback(solver) :: Bool
+    zero_resid = zero_resid_mach #| zero_resid_lim
+    resid_decrease = resid_decrease_mach | resid_decrease_lim
+    solved = resid_decrease || zero_resid
+    inconsistent = (ArNorm ≤ κ && abs(μbarₖ) ≤ ctol) || (breakdown && !solved)
 
     # Update variables
     if iter ≥ 2
@@ -365,7 +384,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     μbarₖ₋₁ = μbarₖ
     ζbarₖ = ζbarₖ₊₁
     βₖ = βₖ₊₁
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ, ANorm, test1)
   end
   (verbose > 0) && @printf("\n")
 
