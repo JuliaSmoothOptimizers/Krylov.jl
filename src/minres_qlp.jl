@@ -102,7 +102,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
   wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ
   Δx, x, p, stats = solver.Δx, solver.x, solver.p, solver.stats
   warm_start = solver.warm_start
-  rNorms, ArNorms = stats.residuals, stats.Aresiduals
+  rNorms, ArNorms, Aconds = stats.residuals, stats.Aresiduals, stats.Acond
   reset!(stats)
   vₖ = MisI ? M⁻¹vₖ : solver.vₖ
   vₖ₊₁ = MisI ? p : M⁻¹vₖ₋₁
@@ -129,7 +129,11 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
   rNorm = βₖ
   ANorm² = zero(T)
   ANorm = zero(T)
+  μmin = zero(T)
+  μmax = zero(T)
+  Acond = zero(T)
   history && push!(rNorms, rNorm)
+  history && push!(Aconds, Acond)
   if rNorm == 0
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
@@ -143,8 +147,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
 
   ε = atol + rtol * rNorm
   κ = zero(T)
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %7s  %8s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁", "Rₖ.ₖ", "Lₖ.ₖ", "‖A‖", "backward")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %8s\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", ANorm, " ✗ ✗ ✗ ✗")
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %7s  %8s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁", "Rₖ.ₖ", "Lₖ.ₖ", "‖A‖", "κ(A)", "backward")
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %7.1e  %8s\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", ANorm, Acond, " ✗ ✗ ✗ ✗")
 
   # Set up workspace.
   M⁻¹vₖ₋₁ .= zero(FC)
@@ -163,13 +167,15 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
 
   # Stopping criterion.
   breakdown = false
-  solved = rNorm ≤ ε
+  solved = zero_resid = zero_resid_lim = rNorm ≤ ε
+  zero_resid_mach = false
   inconsistent = false
+  ill_cond_mach = false
   tired = iter ≥ itmax
   status = "unknown"
   user_requested_exit = false
 
-  while !(solved || tired || inconsistent || breakdown || user_requested_exit)
+  while !(solved || tired || inconsistent || ill_cond_mach || breakdown || user_requested_exit)
     # Update iteration index.
     iter = iter + 1
 
@@ -350,12 +356,27 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     history && push!(ArNorms, ArNorm)
 
     ANorm = sqrt(ANorm²)
+    # estimate A condition number
+    abs_μbarₖ = abs(μbarₖ)
+    if iter == 1
+      μmin = abs_μbarₖ
+      μmax = abs_μbarₖ
+    elseif iter == 2
+      μmax = max(μmax, μbisₖ₋₁, abs_μbarₖ)
+      μmin = min(μmin, μbisₖ₋₁, abs_μbarₖ)
+    else
+      μmax = max(μmax, μₖ₋₂, μbisₖ₋₁, abs_μbarₖ)
+      μmin = min(μmin, μₖ₋₂, μbisₖ₋₁, abs_μbarₖ)
+    end
+    Acond = μmax / μmin
+    history && push!(Aconds, Acond)
     xNorm = @knrm2(n, x)
     backward = rNorm / (ANorm * xNorm)
 
     # Update stopping criterion.
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
+    ill_cond_mach = (one(T) + one(T) / Acond ≤ one(T))
     resid_decrease_mach = (rNorm + one(T) ≤ one(T))
     zero_resid_mach = (one(T) + backward ≤ one(T))
 
@@ -384,7 +405,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     μbarₖ₋₁ = μbarₖ
     ζbarₖ = ζbarₖ₊₁
     βₖ = βₖ₊₁
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %8.1e\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ, ANorm, backward)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %7.1e  %8.1e\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ, ANorm, Acond, backward)
   end
   (verbose > 0) && @printf("\n")
 
@@ -397,7 +418,9 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
   end
 
   tired               && (status = "maximum number of iterations exceeded")
+  ill_cond_mach       && (status = "condition number seems too large for this machine")
   inconsistent        && (status = "found approximate minimum least-squares solution")
+  zero_resid          && (status = "found approximate zero-residual solution")
   solved              && (status = "solution good enough given atol and rtol")
   user_requested_exit && (status = "user-requested exit")
 
