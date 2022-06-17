@@ -1,5 +1,5 @@
 @testset "minres" begin
-  minres_tol = 1.0e-5
+  minres_tol = 1.0e-6
 
   for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
@@ -9,7 +9,7 @@
       (x, stats) = minres(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ minres_tol)
+      @test(resid ≤ minres_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # Symmetric indefinite variant.
@@ -17,7 +17,7 @@
       (x, stats) = minres(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ minres_tol)
+      @test(resid ≤ minres_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # Sparse Laplacian.
@@ -25,7 +25,7 @@
       (x, stats) = minres(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ minres_tol)
+      @test(resid ≤ minres_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # Symmetric indefinite variant, almost singular.
@@ -33,7 +33,7 @@
       (x, stats) = minres(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ 100 * minres_tol)
+      @test(resid ≤ minres_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # Test b == 0
@@ -48,7 +48,7 @@
       (x, stats) = minres(A, b, λ=λ)
       r = b - (A + λ*I) * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ minres_tol)
+      @test(resid ≤ minres_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # test with Jacobi (or diagonal) preconditioner and history = true
@@ -56,7 +56,7 @@
       (x, stats) = minres(A, b, M=M, history=true)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ minres_tol)
+      @test(resid ≤ minres_tol * norm(A) * norm(x))
       @test(stats.solved)
       @test(length(stats.residuals) > 0)
 
@@ -66,7 +66,7 @@
       minres!(solver, A, b, M=M)
       r = b - A * solver.x
       resid = norm(r) / norm(b)
-      @test(resid ≤ minres_tol)
+      @test(resid ≤ minres_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # test callback function
