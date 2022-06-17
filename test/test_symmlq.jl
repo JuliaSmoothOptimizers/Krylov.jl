@@ -10,7 +10,7 @@
       (x, stats) = symmlq(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ symmlq_tol)
+      @test(resid ≤ symmlq_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # Symmetric indefinite variant.
@@ -18,15 +18,15 @@
       (x, stats) = symmlq(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ symmlq_tol)
+      @test(resid ≤ symmlq_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # Sparse Laplacian.
       A, b = sparse_laplacian(FC=FC)
-      (x, stats) = symmlq(A, b, atol=1e-12, rtol=1e-12)
+      (x, stats) = symmlq(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ 100 * symmlq_tol)
+      @test(resid ≤ symmlq_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # System that cause a breakdown with the symmetric Lanczos process.
@@ -34,7 +34,7 @@
       (x, stats) = symmlq(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ symmlq_tol)
+      @test(resid ≤ symmlq_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # Test b == 0
@@ -66,7 +66,7 @@
       (x, stats) = symmlq(A, b, M=M)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ symmlq_tol)
+      @test(resid ≤ symmlq_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # test callback function

@@ -9,7 +9,7 @@
       (x, stats) = minres_qlp(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ minres_qlp_tol)
+      @test(resid ≤ minres_qlp_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # Symmetric indefinite variant.
@@ -17,7 +17,7 @@
       (x, stats) = minres_qlp(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ minres_qlp_tol)
+      @test(resid ≤ minres_qlp_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # Sparse Laplacian.
@@ -25,7 +25,7 @@
       (x, stats) = minres_qlp(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ minres_qlp_tol)
+      @test(resid ≤ minres_qlp_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # Symmetric indefinite variant, almost singular.
@@ -33,7 +33,7 @@
       (x, stats) = minres_qlp(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ minres_qlp_tol)
+      @test(resid ≤ minres_qlp_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # Test b == 0
@@ -64,7 +64,7 @@
       (x, stats) = minres_qlp(A, b, λ=λ)
       r = b - (A + λ*I) * x
       resid = norm(r) / norm(b)
-      @test(resid ≤ minres_qlp_tol)
+      @test(resid ≤ minres_qlp_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # Test with Jacobi (or diagonal) preconditioner
@@ -72,7 +72,7 @@
       (x, stats) = minres_qlp(A, b, M=M)
       r = b - A * x
       resid = sqrt(real(dot(r, M * r))) / norm(b)
-      @test(resid ≤ minres_qlp_tol)
+      @test(resid ≤ minres_qlp_tol * norm(A) * norm(x))
       @test(stats.solved)
 
       # test callback function

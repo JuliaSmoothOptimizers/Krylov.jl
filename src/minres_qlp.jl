@@ -143,8 +143,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
 
   ε = atol + rtol * rNorm
   κ = zero(T)
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %7s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁", "Rₖ.ₖ", "Lₖ.ₖ", "‖A‖", "test1")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", ANorm, " ✗ ✗ ✗ ✗")
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %7s  %8s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁", "Rₖ.ₖ", "Lₖ.ₖ", "‖A‖", "backward")
+  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %8s\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", ANorm, " ✗ ✗ ✗ ✗")
 
   # Set up workspace.
   M⁻¹vₖ₋₁ .= zero(FC)
@@ -351,24 +351,24 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
 
     ANorm = sqrt(ANorm²)
     xNorm = @knrm2(n, x)
-    test1 = rNorm / (ANorm * xNorm)
+    backward = rNorm / (ANorm * xNorm)
 
     # Update stopping criterion.
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
     resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-    zero_resid_mach = (one(T) + test1 ≤ one(T))
+    zero_resid_mach = (one(T) + backward ≤ one(T))
 
     # Stopping conditions based on user-provided tolerances.
     tired = iter ≥ itmax
     resid_decrease_lim = (rNorm ≤ ε)
-    # zero_resid_lim = (test1 ≤ ε)
+    zero_resid_lim = (backward ≤ ε)
     breakdown = βₖ₊₁ ≤ btol
 
     user_requested_exit = callback(solver) :: Bool
-    zero_resid = zero_resid_mach #| zero_resid_lim
+    zero_resid = zero_resid_mach | zero_resid_lim
     resid_decrease = resid_decrease_mach | resid_decrease_lim
-    solved = resid_decrease || zero_resid
+    solved = resid_decrease | zero_resid
     inconsistent = (ArNorm ≤ κ && abs(μbarₖ) ≤ ctol) || (breakdown && !solved)
 
     # Update variables
@@ -384,7 +384,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     μbarₖ₋₁ = μbarₖ
     ζbarₖ = ζbarₖ₊₁
     βₖ = βₖ₊₁
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ, ANorm, test1)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %8.1e\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ, ANorm, backward)
   end
   (verbose > 0) && @printf("\n")
 
