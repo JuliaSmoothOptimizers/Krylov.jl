@@ -294,8 +294,12 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
       @printf("    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
     end
 
+    # Stopping conditions that do not depend on user input.
+    # This is to guard against tolerances that are unreasonably small.
+    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+
     user_requested_exit = callback(solver) :: Bool
-    solved = (rNorm ≤ ε) || npcurv || on_boundary
+    solved = (rNorm ≤ ε) || npcurv || on_boundary || resid_decrease_mach
     tired = iter ≥ itmax
 
     (solved || tired || user_requested_exit) && continue

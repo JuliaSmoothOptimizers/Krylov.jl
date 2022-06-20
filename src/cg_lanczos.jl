@@ -188,8 +188,13 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
     history && push!(rNorms, rNorm)
     iter = iter + 1
     kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+
+    # Stopping conditions that do not depend on user input.
+    # This is to guard against tolerances that are unreasonably small.
+    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+    
     user_requested_exit = callback(solver) :: Bool
-    solved = rNorm ≤ ε
+    solved = rNorm ≤ ε || resid_decrease_mach
     tired = iter ≥ itmax
   end
   (verbose > 0) && @printf("\n")

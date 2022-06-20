@@ -183,7 +183,11 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
     rNorm = sqrt(γ_next)
     history && push!(rNorms, rNorm)
 
-    solved = (rNorm ≤ ε) || on_boundary
+    # Stopping conditions that do not depend on user input.
+    # This is to guard against tolerances that are unreasonably small.
+    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+
+    solved = (rNorm ≤ ε) || on_boundary || resid_decrease_mach
 
     if !solved
       β = γ_next / γ

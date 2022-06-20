@@ -390,10 +390,14 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     # Update the number of coefficients in Rₖ.
     nr = nr + 4k-1
 
+    # Stopping conditions that do not depend on user input.
+    # This is to guard against tolerances that are unreasonably small.
+    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+
     # Update stopping criterion.
     user_requested_exit = callback(solver) :: Bool
     breakdown = Faux ≤ btol && Haux ≤ btol
-    solved = rNorm ≤ ε
+    solved = rNorm ≤ ε || resid_decrease_mach
     tired = iter ≥ itmax
     kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, Haux, Faux)
 
