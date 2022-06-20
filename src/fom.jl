@@ -247,10 +247,14 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
       # Update the number of coefficients in Uₖ
       nr = nr + inner_iter
 
+      # Stopping conditions that do not depend on user input.
+      # This is to guard against tolerances that are unreasonably small.
+      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+
       # Update stopping criterion.
       user_requested_exit = callback(solver) :: Bool
       breakdown = Hbis ≤ btol
-      solved = rNorm ≤ ε
+      solved = rNorm ≤ ε || resid_decrease_mach
       inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
       kdisplay(iter+inner_iter, verbose) && @printf("%5d  %5d  %7.1e  %7.1e\n", npass, iter+inner_iter, rNorm, Hbis)
 

@@ -172,8 +172,13 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
     history && push!(rNorms, rNorm)
     iter = iter + 1
     kdisplay(iter, verbose) && @printf("%5d  %8.2e\n", iter, rNorm)
+
+    # Stopping conditions that do not depend on user input.
+    # This is to guard against tolerances that are unreasonably small.
+    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+
     user_requested_exit = callback(solver) :: Bool
-    solved = rNorm ≤ ɛ_c
+    solved = rNorm ≤ ɛ_c || resid_decrease_mach
     inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
     tired = iter ≥ itmax
   end

@@ -197,9 +197,13 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     rNorm = @knrm2(n, r)
     history && push!(rNorms, rNorm)
 
+    # Stopping conditions that do not depend on user input.
+    # This is to guard against tolerances that are unreasonably small.
+    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+
     # Update stopping criterion.
     user_requested_exit = callback(solver) :: Bool
-    solved = rNorm ≤ ε
+    solved = rNorm ≤ ε || resid_decrease_mach
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
     kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
