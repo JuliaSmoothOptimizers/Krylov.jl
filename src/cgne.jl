@@ -178,7 +178,8 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
     resid_decrease_mach = (rNorm + one(T) ≤ one(T))
 
     user_requested_exit = callback(solver) :: Bool
-    solved = rNorm ≤ ɛ_c || resid_decrease_mach
+    resid_decrease_lim = rNorm ≤ ɛ_c
+    solved = resid_decrease_lim || resid_decrease_mach
     inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
     tired = iter ≥ itmax
   end

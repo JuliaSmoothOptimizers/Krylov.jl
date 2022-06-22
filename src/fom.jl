@@ -253,8 +253,9 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
       # Update stopping criterion.
       user_requested_exit = callback(solver) :: Bool
+      resid_decrease_lim = rNorm ≤ ε
       breakdown = Hbis ≤ btol
-      solved = rNorm ≤ ε || resid_decrease_mach
+      solved = resid_decrease_lim || resid_decrease_mach
       inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
       kdisplay(iter+inner_iter, verbose) && @printf("%5d  %5d  %7.1e  %7.1e\n", npass, iter+inner_iter, rNorm, Hbis)
 

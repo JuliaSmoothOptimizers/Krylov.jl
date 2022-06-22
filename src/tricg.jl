@@ -384,8 +384,9 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
     # Update stopping criterion.
     user_requested_exit = callback(solver) :: Bool
+    resid_decrease_lim = rNorm ≤ ε
     breakdown = βₖ₊₁ ≤ btol && γₖ₊₁ ≤ btol
-    solved = rNorm ≤ ε || resid_decrease_mach
+    solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
     kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ₊₁, γₖ₊₁)
   end
