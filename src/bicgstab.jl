@@ -203,7 +203,8 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     # Update stopping criterion.
     user_requested_exit = callback(solver) :: Bool
-    solved = rNorm ≤ ε || resid_decrease_mach
+    resid_decrease_lim = rNorm ≤ ε
+    solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
     kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))

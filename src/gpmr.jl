@@ -396,8 +396,9 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
 
     # Update stopping criterion.
     user_requested_exit = callback(solver) :: Bool
+    resid_decrease_lim = rNorm ≤ ε
     breakdown = Faux ≤ btol && Haux ≤ btol
-    solved = rNorm ≤ ε || resid_decrease_mach
+    solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
     kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, Haux, Faux)
 

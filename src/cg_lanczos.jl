@@ -194,7 +194,8 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
     resid_decrease_mach = (rNorm + one(T) ≤ one(T))
     
     user_requested_exit = callback(solver) :: Bool
-    solved = rNorm ≤ ε || resid_decrease_mach
+    resid_decrease_lim = rNorm ≤ ε
+    solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
   end
   (verbose > 0) && @printf("\n")

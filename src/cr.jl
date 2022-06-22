@@ -299,7 +299,9 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     resid_decrease_mach = (rNorm + one(T) ≤ one(T))
 
     user_requested_exit = callback(solver) :: Bool
-    solved = (rNorm ≤ ε) || npcurv || on_boundary || resid_decrease_mach
+    resid_decrease_lim = rNorm ≤ ε
+    resid_decrease = resid_decrease_lim || resid_decrease_mach
+    solved = resid_decrease || npcurv || on_boundary
     tired = iter ≥ itmax
 
     (solved || tired || user_requested_exit) && continue

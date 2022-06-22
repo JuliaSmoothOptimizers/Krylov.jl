@@ -187,7 +187,9 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # This is to guard against tolerances that are unreasonably small.
     resid_decrease_mach = (rNorm + one(T) ≤ one(T))
 
-    solved = (rNorm ≤ ε) || on_boundary || resid_decrease_mach
+    resid_decrease_lim = rNorm ≤ ε
+    resid_decrease = resid_decrease_lim || resid_decrease_mach
+    solved = resid_decrease || on_boundary
 
     if !solved
       β = γ_next / γ
