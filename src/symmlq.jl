@@ -354,7 +354,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
-    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+    resid_decrease_mach = (one(T) + rNorm ≤ one(T))
     ill_cond_mach = (one(T) + one(T) / Acond ≤ one(T))
     zero_resid_mach = (one(T) + test1 ≤ one(T))
     # solved_mach = (ϵx ≥ β₁)
