@@ -28,4 +28,8 @@ makedocs(
           ]
 )
 
-deploydocs(repo = "github.com/JuliaSmoothOptimizers/Krylov.jl.git", devbranch = "main")
+deploydocs(
+  repo = "github.com/JuliaSmoothOptimizers/Krylov.jl.git",
+  push_preview = true,
+  devbranch = "main",
+)
