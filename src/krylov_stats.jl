@@ -22,6 +22,32 @@ mutable struct SimpleStats{T} <: KrylovStats{T}
 end
 
 """
+Type for statistics returned by LSMR, the attributes are:
+- niter
+- solved
+- inconsistent
+- residuals
+- Aresiduals
+- Acond
+- Anorm
+- xNorm
+- status
+"""
+mutable struct LsmrStats{T} <: KrylovStats{T}
+  niter        :: Int
+  solved       :: Bool
+  inconsistent :: Bool
+  residuals    :: Vector{T}
+  Aresiduals   :: Vector{T}
+  residual     :: T
+  Aresidual    :: T
+  Acond        :: T
+  Anorm        :: T
+  xNorm        :: T
+  status       :: String
+end
+
+"""
 Type for statistics returned by CG-LANCZOS, the attributes are:
 - niter
 - solved
@@ -166,7 +192,7 @@ special_fields = Dict(
   :err_ubnds_cg => "error bound CG",
 )
 
-for f in ["Simple", "Adjoint", "LNLQ", "LSLQ", "Lanczos", "Symmlq"]
+for f in ["Simple", "Lsmr", "Adjoint", "LNLQ", "LSLQ", "Lanczos", "Symmlq"]
   T = Meta.parse("Krylov." * f * "Stats{S}")
 
   @eval function empty_field!(stats :: $T, i, ::Type{Vector{Si}}) where {S, Si}
@@ -184,7 +210,7 @@ for f in ["Simple", "Adjoint", "LNLQ", "LSLQ", "Lanczos", "Symmlq"]
   end
 end
 
-for f in ["Simple", "Lanczos", "LanczosShift", "Symmlq", "Adjoint", "LNLQ", "LSLQ"]
+for f in ["Simple", "Lsmr", "Lanczos", "LanczosShift", "Symmlq", "Adjoint", "LNLQ", "LSLQ"]
   T = Meta.parse("Krylov." * f * "Stats{S}")
 
   @eval function show(io :: IO, stats :: $T) where S

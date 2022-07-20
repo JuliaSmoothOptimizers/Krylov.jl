@@ -17,6 +17,28 @@
   check_reset(stats)
   @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
 
+  stats = Krylov.LsmrStats(0, true, true, Float64[1.0], Float64[2.0], Float64(3.0), Float64(4.0), Float64(5.0), Float64(6.0), Float64(7.0), "t")
+  io = IOBuffer()
+  show(io, stats)
+  showed = String(take!(io))
+  storage_type = typeof(stats)
+  expected = """Lsmr stats
+  niter: 0
+  solved: true
+  inconsistent: true
+  residuals: [ 1.0e+00 ]
+  Aresiduals: [ 2.0e+00 ]
+  residual: 3.0
+  Aresidual: 4.0
+  κ₂(A): 5.0
+  ‖A‖F: 6.0
+  xNorm: 7.0
+  status: t"""
+  @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  Krylov.reset!(stats)
+  check_reset(stats)
+  @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
+
   stats = Krylov.LanczosStats(0, true, Float64[3.0], true, NaN, NaN, "t")
   io = IOBuffer()
   show(io, stats)

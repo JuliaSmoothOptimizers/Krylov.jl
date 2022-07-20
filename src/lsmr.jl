@@ -186,10 +186,13 @@ function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ζ = zero(T)
   d = zero(T)
 
-  # Initialize variables for estimation of ‖A‖ and cond(A).
+  # Initialize variables for estimation of ‖A‖, cond(A) and xNorm.
   Anorm² = α * α
   maxrbar = zero(T)
   minrbar = min(floatmax(T), T(1.0e+100))
+  Acond = maxrbar / minrbar
+  Anorm = sqrt(Anorm²)
+  xNorm = zero(T)
 
   # Items for use in stopping rules.
   ctol = conlim > 0 ? 1 / conlim : zero(T)
@@ -365,6 +368,11 @@ function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   user_requested_exit && (status = "user-requested exit")
 
   # Update stats
+  stats.residual = rNorm
+  stats.Aresidual = ArNorm
+  stats.Acond = Acond
+  stats.Anorm = Anorm
+  stats.xNorm = xNorm
   stats.niter = iter
   stats.solved = solved
   stats.inconsistent = !zero_resid
