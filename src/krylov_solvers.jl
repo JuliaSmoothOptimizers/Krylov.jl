@@ -1276,7 +1276,7 @@ mutable struct LsmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   u       :: S
   v       :: S
   err_vec :: Vector{T}
-  stats   :: SimpleStats{T}
+  stats   :: LsmrStats{T}
 
   function LsmrSolver(n, m, S; window :: Int=5)
     FC   = eltype(S)
@@ -1291,7 +1291,7 @@ mutable struct LsmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     u    = S(undef, 0)
     v    = S(undef, 0)
     err_vec = zeros(T, window)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+    stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), "unknown")
     solver = new{T,FC,S}(x, Nv, Aᵀu, h, hbar, Mu, Av, u, v, err_vec, stats)
     return solver
   end
