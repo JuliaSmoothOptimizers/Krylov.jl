@@ -22,7 +22,7 @@ mutable struct SimpleStats{T} <: KrylovStats{T}
 end
 
 """
-Type for statistics returned by LSMR, the attributes are:
+Type for statistics returned by LSMR. The attributes are:
 - niter
 - solved
 - inconsistent
