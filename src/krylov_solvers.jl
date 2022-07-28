@@ -1347,7 +1347,7 @@ mutable struct LsqrShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   ill_cond_mach :: Vector{Bool}
   ill_cond_lim :: Vector{Bool}
   rNorm :: Vector{T}
-  solved     :: BitVector
+  converged     :: BitVector
   stats   :: SimpleShiftsStats{T}
 
   function LsqrShiftSolver(n, m, nshifts, S; window :: Int=5)
@@ -1376,9 +1376,9 @@ mutable struct LsqrShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     ill_cond_mach = zeros(Bool, nshifts) # Put in stats?
     ill_cond_lim = zeros(Bool, nshifts) # Put in stats?
     rNorm = Vector{T}(undef, nshifts) # Put in stats?
-    solved     = BitVector(undef, nshifts)
+    converged     = BitVector(undef, nshifts)
     stats = SimpleShiftsStats(0, false, zeros(Bool, nshifts), BitVector(undef, nshifts), [T[] for i = 1 : nshifts], [T[] for i = 1 : nshifts], zeros(T, nshifts), ["unknown" for i = 1 : nshifts])
-    solver = new{T,FC,S}(x, Nv, Aᵀu, w, Mu, Av, u, v, ϕbar, ρbar, err_vec, dNorm², xENorm², Anorm, Anorm², xNorm², z, fwd_err, on_boundary, tired, ill_cond_mach, ill_cond_lim, rNorm, solved, stats)
+    solver = new{T,FC,S}(x, Nv, Aᵀu, w, Mu, Av, u, v, ϕbar, ρbar, err_vec, dNorm², xENorm², Anorm, Anorm², xNorm², z, fwd_err, on_boundary, tired, ill_cond_mach, ill_cond_lim, rNorm, converged, stats)
     return solver
   end
 

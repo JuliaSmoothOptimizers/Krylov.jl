@@ -114,7 +114,7 @@ function lsqr_shift!(solver :: LsqrShiftSolver{T,FC,S}, A, b :: AbstractVector{F
   x, Nv, Aᵀu, w = solver.x, solver.Nv, solver.Aᵀu, solver.w
   Mu, Av, err_vec, stats = solver.Mu, solver.Av, solver.err_vec, solver.stats
   rNorms, ArNorms, Acond = stats.residuals, stats.Aresiduals, stats.Acond
-  solved, zero_resid = solver.solved, stats.inconsistent
+  converged, zero_resid = solver.converged, stats.inconsistent
   Anorm, Anorm² = solver.Anorm, solver.Anorm²
   rNorm, xNorm², dNorm² = solver.rNorm, solver.xNorm², solver.dNorm²
   z, xENorm² = solver.z, solver.xENorm²
@@ -228,7 +228,7 @@ function lsqr_shift!(solver :: LsqrShiftSolver{T,FC,S}, A, b :: AbstractVector{F
   on_boundary .= false
   solved_lim = (ArNorm / (Anorm[end] * rNorm[end]) ≤ axtol)
   solved_mach = (one(T) + ArNorm / (Anorm[end] * rNorm[end]) ≤ one(T))
-  solved .= (solved_mach | solved_lim)
+  converged .= (solved_mach | solved_lim)
   tired .= (iter ≥ itmax)
   ill_cond_mach .= false
   ill_cond_lim .= false
@@ -237,7 +237,7 @@ function lsqr_shift!(solver :: LsqrShiftSolver{T,FC,S}, A, b :: AbstractVector{F
   # PAS MIS A JOUR ENSUITE. BUG DE LSQR OU MOI?
   zero_resid .= (zero_resid_mach | zero_resid_lim)
 
-  while ! all(solved .| tired .| ill_cond_mach .| ill_cond_lim .| user_requested_exit) # ALLOCATES
+  while ! all(converged .| tired .| ill_cond_mach .| ill_cond_lim .| user_requested_exit) # ALLOCATES
     iter = iter + 1
 
     # Generate next Golub-Kahan vectors.
@@ -263,7 +263,7 @@ function lsqr_shift!(solver :: LsqrShiftSolver{T,FC,S}, A, b :: AbstractVector{F
       end
     end
 
-    for i in findall(.!(solved .| tired .| ill_cond_mach .| ill_cond_lim)) # ALLOCATES
+    for i in findall(.!(converged .| tired .| ill_cond_mach .| ill_cond_lim)) # ALLOCATES
       λ = shifts[i]
 
       # Continue QR factorization
@@ -362,11 +362,11 @@ function lsqr_shift!(solver :: LsqrShiftSolver{T,FC,S}, A, b :: AbstractVector{F
 
       zero_resid[i] = zero_resid_lim | zero_resid_mach
 
-      solved[i] = solved_mach | solved_lim | solved_opt
+      converged[i] = solved_mach | solved_lim | solved_opt
     end
 
     #(verbose > 0) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", 1 + 2 * iter, α, β, rNorm[end], ArNorm[end], rNorm[end] / β₁, ArNorm[end] / (Anorm[end] * rNorm[end]), Anorm[end], Acond[end])
-    solved .= solved .| zero_resid .| fwd_err .| on_boundary
+    converged .= converged .| zero_resid .| fwd_err .| on_boundary
   end
   (verbose > 0) && @printf("\n")
 
@@ -375,7 +375,7 @@ function lsqr_shift!(solver :: LsqrShiftSolver{T,FC,S}, A, b :: AbstractVector{F
     tired[i]         && (stats.status[i] = "maximum number of iterations exceeded")
     ill_cond_mach[i] && (stats.status[i] = "condition number seems too large for this machine")
     ill_cond_lim[i]  && (stats.status[i] = "condition number exceeds tolerance")
-    solved[i]        && (stats.status[i] = "found approximate minimum least-squares solution")
+    converged[i]     && (stats.status[i] = "found approximate minimum least-squares solution")
     zero_resid[i]    && (stats.status[i] = "found approximate zero-residual solution")
     fwd_err[i]       && (stats.status[i] = "truncated forward error small enough")
     on_boundary[i]   && (stats.status[i] = "on trust-region boundary")
@@ -383,7 +383,7 @@ function lsqr_shift!(solver :: LsqrShiftSolver{T,FC,S}, A, b :: AbstractVector{F
 
   # Update stats
   stats.niter = iter
-  stats.solved = all(solved)
+  stats.solved = all(converged)
   stats.inconsistent = .!zero_resid
   return solver
 end
