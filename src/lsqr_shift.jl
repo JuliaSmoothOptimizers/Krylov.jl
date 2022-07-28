@@ -87,7 +87,7 @@ function lsqr_shift(A, b :: AbstractVector{FC}, shifts; window :: Int=5, kwargs.
 end
 
 function lsqr_shift!(solver :: LsqrShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts;
-               M=I, N=I, axtol :: T=√eps(T), btol :: T=√eps(T),
+               M=I, N=I, axtol :: T=eps(T), btol :: T=√eps(T),
                atol :: T=zero(T), rtol :: T=zero(T),
                etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
                radius :: T=zero(T), verbose :: Int=0, history :: Bool=false,

@@ -13,7 +13,7 @@ end
       for npower = 1 : 4
         (b, A, D, HY, HZ, Acond, rnorm) = test(40, 40, 4, npower, 0)  # No regularization.
         shifts = [1.0; 2.0; 3.0; 4.0; 5.0; 6.0]
-        (x, stats) = lsqr_shift(A, b, shifts, axtol = 1e-11)
+        (x, stats) = lsqr_shift(A, b, shifts)
         r = residuals_ls(A, b, shifts, x)
         resids = map(norm, r) / norm(A' * b)
         @test all(resids .≤ lsqr_shift_tol)
