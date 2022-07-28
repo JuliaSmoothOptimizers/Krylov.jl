@@ -68,6 +68,41 @@ mutable struct LanczosStats{T} <: KrylovStats{T}
 end
 
 """
+Type for statistics returned by the majority of shifted Krylov solvers, the attributes are:
+- niter
+- solved
+- inconsistent
+- indefinite
+- residuals
+- Aresiduals
+- Acond
+- status
+"""
+mutable struct SimpleShiftsStats{T} <: Krylov.KrylovStats{T}
+  niter        :: Int
+  solved       :: Bool
+  inconsistent :: Vector{Bool}
+  indefinite   :: BitVector
+  residuals    :: Vector{Vector{T}}
+  Aresiduals   :: Vector{Vector{T}}
+  Acond        :: Vector{T}
+  status       :: Vector{String}
+end
+
+function reset!(stats :: SimpleShiftsStats{T}) where {T}
+  for vec in stats.residuals
+    empty!(vec)
+  end
+  for vec in stats.Aresiduals
+    empty!(vec)
+  end
+  stats.Acond .= T(NaN)
+  stats.inconsistent .= false
+  stats.indefinite .= false
+  stats.status .= "unknown"
+end
+
+"""
 Type for statistics returned by CG-LANCZOS with shifts, the attributes are:
 - niter
 - solved

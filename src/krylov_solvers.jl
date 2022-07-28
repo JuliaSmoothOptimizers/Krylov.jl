@@ -1,8 +1,8 @@
 export KrylovSolver, MinresSolver, CgSolver, CrSolver, SymmlqSolver, CgLanczosSolver,
 CgLanczosShiftSolver, MinresQlpSolver, DqgmresSolver, DiomSolver, UsymlqSolver,
 UsymqrSolver, TricgSolver, TrimrSolver, TrilqrSolver, CgsSolver, BicgstabSolver,
-BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CrlsSolver, CgneSolver, CrmrSolver,
-LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
+BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CglsLanczosShiftSolver, CrlsSolver, CgneSolver, CrmrSolver,
+LslqSolver, LsqrSolver, LsqrShiftSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
 GmresSolver, FomSolver, GpmrSolver
 
 export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual,
@@ -32,6 +32,7 @@ const KRYLOV_SOLVERS = Dict(
   :qmr              => :QmrSolver           ,
   :bilqr            => :BilqrSolver         ,
   :cgls             => :CglsSolver          ,
+  :cgls_lanczos_shift => :CglsLanczosShiftSolver,
   :crls             => :CrlsSolver          ,
   :cgne             => :CgneSolver          ,
   :crmr             => :CrmrSolver          ,
@@ -1036,6 +1037,63 @@ mutable struct CglsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 """
+Type for storing the vectors required by the in-place version of CGLS-LANCZOS-SHIFT.
+
+The outer constructors
+
+    solver = CglsLanczosShiftSolver(n, m, nshifts, S)
+    solver = CglsLanczosShiftSolver(A, b, nshifts)
+
+may be used in order to create these vectors.
+"""
+mutable struct CglsLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
+  Mv         :: S
+  Mv_prev    :: S
+  Mv_next    :: S
+  u          :: S
+  v          :: S
+  x          :: Vector{S}
+  p          :: Vector{S}
+  σ          :: Vector{T}
+  δhat       :: Vector{T}
+  ω          :: Vector{T}
+  γ          :: Vector{T}
+  rNorms     :: Vector{T}
+  converged  :: BitVector
+  not_cv     :: BitVector
+  stats      :: SimpleShiftsStats{T}
+
+  function CglsLanczosShiftSolver(n, m, nshifts, S)
+    FC         = eltype(S)
+    T          = real(FC)
+    Mv         = S(undef, m)
+    Mv_prev    = S(undef, n)
+    Mv_next    = S(undef, n)
+    u          = S(undef, n)
+    v          = S(undef, m)
+    x          = [S(undef, m) for i = 1 : nshifts]
+    p          = [S(undef, m) for i = 1 : nshifts]
+    σ          = Vector{T}(undef, nshifts)
+    δhat       = Vector{T}(undef, nshifts)
+    ω          = Vector{T}(undef, nshifts)
+    γ          = Vector{T}(undef, nshifts)
+    rNorms     = Vector{T}(undef, nshifts)
+    indefinite = BitVector(undef, nshifts)
+    converged  = BitVector(undef, nshifts)
+    not_cv     = BitVector(undef, nshifts)
+    stats = SimpleShiftsStats(0, false, zeros(Bool, nshifts), BitVector(undef, nshifts), [T[] for i = 1 : nshifts], [T[] for i = 1 : nshifts], zeros(T, nshifts), ["unknown" for i = 1 : nshifts])
+    solver = new{T,FC,S}(Mv, Mv_prev, Mv_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+    return solver
+  end
+
+  function CglsLanczosShiftSolver(A, b, nshifts)
+    n, m = size(A)
+    S = ktypeof(b)
+    CglsLanczosShiftSolver(n, m, nshifts, S)
+  end
+end
+
+"""
 Type for storing the vectors required by the in-place version of CRLS.
 
 The outer constructors
@@ -1252,6 +1310,82 @@ mutable struct LsqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
     n, m = size(A)
     S = ktypeof(b)
     LsqrSolver(n, m, S, window=window)
+  end
+end
+
+"""
+Type for storing the vectors required by the in-place version of LSQR-LANCZOS-SHIFT.
+
+The outer constructors
+
+    solver = LsqrLanczosShiftSolver(n, m, nshifts, S)
+    solver = LsqrLanczosShiftSolver(A, b, nshifts)
+
+may be used in order to create these vectors.
+"""
+mutable struct LsqrShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
+  x       :: Vector{S}
+  Nv      :: S
+  Aᵀu     :: S
+  w       :: Vector{S}
+  Mu      :: S
+  Av      :: S
+  u       :: S
+  v       :: S
+  ϕbar    :: Vector{T} # S
+  ρbar    :: Vector{T} #S
+  err_vec :: Vector{Vector{T}}
+  dNorm²  :: Vector{T}
+  xENorm² :: Vector{T}
+  Anorm   :: Vector{T}
+  Anorm²  :: Vector{T}
+  xNorm²  :: Vector{T}
+  z       :: Vector{T}
+  fwd_err :: Vector{Bool}
+  on_boundary :: Vector{Bool}
+  tired :: Vector{Bool}
+  ill_cond_mach :: Vector{Bool}
+  ill_cond_lim :: Vector{Bool}
+  rNorm :: Vector{T}
+  solved     :: BitVector
+  stats   :: SimpleShiftsStats{T}
+
+  function LsqrShiftSolver(n, m, nshifts, S; window :: Int=5)
+    FC         = eltype(S)
+    T          = real(FC)
+    x   = [S(undef, m) for i = 1 : nshifts]
+    Nv  = S(undef, m)
+    Aᵀu = S(undef, m)
+    w   = [S(undef, m) for i = 1 : nshifts]
+    Mu  = S(undef, n)
+    Av  = S(undef, n)
+    u   = S(undef, 0)
+    v   = S(undef, 0)
+    ϕbar = Vector{T}(undef, nshifts) # S(undef, nshifts)
+    ρbar = Vector{T}(undef, nshifts) # S(undef, nshifts)
+    err_vec = [zeros(T, window) for i = 1 : nshifts]
+    dNorm² = Vector{T}(undef, nshifts)
+    xENorm² = Vector{T}(undef, nshifts)
+    Anorm = Vector{T}(undef, nshifts) 
+    Anorm² = Vector{T}(undef, nshifts)
+    xNorm² = Vector{T}(undef, nshifts)
+    z = Vector{T}(undef, nshifts)
+    fwd_err = zeros(Bool, nshifts) # Put in stats?
+    on_boundary = zeros(Bool, nshifts) # Put in stats?
+    tired = zeros(Bool, nshifts) # Put in stats?
+    ill_cond_mach = zeros(Bool, nshifts) # Put in stats?
+    ill_cond_lim = zeros(Bool, nshifts) # Put in stats?
+    rNorm = Vector{T}(undef, nshifts) # Put in stats?
+    solved     = BitVector(undef, nshifts)
+    stats = SimpleShiftsStats(0, false, zeros(Bool, nshifts), BitVector(undef, nshifts), [T[] for i = 1 : nshifts], [T[] for i = 1 : nshifts], zeros(T, nshifts), ["unknown" for i = 1 : nshifts])
+    solver = new{T,FC,S}(x, Nv, Aᵀu, w, Mu, Av, u, v, ϕbar, ρbar, err_vec, dNorm², xENorm², Anorm, Anorm², xNorm², z, fwd_err, on_boundary, tired, ill_cond_mach, ill_cond_lim, rNorm, solved, stats)
+    return solver
+  end
+
+  function LsqrShiftSolver(A, b, nshifts; window :: Int=5)
+    n, m = size(A)
+    S = ktypeof(b)
+    LsqrShiftSolver(n, m, nshifts, S, window=window)
   end
 end
 
@@ -1699,6 +1833,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (CgSolver            , :cg!              , 1, 1, 0, true )
   (CgLanczosShiftSolver, :cg_lanczos_shift!, 1, 1, 0, false)
   (CglsSolver          , :cgls!            , 1, 1, 1, false)
+  (CglsLanczosShiftSolver     , :cgls_lanczos_shift!, 1, 1, 0, false)
   (CgLanczosSolver     , :cg_lanczos!      , 1, 1, 0, true )
   (BilqSolver          , :bilq!            , 1, 1, 1, true )
   (MinresQlpSolver     , :minres_qlp!      , 1, 1, 0, true )

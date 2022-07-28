@@ -36,6 +36,7 @@ include("qmr.jl")
 include("bilqr.jl")
 
 include("cgls.jl")
+include("cgls_lanczos_shift.jl")
 include("crls.jl")
 
 include("cgne.jl")
@@ -43,6 +44,7 @@ include("crmr.jl")
 
 include("lslq.jl")
 include("lsqr.jl")
+include("lsqr_shift.jl")
 include("lsmr.jl")
 
 include("lnlq.jl")

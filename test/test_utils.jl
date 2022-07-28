@@ -420,6 +420,19 @@ mutable struct TestCallbackN2LS{T, S, M}
 end
 TestCallbackN2LS(A, b, λ; tol = 0.1) = TestCallbackN2LS(A, b, λ, similar(b), similar(b, size(A, 2)), tol)
 
+mutable struct TestCallbackN2LSShifts{T, S, M}
+  A::M
+  b::S
+  shifts::Vector{T}
+  tol::T
+end
+TestCallbackN2LSShifts(A, b, shifts; tol = 0.1) = TestCallbackN2LSShifts(A, b, shifts, tol)
+
+function (cb_n2::TestCallbackN2LSShifts)(solver)
+  r = residuals_ls(cb_n2.A, cb_n2.b, cb_n2.shifts, solver.x)
+  return all(map(norm, r) .≤ cb_n2.tol)
+end
+
 function (cb_n2::TestCallbackN2LS)(solver)
   mul!(cb_n2.storage_vec1, cb_n2.A, solver.x)
   cb_n2.storage_vec1 .-= cb_n2.b
