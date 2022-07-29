@@ -104,7 +104,7 @@ function cgls_lanczos_shift!(solver :: CglsLanczosShiftSolver{T,FC,S}, A, b :: A
   u .= b
   u_prev .= zero(T)
   mul!(v, A', u)                          # v₁ ← A' * b
-  β = sqrt(@kdotr(m, v, v))                # β₁ = v₁ᵀ M v₁
+  β = sqrt(@kdotr(n, v, v))                # β₁ = v₁ᵀ M v₁
 
   rNorms .= β
   if history
@@ -130,10 +130,10 @@ function cgls_lanczos_shift!(solver :: CglsLanczosShiftSolver{T,FC,S}, A, b :: A
 
   # Initialize Lanczos process.
   # β₁v₁ = b
-  @kscal!(m, one(FC) / β, v)          # v₁  ←  v₁ / β₁
+  @kscal!(n, one(FC) / β, v)          # v₁  ←  v₁ / β₁
   # MisI || @kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
   # Mv_prev .= Mv
-  @kscal!(n, one(FC) / β, u)
+  @kscal!(m, one(FC) / β, u)
 
   # Initialize some constants used in recursions below.
   ρ = one(T)
@@ -173,17 +173,17 @@ function cgls_lanczos_shift!(solver :: CglsLanczosShiftSolver{T,FC,S}, A, b :: A
 
     # Form next Lanczos vector.
     mul!(utilde, A, v)                 # utildeₖ ← Avₖ
-    δ = @kdotr(n, utilde, utilde)       # δₖ = vₖᵀAᵀAvₖ
-    @kaxpy!(n, -δ, u, utilde)          # uₖ₊₁ = utildeₖ - δₖuₖ - βₖuₖ₋₁
-    @kaxpy!(n, -β, u_prev, utilde)
+    δ = @kdotr(m, utilde, utilde)       # δₖ = vₖᵀAᵀAvₖ
+    @kaxpy!(m, -δ, u, utilde)          # uₖ₊₁ = utildeₖ - δₖuₖ - βₖuₖ₋₁
+    @kaxpy!(m, -β, u_prev, utilde)
     mul!(v, A', utilde)                # vₖ₊₁ = Aᵀuₖ₊₁
-    β = sqrt(@kdotr(m, v, v))           # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
-    @kscal!(m, one(FC) / β, v)            # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-    @kscal!(n, one(FC) / β, utilde)       # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
+    β = sqrt(@kdotr(n, v, v))           # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+    @kscal!(n, one(FC) / β, v)            # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+    @kscal!(m, one(FC) / β, utilde)       # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
     u_prev .= u
     u .= utilde
 
-    MisI || (ρ = @kdotr(m, v, v))
+    MisI || (ρ = @kdotr(n, v, v))
     for i = 1 : nshifts
       δhat[i] = δ + ρ * shifts[i]
       γ[i] = 1 / (δhat[i] - ω[i] / γ[i])
@@ -193,11 +193,11 @@ function cgls_lanczos_shift!(solver :: CglsLanczosShiftSolver{T,FC,S}, A, b :: A
     for i = 1 : nshifts
       not_cv[i] = !converged[i]
       if not_cv[i]
-        @kaxpy!(m, γ[i], p[i], x[i])
+        @kaxpy!(n, γ[i], p[i], x[i])
         ω[i] = β * γ[i]
         σ[i] *= -ω[i]
         ω[i] *= ω[i]
-        @kaxpby!(m, σ[i], v, ω[i], p[i])
+        @kaxpby!(n, σ[i], v, ω[i], p[i])
 
         # Update list of systems that have not converged.
         rNorms[i] = abs(σ[i])
