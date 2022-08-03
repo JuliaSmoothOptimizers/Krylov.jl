@@ -4,7 +4,7 @@ makedocs(
   modules = [Krylov],
   doctest = true,
   linkcheck = true,
-  strict = false,
+  strict = true,
   format = Documenter.HTML(assets = ["assets/style.css"], ansicolor=true, prettyurls = get(ENV, "CI", nothing) == "true"),
   sitename = "Krylov.jl",
   pages = ["Home" => "index.md",
