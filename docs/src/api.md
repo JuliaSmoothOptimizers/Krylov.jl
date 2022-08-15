@@ -9,6 +9,7 @@ Krylov.SymmlqStats
 Krylov.AdjointStats
 Krylov.LNLQStats
 Krylov.LSLQStats
+Krylov.LsmrStats
 ```
 
 ## Solver Types
