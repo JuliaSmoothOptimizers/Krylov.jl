@@ -12,7 +12,7 @@
 #
 #  AAᵀy = b.
 #
-# This method is equivalent to Craig-MR, described in
+# This method is equivalent to CRAIGMR, described in
 #
 # D. Orban and M. Arioli. Iterative Solution of Symmetric Quasi-Definite Linear Systems,
 # Volume 3 of Spotlights. SIAM, Philadelphia, PA, 2017.
@@ -29,7 +29,7 @@ export crmr, crmr!
 
 """
     (x, stats) = crmr(A, b::AbstractVector{FC};
-                      M=I, λ::T=zero(T), atol::T=√eps(T),
+                      N=I, λ::T=zero(T), atol::T=√eps(T),
                       rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
                       callback=solver->false)
 
@@ -58,7 +58,7 @@ CRMR produces monotonic residuals ‖r‖₂.
 It is formally equivalent to CRAIG-MR, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 
-A preconditioner M may be provided.
+A preconditioner N may be provided.
 
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
@@ -86,7 +86,7 @@ See [`CrmrSolver`](@ref) for more details about the `solver`.
 function crmr! end
 
 function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
-               M=I, λ :: T=zero(T), atol :: T=√eps(T),
+               N=I, λ :: T=zero(T), atol :: T=√eps(T),
                rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
                callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
@@ -94,8 +94,8 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("CRMR: system of %d equations in %d variables\n", m, n)
 
-  # Tests M = Iₙ
-  MisI = (M === I)
+  # Tests N = Iₙ
+  MisI = (N === I)
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
@@ -114,7 +114,7 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   Mq = MisI ? q : solver.Mq
 
   x .= zero(FC) # initial estimation x = 0
-  mul!(r, M, b) # initial residual r = M * (b - Ax) = M * b
+  mul!(r, N, b) # initial residual r = N * (b - Ax) = N * b
   bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
   rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   history && push!(rNorms, rNorm)
@@ -149,8 +149,8 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   while ! (solved || inconsistent || tired || user_requested_exit)
     mul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s
-    MisI || mul!(Mq, M, q)
-    α = γ / @kdotr(m, q, Mq)   # Compute qᵗ * M * q
+    MisI || mul!(Mq, N, q)
+    α = γ / @kdotr(m, q, Mq)   # Compute qᵗ * N * q
     @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p
     @kaxpy!(m, -α, Mq, r)      # Faster than  r =  r - α * Mq
     rNorm = @knrm2(m, r)       # norm(r)

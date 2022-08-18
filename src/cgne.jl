@@ -31,7 +31,7 @@ export cgne, cgne!
 
 """
     (x, stats) = cgne(A, b::AbstractVector{FC};
-                      M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
+                      N=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                       itmax::Int=0, verbose::Int=0, history::Bool=false,
                       callback=solver->false)
 
@@ -60,7 +60,7 @@ CGNE produces monotonic errors ‖x-x*‖₂ but not residuals ‖r‖₂.
 It is formally equivalent to CRAIG, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 
-A preconditioner M may be provided in the form of a linear operator.
+A preconditioner N may be provided in the form of a linear operator.
 
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
@@ -88,7 +88,7 @@ See [`CgneSolver`](@ref) for more details about the `solver`.
 function cgne! end
 
 function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
-               M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
+               N=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
                callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
@@ -96,8 +96,8 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("CGNE: system of %d equations in %d variables\n", m, n)
 
-  # Tests M = Iₙ
-  MisI = (M === I)
+  # Tests N = Iₙ
+  MisI = (N === I)
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
@@ -116,7 +116,7 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   x .= zero(FC)
   r .= b
-  MisI || mul!(z, M, r)
+  MisI || mul!(z, N, r)
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
   history && push!(rNorms, rNorm)
   if rNorm == 0
@@ -158,7 +158,7 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
     α = γ / δ
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
-    MisI || mul!(z, M, r)
+    MisI || mul!(z, N, r)
     γ_next = @kdotr(m, r, z)  # Faster than γ_next = dot(r, z)
     β = γ_next / γ
     mul!(Aᵀz, Aᵀ, z)
