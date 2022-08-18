@@ -97,6 +97,16 @@
   @test Krylov.kones(Vector{Float64}, 10) == ones(10)
 
   # test ktypeof
+  a = rand(Float32, 10)
+  b = view(a, 4:8)
+  @test Krylov.ktypeof(a) == Vector{Float32}
+  @test Krylov.ktypeof(b) == Vector{Float32}
+
+  a = rand(Float64, 10)
+  b = view(a, 4:8)
+  @test Krylov.ktypeof(a) == Vector{Float64}
+  @test Krylov.ktypeof(b) == Vector{Float64}
+
   a = sprand(Float32, 10, 0.5)
   b = view(a, 4:8)
   @test Krylov.ktypeof(a) == Vector{Float32}
