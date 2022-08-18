@@ -180,19 +180,28 @@ end
 
 Return a dense storage type `S` based on the type of `v`.
 """
-function ktypeof(v :: AbstractVector{T}) where T
-  S = typeof(v)
-  if S <: SubArray
-    S = S.types[1]
-  end
-  if !(S <: DenseVector)
-    if S <: AbstractSparseVector
-      S = S <: SparseVector ? S.types[3] : S.types[2]  # SparseVector / CuSparseVector
-    else
-      S = Vector{T}
-    end
-  end
+function ktypeof end
+
+function ktypeof(v::S) where S <: DenseVector
   return S
+end
+
+function ktypeof(v::S) where S <: SparseVector
+  T = eltype(S)
+  return Vector{T}
+end
+
+function ktypeof(v::S) where S <: AbstractSparseVector
+  return S.types[2]  # return `CuVector` for a `CuSparseVector`
+end
+
+function ktypeof(v::S) where S <: AbstractVector
+  T = eltype(S)
+  return Vector{T}  # BlockArrays, FillArrays, etc...
+end
+
+function ktypeof(v::S) where S <: SubArray
+  return ktypeof(v.parent)
 end
 
 """
