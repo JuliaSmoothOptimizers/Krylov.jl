@@ -1,6 +1,6 @@
-function test_crmr(A, b; λ=0.0, M=I, history=false)
+function test_crmr(A, b; λ=0.0, N=I, history=false)
   (nrow, ncol) = size(A)
-  (x, stats) = crmr(A, b, λ=λ, M=M, history=history)
+  (x, stats) = crmr(A, b, λ=λ, N=N, history=history)
   r = b - A * x
   if λ > 0
     s = r / sqrt(λ)
@@ -76,8 +76,8 @@ end
       A = 0.5 * [19.0 17.0 15.0 13.0 11.0 9.0 7.0 5.0 3.0 1.0;
                   2.0  2.0  2.0  2.0  2.0 2.0 2.0 2.0 2.0 2.0]
       b = [1.0; 0.0]
-      M = Diagonal(1 ./ (A * A'))
-      (x, stats, resid) = test_crmr(A, b, M=M)
+      N = Diagonal(1 ./ (A * A'))
+      (x, stats, resid) = test_crmr(A, b, N=N)
       @test(resid ≤ crmr_tol)
       @test(stats.solved)
       (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
@@ -87,7 +87,7 @@ end
       for transpose ∈ (false, true)
         A, b, c, D = small_sp(transpose, FC=FC)
         D⁻¹ = inv(D)
-        (x, stats) = crmr(A, b, M=D⁻¹, λ=1.0)
+        (x, stats) = crmr(A, b, N=D⁻¹, λ=1.0)
       end
 
       # test callback function
