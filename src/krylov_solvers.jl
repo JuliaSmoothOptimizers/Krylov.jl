@@ -1137,7 +1137,7 @@ mutable struct CrmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   Aᵀr   :: S
   r     :: S
   q     :: S
-  Mq    :: S
+  Nq    :: S
   s     :: S
   stats :: SimpleStats{T}
 end
@@ -1150,10 +1150,10 @@ function CrmrSolver(n, m, S)
   Aᵀr = S(undef, m)
   r   = S(undef, n)
   q   = S(undef, n)
-  Mq  = S(undef, 0)
+  Nq  = S(undef, 0)
   s   = S(undef, 0)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-  solver = CrmrSolver{T,FC,S}(x, p, Aᵀr, r, q, Mq, s, stats)
+  solver = CrmrSolver{T,FC,S}(x, p, Aᵀr, r, q, Nq, s, stats)
   return solver
 end
 

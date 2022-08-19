@@ -1,6 +1,6 @@
-function test_cgne(A, b; λ=0.0, M=I)
+function test_cgne(A, b; λ=0.0, N=I)
   (nrow, ncol) = size(A)
-  (x, stats) = cgne(A, b, λ=λ, M=M)
+  (x, stats) = cgne(A, b, λ=λ, N=N)
   r = b - A * x
   if λ > 0
     s = r / sqrt(λ)
@@ -69,8 +69,8 @@ end
       @test stats.status == "x = 0 is a zero-residual solution"
 
       # Test with Jacobi (or diagonal) preconditioner
-      A, b, M = square_preconditioned(FC=FC)
-      (x, stats, resid) = test_cgne(A, b, M=M)
+      A, b, N = square_preconditioned(FC=FC)
+      (x, stats, resid) = test_cgne(A, b, N=N)
       @test(resid ≤ cgne_tol)
       @test(stats.solved)
       (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
@@ -81,8 +81,8 @@ end
       A = 0.5 * [19.0 17.0 15.0 13.0 11.0 9.0 7.0 5.0 3.0 1.0;
                  2.0  2.0  2.0  2.0  2.0 2.0 2.0 2.0 2.0 2.0]
       b = [1.0; 0.0]
-      M = Diagonal(1 ./ (A * A'))
-      (x, stats, resid) = test_cgne(A, b, M=M)
+      N = Diagonal(1 ./ (A * A'))
+      (x, stats, resid) = test_cgne(A, b, N=N)
       @test(resid ≤ cgne_tol)
       @test(stats.solved)
       (xI, xmin, xmin_norm) = check_min_norm(A, b, x)
@@ -92,7 +92,7 @@ end
       for transpose ∈ (false, true)
         A, b, c, D = small_sp(transpose, FC=FC)
         D⁻¹ = inv(D)
-        (x, stats) = cgne(A, b, M=D⁻¹, λ=1.0)
+        (x, stats) = cgne(A, b, N=D⁻¹, λ=1.0)
       end
 
       # test callback function
