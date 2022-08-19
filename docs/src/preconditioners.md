@@ -4,9 +4,9 @@ The solvers in Krylov.jl support preconditioners that modify a given linear syst
 
 It exists three variants of preconditioning:
 
-| Left preconditioning | Two-sided preconditioning  | Right preconditioning     |
-|:--------------------:|:--------------------------:|:-------------------------:|
-| $MAx = Mb$           | $MANy = Mb$~~with~~$x = Ny$| $ANy = b$~~with~~$x = Ny$ |
+| Left preconditioning | Two-sided preconditioning       | Right preconditioning          |
+|:--------------------:|:-------------------------------:|:------------------------------:|
+| $MAx = Mb$           | $MANy = Mb~~\text{with}~~x = Ny$| $ANy = b~~\text{with}~~x = Ny$ |
 
 #### Unsymmetric linear systems
 
@@ -23,31 +23,56 @@ We provide this preconditioner with the argument `M` in [`SYMMLQ`](@ref symmlq),
 
 #### Least-squares problems
 
-For linear least-squares problem $\min \|b - Ax\|^2_2$, a preconditioner `M` modifies the problem such that $\min \|b - Ax\|^2_M$ is solved.
-It is equivalent to solve the normal equation $A^TMAx = A^TMb$ instead of $A^TAx = A^Tb$.
+| Formulation           | Without preconditioning | With preconditioning    |
+|:---------------------:|:-----------------------:|:-----------------------:|
+| least-squares problem | $\min \\|b - Ax\\|^2_2$ | $\min \\|b - Ax\\|^2_M$ |
+| Normal equation       | $A^TAx = A^Tb$          | $A^TMAx = A^TMb$        |
+| Augmented system      | $\begin{bmatrix} I & A \\ A^T & 0 \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ | $\begin{bmatrix} M & A \\ A^T & 0 \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ |
+
 We provide a symmetric positive definite preconditioner with the argument `M` in [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).
+
+A second positive definite preconditioner `N` is supported by [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).
+It is dedicated to regularized least-squares problems.
+
+| Formulation           | Without preconditioning                         | With preconditioning                                   |
+|:---------------------:|:-----------------------------------------------:|:------------------------------------------------------:|
+| least-squares problem | $\min \\|b - Ax\\|^2_2 + \lambda^2 \\|x\\|^2_2$ | $\min \\|b - Ax\\|^2_M + \lambda^2 \\|x\\|^2_{N^{-1}}$ |
+| Normal equation       | $(A^TA + \lambda^2 I)x = A^Tb$              | $(A^TMA + \lambda^2 N^{-1})x = A^TMb$                      |
+| Augmented system      | $\begin{bmatrix} I & A \\ A^T & -\lambda^2 I \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ | $\begin{bmatrix} M & A \\ A^T & -\lambda^2 N \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ |
 
 #### Minimum-norm problems
 
-For minimum-norm problem $\min \|x\|^2_2$~~s.t.~~$Ax = b$, a preconditioner `N` modifies the problem such that $\min \|x\|^2_{N^{-1}}$~~s.t.~~$Ax = b$ is solved.
-It is equivalent to solve the normal equation $ANA^Tx = b$ instead of $AA^Tx = b$. 
+| Formulation          | Without preconditioning                 | With preconditioning                           |
+|:--------------------:|:---------------------------------------:|:----------------------------------------------:|
+| minimum-norm problem | $\min \\|x\\|^2_2~~\text{s.t.}~~Ax = b$ | $\min \\|x\\|^2_{N^{-1}}~~\text{s.t.}~~Ax = b$ |
+| Normal equation      | $AA^Ty = b~~\text{with}~~x = A^Ty$      | $ANA^Ty = b~~\text{with}~~x = NA^Ty$           |
+| Augmented system     | $\begin{bmatrix} -I & A^T \\ \phantom{-}A & 0 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ | $\begin{bmatrix} -N & A^T \\ \phantom{-}A & 0 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ |
+
 We provide a symmetric positive definite preconditioner with the argument `N` in [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq), [`CRAIG`](@ref craig) and [`CRAIGMR`](@ref craigmr).
+A second positive definite preconditioner `M` is supported by [`LNLQ`](@ref lslq), [`CRAIG`](@ref lsqr) and [`CRAIGMR`](@ref lsmr).
+It is dedicated to penalized minimum-norm problems.
+
+| Formulation          | Without preconditioning                                             | With preconditioning                                                                    |
+|:--------------------:|:-------------------------------------------------------------------:|:---------------------------------------------------------------------------------------:|
+| minimum-norm problem | $\min \\|x\\|^2_2 + \\|y\\|^2_2~~\text{s.t.}~~Ax + \lambda^2 y = b$ | $\min \\|x\\|^2_{N^{-1}} + \\|y\\|^2_{M^{-1}}~~\text{s.t.}~~Ax + \lambda^2 M^{-1}y = b$ |
+| Normal equation      | $(AA^T + \lambda^2 I)y = b~~\text{with}~~x = A^Ty$                  | $(ANA^T + \lambda^2 M^{-1})y = b~~\text{with}~~x = NA^Ty$                               |
+| Augmented system     | $\begin{bmatrix} -I & A^T \\ \phantom{-}A & \lambda^2 I \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ | $\begin{bmatrix} -N^{-1} & A^T \\ \phantom{-}A & \lambda^2 M^{-1} \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ |
 
 #### Saddle-point and symmetric quasi-definite systems
 
 When a symmetric system $Kz = d$ has the 2x2 block structure
 ```math
-  \begin{bmatrix} \tau E & \phantom{-}A \\ A^T & \nu F \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix},
+  \begin{bmatrix} \tau M^{-1} & \phantom{-}A \\ A^T & \nu N^{-1} \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix},
 ```
-where $E$ and $F$ are symmetric positive definite, [`TriCG`](@ref tricg) and [`TriMR`](@ref trimr) can take advantage of this structure if preconditioners `M` and `N` such that $M = E^{-1}$ and $N = F^{-1}$ are available.
+where $M^{-1}$ and $N^{-1}$ are symmetric positive definite, [`TriCG`](@ref tricg) and [`TriMR`](@ref trimr) can take advantage of this structure if preconditioners `M` and `N` that model $M$ and $N$ are available.
 
 #### Generalized saddle-point and unsymmetric partitioned systems
 
 When an unsymmetric system $Kz = d$ has the 2x2 block structure
 ```math
-  \begin{bmatrix} \lambda M & A \\ B & \mu N \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix},
+  \begin{bmatrix} \lambda M^{-1} & A \\ B & \mu N^{-1} \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix},
 ```
-[`GPMR`](@ref gpmr) can take advantage of this structure if preconditioners `C`, `D`, `E` and `F` such that $CE = M^{-1}$ and $DF = N^{-1}$ are available.
+[`GPMR`](@ref gpmr) can take advantage of this structure if preconditioners `C`, `D`, `E` and `F` such that $CE = M$ and $DF = N$ are available.
 
 !!! tip
 	A preconditioner `P` only needs to support the operation `mul!(y, P, x)` to be used in Krylov.jl.
