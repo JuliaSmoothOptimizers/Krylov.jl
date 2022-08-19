@@ -17,7 +17,7 @@ export gpmr, gpmr!
                          gsp::Bool=false, reorthogonalization::Bool=false,
                          itmax::Int=0, λ::FC=one(FC), μ::FC=one(FC),
                          verbose::Int=0, history::Bool=false,
-                         callback=solver->false)
+                         ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -110,7 +110,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
                gsp :: Bool=false, reorthogonalization :: Bool=false,
                itmax :: Int=0, λ :: FC=one(FC), μ :: FC=one(FC),
                verbose :: Int=0, history::Bool=false,
-               callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   s, t = size(B)
@@ -180,7 +180,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   # Compute C(b - AΔy) - λΔx
   warm_start && mul!(b₀, A, Δy)
   warm_start && @kaxpby!(m, one(FC), b, -one(FC), b₀)
-  !CisI && mul!(q, C, b₀)
+  !CisI && mulorldiv!(q, C, b₀, ldiv)
   !CisI && (b₀ = q)
   warm_start && (λ ≠ 0) && @kaxpy!(m, -λ, Δx, b₀)
 
@@ -189,7 +189,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   # Compute D(c - BΔx) - μΔy
   warm_start && mul!(c₀, B, Δx)
   warm_start && @kaxpby!(n, one(FC), c, -one(FC), c₀)
-  !DisI && mul!(p, D, c₀)
+  !DisI && mulorldiv!(p, D, c₀, ldiv)
   !DisI && (c₀ = p)
   warm_start && (μ ≠ 0) && @kaxpy!(n, -μ, Δy, c₀)
 
@@ -251,12 +251,12 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     # DBEVₖ = UₖFₖ + fₖ₊₁.ₖ * uₖ₊₁(eₖ)ᵀ = Uₖ₊₁Fₖ₊₁.ₖ
     wA = FisI ? U[iter] : solver.wA
     wB = EisI ? V[iter] : solver.wB
-    FisI || mul!(wA, F, U[iter])  # wA = Fuₖ
-    EisI || mul!(wB, E, V[iter])  # wB = Evₖ
-    mul!(dA, A, wA)               # dA = AFuₖ
-    mul!(dB, B, wB)               # dB = BEvₖ
-    CisI || mul!(q, C, dA)        # q  = CAFuₖ
-    DisI || mul!(p, D, dB)        # p  = DBEvₖ
+    FisI || mulorldiv!(wA, F, U[iter], ldiv)  # wA = Fuₖ
+    EisI || mulorldiv!(wB, E, V[iter], ldiv)  # wB = Evₖ
+    mul!(dA, A, wA)                           # dA = AFuₖ
+    mul!(dB, B, wB)                           # dB = BEvₖ
+    CisI || mulorldiv!(q, C, dA, ldiv)        # q  = CAFuₖ
+    DisI || mulorldiv!(p, D, dB, ldiv)        # p  = DBEvₖ
 
     for i = 1 : iter
       hᵢₖ = @kdot(m, V[i], q)    # hᵢ.ₖ = vᵢAuₖ
@@ -455,11 +455,11 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   end
   if !EisI
     wB .= x
-    mul!(x, E, wB)
+    mulorldiv!(x, E, wB, ldiv)
   end
   if !FisI
     wA .= y
-    mul!(y, F, wA)
+    mulorldiv!(y, F, wA, ldiv)
   end
   warm_start && @kaxpy!(m, one(FC), Δx, x)
   warm_start && @kaxpy!(n, one(FC), Δy, y)

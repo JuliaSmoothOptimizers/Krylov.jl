@@ -29,7 +29,7 @@ export lnlq, lnlq!
                          M=I, N=I, sqd::Bool=false, λ::T=zero(T), σ::T=zero(T),
                          atol::T=√eps(T), rtol::T=√eps(T), etolx::T=√eps(T), etoly::T=√eps(T), itmax::Int=0,
                          transfer_to_craig::Bool=true, verbose::Int=0, history::Bool=false,
-                         callback=solver->false)
+                         ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -107,7 +107,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
                atol :: T=√eps(T), rtol :: T=√eps(T), etolx :: T=√eps(T), etoly :: T=√eps(T), itmax :: Int=0,
                transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false,
-               callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -172,8 +172,8 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # Initialize generalized Golub-Kahan bidiagonalization.
   # β₁Mu₁ = b.
   Mu .= b
-  MisI || mul!(u, M, Mu)       # u₁ = M⁻¹ * Mu₁
-  βₖ = sqrt(@kdotr(m, u, Mu))  # β₁ = ‖u₁‖_M
+  MisI || mulorldiv!(u, M, Mu, ldiv)  # u₁ = M⁻¹ * Mu₁
+  βₖ = sqrt(@kdotr(m, u, Mu))         # β₁ = ‖u₁‖_M
   if βₖ ≠ 0
     @kscal!(m, one(FC) / βₖ, u)
     MisI || @kscal!(m, one(FC) / βₖ, Mu)
@@ -182,8 +182,8 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # α₁Nv₁ = Aᵀu₁.
   mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
-  NisI || mul!(v, N, Nv)       # v₁ = N⁻¹ * Nv₁
-  αₖ = sqrt(@kdotr(n, v, Nv))  # α₁ = ‖v₁‖_N
+  NisI || mulorldiv!(v, N, Nv, ldiv)  # v₁ = N⁻¹ * Nv₁
+  αₖ = sqrt(@kdotr(n, v, Nv))         # α₁ = ‖v₁‖_N
   if αₖ ≠ 0
     @kscal!(n, one(FC) / αₖ, v)
     NisI || @kscal!(n, one(FC) / αₖ, Nv)
@@ -289,8 +289,8 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     mul!(Av, A, v)
     @kaxpby!(m, one(FC), Av, -αₖ, Mu)
-    MisI || mul!(u, M, Mu)         # uₖ₊₁ = M⁻¹ * Muₖ₊₁
-    βₖ₊₁ = sqrt(@kdotr(m, u, Mu))  # βₖ₊₁ = ‖uₖ₊₁‖_M
+    MisI || mulorldiv!(u, M, Mu, ldiv)  # uₖ₊₁ = M⁻¹ * Muₖ₊₁
+    βₖ₊₁ = sqrt(@kdotr(m, u, Mu))       # βₖ₊₁ = ‖uₖ₊₁‖_M
     if βₖ₊₁ ≠ 0
       @kscal!(m, one(FC) / βₖ₊₁, u)
       MisI || @kscal!(m, one(FC) / βₖ₊₁, Mu)
@@ -299,8 +299,8 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
     mul!(Aᵀu, Aᵀ, u)
     @kaxpby!(n, one(FC), Aᵀu, -βₖ₊₁, Nv)
-    NisI || mul!(v, N, Nv)         # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
-    αₖ₊₁ = sqrt(@kdotr(n, v, Nv))  # αₖ₊₁ = ‖vₖ₊₁‖_N
+    NisI || mulorldiv!(v, N, Nv, ldiv)  # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
+    αₖ₊₁ = sqrt(@kdotr(n, v, Nv))       # αₖ₊₁ = ‖vₖ₊₁‖_N
     if αₖ₊₁ ≠ 0
       @kscal!(n, one(FC) / αₖ₊₁, v)
       NisI || @kscal!(n, one(FC) / αₖ₊₁, Nv)

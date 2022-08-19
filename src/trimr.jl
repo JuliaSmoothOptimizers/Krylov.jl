@@ -17,7 +17,7 @@ export trimr, trimr!
                           spd::Bool=false, snd::Bool=false, flip::Bool=false, sp::Bool=false,
                           τ::T=one(T), ν::T=-one(T), itmax::Int=0,
                           verbose::Int=0, history::Bool=false,
-                          callback=solver->false)
+                          ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -102,7 +102,7 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
                 spd :: Bool=false, snd :: Bool=false, flip :: Bool=false, sp :: Bool=false,
                 τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0,
                 verbose :: Int=0, history :: Bool=false,
-                callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -181,7 +181,7 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
   # β₁Ev₁ = b ↔ β₁v₁ = Mb
   M⁻¹vₖ .= b₀
-  MisI || mul!(vₖ, M, M⁻¹vₖ)
+  MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
   βₖ = sqrt(@kdotr(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
   if βₖ ≠ 0
     @kscal!(m, one(FC) / βₖ, M⁻¹vₖ)
@@ -192,7 +192,7 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
   # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
   N⁻¹uₖ .= c₀
-  NisI || mul!(uₖ, N, N⁻¹uₖ)
+  NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
   γₖ = sqrt(@kdotr(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
   if γₖ ≠ 0
     @kscal!(n, one(FC) / γₖ, N⁻¹uₖ)
@@ -260,8 +260,8 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     @kaxpy!(n, -conj(αₖ), N⁻¹uₖ, p)  # p ← p - ᾱₖ * N⁻¹uₖ
 
     # Compute vₖ₊₁ and uₖ₊₁
-    MisI || mul!(vₖ₊₁, M, q)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
-    NisI || mul!(uₖ₊₁, N, p)  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - ᾱₖuₖ
+    MisI || mulorldiv!(vₖ₊₁, M, q, ldiv)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
+    NisI || mulorldiv!(uₖ₊₁, N, p, ldiv)  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - ᾱₖuₖ
 
     βₖ₊₁ = sqrt(@kdotr(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
     γₖ₊₁ = sqrt(@kdotr(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F

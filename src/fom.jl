@@ -15,7 +15,7 @@ export fom, fom!
                      M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                      reorthogonalization::Bool=false, itmax::Int=0,
                      restart::Bool=false, verbose::Int=0, history::Bool=false,
-                     callback=solver->false)
+                     ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -85,7 +85,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
               reorthogonalization :: Bool=false, itmax :: Int=0,
               restart :: Bool=false, verbose :: Int=0, history :: Bool=false,
-              callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+              ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -124,8 +124,8 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   else
     w .= b
   end
-  MisI || mul!(r₀, M, w)  # r₀ = M⁻¹(b - Ax₀)
-  β = @knrm2(n, r₀)       # β = ‖r₀‖₂
+  MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M⁻¹(b - Ax₀)
+  β = @knrm2(n, r₀)                   # β = ‖r₀‖₂
 
   rNorm = β
   history && push!(rNorms, β)
@@ -178,7 +178,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
       if npass ≥ 1
         mul!(w, A, x)
         @kaxpby!(n, one(FC), b, -one(FC), w)
-        MisI || mul!(r₀, M, w)
+        MisI || mulorldiv!(r₀, M, w, ldiv)
       end
     end
 
@@ -207,9 +207,9 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
       # Continue the Arnoldi process.
       p = NisI ? V[inner_iter] : solver.p
-      NisI || mul!(p, N, V[inner_iter])  # p ← N⁻¹vₖ
-      mul!(w, A, p)                      # w ← AN⁻¹vₖ
-      MisI || mul!(q, M, w)              # q ← M⁻¹AN⁻¹vₖ
+      NisI || mulorldiv!(p, N, V[inner_iter], ldiv)  # p ← N⁻¹vₖ
+      mul!(w, A, p)                                  # w ← AN⁻¹vₖ
+      MisI || mulorldiv!(q, M, w, ldiv)              # q ← M⁻¹AN⁻¹vₖ
       for i = 1 : inner_iter
         U[nr+i] = @kdot(n, V[i], q)      # hᵢₖ = qᵀvᵢ
         @kaxpy!(n, -U[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
@@ -286,7 +286,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
     if !NisI
       solver.p .= xr
-      mul!(xr, N, solver.p)
+      mulorldiv!(xr, N, solver.p, ldiv)
     end
     restart && @kaxpy!(n, one(FC), xr, x)
 

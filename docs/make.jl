@@ -20,7 +20,7 @@ makedocs(
            "In-place methods" => "inplace.md",
            "GPU support" => "gpu.md",
            "Warm start" => "warm_start.md",
-           "Factorization-free operators" => "factorization-free.md",
+           "Matrix-free operators" => "matrix-free.md",
            "Callbacks" => "callbacks.md",
            "Performance tips" => "tips.md",
            "Tutorial" => "examples.md",

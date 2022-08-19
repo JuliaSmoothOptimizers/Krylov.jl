@@ -31,7 +31,7 @@ export craigmr, craigmr!
     (x, y, stats) = craigmr(A, b::AbstractVector{FC};
                             M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                             rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
-                            callback=solver->false)
+                            ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -110,7 +110,7 @@ function craigmr! end
 function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                   M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                   rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-                  callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                  ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -146,7 +146,7 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   x .= zero(FC)
   y .= zero(FC)
   Mu .= b
-  MisI || mul!(u, M, Mu)
+  MisI || mulorldiv!(u, M, Mu, ldiv)
   β = sqrt(@kdotr(m, u, Mu))
   if β == 0
     stats.niter = 0
@@ -164,7 +164,7 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # α₁Nv₁ = Aᵀu₁.
   mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
-  NisI || mul!(v, N, Nv)
+  NisI || mulorldiv!(v, N, Nv, ldiv)
   α = sqrt(@kdotr(n, v, Nv))
   Anorm² = α * α
 
@@ -229,7 +229,7 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     mul!(Av, A, v)
     @kaxpby!(m, one(FC), Av, -α, Mu)
-    MisI || mul!(u, M, Mu)
+    MisI || mulorldiv!(u, M, Mu, ldiv)
     β = sqrt(@kdotr(m, u, Mu))
     if β ≠ 0
       @kscal!(m, one(FC)/β, u)
@@ -291,7 +291,7 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
     mul!(Aᵀu, Aᵀ, u)
     @kaxpby!(n, one(FC), Aᵀu, -β, Nv)
-    NisI || mul!(v, N, Nv)
+    NisI || mulorldiv!(v, N, Nv, ldiv)
     α = sqrt(@kdotr(n, v, Nv))
     Anorm² = Anorm² + α * α  # = ‖Lₖ‖
     ArNorm = α * β * abs(ζ/ρ)

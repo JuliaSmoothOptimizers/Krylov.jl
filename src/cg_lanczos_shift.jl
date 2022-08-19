@@ -19,7 +19,7 @@ export cg_lanczos_shift, cg_lanczos_shift!
                                   M=I, atol::T=√eps(T), rtol::T=√eps(T),
                                   itmax::Int=0, check_curvature::Bool=false,
                                   verbose::Int=0, history::Bool=false,
-                                  callback=solver->false)
+                                  ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -59,7 +59,7 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
                            M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                            itmax :: Int=0, check_curvature :: Bool=false,
                            verbose :: Int=0, history :: Bool=false,
-                           callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                           ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -88,11 +88,11 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
   # Initial state.
   ## Distribute x similarly to shifts.
   for i = 1 : nshifts
-    x[i] .= zero(FC)          # x₀
+    x[i] .= zero(FC)  # x₀
   end
-  Mv .= b                     # Mv₁ ← b
-  MisI || mul!(v, M, Mv)      # v₁ = M⁻¹ * Mv₁
-  β = sqrt(@kdotr(n, v, Mv))  # β₁ = v₁ᵀ M v₁
+  Mv .= b                             # Mv₁ ← b
+  MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹ * Mv₁
+  β = sqrt(@kdotr(n, v, Mv))          # β₁ = v₁ᵀ M v₁
   rNorms .= β
   if history
     for i = 1 : nshifts
@@ -164,7 +164,7 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
       @. Mv_prev = Mv                    # Mvₖ₋₁ ← Mvₖ
     end
     @. Mv = Mv_next                      # Mvₖ ← Mvₖ₊₁
-    MisI || mul!(v, M, Mv)               # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
+    MisI || mulorldiv!(v, M, Mv, ldiv)   # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
     β = sqrt(@kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
     @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
     MisI || @kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁

@@ -15,7 +15,7 @@ export diom, diom!
                       M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                       reorthogonalization::Bool=false, itmax::Int=0,
                       verbose::Int=0, history::Bool=false,
-                      callback=solver->false)
+                      ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -87,7 +87,7 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                reorthogonalization :: Bool=false, itmax :: Int=0,
                verbose :: Int=0, history :: Bool=false,
-               callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -121,9 +121,8 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   else
     t .= b
   end
-  MisI || mul!(r₀, M, t)  # M⁻¹(b - Ax₀)
-  # Compute β.
-  rNorm = @knrm2(n, r₀) # β = ‖r₀‖₂
+  MisI || mulorldiv!(r₀, M, t, ldiv)  # M⁻¹(b - Ax₀)
+  rNorm = @knrm2(n, r₀)               # β = ‖r₀‖₂
   history && push!(rNorms, rNorm)
   if rNorm == 0
     stats.niter = 0
@@ -172,9 +171,9 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     # Incomplete Arnoldi procedure.
     z = NisI ? V[pos] : solver.z
-    NisI || mul!(z, N, V[pos])  # N⁻¹vₘ, forms pₘ
-    mul!(t, A, z)               # AN⁻¹vₘ
-    MisI || mul!(w, M, t)       # M⁻¹AN⁻¹vₘ, forms vₘ₊₁
+    NisI || mulorldiv!(z, N, V[pos], ldiv)  # N⁻¹vₘ, forms pₘ
+    mul!(t, A, z)                           # AN⁻¹vₘ
+    MisI || mulorldiv!(w, M, t, ldiv)       # M⁻¹AN⁻¹vₘ, forms vₘ₊₁
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
       diag = iter - i + 2

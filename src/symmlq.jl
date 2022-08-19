@@ -18,7 +18,7 @@ export symmlq, symmlq!
                         λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                         etol::T=√eps(T), itmax::Int=0, conlim::T=1/√eps(T),
                         verbose::Int=0, history::Bool=false,
-                        callback=solver->false)
+                        ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -83,7 +83,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                  etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
                  verbose :: Int=0, history :: Bool=false,
-                 callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -124,7 +124,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
-  MisI || mul!(vold, M, Mvold)
+  MisI || mulorldiv!(vold, M, Mvold, ldiv)
   β₁ = @kdotr(m, vold, Mvold)
   if β₁ == 0
     stats.niter = 0
@@ -147,7 +147,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   mul!(Mv, A, vold)
   α = @kdotr(m, vold, Mv) + λ
   @kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
-  MisI || mul!(v, M, Mv)
+  MisI || mulorldiv!(v, M, Mv, ldiv)
   β = @kdotr(m, v, Mv)
   β < 0 && error("Preconditioner is not positive definite")
   β = sqrt(β)
@@ -248,7 +248,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     @. Mvold = Mv
     @kaxpy!(m, -α, Mv, Mv_next)
     @. Mv = Mv_next
-    MisI || mul!(v, M, Mv)
+    MisI || mulorldiv!(v, M, Mv, ldiv)
     β = @kdotr(m, v, Mv)
     β < 0 && error("Preconditioner is not positive definite")
     β = sqrt(β)

@@ -21,7 +21,7 @@ export minres_qlp, minres_qlp!
                             M=I, atol::T=√eps(T), rtol::T=√eps(T),
                             ctol::T=√eps(T), λ::T=zero(T), itmax::Int=0,
                             verbose::Int=0, history::Bool=false,
-                            callback=solver->false)
+                            ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -83,7 +83,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                      ctol :: T=√eps(T), λ ::T=zero(T), itmax :: Int=0,
                      verbose :: Int=0, history :: Bool=false,
-                     callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                     ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -119,7 +119,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
   end
 
   # β₁v₁ = Mb
-  MisI || mul!(vₖ, M, M⁻¹vₖ)
+  MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
   βₖ = sqrt(@kdotr(n, vₖ, M⁻¹vₖ))
   if βₖ ≠ 0
     @kscal!(n, one(FC) / βₖ, M⁻¹vₖ)
@@ -196,7 +196,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
 
     @kaxpy!(n, -αₖ, M⁻¹vₖ, p)  # p ← p - αₖM⁻¹vₖ
 
-    MisI || mul!(vₖ₊₁, M, p)   # βₖ₊₁vₖ₊₁ = MAvₖ - γₖvₖ₋₁ - αₖvₖ
+    MisI || mulorldiv!(vₖ₊₁, M, p, ldiv)  # βₖ₊₁vₖ₊₁ = MAvₖ - γₖvₖ₋₁ - αₖvₖ
 
     βₖ₊₁ = sqrt(@kdotr(m, vₖ₊₁, p))
 

@@ -19,7 +19,7 @@ export bicgstab, bicgstab!
     (x, stats) = bicgstab(A, b::AbstractVector{FC}; c::AbstractVector{FC}=b,
                           M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                           itmax::Int=0, verbose::Int=0, history::Bool=false,
-                          callback=solver->false)
+                          ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -89,7 +89,7 @@ end
 function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
                    M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                    itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-                   callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                   ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -125,11 +125,11 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
     r₀ .= b
   end
 
-  x .= zero(FC)          # x₀
-  s .= zero(FC)          # s₀
-  v .= zero(FC)          # v₀
-  MisI || mul!(r, M, r₀) # r₀
-  p .= r                 # p₁
+  x .= zero(FC)                       # x₀
+  s .= zero(FC)                       # s₀
+  v .= zero(FC)                       # v₀
+  MisI || mulorldiv!(r, M, r₀, ldiv)  # r₀
+  p .= r                              # p₁
 
   α = one(FC) # α₀
   ω = one(FC) # ω₀
@@ -174,16 +174,16 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
     iter = iter + 1
     ρ = next_ρ
 
-    NisI || mul!(y, N, p)                # yₖ = N⁻¹pₖ
+    NisI || mulorldiv!(y, N, p, ldiv)    # yₖ = N⁻¹pₖ
     mul!(q, A, y)                        # qₖ = Ayₖ
-    mul!(v, M, q)                        # vₖ = M⁻¹qₖ
+    mulorldiv!(v, M, q, ldiv)            # vₖ = M⁻¹qₖ
     α = ρ / @kdot(n, c, v)               # αₖ = ⟨r̅₀,rₖ₋₁⟩ / ⟨r̅₀,vₖ⟩
     @kcopy!(n, r, s)                     # sₖ = rₖ₋₁
     @kaxpy!(n, -α, v, s)                 # sₖ = sₖ - αₖvₖ
     @kaxpy!(n, α, y, x)                  # xₐᵤₓ = xₖ₋₁ + αₖyₖ
-    NisI || mul!(z, N, s)                # zₖ = N⁻¹sₖ
+    NisI || mulorldiv!(z, N, s, ldiv)    # zₖ = N⁻¹sₖ
     mul!(d, A, z)                        # dₖ = Azₖ
-    MisI || mul!(t, M, d)                # tₖ = M⁻¹dₖ
+    MisI || mulorldiv!(t, M, d, ldiv)    # tₖ = M⁻¹dₖ
     ω = @kdot(n, t, s) / @kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
     @kaxpy!(n, ω, z, x)                  # xₖ = xₐᵤₓ + ωₖzₖ
     @kcopy!(n, s, r)                     # rₖ = sₖ

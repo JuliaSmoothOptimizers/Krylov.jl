@@ -33,7 +33,7 @@ export cgne, cgne!
     (x, stats) = cgne(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                       itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      callback=solver->false)
+                      ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -90,7 +90,7 @@ function cgne! end
 function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-               callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -116,7 +116,7 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   x .= zero(FC)
   r .= b
-  MisI || mul!(z, M, r)
+  MisI || mulorldiv!(z, M, r, ldiv)
   rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
   history && push!(rNorms, rNorm)
   if rNorm == 0
@@ -158,7 +158,7 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
     α = γ / δ
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
-    MisI || mul!(z, M, r)
+    MisI || mulorldiv!(z, M, r, ldiv)
     γ_next = @kdotr(m, r, z)  # Faster than γ_next = dot(r, z)
     β = γ_next / γ
     mul!(Aᵀz, Aᵀ, z)
