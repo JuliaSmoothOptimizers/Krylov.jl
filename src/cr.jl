@@ -18,7 +18,7 @@ export cr, cr!
     (x, stats) = cr(A, b::AbstractVector{FC};
                     M=I, atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T), itmax::Int=0,
                     radius::T=zero(T), verbose::Int=0, linesearch::Bool=false, history::Bool=false,
-                    callback=solver->false)
+                    ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -82,7 +82,7 @@ end
 function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
              radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false,
-             callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+             ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
   n, m = size(A)
@@ -113,7 +113,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   else
     p .= b
   end
-  mul!(r, M, p)
+  mulorldiv!(r, M, p, ldiv)
   mul!(Ar, A, r)
   ρ = @kdotr(n, r, Ar)
 
@@ -170,7 +170,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     elseif pAp ≤ 0 && radius == 0
       error("Indefinite system and no trust region")
     end
-    MisI || mul!(Mq, M, q)
+    MisI || mulorldiv!(Mq, M, q, ldiv)
 
     if radius > 0
       (verbose > 0) && @printf("radius = %8.1e > 0 and ‖x‖ = %8.1e\n", radius, xNorm)

@@ -33,7 +33,7 @@ export cgls, cgls!
     (x, stats) = cgls(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                       radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      callback=solver->false)
+                      ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -81,7 +81,7 @@ function cgls! end
 function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-               callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -116,7 +116,7 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     history && push!(ArNorms, zero(T))
     return solver
   end
-  MisI || mul!(Mr, M, r)
+  MisI || mulorldiv!(Mr, M, r, ldiv)
   mul!(s, Aᵀ, Mr)
   p .= s
   γ = @kdotr(n, s, s)  # γ = sᵀs
@@ -139,7 +139,7 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   while ! (solved || tired || user_requested_exit)
     mul!(q, A, p)
-    MisI || mul!(Mq, M, q)
+    MisI || mulorldiv!(Mq, M, q, ldiv)
     δ = @kdotr(m, q, Mq)  # δ = qᵀMq
     λ > 0 && (δ += λ * @kdotr(n, p, p))  # δ = δ + pᵀp
     α = γ / δ
@@ -153,7 +153,7 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
-    MisI || mul!(Mr, M, r)
+    MisI || mulorldiv!(Mr, M, r, ldiv)
     mul!(s, Aᵀ, Mr)
     λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x
     γ_next = @kdotr(n, s, s)   # γ_next = sᵀs

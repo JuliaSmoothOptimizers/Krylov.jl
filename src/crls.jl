@@ -25,7 +25,7 @@ export crls, crls!
     (x, stats) = crls(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                       radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      callback=solver->false)
+                      ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -72,7 +72,7 @@ function crls! end
 function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-               callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -111,10 +111,10 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     return solver
   end
 
-  MisI || mul!(Mr, M, r)
+  MisI || mulorldiv!(Mr, M, r, ldiv)
   mul!(Ar, Aᵀ, Mr)  # - λ * x0 if x0 ≠ 0.
   mul!(s, A, Ar)
-  MisI || mul!(Ms, M, s)
+  MisI || mulorldiv!(Ms, M, s, ldiv)
 
   p  .= Ar
   Ap .= s
@@ -169,14 +169,14 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     solved && continue
     @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap
     mul!(s, A, Ar)
-    MisI || mul!(Ms, M, s)
+    MisI || mulorldiv!(Ms, M, s, ldiv)
     γ_next = @kdotr(m, s, Ms)   # Faster than γ_next = dot(s, s)
     λ > 0 && (γ_next += λ * ArNorm * ArNorm)
     β = γ_next / γ
 
     @kaxpby!(n, one(FC), Ar, β, p)    # Faster than  p = Ar + β *  p
     @kaxpby!(m, one(FC), s, β, Ap)    # Faster than Ap =  s + β * Ap
-    MisI || mul!(MAp, M, Ap)
+    MisI || mulorldiv!(MAp, M, Ap, ldiv)
     mul!(q, Aᵀ, MAp)
     λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
 

@@ -14,7 +14,7 @@ export cgs, cgs!
     (x, stats) = cgs(A, b::AbstractVector{FC}; c::AbstractVector{FC}=b,
                      M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                      itmax::Int=0, verbose::Int=0, history::Bool=false,
-                     callback=solver->false)
+                     ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -86,7 +86,7 @@ end
 function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
               itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-              callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+              ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
@@ -123,8 +123,8 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     r₀ .= b
   end
 
-  x .= zero(FC)           # x₀
-  MisI || mul!(r, M, r₀)  # r₀
+  x .= zero(FC)                       # x₀
+  MisI || mulorldiv!(r, M, r₀, ldiv)  # r₀
 
   # Compute residual norm ‖r₀‖₂.
   rNorm = @knrm2(n, r)
@@ -167,25 +167,25 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
 
   while !(solved || tired || breakdown || user_requested_exit)
 
-    NisI || mul!(y, N, p)         # yₖ = N⁻¹pₖ
-    mul!(t, A, y)                 # tₖ = Ayₖ
-    MisI || mul!(v, M, t)         # vₖ = M⁻¹tₖ
-    σ = @kdot(n, c, v)            # σₖ = ⟨ r̅₀,M⁻¹AN⁻¹pₖ ⟩
-    α = ρ / σ                     # αₖ = ρₖ / σₖ
-    @kcopy!(n, u, q)              # qₖ = uₖ
-    @kaxpy!(n, -α, v, q)          # qₖ = qₖ - αₖ * M⁻¹AN⁻¹pₖ
-    @kaxpy!(n, one(FC), q, u)     # uₖ₊½ = uₖ + qₖ
-    NisI || mul!(z, N, u)         # zₖ = N⁻¹uₖ₊½
-    @kaxpy!(n, α, z, x)           # xₖ₊₁ = xₖ + αₖ * N⁻¹(uₖ + qₖ)
-    mul!(s, A, z)                 # sₖ = Azₖ
-    MisI || mul!(w, M, s)         # wₖ = M⁻¹sₖ
-    @kaxpy!(n, -α, w, r)          # rₖ₊₁ = rₖ - αₖ * M⁻¹AN⁻¹(uₖ + qₖ)
-    ρ_next = @kdot(n, c, r)       # ρₖ₊₁ = ⟨ r̅₀,rₖ₊₁ ⟩
-    β = ρ_next / ρ                # βₖ = ρₖ₊₁ / ρₖ
-    @kcopy!(n, r, u)              # uₖ₊₁ = rₖ₊₁
-    @kaxpy!(n, β, q, u)           # uₖ₊₁ = uₖ₊₁ + βₖ * qₖ
-    @kaxpby!(n, one(FC), q, β, p) # pₐᵤₓ = qₖ + βₖ * pₖ
-    @kaxpby!(n, one(FC), u, β, p) # pₖ₊₁ = uₖ₊₁ + βₖ * pₐᵤₓ
+    NisI || mulorldiv!(y, N, p, ldiv)  # yₖ = N⁻¹pₖ
+    mul!(t, A, y)                      # tₖ = Ayₖ
+    MisI || mulorldiv!(v, M, t, ldiv)  # vₖ = M⁻¹tₖ
+    σ = @kdot(n, c, v)                 # σₖ = ⟨ r̅₀,M⁻¹AN⁻¹pₖ ⟩
+    α = ρ / σ                          # αₖ = ρₖ / σₖ
+    @kcopy!(n, u, q)                   # qₖ = uₖ
+    @kaxpy!(n, -α, v, q)               # qₖ = qₖ - αₖ * M⁻¹AN⁻¹pₖ
+    @kaxpy!(n, one(FC), q, u)          # uₖ₊½ = uₖ + qₖ
+    NisI || mulorldiv!(z, N, u, ldiv)  # zₖ = N⁻¹uₖ₊½
+    @kaxpy!(n, α, z, x)                # xₖ₊₁ = xₖ + αₖ * N⁻¹(uₖ + qₖ)
+    mul!(s, A, z)                      # sₖ = Azₖ
+    MisI || mulorldiv!(w, M, s, ldiv)  # wₖ = M⁻¹sₖ
+    @kaxpy!(n, -α, w, r)               # rₖ₊₁ = rₖ - αₖ * M⁻¹AN⁻¹(uₖ + qₖ)
+    ρ_next = @kdot(n, c, r)            # ρₖ₊₁ = ⟨ r̅₀,rₖ₊₁ ⟩
+    β = ρ_next / ρ                     # βₖ = ρₖ₊₁ / ρₖ
+    @kcopy!(n, r, u)                   # uₖ₊₁ = rₖ₊₁
+    @kaxpy!(n, β, q, u)                # uₖ₊₁ = uₖ₊₁ + βₖ * qₖ
+    @kaxpby!(n, one(FC), q, β, p)      # pₐᵤₓ = qₖ + βₖ * pₖ
+    @kaxpby!(n, one(FC), u, β, p)      # pₖ₊₁ = uₖ₊₁ + βₖ * pₐᵤₓ
 
     # Update ρ.
     ρ = ρ_next # ρₖ ← ρₖ₊₁

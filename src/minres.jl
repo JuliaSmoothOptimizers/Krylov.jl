@@ -29,7 +29,7 @@ export minres, minres!
                         rrtol :: T=zero(T), etol::T=√eps(T),
                         window::Int=5, itmax::Int=0,
                         conlim::T=1/√eps(T), verbose::Int=0,
-                        history::Bool=false,
+                        history::Bool=false, ldiv::Bool=false,
                         callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -102,7 +102,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
                  itmax :: Int=0, conlim :: T=1/√eps(T), verbose :: Int=0,
-                 history :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 history :: Bool=false, ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   n, m = size(A)
   m == n || error("System must be square")
@@ -142,7 +142,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # Initialize Lanczos process.
   # β₁ M v₁ = b.
   r2 .= r1
-  MisI || mul!(v, M, r1)
+  MisI || mulorldiv!(v, M, r1, ldiv)
   β₁ = @kdotr(m, r1, v)
   β₁ < 0 && error("Preconditioner is not positive definite")
   if β₁ == 0
@@ -227,7 +227,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     @. r1 = r2
     @. r2 = y
-    MisI || mul!(v, M, r2)
+    MisI || mulorldiv!(v, M, r2, ldiv)
     oldβ = β
     β = @kdotr(n, r2, v)
     β < 0 && error("Preconditioner is not positive definite")

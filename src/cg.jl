@@ -21,7 +21,7 @@ export cg, cg!
                     M=I, atol::T=√eps(T), rtol::T=√eps(T),
                     itmax::Int=0, radius::T=zero(T), linesearch::Bool=false,
                     verbose::Int=0, history::Bool=false,
-                    callback=solver->false)
+                    ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -84,7 +84,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
              itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
              verbose :: Int=0, history :: Bool=false,
-             callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+             ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
 
@@ -115,7 +115,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
   else
     r .= b
   end
-  MisI || mul!(z, M, r)
+  MisI || mulorldiv!(z, M, r, ldiv)
   p .= z
   γ = @kdotr(n, r, z)
   rNorm = sqrt(γ)
@@ -178,7 +178,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     @kaxpy!(n,  α,  p, x)
     @kaxpy!(n, -α, Ap, r)
-    MisI || mul!(z, M, r)
+    MisI || mulorldiv!(z, M, r, ldiv)
     γ_next = @kdotr(n, r, z)
     rNorm = sqrt(γ_next)
     history && push!(rNorms, rNorm)

@@ -31,7 +31,7 @@ export crmr, crmr!
     (x, stats) = crmr(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T),
                       rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      callback=solver->false)
+                      ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -88,7 +88,7 @@ function crmr! end
 function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T),
                rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-               callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -113,10 +113,10 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   reset!(stats)
   Mq = MisI ? q : solver.Mq
 
-  x .= zero(FC) # initial estimation x = 0
-  mul!(r, M, b) # initial residual r = M * (b - Ax) = M * b
-  bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
-  rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
+  x .= zero(FC)              # initial estimation x = 0
+  mulorldiv!(r, M, b, ldiv)  # initial residual r = M * (b - Ax) = M * b
+  bNorm = @knrm2(m, r)       # norm(b - A * x0) if x0 ≠ 0.
+  rNorm = bNorm              # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   history && push!(rNorms, rNorm)
   if bNorm == 0
     stats.niter = 0
@@ -149,7 +149,7 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   while ! (solved || inconsistent || tired || user_requested_exit)
     mul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s
-    MisI || mul!(Mq, M, q)
+    MisI || mulorldiv!(Mq, M, q, ldiv)
     α = γ / @kdotr(m, q, Mq)   # Compute qᵗ * M * q
     @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p
     @kaxpy!(m, -α, Mq, r)      # Faster than  r =  r - α * Mq

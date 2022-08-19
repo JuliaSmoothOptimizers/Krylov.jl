@@ -33,7 +33,7 @@ export lsqr, lsqr!
                       etol::T=√eps(T), window::Int=5,
                       itmax::Int=0, conlim::T=1/√eps(T),
                       radius::T=zero(T), verbose::Int=0, history::Bool=false,
-                      callback=solver->false)
+                      ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -110,7 +110,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                atol :: T=zero(T), rtol :: T=zero(T),
                etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
                radius :: T=zero(T), verbose :: Int=0, history :: Bool=false,
-               callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -148,7 +148,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # Initialize Golub-Kahan process.
   # β₁ M u₁ = b.
   Mu .= b
-  MisI || mul!(u, M, Mu)
+  MisI || mulorldiv!(u, M, Mu, ldiv)
   β₁ = sqrt(@kdotr(m, u, Mu))
   if β₁ == 0
     stats.niter = 0
@@ -164,7 +164,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   MisI || @kscal!(m, one(FC)/β₁, Mu)
   mul!(Aᵀu, Aᵀ, u)
   Nv .= Aᵀu
-  NisI || mul!(v, N, Nv)
+  NisI || mulorldiv!(v, N, Nv, ldiv)
   Anorm² = @kdotr(n, v, Nv)
   Anorm = sqrt(Anorm²)
   α = Anorm
@@ -229,7 +229,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     mul!(Av, A, v)
     @kaxpby!(m, one(FC), Av, -α, Mu)
-    MisI || mul!(u, M, Mu)
+    MisI || mulorldiv!(u, M, Mu, ldiv)
     β = sqrt(@kdotr(m, u, Mu))
     if β ≠ 0
       @kscal!(m, one(FC)/β, u)
@@ -240,7 +240,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
       # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
       mul!(Aᵀu, Aᵀ, u)
       @kaxpby!(n, one(FC), Aᵀu, -β, Nv)
-      NisI || mul!(v, N, Nv)
+      NisI || mulorldiv!(v, N, Nv, ldiv)
       α = sqrt(@kdotr(n, v, Nv))
       if α ≠ 0
         @kscal!(n, one(FC)/α, v)

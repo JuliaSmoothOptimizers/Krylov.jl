@@ -38,7 +38,7 @@ export craig, craig!
                           M=I, N=I, sqd::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                           btol::T=√eps(T), rtol::T=√eps(T), conlim::T=1/√eps(T), itmax::Int=0,
                           verbose::Int=0, transfer_to_lsqr::Bool=false, history::Bool=false,
-                          callback=solver->false)
+                          ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -115,7 +115,7 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
                 M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                 btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,
                 verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false,
-                callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -151,7 +151,7 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
   y .= zero(FC)
 
   Mu .= b
-  MisI || mul!(u, M, Mu)
+  MisI || mulorldiv!(u, M, Mu, ldiv)
   β₁ = sqrt(@kdotr(m, u, Mu))
   rNorm  = β₁
   history && push!(rNorms, rNorm)
@@ -215,7 +215,7 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # 1. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
     mul!(Aᵀu, Aᵀ, u)
     @kaxpby!(n, one(FC), Aᵀu, -β, Nv)
-    NisI || mul!(v, N, Nv)
+    NisI || mulorldiv!(v, N, Nv, ldiv)
     α = sqrt(@kdotr(n, v, Nv))
     if α == 0
       inconsistent = true
@@ -258,7 +258,7 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # 2. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
     mul!(Av, A, v)
     @kaxpby!(m, one(FC), Av, -α, Mu)
-    MisI || mul!(u, M, Mu)
+    MisI || mulorldiv!(u, M, Mu, ldiv)
     β = sqrt(@kdotr(m, u, Mu))
     if β ≠ 0
       @kscal!(m, one(FC) / β, u)
