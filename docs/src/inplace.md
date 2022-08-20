@@ -50,7 +50,7 @@ Krylov.issolved
 ## Examples
 
 We illustrate the use of in-place Krylov solvers with two well-known optimization methods.
-The details of the optimization methods are described in the section about [Factorization-free operators](@ref matrix-free).
+The details of the optimization methods are described in the section about [Factorization-free operators](@ref factorization-free).
 
 ### Example 1: Newton's method for convex optimization without linesearch
 
