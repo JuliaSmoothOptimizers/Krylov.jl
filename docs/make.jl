@@ -15,7 +15,7 @@ makedocs(
            "Krylov methods" => ["Symmetric positive definite linear systems" => "solvers/spd.md",
                                 "Symmetric indefinite linear systems" => "solvers/sid.md",
                                 "Unsymmetric linear systems" => "solvers/unsymmetric.md",
-                                "Minimum-norm problems" => "solvers/ln.md",
+                                "Least-norm problems" => "solvers/ln.md",
                                 "Least-squares problems" => "solvers/ls.md",
                                 "Adjoint systems" => "solvers/as.md",
                                 "Saddle-point and symmetric quasi-definite systems" => "solvers/sp_sqd.md",
