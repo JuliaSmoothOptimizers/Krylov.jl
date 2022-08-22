@@ -1,5 +1,3 @@
-## MINRES-QLP
-
 ```@example minres_qlp
 using Krylov
 using LinearAlgebra, Printf

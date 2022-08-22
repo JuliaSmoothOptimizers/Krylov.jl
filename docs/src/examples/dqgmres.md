@@ -1,5 +1,3 @@
-## DQGMRES
-
 ```@example dqgmres
 using Krylov, LinearOperators, ILUZero, MatrixMarket
 using LinearAlgebra, Printf, SuiteSparseMatrixCollection

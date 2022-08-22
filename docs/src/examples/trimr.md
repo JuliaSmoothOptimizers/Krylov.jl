@@ -1,5 +1,3 @@
-## TriMR
-
 ```@example trimr
 using Krylov, LinearOperators, LDLFactorizations
 using LinearAlgebra, Printf, SparseArrays

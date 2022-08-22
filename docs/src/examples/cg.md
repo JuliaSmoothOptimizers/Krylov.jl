@@ -1,5 +1,3 @@
-## CG
-
 ```@example cg
 using Krylov, MatrixMarket, SuiteSparseMatrixCollection
 using LinearAlgebra, Printf

@@ -1,5 +1,3 @@
-## CRAIGMR
-
 ```@example craigmr
 using Krylov, HarwellRutherfordBoeing, SuiteSparseMatrixCollection
 using LinearAlgebra, Printf
