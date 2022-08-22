@@ -1,5 +1,3 @@
-## BICGSTAB
-
 ```@example bicgstab
 using Krylov, LinearOperators, IncompleteLU, HarwellRutherfordBoeing
 using LinearAlgebra, Printf, SuiteSparseMatrixCollection, SparseArrays

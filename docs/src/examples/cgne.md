@@ -1,5 +1,3 @@
-## CGNE
-
 ```@example cgne
 using Krylov, HarwellRutherfordBoeing, SuiteSparseMatrixCollection
 using LinearAlgebra, Printf

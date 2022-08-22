@@ -1,5 +1,3 @@
-## SYMMLQ
-
 ```@example symmlq
 using Krylov
 using LinearAlgebra, Printf

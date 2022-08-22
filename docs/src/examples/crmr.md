@@ -1,5 +1,3 @@
-## CRMR
-
 ```@example crmr
 using Krylov, HarwellRutherfordBoeing, SuiteSparseMatrixCollection
 using LinearAlgebra, Printf

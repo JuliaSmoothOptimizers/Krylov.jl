@@ -1,5 +1,3 @@
-## CG-LANCZOS-SHIFT
-
 ```@example cg_lanczos_shift
 using Krylov, MatrixMarket, SuiteSparseMatrixCollection
 using LinearAlgebra, Printf

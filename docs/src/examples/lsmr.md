@@ -1,5 +1,3 @@
-## LSMR
-
 ```@example lsmr
 using MatrixMarket, SuiteSparseMatrixCollection
 using Krylov, LinearOperators

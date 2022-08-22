@@ -1,5 +1,3 @@
-## TriCG
-
 ```@example tricg
 using Krylov, LinearOperators
 using LinearAlgebra, Printf, SparseArrays

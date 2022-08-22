@@ -1,5 +1,3 @@
-## LSQR
-
 ```@example lsqr
 using MatrixMarket, SuiteSparseMatrixCollection
 using Krylov, LinearOperators

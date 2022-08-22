@@ -1,5 +1,3 @@
-## CGLS
-
 ```@example cgls
 using MatrixMarket, SuiteSparseMatrixCollection
 using Krylov, LinearOperators

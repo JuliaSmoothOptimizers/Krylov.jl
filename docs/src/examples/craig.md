@@ -1,5 +1,3 @@
-## CRAIG
-
 ```@example craig
 using Krylov
 using LinearAlgebra, Printf

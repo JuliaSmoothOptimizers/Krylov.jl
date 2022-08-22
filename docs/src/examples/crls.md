@@ -1,5 +1,3 @@
-## CRLS
-
 ```@example crls
 using MatrixMarket, SuiteSparseMatrixCollection
 using Krylov, LinearOperators
