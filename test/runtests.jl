@@ -1,4 +1,4 @@
-using Test, Krylov, LinearAlgebra, SparseArrays, Printf, Random
+using Krylov, LinearAlgebra, SparseArrays, Printf, Random, Test
 import Krylov.KRYLOV_SOLVERS
 
 include("test_utils.jl")
@@ -38,7 +38,7 @@ include("test_craig.jl")
 include("test_craigmr.jl")
 include("test_cr.jl")
 
-include("test_alloc.jl")
+include("test_allocations.jl")
 include("test_mp.jl")
 include("test_solvers.jl")
 include("test_warm_start.jl")
