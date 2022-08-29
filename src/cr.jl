@@ -281,8 +281,14 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     xNorm = @knrm2(n, x)
     xNorm ≈ radius && (on_boundary = true)
     @kaxpy!(n, -α, Mq, r) # residual
-    rNorm² = abs(rNorm² - α * ρ)
-    rNorm = sqrt(rNorm²)
+    if MisI
+      rNorm² = @kdotr(n, r, r)
+      rNorm = sqrt(rNorm²)
+    else
+      ω = sqrt(α) * sqrt(ρ)
+      rNorm = sqrt(abs(rNorm + ω)) * sqrt(abs(rNorm - ω))
+      rNorm² = rNorm * rNorm  # rNorm² = rNorm² - α * ρ
+    end
     history && push!(rNorms, rNorm)
     mul!(Ar, A, r)
     ArNorm = @knrm2(n, Ar)
