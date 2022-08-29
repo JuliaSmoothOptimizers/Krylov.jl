@@ -63,7 +63,6 @@
       @test(resid ≤ cr_tol)
       @test(stats.solved)
 
-      
       # test callback function
       A, b = symmetric_definite(FC=FC)
       solver = CrSolver(A, b)
