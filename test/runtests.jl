@@ -4,6 +4,7 @@ import Krylov.KRYLOV_SOLVERS
 include("test_utils.jl")
 include("test_aux.jl")
 include("test_stats.jl")
+include("test_processes.jl")
 
 include("test_fgmres.jl")
 include("test_gpmr.jl")
