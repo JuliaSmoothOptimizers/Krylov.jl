@@ -206,7 +206,7 @@ S_k =
   \gamma_2       & \bar{\alpha}_2 & \ddots   &               \\
                  & \ddots         & \ddots   & \beta_k       \\
                  &                & \gamma_k  & \bar{\alpha}_k
-\end{bmatrix}
+\end{bmatrix},
 ```
 ```math
 T_{k+1,k} =
