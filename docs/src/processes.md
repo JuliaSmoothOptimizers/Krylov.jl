@@ -139,10 +139,6 @@ arnoldi
 
 ![golub_kahan](./graphics/golub_kahan.png)
 
-```@docs
-golub_kahan
-```
-
 After $k$ iterations of the Golub-Kahan bidiagonalization process, the situation may be summarized as
 ```math
 \begin{align*}
@@ -177,6 +173,10 @@ B_k =
 ```
 
 Methods related: [`LNLQ`](@ref lnlq), [`CRAIG`](@ref craig), [`CRAIGMR`](@ref craigmr), [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).
+
+```@docs
+golub_kahan
+```
 
 ## Saunders-Simon-Yip
 
