@@ -1,9 +1,10 @@
 name: CI_M1
 on:
   push:
-    branches: ["*"]
-    tags: ["*"]
+    branches:
+      - main
   pull_request:
+    types: [opened, synchronize, reopened]
 jobs:
   test:
     name: Julia ${{ matrix.version }} - macOS - ${{ matrix.arch }} - ${{ github.event_name }}
@@ -12,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - 1.7.2
+          - '1'
         arch:
           - aarch64
     steps:
