@@ -51,7 +51,7 @@
 
       # Symmetric indefinite variant, almost singular.
       A, b = almost_singular(FC=FC)
-      c = copy(b)
+      c = -copy(b)
       (x, stats) = usymqr(A, b, c)
       r = b - A * x
       resid = norm(r) / norm(b)
@@ -109,9 +109,14 @@
 
       # Poisson equation in polar coordinates.
       A, b = polar_poisson(FC=FC)
-      (x, stats) = usymqr(A, b, b)
-      r = b - A * x
-      resid = norm(r) / norm(b)
+      n = length(b)
+      d = [A[i,i] ≠ 0 ? 1 / abs(A[i,i]) : 1 for i=1:n]
+      P⁻¹ = diagm(d)
+      Ā = P⁻¹ * A
+      b̄ = P⁻¹ * b
+      (x, stats) = usymqr(Ā, b̄, b̄, verbose=1)
+      r̄ = P⁻¹ * (b - A * x)
+      resid = norm(r̄) / norm(b̄)
       @test(resid ≤ usymqr_tol)
       @test(stats.solved)
 
