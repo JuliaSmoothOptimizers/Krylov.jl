@@ -113,7 +113,7 @@
       P⁻¹ = diagm(d)
       Ā = P⁻¹ * A
       b̄ = P⁻¹ * b
-      (x, stats) = usymqr(Ā, b̄, b̄, verbose=1)
+      (x, stats) = usymqr(Ā, b̄, b̄)
       r̄ = P⁻¹ * (b - A * x)
       resid = norm(r̄) / norm(b̄)
       @test(resid ≤ usymqr_tol)
