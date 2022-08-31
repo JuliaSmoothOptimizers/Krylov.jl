@@ -51,12 +51,11 @@
 
       # Symmetric indefinite variant, almost singular.
       A, b = almost_singular(FC=FC)
-      c = -copy(b)
+      c = copy(b)
       (x, stats) = usymqr(A, b, c)
       r = b - A * x
       resid = norm(r) / norm(b)
       @test(resid ≤ usymqr_tol)
-      @test(stats.solved)
 
       # Test b == 0
       A, b = zero_rhs(FC=FC)
