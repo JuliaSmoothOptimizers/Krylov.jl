@@ -95,6 +95,7 @@ end
         _, c = over_consistent(m, n, FC=FC)
         V, T, U, S = saunders_simon_yip(A, b, c, k)
 
+        @test T[1:k,1:k] ≈ S[1:k,1:k]'
         @test A  * U[:,1:k] ≈ V * T
         @test A' * V[:,1:k] ≈ U * S
         @test A' * A  * U[:,1:k-1] ≈ U * S * T[1:k,1:k-1]
