@@ -1,0 +1,31 @@
+name: CI_M1
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - macOS - ${{ matrix.arch }} - ${{ github.event_name }}
+    runs-on: self-hosted
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1'
+        arch:
+          - aarch64
+    steps:
+      - uses: actions/checkout@v3
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - name: Version Info
+        shell: julia --color=yes {0}
+        run: |
+          using InteractiveUtils
+          versioninfo()
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
