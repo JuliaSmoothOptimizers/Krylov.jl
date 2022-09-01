@@ -49,15 +49,6 @@
       @test(resid ≤ usymqr_tol)
       @test(stats.solved)
 
-      # Symmetric indefinite variant, almost singular.
-      A, b = almost_singular(FC=FC)
-      c = copy(b)
-      (x, stats) = usymqr(A, b, c)
-      r = b - A * x
-      resid = norm(r) / norm(b)
-      @test(resid ≤ usymqr_tol)
-      # @test(stats.solved)
-
       # Test b == 0
       A, b = zero_rhs(FC=FC)
       c = copy(b)
@@ -106,19 +97,6 @@
       c = [2^i * (iseven(i) ? one(FC) : -one(FC)) for i=1:10]
       (x, stats) = usymqr(A, b, c)
       @test stats.inconsistent
-
-      # Poisson equation in polar coordinates.
-      A, b = polar_poisson(FC=FC)
-      n = length(b)
-      d = [A[i,i] ≠ 0 ? 1 / abs(A[i,i]) : 1 for i=1:n]
-      P⁻¹ = diagm(d)
-      Ā = P⁻¹ * A
-      b̄ = P⁻¹ * b
-      (x, stats) = usymqr(Ā, b̄, b̄)
-      r̄ = P⁻¹ * (b - A * x)
-      resid = norm(r̄) / norm(b̄)
-      @test(resid ≤ usymqr_tol)
-      # @test(stats.solved)
 
       # test callback function
       A, b = sparse_laplacian(FC=FC)
