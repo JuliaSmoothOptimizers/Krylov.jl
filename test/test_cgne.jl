@@ -1,6 +1,6 @@
-function test_cgne(A, b; λ=0.0, N=I)
+function test_cgne(A, b; λ=0.0, N=I, history=false)
   (nrow, ncol) = size(A)
-  (x, stats) = cgne(A, b, λ=λ, N=N)
+  (x, stats) = cgne(A, b, λ=λ, N=N, history=history)
   r = b - A * x
   if λ > 0
     s = r / sqrt(λ)
