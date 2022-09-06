@@ -50,7 +50,7 @@ using CUDA, CUDA.CUSPARSE
 A_gpu = CuSparseMatrixCSC(A_cpu)  # A = CuSparseMatrixCSR(A_cpu)
 b_gpu = CuVector(b_cpu)
 
-# LLᵀ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+# LLᴴ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
 P = ic02(A_gpu, 'O')
 
 # Solve Py = x

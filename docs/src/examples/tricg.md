@@ -14,7 +14,7 @@ N = diagm(0 => [5.0 * i for i = 1:n])
 c = -b
 
 # [I   A] [x] = [b]
-# [Aᵀ -I] [y]   [c]
+# [Aᴴ -I] [y]   [c]
 (x, y, stats) = tricg(A, b, c)
 K = [eye(m) A; A' -eye(n)]
 B = [b; c]
@@ -23,7 +23,7 @@ resid = norm(r)
 @printf("TriCG: Relative residual: %8.1e\n", resid)
 
 # [-I   A] [x] = [b]
-# [ Aᵀ  I] [y]   [c]
+# [ Aᴴ  I] [y]   [c]
 (x, y, stats) = tricg(A, b, c, flip=true)
 K = [-eye(m) A; A' eye(n)]
 B = [b; c]
@@ -32,7 +32,7 @@ resid = norm(r)
 @printf("TriCG: Relative residual: %8.1e\n", resid)
 
 # [I   A] [x] = [b]
-# [Aᵀ  I] [y]   [c]
+# [Aᴴ  I] [y]   [c]
 (x, y, stats) = tricg(A, b, c, spd=true)
 K = [eye(m) A; A' eye(n)]
 B = [b; c]
@@ -41,7 +41,7 @@ resid = norm(r)
 @printf("TriCG: Relative residual: %8.1e\n", resid)
 
 # [-I    A] [x] = [b]
-# [ Aᵀ  -I] [y]   [c]
+# [ Aᴴ  -I] [y]   [c]
 (x, y, stats) = tricg(A, b, c, snd=true)
 K = [-eye(m) A; A' -eye(n)]
 B = [b; c]
@@ -50,7 +50,7 @@ resid = norm(r)
 @printf("TriCG: Relative residual: %8.1e\n", resid)
 
 # [τI    A] [x] = [b]
-# [ Aᵀ  νI] [y]   [c]
+# [ Aᴴ  νI] [y]   [c]
 (τ, ν) = (1e-4, 1e2)
 (x, y, stats) = tricg(A, b, c, τ=τ, ν=ν)
 K = [τ*eye(m) A; A' ν*eye(n)]
@@ -60,7 +60,7 @@ resid = norm(r)
 @printf("TriCG: Relative residual: %8.1e\n", resid)
 
 # [M⁻¹  A  ] [x] = [b]
-# [Aᵀ  -N⁻¹] [y]   [c]
+# [Aᴴ  -N⁻¹] [y]   [c]
 (x, y, stats) = tricg(A, b, c, M=M, N=N, verbose=1)
 K = [inv(M) A; A' -inv(N)]
 H = BlockDiagonalOperator(M, N)

@@ -71,7 +71,7 @@ Overdetermined sytems are less common but also occur.
 4. Adjoint systems
 
 <p align="center">
-  <b><i>Ax = b</i></b> &nbsp; and &nbsp; <b><i>Aᵀy = c</i></b>
+  <b><i>Ax = b</i></b> &nbsp; and &nbsp; <b><i>Aᴴy = c</i></b>
 </p>
 
 where **_A_** can have any shape.
@@ -81,7 +81,7 @@ where **_A_** can have any shape.
 <p align="center">
   [<b><i>M </i></b>&nbsp;&nbsp;&nbsp;<b><i> A</i></b>]&nbsp; [<b><i>x</i></b>]            =           [<b><i>b</i></b>]
   <br>
-  [<b><i>Aᵀ</i></b>&nbsp;&nbsp;      <b><i>-N</i></b>]&nbsp; [<b><i>y</i></b>]&nbsp;&nbsp;&nbsp;&nbsp;[<b><i>c</i></b>]
+  [<b><i>Aᴴ</i></b>&nbsp;&nbsp;      <b><i>-N</i></b>]&nbsp; [<b><i>y</i></b>]&nbsp;&nbsp;&nbsp;&nbsp;[<b><i>c</i></b>]
 </p>
 
 where **_A_** can have any shape.
@@ -94,7 +94,7 @@ where **_A_** can have any shape.
   [<b><i>B</i></b>&nbsp;&nbsp;&nbsp;<b><i>N</i></b>]&nbsp; [<b><i>y</i></b>]&nbsp;&nbsp;&nbsp;&nbsp;[<b><i>c</i></b>]
 </p>
 
-where **_A_** can have any shape and **_B_** has the shape of **_Aᵀ_**.
+where **_A_** can have any shape and **_B_** has the shape of **_Aᴴ_**.
 **_A_**, **_B_**, **_b_** and **_c_** must be all nonzero.
 
 Krylov solvers are particularly appropriate in situations where such problems must be solved but a factorization is not possible, either because:

@@ -46,7 +46,7 @@ Overdetermined sytems are less common but also occur.
 4 - Adjoint systems
 
 ```math
-  Ax = b \quad \text{and} \quad A^T y = c
+  Ax = b \quad \text{and} \quad A^H y = c
 ```
 
 where **_A_** can have any shape.
@@ -54,7 +54,7 @@ where **_A_** can have any shape.
 5 - Saddle-point and symmetric quasi-definite (SQD) systems
 
 ```math
-  \begin{bmatrix} M & \phantom{-}A \\ A^T & -N \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \left(\begin{bmatrix} b \\ 0 \end{bmatrix},\begin{bmatrix} 0 \\ c \end{bmatrix},\begin{bmatrix} b \\ c \end{bmatrix}\right)
+  \begin{bmatrix} M & \phantom{-}A \\ A^H & -N \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \left(\begin{bmatrix} b \\ 0 \end{bmatrix},\begin{bmatrix} 0 \\ c \end{bmatrix},\begin{bmatrix} b \\ c \end{bmatrix}\right)
 ```
 
 where **_A_** can have any shape.
@@ -65,7 +65,7 @@ where **_A_** can have any shape.
   \begin{bmatrix} M & A \\ B & N \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix}
 ```
 
-where **_A_** can have any shape and **_B_** has the shape of **_Aᵀ_**.
+where **_A_** can have any shape and **_B_** has the shape of **_Aᴴ_**.
 **_A_**, **_B_**, **_b_** and **_c_** must be all nonzero.
 
 Krylov solvers are particularly appropriate in situations where such problems must be solved but a factorization is not possible, either because:
