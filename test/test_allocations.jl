@@ -254,7 +254,7 @@
 
       @testset "CGNE" begin
         # CGNE needs:
-        # - 3 n-vectors: x, p, Aᵀz
+        # - 3 n-vectors: x, p, Aᴴz
         # - 2 m-vectors: r, q
         storage_cgne(n, m) = 3 * n + 2 * m
         storage_cgne_bytes(n, m) = nbits * storage_cgne(n, m)
@@ -272,7 +272,7 @@
 
       @testset "CRMR" begin
         # CRMR needs:
-        # - 3 n-vectors: x, p, Aᵀr
+        # - 3 n-vectors: x, p, Aᴴr
         # - 2 m-vectors: r, q
         storage_crmr(n, m) = 3 * n + 2 * m
         storage_crmr_bytes(n, m) = nbits * storage_crmr(n, m)
@@ -290,7 +290,7 @@
 
       @testset "LNLQ" begin
         # LNLQ needs:
-        # - 3 n-vectors: x, v, Aᵀu
+        # - 3 n-vectors: x, v, Aᴴu
         # - 4 m-vectors: y, w̄, u, Av
         storage_lnlq(n, m) = 3 * n + 4 * m
         storage_lnlq_bytes(n, m) = nbits * storage_lnlq(n, m)
@@ -308,7 +308,7 @@
 
       @testset "CRAIG" begin
         # CRAIG needs:
-        # - 3 n-vectors: x, v, Aᵀu
+        # - 3 n-vectors: x, v, Aᴴu
         # - 4 m-vectors: y, w, u, Av
         storage_craig(n, m) = 3 * n + 4 * m
         storage_craig_bytes(n, m) = nbits * storage_craig(n, m)
@@ -326,7 +326,7 @@
 
       @testset "CRAIGMR" begin
         # CRAIGMR needs:
-        # - 4 n-vectors: x, v, Aᵀu, d
+        # - 4 n-vectors: x, v, Aᴴu, d
         # - 5 m-vectors: y, u, w, wbar, Av
         storage_craigmr(n, m) = 4 * n + 5 * m
         storage_craigmr_bytes(n, m) = nbits * storage_craigmr(n, m)
@@ -362,7 +362,7 @@
 
       @testset "LSLQ" begin
         # LSLQ needs:
-        # - 4 m-vectors: x_lq, v, Aᵀu, w̄ (= x_cg)
+        # - 4 m-vectors: x_lq, v, Aᴴu, w̄ (= x_cg)
         # - 2 n-vectors: u, Av
         storage_lslq(n, m) = 4 * m + 2 * n
         storage_lslq_bytes(n, m) = nbits * storage_lslq(n, m)
@@ -398,7 +398,7 @@
 
       @testset "LSQR" begin
         # LSQR needs:
-        # - 4 m-vectors: x, v, w, Aᵀu
+        # - 4 m-vectors: x, v, w, Aᴴu
         # - 2 n-vectors: u, Av
         storage_lsqr(n, m) = 4 * m + 2 * n
         storage_lsqr_bytes(n, m) = nbits * storage_lsqr(n, m)
@@ -416,7 +416,7 @@
 
       @testset "LSMR" begin
         # LSMR needs:
-        # - 5 m-vectors: x, v, h, hbar, Aᵀu
+        # - 5 m-vectors: x, v, h, hbar, Aᴴu
         # - 2 n-vectors: u, Av
         storage_lsmr(n, m) = 5 * m + 2 * n
         storage_lsmr_bytes(n, m) = nbits * storage_lsmr(n, m)

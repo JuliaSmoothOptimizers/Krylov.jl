@@ -74,10 +74,10 @@
       @test(resid ≤ cgs_tol)
       @test(stats.solved)
 
-      # Test bᵀc == 0
+      # Test bᴴc == 0
       A, b, c = bc_breakdown(FC=FC)
       (x, stats) = cgs(A, b, c=c)
-      @test stats.status == "Breakdown bᵀc = 0"
+      @test stats.status == "Breakdown bᴴc = 0"
 
       # test callback function
       A, b = sparse_laplacian(FC=FC)

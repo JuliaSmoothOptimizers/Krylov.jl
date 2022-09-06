@@ -74,7 +74,7 @@
       @test(resid_dual ≤ trilqr_tol)
       @test(stats.solved_dual)
 
-      # Test consistent Ax = b and inconsistent Aᵀt = c.
+      # Test consistent Ax = b and inconsistent Aᴴt = c.
       A, b, c = rectangular_adjoint(FC=FC)
       (x, t, stats) = trilqr(A, b, c)
 
