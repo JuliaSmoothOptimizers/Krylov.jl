@@ -1,12 +1,12 @@
 # [Preconditioners](@id preconditioners)
 
 The solvers in Krylov.jl support preconditioners, i.e., transformations that modify a linear systems $Ax = b$ into an equivalent form that may yield faster convergence in finite-precision arithmetic.
-Preconditioning can be used to reduce the condition number of the problem or clusterize its eigenvalues for instance.
+Preconditioning can be used to reduce the condition number of the problem or cluster its eigenvalues or singular values for instance.
 
-The design of preconditioners is highly dependent on the origin of the problem and most preconditioners need to take application dependent information and structures into account.
+The design of preconditioners is highly dependent on the origin of the problem and most preconditioners need to take application-dependent information and structure into account.
 Specialized preconditioners generally outperform generic preconditioners such as incomplete factorizations.
 
-The construction of a preconditioner also necessitates a trade-off because we need to apply it at least once per iteration within a Krylov method.
+The construction of a preconditioner necessitates trade-offs because we need to apply it at least once per iteration within a Krylov method.
 Hence, a preconditioner must be constructed such that it is cheap to apply, while also capturing the characteristics of the original system in some sense.
 
 There exist three variants of preconditioning:
@@ -17,14 +17,14 @@ There exist three variants of preconditioning:
 
 where $P_{\ell}$ and $P_r$ are square and nonsingular.
 
-We consider that $P_{\ell}^{-1}$ and $P_r^{-1}$ are the default preconditioners in Krylov.jl and that we can apply them with the operation $y \leftarrow P^{-1} * x$.
+In Krylov.jl , we call $P_{\ell}^{-1}$ and $P_r^{-1}$ the preconditioners and we assume that we can apply them with the operation $y \leftarrow P^{-1} * x$.
 It is also common to call $P_{\ell}$ and $P_r$ the preconditioners if the equivalent operation $y \leftarrow P~\backslash~x$ is available.
-Krylov.jl supports both approach thanks to the argument `ldiv` of the Krylov solvers.
+Krylov.jl supports both approaches thanks to the argument `ldiv` of the Krylov solvers.
 
 ## How to use preconditioners in Krylov.jl?
 
 !!! tip
-    A preconditioner only needs to support the operation `mul!(y, P⁻¹, x)` when `ldiv=false` or `ldiv!(y, P, x)` when `ldiv=true` to be used in Krylov.jl.
+    A preconditioner only need support the operation `mul!(y, P⁻¹, x)` when `ldiv=false` or `ldiv!(y, P, x)` when `ldiv=true` to be used in Krylov.jl.
 
 ### Square non-Hermitian linear systems
 
@@ -40,8 +40,9 @@ A Krylov method dedicated to non-Hermitian linear systems allows the three varia
 
 Methods concerned: [`SYMMLQ`](@ref symmlq), [`CG`](@ref cg), [`CG-LANCZOS`](@ref cg_lanczos), [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift), [`CR`](@ref cr), [`MINRES`](@ref minres) and [`MINRES-QLP`](@ref minres_qlp).
 
-When $A$ is Hermitian, we can only use the centered preconditioning $L^{-1}AL^{-T}y = L^{-1}b$ with $x = L^{-T}y$.
-This split preconditioning is a special case of two-sided preconditioning $P_{\ell} = L = P_r^T$ that maintains the hermicity of the linear systems.
+When $A$ is Hermitian, we can only use centered preconditioning $L^{-1}AL^{-T}y = L^{-1}b$ with $x = L^{-T}y$.
+Centered preconditioning is a special case of two-sided preconditioning with $P_{\ell} = L = P_r^T$ that maintains hermicity.
+However, there is no need to specify $L$ and one may specify $M$ directly.
 
 | Preconditioners | $P^{-1} = L^{-T}L^{-1}$ | $P = LL^{T}$         |
 |:---------------:|:-----------------------:|:--------------------:|
@@ -56,7 +57,7 @@ Methods concerned: [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`LSLQ`](@ref lslq)
 
 | Formulation           | Without preconditioning | With preconditioning           |
 |:---------------------:|:-----------------------:|:------------------------------:|
-| least-squares problem | $\min \\|b - Ax\\|^2_2$ | $\min \\|b - Ax\\|^2_{E^{-1}}$ |
+| least-squares problem | $\min \\tfrac{1}{2} \\|b - Ax\\|^2_2$ | $\min \\tfrac{1}{2} \\|b - Ax\\|^2_{E^{-1}}$ |
 | Normal equation       | $A^TAx = A^Tb$          | $A^TE^{-1}Ax = A^TE^{-1}b$     |
 | Augmented system      | $\begin{bmatrix} I & A \\ A^T & 0 \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ | $\begin{bmatrix} E & A \\ A^T & 0 \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ |
 
@@ -64,7 +65,7 @@ Methods concerned: [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`LSLQ`](@ref lslq)
 
 | Formulation           | Without preconditioning                         | With preconditioning                                   |
 |:---------------------:|:-----------------------------------------------:|:------------------------------------------------------:|
-| least-squares problem | $\min \\|b - Ax\\|^2_2 + \lambda^2 \\|x\\|^2_2$ | $\min \\|b - Ax\\|^2_{E^{-1}} + \lambda^2 \\|x\\|^2_F$ |
+| least-squares problem | $\min \\tfrac{1}{2} \\|b - Ax\\|^2_2 + \\tfrac{1}{2} \lambda^2 \\|x\\|^2_2$ | $\min \\tfrac{1}{2} \\|b - Ax\\|^2_{E^{-1}} + \\tfrac{1}{2} \lambda^2 \\|x\\|^2_F$ |
 | Normal equation       | $(A^TA + \lambda^2 I)x = A^Tb$              | $(A^TE^{-1}A + \lambda^2 F)x = A^TE^{-1}b$                      |
 | Augmented system      | $\begin{bmatrix} I & A \\ A^T & -\lambda^2 I \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ | $\begin{bmatrix} E & A \\ A^T & -\lambda^2 F \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ |
 
@@ -81,7 +82,7 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 
 | Formulation          | Without preconditioning                 | With preconditioning                           |
 |:--------------------:|:---------------------------------------:|:----------------------------------------------:|
-| minimum-norm problem | $\min \\|x\\|^2_2~~\text{s.t.}~~Ax = b$ | $\min \\|x\\|^2_F~~\text{s.t.}~~Ax = b$ |
+| minimum-norm problem | $\min \\tfrac{1}{2} \\|x\\|^2_2~~\text{s.t.}~~Ax = b$ | $\min \\tfrac{1}{2} \\|x\\|^2_F~~\text{s.t.}~~Ax = b$ |
 | Normal equation      | $AA^Ty = b~~\text{with}~~x = A^Ty$      | $AF^{-1}A^Ty = b~~\text{with}~~x = F^{-1}A^Ty$           |
 | Augmented system     | $\begin{bmatrix} -I & A^T \\ \phantom{-}A & 0 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ | $\begin{bmatrix} -F & A^T \\ \phantom{-}A & 0 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ |
 
@@ -89,7 +90,7 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 
 | Formulation          | Without preconditioning                                             | With preconditioning                                                                    |
 |:--------------------:|:-------------------------------------------------------------------:|:---------------------------------------------------------------------------------------:|
-| minimum-norm problem | $\min \\|x\\|^2_2 + \\|y\\|^2_2~~\text{s.t.}~~Ax + \lambda^2 y = b$ | $\min \\|x\\|^2_F + \\|y\\|^2_E~~\text{s.t.}~~Ax + \lambda^2 Ey = b$ |
+| minimum-norm problem | $\min \\tfrac{1}{2} \\|x\\|^2_2 + \\tfrac{1}{2} \\|y\\|^2_2~~\text{s.t.}~~Ax + \lambda^2 y = b$ | $\min \\tfrac{1}{2} \\|x\\|^2_F + \\tfrac{1}{2} \\|y\\|^2_E~~\text{s.t.}~~Ax + \lambda^2 Ey = b$ |
 | Normal equation      | $(AA^T + \lambda^2 I)y = b~~\text{with}~~x = A^Ty$                  | $(AF^{-1}A^T + \lambda^2 E)y = b~~\text{with}~~x = F^{-1}A^Ty$                               |
 | Augmented system     | $\begin{bmatrix} -I & A^T \\ \phantom{-}A & \lambda^2 I \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ | $\begin{bmatrix} -F & A^T \\ \phantom{-}A & \lambda^2 E \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ |
 
@@ -102,11 +103,9 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 
 ### Saddle-point and symmetric quasi-definite systems
 
-When a Hermitian system $Kz = d$ has the 2x2 block structure
+[`TriCG`](@ref tricg) and [`TriMR`](@ref trimr) can take advantage of the structure of Hermitian systems $Kz = d$ with the 2x2 block structure
 ```math
   \begin{bmatrix} \tau E & \phantom{-}A \\ A^T & \nu F \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix},
-```
-where $E$ and $F$ are Hermitian and positive definite, [`TriCG`](@ref tricg) and [`TriMR`](@ref trimr) can take advantage of this form if preconditioners `M` and `N` that model the inverse of $E$ and $F$ are available.
 
 | Preconditioners | $E^{-1}$              | $E$                  | $F^{-1}$              | $F$                  |
 |:---------------:|:---------------------:|:--------------------:|:---------------------:|:--------------------:|
@@ -117,11 +116,9 @@ where $E$ and $F$ are Hermitian and positive definite, [`TriCG`](@ref tricg) and
 
 ### Generalized saddle-point and unsymmetric partitioned systems
 
-When an non-Hermitian system $Kz = d$ has the 2x2 block structure
+[`GPMR`](@ref gpmr) can take advantage of the structure of general square systems $Kz = d$ with the 2x2 block structure
 ```math
   \begin{bmatrix} \lambda M & A \\ B & \mu N \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix},
-```
-[`GPMR`](@ref gpmr) can take advantage of this structure if we model the inverse of $M$ and $N$ with the help of preconditioners `C`, `D`, `E` and `F`.
 
 | Relations       | $CE = M^{-1}$                 | $EC = M$                     | $DF = N^{-1}$                 | $FD = N$                     |
 |:---------------:|:-----------------------------:|:----------------------------:|:-----------------------------:|:----------------------------:|
@@ -135,8 +132,8 @@ When an non-Hermitian system $Kz = d$ has the 2x2 block structure
 
 ## Packages that provide preconditioners
 
-- [IncompleteLU.jl](https://github.com/haampie/IncompleteLU.jl) implements the left-looking or Crout version of ILU decompositions.
-- [ILUZero.jl](https://github.com/mcovalt/ILUZero.jl)  is a Julia implementation of incomplete LU factorization with zero level of fill-in. 
+- [IncompleteLU.jl](https://github.com/haampie/IncompleteLU.jl) implements the left-looking and Crout versions of ILU decompositions.
+- [ILUZero.jl](https://github.com/mcovalt/ILUZero.jl) is a Julia implementation of incomplete LU factorization with zero level of fill-in. 
 - [LimitedLDLFactorizations.jl](https://github.com/JuliaSmoothOptimizers/LimitedLDLFactorizations.jl) for limited-memory LDLᵀ factorization of symmetric matrices.
 - [AlgebraicMultigrid.jl](https://github.com/JuliaLinearAlgebra/AlgebraicMultigrid.jl) provides two algebraic multigrid (AMG) preconditioners.
 - [RandomizedPreconditioners.jl](https://github.com/tjdiamandis/RandomizedPreconditioners.jl) uses randomized numerical linear algebra to construct approximate inverses of matrices.
