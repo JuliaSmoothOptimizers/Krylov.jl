@@ -1,8 +1,8 @@
 # Identity matrix.
 eye(n::Int; FC=Float64) = sparse(one(FC) * I, n, n)
 
-# Compute the energy norm ‖r‖ₚ = √(rᵀPr) where P is a symmetric and positive definite matrix.
-metric(r, P) = sqrt(dot(r, P * r))
+# Compute the energy norm ‖r‖ₚ = √(rᴴPr) where P is a symmetric and positive definite matrix.
+metric(r, P) = sqrt(real(dot(r, P * r)))
 
 # Based on Lars Ruthotto's initial implementation.
 function get_div_grad(n1 :: Int, n2 :: Int, n3 :: Int)

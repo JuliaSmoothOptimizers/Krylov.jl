@@ -175,10 +175,10 @@ function square_adjoint(n :: Int=100; FC=Float64)
   return A, b, c
 end
 
-# Adjoint systems with Ax = b underdetermined consistent and Aᵀt = c overdetermined insconsistent.
+# Adjoint systems with Ax = b underdetermined consistent and Aᴴt = c overdetermined insconsistent.
 function rectangular_adjoint(n :: Int=10, m :: Int=25; FC=Float64)
-  Aᵀ, c = over_inconsistent(m, n; FC=FC)
-  A = adjoint(Aᵀ)
+  Aᴴ, c = over_inconsistent(m, n; FC=FC)
+  A = adjoint(Aᴴ)
   b = A * ones(FC, m)
   return A, b, c
 end

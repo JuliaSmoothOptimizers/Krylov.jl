@@ -628,7 +628,7 @@ function test_solvers(FC)
   ├──────────┼───────────────┼─────────────────┤
   │         x│    Vector{$FC}│               64│
   │         p│    Vector{$FC}│               64│
-  │       Aᵀr│    Vector{$FC}│               64│
+  │       Aᴴr│    Vector{$FC}│               64│
   │         r│    Vector{$FC}│               32│
   │         q│    Vector{$FC}│               32│
   │        Nq│    Vector{$FC}│                0│
@@ -694,7 +694,7 @@ function test_solvers(FC)
   ├─────────────┼───────────────┼─────────────────┤
   │            x│    Vector{$FC}│               64│
   │           Nv│    Vector{$FC}│               64│
-  │          Aᵀu│    Vector{$FC}│               64│
+  │          Aᴴu│    Vector{$FC}│               64│
   │            d│    Vector{$FC}│               64│
   │            y│    Vector{$FC}│               32│
   │           Mu│    Vector{$FC}│               32│
@@ -719,7 +719,7 @@ function test_solvers(FC)
   ├──────────┼───────────────┼─────────────────┤
   │         x│    Vector{$FC}│               64│
   │         p│    Vector{$FC}│               64│
-  │       Aᵀz│    Vector{$FC}│               64│
+  │       Aᴴz│    Vector{$FC}│               64│
   │         r│    Vector{$FC}│               32│
   │         q│    Vector{$FC}│               32│
   │         s│    Vector{$FC}│                0│
@@ -739,7 +739,7 @@ function test_solvers(FC)
   ├──────────┼───────────────┼─────────────────┤
   │         x│    Vector{$FC}│               64│
   │        Nv│    Vector{$FC}│               64│
-  │       Aᵀu│    Vector{$FC}│               64│
+  │       Aᴴu│    Vector{$FC}│               64│
   │         y│    Vector{$FC}│               32│
   │         w̄│    Vector{$FC}│               32│
   │        Mu│    Vector{$FC}│               32│
@@ -762,7 +762,7 @@ function test_solvers(FC)
   ├───────────┼───────────────┼─────────────────┤
   │          x│    Vector{$FC}│               64│
   │         Nv│    Vector{$FC}│               64│
-  │        Aᵀu│    Vector{$FC}│               64│
+  │        Aᴴu│    Vector{$FC}│               64│
   │          y│    Vector{$FC}│               32│
   │          w│    Vector{$FC}│               32│
   │         Mu│    Vector{$FC}│               32│
@@ -785,7 +785,7 @@ function test_solvers(FC)
   ├──────────┼───────────────┼─────────────────┤
   │         x│    Vector{$FC}│               32│
   │        Nv│    Vector{$FC}│               32│
-  │       Aᵀu│    Vector{$FC}│               32│
+  │       Aᴴu│    Vector{$FC}│               32│
   │         w̄│    Vector{$FC}│               32│
   │        Mu│    Vector{$FC}│               64│
   │        Av│    Vector{$FC}│               64│
@@ -826,7 +826,7 @@ function test_solvers(FC)
   ├──────────┼───────────────┼─────────────────┤
   │         x│    Vector{$FC}│               32│
   │        Nv│    Vector{$FC}│               32│
-  │       Aᵀu│    Vector{$FC}│               32│
+  │       Aᴴu│    Vector{$FC}│               32│
   │         w│    Vector{$FC}│               32│
   │        Mu│    Vector{$FC}│               64│
   │        Av│    Vector{$FC}│               64│
@@ -869,7 +869,7 @@ function test_solvers(FC)
   ├──────────┼───────────────┼─────────────────┤
   │         x│    Vector{$FC}│               32│
   │        Nv│    Vector{$FC}│               32│
-  │       Aᵀu│    Vector{$FC}│               32│
+  │       Aᴴu│    Vector{$FC}│               32│
   │         h│    Vector{$FC}│               32│
   │      hbar│    Vector{$FC}│               32│
   │        Mu│    Vector{$FC}│               64│

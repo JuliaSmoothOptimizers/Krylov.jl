@@ -46,10 +46,10 @@
       @test(resid_dual ≤ bilqr_tol)
       @test(stats.solved_dual)
 
-      # Test bᵀc == 0
+      # Test bᴴc == 0
       A, b, c = bc_breakdown(FC=FC)
       (x, t, stats) = bilqr(A, b, c)
-      @test stats.status == "Breakdown bᵀc = 0"
+      @test stats.status == "Breakdown bᴴc = 0"
 
       # test callback function
       A, b, c = adjoint_pde(FC=FC)
