@@ -64,10 +64,10 @@ Methods concerned: [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`LSLQ`](@ref lslq)
 
 [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr) also handle regularized least-squares problems.
 
-| Formulation           | Without preconditioning                                                    | With preconditioning                                                              |
-|:---------------------:|:--------------------------------------------------------------------------:|:---------------------------------------------------------------------------------:|
-| least-squares problem | $\min \tfrac{1}{2} \\|b - Ax\\|^2_2 + \\tfrac{1}{2} \lambda^2 \\|x\\|^2_2$ | $\min \tfrac{1}{2} \\|b - Ax\\|^2_{E^{-1}} + \\tfrac{1}{2} \lambda^2 \\|x\\|^2_F$ |
-| Normal equation       | $(A^TA + \lambda^2 I)x = A^Tb$                                             | $(A^TE^{-1}A + \lambda^2 F)x = A^TE^{-1}b$                                        |
+| Formulation           | Without preconditioning                                                   | With preconditioning                                                             |
+|:---------------------:|:-------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|
+| least-squares problem | $\min \tfrac{1}{2} \\|b - Ax\\|^2_2 + \tfrac{1}{2} \lambda^2 \\|x\\|^2_2$ | $\min \tfrac{1}{2} \\|b - Ax\\|^2_{E^{-1}} + \tfrac{1}{2} \lambda^2 \\|x\\|^2_F$ |
+| Normal equation       | $(A^TA + \lambda^2 I)x = A^Tb$                                            | $(A^TE^{-1}A + \lambda^2 F)x = A^TE^{-1}b$                                       |
 | Augmented system      | $\begin{bmatrix} I & A \\ A^T & -\lambda^2 I \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ | $\begin{bmatrix} E & A \\ A^T & -\lambda^2 F \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ |
 
 | Preconditioners | $E^{-1}$                | $E$                  | $F^{-1}$                | $F$                  |
