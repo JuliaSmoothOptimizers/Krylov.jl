@@ -631,7 +631,7 @@ function test_solvers(FC)
   │       Aᵀr│    Vector{$FC}│               64│
   │         r│    Vector{$FC}│               32│
   │         q│    Vector{$FC}│               32│
-  │        Mq│    Vector{$FC}│                0│
+  │        Nq│    Vector{$FC}│                0│
   │         s│    Vector{$FC}│                0│
   └──────────┴───────────────┴─────────────────┘
   """
