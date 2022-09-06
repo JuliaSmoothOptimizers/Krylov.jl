@@ -14,7 +14,7 @@ m, n = size(A)
 c = -b
 
 # [D   A] [x] = [b]
-# [Aᵀ  0] [y]   [c]
+# [Aᴴ  0] [y]   [c]
 llt_D = cholesky(D)
 opD⁻¹ = LinearOperator(Float64, 5, 5, true, true, (y, v) -> ldiv!(y, llt_D, v))
 opH⁻¹ = BlockDiagonalOperator(opD⁻¹, eye(n))
@@ -34,7 +34,7 @@ N = diagm(0 => [5.0 * i for i = 1:n])
 c = -b
 
 # [I   A] [x] = [b]
-# [Aᵀ -I] [y]   [c]
+# [Aᴴ -I] [y]   [c]
 (x, y, stats) = trimr(A, b, c)
 K = [eye(m) A; A' -eye(n)]
 B = [b; c]
@@ -43,7 +43,7 @@ resid = norm(r)
 @printf("TriMR: Relative residual: %8.1e\n", resid)
 
 # [M   A] [x] = [b]
-# [Aᵀ -N] [y]   [c]
+# [Aᴴ -N] [y]   [c]
 ldlt_M = ldl(M)
 ldlt_N = ldl(N)
 opM⁻¹ = LinearOperator(Float64, size(M,1), size(M,2), true, true, (y, v) -> ldiv!(y, ldlt_M, v))

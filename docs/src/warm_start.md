@@ -41,14 +41,14 @@ Explicit restarts cannot be avoided in certain block methods, such as TriMR, due
 
 ```julia
 # [E  A] [x] = [b]
-# [Aᵀ F] [y]   [c]
+# [Aᴴ F] [y]   [c]
 M = inv(E)
 N = inv(F)
 x₀, y₀, stats = trimr(A, b, c, M=M, N=N)
 
 # E and F are not available inside TriMR
 b₀ = b -  Ex₀ - Ay
-c₀ = c - Aᵀx₀ - Fy
+c₀ = c - Aᴴx₀ - Fy
 
 Δx, Δy, stats = trimr(A, b₀, c₀, M=M, N=N)
 x = x₀ + Δx
