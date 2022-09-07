@@ -68,29 +68,29 @@ mutable struct MinresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   err_vec    :: Vector{T}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function MinresSolver(n, m, S; window :: Int=5)
-    FC = eltype(S)
-    T  = real(FC)
-    Δx = S(undef, 0)
-    x  = S(undef, n)
-    r1 = S(undef, n)
-    r2 = S(undef, n)
-    w1 = S(undef, n)
-    w2 = S(undef, n)
-    y  = S(undef, n)
-    v  = S(undef, 0)
-    err_vec = zeros(T, window)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(Δx, x, r1, r2, w1, w2, y, v, err_vec, false, stats)
-    return solver
-  end
+function MinresSolver(n, m, S; window :: Int=5)
+  FC = eltype(S)
+  T  = real(FC)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  r1 = S(undef, n)
+  r2 = S(undef, n)
+  w1 = S(undef, n)
+  w2 = S(undef, n)
+  y  = S(undef, n)
+  v  = S(undef, 0)
+  err_vec = zeros(T, window)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = MinresSolver{T,FC,S}(Δx, x, r1, r2, w1, w2, y, v, err_vec, false, stats)
+  return solver
+end
 
-  function MinresSolver(A, b; window :: Int=5)
-    n, m = size(A)
-    S = ktypeof(b)
-    MinresSolver(n, m, S, window=window)
-  end
+function MinresSolver(A, b; window :: Int=5)
+  n, m = size(A)
+  S = ktypeof(b)
+  MinresSolver(n, m, S, window=window)
 end
 
 """
@@ -112,26 +112,26 @@ mutable struct CgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   z          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function CgSolver(n, m, S)
-    FC = eltype(S)
-    T  = real(FC)
-    Δx = S(undef, 0)
-    x  = S(undef, n)
-    r  = S(undef, n)
-    p  = S(undef, n)
-    Ap = S(undef, n)
-    z  = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(Δx, x, r, p, Ap, z, false, stats)
-    return solver
-  end
+function CgSolver(n, m, S)
+  FC = eltype(S)
+  T  = real(FC)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  r  = S(undef, n)
+  p  = S(undef, n)
+  Ap = S(undef, n)
+  z  = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = CgSolver{T,FC,S}(Δx, x, r, p, Ap, z, false, stats)
+  return solver
+end
 
-  function CgSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    CgSolver(n, m, S)
-  end
+function CgSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  CgSolver(n, m, S)
 end
 
 """
@@ -154,27 +154,27 @@ mutable struct CrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   Mq         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function CrSolver(n, m, S)
-    FC = eltype(S)
-    T  = real(FC)
-    Δx = S(undef, 0)
-    x  = S(undef, n)
-    r  = S(undef, n)
-    p  = S(undef, n)
-    q  = S(undef, n)
-    Ar = S(undef, n)
-    Mq = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(Δx, x, r, p, q, Ar, Mq, false, stats)
-    return solver
-  end
+function CrSolver(n, m, S)
+  FC = eltype(S)
+  T  = real(FC)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  r  = S(undef, n)
+  p  = S(undef, n)
+  q  = S(undef, n)
+  Ar = S(undef, n)
+  Mq = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = CrSolver{T,FC,S}(Δx, x, r, p, q, Ar, Mq, false, stats)
+  return solver
+end
 
-  function CrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    CrSolver(n, m, S)
-  end
+function CrSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  CrSolver(n, m, S)
 end
 
 """
@@ -200,30 +200,30 @@ mutable struct SymmlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   sprod      :: Vector{T}
   warm_start :: Bool
   stats      :: SymmlqStats{T}
+end
 
-  function SymmlqSolver(n, m, S; window :: Int=5)
-    FC      = eltype(S)
-    T       = real(FC)
-    Δx      = S(undef, 0)
-    x       = S(undef, n)
-    Mvold   = S(undef, n)
-    Mv      = S(undef, n)
-    Mv_next = S(undef, n)
-    w̅       = S(undef, n)
-    v       = S(undef, 0)
-    clist   = zeros(T, window)
-    zlist   = zeros(T, window)
-    sprod   = ones(T, window)
-    stats = SymmlqStats(0, false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), "unknown")
-    solver = new{T,FC,S}(Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, false, stats)
-    return solver
-  end
+function SymmlqSolver(n, m, S; window :: Int=5)
+  FC      = eltype(S)
+  T       = real(FC)
+  Δx      = S(undef, 0)
+  x       = S(undef, n)
+  Mvold   = S(undef, n)
+  Mv      = S(undef, n)
+  Mv_next = S(undef, n)
+  w̅       = S(undef, n)
+  v       = S(undef, 0)
+  clist   = zeros(T, window)
+  zlist   = zeros(T, window)
+  sprod   = ones(T, window)
+  stats = SymmlqStats(0, false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), "unknown")
+  solver = SymmlqSolver{T,FC,S}(Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, false, stats)
+  return solver
+end
 
-  function SymmlqSolver(A, b; window :: Int=5)
-    n, m = size(A)
-    S = ktypeof(b)
-    SymmlqSolver(n, m, S, window=window)
-  end
+function SymmlqSolver(A, b; window :: Int=5)
+  n, m = size(A)
+  S = ktypeof(b)
+  SymmlqSolver(n, m, S, window=window)
 end
 
 """
@@ -246,27 +246,27 @@ mutable struct CgLanczosSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v          :: S
   warm_start :: Bool
   stats      :: LanczosStats{T}
+end
 
-  function CgLanczosSolver(n, m, S)
-    FC      = eltype(S)
-    T       = real(FC)
-    Δx      = S(undef, 0)
-    x       = S(undef, n)
-    Mv      = S(undef, n)
-    Mv_prev = S(undef, n)
-    p       = S(undef, n)
-    Mv_next = S(undef, n)
-    v       = S(undef, 0)
-    stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), "unknown")
-    solver = new{T,FC,S}(Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
-    return solver
-  end
+function CgLanczosSolver(n, m, S)
+  FC      = eltype(S)
+  T       = real(FC)
+  Δx      = S(undef, 0)
+  x       = S(undef, n)
+  Mv      = S(undef, n)
+  Mv_prev = S(undef, n)
+  p       = S(undef, n)
+  Mv_next = S(undef, n)
+  v       = S(undef, 0)
+  stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), "unknown")
+  solver = CgLanczosSolver{T,FC,S}(Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
+  return solver
+end
 
-  function CgLanczosSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    CgLanczosSolver(n, m, S)
-  end
+function CgLanczosSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  CgLanczosSolver(n, m, S)
 end
 
 """
@@ -294,34 +294,34 @@ mutable struct CgLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   converged  :: BitVector
   not_cv     :: BitVector
   stats      :: LanczosShiftStats{T}
+end
 
-  function CgLanczosShiftSolver(n, m, nshifts, S)
-    FC         = eltype(S)
-    T          = real(FC)
-    Mv         = S(undef, n)
-    Mv_prev    = S(undef, n)
-    Mv_next    = S(undef, n)
-    v          = S(undef, 0)
-    x          = [S(undef, n) for i = 1 : nshifts]
-    p          = [S(undef, n) for i = 1 : nshifts]
-    σ          = Vector{T}(undef, nshifts)
-    δhat       = Vector{T}(undef, nshifts)
-    ω          = Vector{T}(undef, nshifts)
-    γ          = Vector{T}(undef, nshifts)
-    rNorms     = Vector{T}(undef, nshifts)
-    indefinite = BitVector(undef, nshifts)
-    converged  = BitVector(undef, nshifts)
-    not_cv     = BitVector(undef, nshifts)
-    stats = LanczosShiftStats(0, false, [T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), "unknown")
-    solver = new{T,FC,S}(Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
-    return solver
-  end
+function CgLanczosShiftSolver(n, m, nshifts, S)
+  FC         = eltype(S)
+  T          = real(FC)
+  Mv         = S(undef, n)
+  Mv_prev    = S(undef, n)
+  Mv_next    = S(undef, n)
+  v          = S(undef, 0)
+  x          = [S(undef, n) for i = 1 : nshifts]
+  p          = [S(undef, n) for i = 1 : nshifts]
+  σ          = Vector{T}(undef, nshifts)
+  δhat       = Vector{T}(undef, nshifts)
+  ω          = Vector{T}(undef, nshifts)
+  γ          = Vector{T}(undef, nshifts)
+  rNorms     = Vector{T}(undef, nshifts)
+  indefinite = BitVector(undef, nshifts)
+  converged  = BitVector(undef, nshifts)
+  not_cv     = BitVector(undef, nshifts)
+  stats = LanczosShiftStats(0, false, [T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), "unknown")
+  solver = CgLanczosShiftSolver{T,FC,S}(Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  return solver
+end
 
-  function CgLanczosShiftSolver(A, b, nshifts)
-    n, m = size(A)
-    S = ktypeof(b)
-    CgLanczosShiftSolver(n, m, nshifts, S)
-  end
+function CgLanczosShiftSolver(A, b, nshifts)
+  n, m = size(A)
+  S = ktypeof(b)
+  CgLanczosShiftSolver(n, m, nshifts, S)
 end
 
 """
@@ -345,28 +345,28 @@ mutable struct MinresQlpSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   vₖ         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function MinresQlpSolver(n, m, S)
-    FC      = eltype(S)
-    T       = real(FC)
-    Δx      = S(undef, 0)
-    wₖ₋₁    = S(undef, n)
-    wₖ      = S(undef, n)
-    M⁻¹vₖ₋₁ = S(undef, n)
-    M⁻¹vₖ   = S(undef, n)
-    x       = S(undef, n)
-    p       = S(undef, n)
-    vₖ      = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
-    return solver
-  end
+function MinresQlpSolver(n, m, S)
+  FC      = eltype(S)
+  T       = real(FC)
+  Δx      = S(undef, 0)
+  wₖ₋₁    = S(undef, n)
+  wₖ      = S(undef, n)
+  M⁻¹vₖ₋₁ = S(undef, n)
+  M⁻¹vₖ   = S(undef, n)
+  x       = S(undef, n)
+  p       = S(undef, n)
+  vₖ      = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = MinresQlpSolver{T,FC,S}(Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
+  return solver
+end
 
-  function MinresQlpSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    MinresQlpSolver(n, m, S)
-  end
+function MinresQlpSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  MinresQlpSolver(n, m, S)
 end
 
 """
@@ -393,31 +393,31 @@ mutable struct DqgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   H          :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function DqgmresSolver(n, m, memory, S)
-    memory = min(n, memory)
-    FC = eltype(S)
-    T  = real(FC)
-    Δx = S(undef, 0)
-    x  = S(undef, n)
-    t  = S(undef, n)
-    z  = S(undef, 0)
-    w  = S(undef, 0)
-    P  = [S(undef, n) for i = 1 : memory]
-    V  = [S(undef, n) for i = 1 : memory]
-    c  = Vector{T}(undef, memory)
-    s  = Vector{FC}(undef, memory)
-    H  = Vector{FC}(undef, memory+2)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(Δx, x, t, z, w, P, V, c, s, H, false, stats)
-    return solver
-  end
+function DqgmresSolver(n, m, memory, S)
+  memory = min(n, memory)
+  FC = eltype(S)
+  T  = real(FC)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  t  = S(undef, n)
+  z  = S(undef, 0)
+  w  = S(undef, 0)
+  P  = [S(undef, n) for i = 1 : memory]
+  V  = [S(undef, n) for i = 1 : memory]
+  c  = Vector{T}(undef, memory)
+  s  = Vector{FC}(undef, memory)
+  H  = Vector{FC}(undef, memory+2)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = DqgmresSolver{T,FC,S}(Δx, x, t, z, w, P, V, c, s, H, false, stats)
+  return solver
+end
 
-  function DqgmresSolver(A, b, memory = 20)
-    n, m = size(A)
-    S = ktypeof(b)
-    DqgmresSolver(n, m, memory, S)
-  end
+function DqgmresSolver(A, b, memory = 20)
+  n, m = size(A)
+  S = ktypeof(b)
+  DqgmresSolver(n, m, memory, S)
 end
 
 """
@@ -443,30 +443,30 @@ mutable struct DiomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   H          :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function DiomSolver(n, m, memory, S)
-    memory = min(n, memory)
-    FC  = eltype(S)
-    T   = real(FC)
-    Δx = S(undef, 0)
-    x  = S(undef, n)
-    t  = S(undef, n)
-    z  = S(undef, 0)
-    w  = S(undef, 0)
-    P  = [S(undef, n) for i = 1 : memory]
-    V  = [S(undef, n) for i = 1 : memory]
-    L  = Vector{FC}(undef, memory)
-    H  = Vector{FC}(undef, memory+2)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(Δx, x, t, z, w, P, V, L, H, false, stats)
-    return solver
-  end
+function DiomSolver(n, m, memory, S)
+  memory = min(n, memory)
+  FC  = eltype(S)
+  T   = real(FC)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  t  = S(undef, n)
+  z  = S(undef, 0)
+  w  = S(undef, 0)
+  P  = [S(undef, n) for i = 1 : memory]
+  V  = [S(undef, n) for i = 1 : memory]
+  L  = Vector{FC}(undef, memory)
+  H  = Vector{FC}(undef, memory+2)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = DiomSolver{T,FC,S}(Δx, x, t, z, w, P, V, L, H, false, stats)
+  return solver
+end
 
-  function DiomSolver(A, b, memory = 20)
-    n, m = size(A)
-    S = ktypeof(b)
-    DiomSolver(n, m, memory, S)
-  end
+function DiomSolver(A, b, memory = 20)
+  n, m = size(A)
+  S = ktypeof(b)
+  DiomSolver(n, m, memory, S)
 end
 
 """
@@ -491,29 +491,29 @@ mutable struct UsymlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   q          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function UsymlqSolver(n, m, S)
-    FC   = eltype(S)
-    T    = real(FC)
-    uₖ₋₁ = S(undef, m)
-    uₖ   = S(undef, m)
-    p    = S(undef, m)
-    Δx   = S(undef, 0)
-    x    = S(undef, m)
-    d̅    = S(undef, m)
-    vₖ₋₁ = S(undef, n)
-    vₖ   = S(undef, n)
-    q    = S(undef, n)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
-    return solver
-  end
+function UsymlqSolver(n, m, S)
+  FC   = eltype(S)
+  T    = real(FC)
+  uₖ₋₁ = S(undef, m)
+  uₖ   = S(undef, m)
+  p    = S(undef, m)
+  Δx   = S(undef, 0)
+  x    = S(undef, m)
+  d̅    = S(undef, m)
+  vₖ₋₁ = S(undef, n)
+  vₖ   = S(undef, n)
+  q    = S(undef, n)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = UsymlqSolver{T,FC,S}(uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
+  return solver
+end
 
-  function UsymlqSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    UsymlqSolver(n, m, S)
-  end
+function UsymlqSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  UsymlqSolver(n, m, S)
 end
 
 """
@@ -539,30 +539,30 @@ mutable struct UsymqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   p          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function UsymqrSolver(n, m, S)
-    FC   = eltype(S)
-    T    = real(FC)
-    vₖ₋₁ = S(undef, n)
-    vₖ   = S(undef, n)
-    q    = S(undef, n)
-    Δx   = S(undef, 0)
-    x    = S(undef, m)
-    wₖ₋₂ = S(undef, m)
-    wₖ₋₁ = S(undef, m)
-    uₖ₋₁ = S(undef, m)
-    uₖ   = S(undef, m)
-    p    = S(undef, m)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
-    return solver
-  end
+function UsymqrSolver(n, m, S)
+  FC   = eltype(S)
+  T    = real(FC)
+  vₖ₋₁ = S(undef, n)
+  vₖ   = S(undef, n)
+  q    = S(undef, n)
+  Δx   = S(undef, 0)
+  x    = S(undef, m)
+  wₖ₋₂ = S(undef, m)
+  wₖ₋₁ = S(undef, m)
+  uₖ₋₁ = S(undef, m)
+  uₖ   = S(undef, m)
+  p    = S(undef, m)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = UsymqrSolver{T,FC,S}(vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
+  return solver
+end
 
-  function UsymqrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    UsymqrSolver(n, m, S)
-  end
+function UsymqrSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  UsymqrSolver(n, m, S)
 end
 
 """
@@ -594,36 +594,36 @@ mutable struct TricgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   vₖ         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function TricgSolver(n, m, S)
-    FC      = eltype(S)
-    T       = real(FC)
-    y       = S(undef, m)
-    N⁻¹uₖ₋₁ = S(undef, m)
-    N⁻¹uₖ   = S(undef, m)
-    p       = S(undef, m)
-    gy₂ₖ₋₁  = S(undef, m)
-    gy₂ₖ    = S(undef, m)
-    x       = S(undef, n)
-    M⁻¹vₖ₋₁ = S(undef, n)
-    M⁻¹vₖ   = S(undef, n)
-    q       = S(undef, n)
-    gx₂ₖ₋₁  = S(undef, n)
-    gx₂ₖ    = S(undef, n)
-    Δx      = S(undef, 0)
-    Δy      = S(undef, 0)
-    uₖ      = S(undef, 0)
-    vₖ      = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
-    return solver
-  end
+function TricgSolver(n, m, S)
+  FC      = eltype(S)
+  T       = real(FC)
+  y       = S(undef, m)
+  N⁻¹uₖ₋₁ = S(undef, m)
+  N⁻¹uₖ   = S(undef, m)
+  p       = S(undef, m)
+  gy₂ₖ₋₁  = S(undef, m)
+  gy₂ₖ    = S(undef, m)
+  x       = S(undef, n)
+  M⁻¹vₖ₋₁ = S(undef, n)
+  M⁻¹vₖ   = S(undef, n)
+  q       = S(undef, n)
+  gx₂ₖ₋₁  = S(undef, n)
+  gx₂ₖ    = S(undef, n)
+  Δx      = S(undef, 0)
+  Δy      = S(undef, 0)
+  uₖ      = S(undef, 0)
+  vₖ      = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = TricgSolver{T,FC,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  return solver
+end
 
-  function TricgSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    TricgSolver(n, m, S)
-  end
+function TricgSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  TricgSolver(n, m, S)
 end
 
 """
@@ -659,40 +659,40 @@ mutable struct TrimrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   vₖ         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function TrimrSolver(n, m, S)
-    FC      = eltype(S)
-    T       = real(FC)
-    y       = S(undef, m)
-    N⁻¹uₖ₋₁ = S(undef, m)
-    N⁻¹uₖ   = S(undef, m)
-    p       = S(undef, m)
-    gy₂ₖ₋₃  = S(undef, m)
-    gy₂ₖ₋₂  = S(undef, m)
-    gy₂ₖ₋₁  = S(undef, m)
-    gy₂ₖ    = S(undef, m)
-    x       = S(undef, n)
-    M⁻¹vₖ₋₁ = S(undef, n)
-    M⁻¹vₖ   = S(undef, n)
-    q       = S(undef, n)
-    gx₂ₖ₋₃  = S(undef, n)
-    gx₂ₖ₋₂  = S(undef, n)
-    gx₂ₖ₋₁  = S(undef, n)
-    gx₂ₖ    = S(undef, n)
-    Δx      = S(undef, 0)
-    Δy      = S(undef, 0)
-    uₖ      = S(undef, 0)
-    vₖ      = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
-    return solver
-  end
+function TrimrSolver(n, m, S)
+  FC      = eltype(S)
+  T       = real(FC)
+  y       = S(undef, m)
+  N⁻¹uₖ₋₁ = S(undef, m)
+  N⁻¹uₖ   = S(undef, m)
+  p       = S(undef, m)
+  gy₂ₖ₋₃  = S(undef, m)
+  gy₂ₖ₋₂  = S(undef, m)
+  gy₂ₖ₋₁  = S(undef, m)
+  gy₂ₖ    = S(undef, m)
+  x       = S(undef, n)
+  M⁻¹vₖ₋₁ = S(undef, n)
+  M⁻¹vₖ   = S(undef, n)
+  q       = S(undef, n)
+  gx₂ₖ₋₃  = S(undef, n)
+  gx₂ₖ₋₂  = S(undef, n)
+  gx₂ₖ₋₁  = S(undef, n)
+  gx₂ₖ    = S(undef, n)
+  Δx      = S(undef, 0)
+  Δy      = S(undef, 0)
+  uₖ      = S(undef, 0)
+  vₖ      = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = TrimrSolver{T,FC,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  return solver
+end
 
-  function TrimrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    TrimrSolver(n, m, S)
-  end
+function TrimrSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  TrimrSolver(n, m, S)
 end
 
 """
@@ -721,33 +721,33 @@ mutable struct TrilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   wₖ₋₂       :: S
   warm_start :: Bool
   stats      :: AdjointStats{T}
+end
 
-  function TrilqrSolver(n, m, S)
-    FC   = eltype(S)
-    T    = real(FC)
-    uₖ₋₁ = S(undef, m)
-    uₖ   = S(undef, m)
-    p    = S(undef, m)
-    d̅    = S(undef, m)
-    Δx   = S(undef, 0)
-    x    = S(undef, m)
-    vₖ₋₁ = S(undef, n)
-    vₖ   = S(undef, n)
-    q    = S(undef, n)
-    Δy   = S(undef, 0)
-    y    = S(undef, n)
-    wₖ₋₃ = S(undef, n)
-    wₖ₋₂ = S(undef, n)
-    stats = AdjointStats(0, false, false, T[], T[], "unknown")
-    solver = new{T,FC,S}(uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
-    return solver
-  end
+function TrilqrSolver(n, m, S)
+  FC   = eltype(S)
+  T    = real(FC)
+  uₖ₋₁ = S(undef, m)
+  uₖ   = S(undef, m)
+  p    = S(undef, m)
+  d̅    = S(undef, m)
+  Δx   = S(undef, 0)
+  x    = S(undef, m)
+  vₖ₋₁ = S(undef, n)
+  vₖ   = S(undef, n)
+  q    = S(undef, n)
+  Δy   = S(undef, 0)
+  y    = S(undef, n)
+  wₖ₋₃ = S(undef, n)
+  wₖ₋₂ = S(undef, n)
+  stats = AdjointStats(0, false, false, T[], T[], "unknown")
+  solver = TrilqrSolver{T,FC,S}(uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
+  return solver
+end
 
-  function TrilqrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    TrilqrSolver(n, m, S)
-  end
+function TrilqrSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  TrilqrSolver(n, m, S)
 end
 
 """
@@ -772,29 +772,29 @@ mutable struct CgsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   vw         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function CgsSolver(n, m, S)
-    FC = eltype(S)
-    T  = real(FC)
-    Δx = S(undef, 0)
-    x  = S(undef, n)
-    r  = S(undef, n)
-    u  = S(undef, n)
-    p  = S(undef, n)
-    q  = S(undef, n)
-    ts = S(undef, n)
-    yz = S(undef, 0)
-    vw = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(Δx, x, r, u, p, q, ts, yz, vw, false, stats)
-    return solver
-  end
+function CgsSolver(n, m, S)
+  FC = eltype(S)
+  T  = real(FC)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  r  = S(undef, n)
+  u  = S(undef, n)
+  p  = S(undef, n)
+  q  = S(undef, n)
+  ts = S(undef, n)
+  yz = S(undef, 0)
+  vw = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = CgsSolver{T,FC,S}(Δx, x, r, u, p, q, ts, yz, vw, false, stats)
+  return solver
+end
 
-  function CgsSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    CgsSolver(n, m, S)
-  end
+function CgsSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  CgsSolver(n, m, S)
 end
 
 """
@@ -819,29 +819,29 @@ mutable struct BicgstabSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   t          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function BicgstabSolver(n, m, S)
-    FC = eltype(S)
-    T  = real(FC)
-    Δx = S(undef, 0)
-    x  = S(undef, n)
-    r  = S(undef, n)
-    p  = S(undef, n)
-    v  = S(undef, n)
-    s  = S(undef, n)
-    qd = S(undef, n)
-    yz = S(undef, 0)
-    t  = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(Δx, x, r, p, v, s, qd, yz, t, false, stats)
-    return solver
-  end
+function BicgstabSolver(n, m, S)
+  FC = eltype(S)
+  T  = real(FC)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  r  = S(undef, n)
+  p  = S(undef, n)
+  v  = S(undef, n)
+  s  = S(undef, n)
+  qd = S(undef, n)
+  yz = S(undef, 0)
+  t  = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = BicgstabSolver{T,FC,S}(Δx, x, r, p, v, s, qd, yz, t, false, stats)
+  return solver
+end
 
-  function BicgstabSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    BicgstabSolver(n, m, S)
-  end
+function BicgstabSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  BicgstabSolver(n, m, S)
 end
 
 """
@@ -866,29 +866,29 @@ mutable struct BilqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   d̅          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function BilqSolver(n, m, S)
-    FC   = eltype(S)
-    T    = real(FC)
-    uₖ₋₁ = S(undef, n)
-    uₖ   = S(undef, n)
-    q    = S(undef, n)
-    vₖ₋₁ = S(undef, n)
-    vₖ   = S(undef, n)
-    p    = S(undef, n)
-    Δx   = S(undef, 0)
-    x    = S(undef, n)
-    d̅    = S(undef, n)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, false, stats)
-    return solver
-  end
+function BilqSolver(n, m, S)
+  FC   = eltype(S)
+  T    = real(FC)
+  uₖ₋₁ = S(undef, n)
+  uₖ   = S(undef, n)
+  q    = S(undef, n)
+  vₖ₋₁ = S(undef, n)
+  vₖ   = S(undef, n)
+  p    = S(undef, n)
+  Δx   = S(undef, 0)
+  x    = S(undef, n)
+  d̅    = S(undef, n)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = BilqSolver{T,FC,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, false, stats)
+  return solver
+end
 
-  function BilqSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    BilqSolver(n, m, S)
-  end
+function BilqSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  BilqSolver(n, m, S)
 end
 
 """
@@ -914,30 +914,30 @@ mutable struct QmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   wₖ₋₁       :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function QmrSolver(n, m, S)
-    FC   = eltype(S)
-    T    = real(FC)
-    uₖ₋₁ = S(undef, n)
-    uₖ   = S(undef, n)
-    q    = S(undef, n)
-    vₖ₋₁ = S(undef, n)
-    vₖ   = S(undef, n)
-    p    = S(undef, n)
-    Δx   = S(undef, 0)
-    x    = S(undef, n)
-    wₖ₋₂ = S(undef, n)
-    wₖ₋₁ = S(undef, n)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, false, stats)
-    return solver
-  end
+function QmrSolver(n, m, S)
+  FC   = eltype(S)
+  T    = real(FC)
+  uₖ₋₁ = S(undef, n)
+  uₖ   = S(undef, n)
+  q    = S(undef, n)
+  vₖ₋₁ = S(undef, n)
+  vₖ   = S(undef, n)
+  p    = S(undef, n)
+  Δx   = S(undef, 0)
+  x    = S(undef, n)
+  wₖ₋₂ = S(undef, n)
+  wₖ₋₁ = S(undef, n)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = QmrSolver{T,FC,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, false, stats)
+  return solver
+end
 
-  function QmrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    QmrSolver(n, m, S)
-  end
+function QmrSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  QmrSolver(n, m, S)
 end
 
 """
@@ -966,33 +966,33 @@ mutable struct BilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   wₖ₋₂       :: S
   warm_start :: Bool
   stats      :: AdjointStats{T}
+end
 
-  function BilqrSolver(n, m, S)
-    FC   = eltype(S)
-    T    = real(FC)
-    uₖ₋₁ = S(undef, n)
-    uₖ   = S(undef, n)
-    q    = S(undef, n)
-    vₖ₋₁ = S(undef, n)
-    vₖ   = S(undef, n)
-    p    = S(undef, n)
-    Δx   = S(undef, 0)
-    x    = S(undef, n)
-    Δy   = S(undef, 0)
-    y    = S(undef, n)
-    d̅    = S(undef, n)
-    wₖ₋₃ = S(undef, n)
-    wₖ₋₂ = S(undef, n)
-    stats = AdjointStats(0, false, false, T[], T[], "unknown")
-    solver = new{T,FC,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, false, stats)
-    return solver
-  end
+function BilqrSolver(n, m, S)
+  FC   = eltype(S)
+  T    = real(FC)
+  uₖ₋₁ = S(undef, n)
+  uₖ   = S(undef, n)
+  q    = S(undef, n)
+  vₖ₋₁ = S(undef, n)
+  vₖ   = S(undef, n)
+  p    = S(undef, n)
+  Δx   = S(undef, 0)
+  x    = S(undef, n)
+  Δy   = S(undef, 0)
+  y    = S(undef, n)
+  d̅    = S(undef, n)
+  wₖ₋₃ = S(undef, n)
+  wₖ₋₂ = S(undef, n)
+  stats = AdjointStats(0, false, false, T[], T[], "unknown")
+  solver = BilqrSolver{T,FC,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, false, stats)
+  return solver
+end
 
-  function BilqrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    BilqrSolver(n, m, S)
-  end
+function BilqrSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  BilqrSolver(n, m, S)
 end
 
 """
@@ -1013,26 +1013,26 @@ mutable struct CglsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   q     :: S
   Mr    :: S
   stats :: SimpleStats{T}
+end
 
-  function CglsSolver(n, m, S)
-    FC = eltype(S)
-    T  = real(FC)
-    x  = S(undef, m)
-    p  = S(undef, m)
-    s  = S(undef, m)
-    r  = S(undef, n)
-    q  = S(undef, n)
-    Mr = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(x, p, s, r, q, Mr, stats)
-    return solver
-  end
+function CglsSolver(n, m, S)
+  FC = eltype(S)
+  T  = real(FC)
+  x  = S(undef, m)
+  p  = S(undef, m)
+  s  = S(undef, m)
+  r  = S(undef, n)
+  q  = S(undef, n)
+  Mr = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = CglsSolver{T,FC,S}(x, p, s, r, q, Mr, stats)
+  return solver
+end
 
-  function CglsSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    CglsSolver(n, m, S)
-  end
+function CglsSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  CglsSolver(n, m, S)
 end
 
 """
@@ -1055,28 +1055,28 @@ mutable struct CrlsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   s     :: S
   Ms    :: S
   stats :: SimpleStats{T}
+end
 
-  function CrlsSolver(n, m, S)
-    FC = eltype(S)
-    T  = real(FC)
-    x  = S(undef, m)
-    p  = S(undef, m)
-    Ar = S(undef, m)
-    q  = S(undef, m)
-    r  = S(undef, n)
-    Ap = S(undef, n)
-    s  = S(undef, n)
-    Ms = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(x, p, Ar, q, r, Ap, s, Ms, stats)
-    return solver
-  end
+function CrlsSolver(n, m, S)
+  FC = eltype(S)
+  T  = real(FC)
+  x  = S(undef, m)
+  p  = S(undef, m)
+  Ar = S(undef, m)
+  q  = S(undef, m)
+  r  = S(undef, n)
+  Ap = S(undef, n)
+  s  = S(undef, n)
+  Ms = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = CrlsSolver{T,FC,S}(x, p, Ar, q, r, Ap, s, Ms, stats)
+  return solver
+end
 
-  function CrlsSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    CrlsSolver(n, m, S)
-  end
+function CrlsSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  CrlsSolver(n, m, S)
 end
 
 """
@@ -1098,27 +1098,27 @@ mutable struct CgneSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   s     :: S
   z     :: S
   stats :: SimpleStats{T}
+end
 
-  function CgneSolver(n, m, S)
-    FC  = eltype(S)
-    T   = real(FC)
-    x   = S(undef, m)
-    p   = S(undef, m)
-    Aᵀz = S(undef, m)
-    r   = S(undef, n)
-    q   = S(undef, n)
-    s   = S(undef, 0)
-    z   = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(x, p, Aᵀz, r, q, s, z, stats)
-    return solver
-  end
+function CgneSolver(n, m, S)
+  FC  = eltype(S)
+  T   = real(FC)
+  x   = S(undef, m)
+  p   = S(undef, m)
+  Aᵀz = S(undef, m)
+  r   = S(undef, n)
+  q   = S(undef, n)
+  s   = S(undef, 0)
+  z   = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = CgneSolver{T,FC,S}(x, p, Aᵀz, r, q, s, z, stats)
+  return solver
+end
 
-  function CgneSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    CgneSolver(n, m, S)
-  end
+function CgneSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  CgneSolver(n, m, S)
 end
 
 """
@@ -1140,27 +1140,27 @@ mutable struct CrmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   Mq    :: S
   s     :: S
   stats :: SimpleStats{T}
+end
 
-  function CrmrSolver(n, m, S)
-    FC  = eltype(S)
-    T   = real(FC)
-    x   = S(undef, m)
-    p   = S(undef, m)
-    Aᵀr = S(undef, m)
-    r   = S(undef, n)
-    q   = S(undef, n)
-    Mq  = S(undef, 0)
-    s   = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(x, p, Aᵀr, r, q, Mq, s, stats)
-    return solver
-  end
+function CrmrSolver(n, m, S)
+  FC  = eltype(S)
+  T   = real(FC)
+  x   = S(undef, m)
+  p   = S(undef, m)
+  Aᵀr = S(undef, m)
+  r   = S(undef, n)
+  q   = S(undef, n)
+  Mq  = S(undef, 0)
+  s   = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = CrmrSolver{T,FC,S}(x, p, Aᵀr, r, q, Mq, s, stats)
+  return solver
+end
 
-  function CrmrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    CrmrSolver(n, m, S)
-  end
+function CrmrSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  CrmrSolver(n, m, S)
 end
 
 """
@@ -1184,29 +1184,29 @@ mutable struct LslqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v       :: S
   err_vec :: Vector{T}
   stats   :: LSLQStats{T}
+end
 
-  function LslqSolver(n, m, S; window :: Int=5)
-    FC  = eltype(S)
-    T   = real(FC)
-    x   = S(undef, m)
-    Nv  = S(undef, m)
-    Aᵀu = S(undef, m)
-    w̄   = S(undef, m)
-    Mu  = S(undef, n)
-    Av  = S(undef, n)
-    u   = S(undef, 0)
-    v   = S(undef, 0)
-    err_vec = zeros(T, window)
-    stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], "unknown")
-    solver = new{T,FC,S}(x, Nv, Aᵀu, w̄, Mu, Av, u, v, err_vec, stats)
-    return solver
-  end
+function LslqSolver(n, m, S; window :: Int=5)
+  FC  = eltype(S)
+  T   = real(FC)
+  x   = S(undef, m)
+  Nv  = S(undef, m)
+  Aᵀu = S(undef, m)
+  w̄   = S(undef, m)
+  Mu  = S(undef, n)
+  Av  = S(undef, n)
+  u   = S(undef, 0)
+  v   = S(undef, 0)
+  err_vec = zeros(T, window)
+  stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], "unknown")
+  solver = LslqSolver{T,FC,S}(x, Nv, Aᵀu, w̄, Mu, Av, u, v, err_vec, stats)
+  return solver
+end
 
-  function LslqSolver(A, b; window :: Int=5)
-    n, m = size(A)
-    S = ktypeof(b)
-    LslqSolver(n, m, S, window=window)
-  end
+function LslqSolver(A, b; window :: Int=5)
+  n, m = size(A)
+  S = ktypeof(b)
+  LslqSolver(n, m, S, window=window)
 end
 
 """
@@ -1230,29 +1230,29 @@ mutable struct LsqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v       :: S
   err_vec :: Vector{T}
   stats   :: SimpleStats{T}
+end
 
-  function LsqrSolver(n, m, S; window :: Int=5)
-    FC  = eltype(S)
-    T   = real(FC)
-    x   = S(undef, m)
-    Nv  = S(undef, m)
-    Aᵀu = S(undef, m)
-    w   = S(undef, m)
-    Mu  = S(undef, n)
-    Av  = S(undef, n)
-    u   = S(undef, 0)
-    v   = S(undef, 0)
-    err_vec = zeros(T, window)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(x, Nv, Aᵀu, w, Mu, Av, u, v, err_vec, stats)
-    return solver
-  end
+function LsqrSolver(n, m, S; window :: Int=5)
+  FC  = eltype(S)
+  T   = real(FC)
+  x   = S(undef, m)
+  Nv  = S(undef, m)
+  Aᵀu = S(undef, m)
+  w   = S(undef, m)
+  Mu  = S(undef, n)
+  Av  = S(undef, n)
+  u   = S(undef, 0)
+  v   = S(undef, 0)
+  err_vec = zeros(T, window)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = LsqrSolver{T,FC,S}(x, Nv, Aᵀu, w, Mu, Av, u, v, err_vec, stats)
+  return solver
+end
 
-  function LsqrSolver(A, b; window :: Int=5)
-    n, m = size(A)
-    S = ktypeof(b)
-    LsqrSolver(n, m, S, window=window)
-  end
+function LsqrSolver(A, b; window :: Int=5)
+  n, m = size(A)
+  S = ktypeof(b)
+  LsqrSolver(n, m, S, window=window)
 end
 
 """
@@ -1277,30 +1277,30 @@ mutable struct LsmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v       :: S
   err_vec :: Vector{T}
   stats   :: LsmrStats{T}
+end
 
-  function LsmrSolver(n, m, S; window :: Int=5)
-    FC   = eltype(S)
-    T    = real(FC)
-    x    = S(undef, m)
-    Nv   = S(undef, m)
-    Aᵀu  = S(undef, m)
-    h    = S(undef, m)
-    hbar = S(undef, m)
-    Mu   = S(undef, n)
-    Av   = S(undef, n)
-    u    = S(undef, 0)
-    v    = S(undef, 0)
-    err_vec = zeros(T, window)
-    stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), "unknown")
-    solver = new{T,FC,S}(x, Nv, Aᵀu, h, hbar, Mu, Av, u, v, err_vec, stats)
-    return solver
-  end
+function LsmrSolver(n, m, S; window :: Int=5)
+  FC   = eltype(S)
+  T    = real(FC)
+  x    = S(undef, m)
+  Nv   = S(undef, m)
+  Aᵀu  = S(undef, m)
+  h    = S(undef, m)
+  hbar = S(undef, m)
+  Mu   = S(undef, n)
+  Av   = S(undef, n)
+  u    = S(undef, 0)
+  v    = S(undef, 0)
+  err_vec = zeros(T, window)
+  stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), "unknown")
+  solver = LsmrSolver{T,FC,S}(x, Nv, Aᵀu, h, hbar, Mu, Av, u, v, err_vec, stats)
+  return solver
+end
 
-  function LsmrSolver(A, b; window :: Int=5)
-    n, m = size(A)
-    S = ktypeof(b)
-    LsmrSolver(n, m, S, window=window)
-  end
+function LsmrSolver(A, b; window :: Int=5)
+  n, m = size(A)
+  S = ktypeof(b)
+  LsmrSolver(n, m, S, window=window)
 end
 
 """
@@ -1325,30 +1325,30 @@ mutable struct LnlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v     :: S
   q     :: S
   stats :: LNLQStats{T}
+end
 
-  function LnlqSolver(n, m, S)
-    FC  = eltype(S)
-    T   = real(FC)
-    x   = S(undef, m)
-    Nv  = S(undef, m)
-    Aᵀu = S(undef, m)
-    y   = S(undef, n)
-    w̄   = S(undef, n)
-    Mu  = S(undef, n)
-    Av  = S(undef, n)
-    u   = S(undef, 0)
-    v   = S(undef, 0)
-    q   = S(undef, 0)
-    stats = LNLQStats(0, false, T[], false, T[], T[], "unknown")
-    solver = new{T,FC,S}(x, Nv, Aᵀu, y, w̄, Mu, Av, u, v, q, stats)
-    return solver
-  end
+function LnlqSolver(n, m, S)
+  FC  = eltype(S)
+  T   = real(FC)
+  x   = S(undef, m)
+  Nv  = S(undef, m)
+  Aᵀu = S(undef, m)
+  y   = S(undef, n)
+  w̄   = S(undef, n)
+  Mu  = S(undef, n)
+  Av  = S(undef, n)
+  u   = S(undef, 0)
+  v   = S(undef, 0)
+  q   = S(undef, 0)
+  stats = LNLQStats(0, false, T[], false, T[], T[], "unknown")
+  solver = LnlqSolver{T,FC,S}(x, Nv, Aᵀu, y, w̄, Mu, Av, u, v, q, stats)
+  return solver
+end
 
-  function LnlqSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    LnlqSolver(n, m, S)
-  end
+function LnlqSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  LnlqSolver(n, m, S)
 end
 
 """
@@ -1373,30 +1373,30 @@ mutable struct CraigSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v     :: S
   w2    :: S
   stats :: SimpleStats{T}
+end
 
-  function CraigSolver(n, m, S)
-    FC  = eltype(S)
-    T   = real(FC)
-    x   = S(undef, m)
-    Nv  = S(undef, m)
-    Aᵀu = S(undef, m)
-    y   = S(undef, n)
-    w   = S(undef, n)
-    Mu  = S(undef, n)
-    Av  = S(undef, n)
-    u   = S(undef, 0)
-    v   = S(undef, 0)
-    w2  = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(x, Nv, Aᵀu, y, w, Mu, Av, u, v, w2, stats)
-    return solver
-  end
+function CraigSolver(n, m, S)
+  FC  = eltype(S)
+  T   = real(FC)
+  x   = S(undef, m)
+  Nv  = S(undef, m)
+  Aᵀu = S(undef, m)
+  y   = S(undef, n)
+  w   = S(undef, n)
+  Mu  = S(undef, n)
+  Av  = S(undef, n)
+  u   = S(undef, 0)
+  v   = S(undef, 0)
+  w2  = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = CraigSolver{T,FC,S}(x, Nv, Aᵀu, y, w, Mu, Av, u, v, w2, stats)
+  return solver
+end
 
-  function CraigSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    CraigSolver(n, m, S)
-  end
+function CraigSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  CraigSolver(n, m, S)
 end
 
 """
@@ -1423,32 +1423,32 @@ mutable struct CraigmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v     :: S
   q     :: S
   stats :: SimpleStats{T}
+end
 
-  function CraigmrSolver(n, m, S)
-    FC   = eltype(S)
-    T    = real(FC)
-    x    = S(undef, m)
-    Nv   = S(undef, m)
-    Aᵀu  = S(undef, m)
-    d    = S(undef, m)
-    y    = S(undef, n)
-    Mu   = S(undef, n)
-    w    = S(undef, n)
-    wbar = S(undef, n)
-    Av   = S(undef, n)
-    u    = S(undef, 0)
-    v    = S(undef, 0)
-    q    = S(undef, 0)
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(x, Nv, Aᵀu, d, y, Mu, w, wbar, Av, u, v, q, stats)
-    return solver
-  end
+function CraigmrSolver(n, m, S)
+  FC   = eltype(S)
+  T    = real(FC)
+  x    = S(undef, m)
+  Nv   = S(undef, m)
+  Aᵀu  = S(undef, m)
+  d    = S(undef, m)
+  y    = S(undef, n)
+  Mu   = S(undef, n)
+  w    = S(undef, n)
+  wbar = S(undef, n)
+  Av   = S(undef, n)
+  u    = S(undef, 0)
+  v    = S(undef, 0)
+  q    = S(undef, 0)
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = CraigmrSolver{T,FC,S}(x, Nv, Aᵀu, d, y, Mu, w, wbar, Av, u, v, q, stats)
+  return solver
+end
 
-  function CraigmrSolver(A, b)
-    n, m = size(A)
-    S = ktypeof(b)
-    CraigmrSolver(n, m, S)
-  end
+function CraigmrSolver(A, b)
+  n, m = size(A)
+  S = ktypeof(b)
+  CraigmrSolver(n, m, S)
 end
 
 """
@@ -1476,31 +1476,31 @@ mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   warm_start :: Bool
   inner_iter :: Int
   stats      :: SimpleStats{T}
+end
 
-  function GmresSolver(n, m, memory, S)
-    memory = min(n, memory)
-    FC = eltype(S)
-    T  = real(FC)
-    Δx = S(undef, 0)
-    x  = S(undef, n)
-    w  = S(undef, n)
-    p  = S(undef, 0)
-    q  = S(undef, 0)
-    V  = [S(undef, n) for i = 1 : memory]
-    c  = Vector{T}(undef, memory)
-    s  = Vector{FC}(undef, memory)
-    z  = Vector{FC}(undef, memory)
-    R  = Vector{FC}(undef, div(memory * (memory+1), 2))
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
-    return solver
-  end
+function GmresSolver(n, m, memory, S)
+  memory = min(n, memory)
+  FC = eltype(S)
+  T  = real(FC)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  w  = S(undef, n)
+  p  = S(undef, 0)
+  q  = S(undef, 0)
+  V  = [S(undef, n) for i = 1 : memory]
+  c  = Vector{T}(undef, memory)
+  s  = Vector{FC}(undef, memory)
+  z  = Vector{FC}(undef, memory)
+  R  = Vector{FC}(undef, div(memory * (memory+1), 2))
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = GmresSolver{T,FC,S}(Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
+  return solver
+end
 
-  function GmresSolver(A, b, memory = 20)
-    n, m = size(A)
-    S = ktypeof(b)
-    GmresSolver(n, m, memory, S)
-  end
+function GmresSolver(A, b, memory = 20)
+  n, m = size(A)
+  S = ktypeof(b)
+  GmresSolver(n, m, memory, S)
 end
 
 """
@@ -1526,30 +1526,30 @@ mutable struct FomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   U          :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function FomSolver(n, m, memory, S)
-    memory = min(n, memory)
-    FC = eltype(S)
-    T  = real(FC)
-    Δx = S(undef, 0)
-    x  = S(undef, n)
-    w  = S(undef, n)
-    p  = S(undef, 0)
-    q  = S(undef, 0)
-    V  = [S(undef, n) for i = 1 : memory]
-    l  = Vector{FC}(undef, memory)
-    z  = Vector{FC}(undef, memory)
-    U  = Vector{FC}(undef, div(memory * (memory+1), 2))
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(Δx, x, w, p, q, V, l, z, U, false, stats)
-    return solver
-  end
+function FomSolver(n, m, memory, S)
+  memory = min(n, memory)
+  FC = eltype(S)
+  T  = real(FC)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  w  = S(undef, n)
+  p  = S(undef, 0)
+  q  = S(undef, 0)
+  V  = [S(undef, n) for i = 1 : memory]
+  l  = Vector{FC}(undef, memory)
+  z  = Vector{FC}(undef, memory)
+  U  = Vector{FC}(undef, div(memory * (memory+1), 2))
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = FomSolver{T,FC,S}(Δx, x, w, p, q, V, l, z, U, false, stats)
+  return solver
+end
 
-  function FomSolver(A, b, memory = 20)
-    n, m = size(A)
-    S = ktypeof(b)
-    FomSolver(n, m, memory, S)
-  end
+function FomSolver(A, b, memory = 20)
+  n, m = size(A)
+  S = ktypeof(b)
+  FomSolver(n, m, memory, S)
 end
 
 """
@@ -1582,37 +1582,37 @@ mutable struct GpmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   R          :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
 
-  function GpmrSolver(n, m, memory, S)
-    memory = min(n + m, memory)
-    FC = eltype(S)
-    T  = real(FC)
-    wA = S(undef, 0)
-    wB = S(undef, 0)
-    dA = S(undef, n)
-    dB = S(undef, m)
-    Δx = S(undef, 0)
-    Δy = S(undef, 0)
-    x  = S(undef, n)
-    y  = S(undef, m)
-    q  = S(undef, 0)
-    p  = S(undef, 0)
-    V  = [S(undef, n) for i = 1 : memory]
-    U  = [S(undef, m) for i = 1 : memory]
-    gs = Vector{FC}(undef, 4 * memory)
-    gc = Vector{T}(undef, 4 * memory)
-    zt = Vector{FC}(undef, 2 * memory)
-    R  = Vector{FC}(undef, memory * (2memory + 1))
-    stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-    solver = new{T,FC,S}(wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
-    return solver
-  end
+function GpmrSolver(n, m, memory, S)
+  memory = min(n + m, memory)
+  FC = eltype(S)
+  T  = real(FC)
+  wA = S(undef, 0)
+  wB = S(undef, 0)
+  dA = S(undef, n)
+  dB = S(undef, m)
+  Δx = S(undef, 0)
+  Δy = S(undef, 0)
+  x  = S(undef, n)
+  y  = S(undef, m)
+  q  = S(undef, 0)
+  p  = S(undef, 0)
+  V  = [S(undef, n) for i = 1 : memory]
+  U  = [S(undef, m) for i = 1 : memory]
+  gs = Vector{FC}(undef, 4 * memory)
+  gc = Vector{T}(undef, 4 * memory)
+  zt = Vector{FC}(undef, 2 * memory)
+  R  = Vector{FC}(undef, memory * (2memory + 1))
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = GpmrSolver{T,FC,S}(wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
+  return solver
+end
 
-  function GpmrSolver(A, b, memory = 20)
-    n, m = size(A)
-    S = ktypeof(b)
-    GpmrSolver(n, m, memory, S)
-  end
+function GpmrSolver(A, b, memory = 20)
+  n, m = size(A)
+  S = ktypeof(b)
+  GpmrSolver(n, m, memory, S)
 end
 
 """
