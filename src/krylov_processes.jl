@@ -89,7 +89,7 @@ end
 """
 function unsymmetric_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   n, m = size(A)
-  Aᵀ = A'
+  Aᴴ = A'
 
   colptr = zeros(Int, k+1)
   rowval = zeros(Int, 3k-1)
@@ -127,7 +127,7 @@ function unsymmetric_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k:
       uᵢ .= c ./ conj(γᵢ)
     end
     mul!(q, A , vᵢ)
-    mul!(p, Aᵀ, uᵢ)
+    mul!(p, Aᴴ, uᵢ)
     if i ≥ 2
       vᵢ₋₁ = view(V,:,i-1)
       uᵢ₋₁ = view(U,:,i-1)
@@ -235,7 +235,7 @@ end
 function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   n, m = size(A)
   R = real(FC)
-  Aᵀ = A'
+  Aᴴ = A'
 
   colptr = zeros(Int, k+2)
   rowval = zeros(Int, 2k+1)
@@ -264,7 +264,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
       wᵢ = vᵢ
       βᵢ = @knrm2(n, b)
       uᵢ .= b ./ βᵢ
-      mul!(wᵢ, Aᵀ, uᵢ)
+      mul!(wᵢ, Aᴴ, uᵢ)
       αᵢ = @knrm2(m, wᵢ)
       L[1,1] = αᵢ
       vᵢ .= wᵢ ./ αᵢ
@@ -274,7 +274,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
     @kaxpy!(n, -αᵢ, uᵢ, q)
     βᵢ₊₁ = @knrm2(n, q)
     uᵢ₊₁ .= q ./ βᵢ₊₁
-    mul!(p, Aᵀ, uᵢ₊₁)
+    mul!(p, Aᴴ, uᵢ₊₁)
     @kaxpy!(m, -βᵢ₊₁, vᵢ, p)
     αᵢ₊₁ = @knrm2(m, p)
     vᵢ₊₁ .= p ./ αᵢ₊₁
@@ -307,7 +307,7 @@ end
 """
 function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   n, m = size(A)
-  Aᵀ = A'
+  Aᴴ = A'
 
   colptr = zeros(Int, k+1)
   rowval = zeros(Int, 3k-1)
@@ -344,7 +344,7 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
       uᵢ .= c ./ γ
     end
     mul!(q, A , uᵢ)
-    mul!(p, Aᵀ, vᵢ)
+    mul!(p, Aᴴ, vᵢ)
     if i ≥ 2
       vᵢ₋₁ = view(V,:,i-1)
       uᵢ₋₁ = view(U,:,i-1)
