@@ -1092,7 +1092,7 @@ may be used in order to create these vectors.
 mutable struct CgneSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   x     :: S
   p     :: S
-  Aᵀz   :: S
+  Aᴴz   :: S
   r     :: S
   q     :: S
   s     :: S
@@ -1105,13 +1105,13 @@ function CgneSolver(n, m, S)
   T   = real(FC)
   x   = S(undef, m)
   p   = S(undef, m)
-  Aᵀz = S(undef, m)
+  Aᴴz = S(undef, m)
   r   = S(undef, n)
   q   = S(undef, n)
   s   = S(undef, 0)
   z   = S(undef, 0)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-  solver = CgneSolver{T,FC,S}(x, p, Aᵀz, r, q, s, z, stats)
+  solver = CgneSolver{T,FC,S}(x, p, Aᴴz, r, q, s, z, stats)
   return solver
 end
 
@@ -1134,7 +1134,7 @@ may be used in order to create these vectors.
 mutable struct CrmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   x     :: S
   p     :: S
-  Aᵀr   :: S
+  Aᴴr   :: S
   r     :: S
   q     :: S
   Nq    :: S
@@ -1147,13 +1147,13 @@ function CrmrSolver(n, m, S)
   T   = real(FC)
   x   = S(undef, m)
   p   = S(undef, m)
-  Aᵀr = S(undef, m)
+  Aᴴr = S(undef, m)
   r   = S(undef, n)
   q   = S(undef, n)
   Nq  = S(undef, 0)
   s   = S(undef, 0)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-  solver = CrmrSolver{T,FC,S}(x, p, Aᵀr, r, q, Nq, s, stats)
+  solver = CrmrSolver{T,FC,S}(x, p, Aᴴr, r, q, Nq, s, stats)
   return solver
 end
 
@@ -1176,7 +1176,7 @@ may be used in order to create these vectors.
 mutable struct LslqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   x       :: S
   Nv      :: S
-  Aᵀu     :: S
+  Aᴴu     :: S
   w̄       :: S
   Mu      :: S
   Av      :: S
@@ -1191,7 +1191,7 @@ function LslqSolver(n, m, S; window :: Int=5)
   T   = real(FC)
   x   = S(undef, m)
   Nv  = S(undef, m)
-  Aᵀu = S(undef, m)
+  Aᴴu = S(undef, m)
   w̄   = S(undef, m)
   Mu  = S(undef, n)
   Av  = S(undef, n)
@@ -1199,7 +1199,7 @@ function LslqSolver(n, m, S; window :: Int=5)
   v   = S(undef, 0)
   err_vec = zeros(T, window)
   stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], "unknown")
-  solver = LslqSolver{T,FC,S}(x, Nv, Aᵀu, w̄, Mu, Av, u, v, err_vec, stats)
+  solver = LslqSolver{T,FC,S}(x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
   return solver
 end
 
@@ -1222,7 +1222,7 @@ may be used in order to create these vectors.
 mutable struct LsqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   x       :: S
   Nv      :: S
-  Aᵀu     :: S
+  Aᴴu     :: S
   w       :: S
   Mu      :: S
   Av      :: S
@@ -1237,7 +1237,7 @@ function LsqrSolver(n, m, S; window :: Int=5)
   T   = real(FC)
   x   = S(undef, m)
   Nv  = S(undef, m)
-  Aᵀu = S(undef, m)
+  Aᴴu = S(undef, m)
   w   = S(undef, m)
   Mu  = S(undef, n)
   Av  = S(undef, n)
@@ -1245,7 +1245,7 @@ function LsqrSolver(n, m, S; window :: Int=5)
   v   = S(undef, 0)
   err_vec = zeros(T, window)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-  solver = LsqrSolver{T,FC,S}(x, Nv, Aᵀu, w, Mu, Av, u, v, err_vec, stats)
+  solver = LsqrSolver{T,FC,S}(x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
   return solver
 end
 
@@ -1268,7 +1268,7 @@ may be used in order to create these vectors.
 mutable struct LsmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   x       :: S
   Nv      :: S
-  Aᵀu     :: S
+  Aᴴu     :: S
   h       :: S
   hbar    :: S
   Mu      :: S
@@ -1284,7 +1284,7 @@ function LsmrSolver(n, m, S; window :: Int=5)
   T    = real(FC)
   x    = S(undef, m)
   Nv   = S(undef, m)
-  Aᵀu  = S(undef, m)
+  Aᴴu  = S(undef, m)
   h    = S(undef, m)
   hbar = S(undef, m)
   Mu   = S(undef, n)
@@ -1293,7 +1293,7 @@ function LsmrSolver(n, m, S; window :: Int=5)
   v    = S(undef, 0)
   err_vec = zeros(T, window)
   stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), "unknown")
-  solver = LsmrSolver{T,FC,S}(x, Nv, Aᵀu, h, hbar, Mu, Av, u, v, err_vec, stats)
+  solver = LsmrSolver{T,FC,S}(x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
   return solver
 end
 
@@ -1316,7 +1316,7 @@ may be used in order to create these vectors.
 mutable struct LnlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   x     :: S
   Nv    :: S
-  Aᵀu   :: S
+  Aᴴu   :: S
   y     :: S
   w̄     :: S
   Mu    :: S
@@ -1332,7 +1332,7 @@ function LnlqSolver(n, m, S)
   T   = real(FC)
   x   = S(undef, m)
   Nv  = S(undef, m)
-  Aᵀu = S(undef, m)
+  Aᴴu = S(undef, m)
   y   = S(undef, n)
   w̄   = S(undef, n)
   Mu  = S(undef, n)
@@ -1341,7 +1341,7 @@ function LnlqSolver(n, m, S)
   v   = S(undef, 0)
   q   = S(undef, 0)
   stats = LNLQStats(0, false, T[], false, T[], T[], "unknown")
-  solver = LnlqSolver{T,FC,S}(x, Nv, Aᵀu, y, w̄, Mu, Av, u, v, q, stats)
+  solver = LnlqSolver{T,FC,S}(x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
   return solver
 end
 
@@ -1364,7 +1364,7 @@ may be used in order to create these vectors.
 mutable struct CraigSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   x     :: S
   Nv    :: S
-  Aᵀu   :: S
+  Aᴴu   :: S
   y     :: S
   w     :: S
   Mu    :: S
@@ -1380,7 +1380,7 @@ function CraigSolver(n, m, S)
   T   = real(FC)
   x   = S(undef, m)
   Nv  = S(undef, m)
-  Aᵀu = S(undef, m)
+  Aᴴu = S(undef, m)
   y   = S(undef, n)
   w   = S(undef, n)
   Mu  = S(undef, n)
@@ -1389,7 +1389,7 @@ function CraigSolver(n, m, S)
   v   = S(undef, 0)
   w2  = S(undef, 0)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-  solver = CraigSolver{T,FC,S}(x, Nv, Aᵀu, y, w, Mu, Av, u, v, w2, stats)
+  solver = CraigSolver{T,FC,S}(x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
   return solver
 end
 
@@ -1412,7 +1412,7 @@ may be used in order to create these vectors.
 mutable struct CraigmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   x     :: S
   Nv    :: S
-  Aᵀu   :: S
+  Aᴴu   :: S
   d     :: S
   y     :: S
   Mu    :: S
@@ -1430,7 +1430,7 @@ function CraigmrSolver(n, m, S)
   T    = real(FC)
   x    = S(undef, m)
   Nv   = S(undef, m)
-  Aᵀu  = S(undef, m)
+  Aᴴu  = S(undef, m)
   d    = S(undef, m)
   y    = S(undef, n)
   Mu   = S(undef, n)
@@ -1441,7 +1441,7 @@ function CraigmrSolver(n, m, S)
   v    = S(undef, 0)
   q    = S(undef, 0)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
-  solver = CraigmrSolver{T,FC,S}(x, Nv, Aᵀu, d, y, Mu, w, wbar, Av, u, v, q, stats)
+  solver = CraigmrSolver{T,FC,S}(x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
   return solver
 end
 

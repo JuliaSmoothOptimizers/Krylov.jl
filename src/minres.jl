@@ -50,7 +50,7 @@ MINRES is formally equivalent to applying CR to Ax=b when A is positive
 definite, but is typically more stable and also applies to the case where
 A is indefinite.
 
-MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr‖₂.
+MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr‖₂.
 
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
@@ -189,7 +189,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %7s\n", "k", "‖r‖", "‖Aᵀr‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "test2")
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "test2")
   kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
 
   tol = atol + rtol * β₁
@@ -241,7 +241,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     ϵ = sn * β
     δbar = -cs * β
     root = sqrt(γbar * γbar + δbar * δbar)
-    ArNorm = ϕbar * root  # = ‖Aᵀrₖ₋₁‖
+    ArNorm = ϕbar * root  # = ‖Aᴴrₖ₋₁‖
     history && push!(ArNorms, ArNorm)
 
     # Compute the next plane rotation.
@@ -295,7 +295,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, test1, test2)
 
     if iter == 1 && β / β₁ ≤ 10 * ϵM
-      # Aᵀb = 0 so x = 0 is a minimum least-squares solution
+      # Aᴴb = 0 so x = 0 is a minimum least-squares solution
       stats.niter = 0
       stats.solved, stats.inconsistent = true, true
       stats.status = "x is a minimum least-squares solution"

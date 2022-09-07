@@ -1,5 +1,5 @@
 # An implementation of BILQR for the solution of square
-# consistent linear adjoint systems Ax = b and Aᵀy = c.
+# consistent linear adjoint systems Ax = b and Aᴴy = c.
 #
 # This method is described in
 #
@@ -24,11 +24,11 @@ export bilqr, bilqr!
 Combine BiLQ and QMR to solve adjoint systems.
 
     [0  A] [y] = [b]
-    [Aᵀ 0] [x]   [c]
+    [Aᴴ 0] [x]   [c]
 
-The relation `bᵀc ≠ 0` must be satisfied.
+The relation `bᴴc ≠ 0` must be satisfied.
 BiLQ is used for solving primal system `Ax = b`.
-QMR is used for solving dual system `Aᵀy = c`.
+QMR is used for solving dual system `Aᴴy = c`.
 
 An option gives the possibility of transferring from the BiLQ point to the
 BiCG point, when it exists. The transfer is based on the residual norm.
@@ -94,7 +94,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   uₖ₋₁, uₖ, q, vₖ₋₁, vₖ = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ
@@ -109,7 +109,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   if warm_start
     mul!(r₀, A, Δx)
     @kaxpby!(n, one(FC), b, -one(FC), r₀)
-    mul!(s₀, Aᵀ, Δy)
+    mul!(s₀, Aᴴ, Δy)
     @kaxpby!(n, one(FC), c, -one(FC), s₀)
   end
 
@@ -117,7 +117,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   x .= zero(FC)          # x₀
   bNorm = @knrm2(n, r₀)  # rNorm = ‖r₀‖
 
-  # Initial solution t₀ and residual norm ‖s₀‖ = ‖c - Aᵀy₀‖.
+  # Initial solution t₀ and residual norm ‖s₀‖ = ‖c - Aᴴy₀‖.
   t .= zero(FC)          # t₀
   cNorm = @knrm2(n, s₀)  # sNorm = ‖s₀‖
 
@@ -132,34 +132,34 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
   # Initialize the Lanczos biorthogonalization process.
-  cᵗb = @kdot(n, s₀, r₀)  # ⟨s₀,r₀⟩ = ⟨c - Aᵀy₀,b - Ax₀⟩
-  if cᵗb == 0
+  cᴴb = @kdot(n, s₀, r₀)  # ⟨s₀,r₀⟩ = ⟨c - Aᴴy₀,b - Ax₀⟩
+  if cᴴb == 0
     stats.niter = 0
     stats.solved_primal = false
     stats.solved_dual = false
-    stats.status = "Breakdown bᵀc = 0"
+    stats.status = "Breakdown bᴴc = 0"
     solver.warm_start = false
     return solver
   end
 
   # Set up workspace.
-  βₖ = √(abs(cᵗb))            # β₁γ₁ = (c - Aᵀy₀)ᵀ(b - Ax₀)
-  γₖ = cᵗb / βₖ               # β₁γ₁ = (c - Aᵀy₀)ᵀ(b - Ax₀)
+  βₖ = √(abs(cᴴb))            # β₁γ₁ = (c - Aᴴy₀)ᴴ(b - Ax₀)
+  γₖ = cᴴb / βₖ               # β₁γ₁ = (c - Aᴴy₀)ᴴ(b - Ax₀)
   vₖ₋₁ .= zero(FC)            # v₀ = 0
   uₖ₋₁ .= zero(FC)            # u₀ = 0
   vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
-  uₖ .= s₀ ./ conj(γₖ)        # u₁ = (c - Aᵀy₀) / γ̄₁
+  uₖ .= s₀ ./ conj(γₖ)        # u₁ = (c - Aᴴy₀) / γ̄₁
   cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-  d̅ .= zero(FC)               # Last column of D̅ₖ = Vₖ(Qₖ)ᵀ
+  d̅ .= zero(FC)               # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
   ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
   δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
   ψbarₖ₋₁ = ψₖ₋₁ = zero(FC)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ̄₁e₁
   norm_vₖ = bNorm / βₖ        # ‖vₖ‖ is used for residual norm estimates
   ϵₖ₋₃ = λₖ₋₂ = zero(FC)      # Components of Lₖ₋₁
-  wₖ₋₃ .= zero(FC)            # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᵀ
-  wₖ₋₂ .= zero(FC)            # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᵀ
+  wₖ₋₃ .= zero(FC)            # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᴴ
+  wₖ₋₂ .= zero(FC)            # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᴴ
   τₖ = zero(T)                # τₖ is used for the dual residual norm estimate
 
   # Stopping criterion.
@@ -180,10 +180,10 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
     # Continue the Lanczos biorthogonalization process.
     # AVₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
-    # AᵀUₖ = Uₖ(Tₖ)ᵀ + γ̄ₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
+    # AᴴUₖ = Uₖ(Tₖ)ᴴ + γ̄ₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
     mul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
-    mul!(p, Aᵀ, uₖ)  # Forms uₖ₊₁ : p ← Aᵀuₖ
+    mul!(p, Aᴴ, uₖ)  # Forms uₖ₊₁ : p ← Aᴴuₖ
 
     @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
@@ -193,9 +193,9 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     @kaxpy!(n, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
     @kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
 
-    pᵗq = @kdot(n, p, q)  # pᵗq  = ⟨p,q⟩
-    βₖ₊₁ = √(abs(pᵗq))    # βₖ₊₁ = √(|pᵗq|)
-    γₖ₊₁ = pᵗq / βₖ₊₁     # γₖ₊₁ = pᵗq / βₖ₊₁
+    pᴴq = @kdot(n, p, q)  # pᴴq  = ⟨p,q⟩
+    βₖ₊₁ = √(abs(pᴴq))    # βₖ₊₁ = √(|pᴴq|)
+    γₖ₊₁ = pᴴq / βₖ₊₁     # γₖ₊₁ = pᴴq / βₖ₊₁
 
     # Update the LQ factorization of Tₖ = L̅ₖQₖ.
     # [ α₁ γ₂ 0  •  •  •  0 ]   [ δ₁   0    •   •   •    •    0   ]
@@ -251,7 +251,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
         ηₖ   = -ϵₖ₋₂ * ζₖ₋₂ - λₖ₋₁ * ζₖ₋₁
       end
 
-      # Relations for the directions dₖ₋₁ and d̅ₖ, the last two columns of D̅ₖ = Vₖ(Qₖ)ᵀ.
+      # Relations for the directions dₖ₋₁ and d̅ₖ, the last two columns of D̅ₖ = Vₖ(Qₖ)ᴴ.
       # [d̅ₖ₋₁ vₖ] [cₖ  s̄ₖ] = [dₖ₋₁ d̅ₖ] ⟷ dₖ₋₁ = cₖ * d̅ₖ₋₁ + sₖ * vₖ
       #           [sₖ -cₖ]             ⟷ d̅ₖ   = s̄ₖ * d̅ₖ₋₁ - cₖ * vₖ
       if iter ≥ 2
@@ -271,7 +271,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
       end
 
       # Compute ⟨vₖ,vₖ₊₁⟩ and ‖vₖ₊₁‖
-      vₖᵀvₖ₊₁ = @kdot(n, vₖ, q) / βₖ₊₁
+      vₖᴴvₖ₊₁ = @kdot(n, vₖ, q) / βₖ₊₁
       norm_vₖ₊₁ = @knrm2(n, q) / βₖ₊₁
 
       # Compute BiLQ residual norm
@@ -281,7 +281,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
       else
         μₖ = βₖ * (sₖ₋₁ * ζₖ₋₂ - cₖ₋₁ * cₖ * ζₖ₋₁) + αₖ * sₖ * ζₖ₋₁
         ωₖ = βₖ₊₁ * sₖ * ζₖ₋₁
-        θₖ = conj(μₖ) * ωₖ * vₖᵀvₖ₊₁
+        θₖ = conj(μₖ) * ωₖ * vₖᴴvₖ₊₁
         rNorm_lq = sqrt(abs2(μₖ) * norm_vₖ^2 + abs2(ωₖ) * norm_vₖ₊₁^2 + 2 * real(θₖ))
       end
       history && push!(rNorms, rNorm_lq)
@@ -318,7 +318,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
         ψbarₖ = sₖ * ψbarₖ₋₁
       end
 
-      # Compute the direction wₖ₋₁, the last column of Wₖ₋₁ = (Uₖ₋₁)(Lₖ₋₁)⁻ᵀ ⟷ (L̄ₖ₋₁)(Wₖ₋₁)ᵀ = (Uₖ₋₁)ᵀ.
+      # Compute the direction wₖ₋₁, the last column of Wₖ₋₁ = (Uₖ₋₁)(Lₖ₋₁)⁻ᴴ ⟷ (L̄ₖ₋₁)(Wₖ₋₁)ᵀ = (Uₖ₋₁)ᵀ.
       # w₁ = u₁ / δ̄₁
       if iter == 2
         wₖ₋₁ = wₖ₋₂
@@ -372,7 +372,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
     @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
 
-    if pᵗq ≠ zero(FC)
+    if pᴴq ≠ zero(FC)
       @. vₖ = q / βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
       @. uₖ = p / conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
     end
@@ -392,7 +392,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
     user_requested_exit = callback(solver) :: Bool
     tired = iter ≥ itmax
-    breakdown = !solved_lq && !solved_cg && (pᵗq == 0)
+    breakdown = !solved_lq && !solved_cg && (pᴴq == 0)
 
     kdisplay(iter, verbose) &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "", sNorm)
     kdisplay(iter, verbose) && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "")

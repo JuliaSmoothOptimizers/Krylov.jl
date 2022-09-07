@@ -21,7 +21,7 @@ export cgs, cgs!
 
 Solve the consistent linear system Ax = b using conjugate gradient squared algorithm.
 CGS requires two initial vectors `b` and `c`.
-The relation `bᵀc ≠ 0` must be satisfied and by default `c = b`.
+The relation `bᴴc ≠ 0` must be satisfied and by default `c = b`.
 
 From "Iterative Methods for Sparse Linear Systems (Y. Saad)" :
 
@@ -142,7 +142,7 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   if ρ == 0
     stats.niter = 0
     stats.solved, stats.inconsistent = false, false
-    stats.status = "Breakdown bᵀc = 0"
+    stats.status = "Breakdown bᴴc = 0"
     solver.warm_start =false
     return solver
   end

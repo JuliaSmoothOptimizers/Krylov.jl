@@ -31,7 +31,7 @@ export usymlq, usymlq!
 Solve the linear system Ax = b using the USYMLQ method.
 
 USYMLQ is based on the orthogonal tridiagonalization process and requires two initial nonzero vectors `b` and `c`.
-The vector `c` is only used to initialize the process and a default value can be `b` or `Aᵀb` depending on the shape of `A`.
+The vector `c` is only used to initialize the process and a default value can be `b` or `Aᴴb` depending on the shape of `A`.
 The error norm ‖x - x*‖ monotonously decreases in USYMLQ.
 It's considered as a generalization of SYMMLQ.
 
@@ -103,7 +103,7 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   uₖ₋₁, uₖ, p, Δx, x = solver.uₖ₋₁, solver.uₖ, solver.p, solver.Δx, solver.x
@@ -146,7 +146,7 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   uₖ .= c ./ γₖ               # u₁ = c / γ₁
   cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-  d̅ .= zero(FC)               # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
+  d̅ .= zero(FC)               # Last column of D̅ₖ = Uₖ(Qₖ)ᴴ
   ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
   δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and Lₖ modified over the course of two iterations
@@ -164,10 +164,10 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
 
     # Continue the SSY tridiagonalization process.
     # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
-    # AᵀVₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
+    # AᴴVₖ = Uₖ(Tₖ)ᴴ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
     mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
-    mul!(p, Aᵀ, vₖ)  # Forms uₖ₊₁ : p ← Aᵀvₖ
+    mul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
 
     @kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
@@ -233,7 +233,7 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
       ηₖ   = -ϵₖ₋₂ * ζₖ₋₂ - λₖ₋₁ * ζₖ₋₁
     end
 
-    # Relations for the directions dₖ₋₁ and d̅ₖ, the last two columns of D̅ₖ = Uₖ(Qₖ)ᵀ.
+    # Relations for the directions dₖ₋₁ and d̅ₖ, the last two columns of D̅ₖ = Uₖ(Qₖ)ᴴ.
     # [d̅ₖ₋₁ uₖ] [cₖ  s̄ₖ] = [dₖ₋₁ d̅ₖ] ⟷ dₖ₋₁ = cₖ * d̅ₖ₋₁ + sₖ * uₖ
     #           [sₖ -cₖ]             ⟷ d̅ₖ   = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
     if iter ≥ 2

@@ -211,7 +211,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
       mul!(w, A, p)                                  # w ← AN⁻¹vₖ
       MisI || mulorldiv!(q, M, w, ldiv)              # q ← M⁻¹AN⁻¹vₖ
       for i = 1 : inner_iter
-        U[nr+i] = @kdot(n, V[i], q)      # hᵢₖ = qᵀvᵢ
+        U[nr+i] = @kdot(n, V[i], q)      # hᵢₖ = (vᵢ)ᴴq
         @kaxpy!(n, -U[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
       end
 

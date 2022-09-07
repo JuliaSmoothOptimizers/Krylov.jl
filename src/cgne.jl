@@ -10,7 +10,7 @@
 # and is equivalent to applying the conjugate gradient method
 # to the linear system
 #
-#  AAᵀy = b.
+#  AAᴴy = b.
 #
 # This method is also known as Craig's method, CGME, and other
 # names, and is described in
@@ -46,7 +46,7 @@ using the Conjugate Gradient (CG) method, where λ ≥ 0 is a regularization
 parameter. This method is equivalent to applying CG to the normal equations
 of the second kind
 
-    (AAᵀ + λI) y = b
+    (AAᴴ + λI) y = b
 
 but is more stable. When λ = 0, this method solves the minimum-norm problem
 
@@ -104,12 +104,12 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   allocate_if(!NisI, solver, :z, S, m)
   allocate_if(λ > 0, solver, :s, S, m)
-  x, p, Aᵀz, r, q, s, stats = solver.x, solver.p, solver.Aᵀz, solver.r, solver.q, solver.s, solver.stats
+  x, p, Aᴴz, r, q, s, stats = solver.x, solver.p, solver.Aᴴz, solver.r, solver.q, solver.s, solver.stats
   rNorms = stats.residuals
   reset!(stats)
   z = NisI ? r : solver.z
@@ -126,7 +126,7 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
     return solver
   end
   λ > 0 && (s .= r)
-  mul!(p, Aᵀ, z)
+  mul!(p, Aᴴ, z)
 
   # Use ‖p‖ to detect inconsistent system.
   # An inconsistent system will necessarily have AA' singular.
@@ -161,8 +161,8 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
     NisI || mulorldiv!(z, N, r, ldiv)
     γ_next = @kdotr(m, r, z)  # Faster than γ_next = dot(r, z)
     β = γ_next / γ
-    mul!(Aᵀz, Aᵀ, z)
-    @kaxpby!(n, one(FC), Aᵀz, β, p)  # Faster than p = Aᵀz + β * p
+    mul!(Aᴴz, Aᴴ, z)
+    @kaxpby!(n, one(FC), Aᴴz, β, p)  # Faster than p = Aᴴz + β * p
     pNorm = @knrm2(n, p)
     if λ > 0
       @kaxpby!(m, one(FC), r, β, s)  # s = r + β * s

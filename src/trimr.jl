@@ -25,7 +25,7 @@ export trimr, trimr!
 TriMR solves the symmetric linear system
 
     [ τE    A ] [ x ] = [ b ]
-    [  Aᵀ  νF ] [ y ]   [ c ],
+    [  Aᴴ  νF ] [ y ]   [ c ],
 
 where τ and ν are real numbers, E = M⁻¹ ≻ 0, F = N⁻¹ ≻ 0.
 `b` and `c` must both be nonzero.
@@ -137,7 +137,7 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   warm_start && (ν ≠ 0) && !NisI && error("Warm-start with preconditioners is not supported.")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   allocate_if(!MisI, solver, :vₖ, S, m)
@@ -169,12 +169,12 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   N⁻¹uₖ₋₁ .= zero(FC)  # u₀ = 0
 
   # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
-  # [  Aᵀ  νI ] [ yₖ ]   [ c - AᵀΔx - νΔy ]   [ c₀ ]
+  # [  Aᴴ  νI ] [ yₖ ]   [ c - AᴴΔx - νΔy ]   [ c₀ ]
   if warm_start
     mul!(b₀, A, Δy)
     (τ ≠ 0) && @kaxpy!(m, τ, Δx, b₀)
     @kaxpby!(m, one(FC), b, -one(FC), b₀)
-    mul!(c₀, Aᵀ, Δx)
+    mul!(c₀, Aᴴ, Δx)
     (ν ≠ 0) && @kaxpy!(n, ν, Δy, c₀)
     @kaxpby!(n, one(FC), c, -one(FC), c₀)
   end
@@ -244,10 +244,10 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
     # Continue the orthogonal tridiagonalization process.
     # AUₖ  = EVₖTₖ    + βₖ₊₁Evₖ₊₁(eₖ)ᵀ = EVₖ₊₁Tₖ₊₁.ₖ
-    # AᵀVₖ = FUₖ(Tₖ)ᵀ + γₖ₊₁Fuₖ₊₁(eₖ)ᵀ = FUₖ₊₁(Tₖ.ₖ₊₁)ᵀ
+    # AᴴVₖ = FUₖ(Tₖ)ᴴ + γₖ₊₁Fuₖ₊₁(eₖ)ᵀ = FUₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
     mul!(q, A , uₖ)  # Forms Evₖ₊₁ : q ← Auₖ
-    mul!(p, Aᵀ, vₖ)  # Forms Fuₖ₊₁ : p ← Aᵀvₖ
+    mul!(p, Aᴴ, vₖ)  # Forms Fuₖ₊₁ : p ← Aᴴvₖ
 
     if iter ≥ 2
       @kaxpy!(m, -γₖ, M⁻¹vₖ₋₁, q)  # q ← q - γₖ * M⁻¹vₖ₋₁
@@ -261,7 +261,7 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
     # Compute vₖ₊₁ and uₖ₊₁
     MisI || mulorldiv!(vₖ₊₁, M, q, ldiv)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
-    NisI || mulorldiv!(uₖ₊₁, N, p, ldiv)  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - ᾱₖuₖ
+    NisI || mulorldiv!(uₖ₊₁, N, p, ldiv)  # γₖ₊₁uₖ₊₁ = NAᴴvₖ - βₖuₖ₋₁ - ᾱₖuₖ
 
     βₖ₊₁ = sqrt(@kdotr(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
     γₖ₊₁ = sqrt(@kdotr(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F
@@ -282,10 +282,10 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     #                                [0  u₁ ••• 0  uₖ]
     #
     # rₖ = [ b ] - [ τE    A ] [ xₖ ] = [ b ] - [ τE    A ] Wₖzₖ
-    #      [ c ]   [  Aᵀ  νF ] [ yₖ ]   [ c ]   [  Aᵀ  νF ]
+    #      [ c ]   [  Aᴴ  νF ] [ yₖ ]   [ c ]   [  Aᴴ  νF ]
     #
     # block-Lanczos formulation : [ τE    A ] Wₖ = [ E   0 ] Wₖ₊₁Sₖ₊₁.ₖ
-    #                             [  Aᵀ  νF ]      [ 0   F ]
+    #                             [  Aᴴ  νF ]      [ 0   F ]
     #
     # TriMR subproblem : min ‖ rₖ ‖ ↔ min ‖ Sₖ₊₁.ₖzₖ - β₁e₁ - γ₁e₂ ‖
     #
@@ -419,7 +419,7 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
       @kswap(gy₂ₖ₋₂, gy₂ₖ)
     end
 
-    # Update p̅ₖ = (Qₖ)ᵀ * (β₁e₁ + γ₁e₂)
+    # Update p̅ₖ = (Qₖ)ᴴ * (β₁e₁ + γ₁e₂)
     πbis₂ₖ   =      c₁ₖ  * πbar₂ₖ
     πbis₂ₖ₊₂ = conj(s₁ₖ) * πbar₂ₖ
     #

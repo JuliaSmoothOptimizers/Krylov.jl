@@ -31,7 +31,7 @@ export usymqr, usymqr!
 Solve the linear system Ax = b using the USYMQR method.
 
 USYMQR is based on the orthogonal tridiagonalization process and requires two initial nonzero vectors `b` and `c`.
-The vector `c` is only used to initialize the process and a default value can be `b` or `Aᵀb` depending on the shape of `A`.
+The vector `c` is only used to initialize the process and a default value can be `b` or `Aᴴb` depending on the shape of `A`.
 The residual norm ‖b - Ax‖ monotonously decreases in USYMQR.
 It's considered as a generalization of MINRES.
 
@@ -100,13 +100,13 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   vₖ₋₁, vₖ, q, Δx, x, p = solver.vₖ₋₁, solver.vₖ, solver.q, solver.Δx, solver.x, solver.p
   wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, stats = solver.wₖ₋₂, solver.wₖ₋₁, solver.uₖ₋₁, solver.uₖ, solver.stats
   warm_start = solver.warm_start
-  rNorms, AᵀrNorms = stats.residuals, stats.Aresiduals
+  rNorms, AᴴrNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
   r₀ = warm_start ? q : b
 
@@ -133,7 +133,7 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
 
   ε = atol + rtol * rNorm
   κ = zero(T)
-  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Aᵀrₖ₋₁‖")
+  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Aᴴrₖ₋₁‖")
   kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
   βₖ = @knrm2(m, r₀)           # β₁ = ‖v₁‖ = ‖r₀‖
@@ -146,7 +146,7 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
   wₖ₋₂ .= zero(FC)             # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
   wₖ₋₁ .= zero(FC)             # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
-  ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
+  ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᴴβ₁e₁
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -161,10 +161,10 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
 
     # Continue the SSY tridiagonalization process.
     # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
-    # AᵀVₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
+    # AᴴVₖ = Uₖ(Tₖ)ᴴ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
     mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
-    mul!(p, Aᵀ, vₖ)  # Forms uₖ₊₁ : p ← Aᵀvₖ
+    mul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
 
     @kaxpy!(m, -γₖ, vₖ₋₁, q) # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p) # p ← p - βₖ * uₖ₋₁
@@ -254,9 +254,9 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     rNorm = abs(ζbarₖ₊₁)
     history && push!(rNorms, rNorm)
 
-    # Compute ‖Aᵀrₖ₋₁‖ = |ζbarₖ| * √(|δbarₖ|² + |λbarₖ|²).
-    AᵀrNorm = abs(ζbarₖ) * √(abs2(δbarₖ) + abs2(cₖ₋₁ * γₖ₊₁))
-    history && push!(AᵀrNorms, AᵀrNorm)
+    # Compute ‖Aᴴrₖ₋₁‖ = |ζbarₖ| * √(|δbarₖ|² + |λbarₖ|²).
+    AᴴrNorm = abs(ζbarₖ) * √(abs2(δbarₖ) + abs2(cₖ₋₁ * γₖ₊₁))
+    history && push!(AᴴrNorms, AᴴrNorm)
 
     # Compute uₖ₊₁ and uₖ₊₁.
     @. vₖ₋₁ = vₖ # vₖ₋₁ ← vₖ
@@ -286,12 +286,12 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     βₖ    = βₖ₊₁
 
     # Update stopping criterion.
-    iter == 1 && (κ = atol + rtol * AᵀrNorm)
+    iter == 1 && (κ = atol + rtol * AᴴrNorm)
     user_requested_exit = callback(solver) :: Bool
     solved = rNorm ≤ ε
-    inconsistent = !solved && AᵀrNorm ≤ κ
+    inconsistent = !solved && AᴴrNorm ≤ κ
     tired = iter ≥ itmax
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, AᵀrNorm)
+    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, AᴴrNorm)
   end
   (verbose > 0) && @printf("\n")
   tired               && (status = "maximum number of iterations exceeded")
