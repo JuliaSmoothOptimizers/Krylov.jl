@@ -10,7 +10,7 @@
 # and is equivalent to applying the conjugate residual method
 # to the linear system
 #
-#  AAᵀy = b.
+#  AAᴴy = b.
 #
 # This method is equivalent to CRMR, and is described in
 #
@@ -44,7 +44,7 @@ using the CRAIGMR method, where λ ≥ 0 is a regularization parameter.
 This method is equivalent to applying the Conjugate Residuals method
 to the normal equations of the second kind
 
-    (AAᵀ + λ²I) y = b
+    (AAᴴ + λ²I) y = b
 
 but is more stable. When λ = 0, this method solves the minimum-norm problem
 
@@ -52,7 +52,7 @@ but is more stable. When λ = 0, this method solves the minimum-norm problem
 
 If `λ > 0`, CRAIGMR solves the symmetric and quasi-definite system
 
-    [ -F    Aᵀ ] [ x ]   [ 0 ]
+    [ -F    Aᴴ ] [ x ]   [ 0 ]
     [  A  λ²E  ] [ y ] = [ b ],
 
 where E and F are symmetric and positive definite.
@@ -63,12 +63,12 @@ The system above represents the optimality conditions of
 
     min ‖x‖²_F + λ²‖y‖²_E  s.t.  Ax + λ²Ey = b.
 
-For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᵀKx`.
-CRAIGMR is then equivalent to applying MINRES to `(AF⁻¹Aᵀ + λ²E)y = b` with `Fx = Aᵀy`.
+For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᴴKx`.
+CRAIGMR is then equivalent to applying MINRES to `(AF⁻¹Aᴴ + λ²E)y = b` with `Fx = Aᴴy`.
 
 If `λ = 0`, CRAIGMR solves the symmetric and indefinite system
 
-    [ -F   Aᵀ ] [ x ]   [ 0 ]
+    [ -F   Aᴴ ] [ x ]   [ 0 ]
     [  A   0  ] [ y ] = [ b ].
 
 The system above represents the optimality conditions of
@@ -129,20 +129,20 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   allocate_if(!MisI, solver, :u, S, m)
   allocate_if(!NisI, solver, :v, S, n)
   allocate_if(λ > 0, solver, :q, S, n)
-  x, Nv, Aᵀu, d, y, Mu = solver.x, solver.Nv, solver.Aᵀu, solver.d, solver.y, solver.Mu
+  x, Nv, Aᴴu, d, y, Mu = solver.x, solver.Nv, solver.Aᴴu, solver.d, solver.y, solver.Mu
   w, wbar, Av, q, stats = solver.w, solver.wbar, solver.Av, solver.q, solver.stats
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
   u = MisI ? Mu : solver.u
   v = NisI ? Nv : solver.v
 
-  # Compute y such that AAᵀy = b. Then recover x = Aᵀy.
+  # Compute y such that AAᴴy = b. Then recover x = Aᴴy.
   x .= zero(FC)
   y .= zero(FC)
   Mu .= b
@@ -161,9 +161,9 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # β₁Mu₁ = b.
   @kscal!(m, one(FC)/β, u)
   MisI || @kscal!(m, one(FC)/β, Mu)
-  # α₁Nv₁ = Aᵀu₁.
-  mul!(Aᵀu, Aᵀ, u)
-  Nv .= Aᵀu
+  # α₁Nv₁ = Aᴴu₁.
+  mul!(Aᴴu, Aᴴ, u)
+  Nv .= Aᴴu
   NisI || mulorldiv!(v, N, Nv, ldiv)
   α = sqrt(@kdotr(n, v, Nv))
   Anorm² = α * α
@@ -171,10 +171,10 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   iter = 0
   itmax == 0 && (itmax = m + n)
 
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n", "k", "‖r‖", "‖Aᵀr‖", "β", "α", "cos", "sin", "‖A‖²")
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "α", "cos", "sin", "‖A‖²")
   kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", iter, β, α, β, α, 0, 1, Anorm²)
 
-  # Aᵀb = 0 so x = 0 is a minimum least-squares solution
+  # Aᴴb = 0 so x = 0 is a minimum least-squares solution
   if α == 0
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
@@ -288,9 +288,9 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # xₖ = Dₖzₖ
     @kaxpy!(n, ζ, d, x)
 
-    # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    mul!(Aᵀu, Aᵀ, u)
-    @kaxpby!(n, one(FC), Aᵀu, -β, Nv)
+    # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
+    mul!(Aᴴu, Aᴴ, u)
+    @kaxpby!(n, one(FC), Aᴴu, -β, Nv)
     NisI || mulorldiv!(v, N, Nv, ldiv)
     α = sqrt(@kdotr(n, v, Nv))
     Anorm² = Anorm² + α * α  # = ‖Lₖ‖

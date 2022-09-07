@@ -26,10 +26,10 @@ export bicgstab, bicgstab!
 
 Solve the square linear system Ax = b using the BICGSTAB method.
 BICGSTAB requires two initial vectors `b` and `c`.
-The relation `bᵀc ≠ 0` must be satisfied and by default `c = b`.
+The relation `bᴴc ≠ 0` must be satisfied and by default `c = b`.
 
 The Biconjugate Gradient Stabilized method is a variant of BiCG, like CGS,
-but using different updates for the Aᵀ-sequence in order to obtain smoother
+but using different updates for the Aᴴ-sequence in order to obtain smoother
 convergence than CGS.
 
 If BICGSTAB stagnates, we recommend DQGMRES and BiLQ as alternative methods for unsymmetric square systems.
@@ -157,7 +157,7 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
   if next_ρ == 0
     stats.niter = 0
     stats.solved, stats.inconsistent = false, false
-    stats.status = "Breakdown bᵀc = 0"
+    stats.status = "Breakdown bᴴc = 0"
     solver.warm_start = false
     return solver
   end

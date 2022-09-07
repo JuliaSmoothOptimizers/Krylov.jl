@@ -28,7 +28,7 @@ GPMR solves the unsymmetric partitioned linear system
     [  B  μI ] [ y ]   [ c ],
 
 where λ and μ are real or complex numbers.
-`A` can have any shape and `B` has the shape of `Aᵀ`.
+`A` can have any shape and `B` has the shape of `Aᴴ`.
 `A`, `B`, `b` and `c` must be all nonzero.
 
 This implementation allows left and right block diagonal preconditioners
@@ -172,7 +172,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   gs .= zero(FC)  # Givens sines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
   gc .= zero(T)   # Givens cosines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
   R  .= zero(FC)  # Upper triangular matrix Rₖ.
-  zt .= zero(FC)  # Rₖzₖ = tₖ with (tₖ, τbar₂ₖ₊₁, τbar₂ₖ₊₂) = (Qₖ)ᵀ(βe₁ + γe₂).
+  zt .= zero(FC)  # Rₖzₖ = tₖ with (tₖ, τbar₂ₖ₊₁, τbar₂ₖ₊₂) = (Qₖ)ᴴ(βe₁ + γe₂).
 
   # Warm-start
   # If λ ≠ 0, Cb₀ = Cb - CAΔy - λΔx because CM = Iₘ and E = Iₘ
@@ -259,8 +259,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     DisI || mulorldiv!(p, D, dB, ldiv)        # p  = DBEvₖ
 
     for i = 1 : iter
-      hᵢₖ = @kdot(m, V[i], q)    # hᵢ.ₖ = vᵢAuₖ
-      fᵢₖ = @kdot(n, U[i], p)    # fᵢ.ₖ = uᵢBvₖ
+      hᵢₖ = @kdot(m, V[i], q)    # hᵢ.ₖ = (vᵢ)ᴴq
+      fᵢₖ = @kdot(n, U[i], p)    # fᵢ.ₖ = (uᵢ)ᴴp
       @kaxpy!(m, -hᵢₖ, V[i], q)  # q ← q - hᵢ.ₖvᵢ
       @kaxpy!(n, -fᵢₖ, U[i], p)  # p ← p - fᵢ.ₖuᵢ
       R[nr₂ₖ + 2i-1] = hᵢₖ
@@ -270,8 +270,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     # Reorthogonalization of the Krylov basis.
     if reorthogonalization
       for i = 1 : iter
-        Htmp = @kdot(m, V[i], q)    # hₜₘₚ = qᵀvᵢ
-        Ftmp = @kdot(n, U[i], p)    # fₜₘₚ = pᵀuᵢ
+        Htmp = @kdot(m, V[i], q)    # hₜₘₚ = (vᵢ)ᴴq
+        Ftmp = @kdot(n, U[i], p)    # fₜₘₚ = (uᵢ)ᴴp
         @kaxpy!(m, -Htmp, V[i], q)  # q ← q - hₜₘₚvᵢ
         @kaxpy!(n, -Ftmp, U[i], p)  # p ← p - fₜₘₚuᵢ
         R[nr₂ₖ + 2i-1] += Htmp                            # hᵢ.ₖ = hᵢ.ₖ + hₜₘₚ

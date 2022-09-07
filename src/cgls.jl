@@ -5,7 +5,7 @@
 #
 # equivalently, of the normal equations
 #
-#  AᵀAx = Aᵀb.
+#  AᴴAx = Aᴴb.
 #
 # CGLS is formally equivalent to applying the conjugate gradient method
 # to the normal equations but should be more stable. It is also formally
@@ -45,11 +45,11 @@ Solve the regularized linear least-squares problem
 using the Conjugate Gradient (CG) method, where λ ≥ 0 is a regularization
 parameter. This method is equivalent to applying CG to the normal equations
 
-    (AᵀA + λI) x = Aᵀb
+    (AᴴA + λI) x = Aᴴb
 
 but is more stable.
 
-CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖Aᵀr‖₂.
+CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖Aᴴr‖₂.
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 
@@ -95,7 +95,7 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   allocate_if(!MisI, solver, :Mr, S, m)
@@ -117,9 +117,9 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     return solver
   end
   MisI || mulorldiv!(Mr, M, r, ldiv)
-  mul!(s, Aᵀ, Mr)
+  mul!(s, Aᴴ, Mr)
   p .= s
-  γ = @kdotr(n, s, s)  # γ = sᵀs
+  γ = @kdotr(n, s, s)  # γ = sᴴs
   iter = 0
   itmax == 0 && (itmax = m + n)
 
@@ -128,7 +128,7 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   history && push!(rNorms, rNorm)
   history && push!(ArNorms, ArNorm)
   ε = atol + rtol * ArNorm
-  (verbose > 0) && @printf("%5s  %8s  %8s\n", "k", "‖Aᵀr‖", "‖r‖")
+  (verbose > 0) && @printf("%5s  %8s  %8s\n", "k", "‖Aᴴr‖", "‖r‖")
   kdisplay(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
 
   status = "unknown"
@@ -140,8 +140,8 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   while ! (solved || tired || user_requested_exit)
     mul!(q, A, p)
     MisI || mulorldiv!(Mq, M, q, ldiv)
-    δ = @kdotr(m, q, Mq)  # δ = qᵀMq
-    λ > 0 && (δ += λ * @kdotr(n, p, p))  # δ = δ + pᵀp
+    δ = @kdotr(m, q, Mq)  # δ = qᴴMq
+    λ > 0 && (δ += λ * @kdotr(n, p, p))  # δ = δ + pᴴp
     α = γ / δ
 
     # if a trust-region constraint is give, compute step to the boundary
@@ -154,9 +154,9 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
     @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
     MisI || mulorldiv!(Mr, M, r, ldiv)
-    mul!(s, Aᵀ, Mr)
+    mul!(s, Aᴴ, Mr)
     λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x
-    γ_next = @kdotr(n, s, s)   # γ_next = sᵀs
+    γ_next = @kdotr(n, s, s)   # γ_next = sᴴs
     β = γ_next / γ
     @kaxpby!(n, one(FC), s, β, p) # p = s + βp
     γ = γ_next

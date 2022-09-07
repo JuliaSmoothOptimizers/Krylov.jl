@@ -149,7 +149,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   (verbose > 0) && @printf("%5s %8s %8s %8s\n", "k", "‖x‖", "‖r‖", "quad")
   kdisplay(iter, verbose) && @printf("    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
 
-  descent = pr > 0 # pᵀr > 0 means p is a descent direction
+  descent = pr > 0 # pᴴr > 0 means p is a descent direction
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
   on_boundary = false
@@ -161,7 +161,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     if linesearch
       if (pAp ≤ γ * pNorm²) || (ρ ≤ γ * rNorm²)
         npcurv = true
-        (verbose > 0) && @printf("nonpositive curvature detected: pᵀAp = %8.1e and rᵀAr = %8.1e\n", pAp, ρ)
+        (verbose > 0) && @printf("nonpositive curvature detected: pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
         stats.solved = solved
         stats.inconsistent = false
         stats.status = "nonpositive curvature"
@@ -182,16 +182,16 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
       tr = maximum(to_boundary(x, r, radius; flip = false, xNorm2 = xNorm², dNorm2 = rNorm²))
       (verbose > 0) && @printf("t1 = %8.1e, t2 = %8.1e and tr = %8.1e\n", t1, t2, tr)
 
-      if abspAp ≤ γ * pNorm * @knrm2(n, q) # pᵀAp ≃ 0
+      if abspAp ≤ γ * pNorm * @knrm2(n, q) # pᴴAp ≃ 0
         npcurv = true # nonpositive curvature
-        (verbose > 0) && @printf("pᵀAp = %8.1e ≃ 0\n", pAp)
-        if abspr ≤ γ * pNorm * rNorm # pᵀr ≃ 0
-          (verbose > 0) && @printf("pᵀr = %8.1e ≃ 0, redefining p := r\n", pr)
+        (verbose > 0) && @printf("pᴴAp = %8.1e ≃ 0\n", pAp)
+        if abspr ≤ γ * pNorm * rNorm # pᴴr ≃ 0
+          (verbose > 0) && @printf("pᴴr = %8.1e ≃ 0, redefining p := r\n", pr)
           p = r # - ∇q(x)
           q = Ar
-          # q(x + αr) = q(x) - α ‖r‖² + ½ α² rᵀAr
-          # 1) if rᵀAr > 0, the quadratic decreases from α = 0 to α = ‖r‖² / rᵀAr
-          # 2) if rᵀAr ≤ 0, the quadratic decreases to -∞ in the direction r
+          # q(x + αr) = q(x) - α ‖r‖² + ½ α² rᴴAr
+          # 1) if rᴴAr > 0, the quadratic decreases from α = 0 to α = ‖r‖² / rᴴAr
+          # 2) if rᴴAr ≤ 0, the quadratic decreases to -∞ in the direction r
           if ρ > 0 # case 1
             (verbose > 0) && @printf("quadratic is convex in direction r, curv = %8.1e\n", ρ)
             α = min(tr, rNorm² / ρ)
@@ -200,12 +200,12 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
             α = tr
           end
         else
-          # q_p = q(x + α_p * p) - q(x) = -α_p * rᵀp + ½ (α_p)² * pᵀAp
-          # q_r = q(x + α_r * r) - q(x) = -α_r * ‖r‖² + ½ (α_r)² * rᵀAr
+          # q_p = q(x + α_p * p) - q(x) = -α_p * rᴴp + ½ (α_p)² * pᴴAp
+          # q_r = q(x + α_r * r) - q(x) = -α_r * ‖r‖² + ½ (α_r)² * rᴴAr
           # Δ = q_p - q_r. If Δ > 0, r is followed, else p is followed
           α = descent ? t1 : t2
           ρ > 0 && (tr = min(tr, rNorm² / ρ))
-          Δ = -α * pr + tr * rNorm² - (tr)^2 * ρ / 2 # as pᵀAp = 0
+          Δ = -α * pr + tr * rNorm² - (tr)^2 * ρ / 2 # as pᴴAp = 0
           if Δ > 0 # direction r engenders a better decrease
             (verbose > 0) && @printf("direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
             (verbose > 0) && @printf("redefining p := r\n")
@@ -218,7 +218,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
         end
 
       elseif pAp > 0 && ρ > 0 # no negative curvature
-        (verbose > 0) && @printf("positive curvatures along p and r. pᵀAp = %8.1e and rᵀAr = %8.1e\n", pAp, ρ)
+        (verbose > 0) && @printf("positive curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
         α = ρ / @kdotr(n, q, Mq)
         if α ≥ t1
           α = t1
@@ -227,8 +227,8 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
       elseif pAp > 0 && ρ < 0
         npcurv = true
-        (verbose > 0) && @printf("pᵀAp = %8.1e > 0 and rᵀAr = %8.1e < 0\n", pAp, ρ)
-        # q_p is minimal for α_p = rᵀp / pᵀAp
+        (verbose > 0) && @printf("pᴴAp = %8.1e > 0 and rᴴAr = %8.1e < 0\n", pAp, ρ)
+        # q_p is minimal for α_p = rᴴp / pᴴAp
         α = descent ?  min(t1, pr / pAp) : max(t2, pr / pAp)
         Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
         if Δ > 0
@@ -243,7 +243,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
       elseif pAp < 0 && ρ > 0
         npcurv = true
-        (verbose > 0) && @printf("pᵀAp = %8.1e < 0 and rᵀAr = %8.1e > 0\n", pAp, ρ)
+        (verbose > 0) && @printf("pᴴAp = %8.1e < 0 and rᴴAr = %8.1e > 0\n", pAp, ρ)
         α = descent ? t1 : t2
         tr = min(tr, rNorm² / ρ)
         Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
@@ -259,7 +259,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
       elseif pAp < 0 && ρ < 0
         npcurv = true
-        (verbose > 0) && @printf("negative curvatures along p and r. pᵀAp = %8.1e and rᵀAr = %8.1e\n", pAp, ρ)
+        (verbose > 0) && @printf("negative curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
         α = descent ? t1 : t2
         Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
         if Δ > 0
@@ -330,9 +330,9 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
       solver.warm_start = false
       return solver
     end
-    pr = rNorm² + β * pr - β * α * pAp # pᵀr
+    pr = rNorm² + β * pr - β * α * pAp # pᴴr
     abspr = abs(pr)
-    pAp = ρ + β^2 * pAp # pᵀq
+    pAp = ρ + β^2 * pAp # pᴴq
     abspAp = abs(pAp)
     descent = pr > 0
 

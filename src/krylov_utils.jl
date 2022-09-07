@@ -164,14 +164,14 @@ function to_boundary(x :: Vector{T}, d :: Vector{T},
                      radius :: T; flip :: Bool=false, xNorm2 :: T=zero(T), dNorm2 :: T=zero(T)) where T <: Number
   radius > 0 || error("radius must be positive")
 
-  # ‖d‖² σ² + 2 xᵀd σ + (‖x‖² - radius²).
-  xd = dot(x, d)
-  flip && (xd = -xd)
+  # ‖d‖² σ² + (xᴴd + dᴴx) σ + (‖x‖² - radius²).
+  rxd = real(dot(x, d))
+  flip && (rxd = -rxd)
   dNorm2 == zero(T) && (dNorm2 = dot(d, d))
   dNorm2 == zero(T) && error("zero direction")
   xNorm2 == zero(T) && (xNorm2 = dot(x, x))
   (xNorm2 ≤ radius * radius) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius * radius))
-  roots = roots_quadratic(dNorm2, 2 * xd, xNorm2 - radius * radius)
+  roots = roots_quadratic(dNorm2, 2 * rxd, xNorm2 - radius * radius)
   return roots # `σ1` and `σ2`
 end
 

@@ -9,9 +9,9 @@
 # and is equivalent to applying the SYMMLQ method
 # to the linear system
 #
-#  AAᵀy = b with x = Aᵀy and can be reformulated as
+#  AAᴴy = b with x = Aᴴy and can be reformulated as
 #
-#  [ -I  Aᵀ ][ x ] = [ 0 ]
+#  [ -I  Aᴴ ][ x ] = [ 0 ]
 #  [  A     ][ y ]   [ b ].
 #
 # This method is based on the Golub-Kahan bidiagonalization process and is described in
@@ -41,14 +41,14 @@ Find the least-norm solution of the consistent linear system
 using the LNLQ method, where λ ≥ 0 is a regularization parameter.
 
 For a system in the form Ax = b, LNLQ method is equivalent to applying
-SYMMLQ to AAᵀy = b and recovering x = Aᵀy but is more stable.
+SYMMLQ to AAᴴy = b and recovering x = Aᴴy but is more stable.
 Note that y are the Lagrange multipliers of the least-norm problem
 
     minimize ‖x‖  s.t.  Ax = b.
 
 If `λ > 0`, LNLQ solves the symmetric and quasi-definite system
 
-    [ -F    Aᵀ ] [ x ]   [ 0 ]
+    [ -F    Aᴴ ] [ x ]   [ 0 ]
     [  A  λ²E  ] [ y ] = [ b ],
 
 where E and F are symmetric and positive definite.
@@ -59,12 +59,12 @@ The system above represents the optimality conditions of
 
     min ‖x‖²_F + λ²‖y‖²_E  s.t.  Ax + λ²Ey = b.
 
-For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᵀKx`.
-LNLQ is then equivalent to applying SYMMLQ to `(AF⁻¹Aᵀ + λ²E)y = b` with `Fx = Aᵀy`.
+For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᴴKx`.
+LNLQ is then equivalent to applying SYMMLQ to `(AF⁻¹Aᴴ + λ²E)y = b` with `Fx = Aᴴy`.
 
 If `λ = 0`, LNLQ solves the symmetric and indefinite system
 
-    [ -F   Aᵀ ] [ x ]   [ 0 ]
+    [ -F   Aᴴ ] [ x ]   [ 0 ]
     [  A   0  ] [ y ] = [ b ].
 
 The system above represents the optimality conditions of
@@ -126,13 +126,13 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   allocate_if(!MisI, solver, :u, S, m)
   allocate_if(!NisI, solver, :v, S, n)
   allocate_if(λ > 0, solver, :q, S, n)
-  x, Nv, Aᵀu, y, w̄ = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.w̄
+  x, Nv, Aᴴu, y, w̄ = solver.x, solver.Nv, solver.Aᴴu, solver.y, solver.w̄
   Mu, Av, q, stats = solver.Mu, solver.Av, solver.q, solver.stats
   rNorms, xNorms, yNorms = stats.residuals, stats.error_bnd_x, stats.error_bnd_y
   reset!(stats)
@@ -179,9 +179,9 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     MisI || @kscal!(m, one(FC) / βₖ, Mu)
   end
 
-  # α₁Nv₁ = Aᵀu₁.
-  mul!(Aᵀu, Aᵀ, u)
-  Nv .= Aᵀu
+  # α₁Nv₁ = Aᴴu₁.
+  mul!(Aᴴu, Aᴴ, u)
+  Nv .= Aᴴu
   NisI || mulorldiv!(v, N, Nv, ldiv)  # v₁ = N⁻¹ * Nv₁
   αₖ = sqrt(@kdotr(n, v, Nv))         # α₁ = ‖v₁‖_N
   if αₖ ≠ 0
@@ -190,8 +190,8 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   end
 
   w̄ .= u           # Direction w̄₁
-  cₖ = zero(T)     # Givens cosines used for the LQ factorization of (Lₖ)ᵀ
-  sₖ = zero(FC)    # Givens sines used for the LQ factorization of (Lₖ)ᵀ
+  cₖ = zero(T)     # Givens cosines used for the LQ factorization of (Lₖ)ᴴ
+  sₖ = zero(FC)    # Givens sines used for the LQ factorization of (Lₖ)ᴴ
   ζₖ₋₁ = zero(FC)  # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
   ηₖ = zero(FC)    # Coefficient of M̅ₖ
 
@@ -214,7 +214,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     αhatₖ = αₖ
   end
 
-  # Begin the LQ factorization of (Lₖ)ᵀ = M̅ₖQₖ.
+  # Begin the LQ factorization of (Lₖ)ᴴ = M̅ₖQₖ.
   # [ α₁ β₂ 0  •  •  •  0 ]   [ ϵ₁  0   •   •   •   •   0   ]
   # [ 0  α₂ •  •        • ]   [ η₂  ϵ₂  •               •   ]
   # [ •  •  •  •  •     • ]   [ 0   •   •   •           •   ]
@@ -225,7 +225,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   ϵbarₖ = αhatₖ  # ϵbar₁ = αhat₁
 
-  # Hₖ = Bₖ(Lₖ)ᵀ = [   Lₖ(Lₖ)ᵀ   ] ⟹ (Hₖ₋₁)ᵀ = [Lₖ₋₁Mₖ₋₁  0] Qₖ
+  # Hₖ = Bₖ(Lₖ)ᴴ = [   Lₖ(Lₖ)ᴴ   ] ⟹ (Hₖ₋₁)ᴴ = [Lₖ₋₁Mₖ₋₁  0] Qₖ
   #                [ αₖβₖ₊₁(eₖ)ᵀ ]
   #
   # Solve Lₖtₖ = β₁e₁ and M̅ₖz̅ₖ = tₖ
@@ -273,7 +273,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     # Continue the generalized Golub-Kahan bidiagonalization.
     # AVₖ    = MUₖ₊₁Bₖ
-    # AᵀUₖ₊₁ = NVₖ(Bₖ)ᵀ + αₖ₊₁Nvₖ₊₁(eₖ₊₁)ᵀ = NVₖ₊₁(Lₖ₊₁)ᵀ
+    # AᴴUₖ₊₁ = NVₖ(Bₖ)ᴴ + αₖ₊₁Nvₖ₊₁(eₖ₊₁)ᴴ = NVₖ₊₁(Lₖ₊₁)ᴴ
     #
     #      [ α₁ 0  •  •  •  •  0 ]
     #      [ β₂ α₂ •           • ]
@@ -296,9 +296,9 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
       MisI || @kscal!(m, one(FC) / βₖ₊₁, Mu)
     end
 
-    # αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    mul!(Aᵀu, Aᵀ, u)
-    @kaxpby!(n, one(FC), Aᵀu, -βₖ₊₁, Nv)
+    # αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
+    mul!(Aᴴu, Aᴴ, u)
+    @kaxpby!(n, one(FC), Aᴴu, -βₖ₊₁, Nv)
     NisI || mulorldiv!(v, N, Nv, ldiv)  # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
     αₖ₊₁ = sqrt(@kdotr(n, v, Nv))       # αₖ₊₁ = ‖vₖ₊₁‖_N
     if αₖ₊₁ ≠ 0
@@ -353,7 +353,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
       ρbar = ssig * μbar + csig * σₑₛₜ
     end
 
-    # Continue the LQ factorization of (Lₖ₊₁)ᵀ.
+    # Continue the LQ factorization of (Lₖ₊₁)ᴴ.
     # [ηₖ ϵbarₖ βₖ₊₁] [1     0     0 ] = [ηₖ  ϵₖ     0    ]
     # [0    0   αₖ₊₁] [0   cₖ₊₁  sₖ₊₁]   [0  ηₖ₊₁  ϵbarₖ₊₁]
     #                 [0   sₖ₊₁ -cₖ₊₁]

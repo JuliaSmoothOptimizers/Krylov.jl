@@ -92,7 +92,7 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
   end
   Mv .= b                             # Mv₁ ← b
   MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹ * Mv₁
-  β = sqrt(@kdotr(n, v, Mv))          # β₁ = v₁ᵀ M v₁
+  β = sqrt(@kdotr(n, v, Mv))          # β₁ = v₁ᴴ M v₁
   rNorms .= β
   if history
     for i = 1 : nshifts
@@ -157,7 +157,7 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
     mul!(Mv_next, A, v)                  # Mvₖ₊₁ ← Avₖ
-    δ = @kdotr(n, v, Mv_next)            # δₖ = vₖᵀ A vₖ
+    δ = @kdotr(n, v, Mv_next)            # δₖ = vₖᴴ A vₖ
     @kaxpy!(n, -δ, Mv, Mv_next)          # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
     if iter > 0
       @kaxpy!(n, -β, Mv_prev, Mv_next)   # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
@@ -165,12 +165,12 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
     end
     @. Mv = Mv_next                      # Mvₖ ← Mvₖ₊₁
     MisI || mulorldiv!(v, M, Mv, ldiv)   # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
-    β = sqrt(@kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+    β = sqrt(@kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
     @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
     MisI || @kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
 
-    # Check curvature: vₖᵀ(A + sᵢI)vₖ = vₖᵀAvₖ + sᵢ‖vₖ‖² = δₖ + ρₖ * sᵢ with ρₖ = ‖vₖ‖².
-    # It is possible to show that σₖ² (δₖ + ρₖ * sᵢ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ (A + sᵢ I) pₖ.
+    # Check curvature: vₖᴴ(A + sᵢI)vₖ = vₖᴴAvₖ + sᵢ‖vₖ‖² = δₖ + ρₖ * sᵢ with ρₖ = ‖vₖ‖².
+    # It is possible to show that σₖ² (δₖ + ρₖ * sᵢ - ωₖ₋₁ / γₖ₋₁) = pₖᴴ (A + sᵢ I) pₖ.
     MisI || (ρ = @kdotr(n, v, v))
     for i = 1 : nshifts
       δhat[i] = δ + ρ * shifts[i]

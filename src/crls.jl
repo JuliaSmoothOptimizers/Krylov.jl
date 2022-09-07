@@ -5,7 +5,7 @@
 #
 # equivalently, of the linear system
 #
-#  AᵀAx = Aᵀb.
+#  AᴴAx = Aᴴb.
 #
 # This implementation follows the formulation given in
 #
@@ -37,11 +37,11 @@ Solve the linear least-squares problem
 using the Conjugate Residuals (CR) method. This method is equivalent to
 applying MINRES to the normal equations
 
-    (AᵀA + λI) x = Aᵀb.
+    (AᴴA + λI) x = Aᴴb.
 
 This implementation recurs the residual r := b - Ax.
 
-CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᵀr‖₂.
+CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr‖₂.
 It is formally equivalent to LSMR, though can be substantially less accurate,
 but simpler to implement.
 
@@ -86,7 +86,7 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   allocate_if(!MisI, solver, :Ms, S, m)
@@ -112,13 +112,13 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   end
 
   MisI || mulorldiv!(Mr, M, r, ldiv)
-  mul!(Ar, Aᵀ, Mr)  # - λ * x0 if x0 ≠ 0.
+  mul!(Ar, Aᴴ, Mr)  # - λ * x0 if x0 ≠ 0.
   mul!(s, A, Ar)
   MisI || mulorldiv!(Ms, M, s, ldiv)
 
   p  .= Ar
   Ap .= s
-  mul!(q, Aᵀ, Ms)  # Ap
+  mul!(q, Aᴴ, Ms)  # Ap
   λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
   γ  = @kdotr(m, s, Ms)  # Faster than γ = dot(s, Ms)
   iter = 0
@@ -128,7 +128,7 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   λ > 0 && (γ += λ * ArNorm * ArNorm)
   history && push!(ArNorms, ArNorm)
   ε = atol + rtol * ArNorm
-  (verbose > 0) && @printf("%5s  %8s  %8s\n", "k", "‖Aᵀr‖", "‖r‖")
+  (verbose > 0) && @printf("%5s  %8s  %8s\n", "k", "‖Aᴴr‖", "‖r‖")
   kdisplay(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
 
   status = "unknown"
@@ -147,11 +147,11 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     if radius > 0
       pNorm = @knrm2(n, p)
       if @kdotr(m, Ap, Ap) ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is constant in the direction p
-        psd = true # det(AᵀA) = 0
-        p = Ar # p = Aᵀr
+        psd = true # det(AᴴA) = 0
+        p = Ar # p = Aᴴr
         pNorm² = ArNorm * ArNorm
-        mul!(q, Aᵀ, s)
-        α = min(ArNorm^2 / γ, maximum(to_boundary(x, p, radius, flip = false, dNorm2 = pNorm²))) # the quadratic is minimal in the direction Aᵀr for α = ‖Ar‖²/γ
+        mul!(q, Aᴴ, s)
+        α = min(ArNorm^2 / γ, maximum(to_boundary(x, p, radius, flip = false, dNorm2 = pNorm²))) # the quadratic is minimal in the direction Aᴴr for α = ‖Ar‖²/γ
       else
         pNorm² = pNorm * pNorm
         σ = maximum(to_boundary(x, p, radius, flip = false, dNorm2 = pNorm²))
@@ -177,7 +177,7 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     @kaxpby!(n, one(FC), Ar, β, p)    # Faster than  p = Ar + β *  p
     @kaxpby!(m, one(FC), s, β, Ap)    # Faster than Ap =  s + β * Ap
     MisI || mulorldiv!(MAp, M, Ap, ldiv)
-    mul!(q, Aᵀ, MAp)
+    mul!(q, Aᴴ, MAp)
     λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
 
     γ = γ_next

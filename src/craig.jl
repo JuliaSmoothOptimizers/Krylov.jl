@@ -11,7 +11,7 @@
 # and is equivalent to applying the conjugate gradient method
 # to the linear system
 #
-#  AAᵀy = b.
+#  AAᴴy = b.
 #
 # This method, sometimes known under the name CRAIG, is the
 # Golub-Kahan implementation of CGNE, and is described in
@@ -52,14 +52,14 @@ regularization parameter. This method is equivalent to CGNE but is more
 stable.
 
 For a system in the form Ax = b, Craig's method is equivalent to applying
-CG to AAᵀy = b and recovering x = Aᵀy. Note that y are the Lagrange
+CG to AAᴴy = b and recovering x = Aᴴy. Note that y are the Lagrange
 multipliers of the least-norm problem
 
     minimize ‖x‖  s.t.  Ax = b.
 
 If `λ > 0`, CRAIG solves the symmetric and quasi-definite system
 
-    [ -F     Aᵀ ] [ x ]   [ 0 ]
+    [ -F     Aᴴ ] [ x ]   [ 0 ]
     [  A   λ²E  ] [ y ] = [ b ],
 
 where E and F are symmetric and positive definite.
@@ -70,12 +70,12 @@ The system above represents the optimality conditions of
 
     min ‖x‖²_F + λ²‖y‖²_E  s.t.  Ax + λ²Ey = b.
 
-For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᵀKx`.
-CRAIG is then equivalent to applying CG to `(AF⁻¹Aᵀ + λ²E)y = b` with `Fx = Aᵀy`.
+For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᴴKx`.
+CRAIG is then equivalent to applying CG to `(AF⁻¹Aᴴ + λ²E)y = b` with `Fx = Aᴴy`.
 
 If `λ = 0`, CRAIG solves the symmetric and indefinite system
 
-    [ -F   Aᵀ ] [ x ]   [ 0 ]
+    [ -F   Aᴴ ] [ x ]   [ 0 ]
     [  A   0  ] [ y ] = [ b ].
 
 The system above represents the optimality conditions of
@@ -134,13 +134,13 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   allocate_if(!MisI, solver, :u , S, m)
   allocate_if(!NisI, solver, :v , S, n)
   allocate_if(λ > 0, solver, :w2, S, n)
-  x, Nv, Aᵀu, y, w = solver.x, solver.Nv, solver.Aᵀu, solver.y, solver.w
+  x, Nv, Aᴴu, y, w = solver.x, solver.Nv, solver.Aᴴu, solver.y, solver.w
   Mu, Av, w2, stats = solver.Mu, solver.Av, solver.w2, solver.stats
   rNorms = stats.residuals
   reset!(stats)
@@ -180,7 +180,7 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   Anorm² = zero(T) # Estimate of ‖A‖²_F.
   Anorm  = zero(T)
-  Dnorm² = zero(T) # Estimate of ‖(AᵀA)⁻¹‖².
+  Dnorm² = zero(T) # Estimate of ‖(AᴴA)⁻¹‖².
   Acond  = zero(T) # Estimate of cond(A).
   xNorm² = zero(T) # Estimate of ‖x‖².
   xNorm  = zero(T)
@@ -212,9 +212,9 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   while ! (solved || inconsistent || ill_cond || tired || user_requested_exit)
     # Generate the next Golub-Kahan vectors
-    # 1. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-    mul!(Aᵀu, Aᵀ, u)
-    @kaxpby!(n, one(FC), Aᵀu, -β, Nv)
+    # 1. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
+    mul!(Aᴴu, Aᴴ, u)
+    @kaxpby!(n, one(FC), Aᴴu, -β, Nv)
     NisI || mulorldiv!(v, N, Nv, ldiv)
     α = sqrt(@kdotr(n, v, Nv))
     if α == 0

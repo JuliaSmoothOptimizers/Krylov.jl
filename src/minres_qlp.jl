@@ -246,7 +246,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     # [sₖ -cₖ] [βₖ₊₁ ]   [0 ]
     (cₖ, sₖ, λₖ) = sym_givens(λbarₖ, βₖ₊₁)
 
-    # Compute [   zₖ  ] = (Qₖ)ᵀβ₁e₁
+    # Compute [   zₖ  ] = (Qₖ)ᴴβ₁e₁
     #         [ζbarₖ₊₁]
     #
     # [cₖ  sₖ] [ζbarₖ] = [   ζₖ  ]
@@ -312,7 +312,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
       τₖ   = (ξₖ - ψbarₖ₋₁ * τₖ₋₁) / μbarₖ
     end
 
-    # Compute directions wₖ₋₂, ẘₖ₋₁ and w̄ₖ, last columns of Wₖ = Vₖ(Pₖ)ᵀ
+    # Compute directions wₖ₋₂, ẘₖ₋₁ and w̄ₖ, last columns of Wₖ = Vₖ(Pₖ)ᴴ
     if iter == 1
       # w̅₁ = v₁
       @. wₖ = vₖ

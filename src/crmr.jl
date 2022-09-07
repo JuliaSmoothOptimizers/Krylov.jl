@@ -10,7 +10,7 @@
 # and is equivalent to applying the conjugate residual method
 # to the linear system
 #
-#  AAᵀy = b.
+#  AAᴴy = b.
 #
 # This method is equivalent to CRAIGMR, described in
 #
@@ -44,7 +44,7 @@ using the Conjugate Residual (CR) method, where λ ≥ 0 is a regularization
 parameter. This method is equivalent to applying CR to the normal equations
 of the second kind
 
-    (AAᵀ + λI) y = b
+    (AAᴴ + λI) y = b
 
 but is more stable. When λ = 0, this method solves the minimum-norm problem
 
@@ -102,19 +102,19 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   allocate_if(!NisI, solver, :Nq, S, m)
   allocate_if(λ > 0, solver, :s , S, m)
-  x, p, Aᵀr, r = solver.x, solver.p, solver.Aᵀr, solver.r
+  x, p, Aᴴr, r = solver.x, solver.p, solver.Aᴴr, solver.r
   q, s, stats = solver.q, solver.s, solver.stats
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
   Nq = NisI ? q : solver.Nq
 
   x .= zero(FC)              # initial estimation x = 0
-  mulorldiv!(r, N, b, ldiv)  # initial residual r = M * (b - Ax) = M * b
+  mulorldiv!(r, N, b, ldiv)  # initial residual r = N * (b - Ax) = N * b
   bNorm = @knrm2(m, r)       # norm(b - A * x0) if x0 ≠ 0.
   rNorm = bNorm              # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
   history && push!(rNorms, rNorm)
@@ -126,9 +126,9 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     return solver
   end
   λ > 0 && (s .= r)
-  mul!(Aᵀr, Aᵀ, r)  # - λ * x0 if x0 ≠ 0.
-  p .= Aᵀr
-  γ = @kdotr(n, Aᵀr, Aᵀr)  # Faster than γ = dot(Aᵀr, Aᵀr)
+  mul!(Aᴴr, Aᴴ, r)  # - λ * x0 if x0 ≠ 0.
+  p .= Aᴴr
+  γ = @kdotr(n, Aᴴr, Aᴴr)  # Faster than γ = dot(Aᴴr, Aᴴr)
   λ > 0 && (γ += λ * rNorm * rNorm)
   iter = 0
   itmax == 0 && (itmax = m + n)
@@ -137,7 +137,7 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   history && push!(ArNorms, ArNorm)
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
-  (verbose > 0) && @printf("%5s  %8s  %8s\n", "k", "‖Aᵀr‖", "‖r‖")
+  (verbose > 0) && @printf("%5s  %8s  %8s\n", "k", "‖Aᴴr‖", "‖r‖")
   kdisplay(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
 
   status = "unknown"
@@ -150,16 +150,16 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     mul!(q, A, p)
     λ > 0 && @kaxpy!(m, λ, s, q)  # q = q + λ * s
     NisI || mulorldiv!(Nq, N, q, ldiv)
-    α = γ / @kdotr(m, q, Nq)   # Compute qᵗ * M * q
+    α = γ / @kdotr(m, q, Nq)   # Compute qᴴ * N * q
     @kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p
     @kaxpy!(m, -α, Nq, r)      # Faster than  r =  r - α * Nq
     rNorm = @knrm2(m, r)       # norm(r)
-    mul!(Aᵀr, Aᵀ, r)
-    γ_next = @kdotr(n, Aᵀr, Aᵀr)  # Faster than γ_next = dot(Aᵀr, Aᵀr)
+    mul!(Aᴴr, Aᴴ, r)
+    γ_next = @kdotr(n, Aᴴr, Aᴴr)  # Faster than γ_next = dot(Aᴴr, Aᴴr)
     λ > 0 && (γ_next += λ * rNorm * rNorm)
     β = γ_next / γ
 
-    @kaxpby!(n, one(FC), Aᵀr, β, p)  # Faster than  p = Aᵀr + β * p
+    @kaxpby!(n, one(FC), Aᴴr, β, p)  # Faster than  p = Aᴴr + β * p
     if λ > 0
       @kaxpby!(m, one(FC), r, β, s) # s = r + β * s
     end

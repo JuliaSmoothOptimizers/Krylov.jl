@@ -25,7 +25,7 @@ export tricg, tricg!
 TriCG solves the symmetric linear system
 
     [ τE    A ] [ x ] = [ b ]
-    [  Aᵀ  νF ] [ y ]   [ c ],
+    [  Aᴴ  νF ] [ y ]   [ c ],
 
 where τ and ν are real numbers, E = M⁻¹ ≻ 0 and F = N⁻¹ ≻ 0.
 `b` and `c` must both be nonzero.
@@ -133,7 +133,7 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   warm_start && (ν ≠ 0) && !NisI && error("Warm-start with preconditioners is not supported.")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   allocate_if(!MisI, solver, :vₖ, S, m)
@@ -164,12 +164,12 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   N⁻¹uₖ₋₁ .= zero(FC)  # u₀ = 0
 
   # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
-  # [  Aᵀ  νI ] [ yₖ ]   [ c - AᵀΔx - νΔy ]   [ c₀ ]
+  # [  Aᴴ  νI ] [ yₖ ]   [ c - AᴴΔx - νΔy ]   [ c₀ ]
   if warm_start
     mul!(b₀, A, Δy)
     (τ ≠ 0) && @kaxpy!(m, τ, Δx, b₀)
     @kaxpby!(m, one(FC), b, -one(FC), b₀)
-    mul!(c₀, Aᵀ, Δx)
+    mul!(c₀, Aᴴ, Δx)
     (ν ≠ 0) && @kaxpy!(n, ν, Δy, c₀)
     @kaxpby!(n, one(FC), c, -one(FC), c₀)
   end
@@ -196,7 +196,7 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     error("c must be nonzero")
   end
 
-  # Initialize directions Gₖ such that Lₖ(Gₖ)ᵀ = (Wₖ)ᵀ
+  # Initialize directions Gₖ such that L̄ₖ(Gₖ)ᵀ = (Wₖ)ᵀ
   gx₂ₖ₋₁ .= zero(FC)
   gy₂ₖ₋₁ .= zero(FC)
   gx₂ₖ   .= zero(FC)
@@ -231,10 +231,10 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
     # Continue the orthogonal tridiagonalization process.
     # AUₖ  = EVₖTₖ    + βₖ₊₁Evₖ₊₁(eₖ)ᵀ = EVₖ₊₁Tₖ₊₁.ₖ
-    # AᵀVₖ = FUₖ(Tₖ)ᵀ + γₖ₊₁Fuₖ₊₁(eₖ)ᵀ = FUₖ₊₁(Tₖ.ₖ₊₁)ᵀ
+    # AᴴVₖ = FUₖ(Tₖ)ᴴ + γₖ₊₁Fuₖ₊₁(eₖ)ᵀ = FUₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
     mul!(q, A , uₖ)  # Forms Evₖ₊₁ : q ← Auₖ
-    mul!(p, Aᵀ, vₖ)  # Forms Fuₖ₊₁ : p ← Aᵀvₖ
+    mul!(p, Aᴴ, vₖ)  # Forms Fuₖ₊₁ : p ← Aᴴvₖ
 
     if iter ≥ 2
       @kaxpy!(m, -γₖ, M⁻¹vₖ₋₁, q)  # q ← q - γₖ * M⁻¹vₖ₋₁
@@ -254,14 +254,14 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     #                                [0  u₁ ••• 0  uₖ]
     #
     # rₖ = [ b ] - [ τE    A ] [ xₖ ] = [ b ] - [ τE    A ] Wₖzₖ
-    #      [ c ]   [  Aᵀ  νF ] [ yₖ ]   [ c ]   [  Aᵀ  νF ]
+    #      [ c ]   [  Aᴴ  νF ] [ yₖ ]   [ c ]   [  Aᴴ  νF ]
     #
     # block-Lanczos formulation : [ τE    A ] Wₖ = [ E   0 ] Wₖ₊₁Sₖ₊₁.ₖ
-    #                             [  Aᵀ  νF ]      [ 0   F ]
+    #                             [  Aᴴ  νF ]      [ 0   F ]
     #
-    # TriCG subproblem : (Wₖ)ᵀ * rₖ = 0 ↔ Sₖ.ₖzₖ = β₁e₁ + γ₁e₂
+    # TriCG subproblem : (Wₖ)ᴴ * rₖ = 0 ↔ Sₖ.ₖzₖ = β₁e₁ + γ₁e₂
     #
-    # Update the LDLᵀ factorization of Sₖ.ₖ.
+    # Update the LDLᴴ factorization of Sₖ.ₖ.
     #
     # [ τ  α₁    γ₂ 0  •  •  •  •  0  ]
     # [ ᾱ₁ ν  β₂       •           •  ]
@@ -306,7 +306,7 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
       π₂ₖ   = -(δₖ * d₂ₖ₋₁ * π₂ₖ₋₁ + λₖ * d₂ₖ₋₂ * π₂ₖ₋₂ + ηₖ * d₂ₖ₋₃ * π₂ₖ₋₃) / d₂ₖ
     end
 
-    # Solve Gₖ = Wₖ(Lₖ)⁻ᵀ ⟷ L̄ₖ(Gₖ)ᵀ = (Wₖ)ᵀ.
+    # Solve Gₖ = Wₖ(Lₖ)⁻ᴴ ⟷ L̄ₖ(Gₖ)ᵀ = (Wₖ)ᵀ.
     if iter == 1
       # [ 1  0 ] [ gx₁ gy₁ ] = [ v₁ 0  ]
       # [ δ̄₁ 1 ] [ gx₂ gy₂ ]   [ 0  u₁ ]
@@ -342,7 +342,7 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
     # Compute vₖ₊₁ and uₖ₊₁
     MisI || mulorldiv!(vₖ₊₁, M, q, ldiv)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
-    NisI || mulorldiv!(uₖ₊₁, N, p, ldiv)  # γₖ₊₁uₖ₊₁ = NAᵀvₖ - βₖuₖ₋₁ - ᾱₖuₖ
+    NisI || mulorldiv!(uₖ₊₁, N, p, ldiv)  # γₖ₊₁uₖ₊₁ = NAᴴvₖ - βₖuₖ₋₁ - ᾱₖuₖ
 
     βₖ₊₁ = sqrt(@kdotr(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
     γₖ₊₁ = sqrt(@kdotr(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F

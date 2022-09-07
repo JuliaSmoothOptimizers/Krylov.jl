@@ -1,5 +1,5 @@
 # An implementation of TRILQR for the solution of square or
-# rectangular consistent linear adjoint systems Ax = b and Aᵀy = c.
+# rectangular consistent linear adjoint systems Ax = b and Aᴴy = c.
 #
 # This method is described in
 #
@@ -24,10 +24,10 @@ export trilqr, trilqr!
 Combine USYMLQ and USYMQR to solve adjoint systems.
 
     [0  A] [y] = [b]
-    [Aᵀ 0] [x]   [c]
+    [Aᴴ 0] [x]   [c]
 
 USYMLQ is used for solving primal system `Ax = b`.
-USYMQR is used for solving dual system `Aᵀy = c`.
+USYMQR is used for solving dual system `Aᴴy = c`.
 
 An option gives the possibility of transferring from the USYMLQ point to the
 USYMCG point, when it exists. The transfer is based on the residual norm.
@@ -93,7 +93,7 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   uₖ₋₁, uₖ, p, d̅, x, stats = solver.uₖ₋₁, solver.uₖ, solver.p, solver.d̅, solver.x, solver.stats
@@ -107,7 +107,7 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   if warm_start
     mul!(r₀, A, Δx)
     @kaxpby!(n, one(FC), b, -one(FC), r₀)
-    mul!(s₀, Aᵀ, Δy)
+    mul!(s₀, Aᴴ, Δy)
     @kaxpby!(n, one(FC), c, -one(FC), s₀)
   end
 
@@ -115,7 +115,7 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   x .= zero(FC)          # x₀
   bNorm = @knrm2(m, r₀)  # rNorm = ‖r₀‖
 
-  # Initial solution y₀ and residual s₀ = c - Aᵀy₀.
+  # Initial solution y₀ and residual s₀ = c - Aᴴy₀.
   t .= zero(FC)          # t₀
   cNorm = @knrm2(n, s₀)  # sNorm = ‖s₀‖
 
@@ -136,17 +136,17 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   vₖ₋₁ .= zero(FC)            # v₀ = 0
   uₖ₋₁ .= zero(FC)            # u₀ = 0
   vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
-  uₖ .= s₀ ./ γₖ              # u₁ = (c - Aᵀy₀) / γ₁
+  uₖ .= s₀ ./ γₖ              # u₁ = (c - Aᴴy₀) / γ₁
   cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
   sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-  d̅ .= zero(FC)               # Last column of D̅ₖ = Uₖ(Qₖ)ᵀ
+  d̅ .= zero(FC)               # Last column of D̅ₖ = Uₖ(Qₖ)ᴴ
   ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
   ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
   δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
   ψbarₖ₋₁ = ψₖ₋₁ = zero(FC)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
   ϵₖ₋₃ = λₖ₋₂ = zero(FC)      # Components of Lₖ₋₁
-  wₖ₋₃ .= zero(FC)            # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᵀ
-  wₖ₋₂ .= zero(FC)            # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᵀ
+  wₖ₋₃ .= zero(FC)            # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᴴ
+  wₖ₋₂ .= zero(FC)            # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᴴ
 
   # Stopping criterion.
   inconsistent = false
@@ -166,10 +166,10 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
 
     # Continue the SSY tridiagonalization process.
     # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
-    # AᵀVₖ = Uₖ(Tₖ)ᵀ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
+    # AᴴVₖ = Uₖ(Tₖ)ᴴ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
     mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
-    mul!(p, Aᵀ, vₖ)  # Forms uₖ₊₁ : p ← Aᵀvₖ
+    mul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
 
     @kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
@@ -236,7 +236,7 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
         ηₖ   = -ϵₖ₋₂ * ζₖ₋₂ - λₖ₋₁ * ζₖ₋₁
       end
 
-      # Relations for the directions dₖ₋₁ and d̅ₖ, the last two columns of D̅ₖ = Uₖ(Qₖ)ᵀ.
+      # Relations for the directions dₖ₋₁ and d̅ₖ, the last two columns of D̅ₖ = Uₖ(Qₖ)ᴴ.
       # [d̅ₖ₋₁ uₖ] [cₖ  s̄ₖ] = [dₖ₋₁ d̅ₖ] ⟷ dₖ₋₁ = cₖ * d̅ₖ₋₁ + sₖ * uₖ
       #           [sₖ -cₖ]             ⟷ d̅ₖ   = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
       if iter ≥ 2
@@ -295,7 +295,7 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
         ψbarₖ = sₖ * ψbarₖ₋₁
       end
 
-      # Compute the direction wₖ₋₁, the last column of Wₖ₋₁ = (Vₖ₋₁)(Lₖ₋₁)⁻ᵀ ⟷ (L̄ₖ₋₁)(Wₖ₋₁)ᵀ = (Vₖ₋₁)ᵀ.
+      # Compute the direction wₖ₋₁, the last column of Wₖ₋₁ = (Vₖ₋₁)(Lₖ₋₁)⁻ᴴ ⟷ (L̄ₖ₋₁)(Wₖ₋₁)ᵀ = (Vₖ₋₁)ᵀ.
       # w₁ = v₁ / δ̄₁
       if iter == 2
         wₖ₋₁ = wₖ₋₂

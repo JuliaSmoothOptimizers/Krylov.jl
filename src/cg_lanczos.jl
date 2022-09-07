@@ -111,7 +111,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
     Mv .= b
   end
   MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹r₀
-  β = sqrt(@kdotr(n, v, Mv))          # β₁ = v₁ᵀ M v₁
+  β = sqrt(@kdotr(n, v, Mv))          # β₁ = v₁ᴴ M v₁
   σ = β
   rNorm = σ
   history && push!(rNorms, rNorm)
@@ -157,10 +157,10 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
     # Form next Lanczos vector.
     # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
     mul!(Mv_next, A, v)        # Mvₖ₊₁ ← Avₖ
-    δ = @kdotr(n, v, Mv_next)  # δₖ = vₖᵀ A vₖ
+    δ = @kdotr(n, v, Mv_next)  # δₖ = vₖᴴ A vₖ
 
     # Check curvature. Exit fast if requested.
-    # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᵀ A pₖ.
+    # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᴴ A pₖ.
     γ = one(T) / (δ - ω / γ)  # γₖ = 1 / (δₖ - ωₖ₋₁ / γₖ₋₁)
     indefinite |= (γ ≤ 0)
     (check_curvature & indefinite) && continue
@@ -172,7 +172,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
     end
     @. Mv = Mv_next                      # Mvₖ ← Mvₖ₊₁
     MisI || mulorldiv!(v, M, Mv, ldiv)   # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
-    β = sqrt(@kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+    β = sqrt(@kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
     @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
     MisI || @kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
     Anorm2 += β_prev^2 + β^2 + δ^2       # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.

@@ -32,7 +32,7 @@ export qmr, qmr!
 Solve the square linear system Ax = b using the QMR method.
 
 QMR is based on the Lanczos biorthogonalization process and requires two initial vectors `b` and `c`.
-The relation `bᵀc ≠ 0` must be satisfied and by default `c = b`.
+The relation `bᴴc ≠ 0` must be satisfied and by default `c = b`.
 When `A` is symmetric and `b = c`, QMR is equivalent to MINRES.
 
 QMR can be warm-started from an initial guess `x0` with the method
@@ -96,7 +96,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   ktypeof(c) == S || error("ktypeof(c) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
@@ -133,18 +133,18 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Initialize the Lanczos biorthogonalization process.
-  cᵗb = @kdot(n, c, r₀)  # ⟨c,r₀⟩
-  if cᵗb == 0
+  cᴴb = @kdot(n, c, r₀)  # ⟨c,r₀⟩
+  if cᴴb == 0
     stats.niter = 0
     stats.solved = false
     stats.inconsistent = false
-    stats.status = "Breakdown bᵀc = 0"
+    stats.status = "Breakdown bᴴc = 0"
     solver.warm_start = false
     return solver
   end
 
-  βₖ = √(abs(cᵗb))             # β₁γ₁ = cᵀ(b - Ax₀)
-  γₖ = cᵗb / βₖ                # β₁γ₁ = cᵀ(b - Ax₀)
+  βₖ = √(abs(cᴴb))             # β₁γ₁ = cᴴ(b - Ax₀)
+  γₖ = cᴴb / βₖ                # β₁γ₁ = cᴴ(b - Ax₀)
   vₖ₋₁ .= zero(FC)             # v₀ = 0
   uₖ₋₁ .= zero(FC)             # u₀ = 0
   vₖ .= r₀ ./ βₖ               # v₁ = (b - Ax₀) / β₁
@@ -153,7 +153,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
   wₖ₋₂ .= zero(FC)             # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
   wₖ₋₁ .= zero(FC)             # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
-  ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᵀβ₁e₁
+  ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᴴβ₁e₁
   τₖ = @kdotr(n, vₖ, vₖ)       # τₖ is used for the residual norm estimate
 
   # Stopping criterion.
@@ -169,10 +169,10 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
 
     # Continue the Lanczos biorthogonalization process.
     # AVₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
-    # AᵀUₖ = Uₖ(Tₖ)ᵀ + γ̄ₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᵀ
+    # AᴴUₖ = Uₖ(Tₖ)ᴴ + γ̄ₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
     mul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
-    mul!(p, Aᵀ, uₖ)  # Forms uₖ₊₁ : p ← Aᵀuₖ
+    mul!(p, Aᴴ, uₖ)  # Forms uₖ₊₁ : p ← Aᴴuₖ
 
     @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
     @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
@@ -182,9 +182,9 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     @kaxpy!(n, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
     @kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
 
-    pᵗq = @kdot(n, p, q)      # pᵗq  = ⟨p,q⟩
-    βₖ₊₁ = √(abs(pᵗq))        # βₖ₊₁ = √(|pᵗq|)
-    γₖ₊₁ = pᵗq / βₖ₊₁         # γₖ₊₁ = pᵗq / βₖ₊₁
+    pᴴq = @kdot(n, p, q)      # pᴴq  = ⟨p,q⟩
+    βₖ₊₁ = √(abs(pᴴq))        # βₖ₊₁ = √(|pᴴq|)
+    γₖ₊₁ = pᴴq / βₖ₊₁         # γₖ₊₁ = pᴴq / βₖ₊₁
 
     # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
     #                                            [ Oᵀ ]
@@ -271,7 +271,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
     @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
 
-    if pᵗq ≠ zero(FC)
+    if pᴴq ≠ zero(FC)
       @. vₖ = q / βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
       @. uₖ = p / conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
     end
@@ -303,7 +303,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     resid_decrease_lim = rNorm ≤ ε
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
-    breakdown = !solved && (pᵗq == 0)
+    breakdown = !solved && (pᴴq == 0)
     kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
   end
   (verbose > 0) && @printf("\n")

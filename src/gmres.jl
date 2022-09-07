@@ -214,7 +214,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       mul!(w, A, p)                                  # w ← AN⁻¹vₖ
       MisI || mulorldiv!(q, M, w, ldiv)              # q ← M⁻¹AN⁻¹vₖ
       for i = 1 : inner_iter
-        R[nr+i] = @kdot(n, V[i], q)      # hᵢₖ = qᵀvᵢ
+        R[nr+i] = @kdot(n, V[i], q)      # hᵢₖ = (vᵢ)ᴴq
         @kaxpy!(n, -R[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
       end
 
@@ -245,7 +245,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       # [s̄ₖ -cₖ] [hₖ₊₁.ₖ]   [ 0  ]
       (c[inner_iter], s[inner_iter], R[nr+inner_iter]) = sym_givens(R[nr+inner_iter], Hbis)
 
-      # Update zₖ = (Qₖ)ᵀβe₁
+      # Update zₖ = (Qₖ)ᴴβe₁
       ζₖ₊₁          = conj(s[inner_iter]) * z[inner_iter]
       z[inner_iter] =      c[inner_iter]  * z[inner_iter]
 

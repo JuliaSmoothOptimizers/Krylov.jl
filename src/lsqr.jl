@@ -5,7 +5,7 @@
 #
 # equivalently, of the normal equations
 #
-#  AᵀAx = Aᵀb.
+#  AᴴAx = Aᴴb.
 #
 # LSQR is formally equivalent to applying the conjugate gradient method
 # to the normal equations but should be more stable. It is also formally
@@ -45,17 +45,17 @@ Solve the regularized linear least-squares problem
 using the LSQR method, where λ ≥ 0 is a regularization parameter.
 LSQR is formally equivalent to applying CG to the normal equations
 
-    (AᵀA + λ²I) x = Aᵀb
+    (AᴴA + λ²I) x = Aᴴb
 
 (and therefore to CGLS) but is more stable.
 
-LSQR produces monotonic residuals ‖r‖₂ but not optimality residuals ‖Aᵀr‖₂.
+LSQR produces monotonic residuals ‖r‖₂ but not optimality residuals ‖Aᴴr‖₂.
 It is formally equivalent to CGLS, though can be slightly more accurate.
 
 If `λ > 0`, LSQR solves the symmetric and quasi-definite system
 
     [ E      A ] [ r ]   [ b ]
-    [ Aᵀ  -λ²F ] [ x ] = [ 0 ],
+    [ Aᴴ  -λ²F ] [ x ] = [ 0 ],
 
 where E and F are symmetric and positive definite.
 Preconditioners M = E⁻¹ ≻ 0 and N = F⁻¹ ≻ 0 may be provided in the form of linear operators.
@@ -65,19 +65,19 @@ The system above represents the optimality conditions of
 
     minimize ‖b - Ax‖²_E⁻¹ + λ²‖x‖²_F.
 
-For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᵀKx`.
-LSQR is then equivalent to applying CG to `(AᵀE⁻¹A + λ²F)x = AᵀE⁻¹b` with `r = E⁻¹(b - Ax)`.
+For a symmetric and positive definite matrix `K`, the K-norm of a vector `x` is `‖x‖²_K = xᴴKx`.
+LSQR is then equivalent to applying CG to `(AᴴE⁻¹A + λ²F)x = AᴴE⁻¹b` with `r = E⁻¹(b - Ax)`.
 
 If `λ = 0`, we solve the symmetric and indefinite system
 
     [ E    A ] [ r ]   [ b ]
-    [ Aᵀ   0 ] [ x ] = [ 0 ].
+    [ Aᴴ   0 ] [ x ] = [ 0 ].
 
 The system above represents the optimality conditions of
 
     minimize ‖b - Ax‖²_E⁻¹.
 
-In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᵀr` should be measured.
+In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᴴr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
@@ -129,12 +129,12 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ktypeof(b) == S || error("ktypeof(b) ≠ $S")
 
   # Compute the adjoint of A
-  Aᵀ = A'
+  Aᴴ = A'
 
   # Set up workspace.
   allocate_if(!MisI, solver, :u, S, m)
   allocate_if(!NisI, solver, :v, S, n)
-  x, Nv, Aᵀu, w = solver.x, solver.Nv, solver.Aᵀu, solver.w
+  x, Nv, Aᴴu, w = solver.x, solver.Nv, solver.Aᴴu, solver.w
   Mu, Av, err_vec, stats = solver.Mu, solver.Av, solver.err_vec, solver.stats
   rNorms, ArNorms = stats.residuals, stats.Aresiduals
   reset!(stats)
@@ -162,8 +162,8 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   @kscal!(m, one(FC)/β₁, u)
   MisI || @kscal!(m, one(FC)/β₁, Mu)
-  mul!(Aᵀu, Aᵀ, u)
-  Nv .= Aᵀu
+  mul!(Aᴴu, Aᴴ, u)
+  Nv .= Aᴴu
   NisI || mulorldiv!(v, N, Nv, ldiv)
   Anorm² = @kdotr(n, v, Nv)
   Anorm = sqrt(Anorm²)
@@ -184,7 +184,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   iter = 0
   itmax == 0 && (itmax = m + n)
 
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %7s\n", "k", "α", "β", "‖r‖", "‖Aᵀr‖", "compat", "backwrd", "‖A‖", "κ(A)")
+  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %7s\n", "k", "α", "β", "‖r‖", "‖Aᴴr‖", "compat", "backwrd", "‖A‖", "κ(A)")
   kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, β₁, α, β₁, α, 0, 1, Anorm, Acond)
 
   rNorm = β₁
@@ -194,7 +194,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   history && push!(rNorms, r2Norm)
   ArNorm = ArNorm0 = α * β
   history && push!(ArNorms, ArNorm)
-  # Aᵀb = 0 so x = 0 is a minimum least-squares solution
+  # Aᴴb = 0 so x = 0 is a minimum least-squares solution
   if α == 0
     stats.niter = 0
     stats.solved, stats.inconsistent = true, false
@@ -237,9 +237,9 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
       Anorm² = Anorm² + α * α + β * β  # = ‖B_{k-1}‖²
       λ > 0 && (Anorm² += λ²)
 
-      # 2. αₖ₊₁Nvₖ₊₁ = Aᵀuₖ₊₁ - βₖ₊₁Nvₖ
-      mul!(Aᵀu, Aᵀ, u)
-      @kaxpby!(n, one(FC), Aᵀu, -β, Nv)
+      # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
+      mul!(Aᴴu, Aᴴ, u)
+      @kaxpby!(n, one(FC), Aᴴu, -β, Nv)
       NisI || mulorldiv!(v, N, Nv, ldiv)
       α = sqrt(@kdotr(n, v, Nv))
       if α ≠ 0
