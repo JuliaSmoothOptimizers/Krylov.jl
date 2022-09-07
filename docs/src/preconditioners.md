@@ -41,9 +41,9 @@ A Krylov method dedicated to non-Hermitian linear systems allows the three varia
 
 Methods concerned: [`SYMMLQ`](@ref symmlq), [`CG`](@ref cg), [`CG-LANCZOS`](@ref cg_lanczos), [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift), [`CR`](@ref cr), [`MINRES`](@ref minres) and [`MINRES-QLP`](@ref minres_qlp).
 
-When $A$ is Hermitian, we can only use centered preconditioning $L^{-1}AL^{-T}y = L^{-1}b$ with $x = L^{-T}y$.
-Centered preconditioning is a special case of two-sided preconditioning with $P_{\ell} = L = P_r^T$ that maintains hermicity.
-However, there is no need to specify $L$ and one may specify $P_c = LL^T$ or its inverse directly.
+When $A$ is Hermitian, we can only use centered preconditioning $L^{-1}AL^{-H}y = L^{-1}b$ with $x = L^{-H}y$.
+Centered preconditioning is a special case of two-sided preconditioning with $P_{\ell} = L = P_r^H$ that maintains hermicity.
+However, there is no need to specify $L$ and one may specify $P_c = LL^H$ or its inverse directly.
 
 | Preconditioners | $P_c^{-1}$                | $P_c$                |
 |:---------------:|:-------------------------:|:--------------------:|
@@ -59,16 +59,16 @@ Methods concerned: [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`LSLQ`](@ref lslq)
 | Formulation           | Without preconditioning              | With preconditioning                        |
 |:---------------------:|:------------------------------------:|:-------------------------------------------:|
 | least-squares problem | $\min \tfrac{1}{2} \\|b - Ax\\|^2_2$ | $\min \tfrac{1}{2} \\|b - Ax\\|^2_{E^{-1}}$ |
-| Normal equation       | $A^TAx = A^Tb$                       | $A^TE^{-1}Ax = A^TE^{-1}b$                  |
-| Augmented system      | $\begin{bmatrix} I & A \\ A^T & 0 \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ | $\begin{bmatrix} E & A \\ A^T & 0 \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ |
+| Normal equation       | $A^HAx = A^Hb$                       | $A^HE^{-1}Ax = A^HE^{-1}b$                  |
+| Augmented system      | $\begin{bmatrix} I & A \\ A^H & 0 \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ | $\begin{bmatrix} E & A \\ A^H & 0 \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ |
 
 [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr) also handle regularized least-squares problems.
 
 | Formulation           | Without preconditioning                                                   | With preconditioning                                                             |
 |:---------------------:|:-------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|
 | least-squares problem | $\min \tfrac{1}{2} \\|b - Ax\\|^2_2 + \tfrac{1}{2} \lambda^2 \\|x\\|^2_2$ | $\min \tfrac{1}{2} \\|b - Ax\\|^2_{E^{-1}} + \tfrac{1}{2} \lambda^2 \\|x\\|^2_F$ |
-| Normal equation       | $(A^TA + \lambda^2 I)x = A^Tb$                                            | $(A^TE^{-1}A + \lambda^2 F)x = A^TE^{-1}b$                                       |
-| Augmented system      | $\begin{bmatrix} I & A \\ A^T & -\lambda^2 I \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ | $\begin{bmatrix} E & A \\ A^T & -\lambda^2 F \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ |
+| Normal equation       | $(A^HA + \lambda^2 I)x = A^Hb$                                            | $(A^HE^{-1}A + \lambda^2 F)x = A^HE^{-1}b$                                       |
+| Augmented system      | $\begin{bmatrix} I & A \\ A^H & -\lambda^2 I \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ | $\begin{bmatrix} E & A \\ A^H & -\lambda^2 F \end{bmatrix} \begin{bmatrix} r \\ x \end{bmatrix} = \begin{bmatrix} b \\ 0 \end{bmatrix}$ |
 
 | Preconditioners | $E^{-1}$                | $E$                  | $F^{-1}$                | $F$                  |
 |:---------------:|:-----------------------:|:--------------------:|:-----------------------:|:--------------------:|
@@ -84,16 +84,16 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 | Formulation          | Without preconditioning                              | With preconditioning                                 |
 |:--------------------:|:----------------------------------------------------:|:----------------------------------------------------:|
 | minimum-norm problem | $\min \tfrac{1}{2} \\|x\\|^2_2~~\text{s.t.}~~Ax = b$ | $\min \tfrac{1}{2} \\|x\\|^2_F~~\text{s.t.}~~Ax = b$ |
-| Normal equation      | $AA^Ty = b~~\text{with}~~x = A^Ty$                   | $AF^{-1}A^Ty = b~~\text{with}~~x = F^{-1}A^Ty$       |
-| Augmented system     | $\begin{bmatrix} -I & A^T \\ \phantom{-}A & 0 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ | $\begin{bmatrix} -F & A^T \\ \phantom{-}A & 0 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ |
+| Normal equation      | $AA^Hy = b~~\text{with}~~x = A^Hy$                   | $AF^{-1}A^Hy = b~~\text{with}~~x = F^{-1}A^Hy$       |
+| Augmented system     | $\begin{bmatrix} -I & A^H \\ \phantom{-}A & 0 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ | $\begin{bmatrix} -F & A^H \\ \phantom{-}A & 0 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ |
 
 [`LNLQ`](@ref lslq), [`CRAIG`](@ref lsqr) and [`CRAIGMR`](@ref lsmr) also handle penalized minimum-norm problems.
 
 | Formulation          | Without preconditioning                                                                       | With preconditioning                                                                           |
 |:--------------------:|:---------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------:|
 | minimum-norm problem | $\min \tfrac{1}{2} \\|x\\|^2_2 + \tfrac{1}{2} \\|y\\|^2_2~~\text{s.t.}~~Ax + \lambda^2 y = b$ | $\min \tfrac{1}{2} \\|x\\|^2_F + \tfrac{1}{2} \\|y\\|^2_E~~\text{s.t.}~~Ax + \lambda^2 Ey = b$ |
-| Normal equation      | $(AA^T + \lambda^2 I)y = b~~\text{with}~~x = A^Ty$                                            | $(AF^{-1}A^T + \lambda^2 E)y = b~~\text{with}~~x = F^{-1}A^Ty$                                 |
-| Augmented system     | $\begin{bmatrix} -I & A^T \\ \phantom{-}A & \lambda^2 I \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ | $\begin{bmatrix} -F & A^T \\ \phantom{-}A & \lambda^2 E \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ |
+| Normal equation      | $(AA^H + \lambda^2 I)y = b~~\text{with}~~x = A^Hy$                                            | $(AF^{-1}A^H + \lambda^2 E)y = b~~\text{with}~~x = F^{-1}A^Hy$                                 |
+| Augmented system     | $\begin{bmatrix} -I & A^H \\ \phantom{-}A & \lambda^2 I \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ | $\begin{bmatrix} -F & A^H \\ \phantom{-}A & \lambda^2 E \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} 0 \\ b \end{bmatrix}$ |
 
 | Preconditioners | $E^{-1}$                | $E$                  | $F^{-1}$                | $F$                  |
 |:---------------:|:-----------------------:|:--------------------:|:-----------------------:|:--------------------:|
@@ -106,7 +106,7 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 
 [`TriCG`](@ref tricg) and [`TriMR`](@ref trimr) can take advantage of the structure of Hermitian systems $Kz = d$ with the 2x2 block structure
 ```math
-  \begin{bmatrix} \tau E & \phantom{-}A \\ A^T & \nu F \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix},
+  \begin{bmatrix} \tau E & \phantom{-}A \\ A^H & \nu F \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix},
 ```
 | Preconditioners | $E^{-1}$              | $E$                  | $F^{-1}$              | $F$                  |
 |:---------------:|:---------------------:|:--------------------:|:---------------------:|:--------------------:|
