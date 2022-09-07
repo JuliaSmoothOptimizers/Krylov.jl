@@ -1,4 +1,8 @@
-### Notations
+# [Krylov processes](@id krylov-processes)
+
+Krylov processes are the foundations of Krylov methods, they generate bases of Krylov subspaces.
+
+### Notation
 
 Define $V_k := \begin{bmatrix} v_1 & \ldots & v_k \end{bmatrix} \enspace$ and $\enspace U_k := \begin{bmatrix} u_1 & \ldots & u_k \end{bmatrix}$.
 
@@ -22,7 +26,7 @@ After $k$ iterations of the symmetric Lanczos process, the situation may be summ
 ```math
 \begin{align*}
   A V_k &= V_k T_k + \beta_{k+1,k} v_{k+1} e_k^T = V_{k+1}  T_{k+1,k}, \\
-  V_k^T V_k &= I_k,
+  V_k^H V_k &= I_k,
 \end{align*}
 ```
 where $V_k$ is an orthonormal basis of the Krylov subspace $\mathcal{K}_k (A,b)$,
@@ -42,6 +46,8 @@ T_{k+1,k} =
 \end{bmatrix}.
 ```
 
+The function [`symmetric_lanczos`](@ref symmetric_lanczos) returns $V_{k+1}$ and $T_{k+1,k}$.
+
 Related methods: [`SYMMLQ`](@ref symmlq), [`CG`](@ref cg), [`CR`](@ref cr), [`MINRES`](@ref minres), [`MINRES-QLP`](@ref minres_qlp), [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`CG-LANCZOS`](@ref cg_lanczos) and [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift).
 
 ```@docs
@@ -55,12 +61,12 @@ symmetric_lanczos
 After $k$ iterations of the unsymmetric Lanczos process (also named the Lanczos biorthogonalization process), the situation may be summarized as
 ```math
 \begin{align*}
-  A V_k &= V_k T_k +        \beta_{k+1} v_{k+1} e_k^T = V_{k+1} T_{k+1,k}, \\
-  B U_k &= U_k S_k + \bar{\gamma}_{k+1} u_{k+1} e_k^T = U_{k+1} S_{k+1,k}, \\
-  V_k^T U_k &= U_k^T V_k = I_k,
+  A V_k &= V_k T_k   +        \beta_{k+1} v_{k+1} e_k^T = V_{k+1} T_{k+1,k},   \\
+  B U_k &= U_k T_k^H + \bar{\gamma}_{k+1} u_{k+1} e_k^T = U_{k+1} T_{k,k+1}^H, \\
+  V_k^H U_k &= U_k^H V_k = I_k,
 \end{align*}
 ```
-where $V_k$ and $U_k$ are bases of the Krylov subspaces $\mathcal{K}_k (A,b)$ and $\mathcal{K}_k (A^T,c)$, respectively,
+where $V_k$ and $U_k$ are bases of the Krylov subspaces $\mathcal{K}_k (A,b)$ and $\mathcal{K}_k (A^H,c)$, respectively,
 ```math
 T_k = 
 \begin{bmatrix}
@@ -70,32 +76,24 @@ T_k =
            &          & \beta_k  & \alpha_k
 \end{bmatrix}
 , \qquad
-S_k =
-\begin{bmatrix}
-  \bar{\alpha}_1 & \bar{\beta}_2  &                 &                \\
-  \bar{\gamma}_2 & \bar{\alpha}_2 & \ddots          &                \\
-                 & \ddots         & \ddots          & \bar{\beta}_k  \\
-                 &                & \bar{\gamma}_k  & \bar{\alpha}_k
-\end{bmatrix},
-```
-```math
 T_{k+1,k} =
 \begin{bmatrix}
   T_{k} \\
   \beta_{k+1} e_{k}^T
 \end{bmatrix}
 , \qquad
-S_{k+1,k} =
+T_{k,k+1} =
 \begin{bmatrix}
-  S_{k} \\
-  \bar{\gamma}_{k+1} e_{k}^T
+  T_{k} & \gamma_{k+1} e_k
 \end{bmatrix}.
 ```
 
-!!! note
-    We also have the relations $T_k = S_k^T$, $\enspace T_{k,k+1} = \begin{bmatrix} T_{k} & \gamma_{k+1} e_k \end{bmatrix} = S_{k+1,k}^T \enspace$ and $\enspace S_{k,k+1} = \begin{bmatrix} S_{k} & \bar{\beta}_{k+1} e_k \end{bmatrix} = T_{k+1,k}^T$.
+The function [`unsymmetric_lanczos`](@ref unsymmetric_lanczos) returns $V_{k+1}$, $T_{k+1,k}$, $U_{k+1}$ and $T_{k,k+1}^H$.
 
-Methods related: [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), [`CGS`](@ref cgs) and [`BICGSTAB`](@ref bicgstab).
+Related methods: [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), [`CGS`](@ref cgs) and [`BICGSTAB`](@ref bicgstab).
+
+!!! note
+    The scaling factors used in our implementation are $\beta_k = |u_k^H v_k|^{\tfrac{1}{2}}$ and $\gamma_k = (u_k^H v_k) / \beta_k$.
 
 ```@docs
 unsymmetric_lanczos
@@ -109,7 +107,7 @@ After $k$ iterations of the Arnoldi process, the situation may be summarized as
 ```math
 \begin{align*}
   A V_k &= V_k H_k + h_{k+1,k} v_{k+1} e_k^T = V_{k+1} H_{k+1,k}, \\
-  V_k^T V_k &= I_k,
+  V_k^H V_k &= I_k,
 \end{align*}
 ```
 where $V_k$ is an orthonormal basis of the Krylov subspace $\mathcal{K}_k (A,b)$,
@@ -129,7 +127,10 @@ H_{k+1,k} =
 \end{bmatrix}.
 ```
 
-Methods related: [`DIOM`](@ref diom), [`FOM`](@ref fom), [`DQGMRES`](@ref dqgmres) and [`GMRES`](@ref gmres).
+The function [`arnoldi`](@ref arnoldi) returns $V_{k+1}$ and $H_{k+1,k}$.
+
+Related methods: [`DIOM`](@ref diom), [`FOM`](@ref fom), [`DQGMRES`](@ref dqgmres) and [`GMRES`](@ref gmres).
+
 
 ```@docs
 arnoldi
@@ -143,11 +144,11 @@ After $k$ iterations of the Golub-Kahan bidiagonalization process, the situation
 ```math
 \begin{align*}
   A V_k &= U_{k+1} B_k,   \\
-  A^T U_{k+1} &= V_k B_k^T + \alpha_{k+1} v_{k+1} e_{k+1}^T = V_{k+1} L_{k+1}^T, \\
-  V_k^T V_k &= U_k^T U_k = I_k,
+  A^H U_{k+1} &= V_k B_k^H + \alpha_{k+1} v_{k+1} e_{k+1}^T = V_{k+1} L_{k+1}^H, \\
+  V_k^H V_k &= U_k^H U_k = I_k,
 \end{align*}
 ```
-where $V_k$ and $U_k$ are bases of the Krylov subspaces $\mathcal{K}_k (A^TA,A^Tb)$ and $\mathcal{K}_k (AA^T,b)$, respectively,
+where $V_k$ and $U_k$ are bases of the Krylov subspaces $\mathcal{K}_k (A^HA,A^Hb)$ and $\mathcal{K}_k (AA^H,b)$, respectively,
 ```math
 L_k =
 \begin{bmatrix}
@@ -172,7 +173,9 @@ B_k =
 \end{bmatrix}.
 ```
 
-Methods related: [`LNLQ`](@ref lnlq), [`CRAIG`](@ref craig), [`CRAIGMR`](@ref craigmr), [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).
+The function [`golub_kahan`](@ref golub_kahan) returns $V_{k+1}$, $U_{k+1}$ and $L_{k+1}$.
+
+Related methods: [`LNLQ`](@ref lnlq), [`CRAIG`](@ref craig), [`CRAIGMR`](@ref craigmr), [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).
 
 ```@docs
 golub_kahan
@@ -185,12 +188,12 @@ golub_kahan
 After $k$ iterations of the Saunders-Simon-Yip process (also named the orthogonal tridiagonalization process), the situation may be summarized as
 ```math
 \begin{align*}
-  A U_k &= V_k T_k + \beta_{k+1}  v_{k+1} e_k^T = V_{k+1} T_{k+1,k}, \\
-  B V_k &= U_k S_k + \gamma_{k+1} u_{k+1} e_k^T = U_{k+1} S_{k+1,k}, \\
-  V_k^T V_k &= U_k^T U_k = I_k,
+  A U_k &= V_k T_k   + \beta_{k+1}  v_{k+1} e_k^T = V_{k+1} T_{k+1,k},   \\
+  B V_k &= U_k T_k^H + \gamma_{k+1} u_{k+1} e_k^T = U_{k+1} T_{k,k+1}^H, \\
+  V_k^H V_k &= U_k^H U_k = I_k,
 \end{align*}
 ```
-where $\begin{bmatrix} V_k & 0 \\ 0 & U_k \end{bmatrix}$ is an orthonormal basis of the block Krylov subspace $\mathcal{K}^{\square}_k \left(\begin{bmatrix} 0 & A \\ A^T & 0 \end{bmatrix}, \begin{bmatrix} b & 0 \\ 0 & c \end{bmatrix}\right)$,
+where $\begin{bmatrix} V_k & 0 \\ 0 & U_k \end{bmatrix}$ is an orthonormal basis of the block Krylov subspace $\mathcal{K}^{\square}_k \left(\begin{bmatrix} 0 & A \\ A^H & 0 \end{bmatrix}, \begin{bmatrix} b & 0 \\ 0 & c \end{bmatrix}\right)$,
 ```math
 T_k = 
 \begin{bmatrix}
@@ -200,32 +203,21 @@ T_k =
            &          & \beta_k  & \alpha_k
 \end{bmatrix}
 , \qquad
-S_k =
-\begin{bmatrix}
-  \bar{\alpha}_1 & \beta_2        &          &               \\
-  \gamma_2       & \bar{\alpha}_2 & \ddots   &               \\
-                 & \ddots         & \ddots   & \beta_k       \\
-                 &                & \gamma_k  & \bar{\alpha}_k
-\end{bmatrix},
-```
-```math
 T_{k+1,k} =
 \begin{bmatrix}
   T_{k} \\
   \beta_{k+1} e_{k}^T
 \end{bmatrix}
 , \qquad
-S_{k+1,k} =
+T_{k,k+1} =
 \begin{bmatrix}
-  S_{k} \\
-  \gamma_{k+1} e_{k}^T
+  T_{k} & \gamma_{k+1} e_{k}
 \end{bmatrix}.
 ```
 
-!!! note
-    We also have the relations $T_k = S_k^T$, $\enspace T_{k,k+1} = \begin{bmatrix} T_{k} & \gamma_{k+1} e_k \end{bmatrix} = S_{k+1,k}^T \enspace$ and $\enspace S_{k,k+1} = \begin{bmatrix} S_{k} & \beta_{k+1} e_k \end{bmatrix} = T_{k+1,k}^T$.
+The function [`saunders_simon_yip`](@ref saunders_simon_yip) returns $V_{k+1}$, $T_{k+1,k}$, $U_{k+1}$ and $T_{k,k+1}^H$.
 
-Methods related: [`USYMLQ`](@ref usymlq), [`USYMQR`](@ref usymqr), [`TriLQR`](@ref trilqr), [`TriCG`](@ref tricg) and [`TriMR`](@ref trimr).
+Related methods: [`USYMLQ`](@ref usymlq), [`USYMQR`](@ref usymqr), [`TriLQR`](@ref trilqr), [`TriCG`](@ref tricg) and [`TriMR`](@ref trimr).
 
 ```@docs
 saunders_simon_yip
@@ -240,7 +232,7 @@ After $k$ iterations of the Montoison-Orban process (also named the orthogonal H
 \begin{align*}
   A U_k &= V_k H_k + h_{k+1,k} v_{k+1} e_k^T = V_{k+1} H_{k+1,k}, \\
   B V_k &= U_k F_k + f_{k+1,k} u_{k+1} e_k^T = U_{k+1} F_{k+1,k}, \\
-  V_k^T V_k &= U_k^T U_k = I_k,
+  V_k^H V_k &= U_k^H U_k = I_k,
 \end{align*}
 ```
 where $\begin{bmatrix} V_k & 0 \\ 0 & U_k \end{bmatrix}$ is an orthonormal basis of the block Krylov subspace $\mathcal{K}^{\square}_k \left(\begin{bmatrix} 0 & A \\ B & 0 \end{bmatrix}, \begin{bmatrix} b & 0 \\ 0 & c \end{bmatrix}\right)$,
@@ -275,7 +267,9 @@ F_{k+1,k} =
 \end{bmatrix}.
 ```
 
-Methods related: [`GPMR`](@ref gpmr).
+The function [`montoison_orban`](@ref montoison_orban) returns $V_{k+1}$, $H_{k+1,k}$, $U_{k+1}$ and $F_{k+1,k}$.
+
+Related methods: [`GPMR`](@ref gpmr).
 
 ```@docs
 montoison_orban
