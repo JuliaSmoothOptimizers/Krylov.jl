@@ -1,6 +1,6 @@
 # [Preconditioners](@id preconditioners)
 
-The solvers in Krylov.jl support preconditioners, i.e., transformations that modify a linear systems $Ax = b$ into an equivalent form that may yield faster convergence in finite-precision arithmetic.
+The solvers in Krylov.jl support preconditioners, i.e., transformations that modify a linear system $Ax = b$ into an equivalent form that may yield faster convergence in finite-precision arithmetic.
 Preconditioning can be used to reduce the condition number of the problem or cluster its eigenvalues or singular values for instance.
 
 The design of preconditioners is highly dependent on the origin of the problem and most preconditioners need to take application-dependent information and structure into account.
