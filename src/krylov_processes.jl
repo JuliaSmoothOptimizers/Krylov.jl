@@ -120,9 +120,9 @@ function unsymmetric_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k:
     vᵢ₊₁ = q = view(V,:,i+1)
     uᵢ₊₁ = p = view(U,:,i+1)
     if i == 1
-      cᵗb = @kdot(n, c, b)
-      βᵢ = √(abs(cᵗb))
-      γᵢ = cᵗb / βᵢ
+      cᴴb = @kdot(n, c, b)
+      βᵢ = √(abs(cᴴb))
+      γᵢ = cᴴb / βᵢ
       vᵢ .= b ./ βᵢ
       uᵢ .= c ./ conj(γᵢ)
     end
@@ -141,9 +141,9 @@ function unsymmetric_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k:
     S[i,i] = conj(αᵢ)
     @kaxpy!(m, -     αᵢ , vᵢ, q)
     @kaxpy!(n, -conj(αᵢ), uᵢ, p)
-    pᵗq = @kdot(n, p, q)
-    βᵢ₊₁ = √(abs(pᵗq))
-    γᵢ₊₁ = pᵗq / βᵢ₊₁
+    pᴴq = @kdot(n, p, q)
+    βᵢ₊₁ = √(abs(pᴴq))
+    γᵢ₊₁ = pᴴq / βᵢ₊₁
     vᵢ₊₁ .= q ./ βᵢ₊₁
     uᵢ₊₁ .= p ./ conj(γᵢ₊₁)
     T[i+1,i] = βᵢ₊₁
