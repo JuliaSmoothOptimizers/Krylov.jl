@@ -1,0 +1,65 @@
+steps:
+  - label: "Nvidia GPUs -- CUDA.jl"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: 1.8
+    agents:
+      queue: "juliagpu"
+      cuda: "*"
+    command: |
+      julia --color=yes --project -e '
+      using Pkg
+      Pkg.add("CUDA")
+      Pkg.instantiate()
+      include("test/gpu/nvidia.jl")'
+    timeout_in_minutes: 30
+
+  - label: "AMD GPUs -- AMDGPU.jl"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: 1.8
+    agents:
+      queue: "juliagpu"
+      rocm: "*"
+      rocmgpu: "gfx908"
+    env:
+      JULIA_AMDGPU_CORE_MUST_LOAD: "1"
+      JULIA_AMDGPU_HIP_MUST_LOAD: "1"
+      JULIA_AMDGPU_DISABLE_ARTIFACTS: "1"
+    command: |
+      julia --color=yes --project -e '
+      using Pkg
+      Pkg.add("AMDGPU")
+      Pkg.instantiate()
+      include("test/gpu/amd.jl")'
+    timeout_in_minutes: 30
+
+  - label: "Intel GPUs -- oneAPI.jl"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: 1.8
+    agents:
+      queue: "juliagpu"
+      intel: "*"
+    command: |
+      julia --color=yes --project -e '
+      using Pkg
+      Pkg.add("oneAPI")
+      Pkg.instantiate()
+      include("test/gpu/intel.jl")'
+    timeout_in_minutes: 30
+
+  - label: "Apple M1 GPUs -- Metal.jl"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: 1.8
+    agents:
+      queue: "juliagpu"
+      metal: "*"
+    command: |
+      julia --color=yes --project -e '
+      using Pkg
+      Pkg.add("Metal")
+      Pkg.instantiate()
+      include("test/gpu/metal.jl")'
+    timeout_in_minutes: 30
