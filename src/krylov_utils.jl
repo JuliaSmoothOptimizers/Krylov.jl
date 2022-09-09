@@ -176,124 +176,6 @@ function to_boundary(x :: Vector{T}, d :: Vector{T},
 end
 
 """
-    S = ktypeof(v)
-
-Return a dense storage type `S` based on the type of `v`.
-"""
-function ktypeof end
-
-function ktypeof(v::S) where S <: DenseVector
-  return S
-end
-
-function ktypeof(v::S) where S <: SparseVector
-  T = eltype(S)
-  return Vector{T}
-end
-
-function ktypeof(v::S) where S <: AbstractSparseVector
-  return S.types[2]  # return `CuVector` for a `CuSparseVector`
-end
-
-function ktypeof(v::S) where S <: AbstractVector
-  T = eltype(S)
-  return Vector{T}  # BlockArrays, FillArrays, etc...
-end
-
-function ktypeof(v::S) where S <: SubArray
-  return ktypeof(v.parent)
-end
-
-"""
-    v = kzeros(S, n)
-
-Create an AbstractVector of storage type `S` of length `n` only composed of zero.
-"""
-@inline kzeros(S, n) = fill!(S(undef, n), zero(eltype(S)))
-
-"""
-    v = kones(S, n)
-
-Create an AbstractVector of storage type `S` of length `n` only composed of one.
-"""
-@inline kones(S, n) = fill!(S(undef, n), one(eltype(S)))
-
-@inline allocate_if(bool, solver, v, S, n) = bool && isempty(solver.:($v)) && (solver.:($v) = S(undef, n))
-
-@inline kdisplay(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
-
-@inline mulorldiv!(y, P, x, ldiv::Bool) = ldiv ? ldiv!(y, P, x) : mul!(y, P, x)
-
-@inline krylov_dot(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasReal = BLAS.dot(n, x, dx, y, dy)
-@inline krylov_dot(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasComplex = BLAS.dotc(n, x, dx, y, dy)
-@inline krylov_dot(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: Number = dot(x, y)
-
-@inline krylov_dotr(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: AbstractFloat = krylov_dot(n, x, dx, y, dy)
-@inline krylov_dotr(n :: Integer, x :: AbstractVector{Complex{T}}, dx :: Integer, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = real(krylov_dot(n, x, dx, y, dy))
-
-@inline krylov_norm2(n :: Integer, x :: Vector{T}, dx :: Integer) where T <: BLAS.BlasFloat = BLAS.nrm2(n, x, dx)
-@inline krylov_norm2(n :: Integer, x :: AbstractVector{T}, dx :: Integer) where T <: Number = norm(x)
-
-@inline krylov_scal!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer) where T <: BLAS.BlasFloat = BLAS.scal!(n, s, x, dx)
-@inline krylov_scal!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer) where T <: Number = (x .*= s)
-@inline krylov_scal!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer) where T <: AbstractFloat = krylov_scal!(n, Complex{T}(s), x, dx)
-
-@inline krylov_axpy!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.axpy!(n, s, x, dx, y, dy)
-@inline krylov_axpy!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: Number = axpy!(s, x, y)
-@inline krylov_axpy!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = krylov_axpy!(n, Complex{T}(s), x, dx, y, dy)
-
-@inline krylov_axpby!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer, t :: T, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.axpby!(n, s, x, dx, t, y, dy)
-@inline krylov_axpby!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer, t :: T, y :: AbstractVector{T}, dy :: Integer) where T <: Number = axpby!(s, x, t, y)
-@inline krylov_axpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: Complex{T}, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = krylov_axpby!(n, Complex{T}(s), x, dx, t, y, dy)
-@inline krylov_axpby!(n :: Integer, s :: Complex{T}, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: T, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = krylov_axpby!(n, s, x, dx, Complex{T}(t), y, dy)
-@inline krylov_axpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: T, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = krylov_axpby!(n, Complex{T}(s), x, dx, Complex{T}(t), y, dy)
-
-@inline krylov_copy!(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.blascopy!(n, x, dx, y, dy)
-@inline krylov_copy!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: Number = copyto!(y, x)
-
-# the macros are just for readability, so we don't have to write the increments (always equal to 1)
-
-macro kdot(n, x, y)
-  return esc(:(krylov_dot($n, $x, 1, $y, 1)))
-end
-
-macro kdotr(n, x, y)
-  return esc(:(krylov_dotr($n, $x, 1, $y, 1)))
-end
-
-macro knrm2(n, x)
-  return esc(:(krylov_norm2($n, $x, 1)))
-end
-
-macro kscal!(n, s, x)
-  return esc(:(krylov_scal!($n, $s, $x, 1)))
-end
-
-macro kaxpy!(n, s, x, y)
-  return esc(:(krylov_axpy!($n, $s, $x, 1, $y, 1)))
-end
-
-macro kaxpby!(n, s, x, t, y)
-  return esc(:(krylov_axpby!($n, $s, $x, 1, $t, $y, 1)))
-end
-
-macro kcopy!(n, x, y)
-  return esc(:(krylov_copy!($n, $x, 1, $y, 1)))
-end
-
-macro kswap(x, y)
-  quote
-    local tmp = $(esc(x))
-    $(esc(x)) = $(esc(y))
-    $(esc(y)) = tmp
-  end
-end
-
-macro kref!(n, x, y, c, s)
-  return esc(:(reflect!($x, $y, $c, $s)))
-end
-
-"""
     s = vec2str(x; ndisp)
 
 Display an array in the form
@@ -334,4 +216,121 @@ function vec2str(x :: AbstractVector{T}; ndisp :: Int=7) where T <: Union{Abstra
   end
   s *= "]"
   return s
+end
+
+"""
+    S = ktypeof(v)
+
+Return a dense storage type `S` based on the type of `v`.
+"""
+function ktypeof end
+
+function ktypeof(v::S) where S <: DenseVector
+  return S
+end
+
+function ktypeof(v::S) where S <: SparseVector
+  T = eltype(S)
+  return Vector{T}
+end
+
+function ktypeof(v::S) where S <: AbstractSparseVector
+  return S.types[2]  # return `CuVector` for a `CuSparseVector`
+end
+
+function ktypeof(v::S) where S <: AbstractVector
+  T = eltype(S)
+  return Vector{T}  # BlockArrays, FillArrays, etc...
+end
+
+function ktypeof(v::S) where S <: SubArray
+  return ktypeof(v.parent)
+end
+
+"""
+    v = kzeros(S, n)
+
+Create an AbstractVector of storage type `S` of length `n` only composed of zero.
+"""
+kzeros(S, n) = fill!(S(undef, n), zero(eltype(S)))
+
+"""
+    v = kones(S, n)
+
+Create an AbstractVector of storage type `S` of length `n` only composed of one.
+"""
+kones(S, n) = fill!(S(undef, n), one(eltype(S)))
+
+allocate_if(bool, solver, v, S, n) = bool && isempty(solver.:($v)) && (solver.:($v) = S(undef, n))
+
+kdisplay(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
+
+mulorldiv!(y, P, x, ldiv::Bool) = ldiv ? ldiv!(y, P, x) : mul!(y, P, x)
+
+kdot(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasReal = BLAS.dot(n, x, dx, y, dy)
+kdot(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasComplex = BLAS.dotc(n, x, dx, y, dy)
+kdot(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: FloatOrComplex = dot(x, y)
+
+kdotr(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: AbstractFloat = kdot(n, x, dx, y, dy)
+kdotr(n :: Integer, x :: AbstractVector{Complex{T}}, dx :: Integer, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = real(kdot(n, x, dx, y, dy))
+
+knrm2(n :: Integer, x :: Vector{T}, dx :: Integer) where T <: BLAS.BlasFloat = BLAS.nrm2(n, x, dx)
+knrm2(n :: Integer, x :: AbstractVector{T}, dx :: Integer) where T <: FloatOrComplex = norm(x)
+
+kscal!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer) where T <: BLAS.BlasFloat = BLAS.scal!(n, s, x, dx)
+kscal!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer) where T <: FloatOrComplex = (x .*= s)
+kscal!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer) where T <: AbstractFloat = kscal!(n, Complex{T}(s), x, dx)
+
+kaxpy!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.axpy!(n, s, x, dx, y, dy)
+kaxpy!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: FloatOrComplex = axpy!(s, x, y)
+kaxpy!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = kaxpy!(n, Complex{T}(s), x, dx, y, dy)
+
+kaxpby!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer, t :: T, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.axpby!(n, s, x, dx, t, y, dy)
+kaxpby!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer, t :: T, y :: AbstractVector{T}, dy :: Integer) where T <: FloatOrComplex = axpby!(s, x, t, y)
+kaxpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: Complex{T}, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = kaxpby!(n, Complex{T}(s), x, dx, t, y, dy)
+kaxpby!(n :: Integer, s :: Complex{T}, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: T, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = kaxpby!(n, s, x, dx, Complex{T}(t), y, dy)
+kaxpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: T, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = kaxpby!(n, Complex{T}(s), x, dx, Complex{T}(t), y, dy)
+
+kcopy!(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.blascopy!(n, x, dx, y, dy)
+kcopy!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: FloatOrComplex = copyto!(y, x)
+
+# the macros are just for readability, so we don't have to write the increments (always equal to 1)
+macro kdot(n, x, y)
+  return esc(:(Krylov.kdot($n, $x, 1, $y, 1)))
+end
+
+macro kdotr(n, x, y)
+  return esc(:(Krylov.kdotr($n, $x, 1, $y, 1)))
+end
+
+macro knrm2(n, x)
+  return esc(:(Krylov.knrm2($n, $x, 1)))
+end
+
+macro kscal!(n, s, x)
+  return esc(:(Krylov.kscal!($n, $s, $x, 1)))
+end
+
+macro kaxpy!(n, s, x, y)
+  return esc(:(Krylov.kaxpy!($n, $s, $x, 1, $y, 1)))
+end
+
+macro kaxpby!(n, s, x, t, y)
+  return esc(:(Krylov.kaxpby!($n, $s, $x, 1, $t, $y, 1)))
+end
+
+macro kcopy!(n, x, y)
+  return esc(:(Krylov.kcopy!($n, $x, 1, $y, 1)))
+end
+
+macro kswap(x, y)
+  quote
+    local tmp = $(esc(x))
+    $(esc(x)) = $(esc(y))
+    $(esc(y)) = tmp
+  end
+end
+
+macro kref!(n, x, y, c, s)
+  return esc(:(reflect!($x, $y, $c, $s)))
 end
