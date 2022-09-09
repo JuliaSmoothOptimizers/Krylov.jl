@@ -136,7 +136,7 @@
 
   @testset "macros" begin
     # test macros
-    for FC ∈ (Float16, Float32, Float64, Complex{Float16}, Complex{Float32}, Complex{Float64})
+    for FC ∈ (Float16, Float32, Float64, ComplexF16, ComplexF32, ComplexF64)
       n = 10
       x = rand(FC, n)
       y = rand(FC, n)
