@@ -44,13 +44,14 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             var fs = require('fs')
+            var issue_number = Number(fs.readFileSync('./NR'))
             var msg = fs.readFileSync('./MSG', 'utf8')
 
             // Get the existing comments.
             const {data: comments} = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.number
+              issue_number: issue_number
             })
 
             // Find any comment already made by the bot.
@@ -67,7 +68,7 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.payload.number,
+                issue_number: issue_number,
                 body: msg
               })
             }
