@@ -1,15 +1,15 @@
 # [GPU support](@id gpu)
 
-Krylov methods are well suited for GPU computations because they only require matrix-vector products ($u \leftarrow Av$, $u \leftarrow A^{H}w$) and vector operations ($\|v\|$, $u^H v$, $v \leftarrow \alpha u + \beta v$), which are easily parallelizable.
+Krylov methods are well suited for GPU computations because they only require matrix-vector products ($u \leftarrow Av$, $u \leftarrow A^{H}w$) and vector operations ($\|v\|$, $u^H v$, $v \leftarrow \alpha u + \beta v$), which are highly parallelizable.
 
 The implementations in Krylov.jl are generic so as to take advantage of the multiple dispatch and broadcast features of Julia.
-It allows the implementations to be specialized automatically by the compiler for both CPU and GPU usages.
+Those allow the implementations to be specialized automatically by the compiler for both CPU and GPU.
 Thus, Krylov.jl works with GPU backends that build on [GPUArrays.jl](https://github.com/JuliaGPU/GPUArrays.jl), such as [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl), [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl), [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) or [Metal.jl](https://github.com/JuliaGPU/Metal.jl).
 
 ## Nvidia GPUs
 
-All solvers in Krylov.jl can be used with [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) and allow computations with Nvidia GPUs.
-Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to related GPU format (`CuMatrix` and `CuVector`).
+All solvers in Krylov.jl can be used with [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) and allow computations on Nvidia GPUs.
+Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to the related GPU format (`CuMatrix` and `CuVector`).
 
 ```julia
 using CUDA, Krylov
@@ -22,7 +22,7 @@ b_cpu = rand(20)
 A_gpu = CuMatrix(A_cpu)
 b_gpu = CuVector(b_cpu)
 
-# Solve a square and dense system on a Nivida GPU
+# Solve a square and dense system on an Nivida GPU
 x, stats = bilq(A_gpu, b_gpu)
 ```
 
@@ -119,8 +119,8 @@ x, stats = bicgstab(A_gpu, b_gpu, M=opM)
 
 ## AMD GPUs
 
-All solvers in Krylov.jl can be used with [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) and allow computations with AMD GPUs.
-Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to related GPU format (`ROCMatrix` and `ROCVector`).
+All solvers in Krylov.jl can be used with [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) and allow computations on AMD GPUs.
+Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to the related GPU format (`ROCMatrix` and `ROCVector`).
 
 ```julia
 using Krylov, AMDGPU
@@ -133,7 +133,7 @@ b_cpu = rand(ComplexF64, 20)
 A_gpu = ROCMatrix(A_cpu)
 b_gpu = ROCVector(b_cpu)
 
-# Solve a dense hermitian system on an AMD GPU
+# Solve a dense Hermitian system on an AMD GPU
 x, stats = minres(A_gpu, b_gpu)
 ```
 
@@ -142,8 +142,8 @@ x, stats = minres(A_gpu, b_gpu)
 
 ## Intel GPUs
 
-All solvers in Krylov.jl, except [`MINRES-QLP`](@ref minres_qlp), can be used with [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) and allow computations with Intel GPUs.
-Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to related GPU format (`oneMatrix` and `oneVector`).
+All solvers in Krylov.jl, except [`MINRES-QLP`](@ref minres_qlp), can be used with [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) and allow computations on Intel GPUs.
+Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to the related GPU format (`oneMatrix` and `oneVector`).
 
 ```julia
 using Krylov, oneAPI
@@ -169,8 +169,8 @@ x, stats = lsqr(A_gpu, b_gpu)
 
 ## Apple M1 GPUs
 
-All solvers in Krylov.jl, except [`MINRES-QLP`](@ref minres_qlp), can be used with [Metal.jl](https://github.com/JuliaGPU/Metal.jl) and allow computations with Apple M1 GPUs.
-Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to related GPU format (`MtlMatrix` and `MtlVector`).
+All solvers in Krylov.jl, except [`MINRES-QLP`](@ref minres_qlp), can be used with [Metal.jl](https://github.com/JuliaGPU/Metal.jl) and allow computations on Apple M1 GPUs.
+Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to the related GPU format (`MtlMatrix` and `MtlVector`).
 
 ```julia
 using Krylov, Metal
