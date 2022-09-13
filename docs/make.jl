@@ -6,7 +6,7 @@ makedocs(
   linkcheck = true,
   strict = true,
   format = Documenter.HTML(assets = ["assets/style.css"],
-                           ansicolor=true,
+                           ansicolor = true,
                            prettyurls = get(ENV, "CI", nothing) == "true",
                            collapselevel = 1),
   sitename = "Krylov.jl",
