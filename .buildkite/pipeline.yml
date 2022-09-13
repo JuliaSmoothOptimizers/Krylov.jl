@@ -10,6 +10,7 @@ steps:
       julia --color=yes --project -e '
       using Pkg
       Pkg.add("CUDA")
+      Pkg.add("LinearOperators")
       Pkg.instantiate()
       include("test/gpu/nvidia.jl")'
     timeout_in_minutes: 30
