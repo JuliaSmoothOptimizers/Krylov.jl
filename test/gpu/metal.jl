@@ -5,17 +5,27 @@ using Krylov, Metal
 const MtlVector{T} = MtlArray{T,1}
 const MtlMatrix{T} = MtlArray{T,2}
 
+# https://github.com/JuliaGPU/GPUArrays.jl/pull/427
 import Krylov.kdot
 function kdot(n :: Integer, x :: MtlVector{T}, dx :: Integer, y :: MtlVector{T}, dy :: Integer) where T <: Krylov.FloatOrComplex
-  z = similar(x)
-  z .= conj.(x) .* y
-  reduce(+, z)
+  return mapreduce(dot, +, x, y)
 end
 
 @testset "Apple M1 GPUs -- Metal.jl" begin
 
   # @test Metal.functional()
   Metal.allowscalar(false)
+
+  @testset "documentation" begin
+    T = Float32
+    n = 10
+    n = 20
+    A_cpu = rand(T, n, m)
+    b_cpu = rand(T, n)
+    A_gpu = MtlMatrix(A_cpu)
+    b_gpu = MtlVector(b_cpu)
+    x, stats = craig(A_gpu, b_gpu)
+  end
 
   for FC in (Float32, ComplexF32)
     S = MtlVector{FC}

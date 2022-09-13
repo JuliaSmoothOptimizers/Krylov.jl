@@ -6,6 +6,16 @@ using Krylov, AMDGPU
   @test AMDGPU.functional()
   AMDGPU.allowscalar(false)
 
+  @testset "documentation" begin
+    A_cpu = rand(ComplexF64, 20, 20)
+    A_cpu = A_cpu + A_cpu'
+    b_cpu = rand(ComplexF64, 20)
+    A = A + A'
+    A_gpu = ROCMatrix(A)
+    b_gpu = ROCVector(b)
+    x, stats = minres(A_gpu, b_gpu)
+  end
+
   for FC in (Float32, Float64, ComplexF32, ComplexF64)
     S = ROCVector{FC}
     T = real(FC)

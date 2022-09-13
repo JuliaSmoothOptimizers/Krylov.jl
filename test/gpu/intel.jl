@@ -1,17 +1,27 @@
 using LinearAlgebra, SparseArrays, Test
 using Krylov, oneAPI
 
+# https://github.com/JuliaGPU/GPUArrays.jl/pull/427
 import Krylov.kdot
 function kdot(n :: Integer, x :: oneVector{T}, dx :: Integer, y :: oneVector{T}, dy :: Integer) where T <: Krylov.FloatOrComplex
-  z = similar(x)
-  z .= conj.(x) .* y
-  reduce(+, z)
+  return mapreduce(dot, +, x, y)
 end
 
 @testset "Intel -- oneAPI.jl" begin
 
   @test oneAPI.functional()
   oneAPI.allowscalar(false)
+
+  @testset "documentation" begin
+    T = Float32
+    m = 20
+    n = 10
+    A_cpu = rand(T, m, n)
+    b_cpu = rand(T, m)
+    A_gpu = oneMatrix(A_cpu)
+    b_gpu = oneVector(b_cpu)
+    x, stats = lsqr(A_gpu, b_gpu)
+  end
 
   for FC ∈ (Float32, ComplexF32)
     S = oneVector{FC}
