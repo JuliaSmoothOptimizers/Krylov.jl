@@ -1,8 +1,10 @@
 using LinearAlgebra, SparseArrays, Test
 using Krylov, oneAPI
 
-# https://github.com/JuliaGPU/GPUArrays.jl/pull/427
+include("../test_utils.jl")
+
 import Krylov.kdot
+# https://github.com/JuliaGPU/GPUArrays.jl/pull/427
 function kdot(n :: Integer, x :: oneVector{T}, dx :: Integer, y :: oneVector{T}, dy :: Integer) where T <: Krylov.FloatOrComplex
   return mapreduce(dot, +, x, y)
 end
@@ -75,20 +77,23 @@ end
     # end
 
     ε = eps(T)
-    A = rand(FC, n, n)
-    A = oneMatrix{FC}(A)
-    b = rand(FC, n)
-    b = oneVector{FC}(b)
+    atol = √ε
+    rtol = √ε
 
     @testset "GMRES -- $FC" begin
+      A, b = nonsymmetric_indefinite(FC=FC)
+      A = oneMatrix{FC}(A)
+      b = oneVector{FC}(b)
       x, stats = gmres(A, b)
-      @test norm(b - A * x) ≤ √ε
+      @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
 
     @testset "CG -- $FC" begin
-      C = A * A'
-      x, stats = cg(C, b)
-      @test stats.solved
+      A, b = symmetric_definite(FC=FC)
+      A = oneMatrix{FC}(A)
+      b = oneVector{FC}(b)
+      x, stats = cg(A, b)
+      @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
   end
 end

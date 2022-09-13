@@ -1,6 +1,8 @@
 using LinearAlgebra, SparseArrays, Test
 using Krylov, AMDGPU
 
+include("../test_utils.jl")
+
 @testset "AMD -- AMDGPU.jl" begin
 
   @test AMDGPU.functional()
@@ -67,20 +69,23 @@ using Krylov, AMDGPU
     # end
 
     ε = eps(T)
-    A = rand(FC, n, n)
-    A = ROCMatrix{FC}(A)
-    b = rand(FC, n)
-    b = ROCVector{FC}(b)
+    atol = √ε
+    rtol = √ε
 
     @testset "GMRES -- $FC" begin
+      A, b = nonsymmetric_indefinite(FC=FC)
+      A = ROCMatrix{FC}(A)
+      b = ROCVector{FC}(b)
       x, stats = gmres(A, b)
-      @test norm(b - A * x) ≤ √ε
+      @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
 
     @testset "CG -- $FC" begin
-      C = A * A'
-      x, stats = cg(C, b)
-      @test stats.solved
+      A, b = symmetric_definite(FC=FC)
+      A = ROCMatrix{FC}(A)
+      b = ROCVector{FC}(b)
+      x, stats = cg(A, b)
+      @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
   end
 end
