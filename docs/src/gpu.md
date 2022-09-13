@@ -130,9 +130,8 @@ A_cpu = rand(ComplexF64, 20, 20)
 A_cpu = A_cpu + A_cpu'
 b_cpu = rand(ComplexF64, 20)
 
-A = A + A'
-A_gpu = ROCMatrix(A)
-b_gpu = ROCVector(b)
+A_gpu = ROCMatrix(A_cpu)
+b_gpu = ROCVector(b_cpu)
 
 # Solve a dense hermitian system on an AMD GPU
 x, stats = minres(A_gpu, b_gpu)
@@ -178,7 +177,7 @@ using Krylov, Metal
 
 T = Float32  # Metal.jl also works with ComplexF32
 n = 10
-n = 20
+m = 20
 
 # CPU Arrays
 A_cpu = rand(T, n, m)

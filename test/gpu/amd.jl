@@ -10,9 +10,8 @@ using Krylov, AMDGPU
     A_cpu = rand(ComplexF64, 20, 20)
     A_cpu = A_cpu + A_cpu'
     b_cpu = rand(ComplexF64, 20)
-    A = A + A'
-    A_gpu = ROCMatrix(A)
-    b_gpu = ROCVector(b)
+    A_gpu = ROCMatrix(A_cpu)
+    b_gpu = ROCVector(b_cpu)
     x, stats = minres(A_gpu, b_gpu)
   end
 

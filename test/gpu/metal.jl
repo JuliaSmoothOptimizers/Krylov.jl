@@ -19,7 +19,7 @@ end
   @testset "documentation" begin
     T = Float32
     n = 10
-    n = 20
+    m = 20
     A_cpu = rand(T, n, m)
     b_cpu = rand(T, n)
     A_gpu = MtlMatrix(A_cpu)
