@@ -172,3 +172,38 @@ using ILUZero, Krylov
 Pᵣ = ilu0(A)
 x, stats = bicgstab(A, b, N=Pᵣ, ldiv=true)  # right preconditioning
 ```
+
+```julia
+using LDLFactorizations, Krylov
+
+M = ldl(E)
+N = ldl(F)
+
+# [E  A] [x] = [b]
+# [Aᴴ F] [y]   [c]
+x, y, stats = tricg(A, b, c, M=M, N=N, ldiv=true)
+```
+
+```julia
+using SuiteSparse, Krylov
+import LinearAlgebra.ldiv!
+
+M = cholesky(E)
+
+# ldiv! is not implemented for the sparse Cholesky factorization (SuiteSparse.CHOLMOD)
+ldiv!(y::Vector{T}, F::SuiteSparse.CHOLMOD.Factor{T}, x::Vector{T}) where T = (y .= F \ x)
+
+# [E  A] [x] = [b]
+# [Aᴴ 0] [y]   [c]
+x, y, stats = trimr(A, b, c, M=M, sp=true, ldiv=true)
+```
+
+```julia
+using Krylov
+
+C = lu(M)
+
+# [M  A] [x] = [b]
+# [B  0] [y]   [c]
+x, y, stats = gpmr(A, B, b, c, C=C, gsp=true, ldiv=true)
+```
