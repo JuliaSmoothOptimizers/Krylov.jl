@@ -179,8 +179,8 @@ using LDLFactorizations, Krylov
 M = ldl(E)
 N = ldl(F)
 
-# [E  A] [x] = [b]
-# [Aᴴ F] [y]   [c]
+# [E   A] [x] = [b]
+# [Aᴴ -F] [y]   [c]
 x, y, stats = tricg(A, b, c, M=M, N=N, ldiv=true)
 ```
 
