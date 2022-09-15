@@ -5,7 +5,7 @@ export symmetric_lanczos, unsymmetric_lanczos, arnoldi, golub_kahan, saunders_si
 
 #### Input arguments:
 
-* `A`: a linear operator that models an Hermitian matrix of dimension n.
+* `A`: a linear operator that models a Hermitian matrix of dimension n.
 * `b`: a vector of length n.
 * `k`: the number of iterations of the symmetric Lanczos process.
 
@@ -218,7 +218,7 @@ end
 
 #### Input arguments:
 
-* `A`: a linear operator that models a rectangular matrix of dimension n × m.
+* `A`: a linear operator that models a matrix of dimension n × m.
 * `b`: a vector of length n.
 * `k`: the number of iterations of the Golub-Kahan process.
 
@@ -289,7 +289,7 @@ end
 
 #### Input arguments:
 
-* `A`: a linear operator that models a rectangular matrix of dimension n × m.
+* `A`: a linear operator that models a matrix of dimension n × m.
 * `b`: a vector of length n.
 * `c`: a vector of length m.
 * `k`: the number of iterations of the Saunders-Simon-Yip process.
@@ -377,8 +377,8 @@ end
 
 #### Input arguments:
 
-* `A`: a linear operator that models a rectangular matrix of dimension n × m.
-* `B`: a linear operator that models a rectangular matrix of dimension m × n.
+* `A`: a linear operator that models a matrix of dimension n × m.
+* `B`: a linear operator that models a matrix of dimension m × n.
 * `b`: a vector of length n.
 * `c`: a vector of length m.
 * `k`: the number of iterations of the Montoison-Orban process.

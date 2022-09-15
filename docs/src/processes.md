@@ -1,6 +1,6 @@
 # [Krylov processes](@id krylov-processes)
 
-Krylov processes are the foundations of Krylov methods, they generate bases of Krylov subspaces.
+Krylov processes are the foundation of Krylov methods, they generate bases of Krylov subspaces.
 
 ### Notation
 
@@ -18,11 +18,11 @@ For matrices $C \in \mathbb{C}^{n \times n} \enspace$ and $\enspace T \in \mathb
 \left\{\sum_{i=0}^{k-1} C^i T \, \Omega_i \, \middle \vert \, \Omega_i \in \mathbb{C}^{p \times p},~0 \le i \le k-1 \right\}.
 ```
 
-## Symmetric Lanczos
+## Hermitian Lanczos
 
 ![symmetric_lanczos](./graphics/symmetric_lanczos.png)
 
-After $k$ iterations of the symmetric Lanczos process, the situation may be summarized as
+After $k$ iterations of the Hermitian Lanczos process, the situation may be summarized as
 ```math
 \begin{align*}
   A V_k &= V_k T_k + \beta_{k+1,k} v_{k+1} e_k^T = V_{k+1}  T_{k+1,k}, \\
@@ -54,11 +54,11 @@ Related methods: [`SYMMLQ`](@ref symmlq), [`CG`](@ref cg), [`CR`](@ref cr), [`MI
 symmetric_lanczos
 ```
 
-## Unsymmetric Lanczos
+## Non-Hermitian Lanczos
 
 ![unsymmetric_lanczos](./graphics/unsymmetric_lanczos.png)
 
-After $k$ iterations of the unsymmetric Lanczos process (also named the Lanczos biorthogonalization process), the situation may be summarized as
+After $k$ iterations of the non-Hermitian Lanczos process (also named the Lanczos biorthogonalization process), the situation may be summarized as
 ```math
 \begin{align*}
   A V_k &= V_k T_k   +        \beta_{k+1} v_{k+1} e_k^T = V_{k+1} T_{k+1,k},   \\
