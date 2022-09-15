@@ -14,4 +14,27 @@ P = lldl(A)
 P.D .= abs.(P.D)
 x, stats = cg(A, b, M=P, ldiv=true)  # centered preconditioning</code></pre><pre><code class="language-julia hljs">using ILUZero, Krylov
 Pᵣ = ilu0(A)
-x, stats = bicgstab(A, b, N=Pᵣ, ldiv=true)  # right preconditioning</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../inplace/">« In-place methods</a><a class="docs-footer-nextpage" href="../gpu/">GPU support »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Tuesday 13 September 2022 23:23">Tuesday 13 September 2022</span>. Using Julia version 1.8.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+x, stats = bicgstab(A, b, N=Pᵣ, ldiv=true)  # right preconditioning</code></pre><pre><code class="language-julia hljs">using LDLFactorizations, Krylov
+
+M = ldl(E)
+N = ldl(F)
+
+# [E   A] [x] = [b]
+# [Aᴴ -F] [y]   [c]
+x, y, stats = tricg(A, b, c, M=M, N=N, ldiv=true)</code></pre><pre><code class="language-julia hljs">using SuiteSparse, Krylov
+import LinearAlgebra.ldiv!
+
+M = cholesky(E)
+
+# ldiv! is not implemented for the sparse Cholesky factorization (SuiteSparse.CHOLMOD)
+ldiv!(y::Vector{T}, F::SuiteSparse.CHOLMOD.Factor{T}, x::Vector{T}) where T = (y .= F \ x)
+
+# [E  A] [x] = [b]
+# [Aᴴ 0] [y]   [c]
+x, y, stats = trimr(A, b, c, M=M, sp=true, ldiv=true)</code></pre><pre><code class="language-julia hljs">using Krylov
+
+C = lu(M)
+
+# [M  A] [x] = [b]
+# [B  0] [y]   [c]
+x, y, stats = gpmr(A, B, b, c, C=C, gsp=true, ldiv=true)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../inplace/">« In-place methods</a><a class="docs-footer-nextpage" href="../gpu/">GPU support »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Thursday 15 September 2022 19:54">Thursday 15 September 2022</span>. Using Julia version 1.8.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
