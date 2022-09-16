@@ -46,7 +46,7 @@ my_cb = my_callback3(A, b)
 (x, stats) = minres(A, b, callback = my_cb)
 ```
 
-Although the main goal of a callback is to add new stopping conditions, it can also retrieve informations from the workspace of a Krylov method along the iterations.
+Although the main goal of a callback is to add new stopping conditions, it can also retrieve information from the workspace of a Krylov method along the iterations.
 We now illustrate how to store all iterates $x_k$ of the GMRES method.
 
 ```julia
