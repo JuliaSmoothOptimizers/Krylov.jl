@@ -1,3 +1,16 @@
+import LinearAlgebra.mul!
+
+mutable struct FlexiblePreconditioner{T,S}
+  D::Diagonal{T, S}
+  ω::T
+end
+
+function mul!(y::Vector, P::FlexiblePreconditioner, x::Vector)
+  P.ω = -P.ω
+  mul!(y, P.D, x)
+  y .*= P.ω
+end
+
 @testset "fgmres" begin
   fgmres_tol = 1.0e-6
 
@@ -128,18 +141,14 @@
         @test(stats.solved)
       end
 
-      # test callback function
-      # A, b = sparse_laplacian(FC=FC)
-      # solver = FgmresSolver(A, b)
-      # tol = 1.0e-1
-      # N = Diagonal(1 ./ diag(A))
-      # stor = StorageGetxRestartedGmres(solver, N = N)
-      # storage_vec = similar(b)
-      # fgmres!(solver, A, b, N = N, atol = 0.0, rtol = 0.0, restart = true, callback = solver -> restarted_fgmres_callback_n2(solver, A, b, stor, N, storage_vec, tol))
-      # @test solver.stats.status == "user-requested exit"
-      # @test norm(A * x - b) ≤ tol
-      #
-      # @test_throws TypeError fgmres(A, b, callback = solver -> "string", history = true)
+      A, b = polar_poisson(FC=FC)
+      J = inv(Diagonal(A))  # Jacobi preconditioner
+      N = FlexiblePreconditioner(J, 1.0)
+      (x, stats) = fgmres(A, b, N=N)
+      r = b - A * x
+      resid = norm(r) / norm(b)
+      @test(resid ≤ fgmres_tol)
+      @test(stats.solved)
     end
   end
 end

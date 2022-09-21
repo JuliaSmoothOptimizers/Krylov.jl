@@ -29,6 +29,7 @@ This implementation allows a left preconditioner M and a flexible right precondi
 A situation in which the preconditioner is "not constant" is when a relaxation-type method,
 a Chebyshev iteration or another Krylov subspace method is used as a preconditioner. 
 Compared to GMRES, there is no additional cost incurred in the arithmetic but the memory requirement almost doubles.
+Thus, GMRES is recommended if the right preconditioner N is identical as each iteration.
 
 Full reorthogonalization is available with the `reorthogonalization` option.
 
@@ -93,9 +94,8 @@ function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("FGMRES: system of size %d\n", n)
 
-  # Check M = Iₙ and N = Iₙ
+  # Check M = Iₙ
   MisI = (M === I)
-  NisI = (N === I)
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
