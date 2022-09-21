@@ -470,3 +470,24 @@ function restarted_gmres_callback_n2(solver::GmresSolver, A, b, stor, N, storage
   storage_vec .-= b
   return (norm(storage_vec) ≤ tol)
 end
+
+# Successive over-relaxation (SOR) method
+function sor!(x, A, b, ω, k)
+  x .= 0
+  n = length(x)
+  for iter = 1:k
+    for i = 1:n
+      sum1 = sum(A[i,j] * x[j] for j = 1:i-1; init = 0)
+      sum2 = sum(A[i,j] * x[j] for j = i+1:n; init = 0)
+      x[i] = (1 - ω) * x[i] + (ω / A[i,i]) * (b[i] - sum1 - sum2)
+    end
+  end
+  return x
+end
+
+function test_sor()
+  A = [4 -1 -6 0; -5 -4 10 8; 0 9 4 -2; 1 0 -7 5]
+  b = [2; 21; -12; -6]
+  ω = 0.5
+  return A, b, ω
+end

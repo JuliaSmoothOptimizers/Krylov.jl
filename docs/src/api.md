@@ -48,6 +48,7 @@ LnlqSolver
 CraigSolver
 CraigmrSolver
 GpmrSolver
+FgmresSolver
 ```
 
 ## Utilities

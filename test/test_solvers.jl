@@ -21,6 +21,7 @@ function test_solvers(FC)
     fom_solver = $(KRYLOV_SOLVERS[:fom])($n, $n, $mem, $S)
     dqgmres_solver = $(KRYLOV_SOLVERS[:dqgmres])($n, $n, $mem, $S)
     gmres_solver = $(KRYLOV_SOLVERS[:gmres])($n, $n, $mem, $S)
+    fgmres_solver = $(KRYLOV_SOLVERS[:fgmres])($n, $n, $mem, $S)
     cr_solver = $(KRYLOV_SOLVERS[:cr])($n, $n, $S)
     crmr_solver = $(KRYLOV_SOLVERS[:crmr])($m, $n, $S)
     cgs_solver = $(KRYLOV_SOLVERS[:cgs])($n, $n, $S)
@@ -135,6 +136,16 @@ function test_solvers(FC)
     @test issolved(solver)
 
     solver = solve!(gmres_solver, A, b)
+    niter = niterations(solver)
+    @test niter > 0
+    @test Aprod(solver) == niter
+    @test Atprod(solver) == 0
+    @test statistics(solver) === solver.stats
+    @test solution(solver, 1) === solver.x
+    @test nsolution(solver) == 1
+    @test issolved(solver)
+
+    solver = solve!(fgmres_solver, A, b)
     niter = niterations(solver)
     @test niter > 0
     @test Aprod(solver) == niter
@@ -593,6 +604,31 @@ function test_solvers(FC)
   │ warm_start│               Bool│                0│
   │ inner_iter│              Int64│                0│
   └───────────┴───────────────────┴─────────────────┘
+  """
+  @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
+
+  io = IOBuffer()
+  show(io, fgmres_solver, show_stats=false)
+  showed = String(take!(io))
+  expected = """
+  ┌────────────┬───────────────────┬─────────────────┐
+  │FgmresSolver│    Precision: $FC │Architecture: CPU│
+  ├────────────┼───────────────────┼─────────────────┤
+  │   Attribute│               Type│             Size│
+  ├────────────┼───────────────────┼─────────────────┤
+  │          Δx│        Vector{$FC}│                0│
+  │           x│        Vector{$FC}│               64│
+  │           w│        Vector{$FC}│               64│
+  │           q│        Vector{$FC}│                0│
+  │           V│Vector{Vector{$FC}}│          10 x 64│
+  │           Z│Vector{Vector{$FC}}│          10 x 64│
+  │           c│         Vector{$T}│               10│
+  │           s│        Vector{$FC}│               10│
+  │           z│        Vector{$FC}│               10│
+  │           R│        Vector{$FC}│               55│
+  │  warm_start│               Bool│                0│
+  │  inner_iter│              Int64│                0│
+  └────────────┴───────────────────┴─────────────────┘
   """
   @test reduce(replace, [" " => "", "\n" => "", "─" => ""], init=showed) == reduce(replace, [" " => "", "\n" => "", "─" => ""], init=expected)
 

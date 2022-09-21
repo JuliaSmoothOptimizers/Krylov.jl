@@ -218,6 +218,26 @@
         @test inplace_gmres_bytes == 0
       end
 
+      @testset "FGMRES" begin
+        # FGMRES needs:
+        # - 2 n-vectors: x, w
+        # - 2 n*(mem)-matrix: V, Z
+        # - 3 mem-vectors: c, s, z
+        # - 1 (mem*(mem+1)/2)-vector: R
+        storage_fgmres(mem, n) = (2 * n) + (2 * n * mem) + (3 * mem) + (mem * (mem+1) / 2)
+        storage_fgmres_bytes(mem, n) = nbits * storage_fgmres(mem, n)
+
+        expected_fgmres_bytes = storage_fgmres_bytes(mem, n)
+        fgmres(A, b, memory=mem)  # warmup
+        actual_fgmres_bytes = @allocated fgmres(A, b, memory=mem)
+        @test expected_fgmres_bytes ≤ actual_fgmres_bytes ≤ 1.02 * expected_fgmres_bytes
+
+        solver = FgmresSolver(A, b, mem)
+        fgmres!(solver, A, b)  # warmup
+        inplace_fgmres_bytes = @allocated fgmres!(solver, A, b)
+        @test inplace_fgmres_bytes == 0
+      end
+
       @testset "CGS" begin
         # CGS needs:
         # 6 n-vectors: x, r, u, p, q, ts

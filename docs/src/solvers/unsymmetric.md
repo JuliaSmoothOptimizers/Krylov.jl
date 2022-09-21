@@ -71,3 +71,10 @@ dqgmres!
 gmres
 gmres!
 ```
+
+## FGMRES
+
+```@docs
+fgmres
+fgmres!
+```
