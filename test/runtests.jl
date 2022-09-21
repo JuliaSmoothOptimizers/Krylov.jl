@@ -5,6 +5,7 @@ include("test_utils.jl")
 include("test_aux.jl")
 include("test_stats.jl")
 
+include("test_fgmres.jl")
 include("test_gpmr.jl")
 include("test_fom.jl")
 include("test_gmres.jl")

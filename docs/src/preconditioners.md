@@ -29,7 +29,7 @@ Krylov.jl supports both approaches thanks to the argument `ldiv` of the Krylov s
 
 ### Square non-Hermitian linear systems
 
-Methods concerned: [`CGS`](@ref cgs), [`BiCGSTAB`](@ref bicgstab), [`DQGMRES`](@ref dqgmres), [`GMRES`](@ref gmres), [`DIOM`](@ref diom) and [`FOM`](@ref fom).
+Methods concerned: [`CGS`](@ref cgs), [`BiCGSTAB`](@ref bicgstab), [`DQGMRES`](@ref dqgmres), [`GMRES`](@ref gmres), [`FGMRES`](@ref fgmres), [`DIOM`](@ref diom) and [`FOM`](@ref fom).
 
 A Krylov method dedicated to non-Hermitian linear systems allows the three variants of preconditioning.
 

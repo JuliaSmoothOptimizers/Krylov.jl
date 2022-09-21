@@ -70,6 +70,11 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  x, stats = fgmres(A, b, x0)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+
   x, stats = bicgstab(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)

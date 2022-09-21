@@ -3,7 +3,7 @@ CgLanczosShiftSolver, MinresQlpSolver, DqgmresSolver, DiomSolver, UsymlqSolver,
 UsymqrSolver, TricgSolver, TrimrSolver, TrilqrSolver, CgsSolver, BicgstabSolver,
 BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CrlsSolver, CgneSolver, CrmrSolver,
 LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
-GmresSolver, FomSolver, GpmrSolver
+GmresSolver, FomSolver, GpmrSolver, FgmresSolver
 
 export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual,
 niterations, Aprod, Atprod, Bprod, warm_start!
@@ -20,6 +20,7 @@ const KRYLOV_SOLVERS = Dict(
   :fom              => :FomSolver           ,
   :dqgmres          => :DqgmresSolver       ,
   :gmres            => :GmresSolver         ,
+  :fgmres           => :FgmresSolver        ,
   :gpmr             => :GpmrSolver          ,
   :usymlq           => :UsymlqSolver        ,
   :usymqr           => :UsymqrSolver        ,
@@ -1504,6 +1505,58 @@ function GmresSolver(A, b, memory = 20)
 end
 
 """
+Type for storing the vectors required by the in-place version of FGMRES.
+
+The outer constructors
+
+    solver = FgmresSolver(n, m, memory, S)
+    solver = FgmresSolver(A, b, memory = 20)
+
+may be used in order to create these vectors.
+`memory` is set to `n` if the value given is larger than `n`.
+"""
+mutable struct FgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
+  Δx         :: S
+  x          :: S
+  w          :: S
+  q          :: S
+  V          :: Vector{S}
+  Z          :: Vector{S}
+  c          :: Vector{T}
+  s          :: Vector{FC}
+  z          :: Vector{FC}
+  R          :: Vector{FC}
+  warm_start :: Bool
+  inner_iter :: Int
+  stats      :: SimpleStats{T}
+end
+
+function FgmresSolver(n, m, memory, S)
+  memory = min(n, memory)
+  FC = eltype(S)
+  T  = real(FC)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  w  = S(undef, n)
+  q  = S(undef, 0)
+  V  = [S(undef, n) for i = 1 : memory]
+  Z  = [S(undef, n) for i = 1 : memory]
+  c  = Vector{T}(undef, memory)
+  s  = Vector{FC}(undef, memory)
+  z  = Vector{FC}(undef, memory)
+  R  = Vector{FC}(undef, div(memory * (memory+1), 2))
+  stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
+  solver = FgmresSolver{T,FC,S}(Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
+  return solver
+end
+
+function FgmresSolver(A, b, memory = 20)
+  n, m = size(A)
+  S = ktypeof(b)
+  FgmresSolver(n, m, memory, S)
+end
+
+"""
 Type for storing the vectors required by the in-place version of FOM.
 
 The outer constructors
@@ -1704,6 +1757,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (MinresQlpSolver     , :minres_qlp!      , 1, 1, 0, true )
   (QmrSolver           , :qmr!             , 1, 1, 1, true )
   (GmresSolver         , :gmres!           , 1, 1, 0, true )
+  (FgmresSolver        , :fgmres!          , 1, 1, 0, true )
   (FomSolver           , :fom!             , 1, 1, 0, true )
   (GpmrSolver          , :gpmr!            , 2, 1, 0, true )
 ]

@@ -3,7 +3,7 @@
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos, :dqgmres, :diom, :cr, :gpmr,
              :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab, :craigmr, :crls, :symmlq, :minres,
              :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr, :gmres, :fom,
-             :cg_lanczos_shift)
+             :fgmres, :cg_lanczos_shift)
     for T in (Float16, Float32, Float64, BigFloat)
       for FC in (T, Complex{T})
         A = spdiagm(-1 => -ones(FC,n-1), 0 => 3*ones(FC,n), 1 => -ones(FC,n-1))

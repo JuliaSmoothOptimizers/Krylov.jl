@@ -19,6 +19,7 @@ include("diom.jl")
 include("fom.jl")
 include("dqgmres.jl")
 include("gmres.jl")
+include("fgmres.jl")
 
 include("gpmr.jl")
 
