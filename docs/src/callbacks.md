@@ -3,47 +3,45 @@
 Each Krylov method is able to call a callback function as `callback(solver)` at each iteration.
 The callback should return `true` if the main loop should terminate, and `false` otherwise.
 If the method terminated because of the callback, the output status will be `"user-requested exit"`.
-For example, if the user defines `my_callback(solver::MinresSolver)`, it can be passed to the solver using
+For example, if the user defines `minres_callback(solver::MinresSolver)`, it can be passed to the solver using
 
 ```julia
-(x, stats) = minres(A, b, callback = my_callback)
+(x, stats) = minres(A, b, callback = minres_callback)
 ```
 
-If you need to write a callback that uses variables that are not in the `MinresSolver`, use a closure:
+If you need to write a callback that uses variables that are not in a `KrylovSolver`, use a closure:
 
 ```julia
-function my_callback2(solver::MinresSolver, A, b, r, tol)
+function custom_stopping_condition(solver::KrylovSolver, A, b, r, tol)
   mul!(r, A, solver.x)
   r .-= b               # r := b - Ax
   bool = norm(r) ≤ tol  # tolerance based on the 2-norm of the residual
   return bool
 end
 
-r = similar(b)
-(x, stats) = minres(A, b, callback = solver -> my_callback2(solver, A, b, r, 1e-6))
+cg_callback(solver) = custom_stopping_condition(solver, A, b, r, tol)
+(x, stats) = cg(A, b, callback = cg_callback)
 ```
 
 Alternatively, use a structure and make it callable:
 
 ```julia
-mutable struct my_callback3{S, M}
-  A::M
-  b::S
-  r::S
-  tol::Float64
+mutable struct CallbackWorkspace{T}
+  A::Matrix{T}
+  b::Vector{T}
+  r::Vector{T}
+  tol::T
 end
 
-my_callback3(A, b; tol=1e-6) = my_callback3(A, b, similar(b), tol)  # Outer constructor
-
-function (my_cb::my_callback3)(solver)
-  mul!(my_cb.r, my_cb.A, solver.x)
-  my_cb.r .-= my_cb.b
-  bool = norm(my_cb.r) ≤ my_cb.tol
+function (workspace::CallbackWorkspace)(solver::KrylovSolver)
+  mul!(workspace.r, workspace.A, solver.x)
+  workspace.r .-= workspace.b
+  bool = norm(workspace.r) ≤ workspace.tol
   return bool
 end
 
-my_cb = my_callback3(A, b)
-(x, stats) = minres(A, b, callback = my_cb)
+bicgstab_callback = CallbackWorkspace(A, b, r, tol)
+(x, stats) = bicgstab(A, b, callback = bicgstab_callback)
 ```
 
 Although the main goal of a callback is to add new stopping conditions, it can also retrieve information from the workspace of a Krylov method along the iterations.
