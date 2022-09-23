@@ -60,4 +60,5 @@ Krylov.vec2str
 Krylov.ktypeof
 Krylov.kzeros
 Krylov.kones
+Krylov.vector_to_matrix
 ```
