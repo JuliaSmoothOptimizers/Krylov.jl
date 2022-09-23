@@ -33,6 +33,6 @@ function test_processes(S, M)
 
   cpu_A, cpu_b = under_consistent(n, m, FC=FC)
   cpu_B, cpu_c = over_consistent(m, n, FC=FC)
-  gpu_A, gpu_B, gpu_b, gpu_c = M(cpu_A), M(gpu_B), S(cpu_b), S(cpu_c)
+  gpu_A, gpu_B, gpu_b, gpu_c = M(cpu_A), M(cpu_B), S(cpu_b), S(cpu_c)
   V, H, U, F = montoison_orban(gpu_A, gpu_B, gpu_b, gpu_c, k)
 end
