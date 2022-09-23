@@ -1,3 +1,17 @@
+```@pseudocode
+\begin{algorithm}
+  \caption{Test atoms}
+  \begin{algorithmic}
+    \STATE \textbf{Specials:} \{ \} \$ \& \# \% \_
+    \STATE \textbf{Bools:} \AND \OR \NOT \TRUE \FALSE
+    \STATE \textbf{Carriage return:} first line \\ second line
+    \STATE \textbf{Text-symbols:} \textbackslash
+    \STATE \textbf{Quote-symbols:} `single quotes', ``double quotes''
+    \STATE \textbf{Math:} $(\mathcal{C}_m)$, $i \gets i + 1$, $E=mc^2$, \( x^n + y^n = z^n \), $\$$, \(\$\)
+  \end{algorithmic}
+\end{algorithm}
+```
+
 # [Krylov processes](@id krylov-processes)
 
 Krylov processes are the foundation of Krylov methods, they generate bases of Krylov subspaces.
@@ -20,7 +34,7 @@ For matrices $C \in \mathbb{C}^{n \times n} \enspace$ and $\enspace T \in \mathb
 
 ## Hermitian Lanczos
 
-![symmetric_lanczos](./graphics/symmetric_lanczos.png)
+![hermitian_lanczos](./graphics/hermitian_lanczos.png)
 
 After $k$ iterations of the Hermitian Lanczos process, the situation may be summarized as
 ```math
@@ -45,18 +59,19 @@ T_{k+1,k} =
   \beta_{k+1} e_{k}^T
 \end{bmatrix}.
 ```
+Note that $T_{k+1,k}$ is a real tridiagonal matrix even if $A$ is a complex matrix.
 
-The function [`symmetric_lanczos`](@ref symmetric_lanczos) returns $V_{k+1}$ and $T_{k+1,k}$.
+The function [`hermitian_lanczos`](@ref hermitian_lanczos) returns $V_{k+1}$ and $T_{k+1,k}$.
 
 Related methods: [`SYMMLQ`](@ref symmlq), [`CG`](@ref cg), [`CR`](@ref cr), [`MINRES`](@ref minres), [`MINRES-QLP`](@ref minres_qlp), [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`CG-LANCZOS`](@ref cg_lanczos) and [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift).
 
 ```@docs
-symmetric_lanczos
+hermitian_lanczos
 ```
 
 ## Non-Hermitian Lanczos
 
-![unsymmetric_lanczos](./graphics/unsymmetric_lanczos.png)
+![nonhermitian_lanczos](./graphics/nonhermitian_lanczos.png)
 
 After $k$ iterations of the non-Hermitian Lanczos process (also named the Lanczos biorthogonalization process), the situation may be summarized as
 ```math
@@ -88,7 +103,7 @@ T_{k,k+1} =
 \end{bmatrix}.
 ```
 
-The function [`unsymmetric_lanczos`](@ref unsymmetric_lanczos) returns $V_{k+1}$, $T_{k+1,k}$, $U_{k+1}$ and $T_{k,k+1}^H$.
+The function [`nonhermitian_lanczos`](@ref nonhermitian_lanczos) returns $V_{k+1}$, $T_{k+1,k}$, $U_{k+1}$ and $T_{k,k+1}^H$.
 
 Related methods: [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), [`CGS`](@ref cgs) and [`BICGSTAB`](@ref bicgstab).
 
@@ -96,7 +111,7 @@ Related methods: [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), 
     The scaling factors used in our implementation are $\beta_k = |u_k^H v_k|^{\tfrac{1}{2}}$ and $\gamma_k = (u_k^H v_k) / \beta_k$.
 
 ```@docs
-unsymmetric_lanczos
+nonhermitian_lanczos
 ```
 
 ## Arnoldi
@@ -172,6 +187,7 @@ B_k =
   \beta_{k+1} e_{k}^T
 \end{bmatrix}.
 ```
+Note that $L_k$ is a real bidiagonal matrix even if $A$ is a complex matrix.
 
 The function [`golub_kahan`](@ref golub_kahan) returns $V_{k+1}$, $U_{k+1}$ and $L_{k+1}$.
 
@@ -273,4 +289,8 @@ Related methods: [`GPMR`](@ref gpmr).
 
 ```@docs
 montoison_orban
+```
+
+```@pseudocode
+    pseudocode.renderClass("pseudocode")
 ```

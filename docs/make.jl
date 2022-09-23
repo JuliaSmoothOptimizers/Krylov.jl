@@ -5,7 +5,7 @@ makedocs(
   doctest = true,
   linkcheck = true,
   strict = true,
-  format = Documenter.HTML(assets = ["assets/style.css"],
+  format = Documenter.HTML(assets = ["assets/style.css", "assets/pseudocode.min.js"],
                            ansicolor = true,
                            prettyurls = get(ENV, "CI", nothing) == "true",
                            collapselevel = 1),

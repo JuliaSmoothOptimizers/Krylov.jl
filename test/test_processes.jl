@@ -28,33 +28,33 @@ end
 
     @testset "Data Type: FC" begin
       
-      @testset "Symmetric Lanczos" begin
+      @testset "Hermitian Lanczos" begin
         A, b = symmetric_indefinite(n, FC=FC)
-        V, T = symmetric_lanczos(A, b, k)
+        V, T = hermitian_lanczos(A, b, k)
 
         @test A * V[:,1:k] ≈ V * T
 
-        storage_symmetric_lanczos_bytes(n, k) = 4k * nbits_I + (3k-1) * nbits_R + n*(k+1) * nbits_FC
+        storage_hermitian_lanczos_bytes(n, k) = 4k * nbits_I + (3k-1) * nbits_R + n*(k+1) * nbits_FC
 
-        expected_symmetric_lanczos_bytes = storage_symmetric_lanczos_bytes(n, k)
-        actual_symmetric_lanczos_bytes = @allocated symmetric_lanczos(A, b, k)
-        @test expected_symmetric_lanczos_bytes ≤ actual_symmetric_lanczos_bytes ≤ 1.02 * expected_symmetric_lanczos_bytes
+        expected_hermitian_lanczos_bytes = storage_hermitian_lanczos_bytes(n, k)
+        actual_hermitian_lanczos_bytes = @allocated hermitian_lanczos(A, b, k)
+        @test expected_hermitian_lanczos_bytes ≤ actual_hermitian_lanczos_bytes ≤ 1.02 * expected_hermitian_lanczos_bytes
       end
 
-      @testset "Unsymmetric Lanczos" begin
+      @testset "Non-hermitian Lanczos" begin
         A, b = nonsymmetric_definite(n, FC=FC)
         c = -b
-        V, T, U, S = unsymmetric_lanczos(A, b, c, k)
+        V, T, U, Tᴴ = nonhermitian_lanczos(A, b, c, k)
 
-        @test T[1:k,1:k] ≈ S[1:k,1:k]'
+        @test T[1:k,1:k] ≈ Tᴴ[1:k,1:k]'
         @test A  * V[:,1:k] ≈ V * T
-        @test A' * U[:,1:k] ≈ U * S
+        @test A' * U[:,1:k] ≈ U * Tᴴ
 
-        storage_unsymmetric_lanczos_bytes(n, k) = 4k * nbits_I + (6k-2) * nbits_FC + 2*n*(k+1) * nbits_FC
+        storage_nonhermitian_lanczos_bytes(n, k) = 4k * nbits_I + (6k-2) * nbits_FC + 2*n*(k+1) * nbits_FC
 
-        expected_unsymmetric_lanczos_bytes = storage_unsymmetric_lanczos_bytes(n, k)
-        actual_unsymmetric_lanczos_bytes = @allocated unsymmetric_lanczos(A, b, c, k)
-        @test expected_unsymmetric_lanczos_bytes ≤ actual_unsymmetric_lanczos_bytes ≤ 1.02 * expected_unsymmetric_lanczos_bytes
+        expected_nonhermitian_lanczos_bytes = storage_nonhermitian_lanczos_bytes(n, k)
+        actual_nonhermitian_lanczos_bytes = @allocated nonhermitian_lanczos(A, b, c, k)
+        @test expected_nonhermitian_lanczos_bytes ≤ actual_nonhermitian_lanczos_bytes ≤ 1.02 * expected_nonhermitian_lanczos_bytes
       end
 
       @testset "Arnoldi" begin
@@ -93,20 +93,20 @@ end
       @testset "Saunders-Simon-Yip" begin
         A, b = under_consistent(n, m, FC=FC)
         _, c = over_consistent(m, n, FC=FC)
-        V, T, U, S = saunders_simon_yip(A, b, c, k)
+        V, T, U, Tᴴ = saunders_simon_yip(A, b, c, k)
 
-        @test T[1:k,1:k] ≈ S[1:k,1:k]'
+        @test T[1:k,1:k] ≈ Tᴴ[1:k,1:k]'
         @test A  * U[:,1:k] ≈ V * T
-        @test A' * V[:,1:k] ≈ U * S
-        @test A' * A  * U[:,1:k-1] ≈ U * S * T[1:k,1:k-1]
-        @test A  * A' * V[:,1:k-1] ≈ V * T * S[1:k,1:k-1]
+        @test A' * V[:,1:k] ≈ U * Tᴴ
+        @test A' * A  * U[:,1:k-1] ≈ U * Tᴴ * T[1:k,1:k-1]
+        @test A  * A' * V[:,1:k-1] ≈ V * T * Tᴴ[1:k,1:k-1]
 
         K = [zeros(FC,n,n) A; A' zeros(FC,m,m)]
         Pₖ = permutation_paige(k)
         Wₖ = [V[:,1:k] zeros(FC,n,k); zeros(FC,m,k) U[:,1:k]] * Pₖ
         Pₖ₊₁ = permutation_paige(k+1)
         Wₖ₊₁ = [V zeros(FC,n,k+1); zeros(FC,m,k+1) U] * Pₖ₊₁
-        G = Pₖ₊₁' * [zeros(FC,k+1,k) T; S zeros(FC,k+1,k)] * Pₖ
+        G = Pₖ₊₁' * [zeros(FC,k+1,k) T; Tᴴ zeros(FC,k+1,k)] * Pₖ
         @test K * Wₖ ≈ Wₖ₊₁ * G
 
         storage_saunders_simon_yip_bytes(n, m, k) = 4k * nbits_I + (6k-2) * nbits_FC + (n+m)*(k+1) * nbits_FC

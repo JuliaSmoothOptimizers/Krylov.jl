@@ -1,13 +1,13 @@
-export symmetric_lanczos, unsymmetric_lanczos, arnoldi, golub_kahan, saunders_simon_yip, montoison_orban
+export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_simon_yip, montoison_orban
 
 """
-    V, T = symmetric_lanczos(A, b, k)
+    V, T = hermitian_lanczos(A, b, k)
 
 #### Input arguments:
 
 * `A`: a linear operator that models a Hermitian matrix of dimension n.
 * `b`: a vector of length n.
-* `k`: the number of iterations of the symmetric Lanczos process.
+* `k`: the number of iterations of the Hermitian Lanczos process.
 
 #### Output arguments:
 
@@ -18,7 +18,7 @@ export symmetric_lanczos, unsymmetric_lanczos, arnoldi, golub_kahan, saunders_si
 
 * C. Lanczos, [*An Iteration Method for the Solution of the Eigenvalue Problem of Linear Differential and Integral Operators*](https://doi.org/10.6028/jres.045.026), Journal of Research of the National Bureau of Standards, 45(4), pp. 225--280, 1950.
 """
-function symmetric_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
+function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   n, m = size(A)
   R = real(FC)
 
@@ -67,27 +67,27 @@ function symmetric_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
 end
 
 """
-    V, T, U, S = unsymmetric_lanczos(A, b, c, k)
+    V, T, U, Tᴴ = nonhermitian_lanczos(A, b, c, k)
 
 #### Input arguments:
 
 * `A`: a linear operator that models a square matrix of dimension n.
 * `b`: a vector of length n.
 * `c`: a vector of length n.
-* `k`: the number of iterations of the unsymmetric Lanczos process.
+* `k`: the number of iterations of the non-Hermitian Lanczos process.
 
 #### Output arguments:
 
 * `V`: a dense n × (k+1) matrix.
 * `T`: a sparse (k+1) × k tridiagonal matrix.
 * `U`: a dense n × (k+1) matrix.
-* `S`: a sparse (k+1) × k tridiagonal matrix.
+* `Tᴴ`: a sparse (k+1) × k tridiagonal matrix.
 
 #### Reference
 
 * C. Lanczos, [*An Iteration Method for the Solution of the Eigenvalue Problem of Linear Differential and Integral Operators*](https://doi.org/10.6028/jres.045.026), Journal of Research of the National Bureau of Standards, 45(4), pp. 225--280, 1950.
 """
-function unsymmetric_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
+function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   n, m = size(A)
   Aᴴ = A'
 
@@ -285,7 +285,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
 end
 
 """
-    V, T, U, S = saunders_simon_yip(A, b, c, k)
+    V, T, U, Tᴴ = saunders_simon_yip(A, b, c, k)
 
 #### Input arguments:
 
@@ -299,7 +299,7 @@ end
 * `V`: a dense n × (k+1) matrix.
 * `T`: a sparse (k+1) × k tridiagonal matrix.
 * `U`: a dense m × (k+1) matrix.
-* `S`: a sparse (k+1) × k tridiagonal matrix.
+* `Tᴴ`: a sparse (k+1) × k tridiagonal matrix.
 
 #### Reference
 
