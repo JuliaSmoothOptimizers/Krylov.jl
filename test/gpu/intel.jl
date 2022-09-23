@@ -1,7 +1,6 @@
-using LinearAlgebra, SparseArrays, Test
-using Krylov, oneAPI
+using oneAPI
 
-include("../test_utils.jl")
+include("gpu.jl")
 
 import Krylov.kdot
 # https://github.com/JuliaGPU/GPUArrays.jl/pull/427
@@ -27,6 +26,7 @@ end
 
   for FC ∈ (Float32, ComplexF32)
     S = oneVector{FC}
+    M = oneMatrix{FC}
     T = real(FC)
     n = 10
     x = rand(FC, n)
@@ -78,8 +78,8 @@ end
 
     @testset "vector_to_matrix" begin
       S = oneVector{FC}
-      M = Krylov.vector_to_matrix(S)
-      @test M == oneMatrix{FC}
+      M2 = Krylov.vector_to_matrix(S)
+      @test M2 == M
     end
 
     ε = eps(T)
@@ -100,6 +100,10 @@ end
       b = oneVector{FC}(b)
       x, stats = cg(A, b)
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
+    end
+
+    @testset "processes -- $FC" begin
+      test_processes(S, M)
     end
   end
 end

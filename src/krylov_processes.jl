@@ -21,6 +21,8 @@ export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_s
 function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   n, m = size(A)
   R = real(FC)
+  S = ktypeof(b)
+  M = vector_to_matrix(S)
 
   colptr = zeros(Int, k+1)
   rowval = zeros(Int, 3k-1)
@@ -39,8 +41,8 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
     end
   end
 
+  V = M(undef, n, k+1)
   T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval)
-  V = zeros(FC, n, k+1)
 
   for i = 1:k
     vᵢ = view(V,:,i)
@@ -90,11 +92,13 @@ end
 function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   n, m = size(A)
   Aᴴ = A'
+  S = ktypeof(b)
+  M = vector_to_matrix(S)
 
   colptr = zeros(Int, k+1)
   rowval = zeros(Int, 3k-1)
   nzval_T = zeros(FC, 3k-1)
-  nzval_S = zeros(FC, 3k-1)
+  nzval_Tᴴ = zeros(FC, 3k-1)
 
   colptr[1] = 1
   rowval[1] = 1
@@ -109,10 +113,10 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     end
   end
 
+  V = M(undef, n, k+1)
+  U = M(undef, n, k+1)
   T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_T)
-  S = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_S)
-  V = zeros(FC, n, k+1)
-  U = zeros(FC, n, k+1)
+  Tᴴ = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_Tᴴ)
 
   for i = 1:k
     vᵢ = view(V,:,i)
@@ -138,7 +142,7 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     end
     αᵢ = @kdot(n, uᵢ, q)
     T[i,i] = αᵢ
-    S[i,i] = conj(αᵢ)
+    Tᴴ[i,i] = conj(αᵢ)
     @kaxpy!(m, -     αᵢ , vᵢ, q)
     @kaxpy!(n, -conj(αᵢ), uᵢ, p)
     pᴴq = @kdot(n, p, q)
@@ -147,13 +151,13 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     vᵢ₊₁ .= q ./ βᵢ₊₁
     uᵢ₊₁ .= p ./ conj(γᵢ₊₁)
     T[i+1,i] = βᵢ₊₁
-    S[i+1,i] = conj(γᵢ₊₁)
+    Tᴴ[i+1,i] = conj(γᵢ₊₁)
     if i ≤ k-1
       T[i,i+1] = γᵢ₊₁
-      S[i,i+1] = conj(βᵢ₊₁)
+      Tᴴ[i,i+1] = conj(βᵢ₊₁)
     end
   end
-  return V, T, U, S
+  return V, T, U, Tᴴ
 end
 
 """
@@ -176,6 +180,8 @@ end
 """
 function arnoldi(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   n, m = size(A)
+  S = ktypeof(b)
+  M = vector_to_matrix(S)
 
   nnz = div(k*(k+1), 2) + k
   colptr = zeros(Int, k+1)
@@ -191,8 +197,8 @@ function arnoldi(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
     end
   end
 
+  V = M(undef, n, k+1)
   H = SparseMatrixCSC(k+1, k, colptr, rowval, nzval)
-  V = zeros(FC, n, k+1)
 
   for i = 1:k
     vᵢ = view(V,:,i)
@@ -236,6 +242,8 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
   n, m = size(A)
   R = real(FC)
   Aᴴ = A'
+  S = ktypeof(b)
+  M = vector_to_matrix(S)
 
   colptr = zeros(Int, k+2)
   rowval = zeros(Int, 2k+1)
@@ -251,9 +259,9 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
   rowval[2k+1] = k+1
   colptr[k+2] = 2k+2
 
+  V = M(undef, m, k+1)
+  U = M(undef, n, k+1)
   L = SparseMatrixCSC(k+1, k+1, colptr, rowval, nzval)
-  V = zeros(FC, m, k+1)
-  U = zeros(FC, n, k+1)
 
   for i = 1:k
     uᵢ = view(U,:,i)
@@ -308,11 +316,13 @@ end
 function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   n, m = size(A)
   Aᴴ = A'
+  S = ktypeof(b)
+  M = vector_to_matrix(S)
 
   colptr = zeros(Int, k+1)
   rowval = zeros(Int, 3k-1)
   nzval_T = zeros(FC, 3k-1)
-  nzval_S = zeros(FC, 3k-1)
+  nzval_Tᴴ = zeros(FC, 3k-1)
 
   colptr[1] = 1
   rowval[1] = 1
@@ -327,10 +337,10 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     end
   end
 
+  V = M(undef, n, k+1)
+  U = M(undef, m, k+1)
   T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_T)
-  S = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_S)
-  V = zeros(FC, n, k+1)
-  U = zeros(FC, m, k+1)
+  Tᴴ = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_Tᴴ)
 
   for i = 1:k
     vᵢ = view(V,:,i)
@@ -355,7 +365,7 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     end
     αᵢ = @kdot(n, vᵢ, q)
     T[i,i] = αᵢ
-    S[i,i] = conj(αᵢ)
+    Tᴴ[i,i] = conj(αᵢ)
     @kaxpy!(n, -     αᵢ , vᵢ, q)
     @kaxpy!(m, -conj(αᵢ), uᵢ, p)
     βᵢ₊₁ = @knrm2(n, q)
@@ -363,13 +373,13 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     vᵢ₊₁ .= q ./ βᵢ₊₁
     uᵢ₊₁ .= p ./ γᵢ₊₁
     T[i+1,i] = βᵢ₊₁
-    S[i+1,i] = conj(γᵢ₊₁)
+    Tᴴ[i+1,i] = conj(γᵢ₊₁)
     if i ≤ k-1
       T[i,i+1] = γᵢ₊₁
-      S[i,i+1] = conj(βᵢ₊₁)
+      Tᴴ[i,i+1] = conj(βᵢ₊₁)
     end
   end
-  return V, T, U, S
+  return V, T, U, Tᴴ
 end
 
 """
@@ -396,7 +406,9 @@ end
 """
 function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   n, m = size(A)
-  
+  S = ktypeof(b)
+  M = vector_to_matrix(S)
+
   nnz = div(k*(k+1), 2) + k
   colptr = zeros(Int, k+1)
   rowval = zeros(Int, nnz)
@@ -412,10 +424,10 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     end
   end
 
+  V = M(undef, n, k+1)
+  U = M(undef, m, k+1)
   H = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_H)
   F = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_F)
-  V = zeros(FC, n, k+1)
-  U = zeros(FC, m, k+1)
 
   for i = 1:k
     vᵢ = view(V,:,i)

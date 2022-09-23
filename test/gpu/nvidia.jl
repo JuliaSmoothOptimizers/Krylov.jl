@@ -1,7 +1,6 @@
-using LinearAlgebra, SparseArrays, Test
-using LinearOperators, Krylov, CUDA, CUDA.CUSPARSE, CUDA.CUSOLVER
+using LinearOperators, CUDA, CUDA.CUSPARSE, CUDA.CUSOLVER
 
-include("../test_utils.jl")
+include("gpu.jl")
 
 @testset "Nvidia -- CUDA.jl" begin
 
@@ -95,6 +94,7 @@ include("../test_utils.jl")
 
   for FC in (Float32, Float64, ComplexF32, ComplexF64)
     S = CuVector{FC}
+    M = CuMatrix{FC}
     T = real(FC)
     n = 10
     x = rand(FC, n)
@@ -146,8 +146,8 @@ include("../test_utils.jl")
 
     @testset "vector_to_matrix" begin
       S = CuVector{FC}
-      M = Krylov.vector_to_matrix(S)
-      @test M == CuMatrix{FC}
+      M2 = Krylov.vector_to_matrix(S)
+      @test M2 == M
     end
 
     ε = eps(T)
@@ -168,6 +168,10 @@ include("../test_utils.jl")
       b = CuVector{FC}(b)
       x, stats = cg(A, b)
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
+    end
+
+    @testset "processes -- $FC" begin
+      test_processes(S, M)
     end
   end
 end
