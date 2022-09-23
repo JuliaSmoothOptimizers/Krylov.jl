@@ -80,6 +80,12 @@ end
     #   Krylov.@kref!(n, x, y, c, s)
     # end
 
+    @testset "vector_to_matrix" begin
+      S = MtlVector{FC}
+      M = Krylov.vector_to_matrix(S)
+      @test M == MtlMatrix{FC}
+    end
+
     ε = eps(T)
     atol = √ε
     rtol = √ε

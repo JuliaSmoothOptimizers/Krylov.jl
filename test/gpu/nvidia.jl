@@ -3,8 +3,6 @@ using LinearOperators, Krylov, CUDA, CUDA.CUSPARSE, CUDA.CUSOLVER
 
 include("../test_utils.jl")
 
-include("../test_utils.jl")
-
 @testset "Nvidia -- CUDA.jl" begin
 
   @test CUDA.functional()
@@ -144,6 +142,12 @@ include("../test_utils.jl")
 
     @testset "kref! -- $FC" begin
       Krylov.@kref!(n, x, y, c, s)
+    end
+
+    @testset "vector_to_matrix" begin
+      S = CuVector{FC}
+      M = Krylov.vector_to_matrix(S)
+      @test M == CuMatrix{FC}
     end
 
     ε = eps(T)

@@ -68,6 +68,12 @@ include("../test_utils.jl")
     #   Krylov.@kref!(n, x, y, c, s)
     # end
 
+    @testset "vector_to_matrix" begin
+      S = ROCVector{FC}
+      M = Krylov.vector_to_matrix(S)
+      @test M == ROCMatrix{FC}
+    end
+
     ε = eps(T)
     atol = √ε
     rtol = √ε
