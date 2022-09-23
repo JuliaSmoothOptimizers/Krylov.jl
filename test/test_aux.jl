@@ -134,6 +134,15 @@
     @test Krylov.ktypeof(b) == Vector{Float64}
   end
 
+  @testset "vector_to_matrix" begin
+    # test vector_to_matrix
+    for FC in (Float32, Float64, ComplexF32, ComplexF64)
+      S = Vector{FC}
+      M = Krylov.vector_to_matrix(S)
+      @test M == Matrix{FC}
+    end
+  end
+
   @testset "macros" begin
     # test macros
     for FC ∈ (Float16, Float32, Float64, ComplexF16, ComplexF32, ComplexF64)

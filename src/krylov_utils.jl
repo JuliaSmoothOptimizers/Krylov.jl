@@ -248,6 +248,24 @@ function ktypeof(v::S) where S <: SubArray
 end
 
 """
+    M = vector_to_matrix(S)
+
+Return the dense matrix storage type `M` related to the dense vector storage type `S`.
+"""
+function vector_to_matrix(::Type{S}) where S <: DenseVector
+  V = hasproperty(S, :body) ? S.body : S
+  par = V.parameters
+  npar = length(par)
+  (2 ≤ npar ≤ 3) || error("Type $S is not supported.")
+  if npar == 2
+    M = V.name.wrapper{par[1], 2}
+  else
+    M = V.name.wrapper{par[1], 2, par[3]}
+  end
+  return M
+end
+
+"""
     v = kzeros(S, n)
 
 Create an AbstractVector of storage type `S` of length `n` only composed of zero.
