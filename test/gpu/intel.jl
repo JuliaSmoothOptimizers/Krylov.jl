@@ -102,8 +102,8 @@ end
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
 
-    @testset "processes -- $FC" begin
-      test_processes(S, M)
-    end
+    # @testset "processes -- $FC" begin
+    #   test_processes(S, M)
+    # end
   end
 end
