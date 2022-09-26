@@ -124,7 +124,7 @@ function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   else
     w .= b
   end
-  MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M⁻¹(b - Ax₀)
+  MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M(b - Ax₀)
   β = @knrm2(n, r₀)                   # β = ‖r₀‖₂
 
   rNorm = β

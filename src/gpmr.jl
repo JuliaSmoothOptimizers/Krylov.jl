@@ -58,7 +58,7 @@ Full reorthogonalization is available with the `reorthogonalization` option.
 Additional details can be displayed if verbose mode is enabled (verbose > 0).
 Information will be displayed every `verbose` iterations.
 
-GPMR can be warm-started from initial guesses `x0` and `y0` with the method
+GPMR can be warm-started from initial guesses `x0` and `y0` with
 
     (x, y, stats) = gpmr(A, B, b, c, x0, y0; kwargs...)
 

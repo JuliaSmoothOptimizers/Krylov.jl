@@ -20,22 +20,18 @@ export gmres, gmres!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the linear system Ax = b using GMRES method.
+Solve the linear system Ax = b using GMRES.
 
-GMRES algorithm is based on the Arnoldi process and computes a sequence of approximate solutions with the minimal residual property.
+GMRES algorithm is based on the Arnoldi process and computes a sequence of approximate solutions with the minimum residual.
 
 This implementation allows a left preconditioner M and a right preconditioner N.
-- Left  preconditioning : M⁻¹Ax = M⁻¹b
-- Right preconditioning : AN⁻¹u = b with x = N⁻¹u
-- Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
-
 Full reorthogonalization is available with the `reorthogonalization` option.
 
 If `restart = true`, the restarted version GMRES(k) is used with `k = memory`.
 If `restart = false`, the parameter `memory` should be used as a hint of the number of iterations to limit dynamic memory allocations.
-More storage will be allocated only if the number of iterations exceed `memory`.
+More storage will be allocated only if the number of iterations exceeds `memory`.
 
-GMRES can be warm-started from an initial guess `x0` with the method
+GMRES can be warm-started from an initial guess `x0` with
 
     (x, stats) = gmres(A, b, x0; kwargs...)
 
@@ -124,7 +120,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   else
     w .= b
   end
-  MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M⁻¹(b - Ax₀)
+  MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M(b - Ax₀)
   β = @knrm2(n, r₀)                   # β = ‖r₀‖₂
 
   rNorm = β
@@ -168,7 +164,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Initialize workspace.
     nr = 0  # Number of coefficients stored in Rₖ.
     for i = 1 : mem
-      V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹r₀).
+      V[i] .= zero(FC)  # Orthogonal basis of Kₖ(MAN, Mr₀).
     end
     s .= zero(FC)  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
     c .= zero(T)   # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
@@ -210,9 +206,9 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
       # Continue the Arnoldi process.
       p = NisI ? V[inner_iter] : solver.p
-      NisI || mulorldiv!(p, N, V[inner_iter], ldiv)  # p ← N⁻¹vₖ
-      mul!(w, A, p)                                  # w ← AN⁻¹vₖ
-      MisI || mulorldiv!(q, M, w, ldiv)              # q ← M⁻¹AN⁻¹vₖ
+      NisI || mulorldiv!(p, N, V[inner_iter], ldiv)  # p ← Nvₖ
+      mul!(w, A, p)                                  # w ← ANvₖ
+      MisI || mulorldiv!(q, M, w, ldiv)              # q ← MANvₖ
       for i = 1 : inner_iter
         R[nr+i] = @kdot(n, V[i], q)      # hᵢₖ = (vᵢ)ᴴq
         @kaxpy!(n, -R[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
@@ -250,7 +246,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       z[inner_iter] =      c[inner_iter]  * z[inner_iter]
 
       # Update residual norm estimate.
-      # ‖ M⁻¹(b - Axₖ) ‖₂ = |ζₖ₊₁|
+      # ‖ M(b - Axₖ) ‖₂ = |ζₖ₊₁|
       rNorm = abs(ζₖ₊₁)
       history && push!(rNorms, rNorm)
 
@@ -299,7 +295,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       end
     end
 
-    # Form xₖ = N⁻¹Vₖyₖ
+    # Form xₖ = NVₖyₖ
     for i = 1 : inner_iter
       @kaxpy!(n, y[i], V[i], xr)
     end

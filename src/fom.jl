@@ -20,22 +20,18 @@ export fom, fom!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the linear system Ax = b using FOM method.
+Solve the linear system Ax = b using FOM.
 
 FOM algorithm is based on the Arnoldi process and a Galerkin condition.
 
 This implementation allows a left preconditioner M and a right preconditioner N.
-- Left  preconditioning : M⁻¹Ax = M⁻¹b
-- Right preconditioning : AN⁻¹u = b with x = N⁻¹u
-- Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
-
 Full reorthogonalization is available with the `reorthogonalization` option.
 
 If `restart = true`, the restarted version FOM(k) is used with `k = memory`.
 If `restart = false`, the parameter `memory` should be used as a hint of the number of iterations to limit dynamic memory allocations.
-More storage will be allocated only if the number of iterations exceed `memory`.
+More storage will be allocated only if the number of iterations exceeds `memory`.
 
-FOM can be warm-started from an initial guess `x0` with the method
+FOM can be warm-started from an initial guess `x0` with
 
     (x, stats) = fom(A, b, x0; kwargs...)
 
@@ -124,7 +120,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   else
     w .= b
   end
-  MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M⁻¹(b - Ax₀)
+  MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M(b - Ax₀)
   β = @knrm2(n, r₀)                   # β = ‖r₀‖₂
 
   rNorm = β
@@ -167,7 +163,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Initialize workspace.
     nr = 0  # Number of coefficients stored in Uₖ.
     for i = 1 : mem
-      V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹r₀).
+      V[i] .= zero(FC)  # Orthogonal basis of Kₖ(MAN, Mr₀).
     end
     l .= zero(FC)  # Lower unit triangular matrix Lₖ.
     U .= zero(FC)  # Upper triangular matrix Uₖ.
@@ -207,9 +203,9 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
       # Continue the Arnoldi process.
       p = NisI ? V[inner_iter] : solver.p
-      NisI || mulorldiv!(p, N, V[inner_iter], ldiv)  # p ← N⁻¹vₖ
-      mul!(w, A, p)                                  # w ← AN⁻¹vₖ
-      MisI || mulorldiv!(q, M, w, ldiv)              # q ← M⁻¹AN⁻¹vₖ
+      NisI || mulorldiv!(p, N, V[inner_iter], ldiv)  # p ← Nvₖ
+      mul!(w, A, p)                                  # w ← ANvₖ
+      MisI || mulorldiv!(q, M, w, ldiv)              # q ← MANvₖ
       for i = 1 : inner_iter
         U[nr+i] = @kdot(n, V[i], q)      # hᵢₖ = (vᵢ)ᴴq
         @kaxpy!(n, -U[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
@@ -240,7 +236,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
       l[inner_iter] = Hbis / U[nr+inner_iter]
 
       # Update residual norm estimate.
-      # ‖ M⁻¹(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ζₖ / uₖ.ₖ|
+      # ‖ M(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ζₖ / uₖ.ₖ|
       rNorm = Hbis * abs(z[inner_iter] / U[nr+inner_iter])
       history && push!(rNorms, rNorm)
 
@@ -280,7 +276,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
       y[i] = y[i] / U[pos]  # yᵢ ← yᵢ / rᵢᵢ
     end
 
-    # Form xₖ = N⁻¹Vₖyₖ
+    # Form xₖ = NVₖyₖ
     for i = 1 : inner_iter
       @kaxpy!(n, y[i], V[i], xr)
     end

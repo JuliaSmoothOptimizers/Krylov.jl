@@ -34,7 +34,7 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 M also indicates the weighted norm in which residuals are measured.
 
-MINRES-QLP can be warm-started from an initial guess `x0` with the method
+MINRES-QLP can be warm-started from an initial guess `x0` with
 
     (x, stats) = minres_qlp(A, b, x0; kwargs...)
 

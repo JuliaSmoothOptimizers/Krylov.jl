@@ -55,7 +55,7 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 
-MINRES can be warm-started from an initial guess `x0` with the method
+MINRES can be warm-started from an initial guess `x0` with
 
     (x, stats) = minres(A, b, x0; kwargs...)
 

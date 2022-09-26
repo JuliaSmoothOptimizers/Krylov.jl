@@ -33,7 +33,7 @@ QMR is used for solving dual system `Aᴴy = c`.
 An option gives the possibility of transferring from the BiLQ point to the
 BiCG point, when it exists. The transfer is based on the residual norm.
 
-BiLQR can be warm-started from initial guesses `x0` and `y0` with the method
+BiLQR can be warm-started from initial guesses `x0` and `y0` with
 
     (x, y, stats) = bilqr(A, b, c, x0, y0; kwargs...)
 

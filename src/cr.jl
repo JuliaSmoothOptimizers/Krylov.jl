@@ -34,7 +34,7 @@ In a linesearch context, 'linesearch' must be set to 'true'.
 If `itmax=0`, the default number of iterations is set to `2 * n`,
 with `n = length(b)`.
 
-CR can be warm-started from an initial guess `x0` with the method
+CR can be warm-started from an initial guess `x0` with
 
     (x, stats) = cr(A, b, x0; kwargs...)
 

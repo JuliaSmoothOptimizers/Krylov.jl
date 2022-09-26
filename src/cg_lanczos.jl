@@ -32,7 +32,7 @@ The method does _not_ abort if A is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be hermitian and positive definite.
 
-CG-LANCZOS can be warm-started from an initial guess `x0` with the method
+CG-LANCZOS can be warm-started from an initial guess `x0` with
 
     (x, stats) = cg_lanczos(A, b, x0; kwargs...)
 

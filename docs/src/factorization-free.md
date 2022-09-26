@@ -13,6 +13,9 @@ Some methods only require `A * v` products, whereas other ones also require `A' 
 | DIOM, FOM, DQGMRES, GMRES, FGMRES      | BiLQ, QMR, BiLQR, USYMLQ, USYMQR, TriLQR |
 | CGS, BICGSTAB                          | TriCG, TriMR                             |
 
+!!! info
+    GPMR is the only method that requires `A * v` and `B * w` products.
+
 Preconditioners `M`, `N`, `C`, `D`, `E` or `F` can be also linear operators and must implement `mul!` or `ldiv!`.
 
 We strongly recommend [LinearOperators.jl](https://github.com/JuliaSmoothOptimizers/LinearOperators.jl) to model matrix-free operators, but other packages such as [LinearMaps.jl](https://github.com/JuliaLinearAlgebra/LinearMaps.jl), [DiffEqOperators.jl](https://github.com/SciML/DiffEqOperators.jl) or your own operator can be used as well.

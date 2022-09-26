@@ -24,7 +24,7 @@ export bicgstab, bicgstab!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the square linear system Ax = b using the BICGSTAB method.
+Solve the square linear system Ax = b using BICGSTAB.
 BICGSTAB requires two initial vectors `b` and `c`.
 The relation `bᴴc ≠ 0` must be satisfied and by default `c = b`.
 
@@ -42,7 +42,7 @@ Information will be displayed every `verbose` iterations.
 
 This implementation allows a left preconditioner `M` and a right preconditioner `N`.
 
-BICGSTAB can be warm-started from an initial guess `x0` with the method
+BICGSTAB can be warm-started from an initial guess `x0` with
 
     (x, stats) = bicgstab(A, b, x0; kwargs...)
 

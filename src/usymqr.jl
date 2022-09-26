@@ -28,7 +28,7 @@ export usymqr, usymqr!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the linear system Ax = b using the USYMQR method.
+Solve the linear system Ax = b using USYMQR.
 
 USYMQR is based on the orthogonal tridiagonalization process and requires two initial nonzero vectors `b` and `c`.
 The vector `c` is only used to initialize the process and a default value can be `b` or `Aᴴb` depending on the shape of `A`.
@@ -38,7 +38,7 @@ It's considered as a generalization of MINRES.
 It can also be applied to under-determined and over-determined problems.
 USYMQR finds the minimum-norm solution if problems are inconsistent.
 
-USYMQR can be warm-started from an initial guess `x0` with the method
+USYMQR can be warm-started from an initial guess `x0` with
 
     (x, stats) = usymqr(A, b, c, x0; kwargs...)
 
