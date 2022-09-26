@@ -111,10 +111,10 @@ function roots_quadratic(q₂ :: T, q₁ :: T, q₀ :: T;
   # Case where q(x) is linear.
   if q₂ == zero(T)
     if q₁ == zero(T)
-      root = [zero(T)]
-      q₀ == zero(T) || (root = T[])
+      root = tuple(zero(T))
+      q₀ == zero(T) || (root = tuple())
     else
-      root = [-q₀ / q₁]
+      root = tuple(-q₀ / q₁)
     end
     return root
   end
@@ -123,26 +123,31 @@ function roots_quadratic(q₂ :: T, q₁ :: T, q₀ :: T;
   rhs = √eps(T) * q₁ * q₁
   if abs(q₀ * q₂) > rhs
     ρ = q₁ * q₁ - 4 * q₂ * q₀
-    ρ < 0 && return T[]
+    ρ < 0 && return tuple()
     d = -(q₁ + copysign(sqrt(ρ), q₁)) / 2
-    roots = [d / q₂, q₀ / d]
+    root1 = d / q₂
+    root2 = q₀ / d
   else
     # Ill-conditioned quadratic.
-    roots = [-q₁ / q₂, zero(T)]
+    root1 = -q₁ / q₂
+    root2 = zero(T)
   end
 
   # Perform a few Newton iterations to improve accuracy.
-  for k = 1 : 2
-    root = roots[k]
-    for it = 1 : nitref
-      q = (q₂ * root + q₁) * root + q₀
-      dq = 2 * q₂ * root + q₁
-      dq == zero(T) && continue
-      root = root - q / dq
-    end
-    roots[k] = root
+  for it = 1 : nitref
+    q = (q₂ * root1 + q₁) * root1 + q₀
+    dq = 2 * q₂ * root1 + q₁
+    dq == zero(T) && continue
+    root1 = root1 - q / dq
   end
-  return roots
+
+  for it = 1 : nitref
+    q = (q₂ * root2 + q₁) * root2 + q₀
+    dq = 2 * q₂ * root2 + q₁
+    dq == zero(T) && continue
+    root2 = root2 - q / dq
+  end
+  return (root1, root2)
 end
 
 
