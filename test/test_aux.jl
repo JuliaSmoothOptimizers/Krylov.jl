@@ -36,54 +36,76 @@
   @testset "roots_quadratic" begin
     # test roots of a quadratic
     roots = Krylov.roots_quadratic(0.0, 0.0, 0.0)
+    allocations = @allocated Krylov.roots_quadratic(0.0, 0.0, 0.0)
     @test length(roots) == 1
     @test roots[1] == 0.0
+    @test allocations == 0
 
     roots = Krylov.roots_quadratic(0.0, 0.0, 1.0)
+    allocations = @allocated Krylov.roots_quadratic(0.0, 0.0, 1.0)
     @test length(roots) == 0
+    @test allocations == 0
 
     roots = Krylov.roots_quadratic(0.0, 3.14, -1.0)
+    allocations = @allocated Krylov.roots_quadratic(0.0, 3.14, -1.0)
     @test length(roots) == 1
     @test roots[1] == 1.0 / 3.14
+    @test allocations == 0
 
     roots = Krylov.roots_quadratic(1.0, 0.0, 1.0)
+    allocations = @allocated Krylov.roots_quadratic(1.0, 0.0, 1.0)
     @test length(roots) == 0
+    @test allocations == 0
 
     roots = Krylov.roots_quadratic(1.0, 0.0, 0.0)
+    allocations = @allocated Krylov.roots_quadratic(1.0, 0.0, 0.0)
     @test length(roots) == 2
     @test roots[1] == 0.0
     @test roots[2] == 0.0
+    @test allocations == 0
 
     roots = Krylov.roots_quadratic(1.0, 3.0, 2.0)
+    allocations = @allocated Krylov.roots_quadratic(1.0, 3.0, 2.0)
     @test length(roots) == 2
     @test roots[1] ≈ -2.0
     @test roots[2] ≈ -1.0
+    @test allocations == 0
 
     roots = Krylov.roots_quadratic(1.0e+8, 1.0, 1.0)
+    allocations = @allocated Krylov.roots_quadratic(1.0e+8, 1.0, 1.0)
     @test length(roots) == 0
+    @test allocations == 0
 
     # ill-conditioned quadratic
     roots = Krylov.roots_quadratic(-1.0e-8, 1.0e+5, 1.0, nitref=0)
+    allocations = @allocated Krylov.roots_quadratic(-1.0e-8, 1.0e+5, 1.0, nitref=0)
     @test length(roots) == 2
     @test roots[1] == 1.0e+13
     @test roots[2] == 0.0
+    @test allocations == 0
 
     # iterative refinement is crucial!
     roots = Krylov.roots_quadratic(-1.0e-8, 1.0e+5, 1.0, nitref=1)
+    allocations = @allocated Krylov.roots_quadratic(-1.0e-8, 1.0e+5, 1.0, nitref=1)
     @test length(roots) == 2
     @test roots[1] == 1.0e+13
     @test roots[2] == -1.0e-05
+    @test allocations == 0
 
     # not ill-conditioned quadratic
     roots = Krylov.roots_quadratic(-1.0e-7, 1.0, 1.0, nitref=0)
+    allocations = @allocated Krylov.roots_quadratic(-1.0e-7, 1.0, 1.0, nitref=0)
     @test length(roots) == 2
     @test isapprox(roots[1],  1.0e+7, rtol=1.0e-6)
     @test isapprox(roots[2], -1.0, rtol=1.0e-6)
+    @test allocations == 0
 
     roots = Krylov.roots_quadratic(-1.0e-7, 1.0, 1.0, nitref=1)
+    allocations = @allocated Krylov.roots_quadratic(-1.0e-7, 1.0, 1.0, nitref=1)
     @test length(roots) == 2
     @test isapprox(roots[1], 1.0e+7, rtol=1.0e-6)
     @test isapprox(roots[2], -1.0, rtol=1.0e-6)
+    @test allocations == 0
   end
 
   @testset "to_boundary" begin
