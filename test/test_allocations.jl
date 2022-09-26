@@ -141,10 +141,11 @@
       @testset "DIOM" begin
         # DIOM needs:
         # - 2 n-vectors: x, t
-        # - 2 (n*mem)-matrices: P, V
-        # - 1 mem-vector: L
-        # - 1 (mem+2)-vector: H
-        storage_diom(mem, n) = (2 * n) + (2 * n * mem) + (mem) + (mem + 2)
+        # - 1 (n*mem)-matrix: V
+        # - 1 n*(mem-1)-matrix: P
+        # - 1 (mem-1)-vector: L
+        # - 1 mem-vector: H
+        storage_diom(mem, n) = (2 * n) + (n * mem) + (n * (mem-1)) + (mem-1) + (mem)
         storage_diom_bytes(mem, n) = nbits * storage_diom(mem, n)
 
         expected_diom_bytes = storage_diom_bytes(mem, n)
@@ -183,8 +184,8 @@
         # - 2 n-vectors: x, t
         # - 2 (n*mem)-matrices: P, V
         # - 2 mem-vectors: c, s
-        # - 1 (mem+2)-vector: H
-        storage_dqgmres(mem, n) = (2 * n) + (2 * n * mem) + (2 * mem) + (mem + 2)
+        # - 1 (mem+1)-vector: H
+        storage_dqgmres(mem, n) = (2 * n) + (2 * n * mem) + (2 * mem) + (mem + 1)
         storage_dqgmres_bytes(mem, n) = nbits * storage_dqgmres(mem, n)
 
         expected_dqgmres_bytes = storage_dqgmres_bytes(mem, n)

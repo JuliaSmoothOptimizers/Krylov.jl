@@ -60,7 +60,7 @@
 
       # Poisson equation in polar coordinates.
       A, b = polar_poisson(FC=FC)
-      (x, stats) = diom(A, b, memory=200)
+      (x, stats) = diom(A, b, memory=150)
       r = b - A * x
       resid = norm(r) / norm(b)
       @test(resid ≤ diom_tol)

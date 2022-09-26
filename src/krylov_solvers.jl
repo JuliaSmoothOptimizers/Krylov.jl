@@ -409,7 +409,7 @@ function DqgmresSolver(n, m, memory, S)
   V  = [S(undef, n) for i = 1 : memory]
   c  = Vector{T}(undef, memory)
   s  = Vector{FC}(undef, memory)
-  H  = Vector{FC}(undef, memory+2)
+  H  = Vector{FC}(undef, memory+1)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = DqgmresSolver{T,FC,S}(Δx, x, t, z, w, P, V, c, s, H, false, stats)
   return solver
@@ -455,10 +455,10 @@ function DiomSolver(n, m, memory, S)
   t  = S(undef, n)
   z  = S(undef, 0)
   w  = S(undef, 0)
-  P  = [S(undef, n) for i = 1 : memory]
+  P  = [S(undef, n) for i = 1 : memory-1]
   V  = [S(undef, n) for i = 1 : memory]
-  L  = Vector{FC}(undef, memory)
-  H  = Vector{FC}(undef, memory+2)
+  L  = Vector{FC}(undef, memory-1)
+  H  = Vector{FC}(undef, memory)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = DiomSolver{T,FC,S}(Δx, x, t, z, w, P, V, L, H, false, stats)
   return solver
