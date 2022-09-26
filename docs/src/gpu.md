@@ -80,6 +80,9 @@ opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(y, P, x)
 x, stats = cg(A_gpu, b_gpu, M=opM)
 ```
 
+!!! note
+    You need to replace `'T'` by `'C'` in `ldiv_ic0!` if `A_gpu` is a complex matrix.
+
 ### Example with a general square system
 
 ```julia

@@ -31,25 +31,25 @@ include("../test_utils.jl")
 
       A_gpu = CuSparseMatrixCSC(A_cpu)
       P = ic02(A_gpu, 'O')
-      function ldiv_ic0!(y, P, x)
+      function ldiv_csc_ic0!(y, P, x)
         copyto!(y, x)
         sv2!('T', 'U', 'N', 1.0, P, y, 'O')
         sv2!('N', 'U', 'N', 1.0, P, y, 'O')
         return y
       end
-      opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(y, P, x))
+      opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_csc_ic0!(y, P, x))
       x, stats = cg(A_gpu, b_gpu, M=opM)
       @test norm(b_gpu - A_gpu * x) ≤ 1e-6
 
       A_gpu = CuSparseMatrixCSR(A_cpu)
       P = ic02(A_gpu, 'O')
-      function ldiv_ic0!(y, P, x)
+      function ldiv_csr_ic0!(y, P, x)
         copyto!(y, x)
         sv2!('N', 'L', 'N', 1.0, P, y, 'O')
         sv2!('T', 'L', 'N', 1.0, P, y, 'O')
         return y
       end
-      opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(y, P, x))
+      opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_csr_ic0!(y, P, x))
       x, stats = cg(A_gpu, b_gpu, M=opM)
       @test norm(b_gpu - A_gpu * x) ≤ 1e-6
     end
@@ -69,25 +69,25 @@ include("../test_utils.jl")
 
       A_gpu = CuSparseMatrixCSC(A_cpu)
       P = ilu02(A_gpu, 'O')
-      function ldiv_ilu0!(y, P, x)
+      function ldiv_csc_ilu0!(y, P, x)
         copyto!(y, x)
         sv2!('N', 'L', 'N', 1.0, P, y, 'O')
         sv2!('N', 'U', 'U', 1.0, P, y, 'O')
         return y
       end
-      opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ilu0!(y, P, x))
+      opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_csc_ilu0!(y, P, x))
       x, stats = bicgstab(A_gpu, b_gpu, M=opM)
       @test norm(b_gpu - A_gpu * x) ≤ 1e-6
 
       A_gpu = CuSparseMatrixCSR(A_cpu)
       P = ilu02(A_gpu, 'O')
-      function ldiv_ilu0!(y, P, x)
+      function ldiv_csr_ilu0!(y, P, x)
         copyto!(y, x)
         sv2!('N', 'L', 'U', 1.0, P, y, 'O')
         sv2!('N', 'U', 'N', 1.0, P, y, 'O')
         return y
       end
-      opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ilu0!(y, P, x))
+      opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_csr_ilu0!(y, P, x))
       x, stats = bicgstab(A_gpu, b_gpu, M=opM)
       @test norm(b_gpu - A_gpu * x) ≤ 1e-6
     end
