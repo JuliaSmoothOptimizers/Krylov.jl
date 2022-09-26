@@ -526,10 +526,10 @@ function test_solvers(FC)
   │         t│        Vector{$FC}│               64│
   │         z│        Vector{$FC}│                0│
   │         w│        Vector{$FC}│                0│
-  │         P│Vector{Vector{$FC}}│          10 x 64│
+  │         P│Vector{Vector{$FC}}│           9 x 64│
   │         V│Vector{Vector{$FC}}│          10 x 64│
-  │         L│        Vector{$FC}│               10│
-  │         H│        Vector{$FC}│               12│
+  │         L│        Vector{$FC}│                9│
+  │         H│        Vector{$FC}│               10│
   │warm_start│               Bool│                0│
   └──────────┴───────────────────┴─────────────────┘
   """
@@ -576,7 +576,7 @@ function test_solvers(FC)
   │            V│Vector{Vector{$FC}}│          10 x 64│
   │            c│         Vector{$T}│               10│
   │            s│        Vector{$FC}│               10│
-  │            H│        Vector{$FC}│               12│
+  │            H│        Vector{$FC}│               11│
   │   warm_start│               Bool│                0│
   └─────────────┴───────────────────┴─────────────────┘
   """
