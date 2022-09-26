@@ -21,7 +21,7 @@ export bilq, bilq!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the square linear system Ax = b using the BiLQ method.
+Solve the square linear system Ax = b using BiLQ.
 
 BiLQ is based on the Lanczos biorthogonalization process and requires two initial vectors `b` and `c`.
 The relation `bᴴc ≠ 0` must be satisfied and by default `c = b`.
@@ -30,7 +30,7 @@ When `A` is symmetric and `b = c`, BiLQ is equivalent to SYMMLQ.
 An option gives the possibility of transferring to the BiCG point,
 when it exists. The transfer is based on the residual norm.
 
-BiLQ can be warm-started from an initial guess `x0` with the method
+BiLQ can be warm-started from an initial guess `x0` with
 
     (x, stats) = bilq(A, b, x0; kwargs...)
 

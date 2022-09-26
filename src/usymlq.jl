@@ -41,7 +41,7 @@ In all cases, problems must be consistent.
 An option gives the possibility of transferring to the USYMCG point,
 when it exists. The transfer is based on the residual norm.
 
-USYMLQ can be warm-started from an initial guess `x0` with the method
+USYMLQ can be warm-started from an initial guess `x0` with
 
     (x, stats) = usymlq(A, b, c, x0; kwargs...)
 

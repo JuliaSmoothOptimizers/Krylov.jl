@@ -20,7 +20,7 @@ export diom, diom!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the consistent linear system Ax = b using direct incomplete orthogonalization method.
+Solve the consistent linear system Ax = b using DIOM.
 
 DIOM only orthogonalizes the new vectors of the Krylov basis against the `memory` most recent vectors.
 If CG is well defined on `Ax = b` and `memory = 2`, DIOM is theoretically equivalent to CG.
@@ -33,11 +33,8 @@ An advantage of DIOM is that nonsymmetric or symmetric indefinite or both nonsym
 and indefinite systems of linear equations can be handled by this single algorithm.
 
 This implementation allows a left preconditioner M and a right preconditioner N.
-- Left  preconditioning : M⁻¹Ax = M⁻¹b
-- Right preconditioning : AN⁻¹u = b with x = N⁻¹u
-- Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
 
-DIOM can be warm-started from an initial guess `x0` with the method
+DIOM can be warm-started from an initial guess `x0` with
 
     (x, stats) = diom(A, b, x0; kwargs...)
 
@@ -121,7 +118,7 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   else
     t .= b
   end
-  MisI || mulorldiv!(r₀, M, t, ldiv)  # M⁻¹(b - Ax₀)
+  MisI || mulorldiv!(r₀, M, t, ldiv)  # M(b - Ax₀)
   rNorm = @knrm2(n, r₀)               # β = ‖r₀‖₂
   history && push!(rNorms, rNorm)
   if rNorm == 0
@@ -141,14 +138,14 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   mem = length(L)  # Memory
   for i = 1 : mem
-    V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
-    P[i] .= zero(FC)  # Directions for x : Pₘ = N⁻¹Vₘ(Uₘ)⁻¹.
+    V[i] .= zero(FC)  # Orthogonal basis of Kₖ(MAN, Mr₀).
+    P[i] .= zero(FC)  # Directions for x : Pₖ = NVₖ(Uₖ)⁻¹.
   end
-  H .= zero(FC)  # Last column of the band hessenberg matrix Hₘ = LₘUₘ.
-  # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
-  # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
-  # In addition of that, the last column of Uₘ is stored in H.
-  L .= zero(FC)  # Last mem pivots of Lₘ.
+  H .= zero(FC)  # Last column of the band hessenberg matrix Hₖ = LₖUₖ.
+  # Each column has at most mem + 1 nonzero elements. hᵢ.ₖ is stored as H[k-i+2].
+  # k-i+2 represents the indice of the diagonal where hᵢ.ₖ is located.
+  # In addition of that, the last column of Uₖ is stored in H.
+  L .= zero(FC)  # Last mem pivots of Lₖ.
 
   # Initial ξ₁ and V₁.
   ξ = rNorm
@@ -166,19 +163,19 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     iter = iter + 1
 
     # Set position in circulars stacks.
-    pos = mod(iter-1, mem) + 1 # Position corresponding to pₘ and vₘ in circular stacks P and V.
-    next_pos = mod(iter, mem) + 1 # Position corresponding to vₘ₊₁ in the circular stack V.
+    pos = mod(iter-1, mem) + 1 # Position corresponding to pₖ and vₖ in circular stacks P and V.
+    next_pos = mod(iter, mem) + 1 # Position corresponding to vₖ₊₁ in the circular stack V.
 
     # Incomplete Arnoldi procedure.
     z = NisI ? V[pos] : solver.z
-    NisI || mulorldiv!(z, N, V[pos], ldiv)  # N⁻¹vₘ, forms pₘ
-    mul!(t, A, z)                           # AN⁻¹vₘ
-    MisI || mulorldiv!(w, M, t, ldiv)       # M⁻¹AN⁻¹vₘ, forms vₘ₊₁
+    NisI || mulorldiv!(z, N, V[pos], ldiv)  # Nvₖ, forms pₖ
+    mul!(t, A, z)                           # ANvₖ
+    MisI || mulorldiv!(w, M, t, ldiv)       # MANvₖ, forms vₖ₊₁
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
       diag = iter - i + 2
-      H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₘ = ⟨M⁻¹AN⁻¹vₘ , vᵢ⟩
-      @kaxpy!(n, -H[diag], V[ipos], w) # w ← w - hᵢ.ₘ * vᵢ
+      H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₖ = ⟨MANvₖ , vᵢ⟩
+      @kaxpy!(n, -H[diag], V[ipos], w) # w ← w - hᵢ.ₖvᵢ
     end
 
     # Partial reorthogonalization of the Krylov basis.
@@ -192,56 +189,56 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
       end
     end
 
-    # Compute hₘ₊₁.ₘ and vₘ₊₁.
-    H[1] = @knrm2(n, w) # hₘ₊₁.ₘ = ‖vₘ₊₁‖₂
-    if H[1] ≠ 0 # hₘ₊₁.ₘ = 0 ⇒ "lucky breakdown"
-      @. V[next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
+    # Compute hₖ₊₁.ₖ and vₖ₊₁.
+    H[1] = @knrm2(n, w) # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+    if H[1] ≠ 0 # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
+      @. V[next_pos] = w / H[1] # vₖ₊₁ = w / hₖ₊₁.ₖ
     end
-    # It's possible that uₘ₋ₘₑₘ.ₘ ≠ 0 when m ≥ mem + 1
+    # It's possible that uₖ₋ₘₑₘ.ₖ ≠ 0 when k ≥ mem + 1
     if iter ≥ mem + 2
-      H[mem+2] = zero(FC) # hₘ₋ₘₑₘ.ₘ = 0
+      H[mem+2] = zero(FC) # hₖ₋ₘₑₘ.ₖ = 0
     end
 
     # Update the LU factorization with partial pivoting of H.
-    # Compute the last column of Uₘ.
+    # Compute the last column of Uₖ.
     if iter ≥ 2
       for i = max(2,iter-mem+1) : iter
         lpos = mod(i-1, mem) + 1 # Position corresponding to lᵢ.ᵢ₋₁ in the circular stack L.
         diag = iter - i + 2
         next_diag = diag + 1
-        # uᵢ.ₘ ← hᵢ.ₘ - lᵢ.ᵢ₋₁ * uᵢ₋₁.ₘ
+        # uᵢ.ₖ ← hᵢ.ₖ - lᵢ.ᵢ₋₁ * uᵢ₋₁.ₖ
         H[diag] = H[diag] - L[lpos] * H[next_diag]
       end
-      # Compute ξₘ the last component of zₘ = β(Lₘ)⁻¹e₁.
-      # ξₘ = -lₘ.ₘ₋₁ * ξₘ₋₁
+      # Compute ξₖ the last component of zₖ = β(Lₖ)⁻¹e₁.
+      # ξₖ = -lₖ.ₖ₋₁ * ξₖ₋₁
       ξ = - L[pos] * ξ
     end
-    # Compute next pivot lₘ₊₁.ₘ = hₘ₊₁.ₘ / uₘ.ₘ
+    # Compute next pivot lₖ₊₁.ₖ = hₖ₊₁.ₖ / uₖ.ₖ
     L[next_pos] = H[1] / H[2]
 
-    # Compute the direction pₘ, the last column of Pₘ = N⁻¹Vₘ(Uₘ)⁻¹.
+    # Compute the direction pₖ, the last column of Pₖ = NVₖ(Uₖ)⁻¹.
     for i = max(1,iter-mem) : iter-1
       ipos = mod(i-1, mem) + 1 # Position corresponding to pᵢ in the circular stack P.
       diag = iter - i + 2
       if ipos == pos
-        # pₐᵤₓ ← -hₘ₋ₘₑₘ.ₘ * pₘ₋ₘₑₘ
+        # pₐᵤₓ ← -hₖ₋ₘₑₘ.ₖ * pₖ₋ₘₑₘ
         @kscal!(n, -H[diag], P[pos])
       else
-        # pₐᵤₓ ← pₐᵤₓ - hᵢ.ₘ * pᵢ
+        # pₐᵤₓ ← pₐᵤₓ - hᵢ.ₖ * pᵢ
         @kaxpy!(n, -H[diag], P[ipos], P[pos])
       end
     end
-    # pₐᵤₓ ← pₐᵤₓ + N⁻¹vₘ
+    # pₐᵤₓ ← pₐᵤₓ + Nvₖ
     @kaxpy!(n, one(FC), z, P[pos])
-    # pₘ = pₐᵤₓ / uₘ.ₘ
+    # pₖ = pₐᵤₓ / uₖ.ₖ
     @. P[pos] = P[pos] / H[2]
 
-    # Update solution xₘ.
-    # xₘ = xₘ₋₁ + ξₘ * pₘ
+    # Update solution xₖ.
+    # xₖ = xₖ₋₁ + ξₖ * pₖ
     @kaxpy!(n, ξ, P[pos], x)
 
     # Compute residual norm.
-    # ‖ M⁻¹(b - Axₘ) ‖₂ = hₘ₊₁.ₘ * |ξₘ / uₘ.ₘ|
+    # ‖ M(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ξₖ / uₖ.ₖ|
     rNorm = real(H[1]) * abs(ξ / H[2])
     history && push!(rNorms, rNorm)
 

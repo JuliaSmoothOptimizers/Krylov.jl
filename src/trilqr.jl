@@ -32,7 +32,7 @@ USYMQR is used for solving dual system `Aᴴy = c`.
 An option gives the possibility of transferring from the USYMLQ point to the
 USYMCG point, when it exists. The transfer is based on the residual norm.
 
-TriLQR can be warm-started from initial guesses `x0` and `y0` with the method
+TriLQR can be warm-started from initial guesses `x0` and `y0` with
 
     (x, y, stats) = trilqr(A, b, c, x0, y0; kwargs...)
 

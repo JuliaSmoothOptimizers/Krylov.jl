@@ -53,7 +53,7 @@ TriMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 Additional details can be displayed if verbose mode is enabled (verbose > 0).
 Information will be displayed every `verbose` iterations.
 
-TriMR can be warm-started from initial guesses `x0` and `y0` with the method
+TriMR can be warm-started from initial guesses `x0` and `y0` with
 
     (x, y, stats) = trimr(A, b, c, x0, y0; kwargs...)
 

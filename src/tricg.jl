@@ -53,7 +53,7 @@ TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 Additional details can be displayed if verbose mode is enabled (verbose > 0).
 Information will be displayed every `verbose` iterations.
 
-TriCG can be warm-started from initial guesses `x0` and `y0` with the method
+TriCG can be warm-started from initial guesses `x0` and `y0` with
 
     (x, y, stats) = tricg(A, b, c, x0, y0; kwargs...)
 

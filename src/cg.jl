@@ -26,7 +26,7 @@ export cg, cg!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-The conjugate gradient method to solve the symmetric linear system Ax=b.
+The conjugate gradient method to solve the symmetric linear system Ax = b.
 
 The method does _not_ abort if A is not definite.
 
@@ -37,7 +37,7 @@ M also indicates the weighted norm in which residuals are measured.
 If `itmax=0`, the default number of iterations is set to `2 * n`,
 with `n = length(b)`.
 
-CG can be warm-started from an initial guess `x0` with the method
+CG can be warm-started from an initial guess `x0` with
 
     (x, stats) = cg(A, b, x0; kwargs...)
 

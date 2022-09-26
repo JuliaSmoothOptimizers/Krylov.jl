@@ -40,7 +40,7 @@ TFQMR and BICGSTAB were developed to remedy this difficulty.»
 
 This implementation allows a left preconditioner M and a right preconditioner N.
 
-CGS can be warm-started from an initial guess `x0` with the method
+CGS can be warm-started from an initial guess `x0` with
 
     (x, stats) = cgs(A, b, x0; kwargs...)
 

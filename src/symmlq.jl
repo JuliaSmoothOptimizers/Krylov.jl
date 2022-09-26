@@ -30,12 +30,12 @@ Solve the shifted linear system
 using the SYMMLQ method, where λ is a shift parameter,
 and A is square and symmetric.
 
-SYMMLQ produces monotonic errors ‖x*-x‖₂.
+SYMMLQ produces monotonic errors ‖x* - x‖₂.
 
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be symmetric and positive definite.
 
-SYMMLQ can be warm-started from an initial guess `x0` with the method
+SYMMLQ can be warm-started from an initial guess `x0` with
 
     (x, stats) = symmlq(A, b, x0; kwargs...)
 

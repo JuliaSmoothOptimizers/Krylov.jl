@@ -20,7 +20,7 @@ export dqgmres, dqgmres!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the consistent linear system Ax = b using DQGMRES method.
+Solve the consistent linear system Ax = b using DQGMRES.
 
 DQGMRES algorithm is based on the incomplete Arnoldi orthogonalization process
 and computes a sequence of approximate solutions with the quasi-minimal residual property.
@@ -33,11 +33,8 @@ Otherwise, DQGMRES interpolates between MINRES and GMRES and is similar to MINRE
 Partial reorthogonalization is available with the `reorthogonalization` option.
 
 This implementation allows a left preconditioner M and a right preconditioner N.
-- Left  preconditioning : M⁻¹Ax = M⁻¹b
-- Right preconditioning : AN⁻¹u = b with x = N⁻¹u
-- Split preconditioning : M⁻¹AN⁻¹u = M⁻¹b with x = N⁻¹u
 
-DQGMRES can be warm-started from an initial guess `x0` with the method
+DQGMRES can be warm-started from an initial guess `x0` with
 
     (x, stats) = dqgmres(A, b, x0; kwargs...)
 
@@ -121,7 +118,7 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   else
     t .= b
   end
-  MisI || mulorldiv!(r₀, M, t, ldiv)  # M⁻¹(b - Ax₀)
+  MisI || mulorldiv!(r₀, M, t, ldiv)  # M(b - Ax₀)
   rNorm = @knrm2(n, r₀)               # β = ‖r₀‖₂
   history && push!(rNorms, rNorm)
   if rNorm == 0
@@ -142,23 +139,23 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   # Set up workspace.
   mem = length(c)  # Memory.
   for i = 1 : mem
-    V[i] .= zero(FC)  # Orthogonal basis of Kₖ(M⁻¹AN⁻¹, M⁻¹b).
-    P[i] .= zero(FC)  # Directions for x : Pₘ = N⁻¹Vₘ(Rₘ)⁻¹.
+    V[i] .= zero(FC)  # Orthogonal basis of Kₖ(MAN, Mr₀).
+    P[i] .= zero(FC)  # Directions for x : Pₖ = NVₖ(Rₖ)⁻¹.
   end
-  c .= zero(T)   # Last mem Givens cosines used for the factorization QₘRₘ = Hₘ.
-  s .= zero(FC)  # Last mem Givens sines used for the factorization QₘRₘ = Hₘ.
-  H .= zero(FC)  # Last column of the band hessenberg matrix Hₘ.
-  # Each column has at most mem + 1 nonzero elements. hᵢ.ₘ is stored as H[m-i+2].
-  # m-i+2 represents the indice of the diagonal where hᵢ.ₘ is located.
-  # In addition of that, the last column of Rₘ is also stored in H.
+  c .= zero(T)   # Last mem Givens cosines used for the factorization QₖRₖ = Hₖ.
+  s .= zero(FC)  # Last mem Givens sines used for the factorization QₖRₖ = Hₖ.
+  H .= zero(FC)  # Last column of the band hessenberg matrix Hₖ.
+  # Each column has at most mem + 1 nonzero elements. hᵢ.ₖ is stored as H[k-i+2].
+  # k-i+2 represents the indice of the diagonal where hᵢ.ₖ is located.
+  # In addition of that, the last column of Rₖ is also stored in H.
 
   # Initial γ₁ and V₁.
-  γₘ = rNorm # γₘ and γₘ₊₁ are the last components of gₘ, right-hand of the least squares problem min ‖ Hₘyₘ - gₘ ‖₂.
+  γₖ = rNorm # γₖ and γₖ₊₁ are the last components of gₖ, right-hand of the least squares problem min ‖ Hₖyₖ - gₖ ‖₂.
   @. V[1] = r₀ / rNorm
 
   # The following stopping criterion compensates for the lag in the
   # residual, but usually increases the number of iterations.
-  # solved = sqrt(max(1, iter-mem+1)) * |γₘ₊₁| ≤ ε
+  # solved = sqrt(max(1, iter-mem+1)) * |γₖ₊₁| ≤ ε
   solved = rNorm ≤ ε # less accurate, but acceptable.
   tired = iter ≥ itmax
   status = "unknown"
@@ -170,19 +167,19 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     iter = iter + 1
 
     # Set position in circulars stacks.
-    pos = mod(iter-1, mem) + 1 # Position corresponding to pₘ and vₘ in circular stacks P and V.
-    next_pos = mod(iter, mem) + 1 # Position corresponding to vₘ₊₁ in the circular stack V.
+    pos = mod(iter-1, mem) + 1 # Position corresponding to pₖ and vₖ in circular stacks P and V.
+    next_pos = mod(iter, mem) + 1 # Position corresponding to vₖ₊₁ in the circular stack V.
 
     # Incomplete Arnoldi procedure.
     z = NisI ? V[pos] : solver.z
-    NisI || mulorldiv!(z, N, V[pos], ldiv)  # N⁻¹vₘ, forms pₘ
-    mul!(t, A, z)                           # AN⁻¹vₘ
-    MisI || mulorldiv!(w, M, t, ldiv)       # M⁻¹AN⁻¹vₘ, forms vₘ₊₁
+    NisI || mulorldiv!(z, N, V[pos], ldiv)  # Nvₖ, forms pₖ
+    mul!(t, A, z)                           # ANvₖ
+    MisI || mulorldiv!(w, M, t, ldiv)       # MANvₖ, forms vₖ₊₁
     for i = max(1, iter-mem+1) : iter
       ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
       diag = iter - i + 2
-      H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₘ = ⟨M⁻¹AN⁻¹vₘ , vᵢ⟩
-      @kaxpy!(n, -H[diag], V[ipos], w) # w ← w - hᵢ.ₘ * vᵢ
+      H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₖ = ⟨MANvₖ , vᵢ⟩
+      @kaxpy!(n, -H[diag], V[ipos], w) # w ← w - hᵢ.ₖvᵢ
     end
 
     # Partial reorthogonalization of the Krylov basis.
@@ -196,14 +193,14 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       end
     end
 
-    # Compute hₘ₊₁.ₘ and vₘ₊₁.
-    H[1] = @knrm2(n, w) # hₘ₊₁.ₘ = ‖vₘ₊₁‖₂
-    if H[1] ≠ 0 # hₘ₊₁.ₘ = 0 ⇒ "lucky breakdown"
-      @. V[next_pos] = w / H[1] # vₘ₊₁ = w / hₘ₊₁.ₘ
+    # Compute hₖ₊₁.ₖ and vₖ₊₁.
+    H[1] = @knrm2(n, w) # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+    if H[1] ≠ 0 # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
+      @. V[next_pos] = w / H[1] # vₖ₊₁ = w / hₖ₊₁.ₖ
     end
-    # rₘ₋ₘₑₘ.ₘ ≠ 0 when m ≥ mem + 1
+    # rₖ₋ₘₑₘ.ₖ ≠ 0 when k ≥ mem + 1
     if iter ≥ mem + 2
-      H[mem+2] = zero(FC) # hₘ₋ₘₑₘ.ₘ = 0
+      H[mem+2] = zero(FC) # hₖ₋ₘₑₘ.ₖ = 0
     end
 
     # Update the QR factorization of H.
@@ -217,41 +214,41 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       H[next_diag] = H_aux
     end
 
-    # Compute and apply current Givens reflection Ωₘ.
-    # [cₘ  sₘ] [ hₘ.ₘ ] = [ρₘ]
-    # [sₘ -cₘ] [hₘ₊₁.ₘ]   [0 ]
+    # Compute and apply current Givens reflection Ωₖ.
+    # [cₖ  sₖ] [ hₖ.ₖ ] = [ρₖ]
+    # [sₖ -cₖ] [hₖ₊₁.ₖ]   [0 ]
     (c[pos], s[pos], H[2]) = sym_givens(H[2], H[1])
-    γₘ₊₁ = conj(s[pos]) * γₘ
-    γₘ   =      c[pos]  * γₘ
+    γₖ₊₁ = conj(s[pos]) * γₖ
+    γₖ   =      c[pos]  * γₖ
 
-    # Compute the direction pₘ, the last column of Pₘ = N⁻¹Vₘ(Rₘ)⁻¹.
+    # Compute the direction pₖ, the last column of Pₖ = NVₖ(Rₖ)⁻¹.
     for i = max(1,iter-mem) : iter-1
       ipos = mod(i-1, mem) + 1 # Position corresponding to pᵢ in the circular stack P.
       diag = iter - i + 2
       if ipos == pos
-        # pₐᵤₓ ← -hₘ₋ₘₑₘ.ₘ * pₘ₋ₘₑₘ
+        # pₐᵤₓ ← -hₖ₋ₘₑₘ.ₖ * pₖ₋ₘₑₘ
         @kscal!(n, -H[diag], P[pos])
       else
-        # pₐᵤₓ ← pₐᵤₓ - hᵢ.ₘ * pᵢ
+        # pₐᵤₓ ← pₐᵤₓ - hᵢ.ₖ * pᵢ
         @kaxpy!(n, -H[diag], P[ipos], P[pos])
       end
     end
-    # pₐᵤₓ ← pₐᵤₓ + N⁻¹vₘ
+    # pₐᵤₓ ← pₐᵤₓ + Nvₖ
     @kaxpy!(n, one(FC), z, P[pos])
-    # pₘ = pₐᵤₓ / hₘ.ₘ
+    # pₖ = pₐᵤₓ / hₖ.ₖ
     @. P[pos] = P[pos] / H[2]
 
-    # Compute solution xₘ.
-    # xₘ ← xₘ₋₁ + γₘ * pₘ
-    @kaxpy!(n, γₘ, P[pos], x)
+    # Compute solution xₖ.
+    # xₖ ← xₖ₋₁ + γₖ * pₖ
+    @kaxpy!(n, γₖ, P[pos], x)
 
     # Update residual norm estimate.
-    # ‖ M⁻¹(b - Axₘ) ‖₂ ≈ |γₘ₊₁|
-    rNorm = abs(γₘ₊₁)
+    # ‖ M(b - Axₖ) ‖₂ ≈ |γₖ₊₁|
+    rNorm = abs(γₖ₊₁)
     history && push!(rNorms, rNorm)
 
-    # Update γₘ.
-    γₘ = γₘ₊₁
+    # Update γₖ.
+    γₖ = γₖ₊₁
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
