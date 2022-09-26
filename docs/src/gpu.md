@@ -40,7 +40,7 @@ b_cpu = rand(200)
 A_gpu = CuSparseMatrixCSC(A_cpu)
 b_gpu = CuVector(b_cpu)
 
-# Solve a rectangular and sparse system on a Nvidia GPU
+# Solve a rectangular and sparse system on an Nvidia GPU
 x, stats = lsmr(A_gpu, b_gpu)
 ```
 
