@@ -137,7 +137,7 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
   # Set up workspace.
-  mem = length(c)  # Memory.
+  mem = length(V)  # Memory.
   for i = 1 : mem
     V[i] .= zero(FC)  # Orthogonal basis of Kₖ(MAN, Mr₀).
     P[i] .= zero(FC)  # Directions for x : Pₖ = NVₖ(Rₖ)⁻¹.
@@ -145,13 +145,14 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   c .= zero(T)   # Last mem Givens cosines used for the factorization QₖRₖ = Hₖ.
   s .= zero(FC)  # Last mem Givens sines used for the factorization QₖRₖ = Hₖ.
   H .= zero(FC)  # Last column of the band hessenberg matrix Hₖ.
-  # Each column has at most mem + 1 nonzero elements. hᵢ.ₖ is stored as H[k-i+2].
-  # k-i+2 represents the indice of the diagonal where hᵢ.ₖ is located.
+  # Each column has at most mem + 1 nonzero elements.
+  # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
+  # k-i+1 represents the indice of the diagonal where hᵢ.ₖ is located.
   # In addition of that, the last column of Rₖ is also stored in H.
 
   # Initial γ₁ and V₁.
   γₖ = rNorm # γₖ and γₖ₊₁ are the last components of gₖ, right-hand of the least squares problem min ‖ Hₖyₖ - gₖ ‖₂.
-  @. V[1] = r₀ / rNorm
+  V[1] .= r₀ ./ rNorm
 
   # The following stopping criterion compensates for the lag in the
   # residual, but usually increases the number of iterations.
@@ -167,8 +168,8 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     iter = iter + 1
 
     # Set position in circulars stacks.
-    pos = mod(iter-1, mem) + 1 # Position corresponding to pₖ and vₖ in circular stacks P and V.
-    next_pos = mod(iter, mem) + 1 # Position corresponding to vₖ₊₁ in the circular stack V.
+    pos = mod(iter-1, mem) + 1     # Position corresponding to pₖ and vₖ in circular stacks P and V.
+    next_pos = mod(iter, mem) + 1  # Position corresponding to vₖ₊₁ in the circular stack V.
 
     # Incomplete Arnoldi procedure.
     z = NisI ? V[pos] : solver.z
@@ -176,17 +177,17 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     mul!(t, A, z)                           # ANvₖ
     MisI || mulorldiv!(w, M, t, ldiv)       # MANvₖ, forms vₖ₊₁
     for i = max(1, iter-mem+1) : iter
-      ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
-      diag = iter - i + 2
-      H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₖ = ⟨MANvₖ , vᵢ⟩
-      @kaxpy!(n, -H[diag], V[ipos], w) # w ← w - hᵢ.ₖvᵢ
+      ipos = mod(i-1, mem) + 1  # Position corresponding to vᵢ in the circular stack V.
+      diag = iter - i + 1
+      H[diag] = @kdot(n, w, V[ipos])    # hᵢ.ₖ = ⟨MANvₖ, vᵢ⟩
+      @kaxpy!(n, -H[diag], V[ipos], w)  # w ← w - hᵢ.ₖvᵢ
     end
 
     # Partial reorthogonalization of the Krylov basis.
     if reorthogonalization
       for i = max(1, iter-mem+1) : iter
         ipos = mod(i-1, mem) + 1
-        diag = iter - i + 2
+        diag = iter - i + 1
         Htmp = @kdot(n, w, V[ipos])
         H[diag] += Htmp
         @kaxpy!(n, -Htmp, V[ipos], w)
@@ -194,37 +195,38 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
 
     # Compute hₖ₊₁.ₖ and vₖ₊₁.
-    H[1] = @knrm2(n, w) # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
-    if H[1] ≠ 0 # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
-      @. V[next_pos] = w / H[1] # vₖ₊₁ = w / hₖ₊₁.ₖ
+    Haux = @knrm2(n, w)         # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+    if Haux ≠ 0                 # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
+      V[next_pos] .= w ./ Haux  # vₖ₊₁ = w / hₖ₊₁.ₖ
     end
     # rₖ₋ₘₑₘ.ₖ ≠ 0 when k ≥ mem + 1
+    # We don't want to use rₖ₋₁₋ₘₑₘ.ₖ₋₁ when we compute rₖ₋ₘₑₘ.ₖ
     if iter ≥ mem + 2
-      H[mem+2] = zero(FC) # hₖ₋ₘₑₘ.ₖ = 0
+      H[mem+1] = zero(FC)  # rₖ₋ₘₑₘ.ₖ = 0
     end
 
-    # Update the QR factorization of H.
+    # Update the QR factorization of Hₖ.
     # Apply mem previous Givens reflections Ωᵢ.
     for i = max(1,iter-mem) : iter-1
-      irot_pos = mod(i-1, mem) + 1 # Position corresponding to cᵢ and sᵢ in circular stacks c and s.
-      diag = iter - i + 1
+      irot_pos = mod(i-1, mem) + 1  # Position corresponding to cᵢ and sᵢ in circular stacks c and s.
+      diag = iter - i
       next_diag = diag + 1
-      H_aux        =      c[irot_pos]  * H[next_diag] + s[irot_pos] * H[diag]
+      Htmp         =      c[irot_pos]  * H[next_diag] + s[irot_pos] * H[diag]
       H[diag]      = conj(s[irot_pos]) * H[next_diag] - c[irot_pos] * H[diag]
-      H[next_diag] = H_aux
+      H[next_diag] = Htmp
     end
 
     # Compute and apply current Givens reflection Ωₖ.
     # [cₖ  sₖ] [ hₖ.ₖ ] = [ρₖ]
     # [sₖ -cₖ] [hₖ₊₁.ₖ]   [0 ]
-    (c[pos], s[pos], H[2]) = sym_givens(H[2], H[1])
+    (c[pos], s[pos], H[1]) = sym_givens(H[1], Haux)
     γₖ₊₁ = conj(s[pos]) * γₖ
     γₖ   =      c[pos]  * γₖ
 
     # Compute the direction pₖ, the last column of Pₖ = NVₖ(Rₖ)⁻¹.
     for i = max(1,iter-mem) : iter-1
-      ipos = mod(i-1, mem) + 1 # Position corresponding to pᵢ in the circular stack P.
-      diag = iter - i + 2
+      ipos = mod(i-1, mem) + 1  # Position corresponding to pᵢ in the circular stack P.
+      diag = iter - i + 1
       if ipos == pos
         # pₐᵤₓ ← -hₖ₋ₘₑₘ.ₖ * pₖ₋ₘₑₘ
         @kscal!(n, -H[diag], P[pos])
@@ -236,7 +238,7 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # pₐᵤₓ ← pₐᵤₓ + Nvₖ
     @kaxpy!(n, one(FC), z, P[pos])
     # pₖ = pₐᵤₓ / hₖ.ₖ
-    @. P[pos] = P[pos] / H[2]
+    P[pos] .= P[pos] ./ H[1]
 
     # Compute solution xₖ.
     # xₖ ← xₖ₋₁ + γₖ * pₖ

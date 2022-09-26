@@ -136,20 +136,23 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
   kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
 
-  mem = length(L)  # Memory
+  mem = length(V)  # Memory
   for i = 1 : mem
     V[i] .= zero(FC)  # Orthogonal basis of Kₖ(MAN, Mr₀).
-    P[i] .= zero(FC)  # Directions for x : Pₖ = NVₖ(Uₖ)⁻¹.
+  end
+  for i = 1 : mem-1
+    P[i] .= zero(FC)  # Directions Pₖ = NVₖ(Uₖ)⁻¹.
   end
   H .= zero(FC)  # Last column of the band hessenberg matrix Hₖ = LₖUₖ.
-  # Each column has at most mem + 1 nonzero elements. hᵢ.ₖ is stored as H[k-i+2].
-  # k-i+2 represents the indice of the diagonal where hᵢ.ₖ is located.
+  # Each column has at most mem + 1 nonzero elements.
+  # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
+  # k-i+1 represents the indice of the diagonal where hᵢ.ₖ is located.
   # In addition of that, the last column of Uₖ is stored in H.
-  L .= zero(FC)  # Last mem pivots of Lₖ.
+  L .= zero(FC)  # Last mem-1 pivots of Lₖ.
 
   # Initial ξ₁ and V₁.
   ξ = rNorm
-  @. V[1] = r₀ / rNorm
+  V[1] .= r₀ ./ rNorm
 
   # Stopping criterion.
   solved = rNorm ≤ ε
@@ -163,8 +166,8 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     iter = iter + 1
 
     # Set position in circulars stacks.
-    pos = mod(iter-1, mem) + 1 # Position corresponding to pₖ and vₖ in circular stacks P and V.
-    next_pos = mod(iter, mem) + 1 # Position corresponding to vₖ₊₁ in the circular stack V.
+    pos = mod(iter-1, mem) + 1     # Position corresponding to vₖ in the circular stack V.
+    next_pos = mod(iter, mem) + 1  # Position corresponding to vₖ₊₁ in the circular stack V.
 
     # Incomplete Arnoldi procedure.
     z = NisI ? V[pos] : solver.z
@@ -172,17 +175,17 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     mul!(t, A, z)                           # ANvₖ
     MisI || mulorldiv!(w, M, t, ldiv)       # MANvₖ, forms vₖ₊₁
     for i = max(1, iter-mem+1) : iter
-      ipos = mod(i-1, mem) + 1 # Position corresponding to vᵢ in the circular stack V.
-      diag = iter - i + 2
-      H[diag] = @kdot(n, w, V[ipos]) # hᵢ.ₖ = ⟨MANvₖ , vᵢ⟩
-      @kaxpy!(n, -H[diag], V[ipos], w) # w ← w - hᵢ.ₖvᵢ
+      ipos = mod(i-1, mem) + 1  # Position corresponding to vᵢ in the circular stack V.
+      diag = iter - i + 1
+      H[diag] = @kdot(n, w, V[ipos])    # hᵢ.ₖ = ⟨MANvₖ, vᵢ⟩
+      @kaxpy!(n, -H[diag], V[ipos], w)  # w ← w - hᵢ.ₖvᵢ
     end
 
     # Partial reorthogonalization of the Krylov basis.
     if reorthogonalization
       for i = max(1, iter-mem+1) : iter
         ipos = mod(i-1, mem) + 1
-        diag = iter - i + 2
+        diag = iter - i + 1
         Htmp = @kdot(n, w, V[ipos])
         H[diag] += Htmp
         @kaxpy!(n, -Htmp, V[ipos], w)
@@ -190,56 +193,61 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
 
     # Compute hₖ₊₁.ₖ and vₖ₊₁.
-    H[1] = @knrm2(n, w) # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
-    if H[1] ≠ 0 # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
-      @. V[next_pos] = w / H[1] # vₖ₊₁ = w / hₖ₊₁.ₖ
-    end
-    # It's possible that uₖ₋ₘₑₘ.ₖ ≠ 0 when k ≥ mem + 1
-    if iter ≥ mem + 2
-      H[mem+2] = zero(FC) # hₖ₋ₘₑₘ.ₖ = 0
+    Haux = @knrm2(n, w)         # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+    if Haux ≠ 0                 # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
+      V[next_pos] .= w ./ Haux  # vₖ₊₁ = w / hₖ₊₁.ₖ
     end
 
-    # Update the LU factorization with partial pivoting of H.
+    # Update the LU factorization of Hₖ.
     # Compute the last column of Uₖ.
     if iter ≥ 2
-      for i = max(2,iter-mem+1) : iter
-        lpos = mod(i-1, mem) + 1 # Position corresponding to lᵢ.ᵢ₋₁ in the circular stack L.
-        diag = iter - i + 2
+      # u₁.ₖ ← h₁.ₖ             if iter ≤ mem
+      # uₖ₋ₘₑₘ₊₁.ₖ ← hₖ₋ₘₑₘ₊₁.ₖ if iter ≥ mem + 1
+      for i = max(2,iter-mem+2) : iter
+        lpos = mod(i-1, mem-1) + 1  # Position corresponding to lᵢ.ᵢ₋₁ in the circular stack L.
+        diag = iter - i + 1
         next_diag = diag + 1
         # uᵢ.ₖ ← hᵢ.ₖ - lᵢ.ᵢ₋₁ * uᵢ₋₁.ₖ
         H[diag] = H[diag] - L[lpos] * H[next_diag]
+        if i == iter
+          # Compute ξₖ the last component of zₖ = β(Lₖ)⁻¹e₁.
+          # ξₖ = -lₖ.ₖ₋₁ * ξₖ₋₁
+          ξ = - L[lpos] * ξ
+        end
       end
-      # Compute ξₖ the last component of zₖ = β(Lₖ)⁻¹e₁.
-      # ξₖ = -lₖ.ₖ₋₁ * ξₖ₋₁
-      ξ = - L[pos] * ξ
     end
     # Compute next pivot lₖ₊₁.ₖ = hₖ₊₁.ₖ / uₖ.ₖ
-    L[next_pos] = H[1] / H[2]
+    next_lpos = mod(iter, mem-1) + 1
+    L[next_lpos] = Haux / H[1]
+
+    ppos = mod(iter-1, mem-1) + 1 # Position corresponding to pₖ in the circular stack P.
 
     # Compute the direction pₖ, the last column of Pₖ = NVₖ(Uₖ)⁻¹.
-    for i = max(1,iter-mem) : iter-1
-      ipos = mod(i-1, mem) + 1 # Position corresponding to pᵢ in the circular stack P.
-      diag = iter - i + 2
-      if ipos == pos
-        # pₐᵤₓ ← -hₖ₋ₘₑₘ.ₖ * pₖ₋ₘₑₘ
-        @kscal!(n, -H[diag], P[pos])
+    # u₁.ₖp₁ + ... + uₖ.ₖpₖ = Nvₖ             if k ≤ mem
+    # uₖ₋ₘₑₘ₊₁.ₖpₖ₋ₘₑₘ₊₁ + ... + uₖ.ₖpₖ = Nvₖ if k ≥ mem + 1
+    for i = max(1,iter-mem+1) : iter-1
+      ipos = mod(i-1, mem-1) + 1  # Position corresponding to pᵢ in the circular stack P.
+      diag = iter - i + 1
+      if ipos == ppos
+        # pₖ ← -uₖ₋ₘₑₘ₊₁.ₖ * pₖ₋ₘₑₘ₊₁
+        @kscal!(n, -H[diag], P[ppos])
       else
-        # pₐᵤₓ ← pₐᵤₓ - hᵢ.ₖ * pᵢ
-        @kaxpy!(n, -H[diag], P[ipos], P[pos])
+        # pₖ ← pₖ - uᵢ.ₖ * pᵢ
+        @kaxpy!(n, -H[diag], P[ipos], P[ppos])
       end
     end
     # pₐᵤₓ ← pₐᵤₓ + Nvₖ
-    @kaxpy!(n, one(FC), z, P[pos])
+    @kaxpy!(n, one(FC), z, P[ppos])
     # pₖ = pₐᵤₓ / uₖ.ₖ
-    @. P[pos] = P[pos] / H[2]
+    P[ppos] .= P[ppos] ./ H[1]
 
     # Update solution xₖ.
     # xₖ = xₖ₋₁ + ξₖ * pₖ
-    @kaxpy!(n, ξ, P[pos], x)
+    @kaxpy!(n, ξ, P[ppos], x)
 
     # Compute residual norm.
     # ‖ M(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ξₖ / uₖ.ₖ|
-    rNorm = real(H[1]) * abs(ξ / H[2])
+    rNorm = Haux * abs(ξ / H[1])
     history && push!(rNorms, rNorm)
 
     # Stopping conditions that do not depend on user input.
