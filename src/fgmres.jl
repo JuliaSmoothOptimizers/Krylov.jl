@@ -20,7 +20,7 @@ export fgmres, fgmres!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the linear system Ax = b using FGMRES method.
+Solve the linear system Ax = b using FGMRES.
 
 FGMRES computes a sequence of approximate solutions with minimum residual.
 FGMRES is a variant of GMRES that allows changes in the right preconditioner at each iteration.
