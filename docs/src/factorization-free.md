@@ -10,8 +10,8 @@ Some methods only require `A * v` products, whereas other ones also require `A' 
 |:--------------------------------------:|:----------------------------------------:|
 | CG, CR                                 | CGLS, CRLS, CGNE, CRMR                   |
 | SYMMLQ, CG-LANCZOS, MINRES, MINRES-QLP | LSLQ, LSQR, LSMR, LNLQ, CRAIG, CRAIGMR   |
-| DIOM, FOM, DQGMRES, GMRES              | BiLQ, QMR, BiLQR, USYMLQ, USYMQR, TriLQR |
-| CGS, BICGSTAB                          | TriCG, TriMR, USYMLQR                    |
+| DIOM, FOM, DQGMRES, GMRES, FGMRES      | BiLQ, QMR, BiLQR, USYMLQ, USYMQR, TriLQR |
+| CGS, BICGSTAB                          | TriCG, TriMR                             |
 
 Preconditioners `M`, `N`, `C`, `D`, `E` or `F` can be also linear operators and must implement `mul!` or `ldiv!`.
 
