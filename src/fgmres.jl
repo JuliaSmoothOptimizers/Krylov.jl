@@ -22,22 +22,22 @@ export fgmres, fgmres!
 
 Solve the linear system Ax = b using FGMRES method.
 
-FGMRES computes a sequence of approximate solutions with the minimal residual property.
-FGMRES is a variant of GMRES that allows changes in the right preconditioning at every step.
+FGMRES computes a sequence of approximate solutions with minimum residual.
+FGMRES is a variant of GMRES that allows changes in the right preconditioner at each iteration.
 
 This implementation allows a left preconditioner M and a flexible right preconditioner N.
 A situation in which the preconditioner is "not constant" is when a relaxation-type method,
 a Chebyshev iteration or another Krylov subspace method is used as a preconditioner. 
 Compared to GMRES, there is no additional cost incurred in the arithmetic but the memory requirement almost doubles.
-Thus, GMRES is recommended if the right preconditioner N is identical as each iteration.
+Thus, GMRES is recommended if the right preconditioner N is constant.
 
 Full reorthogonalization is available with the `reorthogonalization` option.
 
 If `restart = true`, the restarted version FGMRES(k) is used with `k = memory`.
 If `restart = false`, the parameter `memory` should be used as a hint of the number of iterations to limit dynamic memory allocations.
-More storage will be allocated only if the number of iterations exceed `memory`.
+More storage will be allocated only if the number of iterations exceeds `memory`.
 
-FGMRES can be warm-started from an initial guess `x0` with the method
+FGMRES can be warm-started from an initial guess `x0` with
 
     (x, stats) = fgmres(A, b, x0; kwargs...)
 
@@ -169,7 +169,7 @@ function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     nr = 0  # Number of coefficients stored in Rₖ.
     for i = 1 : mem
       V[i] .= zero(FC)  # Orthogonal basis of {Mr₀, MANₖr₀, ..., (MANₖ)ᵏ⁻¹r₀}.
-      Z[i] .= zero(FC)  # Z = [N₁v₁, ..., Nₖvₖ]
+      Z[i] .= zero(FC)  # Zₖ = [N₁v₁, ..., Nₖvₖ]
     end
     s .= zero(FC)  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
     c .= zero(T)   # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
