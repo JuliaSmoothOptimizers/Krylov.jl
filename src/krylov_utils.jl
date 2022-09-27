@@ -92,8 +92,8 @@ function sym_givens(a :: Complex{T}, b :: Complex{T}) where T <: AbstractFloat
   return (c, s, ρ)
 end
 
-@inline sym_givens(a :: Complex{T}, b :: T) where T <: AbstractFloat = sym_givens(a, Complex{T}(b))
-@inline sym_givens(a :: T, b :: Complex{T}) where T <: AbstractFloat = sym_givens(Complex{T}(a), b)
+sym_givens(a :: Complex{T}, b :: T) where T <: AbstractFloat = sym_givens(a, Complex{T}(b))
+sym_givens(a :: T, b :: Complex{T}) where T <: AbstractFloat = sym_givens(Complex{T}(a), b)
 
 """
     roots = roots_quadratic(q₂, q₁, q₀; nitref)
@@ -111,19 +111,19 @@ function roots_quadratic(q₂ :: T, q₁ :: T, q₀ :: T;
   # Case where q(x) is linear.
   if q₂ == zero(T)
     if q₁ == zero(T)
-      root = tuple(zero(T))
-      q₀ == zero(T) || (root = tuple())
+      q₀ == zero(T) || error("The quadratic `q` doesn't have real roots.")
+      root = zero(T)
     else
-      root = tuple(-q₀ / q₁)
+      root = -q₀ / q₁
     end
-    return root
+    return (root, root)
   end
 
   # Case where q(x) is indeed quadratic.
   rhs = √eps(T) * q₁ * q₁
   if abs(q₀ * q₂) > rhs
     ρ = q₁ * q₁ - 4 * q₂ * q₀
-    ρ < 0 && return tuple()
+    ρ < 0 && return error("The quadratic `q` doesn't have real roots.")
     d = -(q₁ + copysign(sqrt(ρ), q₁)) / 2
     root1 = d / q₂
     root2 = q₀ / d
@@ -148,36 +148,6 @@ function roots_quadratic(q₂ :: T, q₁ :: T, q₀ :: T;
     root2 = root2 - q / dq
   end
   return (root1, root2)
-end
-
-
-"""
-    roots = to_boundary(x, d, radius; flip, xNorm2, dNorm2)
-
-Given a trust-region radius `radius`, a vector `x` lying inside the
-trust-region and a direction `d`, return `σ1` and `σ2` such that
-
-    ‖x + σi d‖ = radius, i = 1, 2
-
-in the Euclidean norm. If known, ‖x‖² may be supplied in `xNorm2`.
-
-If `flip` is set to `true`, `σ1` and `σ2` are computed such that
-
-    ‖x - σi d‖ = radius, i = 1, 2.
-"""
-function to_boundary(x :: Vector{T}, d :: Vector{T},
-                     radius :: T; flip :: Bool=false, xNorm2 :: T=zero(T), dNorm2 :: T=zero(T)) where T <: Number
-  radius > 0 || error("radius must be positive")
-
-  # ‖d‖² σ² + (xᴴd + dᴴx) σ + (‖x‖² - radius²).
-  rxd = real(dot(x, d))
-  flip && (rxd = -rxd)
-  dNorm2 == zero(T) && (dNorm2 = dot(d, d))
-  dNorm2 == zero(T) && error("zero direction")
-  xNorm2 == zero(T) && (xNorm2 = dot(x, x))
-  (xNorm2 ≤ radius * radius) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius * radius))
-  roots = roots_quadratic(dNorm2, 2 * rxd, xNorm2 - radius * radius)
-  return roots # `σ1` and `σ2`
 end
 
 """
@@ -356,4 +326,38 @@ end
 
 macro kref!(n, x, y, c, s)
   return esc(:(reflect!($x, $y, $c, $s)))
+end
+
+"""
+    roots = to_boundary(n, x, d, radius; flip, xNorm2, dNorm2)
+
+Given a trust-region radius `radius`, a vector `x` lying inside the
+trust-region and a direction `d`, return `σ1` and `σ2` such that
+
+    ‖x + σi d‖ = radius, i = 1, 2
+
+in the Euclidean norm.
+`n` is the length of vectors `x` and `d`.
+If known, ‖x‖² and ‖d‖² may be supplied with `xNorm2` and `dNorm2`.
+
+If `flip` is set to `true`, `σ1` and `σ2` are computed such that
+
+    ‖x - σi d‖ = radius, i = 1, 2.
+"""
+function to_boundary(n :: Int, x :: Vector{T}, d :: Vector{T}, radius :: T; flip :: Bool=false, xNorm2 :: T=zero(T), dNorm2 :: T=zero(T)) where T <: FloatOrComplex
+  radius > 0 || error("radius must be positive")
+
+  # ‖d‖² σ² + (xᴴd + dᴴx) σ + (‖x‖² - Δ²).
+  rxd = @kdotr(n, x, d)
+  flip && (rxd = -rxd)
+  dNorm2 == zero(T) && (dNorm2 = @kdot(n, d, d))
+  dNorm2 == zero(T) && error("zero direction")
+  xNorm2 == zero(T) && (xNorm2 = @kdot(n, x, x))
+  radius2 = radius * radius
+  (xNorm2 ≤ radius2) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius2))
+
+  # q₂ = ‖d‖², q₁ = xᴴd + dᴴx, q₀ = ‖x‖² - Δ²
+  # ‖x‖² ≤ Δ² ⟹ (q₁)² - 4 * q₂ * q₀ ≥ 0
+  roots = roots_quadratic(dNorm2, 2 * rxd, xNorm2 - radius2)
+  return roots  # `σ1` and `σ2`
 end

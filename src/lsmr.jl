@@ -287,7 +287,7 @@ function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # the step ϕ/ρ is not necessarily positive
     σ = ζ / (ρ * ρbar)
     if radius > 0
-      t1, t2 = to_boundary(x, hbar, radius)
+      t1, t2 = to_boundary(n, x, hbar, radius)
       tmax, tmin = max(t1, t2), min(t1, t2)
       on_boundary = σ > tmax || σ < tmin
       σ = σ > 0 ? min(σ, tmax) : max(σ, tmin)
