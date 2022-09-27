@@ -164,7 +164,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
     α = γ / pAp
 
     # Compute step size to boundary if applicable.
-    σ = radius > 0 ? maximum(to_boundary(x, p, radius, dNorm2=pNorm²)) : α
+    σ = radius > 0 ? maximum(to_boundary(n, x, p, radius, dNorm2=pNorm²)) : α
 
     kdisplay(iter, verbose) && @printf("%8.1e  %8.1e  %8.1e\n", pAp, α, σ)
 

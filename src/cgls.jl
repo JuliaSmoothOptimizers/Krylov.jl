@@ -145,7 +145,7 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     α = γ / δ
 
     # if a trust-region constraint is give, compute step to the boundary
-    σ = radius > 0 ? maximum(to_boundary(x, p, radius)) : α
+    σ = radius > 0 ? maximum(to_boundary(n, x, p, radius)) : α
     if (radius > 0) & (α > σ)
       α = σ
       on_boundary = true
