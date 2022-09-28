@@ -23,7 +23,7 @@ BLAS.set_num_threads(N)  # 1 ≤ N ≤ NMAX
 BLAS.get_num_threads()
 ```
 
-The recommended number of BLAS threads is the number of physical and not logical cores, which is in general `N = NMAX / 2`.
+The recommended number of BLAS threads is the number of physical and not logical cores, which is in general `N = NMAX / 2` if your CPU supports simultaneous multithreading (SMT).
 
 By default Julia ships with OpenBLAS but it's also possible to use Intel MKL BLAS and LAPACK with [MKL.jl](https://github.com/JuliaLinearAlgebra/MKL.jl).
 
