@@ -276,7 +276,3 @@ Related methods: [`GPMR`](@ref gpmr).
 ```@docs
 montoison_orban
 ```
-
-```@pseudocode
-    pseudocode.renderClass("pseudocode")
-```
