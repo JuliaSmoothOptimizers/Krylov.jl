@@ -12,6 +12,7 @@ makedocs(
   sitename = "Krylov.jl",
   pages = ["Home" => "index.md",
            "API" => "api.md",
+           "Krylov processes" => "processes.md",
            "Krylov methods" => ["Symmetric positive definite linear systems" => "solvers/spd.md",
                                 "Symmetric indefinite linear systems" => "solvers/sid.md",
                                 "Unsymmetric linear systems" => "solvers/unsymmetric.md",

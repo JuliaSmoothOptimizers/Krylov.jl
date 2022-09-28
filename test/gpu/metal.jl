@@ -1,7 +1,6 @@
-using LinearAlgebra, SparseArrays, Test
-using Krylov, Metal
+using Metal
 
-include("../test_utils.jl")
+include("gpu.jl")
 
 # https://github.com/JuliaGPU/Metal.jl/pull/48
 const MtlVector{T} = MtlArray{T,1}
@@ -31,6 +30,7 @@ end
 
   for FC in (Float32, ComplexF32)
     S = MtlVector{FC}
+    M = MtlMatrix{FC}
     T = real(FC)
     n = 10
     x = rand(FC, n)
@@ -82,8 +82,8 @@ end
 
     @testset "vector_to_matrix" begin
       S = MtlVector{FC}
-      M = Krylov.vector_to_matrix(S)
-      @test M == MtlMatrix{FC}
+      M2 = Krylov.vector_to_matrix(S)
+      @test M2 == M
     end
 
     ε = eps(T)
@@ -105,5 +105,9 @@ end
       x, stats = cg(A, b)
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
+
+    # @testset "processes -- $FC" begin
+    #   test_processes(S, M)
+    # end
   end
 end

@@ -1,7 +1,6 @@
-using LinearAlgebra, SparseArrays, Test
-using Krylov, AMDGPU
+using AMDGPU
 
-include("../test_utils.jl")
+include("gpu.jl")
 
 @testset "AMD -- AMDGPU.jl" begin
 
@@ -19,6 +18,7 @@ include("../test_utils.jl")
 
   for FC in (Float32, Float64, ComplexF32, ComplexF64)
     S = ROCVector{FC}
+    M = ROCMatrix{FC}
     T = real(FC)
     n = 10
     x = rand(FC, n)
@@ -70,8 +70,8 @@ include("../test_utils.jl")
 
     @testset "vector_to_matrix" begin
       S = ROCVector{FC}
-      M = Krylov.vector_to_matrix(S)
-      @test M == ROCMatrix{FC}
+      M2 = Krylov.vector_to_matrix(S)
+      @test M2 == M
     end
 
     ε = eps(T)
@@ -93,5 +93,9 @@ include("../test_utils.jl")
       x, stats = cg(A, b)
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
+
+    # @testset "processes -- $FC" begin
+    #   test_processes(S, M)
+    # end
   end
 end
