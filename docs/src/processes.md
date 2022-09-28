@@ -130,7 +130,7 @@ H_{k+1,k} =
 
 The function [`arnoldi`](@ref arnoldi) returns $V_{k+1}$ and $H_{k+1,k}$.
 
-Related methods: [`DIOM`](@ref diom), [`FOM`](@ref fom), [`DQGMRES`](@ref dqgmres) and [`GMRES`](@ref gmres).
+Related methods: [`DIOM`](@ref diom), [`FOM`](@ref fom), [`DQGMRES`](@ref dqgmres), [`GMRES`](@ref gmres) and [`FGMRES`](@ref fgmres).
 
 
 ```@docs
