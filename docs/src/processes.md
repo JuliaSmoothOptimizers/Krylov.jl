@@ -1,17 +1,3 @@
-```@pseudocode
-\begin{algorithm}
-  \caption{Test atoms}
-  \begin{algorithmic}
-    \STATE \textbf{Specials:} \{ \} \$ \& \# \% \_
-    \STATE \textbf{Bools:} \AND \OR \NOT \TRUE \FALSE
-    \STATE \textbf{Carriage return:} first line \\ second line
-    \STATE \textbf{Text-symbols:} \textbackslash
-    \STATE \textbf{Quote-symbols:} `single quotes', ``double quotes''
-    \STATE \textbf{Math:} $(\mathcal{C}_m)$, $i \gets i + 1$, $E=mc^2$, \( x^n + y^n = z^n \), $\$$, \(\$\)
-  \end{algorithmic}
-\end{algorithm}
-```
-
 # [Krylov processes](@id krylov-processes)
 
 Krylov processes are the foundation of Krylov methods, they generate bases of Krylov subspaces.
