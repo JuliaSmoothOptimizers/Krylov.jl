@@ -344,7 +344,7 @@ If `flip` is set to `true`, `σ1` and `σ2` are computed such that
 
     ‖x - σi d‖ = radius, i = 1, 2.
 """
-function to_boundary(n :: Int, x :: Vector{T}, d :: Vector{T}, radius :: T; flip :: Bool=false, xNorm2 :: T=zero(T), dNorm2 :: T=zero(T)) where T <: FloatOrComplex
+function to_boundary(n :: Int, x :: AbstractVector{T}, d :: AbstractVector{T}, radius :: T; flip :: Bool=false, xNorm2 :: T=zero(T), dNorm2 :: T=zero(T)) where T <: FloatOrComplex
   radius > 0 || error("radius must be positive")
 
   # ‖d‖² σ² + (xᴴd + dᴴx) σ + (‖x‖² - Δ²).
