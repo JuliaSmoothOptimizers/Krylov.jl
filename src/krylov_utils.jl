@@ -160,7 +160,7 @@ If `flip` is set to `true`, `σ1` and `σ2` are computed such that
 
     ‖x - σi d‖ = radius, i = 1, 2.
 """
-function to_boundary(x :: Vector{T}, d :: Vector{T},
+function to_boundary(x :: AbstractVector{T}, d :: AbstractVector{T},
                      radius :: T; flip :: Bool=false, xNorm2 :: T=zero(T), dNorm2 :: T=zero(T)) where T <: Number
   radius > 0 || error("radius must be positive")
 
