@@ -53,12 +53,6 @@ but is more stable.
 * it is possible to transition cheaply from the LSLQ iterate to the LSQR iterate if there is an advantage (there always is in terms of error)
 * if `A` is rank deficient, identify the minimum least-squares solution
 
-#### Optional arguments
-
-* `M`: a symmetric and positive definite dual preconditioner
-* `N`: a symmetric and positive definite primal preconditioner
-* `sqd` indicates that we are solving a symmetric and quasi-definite system with `λ=1`
-
 If `λ > 0`, we solve the symmetric and quasi-definite system
 
     [ E      A ] [ r ]   [ b ]
@@ -87,6 +81,16 @@ The system above represents the optimality conditions of
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᴴr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 
+#### Input arguments
+
+* `A`: a linear operator that models a matrix of dimension n × m.
+* `b`: a vector of length n.
+
+#### Keyword arguments
+
+* `M`: a symmetric and positive definite dual preconditioner
+* `N`: a symmetric and positive definite primal preconditioner
+* `sqd` indicates that we are solving a symmetric and quasi-definite system with `λ=1`
 * `λ` is a regularization parameter (see the problem statement above)
 * `σ` is an underestimate of the smallest nonzero singular value of `A`---setting `σ` too large will result in an error in the course of the iterations
 * `atol` is a stopping tolerance based on the residual
@@ -99,12 +103,10 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 * `conlim` is the limit on the estimated condition number of `A` beyond which the solution will be abandoned
 * `verbose` determines verbosity.
 
-#### Return values
+#### Output arguments
 
-`lslq` returns the tuple `(x, stats)` where
-
-* `x` is the LQ solution estimate
-* `stats` collects other statistics on the run in a LSLQStats
+* `x`: a dense vector of length m.
+* `stats`: statistics collected on the run in a [`LSLQStats`](@ref) structure.
 
 * `stats.err_lbnds` is a vector of lower bounds on the LQ error---the vector is empty if `window` is set to zero
 * `stats.err_ubnds_lq` is a vector of upper bounds on the LQ error---the vector is empty if `σ == 0` is left at zero

@@ -88,6 +88,16 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
+#### Input arguments
+
+* `A`: a linear operator that models a matrix of dimension n × m.
+* `b`: a vector of length n.
+
+#### Output arguments
+
+* `x`: a dense vector of length m.
+* `stats`: statistics collected on the run in a [`LsmrStats`](@ref) structure.
+
 #### Reference
 
 * D. C.-L. Fong and M. A. Saunders, [*LSMR: An Iterative Algorithm for Sparse Least Squares Problems*](https://doi.org/10.1137/10079687X), SIAM Journal on Scientific Computing, 33(5), pp. 2950--2971, 2011.

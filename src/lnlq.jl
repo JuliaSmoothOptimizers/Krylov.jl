@@ -82,6 +82,17 @@ For instance σ:=(1-1e-7)σₘᵢₙ .
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
+#### Input arguments
+
+* `A`: a linear operator that models a matrix of dimension n × m.
+* `b`: a vector of length n.
+
+#### Output arguments
+
+* `x`: a dense vector of length m.
+* `y`: a dense vector of length n.
+* `stats`: statistics collected on the run in a [`LNLQStats`](@ref) structure.
+
 #### Reference
 
 * R. Estrin, D. Orban, M.A. Saunders, [*LNLQ: An Iterative Method for Least-Norm Problems with an Error Minimization Property*](https://doi.org/10.1137/18M1194948), SIAM Journal on Matrix Analysis and Applications, 40(3), pp. 1102--1124, 2019.
