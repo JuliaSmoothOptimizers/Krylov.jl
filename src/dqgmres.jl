@@ -43,6 +43,16 @@ where `kwargs` are the same keyword arguments as above.
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
+#### Input arguments
+
+* `A`: a linear operator that models a matrix of dimension n.
+* `b`: a vector of length n.
+
+#### Output arguments
+
+* `x`: a dense vector of length n.
+* `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
+
 #### Reference
 
 * Y. Saad and K. Wu, [*DQGMRES: a quasi minimal residual algorithm based on incomplete orthogonalization*](https://doi.org/10.1002/(SICI)1099-1506(199607/08)3:4%3C329::AID-NLA86%3E3.0.CO;2-8), Numerical Linear Algebra with Applications, Vol. 3(4), pp. 329--343, 1996.

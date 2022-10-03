@@ -40,6 +40,16 @@ where `kwargs` are the same keyword arguments as above.
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
+#### Input arguments
+
+* `A`: a linear operator that models a matrix of dimension n.
+* `b`: a vector of length n.
+
+#### Output arguments
+
+* `x`: a dense vector of length n.
+* `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
+
 #### Reference
 
 * Y. Saad, [*Krylov subspace methods for solving unsymmetric linear systems*](https://doi.org/10.1090/S0025-5718-1981-0616364-6), Mathematics of computation, Vol. 37(155), pp. 105--126, 1981.

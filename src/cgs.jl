@@ -49,6 +49,16 @@ where `kwargs` are the same keyword arguments as above.
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
+#### Input arguments
+
+* `A`: a linear operator that models a matrix of dimension n.
+* `b`: a vector of length n.
+
+#### Output arguments
+
+* `x`: a dense vector of length n.
+* `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
+
 #### Reference
 
 * P. Sonneveld, [*CGS, A Fast Lanczos-Type Solver for Nonsymmetric Linear systems*](https://doi.org/10.1137/0910004), SIAM Journal on Scientific and Statistical Computing, 10(1), pp. 36--52, 1989.

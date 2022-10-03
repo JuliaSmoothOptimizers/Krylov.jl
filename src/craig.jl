@@ -89,6 +89,17 @@ In this implementation, both the x and y-parts of the solution are returned.
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
+#### Input arguments
+
+* `A`: a linear operator that models a matrix of dimension n × m.
+* `b`: a vector of length n.
+
+#### Output arguments
+
+* `x`: a dense vector of length m.
+* `y`: a dense vector of length n.
+* `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
+
 #### References
 
 * C. C. Paige and M. A. Saunders, [*LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*](https://doi.org/10.1145/355984.355989), ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.

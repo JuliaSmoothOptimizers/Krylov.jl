@@ -3,13 +3,13 @@ export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_s
 """
     V, T = hermitian_lanczos(A, b, k)
 
-#### Input arguments:
+#### Input arguments
 
 * `A`: a linear operator that models a Hermitian matrix of dimension n.
 * `b`: a vector of length n.
 * `k`: the number of iterations of the Hermitian Lanczos process.
 
-#### Output arguments:
+#### Output arguments
 
 * `V`: a dense n × (k+1) matrix.
 * `T`: a sparse (k+1) × k tridiagonal matrix.
@@ -71,14 +71,14 @@ end
 """
     V, T, U, Tᴴ = nonhermitian_lanczos(A, b, c, k)
 
-#### Input arguments:
+#### Input arguments
 
 * `A`: a linear operator that models a square matrix of dimension n.
 * `b`: a vector of length n.
 * `c`: a vector of length n.
 * `k`: the number of iterations of the non-Hermitian Lanczos process.
 
-#### Output arguments:
+#### Output arguments
 
 * `V`: a dense n × (k+1) matrix.
 * `T`: a sparse (k+1) × k tridiagonal matrix.
@@ -163,13 +163,13 @@ end
 """
     V, H = arnoldi(A, b, k)
 
-#### Input arguments:
+#### Input arguments
 
 * `A`: a linear operator that models a square matrix of dimension n.
 * `b`: a vector of length n.
 * `k`: the number of iterations of the Arnoldi process.
 
-#### Output arguments:
+#### Output arguments
 
 * `V`: a dense n × (k+1) matrix.
 * `H`: a sparse (k+1) × k upper Hessenberg matrix.
@@ -222,13 +222,13 @@ end
 """
     V, U, L = golub_kahan(A, b, k)
 
-#### Input arguments:
+#### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension n × m.
 * `b`: a vector of length n.
 * `k`: the number of iterations of the Golub-Kahan process.
 
-#### Output arguments:
+#### Output arguments
 
 * `V`: a dense m × (k+1) matrix.
 * `U`: a dense n × (k+1) matrix.
@@ -295,14 +295,14 @@ end
 """
     V, T, U, Tᴴ = saunders_simon_yip(A, b, c, k)
 
-#### Input arguments:
+#### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension n × m.
 * `b`: a vector of length n.
 * `c`: a vector of length m.
 * `k`: the number of iterations of the Saunders-Simon-Yip process.
 
-#### Output arguments:
+#### Output arguments
 
 * `V`: a dense n × (k+1) matrix.
 * `T`: a sparse (k+1) × k tridiagonal matrix.
@@ -385,7 +385,7 @@ end
 """
     V, H, U, F = montoison_orban(A, B, b, c, k)
 
-#### Input arguments:
+#### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension n × m.
 * `B`: a linear operator that models a matrix of dimension m × n.
@@ -393,7 +393,7 @@ end
 * `c`: a vector of length m.
 * `k`: the number of iterations of the Montoison-Orban process.
 
-#### Output arguments:
+#### Output arguments
 
 * `V`: a dense n × (k+1) matrix.
 * `H`: a sparse (k+1) × k upper Hessenberg matrix.

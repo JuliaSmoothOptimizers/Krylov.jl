@@ -43,6 +43,16 @@ where `kwargs` are the same keyword arguments as above.
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
+#### Input arguments
+
+* `A`: a linear operator that models a matrix of dimension n.
+* `b`: a vector of length n.
+
+#### Output arguments
+
+* `x`: a dense vector of length n.
+* `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
+
 #### Reference
 
 * Y. Saad, [*Practical use of some krylov subspace methods for solving indefinite and nonsymmetric linear systems*](https://doi.org/10.1137/0905015), SIAM journal on scientific and statistical computing, 5(1), pp. 203--228, 1984.

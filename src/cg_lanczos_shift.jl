@@ -36,6 +36,22 @@ assumed to be hermitian and positive definite.
 
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
+
+#### Input arguments
+
+* `A`: a linear operator that models a Hermitian matrix of dimension n.
+* `b`: a vector of length n.
+* `shifts`: a vector of length nshifts.
+
+#### Output arguments
+
+* `x`: a vector of nshifts dense vectors, each one of length n.
+* `stats`: statistics collected on the run in a [`LanczosShiftStats`](@ref) structure.
+
+#### References
+
+* A. Frommer and P. Maass, [*Fast CG-Based Methods for Tikhonov-Phillips Regularization*](https://doi.org/10.1137/S1064827596313310), SIAM Journal on Scientific Computing, 20(5), pp. 1831--1850, 1999.
+* C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
 function cg_lanczos_shift end
 

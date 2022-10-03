@@ -65,6 +65,16 @@ A preconditioner N may be provided in the form of a linear operator.
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
+#### Input arguments
+
+* `A`: a linear operator that models a matrix of dimension n × m.
+* `b`: a vector of length n.
+
+#### Output arguments
+
+* `x`: a dense vector of length m.
+* `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
+
 #### References
 
 * J. E. Craig, [*The N-step iteration procedures*](https://doi.org/10.1002/sapm195534164), Journal of Mathematics and Physics, 34(1), pp. 64--73, 1955.
