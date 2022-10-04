@@ -51,12 +51,12 @@ and `false` otherwise.
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n.
+* `A`: a linear operator that models a matrix of dimension n;
 * `b`: a vector of length n.
 
 #### Output arguments
 
-* `x`: a dense vector of length n.
+* `x`: a dense vector of length n;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### Reference

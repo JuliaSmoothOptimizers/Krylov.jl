@@ -39,13 +39,13 @@ and `false` otherwise.
 
 #### Input arguments
 
-* `A`: a linear operator that models a Hermitian matrix of dimension n.
-* `b`: a vector of length n.
+* `A`: a linear operator that models a Hermitian matrix of dimension n;
+* `b`: a vector of length n;
 * `shifts`: a vector of length nshifts.
 
 #### Output arguments
 
-* `x`: a vector of nshifts dense vectors, each one of length n.
+* `x`: a vector of nshifts dense vectors, each one of length n;
 * `stats`: statistics collected on the run in a [`LanczosShiftStats`](@ref) structure.
 
 #### References
