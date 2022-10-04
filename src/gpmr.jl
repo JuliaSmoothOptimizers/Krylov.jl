@@ -21,7 +21,7 @@ export gpmr, gpmr!
                          verbose::Int=0, history::Bool=false,
                          callback=solver->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, y, stats) = gpmr(A, B, b, c, x0::AbstractVector, y0::AbstractVector; kwargs...)
@@ -101,13 +101,13 @@ GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 """
 function gpmr end
 
-function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
+function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: RealOrComplex
   solver = GpmrSolver(A, b, memory)
   gpmr!(solver, A, B, b, c, x0, y0; kwargs...)
   return (solver.x, solver.y, solver.stats)
 end
 
-function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
+function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: RealOrComplex
   solver = GpmrSolver(A, b, memory)
   gpmr!(solver, A, B, b, c; kwargs...)
   return (solver.x, solver.y, solver.stats)
@@ -127,7 +127,7 @@ See [`GpmrSolver`](@ref) for more details about the `solver`.
 function gpmr! end
 
 function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC},
-                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0, y0)
   gpmr!(solver, A, B, b, c; kwargs...)
   return solver

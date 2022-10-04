@@ -18,7 +18,7 @@ export gmres, gmres!
                        verbose::Int=0, history::Bool=false,
                        callback=solver->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, stats) = gmres(A, b, x0::AbstractVector; kwargs...)
@@ -65,13 +65,13 @@ GMRES algorithm is based on the Arnoldi process and computes a sequence of appro
 """
 function gmres end
 
-function gmres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
+function gmres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: RealOrComplex
   solver = GmresSolver(A, b, memory)
   gmres!(solver, A, b, x0; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function gmres(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
+function gmres(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: RealOrComplex
   solver = GmresSolver(A, b, memory)
   gmres!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
@@ -90,7 +90,7 @@ See [`GmresSolver`](@ref) for more details about the `solver`.
 """
 function gmres! end
 
-function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
   gmres!(solver, A, b; kwargs...)
   return solver

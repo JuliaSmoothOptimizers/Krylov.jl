@@ -22,7 +22,7 @@ export cr, cr!
                     verbose::Int=0, history::Bool=false,
                     callback=solver->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, stats) = cr(A, b, x0::AbstractVector; kwargs...)
@@ -71,13 +71,13 @@ M also indicates the weighted norm in which residuals are measured.
 """
 function cr end
 
-function cr(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+function cr(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: RealOrComplex
   solver = CrSolver(A, b)
   cr!(solver, A, b, x0; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function cr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
+function cr(A, b :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
   solver = CrSolver(A, b)
   cr!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
@@ -93,7 +93,7 @@ See [`CrSolver`](@ref) for more details about the `solver`.
 """
 function cr! end
 
-function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
   cr!(solver, A, b; kwargs...)
   return solver

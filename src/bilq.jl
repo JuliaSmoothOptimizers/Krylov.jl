@@ -19,7 +19,7 @@ export bilq, bilq!
                       verbose::Int=0, history::Bool=false,
                       callback=solver->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, stats) = bilq(A, b, x0::AbstractVector; kwargs...)
@@ -64,13 +64,13 @@ When `A` is Hermitian and `b = c`, BiLQ is equivalent to SYMMLQ.
 """
 function bilq end
 
-function bilq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+function bilq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: RealOrComplex
   solver = BilqSolver(A, b)
   bilq!(solver, A, b, x0; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function bilq(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
+function bilq(A, b :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
   solver = BilqSolver(A, b)
   bilq!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
@@ -86,7 +86,7 @@ See [`BilqSolver`](@ref) for more details about the `solver`.
 """
 function bilq! end
 
-function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
   bilq!(solver, A, b; kwargs...)
   return solver

@@ -33,7 +33,7 @@ export lslq, lslq!
                       verbose::Int=0, history::Bool=false,
                       callback=solver->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
 Solve the regularized linear least-squares problem
@@ -143,7 +143,7 @@ The iterations stop as soon as one of the following conditions holds true:
 """
 function lslq end
 
-function lslq(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
+function lslq(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: RealOrComplex
   solver = LslqSolver(A, b, window=window)
   lslq!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)

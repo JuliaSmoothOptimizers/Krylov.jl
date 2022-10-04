@@ -21,7 +21,7 @@ export cg_lanczos_shift, cg_lanczos_shift!
                                   verbose::Int=0, history::Bool=false,
                                   callback=solver->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
 The Lanczos version of the conjugate gradient method to solve a family
@@ -62,7 +62,7 @@ of size n. The method does _not_ abort if A + αI is not definite.
 """
 function cg_lanczos_shift end
 
-function cg_lanczos_shift(A, b :: AbstractVector{FC}, shifts :: AbstractVector{T}; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+function cg_lanczos_shift(A, b :: AbstractVector{FC}, shifts :: AbstractVector{T}; kwargs...) where {T <: Real, FC <: RealOrComplex{T}}
   nshifts = length(shifts)
   solver = CgLanczosShiftSolver(A, b, nshifts)
   cg_lanczos_shift!(solver, A, b, shifts; kwargs...)

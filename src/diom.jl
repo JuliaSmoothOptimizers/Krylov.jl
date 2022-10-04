@@ -18,7 +18,7 @@ export diom, diom!
                       verbose::Int=0, history::Bool=false,
                       callback=solver->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, stats) = diom(A, b, x0::AbstractVector; kwargs...)
@@ -70,13 +70,13 @@ and indefinite systems of linear equations can be handled by this single algorit
 """
 function diom end
 
-function diom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
+function diom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: RealOrComplex
   solver = DiomSolver(A, b, memory)
   diom!(solver, A, b, x0; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function diom(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
+function diom(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: RealOrComplex
   solver = DiomSolver(A, b, memory)
   diom!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
@@ -95,7 +95,7 @@ See [`DiomSolver`](@ref) for more details about the `solver`.
 """
 function diom! end
 
-function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
   diom!(solver, A, b; kwargs...)
   return solver

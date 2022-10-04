@@ -35,7 +35,7 @@ export cgls, cgls!
                       itmax::Int=0, verbose::Int=0, history::Bool=false,
                       callback=solver->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
 Solve the regularized linear least-squares problem
@@ -84,7 +84,7 @@ but simpler to implement.
 """
 function cgls end
 
-function cgls(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
+function cgls(A, b :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
   solver = CglsSolver(A, b)
   cgls!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)

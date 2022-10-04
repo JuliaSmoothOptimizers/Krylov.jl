@@ -18,7 +18,7 @@ export fgmres, fgmres!
                         verbose::Int=0, history::Bool=false,
                         callback=solver->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, stats) = fgmres(A, b, x0::AbstractVector; kwargs...)
@@ -72,13 +72,13 @@ Thus, GMRES is recommended if the right preconditioner N is constant.
 """
 function fgmres end
 
-function fgmres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
+function fgmres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: RealOrComplex
   solver = FgmresSolver(A, b, memory)
   fgmres!(solver, A, b, x0; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function fgmres(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
+function fgmres(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: RealOrComplex
   solver = FgmresSolver(A, b, memory)
   fgmres!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
@@ -97,7 +97,7 @@ See [`FgmresSolver`](@ref) for more details about the `solver`.
 """
 function fgmres! end
 
-function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
   fgmres!(solver, A, b; kwargs...)
   return solver

@@ -26,7 +26,7 @@ export usymlq, usymlq!
                         verbose::Int=0, history::Bool=false,
                         callback=solver->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, stats) = usymlq(A, b, c, x0::AbstractVector; kwargs...)
@@ -77,13 +77,13 @@ In all cases, problems must be consistent.
 """
 function usymlq end
 
-function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
+function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: RealOrComplex
   solver = UsymlqSolver(A, b)
   usymlq!(solver, A, b, c, x0; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
+function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
   solver = UsymlqSolver(A, b)
   usymlq!(solver, A, b, c; kwargs...)
   return (solver.x, solver.stats)
@@ -100,7 +100,7 @@ See [`UsymlqSolver`](@ref) for more details about the `solver`.
 function usymlq! end
 
 function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
-                 x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 x0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
   usymlq!(solver, A, b, c; kwargs...)
   return solver

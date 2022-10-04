@@ -35,7 +35,7 @@ export lnlq, lnlq!
                          verbose::Int=0, history::Bool=false,
                          callback=solver->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
 Find the least-norm solution of the consistent linear system
@@ -119,7 +119,7 @@ For instance σ:=(1-1e-7)σₘᵢₙ .
 """
 function lnlq end
 
-function lnlq(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
+function lnlq(A, b :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
   solver = LnlqSolver(A, b)
   lnlq!(solver, A, b; kwargs...)
   return (solver.x, solver.y, solver.stats)

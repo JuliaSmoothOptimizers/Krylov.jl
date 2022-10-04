@@ -30,7 +30,7 @@ export minres, minres!
                         verbose::Int=0, history::Bool=false,
                         callback=solver->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, stats) = minres(A, b, x0::AbstractVector; kwargs...)
@@ -90,13 +90,13 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 """
 function minres end
 
-function minres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, kwargs...) where FC <: FloatOrComplex
+function minres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, kwargs...) where FC <: RealOrComplex
   solver = MinresSolver(A, b, window=window)
   minres!(solver, A, b, x0; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function minres(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
+function minres(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: RealOrComplex
   solver = MinresSolver(A, b, window=window)
   minres!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
@@ -112,7 +112,7 @@ See [`MinresSolver`](@ref) for more details about the `solver`.
 """
 function minres! end
 
-function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
   minres!(solver, A, b; kwargs...)
   return solver
