@@ -38,7 +38,7 @@ Find the least-norm solution of the consistent linear system
 
     Ax + λ²y = b
 
-using the LNLQ method, where λ ≥ 0 is a regularization parameter.
+of size n × m using the LNLQ method, where λ ≥ 0 is a regularization parameter.
 
 For a system in the form Ax = b, LNLQ method is equivalent to applying
 SYMMLQ to AAᴴy = b and recovering x = Aᴴy but is more stable.

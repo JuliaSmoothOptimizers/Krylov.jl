@@ -43,7 +43,7 @@ Solve the regularized linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ²‖x‖₂²
 
-using the LSMR method, where λ ≥ 0 is a regularization parameter.
+of size n × m using the LSMR method, where λ ≥ 0 is a regularization parameter.
 LSMR is formally equivalent to applying MINRES to the normal equations
 
     (AᴴA + λ²I) x = Aᴴb

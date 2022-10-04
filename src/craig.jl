@@ -47,7 +47,7 @@ Find the least-norm solution of the consistent linear system
 
     Ax + λ²y = b
 
-using the Golub-Kahan implementation of Craig's method, where λ ≥ 0 is a
+of size n × m using the Golub-Kahan implementation of Craig's method, where λ ≥ 0 is a
 regularization parameter. This method is equivalent to CGNE but is more
 stable.
 

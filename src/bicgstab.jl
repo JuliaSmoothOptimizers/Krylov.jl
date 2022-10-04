@@ -24,7 +24,7 @@ export bicgstab, bicgstab!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the square linear system Ax = b using BICGSTAB.
+Solve the square linear system Ax = b of size n using BICGSTAB.
 BICGSTAB requires two initial vectors `b` and `c`.
 The relation `bᴴc ≠ 0` must be satisfied and by default `c = b`.
 

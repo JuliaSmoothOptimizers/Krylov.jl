@@ -23,16 +23,16 @@ export cr, cr!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-A truncated version of Stiefel’s Conjugate Residual method to solve the symmetric linear system Ax = b or the least-squares problem min ‖b - Ax‖.
-The matrix A must be positive semi-definite.
+A truncated version of Stiefel’s Conjugate Residual method to solve the Hermitian linear system Ax = b
+of size n or the least-squares problem min ‖b - Ax‖ if A is singular.
+The matrix A must be Hermitian semi-definite.
 
-A preconditioner M may be provided in the form of a linear operator and is assumed to be symmetric and positive definite.
+A preconditioner M may be provided in the form of a linear operator and is assumed to be Hermitian and positive definite.
 M also indicates the weighted norm in which residuals are measured.
 
 In a linesearch context, 'linesearch' must be set to 'true'.
 
-If `itmax=0`, the default number of iterations is set to `2 * n`,
-with `n = length(b)`.
+If `itmax=0`, the default number of iterations is set to `2 * n`.
 
 CR can be warm-started from an initial guess `x0` with
 

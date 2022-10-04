@@ -38,7 +38,7 @@ Solve the regularized linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ²‖x‖₂²
 
-using the LSLQ method, where λ ≥ 0 is a regularization parameter.
+of size n × m using the LSLQ method, where λ ≥ 0 is a regularization parameter.
 LSLQ is formally equivalent to applying SYMMLQ to the normal equations
 
     (AᴴA + λ²I) x = Aᴴb

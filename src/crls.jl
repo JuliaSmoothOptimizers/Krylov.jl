@@ -34,8 +34,8 @@ Solve the linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ‖x‖₂²
 
-using the Conjugate Residuals (CR) method. This method is equivalent to
-applying MINRES to the normal equations
+of size n × m using the Conjugate Residuals (CR) method.
+This method is equivalent to applying MINRES to the normal equations
 
     (AᴴA + λI) x = Aᴴb.
 

@@ -27,7 +27,7 @@ GPMR solves the unsymmetric partitioned linear system
     [ λI   A ] [ x ] = [ b ]
     [  B  μI ] [ y ]   [ c ],
 
-where λ and μ are real or complex numbers.
+of size (n+m) × (n+m) where λ and μ are real or complex numbers.
 `A` can have any shape and `B` has the shape of `Aᴴ`.
 `A`, `B`, `b` and `c` must be all nonzero.
 

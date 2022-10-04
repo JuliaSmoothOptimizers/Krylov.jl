@@ -23,14 +23,12 @@ export cg_lanczos, cg_lanczos!
 `FC` is `T` or `Complex{T}`.
 
 The Lanczos version of the conjugate gradient method to solve the
-symmetric linear system
-
-    Ax = b
+Hermitian linear system Ax = b of size n.
 
 The method does _not_ abort if A is not definite.
 
 A preconditioner M may be provided in the form of a linear operator and is
-assumed to be hermitian and positive definite.
+assumed to be Hermitian and positive definite.
 
 CG-LANCZOS can be warm-started from an initial guess `x0` with
 

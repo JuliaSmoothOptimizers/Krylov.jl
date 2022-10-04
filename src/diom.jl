@@ -20,7 +20,7 @@ export diom, diom!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the consistent linear system Ax = b using DIOM.
+Solve the consistent linear system Ax = b of size n using DIOM.
 
 DIOM only orthogonalizes the new vectors of the Krylov basis against the `memory` most recent vectors.
 If CG is well defined on `Ax = b` and `memory = 2`, DIOM is theoretically equivalent to CG.

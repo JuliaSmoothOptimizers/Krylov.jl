@@ -27,8 +27,8 @@ Combine BiLQ and QMR to solve adjoint systems.
     [Aᴴ 0] [x]   [c]
 
 The relation `bᴴc ≠ 0` must be satisfied.
-BiLQ is used for solving primal system `Ax = b`.
-QMR is used for solving dual system `Aᴴy = c`.
+BiLQ is used for solving primal system `Ax = b` of size n.
+QMR is used for solving dual system `Aᴴy = c` of size n.
 
 An option gives the possibility of transferring from the BiLQ point to the
 BiCG point, when it exists. The transfer is based on the residual norm.

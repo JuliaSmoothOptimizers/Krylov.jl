@@ -3,7 +3,7 @@
 #
 #  minimize ‖Ax - b‖₂
 #
-# where A is square and symmetric.
+# where A is Hermitian.
 #
 # MINRES is formally equivalent to applying the conjugate residuals method
 # to Ax = b when A is positive definite, but is more general and also applies
@@ -43,8 +43,8 @@ or the shifted linear system
 
     (A + λI) x = b
 
-using the MINRES method, where λ ≥ 0 is a shift parameter,
-where A is square and symmetric.
+of size n using the MINRES method, where λ ≥ 0 is a shift parameter,
+where A is Hermitian.
 
 MINRES is formally equivalent to applying CR to Ax=b when A is positive
 definite, but is typically more stable and also applies to the case where
@@ -53,7 +53,7 @@ A is indefinite.
 MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr‖₂.
 
 A preconditioner M may be provided in the form of a linear operator and is
-assumed to be symmetric and positive definite.
+assumed to be Hermitian and positive definite.
 
 MINRES can be warm-started from an initial guess `x0` with
 
