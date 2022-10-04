@@ -83,29 +83,29 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n × m.
+* `A`: a linear operator that models a matrix of dimension n × m;
 * `b`: a vector of length n.
 
 #### Keyword arguments
 
-* `M`: a symmetric and positive definite dual preconditioner
-* `N`: a symmetric and positive definite primal preconditioner
-* `sqd` indicates that we are solving a symmetric and quasi-definite system with `λ=1`
-* `λ` is a regularization parameter (see the problem statement above)
-* `σ` is an underestimate of the smallest nonzero singular value of `A`---setting `σ` too large will result in an error in the course of the iterations
-* `atol` is a stopping tolerance based on the residual
-* `btol` is a stopping tolerance used to detect zero-residual problems
-* `etol` is a stopping tolerance based on the lower bound on the error
-* `window` is the number of iterations used to accumulate a lower bound on the error
-* `utol` is a stopping tolerance based on the upper bound on the error
-* `transfer_to_lsqr` return the CG solution estimate (i.e., the LSQR point) instead of the LQ estimate
-* `itmax` is the maximum number of iterations (0 means no imposed limit)
-* `conlim` is the limit on the estimated condition number of `A` beyond which the solution will be abandoned
+* `M`: a symmetric and positive definite dual preconditioner;
+* `N`: a symmetric and positive definite primal preconditioner;
+* `sqd` indicates that we are solving a symmetric and quasi-definite system with `λ=1`;
+* `λ` is a regularization parameter (see the problem statement above);
+* `σ` is an underestimate of the smallest nonzero singular value of `A`---setting `σ` too large will result in an error in the course of the iterations;
+* `atol` is a stopping tolerance based on the residual;
+* `btol` is a stopping tolerance used to detect zero-residual problems;
+* `etol` is a stopping tolerance based on the lower bound on the error;
+* `window` is the number of iterations used to accumulate a lower bound on the error;
+* `utol` is a stopping tolerance based on the upper bound on the error;
+* `transfer_to_lsqr` return the CG solution estimate (i.e., the LSQR point) instead of the LQ estimate;
+* `itmax` is the maximum number of iterations (0 means no imposed limit);
+* `conlim` is the limit on the estimated condition number of `A` beyond which the solution will be abandoned;
 * `verbose` determines verbosity.
 
 #### Output arguments
 
-* `x`: a dense vector of length m.
+* `x`: a dense vector of length m;
 * `stats`: statistics collected on the run in a [`LSLQStats`](@ref) structure.
 
 * `stats.err_lbnds` is a vector of lower bounds on the LQ error---the vector is empty if `window` is set to zero
