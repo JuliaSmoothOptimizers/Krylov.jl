@@ -42,7 +42,7 @@ Solve the consistent linear system
 
     Ax + √λs = b
 
-using the Conjugate Gradient (CG) method, where λ ≥ 0 is a regularization
+of size n × m using the Conjugate Gradient (CG) method, where λ ≥ 0 is a regularization
 parameter. This method is equivalent to applying CG to the normal equations
 of the second kind
 

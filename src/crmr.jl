@@ -40,7 +40,7 @@ Solve the consistent linear system
 
     Ax + √λs = b
 
-using the Conjugate Residual (CR) method, where λ ≥ 0 is a regularization
+of size n × m using the Conjugate Residual (CR) method, where λ ≥ 0 is a regularization
 parameter. This method is equivalent to applying CR to the normal equations
 of the second kind
 

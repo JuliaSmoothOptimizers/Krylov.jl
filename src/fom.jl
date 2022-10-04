@@ -20,7 +20,7 @@ export fom, fom!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the linear system Ax = b using FOM.
+Solve the linear system Ax = b of size n using FOM.
 
 FOM algorithm is based on the Arnoldi process and a Galerkin condition.
 

@@ -27,11 +27,11 @@ export minres_qlp, minres_qlp!
 `FC` is `T` or `Complex{T}`.
 
 MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
-solution on singular inconsistent systems (A + λI)x = b, where λ is a shift parameter.
+solution on singular inconsistent systems (A + λI)x = b of size n, where λ is a shift parameter.
 It is significantly more complex but can be more reliable than MINRES when A is ill-conditioned.
 
 A preconditioner M may be provided in the form of a linear operator and is
-assumed to be symmetric and positive definite.
+assumed to be Hermitian and positive definite.
 M also indicates the weighted norm in which residuals are measured.
 
 MINRES-QLP can be warm-started from an initial guess `x0` with

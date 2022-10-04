@@ -20,7 +20,7 @@ export gmres, gmres!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the linear system Ax = b using GMRES.
+Solve the linear system Ax = b of size n using GMRES.
 
 GMRES algorithm is based on the Arnoldi process and computes a sequence of approximate solutions with the minimum residual.
 

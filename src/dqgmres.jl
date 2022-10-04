@@ -20,7 +20,7 @@ export dqgmres, dqgmres!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the consistent linear system Ax = b using DQGMRES.
+Solve the consistent linear system Ax = b of size n using DQGMRES.
 
 DQGMRES algorithm is based on the incomplete Arnoldi orthogonalization process
 and computes a sequence of approximate solutions with the quasi-minimal residual property.

@@ -27,7 +27,7 @@ TriCG solves the symmetric linear system
     [ τE    A ] [ x ] = [ b ]
     [  Aᴴ  νF ] [ y ]   [ c ],
 
-where τ and ν are real numbers, E = M⁻¹ ≻ 0 and F = N⁻¹ ≻ 0.
+of size (n+m) × (n+m) where τ and ν are real numbers, E = M⁻¹ ≻ 0 and F = N⁻¹ ≻ 0.
 `b` and `c` must both be nonzero.
 TriCG could breakdown if `τ = 0` or `ν = 0`.
 It's recommended to use TriMR in these cases.

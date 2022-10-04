@@ -1,5 +1,5 @@
 # An implementation of SYMMLQ for the solution of the
-# linear system Ax = b, where A is square and symmetric.
+# linear system Ax = b, where A is Hermitian.
 #
 # This implementation follows the original implementation by
 # Michael Saunders described in
@@ -27,13 +27,13 @@ Solve the shifted linear system
 
     (A + λI) x = b
 
-using the SYMMLQ method, where λ is a shift parameter,
-and A is square and symmetric.
+of size n using the SYMMLQ method, where λ is a shift parameter,
+and A is Hermitian.
 
 SYMMLQ produces monotonic errors ‖x* - x‖₂.
 
 A preconditioner M may be provided in the form of a linear operator and is
-assumed to be symmetric and positive definite.
+assumed to be Hermitian and positive definite.
 
 SYMMLQ can be warm-started from an initial guess `x0` with
 

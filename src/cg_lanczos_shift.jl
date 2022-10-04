@@ -27,12 +27,12 @@ export cg_lanczos_shift, cg_lanczos_shift!
 The Lanczos version of the conjugate gradient method to solve a family
 of shifted systems
 
-    (A + αI) x = b  (α = α₁, ..., αₙ)
+    (A + αI) x = b  (α = α₁, ..., αₚ)
 
-The method does _not_ abort if A + αI is not definite.
+of size n. The method does _not_ abort if A + αI is not definite.
 
 A preconditioner M may be provided in the form of a linear operator and is
-assumed to be hermitian and positive definite.
+assumed to be Hermitian and positive definite.
 
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
@@ -41,11 +41,11 @@ and `false` otherwise.
 
 * `A`: a linear operator that models a Hermitian matrix of dimension n;
 * `b`: a vector of length n;
-* `shifts`: a vector of length nshifts.
+* `shifts`: a vector of length p.
 
 #### Output arguments
 
-* `x`: a vector of nshifts dense vectors, each one of length n;
+* `x`: a vector of p dense vectors, each one of length n;
 * `stats`: statistics collected on the run in a [`LanczosShiftStats`](@ref) structure.
 
 #### References
