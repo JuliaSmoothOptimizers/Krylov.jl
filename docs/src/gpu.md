@@ -26,7 +26,7 @@ b_gpu = CuVector(b_cpu)
 x, stats = bilq(A_gpu, b_gpu)
 ```
 
-Sparse matrices have a specific storage on Nvidia GPUs (`CuSparseMatrixCSC` or `CuSparseMatrixCSR`):
+Sparse matrices have a specific storage on Nvidia GPUs (`CuSparseMatrixCSC`, `CuSparseMatrixCSR` or `CuSparseMatrixCOO`):
 
 ```julia
 using CUDA, Krylov
