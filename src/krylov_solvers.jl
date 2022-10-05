@@ -73,6 +73,11 @@ mutable struct MinresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   err_vec    :: Vector{T}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function MinresSolver{T,FC,S}(Δx, x, r1, r2, w1, w2, y, v, err_vec, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, x, r1, r2, w1, w2, y, v, err_vec, warm_start, stats)
+  end
 end
 
 function MinresSolver(m, n, S; window :: Int=5)
@@ -87,6 +92,7 @@ function MinresSolver(m, n, S; window :: Int=5)
   y  = S(undef, n)
   v  = S(undef, 0)
   err_vec = zeros(T, window)
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = MinresSolver{T,FC,S}(m, n, Δx, x, r1, r2, w1, w2, y, v, err_vec, false, stats)
   return solver
@@ -119,6 +125,11 @@ mutable struct CgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   z          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function CgSolver{T,FC,S}(Δx, x, r, p, Ap, z, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, x, r, p, Ap, z, warm_start, stats)
+  end
 end
 
 function CgSolver(m, n, S)
@@ -130,6 +141,7 @@ function CgSolver(m, n, S)
   p  = S(undef, n)
   Ap = S(undef, n)
   z  = S(undef, 0)
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CgSolver{T,FC,S}(m, n, Δx, x, r, p, Ap, z, false, stats)
   return solver
@@ -163,6 +175,11 @@ mutable struct CrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   Mq         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function CrSolver{T,FC,S}(Δx, x, r, p, q, Ar, Mq, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, x, r, p, q, Ar, Mq, warm_start, stats)
+  end
 end
 
 function CrSolver(m, n, S)
@@ -175,6 +192,7 @@ function CrSolver(m, n, S)
   q  = S(undef, n)
   Ar = S(undef, n)
   Mq = S(undef, 0)
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CrSolver{T,FC,S}(m, n, Δx, x, r, p, q, Ar, Mq, false, stats)
   return solver
@@ -211,6 +229,11 @@ mutable struct SymmlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   sprod      :: Vector{T}
   warm_start :: Bool
   stats      :: SymmlqStats{T}
+
+  function SymmlqSolver{T,FC,S}(Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, warm_start, stats)
+  end
 end
 
 function SymmlqSolver(m, n, S; window :: Int=5)
@@ -226,6 +249,7 @@ function SymmlqSolver(m, n, S; window :: Int=5)
   clist   = zeros(T, window)
   zlist   = zeros(T, window)
   sprod   = ones(T, window)
+  warm_start = false
   stats = SymmlqStats(0, false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), "unknown")
   solver = SymmlqSolver{T,FC,S}(m, n, Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, false, stats)
   return solver
@@ -259,6 +283,11 @@ mutable struct CgLanczosSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v          :: S
   warm_start :: Bool
   stats      :: LanczosStats{T}
+
+  function CgLanczosSolver{T,FC,S}(Δx, x, Mv, Mv_prev, p, Mv_next, v, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, x, Mv, Mv_prev, p, Mv_next, v, warm_start, stats)
+  end
 end
 
 function CgLanczosSolver(m, n, S)
@@ -271,6 +300,7 @@ function CgLanczosSolver(m, n, S)
   p       = S(undef, n)
   Mv_next = S(undef, n)
   v       = S(undef, 0)
+  warm_start = false
   stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), "unknown")
   solver = CgLanczosSolver{T,FC,S}(m, n, Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
   return solver
@@ -309,6 +339,11 @@ mutable struct CgLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   converged  :: BitVector
   not_cv     :: BitVector
   stats      :: LanczosShiftStats{T}
+
+  function CgLanczosShiftSolver{T,FC,S}(Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  end
 end
 
 function CgLanczosShiftSolver(m, n, nshifts, S)
@@ -362,6 +397,11 @@ mutable struct MinresQlpSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   vₖ         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function MinresQlpSolver{T,FC,S}(Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, warm_start, stats)
+  end
 end
 
 function MinresQlpSolver(m, n, S)
@@ -375,6 +415,7 @@ function MinresQlpSolver(m, n, S)
   x       = S(undef, n)
   p       = S(undef, n)
   vₖ      = S(undef, 0)
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = MinresQlpSolver{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
   return solver
@@ -412,6 +453,11 @@ mutable struct DqgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   H          :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function DqgmresSolver{T,FC,S}(Δx, x, t, z, w, P, V, c, s, H, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, x, t, z, w, P, V, c, s, H, warm_start, stats)
+  end
 end
 
 function DqgmresSolver(m, n, memory, S)
@@ -428,6 +474,7 @@ function DqgmresSolver(m, n, memory, S)
   c  = Vector{T}(undef, memory)
   s  = Vector{FC}(undef, memory)
   H  = Vector{FC}(undef, memory+1)
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = DqgmresSolver{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
   return solver
@@ -464,6 +511,11 @@ mutable struct DiomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   H          :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function DiomSolver{T,FC,S}(Δx, x, t, z, w, P, V, L, H, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, x, t, z, w, P, V, L, H, warm_start, stats)
+  end
 end
 
 function DiomSolver(m, n, memory, S)
@@ -479,6 +531,7 @@ function DiomSolver(m, n, memory, S)
   V  = S[S(undef, n) for i = 1 : memory]
   L  = Vector{FC}(undef, memory-1)
   H  = Vector{FC}(undef, memory)
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = DiomSolver{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
   return solver
@@ -514,6 +567,11 @@ mutable struct UsymlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   q          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function UsymlqSolver{T,FC,S}(uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, warm_start, stats)
+  end
 end
 
 function UsymlqSolver(m, n, S)
@@ -564,6 +622,11 @@ mutable struct UsymqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   p          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function UsymqrSolver{T,FC,S}(vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, warm_start, stats)
+  end
 end
 
 function UsymqrSolver(m, n, S)
@@ -621,6 +684,11 @@ mutable struct TricgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   vₖ         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function TricgSolver{T,FC,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, warm_start, stats)
+  end
 end
 
 function TricgSolver(m, n, S)
@@ -642,6 +710,7 @@ function TricgSolver(m, n, S)
   Δy      = S(undef, 0)
   uₖ      = S(undef, 0)
   vₖ      = S(undef, 0)
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = TricgSolver{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return solver
@@ -688,6 +757,11 @@ mutable struct TrimrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   vₖ         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function TrimrSolver{T,FC,S}(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, warm_start, stats)
+  end
 end
 
 function TrimrSolver(m, n, S)
@@ -713,6 +787,7 @@ function TrimrSolver(m, n, S)
   Δy      = S(undef, 0)
   uₖ      = S(undef, 0)
   vₖ      = S(undef, 0)
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = TrimrSolver{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return solver
@@ -752,6 +827,11 @@ mutable struct TrilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   wₖ₋₂       :: S
   warm_start :: Bool
   stats      :: AdjointStats{T}
+
+  function TrilqrSolver{T,FC,S}(uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, warm_start, stats)
+  end
 end
 
 function TrilqrSolver(m, n, S)
@@ -805,6 +885,11 @@ mutable struct CgsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   vw         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function CgsSolver{T,FC,S}(Δx, x, r, u, p, q, ts, yz, vw, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, x, r, u, p, q, ts, yz, vw, warm_start, stats)
+  end
 end
 
 function CgsSolver(m, n, S)
@@ -819,6 +904,7 @@ function CgsSolver(m, n, S)
   ts = S(undef, n)
   yz = S(undef, 0)
   vw = S(undef, 0)
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CgsSolver{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
   return solver
@@ -854,6 +940,11 @@ mutable struct BicgstabSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   t          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function BicgstabSolver{T,FC,S}(Δx, x, r, p, v, s, qd, yz, t, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, x, r, p, v, s, qd, yz, t, warm_start, stats)
+  end
 end
 
 function BicgstabSolver(m, n, S)
@@ -868,6 +959,7 @@ function BicgstabSolver(m, n, S)
   qd = S(undef, n)
   yz = S(undef, 0)
   t  = S(undef, 0)
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = BicgstabSolver{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
   return solver
@@ -903,6 +995,11 @@ mutable struct BilqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   d̅          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function BilqSolver{T,FC,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, warm_start, stats)
+  end
 end
 
 function BilqSolver(m, n, S)
@@ -917,6 +1014,7 @@ function BilqSolver(m, n, S)
   Δx   = S(undef, 0)
   x    = S(undef, n)
   d̅    = S(undef, n)
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = BilqSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, false, stats)
   return solver
@@ -953,6 +1051,11 @@ mutable struct QmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   wₖ₋₁       :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function QmrSolver{T,FC,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, warm_start, stats)
+  end
 end
 
 function QmrSolver(m, n, S)
@@ -968,6 +1071,7 @@ function QmrSolver(m, n, S)
   x    = S(undef, n)
   wₖ₋₂ = S(undef, n)
   wₖ₋₁ = S(undef, n)
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = QmrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, false, stats)
   return solver
@@ -1007,6 +1111,11 @@ mutable struct BilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   wₖ₋₂       :: S
   warm_start :: Bool
   stats      :: AdjointStats{T}
+
+  function BilqrSolver{T,FC,S}(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, warm_start, stats)
+  end
 end
 
 function BilqrSolver(m, n, S)
@@ -1025,6 +1134,7 @@ function BilqrSolver(m, n, S)
   d̅    = S(undef, n)
   wₖ₋₃ = S(undef, n)
   wₖ₋₂ = S(undef, n)
+  warm_start = false
   stats = AdjointStats(0, false, false, T[], T[], "unknown")
   solver = BilqrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, false, stats)
   return solver
@@ -1056,6 +1166,11 @@ mutable struct CglsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   q     :: S
   Mr    :: S
   stats :: SimpleStats{T}
+
+  function CglsSolver{T,FC,S}(x, p, s, r, q, Mr, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(x, p, s, r, q, Mr, stats)
+  end
 end
 
 function CglsSolver(m, n, S)
@@ -1100,6 +1215,11 @@ mutable struct CrlsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   s     :: S
   Ms    :: S
   stats :: SimpleStats{T}
+
+  function CrlsSolver{T,FC,S}(x, p, Ar, q, r, Ap, s, Ms, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(x, p, Ar, q, r, Ap, s, Ms, stats)
+  end
 end
 
 function CrlsSolver(m, n, S)
@@ -1145,6 +1265,11 @@ mutable struct CgneSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   s     :: S
   z     :: S
   stats :: SimpleStats{T}
+
+  function CgneSolver{T,FC,S}(x, p, Aᴴz, r, q, s, z, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(x, p, Aᴴz, r, q, s, z, stats)
+  end
 end
 
 function CgneSolver(m, n, S)
@@ -1189,6 +1314,11 @@ mutable struct CrmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   Nq    :: S
   s     :: S
   stats :: SimpleStats{T}
+
+  function CrmrSolver{T,FC,S}(x, p, Aᴴr, r, q, Nq, s, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(x, p, Aᴴr, r, q, Nq, s, stats)
+  end
 end
 
 function CrmrSolver(m, n, S)
@@ -1235,6 +1365,11 @@ mutable struct LslqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v       :: S
   err_vec :: Vector{T}
   stats   :: LSLQStats{T}
+
+  function LslqSolver{T,FC,S}(x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
+  end
 end
 
 function LslqSolver(m, n, S; window :: Int=5)
@@ -1283,6 +1418,11 @@ mutable struct LsqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v       :: S
   err_vec :: Vector{T}
   stats   :: SimpleStats{T}
+
+  function LsqrSolver{T,FC,S}(x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
+  end
 end
 
 function LsqrSolver(m, n, S; window :: Int=5)
@@ -1332,6 +1472,11 @@ mutable struct LsmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v       :: S
   err_vec :: Vector{T}
   stats   :: LsmrStats{T}
+
+  function LsmrSolver{T,FC,S}(x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
+  end
 end
 
 function LsmrSolver(m, n, S; window :: Int=5)
@@ -1382,6 +1527,11 @@ mutable struct LnlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v     :: S
   q     :: S
   stats :: LNLQStats{T}
+
+  function LnlqSolver{T,FC,S}(x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
+  end
 end
 
 function LnlqSolver(m, n, S)
@@ -1432,6 +1582,11 @@ mutable struct CraigSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v     :: S
   w2    :: S
   stats :: SimpleStats{T}
+
+  function CraigSolver{T,FC,S}(x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
+  end
 end
 
 function CraigSolver(m, n, S)
@@ -1484,6 +1639,11 @@ mutable struct CraigmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v     :: S
   q     :: S
   stats :: SimpleStats{T}
+
+  function CraigmrSolver{T,FC,S}(x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
+  end
 end
 
 function CraigmrSolver(m, n, S)
@@ -1536,9 +1696,14 @@ mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   s          :: Vector{FC}
   z          :: Vector{FC}
   R          :: Vector{FC}
-  warm_start :: Bool
   inner_iter :: Int
+  warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function GmresSolver{T,FC,S}(Δx, x, w, p, q, V, c, s, z, R, inner_iter, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, x, w, p, q, V, c, s, z, R, inner_iter, warm_start, stats)
+  end
 end
 
 function GmresSolver(m, n, memory, S)
@@ -1555,6 +1720,8 @@ function GmresSolver(m, n, memory, S)
   s  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
+  inner_iter = 0
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = GmresSolver{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
   return solver
@@ -1590,9 +1757,14 @@ mutable struct FgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   s          :: Vector{FC}
   z          :: Vector{FC}
   R          :: Vector{FC}
-  warm_start :: Bool
   inner_iter :: Int
+  warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function FgmresSolver{T,FC,S}(Δx, x, w, q, V, Z, c, s, z, R, inner_iter, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, x, w, q, V, Z, c, s, z, R, inner_iter, warm_start, stats)
+  end
 end
 
 function FgmresSolver(m, n, memory, S)
@@ -1609,6 +1781,8 @@ function FgmresSolver(m, n, memory, S)
   s  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
+  inner_iter = 0
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = FgmresSolver{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
   return solver
@@ -1645,6 +1819,11 @@ mutable struct FomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   U          :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function FomSolver{T,FC,S}(Δx, x, w, p, q, V, l, z, U, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(Δx, x, w, p, q, V, l, z, U, warm_start, stats)
+  end
 end
 
 function FomSolver(m, n, memory, S)
@@ -1660,6 +1839,7 @@ function FomSolver(m, n, memory, S)
   l  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   U  = Vector{FC}(undef, div(memory * (memory+1), 2))
+  warm_start = false
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = FomSolver{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
   return solver
@@ -1703,6 +1883,11 @@ mutable struct GpmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   R          :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+
+  function GpmrSolver{T,FC,S}(wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, warm_start, stats) where {T,FC,S}
+    T <: Integer && error("Krylov methods cannot solve linear systems over the integers")
+    return new(wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, warm_start, stats)
+  end
 end
 
 function GpmrSolver(m, n, memory, S)
