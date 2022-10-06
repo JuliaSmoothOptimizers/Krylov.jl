@@ -42,7 +42,7 @@ Solve the regularized linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ²‖x‖₂²
 
-of size n × m using the LSQR method, where λ ≥ 0 is a regularization parameter.
+of size m × n using the LSQR method, where λ ≥ 0 is a regularization parameter.
 LSQR is formally equivalent to applying CG to the normal equations
 
     (AᴴA + λ²I) x = Aᴴb
@@ -85,12 +85,12 @@ and `false` otherwise.
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n × m;
-* `b`: a vector of length n.
+* `A`: a linear operator that models a matrix of dimension m × n;
+* `b`: a vector of length m.
 
 #### Output arguments
 
-* `x`: a dense vector of length m;
+* `x`: a dense vector of length n;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### Reference

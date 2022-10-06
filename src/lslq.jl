@@ -38,7 +38,7 @@ Solve the regularized linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ²‖x‖₂²
 
-of size n × m using the LSLQ method, where λ ≥ 0 is a regularization parameter.
+of size m × n using the LSLQ method, where λ ≥ 0 is a regularization parameter.
 LSLQ is formally equivalent to applying SYMMLQ to the normal equations
 
     (AᴴA + λ²I) x = Aᴴb
@@ -83,8 +83,8 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n × m;
-* `b`: a vector of length n.
+* `A`: a linear operator that models a matrix of dimension m × n;
+* `b`: a vector of length m.
 
 #### Keyword arguments
 
@@ -105,7 +105,7 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 
 #### Output arguments
 
-* `x`: a dense vector of length m;
+* `x`: a dense vector of length n;
 * `stats`: statistics collected on the run in a [`LSLQStats`](@ref) structure.
 
 * `stats.err_lbnds` is a vector of lower bounds on the LQ error---the vector is empty if `window` is set to zero

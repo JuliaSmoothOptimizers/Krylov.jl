@@ -28,7 +28,7 @@ export usymqr, usymqr!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the linear system Ax = b of size n × m using USYMQR.
+Solve the linear system Ax = b of size m × n using USYMQR.
 
 USYMQR is based on the orthogonal tridiagonalization process and requires two initial nonzero vectors `b` and `c`.
 The vector `c` is only used to initialize the process and a default value can be `b` or `Aᴴb` depending on the shape of `A`.
@@ -49,13 +49,13 @@ and `false` otherwise.
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n × m;
-* `b`: a vector of length n;
-* `c`: a vector of length m.
+* `A`: a linear operator that models a matrix of dimension m × n;
+* `b`: a vector of length m;
+* `c`: a vector of length n.
 
 #### Output arguments
 
-* `x`: a dense vector of length m;
+* `x`: a dense vector of length n;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### References

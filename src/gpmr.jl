@@ -22,10 +22,11 @@ export gpmr, gpmr!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
+Given matrices `A` of dimension m × n and `B` of dimension n × m,
 GPMR solves the unsymmetric partitioned linear system
 
-    [ λI   A ] [ x ] = [ b ]
-    [  B  μI ] [ y ]   [ c ],
+    [ λIₘ   A  ] [ x ] = [ b ]
+    [  B   μIₙ ] [ y ]   [ c ],
 
 of size (n+m) × (n+m) where λ and μ are real or complex numbers.
 `A` can have any shape and `B` has the shape of `Aᴴ`.
@@ -69,15 +70,15 @@ and `false` otherwise.
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n × m;
-* `B`: a linear operator that models a matrix of dimension m × n;
-* `b`: a vector of length n;
-* `c`: a vector of length m.
+* `A`: a linear operator that models a matrix of dimension m × n;
+* `B`: a linear operator that models a matrix of dimension n × m;
+* `b`: a vector of length m;
+* `c`: a vector of length n.
 
 #### Output arguments
 
-* `x`: a dense vector of length n;
-* `y`: a dense vector of length m;
+* `x`: a dense vector of length m;
+* `y`: a dense vector of length n;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### Reference

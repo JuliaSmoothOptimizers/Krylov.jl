@@ -40,7 +40,7 @@ Solve the consistent linear system
 
     Ax + λ²y = b
 
-of size n × m using the CRAIGMR method, where λ ≥ 0 is a regularization parameter.
+of size m × n using the CRAIGMR method, where λ ≥ 0 is a regularization parameter.
 This method is equivalent to applying the Conjugate Residuals method
 to the normal equations of the second kind
 
@@ -87,13 +87,13 @@ and `false` otherwise.
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n × m;
-* `b`: a vector of length n.
+* `A`: a linear operator that models a matrix of dimension m × n;
+* `b`: a vector of length m.
 
 #### Output arguments
 
-* `x`: a dense vector of length m;
-* `y`: a dense vector of length n;
+* `x`: a dense vector of length n;
+* `y`: a dense vector of length m;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### References

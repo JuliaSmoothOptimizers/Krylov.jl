@@ -224,14 +224,14 @@ end
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n × m;
-* `b`: a vector of length n;
+* `A`: a linear operator that models a matrix of dimension m × n;
+* `b`: a vector of length m;
 * `k`: the number of iterations of the Golub-Kahan process.
 
 #### Output arguments
 
-* `V`: a dense m × (k+1) matrix;
-* `U`: a dense n × (k+1) matrix;
+* `V`: a dense n × (k+1) matrix;
+* `U`: a dense m × (k+1) matrix;
 * `L`: a sparse (k+1) × (k+1) lower bidiagonal matrix.
 
 #### Reference
@@ -297,16 +297,16 @@ end
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n × m;
-* `b`: a vector of length n;
-* `c`: a vector of length m;
+* `A`: a linear operator that models a matrix of dimension m × n;
+* `b`: a vector of length m;
+* `c`: a vector of length n;
 * `k`: the number of iterations of the Saunders-Simon-Yip process.
 
 #### Output arguments
 
-* `V`: a dense n × (k+1) matrix;
+* `V`: a dense m × (k+1) matrix;
 * `T`: a sparse (k+1) × k tridiagonal matrix;
-* `U`: a dense m × (k+1) matrix;
+* `U`: a dense n × (k+1) matrix;
 * `Tᴴ`: a sparse (k+1) × k tridiagonal matrix.
 
 #### Reference
@@ -387,17 +387,17 @@ end
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n × m;
-* `B`: a linear operator that models a matrix of dimension m × n;
-* `b`: a vector of length n;
-* `c`: a vector of length m;
+* `A`: a linear operator that models a matrix of dimension m × n;
+* `B`: a linear operator that models a matrix of dimension n × m;
+* `b`: a vector of length m;
+* `c`: a vector of length n;
 * `k`: the number of iterations of the Montoison-Orban process.
 
 #### Output arguments
 
-* `V`: a dense n × (k+1) matrix;
+* `V`: a dense m × (k+1) matrix;
 * `H`: a sparse (k+1) × k upper Hessenberg matrix;
-* `U`: a dense m × (k+1) matrix;
+* `U`: a dense n × (k+1) matrix;
 * `F`: a sparse (k+1) × k upper Hessenberg matrix.
 
 #### Reference
