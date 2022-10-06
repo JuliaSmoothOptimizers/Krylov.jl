@@ -26,8 +26,8 @@ Combine USYMLQ and USYMQR to solve adjoint systems.
     [0  A] [y] = [b]
     [Aᴴ 0] [x]   [c]
 
-USYMLQ is used for solving primal system `Ax = b` of size n.
-USYMQR is used for solving dual system `Aᴴy = c` of size m.
+USYMLQ is used for solving primal system `Ax = b` of size m × n.
+USYMQR is used for solving dual system `Aᴴy = c` of size n × m.
 
 An option gives the possibility of transferring from the USYMLQ point to the
 USYMCG point, when it exists. The transfer is based on the residual norm.
@@ -43,14 +43,14 @@ and `false` otherwise.
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n × m;
-* `b`: a vector of length n;
-* `c`: a vector of length m.
+* `A`: a linear operator that models a matrix of dimension m × n;
+* `b`: a vector of length m;
+* `c`: a vector of length n.
 
 #### Output arguments
 
-* `x`: a dense vector of length m;
-* `y`: a dense vector of length n;
+* `x`: a dense vector of length n;
+* `y`: a dense vector of length m;
 * `stats`: statistics collected on the run in a [`AdjointStats`](@ref) structure.
 
 #### Reference

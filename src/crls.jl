@@ -34,7 +34,7 @@ Solve the linear least-squares problem
 
     minimize ‖b - Ax‖₂² + λ‖x‖₂²
 
-of size n × m using the Conjugate Residuals (CR) method.
+of size m × n using the Conjugate Residuals (CR) method.
 This method is equivalent to applying MINRES to the normal equations
 
     (AᴴA + λI) x = Aᴴb.
@@ -50,12 +50,12 @@ and `false` otherwise.
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n × m;
-* `b`: a vector of length n.
+* `A`: a linear operator that models a matrix of dimension m × n;
+* `b`: a vector of length m.
 
 #### Output arguments
 
-* `x`: a dense vector of length m;
+* `x`: a dense vector of length n;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### Reference

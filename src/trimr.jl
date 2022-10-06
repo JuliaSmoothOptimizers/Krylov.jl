@@ -22,7 +22,7 @@ export trimr, trimr!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-TriMR solves the symmetric linear system
+Given a matrix `A` of dimension m × n, TriMR solves the symmetric linear system
 
     [ τE    A ] [ x ] = [ b ]
     [  Aᴴ  νF ] [ y ]   [ c ],
@@ -64,14 +64,14 @@ and `false` otherwise.
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n × m;
-* `b`: a vector of length n;
-* `c`: a vector of length m.
+* `A`: a linear operator that models a matrix of dimension m × n;
+* `b`: a vector of length m;
+* `c`: a vector of length n.
 
 #### Output arguments
 
-* `x`: a dense vector of length n;
-* `y`: a dense vector of length m;
+* `x`: a dense vector of length m;
+* `y`: a dense vector of length n;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### Reference
