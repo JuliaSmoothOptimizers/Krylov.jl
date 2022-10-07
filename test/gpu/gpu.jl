@@ -39,9 +39,9 @@ end
 
 function test_solver(S, M)
   n = 10
+  memory = 5
   A = M(undef, n, n)
   b = S(undef, n)
-  FC = eltype(S)
-  solver = GmresSolver(n, n, S)
+  solver = GmresSolver(n, n, memory, S)
   solve!(solver, A, b)  # Test that we don't have errors
 end
