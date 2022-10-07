@@ -95,7 +95,7 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
               itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
               callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
-  n, m = size(A)
+  m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("QMR: system of size %d\n", n)

@@ -94,7 +94,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
                 callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
-  n, m = size(A)
+  m, n = size(A)
   m == n || error("Systems must be square")
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")

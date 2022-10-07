@@ -95,7 +95,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
                      verbose :: Int=0, history :: Bool=false,
                      ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
-  n, m = size(A)
+  m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf("MINRES-QLP: system of size %d\n", n)
