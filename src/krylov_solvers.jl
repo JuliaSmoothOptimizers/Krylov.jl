@@ -8,7 +8,7 @@ GmresSolver, FomSolver, GpmrSolver, FgmresSolver
 export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual,
 niterations, Aprod, Atprod, Bprod, warm_start!
 
-import Base.size, Base.sizeof
+import Base.size, Base.sizeof, Base.format_bytes
 
 const KRYLOV_SOLVERS = Dict(
   :cg               => :CgSolver            ,
@@ -1895,38 +1895,16 @@ function ksizeof(attribute)
   return size_attribute
 end
 
-function sizeof(solver :: KrylovSolver)
-  workspace = typeof(solver)
-  nfields = fieldcount(workspace)
+function sizeof(stats_solver :: Union{KrylovStats, KrylovSolver})
+  type = typeof(stats_solver)
+  nfields = fieldcount(type)
   storage = 0
-  for i = 1:nfields-1
-    field_i = getfield(solver, i)
+  for i = 1:nfields
+    field_i = getfield(stats_solver, i)
     size_i = ksizeof(field_i)
     storage += size_i
   end
   return storage
-end
-
-function val_metric(val::Int)
-  metric = "bytes"
-  if val ≥ 1024
-    val /= 1024
-    metric = "KB"
-    if val ≥ 1024
-      val /= 1024
-      metric = "MB"
-      if val ≥ 1024
-        val /= 1024
-        metric = "GB"
-        if val ≥ 1024
-          val /= 1024
-          metric = "TB"
-        end
-      end
-    end
-    val = round(val, digits=2)
-  end
-  return string(val, " ", metric)
 end
 
 """
@@ -1937,30 +1915,32 @@ Statistics of `solver` are displayed if `show_stats` is set to true.
 function show(io :: IO, solver :: KrylovSolver{T,FC,S}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
   workspace = typeof(solver)
   name_solver = string(workspace.name.name)
+  name_stats = string(typeof(solver.stats).name.name)
   nbytes = sizeof(solver)
-  storage = val_metric(nbytes)
+  storage = format_bytes(nbytes)
   architecture = S <: Vector ? "CPU" : "GPU"
-  l1 = max(length(name_solver) + 8, length(string(FC)) + 11)  # length("solver: ") = 8 and length("Precision: ") = 11
+  l1 = max(length(name_solver), length(string(FC)) + 11)  # length("Precision: ") = 11
   l2 = max(ndigits(solver.m) + 7, length(architecture) + 14, length(string(S)) + 8)  # length("Vector{}") = 8, # length("Architecture: ") = 14 and length("nrows: ") = 7
-  l3 = max(ndigits(solver.n) + 7, length(storage) + 9, 13)  # length("Size in bytes") = 13, length("Storage: ") = 9 and length("cols: ") = 7
+  l2 = max(l2, length(name_stats) + 2 + length(string(T)))  # length("{}") = 2
+  l3 = max(ndigits(solver.n) + 7, length(storage) + 9)  # length("Storage: ") = 9 and length("cols: ") = 7
   format = Printf.Format("│%$(l1)s│%$(l2)s│%$(l3)s│\n")
   format2 = Printf.Format("│%$(l1+1)s│%$(l2)s│%$(l3)s│\n")
   @printf(io, "┌%s┬%s┬%s┐\n", "─"^l1, "─"^l2, "─"^l3)
-  Printf.format(io, format, "Solver: $(name_solver)", "nrows: $(solver.m)", "ncols: $(solver.n)")
+  Printf.format(io, format, "$(name_solver)", "nrows: $(solver.m)", "ncols: $(solver.n)")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
   Printf.format(io, format, "Precision: $FC", "Architecture: $architecture","Storage: $storage")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
-  Printf.format(io, format, "Attribute", "Type", "Size in bytes")
+  Printf.format(io, format, "Attribute", "Type", "Size")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
-  for i=1:fieldcount(workspace)-1 # show stats seperately
+  for i=1:fieldcount(workspace)
     name_i = fieldname(workspace, i)
     type_i = fieldtype(workspace, i)
     field_i = getfield(solver, name_i)
     size_i = ksizeof(field_i)
     if (name_i in [:w̅, :w̄, :d̅]) && (VERSION < v"1.8.0-DEV")
-      Printf.format(io, format2, string(name_i), type_i, size_i)
+      Printf.format(io, format2, string(name_i), type_i, format_bytes(size_i))
     else
-      Printf.format(io, format, string(name_i), type_i, size_i)
+      Printf.format(io, format, string(name_i), type_i, format_bytes(size_i))
     end
   end
   @printf(io, "└%s┴%s┴%s┘\n","─"^l1,"─"^l2,"─"^l3)

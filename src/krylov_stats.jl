@@ -1,3 +1,6 @@
+export KrylovStats, SimpleStats, LsmrStats, LanczosStats, LanczosShiftStats,
+SymmlqStats, AdjointStats, LNLQStats, LSLQStats
+
 "Abstract type for statistics returned by a solver"
 abstract type KrylovStats{T} end
 
