@@ -135,8 +135,8 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
-  ktypeof(c) == S || error("ktypeof(c) ≠ $S")
+  ktypeof(b) <: S || error("ktypeof(b) ≠ $S")
+  ktypeof(c) <: S || error("ktypeof(c) ≠ $S")
 
   # Determine τ and ν associated to SQD, SPD or SND systems.
   flip && (τ = -one(T) ; ν =  one(T))

@@ -99,7 +99,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $T")
-  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  ktypeof(b) <: S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
   allocate_if(!MisI, solver, :v, S, n)

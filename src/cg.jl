@@ -107,7 +107,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  ktypeof(b) <: S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
   allocate_if(!MisI, solver, :z, S, n)
