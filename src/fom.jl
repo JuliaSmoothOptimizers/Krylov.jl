@@ -104,7 +104,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) == S || error("ktypeof(b) ≠ $S")
+  ktypeof(b) <: S || error("ktypeof(b) ≠ $S")
 
   # Set up workspace.
   allocate_if(!MisI  , solver, :q , S, n)

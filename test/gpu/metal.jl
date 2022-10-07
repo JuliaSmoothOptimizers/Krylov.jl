@@ -109,5 +109,9 @@ end
     # @testset "processes -- $FC" begin
     #   test_processes(S, M)
     # end
+
+    @testset "solver -- $FC" begin
+      test_solver(S, M)
+    end
   end
 end
