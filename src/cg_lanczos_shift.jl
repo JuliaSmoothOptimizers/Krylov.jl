@@ -77,7 +77,7 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
                            verbose :: Int=0, history :: Bool=false,
                            ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
-  n, m = size(A)
+  m, n = size(A)
   m == n || error("System must be square")
   length(b) == n || error("Inconsistent problem size")
 

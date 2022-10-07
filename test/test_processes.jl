@@ -16,8 +16,8 @@ function permutation_paige(k)
 end
 
 @testset "processes" begin
-  n = 250
-  m = 500
+  m = 250
+  n = 500
   k = 20
   
   for FC in (Float64, ComplexF64)
@@ -74,7 +74,7 @@ end
       end
 
       @testset "Golub-Kahan" begin
-        A, b = under_consistent(n, m, FC=FC)
+        A, b = under_consistent(m, n, FC=FC)
         V, U, L = golub_kahan(A, b, k)
         B = L[1:k+1,1:k]
 
@@ -83,16 +83,16 @@ end
         @test A' * A  * V[:,1:k] ≈ V * L' * B
         @test A  * A' * U[:,1:k] ≈ U * B * L[1:k,1:k]'
 
-        storage_golub_kahan_bytes(n, m, k) = 3*(k+1) * nbits_I + (2k+1) * nbits_R + (n+m)*(k+1) * nbits_FC
+        storage_golub_kahan_bytes(m, n, k) = 3*(k+1) * nbits_I + (2k+1) * nbits_R + (n+m)*(k+1) * nbits_FC
 
-        expected_golub_kahan_bytes = storage_golub_kahan_bytes(n, m, k)
+        expected_golub_kahan_bytes = storage_golub_kahan_bytes(m, n, k)
         actual_golub_kahan_bytes = @allocated golub_kahan(A, b, k)
         @test expected_golub_kahan_bytes ≤ actual_golub_kahan_bytes ≤ 1.02 * expected_golub_kahan_bytes
       end
 
       @testset "Saunders-Simon-Yip" begin
-        A, b = under_consistent(n, m, FC=FC)
-        _, c = over_consistent(m, n, FC=FC)
+        A, b = under_consistent(m, n, FC=FC)
+        _, c = over_consistent(n, m, FC=FC)
         V, T, U, Tᴴ = saunders_simon_yip(A, b, c, k)
 
         @test T[1:k,1:k] ≈ Tᴴ[1:k,1:k]'
@@ -101,24 +101,24 @@ end
         @test A' * A  * U[:,1:k-1] ≈ U * Tᴴ * T[1:k,1:k-1]
         @test A  * A' * V[:,1:k-1] ≈ V * T * Tᴴ[1:k,1:k-1]
 
-        K = [zeros(FC,n,n) A; A' zeros(FC,m,m)]
+        K = [zeros(FC,m,m) A; A' zeros(FC,n,n)]
         Pₖ = permutation_paige(k)
-        Wₖ = [V[:,1:k] zeros(FC,n,k); zeros(FC,m,k) U[:,1:k]] * Pₖ
+        Wₖ = [V[:,1:k] zeros(FC,m,k); zeros(FC,n,k) U[:,1:k]] * Pₖ
         Pₖ₊₁ = permutation_paige(k+1)
-        Wₖ₊₁ = [V zeros(FC,n,k+1); zeros(FC,m,k+1) U] * Pₖ₊₁
+        Wₖ₊₁ = [V zeros(FC,m,k+1); zeros(FC,n,k+1) U] * Pₖ₊₁
         G = Pₖ₊₁' * [zeros(FC,k+1,k) T; Tᴴ zeros(FC,k+1,k)] * Pₖ
         @test K * Wₖ ≈ Wₖ₊₁ * G
 
-        storage_saunders_simon_yip_bytes(n, m, k) = 4k * nbits_I + (6k-2) * nbits_FC + (n+m)*(k+1) * nbits_FC
+        storage_saunders_simon_yip_bytes(m, n, k) = 4k * nbits_I + (6k-2) * nbits_FC + (n+m)*(k+1) * nbits_FC
 
-        expected_saunders_simon_yip_bytes = storage_saunders_simon_yip_bytes(n, m, k)
+        expected_saunders_simon_yip_bytes = storage_saunders_simon_yip_bytes(m, n, k)
         actual_saunders_simon_yip_bytes = @allocated saunders_simon_yip(A, b, c, k)
         @test expected_saunders_simon_yip_bytes ≤ actual_saunders_simon_yip_bytes ≤ 1.02 * expected_saunders_simon_yip_bytes
       end
 
       @testset "Montoison-Orban" begin
-        A, b = under_consistent(n, m, FC=FC)
-        B, c = over_consistent(m, n, FC=FC)
+        A, b = under_consistent(m, n, FC=FC)
+        B, c = over_consistent(n, m, FC=FC)
         V, H, U, F = montoison_orban(A, B, b, c, k)
 
         @test A * U[:,1:k] ≈ V * H
@@ -126,20 +126,20 @@ end
         @test B * A * U[:,1:k-1] ≈ U * F * H[1:k,1:k-1]
         @test A * B * V[:,1:k-1] ≈ V * H * F[1:k,1:k-1]
 
-        K = [zeros(FC,n,n) A; B zeros(FC,m,m)]
+        K = [zeros(FC,m,m) A; B zeros(FC,n,n)]
         Pₖ = permutation_paige(k)
-        Wₖ = [V[:,1:k] zeros(FC,n,k); zeros(FC,m,k) U[:,1:k]] * Pₖ
+        Wₖ = [V[:,1:k] zeros(FC,m,k); zeros(FC,n,k) U[:,1:k]] * Pₖ
         Pₖ₊₁ = permutation_paige(k+1)
-        Wₖ₊₁ = [V zeros(FC,n,k+1); zeros(FC,m,k+1) U] * Pₖ₊₁
+        Wₖ₊₁ = [V zeros(FC,m,k+1); zeros(FC,n,k+1) U] * Pₖ₊₁
         G = Pₖ₊₁' * [zeros(FC,k+1,k) H; F zeros(FC,k+1,k)] * Pₖ
         @test K * Wₖ ≈ Wₖ₊₁ * G
 
-        function storage_montoison_orban_bytes(n, m, k)
+        function storage_montoison_orban_bytes(m, n, k)
           nnz = div(k*(k+1), 2) + k
           return (nnz + k+1) * nbits_I + 2*nnz * nbits_FC + (n+m)*(k+1) * nbits_FC
         end
 
-        expected_montoison_orban_bytes = storage_montoison_orban_bytes(n, m, k)
+        expected_montoison_orban_bytes = storage_montoison_orban_bytes(m, n, k)
         actual_montoison_orban_bytes = @allocated montoison_orban(A, B, b, c, k)
         @test expected_montoison_orban_bytes ≤ actual_montoison_orban_bytes ≤ 1.02 * expected_montoison_orban_bytes
       end
