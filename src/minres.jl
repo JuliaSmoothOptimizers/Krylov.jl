@@ -306,7 +306,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     if iter == 1 && β / β₁ ≤ 10 * ϵM
       # Aᴴb = 0 so x = 0 is a minimum least-squares solution
-      stats.niter = 0
+      stats.niter = 1
       stats.solved, stats.inconsistent = true, true
       stats.status = "x is a minimum least-squares solution"
       solver.warm_start = false
