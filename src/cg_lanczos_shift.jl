@@ -89,7 +89,7 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) ≠ $S")
+  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
   # Set up workspace.
   allocate_if(!MisI, solver, :v, S, n)

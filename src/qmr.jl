@@ -102,8 +102,8 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) ≠ $S")
-  ktypeof(c) <: S || error("ktypeof(c) ≠ $S")
+  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+  ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
 
   # Compute the adjoint of A
   Aᴴ = A'

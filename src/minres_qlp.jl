@@ -105,7 +105,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) ≠ $S")
+  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
   # Set up workspace.
   allocate_if(!MisI, solver, :vₖ, S, n)
