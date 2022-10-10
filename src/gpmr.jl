@@ -143,8 +143,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
   eltype(B) == FC || error("eltype(B) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) ≠ $S")
-  ktypeof(c) <: S || error("ktypeof(c) ≠ $S")
+  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+  ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
 
   # Determine λ and μ associated to generalized saddle point systems.
   gsp && (λ = one(FC) ; μ = zero(FC))

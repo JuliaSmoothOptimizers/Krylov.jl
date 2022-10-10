@@ -132,8 +132,8 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) ≠ $S")
-  ktypeof(c) <: S || error("ktypeof(c) ≠ $S")
+  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+  ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
 
   # Determine τ and ν associated to SQD, SPD or SND systems.
   flip && (τ = -one(T) ; ν =  one(T))

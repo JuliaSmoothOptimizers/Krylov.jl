@@ -142,7 +142,7 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) ≠ $S")
+  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
   # Compute the adjoint of A
   Aᴴ = A'

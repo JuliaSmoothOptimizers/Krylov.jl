@@ -106,7 +106,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) ≠ $S")
+  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
   # Set up workspace
   allocate_if(!MisI, solver, :Mq, S, n)
