@@ -26,7 +26,7 @@
         expected_symmlq_bytes = storage_symmlq_bytes(n)
         symmlq(A, b)  # warmup
         actual_symmlq_bytes = @allocated symmlq(A, b)
-        @test expected_symmlq_bytes ≤ actual_symmlq_bytes ≤ 1.02 * expected_symmlq_bytes
+        @test expected_symmlq_bytes ≤ actual_symmlq_bytes ≤ 1.03 * expected_symmlq_bytes
 
         solver = SymmlqSolver(A, b)
         symmlq!(solver, A, b)  # warmup
@@ -422,7 +422,7 @@
         expected_lsmr_bytes = storage_lsmr_bytes(m, k)
         (x, stats) = lsmr(Ao, b)  # warmup
         actual_lsmr_bytes = @allocated lsmr(Ao, b)
-        @test expected_lsmr_bytes ≤ actual_lsmr_bytes ≤ 1.02 * expected_lsmr_bytes
+        @test expected_lsmr_bytes ≤ actual_lsmr_bytes ≤ 1.03 * expected_lsmr_bytes
 
         solver = LsmrSolver(Ao, b)
         lsmr!(solver, Ao, b)  # warmup
