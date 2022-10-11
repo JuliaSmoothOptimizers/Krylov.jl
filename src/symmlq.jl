@@ -13,8 +13,8 @@ export symmlq, symmlq!
 
 
 """
-    (x, stats) = symmlq(A, b::AbstractVector{FC}; window::Int=0,
-                        M=I, λ::T=zero(T), transfer_to_cg::Bool=true,
+    (x, stats) = symmlq(A, b::AbstractVector{FC};
+                        window::Int=0, M=I, λ::T=zero(T), transfer_to_cg::Bool=true,
                         λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                         etol::T=√eps(T), itmax::Int=0, conlim::T=1/√eps(T),
                         verbose::Int=0, history::Bool=false,
@@ -22,6 +22,10 @@ export symmlq, symmlq!
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
+
+    (x, stats) = symmlq(A, b, x0::AbstractVector; kwargs...)
+
+SYMMLQ can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above
 
 Solve the shifted linear system
 
@@ -35,12 +39,6 @@ SYMMLQ produces monotonic errors ‖x* - x‖₂.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be Hermitian and positive definite.
 
-SYMMLQ can be warm-started from an initial guess `x0` with
-
-    (x, stats) = symmlq(A, b, x0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -48,6 +46,10 @@ and `false` otherwise.
 
 * `A`: a linear operator that models a Hermitian matrix of dimension n;
 * `b`: a vector of length n.
+
+#### Optional argument
+
+* `x0`: a vector of length n that represents an initial guess of the solution x.
 
 #### Output arguments
 

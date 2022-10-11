@@ -11,13 +11,17 @@
 export cgs, cgs!
 
 """
-    (x, stats) = cgs(A, b::AbstractVector{FC}; c::AbstractVector{FC}=b,
-                     M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
-                     itmax::Int=0, verbose::Int=0, history::Bool=false,
-                     ldiv::Bool=false, callback=solver->false)
+    (x, stats) = cgs(A, b::AbstractVector{FC};
+                     c::AbstractVector{FC}=b, M=I, N=I, atol::T=√eps(T),
+                     rtol::T=√eps(T), itmax::Int=0, verbose::Int=0,
+                     history::Bool=false, ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
+
+    (x, stats) = cgs(A, b, x0::AbstractVector; kwargs...)
+
+CGS can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
 
 Solve the consistent linear system Ax = b of size n using CGS.
 CGS requires two initial vectors `b` and `c`.
@@ -40,12 +44,6 @@ TFQMR and BICGSTAB were developed to remedy this difficulty.»
 
 This implementation allows a left preconditioner M and a right preconditioner N.
 
-CGS can be warm-started from an initial guess `x0` with
-
-    (x, stats) = cgs(A, b, x0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -53,6 +51,10 @@ and `false` otherwise.
 
 * `A`: a linear operator that models a matrix of dimension n;
 * `b`: a vector of length n.
+
+#### Optional argument
+
+* `x0`: a vector of length n that represents an initial guess of the solution x.
 
 #### Output arguments
 

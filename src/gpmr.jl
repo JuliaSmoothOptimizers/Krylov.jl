@@ -12,15 +12,19 @@
 export gpmr, gpmr!
 
 """
-    (x, y, stats) = gpmr(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}; memory::Int=20,
-                         C=I, D=I, E=I, F=I, atol::T=√eps(T), rtol::T=√eps(T),
-                         gsp::Bool=false, reorthogonalization::Bool=false,
-                         itmax::Int=0, λ::FC=one(FC), μ::FC=one(FC),
-                         verbose::Int=0, history::Bool=false,
-                         ldiv::Bool=false, callback=solver->false)
+    (x, y, stats) = gpmr(A, B, b::AbstractVector{FC}, c::AbstractVector{FC};
+                         memory::Int=20, C=I, D=I, E=I, F=I,
+                         atol::T=√eps(T), rtol::T=√eps(T), gsp::Bool=false,
+                         reorthogonalization::Bool=false, itmax::Int=0,
+                         λ::FC=one(FC), μ::FC=one(FC), verbose::Int=0,
+                         history::Bool=false, ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
+
+    (x, y, stats) = gpmr(A, B, b, c, x0::AbstractVector, y0::AbstractVector; kwargs...)
+
+GPMR can be warm-started from initial guesses `x0` and `y0` where `kwargs` are the same keyword arguments as above.
 
 Given matrices `A` of dimension m × n and `B` of dimension n × m,
 GPMR solves the unsymmetric partitioned linear system
@@ -59,12 +63,6 @@ Full reorthogonalization is available with the `reorthogonalization` option.
 Additional details can be displayed if verbose mode is enabled (verbose > 0).
 Information will be displayed every `verbose` iterations.
 
-GPMR can be warm-started from initial guesses `x0` and `y0` with
-
-    (x, y, stats) = gpmr(A, B, b, c, x0, y0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -74,6 +72,11 @@ and `false` otherwise.
 * `B`: a linear operator that models a matrix of dimension n × m;
 * `b`: a vector of length m;
 * `c`: a vector of length n.
+
+#### Optional arguments
+
+* `x0`: a vector of length m that represents an initial guess of the solution x;
+* `y0`: a vector of length n that represents an initial guess of the solution y.
 
 #### Output arguments
 

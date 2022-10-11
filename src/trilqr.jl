@@ -21,6 +21,10 @@ export trilqr, trilqr!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
+    (x, y, stats) = trilqr(A, b, c, x0::AbstractVector, y0::AbstractVector; kwargs...)
+
+TriLQR can be warm-started from initial guesses `x0` and `y0` where `kwargs` are the same keyword arguments as above.
+
 Combine USYMLQ and USYMQR to solve adjoint systems.
 
     [0  A] [y] = [b]
@@ -32,12 +36,6 @@ USYMQR is used for solving dual system `Aᴴy = c` of size n × m.
 An option gives the possibility of transferring from the USYMLQ point to the
 USYMCG point, when it exists. The transfer is based on the residual norm.
 
-TriLQR can be warm-started from initial guesses `x0` and `y0` with
-
-    (x, y, stats) = trilqr(A, b, c, x0, y0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -47,11 +45,16 @@ and `false` otherwise.
 * `b`: a vector of length m;
 * `c`: a vector of length n.
 
+#### Optional arguments
+
+* `x0`: a vector of length n that represents an initial guess of the solution x;
+* `y0`: a vector of length m that represents an initial guess of the solution y.
+
 #### Output arguments
 
 * `x`: a dense vector of length n;
 * `y`: a dense vector of length m;
-* `stats`: statistics collected on the run in a [`AdjointStats`](@ref) structure.
+* `stats`: statistics collected on the run in an [`AdjointStats`](@ref) structure.
 
 #### Reference
 

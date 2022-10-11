@@ -26,6 +26,10 @@ export cg, cg!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
+    (x, stats) = cg(A, b, x0::AbstractVector; kwargs...)
+
+CG can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
+
 The conjugate gradient method to solve the Hermitian linear system Ax = b of size n.
 
 The method does _not_ abort if A is not definite.
@@ -36,12 +40,6 @@ M also indicates the weighted norm in which residuals are measured.
 
 If `itmax=0`, the default number of iterations is set to `2 * n`.
 
-CG can be warm-started from an initial guess `x0` with
-
-    (x, stats) = cg(A, b, x0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -49,6 +47,10 @@ and `false` otherwise.
 
 * `A`: a linear operator that models a Hermitian positive definite matrix of dimension n;
 * `b`: a vector of length n.
+
+#### Optional argument
+
+* `x0`: a vector of length n that represents an initial guess of the solution x.
 
 #### Output arguments
 

@@ -21,12 +21,15 @@ export usymqr, usymqr!
 
 """
     (x, stats) = usymqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
-                        atol::T=√eps(T), rtol::T=√eps(T),
-                        itmax::Int=0, verbose::Int=0, history::Bool=false,
-                        callback=solver->false)
+                        atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                        verbose::Int=0, history::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
+
+    (x, stats) = usymqr(A, b, c, x0::AbstractVector; kwargs...)
+
+USYMQR can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
 
 Solve the linear system Ax = b of size m × n using USYMQR.
 
@@ -38,12 +41,6 @@ It's considered as a generalization of MINRES.
 It can also be applied to under-determined and over-determined problems.
 USYMQR finds the minimum-norm solution if problems are inconsistent.
 
-USYMQR can be warm-started from an initial guess `x0` with
-
-    (x, stats) = usymqr(A, b, c, x0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -52,6 +49,10 @@ and `false` otherwise.
 * `A`: a linear operator that models a matrix of dimension m × n;
 * `b`: a vector of length m;
 * `c`: a vector of length n.
+
+#### Optional argument
+
+* `x0`: a vector of length n that represents an initial guess of the solution x.
 
 #### Output arguments
 
