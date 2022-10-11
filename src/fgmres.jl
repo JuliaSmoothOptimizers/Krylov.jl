@@ -11,14 +11,18 @@
 export fgmres, fgmres!
 
 """
-    (x, stats) = fgmres(A, b::AbstractVector{FC}; memory::Int=20,
-                        M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
+    (x, stats) = fgmres(A, b::AbstractVector{FC};
+                        memory::Int=20, M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                         reorthogonalization::Bool=false, itmax::Int=0,
                         restart::Bool=false, verbose::Int=0, history::Bool=false,
                         ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
+
+    (x, stats) = fgmres(A, b, x0::AbstractVector; kwargs...)
+
+FGMRES can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
 
 Solve the linear system Ax = b of size n using FGMRES.
 
@@ -37,12 +41,6 @@ If `restart = true`, the restarted version FGMRES(k) is used with `k = memory`.
 If `restart = false`, the parameter `memory` should be used as a hint of the number of iterations to limit dynamic memory allocations.
 More storage will be allocated only if the number of iterations exceeds `memory`.
 
-FGMRES can be warm-started from an initial guess `x0` with
-
-    (x, stats) = fgmres(A, b, x0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -50,6 +48,10 @@ and `false` otherwise.
 
 * `A`: a linear operator that models a matrix of dimension n;
 * `b`: a vector of length n.
+
+#### Optional argument
+
+* `x0`: a vector of length n that represents an initial guess of the solution x.
 
 #### Output arguments
 

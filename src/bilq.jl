@@ -13,28 +13,26 @@
 export bilq, bilq!
 
 """
-    (x, stats) = bilq(A, b::AbstractVector{FC}; c::AbstractVector{FC}=b,
-                      atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
-                      itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      callback=solver->false)
+    (x, stats) = bilq(A, b::AbstractVector{FC};
+                      c::AbstractVector{FC}=b, atol::T=√eps(T),
+                      rtol::T=√eps(T), transfer_to_bicg::Bool=true,
+                      itmax::Int=0, verbose::Int=0,
+                      history::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
-Solve the square linear system Ax = b of size n using BiLQ.
+    (x, stats) = bilq(A, b, x0::AbstractVector; kwargs...)
 
+BiLQ can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
+
+Solve the square linear system Ax = b of size n using BiLQ.
 BiLQ is based on the Lanczos biorthogonalization process and requires two initial vectors `b` and `c`.
 The relation `bᴴc ≠ 0` must be satisfied and by default `c = b`.
 When `A` is symmetric and `b = c`, BiLQ is equivalent to SYMMLQ.
 
 An option gives the possibility of transferring to the BiCG point,
 when it exists. The transfer is based on the residual norm.
-
-BiLQ can be warm-started from an initial guess `x0` with
-
-    (x, stats) = bilq(A, b, x0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
 
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
@@ -43,6 +41,10 @@ and `false` otherwise.
 
 * `A`: a linear operator that models a matrix of dimension n;
 * `b`: a vector of length n.
+
+#### Optional argument
+
+* `x0`: a vector of length n that represents an initial guess of the solution x.
 
 #### Output arguments
 

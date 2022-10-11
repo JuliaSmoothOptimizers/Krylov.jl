@@ -22,6 +22,10 @@ export tricg, tricg!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
+    (x, y, stats) = tricg(A, b, c, x0::AbstractVector, y0::AbstractVector; kwargs...)
+
+TriCG can be warm-started from initial guesses `x0` and `y0` where `kwargs` are the same keyword arguments as above.
+
 Given a matrix `A` of dimension m × n, TriCG solves the symmetric linear system
 
     [ τE    A ] [ x ] = [ b ]
@@ -53,12 +57,6 @@ TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 Additional details can be displayed if verbose mode is enabled (verbose > 0).
 Information will be displayed every `verbose` iterations.
 
-TriCG can be warm-started from initial guesses `x0` and `y0` with
-
-    (x, y, stats) = tricg(A, b, c, x0, y0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -67,6 +65,11 @@ and `false` otherwise.
 * `A`: a linear operator that models a matrix of dimension m × n;
 * `b`: a vector of length m;
 * `c`: a vector of length n.
+
+#### Optional arguments
+
+* `x0`: a vector of length m that represents an initial guess of the solution x;
+* `y0`: a vector of length n that represents an initial guess of the solution y.
 
 #### Output arguments
 

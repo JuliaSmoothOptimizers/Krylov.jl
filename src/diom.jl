@@ -11,14 +11,18 @@
 export diom, diom!
 
 """
-    (x, stats) = diom(A, b::AbstractVector{FC}; memory::Int=20,
-                      M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
-                      reorthogonalization::Bool=false, itmax::Int=0,
-                      verbose::Int=0, history::Bool=false,
+    (x, stats) = diom(A, b::AbstractVector{FC};
+                      memory::Int=20, M=I, N=I, atol::T=√eps(T),
+                      rtol::T=√eps(T), reorthogonalization::Bool=false,
+                      itmax::Int=0, verbose::Int=0, history::Bool=false,
                       ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
+
+    (x, stats) = diom(A, b, x0::AbstractVector; kwargs...)
+
+DIOM can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
 
 Solve the consistent linear system Ax = b of size n using DIOM.
 
@@ -34,12 +38,6 @@ and indefinite systems of linear equations can be handled by this single algorit
 
 This implementation allows a left preconditioner M and a right preconditioner N.
 
-DIOM can be warm-started from an initial guess `x0` with
-
-    (x, stats) = diom(A, b, x0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -47,6 +45,10 @@ and `false` otherwise.
 
 * `A`: a linear operator that models a matrix of dimension n;
 * `b`: a vector of length n.
+
+#### Optional argument
+
+* `x0`: a vector of length n that represents an initial guess of the solution x.
 
 #### Output arguments
 

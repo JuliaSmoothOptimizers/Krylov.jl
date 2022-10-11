@@ -26,6 +26,10 @@ export minres_qlp, minres_qlp!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
+    (x, stats) = minres_qlp(A, b, x0::AbstractVector; kwargs...)
+
+MINRES-QLP can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
+
 MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
 solution on singular inconsistent systems (A + λI)x = b of size n, where λ is a shift parameter.
 It is significantly more complex but can be more reliable than MINRES when A is ill-conditioned.
@@ -34,12 +38,6 @@ A preconditioner M may be provided in the form of a linear operator and is
 assumed to be Hermitian and positive definite.
 M also indicates the weighted norm in which residuals are measured.
 
-MINRES-QLP can be warm-started from an initial guess `x0` with
-
-    (x, stats) = minres_qlp(A, b, x0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -47,6 +45,10 @@ and `false` otherwise.
 
 * `A`: a linear operator that models a Hermitian matrix of dimension n;
 * `b`: a vector of length n.
+
+#### Optional argument
+
+* `x0`: a vector of length n that represents an initial guess of the solution x.
 
 #### Output arguments
 

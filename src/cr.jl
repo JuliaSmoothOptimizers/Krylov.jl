@@ -16,12 +16,17 @@ export cr, cr!
 
 """
     (x, stats) = cr(A, b::AbstractVector{FC};
-                    M=I, atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T), itmax::Int=0,
-                    radius::T=zero(T), verbose::Int=0, linesearch::Bool=false, history::Bool=false,
+                    M=I, atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T),
+                    itmax::Int=0, radius::T=zero(T), verbose::Int=0,
+                    linesearch::Bool=false, history::Bool=false,
                     ldiv::Bool=false, callback=solver->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
+
+    (x, stats) = cr(A, b, x0::AbstractVector; kwargs...)
+
+CR can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
 
 A truncated version of Stiefel’s Conjugate Residual method to solve the Hermitian linear system Ax = b
 of size n or the least-squares problem min ‖b - Ax‖ if A is singular.
@@ -34,12 +39,6 @@ In a linesearch context, 'linesearch' must be set to 'true'.
 
 If `itmax=0`, the default number of iterations is set to `2 * n`.
 
-CR can be warm-started from an initial guess `x0` with
-
-    (x, stats) = cr(A, b, x0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -47,6 +46,10 @@ and `false` otherwise.
 
 * `A`: a linear operator that models a Hermitian positive definite matrix of dimension n;
 * `b`: a vector of length n.
+
+#### Optional argument
+
+* `x0`: a vector of length n that represents an initial guess of the solution x.
 
 #### Output arguments
 

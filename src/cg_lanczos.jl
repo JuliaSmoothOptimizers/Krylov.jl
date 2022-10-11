@@ -22,6 +22,10 @@ export cg_lanczos, cg_lanczos!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
+    (x, stats) = cg_lanczos(A, b, x0::AbstractVector; kwargs...)
+
+CG-LANCZOS can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
+
 The Lanczos version of the conjugate gradient method to solve the
 Hermitian linear system Ax = b of size n.
 
@@ -30,12 +34,6 @@ The method does _not_ abort if A is not definite.
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be Hermitian and positive definite.
 
-CG-LANCZOS can be warm-started from an initial guess `x0` with
-
-    (x, stats) = cg_lanczos(A, b, x0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -43,6 +41,10 @@ and `false` otherwise.
 
 * `A`: a linear operator that models a Hermitian matrix of dimension n;
 * `b`: a vector of length n.
+
+#### Optional argument
+
+* `x0`: a vector of length n that represents an initial guess of the solution x.
 
 #### Output arguments
 

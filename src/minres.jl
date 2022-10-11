@@ -35,6 +35,10 @@ export minres, minres!
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
+    (x, stats) = minres(A, b, x0::AbstractVector; kwargs...)
+
+MINRES can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
+
 Solve the shifted linear least-squares problem
 
     minimize ‖b - (A + λI)x‖₂²
@@ -55,12 +59,6 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 A preconditioner M may be provided in the form of a linear operator and is
 assumed to be Hermitian and positive definite.
 
-MINRES can be warm-started from an initial guess `x0` with
-
-    (x, stats) = minres(A, b, x0; kwargs...)
-
-where `kwargs` are the same keyword arguments as above.
-
 The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
 and `false` otherwise.
 
@@ -68,6 +66,10 @@ and `false` otherwise.
 
 * `A`: a linear operator that models a Hermitian matrix of dimension n;
 * `b`: a vector of length n.
+
+#### Optional argument
+
+* `x0`: a vector of length n that represents an initial guess of the solution x.
 
 #### Output arguments
 
