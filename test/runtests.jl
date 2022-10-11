@@ -1,8 +1,6 @@
 using Krylov, LinearAlgebra, SparseArrays, Printf, Random, Test
 import Krylov.KRYLOV_SOLVERS
 
-include("aqua.jl")
-
 include("test_utils.jl")
 include("test_aux.jl")
 include("test_stats.jl")
