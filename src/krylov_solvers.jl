@@ -1886,9 +1886,10 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
 end
 
 function ksizeof(attribute)
-  if isa(attribute, AbstractVector) && !isempty(attribute)
+  if isa(attribute, Vector{<:AbstractVector}) && !isempty(attribute)
+    # A vector of vector is a vector of pointers in Julia.
     # All vectors inside a vector have the same size in Krylov.jl
-    size_attribute = length(attribute) * ksizeof(attribute[1])
+    size_attribute = sizeof(attribute) + length(attribute) * ksizeof(attribute[1])
   else
     size_attribute = sizeof(attribute)
   end
@@ -1938,9 +1939,9 @@ function show(io :: IO, solver :: KrylovSolver{T,FC,S}; show_stats :: Bool=true)
     field_i = getfield(solver, name_i)
     size_i = ksizeof(field_i)
     if (name_i in [:w̅, :w̄, :d̅]) && (VERSION < v"1.8.0-DEV")
-      Printf.format(io, format2, string(name_i), type_i, format_bytes(size_i))
+      (size_i ≠ 0) && Printf.format(io, format2, string(name_i), type_i, format_bytes(size_i))
     else
-      Printf.format(io, format, string(name_i), type_i, format_bytes(size_i))
+      (size_i ≠ 0) && Printf.format(io, format, string(name_i), type_i, format_bytes(size_i))
     end
   end
   @printf(io, "└%s┴%s┴%s┘\n","─"^l1,"─"^l2,"─"^l3)
