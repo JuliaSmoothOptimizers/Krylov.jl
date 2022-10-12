@@ -27,7 +27,7 @@ export lnlq, lnlq!
 """
     (x, y, stats) = lnlq(A, b::AbstractVector{FC};
                          M=I, N=I, sqd::Bool=false, λ::T=zero(T), σ::T=zero(T),
-                         atol::T=√eps(T), rtol::T=√eps(T), etolx::T=√eps(T), etoly::T=√eps(T), itmax::Int=0,
+                         atol::T=√eps(T), rtol::T=√eps(T), utolx::T=√eps(T), utoly::T=√eps(T), itmax::Int=0,
                          transfer_to_craig::Bool=true, verbose::Int=0, history::Bool=false,
                          ldiv::Bool=false, callback=solver->false)
 
@@ -75,7 +75,7 @@ In this case, `M` can still be specified and indicates the weighted norm in whic
 
 In this implementation, both the x and y-parts of the solution are returned.
 
-`etolx` and `etoly` are tolerances on the upper bound of the distance to the solution ‖x-xₛ‖ and ‖y-yₛ‖, respectively.
+`utolx` and `utoly` are tolerances on the upper bound of the distance to the solution ‖x-x*‖ and ‖y-y*‖, respectively.
 The bound is valid if λ>0 or σ>0 where σ should be strictly smaller than the smallest positive singular value.
 For instance σ:=(1-1e-7)σₘᵢₙ .
 
@@ -116,7 +116,7 @@ function lnlq! end
 
 function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
-               atol :: T=√eps(T), rtol :: T=√eps(T), etolx :: T=√eps(T), etoly :: T=√eps(T), itmax :: Int=0,
+               atol :: T=√eps(T), rtol :: T=√eps(T), utolx :: T=√eps(T), utoly :: T=√eps(T), itmax :: Int=0,
                transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false,
                ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
@@ -258,7 +258,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     err_x = τtildeₖ
     err_y = ζtildeₖ
 
-    solved_lq = err_x ≤ etolx || err_y ≤ etoly
+    solved_lq = err_x ≤ utolx || err_y ≤ utoly
     history && push!(xNorms, err_x)
     history && push!(yNorms, err_y)
 
@@ -449,11 +449,8 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     solved_lq = rNorm_lq ≤ ε
     solved_cg = transfer_to_craig && rNorm_cg ≤ ε
     if σₑₛₜ > 0
-      if transfer_to_craig
-        solved_cg = solved_cg || err_x ≤ etolx || err_y ≤ etoly
-      else
-        solved_lq = solved_lq || err_x ≤ etolx || err_y ≤ etoly
-      end
+      solved_lq = solved_lq || err_x ≤ utolx || err_y ≤ utoly
+      solved_cg = transfer_to_craig && (solved_cg || err_x ≤ utolx || err_y ≤ utoly)
     end
     kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
 
