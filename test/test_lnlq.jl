@@ -1,5 +1,5 @@
 function test_lnlq(A, b,transfer_to_craig)
-  (x, y, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig, etolx=0.0, etoly=0.0)
+  (x, y, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig, utolx=0.0, utoly=0.0)
   r = b - A * x
   resid = norm(r) / norm(b)
   return (x, y, stats, resid)
@@ -61,8 +61,8 @@ end
 
         # Test regularization
         A, b, λ = regularization(FC=FC)
-        (x, y, stats) = lnlq(A, b, λ=λ, transfer_to_craig=transfer_to_craig, etolx=0.0, etoly=0.0)
-        (xₛ, yₛ, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, etolx=1e-10, etoly=1e-10, λ=λ)
+        (x, y, stats) = lnlq(A, b, λ=λ, transfer_to_craig=transfer_to_craig, utolx=0.0, utoly=0.0)
+        (xₛ, yₛ, stats) = lnlq(A, b, transfer_to_craig=transfer_to_craig, atol=0.0, rtol=0.0, utolx=1e-10, utoly=1e-10, λ=λ)
         for (x, y) in ((x, y), (xₛ, yₛ))
           s = λ * y
           r = b - (A * x + λ * s)
