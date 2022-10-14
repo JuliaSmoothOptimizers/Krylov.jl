@@ -76,7 +76,7 @@ Overdetermined sytems are less common but also occur.
 
 where **_A_** can have any shape.
 
-5. Saddle-point and symmetric quasi-definite (SQD) systems
+5. Saddle-point and Hermitian quasi-definite systems
 
 <p align="center">
   [<b><i>M </i></b>&nbsp;&nbsp;&nbsp;<b><i> A</i></b>]&nbsp; [<b><i>x</i></b>]            =           [<b><i>b</i></b>]
@@ -86,7 +86,7 @@ where **_A_** can have any shape.
 
 where **_A_** can have any shape.
 
-6. Generalized saddle-point and unsymmetric partitioned systems
+6. Generalized saddle-point and non-Hermitian partitioned systems
 
 <p align="center">
   [<b><i>M</i></b>&nbsp;&nbsp;&nbsp;<b><i>A</i></b>]&nbsp; [<b><i>x</i></b>]            =           [<b><i>b</i></b>]
