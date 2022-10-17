@@ -16,20 +16,6 @@ qmr
 qmr!
 ```
 
-## USYMLQ
-
-```@docs
-usymlq
-usymlq!
-```
-
-## USYMQR
-
-```@docs
-usymqr
-usymqr!
-```
-
 ## CGS
 
 ```@docs

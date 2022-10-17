@@ -31,7 +31,8 @@ export usymqr, usymqr!
 
 USYMQR can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
 
-Solve the linear system Ax = b of size m × n using USYMQR.
+USYMQR solves the linear least-squares problem min ‖b - Ax‖² of size m × n.
+If A is square and nonsingular, USYMQR solves Ax = b.
 
 USYMQR is based on the orthogonal tridiagonalization process and requires two initial nonzero vectors `b` and `c`.
 The vector `c` is only used to initialize the process and a default value can be `b` or `Aᴴb` depending on the shape of `A`.

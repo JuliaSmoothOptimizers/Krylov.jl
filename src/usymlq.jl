@@ -32,7 +32,7 @@ export usymlq, usymlq!
 
 USYMLQ can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
 
-Solve the linear system Ax = b of size m × n using the USYMLQ method.
+USYMLQ determines the least-norm solution of the consistent linear system Ax = b of size m × n.
 
 USYMLQ is based on the orthogonal tridiagonalization process and requires two initial nonzero vectors `b` and `c`.
 The vector `c` is only used to initialize the process and a default value can be `b` or `Aᴴb` depending on the shape of `A`.

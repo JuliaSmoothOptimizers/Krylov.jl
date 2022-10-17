@@ -36,3 +36,10 @@ lsqr!
 lsmr
 lsmr!
 ```
+
+## USYMQR
+
+```@docs
+usymqr
+usymqr!
+```
