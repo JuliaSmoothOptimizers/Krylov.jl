@@ -45,3 +45,8 @@ function test_solver(S, M)
   solver = GmresSolver(n, n, memory, S)
   solve!(solver, A, b)  # Test that we don't have errors
 end
+
+function test_conversion(S, M)
+  @test Krylov.vector_to_matrix(S) == M
+  @test Krylov.matrix_to_vector(M) == S
+end

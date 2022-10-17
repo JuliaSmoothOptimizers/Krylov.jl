@@ -62,4 +62,5 @@ Krylov.ktypeof
 Krylov.kzeros
 Krylov.kones
 Krylov.vector_to_matrix
+Krylov.matrix_to_vector
 ```
