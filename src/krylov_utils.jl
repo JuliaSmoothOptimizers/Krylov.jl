@@ -219,7 +219,13 @@ function ktypeof(v::S) where S <: AbstractVector
 end
 
 function ktypeof(v::S) where S <: SubArray
-  return ktypeof(v.parent)
+  vp = v.parent
+  if isa(vp, DenseMatrix)
+    M = typeof(vp)
+    return matrix_to_vector(M)  # view of a row or a column of a matrix
+  else
+    return ktypeof(vp)  # view of a vector
+  end
 end
 
 """
@@ -228,16 +234,34 @@ end
 Return the dense matrix storage type `M` related to the dense vector storage type `S`.
 """
 function vector_to_matrix(::Type{S}) where S <: DenseVector
-  V = hasproperty(S, :body) ? S.body : S
-  par = V.parameters
+  T = hasproperty(S, :body) ? S.body : S
+  par = T.parameters
   npar = length(par)
   (2 ≤ npar ≤ 3) || error("Type $S is not supported.")
   if npar == 2
-    M = V.name.wrapper{par[1], 2}
+    M = T.name.wrapper{par[1], 2}
   else
-    M = V.name.wrapper{par[1], 2, par[3]}
+    M = T.name.wrapper{par[1], 2, par[3]}
   end
   return M
+end
+
+"""
+    S = matrix_to_vector(M)
+
+Return the dense vector storage type `S` related to the dense matrix storage type `M`.
+"""
+function matrix_to_vector(::Type{M}) where M <: DenseMatrix
+  T = hasproperty(M, :body) ? M.body : M
+  par = T.parameters
+  npar = length(par)
+  (2 ≤ npar ≤ 3) || error("Type $M is not supported.")
+  if npar == 2
+    S = T.name.wrapper{par[1], 1}
+  else
+    S = T.name.wrapper{par[1], 1, par[3]}
+  end
+  return S
 end
 
 """

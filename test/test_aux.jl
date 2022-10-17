@@ -129,25 +129,21 @@
 
   @testset "ktypeof" begin
     # test ktypeof
-    a = rand(Float32, 10)
-    b = view(a, 4:8)
-    @test Krylov.ktypeof(a) == Vector{Float32}
-    @test Krylov.ktypeof(b) == Vector{Float32}
+    for FC in (Float32, Float64, ComplexF32, ComplexF64)
+      dv = rand(FC, 10)
+      b = view(dv, 4:8)
+      @test Krylov.ktypeof(dv) == Vector{FC}
+      @test Krylov.ktypeof(b)  == Vector{FC}
 
-    a = rand(Float64, 10)
-    b = view(a, 4:8)
-    @test Krylov.ktypeof(a) == Vector{Float64}
-    @test Krylov.ktypeof(b) == Vector{Float64}
+      dm = rand(FC, 10, 10)
+      b = view(dm, :, 3)
+      @test Krylov.ktypeof(b) == Vector{FC}
 
-    a = sprand(Float32, 10, 0.5)
-    b = view(a, 4:8)
-    @test Krylov.ktypeof(a) == Vector{Float32}
-    @test Krylov.ktypeof(b) == Vector{Float32}
-
-    a = sprand(Float64, 10, 0.5)
-    b = view(a, 4:8)
-    @test Krylov.ktypeof(a) == Vector{Float64}
-    @test Krylov.ktypeof(b) == Vector{Float64}
+      sv = sprand(FC, 10, 0.5)
+      b = view(sv, 4:8)
+      @test Krylov.ktypeof(sv) == Vector{FC}
+      @test Krylov.ktypeof(b)  == Vector{FC}
+    end
   end
 
   @testset "vector_to_matrix" begin
@@ -156,6 +152,15 @@
       S = Vector{FC}
       M = Krylov.vector_to_matrix(S)
       @test M == Matrix{FC}
+    end
+  end
+
+  @testset "matrix_to_vector" begin
+    # test matrix_to_vector
+    for FC in (Float32, Float64, ComplexF32, ComplexF64)
+      M = Matrix{FC}
+      S = Krylov.matrix_to_vector(M)
+      @test S == Vector{FC}
     end
   end
 

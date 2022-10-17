@@ -68,10 +68,8 @@ include("gpu.jl")
     #   Krylov.@kref!(n, x, y, c, s)
     # end
 
-    @testset "vector_to_matrix" begin
-      S = ROCVector{FC}
-      M2 = Krylov.vector_to_matrix(S)
-      @test M2 == M
+    @testset "conversion -- $FC" begin
+      test_conversion(S, M)
     end
 
     ε = eps(T)
