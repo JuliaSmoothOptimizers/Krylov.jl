@@ -26,7 +26,7 @@ end
     nbits_R = sizeof(R)
     nbits_I = sizeof(Int)
 
-    @testset "Data Type: FC" begin
+    @testset "Data Type: $FC" begin
       
       @testset "Hermitian Lanczos" begin
         A, b = symmetric_indefinite(n, FC=FC)
@@ -41,7 +41,7 @@ end
         @test expected_hermitian_lanczos_bytes ≤ actual_hermitian_lanczos_bytes ≤ 1.02 * expected_hermitian_lanczos_bytes
       end
 
-      @testset "Non-hermitian Lanczos" begin
+      @testset "Non-Hermitian Lanczos" begin
         A, b = nonsymmetric_definite(n, FC=FC)
         c = -b
         V, T, U, Tᴴ = nonhermitian_lanczos(A, b, c, k)
@@ -64,8 +64,7 @@ end
         @test A * V[:,1:k] ≈ V * H
 
         function storage_arnoldi_bytes(n, k)
-          nnz = div(k*(k+1), 2) + k
-          return (nnz + k+1) * nbits_I + nnz * nbits_FC + n*(k+1) * nbits_FC
+          return k*(k+1) * nbits_FC + n*(k+1) * nbits_FC
         end
 
         expected_arnoldi_bytes = storage_arnoldi_bytes(n, k)
@@ -135,8 +134,7 @@ end
         @test K * Wₖ ≈ Wₖ₊₁ * G
 
         function storage_montoison_orban_bytes(m, n, k)
-          nnz = div(k*(k+1), 2) + k
-          return (nnz + k+1) * nbits_I + 2*nnz * nbits_FC + (n+m)*(k+1) * nbits_FC
+          return 2*k*(k+1) * nbits_FC + (n+m)*(k+1) * nbits_FC
         end
 
         expected_montoison_orban_bytes = storage_montoison_orban_bytes(m, n, k)

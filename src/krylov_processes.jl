@@ -44,6 +44,7 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
   V = M(undef, n, k+1)
   T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval)
 
+  pαᵢ = 1  # Position of αᵢ in the vector `nzval`
   for i = 1:k
     vᵢ = view(V,:,i)
     vᵢ₊₁ = q = view(V,:,i+1)
@@ -53,17 +54,18 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
     end
     mul!(q, A, vᵢ)
     αᵢ = @kdotr(n, vᵢ, q)
-    T[i,i] = αᵢ
+    nzval[pαᵢ] = αᵢ  # Tᵢ.ᵢ = αᵢ
     @kaxpy!(n, -αᵢ, vᵢ, q)
     if i ≥ 2
       vᵢ₋₁ = view(V,:,i-1)
-      βᵢ = T[i,i-1]
-      T[i-1,i] = βᵢ
+      βᵢ = nzval[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
+      nzval[pαᵢ-1] = βᵢ  # Tᵢ₋₁.ᵢ = βᵢ
       @kaxpy!(n, -βᵢ, vᵢ₋₁, q)
     end
     βᵢ₊₁ = @knrm2(n, q)
-    T[i+1,i] = βᵢ₊₁
+    nzval[pαᵢ+1] = βᵢ₊₁  # Tᵢ₊₁.ᵢ = βᵢ₊₁
     vᵢ₊₁ .= q ./ βᵢ₊₁
+    pαᵢ = pαᵢ + 3
   end
   return V, T
 end
@@ -118,6 +120,7 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
   T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_T)
   Tᴴ = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_Tᴴ)
 
+  pαᵢ = 1  # Position of αᵢ and ᾱᵢ in the vectors `nzval_T` and `nzval_Tᴴ`
   for i = 1:k
     vᵢ = view(V,:,i)
     uᵢ = view(U,:,i)
@@ -135,14 +138,14 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     if i ≥ 2
       vᵢ₋₁ = view(V,:,i-1)
       uᵢ₋₁ = view(U,:,i-1)
-      βᵢ = T[i,i-1]
-      γᵢ = T[i-1,i]
+      βᵢ = nzval_T[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
+      γᵢ = nzval_T[pαᵢ-1]  # γᵢ = Tᵢ₋₁.ᵢ
       @kaxpy!(n, -     γᵢ , vᵢ₋₁, q)
       @kaxpy!(n, -conj(βᵢ), uᵢ₋₁, p)
     end
     αᵢ = @kdot(n, uᵢ, q)
-    T[i,i] = αᵢ
-    Tᴴ[i,i] = conj(αᵢ)
+    nzval_T[pαᵢ]  = αᵢ        # Tᵢ.ᵢ  = αᵢ
+    nzval_Tᴴ[pαᵢ] = conj(αᵢ)  # Tᴴᵢ.ᵢ = ᾱᵢ
     @kaxpy!(m, -     αᵢ , vᵢ, q)
     @kaxpy!(n, -conj(αᵢ), uᵢ, p)
     pᴴq = @kdot(n, p, q)
@@ -150,12 +153,13 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     γᵢ₊₁ = pᴴq / βᵢ₊₁
     vᵢ₊₁ .= q ./ βᵢ₊₁
     uᵢ₊₁ .= p ./ conj(γᵢ₊₁)
-    T[i+1,i] = βᵢ₊₁
-    Tᴴ[i+1,i] = conj(γᵢ₊₁)
+    nzval_T[pαᵢ+1]  = βᵢ₊₁        # Tᵢ₊₁.ᵢ  = βᵢ₊₁
+    nzval_Tᴴ[pαᵢ+1] = conj(γᵢ₊₁)  # Tᴴᵢ₊₁.ᵢ = γ̄ᵢ₊₁
     if i ≤ k-1
-      T[i,i+1] = γᵢ₊₁
-      Tᴴ[i,i+1] = conj(βᵢ₊₁)
+      nzval_T[pαᵢ+2]  = γᵢ₊₁        # Tᵢ.ᵢ₊₁  = γᵢ₊₁
+      nzval_Tᴴ[pαᵢ+2] = conj(βᵢ₊₁)  # Tᴴᵢ.ᵢ₊₁ = β̄ᵢ₊₁
     end
+    pαᵢ = pαᵢ + 3
   end
   return V, T, U, Tᴴ
 end
@@ -172,7 +176,7 @@ end
 #### Output arguments
 
 * `V`: a dense n × (k+1) matrix;
-* `H`: a sparse (k+1) × k upper Hessenberg matrix.
+* `H`: a dense (k+1) × k upper Hessenberg matrix.
 
 #### Reference
 
@@ -183,22 +187,8 @@ function arnoldi(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   S = ktypeof(b)
   M = vector_to_matrix(S)
 
-  nnz = div(k*(k+1), 2) + k
-  colptr = zeros(Int, k+1)
-  rowval = zeros(Int, nnz)
-  nzval = zeros(FC, nnz)
-
-  colptr[1] = 1
-  for i = 1:k
-    pos = colptr[i]
-    colptr[i+1] = pos+i+1
-    for j = 1:i+1
-      rowval[pos+j-1] = j
-    end
-  end
-
   V = M(undef, n, k+1)
-  H = SparseMatrixCSC(k+1, k, colptr, rowval, nzval)
+  H = zeros(FC, k+1, k)
 
   for i = 1:k
     vᵢ = view(V,:,i)
@@ -263,6 +253,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
   U = M(undef, m, k+1)
   L = SparseMatrixCSC(k+1, k+1, colptr, rowval, nzval)
 
+  pαᵢ = 1  # Position of αᵢ in the vector `nzval`
   for i = 1:k
     uᵢ = view(U,:,i)
     vᵢ = view(V,:,i)
@@ -274,11 +265,11 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
       uᵢ .= b ./ βᵢ
       mul!(wᵢ, Aᴴ, uᵢ)
       αᵢ = @knrm2(n, wᵢ)
-      L[1,1] = αᵢ
+      nzval[pαᵢ] = αᵢ  # Lᵢ.ᵢ = αᵢ
       vᵢ .= wᵢ ./ αᵢ
     end
     mul!(q, A, vᵢ)
-    αᵢ = L[i,i] 
+    αᵢ = nzval[pαᵢ]  # αᵢ = Lᵢ.ᵢ
     @kaxpy!(m, -αᵢ, uᵢ, q)
     βᵢ₊₁ = @knrm2(m, q)
     uᵢ₊₁ .= q ./ βᵢ₊₁
@@ -286,8 +277,9 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
     @kaxpy!(n, -βᵢ₊₁, vᵢ, p)
     αᵢ₊₁ = @knrm2(n, p)
     vᵢ₊₁ .= p ./ αᵢ₊₁
-    L[i+1,i]   = βᵢ₊₁
-    L[i+1,i+1] = αᵢ₊₁
+    nzval[pαᵢ+1] = βᵢ₊₁  # Lᵢ₊₁.ᵢ   = βᵢ₊₁
+    nzval[pαᵢ+2] = αᵢ₊₁  # Lᵢ₊₁.ᵢ₊₁ = αᵢ₊₁
+    pαᵢ = pαᵢ + 2
   end
   return V, U, L
 end
@@ -342,6 +334,7 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
   T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_T)
   Tᴴ = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_Tᴴ)
 
+  pαᵢ = 1  # Position of αᵢ and ᾱᵢ in the vectors `nzval_T` and `nzval_Tᴴ`
   for i = 1:k
     vᵢ = view(V,:,i)
     uᵢ = view(U,:,i)
@@ -358,26 +351,27 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     if i ≥ 2
       vᵢ₋₁ = view(V,:,i-1)
       uᵢ₋₁ = view(U,:,i-1)
-      βᵢ = T[i,i-1]
-      γᵢ = T[i-1,i]
+      βᵢ = nzval_T[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
+      γᵢ = nzval_T[pαᵢ-1]  # γᵢ = Tᵢ₋₁.ᵢ
       @kaxpy!(m, -γᵢ, vᵢ₋₁, q)
       @kaxpy!(n, -βᵢ, uᵢ₋₁, p)
     end
     αᵢ = @kdot(m, vᵢ, q)
-    T[i,i] = αᵢ
-    Tᴴ[i,i] = conj(αᵢ)
+    nzval_T[pαᵢ]  = αᵢ        # Tᵢ.ᵢ  = αᵢ
+    nzval_Tᴴ[pαᵢ] = conj(αᵢ)  # Tᴴᵢ.ᵢ = ᾱᵢ
     @kaxpy!(m, -     αᵢ , vᵢ, q)
     @kaxpy!(n, -conj(αᵢ), uᵢ, p)
     βᵢ₊₁ = @knrm2(m, q)
     γᵢ₊₁ = @knrm2(n, p)
     vᵢ₊₁ .= q ./ βᵢ₊₁
     uᵢ₊₁ .= p ./ γᵢ₊₁
-    T[i+1,i] = βᵢ₊₁
-    Tᴴ[i+1,i] = conj(γᵢ₊₁)
+    nzval_T[pαᵢ+1]  = βᵢ₊₁  # Tᵢ₊₁.ᵢ  = βᵢ₊₁
+    nzval_Tᴴ[pαᵢ+1] = γᵢ₊₁  # Tᴴᵢ₊₁.ᵢ = γᵢ₊₁
     if i ≤ k-1
-      T[i,i+1] = γᵢ₊₁
-      Tᴴ[i,i+1] = conj(βᵢ₊₁)
+      nzval_T[pαᵢ+2]  = γᵢ₊₁  # Tᵢ.ᵢ₊₁  = γᵢ₊₁
+      nzval_Tᴴ[pαᵢ+2] = βᵢ₊₁  # Tᴴᵢ.ᵢ₊₁ = βᵢ₊₁
     end
+    pαᵢ = pαᵢ + 3
   end
   return V, T, U, Tᴴ
 end
@@ -396,9 +390,9 @@ end
 #### Output arguments
 
 * `V`: a dense m × (k+1) matrix;
-* `H`: a sparse (k+1) × k upper Hessenberg matrix;
+* `H`: a dense (k+1) × k upper Hessenberg matrix;
 * `U`: a dense n × (k+1) matrix;
-* `F`: a sparse (k+1) × k upper Hessenberg matrix.
+* `F`: a dense (k+1) × k upper Hessenberg matrix.
 
 #### Reference
 
@@ -409,25 +403,10 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
   S = ktypeof(b)
   M = vector_to_matrix(S)
 
-  nnz = div(k*(k+1), 2) + k
-  colptr = zeros(Int, k+1)
-  rowval = zeros(Int, nnz)
-  nzval_H = zeros(FC, nnz)
-  nzval_F = zeros(FC, nnz)
-
-  colptr[1] = 1
-  for i = 1:k
-    pos = colptr[i]
-    colptr[i+1] = pos+i+1
-    for j = 1:i+1
-      rowval[pos+j-1] = j
-    end
-  end
-
   V = M(undef, m, k+1)
   U = M(undef, n, k+1)
-  H = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_H)
-  F = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_F)
+  H = zeros(FC, k+1, k)
+  F = zeros(FC, k+1, k)
 
   for i = 1:k
     vᵢ = view(V,:,i)
