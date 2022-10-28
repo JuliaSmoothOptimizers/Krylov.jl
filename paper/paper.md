@@ -205,11 +205,9 @@ gauss_newton(F, JF, x₀)
 ```
 
 ```julia
-rows = [1, 1, 1, 2, 2, 2, 3, 3, 3]
-cols = [1, 2, 3, 1, 2, 3, 1, 2, 3]
-vals = [7.0, im, -5im, -im, 8.0, 5.0, 5im, 5, 10.0]
-A_cpu = sparse(rows, cols, vals, 3, 3)
-b_cpu = [11.0-6im, 32.0+12im, 35.0+20im]
+A_cpu = sprand(ComplexF64, 100, 100, 0.05)
+A_cpu = A_cpu * A_cpu'
+b_cpu = rand(ComplexF64, 100)
 
 # Transfer the linear system from the CPU to the GPU
 A_gpu = CuSparseMatrixCSR(A_cpu)
