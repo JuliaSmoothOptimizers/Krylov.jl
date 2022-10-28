@@ -1,5 +1,11 @@
-on: [push]
-
+name: JOSS
+on:
+  push:
+    branches:
+      - joss-paper
+    tags: '*'
+  pull_request:
+    types: [opened, synchronize, reopened]
 jobs:
   paper:
     runs-on: ubuntu-latest
