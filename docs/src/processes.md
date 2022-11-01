@@ -63,7 +63,7 @@ After $k$ iterations of the non-Hermitian Lanczos process (also named the Lanczo
 ```math
 \begin{align*}
   A V_k &= V_k T_k   +        \beta_{k+1} v_{k+1} e_k^T = V_{k+1} T_{k+1,k},   \\
-  B U_k &= U_k T_k^H + \bar{\gamma}_{k+1} u_{k+1} e_k^T = U_{k+1} T_{k,k+1}^H, \\
+  A^H U_k &= U_k T_k^H + \bar{\gamma}_{k+1} u_{k+1} e_k^T = U_{k+1} T_{k,k+1}^H, \\
   V_k^H U_k &= U_k^H V_k = I_k,
 \end{align*}
 ```
@@ -191,7 +191,7 @@ After $k$ iterations of the Saunders-Simon-Yip process (also named the orthogona
 ```math
 \begin{align*}
   A U_k &= V_k T_k   + \beta_{k+1}  v_{k+1} e_k^T = V_{k+1} T_{k+1,k},   \\
-  B V_k &= U_k T_k^H + \gamma_{k+1} u_{k+1} e_k^T = U_{k+1} T_{k,k+1}^H, \\
+  A^H V_k &= U_k T_k^H + \gamma_{k+1} u_{k+1} e_k^T = U_{k+1} T_{k,k+1}^H, \\
   V_k^H V_k &= U_k^H U_k = I_k,
 \end{align*}
 ```
