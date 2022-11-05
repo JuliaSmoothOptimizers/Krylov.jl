@@ -1,3 +1,32 @@
+```@raw html
+<style>
+.content table td {
+    border-right-width: 1px;
+}
+.content table th {
+    border-right-width: 1px;
+}
+.content table td:last-child {
+    border-right-width: 0px;
+}
+.content table th:last-child {
+    border-right-width: 0px;
+}
+html.theme--documenter-dark .content table td {
+    border-right-width: 1px;
+}
+html.theme--documenter-dark .content table th {
+    border-right-width: 1px;
+}
+html.theme--documenter-dark .content table td:last-child {
+    border-right-width: 0px;
+}
+html.theme--documenter-dark .content table th:last-child {
+    border-right-width: 0px;
+}
+</style>
+```
+
 ## [Factorization-free operators](@id factorization-free)
 
 All methods are factorization-free, which means that you only need to provide operator-vector products.
