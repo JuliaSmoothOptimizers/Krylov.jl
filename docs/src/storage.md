@@ -132,7 +132,7 @@ Base.format_bytes(nbytes)
 ```
 
 To verify that we match the theoretical results, we just need to multiply the storage requirement of a method by the number of bytes associated to the precision of the linear problem.
-For instance, we need 4 bytes for the precision `Float32` , 8 bytes for precisions `Float64` and `ComplexF32`, and 16 bytes for the precision `ComplexF64`.
+For instance, we need 4 bytes for the precision `Float32`, 8 bytes for precisions `Float64` and `ComplexF32`, and 16 bytes for the precision `ComplexF64`.
 
 ```@example storage
 FC = Float64                            # precision of the least-squares problem
