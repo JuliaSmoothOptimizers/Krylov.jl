@@ -44,8 +44,8 @@ The numbers of shifts of CG-LANCZOS-SHIFT is $p$.
 ## Theoretical storage requirements
 
 The following tables provide the number of coefficients that must be allocated for each Krylov method.
-The coefficients have the same type as those that composed the linear problem we seek to solve.
-Each table summarizes the storage requirements a Krylov methods recommended to a specific linear problem.
+The coefficients have the same type as those that compose the linear problem we seek to solve.
+Each table summarizes the storage requirements of Krylov methods recommended to a specific linear problem.
 
 #### Hermitian positive definite linear systems
 
