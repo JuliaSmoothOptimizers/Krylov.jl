@@ -23,6 +23,7 @@ makedocs(
                                 "Generalized saddle-point and non-Hermitian partitioned systems" => "solvers/gsp.md"],
            "In-place methods" => "inplace.md",
            "Preconditioners" => "preconditioners.md",
+           "Storage requirements" => "storage.md",
            "GPU support" => "gpu.md",
            "Warm start" => "warm_start.md",
            "Factorization-free operators" => "factorization-free.md",
