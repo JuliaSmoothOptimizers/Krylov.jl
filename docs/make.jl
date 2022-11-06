@@ -15,7 +15,7 @@ makedocs(
            "Krylov processes" => "processes.md",
            "Krylov methods" => ["Hermitian positive definite linear systems" => "solvers/spd.md",
                                 "Hermitian indefinite linear systems" => "solvers/sid.md",
-                                "Non-Hermitian linear systems" => "solvers/unsymmetric.md",
+                                "Non-Hermitian square linear systems" => "solvers/unsymmetric.md",
                                 "Least-norm problems" => "solvers/ln.md",
                                 "Least-squares problems" => "solvers/ls.md",
                                 "Adjoint systems" => "solvers/as.md",
