@@ -1,5 +1,5 @@
 ```@meta
-# Symmetric positive definite linear systems
+# Hermitian positive definite linear systems
 ```
 
 ## CG

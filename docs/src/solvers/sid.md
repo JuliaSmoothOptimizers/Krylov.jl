@@ -1,5 +1,5 @@
 ```@meta
-# Symmetric indefinite linear systems
+# Hermitian indefinite linear systems
 ```
 
 ## SYMMLQ

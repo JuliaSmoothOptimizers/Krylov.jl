@@ -3,7 +3,7 @@
   for FC in (Float32, Float64, ComplexF32, ComplexF64)
     @testset "Data Type: $FC" begin
 
-      A   = FC.(get_div_grad(16, 16, 16))  # Dimension m x n
+      A   = FC.(get_div_grad(18, 18, 18))  # Dimension m x n
       m,n = size(A)
       k   = div(n, 2)
       Au  = A[1:k,:]          # Dimension k x n
@@ -26,7 +26,7 @@
         expected_symmlq_bytes = storage_symmlq_bytes(n)
         symmlq(A, b)  # warmup
         actual_symmlq_bytes = @allocated symmlq(A, b)
-        @test expected_symmlq_bytes ≤ actual_symmlq_bytes ≤ 1.03 * expected_symmlq_bytes
+        @test expected_symmlq_bytes ≤ actual_symmlq_bytes ≤ 1.02 * expected_symmlq_bytes
 
         solver = SymmlqSolver(A, b)
         symmlq!(solver, A, b)  # warmup
@@ -371,7 +371,7 @@
         expected_lslq_bytes = storage_lslq_bytes(m, k)
         (x, stats) = lslq(Ao, b)  # warmup
         actual_lslq_bytes = @allocated lslq(Ao, b)
-        @test expected_lslq_bytes ≤ actual_lslq_bytes ≤ 1.03 * expected_lslq_bytes
+        @test expected_lslq_bytes ≤ actual_lslq_bytes ≤ 1.02 * expected_lslq_bytes
 
         solver = LslqSolver(Ao, b)
         lslq!(solver, Ao, b)  # warmup
@@ -405,7 +405,7 @@
         expected_lsqr_bytes = storage_lsqr_bytes(m, k)
         (x, stats) = lsqr(Ao, b)  # warmup
         actual_lsqr_bytes = @allocated lsqr(Ao, b)
-        @test expected_lsqr_bytes ≤ actual_lsqr_bytes ≤ 1.03 * expected_lsqr_bytes
+        @test expected_lsqr_bytes ≤ actual_lsqr_bytes ≤ 1.02 * expected_lsqr_bytes
 
         solver = LsqrSolver(Ao, b)
         lsqr!(solver, Ao, b)  # warmup
@@ -422,7 +422,7 @@
         expected_lsmr_bytes = storage_lsmr_bytes(m, k)
         (x, stats) = lsmr(Ao, b)  # warmup
         actual_lsmr_bytes = @allocated lsmr(Ao, b)
-        @test expected_lsmr_bytes ≤ actual_lsmr_bytes ≤ 1.03 * expected_lsmr_bytes
+        @test expected_lsmr_bytes ≤ actual_lsmr_bytes ≤ 1.02 * expected_lsmr_bytes
 
         solver = LsmrSolver(Ao, b)
         lsmr!(solver, Ao, b)  # warmup

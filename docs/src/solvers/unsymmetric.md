@@ -1,5 +1,5 @@
 ```@meta
-# Unsymmetric linear systems
+# Non-Hermitian square linear systems
 ```
 
 ## BiLQ

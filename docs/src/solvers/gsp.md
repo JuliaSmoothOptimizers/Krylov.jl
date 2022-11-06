@@ -1,5 +1,5 @@
 ```@meta
-# Generalized saddle-point and unsymmetric partitioned systems
+# Generalized saddle-point and non-Hermitian partitioned systems
 ```
 
 ## GPMR

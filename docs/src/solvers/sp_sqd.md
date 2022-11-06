@@ -1,5 +1,5 @@
 ```@meta
-# Saddle-point and symmetric quasi-definite systems
+# Saddle-point and Hermitian quasi-definite systems
 ```
 
 ## TriCG
