@@ -29,7 +29,7 @@ export lnlq, lnlq!
                          M=I, N=I, sqd::Bool=false, λ::T=zero(T), σ::T=zero(T),
                          atol::T=√eps(T), rtol::T=√eps(T), utolx::T=√eps(T), utoly::T=√eps(T), itmax::Int=0,
                          transfer_to_craig::Bool=true, verbose::Int=0, history::Bool=false,
-                         ldiv::Bool=false, callback=solver->false)
+                         ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -118,11 +118,11 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
                atol :: T=√eps(T), rtol :: T=√eps(T), utolx :: T=√eps(T), utoly :: T=√eps(T), itmax :: Int=0,
                transfer_to_craig :: Bool=true, verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("LNLQ: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf(iostream, "LNLQ: system of %d equations in %d variables\n", m, n)
 
   # Check sqd and λ parameters
   sqd && (λ ≠ 0) && error("sqd cannot be set to true if λ ≠ 0 !")
@@ -174,8 +174,8 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   iter = 0
   itmax == 0 && (itmax = m + n)
 
-  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
+  (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, bNorm)
 
   # Update iteration index
   iter = iter + 1
@@ -452,12 +452,12 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
       solved_lq = solved_lq || err_x ≤ utolx || err_y ≤ utoly
       solved_cg = transfer_to_craig && (solved_cg || err_x ≤ utolx || err_y ≤ utoly)
     end
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm_lq)
 
     # Update iteration index.
     iter = iter + 1
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   if solved_cg
     if λ > 0

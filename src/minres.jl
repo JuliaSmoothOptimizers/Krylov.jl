@@ -30,7 +30,7 @@ export minres, minres!
                         window::Int=5, itmax::Int=0,
                         conlim::T=1/√eps(T), verbose::Int=0,
                         history::Bool=false, ldiv::Bool=false,
-                        callback=solver->false)
+                        callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -114,12 +114,12 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
                  ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
                  itmax :: Int=0, conlim :: T=1/√eps(T), verbose :: Int=0,
-                 history :: Bool=false, ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 history :: Bool=false, ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == n || error("Inconsistent problem size")
-  (verbose > 0) && @printf("MINRES: system of size %d\n", n)
+  (verbose > 0) && @printf(iostream, "MINRES: system of size %d\n", n)
 
   # Tests M = Iₙ
   MisI = (M === I)
@@ -201,8 +201,8 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   iter = 0
   itmax == 0 && (itmax = 2*n)
 
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "test2")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "test2")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
 
   tol = atol + rtol * β₁
   rNormtol = ratol + rrtol * β₁ 
@@ -304,7 +304,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     Acond = γmax / γmin
     history && push!(Aconds, Acond)
 
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, test1, test2)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, test1, test2)
 
     if iter == 1 && β / β₁ ≤ 10 * ϵM
       # Aᴴb = 0 so x = 0 is a minimum least-squares solution
@@ -337,7 +337,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     ill_cond = ill_cond_mach | ill_cond_lim
     solved = solved_mach | solved_lim | zero_resid | fwd_err | resid_decrease
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   tired               && (status = "maximum number of iterations exceeded")
   ill_cond_mach       && (status = "condition number seems too large for this machine")

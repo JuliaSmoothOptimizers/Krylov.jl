@@ -18,7 +18,7 @@ export symmlq, symmlq!
                         λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                         etol::T=√eps(T), itmax::Int=0, conlim::T=1/√eps(T),
                         verbose::Int=0, history::Bool=false,
-                        ldiv::Bool=false, callback=solver->false)
+                        ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -95,12 +95,12 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                  etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
                  verbose :: Int=0, history :: Bool=false,
-                 ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("SYMMLQ: system of size %d\n", n)
+  (verbose > 0) && @printf(iostream, "SYMMLQ: system of size %d\n", n)
 
   # Tests M = Iₙ
   MisI = (M === I)
@@ -225,8 +225,8 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   iter = 0
   itmax == 0 && (itmax = 2 * n)
 
-  (verbose > 0) && @printf("%5s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "k", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, β, cold, sold, ANorm, Acond)
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "k", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, β, cold, sold, ANorm, Acond)
 
   tol = atol + rtol * β₁
   status = "unknown"
@@ -357,7 +357,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     ANorm = sqrt(ANorm²)
     test1 = rNorm / (ANorm * xNorm)
 
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, β, c, s, ANorm, Acond, test1)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, β, c, s, ANorm, Acond, test1)
 
     # Reset variables
     ϵold = ϵ
@@ -384,7 +384,7 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     ill_cond = ill_cond_mach || ill_cond_lim
     solved = solved_mach || zero_resid || zero_resid_mach || zero_resid_lim || fwd_err || resid_decrease_mach
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   # Compute CG point
   # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * w̅ₖ

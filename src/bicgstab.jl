@@ -20,7 +20,7 @@ export bicgstab, bicgstab!
                           c::AbstractVector{FC}=b, M=I, N=I,
                           atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                           verbose::Int=0, history::Bool=false,
-                          ldiv::Bool=false, callback=solver->false)
+                          ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -102,12 +102,12 @@ end
 function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
                    M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                    itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-                   ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                   ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("BICGSTAB: system of size %d\n", n)
+  (verbose > 0) && @printf(iostream, "BICGSTAB: system of size %d\n", n)
 
   # Check M = Iₙ and N = Iₙ
   MisI = (M === I)
@@ -163,8 +163,8 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
   itmax == 0 && (itmax = 2*n)
 
   ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "|αₖ|", "|ωₖ|")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "|αₖ|", "|ωₖ|")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
 
   next_ρ = @kdot(n, c, r)  # ρ₁ = ⟨r̅₀,r₀⟩
   if next_ρ == 0
@@ -220,9 +220,9 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   tired               && (status = "maximum number of iterations exceeded")
   breakdown           && (status = "breakdown αₖ == 0")

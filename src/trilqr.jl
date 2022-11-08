@@ -16,7 +16,7 @@ export trilqr, trilqr!
     (x, y, stats) = trilqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                            atol::T=√eps(T), rtol::T=√eps(T), transfer_to_usymcg::Bool=true,
                            itmax::Int=0, verbose::Int=0, history::Bool=false,
-                           callback=solver->false)
+                           callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -94,13 +94,13 @@ end
 function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                  atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-                 callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  (verbose > 0) && @printf("TRILQR: primal system of %d equations in %d variables\n", m, n)
-  (verbose > 0) && @printf("TRILQR: dual system of %d equations in %d variables\n", n, m)
+  (verbose > 0) && @printf(iostream, "TRILQR: primal system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf(iostream, "TRILQR: dual system of %d equations in %d variables\n", n, m)
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
@@ -142,8 +142,8 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   εL = atol + rtol * bNorm
   εQ = atol + rtol * cNorm
   ξ = zero(T)
-  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
   # Set up workspace.
   βₖ = @knrm2(m, r₀)          # β₁ = ‖r₀‖ = ‖v₁‖
@@ -389,11 +389,11 @@ function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     user_requested_exit = callback(solver) :: Bool
     tired = iter ≥ itmax
 
-    kdisplay(iter, verbose) &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "", sNorm)
-    kdisplay(iter, verbose) && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
-    kdisplay(iter, verbose) && !solved_primal && !solved_dual && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
+    kdisplay(iter, verbose) &&  solved_primal && !solved_dual && @printf(iostream, "%5d  %7s  %7.1e\n", iter, "", sNorm)
+    kdisplay(iter, verbose) && !solved_primal &&  solved_dual && @printf(iostream, "%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
+    kdisplay(iter, verbose) && !solved_primal && !solved_dual && @printf(iostream, "%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   # Compute USYMCG point
   # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ

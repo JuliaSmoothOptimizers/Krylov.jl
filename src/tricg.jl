@@ -17,7 +17,7 @@ export tricg, tricg!
                           spd::Bool=false, snd::Bool=false, flip::Bool=false,
                           τ::T=one(T), ν::T=-one(T), itmax::Int=0,
                           verbose::Int=0, history::Bool=false,
-                          ldiv::Bool=false, callback=solver->false)
+                          ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -117,12 +117,12 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
                 spd :: Bool=false, snd :: Bool=false, flip :: Bool=false,
                 τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0,
                 verbose :: Int=0, history :: Bool=false,
-                ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  (verbose > 0) && @printf("TriCG: system of %d equations in %d variables\n", m+n, m+n)
+  (verbose > 0) && @printf(iostream, "TriCG: system of %d equations in %d variables\n", m+n, m+n)
 
   # Check flip, spd and snd parameters
   spd && flip && error("The matrix cannot be SPD and SQD")
@@ -222,8 +222,8 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   history && push!(rNorms, rNorm)
   ε = atol + rtol * rNorm
 
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "βₖ₊₁", "γₖ₊₁")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ, γₖ)
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "βₖ₊₁", "γₖ₊₁")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ, γₖ)
 
   # Set up workspace.
   d₂ₖ₋₃ = d₂ₖ₋₂ = zero(T)
@@ -403,9 +403,9 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     breakdown = βₖ₊₁ ≤ btol && γₖ₊₁ ≤ btol
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ₊₁, γₖ₊₁)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ₊₁, γₖ₊₁)
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   tired               && (status = "maximum number of iterations exceeded")
   breakdown           && (status = "inconsistent linear system")

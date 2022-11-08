@@ -33,7 +33,7 @@ export cgls, cgls!
     (x, stats) = cgls(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                       radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      ldiv::Bool=false, callback=solver->false)
+                      ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -91,11 +91,11 @@ function cgls! end
 function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("CGLS: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf(iostream, "CGLS: system of %d equations in %d variables\n", m, n)
 
   # Tests M = Iₙ
   MisI = (M === I)
@@ -138,8 +138,8 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   history && push!(rNorms, rNorm)
   history && push!(ArNorms, ArNorm)
   ε = atol + rtol * ArNorm
-  (verbose > 0) && @printf("%5s  %8s  %8s\n", "k", "‖Aᴴr‖", "‖r‖")
-  kdisplay(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
+  (verbose > 0) && @printf(iostream, "%5s  %8s  %8s\n", "k", "‖Aᴴr‖", "‖r‖")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
 
   status = "unknown"
   on_boundary = false
@@ -175,12 +175,12 @@ function cgls!(solver :: CglsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     history && push!(rNorms, rNorm)
     history && push!(ArNorms, ArNorm)
     iter = iter + 1
-    kdisplay(iter, verbose) && @printf("%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
     user_requested_exit = callback(solver) :: Bool
     solved = (ArNorm ≤ ε) | on_boundary
     tired = iter ≥ itmax
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   tired               && (status = "maximum number of iterations exceeded")
   solved              && (status = "solution good enough given atol and rtol")

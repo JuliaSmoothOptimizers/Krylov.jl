@@ -17,7 +17,7 @@ export gpmr, gpmr!
                          atol::T=√eps(T), rtol::T=√eps(T), gsp::Bool=false,
                          reorthogonalization::Bool=false, itmax::Int=0,
                          λ::FC=one(FC), μ::FC=one(FC), verbose::Int=0,
-                         history::Bool=false, ldiv::Bool=false, callback=solver->false)
+                         history::Bool=false, ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -127,7 +127,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
                gsp :: Bool=false, reorthogonalization :: Bool=false,
                itmax :: Int=0, λ :: FC=one(FC), μ :: FC=one(FC),
                verbose :: Int=0, history::Bool=false,
-               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   s, t = size(B)
@@ -135,7 +135,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   s == n         || error("Inconsistent problem size")
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  (verbose > 0) && @printf("GPMR: system of %d equations in %d variables\n", m+n, m+n)
+  (verbose > 0) && @printf(iostream, "GPMR: system of %d equations in %d variables\n", m+n, m+n)
 
   # Check C = E = Iₘ and D = F = Iₙ
   CisI = (C === I)
@@ -230,8 +230,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   zt[1] = β
   zt[2] = γ
 
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "hₖ₊₁.ₖ", "fₖ₊₁.ₖ")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗")
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "hₖ₊₁.ₖ", "fₖ₊₁.ₖ")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗")
 
   # Tolerance for breakdown detection.
   btol = eps(T)^(3/4)
@@ -417,7 +417,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     breakdown = Faux ≤ btol && Haux ≤ btol
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, Haux, Faux)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, Haux, Faux)
 
     # Compute vₖ₊₁ and uₖ₊₁
     if !(solved || tired || breakdown || user_requested_exit)
@@ -447,7 +447,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
       zt[2k+2] = τbar₂ₖ₊₂
     end
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   # Compute zₖ = (ζ₁, ..., ζ₂ₖ) by solving Rₖzₖ = tₖ with backward substitution.
   for i = 2iter : -1 : 1

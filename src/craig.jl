@@ -38,7 +38,7 @@ export craig, craig!
                           M=I, N=I, sqd::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                           btol::T=√eps(T), rtol::T=√eps(T), conlim::T=1/√eps(T), itmax::Int=0,
                           verbose::Int=0, transfer_to_lsqr::Bool=false, history::Bool=false,
-                          ldiv::Bool=false, callback=solver->false)
+                          ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -126,11 +126,11 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
                 M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                 btol :: T=√eps(T), rtol :: T=√eps(T), conlim :: T=1/√eps(T), itmax :: Int=0,
                 verbose :: Int=0, transfer_to_lsqr :: Bool=false, history :: Bool=false,
-                ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("CRAIG: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf(iostream, "CRAIG: system of %d equations in %d variables\n", m, n)
 
   # Check sqd and λ parameters
   sqd && (λ ≠ 0) && error("sqd cannot be set to true if λ ≠ 0 !")
@@ -202,8 +202,8 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ɛ_c = atol + rtol * rNorm   # Stopping tolerance for consistent systems.
   ɛ_i = atol                  # Stopping tolerance for inconsistent systems.
   ctol = conlim > 0 ? 1/conlim : zero(T)  # Stopping tolerance for ill-conditioned operators.
-  (verbose > 0) && @printf("%5s  %8s  %8s  %8s  %8s  %8s  %7s\n", "k", "‖r‖", "‖x‖", "‖A‖", "κ(A)", "α", "β")
-  kdisplay(iter, verbose) && @printf("%5d  %8.2e  %8.2e  %8.2e  %8.2e\n", iter, rNorm, xNorm, Anorm, Acond)
+  (verbose > 0) && @printf(iostream, "%5s  %8s  %8s  %8s  %8s  %8s  %7s\n", "k", "‖r‖", "‖x‖", "‖A‖", "κ(A)", "α", "β")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %8.2e  %8.2e\n", iter, rNorm, xNorm, Anorm, Acond)
 
   bkwerr = one(T)  # initial value of the backward error ‖r‖ / √(‖b‖² + ‖A‖² ‖x‖²)
 
@@ -307,7 +307,7 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     ρ_prev = ρ   # Only differs from α if λ > 0.
 
-    kdisplay(iter, verbose) && @printf("%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8.1e  %7.1e\n", iter, rNorm, xNorm, Anorm, Acond, α, β)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8.1e  %7.1e\n", iter, rNorm, xNorm, Anorm, Acond, α, β)
 
     solved_lim = bkwerr ≤ btol
     solved_mach = one(T) + bkwerr ≤ one(T)
@@ -323,7 +323,7 @@ function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
     inconsistent = false
     tired = iter ≥ itmax
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   # transfer to LSQR point if requested
   if λ > 0 && transfer_to_lsqr

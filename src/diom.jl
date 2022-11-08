@@ -15,7 +15,7 @@ export diom, diom!
                       memory::Int=20, M=I, N=I, atol::T=√eps(T),
                       rtol::T=√eps(T), reorthogonalization::Bool=false,
                       itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      ldiv::Bool=false, callback=solver->false)
+                      ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -96,12 +96,12 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                reorthogonalization :: Bool=false, itmax :: Int=0,
                verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("DIOM: system of size %d\n", n)
+  (verbose > 0) && @printf(iostream, "DIOM: system of size %d\n", n)
 
   # Check M = Iₙ and N = Iₙ
   MisI = (M === I)
@@ -145,8 +145,8 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   itmax == 0 && (itmax = 2*n)
 
   ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+  (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
 
   mem = length(V)  # Memory
   for i = 1 : mem
@@ -271,9 +271,9 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     resid_decrease_lim = rNorm ≤ ε
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
   tired               && (status = "maximum number of iterations exceeded")
   solved              && (status = "solution good enough given atol and rtol")
   user_requested_exit && (status = "user-requested exit")

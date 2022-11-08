@@ -14,7 +14,7 @@ export cgs, cgs!
     (x, stats) = cgs(A, b::AbstractVector{FC};
                      c::AbstractVector{FC}=b, M=I, N=I, atol::T=√eps(T),
                      rtol::T=√eps(T), itmax::Int=0, verbose::Int=0,
-                     history::Bool=false, ldiv::Bool=false, callback=solver->false)
+                     history::Bool=false, ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -98,12 +98,12 @@ end
 function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
               itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-              ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+              ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("CGS: system of size %d\n", n)
+  (verbose > 0) && @printf(iostream, "CGS: system of size %d\n", n)
 
   # Check M = Iₙ and N = Iₙ
   MisI = (M === I)
@@ -163,8 +163,8 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
   itmax == 0 && (itmax = 2*n)
 
   ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+  (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
 
   u .= r        # u₀
   p .= r        # p₀
@@ -219,9 +219,9 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   tired               && (status = "maximum number of iterations exceeded")
   breakdown           && (status = "breakdown αₖ == 0")

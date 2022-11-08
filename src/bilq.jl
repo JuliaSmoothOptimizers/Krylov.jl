@@ -17,7 +17,7 @@ export bilq, bilq!
                       c::AbstractVector{FC}=b, atol::T=√eps(T),
                       rtol::T=√eps(T), transfer_to_bicg::Bool=true,
                       itmax::Int=0, verbose::Int=0,
-                      history::Bool=false, callback=solver->false)
+                      history::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -89,12 +89,12 @@ end
 function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
                atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
                itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-               callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("BILQ: system of size %d\n", n)
+  (verbose > 0) && @printf(iostream, "BILQ: system of size %d\n", n)
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
@@ -135,8 +135,8 @@ function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Ab
   itmax == 0 && (itmax = 2*n)
 
   ε = atol + rtol * bNorm
-  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
+  (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, bNorm)
 
   # Initialize the Lanczos biorthogonalization process.
   cᴴb = @kdot(n, c, r₀)  # ⟨c,r₀⟩
@@ -313,9 +313,9 @@ function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Ab
     solved_cg = transfer_to_bicg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ ε)
     tired = iter ≥ itmax
     breakdown = !solved_lq && !solved_cg && (pᴴq == 0)
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm_lq)
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   # Compute BICG point
   # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ

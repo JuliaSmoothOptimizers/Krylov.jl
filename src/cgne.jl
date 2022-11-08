@@ -33,7 +33,7 @@ export cgne, cgne!
     (x, stats) = cgne(A, b::AbstractVector{FC};
                       N=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                       itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      ldiv::Bool=false, callback=solver->false)
+                      ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -100,11 +100,11 @@ function cgne! end
 function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
                N=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("CGNE: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf(iostream, "CGNE: system of %d equations in %d variables\n", m, n)
 
   # Tests N = Iₙ
   NisI = (N === I)
@@ -151,8 +151,8 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
   ɛ_i = atol + rtol * pNorm  # Stopping tolerance for inconsistent systems.
-  (verbose > 0) && @printf("%5s  %8s\n", "k", "‖r‖")
-  kdisplay(iter, verbose) && @printf("%5d  %8.2e\n", iter, rNorm)
+  (verbose > 0) && @printf(iostream, "%5s  %8s\n", "k", "‖r‖")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e\n", iter, rNorm)
 
   status = "unknown"
   solved = rNorm ≤ ɛ_c
@@ -181,7 +181,7 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
     rNorm = sqrt(γ_next)
     history && push!(rNorms, rNorm)
     iter = iter + 1
-    kdisplay(iter, verbose) && @printf("%5d  %8.2e\n", iter, rNorm)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e\n", iter, rNorm)
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
@@ -193,7 +193,7 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
     inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
     tired = iter ≥ itmax
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   tired               && (status = "maximum number of iterations exceeded")
   inconsistent        && (status = "system probably inconsistent")

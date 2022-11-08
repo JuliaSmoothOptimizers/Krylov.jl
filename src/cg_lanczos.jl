@@ -17,7 +17,7 @@ export cg_lanczos, cg_lanczos!
     (x, stats) = cg_lanczos(A, b::AbstractVector{FC};
                             M=I, atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                             check_curvature::Bool=false, verbose::Int=0, history::Bool=false,
-                            ldiv::Bool=false, callback=solver->false)
+                            ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -89,12 +89,12 @@ end
 function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{FC};
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                      check_curvature :: Bool=false, verbose :: Int=0, history :: Bool=false,
-                     ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                     ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == n || error("Inconsistent problem size")
-  (verbose > 0) && @printf("CG Lanczos: system of %d equations in %d variables\n", n, n)
+  (verbose > 0) && @printf(iostream, "CG Lanczos: system of %d equations in %d variables\n", n, n)
 
   # Tests M = Iₙ
   MisI = (M === I)
@@ -153,8 +153,8 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
 
   # Define stopping tolerance.
   ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+  (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
 
   indefinite = false
   solved = rNorm ≤ ε
@@ -197,7 +197,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
     rNorm = abs(σ)          # ‖rₖ₊₁‖_M = |σₖ₊₁| because rₖ₊₁ = σₖ₊₁ * vₖ₊₁ and ‖vₖ₊₁‖_M = 1
     history && push!(rNorms, rNorm)
     iter = iter + 1
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
@@ -208,7 +208,7 @@ function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{F
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   tired                          && (status = "maximum number of iterations exceeded")
   (check_curvature & indefinite) && (status = "negative curvature")

@@ -19,7 +19,7 @@ export cr, cr!
                     M=I, atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T),
                     itmax::Int=0, radius::T=zero(T), verbose::Int=0,
                     linesearch::Bool=false, history::Bool=false,
-                    ldiv::Bool=false, callback=solver->false)
+                    ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -95,14 +95,14 @@ end
 function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
              radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false,
-             ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+             ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == n || error("Inconsistent problem size")
-  (verbose > 0) && @printf("CR: system of %d equations in %d variables\n", n, n)
+  (verbose > 0) && @printf(iostream, "CR: system of %d equations in %d variables\n", n, n)
 
   # Tests M = Iₙ
   MisI = (M === I)
@@ -160,8 +160,8 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   ArNorm = @knrm2(n, Ar) # ‖Ar‖
   history && push!(ArNorms, ArNorm)
   ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s %8s %8s %8s\n", "k", "‖x‖", "‖r‖", "quad")
-  kdisplay(iter, verbose) && @printf("    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
+  (verbose > 0) && @printf(iostream, "%5s %8s %8s %8s\n", "k", "‖x‖", "‖r‖", "quad")
+  kdisplay(iter, verbose) && @printf(iostream, "    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
 
   descent = pr > 0 # pᴴr > 0 means p is a descent direction
   solved = rNorm ≤ ε
@@ -175,7 +175,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     if linesearch
       if (pAp ≤ γ * pNorm²) || (ρ ≤ γ * rNorm²)
         npcurv = true
-        (verbose > 0) && @printf("nonpositive curvature detected: pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
+        (verbose > 0) && @printf(iostream, "nonpositive curvature detected: pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
         stats.solved = solved
         stats.inconsistent = false
         stats.status = "nonpositive curvature"
@@ -187,30 +187,30 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     MisI || mulorldiv!(Mq, M, q, ldiv)
 
     if radius > 0
-      (verbose > 0) && @printf("radius = %8.1e > 0 and ‖x‖ = %8.1e\n", radius, xNorm)
+      (verbose > 0) && @printf(iostream, "radius = %8.1e > 0 and ‖x‖ = %8.1e\n", radius, xNorm)
       # find t1 > 0 and t2 < 0 such that ‖x + ti * p‖² = radius²  (i = 1, 2)
       xNorm² = xNorm * xNorm
       t = to_boundary(n, x, p, radius; flip = false, xNorm2 = xNorm², dNorm2 = pNorm²)
       t1 = maximum(t) # > 0
       t2 = minimum(t) # < 0
       tr = maximum(to_boundary(n, x, r, radius; flip = false, xNorm2 = xNorm², dNorm2 = rNorm²))
-      (verbose > 0) && @printf("t1 = %8.1e, t2 = %8.1e and tr = %8.1e\n", t1, t2, tr)
+      (verbose > 0) && @printf(iostream, "t1 = %8.1e, t2 = %8.1e and tr = %8.1e\n", t1, t2, tr)
 
       if abspAp ≤ γ * pNorm * @knrm2(n, q) # pᴴAp ≃ 0
         npcurv = true # nonpositive curvature
-        (verbose > 0) && @printf("pᴴAp = %8.1e ≃ 0\n", pAp)
+        (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e ≃ 0\n", pAp)
         if abspr ≤ γ * pNorm * rNorm # pᴴr ≃ 0
-          (verbose > 0) && @printf("pᴴr = %8.1e ≃ 0, redefining p := r\n", pr)
+          (verbose > 0) && @printf(iostream, "pᴴr = %8.1e ≃ 0, redefining p := r\n", pr)
           p = r # - ∇q(x)
           q = Ar
           # q(x + αr) = q(x) - α ‖r‖² + ½ α² rᴴAr
           # 1) if rᴴAr > 0, the quadratic decreases from α = 0 to α = ‖r‖² / rᴴAr
           # 2) if rᴴAr ≤ 0, the quadratic decreases to -∞ in the direction r
           if ρ > 0 # case 1
-            (verbose > 0) && @printf("quadratic is convex in direction r, curv = %8.1e\n", ρ)
+            (verbose > 0) && @printf(iostream, "quadratic is convex in direction r, curv = %8.1e\n", ρ)
             α = min(tr, rNorm² / ρ)
           else # case 2
-            (verbose > 0) && @printf("r is a direction of nonpositive curvature: %8.1e\n", ρ)
+            (verbose > 0) && @printf(iostream, "r is a direction of nonpositive curvature: %8.1e\n", ρ)
             α = tr
           end
         else
@@ -221,18 +221,18 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
           ρ > 0 && (tr = min(tr, rNorm² / ρ))
           Δ = -α * pr + tr * rNorm² - (tr)^2 * ρ / 2 # as pᴴAp = 0
           if Δ > 0 # direction r engenders a better decrease
-            (verbose > 0) && @printf("direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
-            (verbose > 0) && @printf("redefining p := r\n")
+            (verbose > 0) && @printf(iostream, "direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
+            (verbose > 0) && @printf(iostream, "redefining p := r\n")
             p = r
             q = Ar
             α = tr
           else
-            (verbose > 0) && @printf("direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
+            (verbose > 0) && @printf(iostream, "direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
           end
         end
 
       elseif pAp > 0 && ρ > 0 # no negative curvature
-        (verbose > 0) && @printf("positive curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
+        (verbose > 0) && @printf(iostream, "positive curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
         α = ρ / @kdotr(n, q, Mq)
         if α ≥ t1
           α = t1
@@ -241,49 +241,49 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
       elseif pAp > 0 && ρ < 0
         npcurv = true
-        (verbose > 0) && @printf("pᴴAp = %8.1e > 0 and rᴴAr = %8.1e < 0\n", pAp, ρ)
+        (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e > 0 and rᴴAr = %8.1e < 0\n", pAp, ρ)
         # q_p is minimal for α_p = rᴴp / pᴴAp
         α = descent ?  min(t1, pr / pAp) : max(t2, pr / pAp)
         Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
         if Δ > 0
-          (verbose > 0) && @printf("direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
-          (verbose > 0) && @printf("redefining p := r\n")
+          (verbose > 0) && @printf(iostream, "direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
+          (verbose > 0) && @printf(iostream, "redefining p := r\n")
           p = r
           q = Ar
           α = tr
         else
-          (verbose > 0) && @printf("direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
+          (verbose > 0) && @printf(iostream, "direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
         end
 
       elseif pAp < 0 && ρ > 0
         npcurv = true
-        (verbose > 0) && @printf("pᴴAp = %8.1e < 0 and rᴴAr = %8.1e > 0\n", pAp, ρ)
+        (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e < 0 and rᴴAr = %8.1e > 0\n", pAp, ρ)
         α = descent ? t1 : t2
         tr = min(tr, rNorm² / ρ)
         Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
         if Δ > 0
-          (verbose > 0) && @printf("direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
-          (verbose > 0) && @printf("redefining p := r\n")
+          (verbose > 0) && @printf(iostream, "direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
+          (verbose > 0) && @printf(iostream, "redefining p := r\n")
           p = r
           q = Ar
           α = tr
         else
-          (verbose > 0) && @printf("direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
+          (verbose > 0) && @printf(iostream, "direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
         end
 
       elseif pAp < 0 && ρ < 0
         npcurv = true
-        (verbose > 0) && @printf("negative curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
+        (verbose > 0) && @printf(iostream, "negative curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
         α = descent ? t1 : t2
         Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
         if Δ > 0
-          (verbose > 0) && @printf("direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
-          (verbose > 0) && @printf("redefining p := r\n")
+          (verbose > 0) && @printf(iostream, "direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
+          (verbose > 0) && @printf(iostream, "redefining p := r\n")
           p = r
           q = Ar
           α = tr
         else
-          (verbose > 0) && @printf("direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
+          (verbose > 0) && @printf(iostream, "direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
         end
       end
 
@@ -311,7 +311,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     iter = iter + 1
     if kdisplay(iter, verbose)
       m = m - α * pr + α^2 * pAp / 2
-      @printf("    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
+      @printf(iostream, "    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
     end
 
     # Stopping conditions that do not depend on user input.
@@ -351,7 +351,7 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     descent = pr > 0
 
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   tired               && (status = "maximum number of iterations exceeded")
   on_boundary         && (status = "on trust-region boundary")

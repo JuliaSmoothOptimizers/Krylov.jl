@@ -22,7 +22,7 @@ export usymqr, usymqr!
 """
     (x, stats) = usymqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                         atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                        verbose::Int=0, history::Bool=false, callback=solver->false)
+                        verbose::Int=0, history::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -100,12 +100,12 @@ end
 function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                  atol :: T=√eps(T), rtol :: T=√eps(T),
                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-                 callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  (verbose > 0) && @printf("USYMQR: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf(iostream, "USYMQR: system of %d equations in %d variables\n", m, n)
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
@@ -146,8 +146,8 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
 
   ε = atol + rtol * rNorm
   κ = zero(T)
-  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Aᴴrₖ₋₁‖")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Aᴴrₖ₋₁‖")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
 
   βₖ = @knrm2(m, r₀)           # β₁ = ‖v₁‖ = ‖r₀‖
   γₖ = @knrm2(n, c)            # γ₁ = ‖u₁‖ = ‖c‖
@@ -304,9 +304,9 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     solved = rNorm ≤ ε
     inconsistent = !solved && AᴴrNorm ≤ κ
     tired = iter ≥ itmax
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm, AᴴrNorm)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e\n", iter, rNorm, AᴴrNorm)
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
   tired               && (status = "maximum number of iterations exceeded")
   solved              && (status = "solution good enough given atol and rtol")
   user_requested_exit && (status = "user-requested exit")
