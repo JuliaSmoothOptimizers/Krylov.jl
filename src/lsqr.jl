@@ -33,7 +33,7 @@ export lsqr, lsqr!
                       etol::T=√eps(T), window::Int=5,
                       itmax::Int=0, conlim::T=1/√eps(T),
                       radius::T=zero(T), verbose::Int=0, history::Bool=false,
-                      ldiv::Bool=false, callback=solver->false)
+                      ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -120,11 +120,11 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                atol :: T=zero(T), rtol :: T=zero(T),
                etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
                radius :: T=zero(T), verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("LSQR: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf(iostream, "LSQR: system of %d equations in %d variables\n", m, n)
 
   # Check sqd and λ parameters
   sqd && (λ ≠ 0) && error("sqd cannot be set to true if λ ≠ 0 !")
@@ -194,8 +194,8 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   iter = 0
   itmax == 0 && (itmax = m + n)
 
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %7s\n", "k", "α", "β", "‖r‖", "‖Aᴴr‖", "compat", "backwrd", "‖A‖", "κ(A)")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, β₁, α, β₁, α, 0, 1, Anorm, Acond)
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %7s\n", "k", "α", "β", "‖r‖", "‖Aᴴr‖", "compat", "backwrd", "‖A‖", "κ(A)")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, β₁, α, β₁, α, 0, 1, Anorm, Acond)
 
   rNorm = β₁
   r1Norm = rNorm
@@ -335,7 +335,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     t1    = test1 / (one(T) + Anorm * xNorm / β₁)
     rNormtol = btol + axtol * Anorm * xNorm / β₁
 
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, α, β, rNorm, ArNorm, test1, test2, Anorm, Acond)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, α, β, rNorm, ArNorm, test1, test2, Anorm, Acond)
 
     # Stopping conditions that do not depend on user input.
     # This is to guard against tolerances that are unreasonably small.
@@ -356,7 +356,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     zero_resid = zero_resid_mach | zero_resid_lim
     solved = solved_mach | solved_lim | solved_opt | zero_resid | fwd_err | on_boundary
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   tired               && (status = "maximum number of iterations exceeded")
   ill_cond_mach       && (status = "condition number seems too large for this machine")

@@ -15,7 +15,7 @@ export fom, fom!
                      memory::Int=20, M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                      reorthogonalization::Bool=false, itmax::Int=0,
                      restart::Bool=false, verbose::Int=0, history::Bool=false,
-                     ldiv::Bool=false, callback=solver->false)
+                     ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -93,12 +93,12 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
               reorthogonalization :: Bool=false, itmax :: Int=0,
               restart :: Bool=false, verbose :: Int=0, history :: Bool=false,
-              ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+              ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("FOM: system of size %d\n", n)
+  (verbose > 0) && @printf(iostream, "FOM: system of size %d\n", n)
 
   # Check M = Iₙ and N = Iₙ
   MisI = (M === I)
@@ -156,8 +156,8 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   itmax == 0 && (itmax = 2*n)
   inner_itmax = itmax
 
-  (verbose > 0) && @printf("%5s  %5s  %7s  %7s\n", "pass", "k", "‖rₖ‖", "hₖ₊₁.ₖ")
-  kdisplay(iter, verbose) && @printf("%5d  %5d  %7.1e  %7s\n", npass, iter, rNorm, "✗ ✗ ✗ ✗")
+  (verbose > 0) && @printf(iostream, "%5s  %5s  %7s  %7s\n", "pass", "k", "‖rₖ‖", "hₖ₊₁.ₖ")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7s\n", npass, iter, rNorm, "✗ ✗ ✗ ✗")
 
   # Tolerance for breakdown detection.
   btol = eps(T)^(3/4)
@@ -265,7 +265,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
       breakdown = Hbis ≤ btol
       solved = resid_decrease_lim || resid_decrease_mach
       inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
-      kdisplay(iter+inner_iter, verbose) && @printf("%5d  %5d  %7.1e  %7.1e\n", npass, iter+inner_iter, rNorm, Hbis)
+      kdisplay(iter+inner_iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7.1e\n", npass, iter+inner_iter, rNorm, Hbis)
 
       # Compute vₖ₊₁.
       if !(solved || inner_tired || breakdown)
@@ -303,7 +303,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     iter = iter + inner_iter
     tired = iter ≥ itmax
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   tired               && (status = "maximum number of iterations exceeded")
   breakdown           && (status = "inconsistent linear system")

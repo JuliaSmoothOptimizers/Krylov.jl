@@ -23,7 +23,7 @@ export usymlq, usymlq!
     (x, stats) = usymlq(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                         atol::T=√eps(T), rtol::T=√eps(T),
                         transfer_to_usymcg::Bool=true, itmax::Int=0,
-                        verbose::Int=0, history::Bool=false, callback=solver->false)
+                        verbose::Int=0, history::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -103,12 +103,12 @@ end
 function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                  atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
                  itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-                 callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  (verbose > 0) && @printf("USYMLQ: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf(iostream, "USYMLQ: system of %d equations in %d variables\n", m, n)
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
@@ -148,8 +148,8 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   itmax == 0 && (itmax = m+n)
 
   ε = atol + rtol * bNorm
-  (verbose > 0) && @printf("%5s  %7s\n", "k", "‖rₖ‖")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, bNorm)
+  (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, bNorm)
 
   βₖ = @knrm2(m, r₀)          # β₁ = ‖v₁‖ = ‖r₀‖
   γₖ = @knrm2(n, c)           # γ₁ = ‖u₁‖ = ‖c‖
@@ -307,9 +307,9 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     solved_lq = rNorm_lq ≤ ε
     solved_cg = transfer_to_usymcg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ ε)
     tired = iter ≥ itmax
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e\n", iter, rNorm_lq)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm_lq)
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   # Compute USYMCG point
   # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ

@@ -21,7 +21,7 @@ export cg, cg!
                     M=I, atol::T=√eps(T), rtol::T=√eps(T),
                     itmax::Int=0, radius::T=zero(T), linesearch::Bool=false,
                     verbose::Int=0, history::Bool=false,
-                    ldiv::Bool=false, callback=solver->false)
+                    ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -95,14 +95,14 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
              itmax :: Int=0, radius :: T=zero(T), linesearch :: Bool=false,
              verbose :: Int=0, history :: Bool=false,
-             ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+             ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == n || error("Inconsistent problem size")
-  (verbose > 0) && @printf("CG: system of %d equations in %d variables\n", n, n)
+  (verbose > 0) && @printf(iostream, "CG: system of %d equations in %d variables\n", n, n)
 
   # Tests M = Iₙ
   MisI = (M === I)
@@ -145,8 +145,8 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
   pAp = zero(T)
   pNorm² = γ
   ε = atol + rtol * rNorm
-  (verbose > 0) && @printf("%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  ", iter, rNorm)
 
   solved = rNorm ≤ ε
   tired = iter ≥ itmax
@@ -177,7 +177,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Compute step size to boundary if applicable.
     σ = radius > 0 ? maximum(to_boundary(n, x, p, radius, dNorm2=pNorm²)) : α
 
-    kdisplay(iter, verbose) && @printf("%8.1e  %8.1e  %8.1e\n", pAp, α, σ)
+    kdisplay(iter, verbose) && @printf(iostream, "%8.1e  %8.1e  %8.1e\n", pAp, α, σ)
 
     # Move along p from x to the boundary if either
     # the next step leads outside the trust region or
@@ -212,9 +212,9 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
     iter = iter + 1
     tired = iter ≥ itmax
     user_requested_exit = callback(solver) :: Bool
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  ", iter, rNorm)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  ", iter, rNorm)
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   solved && on_boundary && (status = "on trust-region boundary")
   solved && linesearch && (pAp ≤ 0) && (status = "nonpositive curvature detected")

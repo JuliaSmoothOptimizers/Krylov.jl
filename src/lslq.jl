@@ -29,7 +29,7 @@ export lslq, lslq!
                       window::Int=5, utol::T=√eps(T), itmax::Int=0,
                       σ::T=zero(T), transfer_to_lsqr::Bool=false, 
                       conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false,
-                      ldiv::Bool=false, callback=solver->false)
+                      ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -160,11 +160,11 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                utol :: T=√eps(T), itmax :: Int=0, σ :: T=zero(T),
                transfer_to_lsqr :: Bool=false, conlim :: T=1/√eps(T),
                verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("LSLQ: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf(iostream, "LSLQ: system of %d equations in %d variables\n", m, n)
 
   # Check sqd and λ parameters
   sqd && (λ ≠ 0) && error("sqd cannot be set to true if λ ≠ 0 !")
@@ -276,8 +276,8 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   iter = 0
   itmax == 0 && (itmax = m + n)
 
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "α", "cos", "sin", "‖A‖²", "κ(A)", "‖xL‖")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm², Acond, xlqNorm)
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "α", "cos", "sin", "‖A‖²", "κ(A)", "‖xL‖")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm², Acond, xlqNorm)
 
   status = "unknown"
   solved = solved_mach = solved_lim = (rNorm ≤ atol)
@@ -441,9 +441,9 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     solved = solved_mach || solved_lim || zero_resid || fwd_err_lbnd || fwd_err_ubnd
 
     iter = iter + 1
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   if transfer_to_lsqr  # compute LSQR point
     @kaxpy!(n, ζ̄ , w̄, x)

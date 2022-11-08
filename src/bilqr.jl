@@ -16,7 +16,7 @@ export bilqr, bilqr!
     (x, y, stats) = bilqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                           atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
                           itmax::Int=0, verbose::Int=0, history::Bool=false,
-                          callback=solver->false)
+                          callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -95,13 +95,13 @@ end
 function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-                callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("Systems must be square")
   length(b) == m || error("Inconsistent problem size")
   length(c) == n || error("Inconsistent problem size")
-  (verbose > 0) && @printf("BILQR: systems of size %d\n", n)
+  (verbose > 0) && @printf(iostream, "BILQR: systems of size %d\n", n)
 
   # Check type consistency
   eltype(A) == FC || error("eltype(A) ≠ $FC")
@@ -143,8 +143,8 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   history && push!(sNorms, cNorm)
   εL = atol + rtol * bNorm
   εQ = atol + rtol * cNorm
-  (verbose > 0) && @printf("%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
 
   # Initialize the Lanczos biorthogonalization process.
   cᴴb = @kdot(n, s₀, r₀)  # ⟨s₀,r₀⟩ = ⟨c - Aᴴy₀,b - Ax₀⟩
@@ -409,11 +409,11 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     tired = iter ≥ itmax
     breakdown = !solved_lq && !solved_cg && (pᴴq == 0)
 
-    kdisplay(iter, verbose) &&  solved_primal && !solved_dual && @printf("%5d  %7s  %7.1e\n", iter, "", sNorm)
-    kdisplay(iter, verbose) && !solved_primal &&  solved_dual && @printf("%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
-    kdisplay(iter, verbose) && !solved_primal && !solved_dual && @printf("%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
+    kdisplay(iter, verbose) &&  solved_primal && !solved_dual && @printf(iostream, "%5d  %7s  %7.1e\n", iter, "", sNorm)
+    kdisplay(iter, verbose) && !solved_primal &&  solved_dual && @printf(iostream, "%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
+    kdisplay(iter, verbose) && !solved_primal && !solved_dual && @printf(iostream, "%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   # Compute BICG point
   # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ

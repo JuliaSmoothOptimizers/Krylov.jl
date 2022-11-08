@@ -31,7 +31,7 @@ export craigmr, craigmr!
     (x, y, stats) = craigmr(A, b::AbstractVector{FC};
                             M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                             rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
-                            ldiv::Bool=false, callback=solver->false)
+                            ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -121,11 +121,11 @@ function craigmr! end
 function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                   M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                   rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-                  ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                  ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("CRAIGMR: system of %d equations in %d variables\n", m, n)
+  (verbose > 0) && @printf(iostream, "CRAIGMR: system of %d equations in %d variables\n", m, n)
 
   # Check sqd and λ parameters
   sqd && (λ ≠ 0) && error("sqd cannot be set to true if λ ≠ 0 !")
@@ -182,8 +182,8 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   iter = 0
   itmax == 0 && (itmax = m + n)
 
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "α", "cos", "sin", "‖A‖²")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", iter, β, α, β, α, 0, 1, Anorm²)
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "α", "cos", "sin", "‖A‖²")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", iter, β, α, β, α, 0, 1, Anorm²)
 
   # Aᴴb = 0 so x = 0 is a minimum least-squares solution
   if α == 0
@@ -308,7 +308,7 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     ArNorm = α * β * abs(ζ/ρ)
     history && push!(ArNorms, ArNorm)
 
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm²)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm²)
 
     if λ > 0
       (cdₖ, sdₖ, λₖ₊₁) = sym_givens(λ, λₐᵤₓ)
@@ -331,7 +331,7 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
     tired  = iter ≥ itmax
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
   
   tired               && (status = "maximum number of iterations exceeded")
   solved              && (status = "found approximate minimum-norm solution")

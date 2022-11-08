@@ -21,7 +21,7 @@ export minres_qlp, minres_qlp!
                             M=I, atol::T=√eps(T), rtol::T=√eps(T),
                             ctol::T=√eps(T), λ::T=zero(T), itmax::Int=0,
                             verbose::Int=0, history::Bool=false,
-                            ldiv::Bool=false, callback=solver->false)
+                            ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -95,12 +95,12 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
                      M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                      ctol :: T=√eps(T), λ ::T=zero(T), itmax :: Int=0,
                      verbose :: Int=0, history :: Bool=false,
-                     ldiv :: Bool=false, callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                     ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf("MINRES-QLP: system of size %d\n", n)
+  (verbose > 0) && @printf(iostream, "MINRES-QLP: system of size %d\n", n)
 
   # Tests M = Iₙ
   MisI = (M === I)
@@ -159,8 +159,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
 
   ε = atol + rtol * rNorm
   κ = zero(T)
-  (verbose > 0) && @printf("%5s  %7s  %7s  %7s  %7s  %8s  %7s  %8s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁", "Rₖ.ₖ", "Lₖ.ₖ", "‖A‖", "κ(A)", "backward")
-  kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %7.1e  %8s\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", ANorm, Acond, " ✗ ✗ ✗ ✗")
+  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %8s  %7s  %8s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁", "Rₖ.ₖ", "Lₖ.ₖ", "‖A‖", "κ(A)", "backward")
+  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %7.1e  %8s\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", ANorm, Acond, " ✗ ✗ ✗ ✗")
 
   # Set up workspace.
   M⁻¹vₖ₋₁ .= zero(FC)
@@ -417,9 +417,9 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     μbarₖ₋₁ = μbarₖ
     ζbarₖ = ζbarₖ₊₁
     βₖ = βₖ₊₁
-    kdisplay(iter, verbose) && @printf("%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %7.1e  %8.1e\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ, ANorm, Acond, backward)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %7.1e  %8.1e\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ, ANorm, Acond, backward)
   end
-  (verbose > 0) && @printf("\n")
+  (verbose > 0) && @printf(iostream, "\n")
 
   # Finalize the update of x
   if iter ≥ 2
