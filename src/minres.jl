@@ -30,7 +30,7 @@ export minres, minres!
                         window::Int=5, itmax::Int=0,
                         conlim::T=1/√eps(T), verbose::Int=0,
                         history::Bool=false, ldiv::Bool=false,
-                        callback=solver->false, iostream::IO=stdout)
+                        callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.

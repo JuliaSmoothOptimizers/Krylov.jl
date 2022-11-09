@@ -14,7 +14,8 @@ export cgs, cgs!
     (x, stats) = cgs(A, b::AbstractVector{FC};
                      c::AbstractVector{FC}=b, M=I, N=I, atol::T=√eps(T),
                      rtol::T=√eps(T), itmax::Int=0, verbose::Int=0,
-                     history::Bool=false, ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
+                     history::Bool=false, ldiv::Bool=false,
+                     callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -95,10 +96,11 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: Abs
   return solver
 end
 
-function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
-              M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-              itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-              ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC};
+              c :: AbstractVector{FC}=b, M=I, N=I, atol :: T=√eps(T),
+              rtol :: T=√eps(T), itmax :: Int=0, verbose :: Int=0,
+              history :: Bool=false, ldiv :: Bool=false,
+              callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

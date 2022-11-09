@@ -38,7 +38,7 @@ export craig, craig!
                           M=I, N=I, sqd::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                           btol::T=√eps(T), rtol::T=√eps(T), conlim::T=1/√eps(T), itmax::Int=0,
                           verbose::Int=0, transfer_to_lsqr::Bool=false, history::Bool=false,
-                          ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
+                          ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.

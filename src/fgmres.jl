@@ -15,7 +15,7 @@ export fgmres, fgmres!
                         memory::Int=20, M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
                         reorthogonalization::Bool=false, itmax::Int=0,
                         restart::Bool=false, verbose::Int=0, history::Bool=false,
-                        ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
+                        ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.

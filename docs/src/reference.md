@@ -6,6 +6,7 @@
 ```
 
 ```@docs
+Krylov.kstdout
 Krylov.FloatOrComplex
 Krylov.niterations
 Krylov.Aprod

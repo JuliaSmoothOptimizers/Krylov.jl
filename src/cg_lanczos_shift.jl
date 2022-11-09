@@ -19,7 +19,8 @@ export cg_lanczos_shift, cg_lanczos_shift!
                                   M=I, atol::T=√eps(T), rtol::T=√eps(T),
                                   itmax::Int=0, check_curvature::Bool=false,
                                   verbose::Int=0, history::Bool=false,
-                                  ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
+                                  ldiv::Bool=false, callback=solver->false,
+                                  iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -75,7 +76,8 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
                            M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                            itmax :: Int=0, check_curvature :: Bool=false,
                            verbose :: Int=0, history :: Bool=false,
-                           ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                           ldiv :: Bool=false, callback = solver -> false,
+                           iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

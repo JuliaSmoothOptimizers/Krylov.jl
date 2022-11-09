@@ -17,7 +17,8 @@ export gpmr, gpmr!
                          atol::T=√eps(T), rtol::T=√eps(T), gsp::Bool=false,
                          reorthogonalization::Bool=false, itmax::Int=0,
                          λ::FC=one(FC), μ::FC=one(FC), verbose::Int=0,
-                         history::Bool=false, ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
+                         history::Bool=false, ldiv::Bool=false,
+                         callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -126,8 +127,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
                C=I, D=I, E=I, F=I, atol :: T=√eps(T), rtol :: T=√eps(T),
                gsp :: Bool=false, reorthogonalization :: Bool=false,
                itmax :: Int=0, λ :: FC=one(FC), μ :: FC=one(FC),
-               verbose :: Int=0, history::Bool=false,
-               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               verbose :: Int=0, history::Bool=false, ldiv :: Bool=false,
+               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   s, t = size(B)

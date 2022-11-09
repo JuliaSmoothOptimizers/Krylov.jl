@@ -1,3 +1,5 @@
+export kstdout
+
 "Default I/O stream for all Krylov methods."
 const kstdout = stdout
 

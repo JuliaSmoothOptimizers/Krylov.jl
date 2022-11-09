@@ -29,7 +29,7 @@ export lslq, lslq!
                       window::Int=5, utol::T=√eps(T), itmax::Int=0,
                       σ::T=zero(T), transfer_to_lsqr::Bool=false, 
                       conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false,
-                      ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
+                      ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.

@@ -23,7 +23,8 @@ export usymlq, usymlq!
     (x, stats) = usymlq(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                         atol::T=√eps(T), rtol::T=√eps(T),
                         transfer_to_usymcg::Bool=true, itmax::Int=0,
-                        verbose::Int=0, history::Bool=false, callback=solver->false, iostream::IO=stdout)
+                        verbose::Int=0, history::Bool=false,
+                        callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -101,8 +102,9 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
 end
 
 function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
-                 atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_usymcg :: Bool=true,
-                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+                 atol :: T=√eps(T), rtol :: T=√eps(T),
+                 transfer_to_usymcg :: Bool=true, itmax :: Int=0,
+                 verbose :: Int=0, history :: Bool=false,
                  callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
