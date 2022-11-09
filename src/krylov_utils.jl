@@ -1,3 +1,6 @@
+"Default I/O stream for all Krylov methods."
+const kstdout = stdout
+
 """
     FloatOrComplex{T}
 Union type of `T` and `Complex{T}` where T is an `AbstractFloat`.
