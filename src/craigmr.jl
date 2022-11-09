@@ -31,7 +31,7 @@ export craigmr, craigmr!
     (x, y, stats) = craigmr(A, b::AbstractVector{FC};
                             M=I, N=I, sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                             rtol::T=√eps(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
-                            ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
+                            ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.

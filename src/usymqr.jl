@@ -22,7 +22,8 @@ export usymqr, usymqr!
 """
     (x, stats) = usymqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                         atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                        verbose::Int=0, history::Bool=false, callback=solver->false, iostream::IO=stdout)
+                        verbose::Int=0, history::Bool=false,
+                        callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -98,8 +99,8 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
 end
 
 function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
-                 atol :: T=√eps(T), rtol :: T=√eps(T),
-                 itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+                 atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+                 verbose :: Int=0, history :: Bool=false,
                  callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)

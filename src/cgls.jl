@@ -33,7 +33,7 @@ export cgls, cgls!
     (x, stats) = cgls(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                       radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      ldiv::Bool=false, callback=solver->false, iostream::IO=stdout)
+                      ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
