@@ -1,7 +1,7 @@
 export kstdout
 
 "Default I/O stream for all Krylov methods."
-const kstdout = stdout
+const kstdout = Core.stdout
 
 """
     FloatOrComplex{T}
