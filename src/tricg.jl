@@ -117,7 +117,7 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
                 spd :: Bool=false, snd :: Bool=false, flip :: Bool=false,
                 τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0,
                 verbose :: Int=0, history :: Bool=false,
-                ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

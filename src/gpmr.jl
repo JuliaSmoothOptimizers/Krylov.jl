@@ -127,7 +127,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
                gsp :: Bool=false, reorthogonalization :: Bool=false,
                itmax :: Int=0, λ :: FC=one(FC), μ :: FC=one(FC),
                verbose :: Int=0, history::Bool=false,
-               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   s, t = size(B)

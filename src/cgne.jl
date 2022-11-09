@@ -100,7 +100,7 @@ function cgne! end
 function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
                N=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
                itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

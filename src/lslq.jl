@@ -160,7 +160,7 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                utol :: T=√eps(T), itmax :: Int=0, σ :: T=zero(T),
                transfer_to_lsqr :: Bool=false, conlim :: T=1/√eps(T),
                verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=stdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
