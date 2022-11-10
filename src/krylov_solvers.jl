@@ -1921,7 +1921,8 @@ function show(io :: IO, solver :: KrylovSolver{T,FC,S}; show_stats :: Bool=true)
   storage = format_bytes(nbytes)
   architecture = S <: Vector ? "CPU" : "GPU"
   l1 = max(length(name_solver), length(string(FC)) + 11)  # length("Precision: ") = 11
-  l2 = max(ndigits(solver.m) + 7, length(architecture) + 14, length(string(S)) + 8)  # length("Vector{}") = 8, # length("Architecture: ") = 14 and length("nrows: ") = 7
+  nchar = workspace <: Union{CgLanczosShiftSolver, FomSolver, DiomSolver, DqgmresSolver, GmresSolver, FgmresSolver, GpmrSolver} ? 8 : 0  # length("Vector{}") = 8
+  l2 = max(ndigits(solver.m) + 7, length(architecture) + 14, length(string(S)) + nchar)  # length("nrows: ") = 7 and length("Architecture: ") = 14
   l2 = max(l2, length(name_stats) + 2 + length(string(T)))  # length("{}") = 2
   l3 = max(ndigits(solver.n) + 7, length(storage) + 9)  # length("Storage: ") = 9 and length("cols: ") = 7
   format = Printf.Format("│%$(l1)s│%$(l2)s│%$(l3)s│\n")
