@@ -158,12 +158,8 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
   itmax == 0 && (itmax = 2 * n)
 
   # Build format strings for printing.
-  if kdisplay(iter, verbose)
-    fmt = "%5d" * repeat("  %8.1e", nshifts) * "\n"
-    # precompile printf for our particular format
-    local_printf(data...) = Core.eval(Main, :(@printf($fmt, $(data)...)))
-    local_printf(iter, rNorms...)
-  end
+  (verbose > 0) && (fmt = Printf.Format("%5d" * repeat("  %8.1e", nshifts) * "\n"))
+  kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms...)
 
   solved = sum(not_cv) == 0
   tired = iter ≥ itmax
@@ -226,7 +222,7 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
       not_cv[i] = check_curvature ? !(converged[i] || indefinite[i]) : !converged[i]
     end
     iter = iter + 1
-    kdisplay(iter, verbose) && local_printf(iter, rNorms...)
+    kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms...)
 
     user_requested_exit = callback(solver) :: Bool
     solved = sum(not_cv) == 0
