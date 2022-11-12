@@ -179,7 +179,6 @@ function gauss_newton(F, JF, x₀; itmax = 200, tol = 1e-8)
     iter = 0
     S = typeof(x)                 # precision and architecture
     solver = LsmrSolver(m, n, S)  # structure that contains the workspace of LSMR
-    Δx = solver.x                 # pointer to subproblem solution
     solved = tired = false
     while !(solved || tired)
         Jx = JF(x)              # Compute J(xₖ)
