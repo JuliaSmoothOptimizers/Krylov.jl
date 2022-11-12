@@ -183,7 +183,7 @@ function gauss_newton(F, JF, x₀; itmax = 200, tol = 1e-8)
     while !(solved || tired)
         Jx = JF(x)              # Compute J(xₖ)
         lsmr!(solver, Jx, -Fx)  # Minimize ‖J(xₖ)Δx + F(xₖ)‖
-        x .+= Δx                # Update xₖ₊₁ = xₖ + Δx
+        x .+= solver.x          # Update xₖ₊₁ = xₖ + Δx
         Fx_old = Fx             # F(xₖ)
         Fx = F(x)               # F(xₖ₊₁)
         iter += 1
