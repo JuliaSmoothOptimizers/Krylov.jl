@@ -138,7 +138,6 @@ function newton(∇f, ∇²f, x₀; itmax = 200, tol = sqrt(eps(eltype(x₀))))
     iter = 0
     S = typeof(x)               # precision and architecture
     solver = CgSolver(n, n, S)  # structure that contains the workspace of CG
-    Δx = solver.x               # pointer to subproblem solution
     solved = tired = false
     while !(solved || tired)
         Hx = ∇²f(x)           # Compute ∇²f(xₖ)
