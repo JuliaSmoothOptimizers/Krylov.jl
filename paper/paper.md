@@ -142,7 +142,7 @@ function newton(∇f, ∇²f, x₀; itmax = 200, tol = sqrt(eps(eltype(x₀))))
     while !(solved || tired)
         Hx = ∇²f(x)           # Compute ∇²f(xₖ)
         cg!(solver, Hx, -gx)  # Solve ∇²f(xₖ)Δx = -∇f(xₖ)
-        x .+= Δx              # Update xₖ₊₁ = xₖ + Δx
+        x .+= solver.x        # Update xₖ₊₁ = xₖ + Δx
         gx = ∇f(x)            # ∇f(xₖ₊₁)
         iter += 1
         solved = norm(gx) ≤ tol
