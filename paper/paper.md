@@ -131,7 +131,7 @@ The system above can be solved with the conjugate gradient method. -->
 
 ```julia
 "The Newton method for convex optimization"
-function newton(∇f, ∇²f, x₀; itmax = 200, tol = sqrt(eps(eltype(x₀))))
+function newton(∇f, ∇²f, x₀::AbstractVector{T}; itmax = 200, tol = √eps(T)) where T
     n = length(x₀)
     x = copy(x₀)
     gx = ∇f(x)
