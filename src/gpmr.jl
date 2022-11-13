@@ -89,8 +89,7 @@ and `false` otherwise.
 * `F`:
 * `ldiv`:
 * `gsp`:
-* `λ`:
-* `μ`:
+* `λ` and `μ`:
 * `reorthogonalization`:
 * `atol`:
 * `rtol`:
