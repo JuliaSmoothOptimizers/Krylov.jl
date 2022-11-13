@@ -82,8 +82,7 @@ and `false` otherwise.
 * `snd`:
 * `flip`:
 * `sp`:
-* `τ`:
-* `ν`:
+* `τ` and `ν`:
 * `atol`:
 * `rtol`:
 * `itmax`:
