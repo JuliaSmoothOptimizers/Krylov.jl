@@ -13,11 +13,13 @@ export tricg, tricg!
 
 """
     (x, y, stats) = tricg(A, b::AbstractVector{FC}, c::AbstractVector{FC};
-                          M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
-                          spd::Bool=false, snd::Bool=false, flip::Bool=false,
-                          τ::T=one(T), ν::T=-one(T), itmax::Int=0,
+                          M=I, N=I, ldiv::Bool=false,
+                          spd::Bool=false, snd::Bool=false,
+                          flip::Bool=false, τ::T=one(T),
+                          ν::T=-one(T), atol::T=√eps(T),
+                          rtol::T=√eps(T), itmax::Int=0,
                           verbose::Int=0, history::Bool=false,
-                          ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
+                          callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -71,6 +73,24 @@ and `false` otherwise.
 * `x0`: a vector of length m that represents an initial guess of the solution x;
 * `y0`: a vector of length n that represents an initial guess of the solution y.
 
+#### Keyword arguments
+
+* `M`:
+* `N`:
+* `ldiv`:
+* `spd`:
+* `snd`:
+* `flip`:
+* `τ`:
+* `ν`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
+
 #### Output arguments
 
 * `x`: a dense vector of length m;
@@ -113,11 +133,13 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 end
 
 function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
-                M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-                spd :: Bool=false, snd :: Bool=false, flip :: Bool=false,
-                τ :: T=one(T), ν :: T=-one(T), itmax :: Int=0,
+                M=I, N=I, ldiv :: Bool=false,
+                spd :: Bool=false, snd :: Bool=false,
+                flip :: Bool=false, τ :: T=one(T),
+                ν :: T=-one(T), atol :: T=√eps(T),
+                rtol :: T=√eps(T), itmax :: Int=0,
                 verbose :: Int=0, history :: Bool=false,
-                ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

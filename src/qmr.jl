@@ -51,6 +51,17 @@ and `false` otherwise.
 
 * `x0`: a vector of length n that represents an initial guess of the solution x.
 
+#### Keyword arguments
+
+* `c`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
+
 #### Output arguments
 
 * `x`: a dense vector of length n;

@@ -16,10 +16,11 @@ export cr, cr!
 
 """
     (x, stats) = cr(A, b::AbstractVector{FC};
-                    M=I, atol::T=√eps(T), rtol::T=√eps(T), γ::T=√eps(T),
-                    itmax::Int=0, radius::T=zero(T), verbose::Int=0,
-                    linesearch::Bool=false, history::Bool=false,
-                    ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
+                    M=I, ldiv::Bool=false, radius::T=zero(T),
+                    linesearch::Bool=false, γ::T=√eps(T),
+                    atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                    verbose::Int=0, history::Bool=false,
+                    callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -50,6 +51,21 @@ and `false` otherwise.
 #### Optional argument
 
 * `x0`: a vector of length n that represents an initial guess of the solution x.
+
+#### Keyword arguments
+
+* `M`:
+* `ldiv`:
+* `radius`:
+* `linesearch`:
+* `γ`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
 
 #### Output arguments
 
@@ -93,9 +109,11 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: Abstr
 end
 
 function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
-             M=I, atol :: T=√eps(T), rtol :: T=√eps(T), γ :: T=√eps(T), itmax :: Int=0,
-             radius :: T=zero(T), verbose :: Int=0, linesearch :: Bool=false, history :: Bool=false,
-             ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+             M=I, ldiv :: Bool=false, radius :: T=zero(T),
+             linesearch :: Bool=false, γ :: T=√eps(T),
+             atol :: T=√eps(T), rtol :: T=√eps(T),  itmax :: Int=0,
+             verbose :: Int=0,  history :: Bool=false,
+             callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
 

@@ -18,10 +18,11 @@ export minres_qlp, minres_qlp!
 
 """
     (x, stats) = minres_qlp(A, b::AbstractVector{FC};
-                            M=I, atol::T=√eps(T), rtol::T=√eps(T),
-                            ctol::T=√eps(T), λ::T=zero(T), itmax::Int=0,
+                            M=I, ldiv::Bool=false, ctol::T=√eps(T),
+                            λ::T=zero(T), atol::T=√eps(T),
+                            rtol::T=√eps(T), itmax::Int=0,
                             verbose::Int=0, history::Bool=false,
-                            ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
+                            callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -49,6 +50,20 @@ and `false` otherwise.
 #### Optional argument
 
 * `x0`: a vector of length n that represents an initial guess of the solution x.
+
+#### Keyword arguments
+
+* `M`:
+* `ldiv`:
+* `ctol`:
+* `λ`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
 
 #### Output arguments
 
@@ -92,10 +107,11 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
 end
 
 function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{FC};
-                     M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-                     ctol :: T=√eps(T), λ ::T=zero(T), itmax :: Int=0,
+                     M=I, ldiv :: Bool=false, ctol :: T=√eps(T),
+                     λ ::T=zero(T), atol :: T=√eps(T),
+                     rtol :: T=√eps(T), itmax :: Int=0,
                      verbose :: Int=0, history :: Bool=false,
-                     ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                     callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

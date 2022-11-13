@@ -12,10 +12,11 @@ export gmres, gmres!
 
 """
     (x, stats) = gmres(A, b::AbstractVector{FC};
-                       memory::Int=20, M=I, N=I, atol::T=√eps(T), rtol::T=√eps(T),
-                       reorthogonalization::Bool=false, itmax::Int=0,
-                       restart::Bool=false, verbose::Int=0, history::Bool=false,
-                       ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
+                       memory::Int=20, M=I, N=I, ldiv::Bool=false,
+                       restart::Bool=false, reorthogonalization::Bool=false,
+                       atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                       verbose::Int=0, history::Bool=false,
+                       callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -46,6 +47,22 @@ and `false` otherwise.
 #### Optional argument
 
 * `x0`: a vector of length n that represents an initial guess of the solution x.
+
+#### Keyword arguments
+
+* `memory`:
+* `M`:
+* `N`:
+* `ldiv`:
+* `restart`:
+* `reorthogonalization`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
 
 #### Output arguments
 
@@ -90,10 +107,11 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 ::
 end
 
 function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
-                M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-                reorthogonalization :: Bool=false, itmax :: Int=0,
-                restart :: Bool=false, verbose :: Int=0, history :: Bool=false,
-                ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                M=I, N=I, ldiv :: Bool=false,
+                restart :: Bool=false, reorthogonalization :: Bool=false,
+                atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+                verbose :: Int=0, history :: Bool=false,
+                callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
