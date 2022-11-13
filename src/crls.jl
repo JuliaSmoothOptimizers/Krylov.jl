@@ -20,12 +20,12 @@
 
 export crls, crls!
 
-
 """
     (x, stats) = crls(A, b::AbstractVector{FC};
-                      M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
+                      M=I, ldiv::Bool=false, radius::T=zero(T),
+                      λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
+                      itmax::Int=0, verbose::Int=0, history::Bool=false,
+                      callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -52,6 +52,20 @@ and `false` otherwise.
 
 * `A`: a linear operator that models a matrix of dimension m × n;
 * `b`: a vector of length m.
+
+#### Keyword arguments
+
+* `M`:
+* `ldiv`:
+* `radius`:
+* `λ`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
 
 #### Output arguments
 
@@ -80,9 +94,10 @@ See [`CrlsSolver`](@ref) for more details about the `solver`.
 function crls! end
 
 function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
-               M=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-               radius :: T=zero(T), itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               M=I, ldiv :: Bool=false, radius :: T=zero(T),
+               λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
+               itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

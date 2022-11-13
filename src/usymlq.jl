@@ -21,8 +21,8 @@ export usymlq, usymlq!
 
 """
     (x, stats) = usymlq(A, b::AbstractVector{FC}, c::AbstractVector{FC};
-                        atol::T=√eps(T), rtol::T=√eps(T),
-                        transfer_to_usymcg::Bool=true, itmax::Int=0,
+                        transfer_to_usymcg::Bool=true, atol::T=√eps(T),
+                        rtol::T=√eps(T), itmax::Int=0,
                         verbose::Int=0, history::Bool=false,
                         callback=solver->false, iostream::IO=kstdout)
 
@@ -58,6 +58,17 @@ and `false` otherwise.
 #### Optional argument
 
 * `x0`: a vector of length n that represents an initial guess of the solution x.
+
+#### Keyword arguments
+
+* `transfer_to_usymcg`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
 
 #### Output arguments
 
@@ -102,8 +113,8 @@ function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
 end
 
 function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
-                 atol :: T=√eps(T), rtol :: T=√eps(T),
-                 transfer_to_usymcg :: Bool=true, itmax :: Int=0,
+                 transfer_to_usymcg :: Bool=true, atol :: T=√eps(T),
+                 rtol :: T=√eps(T), itmax :: Int=0,
                  verbose :: Int=0, history :: Bool=false,
                  callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 

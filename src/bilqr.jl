@@ -14,8 +14,9 @@ export bilqr, bilqr!
 
 """
     (x, y, stats) = bilqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
-                          atol::T=√eps(T), rtol::T=√eps(T), transfer_to_bicg::Bool=true,
-                          itmax::Int=0, verbose::Int=0, history::Bool=false,
+                          transfer_to_bicg::Bool=true, atol::T=√eps(T),
+                          rtol::T=√eps(T), itmax::Int=0,
+                          verbose::Int=0, history::Bool=false,
                           callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -50,6 +51,17 @@ and `false` otherwise.
 
 * `x0`: a vector of length n that represents an initial guess of the solution x;
 * `y0`: a vector of length n that represents an initial guess of the solution y.
+
+#### Keyword arguments
+
+* `transfer_to_bicg`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
 
 #### Output arguments
 
@@ -93,8 +105,9 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
 end
 
 function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
-                atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
-                itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+                transfer_to_bicg :: Bool=true, atol :: T=√eps(T),
+                rtol :: T=√eps(T), itmax :: Int=0,
+                verbose :: Int=0, history :: Bool=false,
                 callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)

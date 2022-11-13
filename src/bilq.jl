@@ -14,10 +14,10 @@ export bilq, bilq!
 
 """
     (x, stats) = bilq(A, b::AbstractVector{FC};
-                      c::AbstractVector{FC}=b, atol::T=√eps(T),
-                      rtol::T=√eps(T), transfer_to_bicg::Bool=true,
-                      itmax::Int=0, verbose::Int=0,
-                      history::Bool=false, callback=solver->false, iostream::IO=kstdout)
+                      c::AbstractVector{FC}=b, transfer_to_bicg::Bool=true,
+                      atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                      verbose::Int=0, history::Bool=false,
+                      callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -45,6 +45,18 @@ and `false` otherwise.
 #### Optional argument
 
 * `x0`: a vector of length n that represents an initial guess of the solution x.
+
+#### Keyword arguments
+
+* `c`:
+* `transfer_to_bicg`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
 
 #### Output arguments
 
@@ -86,9 +98,10 @@ function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: A
   return solver
 end
 
-function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
-               atol :: T=√eps(T), rtol :: T=√eps(T), transfer_to_bicg :: Bool=true,
-               itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC};
+               c :: AbstractVector{FC}=b, transfer_to_bicg :: Bool=true,
+               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
+               verbose :: Int=0, history :: Bool=false,
                callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)

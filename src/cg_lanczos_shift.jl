@@ -13,14 +13,13 @@
 
 export cg_lanczos_shift, cg_lanczos_shift!
 
-
 """
     (x, stats) = cg_lanczos_shift(A, b::AbstractVector{FC}, shifts::AbstractVector{T};
-                                  M=I, atol::T=√eps(T), rtol::T=√eps(T),
-                                  itmax::Int=0, check_curvature::Bool=false,
+                                  M=I, ldiv::Bool=false,
+                                  check_curvature::Bool=false, atol::T=√eps(T),
+                                  rtol::T=√eps(T), itmax::Int=0,
                                   verbose::Int=0, history::Bool=false,
-                                  ldiv::Bool=false, callback=solver->false,
-                                  iostream::IO=kstdout)
+                                  callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -43,6 +42,19 @@ and `false` otherwise.
 * `A`: a linear operator that models a Hermitian matrix of dimension n;
 * `b`: a vector of length n;
 * `shifts`: a vector of length p.
+
+#### Keyword arguments
+
+* `M`:
+* `ldiv`:
+* `check_curvature`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
 
 #### Output arguments
 
@@ -73,11 +85,11 @@ See [`CgLanczosShiftSolver`](@ref) for more details about the `solver`.
 function cg_lanczos_shift! end
 
 function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: AbstractVector{T};
-                           M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-                           itmax :: Int=0, check_curvature :: Bool=false,
+                           M=I, ldiv :: Bool=false,
+                           check_curvature :: Bool=false, atol :: T=√eps(T),
+                           rtol :: T=√eps(T), itmax :: Int=0,
                            verbose :: Int=0, history :: Bool=false,
-                           ldiv :: Bool=false, callback = solver -> false,
-                           iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                           callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
