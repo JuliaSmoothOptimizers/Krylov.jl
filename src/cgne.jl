@@ -28,12 +28,13 @@
 
 export cgne, cgne!
 
-
 """
     (x, stats) = cgne(A, b::AbstractVector{FC};
-                      N=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
+                      N=I, ldiv::Bool=false,
+                      λ::T=zero(T), atol::T=√eps(T),
+                      rtol::T=√eps(T), itmax::Int=0,
+                      verbose::Int=0, history::Bool=false,
+                      callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -70,6 +71,19 @@ and `false` otherwise.
 * `A`: a linear operator that models a matrix of dimension m × n;
 * `b`: a vector of length m.
 
+#### Keyword arguments
+
+* `N`:
+* `ldiv`:
+* `λ`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
+
 #### Output arguments
 
 * `x`: a dense vector of length n;
@@ -98,9 +112,11 @@ See [`CgneSolver`](@ref) for more details about the `solver`.
 function cgne! end
 
 function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
-               N=I, λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-               itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               N=I, ldiv :: Bool=false,
+               λ :: T=zero(T), atol :: T=√eps(T),
+               rtol :: T=√eps(T), itmax :: Int=0,
+               verbose :: Int=0, history :: Bool=false,
+               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

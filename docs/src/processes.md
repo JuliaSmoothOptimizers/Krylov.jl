@@ -6,7 +6,7 @@ Krylov processes are the foundation of Krylov methods, they generate bases of Kr
 
 For a matrix $A$, $A^H$ denotes the conjugate transpose of $A$.
 
-It coincides with $A^T$, the transpose of $A$, for real matrices.
+It coincides with $A^T$, the transpose of $A$, if $A$ is real.
 
 Define $V_k := \begin{bmatrix} v_1 & \ldots & v_k \end{bmatrix} \enspace$ and $\enspace U_k := \begin{bmatrix} u_1 & \ldots & u_k \end{bmatrix}$.
 

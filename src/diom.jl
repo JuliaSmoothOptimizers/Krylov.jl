@@ -12,10 +12,11 @@ export diom, diom!
 
 """
     (x, stats) = diom(A, b::AbstractVector{FC};
-                      memory::Int=20, M=I, N=I, atol::T=√eps(T),
-                      rtol::T=√eps(T), reorthogonalization::Bool=false,
-                      itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
+                      memory::Int=20, M=I, N=I, ldiv::Bool=false,
+                      reorthogonalization::Bool=false, atol::T=√eps(T),
+                      rtol::T=√eps(T), itmax::Int=0,
+                      verbose::Int=0, history::Bool=false,
+                      callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -49,6 +50,21 @@ and `false` otherwise.
 #### Optional argument
 
 * `x0`: a vector of length n that represents an initial guess of the solution x.
+
+#### Keyword arguments
+
+* `memory`:
+* `M`:
+* `N`:
+* `ldiv`:
+* `reorthogonalization`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
 
 #### Output arguments
 
@@ -93,10 +109,11 @@ function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: A
 end
 
 function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};
-               M=I, N=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-               reorthogonalization :: Bool=false, itmax :: Int=0,
+               M=I, N=I, ldiv :: Bool=false,
+               reorthogonalization :: Bool=false, atol :: T=√eps(T),
+               rtol :: T=√eps(T), itmax :: Int=0,
                verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

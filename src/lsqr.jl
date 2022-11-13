@@ -24,16 +24,16 @@
 
 export lsqr, lsqr!
 
-
 """
     (x, stats) = lsqr(A, b::AbstractVector{FC};
-                      M=I, N=I, sqd::Bool=false, λ::T=zero(T),
+                      M=I, N=I, ldiv::Bool=false,
+                      window::Int=5, sqd::Bool=false, λ::T=zero(T),
+                      radius::T=zero(T), etol::T=√eps(T),
                       axtol::T=√eps(T), btol::T=√eps(T),
-                      atol::T=zero(T), rtol::T=zero(T),
-                      etol::T=√eps(T), window::Int=5,
-                      itmax::Int=0, conlim::T=1/√eps(T),
-                      radius::T=zero(T), verbose::Int=0, history::Bool=false,
-                      ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
+                      conlim::T=1/√eps(T), atol::T=zero(T),
+                      rtol::T=zero(T), itmax::Int=0,
+                      verbose::Int=0, history::Bool=false,
+                      callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -88,6 +88,27 @@ and `false` otherwise.
 * `A`: a linear operator that models a matrix of dimension m × n;
 * `b`: a vector of length m.
 
+#### Keyword arguments
+
+* `M`:
+* `N`:
+* `ldiv`:
+* `window`:
+* `sqd`:
+* `λ`:
+* `radius`:
+* `etol`:
+* `axtol`:
+* `btol`:
+* `conlim`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
+
 #### Output arguments
 
 * `x`: a dense vector of length n;
@@ -115,12 +136,14 @@ See [`LsqrSolver`](@ref) for more details about the `solver`.
 function lsqr! end
 
 function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
-               M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
+               M=I, N=I, ldiv :: Bool=false,
+               sqd :: Bool=false, λ :: T=zero(T),
+               radius :: T=zero(T), etol :: T=√eps(T),
                axtol :: T=√eps(T), btol :: T=√eps(T),
-               atol :: T=zero(T), rtol :: T=zero(T),
-               etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
-               radius :: T=zero(T), verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               conlim :: T=1/√eps(T), atol :: T=zero(T),
+               rtol :: T=zero(T), itmax :: Int=0,
+               verbose :: Int=0, history :: Bool=false,
+               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

@@ -21,15 +21,14 @@
 
 export minres, minres!
 
-
 """
     (x, stats) = minres(A, b::AbstractVector{FC};
-                        M=I, λ::T=zero(T), atol::T=√eps(T)/100,
-                        rtol::T=√eps(T)/100, ratol :: T=zero(T), 
+                        M=I, ldiv::Bool=false, window::Int=5,
+                        λ::T=zero(T), atol::T=√eps(T)/100,
+                        rtol::T=√eps(T)/100, ratol :: T=zero(T),
                         rrtol :: T=zero(T), etol::T=√eps(T),
-                        window::Int=5, itmax::Int=0,
-                        conlim::T=1/√eps(T), verbose::Int=0,
-                        history::Bool=false, ldiv::Bool=false,
+                        conlim::T=1/√eps(T), itmax::Int=0,
+                        verbose::Int=0, history::Bool=false,
                         callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -71,6 +70,24 @@ and `false` otherwise.
 
 * `x0`: a vector of length n that represents an initial guess of the solution x.
 
+#### Keyword arguments
+
+* `M`:
+* `ldiv`:
+* `window`:
+* `λ`:
+* `atol`:
+* `rtol`:
+* `ratol`:
+* `rrtol`:
+* `etol`:
+* `conlim`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
+
 #### Output arguments
 
 * `x`: a dense vector of length n;
@@ -111,10 +128,13 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 
 end
 
 function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
-                 M=I, λ :: T=zero(T), atol :: T=√eps(T)/100, rtol :: T=√eps(T)/100, 
-                 ratol :: T=zero(T), rrtol :: T=zero(T), etol :: T=√eps(T),
-                 itmax :: Int=0, conlim :: T=1/√eps(T), verbose :: Int=0,
-                 history :: Bool=false, ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 M=I, ldiv :: Bool=false,
+                 λ :: T=zero(T), atol :: T=√eps(T)/100,
+                 rtol :: T=√eps(T)/100, ratol :: T=zero(T),
+                 rrtol :: T=zero(T), etol :: T=√eps(T),
+                 conlim :: T=1/√eps(T), itmax :: Int=0,
+                 verbose :: Int=0, history :: Bool=false,
+                 callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

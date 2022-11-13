@@ -11,14 +11,15 @@
 
 export symmlq, symmlq!
 
-
 """
     (x, stats) = symmlq(A, b::AbstractVector{FC};
-                        window::Int=0, M=I, λ::T=zero(T), transfer_to_cg::Bool=true,
-                        λest::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                        etol::T=√eps(T), itmax::Int=0, conlim::T=1/√eps(T),
+                        M=I, ldiv::Bool=false, window::Int=0,
+                        transfer_to_cg::Bool=true, λ::T=zero(T),
+                        λest::T=zero(T), etol::T=√eps(T),
+                        conlim::T=1/√eps(T), atol::T=√eps(T),
+                        rtol::T=√eps(T), itmax::Int=0,
                         verbose::Int=0, history::Bool=false,
-                        ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
+                        callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -50,6 +51,24 @@ and `false` otherwise.
 #### Optional argument
 
 * `x0`: a vector of length n that represents an initial guess of the solution x.
+
+#### Keyword arguments
+
+* `M`:
+* `ldiv`:
+* `window`:
+* `transfer_to_cg`:
+* `λ`:
+* `λest`:
+* `etol`:
+* `conlim`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
 
 #### Output arguments
 
@@ -91,11 +110,13 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 
 end
 
 function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
-                 M=I, λ :: T=zero(T), transfer_to_cg :: Bool=true,
-                 λest :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-                 etol :: T=√eps(T), itmax :: Int=0, conlim :: T=1/√eps(T),
+                 M=I, ldiv :: Bool=false,
+                 transfer_to_cg :: Bool=true, λ :: T=zero(T),
+                 λest :: T=zero(T), etol :: T=√eps(T),
+                 conlim :: T=1/√eps(T), atol :: T=√eps(T),
+                 rtol :: T=√eps(T), itmax :: Int=0,
                  verbose :: Int=0, history :: Bool=false,
-                 ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

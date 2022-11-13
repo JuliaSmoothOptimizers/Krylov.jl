@@ -21,15 +21,16 @@
 
 export lslq, lslq!
 
-
 """
     (x, stats) = lslq(A, b::AbstractVector{FC};
-                      M=I, N=I, sqd::Bool=false, λ::T=zero(T),
-                      atol::T=√eps(T), btol::T=√eps(T), etol::T=√eps(T),
-                      window::Int=5, utol::T=√eps(T), itmax::Int=0,
-                      σ::T=zero(T), transfer_to_lsqr::Bool=false, 
-                      conlim::T=1/√eps(T), verbose::Int=0, history::Bool=false,
-                      ldiv::Bool=false, callback=solver->false, iostream::IO=kstdout)
+                      M=I, N=I, ldiv::Bool=false,
+                      window::Int=5, transfer_to_lsqr::Bool=false,
+                      sqd::Bool=false, λ::T=zero(T), σ::T=zero(T),
+                      etol::T=√eps(T), utol::T=√eps(T),
+                      conlim::T=1/√eps(T), atol::T=√eps(T),
+                      rtol::T=√eps(T), itmax::Int=0,
+                      verbose::Int=0, history::Bool=false,
+                      callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -88,20 +89,24 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 
 #### Keyword arguments
 
-* `M`: a symmetric and positive definite dual preconditioner;
-* `N`: a symmetric and positive definite primal preconditioner;
-* `sqd` indicates that we are solving a symmetric and quasi-definite system with `λ=1`;
-* `λ` is a regularization parameter (see the problem statement above);
-* `σ` is an underestimate of the smallest nonzero singular value of `A`---setting `σ` too large will result in an error in the course of the iterations;
-* `atol` is a stopping tolerance based on the residual;
-* `btol` is a stopping tolerance used to detect zero-residual problems;
-* `etol` is a stopping tolerance based on the lower bound on the error;
-* `window` is the number of iterations used to accumulate a lower bound on the error;
-* `utol` is a stopping tolerance based on the upper bound on the error;
-* `transfer_to_lsqr` return the CG solution estimate (i.e., the LSQR point) instead of the LQ estimate;
-* `itmax` is the maximum number of iterations (0 means no imposed limit);
-* `conlim` is the limit on the estimated condition number of `A` beyond which the solution will be abandoned;
-* `verbose` determines verbosity.
+* `M`:
+* `N`:
+* `ldiv`:
+* `window`:
+* `transfer_to_lsqr`:
+* `sqd`:
+* `λ`:
+* `σ`:
+* `etol`:
+* `utol`:
+* `conlim`:
+* `atol`:
+* `rtol`:
+* `itmax`:
+* `verbose`:
+* `history`:
+* `callback`:
+* `iostream`:
 
 #### Output arguments
 
@@ -121,7 +126,7 @@ The iterations stop as soon as one of the following conditions holds true:
   * ‖Aᴴr‖ / (‖A‖ ‖r‖) ≤ atol, or
   * 1 + ‖Aᴴr‖ / (‖A‖ ‖r‖) ≤ 1
 * an approximate zero-residual solution has been found (`stats.status = "found approximate zero-residual solution"`) in the sense that either
-  * ‖r‖ / ‖b‖ ≤ btol + atol ‖A‖ * ‖xᴸ‖ / ‖b‖, or
+  * ‖r‖ / ‖b‖ ≤ rtol + atol ‖A‖ * ‖xᴸ‖ / ‖b‖, or
   * 1 + ‖r‖ / ‖b‖ ≤ 1
 * the estimated condition number of `A` is too large in the sense that either
   * 1/cond(A) ≤ 1/conlim (`stats.status = "condition number exceeds tolerance"`), or
@@ -155,12 +160,14 @@ See [`LslqSolver`](@ref) for more details about the `solver`.
 function lslq! end
 
 function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
-               M=I, N=I, sqd :: Bool=false, λ :: T=zero(T),
-               atol :: T=√eps(T), btol :: T=√eps(T), etol :: T=√eps(T),
-               utol :: T=√eps(T), itmax :: Int=0, σ :: T=zero(T),
-               transfer_to_lsqr :: Bool=false, conlim :: T=1/√eps(T),
+               M=I, N=I, ldiv :: Bool=false,
+               transfer_to_lsqr :: Bool=false,
+               sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
+               etol :: T=√eps(T), utol :: T=√eps(T),
+               conlim :: T=1/√eps(T), atol :: T=√eps(T),
+               rtol :: T=√eps(T), itmax :: Int=0,
                verbose :: Int=0, history :: Bool=false,
-               ldiv :: Bool=false, callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               callback=solver->false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
@@ -394,7 +401,7 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     test2 = ArNorm / (Anorm * rNorm)
     test3 = 1 / Acond
     t1    = test1 / (one(T) + Anorm * xlqNorm / β₁)
-    rtol  = btol + atol * Anorm * xlqNorm / β₁
+    tol   = rtol + atol * Anorm * xlqNorm / β₁
 
     # update LSLQ point for next iteration
     @kaxpy!(n, c * ζ, w̄, x)
@@ -434,7 +441,7 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     tired  = iter ≥ itmax
     ill_cond_lim = (test3 ≤ ctol)
     solved_lim = (test2 ≤ atol)
-    zero_resid_lim = (test1 ≤ rtol)
+    zero_resid_lim = (test1 ≤ tol)
 
     ill_cond = ill_cond_mach || ill_cond_lim
     zero_resid = zero_resid_mach || zero_resid_lim
