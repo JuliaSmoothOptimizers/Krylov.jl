@@ -1,9 +1,10 @@
-## Warm Start
+# [Warm-start](@id warm-start)
 
-Most Krylov methods in this module accept a starting point as argument. The starting point is used as initial approximation to a solution.
+Most Krylov methods in this module accept a starting point as argument.
+The starting point is used as initial approximation to a solution.
 
 ```julia
-solver = CgSolver(n, n, S)
+solver = CgSolver(A, b)
 cg!(solver, A, b, itmax=100)
 if !issolved(solver)
   cg!(solver, A, b, solver.x, itmax=100) # cg! uses the approximate solution `solver.x` as starting point
@@ -28,7 +29,7 @@ If a Krylov method doesn't have the option to warm start, it can still be done e
 We provide an example with `cg_lanczos!`.
 
 ```julia
-solver = CgLanczosSolver(n, n, S)
+solver = CgLanczosSolver(A, b)
 cg_lanczos!(solver, A, b)
 x₀ = solver.x           # Ax₀ ≈ b
 r = b - A * x₀          # r = b - Ax₀
@@ -54,20 +55,21 @@ c₀ = c - Aᴴx₀ - Fy
 x = x₀ + Δx
 y = y₀ + Δy
 ```
-
-## Restarted methods
-
-The storage requierements of Krylov methods based on the Arnoldi process, such as FOM and GMRES, increase as the iteration progresses.
-For very large problems, the storage costs become prohibitive after only few iterations and restarted variants FOM(k) and GMRES(k) are prefered.
-In this section, we show how to use warm starts to implement GMRES(k) and FOM(k).
-
-```julia
-k = 50
-solver = GmresSolver(A, b, k)  # FomSolver(A, b, k)
-solver.x .= 0                  # solver.x .= x₀ 
-nrestart = 0
-while !issolved(solver) || nrestart ≤ 10
-  solve!(solver, A, b, solver.x, itmax=k)
-  nrestart += 1
-end
+```@meta
+# ## Restarted methods
+#
+# The storage requierements of Krylov methods based on the Arnoldi process, such as FOM and GMRES, increase as the iteration progresses.
+# For very large problems, the storage costs become prohibitive after only few iterations and restarted variants FOM(k) and GMRES(k) are prefered.
+# In this section, we show how to use warm starts to implement GMRES(k) and FOM(k).
+#
+# ```julia
+# k = 50
+# solver = GmresSolver(A, b, k)  # FomSolver(A, b, k)
+# solver.x .= 0                  # solver.x .= x₀ 
+# nrestart = 0
+# while !issolved(solver) || nrestart ≤ 10
+#   solve!(solver, A, b, solver.x, itmax=k)
+#   nrestart += 1
+# end
+# ```
 ```
