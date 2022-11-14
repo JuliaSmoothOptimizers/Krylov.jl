@@ -25,7 +25,7 @@ makedocs(
            "Preconditioners" => "preconditioners.md",
            "Storage requirements" => "storage.md",
            "GPU support" => "gpu.md",
-           "Warm start" => "warm_start.md",
+           "Warm start" => "warm-start.md",
            "Factorization-free operators" => "factorization-free.md",
            "Callbacks" => "callbacks.md",
            "Performance tips" => "tips.md",
