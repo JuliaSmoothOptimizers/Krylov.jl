@@ -13,7 +13,7 @@ export symmlq, symmlq!
 
 """
     (x, stats) = symmlq(A, b::AbstractVector{FC};
-                        M=I, ldiv::Bool=false, window::Int=0,
+                        M=I, ldiv::Bool=false, window::Int=5,
                         transfer_to_cg::Bool=true, λ::T=zero(T),
                         λest::T=zero(T), etol::T=√eps(T),
                         conlim::T=1/√eps(T), atol::T=√eps(T),
