@@ -41,7 +41,7 @@ header-includes: |
 $A^{H\!}$ denotes the conjugate transpose of $A$.
 It coincides with $A^{T\!}$, the transpose of $A$, if $A$ is real.
 Krylov methods are iterative methods based on @krylov-1931 subspaces.
-They are an alternative to direct methods such as Gaussian elimination or QR decomposition when storage requirements or computational costs become prohibitive, which is often the case for large and sparse linear systems.
+They are an alternative to direct methods such as Gaussian elimination or QR decomposition when storage requirements or computational costs become prohibitive, which is often the case for large and sparse linear problems.
 Contrary to direct methods, which require storing $A$ explicitly, Krylov methods support linear operators to model operator-vector products $u \leftarrow Av$, and in some instances $u \leftarrow A^{H\!}w$ because Krylov processes only require those operations to build Krylov subspaces.
 The same goes with preconditioners, i.e., transformations that modify a linear system into an equivalent form with favorable spectral properties that may yield faster convergence in finite-precision arithmetic.
 We refer interested readers to [@ipsen-meyer-1998] for an introduction to Krylov methods along with [@greenbaum-1997] and [@saad-2003] for more details.
