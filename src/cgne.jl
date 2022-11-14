@@ -74,15 +74,15 @@ and `false` otherwise.
 #### Keyword arguments
 
 * `N`:
-* `ldiv`:
-* `λ`:
-* `atol`:
-* `rtol`:
-* `itmax`:
-* `verbose`:
-* `history`:
-* `callback`:
-* `iostream`:
+* `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
+* `λ`: regularization parameter;
+* `atol`: absolute stopping tolerance based on the residual norm;
+* `rtol`: relative stopping tolerance based on the residual norm;
+* `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
+* `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
+* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `iostream`: stream to which output is logged.
 
 #### Output arguments
 
