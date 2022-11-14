@@ -25,8 +25,9 @@ export lslq, lslq!
     (x, stats) = lslq(A, b::AbstractVector{FC};
                       M=I, N=I, ldiv::Bool=false,
                       window::Int=5, transfer_to_lsqr::Bool=false,
-                      sqd::Bool=false, λ::T=zero(T), σ::T=zero(T),
-                      etol::T=√eps(T), utol::T=√eps(T),
+                      sqd::Bool=false, λ::T=zero(T),
+                      σ::T=zero(T), etol::T=√eps(T),
+                      utol::T=√eps(T), btol::T=√eps(T),
                       conlim::T=1/√eps(T), atol::T=√eps(T),
                       rtol::T=√eps(T), itmax::Int=0,
                       verbose::Int=0, history::Bool=false,
@@ -99,6 +100,7 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 * `σ`:
 * `etol`:
 * `utol`:
+* `btol`:
 * `conlim`:
 * `atol`:
 * `rtol`:
@@ -126,7 +128,7 @@ The iterations stop as soon as one of the following conditions holds true:
   * ‖Aᴴr‖ / (‖A‖ ‖r‖) ≤ atol, or
   * 1 + ‖Aᴴr‖ / (‖A‖ ‖r‖) ≤ 1
 * an approximate zero-residual solution has been found (`stats.status = "found approximate zero-residual solution"`) in the sense that either
-  * ‖r‖ / ‖b‖ ≤ rtol + atol ‖A‖ * ‖xᴸ‖ / ‖b‖, or
+  * ‖r‖ / ‖b‖ ≤ btol + atol ‖A‖ * ‖xᴸ‖ / ‖b‖, or
   * 1 + ‖r‖ / ‖b‖ ≤ 1
 * the estimated condition number of `A` is too large in the sense that either
   * 1/cond(A) ≤ 1/conlim (`stats.status = "condition number exceeds tolerance"`), or
@@ -162,8 +164,9 @@ function lslq! end
 function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, ldiv :: Bool=false,
                transfer_to_lsqr :: Bool=false,
-               sqd :: Bool=false, λ :: T=zero(T), σ :: T=zero(T),
-               etol :: T=√eps(T), utol :: T=√eps(T),
+               sqd :: Bool=false, λ :: T=zero(T),
+               σ :: T=zero(T), etol :: T=√eps(T),
+               utol :: T=√eps(T), btol :: T=√eps(T),
                conlim :: T=1/√eps(T), atol :: T=√eps(T),
                rtol :: T=√eps(T), itmax :: Int=0,
                verbose :: Int=0, history :: Bool=false,
@@ -287,7 +290,8 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm², Acond, xlqNorm)
 
   status = "unknown"
-  solved = solved_mach = solved_lim = (rNorm ≤ atol)
+  ε = atol + rtol * β₁
+  solved = solved_mach = solved_lim = (rNorm ≤ ε)
   tired  = iter ≥ itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
   zero_resid = zero_resid_mach = zero_resid_lim = false
@@ -397,11 +401,11 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
       end
     end
 
-    test1 = rNorm / β₁
+    test1 = rNorm
     test2 = ArNorm / (Anorm * rNorm)
     test3 = 1 / Acond
-    t1    = test1 / (one(T) + Anorm * xlqNorm / β₁)
-    tol   = rtol + atol * Anorm * xlqNorm / β₁
+    t1    = test1 / (one(T) + Anorm * xlqNorm)
+    tol   = btol + atol * Anorm * xlqNorm / β₁
 
     # update LSLQ point for next iteration
     @kaxpy!(n, c * ζ, w̄, x)
@@ -441,7 +445,7 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     tired  = iter ≥ itmax
     ill_cond_lim = (test3 ≤ ctol)
     solved_lim = (test2 ≤ atol)
-    zero_resid_lim = (test1 ≤ tol)
+    zero_resid_lim = (test1 ≤ ε)
 
     ill_cond = ill_cond_mach || ill_cond_lim
     zero_resid = zero_resid_mach || zero_resid_lim
