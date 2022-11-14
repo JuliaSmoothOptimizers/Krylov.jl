@@ -75,21 +75,21 @@ and `false` otherwise.
 
 #### Keyword arguments
 
-* `M`:
-* `N`:
-* `ldiv`:
-* `spd`:
-* `snd`:
-* `flip`:
-* `sp`:
-* `τ` and `ν`:
-* `atol`:
-* `rtol`:
-* `itmax`:
-* `verbose`:
-* `history`:
-* `callback`:
-* `iostream`:
+* `M`: linear operator that models a Hermitian positive-definite matrix of size `m` used for centered preconditioning of the partitioned system;
+* `N`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning of the partitioned system;
+* `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
+* `spd`: if `true`, set `τ = 1` and `ν = 1` for Hermitian and positive-definite linear system;
+* `snd`: if `true`, set `τ = -1` and `ν = -1` for Hermitian and negative-definite linear systems;
+* `flip`: if `true`, set `τ = -1` and `ν = 1` for another known variant of Hermitian quasi-definite systems;
+* `sp`: if `true`, set `τ = 1` and `ν = 0` for saddle-point systems;
+* `τ` and `ν`: diagonal scaling factors of the partitioned Hermitian linear system;
+* `atol`: absolute stopping tolerance based on the residual norm;
+* `rtol`: relative stopping tolerance based on the residual norm;
+* `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
+* `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
+* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `iostream`: stream to which output is logged.
 
 #### Output arguments
 

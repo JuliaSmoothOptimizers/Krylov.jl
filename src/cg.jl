@@ -54,17 +54,17 @@ and `false` otherwise.
 
 #### Keyword arguments
 
-* `M`:
-* `ldiv`:
-* `radius`:
-* `linesearch`:
-* `atol`:
-* `rtol`:
-* `itmax`:
-* `verbose`:
-* `history`:
-* `callback`:
-* `iostream`:
+* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
+* `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
+* `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization;
+* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If negative curvature is detected at iteration k > 0, the solution of iteration k-1 is returned. If negative curvature is detected at iteration 0, the right-hand side is returned (i.e., the negative gradient);
+* `atol`: absolute stopping tolerance based on the residual norm;
+* `rtol`: relative stopping tolerance based on the residual norm;
+* `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
+* `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
+* `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
+* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `iostream`: stream to which output is logged.
 
 #### Output arguments
 

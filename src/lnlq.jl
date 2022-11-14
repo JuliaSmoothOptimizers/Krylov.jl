@@ -93,22 +93,22 @@ and `false` otherwise.
 
 #### Keyword arguments
 
-* `M`:
-* `N`:
-* `ldiv`:
-* `transfer_to_craig`:
-* `sqd`:
-* `λ`:
-* `σ`:
-* `utolx`:
-* `utoly`:
-* `atol`:
-* `rtol`:
-* `itmax`:
-* `verbose`:
-* `history`:
-* `callback`:
-* `iostream`:
+* `M`: linear operator that models a Hermitian positive-definite matrix of size `m` used for centered preconditioning of the augmented system;
+* `N`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning of the augmented system;
+* `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
+* `transfer_to_craig`: transfer from the LNLQ point to the CRAIG point, when it exists. The transfer is based on the residual norm;
+* `sqd`: if `true`, set `λ=1` for Hermitian quasi-definite systems;
+* `λ`: regularization parameter;
+* `σ`: strict lower bound on the smallest positive singular value `σₘᵢₙ` such as `σ = (1-10⁻⁷)σₘᵢₙ`;
+* `utolx`: tolerance on the upper bound on the distance to the solution `‖x-x*‖`;
+* `utoly`: tolerance on the upper bound on the distance to the solution `‖y-y*‖`;
+* `atol`: absolute stopping tolerance based on the residual norm;
+* `rtol`: relative stopping tolerance based on the residual norm;
+* `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
+* `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
+* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `iostream`: stream to which output is logged.
 
 #### Output arguments
 
