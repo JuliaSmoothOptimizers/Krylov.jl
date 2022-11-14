@@ -101,7 +101,7 @@ By default, Julia ships with OpenBLAS and provides multithreaded routines.
 Since Julia 1.6, users can also switch dynamically to other BLAS backends, such as Apple Accelerate, the Intel MKL or BLIS, thanks to the BLAS demuxing library `libblastrampoline`, if an optimized BLAS is available.
 <!-- une petite transition ne serait pas du luxe -->
 
-A ``Storage Requirements'' section is available in the documentation to provide the theoretical number of bits required by each method.
+A ``Storage Requirements'' section is available in the documentation to provide the theoretical number of bytes required by each method.
 Our implementations are storage-optimal in the sense that they are guaranteed to match the theoretical storage amount.
 The match is verified in the unit tests by way of functions that return the number of bits allocated by our implementations.
 
