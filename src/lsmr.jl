@@ -94,24 +94,24 @@ and `false` otherwise.
 
 #### Keyword arguments
 
-* `M`:
-* `N`:
-* `ldiv`:
-* `window`:
-* `sqd`:
-* `λ`:
-* `radius`:
-* `etol`:
-* `axtol`:
-* `btol`:
-* `conlim`:
-* `atol`:
-* `rtol`:
-* `itmax`:
-* `verbose`:
-* `history`:
-* `callback`:
-* `iostream`:
+* `M`: linear operator that models a Hermitian positive-definite matrix of size `m` used for centered preconditioning of the augmented system;
+* `N`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning of the augmented system;
+* `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
+* `window`: number of iterations used to accumulate a lower bound on the error;
+* `sqd`: if `true`, set `λ=1` for Hermitian quasi-definite systems;
+* `λ`: regularization parameter;
+* `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization;
+* `etol`: stopping tolerance based on the lower bound on the error;
+* `axtol`: tolerance on the backward error;
+* `btol`: stopping tolerance used to detect zero-residual problems;
+* `conlim`: limit on the estimated condition number of `A` beyond which the solution will be abandoned;
+* `atol`: absolute stopping tolerance based on the residual norm;
+* `rtol`: relative stopping tolerance based on the residual norm;
+* `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
+* `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
+* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `iostream`: stream to which output is logged.
 
 #### Output arguments
 

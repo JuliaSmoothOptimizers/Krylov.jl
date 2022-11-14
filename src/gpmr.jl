@@ -82,22 +82,22 @@ and `false` otherwise.
 
 #### Keyword arguments
 
-* `memory`:
-* `C`:
-* `D`:
-* `E`:
-* `F`:
-* `ldiv`:
-* `gsp`:
-* `λ` and `μ`:
-* `reorthogonalization`:
-* `atol`:
-* `rtol`:
-* `itmax`:
-* `verbose`:
-* `history`:
-* `callback`:
-* `iostream`:
+* `memory`: if `restart = true`, the restarted version GPMR(k) is used with `k = memory`. If `restart = false`, the parameter `memory` should be used as a hint of the number of iterations to limit dynamic memory allocations. Additional storage will be allocated if the number of iterations exceeds `memory`;
+* `C`: linear operator that models a nonsingular matrix of size `m`, and represents the first term of the block-diagonal left preconditioner;
+* `D`: linear operator that models a nonsingular matrix of size `n`, and represents the second term of the block-diagonal left preconditioner;
+* `E`: linear operator that models a nonsingular matrix of size `m`, and represents the first term of the block-diagonal right preconditioner;
+* `F`: linear operator that models a nonsingular matrix of size `n`, and represents the second term of the block-diagonal right preconditioner;
+* `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
+* `gsp`: if `true`, set `λ = 1` and `μ = 0` for generalized saddle-point systems;
+* `λ` and `μ`: diagonal scaling factors of the partitioned linear system;
+* `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against all previous vectors;
+* `atol`: absolute stopping tolerance based on the residual norm;
+* `rtol`: relative stopping tolerance based on the residual norm;
+* `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
+* `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
+* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `iostream`: stream to which output is logged.
 
 #### Output arguments
 
