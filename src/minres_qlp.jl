@@ -18,7 +18,7 @@ export minres_qlp, minres_qlp!
 
 """
     (x, stats) = minres_qlp(A, b::AbstractVector{FC};
-                            M=I, ldiv::Bool=false, ctol::T=√eps(T),
+                            M=I, ldiv::Bool=false, Artol::T=√eps(T),
                             λ::T=zero(T), atol::T=√eps(T),
                             rtol::T=√eps(T), itmax::Int=0,
                             verbose::Int=0, history::Bool=false,
@@ -55,7 +55,7 @@ and `false` otherwise.
 
 * `M`:
 * `ldiv`:
-* `ctol`:
+* `Artol`:
 * `λ`:
 * `atol`:
 * `rtol`:
@@ -107,7 +107,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
 end
 
 function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{FC};
-                     M=I, ldiv :: Bool=false, ctol :: T=√eps(T),
+                     M=I, ldiv :: Bool=false, Artol :: T=√eps(T),
                      λ ::T=zero(T), atol :: T=√eps(T),
                      rtol :: T=√eps(T), itmax :: Int=0,
                      verbose :: Int=0, history :: Bool=false,
@@ -380,7 +380,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     # Update ‖Arₖ₋₁‖ estimate
     # ‖ Arₖ₋₁ ‖ = |ζbarₖ| * √(|λbarₖ|² + |γbarₖ|²)
     ArNorm = abs(ζbarₖ) * √(abs2(λbarₖ) + abs2(cₖ₋₁ * βₖ₊₁))
-    iter == 1 && (κ = atol + ctol * ArNorm)
+    iter == 1 && (κ = atol + Artol * ArNorm)
     history && push!(ArNorms, ArNorm)
 
     ANorm = sqrt(ANorm²)
@@ -418,7 +418,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     zero_resid = zero_resid_mach | zero_resid_lim
     resid_decrease = resid_decrease_mach | resid_decrease_lim
     solved = resid_decrease | zero_resid
-    inconsistent = (ArNorm ≤ κ && abs(μbarₖ) ≤ ctol) || (breakdown && !solved)
+    inconsistent = (ArNorm ≤ κ && abs(μbarₖ) ≤ Artol) || (breakdown && !solved)
 
     # Update variables
     if iter ≥ 2
