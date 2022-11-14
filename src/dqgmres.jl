@@ -35,13 +35,6 @@ If MINRES is well defined on `Ax = b` and `memory = 2`, DQGMRES is theoretically
 If `k ≤ memory` where `k` is the number of iterations, DQGMRES is theoretically equivalent to GMRES.
 Otherwise, DQGMRES interpolates between MINRES and GMRES and is similar to MINRES with partial reorthogonalization.
 
-Partial reorthogonalization is available with the `reorthogonalization` option.
-
-This implementation allows a left preconditioner M and a right preconditioner N.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension n;

@@ -44,11 +44,6 @@ to become inaccurate.
 
 TFQMR and BICGSTAB were developed to remedy this difficulty.»
 
-This implementation allows a left preconditioner M and a right preconditioner N.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension n;

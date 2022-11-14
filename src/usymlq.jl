@@ -43,12 +43,6 @@ It's considered as a generalization of SYMMLQ.
 It can also be applied to under-determined and over-determined problems.
 In all cases, problems must be consistent.
 
-An option gives the possibility of transferring to the USYMCG point,
-when it exists. The transfer is based on the residual norm.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension m × n;

@@ -37,10 +37,7 @@ Solve the square linear system Ax = b of size n using QMR.
 
 QMR is based on the Lanczos biorthogonalization process and requires two initial vectors `b` and `c`.
 The relation `bᴴc ≠ 0` must be satisfied and by default `c = b`.
-When `A` is symmetric and `b = c`, QMR is equivalent to MINRES.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
+When `A` is Hermitian and `b = c`, QMR is equivalent to MINRES.
 
 #### Input arguments
 

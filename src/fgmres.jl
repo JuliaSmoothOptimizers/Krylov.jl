@@ -36,15 +36,6 @@ a Chebyshev iteration or another Krylov subspace method is used as a preconditio
 Compared to GMRES, there is no additional cost incurred in the arithmetic but the memory requirement almost doubles.
 Thus, GMRES is recommended if the right preconditioner N is constant.
 
-Full reorthogonalization is available with the `reorthogonalization` option.
-
-If `restart = true`, the restarted version FGMRES(k) is used with `k = memory`.
-If `restart = false`, the parameter `memory` should be used as a hint of the number of iterations to limit dynamic memory allocations.
-More storage will be allocated only if the number of iterations exceeds `memory`.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension n;

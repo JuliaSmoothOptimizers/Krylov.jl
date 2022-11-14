@@ -35,12 +35,6 @@ The relation `bᴴc ≠ 0` must be satisfied.
 BiLQ is used for solving primal system `Ax = b` of size n.
 QMR is used for solving dual system `Aᴴy = c` of size n.
 
-An option gives the possibility of transferring from the BiLQ point to the
-BiCG point, when it exists. The transfer is based on the residual norm.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension n;

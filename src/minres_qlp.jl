@@ -35,12 +35,7 @@ MINRES-QLP is the only method based on the Lanczos process that returns the mini
 solution on singular inconsistent systems (A + λI)x = b of size n, where λ is a shift parameter.
 It is significantly more complex but can be more reliable than MINRES when A is ill-conditioned.
 
-A preconditioner M may be provided in the form of a linear operator and is
-assumed to be Hermitian and positive definite.
 M also indicates the weighted norm in which residuals are measured.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
 
 #### Input arguments
 

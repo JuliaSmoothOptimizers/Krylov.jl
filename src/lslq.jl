@@ -47,14 +47,6 @@ LSLQ is formally equivalent to applying SYMMLQ to the normal equations
 
 but is more stable.
 
-#### Main features
-
-* the solution estimate is updated along orthogonal directions
-* the norm of the solution estimate ‖xᴸₖ‖₂ is increasing
-* the error ‖eₖ‖₂ := ‖xᴸₖ - x*‖₂ is decreasing
-* it is possible to transition cheaply from the LSLQ iterate to the LSQR iterate if there is an advantage (there always is in terms of error)
-* if `A` is rank deficient, identify the minimum least-squares solution
-
 If `λ > 0`, we solve the symmetric and quasi-definite system
 
     [ E      A ] [ r ]   [ b ]
@@ -82,6 +74,14 @@ The system above represents the optimality conditions of
 
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᴴr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
+
+#### Main features
+
+* the solution estimate is updated along orthogonal directions
+* the norm of the solution estimate ‖xᴸₖ‖₂ is increasing
+* the error ‖eₖ‖₂ := ‖xᴸₖ - x*‖₂ is decreasing
+* it is possible to transition cheaply from the LSLQ iterate to the LSQR iterate if there is an advantage (there always is in terms of error)
+* if `A` is rank deficient, identify the minimum least-squares solution
 
 #### Input arguments
 
@@ -135,9 +135,6 @@ The iterations stop as soon as one of the following conditions holds true:
   * 1 + 1/cond(A) ≤ 1 (`stats.status = "condition number seems too large for this machine"`)
 * the lower bound on the LQ forward error is less than etol * ‖xᴸ‖
 * the upper bound on the CG forward error is less than utol * ‖xᶜ‖
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
 
 #### References
 

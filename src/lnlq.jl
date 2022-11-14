@@ -83,9 +83,6 @@ In this implementation, both the x and y-parts of the solution are returned.
 The bound is valid if λ>0 or σ>0 where σ should be strictly smaller than the smallest positive singular value.
 For instance σ:=(1-1e-7)σₘᵢₙ .
 
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension m × n;
