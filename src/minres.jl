@@ -24,9 +24,8 @@ export minres, minres!
 """
     (x, stats) = minres(A, b::AbstractVector{FC};
                         M=I, ldiv::Bool=false, window::Int=5,
-                        λ::T=zero(T), atol::T=√eps(T)/100,
-                        rtol::T=√eps(T)/100, ratol :: T=zero(T),
-                        rrtol :: T=zero(T), etol::T=√eps(T),
+                        λ::T=zero(T), atol::T=√eps(T),
+                        rtol::T=√eps(T), etol::T=√eps(T),
                         conlim::T=1/√eps(T), itmax::Int=0,
                         verbose::Int=0, history::Bool=false,
                         callback=solver->false, iostream::IO=kstdout)
@@ -78,8 +77,6 @@ and `false` otherwise.
 * `λ`:
 * `atol`:
 * `rtol`:
-* `ratol`:
-* `rrtol`:
 * `etol`:
 * `conlim`:
 * `itmax`:
@@ -129,9 +126,8 @@ end
 
 function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, ldiv :: Bool=false,
-                 λ :: T=zero(T), atol :: T=√eps(T)/100,
-                 rtol :: T=√eps(T)/100, ratol :: T=zero(T),
-                 rrtol :: T=zero(T), etol :: T=√eps(T),
+                 λ :: T=zero(T), atol :: T=√eps(T),
+                 rtol :: T=√eps(T), etol :: T=√eps(T),
                  conlim :: T=1/√eps(T), itmax :: Int=0,
                  verbose :: Int=0, history :: Bool=false,
                  callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
@@ -224,13 +220,12 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
   (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "test2")
   kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond)
 
-  tol = atol + rtol * β₁
-  rNormtol = ratol + rrtol * β₁ 
+  ε = atol + rtol * β₁
   stats.status = "unknown"
   solved = solved_mach = solved_lim = (rNorm ≤ rtol)
   tired  = iter ≥ itmax
   ill_cond = ill_cond_mach = ill_cond_lim = false
-  zero_resid = zero_resid_mach = zero_resid_lim = (rNorm ≤ tol)
+  zero_resid = zero_resid_mach = zero_resid_lim = (rNorm ≤ ε)
   fwd_err = false
   user_requested_exit = false
 
@@ -346,16 +341,18 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Stopping conditions based on user-provided tolerances.
     tired = iter ≥ itmax
     ill_cond_lim = (one(T) / Acond ≤ ctol)
-    solved_lim = (test2 ≤ tol)
-    zero_resid_lim = (test1 ≤ tol)
-    resid_decrease_lim = (rNorm ≤ rNormtol)
+    # We must check that these stopping conditions work with preconditioners
+    # before we reuse them as stopping conditions.
+    # solved_lim = (test2 ≤ ε)
+    # zero_resid_lim = (test1 ≤ ε)
+    resid_decrease_lim = (rNorm ≤ ε)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
 
     user_requested_exit = callback(solver) :: Bool
-    zero_resid = zero_resid_mach | zero_resid_lim
-    resid_decrease = resid_decrease_mach | resid_decrease_lim
-    ill_cond = ill_cond_mach | ill_cond_lim
-    solved = solved_mach | solved_lim | zero_resid | fwd_err | resid_decrease
+    zero_resid = zero_resid_mach || zero_resid_lim
+    resid_decrease = resid_decrease_mach || resid_decrease_lim
+    ill_cond = ill_cond_mach || ill_cond_lim
+    solved = solved_mach || solved_lim || zero_resid || fwd_err || resid_decrease
   end
   (verbose > 0) && @printf(iostream, "\n")
 
