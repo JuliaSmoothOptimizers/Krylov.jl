@@ -137,6 +137,8 @@ The function [`arnoldi`](@ref arnoldi) returns $V_{k+1}$ and $H_{k+1,k}$.
 
 Related methods: [`DIOM`](@ref diom), [`FOM`](@ref fom), [`DQGMRES`](@ref dqgmres), [`GMRES`](@ref gmres) and [`FGMRES`](@ref fgmres).
 
+!!! note
+    The Arnoldi process coincides with the Hermitian Lanczos process when $A$ is Hermitian.
 
 ```@docs
 arnoldi
@@ -184,6 +186,9 @@ The function [`golub_kahan`](@ref golub_kahan) returns $V_{k+1}$, $U_{k+1}$ and 
 
 Related methods: [`LNLQ`](@ref lnlq), [`CRAIG`](@ref craig), [`CRAIGMR`](@ref craigmr), [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).
 
+!!! note
+    The Golub-Kahan process coincides with the Hermitian Lanczos process applied on the normal equations $A^HA = A^Hb$ and $AA^H = b$.
+
 ```@docs
 golub_kahan
 ```
@@ -229,6 +234,9 @@ Related methods: [`USYMLQ`](@ref usymlq), [`USYMQR`](@ref usymqr), [`TriLQR`](@r
 ```@docs
 saunders_simon_yip
 ```
+
+!!! note
+    The Saunders-Simon-Yip is equivalent to the block-Lanczos process applied on $\begin{bmatrix} 0 & A \\ A^H & 0 \end{bmatrix}$ with the initial matrix $\begin{bmatrix} b & 0 \\ 0 & c \end{bmatrix}$.
 
 ## Montoison-Orban
 
@@ -277,6 +285,10 @@ F_{k+1,k} =
 The function [`montoison_orban`](@ref montoison_orban) returns $V_{k+1}$, $H_{k+1,k}$, $U_{k+1}$ and $F_{k+1,k}$.
 
 Related methods: [`GPMR`](@ref gpmr).
+
+!!! note
+    The Montoison-Orban is equivalent to the block-Arnoldi process applied on $\begin{bmatrix} 0 & A \\ B & 0 \end{bmatrix}$ with the initial matrix $\begin{bmatrix} b & 0 \\ 0 & c \end{bmatrix}$.
+    It also coincides with the Saunders-Simon-Yip process when $B = A^H$.
 
 ```@docs
 montoison_orban
