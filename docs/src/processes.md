@@ -1,6 +1,45 @@
+```@raw html
+<style>
+.content table td {
+    border-right-width: 1px;
+}
+.content table th {
+    border-right-width: 1px;
+}
+.content table td:last-child {
+    border-right-width: 0px;
+}
+.content table th:last-child {
+    border-right-width: 0px;
+}
+html.theme--documenter-dark .content table td {
+    border-right-width: 1px;
+}
+html.theme--documenter-dark .content table th {
+    border-right-width: 1px;
+}
+html.theme--documenter-dark .content table td:last-child {
+    border-right-width: 0px;
+}
+html.theme--documenter-dark .content table th:last-child {
+    border-right-width: 0px;
+}
+</style>
+```
+
 # [Krylov processes](@id krylov-processes)
 
 Krylov processes are the foundation of Krylov methods, they generate bases of Krylov subspaces.
+The following table summarizes the most relevant processes for each linear problem.
+
+| Linear problems                                                |  Processes                        |
+|:--------------------------------------------------------------:|:---------------------------------:|
+| Hermitian linear systems                                       | Hermitian Lanczos                 |
+| Square Non-Hermitian linear systems                            | Non-Hermitian Lanczos -- Arnoldi  |
+| Least-squares problems                                         | Golub-Kahan -- Saunders-Simon-Yip |
+| Least-norm problems                                            | Golub-Kahan -- Saunders-Simon-Yip |
+| Saddle-point and Hermitian quasi-definite systems              | Golub-Kahan -- Saunders-Simon-Yip |
+| Generalized saddle-point and non-Hermitian partitioned systems | Montoison-Orban                   |
 
 ### Notation
 
