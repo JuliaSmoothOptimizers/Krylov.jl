@@ -224,9 +224,10 @@ end
 * `U`: a dense m × (k+1) matrix;
 * `L`: a sparse (k+1) × (k+1) lower bidiagonal matrix.
 
-#### Reference
+#### References
 
 * G. H. Golub and W. Kahan, [*Calculating the Singular Values and Pseudo-Inverse of a Matrix*](https://doi.org/10.1137/0702016), SIAM Journal on Numerical Analysis, 2(2), pp. 225--224, 1965.
+* C. C. Paige, [*Bidiagonalization of Matrices and Solution of Linear Equations*](https://doi.org/10.1137/0711019), SIAM Journal on Numerical Analysis, 11(1), pp. 197--209, 1974.
 """
 function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   m, n = size(A)
