@@ -225,8 +225,8 @@ The function [`golub_kahan`](@ref golub_kahan) returns $V_{k+1}$, $U_{k+1}$ and 
 Related methods: [`LNLQ`](@ref lnlq), [`CRAIG`](@ref craig), [`CRAIGMR`](@ref craigmr), [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).
 
 !!! note
-    The Golub-Kahan process coincides with the Hermitian Lanczos process applied on the normal equations $A^HA = A^Hb$ and $AA^H = b$.
-    It is also equivalent to the Hermitian Lanczos process applied on $\begin{bmatrix} 0 & A \\ A^H & 0 \end{bmatrix}$ with the initial vector $\begin{bmatrix} b \\ 0 \end{bmatrix}$.
+    The Golub-Kahan process coincides with the Hermitian Lanczos process applied to the normal equations $A^HA x = A^Hb$ and $AA^H x = b$.
+    It is also related to the Hermitian Lanczos process applied to $\begin{bmatrix} 0 & A \\ A^H & 0 \end{bmatrix}$ with initial vector $\begin{bmatrix} b \\ 0 \end{bmatrix}$.
 
 ```@docs
 golub_kahan
@@ -275,7 +275,7 @@ saunders_simon_yip
 ```
 
 !!! note
-    The Saunders-Simon-Yip is equivalent to the block-Lanczos process applied on $\begin{bmatrix} 0 & A \\ A^H & 0 \end{bmatrix}$ with the initial matrix $\begin{bmatrix} b & 0 \\ 0 & c \end{bmatrix}$.
+    The Saunders-Simon-Yip is equivalent to the block-Lanczos process applied to $\begin{bmatrix} 0 & A \\ A^H & 0 \end{bmatrix}$ with initial matrix $\begin{bmatrix} b & 0 \\ 0 & c \end{bmatrix}$.
 
 ## Montoison-Orban
 
@@ -326,7 +326,7 @@ The function [`montoison_orban`](@ref montoison_orban) returns $V_{k+1}$, $H_{k+
 Related methods: [`GPMR`](@ref gpmr).
 
 !!! note
-    The Montoison-Orban is equivalent to the block-Arnoldi process applied on $\begin{bmatrix} 0 & A \\ B & 0 \end{bmatrix}$ with the initial matrix $\begin{bmatrix} b & 0 \\ 0 & c \end{bmatrix}$.
+    The Montoison-Orban is equivalent to the block-Arnoldi process applied to $\begin{bmatrix} 0 & A \\ B & 0 \end{bmatrix}$ with initial matrix $\begin{bmatrix} b & 0 \\ 0 & c \end{bmatrix}$.
     It also coincides with the Saunders-Simon-Yip process when $B = A^H$.
 
 ```@docs
