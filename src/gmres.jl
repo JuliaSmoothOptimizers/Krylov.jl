@@ -29,16 +29,6 @@ Solve the linear system Ax = b of size n using GMRES.
 
 GMRES algorithm is based on the Arnoldi process and computes a sequence of approximate solutions with the minimum residual.
 
-This implementation allows a left preconditioner M and a right preconditioner N.
-Full reorthogonalization is available with the `reorthogonalization` option.
-
-If `restart = true`, the restarted version GMRES(k) is used with `k = memory`.
-If `restart = false`, the parameter `memory` should be used as a hint of the number of iterations to limit dynamic memory allocations.
-More storage will be allocated only if the number of iterations exceeds `memory`.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension n;

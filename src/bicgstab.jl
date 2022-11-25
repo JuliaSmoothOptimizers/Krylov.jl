@@ -41,15 +41,6 @@ convergence than CGS.
 If BICGSTAB stagnates, we recommend DQGMRES and BiLQ as alternative methods for unsymmetric square systems.
 
 BICGSTAB stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖b‖ * rtol`.
-`atol` is an absolute tolerance and `rtol` is a relative tolerance.
-
-Additional details can be displayed if verbose mode is enabled (verbose > 0).
-Information will be displayed every `verbose` iterations.
-
-This implementation allows a left preconditioner `M` and a right preconditioner `N`.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
 
 #### Input arguments
 

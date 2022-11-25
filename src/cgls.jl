@@ -53,9 +53,6 @@ CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖A�
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension m × n;

@@ -33,15 +33,7 @@ CG can be warm-started from an initial guess `x0` where `kwargs` are the same ke
 The conjugate gradient method to solve the Hermitian linear system Ax = b of size n.
 
 The method does _not_ abort if A is not definite.
-
-A preconditioner M may be provided in the form of a linear operator and is
-assumed to be Hermitian and positive definite.
 M also indicates the weighted norm in which residuals are measured.
-
-If `itmax=0`, the default number of iterations is set to `2 * n`.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
 
 #### Input arguments
 

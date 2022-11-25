@@ -32,16 +32,9 @@ Solve the shifted linear system
 
     (A + λI) x = b
 
-of size n using the SYMMLQ method, where λ is a shift parameter,
-and A is Hermitian.
+of size n using the SYMMLQ method, where λ is a shift parameter, and A is Hermitian.
 
 SYMMLQ produces monotonic errors ‖x* - x‖₂.
-
-A preconditioner M may be provided in the form of a linear operator and is
-assumed to be Hermitian and positive definite.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
 
 #### Input arguments
 

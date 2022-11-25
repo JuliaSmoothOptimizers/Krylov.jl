@@ -28,7 +28,7 @@ export tricg, tricg!
 
 TriCG can be warm-started from initial guesses `x0` and `y0` where `kwargs` are the same keyword arguments as above.
 
-Given a matrix `A` of dimension m × n, TriCG solves the symmetric linear system
+Given a matrix `A` of dimension m × n, TriCG solves the Hermitian linear system
 
     [ τE    A ] [ x ] = [ b ]
     [  Aᴴ  νF ] [ y ]   [ c ],
@@ -38,11 +38,7 @@ of size (n+m) × (n+m) where τ and ν are real numbers, E = M⁻¹ ≻ 0 and F 
 TriCG could breakdown if `τ = 0` or `ν = 0`.
 It's recommended to use TriMR in these cases.
 
-By default, TriCG solves symmetric and quasi-definite linear systems with τ = 1 and ν = -1.
-If `flip = true`, TriCG solves another known variant of SQD systems where τ = -1 and ν = 1.
-If `spd = true`, τ = ν = 1 and the associated symmetric and positive definite linear system is solved.
-If `snd = true`, τ = ν = -1 and the associated symmetric and negative definite linear system is solved.
-`τ` and `ν` are also keyword arguments that can be directly modified for more specific problems.
+By default, TriCG solves Hermitian and quasi-definite linear systems with τ = 1 and ν = -1.
 
 TriCG is based on the preconditioned orthogonal tridiagonalization process
 and its relation with the preconditioned block-Lanczos process.
@@ -55,12 +51,6 @@ It's the Euclidean norm when `M` and `N` are identity operators.
 
 TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
-
-Additional details can be displayed if verbose mode is enabled (verbose > 0).
-Information will be displayed every `verbose` iterations.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
 
 #### Input arguments
 
