@@ -341,10 +341,8 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # Stopping conditions based on user-provided tolerances.
     tired = iter ≥ itmax
     ill_cond_lim = (one(T) / Acond ≤ ctol)
-    # We must check that these stopping conditions work with preconditioners
-    # before we reuse them as stopping conditions.
-    # solved_lim = (test2 ≤ ε)
-    # zero_resid_lim = (test1 ≤ ε)
+    solved_lim = (test2 ≤ ε)
+    zero_resid_lim = MisI && (test1 ≤ ε)
     resid_decrease_lim = (rNorm ≤ ε)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
 

@@ -411,7 +411,7 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     # Stopping conditions based on user-provided tolerances.
     tired = iter ≥ itmax
     resid_decrease_lim = (rNorm ≤ ε)
-    zero_resid_lim = (backward ≤ ε)
+    zero_resid_lim = MisI && (backward ≤ ε)
     breakdown = βₖ₊₁ ≤ btol
 
     user_requested_exit = callback(solver) :: Bool
