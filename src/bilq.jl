@@ -29,13 +29,7 @@ BiLQ can be warm-started from an initial guess `x0` where `kwargs` are the same 
 Solve the square linear system Ax = b of size n using BiLQ.
 BiLQ is based on the Lanczos biorthogonalization process and requires two initial vectors `b` and `c`.
 The relation `bᴴc ≠ 0` must be satisfied and by default `c = b`.
-When `A` is symmetric and `b = c`, BiLQ is equivalent to SYMMLQ.
-
-An option gives the possibility of transferring to the BiCG point,
-when it exists. The transfer is based on the residual norm.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
+When `A` is Hermitian and `b = c`, BiLQ is equivalent to SYMMLQ.
 
 #### Input arguments
 

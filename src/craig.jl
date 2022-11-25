@@ -88,9 +88,6 @@ In this case, `M` can still be specified and indicates the weighted norm in whic
 
 In this implementation, both the x and y-parts of the solution are returned.
 
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension m × n;

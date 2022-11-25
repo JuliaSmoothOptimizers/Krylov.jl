@@ -54,12 +54,6 @@ A is indefinite.
 
 MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr‖₂.
 
-A preconditioner M may be provided in the form of a linear operator and is
-assumed to be Hermitian and positive definite.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian matrix of dimension n;

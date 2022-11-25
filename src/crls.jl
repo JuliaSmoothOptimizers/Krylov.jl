@@ -45,9 +45,6 @@ CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr�
 It is formally equivalent to LSMR, though can be substantially less accurate,
 but simpler to implement.
 
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension m × n;

@@ -32,15 +32,8 @@ If CG is well defined on `Ax = b` and `memory = 2`, DIOM is theoretically equiva
 If `k ≤ memory` where `k` is the number of iterations, DIOM is theoretically equivalent to FOM.
 Otherwise, DIOM interpolates between CG and FOM and is similar to CG with partial reorthogonalization.
 
-Partial reorthogonalization is available with the `reorthogonalization` option.
-
-An advantage of DIOM is that nonsymmetric or symmetric indefinite or both nonsymmetric
+An advantage of DIOM is that non-Hermitian or Hermitian indefinite or both non-Hermitian
 and indefinite systems of linear equations can be handled by this single algorithm.
-
-This implementation allows a left preconditioner M and a right preconditioner N.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
 
 #### Input arguments
 

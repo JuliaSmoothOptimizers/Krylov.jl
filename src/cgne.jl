@@ -61,11 +61,6 @@ CGNE produces monotonic errors ‖x-x*‖₂ but not residuals ‖r‖₂.
 It is formally equivalent to CRAIG, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 
-A preconditioner N may be provided in the form of a linear operator.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension m × n;

@@ -38,11 +38,6 @@ of size (n+m) × (n+m) where τ and ν are real numbers, E = M⁻¹ ≻ 0, F = N
 TriMR handles saddle-point systems (`τ = 0` or `ν = 0`) and adjoint systems (`τ = 0` and `ν = 0`) without any risk of breakdown.
 
 By default, TriMR solves symmetric and quasi-definite linear systems with τ = 1 and ν = -1.
-If `flip = true`, TriMR solves another known variant of SQD systems where τ = -1 and ν = 1.
-If `spd = true`, τ = ν = 1 and the associated symmetric and positive definite linear system is solved.
-If `snd = true`, τ = ν = -1 and the associated symmetric and negative definite linear system is solved.
-If `sp = true`, τ = 1, ν = 0 and the associated saddle-point linear system is solved.
-`τ` and `ν` are also keyword arguments that can be directly modified for more specific problems.
 
 TriMR is based on the preconditioned orthogonal tridiagonalization process
 and its relation with the preconditioned block-Lanczos process.
@@ -55,12 +50,6 @@ It's the Euclidean norm when `M` and `N` are identity operators.
 
 TriMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
-
-Additional details can be displayed if verbose mode is enabled (verbose > 0).
-Information will be displayed every `verbose` iterations.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
 
 #### Input arguments
 

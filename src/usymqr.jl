@@ -43,9 +43,6 @@ It's considered as a generalization of MINRES.
 It can also be applied to under-determined and over-determined problems.
 USYMQR finds the minimum-norm solution if problems are inconsistent.
 
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension m × n;

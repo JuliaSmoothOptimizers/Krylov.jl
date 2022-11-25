@@ -29,7 +29,7 @@ export gpmr, gpmr!
 GPMR can be warm-started from initial guesses `x0` and `y0` where `kwargs` are the same keyword arguments as above.
 
 Given matrices `A` of dimension m × n and `B` of dimension n × m,
-GPMR solves the unsymmetric partitioned linear system
+GPMR solves the non-Hermitian partitioned linear system
 
     [ λIₘ   A  ] [ x ] = [ b ]
     [  B   μIₙ ] [ y ]   [ c ],
@@ -51,22 +51,12 @@ and can solve
 when `CE = M⁻¹` and `DF = N⁻¹`.
 
 By default, GPMR solves unsymmetric linear systems with `λ = 1` and `μ = 1`.
-If `gsp = true`, `λ = 1`, `μ = 0` and the associated generalized saddle point system is solved.
-`λ` and `μ` are also keyword arguments that can be directly modified for more specific problems.
 
 GPMR is based on the orthogonal Hessenberg reduction process and its relations with the block-Arnoldi process.
 The residual norm ‖rₖ‖ is monotonically decreasing in GPMR.
 
 GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
-
-Full reorthogonalization is available with the `reorthogonalization` option.
-
-Additional details can be displayed if verbose mode is enabled (verbose > 0).
-Information will be displayed every `verbose` iterations.
-
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
 
 #### Input arguments
 

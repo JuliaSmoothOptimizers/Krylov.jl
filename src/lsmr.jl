@@ -84,9 +84,6 @@ The system above represents the optimality conditions of
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᴴr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 
-The callback is called as `callback(solver)` and should return `true` if the main loop should terminate,
-and `false` otherwise.
-
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension m × n;
