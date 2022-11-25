@@ -103,9 +103,9 @@ The match is verified in the unit tests by way of functions that return the numb
 
 # Examples
 
-Our first example is a simple implementation of Gauss-Newton method without linesearch for nonlinear least squares.
+Our first example is a simple implementation of the Gauss-Newton method without linesearch for nonlinear least squares.
 It illustrates several of the facilities of Krylov.jl: solver preallocation and reuse, genericity with respect to data types, and linear operators.
-Another example based on a simplistic Newton's method without linesearch for convex optimization is also available in the documentation and illustrates the concepts separately in the sections “In-places methods” and “Factorization-free operators”.
+Another example based on a simplistic Newton method without linesearch for convex optimization is also available in the documentation, and illustrates the same concepts in the sections “In-places methods” and “Factorization-free operators”.
 
 ```julia
 using SparseArrays     # Sparse library of Julia
@@ -150,7 +150,7 @@ JF(x) = LinearOperator(T, 3, 2, symmetric, hermitian, (y, v) -> J(y, x, v),   # 
 gauss_newton(F, JF, x₀)
 ```
 
-Our second example concerns the solution of a complex Hermitian linear system from the SuiteSparse Matrix Collection with an incomplete Cholesky preconditioner on GPU.
+Our second example concerns the solution of a complex Hermitian linear system from the SuiteSparse Matrix Collection with an incomplete Cholesky factorization preconditioner on GPU.
 The preconditioner $P$ is implemented as an in-place linear operator that performs the forward and backward sweeps with the Cholesky factor to model $P^{-1}$.
 Because the system matrix is Hermitian and positive definite, we use the conjugate gradient method.
 However, other methods for Hermitian systems could be used, including \textsc{Symmlq}, \textsc{Cr} and \textsc{Minres}.
@@ -193,7 +193,7 @@ symmetric = false
 hermitian = true
 P⁻¹ = LinearOperator(T, m, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(y, P, x))
 
-# Solve an Hermitian positive definite system with an incomplete Cholesky preconditioner on GPU
+# Solve a Hermitian positive definite system with an incomplete Cholesky factorization preconditioner on GPU
 x, stats = cg(A_gpu, b_gpu, M=P⁻¹)
 ```
 
