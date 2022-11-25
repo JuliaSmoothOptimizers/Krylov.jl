@@ -38,6 +38,8 @@ header-includes: |
 |$\begin{matrix} Ax = b \\ A^{H\!} y = c \end{matrix}$ | $\begin{bmatrix} M & \!\phantom{-}A \\ A^{
   H\!} & \!-N \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix}$ | $\begin{bmatrix} M & A \\ B & N \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix}$ |
 
+\vspace{-1em}
+
 $A^{H\!}$ denotes the conjugate transpose of $A$.
 It coincides with $A^{T\!}$, the transpose of $A$, if $A$ is real.
 Krylov methods are iterative methods based on @krylov-1931 subspaces.
@@ -57,7 +59,6 @@ Krylov.jl aims to provide a unified interface for the largest collection of Kryl
 
 Some processes and methods are not available elsewhere and are the product of our own research.
 References for each process and method are available in the extensive [documentation](https://juliasmoothoptimizers.github.io/Krylov.jl/stable/).
-<!-- placement de produit pour JSO et utilisation dans LinearSolve.jl? -->
 
 ## Support for any floating-point system supported by Julia
 
@@ -65,9 +66,6 @@ Krylov.jl works with real and complex data in any floating-point system supporte
 Although most personal computers offer IEEE 754 single and double precision computations, new architectures implement native computations in other floating-point systems.
 In addition, software libraries such as the GNU MPFR, shipped with Julia, let users experiment with computations in variable, extended precision at the software level with the `BigFloat` data type.
 Working in high precision has obvious benefits in terms of accuracy.
-<!-- We can solve linear systems within the common half, single, double and arbitrary precision (`Float16`, `Float32`, `Float64`, `BigFloat` and their complex counterparts) but shipped with Julia or additional precision implemented through packages. -->
-<!-- The alternative half precision format `BFloat16` provided by [BFloat16s.jl](https://github.com/JuliaMath/BFloat16s.jl) or the quadruple precision `Float128` implemented in [Quadmath.jl](https://github.com/JuliaMath/Quadmath.jl) are supported by Krylov.jl for instance. -->
-<!-- DoubleFloats.jl, AbNumerics.jl, DecFP.jl, MultiFloats.jl... -->
 
 ## Support for Nvidia, AMD and Intel GPUs
 
@@ -80,7 +78,7 @@ Thus, Krylov.jl works with GPU backends that build on [GPUArrays.jl](https://git
 ## Support for linear operators
 
 The input arguments of all Krylov.jl solvers that model $A$, $B$, $M$, $N$ and preconditioners can be any object that represents a linear operator.
-Krylov methods combined with linear operators allow to reduce computation time and memory requirements considerably by avoiding building and storing the system matrix.
+Krylov methods combined with linear operators allow to reduce computation time and memory requirements considerably by avoiding building and storing matrices.
 In nonlinear optimization, finding a critical point of a continuous function frequently involves linear systems where $A$ is a Hessian or a Jacobian.
 Materializing such operators as matrices is expensive in terms of operations and memory consumption and is unreasonable for high-dimensional problems.
 However, it is often possible to implement efficient Hessian-vector and Jacobian-vector products, for example with the help of automatic differentiation tools.
@@ -91,26 +89,23 @@ All solvers in Krylov.jl have an in-place variant that allows to solve multiple 
 Optimization methods such as the Newton and Gauss-Newton methods can take advantage of this functionality by allocating workspace for the solve only once.
 The in-place variants only require a Julia structure that contains all the storage needed by a Krylov method as additional argument.
 In-place methods limit memory allocations and deallocations, which are particularly expensive on GPUs.
-<!-- C'est le moment de placer un mot sur JSO -->
 
 ## Performance optimizations and storage requirements
 
 Operator-vector products and vector operations are the most expensive operations in Krylov.jl.
 We rely on BLAS routines as much as possible to perform those operations.
 By default, Julia ships with OpenBLAS and provides multithreaded routines.
-Since Julia 1.6, users can also switch dynamically to other BLAS backends, such as Apple Accelerate, the Intel MKL or BLIS, thanks to the BLAS demuxing library `libblastrampoline`, if an optimized BLAS is available.
-<!-- une petite transition ne serait pas du luxe -->
+Since Julia 1.6, users can also switch dynamically to other BLAS backends, such as the Intel MKL or BLIS, thanks to the BLAS demuxing library `libblastrampoline`, if an optimized BLAS is available.
 
-A ``Storage Requirements'' section is available in the documentation to provide the theoretical number of bytes required by each method.
+A “Storage Requirements” section is available in the documentation to provide the theoretical number of bytes required by each method.
 Our implementations are storage-optimal in the sense that they are guaranteed to match the theoretical storage amount.
 The match is verified in the unit tests by way of functions that return the number of bytes allocated by our implementations.
 
 # Examples
 
-Our first example is a simple implementation of Newton's method without linesearch for convex optimization.
+Our first example is a simple implementation of Gauss-Newton method without linesearch for nonlinear least squares.
 It illustrates several of the facilities of Krylov.jl: solver preallocation and reuse, genericity with respect to data types, and linear operators.
-Because we expect the Hessian to be symmetric and positive definite, we use the conjugate gradient method.
-However, other methods for symmetric systems could be used, including CR and MINRES.
+Another example based on a simplistic Newton's method without linesearch for convex optimization is also available in the documentation and illustrates the concepts separately in the sections “In-places methods” and “Factorization-free operators”.
 
 ```julia
 using SparseArrays     # Sparse library of Julia
@@ -119,59 +114,9 @@ using ForwardDiff      # Automatic differentiation
 using LinearOperators  # Linear operators
 using Quadmath         # Quadruple precision
 using MKL              # Intel BLAS
-using CUDA             # Interface to Nvidia GPUs
-using CUDA.CUSPARSE    # Nvidia CUSPARSE library
-```
 
-<!-- At each iteration of Newton's method applied to a $\mathcal{C}^2$ strictly convex function $f : \mathbb{R}^n \rightarrow \mathbb{R}$, a descent direction direction is determined by minimizing the quadratic Taylor model of $f$:
-$$\min_{d \in \mathbb{R}^n}~~f(x_k) + \nabla f(x_k)^T d + \tfrac{1}{2}~d^T \nabla^2 f(x_k) d$$
-which is equivalent to solving the symmetric and positive-definite system
-$$\nabla^2 f(x_k) d  = -\nabla f(x_k).$$
-The system above can be solved with the conjugate gradient method. -->
-
-```julia
-"The Newton method for convex optimization"
-function newton(∇f, ∇²f, x₀::AbstractVector{T}; itmax = 200, tol = √eps(T)) where T
-    n = length(x₀)
-    x = copy(x₀)
-    gx = ∇f(x)
-    iter = 0
-    S = typeof(x)               # precision and architecture
-    solver = CgSolver(n, n, S)  # structure that contains the workspace of CG
-    solved = tired = false
-    while !(solved || tired)
-        Hx = ∇²f(x)           # Compute ∇²f(xₖ)
-        cg!(solver, Hx, -gx)  # Solve ∇²f(xₖ)Δx = -∇f(xₖ)
-        x .+= solver.x        # Update xₖ₊₁ = xₖ + Δx
-        gx = ∇f(x)            # ∇f(xₖ₊₁)
-        iter += 1
-        solved = norm(gx) ≤ tol
-        tired = iter ≥ itmax
-    end
-    return x
-end
-
-T = Float16  # IEEE half precision
-n = 4
-x₀ = -ones(T, n)
-f(x) = sum((x[i] - i)^2 for i = 1:n)                                # f(x)
-∇f(x) = ForwardDiff.gradient(f, x)                                  # ∇f(x)
-H(y, x, v) = ForwardDiff.derivative!(y, t -> ∇f(x + t * v), 0)      # y ← ∇²f(x)v
-symmetric = hermitian = true
-∇²f(x) = LinearOperator(T, n, n, symmetric, hermitian, (y, v) -> H(y, x, v))  # ∇²f(x)
-newton(∇f, ∇²f, x₀)
-```
-
-Our second example illustrates similar concepts with a solver for rectangular problems, in this case a linear least-squares solver, in the context of a simplistic Gauss-Newton method without linesearch for nonlinear least squares.
-
-<!-- At each iteration of the Gauss-Newton method applied to a nonlinear least-squares objective $f(x) = \tfrac{1}{2}\| F(x)\|^2$ where $F : \mathbb{R}^n \rightarrow \mathbb{R}^m$ is $\mathcal{C}^1$, we solve the subproblem:
-$$\min_{d \in \mathbb{R}^n}~~\tfrac{1}{2}~\|J(x_k) d + F(x_k)\|^2,$$
-where $J(x)$ is the Jacobian of $F$ at $x$.
-An appropriate iterative method to solve the above linear least-squares problems is LSMR. -->
-
-```julia
 "The Gauss-Newton method for Nonlinear Least Squares"
-function gauss_newton(F, JF, x₀; itmax = 200, tol = 1e-8)
+function gauss_newton(F, JF, x₀::AbstractVector{T}; itmax = 200, tol = √eps(T)) where T
     n = length(x₀)
     x = copy(x₀)
     Fx = F(x)
@@ -205,13 +150,27 @@ JF(x) = LinearOperator(T, 3, 2, symmetric, hermitian, (y, v) -> J(y, x, v),   # 
 gauss_newton(F, JF, x₀)
 ```
 
-Our final example concerns the solution of a set of complex normal equations with incomplete Cholesky preconditioner on GPU.
+Our second example concerns the solution of a complex Hermitian linear system from the SuiteSparse Matrix Collection with an incomplete Cholesky preconditioner on GPU.
 The preconditioner $P$ is implemented as an in-place linear operator that performs the forward and backward sweeps with the Cholesky factor to model $P^{-1}$.
+Because the system matrix is Hermitian and positive definite, we use the conjugate gradient method.
+However, other methods for Hermitian systems could be used, including \textsc{Symmlq}, \textsc{Cr} and \textsc{Minres}.
 
 ```julia
-A_cpu = sprand(ComplexF64, 100, 100, 0.05)
-A_cpu = A_cpu * A_cpu'
-b_cpu = rand(ComplexF64, 100)
+using SparseArrays                 # Sparse library of Julia
+using Krylov                       # Krylov methods and processes
+using MatrixMarket                 # Reader of matrices stored in the Matrix Market format
+using SuiteSparseMatrixCollection  # Interface to the SuiteSparse Matrix Collection
+using LinearOperators              # Linear operators
+using CUDA                         # Interface to Nvidia GPUs
+using CUDA.CUSPARSE                # Nvidia CUSPARSE library
+
+ssmc = ssmc_db()
+matrices = ssmc_matrices(ssmc, "Bai", "mhd1280b")
+paths = fetch_ssmc(matrices, format="MM")
+path_A = joinpath(paths[1], "mhd1280b.mtx")
+A_cpu = MatrixMarket.mmread(path_A)
+m, n = size(A_cpu)
+b_cpu = ones(ComplexF64, m)
 
 # Transfer the linear system from the CPU to the GPU
 A_gpu = CuSparseMatrixCSR(A_cpu)
@@ -229,14 +188,13 @@ function ldiv_ic0!(y, P, x)
 end
 
 # Linear operator that model the preconditioner P⁻¹
-n = length(b_gpu)
-T = eltype(b_gpu)
+T = ComplexF64
 symmetric = false
 hermitian = true
-P⁻¹ = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(y, P, x))
+P⁻¹ = LinearOperator(T, m, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(y, P, x))
 
-# Solve a Hermitian positive definite system with an incomplete Cholesky preconditioner on GPU
-x, stats = minres(A_gpu, b_gpu, M=P⁻¹)
+# Solve an Hermitian positive definite system with an incomplete Cholesky preconditioner on GPU
+x, stats = cg(A_gpu, b_gpu, M=P⁻¹)
 ```
 
 # Acknowledgements
@@ -245,13 +203,3 @@ Alexis Montoison is supported by an FRQNT grant and an excellence scholarship of
 and Dominique Orban is partially supported by an NSERC Discovery Grant.
 
 # References
-
-<!--
-Livre de Greenbaum
-Book Series Name:Frontiers in Applied Mathematics
-Book Code:FR17
-
-Livre de Saad:
-Book Series Name:Other Titles in Applied Mathematics
-Book Code:OT82
--->
