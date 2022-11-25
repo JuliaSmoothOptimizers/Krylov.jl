@@ -108,10 +108,11 @@ It illustrates several of the facilities of Krylov.jl: solver preallocation and 
 Another example based on a simplistic Newton method without linesearch for convex optimization is also available in the documentation, and illustrates the same concepts in the sections “In-places methods” and “Factorization-free operators”.
 
 ```julia
+using LinearAlgebra    # Linear algebra library of Julia
 using SparseArrays     # Sparse library of Julia
 using Krylov           # Krylov methods and processes
-using ForwardDiff      # Automatic differentiation
 using LinearOperators  # Linear operators
+using ForwardDiff      # Automatic differentiation
 using Quadmath         # Quadruple precision
 using MKL              # Intel BLAS
 
@@ -150,17 +151,18 @@ JF(x) = LinearOperator(T, 3, 2, symmetric, hermitian, (y, v) -> J(y, x, v),   # 
 gauss_newton(F, JF, x₀)
 ```
 
-Our second example concerns the solution of a complex Hermitian linear system from the SuiteSparse Matrix Collection with an incomplete Cholesky factorization preconditioner on GPU.
+Our second example concerns the solution of a complex Hermitian linear system from the SuiteSparse Matrix Collection [@davis-hu-2011] with an incomplete Cholesky factorization preconditioner on GPU.
 The preconditioner $P$ is implemented as an in-place linear operator that performs the forward and backward sweeps with the Cholesky factor to model $P^{-1}$.
 Because the system matrix is Hermitian and positive definite, we use the conjugate gradient method.
 However, other methods for Hermitian systems could be used, including \textsc{Symmlq}, \textsc{Cr} and \textsc{Minres}.
 
 ```julia
+using LinearAlgebra                # Linear algebra library of Julia
 using SparseArrays                 # Sparse library of Julia
 using Krylov                       # Krylov methods and processes
+using LinearOperators              # Linear operators
 using MatrixMarket                 # Reader of matrices stored in the Matrix Market format
 using SuiteSparseMatrixCollection  # Interface to the SuiteSparse Matrix Collection
-using LinearOperators              # Linear operators
 using CUDA                         # Interface to Nvidia GPUs
 using CUDA.CUSPARSE                # Nvidia CUSPARSE library
 
@@ -183,7 +185,7 @@ P = ic02(A_gpu, 'O')
 function ldiv_ic0!(y, P, x)
   copyto!(y, x)
   ldiv!(LowerTriangular(P), y)   # Forward substitution with L
-  ldiv!(LowerTriangular(P'), y)  # Backward substitution with Lᴴ
+  ldiv!(LowerTriangular(P)', y)  # Backward substitution with Lᴴ
   return y
 end
 
