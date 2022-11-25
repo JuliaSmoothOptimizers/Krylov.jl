@@ -195,7 +195,7 @@ symmetric = false
 hermitian = true
 P⁻¹ = LinearOperator(T, m, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(y, P, x))
 
-# Solve a Hermitian positive definite system with an incomplete Cholesky factorization preconditioner on GPU
+# Solve a Hermitian positive definite system with an incomplete Cholesky factorization preconditioner
 x, stats = cg(A_gpu, b_gpu, M=P⁻¹)
 ```
 
