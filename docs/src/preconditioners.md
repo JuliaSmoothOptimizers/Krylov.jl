@@ -135,6 +135,7 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 - [LimitedLDLFactorizations.jl](https://github.com/JuliaSmoothOptimizers/LimitedLDLFactorizations.jl) for limited-memory LDLᵀ factorization of symmetric matrices.
 - [AlgebraicMultigrid.jl](https://github.com/JuliaLinearAlgebra/AlgebraicMultigrid.jl) provides two algebraic multigrid (AMG) preconditioners.
 - [RandomizedPreconditioners.jl](https://github.com/tjdiamandis/RandomizedPreconditioners.jl) uses randomized numerical linear algebra to construct approximate inverses of matrices.
+- [BasicLU.jl](https://github.com/JuliaSmoothOptimizers/BasicLU.jl) uses a sparse LU factorization to compute a maximum volume basis that can be used as a preconditioner for least-norm and least-squares problems.
 
 ## Examples
 
@@ -206,4 +207,31 @@ C = lu(M)
 # [M  A] [x] = [b]
 # [B  0] [y]   [c]
 x, y, stats = gpmr(A, B, b, c, C=C, gsp=true, ldiv=true)
+```
+
+```julia
+import BasicLU
+using LinearOperators, Krylov
+
+# Least-squares problem
+m, n = size(A)
+Aᴴ = sparse(A')
+basis, B = BasicLU.maxvolbasis(Aᴴ)
+opA = LinearOperator(A)
+B⁻ᴴ = LinearOperator(Float64, n, n, false, false, (y, v) -> (y .= v ; BasicLU.solve!(B, y, 'T')),
+                                                  (y, v) -> (y .= v ; BasicLU.solve!(B, y, 'N')),
+                                                  (y, v) -> (y .= v ; BasicLU.solve!(B, y, 'N')))
+
+d, stats = lsmr(opA * B⁻ᴴ, b)  # min ‖AB⁻ᴴd - b‖₂
+x = B⁻ᴴ * d                    # recover the solution of min ‖Ax - b‖₂
+
+# Least-norm problem
+m, n = size(A)
+basis, B = maxvolbasis(A)
+opA = LinearOperator(A)
+B⁻¹ = LinearOperator(Float64, m, m, false, false, (y, v) -> (y .= v ; BasicLU.solve!(B, y, 'N')),
+                                                  (y, v) -> (y .= v ; BasicLU.solve!(B, y, 'T')),
+                                                  (y, v) -> (y .= v ; BasicLU.solve!(B, y, 'T')))
+
+x, y, stats = craigmr(B⁻¹ * opA, B⁻¹ * b)  # min ‖x‖₂  s.t.  B⁻¹Ax = B⁻¹b
 ```
