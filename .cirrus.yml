@@ -26,6 +26,11 @@ task:
   allow_failures: $JULIA_VERSION == 'nightly'
   install_script: |
     URL="https://raw.githubusercontent.com/ararslan/CirrusCI.jl/master/bin/install.sh"
+    set -x
+    if command -v apt; then
+        apt update
+        apt install -y curl
+    fi
     if command -v curl; then
         sh -c "$(curl ${URL})"
     elif command -v wget; then
