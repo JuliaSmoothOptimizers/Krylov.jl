@@ -1,15 +1,31 @@
-freebsd_instance:
-  image: freebsd-13-0-release-amd64
 task:
-  name: FreeBSD
-  env:
-    matrix:
-      - JULIA_VERSION: 1.6
-      - JULIA_VERSION: 1
-      - JULIA_VERSION: nightly
+  matrix:
+    - name: FreeBSD
+      freebsd_instance:
+        image_family: freebsd-13-1
+      env:
+        matrix:
+          - JULIA_VERSION: 1.6
+          - JULIA_VERSION: 1
+          - JULIA_VERSION: nightly
+    - name: Linux ARMv8
+      arm_container:
+        image: ubuntu:latest
+      env:
+        - JULIA_VERSION: 1
+    - name: musl Linux
+      container:
+        image: alpine:3.14
+      env:
+        - JULIA_VERSION: 1
+    - name: macOS M1
+      macos_instance:
+        image: ghcr.io/cirruslabs/macos-monterey-base:latest
+      env:
+        - JULIA_VERSION: 1
   allow_failures: $JULIA_VERSION == 'nightly'
   install_script:
-    - sh -c "$(fetch https://raw.githubusercontent.com/ararslan/CirrusCI.jl/master/bin/install.sh -o -)"
+    - sh bin/install.sh
   build_script:
     - cirrusjl build
   test_script:
