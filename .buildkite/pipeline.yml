@@ -55,8 +55,9 @@ steps:
       - JuliaCI/julia#v1:
           version: 1.8
     agents:
-      queue: "juliagpu"
-      metal: "*"
+      queue: "juliaecosystem"
+      os: "macos"
+      arch: "aarch64"
     command: |
       julia --color=yes --project -e '
       using Pkg
