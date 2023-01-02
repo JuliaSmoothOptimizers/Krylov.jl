@@ -302,7 +302,7 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
     xENorm² = xENorm² + ϕ * ϕ
     err_vec[mod(iter, window) + 1] = ϕ
-    iter ≥ window && (err_lbnd = norm(err_vec))
+    iter ≥ window && (err_lbnd = @knrm2(window, err_vec))
 
     τ = s * ϕ
     θ = s * α

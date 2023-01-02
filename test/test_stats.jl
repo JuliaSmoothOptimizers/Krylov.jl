@@ -4,7 +4,7 @@
   show(io, stats)
   showed = String(take!(io))
   storage_type = typeof(stats)
-  expected = """Simple stats
+  expected = """SimpleStats
   niter: 0
   solved: true
   inconsistent: true
@@ -15,14 +15,15 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
-  @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
+  nbytes_allocated = @allocated Krylov.reset!(stats)
+  @test nbytes_allocated == 0
 
   stats = Krylov.LsmrStats(0, true, true, Float64[1.0], Float64[2.0], Float64(3.0), Float64(4.0), Float64(5.0), Float64(6.0), Float64(7.0), "t")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
   storage_type = typeof(stats)
-  expected = """Lsmr stats
+  expected = """LsmrStats
   niter: 0
   solved: true
   inconsistent: true
@@ -37,14 +38,15 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
-  @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
+  nbytes_allocated = @allocated Krylov.reset!(stats)
+  @test nbytes_allocated == 0
 
   stats = Krylov.LanczosStats(0, true, Float64[3.0], true, NaN, NaN, "t")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
   storage_type = typeof(stats)
-  expected = """Lanczos stats
+  expected = """LanczosStats
   niter: 0
   solved: true
   residuals: [ 3.0e+00 ]
@@ -55,14 +57,15 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
-  @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
+  nbytes_allocated = @allocated Krylov.reset!(stats)
+  @test nbytes_allocated == 0
 
   stats = Krylov.LanczosShiftStats(0, true, [Float64[0.9, 0.5], Float64[0.6, 0.4, 0.1]], BitVector([false, true]), NaN, NaN, "t")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
   storage_type = typeof(stats)
-  expected = """LanczosShift stats
+  expected = """LanczosShiftStats
   niter: 0
   solved: true
   residuals: [[0.9, 0.5], [0.6, 0.4, 0.1]]
@@ -70,16 +73,17 @@
   ‖A‖F: NaN
   κ₂(A): NaN
   status: t"""
-  @test (VERSION < v"1.5") || strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
+  @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
-  @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
+  nbytes_allocated = @allocated Krylov.reset!(stats)
+  @test nbytes_allocated == 0
 
   stats = Krylov.SymmlqStats(0, true, Float64[4.0], Union{Float64,Missing}[5.0, missing], Float64[6.0], Union{Float64,Missing}[7.0, missing], NaN, NaN, "t")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
   storage_type = typeof(stats)
-  expected = """Symmlq stats
+  expected = """SymmlqStats
   niter: 0
   solved: true
   residuals: [ 4.0e+00 ]
@@ -92,14 +96,15 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
-  @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
+  nbytes_allocated = @allocated Krylov.reset!(stats)
+  @test nbytes_allocated == 0
 
   stats = Krylov.AdjointStats(0, true, true, Float64[8.0], Float64[9.0], "t")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
   storage_type = typeof(stats)
-  expected = """Adjoint stats
+  expected = """AdjointStats
   niter: 0
   solved primal: true
   solved dual: true
@@ -109,14 +114,15 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
-  @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
+  nbytes_allocated = @allocated Krylov.reset!(stats)
+  @test nbytes_allocated == 0
 
   stats = Krylov.LNLQStats(0, true, Float64[10.0], false, Float64[11.0], Float64[12.0], "t")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
   storage_type = typeof(stats)
-  expected = """LNLQ stats
+  expected = """LNLQStats
   niter: 0
   solved: true
   residuals: [ 1.0e+01 ]
@@ -127,14 +133,15 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
-  @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
+  nbytes_allocated = @allocated Krylov.reset!(stats)
+  @test nbytes_allocated == 0
 
   stats = Krylov.LSLQStats(0, true, false, Float64[13.0], Float64[14.0], Float64[15.0], false, Float64[16.0], Float64[17.0], "t")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
   storage_type = typeof(stats)
-  expected = """LSLQ stats
+  expected = """LSLQStats
   niter: 0
   solved: true
   inconsistent: false
@@ -148,5 +155,6 @@
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
-  @test (VERSION < v"1.5") || (@allocated Krylov.reset!(stats)) == 0
+  nbytes_allocated = @allocated Krylov.reset!(stats)
+  @test nbytes_allocated == 0
 end

@@ -417,7 +417,7 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     # check stopping condition based on forward error lower bound
     err_vec[mod(iter, window) + 1] = ζ
     if iter ≥ window
-      err_lbnd = norm(err_vec)
+      err_lbnd = @knrm2(window, err_vec)
       history && push!(err_lbnds, err_lbnd)
       fwd_err_lbnd = err_lbnd ≤ etol * xlqNorm
     end

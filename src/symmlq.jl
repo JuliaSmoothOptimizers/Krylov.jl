@@ -327,8 +327,11 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
           zetabark = zlist[jx] / clist[jx]
 
           if γbar ≠ 0
-            theta = abs(sum(clist[i] * sprod[i] * zlist[i] for i = 1 : window))
-            theta = zetabark * theta + abs(zetabark * ζbar * sprod[ix] * s) - zetabark^2
+            theta = zero(T)
+            for i = 1 : window
+              theta += clist[i] * sprod[i] * zlist[i]
+            end
+            theta = zetabark * abs(theta) + abs(zetabark * ζbar * sprod[ix] * s) - zetabark^2
             history && (errorscg[iter-window+1] = sqrt(abs(errorscg[iter-window+1]^2 - 2*theta)))
           else
             history && (errorscg[iter-window+1] = missing)
