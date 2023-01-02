@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Factorization-free operators · Krylov.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/style.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Krylov.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">Krylov.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../api/">API</a></li><li><a class="tocitem" href="../processes/">Krylov processes</a></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Krylov methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../solvers/spd/">Hermitian positive definite linear systems</a></li><li><a class="tocitem" href="../solvers/sid/">Hermitian indefinite linear systems</a></li><li><a class="tocitem" href="../solvers/unsymmetric/">Non-Hermitian square linear systems</a></li><li><a class="tocitem" href="../solvers/ln/">Least-norm problems</a></li><li><a class="tocitem" href="../solvers/ls/">Least-squares problems</a></li><li><a class="tocitem" href="../solvers/as/">Adjoint systems</a></li><li><a class="tocitem" href="../solvers/sp_sqd/">Saddle-point and Hermitian quasi-definite systems</a></li><li><a class="tocitem" href="../solvers/gsp/">Generalized saddle-point and non-Hermitian partitioned systems</a></li></ul></li><li><a class="tocitem" href="../inplace/">In-place methods</a></li><li><a class="tocitem" href="../preconditioners/">Preconditioners</a></li><li><a class="tocitem" href="../storage/">Storage requirements</a></li><li><a class="tocitem" href="../gpu/">GPU support</a></li><li><a class="tocitem" href="../warm-start/">Warm-start</a></li><li class="is-active"><a class="tocitem" href>Factorization-free operators</a><ul class="internal"><li><a class="tocitem" href="#factorization-free"><span>Factorization-free operators</span></a></li><li><a class="tocitem" href="#Examples"><span>Examples</span></a></li></ul></li><li><a class="tocitem" href="../callbacks/">Callbacks</a></li><li><a class="tocitem" href="../tips/">Performance tips</a></li><li><input class="collapse-toggle" id="menuitem-13" type="checkbox"/><label class="tocitem" for="menuitem-13"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../examples/cg/">CG</a></li><li><a class="tocitem" href="../examples/cg_lanczos_shift/">CG-LANCZOS-SHIFT</a></li><li><a class="tocitem" href="../examples/symmlq/">SYMMLQ</a></li><li><a class="tocitem" href="../examples/minres_qlp/">MINRES-QLP</a></li><li><a class="tocitem" href="../examples/tricg/">TriCG</a></li><li><a class="tocitem" href="../examples/trimr/">TriMR</a></li><li><a class="tocitem" href="../examples/bicgstab/">BICGSTAB</a></li><li><a class="tocitem" href="../examples/dqgmres/">DQGMRES</a></li><li><a class="tocitem" href="../examples/cgne/">CGNE</a></li><li><a class="tocitem" href="../examples/crmr/">CRMR</a></li><li><a class="tocitem" href="../examples/craig/">CRAIG</a></li><li><a class="tocitem" href="../examples/craigmr/">CRAIGMR</a></li><li><a class="tocitem" href="../examples/cgls/">CGLS</a></li><li><a class="tocitem" href="../examples/crls/">CRLS</a></li><li><a class="tocitem" href="../examples/lsqr/">LSQR</a></li><li><a class="tocitem" href="../examples/lsmr/">LSMR</a></li></ul></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Factorization-free operators</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Factorization-free operators</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/docs/src/factorization-free.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><style>
+.content table td {
+    border-right-width: 1px;
+}
+.content table th {
+    border-right-width: 1px;
+}
+.content table td:last-child {
+    border-right-width: 0px;
+}
+.content table th:last-child {
+    border-right-width: 0px;
+}
+html.theme--documenter-dark .content table td {
+    border-right-width: 1px;
+}
+html.theme--documenter-dark .content table th {
+    border-right-width: 1px;
+}
+html.theme--documenter-dark .content table td:last-child {
+    border-right-width: 0px;
+}
+html.theme--documenter-dark .content table th:last-child {
+    border-right-width: 0px;
+}
+</style><h2 id="factorization-free"><a class="docs-heading-anchor" href="#factorization-free">Factorization-free operators</a><a id="factorization-free-1"></a><a class="docs-heading-anchor-permalink" href="#factorization-free" title="Permalink"></a></h2><p>All methods are factorization-free, which means that you only need to provide operator-vector products.</p><p>The <code>A</code> or <code>B</code> input arguments of Krylov.jl solvers can be any object that represents a linear operator. That object must implement <code>mul!</code>, for multiplication with a vector, <code>size()</code> and <code>eltype()</code>. For certain methods it must also implement <code>adjoint()</code>.</p><p>Some methods only require <code>A * v</code> products, whereas other ones also require <code>A&#39; * u</code> products. In the latter case, <code>adjoint(A)</code> must also be implemented.</p><table><tr><th style="text-align: center">A * v</th><th style="text-align: center">A * v and A&#39; * u</th></tr><tr><td style="text-align: center">CG, CR</td><td style="text-align: center">CGLS, CRLS, CGNE, CRMR</td></tr><tr><td style="text-align: center">SYMMLQ, CG-LANCZOS, MINRES, MINRES-QLP</td><td style="text-align: center">LSLQ, LSQR, LSMR, LNLQ, CRAIG, CRAIGMR</td></tr><tr><td style="text-align: center">DIOM, FOM, DQGMRES, GMRES, FGMRES</td><td style="text-align: center">BiLQ, QMR, BiLQR, USYMLQ, USYMQR, TriLQR</td></tr><tr><td style="text-align: center">CGS, BICGSTAB</td><td style="text-align: center">TriCG, TriMR</td></tr></table><div class="admonition is-info"><header class="admonition-header">Info</header><div class="admonition-body"><p>GPMR is the only method that requires <code>A * v</code> and <code>B * w</code> products.</p></div></div><p>Preconditioners <code>M</code>, <code>N</code>, <code>C</code>, <code>D</code>, <code>E</code> or <code>F</code> can be also linear operators and must implement <code>mul!</code> or <code>ldiv!</code>.</p><p>We strongly recommend <a href="https://github.com/JuliaSmoothOptimizers/LinearOperators.jl">LinearOperators.jl</a> to model matrix-free operators, but other packages such as <a href="https://github.com/JuliaLinearAlgebra/LinearMaps.jl">LinearMaps.jl</a>, <a href="https://github.com/SciML/DiffEqOperators.jl">DiffEqOperators.jl</a> or your own operator can be used as well.</p><p>With <code>LinearOperators.jl</code>, operators are defined as</p><pre><code class="language-julia hljs">A = LinearOperator(type, nrows, ncols, symmetric, hermitian, prod, tprod, ctprod)</code></pre><p>where</p><ul><li><code>type</code> is the operator element type;</li><li><code>nrow</code> and <code>ncol</code> are its dimensions;</li><li><code>symmetric</code> and <code>hermitian</code> should be set to <code>true</code> or <code>false</code>;</li><li><code>prod(y, v)</code>, <code>tprod(y, w)</code> and <code>ctprod(u, w)</code> are called when writing <code>mul!(y, A, v)</code>, <code>mul!(y, tranpose(A), w)</code>, and <code>mul!(y, A&#39;, u)</code>, respectively.</li></ul><p>See the <a href="https://juliasmoothoptimizers.github.io/tutorials/introduction-to-linear-operators/">tutorial</a> and the detailed <a href="https://juliasmoothoptimizers.github.io/LinearOperators.jl/dev/">documentation</a> for more informations on <code>LinearOperators.jl</code>.</p><h2 id="Examples"><a class="docs-heading-anchor" href="#Examples">Examples</a><a id="Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Examples" title="Permalink"></a></h2><p>In the field of nonlinear optimization, finding critical points of a continuous function frequently involves linear systems with a Hessian or Jacobian as coefficient. Materializing such operators as matrices is expensive in terms of operations and memory consumption and is unreasonable for high-dimensional problems. However, it is often possible to implement efficient Hessian-vector and Jacobian-vector products, for example with the help of automatic differentiation tools, and used within Krylov solvers. We now illustrate variants with explicit matrices and with matrix-free operators for two well-known optimization methods.</p><h3 id="Example-1:-Newton&#39;s-Method-for-convex-optimization"><a class="docs-heading-anchor" href="#Example-1:-Newton&#39;s-Method-for-convex-optimization">Example 1: Newton&#39;s Method for convex optimization</a><a id="Example-1:-Newton&#39;s-Method-for-convex-optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Example-1:-Newton&#39;s-Method-for-convex-optimization" title="Permalink"></a></h3><p>At each iteration of Newton&#39;s method applied to a <span>$\mathcal{C}^2$</span> strictly convex function <span>$f : \mathbb{R}^n \rightarrow \mathbb{R}$</span>, a descent direction direction is determined by minimizing the quadratic Taylor model of <span>$f$</span>:</p><p class="math-container">\[\min_{d \in \mathbb{R}^n}~~f(x_k) + \nabla f(x_k)^T d + \tfrac{1}{2}~d^T \nabla^2 f(x_k) d\]</p><p>which is equivalent to solving the symmetric and positive-definite system</p><p class="math-container">\[\nabla^2 f(x_k) d  = -\nabla f(x_k).\]</p><p>The system above can be solved with the conjugate gradient method as follows, using the explicit Hessian:</p><pre><code class="language- hljs">using ForwardDiff, Krylov
+
+xk = -ones(4)
+
+f(x) = (x[1] - 1)^2 + (x[2] - 2)^2 + (x[3] - 3)^2 + (x[4] - 4)^2
+
+g(x) = ForwardDiff.gradient(f, x)
+
+H(x) = ForwardDiff.hessian(f, x)
+
+d, stats = cg(H(xk), -g(xk))</code></pre><p>The explicit Hessian can be replaced by a linear operator that only computes Hessian-vector products:</p><pre><code class="language-julia hljs">using ForwardDiff, LinearOperators, Krylov
+
+xk = -ones(4)
+
+f(x) = (x[1] - 1)^2 + (x[2] - 2)^2 + (x[3] - 3)^2 + (x[4] - 4)^2
+
+g(x) = ForwardDiff.gradient(f, x)
+
+H(y, v) = ForwardDiff.derivative!(y, t -&gt; g(xk + t * v), 0)
+opH = LinearOperator(Float64, 4, 4, true, true, (y, v) -&gt; H(y, v))
+
+cg(opH, -g(xk))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">([2.0, 3.0, 4.0, 5.0], SimpleStats
+ niter: 1
+ solved: true
+ inconsistent: false
+ residuals: []
+ Aresiduals: []
+ κ₂(A): []
+ status: solution good enough given atol and rtol
+)</code></pre><h3 id="Example-2:-The-Gauss-Newton-Method-for-Nonlinear-Least-Squares"><a class="docs-heading-anchor" href="#Example-2:-The-Gauss-Newton-Method-for-Nonlinear-Least-Squares">Example 2: The Gauss-Newton Method for Nonlinear Least Squares</a><a id="Example-2:-The-Gauss-Newton-Method-for-Nonlinear-Least-Squares-1"></a><a class="docs-heading-anchor-permalink" href="#Example-2:-The-Gauss-Newton-Method-for-Nonlinear-Least-Squares" title="Permalink"></a></h3><p>At each iteration of the Gauss-Newton method applied to a nonlinear least-squares objective <span>$f(x) = \tfrac{1}{2}\| F(x)\|^2$</span> where <span>$F : \mathbb{R}^n \rightarrow \mathbb{R}^m$</span> is <span>$\mathcal{C}^1$</span>, we solve the subproblem:</p><p class="math-container">\[\min_{d \in \mathbb{R}^n}~~\tfrac{1}{2}~\|J(x_k) d + F(x_k)\|^2,\]</p><p>where <span>$J(x)$</span> is the Jacobian of <span>$F$</span> at <span>$x$</span>.</p><p>An appropriate iterative method to solve the above linear least-squares problems is LSMR. We could pass the explicit Jacobian to LSMR as follows:</p><pre><code class="language- hljs">using ForwardDiff, Krylov
+
+xk = ones(2)
+
+F(x) = [x[1]^4 - 3; exp(x[2]) - 2; log(x[1]) - x[2]^2]
+
+J(x) = ForwardDiff.jacobian(F, x)
+
+d, stats = lsmr(J(xk), -F(xk))</code></pre><p>However, the explicit Jacobian can be replaced by a linear operator that only computes Jacobian-vector and transposed Jacobian-vector products:</p><pre><code class="language-julia hljs">using LinearAlgebra, ForwardDiff, LinearOperators, Krylov
+
+xk = ones(2)
+
+F(x) = [x[1]^4 - 3; exp(x[2]) - 2; log(x[1]) - x[2]^2]
+
+J(y, v) = ForwardDiff.derivative!(y, t -&gt; F(xk + t * v), 0)
+Jᵀ(y, u) = ForwardDiff.gradient!(y, x -&gt; dot(F(x), u), xk)
+opJ = LinearOperator(Float64, 3, 2, false, false, (y, v) -&gt; J(y, v),
+                                                  (y, w) -&gt; Jᵀ(y, w),
+                                                  (y, u) -&gt; Jᵀ(y, u))
+
+lsmr(opJ, -F(xk))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">([0.49889007728348445, -0.2594343430903828], LsmrStats
+ niter: 2
+ solved: true
+ inconsistent: true
+ residuals: []
+ Aresiduals: []
+ residual: 0.022490204087080454
+ Aresidual: 1.9837017206339416e-15
+ κ₂(A): 1.2777264193293685
+ ‖A‖F: 5.328138145631235
+ xNorm: 0.5623144027914095
+ status: found approximate minimum least-squares solution
+)</code></pre><p>Note that preconditioners can be also implemented as abstract operators. For instance, we could compute the Cholesky factorization of <span>$M$</span> and <span>$N$</span> and create linear operators that perform the forward and backsolves.</p><p>Krylov methods combined with factorization free operators allow to reduce computation time and memory requirements considerably by avoiding building and storing the system matrix. In the field of partial differential equations, the implementation of high-performance factorization free operators and assembly free preconditioning is a subject of active research.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../warm-start/">« Warm-start</a><a class="docs-footer-nextpage" href="../callbacks/">Callbacks »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Monday 2 January 2023 00:22">Monday 2 January 2023</span>. Using Julia version 1.8.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
