@@ -318,8 +318,8 @@ function CgLanczosShiftSolver(m, n, nshifts, S)
   Mv_prev    = S(undef, n)
   Mv_next    = S(undef, n)
   v          = S(undef, 0)
-  x          = [S(undef, n) for i = 1 : nshifts]
-  p          = [S(undef, n) for i = 1 : nshifts]
+  x          = S[S(undef, n) for i = 1 : nshifts]
+  p          = S[S(undef, n) for i = 1 : nshifts]
   σ          = Vector{T}(undef, nshifts)
   δhat       = Vector{T}(undef, nshifts)
   ω          = Vector{T}(undef, nshifts)
@@ -328,7 +328,7 @@ function CgLanczosShiftSolver(m, n, nshifts, S)
   indefinite = BitVector(undef, nshifts)
   converged  = BitVector(undef, nshifts)
   not_cv     = BitVector(undef, nshifts)
-  stats = LanczosShiftStats(0, false, [T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), "unknown")
+  stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), "unknown")
   solver = CgLanczosShiftSolver{T,FC,S}(m, n, Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return solver
 end
@@ -423,8 +423,8 @@ function DqgmresSolver(m, n, memory, S)
   t  = S(undef, n)
   z  = S(undef, 0)
   w  = S(undef, 0)
-  P  = [S(undef, n) for i = 1 : memory]
-  V  = [S(undef, n) for i = 1 : memory]
+  P  = S[S(undef, n) for i = 1 : memory]
+  V  = S[S(undef, n) for i = 1 : memory]
   c  = Vector{T}(undef, memory)
   s  = Vector{FC}(undef, memory)
   H  = Vector{FC}(undef, memory+1)
@@ -475,8 +475,8 @@ function DiomSolver(m, n, memory, S)
   t  = S(undef, n)
   z  = S(undef, 0)
   w  = S(undef, 0)
-  P  = [S(undef, n) for i = 1 : memory-1]
-  V  = [S(undef, n) for i = 1 : memory]
+  P  = S[S(undef, n) for i = 1 : memory-1]
+  V  = S[S(undef, n) for i = 1 : memory]
   L  = Vector{FC}(undef, memory-1)
   H  = Vector{FC}(undef, memory)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
@@ -1550,7 +1550,7 @@ function GmresSolver(m, n, memory, S)
   w  = S(undef, n)
   p  = S(undef, 0)
   q  = S(undef, 0)
-  V  = [S(undef, n) for i = 1 : memory]
+  V  = S[S(undef, n) for i = 1 : memory]
   c  = Vector{T}(undef, memory)
   s  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
@@ -1603,8 +1603,8 @@ function FgmresSolver(m, n, memory, S)
   x  = S(undef, n)
   w  = S(undef, n)
   q  = S(undef, 0)
-  V  = [S(undef, n) for i = 1 : memory]
-  Z  = [S(undef, n) for i = 1 : memory]
+  V  = S[S(undef, n) for i = 1 : memory]
+  Z  = S[S(undef, n) for i = 1 : memory]
   c  = Vector{T}(undef, memory)
   s  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
@@ -1656,7 +1656,7 @@ function FomSolver(m, n, memory, S)
   w  = S(undef, n)
   p  = S(undef, 0)
   q  = S(undef, 0)
-  V  = [S(undef, n) for i = 1 : memory]
+  V  = S[S(undef, n) for i = 1 : memory]
   l  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   U  = Vector{FC}(undef, div(memory * (memory+1), 2))
@@ -1719,8 +1719,8 @@ function GpmrSolver(m, n, memory, S)
   y  = S(undef, n)
   q  = S(undef, 0)
   p  = S(undef, 0)
-  V  = [S(undef, m) for i = 1 : memory]
-  U  = [S(undef, n) for i = 1 : memory]
+  V  = S[S(undef, m) for i = 1 : memory]
+  U  = S[S(undef, n) for i = 1 : memory]
   gs = Vector{FC}(undef, 4 * memory)
   gc = Vector{T}(undef, 4 * memory)
   zt = Vector{FC}(undef, 2 * memory)
@@ -1939,7 +1939,7 @@ function show(io :: IO, solver :: KrylovSolver{T,FC,S}; show_stats :: Bool=true)
     type_i = fieldtype(workspace, i)
     field_i = getfield(solver, name_i)
     size_i = ksizeof(field_i)
-    if (name_i in [:w̅, :w̄, :d̅]) && (VERSION < v"1.8.0-DEV")
+    if (name_i::Symbol in [:w̅, :w̄, :d̅]) && (VERSION < v"1.8.0-DEV")
       (size_i ≠ 0) && Printf.format(io, format2, string(name_i), type_i, format_bytes(size_i))
     else
       (size_i ≠ 0) && Printf.format(io, format, string(name_i), type_i, format_bytes(size_i))

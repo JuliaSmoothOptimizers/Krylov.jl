@@ -272,18 +272,18 @@ end
 """
     v = kzeros(S, n)
 
-Create an AbstractVector of storage type `S` of length `n` only composed of zero.
+Create a vector of storage type `S` of length `n` only composed of zero.
 """
 kzeros(S, n) = fill!(S(undef, n), zero(eltype(S)))
 
 """
     v = kones(S, n)
 
-Create an AbstractVector of storage type `S` of length `n` only composed of one.
+Create a vector of storage type `S` of length `n` only composed of one.
 """
 kones(S, n) = fill!(S(undef, n), one(eltype(S)))
 
-allocate_if(bool, solver, v, S, n) = bool && isempty(solver.:($v)) && (solver.:($v) = S(undef, n))
+allocate_if(bool, solver, v, S, n) = bool && isempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, n))
 
 kdisplay(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
 
@@ -373,15 +373,15 @@ If `flip` is set to `true`, `σ1` and `σ2` are computed such that
 
     ‖x - σi d‖ = radius, i = 1, 2.
 """
-function to_boundary(n :: Int, x :: AbstractVector{T}, d :: AbstractVector{T}, radius :: T; flip :: Bool=false, xNorm2 :: T=zero(T), dNorm2 :: T=zero(T)) where T <: FloatOrComplex
+function to_boundary(n :: Int, x :: AbstractVector{FC}, d :: AbstractVector{FC}, radius :: T; flip :: Bool=false, xNorm2 :: T=zero(T), dNorm2 :: T=zero(T)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
   radius > 0 || error("radius must be positive")
 
   # ‖d‖² σ² + (xᴴd + dᴴx) σ + (‖x‖² - Δ²).
   rxd = @kdotr(n, x, d)
   flip && (rxd = -rxd)
-  dNorm2 == zero(T) && (dNorm2 = @kdot(n, d, d))
+  dNorm2 == zero(T) && (dNorm2 = @kdotr(n, d, d))
   dNorm2 == zero(T) && error("zero direction")
-  xNorm2 == zero(T) && (xNorm2 = @kdot(n, x, x))
+  xNorm2 == zero(T) && (xNorm2 = @kdotr(n, x, x))
   radius2 = radius * radius
   (xNorm2 ≤ radius2) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius2))
 

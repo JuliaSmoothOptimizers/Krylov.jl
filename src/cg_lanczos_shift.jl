@@ -167,7 +167,7 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
   (verbose > 0) && (fmt = Printf.Format("%5d" * repeat("  %8.1e", nshifts) * "\n"))
   kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms...)
 
-  solved = sum(not_cv) == 0
+  solved = !reduce(|, not_cv)
   tired = iter ≥ itmax
   status = "unknown"
   user_requested_exit = false
@@ -231,7 +231,7 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
     kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms...)
 
     user_requested_exit = callback(solver) :: Bool
-    solved = sum(not_cv) == 0
+    solved = !reduce(|, not_cv)
     tired = iter ≥ itmax
   end
   (verbose > 0) && @printf(iostream, "\n")

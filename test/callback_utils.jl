@@ -120,7 +120,7 @@ TestCallbackN2LN(A, b, λ; tol = 0.1) = TestCallbackN2LN(A, b, λ, similar(b), t
 function (cb_n2::TestCallbackN2LN)(solver)
   mul!(cb_n2.storage_vec, cb_n2.A, solver.x)
   cb_n2.storage_vec .-= cb_n2.b
-  cb_n2.λ != 0 && (cb_n2.storage_vec .+= sqrt(cb_n2.λ) .* solver.s)
+  cb_n2.λ != 0 && (cb_n2.storage_vec .+= cb_n2.λ .* solver.x)
   return norm(cb_n2.storage_vec) ≤ cb_n2.tol
 end
 
