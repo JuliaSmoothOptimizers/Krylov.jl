@@ -336,7 +336,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     tired = iter ≥ itmax
     ill_cond_lim = (one(T) / Acond ≤ ctol)
     solved_lim = (test2 ≤ ε)
-    zero_resid_lim = MisI && (test1 ≤ ε)
+    zero_resid_lim = MisI && (test1 ≤ eps(T))
     resid_decrease_lim = (rNorm ≤ ε)
     iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
 
