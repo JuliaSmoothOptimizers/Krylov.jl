@@ -98,7 +98,7 @@ include("gpu.jl")
       A, b = symmetric_definite(FC=FC)
       A = M(A)
       b = S(b)
-      x, stats = minres_qlp(A, b)
+      x, stats = minres_qlp(A, b, verbose=1)
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
 
