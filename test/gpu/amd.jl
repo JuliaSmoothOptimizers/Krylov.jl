@@ -93,7 +93,7 @@ include("gpu.jl")
     end
 
     @testset "MINRES-QLP -- $FC" begin
-      A, b = symmetric_indefinite(FC=FC)
+      A, b = sparse_laplacian(FC=FC)
       A = M(A)
       b = S(b)
       x, stats = minres_qlp(A, b)
