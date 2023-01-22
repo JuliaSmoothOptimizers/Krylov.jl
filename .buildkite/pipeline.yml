@@ -18,7 +18,7 @@ steps:
   - label: "AMD GPUs -- AMDGPU.jl"
     plugins:
       - JuliaCI/julia#v1:
-          version: 1.8
+          version: 1.9-nightly
     agents:
       queue: "juliagpu"
       rocm: "*"
@@ -26,7 +26,6 @@ steps:
     env:
       JULIA_AMDGPU_CORE_MUST_LOAD: "1"
       JULIA_AMDGPU_HIP_MUST_LOAD: "1"
-      JULIA_AMDGPU_DISABLE_ARTIFACTS: "1"
     command: |
       julia --color=yes --project -e '
       using Pkg
