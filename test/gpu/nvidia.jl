@@ -170,10 +170,10 @@ include("gpu.jl")
     end
 
     @testset "MINRES-QLP -- $FC" begin
-      A, b = symmetric_definite(FC=FC)
+      A, b = symmetric_indefinite(FC=FC)
       A = M(A)
       b = S(b)
-      x, stats = minres_qlp(A, b, verbose=1)
+      x, stats = minres_qlp(A, b)
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
 
