@@ -145,7 +145,7 @@ x, stats = minres(A_gpu, b_gpu)
 
 ## Intel GPUs
 
-All solvers in Krylov.jl, except [`MINRES-QLP`](@ref minres_qlp), can be used with [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) and allow computations on Intel GPUs.
+All solvers in Krylov.jl can be used with [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) and allow computations on Intel GPUs.
 Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to the related GPU format (`oneMatrix` and `oneVector`).
 
 ```julia
@@ -172,7 +172,7 @@ x, stats = lsqr(A_gpu, b_gpu)
 
 ## Apple M1 GPUs
 
-All solvers in Krylov.jl, except [`MINRES-QLP`](@ref minres_qlp), can be used with [Metal.jl](https://github.com/JuliaGPU/Metal.jl) and allow computations on Apple M1 GPUs.
+All solvers in Krylov.jl can be used with [Metal.jl](https://github.com/JuliaGPU/Metal.jl) and allow computations on Apple M1 GPUs.
 Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to the related GPU format (`MtlMatrix` and `MtlVector`).
 
 ```julia

@@ -64,9 +64,9 @@ include("gpu.jl")
       Krylov.@kswap(x, y)
     end
 
-    # @testset "kref! -- $FC" begin
-    #   Krylov.@kref!(n, x, y, c, s)
-    # end
+    @testset "kref! -- $FC" begin
+      Krylov.@kref!(n, x, y, c, s)
+    end
 
     @testset "conversion -- $FC" begin
       test_conversion(S, M)
@@ -78,17 +78,25 @@ include("gpu.jl")
 
     @testset "GMRES -- $FC" begin
       A, b = nonsymmetric_indefinite(FC=FC)
-      A = ROCMatrix{FC}(A)
-      b = ROCVector{FC}(b)
+      A = M(A)
+      b = S(b)
       x, stats = gmres(A, b)
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
 
     @testset "CG -- $FC" begin
       A, b = symmetric_definite(FC=FC)
-      A = ROCMatrix{FC}(A)
-      b = ROCVector{FC}(b)
+      A = M(A)
+      b = S(b)
       x, stats = cg(A, b)
+      @test norm(b - A * x) ≤ atol + rtol * norm(b)
+    end
+
+    @testset "MINRES-QLP -- $FC" begin
+      A, b = symmetric_indefinite(FC=FC)
+      A = M(A)
+      b = S(b)
+      x, stats = minres_qlp(A, b)
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
 

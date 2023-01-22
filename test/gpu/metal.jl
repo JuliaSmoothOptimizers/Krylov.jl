@@ -2,16 +2,6 @@ using Metal
 
 include("gpu.jl")
 
-# https://github.com/JuliaGPU/Metal.jl/pull/48
-const MtlVector{T} = MtlArray{T,1}
-const MtlMatrix{T} = MtlArray{T,2}
-
-# https://github.com/JuliaGPU/GPUArrays.jl/pull/427
-import Krylov.kdot
-function kdot(n :: Integer, x :: MtlVector{T}, dx :: Integer, y :: MtlVector{T}, dy :: Integer) where T <: Krylov.FloatOrComplex
-  return mapreduce(dot, +, x, y)
-end
-
 @testset "Apple M1 GPUs -- Metal.jl" begin
 
   # @test Metal.functional()
@@ -76,9 +66,9 @@ end
       Krylov.@kswap(x, y)
     end
 
-    # @testset "kref! -- $FC" begin
-    #   Krylov.@kref!(n, x, y, c, s)
-    # end
+    @testset "kref! -- $FC" begin
+      Krylov.@kref!(n, x, y, c, s)
+    end
 
     @testset "conversion -- $FC" begin
       test_conversion(S, M)
@@ -90,17 +80,25 @@ end
 
     @testset "GMRES -- $FC" begin
       A, b = nonsymmetric_indefinite(FC=FC)
-      A = MtlMatrix{FC}(A)
-      b = MtlVector{FC}(b)
+      A = M(A)
+      b = S(b)
       x, stats = gmres(A, b)
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
 
     @testset "CG -- $FC" begin
-     A, b = symmetric_definite(FC=FC)
-      A = MtlMatrix{FC}(A)
-      b = MtlVector{FC}(b)
+      A, b = symmetric_definite(FC=FC)
+      A = M(A)
+      b = S(b)
       x, stats = cg(A, b)
+      @test norm(b - A * x) ≤ atol + rtol * norm(b)
+    end
+
+    @testset "MINRES-QLP -- $FC" begin
+      A, b = symmetric_indefinite(FC=FC)
+      A = M(A)
+      b = S(b)
+      x, stats = minres_qlp(A, b)
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
 
