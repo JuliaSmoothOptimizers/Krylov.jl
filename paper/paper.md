@@ -5,6 +5,7 @@ tags:
   - linear algebra
   - Krylov methods
   - sparse linear systems
+  - GPU computing
 authors:
   - name: Alexis Montoison^[corresponding author]
     orcid: 0000-0002-3403-5450
@@ -15,7 +16,7 @@ authors:
 affiliations:
  - name: GERAD and Department of Mathematics and Industrial Engineering, Polytechnique Montréal, QC, Canada.
    index: 1
-date: 29 July 2022
+date: 29 January 2023
 bibliography: paper.bib
 header-includes: |
   \usepackage{booktabs}
@@ -48,7 +49,8 @@ Contrary to direct methods, which require storing $A$ explicitly, Krylov methods
 The same goes with preconditioners, i.e., transformations that modify a linear system into an equivalent form with favorable spectral properties that may yield faster convergence in finite-precision arithmetic.
 We refer interested readers to [@ipsen-meyer-1998] for an introduction to Krylov methods along with [@greenbaum-1997] and [@saad-2003] for more details.
 
-# Features and Functionalities
+<!-- # Features and Functionalities -->
+# Statement of need
 
 ##  Largest collection of Krylov processes and methods
 
@@ -57,6 +59,8 @@ Krylov.jl aims to provide a unified interface for the largest collection of Kryl
 - \textbf{Krylov processes}: \textsc{Arnoldi}, \textsc{Golub-Kahan}, \textsc{Hermitian Lanczos}, \textsc{Montoison-Orban}, \textsc{Non-Hermitian Lanczos},  \textsc{Saunders-Simon-Yip};
 - \textbf{Krylov methods}: \textsc{Bicgstab}, \textsc{Bilq}, \textsc{Bilqr}, \textsc{Cg}, \textsc{Cg-lanczos}, \textsc{Cg-lanczos-shift}, \textsc{Cgls}, \textsc{Cgne}, \textsc{Cgs}, \textsc{Cr}, \textsc{Craig}, \textsc{Craigmr}, \textsc{Crls}, \textsc{Crmr}, \textsc{Diom}, \textsc{Dqgmres}, \textsc{Fgmres}, \textsc{Fom}, \textsc{Gmres}, \textsc{Gpmr}, \textsc{Lnlq}, \textsc{Lslq}, \textsc{Lsmr}, \textsc{Lsqr}, \textsc{Minres}, \textsc{Minres-qlp}, \textsc{Qmr}, \textsc{Symmlq}, \textsc{Tricg}, \textsc{Trilqr}, \textsc{Trimr}, \textsc{Usymlq}, \textsc{Usymqr}.
 
+MATLAB [@MATLAB] and PETSc [@petsc] have nineteen and eighteen distinct Krylov methods, respectively.
+Note that we only consider the number of Krylov methods that generate different iterates.
 Some processes and methods are not available elsewhere and are the product of our own research.
 References for each process and method are available in the extensive [documentation](https://juliasmoothoptimizers.github.io/Krylov.jl/stable/).
 
