@@ -34,7 +34,7 @@ export crmr, crmr!
                       verbose::Int=0, history::Bool=false,
                       callback=solver->false, iostream::IO=kstdout)
 
-`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
 Solve the consistent linear system
@@ -89,7 +89,7 @@ but simpler to implement. Only the x-part of the solution is returned.
 """
 function crmr end
 
-function crmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
+function crmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CrmrSolver(A, b)
   crmr!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)

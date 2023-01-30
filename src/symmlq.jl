@@ -21,7 +21,7 @@ export symmlq, symmlq!
                         verbose::Int=0, history::Bool=false,
                         callback=solver->false, iostream::IO=kstdout)
 
-`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, stats) = symmlq(A, b, x0::AbstractVector; kwargs...)
@@ -74,13 +74,13 @@ SYMMLQ produces monotonic errors ‖x* - x‖₂.
 """
 function symmlq end
 
-function symmlq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, kwargs...) where FC <: RealOrComplex
+function symmlq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = SymmlqSolver(A, b, window=window)
   symmlq!(solver, A, b, x0; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function symmlq(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: RealOrComplex
+function symmlq(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = SymmlqSolver(A, b, window=window)
   symmlq!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
@@ -96,7 +96,7 @@ See [`SymmlqSolver`](@ref) for more details about the `solver`.
 """
 function symmlq! end
 
-function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
+function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
   symmlq!(solver, A, b; kwargs...)
   return solver

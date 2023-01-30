@@ -26,7 +26,7 @@ export qmr, qmr!
                      rtol::T=√eps(T), itmax::Int=0, verbose::Int=0,
                      history::Bool=false, callback=solver->false, iostream::IO=kstdout)
 
-`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, stats) = qmr(A, b, x0::AbstractVector; kwargs...)
@@ -72,13 +72,13 @@ When `A` is Hermitian and `b = c`, QMR is equivalent to MINRES.
 """
 function qmr end
 
-function qmr(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: RealOrComplex
+function qmr(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
   solver = QmrSolver(A, b)
   qmr!(solver, A, b, x0; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function qmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
+function qmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = QmrSolver(A, b)
   qmr!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
@@ -94,7 +94,7 @@ See [`QmrSolver`](@ref) for more details about the `solver`.
 """
 function qmr! end
 
-function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
+function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
   qmr!(solver, A, b; kwargs...)
   return solver

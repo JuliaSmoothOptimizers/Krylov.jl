@@ -18,7 +18,7 @@ export fom, fom!
                      verbose::Int=0, history::Bool=false,
                      callback=solver->false, iostream::IO=kstdout)
 
-`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, stats) = fom(A, b, x0::AbstractVector; kwargs...)
@@ -65,13 +65,13 @@ FOM algorithm is based on the Arnoldi process and a Galerkin condition.
 """
 function fom end
 
-function fom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: RealOrComplex
+function fom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
   solver = FomSolver(A, b, memory)
   fom!(solver, A, b, x0; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function fom(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: RealOrComplex
+function fom(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
   solver = FomSolver(A, b, memory)
   fom!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
@@ -90,7 +90,7 @@ See [`FomSolver`](@ref) for more details about the `solver`.
 """
 function fom! end
 
-function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
+function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
   fom!(solver, A, b; kwargs...)
   return solver

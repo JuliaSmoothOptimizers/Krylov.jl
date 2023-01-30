@@ -21,7 +21,7 @@ export trimr, trimr!
                           verbose::Int=0, history::Bool=false,
                           callback=solver->false, iostream::IO=kstdout)
 
-`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, y, stats) = trimr(A, b, c, x0::AbstractVector, y0::AbstractVector; kwargs...)
@@ -92,13 +92,13 @@ TriMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 """
 function trimr end
 
-function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where FC <: RealOrComplex
+function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
   solver = TrimrSolver(A, b)
   trimr!(solver, A, b, c, x0, y0; kwargs...)
   return (solver.x, solver.y, solver.stats)
 end
 
-function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
+function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = TrimrSolver(A, b)
   trimr!(solver, A, b, c; kwargs...)
   return (solver.x, solver.y, solver.stats)
@@ -115,7 +115,7 @@ See [`TrimrSolver`](@ref) for more details about the `solver`.
 function trimr! end
 
 function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
-                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
+                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0, y0)
   trimr!(solver, A, b, c; kwargs...)
   return solver

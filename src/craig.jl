@@ -42,7 +42,7 @@ export craig, craig!
                           verbose::Int=0, history::Bool=false,
                           callback=solver->false, iostream::IO=kstdout)
 
-`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
 Find the least-norm solution of the consistent linear system
@@ -124,7 +124,7 @@ In this implementation, both the x and y-parts of the solution are returned.
 """
 function craig end
 
-function craig(A, b :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
+function craig(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CraigSolver(A, b)
   craig!(solver, A, b; kwargs...)
   return (solver.x, solver.y, solver.stats)

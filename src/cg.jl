@@ -23,7 +23,7 @@ export cg, cg!
                     verbose::Int=0, history::Bool=false,
                     callback=solver->false, iostream::IO=kstdout)
 
-`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, stats) = cg(A, b, x0::AbstractVector; kwargs...)
@@ -69,13 +69,13 @@ M also indicates the weighted norm in which residuals are measured.
 """
 function cg end
 
-function cg(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: RealOrComplex
+function cg(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
   solver = CgSolver(A, b)
   cg!(solver, A, b, x0; kwargs...)
   return (solver.x, solver.stats)
 end
 
-function cg(A, b :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
+function cg(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CgSolver(A, b)
   cg!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
@@ -91,7 +91,7 @@ See [`CgSolver`](@ref) for more details about the `solver`.
 """
 function cg! end
 
-function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
+function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0)
   cg!(solver, A, b; kwargs...)
   return solver

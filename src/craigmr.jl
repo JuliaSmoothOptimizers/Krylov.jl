@@ -34,7 +34,7 @@ export craigmr, craigmr!
                             verbose::Int=0, history::Bool=false,
                             callback=solver->false, iostream::IO=kstdout)
 
-`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
 Solve the consistent linear system
@@ -116,7 +116,7 @@ returned.
 """
 function craigmr end
 
-function craigmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
+function craigmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CraigmrSolver(A, b)
   craigmr!(solver, A, b; kwargs...)
   return (solver.x, solver.y, solver.stats)

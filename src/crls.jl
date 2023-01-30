@@ -27,7 +27,7 @@ export crls, crls!
                       itmax::Int=0, verbose::Int=0, history::Bool=false,
                       callback=solver->false, iostream::IO=kstdout)
 
-`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
 Solve the linear least-squares problem
@@ -75,7 +75,7 @@ but simpler to implement.
 """
 function crls end
 
-function crls(A, b :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
+function crls(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = CrlsSolver(A, b)
   crls!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)

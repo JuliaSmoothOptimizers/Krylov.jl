@@ -19,7 +19,7 @@ export trilqr, trilqr!
                            verbose::Int=0, history::Bool=false,
                            callback=solver->false, iostream::IO=kstdout)
 
-`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
     (x, y, stats) = trilqr(A, b, c, x0::AbstractVector, y0::AbstractVector; kwargs...)
@@ -68,13 +68,13 @@ USYMQR is used for solving dual system `Aᴴy = c` of size n × m.
 """
 function trilqr end
 
-function trilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where FC <: RealOrComplex
+function trilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
   solver = TrilqrSolver(A, b)
   trilqr!(solver, A, b, c, x0, y0; kwargs...)
   return (solver.x, solver.y, solver.stats)
 end
 
-function trilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: RealOrComplex
+function trilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
   solver = TrilqrSolver(A, b)
   trilqr!(solver, A, b, c; kwargs...)
   return (solver.x, solver.y, solver.stats)
@@ -91,7 +91,7 @@ See [`TrilqrSolver`](@ref) for more details about the `solver`.
 function trilqr! end
 
 function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
-                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: Real, FC <: RealOrComplex{T}, S <: DenseVector{FC}}
+                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
   warm_start!(solver, x0, y0)
   trilqr!(solver, A, b, c; kwargs...)
   return solver

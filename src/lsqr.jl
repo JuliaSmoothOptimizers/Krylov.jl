@@ -35,7 +35,7 @@ export lsqr, lsqr!
                       verbose::Int=0, history::Bool=false,
                       callback=solver->false, iostream::IO=kstdout)
 
-`T` is a `Real` such as `Float32`, `Float64` or `BigFloat`.
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
 
 Solve the regularized linear least-squares problem
@@ -117,7 +117,7 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 """
 function lsqr end
 
-function lsqr(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: RealOrComplex
+function lsqr(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
   solver = LsqrSolver(A, b, window=window)
   lsqr!(solver, A, b; kwargs...)
   return (solver.x, solver.stats)
