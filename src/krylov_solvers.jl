@@ -54,8 +54,8 @@ Type for storing the vectors required by the in-place version of MINRES.
 
 The outer constructors
 
-    solver = MinresSolver(m, n, S; window :: Int=5)
-    solver = MinresSolver(A, b; window :: Int=5)
+    solver = MinresSolver(m, n, S; window :: Integer=5)
+    solver = MinresSolver(A, b; window :: Integer=5)
 
 may be used in order to create these vectors.
 """
@@ -75,7 +75,7 @@ mutable struct MinresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function MinresSolver(m, n, S; window :: Int=5)
+function MinresSolver(m :: Integer, n :: Integer, S :: DataType; window :: Integer=5)
   FC = eltype(S)
   T  = real(FC)
   Δx = S(undef, 0)
@@ -92,7 +92,7 @@ function MinresSolver(m, n, S; window :: Int=5)
   return solver
 end
 
-function MinresSolver(A, b; window :: Int=5)
+function MinresSolver(A, b :: AbstractVector; window :: Integer=5)
   m, n = size(A)
   S = ktypeof(b)
   MinresSolver(m, n, S, window=window)
@@ -121,7 +121,7 @@ mutable struct CgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function CgSolver(m, n, S)
+function CgSolver(m :: Integer, n :: Integer, S :: DataType)
   FC = eltype(S)
   T  = real(FC)
   Δx = S(undef, 0)
@@ -135,7 +135,7 @@ function CgSolver(m, n, S)
   return solver
 end
 
-function CgSolver(A, b)
+function CgSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   CgSolver(m, n, S)
@@ -165,7 +165,7 @@ mutable struct CrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function CrSolver(m, n, S)
+function CrSolver(m :: Integer, n :: Integer, S :: DataType)
   FC = eltype(S)
   T  = real(FC)
   Δx = S(undef, 0)
@@ -180,7 +180,7 @@ function CrSolver(m, n, S)
   return solver
 end
 
-function CrSolver(A, b)
+function CrSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   CrSolver(m, n, S)
@@ -213,7 +213,7 @@ mutable struct SymmlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SymmlqStats{T}
 end
 
-function SymmlqSolver(m, n, S; window :: Int=5)
+function SymmlqSolver(m :: Integer, n :: Integer, S :: DataType; window :: Integer=5)
   FC      = eltype(S)
   T       = real(FC)
   Δx      = S(undef, 0)
@@ -231,7 +231,7 @@ function SymmlqSolver(m, n, S; window :: Int=5)
   return solver
 end
 
-function SymmlqSolver(A, b; window :: Int=5)
+function SymmlqSolver(A, b :: AbstractVector; window :: Integer=5)
   m, n = size(A)
   S = ktypeof(b)
   SymmlqSolver(m, n, S, window=window)
@@ -261,7 +261,7 @@ mutable struct CgLanczosSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: LanczosStats{T}
 end
 
-function CgLanczosSolver(m, n, S)
+function CgLanczosSolver(m :: Integer, n :: Integer, S :: DataType)
   FC      = eltype(S)
   T       = real(FC)
   Δx      = S(undef, 0)
@@ -276,7 +276,7 @@ function CgLanczosSolver(m, n, S)
   return solver
 end
 
-function CgLanczosSolver(A, b)
+function CgLanczosSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   CgLanczosSolver(m, n, S)
@@ -311,7 +311,7 @@ mutable struct CgLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: LanczosShiftStats{T}
 end
 
-function CgLanczosShiftSolver(m, n, nshifts, S)
+function CgLanczosShiftSolver(m :: Integer, n :: Integer, nshifts :: Integer, S :: DataType)
   FC         = eltype(S)
   T          = real(FC)
   Mv         = S(undef, n)
@@ -333,7 +333,7 @@ function CgLanczosShiftSolver(m, n, nshifts, S)
   return solver
 end
 
-function CgLanczosShiftSolver(A, b, nshifts)
+function CgLanczosShiftSolver(A, b :: AbstractVector, nshifts :: Integer)
   m, n = size(A)
   S = ktypeof(b)
   CgLanczosShiftSolver(m, n, nshifts, S)
@@ -364,7 +364,7 @@ mutable struct MinresQlpSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function MinresQlpSolver(m, n, S)
+function MinresQlpSolver(m :: Integer, n :: Integer, S :: DataType)
   FC      = eltype(S)
   T       = real(FC)
   Δx      = S(undef, 0)
@@ -380,7 +380,7 @@ function MinresQlpSolver(m, n, S)
   return solver
 end
 
-function MinresQlpSolver(A, b)
+function MinresQlpSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   MinresQlpSolver(m, n, S)
@@ -414,7 +414,7 @@ mutable struct DqgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function DqgmresSolver(m, n, memory, S)
+function DqgmresSolver(m :: Integer, n :: Integer, memory :: Integer, S :: DataType)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -433,7 +433,7 @@ function DqgmresSolver(m, n, memory, S)
   return solver
 end
 
-function DqgmresSolver(A, b, memory = 20)
+function DqgmresSolver(A, b :: AbstractVector, memory :: Integer=20)
   m, n = size(A)
   S = ktypeof(b)
   DqgmresSolver(m, n, memory, S)
@@ -466,7 +466,7 @@ mutable struct DiomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function DiomSolver(m, n, memory, S)
+function DiomSolver(m :: Integer, n :: Integer, memory :: Integer, S :: DataType)
   memory = min(m, memory)
   FC  = eltype(S)
   T   = real(FC)
@@ -484,7 +484,7 @@ function DiomSolver(m, n, memory, S)
   return solver
 end
 
-function DiomSolver(A, b, memory = 20)
+function DiomSolver(A, b :: AbstractVector, memory :: Integer=20)
   m, n = size(A)
   S = ktypeof(b)
   DiomSolver(m, n, memory, S)
@@ -516,7 +516,7 @@ mutable struct UsymlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function UsymlqSolver(m, n, S)
+function UsymlqSolver(m :: Integer, n :: Integer, S :: DataType)
   FC   = eltype(S)
   T    = real(FC)
   uₖ₋₁ = S(undef, n)
@@ -533,7 +533,7 @@ function UsymlqSolver(m, n, S)
   return solver
 end
 
-function UsymlqSolver(A, b)
+function UsymlqSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   UsymlqSolver(m, n, S)
@@ -566,7 +566,7 @@ mutable struct UsymqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function UsymqrSolver(m, n, S)
+function UsymqrSolver(m :: Integer, n :: Integer, S :: DataType)
   FC   = eltype(S)
   T    = real(FC)
   vₖ₋₁ = S(undef, m)
@@ -584,7 +584,7 @@ function UsymqrSolver(m, n, S)
   return solver
 end
 
-function UsymqrSolver(A, b)
+function UsymqrSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   UsymqrSolver(m, n, S)
@@ -623,7 +623,7 @@ mutable struct TricgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function TricgSolver(m, n, S)
+function TricgSolver(m :: Integer, n :: Integer, S :: DataType)
   FC      = eltype(S)
   T       = real(FC)
   y       = S(undef, n)
@@ -647,7 +647,7 @@ function TricgSolver(m, n, S)
   return solver
 end
 
-function TricgSolver(A, b)
+function TricgSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   TricgSolver(m, n, S)
@@ -690,7 +690,7 @@ mutable struct TrimrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function TrimrSolver(m, n, S)
+function TrimrSolver(m :: Integer, n :: Integer, S :: DataType)
   FC      = eltype(S)
   T       = real(FC)
   y       = S(undef, n)
@@ -718,7 +718,7 @@ function TrimrSolver(m, n, S)
   return solver
 end
 
-function TrimrSolver(A, b)
+function TrimrSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   TrimrSolver(m, n, S)
@@ -754,7 +754,7 @@ mutable struct TrilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: AdjointStats{T}
 end
 
-function TrilqrSolver(m, n, S)
+function TrilqrSolver(m :: Integer, n :: Integer, S :: DataType)
   FC   = eltype(S)
   T    = real(FC)
   uₖ₋₁ = S(undef, n)
@@ -775,7 +775,7 @@ function TrilqrSolver(m, n, S)
   return solver
 end
 
-function TrilqrSolver(A, b)
+function TrilqrSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   TrilqrSolver(m, n, S)
@@ -807,7 +807,7 @@ mutable struct CgsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function CgsSolver(m, n, S)
+function CgsSolver(m :: Integer, n :: Integer, S :: DataType)
   FC = eltype(S)
   T  = real(FC)
   Δx = S(undef, 0)
@@ -824,7 +824,7 @@ function CgsSolver(m, n, S)
   return solver
 end
 
-function CgsSolver(A, b)
+function CgsSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   CgsSolver(m, n, S)
@@ -856,7 +856,7 @@ mutable struct BicgstabSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function BicgstabSolver(m, n, S)
+function BicgstabSolver(m :: Integer, n :: Integer, S :: DataType)
   FC = eltype(S)
   T  = real(FC)
   Δx = S(undef, 0)
@@ -873,7 +873,7 @@ function BicgstabSolver(m, n, S)
   return solver
 end
 
-function BicgstabSolver(A, b)
+function BicgstabSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   BicgstabSolver(m, n, S)
@@ -905,7 +905,7 @@ mutable struct BilqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function BilqSolver(m, n, S)
+function BilqSolver(m :: Integer, n :: Integer, S :: DataType)
   FC   = eltype(S)
   T    = real(FC)
   uₖ₋₁ = S(undef, n)
@@ -922,7 +922,7 @@ function BilqSolver(m, n, S)
   return solver
 end
 
-function BilqSolver(A, b)
+function BilqSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   BilqSolver(m, n, S)
@@ -955,7 +955,7 @@ mutable struct QmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function QmrSolver(m, n, S)
+function QmrSolver(m :: Integer, n :: Integer, S :: DataType)
   FC   = eltype(S)
   T    = real(FC)
   uₖ₋₁ = S(undef, n)
@@ -973,7 +973,7 @@ function QmrSolver(m, n, S)
   return solver
 end
 
-function QmrSolver(A, b)
+function QmrSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   QmrSolver(m, n, S)
@@ -1009,7 +1009,7 @@ mutable struct BilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: AdjointStats{T}
 end
 
-function BilqrSolver(m, n, S)
+function BilqrSolver(m :: Integer, n :: Integer, S :: DataType)
   FC   = eltype(S)
   T    = real(FC)
   uₖ₋₁ = S(undef, n)
@@ -1030,7 +1030,7 @@ function BilqrSolver(m, n, S)
   return solver
 end
 
-function BilqrSolver(A, b)
+function BilqrSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   BilqrSolver(m, n, S)
@@ -1058,7 +1058,7 @@ mutable struct CglsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
-function CglsSolver(m, n, S)
+function CglsSolver(m :: Integer, n :: Integer, S :: DataType)
   FC = eltype(S)
   T  = real(FC)
   x  = S(undef, n)
@@ -1072,7 +1072,7 @@ function CglsSolver(m, n, S)
   return solver
 end
 
-function CglsSolver(A, b)
+function CglsSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   CglsSolver(m, n, S)
@@ -1102,7 +1102,7 @@ mutable struct CrlsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
-function CrlsSolver(m, n, S)
+function CrlsSolver(m :: Integer, n :: Integer, S :: DataType)
   FC = eltype(S)
   T  = real(FC)
   x  = S(undef, n)
@@ -1118,7 +1118,7 @@ function CrlsSolver(m, n, S)
   return solver
 end
 
-function CrlsSolver(A, b)
+function CrlsSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   CrlsSolver(m, n, S)
@@ -1147,7 +1147,7 @@ mutable struct CgneSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
-function CgneSolver(m, n, S)
+function CgneSolver(m :: Integer, n :: Integer, S :: DataType)
   FC  = eltype(S)
   T   = real(FC)
   x   = S(undef, n)
@@ -1162,7 +1162,7 @@ function CgneSolver(m, n, S)
   return solver
 end
 
-function CgneSolver(A, b)
+function CgneSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   CgneSolver(m, n, S)
@@ -1191,7 +1191,7 @@ mutable struct CrmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
-function CrmrSolver(m, n, S)
+function CrmrSolver(m :: Integer, n :: Integer, S :: DataType)
   FC  = eltype(S)
   T   = real(FC)
   x   = S(undef, n)
@@ -1206,7 +1206,7 @@ function CrmrSolver(m, n, S)
   return solver
 end
 
-function CrmrSolver(A, b)
+function CrmrSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   CrmrSolver(m, n, S)
@@ -1237,7 +1237,7 @@ mutable struct LslqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats   :: LSLQStats{T}
 end
 
-function LslqSolver(m, n, S; window :: Int=5)
+function LslqSolver(m :: Integer, n :: Integer, S :: DataType; window :: Integer=5)
   FC  = eltype(S)
   T   = real(FC)
   x   = S(undef, n)
@@ -1254,7 +1254,7 @@ function LslqSolver(m, n, S; window :: Int=5)
   return solver
 end
 
-function LslqSolver(A, b; window :: Int=5)
+function LslqSolver(A, b :: AbstractVector; window :: Integer=5)
   m, n = size(A)
   S = ktypeof(b)
   LslqSolver(m, n, S, window=window)
@@ -1285,7 +1285,7 @@ mutable struct LsqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats   :: SimpleStats{T}
 end
 
-function LsqrSolver(m, n, S; window :: Int=5)
+function LsqrSolver(m :: Integer, n :: Integer, S :: DataType; window :: Integer=5)
   FC  = eltype(S)
   T   = real(FC)
   x   = S(undef, n)
@@ -1302,7 +1302,7 @@ function LsqrSolver(m, n, S; window :: Int=5)
   return solver
 end
 
-function LsqrSolver(A, b; window :: Int=5)
+function LsqrSolver(A, b :: AbstractVector; window :: Integer=5)
   m, n = size(A)
   S = ktypeof(b)
   LsqrSolver(m, n, S, window=window)
@@ -1334,7 +1334,7 @@ mutable struct LsmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats   :: LsmrStats{T}
 end
 
-function LsmrSolver(m, n, S; window :: Int=5)
+function LsmrSolver(m :: Integer, n :: Integer, S :: DataType; window :: Integer=5)
   FC   = eltype(S)
   T    = real(FC)
   x    = S(undef, n)
@@ -1352,7 +1352,7 @@ function LsmrSolver(m, n, S; window :: Int=5)
   return solver
 end
 
-function LsmrSolver(A, b; window :: Int=5)
+function LsmrSolver(A, b :: AbstractVector; window :: Integer=5)
   m, n = size(A)
   S = ktypeof(b)
   LsmrSolver(m, n, S, window=window)
@@ -1384,7 +1384,7 @@ mutable struct LnlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: LNLQStats{T}
 end
 
-function LnlqSolver(m, n, S)
+function LnlqSolver(m :: Integer, n :: Integer, S :: DataType)
   FC  = eltype(S)
   T   = real(FC)
   x   = S(undef, n)
@@ -1402,7 +1402,7 @@ function LnlqSolver(m, n, S)
   return solver
 end
 
-function LnlqSolver(A, b)
+function LnlqSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   LnlqSolver(m, n, S)
@@ -1434,7 +1434,7 @@ mutable struct CraigSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
-function CraigSolver(m, n, S)
+function CraigSolver(m :: Integer, n :: Integer, S :: DataType)
   FC  = eltype(S)
   T   = real(FC)
   x   = S(undef, n)
@@ -1452,7 +1452,7 @@ function CraigSolver(m, n, S)
   return solver
 end
 
-function CraigSolver(A, b)
+function CraigSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   CraigSolver(m, n, S)
@@ -1486,7 +1486,7 @@ mutable struct CraigmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
-function CraigmrSolver(m, n, S)
+function CraigmrSolver(m :: Integer, n :: Integer, S :: DataType)
   FC   = eltype(S)
   T    = real(FC)
   x    = S(undef, n)
@@ -1506,7 +1506,7 @@ function CraigmrSolver(m, n, S)
   return solver
 end
 
-function CraigmrSolver(A, b)
+function CraigmrSolver(A, b :: AbstractVector)
   m, n = size(A)
   S = ktypeof(b)
   CraigmrSolver(m, n, S)
@@ -1541,7 +1541,7 @@ mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function GmresSolver(m, n, memory, S)
+function GmresSolver(m :: Integer, n :: Integer, memory :: Integer, S :: DataType)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -1560,7 +1560,7 @@ function GmresSolver(m, n, memory, S)
   return solver
 end
 
-function GmresSolver(A, b, memory = 20)
+function GmresSolver(A, b :: AbstractVector, memory :: Integer=20)
   m, n = size(A)
   S = ktypeof(b)
   GmresSolver(m, n, memory, S)
@@ -1595,7 +1595,7 @@ mutable struct FgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function FgmresSolver(m, n, memory, S)
+function FgmresSolver(m :: Integer, n :: Integer, memory :: Integer, S :: DataType)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -1614,7 +1614,7 @@ function FgmresSolver(m, n, memory, S)
   return solver
 end
 
-function FgmresSolver(A, b, memory = 20)
+function FgmresSolver(A, b :: AbstractVector, memory :: Integer=20)
   m, n = size(A)
   S = ktypeof(b)
   FgmresSolver(m, n, memory, S)
@@ -1647,7 +1647,7 @@ mutable struct FomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function FomSolver(m, n, memory, S)
+function FomSolver(m :: Integer, n :: Integer, memory :: Integer, S :: DataType)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -1665,7 +1665,7 @@ function FomSolver(m, n, memory, S)
   return solver
 end
 
-function FomSolver(A, b, memory = 20)
+function FomSolver(A, b :: AbstractVector, memory :: Integer=20)
   m, n = size(A)
   S = ktypeof(b)
   FomSolver(m, n, memory, S)
@@ -1705,7 +1705,7 @@ mutable struct GpmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function GpmrSolver(m, n, memory, S)
+function GpmrSolver(m :: Integer, n :: Integer, memory :: Integer, S :: DataType)
   memory = min(n + m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -1730,7 +1730,7 @@ function GpmrSolver(m, n, memory, S)
   return solver
 end
 
-function GpmrSolver(A, b, memory = 20)
+function GpmrSolver(A, b :: AbstractVector, memory :: Integer=20)
   m, n = size(A)
   S = ktypeof(b)
   GpmrSolver(m, n, memory, S)
