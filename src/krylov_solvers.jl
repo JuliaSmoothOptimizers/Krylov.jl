@@ -75,17 +75,18 @@ mutable struct MinresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function MinresSolver(m, n, S; window :: Int=5)
+function MinresSolver(m, n, ::Type{S}; ixm=m, ixn=n, window :: Int=5) where S <: AbstractVector
+  dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
-  Δx = S(undef, 0)
-  x  = S(undef, n)
-  r1 = S(undef, n)
-  r2 = S(undef, n)
-  w1 = S(undef, n)
-  w2 = S(undef, n)
-  y  = S(undef, n)
-  v  = S(undef, 0)
+  Δx = dense ? similar(S, 0) : similar(S, ixn)
+  x  = similar(S, ixn)
+  r1 = similar(S, ixn)
+  r2 = similar(S, ixn)
+  w1 = similar(S, ixn)
+  w2 = similar(S, ixn)
+  y  = similar(S, ixn)
+  v  = dense ? similar(S, 0) : similar(S, ixn)
   err_vec = zeros(T, window)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = MinresSolver{T,FC,S}(m, n, Δx, x, r1, r2, w1, w2, y, v, err_vec, false, stats)
@@ -95,7 +96,12 @@ end
 function MinresSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  MinresSolver(m, n, S, window=window)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  MinresSolver(m, n, S, ixm=ixm, ixn=ixn, window=window)
 end
 
 """
@@ -121,15 +127,16 @@ mutable struct CgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function CgSolver(m, n, S)
+function CgSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
-  Δx = S(undef, 0)
-  x  = S(undef, n)
-  r  = S(undef, n)
-  p  = S(undef, n)
-  Ap = S(undef, n)
-  z  = S(undef, 0)
+  Δx = dense ? similar(S, 0) : similar(S, ixn)
+  x  = similar(S, ixn)
+  r  = similar(S, ixn)
+  p  = similar(S, ixn)
+  Ap = similar(S, ixn)
+  z  = dense ? similar(S, 0) : similar(S, ixn)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CgSolver{T,FC,S}(m, n, Δx, x, r, p, Ap, z, false, stats)
   return solver
@@ -138,7 +145,12 @@ end
 function CgSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  CgSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  CgSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -165,16 +177,17 @@ mutable struct CrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function CrSolver(m, n, S)
+function CrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
-  Δx = S(undef, 0)
-  x  = S(undef, n)
-  r  = S(undef, n)
-  p  = S(undef, n)
-  q  = S(undef, n)
-  Ar = S(undef, n)
-  Mq = S(undef, 0)
+  Δx = dense ? similar(S, 0) : similar(S, ixn)
+  x  = similar(S, ixn)
+  r  = similar(S, ixn)
+  p  = similar(S, ixn)
+  q  = similar(S, ixn)
+  Ar = similar(S, ixn)
+  Mq = dense ? similar(S, 0) : similar(S, ixn)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CrSolver{T,FC,S}(m, n, Δx, x, r, p, q, Ar, Mq, false, stats)
   return solver
@@ -183,7 +196,12 @@ end
 function CrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  CrSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  CrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -213,16 +231,17 @@ mutable struct SymmlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SymmlqStats{T}
 end
 
-function SymmlqSolver(m, n, S; window :: Int=5)
+function SymmlqSolver(m, n, ::Type{S}; ixm=m, ixn=n, window :: Int=5) where S <: AbstractVector
+  dense = S <: DenseVector
   FC      = eltype(S)
   T       = real(FC)
-  Δx      = S(undef, 0)
-  x       = S(undef, n)
-  Mvold   = S(undef, n)
-  Mv      = S(undef, n)
-  Mv_next = S(undef, n)
-  w̅       = S(undef, n)
-  v       = S(undef, 0)
+  Δx      = dense ? similar(S, 0) : similar(S, ixn)
+  x       = similar(S, ixn)
+  Mvold   = similar(S, ixn)
+  Mv      = similar(S, ixn)
+  Mv_next = similar(S, ixn)
+  w̅       = similar(S, ixn)
+  v       = dense ? similar(S, 0) : similar(S, ixn)
   clist   = zeros(T, window)
   zlist   = zeros(T, window)
   sprod   = ones(T, window)
@@ -234,7 +253,12 @@ end
 function SymmlqSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  SymmlqSolver(m, n, S, window=window)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  SymmlqSolver(m, n, S, ixm=ixm, ixn=ixn, window=window)
 end
 
 """
@@ -261,16 +285,17 @@ mutable struct CgLanczosSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: LanczosStats{T}
 end
 
-function CgLanczosSolver(m, n, S)
+function CgLanczosSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC      = eltype(S)
   T       = real(FC)
-  Δx      = S(undef, 0)
-  x       = S(undef, n)
-  Mv      = S(undef, n)
-  Mv_prev = S(undef, n)
-  p       = S(undef, n)
-  Mv_next = S(undef, n)
-  v       = S(undef, 0)
+  Δx      = dense ? similar(S, 0) : similar(S, ixn)
+  x       = similar(S, ixn)
+  Mv      = similar(S, ixn)
+  Mv_prev = similar(S, ixn)
+  p       = similar(S, ixn)
+  Mv_next = similar(S, ixn)
+  v       = dense ? similar(S, 0) : similar(S, ixn)
   stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), "unknown")
   solver = CgLanczosSolver{T,FC,S}(m, n, Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
   return solver
@@ -279,7 +304,12 @@ end
 function CgLanczosSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  CgLanczosSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  CgLanczosSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -312,23 +342,24 @@ mutable struct CgLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: LanczosShiftStats{T}
 end
 
-function CgLanczosShiftSolver(m, n, nshifts, S)
+function CgLanczosShiftSolver(m, n, nshifts, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC         = eltype(S)
   T          = real(FC)
-  Mv         = S(undef, n)
-  Mv_prev    = S(undef, n)
-  Mv_next    = S(undef, n)
-  v          = S(undef, 0)
-  x          = S[S(undef, n) for i = 1 : nshifts]
-  p          = S[S(undef, n) for i = 1 : nshifts]
-  σ          = Vector{T}(undef, nshifts)
-  δhat       = Vector{T}(undef, nshifts)
-  ω          = Vector{T}(undef, nshifts)
-  γ          = Vector{T}(undef, nshifts)
-  rNorms     = Vector{T}(undef, nshifts)
-  indefinite = BitVector(undef, nshifts)
-  converged  = BitVector(undef, nshifts)
-  not_cv     = BitVector(undef, nshifts)
+  Mv         = similar(S, ixn)
+  Mv_prev    = similar(S, ixn)
+  Mv_next    = similar(S, ixn)
+  v          = dense ? similar(S, 0) : similar(S, ixn)
+  x          = S[similar(S, ixn) for i = 1 : nshifts]
+  p          = S[similar(S, ixn) for i = 1 : nshifts]
+  σ          = similar(Vector{T}, nshifts)
+  δhat       = similar(Vector{T}, nshifts)
+  ω          = similar(Vector{T}, nshifts)
+  γ          = similar(Vector{T}, nshifts)
+  rNorms     = similar(Vector{T}, nshifts)
+  indefinite = similar(BitVector, nshifts)
+  converged  = similar(BitVector, nshifts)
+  not_cv     = similar(BitVector, nshifts)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), "unknown")
   solver = CgLanczosShiftSolver{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return solver
@@ -337,7 +368,12 @@ end
 function CgLanczosShiftSolver(A, b, nshifts)
   m, n = size(A)
   S = ktypeof(b)
-  CgLanczosShiftSolver(m, n, nshifts, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  CgLanczosShiftSolver(m, n, nshifts, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -365,17 +401,18 @@ mutable struct MinresQlpSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function MinresQlpSolver(m, n, S)
+function MinresQlpSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC      = eltype(S)
   T       = real(FC)
-  Δx      = S(undef, 0)
-  wₖ₋₁    = S(undef, n)
-  wₖ      = S(undef, n)
-  M⁻¹vₖ₋₁ = S(undef, n)
-  M⁻¹vₖ   = S(undef, n)
-  x       = S(undef, n)
-  p       = S(undef, n)
-  vₖ      = S(undef, 0)
+  Δx      = dense ? similar(S, 0) : similar(S, ixn)
+  wₖ₋₁    = similar(S, ixn)
+  wₖ      = similar(S, ixn)
+  M⁻¹vₖ₋₁ = similar(S, ixn)
+  M⁻¹vₖ   = similar(S, ixn)
+  x       = similar(S, ixn)
+  p       = similar(S, ixn)
+  vₖ      = dense ? similar(S, 0) : similar(S, ixn)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = MinresQlpSolver{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
   return solver
@@ -384,7 +421,12 @@ end
 function MinresQlpSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  MinresQlpSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  MinresQlpSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -415,20 +457,21 @@ mutable struct DqgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function DqgmresSolver(m, n, memory, S)
+function DqgmresSolver(m, n, memory, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
-  Δx = S(undef, 0)
-  x  = S(undef, n)
-  t  = S(undef, n)
-  z  = S(undef, 0)
-  w  = S(undef, 0)
-  P  = S[S(undef, n) for i = 1 : memory]
-  V  = S[S(undef, n) for i = 1 : memory]
-  c  = Vector{T}(undef, memory)
-  s  = Vector{FC}(undef, memory)
-  H  = Vector{FC}(undef, memory+1)
+  Δx = dense ? similar(S, 0) : similar(S, ixn)
+  x  = similar(S, ixn)
+  t  = similar(S, ixn)
+  z  = dense ? similar(S, 0) : similar(S, ixn)
+  w  = dense ? similar(S, 0) : similar(S, ixn)
+  P  = S[similar(S, ixn) for i = 1 : memory]
+  V  = S[similar(S, ixn) for i = 1 : memory]
+  c  = similar(Vector{T}, memory)
+  s  = similar(Vector{FC}, memory)
+  H  = similar(Vector{FC}, memory+1)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = DqgmresSolver{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
   return solver
@@ -437,7 +480,12 @@ end
 function DqgmresSolver(A, b, memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  DqgmresSolver(m, n, memory, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  DqgmresSolver(m, n, memory, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -467,19 +515,20 @@ mutable struct DiomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function DiomSolver(m, n, memory, S)
+function DiomSolver(m, n, memory, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   memory = min(m, memory)
-  FC  = eltype(S)
-  T   = real(FC)
-  Δx = S(undef, 0)
-  x  = S(undef, n)
-  t  = S(undef, n)
-  z  = S(undef, 0)
-  w  = S(undef, 0)
-  P  = S[S(undef, n) for i = 1 : memory-1]
-  V  = S[S(undef, n) for i = 1 : memory]
-  L  = Vector{FC}(undef, memory-1)
-  H  = Vector{FC}(undef, memory)
+  FC = eltype(S)
+  T  = real(FC)
+  Δx = dense ? similar(S, 0) : similar(S, ixn)
+  x  = similar(S, ixn)
+  t  = similar(S, ixn)
+  z  = dense ? similar(S, 0) : similar(S, ixn)
+  w  = dense ? similar(S, 0) : similar(S, ixn)
+  P  = S[similar(S, ixn) for i = 1 : memory-1]
+  V  = S[similar(S, ixn) for i = 1 : memory]
+  L  = similar(Vector{FC}, memory-1)
+  H  = similar(Vector{FC}, memory)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = DiomSolver{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
   return solver
@@ -488,7 +537,12 @@ end
 function DiomSolver(A, b, memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  DiomSolver(m, n, memory, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  DiomSolver(m, n, memory, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -517,18 +571,19 @@ mutable struct UsymlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function UsymlqSolver(m, n, S)
+function UsymlqSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
-  uₖ₋₁ = S(undef, n)
-  uₖ   = S(undef, n)
-  p    = S(undef, n)
-  Δx   = S(undef, 0)
-  x    = S(undef, n)
-  d̅    = S(undef, n)
-  vₖ₋₁ = S(undef, m)
-  vₖ   = S(undef, m)
-  q    = S(undef, m)
+  uₖ₋₁ = similar(S, ixn)
+  uₖ   = similar(S, ixn)
+  p    = similar(S, ixn)
+  Δx   = dense ? similar(S, 0) : similar(S, ixn)
+  x    = similar(S, ixn)
+  d̅    = similar(S, ixn)
+  vₖ₋₁ = similar(S, ixm)
+  vₖ   = similar(S, ixm)
+  q    = similar(S, ixm)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = UsymlqSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
   return solver
@@ -537,7 +592,12 @@ end
 function UsymlqSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  UsymlqSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  UsymlqSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -567,19 +627,20 @@ mutable struct UsymqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function UsymqrSolver(m, n, S)
+function UsymqrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
-  vₖ₋₁ = S(undef, m)
-  vₖ   = S(undef, m)
-  q    = S(undef, m)
-  Δx   = S(undef, 0)
-  x    = S(undef, n)
-  wₖ₋₂ = S(undef, n)
-  wₖ₋₁ = S(undef, n)
-  uₖ₋₁ = S(undef, n)
-  uₖ   = S(undef, n)
-  p    = S(undef, n)
+  vₖ₋₁ = similar(S, ixm)
+  vₖ   = similar(S, ixm)
+  q    = similar(S, ixm)
+  Δx   = dense ? similar(S, 0) : similar(S, ixn)
+  x    = similar(S, ixn)
+  wₖ₋₂ = similar(S, ixn)
+  wₖ₋₁ = similar(S, ixn)
+  uₖ₋₁ = similar(S, ixn)
+  uₖ   = similar(S, ixn)
+  p    = similar(S, ixn)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = UsymqrSolver{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
   return solver
@@ -588,7 +649,12 @@ end
 function UsymqrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  UsymqrSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  UsymqrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -624,25 +690,26 @@ mutable struct TricgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function TricgSolver(m, n, S)
+function TricgSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC      = eltype(S)
   T       = real(FC)
-  y       = S(undef, n)
-  N⁻¹uₖ₋₁ = S(undef, n)
-  N⁻¹uₖ   = S(undef, n)
-  p       = S(undef, n)
-  gy₂ₖ₋₁  = S(undef, n)
-  gy₂ₖ    = S(undef, n)
-  x       = S(undef, m)
-  M⁻¹vₖ₋₁ = S(undef, m)
-  M⁻¹vₖ   = S(undef, m)
-  q       = S(undef, m)
-  gx₂ₖ₋₁  = S(undef, m)
-  gx₂ₖ    = S(undef, m)
-  Δx      = S(undef, 0)
-  Δy      = S(undef, 0)
-  uₖ      = S(undef, 0)
-  vₖ      = S(undef, 0)
+  y       = similar(S, ixn)
+  N⁻¹uₖ₋₁ = similar(S, ixn)
+  N⁻¹uₖ   = similar(S, ixn)
+  p       = similar(S, ixn)
+  gy₂ₖ₋₁  = similar(S, ixn)
+  gy₂ₖ    = similar(S, ixn)
+  x       = similar(S, ixm)
+  M⁻¹vₖ₋₁ = similar(S, ixm)
+  M⁻¹vₖ   = similar(S, ixm)
+  q       = similar(S, ixm)
+  gx₂ₖ₋₁  = similar(S, ixm)
+  gx₂ₖ    = similar(S, ixm)
+  Δx      = dense ? similar(S, 0) : similar(S, ixm)
+  Δy      = dense ? similar(S, 0) : similar(S, ixn)
+  uₖ      = dense ? similar(S, 0) : similar(S, ixn)
+  vₖ      = dense ? similar(S, 0) : similar(S, ixm)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = TricgSolver{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return solver
@@ -651,7 +718,12 @@ end
 function TricgSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  TricgSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  TricgSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -691,29 +763,30 @@ mutable struct TrimrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function TrimrSolver(m, n, S)
+function TrimrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC      = eltype(S)
   T       = real(FC)
-  y       = S(undef, n)
-  N⁻¹uₖ₋₁ = S(undef, n)
-  N⁻¹uₖ   = S(undef, n)
-  p       = S(undef, n)
-  gy₂ₖ₋₃  = S(undef, n)
-  gy₂ₖ₋₂  = S(undef, n)
-  gy₂ₖ₋₁  = S(undef, n)
-  gy₂ₖ    = S(undef, n)
-  x       = S(undef, m)
-  M⁻¹vₖ₋₁ = S(undef, m)
-  M⁻¹vₖ   = S(undef, m)
-  q       = S(undef, m)
-  gx₂ₖ₋₃  = S(undef, m)
-  gx₂ₖ₋₂  = S(undef, m)
-  gx₂ₖ₋₁  = S(undef, m)
-  gx₂ₖ    = S(undef, m)
-  Δx      = S(undef, 0)
-  Δy      = S(undef, 0)
-  uₖ      = S(undef, 0)
-  vₖ      = S(undef, 0)
+  y       = similar(S, ixn)
+  N⁻¹uₖ₋₁ = similar(S, ixn)
+  N⁻¹uₖ   = similar(S, ixn)
+  p       = similar(S, ixn)
+  gy₂ₖ₋₃  = similar(S, ixn)
+  gy₂ₖ₋₂  = similar(S, ixn)
+  gy₂ₖ₋₁  = similar(S, ixn)
+  gy₂ₖ    = similar(S, ixn)
+  x       = similar(S, ixm)
+  M⁻¹vₖ₋₁ = similar(S, ixm)
+  M⁻¹vₖ   = similar(S, ixm)
+  q       = similar(S, ixm)
+  gx₂ₖ₋₃  = similar(S, ixm)
+  gx₂ₖ₋₂  = similar(S, ixm)
+  gx₂ₖ₋₁  = similar(S, ixm)
+  gx₂ₖ    = similar(S, ixm)
+  Δx      = dense ? similar(S, 0) : similar(S, ixm)
+  Δy      = dense ? similar(S, 0) : similar(S, ixn)
+  uₖ      = dense ? similar(S, 0) : similar(S, ixn)
+  vₖ      = dense ? similar(S, 0) : similar(S, ixm)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = TrimrSolver{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return solver
@@ -722,7 +795,12 @@ end
 function TrimrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  TrimrSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  TrimrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -755,22 +833,23 @@ mutable struct TrilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: AdjointStats{T}
 end
 
-function TrilqrSolver(m, n, S)
+function TrilqrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
-  uₖ₋₁ = S(undef, n)
-  uₖ   = S(undef, n)
-  p    = S(undef, n)
-  d̅    = S(undef, n)
-  Δx   = S(undef, 0)
-  x    = S(undef, n)
-  vₖ₋₁ = S(undef, m)
-  vₖ   = S(undef, m)
-  q    = S(undef, m)
-  Δy   = S(undef, 0)
-  y    = S(undef, m)
-  wₖ₋₃ = S(undef, m)
-  wₖ₋₂ = S(undef, m)
+  uₖ₋₁ = similar(S, ixn)
+  uₖ   = similar(S, ixn)
+  p    = similar(S, ixn)
+  d̅    = similar(S, ixn)
+  Δx   = dense ? similar(S, 0) : similar(S, ixn)
+  x    = similar(S, ixn)
+  vₖ₋₁ = similar(S, ixm)
+  vₖ   = similar(S, ixm)
+  q    = similar(S, ixm)
+  Δy   = dense ? similar(S, 0) : similar(S, ixm)
+  y    = similar(S, ixm)
+  wₖ₋₃ = similar(S, ixm)
+  wₖ₋₂ = similar(S, ixm)
   stats = AdjointStats(0, false, false, T[], T[], "unknown")
   solver = TrilqrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
   return solver
@@ -779,13 +858,18 @@ end
 function TrilqrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  TrilqrSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  TrilqrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
 Type for storing the vectors required by the in-place version of CGS.
 
-The outer constructorss
+The outer constructors
 
     solver = CgsSolver(m, n, S)
     solver = CgsSolver(A, b)
@@ -808,18 +892,19 @@ mutable struct CgsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function CgsSolver(m, n, S)
+function CgsSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
-  Δx = S(undef, 0)
-  x  = S(undef, n)
-  r  = S(undef, n)
-  u  = S(undef, n)
-  p  = S(undef, n)
-  q  = S(undef, n)
-  ts = S(undef, n)
-  yz = S(undef, 0)
-  vw = S(undef, 0)
+  Δx = dense ? similar(S, 0) : similar(S, ixn)
+  x  = similar(S, ixn)
+  r  = similar(S, ixn)
+  u  = similar(S, ixn)
+  p  = similar(S, ixn)
+  q  = similar(S, ixn)
+  ts = similar(S, ixn)
+  yz = dense ? similar(S, 0) : similar(S, ixn)
+  vw = dense ? similar(S, 0) : similar(S, ixn)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CgsSolver{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
   return solver
@@ -828,7 +913,12 @@ end
 function CgsSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  CgsSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  CgsSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -857,18 +947,19 @@ mutable struct BicgstabSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function BicgstabSolver(m, n, S)
+function BicgstabSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
-  Δx = S(undef, 0)
-  x  = S(undef, n)
-  r  = S(undef, n)
-  p  = S(undef, n)
-  v  = S(undef, n)
-  s  = S(undef, n)
-  qd = S(undef, n)
-  yz = S(undef, 0)
-  t  = S(undef, 0)
+  Δx = dense ? similar(S, 0) : similar(S, ixn)
+  x  = similar(S, ixn)
+  r  = similar(S, ixn)
+  p  = similar(S, ixn)
+  v  = similar(S, ixn)
+  s  = similar(S, ixn)
+  qd = similar(S, ixn)
+  yz = dense ? similar(S, 0) : similar(S, ixn)
+  t  = dense ? similar(S, 0) : similar(S, ixn)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = BicgstabSolver{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
   return solver
@@ -877,7 +968,12 @@ end
 function BicgstabSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  BicgstabSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  BicgstabSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -906,18 +1002,19 @@ mutable struct BilqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function BilqSolver(m, n, S)
+function BilqSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
-  uₖ₋₁ = S(undef, n)
-  uₖ   = S(undef, n)
-  q    = S(undef, n)
-  vₖ₋₁ = S(undef, n)
-  vₖ   = S(undef, n)
-  p    = S(undef, n)
-  Δx   = S(undef, 0)
-  x    = S(undef, n)
-  d̅    = S(undef, n)
+  uₖ₋₁ = similar(S, ixn)
+  uₖ   = similar(S, ixn)
+  q    = similar(S, ixn)
+  vₖ₋₁ = similar(S, ixn)
+  vₖ   = similar(S, ixn)
+  p    = similar(S, ixn)
+  Δx   = dense ? similar(S, 0) : similar(S, ixn)
+  x    = similar(S, ixn)
+  d̅    = similar(S, ixn)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = BilqSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, false, stats)
   return solver
@@ -926,7 +1023,12 @@ end
 function BilqSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  BilqSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  BilqSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -956,19 +1058,20 @@ mutable struct QmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function QmrSolver(m, n, S)
+function QmrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
-  uₖ₋₁ = S(undef, n)
-  uₖ   = S(undef, n)
-  q    = S(undef, n)
-  vₖ₋₁ = S(undef, n)
-  vₖ   = S(undef, n)
-  p    = S(undef, n)
-  Δx   = S(undef, 0)
-  x    = S(undef, n)
-  wₖ₋₂ = S(undef, n)
-  wₖ₋₁ = S(undef, n)
+  uₖ₋₁ = similar(S, ixn)
+  uₖ   = similar(S, ixn)
+  q    = similar(S, ixn)
+  vₖ₋₁ = similar(S, ixn)
+  vₖ   = similar(S, ixn)
+  p    = similar(S, ixn)
+  Δx   = dense ? similar(S, 0) : similar(S, ixn)
+  x    = similar(S, ixn)
+  wₖ₋₂ = similar(S, ixn)
+  wₖ₋₁ = similar(S, ixn)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = QmrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, false, stats)
   return solver
@@ -977,7 +1080,12 @@ end
 function QmrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  QmrSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  QmrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -1010,22 +1118,23 @@ mutable struct BilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: AdjointStats{T}
 end
 
-function BilqrSolver(m, n, S)
+function BilqrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
-  uₖ₋₁ = S(undef, n)
-  uₖ   = S(undef, n)
-  q    = S(undef, n)
-  vₖ₋₁ = S(undef, n)
-  vₖ   = S(undef, n)
-  p    = S(undef, n)
-  Δx   = S(undef, 0)
-  x    = S(undef, n)
-  Δy   = S(undef, 0)
-  y    = S(undef, n)
-  d̅    = S(undef, n)
-  wₖ₋₃ = S(undef, n)
-  wₖ₋₂ = S(undef, n)
+  uₖ₋₁ = similar(S, ixn)
+  uₖ   = similar(S, ixn)
+  q    = similar(S, ixn)
+  vₖ₋₁ = similar(S, ixn)
+  vₖ   = similar(S, ixn)
+  p    = similar(S, ixn)
+  Δx   = dense ? similar(S, 0) : similar(S, ixn)
+  x    = similar(S, ixn)
+  Δy   = dense ? similar(S, 0) : similar(S, ixn)
+  y    = similar(S, ixn)
+  d̅    = similar(S, ixn)
+  wₖ₋₃ = similar(S, ixn)
+  wₖ₋₂ = similar(S, ixn)
   stats = AdjointStats(0, false, false, T[], T[], "unknown")
   solver = BilqrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, false, stats)
   return solver
@@ -1034,7 +1143,12 @@ end
 function BilqrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  BilqrSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  BilqrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -1059,15 +1173,16 @@ mutable struct CglsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
-function CglsSolver(m, n, S)
+function CglsSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
-  x  = S(undef, n)
-  p  = S(undef, n)
-  s  = S(undef, n)
-  r  = S(undef, m)
-  q  = S(undef, m)
-  Mr = S(undef, 0)
+  x  = similar(S, ixn)
+  p  = similar(S, ixn)
+  s  = similar(S, ixn)
+  r  = similar(S, ixm)
+  q  = similar(S, ixm)
+  Mr = dense ? similar(S, 0) : similar(S, ixm)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CglsSolver{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
   return solver
@@ -1076,7 +1191,12 @@ end
 function CglsSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  CglsSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  CglsSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -1103,17 +1223,18 @@ mutable struct CrlsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
-function CrlsSolver(m, n, S)
+function CrlsSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
-  x  = S(undef, n)
-  p  = S(undef, n)
-  Ar = S(undef, n)
-  q  = S(undef, n)
-  r  = S(undef, m)
-  Ap = S(undef, m)
-  s  = S(undef, m)
-  Ms = S(undef, 0)
+  x  = similar(S, ixn)
+  p  = similar(S, ixn)
+  Ar = similar(S, ixn)
+  q  = similar(S, ixn)
+  r  = similar(S, ixm)
+  Ap = similar(S, ixm)
+  s  = similar(S, ixm)
+  Ms = dense ? similar(S, 0) : similar(S, ixm)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CrlsSolver{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
   return solver
@@ -1122,7 +1243,12 @@ end
 function CrlsSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  CrlsSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  CrlsSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -1148,16 +1274,17 @@ mutable struct CgneSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
-function CgneSolver(m, n, S)
+function CgneSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC  = eltype(S)
   T   = real(FC)
-  x   = S(undef, n)
-  p   = S(undef, n)
-  Aᴴz = S(undef, n)
-  r   = S(undef, m)
-  q   = S(undef, m)
-  s   = S(undef, 0)
-  z   = S(undef, 0)
+  x   = similar(S, ixn)
+  p   = similar(S, ixn)
+  Aᴴz = similar(S, ixn)
+  r   = similar(S, ixm)
+  q   = similar(S, ixm)
+  s   = dense ? similar(S, 0) : similar(S, ixm)
+  z   = dense ? similar(S, 0) : similar(S, ixm)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CgneSolver{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
   return solver
@@ -1166,7 +1293,12 @@ end
 function CgneSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  CgneSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  CgneSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -1192,16 +1324,17 @@ mutable struct CrmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
-function CrmrSolver(m, n, S)
+function CrmrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC  = eltype(S)
   T   = real(FC)
-  x   = S(undef, n)
-  p   = S(undef, n)
-  Aᴴr = S(undef, n)
-  r   = S(undef, m)
-  q   = S(undef, m)
-  Nq  = S(undef, 0)
-  s   = S(undef, 0)
+  x   = similar(S, ixn)
+  p   = similar(S, ixn)
+  Aᴴr = similar(S, ixn)
+  r   = similar(S, ixm)
+  q   = similar(S, ixm)
+  Nq  = dense ? similar(S, 0) : similar(S, ixm)
+  s   = dense ? similar(S, 0) : similar(S, ixm)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CrmrSolver{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
   return solver
@@ -1210,7 +1343,12 @@ end
 function CrmrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  CrmrSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  CrmrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -1238,17 +1376,18 @@ mutable struct LslqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats   :: LSLQStats{T}
 end
 
-function LslqSolver(m, n, S; window :: Int=5)
+function LslqSolver(m, n, ::Type{S}; ixm=m, ixn=n, window :: Int=5) where S <: AbstractVector
+  dense = S <: DenseVector
   FC  = eltype(S)
   T   = real(FC)
-  x   = S(undef, n)
-  Nv  = S(undef, n)
-  Aᴴu = S(undef, n)
-  w̄   = S(undef, n)
-  Mu  = S(undef, m)
-  Av  = S(undef, m)
-  u   = S(undef, 0)
-  v   = S(undef, 0)
+  x   = similar(S, ixn)
+  Nv  = similar(S, ixn)
+  Aᴴu = similar(S, ixn)
+  w̄   = similar(S, ixn)
+  Mu  = similar(S, ixm)
+  Av  = similar(S, ixm)
+  u   = dense ? similar(S, 0) : similar(S, ixm)
+  v   = dense ? similar(S, 0) : similar(S, ixn)
   err_vec = zeros(T, window)
   stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], "unknown")
   solver = LslqSolver{T,FC,S}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
@@ -1258,7 +1397,12 @@ end
 function LslqSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  LslqSolver(m, n, S, window=window)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  LslqSolver(m, n, S, ixm=ixm, ixn=ixn, window=window)
 end
 
 """
@@ -1286,17 +1430,18 @@ mutable struct LsqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats   :: SimpleStats{T}
 end
 
-function LsqrSolver(m, n, S; window :: Int=5)
+function LsqrSolver(m, n, ::Type{S}; ixm=m, ixn=n, window :: Int=5) where S <: AbstractVector
+  dense = S <: DenseVector
   FC  = eltype(S)
   T   = real(FC)
-  x   = S(undef, n)
-  Nv  = S(undef, n)
-  Aᴴu = S(undef, n)
-  w   = S(undef, n)
-  Mu  = S(undef, m)
-  Av  = S(undef, m)
-  u   = S(undef, 0)
-  v   = S(undef, 0)
+  x   = similar(S, ixn)
+  Nv  = similar(S, ixn)
+  Aᴴu = similar(S, ixn)
+  w   = similar(S, ixn)
+  Mu  = similar(S, ixm)
+  Av  = similar(S, ixm)
+  u   = dense ? similar(S, 0) : similar(S, ixm)
+  v   = dense ? similar(S, 0) : similar(S, ixn)
   err_vec = zeros(T, window)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = LsqrSolver{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
@@ -1306,7 +1451,12 @@ end
 function LsqrSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  LsqrSolver(m, n, S, window=window)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  LsqrSolver(m, n, S, ixm=ixm, ixn=ixn, window=window)
 end
 
 """
@@ -1335,18 +1485,19 @@ mutable struct LsmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats   :: LsmrStats{T}
 end
 
-function LsmrSolver(m, n, S; window :: Int=5)
+function LsmrSolver(m, n, ::Type{S}; ixm=m, ixn=n, window :: Int=5) where S <: AbstractVector
+  dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
-  x    = S(undef, n)
-  Nv   = S(undef, n)
-  Aᴴu  = S(undef, n)
-  h    = S(undef, n)
-  hbar = S(undef, n)
-  Mu   = S(undef, m)
-  Av   = S(undef, m)
-  u    = S(undef, 0)
-  v    = S(undef, 0)
+  x    = similar(S, ixn)
+  Nv   = similar(S, ixn)
+  Aᴴu  = similar(S, ixn)
+  h    = similar(S, ixn)
+  hbar = similar(S, ixn)
+  Mu   = similar(S, ixm)
+  Av   = similar(S, ixm)
+  u    = dense ? similar(S, 0) : similar(S, ixm)
+  v    = dense ? similar(S, 0) : similar(S, ixn)
   err_vec = zeros(T, window)
   stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), "unknown")
   solver = LsmrSolver{T,FC,S}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
@@ -1356,7 +1507,12 @@ end
 function LsmrSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  LsmrSolver(m, n, S, window=window)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  LsmrSolver(m, n, S, ixm=ixm, ixn=ixn, window=window)
 end
 
 """
@@ -1385,19 +1541,20 @@ mutable struct LnlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: LNLQStats{T}
 end
 
-function LnlqSolver(m, n, S)
+function LnlqSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC  = eltype(S)
   T   = real(FC)
-  x   = S(undef, n)
-  Nv  = S(undef, n)
-  Aᴴu = S(undef, n)
-  y   = S(undef, m)
-  w̄   = S(undef, m)
-  Mu  = S(undef, m)
-  Av  = S(undef, m)
-  u   = S(undef, 0)
-  v   = S(undef, 0)
-  q   = S(undef, 0)
+  x   = similar(S, ixn)
+  Nv  = similar(S, ixn)
+  Aᴴu = similar(S, ixn)
+  y   = similar(S, ixm)
+  w̄   = similar(S, ixm)
+  Mu  = similar(S, ixm)
+  Av  = similar(S, ixm)
+  u   = dense ? similar(S, 0) : similar(S, ixm)
+  v   = dense ? similar(S, 0) : similar(S, ixn)
+  q   = dense ? similar(S, 0) : similar(S, ixn)
   stats = LNLQStats(0, false, T[], false, T[], T[], "unknown")
   solver = LnlqSolver{T,FC,S}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
   return solver
@@ -1406,7 +1563,12 @@ end
 function LnlqSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  LnlqSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  LnlqSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -1435,19 +1597,20 @@ mutable struct CraigSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
-function CraigSolver(m, n, S)
+function CraigSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC  = eltype(S)
   T   = real(FC)
-  x   = S(undef, n)
-  Nv  = S(undef, n)
-  Aᴴu = S(undef, n)
-  y   = S(undef, m)
-  w   = S(undef, m)
-  Mu  = S(undef, m)
-  Av  = S(undef, m)
-  u   = S(undef, 0)
-  v   = S(undef, 0)
-  w2  = S(undef, 0)
+  x   = similar(S, ixn)
+  Nv  = similar(S, ixn)
+  Aᴴu = similar(S, ixn)
+  y   = similar(S, ixm)
+  w   = similar(S, ixm)
+  Mu  = similar(S, ixm)
+  Av  = similar(S, ixm)
+  u   = dense ? similar(S, 0) : similar(S, ixm)
+  v   = dense ? similar(S, 0) : similar(S, ixn)
+  w2  = dense ? similar(S, 0) : similar(S, ixn)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CraigSolver{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
   return solver
@@ -1456,7 +1619,12 @@ end
 function CraigSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  CraigSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  CraigSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -1487,21 +1655,22 @@ mutable struct CraigmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
-function CraigmrSolver(m, n, S)
+function CraigmrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
-  x    = S(undef, n)
-  Nv   = S(undef, n)
-  Aᴴu  = S(undef, n)
-  d    = S(undef, n)
-  y    = S(undef, m)
-  Mu   = S(undef, m)
-  w    = S(undef, m)
-  wbar = S(undef, m)
-  Av   = S(undef, m)
-  u    = S(undef, 0)
-  v    = S(undef, 0)
-  q    = S(undef, 0)
+  x    = similar(S, ixn)
+  Nv   = similar(S, ixn)
+  Aᴴu  = similar(S, ixn)
+  d    = similar(S, ixn)
+  y    = similar(S, ixm)
+  Mu   = similar(S, ixm)
+  w    = similar(S, ixm)
+  wbar = similar(S, ixm)
+  Av   = similar(S, ixm)
+  u    = dense ? similar(S, 0) : similar(S, ixm)
+  v    = dense ? similar(S, 0) : similar(S, ixn)
+  q    = dense ? similar(S, 0) : similar(S, ixn)
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CraigmrSolver{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
   return solver
@@ -1510,7 +1679,12 @@ end
 function CraigmrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  CraigmrSolver(m, n, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  CraigmrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -1542,20 +1716,21 @@ mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function GmresSolver(m, n, memory, S)
+function GmresSolver(m, n, memory, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
-  Δx = S(undef, 0)
-  x  = S(undef, n)
-  w  = S(undef, n)
-  p  = S(undef, 0)
-  q  = S(undef, 0)
-  V  = S[S(undef, n) for i = 1 : memory]
-  c  = Vector{T}(undef, memory)
-  s  = Vector{FC}(undef, memory)
-  z  = Vector{FC}(undef, memory)
-  R  = Vector{FC}(undef, div(memory * (memory+1), 2))
+  Δx = dense ? similar(S, 0) : similar(S, ixn)
+  x  = similar(S, ixn)
+  w  = similar(S, ixn)
+  p  = dense ? similar(S, 0) : similar(S, ixn)
+  q  = dense ? similar(S, 0) : similar(S, ixn)
+  V  = S[similar(S, ixn) for i = 1 : memory]
+  c  = similar(Vector{T}, memory)
+  s  = similar(Vector{FC}, memory)
+  z  = similar(Vector{FC}, memory)
+  R  = similar(Vector{FC}, div(memory * (memory+1), 2))
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = GmresSolver{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
   return solver
@@ -1564,7 +1739,12 @@ end
 function GmresSolver(A, b, memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  GmresSolver(m, n, memory, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  GmresSolver(m, n, memory, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -1596,20 +1776,21 @@ mutable struct FgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function FgmresSolver(m, n, memory, S)
+function FgmresSolver(m, n, memory, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
-  Δx = S(undef, 0)
-  x  = S(undef, n)
-  w  = S(undef, n)
-  q  = S(undef, 0)
-  V  = S[S(undef, n) for i = 1 : memory]
-  Z  = S[S(undef, n) for i = 1 : memory]
-  c  = Vector{T}(undef, memory)
-  s  = Vector{FC}(undef, memory)
-  z  = Vector{FC}(undef, memory)
-  R  = Vector{FC}(undef, div(memory * (memory+1), 2))
+  Δx = dense ? similar(S, 0) : similar(S, ixn)
+  x  = similar(S, ixn)
+  w  = similar(S, ixn)
+  q  = dense ? similar(S, 0) : similar(S, ixn)
+  V  = S[similar(S, ixn) for i = 1 : memory]
+  Z  = S[similar(S, ixn) for i = 1 : memory]
+  c  = similar(Vector{T}, memory)
+  s  = similar(Vector{FC}, memory)
+  z  = similar(Vector{FC}, memory)
+  R  = similar(Vector{FC}, div(memory * (memory+1), 2))
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = FgmresSolver{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
   return solver
@@ -1618,7 +1799,12 @@ end
 function FgmresSolver(A, b, memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  FgmresSolver(m, n, memory, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  FgmresSolver(m, n, memory, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -1648,19 +1834,20 @@ mutable struct FomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function FomSolver(m, n, memory, S)
+function FomSolver(m, n, memory, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
-  Δx = S(undef, 0)
-  x  = S(undef, n)
-  w  = S(undef, n)
-  p  = S(undef, 0)
-  q  = S(undef, 0)
-  V  = S[S(undef, n) for i = 1 : memory]
-  l  = Vector{FC}(undef, memory)
-  z  = Vector{FC}(undef, memory)
-  U  = Vector{FC}(undef, div(memory * (memory+1), 2))
+  Δx = dense ? similar(S, 0) : similar(S, ixn)
+  x  = similar(S, ixn)
+  w  = similar(S, ixn)
+  p  = dense ? similar(S, 0) : similar(S, ixn)
+  q  = dense ? similar(S, 0) : similar(S, ixn)
+  V  = S[similar(S, ixn) for i = 1 : memory]
+  l  = similar(Vector{FC}, memory)
+  z  = similar(Vector{FC}, memory)
+  U  = similar(Vector{FC}, div(memory * (memory+1), 2))
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = FomSolver{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
   return solver
@@ -1669,7 +1856,12 @@ end
 function FomSolver(A, b, memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  FomSolver(m, n, memory, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  FomSolver(m, n, memory, S, ixm=ixm, ixn=ixn)
 end
 
 """
@@ -1706,26 +1898,27 @@ mutable struct GpmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function GpmrSolver(m, n, memory, S)
+function GpmrSolver(m, n, memory, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  dense = S <: DenseVector
   memory = min(n + m, memory)
   FC = eltype(S)
   T  = real(FC)
-  wA = S(undef, 0)
-  wB = S(undef, 0)
-  dA = S(undef, m)
-  dB = S(undef, n)
-  Δx = S(undef, 0)
-  Δy = S(undef, 0)
-  x  = S(undef, m)
-  y  = S(undef, n)
-  q  = S(undef, 0)
-  p  = S(undef, 0)
-  V  = S[S(undef, m) for i = 1 : memory]
-  U  = S[S(undef, n) for i = 1 : memory]
-  gs = Vector{FC}(undef, 4 * memory)
-  gc = Vector{T}(undef, 4 * memory)
-  zt = Vector{FC}(undef, 2 * memory)
-  R  = Vector{FC}(undef, memory * (2 * memory + 1))
+  wA = dense ? similar(S, 0) : similar(S, ixn)
+  wB = dense ? similar(S, 0) : similar(S, ixm)
+  dA = similar(S, ixm)
+  dB = similar(S, ixn)
+  Δx = dense ? similar(S, 0) : similar(S, ixm)
+  Δy = dense ? similar(S, 0) : similar(S, ixn)
+  x  = similar(S, ixm)
+  y  = similar(S, ixn)
+  q  = dense ? similar(S, 0) : similar(S, ixm)
+  p  = dense ? similar(S, 0) : similar(S, ixn)
+  V  = S[similar(S, ixm) for i = 1 : memory]
+  U  = S[similar(S, ixn) for i = 1 : memory]
+  gs = similar(Vector{FC}, 4 * memory)
+  gc = similar(Vector{T}, 4 * memory)
+  zt = similar(Vector{FC}, 2 * memory)
+  R  = similar(Vector{FC}, memory * (2 * memory + 1))
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = GpmrSolver{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
   return solver
@@ -1734,7 +1927,12 @@ end
 function GpmrSolver(A, b, memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  GpmrSolver(m, n, memory, S)
+  if S <: DenseVector
+    ixm, ixn = m, n
+  else
+    ixm, ixn = axes(A)
+  end
+  GpmrSolver(m, n, memory, S, ixm=ixm, ixn=ixn)
 end
 
 """
