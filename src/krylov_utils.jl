@@ -205,12 +205,17 @@ Return the most relevant storage type `S` based on the type of `v`.
 """
 function ktypeof end
 
-function ktypeof(v::S) where S <: AbstractVector
-  return S  # BlockArrays, FillArrays, PartitionedArrays, etc...
-end
-
 function ktypeof(v::S) where S <: DenseVector
   return S
+end
+
+function ktypeof(v::S) where S <: AbstractVector
+  if S.name.name == :Zeros || S.name.name == :Ones
+    T = eltype(S)
+    return Vector{T}  # FillArrays
+  else
+    return S  # BlockArrays, PartitionedArrays, etc...
+  end
 end
 
 function ktypeof(v::S) where S <: SparseVector
