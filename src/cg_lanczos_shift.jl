@@ -83,7 +83,7 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
                            check_curvature :: Bool=false, atol :: T=√eps(T),
                            rtol :: T=√eps(T), itmax :: Int=0,
                            verbose :: Int=0, history :: Bool=false,
-                           callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                           callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

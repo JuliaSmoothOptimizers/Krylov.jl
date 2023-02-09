@@ -99,7 +99,7 @@ See [`UsymqrSolver`](@ref) for more details about the `solver`.
 function usymqr! end
 
 function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
-                 x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   warm_start!(solver, x0)
   usymqr!(solver, A, b, c; kwargs...)
   return solver
@@ -108,7 +108,7 @@ end
 function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                  atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                  verbose :: Int=0, history :: Bool=false,
-                 callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

@@ -90,7 +90,7 @@ See [`FomSolver`](@ref) for more details about the `solver`.
 """
 function fom! end
 
-function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   warm_start!(solver, x0)
   fom!(solver, A, b; kwargs...)
   return solver
@@ -101,7 +101,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
               restart :: Bool=false, reorthogonalization :: Bool=false,
               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
               verbose :: Int=0, history :: Bool=false,
-              callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+              callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

@@ -127,7 +127,7 @@ See [`GpmrSolver`](@ref) for more details about the `solver`.
 function gpmr! end
 
 function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC},
-                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   warm_start!(solver, x0, y0)
   gpmr!(solver, A, B, b, c; kwargs...)
   return solver
@@ -140,7 +140,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
                reorthogonalization :: Bool=false, atol :: T=√eps(T),
                rtol :: T=√eps(T), itmax :: Int=0,
                verbose :: Int=0, history::Bool=false,
-               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
   m, n = size(A)
   s, t = size(B)

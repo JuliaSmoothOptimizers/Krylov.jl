@@ -1913,7 +1913,7 @@ end
 
 Statistics of `solver` are displayed if `show_stats` is set to true.
 """
-function show(io :: IO, solver :: KrylovSolver{T,FC,S}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+function show(io :: IO, solver :: KrylovSolver{T,FC,S}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   workspace = typeof(solver)
   name_solver = string(workspace.name.name)
   name_stats = string(typeof(solver.stats).name.name)

@@ -109,7 +109,7 @@ function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                λ :: T=zero(T), atol :: T=√eps(T),
                rtol :: T=√eps(T), itmax :: Int=0,
                verbose :: Int=0, history :: Bool=false,
-               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")
