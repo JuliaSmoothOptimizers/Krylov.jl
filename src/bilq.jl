@@ -86,7 +86,7 @@ See [`BilqSolver`](@ref) for more details about the `solver`.
 """
 function bilq! end
 
-function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   warm_start!(solver, x0)
   bilq!(solver, A, b; kwargs...)
   return solver
@@ -96,7 +96,7 @@ function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                c :: AbstractVector{FC}=b, transfer_to_bicg :: Bool=true,
                atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
                verbose :: Int=0, history :: Bool=false,
-               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")

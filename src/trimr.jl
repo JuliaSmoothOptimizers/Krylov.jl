@@ -115,7 +115,7 @@ See [`TrimrSolver`](@ref) for more details about the `solver`.
 function trimr! end
 
 function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
-                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   warm_start!(solver, x0, y0)
   trimr!(solver, A, b, c; kwargs...)
   return solver
@@ -128,7 +128,7 @@ function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
                 τ :: T=one(T), ν :: T=-one(T), atol :: T=√eps(T),
                 rtol :: T=√eps(T), itmax :: Int=0,
                 verbose :: Int=0, history :: Bool=false,
-                callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
   m, n = size(A)
   length(b) == m || error("Inconsistent problem size")

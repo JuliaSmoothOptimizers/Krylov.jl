@@ -112,7 +112,7 @@ See [`MinresSolver`](@ref) for more details about the `solver`.
 """
 function minres! end
 
-function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   warm_start!(solver, x0)
   minres!(solver, A, b; kwargs...)
   return solver
@@ -124,7 +124,7 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  rtol :: T=√eps(T), etol :: T=√eps(T),
                  conlim :: T=1/√eps(T), itmax :: Int=0,
                  verbose :: Int=0, history :: Bool=false,
-                 callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+                 callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
   m, n = size(A)
   m == n || error("System must be square")
