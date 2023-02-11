@@ -107,6 +107,7 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
   linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
 
   m, n = size(A)
+  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   m == n || error("System must be square")
   length(b) == n || error("Inconsistent problem size")
   (verbose > 0) && @printf(iostream, "CG: system of %d equations in %d variables\n", n, n)

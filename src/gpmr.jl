@@ -144,6 +144,7 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
 
   m, n = size(A)
   s, t = size(B)
+  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   m == t         || error("Inconsistent problem size")
   s == n         || error("Inconsistent problem size")
   length(b) == m || error("Inconsistent problem size")

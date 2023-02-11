@@ -295,6 +295,7 @@ may be used in order to create these vectors.
 mutable struct CgLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
   n          :: Int
+  nshifts    :: Int
   Mv         :: S
   Mv_prev    :: S
   Mv_next    :: S
@@ -329,7 +330,7 @@ function CgLanczosShiftSolver(m, n, nshifts, S)
   converged  = BitVector(undef, nshifts)
   not_cv     = BitVector(undef, nshifts)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), "unknown")
-  solver = CgLanczosShiftSolver{T,FC,S}(m, n, Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  solver = CgLanczosShiftSolver{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return solver
 end
 
