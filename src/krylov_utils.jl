@@ -199,6 +199,18 @@ function vec2str(x :: AbstractVector{T}; ndisp :: Int=7) where T <: Union{Abstra
 end
 
 """
+  ixm, ixn = kaxes(S, A)
+
+Return the size of `A` if `S` is a `DenseVector`.
+Otherwise, it returns the axes of `A`.
+`axes(A)` could not be defined for some linear operators and we only want to call it for fancy arrays.
+"""
+function kaxes end
+
+kaxes(::Type{S}, A) where S <: DenseVector = size(A)
+kaxes(::Type{S}, A) where S <: AbstractVector = axes(A)
+
+"""
     S = ktypeof(v)
 
 Return the most relevant storage type `S` based on the type of `v`.
@@ -308,14 +320,16 @@ kscal!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer) where T <: F
 kscal!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer) where T <: AbstractFloat = kscal!(n, Complex{T}(s), x, dx)
 
 kaxpy!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.axpy!(n, s, x, dx, y, dy)
-kaxpy!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: FloatOrComplex = (y .+= s .* x)  # axpy!(s, x, y)
-kaxpy!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = (y .+= s .* x)  # kaxpy!(n, Complex{T}(s), x, dx, y, dy)
+kaxpy!(n :: Integer, s :: T, x :: S, dx :: Integer, y :: S, dy :: Integer) where {T <: FloatOrComplex, S <: DenseVector{T}} = axpy!(s, x, y)
+kaxpy!(n :: Integer, s :: T, x :: S, dx :: Integer, y :: S, dy :: Integer) where {T <: FloatOrComplex, S <: AbstractVector{T}} = (y .+= s .* x)
+kaxpy!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = kaxpy!(n, Complex{T}(s), x, dx, y, dy)
 
 kaxpby!(n :: Integer, s :: T, x :: Vector{T}, dx :: Integer, t :: T, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.axpby!(n, s, x, dx, t, y, dy)
-kaxpby!(n :: Integer, s :: T, x :: AbstractVector{T}, dx :: Integer, t :: T, y :: AbstractVector{T}, dy :: Integer) where T <: FloatOrComplex = (y .= s .* x .+ t .* y)  # axpby!(s, x, t, y)
-kaxpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: Complex{T}, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = (y .= s .* x .+ t .* y)  # kaxpby!(n, Complex{T}(s), x, dx, t, y, dy)
-kaxpby!(n :: Integer, s :: Complex{T}, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: T, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = (y .= s .* x .+ t .* y)  # kaxpby!(n, s, x, dx, Complex{T}(t), y, dy)
-kaxpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: T, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = (y .= s .* x .+ t .* y)  # kaxpby!(n, Complex{T}(s), x, dx, Complex{T}(t), y, dy)
+kaxpby!(n :: Integer, s :: T, x :: S, dx :: Integer, t :: T, y :: S, dy :: Integer) where {T <: FloatOrComplex, S <: DenseVector{T}} = axpby!(s, x, t, y)
+kaxpby!(n :: Integer, s :: T, x :: S, dx :: Integer, t :: T, y :: S, dy :: Integer) where {T <: FloatOrComplex, S <: AbstractVector{T}} = (y .= s .* x .+ t .* y)
+kaxpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: Complex{T}, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = kaxpby!(n, Complex{T}(s), x, dx, t, y, dy)
+kaxpby!(n :: Integer, s :: Complex{T}, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: T, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = kaxpby!(n, s, x, dx, Complex{T}(t), y, dy)
+kaxpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, t :: T, y :: AbstractVector{Complex{T}}, dy :: Integer) where T <: AbstractFloat = kaxpby!(n, Complex{T}(s), x, dx, Complex{T}(t), y, dy)
 
 kcopy!(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.blascopy!(n, x, dx, y, dy)
 kcopy!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: FloatOrComplex = copyto!(y, x)

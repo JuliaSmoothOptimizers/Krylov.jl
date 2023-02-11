@@ -96,11 +96,7 @@ end
 function MinresSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   MinresSolver(m, n, S, ixm=ixm, ixn=ixn, window=window)
 end
 
@@ -145,11 +141,7 @@ end
 function CgSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   CgSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -196,11 +188,7 @@ end
 function CrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   CrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -253,11 +241,7 @@ end
 function SymmlqSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   SymmlqSolver(m, n, S, ixm=ixm, ixn=ixn, window=window)
 end
 
@@ -304,11 +288,7 @@ end
 function CgLanczosSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   CgLanczosSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -368,11 +348,7 @@ end
 function CgLanczosShiftSolver(A, b, nshifts)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   CgLanczosShiftSolver(m, n, nshifts, S, ixm=ixm, ixn=ixn)
 end
 
@@ -421,11 +397,7 @@ end
 function MinresQlpSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   MinresQlpSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -480,11 +452,7 @@ end
 function DqgmresSolver(A, b, memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   DqgmresSolver(m, n, memory, S, ixm=ixm, ixn=ixn)
 end
 
@@ -537,11 +505,7 @@ end
 function DiomSolver(A, b, memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   DiomSolver(m, n, memory, S, ixm=ixm, ixn=ixn)
 end
 
@@ -592,11 +556,7 @@ end
 function UsymlqSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   UsymlqSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -649,11 +609,7 @@ end
 function UsymqrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   UsymqrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -718,11 +674,7 @@ end
 function TricgSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   TricgSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -795,11 +747,7 @@ end
 function TrimrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   TrimrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -858,11 +806,7 @@ end
 function TrilqrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   TrilqrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -913,11 +857,7 @@ end
 function CgsSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   CgsSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -968,11 +908,7 @@ end
 function BicgstabSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   BicgstabSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1023,11 +959,7 @@ end
 function BilqSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   BilqSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1080,11 +1012,7 @@ end
 function QmrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   QmrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1143,11 +1071,7 @@ end
 function BilqrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   BilqrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1191,11 +1115,7 @@ end
 function CglsSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   CglsSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1243,11 +1163,7 @@ end
 function CrlsSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   CrlsSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1293,11 +1209,7 @@ end
 function CgneSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   CgneSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1343,11 +1255,7 @@ end
 function CrmrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   CrmrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1397,11 +1305,7 @@ end
 function LslqSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   LslqSolver(m, n, S, ixm=ixm, ixn=ixn, window=window)
 end
 
@@ -1451,11 +1355,7 @@ end
 function LsqrSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   LsqrSolver(m, n, S, ixm=ixm, ixn=ixn, window=window)
 end
 
@@ -1507,11 +1407,7 @@ end
 function LsmrSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   LsmrSolver(m, n, S, ixm=ixm, ixn=ixn, window=window)
 end
 
@@ -1563,11 +1459,7 @@ end
 function LnlqSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   LnlqSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1619,11 +1511,7 @@ end
 function CraigSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   CraigSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1679,11 +1567,7 @@ end
 function CraigmrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   CraigmrSolver(m, n, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1739,11 +1623,7 @@ end
 function GmresSolver(A, b, memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   GmresSolver(m, n, memory, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1799,11 +1679,7 @@ end
 function FgmresSolver(A, b, memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   FgmresSolver(m, n, memory, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1856,11 +1732,7 @@ end
 function FomSolver(A, b, memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   FomSolver(m, n, memory, S, ixm=ixm, ixn=ixn)
 end
 
@@ -1927,11 +1799,7 @@ end
 function GpmrSolver(A, b, memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  if S <: DenseVector
-    ixm, ixn = m, n
-  else
-    ixm, ixn = axes(A)
-  end
+  ixm, ixn = kaxes(S, A)
   GpmrSolver(m, n, memory, S, ixm=ixm, ixn=ixn)
 end
 
