@@ -112,6 +112,7 @@ function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+  ixn = kaxe(b)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf(iostream, "FGMRES: system of size %d\n", n)
@@ -229,7 +230,7 @@ function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
         end
         push!(s, zero(FC))
         push!(c, zero(T))
-        push!(Z, S(undef, n))
+        push!(Z, similar(S, ixn))
       end
 
       # Continue the process.

@@ -199,9 +199,20 @@ function vec2str(x :: AbstractVector{T}; ndisp :: Int=7) where T <: Union{Abstra
 end
 
 """
+  ixm = kaxe(b)
+
+Return the length of `b` if `b` is a `DenseVector`.
+Otherwise, it returns the axe of `b` along the first dimension.
+"""
+function kaxe end
+
+kaxe(v::S) where S <: DenseVector = length(v)
+kaxe(v::S) where S <: AbstractVector = axes(v, 1)
+
+"""
   ixm, ixn = kaxes(S, A)
 
-Return the size of `A` if `S` is a `DenseVector`.
+Return the size of `A` if `S` is a subtype of `DenseVector`.
 Otherwise, it returns the axes of `A`.
 `axes(A)` could not be defined for some linear operators and we only want to call it for fancy arrays.
 """
