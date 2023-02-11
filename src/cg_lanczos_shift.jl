@@ -86,10 +86,12 @@ function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: Abstr
                            callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
   m, n = size(A)
+  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   m == n || error("System must be square")
   length(b) == n || error("Inconsistent problem size")
 
   nshifts = length(shifts)
+  nshifts == solver.nshifts || error("solver.nshifts = $(solver.nshifts) is inconsistent with length(shifts) = $nshifts")
   (verbose > 0) && @printf(iostream, "CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts)
 
   # Tests M = Iₙ

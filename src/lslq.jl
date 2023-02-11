@@ -170,6 +170,7 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                callback=solver->false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
   m, n = size(A)
+  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf(iostream, "LSLQ: system of %d equations in %d variables\n", m, n)
 
