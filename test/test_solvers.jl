@@ -50,6 +50,33 @@ function test_solvers(FC)
     $solvers[:cg_lanczos_shift] = $(KRYLOV_SOLVERS[:cg_lanczos_shift])($n, $n, $nshifts, $S)
   end
 
+  @testset "Check compatibility between KrylovSolvers and the dimension of the linear problems" begin
+    A2  = FC.(get_div_grad(2, 2, 2))
+    n2  = size(A2, 1)
+    m2  = div(n2, 2)
+    Au2 = A2[1:m2,:]
+    Ao2 = A2[:,1:m2]
+    b2  = Ao2 * ones(FC, m2)
+    c2  = Au2 * ones(FC, n2)
+    shifts2 = [1.0; 2.0; 3.0; 4.0; 5.0; 6.0]
+    T = real(FC)
+    S = Vector{FC}
+    for (method, solver) in solvers
+      if method ∈ (:cg, :cr, :symmlq, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr)
+        @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)" solve!(solver, A2, b2)
+      end
+      method == :cg_lanczos_shift && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)" solve!(solver, A2, b2, shifts2)
+      method == :cg_lanczos_shift && @test_throws "solver.nshifts = $(solver.nshifts) is inconsistent with length(shifts) = $(length(shifts2))" solve!(solver, A, b, shifts2)
+      method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m2, $n2)" solve!(solver, Au2, c2)
+      method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr) && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)" solve!(solver, Ao2, b2)
+      method ∈ (:bilqr, :trilqr) && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)" solve!(solver, A2, b2, b2)
+      method == :gpmr && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)" solve!(solver, Ao2, Au2, b2, c2)
+      method ∈ (:tricg, :trimr) && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)" solve!(solver, Ao2, b2, c2)
+      method == :usymlq && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m2, $n2)" solve!(solver, Au2, c2, b2)
+      method == :usymqr && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)" solve!(solver, Ao2, b2, c2)
+    end
+  end
+
   for (method, solver) in solvers
     @testset "$(method)" begin
       for i = 1 : 3
