@@ -63,17 +63,17 @@ function test_solvers(FC)
     S = Vector{FC}
     for (method, solver) in solvers
       if method ∈ (:cg, :cr, :symmlq, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr)
-        @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)" solve!(solver, A2, b2)
+        @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)") solve!(solver, A2, b2)
       end
-      method == :cg_lanczos_shift && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)" solve!(solver, A2, b2, shifts2)
-      method == :cg_lanczos_shift && @test_throws "solver.nshifts = $(solver.nshifts) is inconsistent with length(shifts) = $(length(shifts2))" solve!(solver, A, b, shifts2)
-      method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m2, $n2)" solve!(solver, Au2, c2)
-      method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr) && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)" solve!(solver, Ao2, b2)
-      method ∈ (:bilqr, :trilqr) && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)" solve!(solver, A2, b2, b2)
-      method == :gpmr && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)" solve!(solver, Ao2, Au2, b2, c2)
-      method ∈ (:tricg, :trimr) && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)" solve!(solver, Ao2, b2, c2)
-      method == :usymlq && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m2, $n2)" solve!(solver, Au2, c2, b2)
-      method == :usymqr && @test_throws "(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)" solve!(solver, Ao2, b2, c2)
+      method == :cg_lanczos_shift && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)") solve!(solver, A2, b2, shifts2)
+      method == :cg_lanczos_shift && @test_throws ErrorException("solver.nshifts = $(solver.nshifts) is inconsistent with length(shifts) = $(length(shifts2))") solve!(solver, A, b, shifts2)
+      method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m2, $n2)") solve!(solver, Au2, c2)
+      method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr) && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)") solve!(solver, Ao2, b2)
+      method ∈ (:bilqr, :trilqr) && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)") solve!(solver, A2, b2, b2)
+      method == :gpmr && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)") solve!(solver, Ao2, Au2, b2, c2)
+      method ∈ (:tricg, :trimr) && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)") solve!(solver, Ao2, b2, c2)
+      method == :usymlq && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m2, $n2)") solve!(solver, Au2, c2, b2)
+      method == :usymqr && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)") solve!(solver, Ao2, b2, c2)
     end
   end
 
