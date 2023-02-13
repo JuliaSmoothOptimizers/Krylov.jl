@@ -202,8 +202,8 @@ end
   ixm, ixn = kaxes(S, A)
 
 Return the size of `A` if `S` is a subtype of `DenseVector`.
-Otherwise, it returns the axes of `A`.
-`axes(A)` may not be defined for some linear operators and we only want to call it for fancy arrays.
+Otherwise, return `axes(A)`.
+`axes(A)` may not be defined for some linear operators.
 """
 function kaxes end
 
