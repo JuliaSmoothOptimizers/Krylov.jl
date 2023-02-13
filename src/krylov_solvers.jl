@@ -76,6 +76,7 @@ mutable struct MinresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function MinresSolver(m, n, ::Type{S}; ixm=m, ixn=n, window :: Int=5) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
@@ -124,6 +125,7 @@ mutable struct CgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CgSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
@@ -170,6 +172,7 @@ mutable struct CrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
@@ -220,6 +223,7 @@ mutable struct SymmlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function SymmlqSolver(m, n, ::Type{S}; ixm=m, ixn=n, window :: Int=5) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC      = eltype(S)
   T       = real(FC)
@@ -270,6 +274,7 @@ mutable struct CgLanczosSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CgLanczosSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC      = eltype(S)
   T       = real(FC)
@@ -323,6 +328,7 @@ mutable struct CgLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CgLanczosShiftSolver(m, n, nshifts, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC         = eltype(S)
   T          = real(FC)
@@ -378,6 +384,7 @@ mutable struct MinresQlpSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function MinresQlpSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC      = eltype(S)
   T       = real(FC)
@@ -430,6 +437,7 @@ mutable struct DqgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function DqgmresSolver(m, n, memory, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   memory = min(m, memory)
   FC = eltype(S)
@@ -484,6 +492,7 @@ mutable struct DiomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function DiomSolver(m, n, memory, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   memory = min(m, memory)
   FC = eltype(S)
@@ -536,6 +545,7 @@ mutable struct UsymlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function UsymlqSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
@@ -588,6 +598,7 @@ mutable struct UsymqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function UsymqrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
@@ -647,6 +658,7 @@ mutable struct TricgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function TricgSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC      = eltype(S)
   T       = real(FC)
@@ -716,6 +728,7 @@ mutable struct TrimrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function TrimrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC      = eltype(S)
   T       = real(FC)
@@ -782,6 +795,7 @@ mutable struct TrilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function TrilqrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
@@ -837,6 +851,7 @@ mutable struct CgsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CgsSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
@@ -888,6 +903,7 @@ mutable struct BicgstabSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function BicgstabSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
@@ -939,6 +955,7 @@ mutable struct BilqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function BilqSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
@@ -991,6 +1008,7 @@ mutable struct QmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function QmrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
@@ -1047,6 +1065,7 @@ mutable struct BilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function BilqrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
@@ -1098,6 +1117,7 @@ mutable struct CglsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CglsSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
@@ -1144,6 +1164,7 @@ mutable struct CrlsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CrlsSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC = eltype(S)
   T  = real(FC)
@@ -1191,6 +1212,7 @@ mutable struct CgneSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CgneSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC  = eltype(S)
   T   = real(FC)
@@ -1237,6 +1259,7 @@ mutable struct CrmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CrmrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC  = eltype(S)
   T   = real(FC)
@@ -1285,6 +1308,7 @@ mutable struct LslqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function LslqSolver(m, n, ::Type{S}; ixm=m, ixn=n, window :: Int=5) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC  = eltype(S)
   T   = real(FC)
@@ -1335,6 +1359,7 @@ mutable struct LsqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function LsqrSolver(m, n, ::Type{S}; ixm=m, ixn=n, window :: Int=5) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC  = eltype(S)
   T   = real(FC)
@@ -1386,6 +1411,7 @@ mutable struct LsmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function LsmrSolver(m, n, ::Type{S}; ixm=m, ixn=n, window :: Int=5) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
@@ -1438,6 +1464,7 @@ mutable struct LnlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function LnlqSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC  = eltype(S)
   T   = real(FC)
@@ -1490,6 +1517,7 @@ mutable struct CraigSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CraigSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC  = eltype(S)
   T   = real(FC)
@@ -1544,6 +1572,7 @@ mutable struct CraigmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CraigmrSolver(m, n, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   FC   = eltype(S)
   T    = real(FC)
@@ -1601,6 +1630,7 @@ mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function GmresSolver(m, n, memory, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   memory = min(m, memory)
   FC = eltype(S)
@@ -1657,6 +1687,7 @@ mutable struct FgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function FgmresSolver(m, n, memory, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   memory = min(m, memory)
   FC = eltype(S)
@@ -1711,6 +1742,7 @@ mutable struct FomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function FomSolver(m, n, memory, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   memory = min(m, memory)
   FC = eltype(S)
@@ -1771,6 +1803,7 @@ mutable struct GpmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function GpmrSolver(m, n, memory, ::Type{S}; ixm=m, ixn=n) where S <: AbstractVector
+  S <: AbstractSparseVector && error("The storage type S can't be a sparse vector for performance reasons")
   dense = S <: DenseVector
   memory = min(n + m, memory)
   FC = eltype(S)
