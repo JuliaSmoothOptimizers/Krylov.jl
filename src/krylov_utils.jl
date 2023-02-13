@@ -199,17 +199,6 @@ function vec2str(x :: AbstractVector{T}; ndisp :: Int=7) where T <: Union{Abstra
 end
 
 """
-  ixm = kaxis(b)
-
-Return the length of `b` if `b` is a `DenseVector`.
-Otherwise, it returns the axis of `b` along the first dimension.
-"""
-function kaxis end
-
-kaxis(v::S) where S <: DenseVector = length(v)
-kaxis(v::S) where S <: AbstractVector = axes(v, 1)
-
-"""
   ixm, ixn = kaxes(S, A)
 
 Return the size of `A` if `S` is a subtype of `DenseVector`.

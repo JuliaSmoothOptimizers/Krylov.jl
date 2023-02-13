@@ -105,7 +105,6 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
 
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
-  ixn = kaxis(solver.x)
   m == n || error("System must be square")
   length(b) == m || error("Inconsistent problem size")
   (verbose > 0) && @printf(iostream, "GMRES: system of size %d\n", n)
@@ -290,7 +289,7 @@ function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       # Compute vₖ₊₁
       if !(solved || inner_tired || breakdown)
         if !restart && (inner_iter ≥ mem)
-          push!(V, similar(S, ixn))
+          push!(V, similar(x))
           push!(z, zero(FC))
         end
         @. V[inner_iter+1] = q / Hbis  # hₖ₊₁.ₖvₖ₊₁ = q

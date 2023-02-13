@@ -145,8 +145,6 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   m, n = size(A)
   s, t = size(B)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
-  ixm = kaxis(solver.x)
-  ixn = kaxis(solver.y)
   m == t         || error("Inconsistent problem size")
   s == n         || error("Inconsistent problem size")
   length(b) == m || error("Inconsistent problem size")
@@ -438,8 +436,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     # Compute vₖ₊₁ and uₖ₊₁
     if !(solved || tired || breakdown || user_requested_exit)
       if iter ≥ mem
-        push!(V, similar(S, ixm))
-        push!(U, similar(S, ixn))
+        push!(V, similar(x))
+        push!(U, similar(y))
         push!(zt, zero(FC), zero(FC))
       end
 
