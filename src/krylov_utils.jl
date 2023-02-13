@@ -214,7 +214,7 @@ kaxis(v::S) where S <: AbstractVector = axes(v, 1)
 
 Return the size of `A` if `S` is a subtype of `DenseVector`.
 Otherwise, it returns the axes of `A`.
-`axes(A)` could not be defined for some linear operators and we only want to call it for fancy arrays.
+`axes(A)` may not be defined for some linear operators and we only want to call it for fancy arrays.
 """
 function kaxes end
 
