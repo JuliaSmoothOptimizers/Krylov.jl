@@ -11,7 +11,7 @@ Krylov.FloatOrComplex
 Krylov.niterations
 Krylov.Aprod
 Krylov.Atprod
-Krylov.kaxe
+Krylov.kaxis
 Krylov.kaxes
 Base.show
 ```
