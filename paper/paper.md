@@ -16,7 +16,7 @@ authors:
 affiliations:
  - name: GERAD and Department of Mathematics and Industrial Engineering, Polytechnique Montréal, QC, Canada.
    index: 1
-date: 5 February 2023
+date: 15 February 2023
 bibliography: paper.bib
 header-includes: |
   \usepackage{booktabs}
