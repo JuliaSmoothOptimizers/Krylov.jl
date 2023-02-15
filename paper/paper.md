@@ -187,11 +187,13 @@ b_gpu = CuVector(b_cpu)
 # Incomplete Cholesky decomposition LLᴴ ≈ A with zero fill-in
 P = ic02(A_gpu, 'O')
 
+# Additional vector required for solving triangular systems
+z = similar(CuVector{ComplexF64}, n)
+
 # Solve Py = x
-function ldiv_ic0!(y, P, x)
-  copyto!(y, x)
-  ldiv!(LowerTriangular(P), y)   # Forward substitution with L
-  ldiv!(LowerTriangular(P)', y)  # Backward substitution with Lᴴ
+function ldiv_ic0!(P, x, y, z)
+  ldiv!(z, LowerTriangular(P), x)   # Forward substitution with L
+  ldiv!(y, LowerTriangular(P)', z)  # Backward substitution with Lᴴ
   return y
 end
 
@@ -199,7 +201,7 @@ end
 T = ComplexF64
 symmetric = false
 hermitian = true
-P⁻¹ = LinearOperator(T, m, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(y, P, x))
+P⁻¹ = LinearOperator(T, m, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(P, x, y, z))
 
 # Solve a Hermitian positive definite system with an incomplete Cholesky factorization preconditioner
 x, stats = cg(A_gpu, b_gpu, M=P⁻¹)
