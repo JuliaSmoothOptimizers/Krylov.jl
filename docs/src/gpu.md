@@ -56,32 +56,37 @@ using SparseArrays, Krylov, LinearOperators
 using CUDA, CUDA.CUSPARSE
 
 # Transfer the linear system from the CPU to the GPU
-A_gpu = CuSparseMatrixCSC(A_cpu)  # A_gpu = CuSparseMatrixCSR(A_cpu)
+A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
 b_gpu = CuVector(b_cpu)
 
-# LLᴴ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+# Incomplete decomposition LLᴴ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
 P = ic02(A_gpu, 'O')
 
+# Additional vector required for solving triangular systems
+n = length(b_gpu)
+T = eltype(b_gpu)
+z = similar(CuVector{T}, n)
+
 # Solve Py = x
-function ldiv_ic0!(y, P, x)
-  copyto!(y, x)                        # Variant for CuSparseMatrixCSR
-  sv2!('T', 'U', 'N', 1.0, P, y, 'O')  # sv2!('N', 'L', 'N', 1.0, P, y, 'O')
-  sv2!('N', 'U', 'N', 1.0, P, y, 'O')  # sv2!('T', 'L', 'N', 1.0, P, y, 'O')
+function ldiv_ic0!(P::CuSparseMatrixCSR, x, y, z)
+  ldiv!(z, LowerTriangular(P), x)   # Forward substitution with L
+  ldiv!(y, LowerTriangular(P)', z)  # Backward substitution with Lᴴ
+  return y
+end
+
+function ldiv_ic0!(P::CuSparseMatrixCSC, x, y, z)
+  ldiv!(z, UpperTriangular(P)', x)  # Forward substitution with L
+  ldiv!(y, UpperTriangular(P), z)   # Backward substitution with Lᴴ
   return y
 end
 
 # Operator that model P⁻¹
-n = length(b_gpu)
-T = eltype(b_gpu)
 symmetric = hermitian = true
-opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(y, P, x))
+opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(P, x, y, z))
 
-# Solve a symmetric positive definite system with an incomplete Cholesky preconditioner on GPU
+# Solve an Hermitian positive definite system with an incomplete Cholesky preconditioner on GPU
 x, stats = cg(A_gpu, b_gpu, M=opM)
 ```
-
-!!! note
-    You need to replace `'T'` by `'C'` in `ldiv_ic0!` if `A_gpu` is a complex matrix.
 
 ### Example with a general square system
 
@@ -96,27 +101,35 @@ A_cpu = A_cpu[p,:]
 b_cpu = b_cpu[p]
 
 # Transfer the linear system from the CPU to the GPU
-A_gpu = CuSparseMatrixCSC(A_cpu)  # A_gpu = CuSparseMatrixCSR(A_cpu)
+A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
 b_gpu = CuVector(b_cpu)
 
-# LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+# Incomplete decomposition LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
 P = ilu02(A_gpu, 'O')
 
+# Additional vector required for solving triangular systems
+n = length(b_gpu)
+T = eltype(b_gpu)
+z = similar(CuVector{T}, n)
+
 # Solve Py = x
-function ldiv_ilu0!(y, P, x)
-  copyto!(y, x)                        # Variant for CuSparseMatrixCSR
-  sv2!('N', 'L', 'N', 1.0, P, y, 'O')  # sv2!('N', 'L', 'U', 1.0, P, y, 'O')
-  sv2!('N', 'U', 'U', 1.0, P, y, 'O')  # sv2!('N', 'U', 'N', 1.0, P, y, 'O')
+function ldiv_ilu0!(P::CuSparseMatrixCSR, x, y, z)
+  ldiv!(z, UnitLowerTriangular(P), x)  # Forward substitution with L
+  ldiv!(y, UpperTriangular(P), z)      # Backward substitution with U
+  return y
+end
+
+function ldiv_ilu0!(P::CuSparseMatrixCSC, x, y, z)
+  ldiv!(z, LowerTriangular(P), x)      # Forward substitution with L
+  ldiv!(y, UnitUpperTriangular(P), z)  # Backward substitution with U
   return y
 end
 
 # Operator that model P⁻¹
-n = length(b_gpu)
-T = eltype(b_gpu)
 symmetric = hermitian = false
-opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ilu0!(y, P, x))
+opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ilu0!(P, x, y, z))
 
-# Solve an unsymmetric system with an incomplete LU preconditioner on GPU
+# Solve a non-Hermitian system with an incomplete LU preconditioner on GPU
 x, stats = bicgstab(A_gpu, b_gpu, M=opM)
 ```
 
@@ -167,8 +180,8 @@ b_gpu = oneVector(b_cpu)
 x, stats = lsqr(A_gpu, b_gpu)
 ```
 
-!!! warning
-    The library `oneMKL` is not interfaced yet in oneAPI.jl and all BLAS routines (dot, norm, mul!, etc.) dispatch to generic fallbacks.
+!!! note
+    The library `oneMKL` is interfaced in oneAPI.jl and accelerate linear algebra operations on Intel GPUs. Only dense linear systems are supported because sparse linear algebra routines are not interfaced yet.
 
 ## Apple M1 GPUs
 
