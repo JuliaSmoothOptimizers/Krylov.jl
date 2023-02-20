@@ -181,7 +181,7 @@ x, stats = lsqr(A_gpu, b_gpu)
 ```
 
 !!! note
-    The library `oneMKL` is interfaced in oneAPI.jl and accelerate linear algebra operations on Intel GPUs. Only dense linear systems are supported because sparse linear algebra routines are not interfaced yet.
+    The library `oneMKL` is interfaced in oneAPI.jl and accelerates linear algebra operations on Intel GPUs. Only dense linear systems are supported for the time being because sparse linear algebra routines are not interfaced yet.
 
 ## Apple M1 GPUs
 
