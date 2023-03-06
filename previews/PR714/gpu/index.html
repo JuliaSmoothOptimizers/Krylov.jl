@@ -34,7 +34,7 @@ if CUDA.functional()
   A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
   b_gpu = CuVector(b_cpu)
 
-  # Incomplete decomposition LLᴴ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+  # Incomplete Cholesky decomposition LLᴴ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
   P = ic02(A_gpu, &#39;O&#39;)
 
   # Additional vector required for solving triangular systems
@@ -59,7 +59,7 @@ if CUDA.functional()
   symmetric = hermitian = true
   opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -&gt; ldiv_ic0!(P, x, y, z))
 
-  # Solve an Hermitian positive definite system with an incomplete Cholesky preconditioner on GPU
+  # Solve an Hermitian positive definite system with an IC(0) preconditioner on GPU
   x, stats = cg(A_gpu, b_gpu, M=opM)
 end</code></pre><h3 id="Example-with-a-general-square-system"><a class="docs-heading-anchor" href="#Example-with-a-general-square-system">Example with a general square system</a><a id="Example-with-a-general-square-system-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-a-general-square-system" title="Permalink"></a></h3><pre><code class="language-julia hljs">using SparseArrays, Krylov, LinearOperators
 using CUDA, CUDA.CUSPARSE, CUDA.CUSOLVER
@@ -75,7 +75,7 @@ if CUDA.functional()
   A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
   b_gpu = CuVector(b_cpu)
 
-  # Incomplete decomposition LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+  # Incomplete LU decomposition LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
   P = ilu02(A_gpu, &#39;O&#39;)
 
   # Additional vector required for solving triangular systems
@@ -100,7 +100,7 @@ if CUDA.functional()
   symmetric = hermitian = false
   opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -&gt; ldiv_ilu0!(P, x, y, z))
 
-  # Solve a non-Hermitian system with an incomplete LU preconditioner on GPU
+  # Solve a non-Hermitian system with an ILU(0) preconditioner on GPU
   x, stats = bicgstab(A_gpu, b_gpu, M=opM)
 end</code></pre><h2 id="AMD-GPUs"><a class="docs-heading-anchor" href="#AMD-GPUs">AMD GPUs</a><a id="AMD-GPUs-1"></a><a class="docs-heading-anchor-permalink" href="#AMD-GPUs" title="Permalink"></a></h2><p>All solvers in Krylov.jl can be used with <a href="https://github.com/JuliaGPU/AMDGPU.jl">AMDGPU.jl</a> and allow computations on AMD GPUs. Problems stored in CPU format (<code>Matrix</code> and <code>Vector</code>) must first be converted to the related GPU format (<code>ROCMatrix</code> and <code>ROCVector</code>).</p><pre><code class="language-julia hljs">using Krylov, AMDGPU
 
@@ -147,4 +147,4 @@ A_gpu = MtlMatrix(A_cpu)
 b_gpu = MtlVector(b_cpu)
 
 # Solve a dense least-norm problem on an Apple M1 GPU
-x, stats = craig(A_gpu, b_gpu)</code></pre><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>Metal.jl is under heavy development and is considered experimental for now.</p></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../storage/">« Storage requirements</a><a class="docs-footer-nextpage" href="../warm-start/">Warm-start »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Monday 6 March 2023 22:47">Monday 6 March 2023</span>. Using Julia version 1.8.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+x, stats = craig(A_gpu, b_gpu)</code></pre><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>Metal.jl is under heavy development and is considered experimental for now.</p></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../storage/">« Storage requirements</a><a class="docs-footer-nextpage" href="../warm-start/">Warm-start »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Monday 6 March 2023 23:03">Monday 6 March 2023</span>. Using Julia version 1.8.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
