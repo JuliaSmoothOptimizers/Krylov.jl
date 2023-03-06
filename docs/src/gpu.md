@@ -64,7 +64,7 @@ if CUDA.functional()
   A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
   b_gpu = CuVector(b_cpu)
 
-  # Incomplete decomposition LLᴴ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+  # IC(0) decomposition LLᴴ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
   P = ic02(A_gpu, 'O')
 
   # Additional vector required for solving triangular systems
@@ -89,7 +89,7 @@ if CUDA.functional()
   symmetric = hermitian = true
   opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(P, x, y, z))
 
-  # Solve an Hermitian positive definite system with an incomplete Cholesky preconditioner on GPU
+  # Solve an Hermitian positive definite system with an IC(0) preconditioner on GPU
   x, stats = cg(A_gpu, b_gpu, M=opM)
 end
 ```
@@ -111,7 +111,7 @@ if CUDA.functional()
   A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
   b_gpu = CuVector(b_cpu)
 
-  # Incomplete decomposition LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+  # ILU(0) decomposition LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
   P = ilu02(A_gpu, 'O')
 
   # Additional vector required for solving triangular systems
@@ -136,7 +136,7 @@ if CUDA.functional()
   symmetric = hermitian = false
   opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ilu0!(P, x, y, z))
 
-  # Solve a non-Hermitian system with an incomplete LU preconditioner on GPU
+  # Solve a non-Hermitian system with an ILU(0) preconditioner on GPU
   x, stats = bicgstab(A_gpu, b_gpu, M=opM)
 end
 ```
