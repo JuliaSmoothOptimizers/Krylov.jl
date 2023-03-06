@@ -14,16 +14,18 @@ Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to
 ```julia
 using CUDA, Krylov
 
-# CPU Arrays
-A_cpu = rand(20, 20)
-b_cpu = rand(20)
+if CUDA.functional()
+  # CPU Arrays
+  A_cpu = rand(20, 20)
+  b_cpu = rand(20)
 
-# GPU Arrays
-A_gpu = CuMatrix(A_cpu)
-b_gpu = CuVector(b_cpu)
+  # GPU Arrays
+  A_gpu = CuMatrix(A_cpu)
+  b_gpu = CuVector(b_cpu)
 
-# Solve a square and dense system on an Nivida GPU
-x, stats = bilq(A_gpu, b_gpu)
+  # Solve a square and dense system on an Nivida GPU
+  x, stats = bilq(A_gpu, b_gpu)
+end
 ```
 
 Sparse matrices have a specific storage on Nvidia GPUs (`CuSparseMatrixCSC`, `CuSparseMatrixCSR` or `CuSparseMatrixCOO`):
@@ -32,16 +34,18 @@ Sparse matrices have a specific storage on Nvidia GPUs (`CuSparseMatrixCSC`, `Cu
 using CUDA, Krylov
 using CUDA.CUSPARSE, SparseArrays
 
-# CPU Arrays
-A_cpu = sprand(200, 100, 0.3)
-b_cpu = rand(200)
+if CUDA.functional()
+  # CPU Arrays
+  A_cpu = sprand(200, 100, 0.3)
+  b_cpu = rand(200)
 
-# GPU Arrays
-A_gpu = CuSparseMatrixCSC(A_cpu)
-b_gpu = CuVector(b_cpu)
+  # GPU Arrays
+  A_gpu = CuSparseMatrixCSC(A_cpu)
+  b_gpu = CuVector(b_cpu)
 
-# Solve a rectangular and sparse system on an Nvidia GPU
-x, stats = lsmr(A_gpu, b_gpu)
+  # Solve a rectangular and sparse system on an Nvidia GPU
+  x, stats = lsmr(A_gpu, b_gpu)
+end
 ```
 
 Optimized operator-vector products that exploit GPU features can be also used by means of linear operators.
@@ -55,37 +59,39 @@ can be applied directly on GPU thanks to efficient operators that take advantage
 using SparseArrays, Krylov, LinearOperators
 using CUDA, CUDA.CUSPARSE
 
-# Transfer the linear system from the CPU to the GPU
-A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
-b_gpu = CuVector(b_cpu)
+if CUDA.functional()
+  # Transfer the linear system from the CPU to the GPU
+  A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
+  b_gpu = CuVector(b_cpu)
 
-# Incomplete decomposition LLᴴ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
-P = ic02(A_gpu, 'O')
+  # Incomplete decomposition LLᴴ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+  P = ic02(A_gpu, 'O')
 
-# Additional vector required for solving triangular systems
-n = length(b_gpu)
-T = eltype(b_gpu)
-z = similar(CuVector{T}, n)
+  # Additional vector required for solving triangular systems
+  n = length(b_gpu)
+  T = eltype(b_gpu)
+  z = similar(CuVector{T}, n)
 
-# Solve Py = x
-function ldiv_ic0!(P::CuSparseMatrixCSR, x, y, z)
-  ldiv!(z, LowerTriangular(P), x)   # Forward substitution with L
-  ldiv!(y, LowerTriangular(P)', z)  # Backward substitution with Lᴴ
-  return y
+  # Solve Py = x
+  function ldiv_ic0!(P::CuSparseMatrixCSR, x, y, z)
+    ldiv!(z, LowerTriangular(P), x)   # Forward substitution with L
+    ldiv!(y, LowerTriangular(P)', z)  # Backward substitution with Lᴴ
+    return y
+  end
+
+  function ldiv_ic0!(P::CuSparseMatrixCSC, x, y, z)
+    ldiv!(z, UpperTriangular(P)', x)  # Forward substitution with L
+    ldiv!(y, UpperTriangular(P), z)   # Backward substitution with Lᴴ
+    return y
+  end
+
+  # Operator that model P⁻¹
+  symmetric = hermitian = true
+  opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(P, x, y, z))
+
+  # Solve an Hermitian positive definite system with an incomplete Cholesky preconditioner on GPU
+  x, stats = cg(A_gpu, b_gpu, M=opM)
 end
-
-function ldiv_ic0!(P::CuSparseMatrixCSC, x, y, z)
-  ldiv!(z, UpperTriangular(P)', x)  # Forward substitution with L
-  ldiv!(y, UpperTriangular(P), z)   # Backward substitution with Lᴴ
-  return y
-end
-
-# Operator that model P⁻¹
-symmetric = hermitian = true
-opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(P, x, y, z))
-
-# Solve an Hermitian positive definite system with an incomplete Cholesky preconditioner on GPU
-x, stats = cg(A_gpu, b_gpu, M=opM)
 ```
 
 ### Example with a general square system
@@ -94,43 +100,45 @@ x, stats = cg(A_gpu, b_gpu, M=opM)
 using SparseArrays, Krylov, LinearOperators
 using CUDA, CUDA.CUSPARSE, CUDA.CUSOLVER
 
-# Optional -- Compute a permutation vector p such that A[p,:] has no zero diagonal
-p = zfd(A_cpu, 'O')
-p .+= 1
-A_cpu = A_cpu[p,:]
-b_cpu = b_cpu[p]
+if CUDA.functional()
+  # Optional -- Compute a permutation vector p such that A[p,:] has no zero diagonal
+  p = zfd(A_cpu, 'O')
+  p .+= 1
+  A_cpu = A_cpu[p,:]
+  b_cpu = b_cpu[p]
 
-# Transfer the linear system from the CPU to the GPU
-A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
-b_gpu = CuVector(b_cpu)
+  # Transfer the linear system from the CPU to the GPU
+  A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
+  b_gpu = CuVector(b_cpu)
 
-# Incomplete decomposition LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
-P = ilu02(A_gpu, 'O')
+  # Incomplete decomposition LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+  P = ilu02(A_gpu, 'O')
 
-# Additional vector required for solving triangular systems
-n = length(b_gpu)
-T = eltype(b_gpu)
-z = similar(CuVector{T}, n)
+  # Additional vector required for solving triangular systems
+  n = length(b_gpu)
+  T = eltype(b_gpu)
+  z = similar(CuVector{T}, n)
 
-# Solve Py = x
-function ldiv_ilu0!(P::CuSparseMatrixCSR, x, y, z)
-  ldiv!(z, UnitLowerTriangular(P), x)  # Forward substitution with L
-  ldiv!(y, UpperTriangular(P), z)      # Backward substitution with U
-  return y
+  # Solve Py = x
+  function ldiv_ilu0!(P::CuSparseMatrixCSR, x, y, z)
+    ldiv!(z, UnitLowerTriangular(P), x)  # Forward substitution with L
+    ldiv!(y, UpperTriangular(P), z)      # Backward substitution with U
+    return y
+  end
+
+  function ldiv_ilu0!(P::CuSparseMatrixCSC, x, y, z)
+    ldiv!(z, LowerTriangular(P), x)      # Forward substitution with L
+    ldiv!(y, UnitUpperTriangular(P), z)  # Backward substitution with U
+    return y
+  end
+
+  # Operator that model P⁻¹
+  symmetric = hermitian = false
+  opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ilu0!(P, x, y, z))
+
+  # Solve a non-Hermitian system with an incomplete LU preconditioner on GPU
+  x, stats = bicgstab(A_gpu, b_gpu, M=opM)
 end
-
-function ldiv_ilu0!(P::CuSparseMatrixCSC, x, y, z)
-  ldiv!(z, LowerTriangular(P), x)      # Forward substitution with L
-  ldiv!(y, UnitUpperTriangular(P), z)  # Backward substitution with U
-  return y
-end
-
-# Operator that model P⁻¹
-symmetric = hermitian = false
-opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ilu0!(P, x, y, z))
-
-# Solve a non-Hermitian system with an incomplete LU preconditioner on GPU
-x, stats = bicgstab(A_gpu, b_gpu, M=opM)
 ```
 
 ## AMD GPUs
@@ -141,16 +149,18 @@ Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to
 ```julia
 using Krylov, AMDGPU
 
-# CPU Arrays
-A_cpu = rand(ComplexF64, 20, 20)
-A_cpu = A_cpu + A_cpu'
-b_cpu = rand(ComplexF64, 20)
+if AMDGPU.functional()
+  # CPU Arrays
+  A_cpu = rand(ComplexF64, 20, 20)
+  A_cpu = A_cpu + A_cpu'
+  b_cpu = rand(ComplexF64, 20)
 
-A_gpu = ROCMatrix(A_cpu)
-b_gpu = ROCVector(b_cpu)
+  A_gpu = ROCMatrix(A_cpu)
+  b_gpu = ROCVector(b_cpu)
 
-# Solve a dense Hermitian system on an AMD GPU
-x, stats = minres(A_gpu, b_gpu)
+  # Solve a dense Hermitian system on an AMD GPU
+  x, stats = minres(A_gpu, b_gpu)
+end
 ```
 
 !!! info
@@ -164,20 +174,22 @@ Problems stored in CPU format (`Matrix` and `Vector`) must first be converted to
 ```julia
 using Krylov, oneAPI
 
-T = Float32  # oneAPI.jl also works with ComplexF32
-m = 20
-n = 10
+if oneAPI.functional()
+  T = Float32  # oneAPI.jl also works with ComplexF32
+  m = 20
+  n = 10
 
-# CPU Arrays
-A_cpu = rand(T, m, n)
-b_cpu = rand(T, m)
+  # CPU Arrays
+  A_cpu = rand(T, m, n)
+  b_cpu = rand(T, m)
 
-# GPU Arrays
-A_gpu = oneMatrix(A_cpu)
-b_gpu = oneVector(b_cpu)
+  # GPU Arrays
+  A_gpu = oneMatrix(A_cpu)
+  b_gpu = oneVector(b_cpu)
 
-# Solve a dense least-squares problem on an Intel GPU
-x, stats = lsqr(A_gpu, b_gpu)
+  # Solve a dense least-squares problem on an Intel GPU
+  x, stats = lsqr(A_gpu, b_gpu)
+end
 ```
 
 !!! note
