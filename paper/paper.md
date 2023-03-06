@@ -4,6 +4,7 @@ tags:
   - Julia
   - linear algebra
   - Krylov methods
+  - Krylov processes
   - sparse linear systems
   - GPU computing
 authors:
@@ -16,7 +17,7 @@ authors:
 affiliations:
  - name: GERAD and Department of Mathematics and Industrial Engineering, Polytechnique Montréal, QC, Canada.
    index: 1
-date: 15 February 2023
+date: 6 March 2023
 bibliography: paper.bib
 header-includes: |
   \usepackage{booktabs}
@@ -54,14 +55,15 @@ We refer interested readers to [@ipsen-meyer-1998] for an introduction to Krylov
 
 ##  Largest collection of Krylov processes and methods
 
-Krylov.jl aims to provide a unified interface for the largest collection of Krylov processes and methods, all programming languages taken together, with six and thirty-three implementations, respectively:
+Krylov.jl aims to provide a user-friendly and unified interface for the largest collection of Krylov processes and methods, all programming languages taken together, with six and thirty-three implementations, respectively:
 
 - \textbf{Krylov processes}: \textsc{Arnoldi}, \textsc{Golub-Kahan}, \textsc{Hermitian Lanczos}, \textsc{Montoison-Orban}, \textsc{Non-Hermitian Lanczos},  \textsc{Saunders-Simon-Yip};
 - \textbf{Krylov methods}: \textsc{Bicgstab}, \textsc{Bilq}, \textsc{Bilqr}, \textsc{Cg}, \textsc{Cg-lanczos}, \textsc{Cg-lanczos-shift}, \textsc{Cgls}, \textsc{Cgne}, \textsc{Cgs}, \textsc{Cr}, \textsc{Craig}, \textsc{Craigmr}, \textsc{Crls}, \textsc{Crmr}, \textsc{Diom}, \textsc{Dqgmres}, \textsc{Fgmres}, \textsc{Fom}, \textsc{Gmres}, \textsc{Gpmr}, \textsc{Lnlq}, \textsc{Lslq}, \textsc{Lsmr}, \textsc{Lsqr}, \textsc{Minres}, \textsc{Minres-qlp}, \textsc{Qmr}, \textsc{Symmlq}, \textsc{Tricg}, \textsc{Trilqr}, \textsc{Trimr}, \textsc{Usymlq}, \textsc{Usymqr}.
 
+Hence Krylov.jl is a suitable toolbox for easily comparing existing methods with each other as well as new ones.
 MATLAB [@MATLAB] and PETSc [@petsc] have eleven and eighteen distinct Krylov methods, respectively.
 Note that we only consider the number of Krylov methods that generate different iterates without preconditioning.
-Variants with preconditioning are not counted except it is a flexible one such as \textsc{Fgmres}.
+Variants with preconditioning are not counted except if it is a flexible one such as \textsc{Fgmres}.
 
 Some processes and methods are not available elsewhere and are the product of our own research.
 References for each process and method are available in the extensive [documentation](https://juliasmoothoptimizers.github.io/Krylov.jl/stable/).
@@ -73,13 +75,13 @@ Although most personal computers offer IEEE 754 single and double precision comp
 In addition, software libraries such as the GNU MPFR, shipped with Julia, let users experiment with computations in variable, extended precision at the software level with the `BigFloat` data type.
 Working in high precision has obvious benefits in terms of accuracy.
 
-## Support for Nvidia, AMD and Intel GPUs
+## Support for NVIDIA, AMD and Intel GPUs
 
 Krylov methods are well suited for GPU computations because they only require operator-vector products ($u \leftarrow Av$, $u \leftarrow A^{H\!}w$) and vector operations ($\|v\|$, $u^H v$, $v \leftarrow \alpha u + \beta v$), which are highly parallelizable.
 The implementations in Krylov.jl are generic so as to take advantage of the multiple dispatch and broadcast features of Julia.
 Those allow the implementations to be specialized automatically by the compiler for both CPU and GPU.
-Thus, Krylov.jl works with GPU backends that build on [GPUArrays.jl](https://github.com/JuliaGPU/GPUArrays.jl), including [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl), [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) and [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl), the Julia interfaces to Nvidia, AMD and Intel GPUs.
-<!-- Our implementations target the CUDA, ROCm or OneAPI libraries for efficient operator-vector products and vector operations on Nvidia, AMD and Intel GPUs. -->
+Thus, Krylov.jl works with GPU backends that build on [GPUArrays.jl](https://github.com/JuliaGPU/GPUArrays.jl), including [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl), [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) and [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl), the Julia interfaces to NVIDIA, AMD, and Intel GPUs.
+<!-- Our implementations target the CUDA, ROCm or OneAPI libraries for efficient operator-vector products and vector operations on NVIDIA, AMD and Intel GPUs. -->
 
 ## Support for linear operators
 
@@ -158,7 +160,7 @@ gauss_newton(F, JF, x₀)
 ```
 
 Our second example concerns the solution of a complex Hermitian linear system from the SuiteSparse Matrix Collection [@davis-hu-2011] with an incomplete Cholesky factorization preconditioner on GPU.
-The preconditioner $P$ is implemented as an in-place linear operator that performs the forward and backward sweeps with the Cholesky factor to model $P^{-1}$.
+The preconditioner is implemented as an in-place linear operator that performs the forward and backward sweeps with the Cholesky factor of the imcomplete decomposition.
 Because the system matrix is Hermitian and positive definite, we use the conjugate gradient method.
 However, other methods for Hermitian systems could be used, including \textsc{Symmlq}, \textsc{Cr} and \textsc{Minres}.
 
@@ -169,8 +171,8 @@ using Krylov                       # Krylov methods and processes
 using LinearOperators              # Linear operators
 using MatrixMarket                 # Reader of matrices stored in the Matrix Market format
 using SuiteSparseMatrixCollection  # Interface to the SuiteSparse Matrix Collection
-using CUDA                         # Interface to Nvidia GPUs
-using CUDA.CUSPARSE                # Nvidia CUSPARSE library
+using CUDA                         # Interface to NVIDIA GPUs
+using CUDA.CUSPARSE                # NVIDIA CUSPARSE library
 
 ssmc = ssmc_db()
 matrices = ssmc_matrices(ssmc, "Bai", "mhd1280b")
@@ -197,7 +199,7 @@ function ldiv_ic0!(P, x, y, z)
   return y
 end
 
-# Linear operator that model the preconditioner P⁻¹
+# Linear operator that approximate the preconditioner P⁻¹ in floating-point arithmetic
 T = ComplexF64
 symmetric = false
 hermitian = true
