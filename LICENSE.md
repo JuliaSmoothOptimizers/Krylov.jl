@@ -1,6 +1,6 @@
-Copyright (c) 2015-2019: Dominique Orban
+Copyright (c) 2015-present: Alexis Montoison, Dominique Orban, and other contributors
 
-Krylov.jl is licensed under the [MPL version 2.0](https://www.mozilla.org/MPL/2.0/).
+[Krylov.jl](https://github.com/JuliaSmoothOptimizers/Krylov.jl) is licensed under the [MPL version 2.0](https://www.mozilla.org/MPL/2.0/).
 
 ## License
 
@@ -11,83 +11,83 @@ Krylov.jl is licensed under the [MPL version 2.0](https://www.mozilla.org/MPL/2.
 	--------------
 
 	1.1. "Contributor"
-		means each individual or legal entity that creates, contributes to
-		the creation of, or owns Covered Software.
+	    means each individual or legal entity that creates, contributes to
+	    the creation of, or owns Covered Software.
 
 	1.2. "Contributor Version"
-		means the combination of the Contributions of others (if any) used
-		by a Contributor and that particular Contributor's Contribution.
+	    means the combination of the Contributions of others (if any) used
+	    by a Contributor and that particular Contributor's Contribution.
 
 	1.3. "Contribution"
-		means Covered Software of a particular Contributor.
+	    means Covered Software of a particular Contributor.
 
 	1.4. "Covered Software"
-		means Source Code Form to which the initial Contributor has attached
-		the notice in Exhibit A, the Executable Form of such Source Code
-		Form, and Modifications of such Source Code Form, in each case
-		including portions thereof.
+	    means Source Code Form to which the initial Contributor has attached
+	    the notice in Exhibit A, the Executable Form of such Source Code
+	    Form, and Modifications of such Source Code Form, in each case
+	    including portions thereof.
 
 	1.5. "Incompatible With Secondary Licenses"
-		means
+	    means
 
-		(a) that the initial Contributor has attached the notice described
-			in Exhibit B to the Covered Software; or
+	    (a) that the initial Contributor has attached the notice described
+	        in Exhibit B to the Covered Software; or
 
-		(b) that the Covered Software was made available under the terms of
-			version 1.1 or earlier of the License, but not also under the
-			terms of a Secondary License.
+	    (b) that the Covered Software was made available under the terms of
+	        version 1.1 or earlier of the License, but not also under the
+	        terms of a Secondary License.
 
 	1.6. "Executable Form"
-		means any form of the work other than Source Code Form.
+	    means any form of the work other than Source Code Form.
 
 	1.7. "Larger Work"
-		means a work that combines Covered Software with other material, in
-		a separate file or files, that is not Covered Software.
+	    means a work that combines Covered Software with other material, in
+	    a separate file or files, that is not Covered Software.
 
 	1.8. "License"
-		means this document.
+	    means this document.
 
 	1.9. "Licensable"
-		means having the right to grant, to the maximum extent possible,
-		whether at the time of the initial grant or subsequently, any and
-		all of the rights conveyed by this License.
+	    means having the right to grant, to the maximum extent possible,
+	    whether at the time of the initial grant or subsequently, any and
+	    all of the rights conveyed by this License.
 
 	1.10. "Modifications"
-		means any of the following:
+	    means any of the following:
 
-		(a) any file in Source Code Form that results from an addition to,
-			deletion from, or modification of the contents of Covered
-			Software; or
+	    (a) any file in Source Code Form that results from an addition to,
+	        deletion from, or modification of the contents of Covered
+	        Software; or
 
-		(b) any new file in Source Code Form that contains any Covered
-			Software.
+	    (b) any new file in Source Code Form that contains any Covered
+	        Software.
 
 	1.11. "Patent Claims" of a Contributor
-		means any patent claim(s), including without limitation, method,
-		process, and apparatus claims, in any patent Licensable by such
-		Contributor that would be infringed, but for the grant of the
-		License, by the making, using, selling, offering for sale, having
-		made, import, or transfer of either its Contributions or its
-		Contributor Version.
+	    means any patent claim(s), including without limitation, method,
+	    process, and apparatus claims, in any patent Licensable by such
+	    Contributor that would be infringed, but for the grant of the
+	    License, by the making, using, selling, offering for sale, having
+	    made, import, or transfer of either its Contributions or its
+	    Contributor Version.
 
 	1.12. "Secondary License"
-		means either the GNU General Public License, Version 2.0, the GNU
-		Lesser General Public License, Version 2.1, the GNU Affero General
-		Public License, Version 3.0, or any later versions of those
-		licenses.
+	    means either the GNU General Public License, Version 2.0, the GNU
+	    Lesser General Public License, Version 2.1, the GNU Affero General
+	    Public License, Version 3.0, or any later versions of those
+	    licenses.
 
 	1.13. "Source Code Form"
-		means the form of the work preferred for making modifications.
+	    means the form of the work preferred for making modifications.
 
 	1.14. "You" (or "Your")
-		means an individual or a legal entity exercising rights under this
-		License. For legal entities, "You" includes any entity that
-		controls, is controlled by, or is under common control with You. For
-		purposes of this definition, "control" means (a) the power, direct
-		or indirect, to cause the direction or management of such entity,
-		whether by contract or otherwise, or (b) ownership of more than
-		fifty percent (50%) of the outstanding shares or beneficial
-		ownership of such entity.
+	    means an individual or a legal entity exercising rights under this
+	    License. For legal entities, "You" includes any entity that
+	    controls, is controlled by, or is under common control with You. For
+	    purposes of this definition, "control" means (a) the power, direct
+	    or indirect, to cause the direction or management of such entity,
+	    whether by contract or otherwise, or (b) ownership of more than
+	    fifty percent (50%) of the outstanding shares or beneficial
+	    ownership of such entity.
 
 	2. License Grants and Conditions
 	--------------------------------
@@ -98,14 +98,14 @@ Krylov.jl is licensed under the [MPL version 2.0](https://www.mozilla.org/MPL/2.
 	non-exclusive license:
 
 	(a) under intellectual property rights (other than patent or trademark)
-		Licensable by such Contributor to use, reproduce, make available,
-		modify, display, perform, distribute, and otherwise exploit its
-		Contributions, either on an unmodified basis, with Modifications, or
-		as part of a Larger Work; and
+	    Licensable by such Contributor to use, reproduce, make available,
+	    modify, display, perform, distribute, and otherwise exploit its
+	    Contributions, either on an unmodified basis, with Modifications, or
+	    as part of a Larger Work; and
 
 	(b) under Patent Claims of such Contributor to make, use, sell, offer
-		for sale, have made, import, and otherwise transfer either its
-		Contributions or its Contributor Version.
+	    for sale, have made, import, and otherwise transfer either its
+	    Contributions or its Contributor Version.
 
 	2.2. Effective Date
 
@@ -122,15 +122,15 @@ Krylov.jl is licensed under the [MPL version 2.0](https://www.mozilla.org/MPL/2.
 	Contributor:
 
 	(a) for any code that a Contributor has removed from Covered Software;
-		or
+	    or
 
 	(b) for infringements caused by: (i) Your and any other third party's
-		modifications of Covered Software, or (ii) the combination of its
-		Contributions with other software (except as part of its Contributor
-		Version); or
+	    modifications of Covered Software, or (ii) the combination of its
+	    Contributions with other software (except as part of its Contributor
+	    Version); or
 
 	(c) under Patent Claims infringed by Covered Software in the absence of
-		its Contributions.
+	    its Contributions.
 
 	This License does not grant any rights in the trademarks, service marks,
 	or logos of any Contributor (except as may be necessary to comply with
@@ -178,15 +178,15 @@ Krylov.jl is licensed under the [MPL version 2.0](https://www.mozilla.org/MPL/2.
 	If You distribute Covered Software in Executable Form then:
 
 	(a) such Covered Software must also be made available in Source Code
-		Form, as described in Section 3.1, and You must inform recipients of
-		the Executable Form how they can obtain a copy of such Source Code
-		Form by reasonable means in a timely manner, at a charge no more
-		than the cost of distribution to the recipient; and
+	    Form, as described in Section 3.1, and You must inform recipients of
+	    the Executable Form how they can obtain a copy of such Source Code
+	    Form by reasonable means in a timely manner, at a charge no more
+	    than the cost of distribution to the recipient; and
 
 	(b) You may distribute such Executable Form under the terms of this
-		License, or sublicense it under different terms, provided that the
-		license for the Executable Form does not attempt to limit or alter
-		the recipients' rights in the Source Code Form under this License.
+	    License, or sublicense it under different terms, provided that the
+	    license for the Executable Form does not attempt to limit or alter
+	    the recipients' rights in the Source Code Form under this License.
 
 	3.3. Distribution of a Larger Work
 
@@ -363,7 +363,7 @@ Krylov.jl is licensed under the [MPL version 2.0](https://www.mozilla.org/MPL/2.
 
 	  This Source Code Form is subject to the terms of the Mozilla Public
 	  License, v. 2.0. If a copy of the MPL was not distributed with this
-	  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+	  file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 	If it is not possible or desirable to put the notice in a particular
 	file, then You may include the notice in a location (such as a LICENSE
