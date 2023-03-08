@@ -199,7 +199,7 @@ function ldiv_ic0!(P, x, y, z)
   return y
 end
 
-# Linear operator that approximate the preconditioner P⁻¹ in floating-point arithmetic
+# Linear operator that approximates the preconditioner P⁻¹ in floating-point arithmetic
 T = ComplexF64
 symmetric = false
 hermitian = true
