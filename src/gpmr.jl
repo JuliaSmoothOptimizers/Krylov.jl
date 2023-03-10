@@ -3,8 +3,8 @@
 # This method is described in
 #
 # A. Montoison and D. Orban
-# GPMR: An Iterative Method for Unsymmetric Partitioned Linear Systems
-# Cahier du GERAD G-2021-62.
+# GPMR: An Iterative Method for Unsymmetric Partitioned Linear Systems.
+# SIAM Journal on Matrix Analysis and Applications, 44(1), pp. 293--311, 2023.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montréal, August 2021.
@@ -97,7 +97,7 @@ GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 
 #### Reference
 
-* A. Montoison and D. Orban, [*GPMR: An Iterative Method for Unsymmetric Partitioned Linear Systems*](https://dx.doi.org/10.13140/RG.2.2.24069.68326), Cahier du GERAD G-2021-62, GERAD, Montréal, 2021.
+* A. Montoison and D. Orban, [*GPMR: An Iterative Method for Unsymmetric Partitioned Linear Systems*](https://doi.org/10.1137/21M1459265), SIAM Journal on Matrix Analysis and Applications, 44(1), pp. 293--311, 2023.
 """
 function gpmr end
 
