@@ -22,6 +22,7 @@ include("gpu.jl")
 
     @testset "ic0" begin
       A_cpu, b_cpu = sparse_laplacian()
+      @test mapreduce(Aᵢᵢ -> Aᵢᵢ != 0, &, diag(A_cpu)) == true
 
       b_gpu = CuVector(b_cpu)
       n = length(b_gpu)
@@ -30,7 +31,7 @@ include("gpu.jl")
       symmetric = hermitian = true
 
       A_gpu = CuSparseMatrixCSC(A_cpu)
-      P = ic02(A_gpu, 'O')
+      P = ic02(A_gpu)
       function ldiv_ic0!(P::CuSparseMatrixCSC, x, y, z)
         ldiv!(z, UpperTriangular(P)', x)
         ldiv!(y, UpperTriangular(P), z)
@@ -39,10 +40,10 @@ include("gpu.jl")
       opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(P, x, y, z))
       x, stats = cg(A_gpu, b_gpu, M=opM)
       @test norm(b_gpu - A_gpu * x) ≤ 1e-6
-      @test stats.niter ≤ 38
+      @test stats.niter ≤ 19
 
-      A_gpu = CuSparseMatrixCSR(A_cpu)
-      P = ic02(A_gpu, 'O')
+      A_gpu = CuSparseMatrixCSR(A_gpu)
+      P = ic02(A_gpu)
       function ldiv_ic0!(P::CuSparseMatrixCSR, x, y, z)
         ldiv!(z, LowerTriangular(P), x)
         ldiv!(y, LowerTriangular(P)', z)
@@ -51,16 +52,22 @@ include("gpu.jl")
       opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(P, x, y, z))
       x, stats = cg(A_gpu, b_gpu, M=opM)
       @test norm(b_gpu - A_gpu * x) ≤ 1e-6
-      @test stats.niter ≤ 38
+      @test stats.niter ≤ 19
     end
 
     @testset "ilu0" begin
-      A_cpu, b_cpu = polar_poisson()
+      A_cpu = Float64[1  0 0  4;
+                      0  0 7  8;
+                      9  0 0 12;
+                      0 14 0 16]
+      A_cpu = sparse(A_cpu)
+      b_cpu = ones(4)
+      @test mapreduce(Aᵢᵢ -> Aᵢᵢ != 0, &, diag(A_cpu)) == false
 
-      p = zfd(A_cpu, 'O')
+      p = zfd(A_cpu)
       p .+= 1
-      A_cpu = A_cpu[p,:]
-      b_cpu = b_cpu[p]
+      invp = invperm(p)
+      @test reduce(&, invp .== p) == false
 
       b_gpu = CuVector(b_cpu)
       n = length(b_gpu)
@@ -68,29 +75,31 @@ include("gpu.jl")
       z = similar(CuVector{T}, n)
       symmetric = hermitian = false
 
-      A_gpu = CuSparseMatrixCSC(A_cpu)
-      P = ilu02(A_gpu, 'O')
+      A_gpu = CuSparseMatrixCSC(A_cpu[:,p])
+      P = ilu02(A_gpu)
       function ldiv_ilu0!(P::CuSparseMatrixCSC, x, y, z)
         ldiv!(z, LowerTriangular(P), x)
         ldiv!(y, UnitUpperTriangular(P), z)
         return y
       end
       opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ilu0!(P, x, y, z))
-      x, stats = bicgstab(A_gpu, b_gpu, M=opM)
-      @test norm(b_gpu - A_gpu * x) ≤ 1e-6
-      @test stats.niter ≤ 1659
+      x̄, stats = gmres(A_gpu, b_gpu, M=opM)
+      x = Vector(x̄)[invp]
+      @test norm(b_gpu - A_gpu * x̄) ≤ 1e-6
+      @test norm(b_cpu - A_cpu * x) ≤ 1e-6
 
-      A_gpu = CuSparseMatrixCSR(A_cpu)
-      P = ilu02(A_gpu, 'O')
+      A_gpu = CuSparseMatrixCSR(A_cpu[:,p])
+      P = ilu02(A_gpu)
       function ldiv_ilu0!(P::CuSparseMatrixCSR, x, y, z)
         ldiv!(z, UnitLowerTriangular(P), x)
         ldiv!(y, UpperTriangular(P), z)
         return y
       end
       opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ilu0!(P, x, y, z))
-      x, stats = bicgstab(A_gpu, b_gpu, M=opM)
-      @test norm(b_gpu - A_gpu * x) ≤ 1e-6
-      @test stats.niter ≤ 1659
+      x̄, stats = gmres(A_gpu, b_gpu, M=opM)
+      x = Vector(x̄)[invp]
+      @test norm(b_gpu - A_gpu * x̄) ≤ 1e-6
+      @test norm(b_cpu - A_cpu * x) ≤ 1e-6
     end
   end
 
