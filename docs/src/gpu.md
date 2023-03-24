@@ -145,7 +145,7 @@ end
 ```
 
 !!! note
-    The `CUSPARSE` library of CUDA toolkits `v"12.x"` has some bugs. We recommend to use an older CUDA toolkit with `CUDA.set_runtime_version!(v"11.8")`.
+    The `CUSPARSE` library of CUDA toolkits `v"12.x"` is unstable. We recommend using CUDA toolkit v"11.8" with `CUDA.set_runtime_version!(v"11.8")`.
 
 ## AMD GPUs
 
