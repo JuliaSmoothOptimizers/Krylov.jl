@@ -65,7 +65,7 @@ if CUDA.functional()
   b_gpu = CuVector(b_cpu)
 
   # IC(0) decomposition LLᴴ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
-  P = ic02(A_gpu, 'O')
+  P = ic02(A_gpu)
 
   # Additional vector required for solving triangular systems
   n = length(b_gpu)
@@ -101,18 +101,17 @@ using SparseArrays, Krylov, LinearOperators
 using CUDA, CUDA.CUSPARSE, CUDA.CUSOLVER
 
 if CUDA.functional()
-  # Optional -- Compute a permutation vector p such that A[p,:] has no zero diagonal
-  p = zfd(A_cpu, 'O')
+  # Optional -- Compute a permutation vector p such that A[:,p] has no zero diagonal
+  p = zfd(A_cpu)
   p .+= 1
-  A_cpu = A_cpu[p,:]
-  b_cpu = b_cpu[p]
+  A_cpu = A_cpu[:,p]
 
   # Transfer the linear system from the CPU to the GPU
   A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
   b_gpu = CuVector(b_cpu)
 
   # ILU(0) decomposition LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
-  P = ilu02(A_gpu, 'O')
+  P = ilu02(A_gpu)
 
   # Additional vector required for solving triangular systems
   n = length(b_gpu)
@@ -137,9 +136,16 @@ if CUDA.functional()
   opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ilu0!(P, x, y, z))
 
   # Solve a non-Hermitian system with an ILU(0) preconditioner on GPU
-  x, stats = bicgstab(A_gpu, b_gpu, M=opM)
+  x̄, stats = bicgstab(A_gpu, b_gpu, M=opM)
+
+  # Recover the solution of Ax = b with the solution of A[:,p]x̄ = b
+  invp = invperm(p)
+  x = x̄[invp]
 end
 ```
+
+!!! note
+    The `CUSPARSE` library of CUDA toolkits `v"12.x"` has some bugs. We recommend to use an older CUDA toolkit with `CUDA.set_runtime_version!(v"11.8")`.
 
 ## AMD GPUs
 

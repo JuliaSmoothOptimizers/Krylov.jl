@@ -12,6 +12,8 @@ steps:
       Pkg.add("CUDA")
       Pkg.add("LinearOperators")
       Pkg.instantiate()
+      using CUDA
+      CUDA.set_runtime_version!(v"11.8")
       include("test/gpu/nvidia.jl")'
     timeout_in_minutes: 30
 
