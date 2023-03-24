@@ -8,13 +8,15 @@ steps:
       cuda: "*"
     command: |
       julia --color=yes --project -e '
-      using Pkg
-      Pkg.add("CUDA")
-      Pkg.add("LinearOperators")
-      Pkg.instantiate()
-      using CUDA
-      CUDA.set_runtime_version!(v"11.8")
-      include("test/gpu/nvidia.jl")'
+        using Pkg
+        Pkg.add("CUDA")
+        Pkg.add("LinearOperators")
+        Pkg.instantiate()
+        using CUDA
+        CUDA.set_runtime_version!(v"11.8")'
+
+      julia --color=yes --project -e '
+        include("test/gpu/nvidia.jl")'
     timeout_in_minutes: 30
 
   # - label: "AMD GPUs -- AMDGPU.jl"
@@ -31,9 +33,9 @@ steps:
   #   command: |
   #     julia --color=yes --project -e '
   #     using Pkg
-  #     Pkg.add("AMDGPU")
-  #     Pkg.instantiate()
-  #     include("test/gpu/amd.jl")'
+  #       Pkg.add("AMDGPU")
+  #       Pkg.instantiate()
+  #       include("test/gpu/amd.jl")'
   #   timeout_in_minutes: 30
 
   - label: "Intel GPUs -- oneAPI.jl"
@@ -45,10 +47,10 @@ steps:
       intel: "*"
     command: |
       julia --color=yes --project -e '
-      using Pkg
-      Pkg.add("oneAPI")
-      Pkg.instantiate()
-      include("test/gpu/intel.jl")'
+        using Pkg
+        Pkg.add("oneAPI")
+        Pkg.instantiate()
+        include("test/gpu/intel.jl")'
     timeout_in_minutes: 30
 
   - label: "Apple M1 GPUs -- Metal.jl"
@@ -61,8 +63,8 @@ steps:
       arch: "aarch64"
     command: |
       julia --color=yes --project -e '
-      using Pkg
-      Pkg.add("Metal")
-      Pkg.instantiate()
-      include("test/gpu/metal.jl")'
+        using Pkg
+        Pkg.add("Metal")
+        Pkg.instantiate()
+        include("test/gpu/metal.jl")'
     timeout_in_minutes: 30
