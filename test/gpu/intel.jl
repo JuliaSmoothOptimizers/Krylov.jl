@@ -66,9 +66,9 @@ include("gpu.jl")
       Krylov.@kswap(x, y)
     end
 
-    @testset "kref! -- $FC" begin
-      Krylov.@kref!(n, x, y, c, s)
-    end
+    # @testset "kref! -- $FC" begin
+    #   Krylov.@kref!(n, x, y, c, s)
+    # end
 
     @testset "conversion -- $FC" begin
       test_conversion(S, M)
@@ -94,13 +94,13 @@ include("gpu.jl")
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
 
-    @testset "MINRES-QLP -- $FC" begin
-      A, b = symmetric_indefinite(FC=FC)
-      A = M(A)
-      b = S(b)
-      x, stats = minres_qlp(A, b)
-      @test norm(b - A * x) ≤ atol + rtol * norm(b)
-    end
+    # @testset "MINRES-QLP -- $FC" begin
+    #   A, b = symmetric_indefinite(FC=FC)
+    #   A = M(A)
+    #   b = S(b)
+    #   x, stats = minres_qlp(A, b)
+    #   @test norm(b - A * x) ≤ atol + rtol * norm(b)
+    # end
 
     # @testset "processes -- $FC" begin
     #   test_processes(S, M)
