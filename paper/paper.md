@@ -17,12 +17,12 @@ authors:
 affiliations:
  - name: GERAD and Department of Mathematics and Industrial Engineering, Polytechnique Montréal, QC, Canada.
    index: 1
-date: 6 March 2023
+date: 25 March 2023
 bibliography: paper.bib
 header-includes: |
   \usepackage{booktabs}
   \usepackage{fontspec}
-  \setmonofont[Path = ./, Scale=0.7]{JuliaMono-Regular.ttf}
+  \setmonofont[Path = ./, Scale=0.68]{JuliaMono-Regular.ttf}
 ---
 
 # Summary
@@ -61,12 +61,14 @@ Krylov.jl aims to provide a user-friendly and unified interface for the largest 
 - \textbf{Krylov methods}: \textsc{Bicgstab}, \textsc{Bilq}, \textsc{Bilqr}, \textsc{Cg}, \textsc{Cg-lanczos}, \textsc{Cg-lanczos-shift}, \textsc{Cgls}, \textsc{Cgne}, \textsc{Cgs}, \textsc{Cr}, \textsc{Craig}, \textsc{Craigmr}, \textsc{Crls}, \textsc{Crmr}, \textsc{Diom}, \textsc{Dqgmres}, \textsc{Fgmres}, \textsc{Fom}, \textsc{Gmres}, \textsc{Gpmr}, \textsc{Lnlq}, \textsc{Lslq}, \textsc{Lsmr}, \textsc{Lsqr}, \textsc{Minres}, \textsc{Minres-qlp}, \textsc{Qmr}, \textsc{Symmlq}, \textsc{Tricg}, \textsc{Trilqr}, \textsc{Trimr}, \textsc{Usymlq}, \textsc{Usymqr}.
 
 Hence Krylov.jl is a suitable toolbox for easily comparing existing methods with each other as well as new ones.
-MATLAB [@MATLAB] and PETSc [@petsc] have eleven and eighteen distinct Krylov methods, respectively.
+The number of distinct Krylov methods is eighteen for PETSc [@petsc], eleven for MATLAB @MATLAB and [KrylovMethods.jl](https://github.com/JuliaInv/KrylovMethods.jl), nine for [IterativeSolvers.jl](https://github.com/JuliaLinearAlgebra/IterativeSolvers.jl) and three for [KrylovKit.jl](https://github.com/Jutho/KrylovKit.jl).
+However Krylov.jl doesn't have implementations of Block-Krylov methods unlike some alternatives.
 Note that we only consider the number of Krylov methods that generate different iterates without preconditioning.
 Variants with preconditioning are not counted except if it is a flexible one such as \textsc{Fgmres}.
 
 Some processes and methods are not available elsewhere and are the product of our own research.
 References for each process and method are available in the extensive [documentation](https://juliasmoothoptimizers.github.io/Krylov.jl/stable/).
+Beyond the number of methods, Krylov.jl is the only package that offers all of the features that we are going to describe.
 
 ## Support for any floating-point system supported by Julia
 
@@ -101,7 +103,9 @@ In-place methods limit memory allocations and deallocations, which are particula
 ## Performance optimizations and storage requirements
 
 Operator-vector products and vector operations are the most expensive operations in Krylov.jl.
-We rely on BLAS routines as much as possible to perform those operations.
+To speed up theses procedures, we rely on BLAS when the linear problems are solved with CPUs and stored in a precision supported by BLAS.
+Because the vectors manipulated by Krylov methods are always dense, the use of BLAS directly affect the efficiency of our implementations.
+We also dispatch to BLAS for operator-vector products when the operator is a dense matrix.
 By default, Julia ships with OpenBLAS and provides multithreaded routines.
 Since Julia 1.6, users can also switch dynamically to other BLAS backends, such as the Intel MKL or BLIS, thanks to the BLAS demuxing library `libblastrampoline`, if an optimized BLAS is available.
 
@@ -156,7 +160,7 @@ symmetric = hermitian = false
 JF(x) = LinearOperator(T, 3, 2, symmetric, hermitian, (y, v) -> J(y, x, v),   # non-transpose
                                                       (y, w) -> Jᵀ(y, x, w),  # transpose
                                                       (y, w) -> Jᵀ(y, x, w))  # conjugate transpose
-gauss_newton(F, JF, x₀)
+xstar = gauss_newton(F, JF, x₀)
 ```
 
 Our second example concerns the solution of a complex Hermitian linear system from the SuiteSparse Matrix Collection [@davis-hu-2011] with an incomplete Cholesky factorization preconditioner on GPU.
@@ -174,39 +178,41 @@ using SuiteSparseMatrixCollection  # Interface to the SuiteSparse Matrix Collect
 using CUDA                         # Interface to NVIDIA GPUs
 using CUDA.CUSPARSE                # NVIDIA CUSPARSE library
 
-ssmc = ssmc_db()
-matrices = ssmc_matrices(ssmc, "Bai", "mhd1280b")
-paths = fetch_ssmc(matrices, format="MM")
-path_A = joinpath(paths[1], "mhd1280b.mtx")
-A_cpu = MatrixMarket.mmread(path_A)
-m, n = size(A_cpu)
-b_cpu = ones(ComplexF64, m)
+if CUDA.functional()
+  ssmc = ssmc_db()
+  matrices = ssmc_matrices(ssmc, "Bai", "mhd1280b")
+  paths = fetch_ssmc(matrices, format="MM")
+  path_A = joinpath(paths[1], "mhd1280b.mtx")
+  A_cpu = MatrixMarket.mmread(path_A)
+  m, n = size(A_cpu)
+  b_cpu = ones(ComplexF64, m)
 
-# Transfer the linear system from the CPU to the GPU
-A_gpu = CuSparseMatrixCSR(A_cpu)
-b_gpu = CuVector(b_cpu)
+  # Transfer the linear system from the CPU to the GPU
+  A_gpu = CuSparseMatrixCSR(A_cpu)
+  b_gpu = CuVector(b_cpu)
 
-# Incomplete Cholesky decomposition LLᴴ ≈ A with zero fill-in
-P = ic02(A_gpu, 'O')
+  # Incomplete Cholesky decomposition LLᴴ ≈ A with zero fill-in
+  P = ic02(A_gpu, 'O')
 
-# Additional vector required for solving triangular systems
-z = similar(CuVector{ComplexF64}, n)
+  # Additional vector required for solving triangular systems
+  z = similar(CuVector{ComplexF64}, n)
 
-# Solve Py = x
-function ldiv_ic0!(P, x, y, z)
-  ldiv!(z, LowerTriangular(P), x)   # Forward substitution with L
-  ldiv!(y, LowerTriangular(P)', z)  # Backward substitution with Lᴴ
-  return y
+  # Solve Py = x
+  function ldiv_ic0!(P, x, y, z)
+    ldiv!(z, LowerTriangular(P), x)   # Forward substitution with L
+    ldiv!(y, LowerTriangular(P)', z)  # Backward substitution with Lᴴ
+    return y
+  end
+
+  # Linear operator that approximates the preconditioner P⁻¹ in floating-point arithmetic
+  T = ComplexF64
+  symmetric = false
+  hermitian = true
+  P⁻¹ = LinearOperator(T, m, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(P, x, y, z))
+
+  # Solve an Hermitian positive definite system with an incomplete Cholesky factorization preconditioner
+  x, stats = cg(A_gpu, b_gpu, M=P⁻¹)
 end
-
-# Linear operator that approximates the preconditioner P⁻¹ in floating-point arithmetic
-T = ComplexF64
-symmetric = false
-hermitian = true
-P⁻¹ = LinearOperator(T, m, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(P, x, y, z))
-
-# Solve a Hermitian positive definite system with an incomplete Cholesky factorization preconditioner
-x, stats = cg(A_gpu, b_gpu, M=P⁻¹)
 ```
 
 # Acknowledgements
