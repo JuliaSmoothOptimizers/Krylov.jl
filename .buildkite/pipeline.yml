@@ -8,10 +8,11 @@ steps:
       arch: "x86_64"
     command: |
       julia --color=yes --project=./paper/example1 -e '
+      using Pkg
+      Pkg.instantiate()
       include("paper/example1/example1.jl")'
     timeout_in_minutes: 30
 
-steps:
   - label: "Example 2 -- JOSS"
     plugins:
       - JuliaCI/julia#v1:
@@ -21,6 +22,8 @@ steps:
       cuda: "*"
     command: |
       julia --color=yes --project=./paper/example2 -e '
+      using Pkg
+      Pkg.instantiate()
       include("paper/example2/example2.jl")'
     timeout_in_minutes: 30
 
