@@ -1,5 +1,18 @@
 steps:
-  - label: "Nvidia GPUs -- CUDA.jl"
+  - label: "Example 1 -- JOSS"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: 1.8
+    agents:
+      os: "linux"
+      arch: "x86_64"
+    command: |
+      julia --color=yes --project=./paper/example1 -e '
+      include("paper/example1/example1.jl")'
+    timeout_in_minutes: 30
+
+steps:
+  - label: "Example 2 -- JOSS"
     plugins:
       - JuliaCI/julia#v1:
           version: 1.9
@@ -7,67 +20,8 @@ steps:
       queue: "juliagpu"
       cuda: "*"
     command: |
-      julia --color=yes --project -e '
-        using Pkg
-        Pkg.add("CUDA")
-        Pkg.add("LinearOperators")
-        Pkg.instantiate()
-        using CUDA
-        # CUDA.set_runtime_version!(v"11.8")'
-
-      julia --color=yes --project -e '
-        include("test/gpu/nvidia.jl")'
-    timeout_in_minutes: 30
-
-  # - label: "AMD GPUs -- AMDGPU.jl"
-  #   plugins:
-  #     - JuliaCI/julia#v1:
-  #         version: 1.9
-  #   agents:
-  #     queue: "juliagpu"
-  #     rocm: "*"
-  #     rocmgpu: "gfx1031"
-  #   env:
-  #     JULIA_AMDGPU_CORE_MUST_LOAD: "1"
-  #     JULIA_AMDGPU_HIP_MUST_LOAD: "1"
-  #     JULIA_AMDGPU_DISABLE_ARTIFACTS: "1"
-  #   command: |
-  #     julia --color=yes --project -e '
-  #     using Pkg
-  #       Pkg.add("AMDGPU")
-  #       Pkg.instantiate()
-  #       include("test/gpu/amd.jl")'
-  #   timeout_in_minutes: 30
-
-  - label: "Intel GPUs -- oneAPI.jl"
-    plugins:
-      - JuliaCI/julia#v1:
-          version: 1.9
-    agents:
-      queue: "juliagpu"
-      intel: "*"
-    command: |
-      julia --color=yes --project -e '
-        using Pkg
-        Pkg.add("oneAPI")
-        Pkg.instantiate()
-        include("test/gpu/intel.jl")'
-    timeout_in_minutes: 30
-
-  - label: "Apple M1 GPUs -- Metal.jl"
-    plugins:
-      - JuliaCI/julia#v1:
-          version: 1.9
-    agents:
-      queue: "juliaecosystem"
-      os: "macos"
-      arch: "aarch64"
-    command: |
-      julia --color=yes --project -e '
-        using Pkg
-        Pkg.add("Metal")
-        Pkg.instantiate()
-        include("test/gpu/metal.jl")'
+      julia --color=yes --project=./paper/example2 -e '
+      include("paper/example2/example2.jl")'
     timeout_in_minutes: 30
 
   - label: "CPUs -- StaticArrays.jl"
