@@ -61,7 +61,7 @@ Krylov.jl aims to provide a user-friendly and unified interface for the largest 
 - \textbf{Krylov methods}: \textsc{Bicgstab}, \textsc{Bilq}, \textsc{Bilqr}, \textsc{Cg}, \textsc{Cg-lanczos}, \textsc{Cg-lanczos-shift}, \textsc{Cgls}, \textsc{Cgne}, \textsc{Cgs}, \textsc{Cr}, \textsc{Craig}, \textsc{Craigmr}, \textsc{Crls}, \textsc{Crmr}, \textsc{Diom}, \textsc{Dqgmres}, \textsc{Fgmres}, \textsc{Fom}, \textsc{Gmres}, \textsc{Gpmr}, \textsc{Lnlq}, \textsc{Lslq}, \textsc{Lsmr}, \textsc{Lsqr}, \textsc{Minres}, \textsc{Minres-qlp}, \textsc{Qmr}, \textsc{Symmlq}, \textsc{Tricg}, \textsc{Trilqr}, \textsc{Trimr}, \textsc{Usymlq}, \textsc{Usymqr}.
 
 Hence Krylov.jl is a suitable toolbox for easily comparing existing methods with each other as well as new ones.
-The number of distinct Krylov methods is eighteen for PETSc [@petsc], eleven for MATLAB @MATLAB and [KrylovMethods.jl](https://github.com/JuliaInv/KrylovMethods.jl), nine for [IterativeSolvers.jl](https://github.com/JuliaLinearAlgebra/IterativeSolvers.jl) and three for [KrylovKit.jl](https://github.com/Jutho/KrylovKit.jl).
+The number of distinct Krylov methods is eighteen for PETSc [@petsc], eleven @MATLAB and [KrylovMethods.jl](https://github.com/JuliaInv/KrylovMethods.jl), nine for [IterativeSolvers.jl](https://github.com/JuliaLinearAlgebra/IterativeSolvers.jl) and three for [KrylovKit.jl](https://github.com/Jutho/KrylovKit.jl).
 However Krylov.jl doesn't have implementations of Block-Krylov methods unlike some alternatives.
 Note that we only consider the number of Krylov methods that generate different iterates without preconditioning.
 Variants with preconditioning are not counted except if it is a flexible one such as \textsc{Fgmres}.
