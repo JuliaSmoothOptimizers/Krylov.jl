@@ -61,14 +61,14 @@ Krylov.jl aims to provide a user-friendly and unified interface for the largest 
 - \textbf{Krylov methods}: \textsc{Bicgstab}, \textsc{Bilq}, \textsc{Bilqr}, \textsc{Cg}, \textsc{Cg-lanczos}, \textsc{Cg-lanczos-shift}, \textsc{Cgls}, \textsc{Cgne}, \textsc{Cgs}, \textsc{Cr}, \textsc{Craig}, \textsc{Craigmr}, \textsc{Crls}, \textsc{Crmr}, \textsc{Diom}, \textsc{Dqgmres}, \textsc{Fgmres}, \textsc{Fom}, \textsc{Gmres}, \textsc{Gpmr}, \textsc{Lnlq}, \textsc{Lslq}, \textsc{Lsmr}, \textsc{Lsqr}, \textsc{Minres}, \textsc{Minres-qlp}, \textsc{Qmr}, \textsc{Symmlq}, \textsc{Tricg}, \textsc{Trilqr}, \textsc{Trimr}, \textsc{Usymlq}, \textsc{Usymqr}.
 
 Hence Krylov.jl is a suitable toolbox for easily comparing existing methods with each other as well as new ones.
-The number of distinct Krylov methods is eighteen for PETSc [@petsc], eleven @MATLAB and [KrylovMethods.jl](https://github.com/JuliaInv/KrylovMethods.jl), nine for [IterativeSolvers.jl](https://github.com/JuliaLinearAlgebra/IterativeSolvers.jl) and three for [KrylovKit.jl](https://github.com/Jutho/KrylovKit.jl).
-However Krylov.jl doesn't have implementations of Block-Krylov methods unlike some alternatives.
+The number of distinct Krylov methods is eighteen for PETSc [@petsc], eleven for @MATLAB and [KrylovMethods.jl](https://github.com/JuliaInv/KrylovMethods.jl), nine for [IterativeSolvers.jl](https://github.com/JuliaLinearAlgebra/IterativeSolvers.jl) and three for [KrylovKit.jl](https://github.com/Jutho/KrylovKit.jl).
+However Krylov.jl doesn't have implementations of Block-Krylov methods unlike some alternatives, except for special cases, including \testsc{Tricg}, \textsc{Trimr}, and \textsc{Gpmr}.
 Note that we only consider the number of Krylov methods that generate different iterates without preconditioning.
 Variants with preconditioning are not counted except if it is a flexible one such as \textsc{Fgmres}.
 
 Some processes and methods are not available elsewhere and are the product of our own research.
 References for each process and method are available in the extensive [documentation](https://juliasmoothoptimizers.github.io/Krylov.jl/stable/).
-Beyond the number of methods, Krylov.jl is the only package that offers all of the features that we are going to describe.
+Beyond the number of methods, Krylov.jl is the only package that offers all of the features that we describe below.
 
 ## Support for any floating-point system supported by Julia
 
@@ -103,8 +103,8 @@ In-place methods limit memory allocations and deallocations, which are particula
 ## Performance optimizations and storage requirements
 
 Operator-vector products and vector operations are the most expensive operations in Krylov.jl.
-To speed up theses procedures, we rely on BLAS when the linear problems are solved with CPUs and stored in a precision supported by BLAS.
-Because the vectors manipulated by Krylov methods are always dense, the use of BLAS directly affect the efficiency of our implementations.
+To speed up theses procedures, we rely on BLAS when the linear problems are solved on CPU and stored in a representation supported by BLAS.
+Because the vectors manipulated by Krylov methods are always dense, the use of BLAS directly affects the efficiency of our implementations.
 We also dispatch to BLAS for operator-vector products when the operator is a dense matrix.
 By default, Julia ships with OpenBLAS and provides multithreaded routines.
 Since Julia 1.6, users can also switch dynamically to other BLAS backends, such as the Intel MKL or BLIS, thanks to the BLAS demuxing library `libblastrampoline`, if an optimized BLAS is available.
