@@ -4,8 +4,8 @@ steps:
       - JuliaCI/julia#v1:
           version: 1.8
     agents:
-      os: "linux"
-      arch: "x86_64"
+      queue: "juliagpu"
+      cuda: "*"
     command: |
       julia --color=yes --project=./paper/example1 -e '
       using Pkg
