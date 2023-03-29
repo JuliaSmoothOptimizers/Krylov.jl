@@ -47,7 +47,7 @@ should be solved when **_b_** is not in the range of **_A_** (inconsistent syste
   * **_A_** is square and singular,
   * **_A_** is tall and thin.
 
-Underdetermined sytems are less common but also occur.
+Underdetermined systems are less common but also occur.
 
 If there are infinitely many such **_x_** (because **_A_** is column rank-deficient), one with minimum norm is identified
 
@@ -61,12 +61,12 @@ If there are infinitely many such **_x_** (because **_A_** is column rank-defici
   minimize ‖<b><i>x</i></b>‖ &nbsp; subject to &nbsp; <b><i>Ax = b</i></b>
 </p>
 
-sould be solved when **_A_** is column rank-deficient but **_b_** is in the range of **_A_** (consistent systems), regardless of the shape of **_A_**.
+should be solved when **_A_** is column rank-deficient but **_b_** is in the range of **_A_** (consistent systems), regardless of the shape of **_A_**.
 This situation mainly occurs when
   * **_A_** is square and singular,
   * **_A_** is short and wide.
 
-Overdetermined sytems are less common but also occur.
+Overdetermined systems are less common but also occur.
 
 4. Adjoint systems
 

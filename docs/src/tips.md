@@ -16,7 +16,7 @@ If you don't know the maximum number of threads available on your computer, you 
 NMAX = Sys.CPU_THREADS
 ```
 
-and define the number of OpenBLAS/MKL threads at runtine with
+and define the number of OpenBLAS/MKL threads at runtime with
 
 ```julia
 BLAS.set_num_threads(N)  # 1 ≤ N ≤ NMAX
