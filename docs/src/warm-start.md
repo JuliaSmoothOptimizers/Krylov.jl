@@ -58,8 +58,8 @@ y = y₀ + Δy
 ```@meta
 # ## Restarted methods
 #
-# The storage requierements of Krylov methods based on the Arnoldi process, such as FOM and GMRES, increase as the iteration progresses.
-# For very large problems, the storage costs become prohibitive after only few iterations and restarted variants FOM(k) and GMRES(k) are prefered.
+# The storage requirements of Krylov methods based on the Arnoldi process, such as FOM and GMRES, increase as the iteration progresses.
+# For very large problems, the storage costs become prohibitive after only few iterations and restarted variants FOM(k) and GMRES(k) are preferred.
 # In this section, we show how to use warm starts to implement GMRES(k) and FOM(k).
 #
 # ```julia
