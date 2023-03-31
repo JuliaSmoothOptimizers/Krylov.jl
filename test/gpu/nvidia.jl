@@ -27,7 +27,7 @@ include("gpu.jl")
       b_gpu = CuVector(b_cpu)
       n = length(b_gpu)
       T = eltype(b_gpu)
-      z = similar(CuVector{T}, n)
+      z = CUDA.zeros(T, n)
       symmetric = hermitian = true
 
       A_gpu = CuSparseMatrixCSC(A_cpu)
@@ -72,7 +72,7 @@ include("gpu.jl")
       b_gpu = CuVector(b_cpu)
       n = length(b_gpu)
       T = eltype(b_gpu)
-      z = similar(CuVector{T}, n)
+      z = CUDA.zeros(T, n)
       symmetric = hermitian = false
 
       A_gpu = CuSparseMatrixCSC(A_cpu[:,p])

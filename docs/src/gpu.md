@@ -70,7 +70,7 @@ if CUDA.functional()
   # Additional vector required for solving triangular systems
   n = length(b_gpu)
   T = eltype(b_gpu)
-  z = similar(CuVector{T}, n)
+  z = CUDA.zeros(T, n)
 
   # Solve Py = x
   function ldiv_ic0!(P::CuSparseMatrixCSR, x, y, z)
@@ -116,7 +116,7 @@ if CUDA.functional()
   # Additional vector required for solving triangular systems
   n = length(b_gpu)
   T = eltype(b_gpu)
-  z = similar(CuVector{T}, n)
+  z = CUDA.zeros(T, n)
 
   # Solve Py = x
   function ldiv_ilu0!(P::CuSparseMatrixCSR, x, y, z)
