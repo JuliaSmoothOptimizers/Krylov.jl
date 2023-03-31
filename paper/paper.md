@@ -17,7 +17,7 @@ authors:
 affiliations:
  - name: GERAD and Department of Mathematics and Industrial Engineering, Polytechnique Montréal, QC, Canada.
    index: 1
-date: 25 March 2023
+date: 31 March 2023
 bibliography: paper.bib
 header-includes: |
   \usepackage{booktabs}
@@ -62,7 +62,7 @@ Krylov.jl aims to provide a user-friendly and unified interface for the largest 
 
 Hence Krylov.jl is a suitable toolbox for easily comparing existing methods with each other as well as new ones.
 The number of distinct Krylov methods is eighteen for PETSc [@petsc], eleven for @MATLAB and [KrylovMethods.jl](https://github.com/JuliaInv/KrylovMethods.jl), nine for [IterativeSolvers.jl](https://github.com/JuliaLinearAlgebra/IterativeSolvers.jl) and three for [KrylovKit.jl](https://github.com/Jutho/KrylovKit.jl).
-However Krylov.jl doesn't have implementations of Block-Krylov methods unlike some alternatives, except for special cases, including \textsc{Tricg}, \textsc{Trimr}, and \textsc{Gpmr}.
+However Krylov.jl doesn't have implementations of recycling Krylov methods nor block Krylov methods unlike some alternatives, except for special cases, including \textsc{Tricg}, \textsc{Trimr}, and \textsc{Gpmr}.
 Note that we only consider the number of Krylov methods that generate different iterates without preconditioning.
 Variants with preconditioning are not counted except if it is a flexible one such as \textsc{Fgmres}.
 
@@ -122,6 +122,7 @@ Another example based on a simplistic Newton method without linesearch for conve
 ```julia
 using LinearAlgebra    # Linear algebra library of Julia
 using SparseArrays     # Sparse library of Julia
+using Test             # Test library of Julia
 using Krylov           # Krylov methods and processes
 using LinearOperators  # Linear operators
 using ForwardDiff      # Automatic differentiation
@@ -153,24 +154,31 @@ end
 
 T = Float128  # IEEE quadruple precision
 x₀ = ones(T, 2)
-F(x) = [x[1]^4 - 3; exp(x[2]) - 2; log(x[1]) - x[2]^2]         # F(x)
+t = T[1, 2, 3, 4, 5, 6, 7, 8]
+y = T[10.272, 13.190, 16.936, 21.746, 27.923, 35.854, 46.037, 59.112]
+F(x) = [x[1] * exp(x[2] * t[i]) - y[i] for i=1:8]              # F(x)
 J(y, x, v) = ForwardDiff.derivative!(y, t -> F(x + t * v), 0)  # y ← JF(x)v
 Jᵀ(y, x, w) = ForwardDiff.gradient!(y, x -> dot(F(x), w), x)   # y ← JFᵀ(x)w
 symmetric = hermitian = false
-JF(x) = LinearOperator(T, 3, 2, symmetric, hermitian, (y, v) -> J(y, x, v),   # non-transpose
+JF(x) = LinearOperator(T, 8, 2, symmetric, hermitian, (y, v) -> J(y, x, v),   # non-transpose
                                                       (y, w) -> Jᵀ(y, x, w),  # transpose
                                                       (y, w) -> Jᵀ(y, x, w))  # conjugate transpose
-xstar = gauss_newton(F, JF, x₀)
+x = gauss_newton(F, JF, x₀)
+
+# Check the solution returned by the Gauss-Newton method
+xstar = T[8, 0.25]
+@test norm(x - xstar) ≤ 1e-4
 ```
 
 Our second example concerns the solution of a complex Hermitian linear system from the SuiteSparse Matrix Collection [@davis-hu-2011] with an incomplete Cholesky factorization preconditioner on GPU.
-The preconditioner is implemented as an in-place linear operator that performs the forward and backward sweeps with the Cholesky factor of the imcomplete decomposition.
+The preconditioner is implemented as an in-place linear operator that performs the forward and backward sweeps with the Cholesky factor of the incomplete decomposition.
 Because the system matrix is Hermitian and positive definite, we use the conjugate gradient method.
 However, other methods for Hermitian systems could be used, including \textsc{Symmlq}, \textsc{Cr} and \textsc{Minres}.
 
 ```julia
 using LinearAlgebra                # Linear algebra library of Julia
 using SparseArrays                 # Sparse library of Julia
+using Test                         # Test library of Julia
 using Krylov                       # Krylov methods and processes
 using LinearOperators              # Linear operators
 using MatrixMarket                 # Reader of matrices stored in the Matrix Market format
@@ -179,23 +187,26 @@ using CUDA                         # Interface to NVIDIA GPUs
 using CUDA.CUSPARSE                # NVIDIA CUSPARSE library
 
 if CUDA.functional()
-  ssmc = ssmc_db()
-  matrices = ssmc_matrices(ssmc, "Bai", "mhd1280b")
+  ssmc = ssmc_db(verbose=false)
+  matrices = ssmc_matrices(ssmc, "Sinclair", "3Dspectralwave2")
   paths = fetch_ssmc(matrices, format="MM")
-  path_A = joinpath(paths[1], "mhd1280b.mtx")
-  A_cpu = MatrixMarket.mmread(path_A)
+  path_A = joinpath(paths[1], "3Dspectralwave2.mtx")
+
+  # A is an Hermitian and positive definite matrix of size 292008 x 292008
+  A_cpu = MatrixMarket.mmread(path_A) + 50I
   m, n = size(A_cpu)
-  b_cpu = ones(ComplexF64, m)
+  xstar = ones(ComplexF64, m)
+  b_cpu = A_cpu * xstar
 
   # Transfer the linear system from the CPU to the GPU
   A_gpu = CuSparseMatrixCSR(A_cpu)
   b_gpu = CuVector(b_cpu)
 
-  # Incomplete Cholesky decomposition LLᴴ ≈ A with zero fill-in
-  P = ic02(A_gpu, 'O')
+  # Incomplete Cholesky factorization LLᴴ ≈ A with zero fill-in
+  P = ic02(A_gpu)
 
   # Additional vector required for solving triangular systems
-  z = similar(CuVector{ComplexF64}, n)
+  z = CUDA.zeros(ComplexF64, n)
 
   # Solve Py = x
   function ldiv_ic0!(P, x, y, z)
@@ -211,7 +222,11 @@ if CUDA.functional()
   P⁻¹ = LinearOperator(T, m, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(P, x, y, z))
 
   # Solve an Hermitian positive definite system with an incomplete Cholesky factorization preconditioner
-  x, stats = cg(A_gpu, b_gpu, M=P⁻¹)
+  x_gpu, stats = cg(A_gpu, b_gpu, M=P⁻¹)
+
+  # Check the solution returned by the conjugate gradient method
+  x_cpu = Vector{ComplexF64}(x_gpu)
+  @test norm(x_cpu - xstar) ≤ 1e-5
 end
 ```
 
