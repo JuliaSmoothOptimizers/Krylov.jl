@@ -17,8 +17,8 @@ if CUDA.functional()
   # A is an Hermitian and positive definite matrix of size 292008 x 292008
   A_cpu = MatrixMarket.mmread(path_A) + 50I
   m, n = size(A_cpu)
-  xstar = ones(ComplexF64, m)
-  b_cpu = A_cpu * xstar
+  x_exact = ones(ComplexF64, m)
+  b_cpu = A_cpu * x_exact
 
   # Transfer the linear system from the CPU to the GPU
   A_gpu = CuSparseMatrixCSR(A_cpu)
@@ -48,5 +48,5 @@ if CUDA.functional()
 
   # Check the solution returned by the conjugate gradient method
   x_cpu = Vector{ComplexF64}(x_gpu)
-  @test norm(x_cpu - xstar) ≤ 1e-5
+  @test norm(x_cpu - x_exact) ≤ 1e-5
 end
