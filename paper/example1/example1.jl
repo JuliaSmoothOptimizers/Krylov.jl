@@ -1,5 +1,6 @@
 using LinearAlgebra    # Linear algebra library of Julia
 using SparseArrays     # Sparse library of Julia
+using Test             # Test library of Julia
 using Krylov           # Krylov methods and processes
 using LinearOperators  # Linear operators
 using ForwardDiff      # Automatic differentiation
@@ -31,11 +32,17 @@ end
 
 T = Float128  # IEEE quadruple precision
 x₀ = ones(T, 2)
-F(x) = [x[1]^4 - 3; exp(x[2]) - 2; log(x[1]) - x[2]^2]         # F(x)
+t = T[1, 2, 3, 4, 5, 6, 7, 8]
+y = T[10.272, 13.190, 16.936, 21.746, 27.923, 35.854, 46.037, 59.112]
+F(x) = [x[1] * exp(x[2] * t[i]) - y[i] for i=1:8]              # F(x)
 J(y, x, v) = ForwardDiff.derivative!(y, t -> F(x + t * v), 0)  # y ← JF(x)v
 Jᵀ(y, x, w) = ForwardDiff.gradient!(y, x -> dot(F(x), w), x)   # y ← JFᵀ(x)w
 symmetric = hermitian = false
-JF(x) = LinearOperator(T, 3, 2, symmetric, hermitian, (y, v) -> J(y, x, v),   # non-transpose
+JF(x) = LinearOperator(T, 8, 2, symmetric, hermitian, (y, v) -> J(y, x, v),   # non-transpose
                                                       (y, w) -> Jᵀ(y, x, w),  # transpose
                                                       (y, w) -> Jᵀ(y, x, w))  # conjugate transpose
-xstar = gauss_newton(F, JF, x₀)
+x = gauss_newton(F, JF, x₀)
+
+# Check the solution returned by the Gauss-Newton method
+xstar = T[8, 0.25]
+@test norm(x - xstar) ≤ 1e-4
