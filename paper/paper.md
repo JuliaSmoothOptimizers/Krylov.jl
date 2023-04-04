@@ -117,7 +117,7 @@ The match is verified in the unit tests by way of functions that return the numb
 
 Our first example is a simple implementation of the Gauss-Newton method without linesearch for nonlinear least squares.
 It illustrates several of the facilities of Krylov.jl: solver preallocation and reuse, genericity with respect to data types, and linear operators.
-Another example based on a simplistic Newton method without linesearch for convex optimization is also available in the documentation, and illustrates the same concepts in the sections “In-places methods” and “Factorization-free operators”.
+Another example based on a simplistic Newton method without linesearch for convex optimization is also available in the documentation, and illustrates the same concepts in the sections “In-place methods” and “Factorization-free operators”.
 
 ```julia
 using LinearAlgebra    # Linear algebra library of Julia
@@ -173,7 +173,7 @@ x = gauss_newton(F, JF, x₀)
 Our second example concerns the solution of a complex Hermitian linear system from the SuiteSparse Matrix Collection [@davis-hu-2011] with an incomplete Cholesky factorization preconditioner on GPU.
 The preconditioner is implemented as an in-place linear operator that performs the forward and backward sweeps with the Cholesky factor of the incomplete decomposition.
 Because the system matrix is Hermitian and positive definite, we use the conjugate gradient method.
-However, other methods for Hermitian systems could be used, including \textsc{Symmlq}, \textsc{Cr} and \textsc{Minres}.
+However, other methods for Hermitian systems could be used, including \textsc{Symmlq}, \textsc{Cr}, and \textsc{Minres}.
 
 ```julia
 using LinearAlgebra                # Linear algebra library of Julia
