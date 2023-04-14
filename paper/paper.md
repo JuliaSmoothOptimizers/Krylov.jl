@@ -107,7 +107,7 @@ To speed up theses procedures, we rely on BLAS when the linear problems are solv
 Because the vectors manipulated by Krylov methods are always dense, the use of BLAS directly affects the efficiency of our implementations.
 We also dispatch to BLAS for operator-vector products when the operator is a dense matrix.
 By default, Julia ships with OpenBLAS and provides multithreaded routines.
-Since Julia 1.6, users can also switch dynamically to other BLAS backends, such as the Intel MKL or BLIS, thanks to the BLAS demuxing library `libblastrampoline`, if an optimized BLAS is available.
+Since Julia 1.6, users can also switch dynamically to other BLAS backends, such as the Intel MKL, BLIS or Apple Accelerate, thanks to the BLAS demuxing library `libblastrampoline`, if an optimized BLAS is available.
 
 A “Storage Requirements” section is available in the documentation to provide the theoretical number of bytes required by each method.
 Our implementations are storage-optimal in the sense that they are guaranteed to match the theoretical storage amount.
