@@ -6,6 +6,9 @@
 # E. Stiefel, Relaxationsmethoden bester Strategie zur Losung linearer Gleichungssysteme.
 # Commentarii Mathematici Helvetici, 29(1), pp. 157--179, 1955.
 #
+# D. G. Luenberger, The conjugate residual method for constrained minimization problems.
+# SIAM Journal on Numerical Analysis, 7(3), pp. 390--398, 1970.
+#
 # M-A. Dahito and D. Orban, The Conjugate Residual Method in Linesearch and Trust-Region Methods.
 # SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
 #
@@ -67,6 +70,7 @@ M also indicates the weighted norm in which residuals are measured.
 
 * M. R. Hestenes and E. Stiefel, [*Methods of conjugate gradients for solving linear systems*](https://doi.org/10.6028/jres.049.044), Journal of Research of the National Bureau of Standards, 49(6), pp. 409--436, 1952.
 * E. Stiefel, [*Relaxationsmethoden bester Strategie zur Losung linearer Gleichungssysteme*](https://doi.org/10.1007/BF02564277), Commentarii Mathematici Helvetici, 29(1), pp. 157--179, 1955.
+* D. G. Luenberger, [*The conjugate residual method for constrained minimization problems*](https://doi.org/10.1137/0707032), SIAM Journal on Numerical Analysis, 7(3), pp. 390--398, 1970.
 * M-A. Dahito and D. Orban, [*The Conjugate Residual Method in Linesearch and Trust-Region Methods*](https://doi.org/10.1137/18M1204255), SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
 """
 function cr end
