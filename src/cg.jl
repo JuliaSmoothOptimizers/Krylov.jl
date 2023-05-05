@@ -20,7 +20,7 @@ export cg, cg!
                     M=I, ldiv::Bool=false, radius::T=zero(T),
                     linesearch::Bool=false, atol::T=√eps(T),
                     rtol::T=√eps(T), itmax::Int=0,
-                    verbose::Int=0, history::Bool=false,
+                    timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                     callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -53,6 +53,7 @@ M also indicates the weighted norm in which residuals are measured.
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
+* `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
@@ -101,15 +102,15 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
              M=I, ldiv :: Bool=false, radius :: T=zero(T),
              linesearch :: Bool=false, atol :: T=√eps(T),
              rtol :: T=√eps(T), itmax :: Int=0,
-             verbose :: Int=0, history :: Bool=false,
+             timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
              callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
-
+  start_time = time()
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   m == n || error("System must be square")
   length(b) == n || error("Inconsistent problem size")
+  linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
   (verbose > 0) && @printf(iostream, "CG: system of %d equations in %d variables\n", n, n)
 
   # Tests M = Iₙ
@@ -162,10 +163,11 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
   on_boundary = false
   zero_curvature = false
   user_requested_exit = false
+  overtimed = false
 
   status = "unknown"
 
-  while !(solved || tired || zero_curvature || user_requested_exit)
+  while !(solved || tired || zero_curvature || user_requested_exit || overtimed)
     mul!(Ap, A, p)
     pAp = @kdotr(n, p, Ap)
     if (pAp ≤ eps(T) * pNorm²) && (radius == 0)
@@ -220,16 +222,19 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
     iter = iter + 1
     tired = iter ≥ itmax
     user_requested_exit = callback(solver) :: Bool
+    overtimed = time() - start_time > timemax
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  ", iter, rNorm)
   end
   (verbose > 0) && @printf(iostream, "\n")
 
-  solved && on_boundary && (status = "on trust-region boundary")
+  # Termination status
+  solved && on_boundary             && (status = "on trust-region boundary")
   solved && linesearch && (pAp ≤ 0) && (status = "nonpositive curvature detected")
-  solved && (status == "unknown") && (status = "solution good enough given atol and rtol")
-  zero_curvature && (status = "zero curvature detected")
-  tired && (status = "maximum number of iterations exceeded")
-  user_requested_exit && (status = "user-requested exit")
+  solved && (status == "unknown")   && (status = "solution good enough given atol and rtol")
+  zero_curvature                    && (status = "zero curvature detected")
+  tired                             && (status = "maximum number of iterations exceeded")
+  user_requested_exit               && (status = "user-requested exit")
+  overtimed                         && (status = "time limit exceeded")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)

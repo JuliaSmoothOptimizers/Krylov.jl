@@ -30,7 +30,7 @@ export lslq, lslq!
                       utol::T=√eps(T), btol::T=√eps(T),
                       conlim::T=1/√eps(T), atol::T=√eps(T),
                       rtol::T=√eps(T), itmax::Int=0,
-                      verbose::Int=0, history::Bool=false,
+                      timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                       callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -105,6 +105,7 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
@@ -166,9 +167,10 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                utol :: T=√eps(T), btol :: T=√eps(T),
                conlim :: T=1/√eps(T), atol :: T=√eps(T),
                rtol :: T=√eps(T), itmax :: Int=0,
-               verbose :: Int=0, history :: Bool=false,
+               timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
                callback=solver->false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
+  start_time = time()
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   length(b) == m || error("Inconsistent problem size")
@@ -296,8 +298,9 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   fwd_err_lbnd = false
   fwd_err_ubnd = false
   user_requested_exit = false
+  overtimed = false
 
-  while ! (solved || tired || ill_cond || user_requested_exit)
+  while ! (solved || tired || ill_cond || user_requested_exit || overtimed)
 
     # Generate next Golub-Kahan vectors.
     # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
@@ -448,6 +451,7 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     ill_cond = ill_cond_mach || ill_cond_lim
     zero_resid = zero_resid_mach || zero_resid_lim
     solved = solved_mach || solved_lim || zero_resid || fwd_err_lbnd || fwd_err_ubnd
+    overtimed = time() - start_time > timemax
 
     iter = iter + 1
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
@@ -458,6 +462,7 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     @kaxpy!(n, ζ̄ , w̄, x)
   end
 
+  # Termination status
   tired               && (status = "maximum number of iterations exceeded")
   ill_cond_mach       && (status = "condition number seems too large for this machine")
   ill_cond_lim        && (status = "condition number exceeds tolerance")
@@ -466,6 +471,7 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   fwd_err_lbnd        && (status = "forward error lower bound small enough")
   fwd_err_ubnd        && (status = "forward error upper bound small enough")
   user_requested_exit && (status = "user-requested exit")
+  overtimed           && (status = "time limit exceeded")
 
   # Update stats
   stats.niter = iter

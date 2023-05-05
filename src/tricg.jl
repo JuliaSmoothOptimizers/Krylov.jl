@@ -18,7 +18,7 @@ export tricg, tricg!
                           flip::Bool=false, τ::T=one(T),
                           ν::T=-one(T), atol::T=√eps(T),
                           rtol::T=√eps(T), itmax::Int=0,
-                          verbose::Int=0, history::Bool=false,
+                          timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                           callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -75,6 +75,7 @@ TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
@@ -127,9 +128,10 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
                 flip :: Bool=false, τ :: T=one(T),
                 ν :: T=-one(T), atol :: T=√eps(T),
                 rtol :: T=√eps(T), itmax :: Int=0,
-                verbose :: Int=0, history :: Bool=false,
+                timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
                 callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
+  start_time = time()
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   length(b) == m || error("Inconsistent problem size")
@@ -251,8 +253,9 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   tired = iter ≥ itmax
   status = "unknown"
   user_requested_exit = false
+  overtimed = false
 
-  while !(solved || tired || breakdown || user_requested_exit)
+  while !(solved || tired || breakdown || user_requested_exit || overtimed)
     # Update iteration index.
     iter = iter + 1
 
@@ -415,14 +418,17 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     breakdown = βₖ₊₁ ≤ btol && γₖ₊₁ ≤ btol
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
+    overtimed = time() - start_time > timemax
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ₊₁, γₖ₊₁)
   end
   (verbose > 0) && @printf(iostream, "\n")
 
+  # Termination status
   tired               && (status = "maximum number of iterations exceeded")
   breakdown           && (status = "inconsistent linear system")
   solved              && (status = "solution good enough given atol and rtol")
   user_requested_exit && (status = "user-requested exit")
+  overtimed           && (status = "time limit exceeded")
 
   # Update x and y
   warm_start && @kaxpy!(m, one(FC), Δx, xₖ)

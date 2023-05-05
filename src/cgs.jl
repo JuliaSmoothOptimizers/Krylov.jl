@@ -15,7 +15,7 @@ export cgs, cgs!
                      c::AbstractVector{FC}=b, M=I, N=I,
                      ldiv::Bool=false, atol::T=√eps(T),
                      rtol::T=√eps(T), itmax::Int=0,
-                     verbose::Int=0, history::Bool=false,
+                     timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                      callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -62,6 +62,7 @@ TFQMR and BICGSTAB were developed to remedy this difficulty.»
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
+* `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
@@ -110,9 +111,10 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC};
               c :: AbstractVector{FC}=b, M=I, N=I,
               ldiv :: Bool=false, atol :: T=√eps(T),
               rtol :: T=√eps(T), itmax :: Int=0,
-              verbose :: Int=0, history :: Bool=false,
+              timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
+  start_time = time()
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   m == n || error("System must be square")
@@ -190,8 +192,9 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   breakdown = false
   status = "unknown"
   user_requested_exit = false
+  overtimed = false
 
-  while !(solved || tired || breakdown || user_requested_exit)
+  while !(solved || tired || breakdown || user_requested_exit || overtimed)
 
     NisI || mulorldiv!(y, N, p, ldiv)  # yₖ = N⁻¹pₖ
     mul!(t, A, y)                      # tₖ = Ayₖ
@@ -233,14 +236,17 @@ function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
+    overtimed = time() - start_time > timemax
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
   end
   (verbose > 0) && @printf(iostream, "\n")
 
+  # Termination status
   tired               && (status = "maximum number of iterations exceeded")
   breakdown           && (status = "breakdown αₖ == 0")
   solved              && (status = "solution good enough given atol and rtol")
   user_requested_exit && (status = "user-requested exit")
+  overtimed           && (status = "time limit exceeded")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)

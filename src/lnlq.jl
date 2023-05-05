@@ -32,7 +32,7 @@ export lnlq, lnlq!
                          σ::T=zero(T), utolx::T=√eps(T),
                          utoly::T=√eps(T), atol::T=√eps(T),
                          rtol::T=√eps(T), itmax::Int=0,
-                         verbose::Int=0, history::Bool=false,
+                         timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                          callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -102,6 +102,7 @@ For instance σ:=(1-1e-7)σₘᵢₙ .
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
@@ -141,9 +142,10 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                σ :: T=zero(T), utolx :: T=√eps(T),
                utoly :: T=√eps(T), atol :: T=√eps(T),
                rtol :: T=√eps(T), itmax :: Int=0,
-               verbose :: Int=0, history :: Bool=false,
+               timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
                callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
+  start_time = time()
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   length(b) == m || error("Inconsistent problem size")
@@ -276,6 +278,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
   tired = false
   status = "unknown"
   user_requested_exit = false
+  overtimed = false
 
   if σₑₛₜ > 0
     τtildeₖ = βₖ / σₑₛₜ
@@ -291,7 +294,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     csig = -one(T)
   end
 
-  while !(solved_lq || solved_cg || tired || user_requested_exit)
+  while !(solved_lq || solved_cg || tired || user_requested_exit || overtimed)
 
     # Update of (xᵃᵘˣ)ₖ = Vₖtₖ
     if λ > 0
@@ -477,6 +480,7 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
       solved_lq = solved_lq || err_x ≤ utolx || err_y ≤ utoly
       solved_cg = transfer_to_craig && (solved_cg || err_x ≤ utolx || err_y ≤ utoly)
     end
+    overtimed = time() - start_time > timemax
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm_lq)
 
     # Update iteration index.
@@ -510,10 +514,12 @@ function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
   end
 
+  # Termination status
   tired               && (status = "maximum number of iterations exceeded")
   solved_lq           && (status = "solutions (xᴸ, yᴸ) good enough for the tolerances given")
   solved_cg           && (status = "solutions (xᶜ, yᶜ) good enough for the tolerances given")
   user_requested_exit && (status = "user-requested exit")
+  overtimed           && (status = "time limit exceeded")
 
   # Update stats
   stats.niter = iter

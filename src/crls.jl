@@ -24,7 +24,7 @@ export crls, crls!
     (x, stats) = crls(A, b::AbstractVector{FC};
                       M=I, ldiv::Bool=false, radius::T=zero(T),
                       λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      itmax::Int=0, verbose::Int=0, history::Bool=false,
+                      itmax::Int=0, timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                       callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -59,6 +59,7 @@ but simpler to implement.
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
@@ -93,9 +94,10 @@ function crls! end
 function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, ldiv :: Bool=false, radius :: T=zero(T),
                λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-               itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
+               itmax :: Int=0, timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
                callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
+  start_time = time()
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   length(b) == m || error("Inconsistent problem size")
@@ -160,8 +162,9 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
   tired = iter ≥ itmax
   psd = false
   user_requested_exit = false
+  overtimed = false
 
-  while ! (solved || tired || user_requested_exit)
+  while ! (solved || tired || user_requested_exit || overtimed)
     qNorm² = @kdotr(n, q, q) # dot(q, q)
     α = γ / qNorm²
 
@@ -216,14 +219,17 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     user_requested_exit = callback(solver) :: Bool
     solved = (ArNorm ≤ ε) || on_boundary
     tired = iter ≥ itmax
+    overtimed = time() - start_time > timemax
   end
   (verbose > 0) && @printf(iostream, "\n")
 
+  # Termination status
   tired               && (status = "maximum number of iterations exceeded")
   solved              && (status = "solution good enough given atol and rtol")
   psd                 && (status = "zero-curvature encountered")
   on_boundary         && (status = "on trust-region boundary")
   user_requested_exit && (status = "user-requested exit")
+  overtimed           && (status = "time limit exceeded")
 
   # Update stats
   stats.niter = iter
