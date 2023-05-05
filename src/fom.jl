@@ -277,7 +277,8 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
       breakdown = Hbis ≤ btol
       solved = resid_decrease_lim || resid_decrease_mach
       inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
-      overtimed = time() - start_time > timemax
+      timer = time() - start_time
+      overtimed = timer > timemax
       kdisplay(iter+inner_iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7.1e\n", npass, iter+inner_iter, rNorm, Hbis)
 
       # Compute vₖ₊₁.
@@ -315,7 +316,8 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     inner_itmax = inner_itmax - inner_iter
     iter = iter + inner_iter
     tired = iter ≥ itmax
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
   end
   (verbose > 0) && @printf(iostream, "\n")
 

@@ -349,7 +349,8 @@ function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     resid_decrease = resid_decrease_mach || resid_decrease_lim
     ill_cond = ill_cond_mach || ill_cond_lim
     solved = solved_mach || solved_lim || zero_resid || fwd_err || resid_decrease
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
   end
   (verbose > 0) && @printf(iostream, "\n")
 

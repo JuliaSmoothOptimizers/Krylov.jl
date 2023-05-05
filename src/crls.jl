@@ -219,7 +219,8 @@ function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
     user_requested_exit = callback(solver) :: Bool
     solved = (ArNorm ≤ ε) || on_boundary
     tired = iter ≥ itmax
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
   end
   (verbose > 0) && @printf(iostream, "\n")
 

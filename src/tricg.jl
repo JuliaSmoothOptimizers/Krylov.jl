@@ -418,7 +418,8 @@ function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     breakdown = βₖ₊₁ ≤ btol && γₖ₊₁ ≤ btol
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ₊₁, γₖ₊₁)
   end
   (verbose > 0) && @printf(iostream, "\n")

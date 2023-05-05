@@ -336,7 +336,8 @@ function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     inner_itmax = inner_itmax - inner_iter
     iter = iter + inner_iter
     tired = iter ≥ itmax
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
   end
   (verbose > 0) && @printf(iostream, "\n")
 

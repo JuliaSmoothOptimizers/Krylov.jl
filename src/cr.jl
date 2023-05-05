@@ -339,7 +339,8 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     resid_decrease = resid_decrease_lim || resid_decrease_mach
     solved = resid_decrease || npcurv || on_boundary
     tired = iter ≥ itmax
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
 
     (solved || tired || user_requested_exit || overtimed) && continue
     ρbar = ρ

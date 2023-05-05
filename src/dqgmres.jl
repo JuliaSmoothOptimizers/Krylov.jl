@@ -287,7 +287,8 @@ function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     resid_decrease_lim = rNorm ≤ ε
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
   end
   (verbose > 0) && @printf(iostream, "\n")

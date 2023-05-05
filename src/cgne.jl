@@ -207,7 +207,8 @@ function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
     solved = resid_decrease_lim || resid_decrease_mach
     inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
     tired = iter ≥ itmax
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
   end
   (verbose > 0) && @printf(iostream, "\n")
 

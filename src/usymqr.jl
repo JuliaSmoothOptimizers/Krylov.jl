@@ -316,7 +316,8 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     solved = rNorm ≤ ε
     inconsistent = !solved && AᴴrNorm ≤ κ
     tired = iter ≥ itmax
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e\n", iter, rNorm, AᴴrNorm)
   end
   (verbose > 0) && @printf(iostream, "\n")

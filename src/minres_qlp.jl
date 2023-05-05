@@ -418,7 +418,8 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
     resid_decrease = resid_decrease_mach | resid_decrease_lim
     solved = resid_decrease | zero_resid
     inconsistent = (ArNorm ≤ κ && abs(μbarₖ) ≤ Artol) || (breakdown && !solved)
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
 
     # Update variables
     if iter ≥ 2

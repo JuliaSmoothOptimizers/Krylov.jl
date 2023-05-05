@@ -329,7 +329,8 @@ function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: Abst
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
     breakdown = !solved && (pᴴq == 0)
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
   end
   (verbose > 0) && @printf(iostream, "\n")

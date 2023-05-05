@@ -379,7 +379,8 @@ function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     ill_cond = ill_cond_mach || ill_cond_lim
     zero_resid = zero_resid_mach || zero_resid_lim
     solved = solved_mach || solved_lim || solved_opt || zero_resid || fwd_err || on_boundary
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
   end
   (verbose > 0) && @printf(iostream, "\n")
 

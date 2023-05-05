@@ -324,7 +324,8 @@ function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     solved_cg = transfer_to_bicg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ ε)
     tired = iter ≥ itmax
     breakdown = !solved_lq && !solved_cg && (pᴴq == 0)
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm_lq)
   end
   (verbose > 0) && @printf(iostream, "\n")

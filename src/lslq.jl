@@ -451,7 +451,8 @@ function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     ill_cond = ill_cond_mach || ill_cond_lim
     zero_resid = zero_resid_mach || zero_resid_lim
     solved = solved_mach || solved_lim || zero_resid || fwd_err_lbnd || fwd_err_ubnd
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
 
     iter = iter + 1
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)

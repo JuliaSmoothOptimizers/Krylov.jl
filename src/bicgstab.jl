@@ -232,7 +232,8 @@ function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
     breakdown = (α == 0 || isnan(α))
-    overtimed = time() - start_time > timemax
+    timer = time() - start_time
+    overtimed = timer > timemax
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
   end
   (verbose > 0) && @printf(iostream, "\n")
