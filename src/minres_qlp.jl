@@ -201,7 +201,6 @@ function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{F
   status = "unknown"
   user_requested_exit = false
   overtimed = false
-  overtimed = false
 
   while !(solved || tired || inconsistent || ill_cond_mach || breakdown || user_requested_exit || overtimed)
     # Update iteration index.
