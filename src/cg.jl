@@ -222,7 +222,11 @@ function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
     iter = iter + 1
     tired = iter ≥ itmax
     user_requested_exit = callback(solver) :: Bool
+    println("iter: $iter")
+    println(time() - start_time)
+    println(timemax)
     overtimed = time() - start_time > timemax
+    println(overtimed)
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  ", iter, rNorm)
   end
   (verbose > 0) && @printf(iostream, "\n")
