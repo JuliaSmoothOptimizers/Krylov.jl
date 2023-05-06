@@ -104,7 +104,8 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
               timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  start_time = time()
+  start_time = time_ns()
+  timemax_ns = 1e9 * timemax
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   m == n || error("System must be square")
@@ -277,8 +278,8 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
       breakdown = Hbis ≤ btol
       solved = resid_decrease_lim || resid_decrease_mach
       inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
-      timer = time() - start_time
-      overtimed = timer > timemax
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
       kdisplay(iter+inner_iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7.1e\n", npass, iter+inner_iter, rNorm, Hbis)
 
       # Compute vₖ₊₁.
@@ -316,8 +317,8 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     inner_itmax = inner_itmax - inner_iter
     iter = iter + inner_iter
     tired = iter ≥ itmax
-    timer = time() - start_time
-    overtimed = timer > timemax
+    timer = time_ns() - start_time
+    overtimed = timer > timemax_ns
   end
   (verbose > 0) && @printf(iostream, "\n")
 

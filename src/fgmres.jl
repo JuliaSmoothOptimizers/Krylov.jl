@@ -111,7 +111,8 @@ function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
                  callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  start_time = time()
+  start_time = time_ns()
+  timemax_ns = 1e9 * timemax
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   m == n || error("System must be square")
@@ -336,8 +337,8 @@ function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
     inner_itmax = inner_itmax - inner_iter
     iter = iter + inner_iter
     tired = iter ≥ itmax
-    timer = time() - start_time
-    overtimed = timer > timemax
+    timer = time_ns() - start_time
+    overtimed = timer > timemax_ns
   end
   (verbose > 0) && @printf(iostream, "\n")
 
