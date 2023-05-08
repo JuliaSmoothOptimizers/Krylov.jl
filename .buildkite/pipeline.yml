@@ -13,7 +13,7 @@ steps:
         Pkg.add("LinearOperators")
         Pkg.instantiate()
         using CUDA
-        CUDA.set_runtime_version!(v"11.8")'
+        # CUDA.set_runtime_version!(v"11.8")'
 
       julia --color=yes --project -e '
         include("test/gpu/nvidia.jl")'
