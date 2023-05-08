@@ -290,15 +290,17 @@ function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       resid_decrease_mach = (rNorm + one(T) ≤ one(T))
       
       # Update stopping criterion.
+      user_requested_exit = callback(solver) :: Bool
       resid_decrease_lim = rNorm ≤ ε
       breakdown = Hbis ≤ btol
       solved = resid_decrease_lim || resid_decrease_mach
       inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
-      solver.inner_iter = inner_iter
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
       kdisplay(iter+inner_iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7.1e\n", npass, iter+inner_iter, rNorm, Hbis)
 
       # Compute vₖ₊₁
-      if !(solved || inner_tired || breakdown)
+      if !(solved || inner_tired || breakdown || user_requested_exit || overtimed)
         if !restart && (inner_iter ≥ mem)
           push!(V, S(undef, n))
           push!(z, zero(FC))
@@ -306,8 +308,6 @@ function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
         @. V[inner_iter+1] = q / Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
         z[inner_iter+1] = ζₖ₊₁
       end
-
-      user_requested_exit = callback(solver) :: Bool
     end
 
     # Compute y by solving Ry = z with backward substitution.
