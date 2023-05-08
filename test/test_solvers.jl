@@ -157,7 +157,7 @@ function test_solvers(FC)
       showed = String(take!(io))
 
       # Test that the lines have the same length
-      str = split(showed, "\n", keepempty=false)
+      str = split(showed, '\n', keepempty=false)
       len_row = length(str[1])
       @test mapreduce(x -> length(x) - mapreduce(y -> occursin(y, x), |, ["w̅","w̄","d̅"]) == len_row, &, str)
 
