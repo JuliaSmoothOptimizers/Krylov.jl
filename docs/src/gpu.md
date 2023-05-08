@@ -144,9 +144,6 @@ if CUDA.functional()
 end
 ```
 
-!!! note
-    The `CUSPARSE` library of CUDA toolkits `v"12.x"` is unstable. We recommend using CUDA toolkit v"11.8" with `CUDA.set_runtime_version!(v"11.8")`.
-
 ## AMD GPUs
 
 All solvers in Krylov.jl can be used with [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) and allow computations on AMD GPUs.
