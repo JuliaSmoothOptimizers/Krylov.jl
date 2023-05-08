@@ -15,7 +15,7 @@ export fom, fom!
                      memory::Int=20, M=I, N=I, ldiv::Bool=false,
                      restart::Bool=false, reorthogonalization::Bool=false,
                      atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                     verbose::Int=0, history::Bool=false,
+                     timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                      callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -49,6 +49,7 @@ FOM algorithm is based on the Arnoldi process and a Galerkin condition.
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
+* `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
@@ -100,9 +101,11 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
               M=I, N=I, ldiv :: Bool=false,
               restart :: Bool=false, reorthogonalization :: Bool=false,
               atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-              verbose :: Int=0, history :: Bool=false,
+              timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
+  start_time = time_ns()
+  timemax_ns = 1e9 * timemax
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   m == n || error("System must be square")
@@ -178,8 +181,9 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
   inner_tired = inner_iter ≥ inner_itmax
   status = "unknown"
   user_requested_exit = false
+  overtimed = false
 
-  while !(solved || tired || breakdown || user_requested_exit)
+  while !(solved || tired || breakdown || user_requested_exit || overtimed)
 
     # Initialize workspace.
     nr = 0  # Number of coefficients stored in Uₖ.
@@ -274,10 +278,12 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
       breakdown = Hbis ≤ btol
       solved = resid_decrease_lim || resid_decrease_mach
       inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
       kdisplay(iter+inner_iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7.1e\n", npass, iter+inner_iter, rNorm, Hbis)
 
       # Compute vₖ₊₁.
-      if !(solved || inner_tired || breakdown)
+      if !(solved || inner_tired || breakdown || user_requested_exit || overtimed)
         if !restart && (inner_iter ≥ mem)
           push!(V, S(undef, n))
         end
@@ -307,17 +313,21 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
     end
     restart && @kaxpy!(n, one(FC), xr, x)
 
-    # Update inner_itmax, iter and tired variables.
+    # Update inner_itmax, iter, tired and overtimed variables.
     inner_itmax = inner_itmax - inner_iter
     iter = iter + inner_iter
     tired = iter ≥ itmax
+    timer = time_ns() - start_time
+    overtimed = timer > timemax_ns
   end
   (verbose > 0) && @printf(iostream, "\n")
 
+  # Termination status
   tired               && (status = "maximum number of iterations exceeded")
   breakdown           && (status = "inconsistent linear system")
   solved              && (status = "solution good enough given atol and rtol")
   user_requested_exit && (status = "user-requested exit")
+  overtimed           && (status = "time limit exceeded")
 
   # Update x
   warm_start && !restart && @kaxpy!(n, one(FC), Δx, x)

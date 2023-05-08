@@ -22,7 +22,7 @@ export usymqr, usymqr!
 """
     (x, stats) = usymqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                         atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                        verbose::Int=0, history::Bool=false,
+                        timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                         callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -58,6 +58,7 @@ USYMQR finds the minimum-norm solution if problems are inconsistent.
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
@@ -107,9 +108,11 @@ end
 
 function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                  atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-                 verbose :: Int=0, history :: Bool=false,
+                 timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
                  callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
+  start_time = time_ns()
+  timemax_ns = 1e9 * timemax
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   length(b) == m || error("Inconsistent problem size")
@@ -176,8 +179,9 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
   tired = iter ≥ itmax
   status = "unknown"
   user_requested_exit = false
+  overtimed = false
 
-  while !(solved || tired || inconsistent || user_requested_exit)
+  while !(solved || tired || inconsistent || user_requested_exit || overtimed)
     # Update iteration index.
     iter = iter + 1
 
@@ -313,12 +317,17 @@ function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :
     solved = rNorm ≤ ε
     inconsistent = !solved && AᴴrNorm ≤ κ
     tired = iter ≥ itmax
+    timer = time_ns() - start_time
+    overtimed = timer > timemax_ns
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e\n", iter, rNorm, AᴴrNorm)
   end
   (verbose > 0) && @printf(iostream, "\n")
+
+  # Termination status
   tired               && (status = "maximum number of iterations exceeded")
   solved              && (status = "solution good enough given atol and rtol")
   user_requested_exit && (status = "user-requested exit")
+  overtimed           && (status = "time limit exceeded")
 
   # Update x
   warm_start && @kaxpy!(n, one(FC), Δx, x)

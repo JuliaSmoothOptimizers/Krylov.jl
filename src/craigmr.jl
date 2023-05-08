@@ -31,7 +31,7 @@ export craigmr, craigmr!
                             M=I, N=I, ldiv::Bool=false,
                             sqd::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                             rtol::T=√eps(T), itmax::Int=0,
-                            verbose::Int=0, history::Bool=false,
+                            timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                             callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -98,6 +98,7 @@ returned.
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
@@ -135,9 +136,11 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                   M=I, N=I, ldiv :: Bool=false,
                   sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
                   rtol :: T=√eps(T), itmax :: Int=0,
-                  verbose :: Int=0, history :: Bool=false,
+                  timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
                   callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
+  start_time = time_ns()
+  timemax_ns = 1e9 * timemax
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   length(b) == m || error("Inconsistent problem size")
@@ -248,8 +251,9 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
   inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
   tired  = iter ≥ itmax
   user_requested_exit = false
+  overtimed = false
 
-  while ! (solved || inconsistent || tired || user_requested_exit)
+  while ! (solved || inconsistent || tired || user_requested_exit || overtimed)
     iter = iter + 1
 
     # Generate next Golub-Kahan vectors.
@@ -345,14 +349,18 @@ function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
     user_requested_exit = callback(solver) :: Bool
     solved = rNorm ≤ ɛ_c
     inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
-    tired  = iter ≥ itmax
+    tired = iter ≥ itmax
+    timer = time_ns() - start_time
+    overtimed = timer > timemax_ns
   end
   (verbose > 0) && @printf(iostream, "\n")
-  
+
+  # Termination status
   tired               && (status = "maximum number of iterations exceeded")
   solved              && (status = "found approximate minimum-norm solution")
   !tired && !solved   && (status = "found approximate minimum least-squares solution")
   user_requested_exit && (status = "user-requested exit")
+  overtimed           && (status = "time limit exceeded")
 
   # Update stats
   stats.niter = iter

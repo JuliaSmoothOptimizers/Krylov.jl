@@ -18,7 +18,7 @@ export gpmr, gpmr!
                          λ::FC=one(FC), μ::FC=one(FC),
                          reorthogonalization::Bool=false, atol::T=√eps(T),
                          rtol::T=√eps(T), itmax::Int=0,
-                         verbose::Int=0, history::Bool=false,
+                         timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                          callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -84,6 +84,7 @@ GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
@@ -139,9 +140,11 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
                λ :: FC=one(FC), μ :: FC=one(FC),
                reorthogonalization :: Bool=false, atol :: T=√eps(T),
                rtol :: T=√eps(T), itmax :: Int=0,
-               verbose :: Int=0, history::Bool=false,
+               timemax :: Float64=Inf, verbose :: Int=0, history::Bool=false,
                callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
+  start_time = time_ns()
+  timemax_ns = 1e9 * timemax
   m, n = size(A)
   s, t = size(B)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
@@ -257,8 +260,9 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   tired = iter ≥ itmax
   status = "unknown"
   user_requested_exit = false
+  overtimed = false
 
-  while !(solved || tired || breakdown || user_requested_exit)
+  while !(solved || tired || breakdown || user_requested_exit || overtimed)
 
     # Update iteration index.
     iter = iter + 1
@@ -431,10 +435,12 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     breakdown = Faux ≤ btol && Haux ≤ btol
     solved = resid_decrease_lim || resid_decrease_mach
     tired = iter ≥ itmax
+    timer = time_ns() - start_time
+    overtimed = timer > timemax_ns
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, Haux, Faux)
 
     # Compute vₖ₊₁ and uₖ₊₁
-    if !(solved || tired || breakdown || user_requested_exit)
+    if !(solved || tired || breakdown || user_requested_exit || overtimed)
       if iter ≥ mem
         push!(V, S(undef, m))
         push!(U, S(undef, n))
@@ -496,10 +502,12 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
   warm_start && @kaxpy!(n, one(FC), Δy, y)
   solver.warm_start = false
 
+  # Termination status
   tired               && (status = "maximum number of iterations exceeded")
   solved              && (status = "solution good enough given atol and rtol")
   inconsistent        && (status = "found approximate least-squares solution")
   user_requested_exit && (status = "user-requested exit")
+  overtimed           && (status = "time limit exceeded")
 
   # Update stats
   stats.niter = iter

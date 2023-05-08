@@ -59,8 +59,6 @@ function test_solvers(FC)
     b2  = Ao2 * ones(FC, m2)
     c2  = Au2 * ones(FC, n2)
     shifts2 = [1.0; 2.0; 3.0; 4.0; 5.0; 6.0]
-    T = real(FC)
-    S = Vector{FC}
     for (method, solver) in solvers
       if method ∈ (:cg, :cr, :symmlq, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr)
         @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)") solve!(solver, A2, b2)
@@ -74,6 +72,22 @@ function test_solvers(FC)
       method ∈ (:tricg, :trimr) && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)") solve!(solver, Ao2, b2, c2)
       method == :usymlq && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m2, $n2)") solve!(solver, Au2, c2, b2)
       method == :usymqr && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)") solve!(solver, Ao2, b2, c2)
+    end
+  end
+
+  @testset "Test the keyword argument timemax" begin
+    timemax = 0.0
+    for (method, solver) in solvers
+      method ∈ (:cg, :cr, :symmlq, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr) && solve!(solver, A, b, timemax=timemax)
+      method == :cg_lanczos_shift && solve!(solver, A, b, shifts, timemax=timemax)
+      method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && solve!(solver, Au, c, timemax=timemax)
+      method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr) && solve!(solver, Ao, b, timemax=timemax)
+      method ∈ (:bilqr, :trilqr) && solve!(solver, A, b, b, timemax=timemax)
+      method == :gpmr && solve!(solver, Ao, Au, b, c, timemax=timemax)
+      method ∈ (:tricg, :trimr) && solve!(solver, Au, c, b, timemax=timemax)
+      method == :usymlq && solve!(solver, Au, c, b, timemax=timemax)
+      method == :usymqr && solve!(solver, Ao, b, c, timemax=timemax)
+      @test solver.stats.status == "time limit exceeded"
     end
   end
 

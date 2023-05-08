@@ -16,7 +16,7 @@ export bilqr, bilqr!
     (x, y, stats) = bilqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                           transfer_to_bicg::Bool=true, atol::T=√eps(T),
                           rtol::T=√eps(T), itmax::Int=0,
-                          verbose::Int=0, history::Bool=false,
+                          timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                           callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -52,6 +52,7 @@ QMR is used for solving dual system `Aᴴy = c` of size n.
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
+* `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
@@ -101,9 +102,11 @@ end
 function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};
                 transfer_to_bicg :: Bool=true, atol :: T=√eps(T),
                 rtol :: T=√eps(T), itmax :: Int=0,
-                verbose :: Int=0, history :: Bool=false,
+                timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
                 callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
+  start_time = time_ns()
+  timemax_ns = 1e9 * timemax
   m, n = size(A)
   (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
   m == n || error("Systems must be square")
@@ -196,8 +199,9 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   breakdown = false
   status = "unknown"
   user_requested_exit = false
+  overtimed = false
 
-  while !((solved_primal && solved_dual) || tired || breakdown || user_requested_exit)
+  while !((solved_primal && solved_dual) || tired || breakdown || user_requested_exit || overtimed)
     # Update iteration index.
     iter = iter + 1
 
@@ -416,6 +420,8 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     user_requested_exit = callback(solver) :: Bool
     tired = iter ≥ itmax
     breakdown = !solved_lq && !solved_cg && (pᴴq == 0)
+    timer = time_ns() - start_time
+    overtimed = timer > timemax_ns
 
     kdisplay(iter, verbose) &&  solved_primal && !solved_dual && @printf(iostream, "%5d  %7s  %7.1e\n", iter, "", sNorm)
     kdisplay(iter, verbose) && !solved_primal &&  solved_dual && @printf(iostream, "%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
@@ -429,6 +435,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
     @kaxpy!(n, ζbarₖ, d̅, x)
   end
 
+  # Termination status
   tired                            && (status = "maximum number of iterations exceeded")
   breakdown                        && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
   solved_lq_tol  && !solved_dual   && (status = "Only the primal solution xᴸ is good enough given atol and rtol")
@@ -446,6 +453,7 @@ function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: 
   solved_lq_tol  && solved_qr_mach && (status = "Found a primal solution xᴸ good enough given atol and rtol and an approximate zero-residual dual solutions t")
   solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
   user_requested_exit              && (status = "user-requested exit")
+  overtimed                        && (status = "time limit exceeded")
 
   # Update x and y
   warm_start && @kaxpy!(n, one(FC), Δx, x)
