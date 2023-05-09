@@ -71,18 +71,6 @@ and indefinite systems of linear equations can be handled by this single algorit
 """
 function diom end
 
-function diom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
-  solver = DiomSolver(A, b, memory)
-  diom!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function diom(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
-  solver = DiomSolver(A, b, memory)
-  diom!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = diom!(solver::DiomSolver, A, b; kwargs...)
     solver = diom!(solver::DiomSolver, A, b, x0; kwargs...)
@@ -96,10 +84,41 @@ See [`DiomSolver`](@ref) for more details about the `solver`.
 """
 function diom! end
 
-function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  diom!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_diom = (:(; M = I                            ),
+                   :(; N = I                            ),
+                   :(; ldiv::Bool = false               ),
+                   :(; reorthogonalization::Bool = false),
+                   :(; atol::T = √eps(T)                ),
+                   :(; rtol::T = √eps(T)                ),
+                   :(; itmax::Int = 0                   ),
+                   :(; timemax::Float64 = Inf           ),
+                   :(; verbose::Int = 0                 ),
+                   :(; history::Bool = false            ),
+                   :(; callback = solver -> false       ),
+                   :(; iostream::IO = kstdout           ))
+
+def_kwargs_diom = reduce(vcat, kw.args[1].args for kw in def_kwargs_diom)
+
+kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function diom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = DiomSolver(A, b, memory)
+    diom!(solver, A, b, x0; $(kwargs_diom...))
+    return (solver.x, solver.stats)
+  end
+
+  function diom(A, b :: AbstractVector{FC}; memory :: Int=20, $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = DiomSolver(A, b, memory)
+    diom!(solver, A, b; $(kwargs_diom...))
+    return (solver.x, solver.stats)
+  end
+
+  function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    diom!(solver, A, b; $(kwargs_diom...))
+    return solver
+  end
 end
 
 function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC};

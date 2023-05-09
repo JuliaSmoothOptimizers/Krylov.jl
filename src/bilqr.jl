@@ -70,18 +70,6 @@ QMR is used for solving dual system `Aᴴy = c` of size n.
 """
 function bilqr end
 
-function bilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
-  solver = BilqrSolver(A, b)
-  bilqr!(solver, A, b, c, x0, y0; kwargs...)
-  return (solver.x, solver.y, solver.stats)
-end
-
-function bilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = BilqrSolver(A, b)
-  bilqr!(solver, A, b, c; kwargs...)
-  return (solver.x, solver.y, solver.stats)
-end
-
 """
     solver = bilqr!(solver::BilqrSolver, A, b, c; kwargs...)
     solver = bilqr!(solver::BilqrSolver, A, b, c, x0, y0; kwargs...)
@@ -92,11 +80,39 @@ See [`BilqrSolver`](@ref) for more details about the `solver`.
 """
 function bilqr! end
 
-function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
-                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0, y0)
-  bilqr!(solver, A, b, c; kwargs...)
-  return solver
+def_kwargs_bilqr = (:(; transfer_to_bicg::Bool = true),
+                    :(; atol::T = √eps(T)            ),
+                    :(; rtol::T = √eps(T)            ),
+                    :(; itmax::Int = 0               ),
+                    :(; timemax::Float64 = Inf       ),
+                    :(; verbose::Int = 0             ),
+                    :(; history::Bool = false        ),
+                    :(; callback = solver -> false   ),
+                    :(; iostream::IO = kstdout       ))
+
+def_kwargs_bilqr = reduce(vcat, kw.args[1].args for kw in def_kwargs_bilqr)
+
+kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function bilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_bilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = BilqrSolver(A, b)
+    bilqr!(solver, A, b, c, x0, y0; $(kwargs_bilqr...))
+    return (solver.x, solver.y, solver.stats)
+  end
+
+  function bilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_bilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = BilqrSolver(A, b)
+    bilqr!(solver, A, b, c; $(kwargs_bilqr...))
+    return (solver.x, solver.y, solver.stats)
+  end
+
+  function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
+                  x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_bilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0, y0)
+    bilqr!(solver, A, b, c; $(kwargs_bilqr...))
+    return solver
+  end
 end
 
 function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};

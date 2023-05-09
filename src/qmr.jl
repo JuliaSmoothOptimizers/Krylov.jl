@@ -73,18 +73,6 @@ When `A` is Hermitian and `b = c`, QMR is equivalent to MINRES.
 """
 function qmr end
 
-function qmr(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
-  solver = QmrSolver(A, b)
-  qmr!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function qmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = QmrSolver(A, b)
-  qmr!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = qmr!(solver::QmrSolver, A, b; kwargs...)
     solver = qmr!(solver::QmrSolver, A, b, x0; kwargs...)
@@ -95,15 +83,43 @@ See [`QmrSolver`](@ref) for more details about the `solver`.
 """
 function qmr! end
 
-function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  qmr!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_qmr = (:(; c::AbstractVector{FC} = b ),
+                  :(; atol::T = √eps(T)         ),
+                  :(; rtol::T = √eps(T)         ),
+                  :(; itmax::Int = 0            ),
+                  :(; timemax::Float64 = Inf    ),
+                  :(; verbose::Int = 0          ),
+                  :(; history::Bool = false     ),
+                  :(; callback = solver -> false),
+                  :(; iostream::IO = kstdout    ))
+
+def_kwargs_qmr = reduce(vcat, kw.args[1].args for kw in def_kwargs_qmr)
+
+kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function qmr(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = QmrSolver(A, b)
+    qmr!(solver, A, b, x0; $(kwargs_qmr...))
+    return (solver.x, solver.stats)
+  end
+
+  function qmr(A, b :: AbstractVector{FC}; $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = QmrSolver(A, b)
+    qmr!(solver, A, b; $(kwargs_qmr...))
+    return (solver.x, solver.stats)
+  end
+
+  function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    qmr!(solver, A, b; $(kwargs_qmr...))
+    return solver
+  end
 end
 
-function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; c :: AbstractVector{FC}=b,
-              atol :: T=√eps(T), rtol :: T=√eps(T),
-              itmax :: Int=0, timemax :: Float64=Inf,
+function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
+              c :: AbstractVector{FC}=b, atol :: T=√eps(T),
+              rtol :: T=√eps(T), itmax :: Int=0, timemax :: Float64=Inf,
               verbose :: Int=0, history :: Bool=false,
               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 

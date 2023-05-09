@@ -120,12 +120,6 @@ For instance σ:=(1-1e-7)σₘᵢₙ .
 """
 function lnlq end
 
-function lnlq(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = LnlqSolver(A, b)
-  lnlq!(solver, A, b; kwargs...)
-  return (solver.x, solver.y, solver.stats)
-end
-
 """
     solver = lnlq!(solver::LnlqSolver, A, b; kwargs...)
 
@@ -134,6 +128,36 @@ where `kwargs` are keyword arguments of [`lnlq`](@ref).
 See [`LnlqSolver`](@ref) for more details about the `solver`.
 """
 function lnlq! end
+
+def_kwargs_lnlq = (:(; M = I                         ),
+                   :(; N = I                         ),
+                   :(; ldiv::Bool = false            ),
+                   :(; transfer_to_craig::Bool = true),
+                   :(; sqd::Bool = false             ),
+                   :(; λ::T = zero(T)                ),
+                   :(; σ::T = zero(T)                ),
+                   :(; utolx::T = √eps(T)            ),
+                   :(; utoly::T = √eps(T)            ),
+                   :(; atol::T = √eps(T)             ),
+                   :(; rtol::T = √eps(T)             ),
+                   :(; itmax::Int = 0                ),
+                   :(; timemax::Float64 = Inf        ),
+                   :(; verbose::Int = 0              ),
+                   :(; history::Bool = false         ),
+                   :(; callback = solver -> false    ),
+                   :(; iostream::IO = kstdout        ))
+
+def_kwargs_lnlq = reduce(vcat, kw.args[1].args for kw in def_kwargs_lnlq)
+
+kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function lnlq(A, b :: AbstractVector{FC}; $(def_kwargs_lnlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = LnlqSolver(A, b)
+    lnlq!(solver, A, b; $(kwargs_lnlq...))
+    return (solver.x, solver.y, solver.stats)
+  end
+end
 
 function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, ldiv :: Bool=false,

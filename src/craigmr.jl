@@ -117,12 +117,6 @@ returned.
 """
 function craigmr end
 
-function craigmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = CraigmrSolver(A, b)
-  craigmr!(solver, A, b; kwargs...)
-  return (solver.x, solver.y, solver.stats)
-end
-
 """
     solver = craigmr!(solver::CraigmrSolver, A, b; kwargs...)
 
@@ -131,6 +125,32 @@ where `kwargs` are keyword arguments of [`craigmr`](@ref).
 See [`CraigmrSolver`](@ref) for more details about the `solver`.
 """
 function craigmr! end
+
+def_kwargs_craigmr = (:(; M = I                     ),
+                      :(; N = I                     ),
+                      :(; ldiv::Bool = false        ),
+                      :(; sqd::Bool = false         ),
+                      :(; λ::T = zero(T)            ),
+                      :(; atol::T = √eps(T)         ),
+                      :(; rtol::T = √eps(T)         ),
+                      :(; itmax::Int = 0            ),
+                      :(; timemax::Float64 = Inf    ),
+                      :(; verbose::Int = 0          ),
+                      :(; history::Bool = false     ),
+                      :(; callback = solver -> false),
+                      :(; iostream::IO = kstdout    ))
+
+def_kwargs_craigmr = reduce(vcat, kw.args[1].args for kw in def_kwargs_craigmr)
+
+kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function craigmr(A, b :: AbstractVector{FC}; $(def_kwargs_craigmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = CraigmrSolver(A, b)
+    craigmr!(solver, A, b; $(kwargs_craigmr...))
+    return (solver.x, solver.y, solver.stats)
+  end
+end
 
 function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                   M=I, N=I, ldiv :: Bool=false,

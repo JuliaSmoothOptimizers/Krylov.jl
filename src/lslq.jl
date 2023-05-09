@@ -144,12 +144,6 @@ The iterations stop as soon as one of the following conditions holds true:
 """
 function lslq end
 
-function lslq(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
-  solver = LslqSolver(A, b, window=window)
-  lslq!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = lslq!(solver::LslqSolver, A, b; kwargs...)
 
@@ -158,6 +152,38 @@ where `kwargs` are keyword arguments of [`lslq`](@ref).
 See [`LslqSolver`](@ref) for more details about the `solver`.
 """
 function lslq! end
+
+def_kwargs_lslq = (:(; M = I                         ),
+                   :(; N = I                         ),
+                   :(; ldiv::Bool = false            ),
+                   :(; transfer_to_lsqr::Bool = false),
+                   :(; sqd::Bool = false             ),
+                   :(; λ::T = zero(T)                ),
+                   :(; σ::T = zero(T)                ),
+                   :(; etol::T = √eps(T)             ),
+                   :(; utol::T = √eps(T)             ),
+                   :(; btol::T = √eps(T)             ),
+                   :(; conlim::T = 1/√eps(T)         ),
+                   :(; atol::T = √eps(T)             ),
+                   :(; rtol::T = √eps(T)             ),
+                   :(; itmax::Int = 0                ),
+                   :(; timemax::Float64 = Inf        ),
+                   :(; verbose::Int = 0              ),
+                   :(; history::Bool = false         ),
+                   :(; callback = solver -> false    ),
+                   :(; iostream::IO = kstdout        ))
+
+def_kwargs_lslq = reduce(vcat, kw.args[1].args for kw in def_kwargs_lslq)
+
+kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function lslq(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_lslq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = LslqSolver(A, b, window=window)
+    lslq!(solver, A, b; $(kwargs_lslq...))
+    return (solver.x, solver.stats)
+  end
+end
 
 function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, ldiv :: Bool=false,

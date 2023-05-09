@@ -63,13 +63,6 @@ of size n. The method does _not_ abort if A + αI is not definite.
 """
 function cg_lanczos_shift end
 
-function cg_lanczos_shift(A, b :: AbstractVector{FC}, shifts :: AbstractVector{T}; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-  nshifts = length(shifts)
-  solver = CgLanczosShiftSolver(A, b, nshifts)
-  cg_lanczos_shift!(solver, A, b, shifts; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = cg_lanczos!(solver::CgLanczosShiftSolver, A, b, shifts; kwargs...)
 
@@ -78,6 +71,31 @@ where `kwargs` are keyword arguments of [`cg_lanczos_shift`](@ref).
 See [`CgLanczosShiftSolver`](@ref) for more details about the `solver`.
 """
 function cg_lanczos_shift! end
+
+def_kwargs_cg_lanczos_shift = (:(; M = I                        ),
+                               :(; ldiv::Bool = false           ),
+                               :(; check_curvature::Bool = false),
+                               :(; atol::T = √eps(T)            ),
+                               :(; rtol::T = √eps(T)            ),
+                               :(; itmax::Int = 0               ),
+                               :(; timemax::Float64 = Inf       ),
+                               :(; verbose::Int = 0             ),
+                               :(; history::Bool = false        ),
+                               :(; callback = solver -> false   ),
+                               :(; iostream::IO = kstdout       ))
+
+def_kwargs_cg_lanczos_shift = reduce(vcat, kw.args[1].args for kw in def_kwargs_cg_lanczos_shift)
+
+kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function cg_lanczos_shift(A, b :: AbstractVector{FC}, shifts :: AbstractVector{T}; $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    nshifts = length(shifts)
+    solver = CgLanczosShiftSolver(A, b, nshifts)
+    cg_lanczos_shift!(solver, A, b, shifts; $(kwargs_cg_lanczos_shift...))
+    return (solver.x, solver.stats)
+  end
+end
 
 function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: AbstractVector{T};
                            M=I, ldiv :: Bool=false,

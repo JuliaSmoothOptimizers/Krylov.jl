@@ -118,12 +118,6 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 """
 function lsqr end
 
-function lsqr(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
-  solver = LsqrSolver(A, b, window=window)
-  lsqr!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = lsqr!(solver::LsqrSolver, A, b; kwargs...)
 
@@ -132,6 +126,37 @@ where `kwargs` are keyword arguments of [`lsqr`](@ref).
 See [`LsqrSolver`](@ref) for more details about the `solver`.
 """
 function lsqr! end
+
+def_kwargs_lsqr = (:(; M = I                     ),
+                   :(; N = I                     ),
+                   :(; ldiv::Bool = false        ),
+                   :(; sqd::Bool = false         ),
+                   :(; λ::T = zero(T)            ),
+                   :(; radius::T = zero(T)       ),
+                   :(; etol::T = √eps(T)         ),
+                   :(; axtol::T = √eps(T)        ),
+                   :(; btol::T = √eps(T)         ),
+                   :(; conlim::T = 1/√eps(T)     ),
+                   :(; atol::T = zero(T)         ),
+                   :(; rtol::T = zero(T)         ),
+                   :(; itmax::Int = 0            ),
+                   :(; timemax::Float64 = Inf    ),
+                   :(; verbose::Int = 0          ),
+                   :(; history::Bool = false     ),
+                   :(; callback = solver -> false),
+                   :(; iostream::IO = kstdout    ))
+
+def_kwargs_lsqr = reduce(vcat, kw.args[1].args for kw in def_kwargs_lsqr)
+
+kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function lsqr(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_lsqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = LsqrSolver(A, b, window=window)
+    lsqr!(solver, A, b; $(kwargs_lsqr...))
+    return (solver.x, solver.stats)
+  end
+end
 
 function lsqr!(solver :: LsqrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, ldiv :: Bool=false,

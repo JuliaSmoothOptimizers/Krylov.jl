@@ -24,7 +24,8 @@ export crls, crls!
     (x, stats) = crls(A, b::AbstractVector{FC};
                       M=I, ldiv::Bool=false, radius::T=zero(T),
                       λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      itmax::Int=0, timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
+                      itmax::Int=0, timemax::Float64=Inf,
+                      verbose::Int=0, history::Bool=false,
                       callback=solver->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
@@ -52,7 +53,7 @@ but simpler to implement.
 
 #### Keyword arguments
 
-* `N`: linear operator that models a Hermitian positive-definite matrix of size `n` used for preconditioning;
+* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization;
 * `λ`: regularization parameter;
@@ -76,12 +77,6 @@ but simpler to implement.
 """
 function crls end
 
-function crls(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = CrlsSolver(A, b)
-  crls!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = crls!(solver::CrlsSolver, A, b; kwargs...)
 
@@ -90,6 +85,31 @@ where `kwargs` are keyword arguments of [`crls`](@ref).
 See [`CrlsSolver`](@ref) for more details about the `solver`.
 """
 function crls! end
+
+def_kwargs_crls = (:(; M = I                     ),
+                   :(; ldiv::Bool = false        ),
+                   :(; radius::T = zero(T)       ),
+                   :(; λ::T = zero(T)            ),
+                   :(; atol::T = √eps(T)         ),
+                   :(; rtol::T = √eps(T)         ),
+                   :(; itmax::Int = 0            ),
+                   :(; timemax::Float64 = Inf    ),
+                   :(; verbose::Int = 0          ),
+                   :(; history::Bool = false     ),
+                   :(; callback = solver -> false),
+                   :(; iostream::IO = kstdout    ))
+
+def_kwargs_crls = reduce(vcat, kw.args[1].args for kw in def_kwargs_crls)
+
+kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function crls(A, b :: AbstractVector{FC}; $(def_kwargs_crls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = CrlsSolver(A, b)
+    crls!(solver, A, b; $(kwargs_crls...))
+    return (solver.x, solver.stats)
+  end
+end
 
 function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, ldiv :: Bool=false, radius :: T=zero(T),

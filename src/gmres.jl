@@ -66,18 +66,6 @@ GMRES algorithm is based on the Arnoldi process and computes a sequence of appro
 """
 function gmres end
 
-function gmres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
-  solver = GmresSolver(A, b, memory)
-  gmres!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function gmres(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
-  solver = GmresSolver(A, b, memory)
-  gmres!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = gmres!(solver::GmresSolver, A, b; kwargs...)
     solver = gmres!(solver::GmresSolver, A, b, x0; kwargs...)
@@ -91,10 +79,42 @@ See [`GmresSolver`](@ref) for more details about the `solver`.
 """
 function gmres! end
 
-function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  gmres!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_gmres = (:(; M = I                            ),
+                    :(; N = I                            ),
+                    :(; ldiv::Bool = false               ),
+                    :(; restart::Bool = false            ),
+                    :(; reorthogonalization::Bool = false),
+                    :(; atol::T = √eps(T)                ),
+                    :(; rtol::T = √eps(T)                ),
+                    :(; itmax::Int = 0                   ),
+                    :(; timemax::Float64 = Inf           ),
+                    :(; verbose::Int = 0                 ),
+                    :(; history::Bool = false            ),
+                    :(; callback = solver -> false       ),
+                    :(; iostream::IO = kstdout           ))
+
+def_kwargs_gmres = reduce(vcat, kw.args[1].args for kw in def_kwargs_gmres)
+
+kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function gmres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = GmresSolver(A, b, memory)
+    gmres!(solver, A, b, x0; $(kwargs_gmres...))
+    return (solver.x, solver.stats)
+  end
+
+  function gmres(A, b :: AbstractVector{FC}; memory :: Int=20, $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = GmresSolver(A, b, memory)
+    gmres!(solver, A, b; $(kwargs_gmres...))
+    return (solver.x, solver.stats)
+  end
+
+  function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    gmres!(solver, A, b; $(kwargs_gmres...))
+    return solver
+  end
 end
 
 function gmres!(solver :: GmresSolver{T,FC,S}, A, b :: AbstractVector{FC};

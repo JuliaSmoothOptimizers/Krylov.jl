@@ -67,18 +67,6 @@ The method does _not_ abort if A is not definite.
 """
 function cg_lanczos end
 
-function cg_lanczos(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
-  solver = CgLanczosSolver(A, b)
-  cg_lanczos!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function cg_lanczos(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = CgLanczosSolver(A, b)
-  cg_lanczos!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = cg_lanczos!(solver::CgLanczosSolver, A, b; kwargs...)
     solver = cg_lanczos!(solver::CgLanczosSolver, A, b, x0; kwargs...)
@@ -89,10 +77,40 @@ See [`CgLanczosSolver`](@ref) for more details about the `solver`.
 """
 function cg_lanczos! end
 
-function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  cg_lanczos!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_cg_lanczos = (:(; M = I                        ),
+                         :(; ldiv::Bool = false           ),
+                         :(; check_curvature::Bool = false),
+                         :(; atol::T = √eps(T)            ),
+                         :(; rtol::T = √eps(T)            ),
+                         :(; itmax::Int = 0               ),
+                         :(; timemax::Float64 = Inf       ),
+                         :(; verbose::Int = 0             ),
+                         :(; history::Bool = false        ),
+                         :(; callback = solver -> false   ),
+                         :(; iostream::IO = kstdout       ))
+
+def_kwargs_cg_lanczos = reduce(vcat, kw.args[1].args for kw in def_kwargs_cg_lanczos)
+
+kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function cg_lanczos(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = CgLanczosSolver(A, b)
+    cg_lanczos!(solver, A, b, x0; $(kwargs_cg_lanczos...))
+    return (solver.x, solver.stats)
+  end
+
+  function cg_lanczos(A, b :: AbstractVector{FC}; $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = CgLanczosSolver(A, b)
+    cg_lanczos!(solver, A, b; $(kwargs_cg_lanczos...))
+    return (solver.x, solver.stats)
+  end
+
+  function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    cg_lanczos!(solver, A, b; $(kwargs_cg_lanczos...))
+    return solver
+  end
 end
 
 function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{FC};

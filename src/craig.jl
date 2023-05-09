@@ -125,12 +125,6 @@ In this implementation, both the x and y-parts of the solution are returned.
 """
 function craig end
 
-function craig(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = CraigSolver(A, b)
-  craig!(solver, A, b; kwargs...)
-  return (solver.x, solver.y, solver.stats)
-end
-
 """
     solver = craig!(solver::CraigSolver, A, b; kwargs...)
 
@@ -139,6 +133,35 @@ where `kwargs` are keyword arguments of [`craig`](@ref).
 See [`CraigSolver`](@ref) for more details about the `solver`.
 """
 function craig! end
+
+def_kwargs_craig = (:(; M = I                         ),
+                    :(; N = I                         ),
+                    :(; ldiv::Bool = false            ),
+                    :(; transfer_to_lsqr::Bool = false),
+                    :(; sqd::Bool = false             ),
+                    :(; λ::T = zero(T)                ),
+                    :(; btol::T = √eps(T)             ),
+                    :(; conlim::T = 1/√eps(T)         ),
+                    :(; atol::T = √eps(T)             ),
+                    :(; rtol::T = √eps(T)             ),
+                    :(; itmax::Int = 0                ),
+                    :(; timemax::Float64 = Inf        ),
+                    :(; verbose::Int = 0              ),
+                    :(; history::Bool = false         ),
+                    :(; callback = solver -> false    ),
+                    :(; iostream::IO = kstdout        ))
+
+def_kwargs_craig = reduce(vcat, kw.args[1].args for kw in def_kwargs_craig)
+
+kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function craig(A, b :: AbstractVector{FC}; $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = CraigSolver(A, b)
+    craig!(solver, A, b; $(kwargs_craig...))
+    return (solver.x, solver.y, solver.stats)
+  end
+end
 
 function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC};
                 M=I, N=I, ldiv :: Bool=false,
