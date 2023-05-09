@@ -79,18 +79,6 @@ TFQMR and BICGSTAB were developed to remedy this difficulty.»
 """
 function cgs end
 
-function cgs(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
-  solver = CgsSolver(A, b)
-  cgs!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function cgs(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = CgsSolver(A, b)
-  cgs!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = cgs!(solver::CgsSolver, A, b; kwargs...)
     solver = cgs!(solver::CgsSolver, A, b, x0; kwargs...)
@@ -101,10 +89,41 @@ See [`CgsSolver`](@ref) for more details about the `solver`.
 """
 function cgs! end
 
-function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  cgs!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_cgs = (:(; c::AbstractVector{FC} = b ),
+                  :(; M = I                     ),
+                  :(; N = I                     ),
+                  :(; ldiv::Bool = false        ),
+                  :(; atol::T = √eps(T)         ),
+                  :(; rtol::T = √eps(T)         ),
+                  :(; itmax::Int = 0            ),
+                  :(; timemax::Float64 = Inf    ),
+                  :(; verbose::Int = 0          ),
+                  :(; history::Bool = false     ),
+                  :(; callback = solver -> false),
+                  :(; iostream::IO = kstdout    ))
+
+def_kwargs_cgs = reduce(vcat, kw.args[1].args for kw in def_kwargs_cgs)
+
+kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function cgs(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = CgsSolver(A, b)
+    cgs!(solver, A, b, x0; $(kwargs_cgs...))
+    return (solver.x, solver.stats)
+  end
+
+  function cgs(A, b :: AbstractVector{FC}; $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = CgsSolver(A, b)
+    cgs!(solver, A, b; $(kwargs_cgs...))
+    return (solver.x, solver.stats)
+  end
+
+  function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    cgs!(solver, A, b; $(kwargs_cgs...))
+    return solver
+  end
 end
 
 function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC};

@@ -53,10 +53,10 @@ SYMMLQ produces monotonic errors ‖x* - x‖₂.
 * `transfer_to_cg`: transfer from the SYMMLQ point to the CG point, when it exists. The transfer is based on the residual norm;
 * `λ`: regularization parameter;
 * `λest`: positive strict lower bound on the smallest eigenvalue `λₘᵢₙ` when solving a positive-definite system, such as `λest = (1-10⁻⁷)λₘᵢₙ`;
-* `etol`: stopping tolerance based on the lower bound on the error;
-* `conlim`: limit on the estimated condition number of `A` beyond which the solution will be abandoned;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
+* `etol`: stopping tolerance based on the lower bound on the error;
+* `conlim`: limit on the estimated condition number of `A` beyond which the solution will be abandoned;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
@@ -75,18 +75,6 @@ SYMMLQ produces monotonic errors ‖x* - x‖₂.
 """
 function symmlq end
 
-function symmlq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, kwargs...) where FC <: FloatOrComplex
-  solver = SymmlqSolver(A, b, window=window)
-  symmlq!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function symmlq(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
-  solver = SymmlqSolver(A, b, window=window)
-  symmlq!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = symmlq!(solver::SymmlqSolver, A, b; kwargs...)
     solver = symmlq!(solver::SymmlqSolver, A, b, x0; kwargs...)
@@ -97,18 +85,52 @@ See [`SymmlqSolver`](@ref) for more details about the `solver`.
 """
 function symmlq! end
 
-function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  symmlq!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_symmlq = (:(; M = I                      ),
+                     :(; ldiv::Bool = false         ),
+                     :(; transfer_to_cg::Bool = true),
+                     :(; λ::T = zero(T)             ),
+                     :(; λest::T = zero(T)          ),
+                     :(; atol::T = √eps(T)          ),
+                     :(; rtol::T = √eps(T)          ),
+                     :(; etol::T = √eps(T)          ),
+                     :(; conlim::T = 1/√eps(T)      ),
+                     :(; itmax::Int = 0             ),
+                     :(; timemax::Float64 = Inf     ),
+                     :(; verbose::Int = 0           ),
+                     :(; history::Bool = false      ),
+                     :(; callback = solver -> false ),
+                     :(; iostream::IO = kstdout     ))
+
+def_kwargs_symmlq = reduce(vcat, kw.args[1].args for kw in def_kwargs_symmlq)
+
+kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function symmlq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = SymmlqSolver(A, b, window=window)
+    symmlq!(solver, A, b, x0; $(kwargs_symmlq...))
+    return (solver.x, solver.stats)
+  end
+
+  function symmlq(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = SymmlqSolver(A, b, window=window)
+    symmlq!(solver, A, b; $(kwargs_symmlq...))
+    return (solver.x, solver.stats)
+  end
+
+  function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    symmlq!(solver, A, b; $(kwargs_symmlq...))
+    return solver
+  end
 end
 
 function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
                  M=I, ldiv :: Bool=false,
                  transfer_to_cg :: Bool=true, λ :: T=zero(T),
-                 λest :: T=zero(T), etol :: T=√eps(T),
-                 conlim :: T=1/√eps(T), atol :: T=√eps(T),
-                 rtol :: T=√eps(T), itmax :: Int=0,
+                 λest :: T=zero(T), atol :: T=√eps(T),
+                 rtol :: T=√eps(T), etol :: T=√eps(T),
+                 conlim :: T=1/√eps(T), itmax :: Int=0,
                  timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
                  callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 

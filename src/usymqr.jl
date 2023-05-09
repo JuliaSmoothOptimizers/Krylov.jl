@@ -77,18 +77,6 @@ USYMQR finds the minimum-norm solution if problems are inconsistent.
 """
 function usymqr end
 
-function usymqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
-  solver = UsymqrSolver(A, b)
-  usymqr!(solver, A, b, c, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function usymqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = UsymqrSolver(A, b)
-  usymqr!(solver, A, b, c; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = usymqr!(solver::UsymqrSolver, A, b, c; kwargs...)
     solver = usymqr!(solver::UsymqrSolver, A, b, c, x0; kwargs...)
@@ -99,11 +87,38 @@ See [`UsymqrSolver`](@ref) for more details about the `solver`.
 """
 function usymqr! end
 
-function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
-                 x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  usymqr!(solver, A, b, c; kwargs...)
-  return solver
+def_kwargs_usymqr = (:(; atol::T = √eps(T)         ),
+                     :(; rtol::T = √eps(T)         ),
+                     :(; itmax::Int = 0            ),
+                     :(; timemax::Float64 = Inf    ),
+                     :(; verbose::Int = 0          ),
+                     :(; history::Bool = false     ),
+                     :(; callback = solver -> false),
+                     :(; iostream::IO = kstdout    ))
+
+def_kwargs_usymqr = reduce(vcat, kw.args[1].args for kw in def_kwargs_usymqr)
+
+kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function usymqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = UsymqrSolver(A, b)
+    usymqr!(solver, A, b, c, x0; $(kwargs_usymqr...))
+    return (solver.x, solver.stats)
+  end
+
+  function usymqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = UsymqrSolver(A, b)
+    usymqr!(solver, A, b, c; $(kwargs_usymqr...))
+    return (solver.x, solver.stats)
+  end
+
+  function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
+                   x0 :: AbstractVector; $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    usymqr!(solver, A, b, c; $(kwargs_usymqr...))
+    return solver
+  end
 end
 
 function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};

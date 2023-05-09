@@ -66,18 +66,6 @@ FOM algorithm is based on the Arnoldi process and a Galerkin condition.
 """
 function fom end
 
-function fom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
-  solver = FomSolver(A, b, memory)
-  fom!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function fom(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
-  solver = FomSolver(A, b, memory)
-  fom!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = fom!(solver::FomSolver, A, b; kwargs...)
     solver = fom!(solver::FomSolver, A, b, x0; kwargs...)
@@ -91,10 +79,42 @@ See [`FomSolver`](@ref) for more details about the `solver`.
 """
 function fom! end
 
-function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  fom!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_fom = (:(; M = I                            ),
+                  :(; N = I                            ),
+                  :(; ldiv::Bool = false               ),
+                  :(; restart::Bool = false            ),
+                  :(; reorthogonalization::Bool = false),
+                  :(; atol::T = √eps(T)                ),
+                  :(; rtol::T = √eps(T)                ),
+                  :(; itmax::Int = 0                   ),
+                  :(; timemax::Float64 = Inf           ),
+                  :(; verbose::Int = 0                 ),
+                  :(; history::Bool = false            ),
+                  :(; callback = solver -> false       ),
+                  :(; iostream::IO = kstdout           ))
+
+def_kwargs_fom = reduce(vcat, kw.args[1].args for kw in def_kwargs_fom)
+
+kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function fom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = FomSolver(A, b, memory)
+    fom!(solver, A, b, x0; $(kwargs_fom...))
+    return (solver.x, solver.stats)
+  end
+
+  function fom(A, b :: AbstractVector{FC}; memory :: Int=20, $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = FomSolver(A, b, memory)
+    fom!(solver, A, b; $(kwargs_fom...))
+    return (solver.x, solver.stats)
+  end
+
+  function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    fom!(solver, A, b; $(kwargs_fom...))
+    return solver
+  end
 end
 
 function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};

@@ -93,18 +93,6 @@ TriMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 """
 function trimr end
 
-function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
-  solver = TrimrSolver(A, b)
-  trimr!(solver, A, b, c, x0, y0; kwargs...)
-  return (solver.x, solver.y, solver.stats)
-end
-
-function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = TrimrSolver(A, b)
-  trimr!(solver, A, b, c; kwargs...)
-  return (solver.x, solver.y, solver.stats)
-end
-
 """
     solver = trimr!(solver::TrimrSolver, A, b, c; kwargs...)
     solver = trimr!(solver::TrimrSolver, A, b, c, x0, y0; kwargs...)
@@ -115,11 +103,47 @@ See [`TrimrSolver`](@ref) for more details about the `solver`.
 """
 function trimr! end
 
-function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
-                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0, y0)
-  trimr!(solver, A, b, c; kwargs...)
-  return solver
+def_kwargs_trimr = (:(; M = I                     ),
+                    :(; N = I                     ),
+                    :(; ldiv::Bool = false        ),
+                    :(; spd::Bool = false         ),
+                    :(; snd::Bool = false         ),
+                    :(; flip::Bool = false        ),
+                    :(; sp::Bool = false          ),
+                    :(; τ::T = one(T)             ),
+                    :(; ν::T = -one(T)            ),
+                    :(; atol::T = √eps(T)         ),
+                    :(; rtol::T = √eps(T)         ),
+                    :(; itmax::Int = 0            ),
+                    :(; timemax::Float64 = Inf    ),
+                    :(; verbose::Int = 0          ),
+                    :(; history::Bool = false     ),
+                    :(; callback = solver -> false),
+                    :(; iostream::IO = kstdout    ))
+
+def_kwargs_trimr = reduce(vcat, kw.args[1].args for kw in def_kwargs_trimr)
+
+kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = TrimrSolver(A, b)
+    trimr!(solver, A, b, c, x0, y0; $(kwargs_trimr...))
+    return (solver.x, solver.y, solver.stats)
+  end
+
+  function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = TrimrSolver(A, b)
+    trimr!(solver, A, b, c; $(kwargs_trimr...))
+    return (solver.x, solver.y, solver.stats)
+  end
+
+  function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC},
+                  x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0, y0)
+    trimr!(solver, A, b, c; $(kwargs_trimr...))
+    return solver
+  end
 end
 
 function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC};

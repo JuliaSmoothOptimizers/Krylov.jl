@@ -66,7 +66,7 @@ but simpler to implement. Only the x-part of the solution is returned.
 
 #### Keyword arguments
 
-* `N`:
+* `N`: linear operator that models a Hermitian positive-definite matrix of size `n` used for preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
@@ -90,12 +90,6 @@ but simpler to implement. Only the x-part of the solution is returned.
 """
 function crmr end
 
-function crmr(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = CrmrSolver(A, b)
-  crmr!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = crmr!(solver::CrmrSolver, A, b; kwargs...)
 
@@ -104,6 +98,30 @@ where `kwargs` are keyword arguments of [`crmr`](@ref).
 See [`CrmrSolver`](@ref) for more details about the `solver`.
 """
 function crmr! end
+
+def_kwargs_crmr = (:(; N = I                     ),
+                   :(; ldiv::Bool = false        ),
+                   :(; λ::T = zero(T)            ),
+                   :(; atol::T = √eps(T)         ),
+                   :(; rtol::T = √eps(T)         ),
+                   :(; itmax::Int = 0            ),
+                   :(; timemax::Float64 = Inf    ),
+                   :(; verbose::Int = 0          ),
+                   :(; history::Bool = false     ),
+                   :(; callback = solver -> false),
+                   :(; iostream::IO = kstdout    ))
+
+def_kwargs_crmr = reduce(vcat, kw.args[1].args for kw in def_kwargs_crmr)
+
+kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function crmr(A, b :: AbstractVector{FC}; $(def_kwargs_crmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = CrmrSolver(A, b)
+    crmr!(solver, A, b; $(kwargs_crmr...))
+    return (solver.x, solver.stats)
+  end
+end
 
 function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                N=I, ldiv :: Bool=false,

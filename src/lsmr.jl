@@ -122,12 +122,6 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 """
 function lsmr end
 
-function lsmr(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
-  solver = LsmrSolver(A, b, window=window)
-  lsmr!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = lsmr!(solver::LsmrSolver, A, b; kwargs...)
 
@@ -136,6 +130,37 @@ where `kwargs` are keyword arguments of [`lsmr`](@ref).
 See [`LsmrSolver`](@ref) for more details about the `solver`.
 """
 function lsmr! end
+
+def_kwargs_lsmr = (:(; M = I                     ),
+                   :(; N = I                     ),
+                   :(; ldiv::Bool = false        ),
+                   :(; sqd::Bool = false         ),
+                   :(; λ::T = zero(T)            ),
+                   :(; radius::T = zero(T)       ),
+                   :(; etol::T = √eps(T)         ),
+                   :(; axtol::T = √eps(T)        ),
+                   :(; btol::T = √eps(T)         ),
+                   :(; conlim::T = 1/√eps(T)     ),
+                   :(; atol::T = zero(T)         ),
+                   :(; rtol::T = zero(T)         ),
+                   :(; itmax::Int = 0            ),
+                   :(; timemax::Float64 = Inf    ),
+                   :(; verbose::Int = 0          ),
+                   :(; history::Bool = false     ),
+                   :(; callback = solver -> false),
+                   :(; iostream::IO = kstdout    ))
+
+def_kwargs_lsmr = reduce(vcat, kw.args[1].args for kw in def_kwargs_lsmr)
+
+kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function lsmr(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = LsmrSolver(A, b, window=window)
+    lsmr!(solver, A, b; $(kwargs_lsmr...))
+    return (solver.x, solver.stats)
+  end
+end
 
 function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
                M=I, N=I, ldiv :: Bool=false,

@@ -65,18 +65,6 @@ When `A` is Hermitian and `b = c`, BiLQ is equivalent to SYMMLQ.
 """
 function bilq end
 
-function bilq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
-  solver = BilqSolver(A, b)
-  bilq!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function bilq(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = BilqSolver(A, b)
-  bilq!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = bilq!(solver::BilqSolver, A, b; kwargs...)
     solver = bilq!(solver::BilqSolver, A, b, x0; kwargs...)
@@ -87,10 +75,39 @@ See [`BilqSolver`](@ref) for more details about the `solver`.
 """
 function bilq! end
 
-function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  bilq!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_bilq = (:(; c::AbstractVector{FC} = b    ),
+                   :(; transfer_to_bicg::Bool = true),
+                   :(; atol::T = √eps(T)            ),
+                   :(; rtol::T = √eps(T)            ),
+                   :(; itmax::Int = 0               ),
+                   :(; timemax::Float64 = Inf       ),
+                   :(; verbose::Int = 0             ),
+                   :(; history::Bool = false        ),
+                   :(; callback = solver -> false   ),
+                   :(; iostream::IO = kstdout       ))
+
+def_kwargs_bilq = reduce(vcat, kw.args[1].args for kw in def_kwargs_bilq)
+
+kwargs_bilq = (:c, :transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function bilq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = BilqSolver(A, b)
+    bilq!(solver, A, b, x0; $(kwargs_bilq...))
+    return (solver.x, solver.stats)
+  end
+
+  function bilq(A, b :: AbstractVector{FC}; $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = BilqSolver(A, b)
+    bilq!(solver, A, b; $(kwargs_bilq...))
+    return (solver.x, solver.stats)
+  end
+
+  function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    bilq!(solver, A, b; $(kwargs_bilq...))
+    return solver
+  end
 end
 
 function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC};

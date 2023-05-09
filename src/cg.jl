@@ -70,18 +70,6 @@ M also indicates the weighted norm in which residuals are measured.
 """
 function cg end
 
-function cg(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
-  solver = CgSolver(A, b)
-  cg!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function cg(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = CgSolver(A, b)
-  cg!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = cg!(solver::CgSolver, A, b; kwargs...)
     solver = cg!(solver::CgSolver, A, b, x0; kwargs...)
@@ -92,10 +80,41 @@ See [`CgSolver`](@ref) for more details about the `solver`.
 """
 function cg! end
 
-function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  cg!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_cg = (:(; M = I                     ),
+                 :(; ldiv::Bool = false        ),
+                 :(; radius::T = zero(T)       ),
+                 :(; linesearch::Bool = false  ),
+                 :(; atol::T = √eps(T)         ),
+                 :(; rtol::T = √eps(T)         ),
+                 :(; itmax::Int = 0            ),
+                 :(; timemax::Float64 = Inf    ),
+                 :(; verbose::Int = 0          ),
+                 :(; history::Bool = false     ),
+                 :(; callback = solver -> false),
+                 :(; iostream::IO = kstdout    ))
+
+def_kwargs_cg = reduce(vcat, kw.args[1].args for kw in def_kwargs_cg)
+
+kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function cg(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = CgSolver(A, b)
+    cg!(solver, A, b, x0; $(kwargs_cg...))
+    return (solver.x, solver.stats)
+  end
+
+  function cg(A, b :: AbstractVector{FC}; $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = CgSolver(A, b)
+    cg!(solver, A, b; $(kwargs_cg...))
+    return (solver.x, solver.stats)
+  end
+
+  function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    cg!(solver, A, b; $(kwargs_cg...))
+    return solver
+  end
 end
 
 function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};

@@ -91,18 +91,6 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 """
 function minres end
 
-function minres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, kwargs...) where FC <: FloatOrComplex
-  solver = MinresSolver(A, b, window=window)
-  minres!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function minres(A, b :: AbstractVector{FC}; window :: Int=5, kwargs...) where FC <: FloatOrComplex
-  solver = MinresSolver(A, b, window=window)
-  minres!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = minres!(solver::MinresSolver, A, b; kwargs...)
     solver = minres!(solver::MinresSolver, A, b, x0; kwargs...)
@@ -113,10 +101,42 @@ See [`MinresSolver`](@ref) for more details about the `solver`.
 """
 function minres! end
 
-function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  minres!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_minres = (:(; M = I                     ),
+                     :(; ldiv::Bool = false        ),
+                     :(; λ::T = zero(T)            ),
+                     :(; atol::T = √eps(T)         ),
+                     :(; rtol::T = √eps(T)         ),
+                     :(; etol::T = √eps(T)         ),
+                     :(; conlim::T = 1/√eps(T)     ),
+                     :(; itmax::Int = 0            ),
+                     :(; timemax::Float64 = Inf    ),
+                     :(; verbose::Int = 0          ),
+                     :(; history::Bool = false     ),
+                     :(; callback = solver -> false),
+                     :(; iostream::IO = kstdout    ))
+
+def_kwargs_minres = reduce(vcat, kw.args[1].args for kw in def_kwargs_minres)
+
+kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function minres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = MinresSolver(A, b, window=window)
+    minres!(solver, A, b, x0; $(kwargs_minres...))
+    return (solver.x, solver.stats)
+  end
+
+  function minres(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = MinresSolver(A, b, window=window)
+    minres!(solver, A, b; $(kwargs_minres...))
+    return (solver.x, solver.stats)
+  end
+
+  function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    minres!(solver, A, b; $(kwargs_minres...))
+    return solver
+  end
 end
 
 function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC};

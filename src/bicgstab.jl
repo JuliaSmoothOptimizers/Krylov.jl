@@ -78,18 +78,6 @@ BICGSTAB stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol 
 """
 function bicgstab end
 
-function bicgstab(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
-  solver = BicgstabSolver(A, b)
-  bicgstab!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function bicgstab(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = BicgstabSolver(A, b)
-  bicgstab!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = bicgstab!(solver::BicgstabSolver, A, b; kwargs...)
     solver = bicgstab!(solver::BicgstabSolver, A, b, x0; kwargs...)
@@ -100,10 +88,41 @@ See [`BicgstabSolver`](@ref) for more details about the `solver`.
 """
 function bicgstab! end
 
-function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  bicgstab!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_bicgstab = (:(; c::AbstractVector{FC} = b ),
+                       :(; M = I                     ),
+                       :(; N = I                     ),
+                       :(; ldiv::Bool = false        ),
+                       :(; atol::T = √eps(T)         ),
+                       :(; rtol::T = √eps(T)         ),
+                       :(; itmax::Int = 0            ),
+                       :(; timemax::Float64 = Inf    ),
+                       :(; verbose::Int = 0          ),
+                       :(; history::Bool = false     ),
+                       :(; callback = solver -> false),
+                       :(; iostream::IO = kstdout    ))
+
+def_kwargs_bicgstab = reduce(vcat, kw.args[1].args for kw in def_kwargs_bicgstab)
+
+kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function bicgstab(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = BicgstabSolver(A, b)
+    bicgstab!(solver, A, b, x0; $(kwargs_bicgstab...))
+    return (solver.x, solver.stats)
+  end
+
+  function bicgstab(A, b :: AbstractVector{FC}; $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = BicgstabSolver(A, b)
+    bicgstab!(solver, A, b; $(kwargs_bicgstab...))
+    return (solver.x, solver.stats)
+  end
+
+  function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    bicgstab!(solver, A, b; $(kwargs_bicgstab...))
+    return solver
+  end
 end
 
 function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};

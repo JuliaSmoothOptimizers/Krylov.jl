@@ -102,18 +102,6 @@ GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 """
 function gpmr end
 
-function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
-  solver = GpmrSolver(A, b, memory)
-  gpmr!(solver, A, B, b, c, x0, y0; kwargs...)
-  return (solver.x, solver.y, solver.stats)
-end
-
-function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
-  solver = GpmrSolver(A, b, memory)
-  gpmr!(solver, A, B, b, c; kwargs...)
-  return (solver.x, solver.y, solver.stats)
-end
-
 """
     solver = gpmr!(solver::GpmrSolver, A, B, b, c; kwargs...)
     solver = gpmr!(solver::GpmrSolver, A, B, b, c, x0, y0; kwargs...)
@@ -127,11 +115,47 @@ See [`GpmrSolver`](@ref) for more details about the `solver`.
 """
 function gpmr! end
 
-function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC},
-                x0 :: AbstractVector, y0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0, y0)
-  gpmr!(solver, A, B, b, c; kwargs...)
-  return solver
+def_kwargs_gpmr = (:(; C = I                            ),
+                   :(; D = I                            ),
+                   :(; E = I                            ),
+                   :(; F = I                            ),
+                   :(; ldiv::Bool = false               ),
+                   :(; gsp::Bool = false                ),
+                   :(; λ::FC = one(FC)                  ),
+                   :(; μ::FC = one(FC)                  ),
+                   :(; reorthogonalization::Bool = false),
+                   :(; atol::T = √eps(T)                ),
+                   :(; rtol::T = √eps(T)                ),
+                   :(; itmax::Int = 0                   ),
+                   :(; timemax::Float64 = Inf           ),
+                   :(; verbose::Int = 0                 ),
+                   :(; history::Bool = false            ),
+                   :(; callback = solver -> false       ),
+                   :(; iostream::IO = kstdout           ))
+
+def_kwargs_gpmr = reduce(vcat, kw.args[1].args for kw in def_kwargs_gpmr)
+
+kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; memory :: Int=20, $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = GpmrSolver(A, b, memory)
+    gpmr!(solver, A, B, b, c, x0, y0; $(kwargs_gpmr...))
+    return (solver.x, solver.y, solver.stats)
+  end
+
+  function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}; memory :: Int=20, $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = GpmrSolver(A, b, memory)
+    gpmr!(solver, A, B, b, c; $(kwargs_gpmr...))
+    return (solver.x, solver.y, solver.stats)
+  end
+
+  function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC},
+                  x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0, y0)
+    gpmr!(solver, A, B, b, c; $(kwargs_gpmr...))
+    return solver
+  end
 end
 
 function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC};

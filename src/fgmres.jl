@@ -73,18 +73,6 @@ Thus, GMRES is recommended if the right preconditioner N is constant.
 """
 function fgmres end
 
-function fgmres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
-  solver = FgmresSolver(A, b, memory)
-  fgmres!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function fgmres(A, b :: AbstractVector{FC}; memory :: Int=20, kwargs...) where FC <: FloatOrComplex
-  solver = FgmresSolver(A, b, memory)
-  fgmres!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = fgmres!(solver::FgmresSolver, A, b; kwargs...)
     solver = fgmres!(solver::FgmresSolver, A, b, x0; kwargs...)
@@ -98,10 +86,42 @@ See [`FgmresSolver`](@ref) for more details about the `solver`.
 """
 function fgmres! end
 
-function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  fgmres!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_fgmres = (:(; M = I                            ),
+                     :(; N = I                            ),
+                     :(; ldiv::Bool = false               ),
+                     :(; restart::Bool = false            ),
+                     :(; reorthogonalization::Bool = false),
+                     :(; atol::T = √eps(T)                ),
+                     :(; rtol::T = √eps(T)                ),
+                     :(; itmax::Int = 0                   ),
+                     :(; timemax::Float64 = Inf           ),
+                     :(; verbose::Int = 0                 ),
+                     :(; history::Bool = false            ),
+                     :(; callback = solver -> false       ),
+                     :(; iostream::IO = kstdout           ))
+
+def_kwargs_fgmres = reduce(vcat, kw.args[1].args for kw in def_kwargs_fgmres)
+
+kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function fgmres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, $(def_kwargs_fgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = FgmresSolver(A, b, memory)
+    fgmres!(solver, A, b, x0; $(kwargs_fgmres...))
+    return (solver.x, solver.stats)
+  end
+
+  function fgmres(A, b :: AbstractVector{FC}; memory :: Int=20, $(def_kwargs_fgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = FgmresSolver(A, b, memory)
+    fgmres!(solver, A, b; $(kwargs_fgmres...))
+    return (solver.x, solver.stats)
+  end
+
+  function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_fgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    fgmres!(solver, A, b; $(kwargs_fgmres...))
+    return solver
+  end
 end
 
 function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};

@@ -50,10 +50,10 @@ M also indicates the weighted norm in which residuals are measured.
 
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
-* `Artol`: relative stopping tolerance based on the Aᴴ-residual norm;
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
+* `Artol`: relative stopping tolerance based on the Aᴴ-residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
@@ -74,18 +74,6 @@ M also indicates the weighted norm in which residuals are measured.
 """
 function minres_qlp end
 
-function minres_qlp(A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where FC <: FloatOrComplex
-  solver = MinresQlpSolver(A, b)
-  minres_qlp!(solver, A, b, x0; kwargs...)
-  return (solver.x, solver.stats)
-end
-
-function minres_qlp(A, b :: AbstractVector{FC}; kwargs...) where FC <: FloatOrComplex
-  solver = MinresQlpSolver(A, b)
-  minres_qlp!(solver, A, b; kwargs...)
-  return (solver.x, solver.stats)
-end
-
 """
     solver = minres_qlp!(solver::MinresQlpSolver, A, b; kwargs...)
     solver = minres_qlp!(solver::MinresQlpSolver, A, b, x0; kwargs...)
@@ -96,16 +84,46 @@ See [`MinresQlpSolver`](@ref) for more details about the `solver`.
 """
 function minres_qlp! end
 
-function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; kwargs...) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  warm_start!(solver, x0)
-  minres_qlp!(solver, A, b; kwargs...)
-  return solver
+def_kwargs_minres_qlp = (:(; M = I                     ),
+                         :(; ldiv::Bool = false        ),
+                         :(; λ::T = zero(T)            ),
+                         :(; atol::T = √eps(T)         ),
+                         :(; rtol::T = √eps(T)         ),
+                         :(; Artol::T = √eps(T)        ),
+                         :(; itmax::Int = 0            ),
+                         :(; timemax::Float64 = Inf    ),
+                         :(; verbose::Int = 0          ),
+                         :(; history::Bool = false     ),
+                         :(; callback = solver -> false),
+                         :(; iostream::IO = kstdout    ))
+
+def_kwargs_minres_qlp = reduce(vcat, kw.args[1].args for kw in def_kwargs_minres_qlp)
+
+kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+
+@eval begin
+  function minres_qlp(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = MinresQlpSolver(A, b)
+    minres_qlp!(solver, A, b, x0; $(kwargs_minres_qlp...))
+    return (solver.x, solver.stats)
+  end
+
+  function minres_qlp(A, b :: AbstractVector{FC}; $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    solver = MinresQlpSolver(A, b)
+    minres_qlp!(solver, A, b; $(kwargs_minres_qlp...))
+    return (solver.x, solver.stats)
+  end
+
+  function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    warm_start!(solver, x0)
+    minres_qlp!(solver, A, b; $(kwargs_minres_qlp...))
+    return solver
+  end
 end
 
 function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{FC};
-                     M=I, ldiv :: Bool=false, Artol :: T=√eps(T),
-                     λ ::T=zero(T), atol :: T=√eps(T),
-                     rtol :: T=√eps(T), itmax :: Int=0,
+                     M=I, ldiv :: Bool=false, λ :: T=zero(T),atol :: T=√eps(T),
+                     rtol :: T=√eps(T), Artol :: T=√eps(T), itmax :: Int=0,
                      timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
                      callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
