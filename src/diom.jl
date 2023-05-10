@@ -104,7 +104,8 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
 @eval begin
   function diom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = DiomSolver(A, b, memory)
-    diom!(solver, A, b, x0; $(kwargs_diom...))
+    warm_start!(solver, x0)
+    diom!(solver, A, b; $(kwargs_diom...))
     return (solver.x, solver.stats)
   end
 

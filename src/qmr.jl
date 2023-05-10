@@ -100,7 +100,8 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
 @eval begin
   function qmr(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = QmrSolver(A, b)
-    qmr!(solver, A, b, x0; $(kwargs_qmr...))
+    warm_start!(solver, x0)
+    qmr!(solver, A, b; $(kwargs_qmr...))
     return (solver.x, solver.stats)
   end
 

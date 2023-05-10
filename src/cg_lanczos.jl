@@ -96,7 +96,8 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
 @eval begin
   function cg_lanczos(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = CgLanczosSolver(A, b)
-    cg_lanczos!(solver, A, b, x0; $(kwargs_cg_lanczos...))
+    warm_start!(solver, x0)
+    cg_lanczos!(solver, A, b; $(kwargs_cg_lanczos...))
     return (solver.x, solver.stats)
   end
 

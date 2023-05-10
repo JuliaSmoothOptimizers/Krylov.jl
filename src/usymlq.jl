@@ -105,7 +105,8 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
 @eval begin
   function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = UsymlqSolver(A, b)
-    usymlq!(solver, A, b, c, x0; $(kwargs_usymlq...))
+    warm_start!(solver, x0)
+    usymlq!(solver, A, b, c; $(kwargs_usymlq...))
     return (solver.x, solver.stats)
   end
 

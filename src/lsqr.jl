@@ -152,7 +152,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
 
 @eval begin
   function lsqr(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_lsqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    solver = LsqrSolver(A, b, window=window)
+    solver = LsqrSolver(A, b; windows)
     lsqr!(solver, A, b; $(kwargs_lsqr...))
     return (solver.x, solver.stats)
   end

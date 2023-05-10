@@ -96,7 +96,8 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
 @eval begin
   function trilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = TrilqrSolver(A, b)
-    trilqr!(solver, A, b, c, x0, y0; $(kwargs_trilqr...))
+    warm_start!(solver, x0, y0)
+    trilqr!(solver, A, b, c; $(kwargs_trilqr...))
     return (solver.x, solver.y, solver.stats)
   end
 

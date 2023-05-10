@@ -104,7 +104,8 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
 @eval begin
   function minres_qlp(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = MinresQlpSolver(A, b)
-    minres_qlp!(solver, A, b, x0; $(kwargs_minres_qlp...))
+    warm_start!(solver, x0)
+    minres_qlp!(solver, A, b; $(kwargs_minres_qlp...))
     return (solver.x, solver.stats)
   end
 
