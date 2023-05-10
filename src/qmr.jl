@@ -115,258 +115,256 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
     qmr!(solver, A, b; $(kwargs_qmr...))
     return solver
   end
-end
 
-function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
-              c :: AbstractVector{FC}=b, atol :: T=√eps(T),
-              rtol :: T=√eps(T), itmax :: Int=0, timemax :: Float64=Inf,
-              verbose :: Int=0, history :: Bool=false,
-              callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  start_time = time_ns()
-  timemax_ns = 1e9 * timemax
-  m, n = size(A)
-  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
-  m == n || error("System must be square")
-  length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf(iostream, "QMR: system of size %d\n", n)
+    # Timer
+    start_time = time_ns()
+    timemax_ns = 1e9 * timemax
 
-  # Check type consistency
-  eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
-  ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
+    m, n = size(A)
+    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    m == n || error("System must be square")
+    length(b) == m || error("Inconsistent problem size")
+    (verbose > 0) && @printf(iostream, "QMR: system of size %d\n", n)
 
-  # Compute the adjoint of A
-  Aᴴ = A'
+    # Check type consistency
+    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
 
-  # Set up workspace.
-  uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
-  Δx, x, wₖ₋₂, wₖ₋₁, stats = solver.Δx, solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.stats
-  warm_start = solver.warm_start
-  rNorms = stats.residuals
-  reset!(stats)
-  r₀ = warm_start ? q : b
+    # Compute the adjoint of A
+    Aᴴ = A'
 
-  if warm_start
-    mul!(r₀, A, Δx)
-    @kaxpby!(n, one(FC), b, -one(FC), r₀)
-  end
+    # Set up workspace.
+    uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
+    Δx, x, wₖ₋₂, wₖ₋₁, stats = solver.Δx, solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.stats
+    warm_start = solver.warm_start
+    rNorms = stats.residuals
+    reset!(stats)
+    r₀ = warm_start ? q : b
 
-  # Initial solution x₀ and residual norm ‖r₀‖.
-  x .= zero(FC)
-  rNorm = @knrm2(n, r₀)  # ‖r₀‖ = ‖b₀ - Ax₀‖
-
-  history && push!(rNorms, rNorm)
-  if rNorm == 0
-    stats.niter = 0
-    stats.solved = true
-    stats.inconsistent = false
-    stats.status = "x = 0 is a zero-residual solution"
-    solver.warm_start = false
-    return solver
-  end
-
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
-
-  ε = atol + rtol * rNorm
-  (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
-  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
-
-  # Initialize the Lanczos biorthogonalization process.
-  cᴴb = @kdot(n, c, r₀)  # ⟨c,r₀⟩
-  if cᴴb == 0
-    stats.niter = 0
-    stats.solved = false
-    stats.inconsistent = false
-    stats.status = "Breakdown bᴴc = 0"
-    solver.warm_start = false
-    return solver
-  end
-
-  βₖ = √(abs(cᴴb))             # β₁γ₁ = cᴴ(b - Ax₀)
-  γₖ = cᴴb / βₖ                # β₁γ₁ = cᴴ(b - Ax₀)
-  vₖ₋₁ .= zero(FC)             # v₀ = 0
-  uₖ₋₁ .= zero(FC)             # u₀ = 0
-  vₖ .= r₀ ./ βₖ               # v₁ = (b - Ax₀) / β₁
-  uₖ .= c ./ conj(γₖ)          # u₁ = c / γ̄₁
-  cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
-  sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-  wₖ₋₂ .= zero(FC)             # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
-  wₖ₋₁ .= zero(FC)             # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
-  ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᴴβ₁e₁
-  τₖ = @kdotr(n, vₖ, vₖ)       # τₖ is used for the residual norm estimate
-
-  # Stopping criterion.
-  solved    = rNorm ≤ ε
-  breakdown = false
-  tired     = iter ≥ itmax
-  status    = "unknown"
-  user_requested_exit = false
-  overtimed = false
-
-  while !(solved || tired || breakdown || user_requested_exit || overtimed)
-    # Update iteration index.
-    iter = iter + 1
-
-    # Continue the Lanczos biorthogonalization process.
-    # AVₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
-    # AᴴUₖ = Uₖ(Tₖ)ᴴ + γ̄ₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
-
-    mul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
-    mul!(p, Aᴴ, uₖ)  # Forms uₖ₊₁ : p ← Aᴴuₖ
-
-    @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
-    @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
-
-    αₖ = @kdot(n, uₖ, q)      # αₖ = ⟨uₖ,q⟩
-
-    @kaxpy!(n, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
-    @kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
-
-    pᴴq = @kdot(n, p, q)      # pᴴq  = ⟨p,q⟩
-    βₖ₊₁ = √(abs(pᴴq))        # βₖ₊₁ = √(|pᴴq|)
-    γₖ₊₁ = pᴴq / βₖ₊₁         # γₖ₊₁ = pᴴq / βₖ₊₁
-
-    # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
-    #                                            [ Oᵀ ]
-    # [ α₁ γ₂ 0  •  •  •   0  ]      [ δ₁ λ₁ ϵ₁ 0  •  •  0  ]
-    # [ β₂ α₂ γ₃ •         •  ]      [ 0  δ₂ λ₂ •  •     •  ]
-    # [ 0  •  •  •  •      •  ]      [ •  •  δ₃ •  •  •  •  ]
-    # [ •  •  •  •  •  •   •  ] = Qₖ [ •     •  •  •  •  0  ]
-    # [ •     •  •  •  •   0  ]      [ •        •  •  • ϵₖ₋₂]
-    # [ •        •  •  •   γₖ ]      [ •           •  • λₖ₋₁]
-    # [ •           •  βₖ  αₖ ]      [ •              •  δₖ ]
-    # [ 0  •  •  •  •  0  βₖ₊₁]      [ 0  •  •  •  •  •  0  ]
-    #
-    # If k = 1, we don't have any previous reflexion.
-    # If k = 2, we apply the last reflexion.
-    # If k ≥ 3, we only apply the two previous reflexions.
-
-    # Apply previous Givens reflections Qₖ₋₂.ₖ₋₁
-    if iter ≥ 3
-      # [cₖ₋₂  sₖ₋₂] [0 ] = [  ϵₖ₋₂ ]
-      # [s̄ₖ₋₂ -cₖ₋₂] [γₖ]   [λbarₖ₋₁]
-      ϵₖ₋₂    =  sₖ₋₂ * γₖ
-      λbarₖ₋₁ = -cₖ₋₂ * γₖ
+    if warm_start
+      mul!(r₀, A, Δx)
+      @kaxpby!(n, one(FC), b, -one(FC), r₀)
     end
 
-    # Apply previous Givens reflections Qₖ₋₁.ₖ
-    if iter ≥ 2
-      iter == 2 && (λbarₖ₋₁ = γₖ)
-      # [cₖ₋₁  sₖ₋₁] [λbarₖ₋₁] = [λₖ₋₁ ]
-      # [s̄ₖ₋₁ -cₖ₋₁] [   αₖ  ]   [δbarₖ]
-      λₖ₋₁  =      cₖ₋₁  * λbarₖ₋₁ + sₖ₋₁ * αₖ
-      δbarₖ = conj(sₖ₋₁) * λbarₖ₋₁ - cₖ₋₁ * αₖ
+    # Initial solution x₀ and residual norm ‖r₀‖.
+    x .= zero(FC)
+    rNorm = @knrm2(n, r₀)  # ‖r₀‖ = ‖b₀ - Ax₀‖
 
-      # Update sₖ₋₂ and cₖ₋₂.
-      sₖ₋₂ = sₖ₋₁
-      cₖ₋₂ = cₖ₋₁
-    end
-
-    # Compute and apply current Givens reflection Qₖ.ₖ₊₁
-    iter == 1 && (δbarₖ = αₖ)
-    # [cₖ  sₖ] [δbarₖ] = [δₖ]
-    # [s̄ₖ -cₖ] [βₖ₊₁ ]   [0 ]
-    (cₖ, sₖ, δₖ) = sym_givens(δbarₖ, βₖ₊₁)
-
-    # Update z̅ₖ₊₁ = Qₖ.ₖ₊₁ [ z̄ₖ ]
-    #                      [ 0  ]
-    #
-    # [cₖ  sₖ] [ζbarₖ] = [   ζₖ  ]
-    # [s̄ₖ -cₖ] [  0  ]   [ζbarₖ₊₁]
-    ζₖ      =      cₖ  * ζbarₖ
-    ζbarₖ₊₁ = conj(sₖ) * ζbarₖ
-
-    # Update sₖ₋₁ and cₖ₋₁.
-    sₖ₋₁ = sₖ
-    cₖ₋₁ = cₖ
-
-    # Compute the direction wₖ, the last column of Wₖ = Vₖ(Rₖ)⁻¹ ⟷ (Rₖ)ᵀ(Wₖ)ᵀ = (Vₖ)ᵀ.
-    # w₁ = v₁ / δ₁
-    if iter == 1
-      wₖ = wₖ₋₁
-      @kaxpy!(n, one(FC), vₖ, wₖ)
-      @. wₖ = wₖ / δₖ
-    end
-    # w₂ = (v₂ - λ₁w₁) / δ₂
-    if iter == 2
-      wₖ = wₖ₋₂
-      @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
-      @kaxpy!(n, one(FC), vₖ, wₖ)
-      @. wₖ = wₖ / δₖ
-    end
-    # wₖ = (vₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
-    if iter ≥ 3
-      @kscal!(n, -ϵₖ₋₂, wₖ₋₂)
-      wₖ = wₖ₋₂
-      @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
-      @kaxpy!(n, one(FC), vₖ, wₖ)
-      @. wₖ = wₖ / δₖ
-    end
-
-    # Compute solution xₖ.
-    # xₖ ← xₖ₋₁ + ζₖ * wₖ
-    @kaxpy!(n, ζₖ, wₖ, x)
-
-    # Compute vₖ₊₁ and uₖ₊₁.
-    @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
-    @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
-
-    if pᴴq ≠ zero(FC)
-      @. vₖ = q / βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
-      @. uₖ = p / conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
-    end
-
-    # Compute τₖ₊₁ = τₖ + ‖vₖ₊₁‖²
-    τₖ₊₁ = τₖ + @kdotr(n, vₖ, vₖ)
-
-    # Compute ‖rₖ‖ ≤ |ζbarₖ₊₁|√τₖ₊₁
-    rNorm = abs(ζbarₖ₊₁) * √τₖ₊₁
     history && push!(rNorms, rNorm)
-
-    # Update directions for x.
-    if iter ≥ 2
-      @kswap(wₖ₋₂, wₖ₋₁)
+    if rNorm == 0
+      stats.niter = 0
+      stats.solved = true
+      stats.inconsistent = false
+      stats.status = "x = 0 is a zero-residual solution"
+      solver.warm_start = false
+      return solver
     end
 
-    # Update ζbarₖ, βₖ, γₖ and τₖ.
-    ζbarₖ = ζbarₖ₊₁
-    βₖ    = βₖ₊₁
-    γₖ    = γₖ₊₁
-    τₖ    = τₖ₊₁
+    iter = 0
+    itmax == 0 && (itmax = 2*n)
 
-    # Stopping conditions that do not depend on user input.
-    # This is to guard against tolerances that are unreasonably small.
-    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-
-    # Update stopping criterion.
-    user_requested_exit = callback(solver) :: Bool
-    resid_decrease_lim = rNorm ≤ ε
-    solved = resid_decrease_lim || resid_decrease_mach
-    tired = iter ≥ itmax
-    breakdown = !solved && (pᴴq == 0)
-    timer = time_ns() - start_time
-    overtimed = timer > timemax_ns
+    ε = atol + rtol * rNorm
+    (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
+
+    # Initialize the Lanczos biorthogonalization process.
+    cᴴb = @kdot(n, c, r₀)  # ⟨c,r₀⟩
+    if cᴴb == 0
+      stats.niter = 0
+      stats.solved = false
+      stats.inconsistent = false
+      stats.status = "Breakdown bᴴc = 0"
+      solver.warm_start = false
+      return solver
+    end
+
+    βₖ = √(abs(cᴴb))             # β₁γ₁ = cᴴ(b - Ax₀)
+    γₖ = cᴴb / βₖ                # β₁γ₁ = cᴴ(b - Ax₀)
+    vₖ₋₁ .= zero(FC)             # v₀ = 0
+    uₖ₋₁ .= zero(FC)             # u₀ = 0
+    vₖ .= r₀ ./ βₖ               # v₁ = (b - Ax₀) / β₁
+    uₖ .= c ./ conj(γₖ)          # u₁ = c / γ̄₁
+    cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+    sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+    wₖ₋₂ .= zero(FC)             # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
+    wₖ₋₁ .= zero(FC)             # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
+    ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᴴβ₁e₁
+    τₖ = @kdotr(n, vₖ, vₖ)       # τₖ is used for the residual norm estimate
+
+    # Stopping criterion.
+    solved    = rNorm ≤ ε
+    breakdown = false
+    tired     = iter ≥ itmax
+    status    = "unknown"
+    user_requested_exit = false
+    overtimed = false
+
+    while !(solved || tired || breakdown || user_requested_exit || overtimed)
+      # Update iteration index.
+      iter = iter + 1
+
+      # Continue the Lanczos biorthogonalization process.
+      # AVₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
+      # AᴴUₖ = Uₖ(Tₖ)ᴴ + γ̄ₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
+
+      mul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
+      mul!(p, Aᴴ, uₖ)  # Forms uₖ₊₁ : p ← Aᴴuₖ
+
+      @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
+      @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
+
+      αₖ = @kdot(n, uₖ, q)      # αₖ = ⟨uₖ,q⟩
+
+      @kaxpy!(n, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
+      @kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
+
+      pᴴq = @kdot(n, p, q)      # pᴴq  = ⟨p,q⟩
+      βₖ₊₁ = √(abs(pᴴq))        # βₖ₊₁ = √(|pᴴq|)
+      γₖ₊₁ = pᴴq / βₖ₊₁         # γₖ₊₁ = pᴴq / βₖ₊₁
+
+      # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
+      #                                            [ Oᵀ ]
+      # [ α₁ γ₂ 0  •  •  •   0  ]      [ δ₁ λ₁ ϵ₁ 0  •  •  0  ]
+      # [ β₂ α₂ γ₃ •         •  ]      [ 0  δ₂ λ₂ •  •     •  ]
+      # [ 0  •  •  •  •      •  ]      [ •  •  δ₃ •  •  •  •  ]
+      # [ •  •  •  •  •  •   •  ] = Qₖ [ •     •  •  •  •  0  ]
+      # [ •     •  •  •  •   0  ]      [ •        •  •  • ϵₖ₋₂]
+      # [ •        •  •  •   γₖ ]      [ •           •  • λₖ₋₁]
+      # [ •           •  βₖ  αₖ ]      [ •              •  δₖ ]
+      # [ 0  •  •  •  •  0  βₖ₊₁]      [ 0  •  •  •  •  •  0  ]
+      #
+      # If k = 1, we don't have any previous reflexion.
+      # If k = 2, we apply the last reflexion.
+      # If k ≥ 3, we only apply the two previous reflexions.
+
+      # Apply previous Givens reflections Qₖ₋₂.ₖ₋₁
+      if iter ≥ 3
+        # [cₖ₋₂  sₖ₋₂] [0 ] = [  ϵₖ₋₂ ]
+        # [s̄ₖ₋₂ -cₖ₋₂] [γₖ]   [λbarₖ₋₁]
+        ϵₖ₋₂    =  sₖ₋₂ * γₖ
+        λbarₖ₋₁ = -cₖ₋₂ * γₖ
+      end
+
+      # Apply previous Givens reflections Qₖ₋₁.ₖ
+      if iter ≥ 2
+        iter == 2 && (λbarₖ₋₁ = γₖ)
+        # [cₖ₋₁  sₖ₋₁] [λbarₖ₋₁] = [λₖ₋₁ ]
+        # [s̄ₖ₋₁ -cₖ₋₁] [   αₖ  ]   [δbarₖ]
+        λₖ₋₁  =      cₖ₋₁  * λbarₖ₋₁ + sₖ₋₁ * αₖ
+        δbarₖ = conj(sₖ₋₁) * λbarₖ₋₁ - cₖ₋₁ * αₖ
+
+        # Update sₖ₋₂ and cₖ₋₂.
+        sₖ₋₂ = sₖ₋₁
+        cₖ₋₂ = cₖ₋₁
+      end
+
+      # Compute and apply current Givens reflection Qₖ.ₖ₊₁
+      iter == 1 && (δbarₖ = αₖ)
+      # [cₖ  sₖ] [δbarₖ] = [δₖ]
+      # [s̄ₖ -cₖ] [βₖ₊₁ ]   [0 ]
+      (cₖ, sₖ, δₖ) = sym_givens(δbarₖ, βₖ₊₁)
+
+      # Update z̅ₖ₊₁ = Qₖ.ₖ₊₁ [ z̄ₖ ]
+      #                      [ 0  ]
+      #
+      # [cₖ  sₖ] [ζbarₖ] = [   ζₖ  ]
+      # [s̄ₖ -cₖ] [  0  ]   [ζbarₖ₊₁]
+      ζₖ      =      cₖ  * ζbarₖ
+      ζbarₖ₊₁ = conj(sₖ) * ζbarₖ
+
+      # Update sₖ₋₁ and cₖ₋₁.
+      sₖ₋₁ = sₖ
+      cₖ₋₁ = cₖ
+
+      # Compute the direction wₖ, the last column of Wₖ = Vₖ(Rₖ)⁻¹ ⟷ (Rₖ)ᵀ(Wₖ)ᵀ = (Vₖ)ᵀ.
+      # w₁ = v₁ / δ₁
+      if iter == 1
+        wₖ = wₖ₋₁
+        @kaxpy!(n, one(FC), vₖ, wₖ)
+        @. wₖ = wₖ / δₖ
+      end
+      # w₂ = (v₂ - λ₁w₁) / δ₂
+      if iter == 2
+        wₖ = wₖ₋₂
+        @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
+        @kaxpy!(n, one(FC), vₖ, wₖ)
+        @. wₖ = wₖ / δₖ
+      end
+      # wₖ = (vₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
+      if iter ≥ 3
+        @kscal!(n, -ϵₖ₋₂, wₖ₋₂)
+        wₖ = wₖ₋₂
+        @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
+        @kaxpy!(n, one(FC), vₖ, wₖ)
+        @. wₖ = wₖ / δₖ
+      end
+
+      # Compute solution xₖ.
+      # xₖ ← xₖ₋₁ + ζₖ * wₖ
+      @kaxpy!(n, ζₖ, wₖ, x)
+
+      # Compute vₖ₊₁ and uₖ₊₁.
+      @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
+      @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
+
+      if pᴴq ≠ zero(FC)
+        @. vₖ = q / βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
+        @. uₖ = p / conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
+      end
+
+      # Compute τₖ₊₁ = τₖ + ‖vₖ₊₁‖²
+      τₖ₊₁ = τₖ + @kdotr(n, vₖ, vₖ)
+
+      # Compute ‖rₖ‖ ≤ |ζbarₖ₊₁|√τₖ₊₁
+      rNorm = abs(ζbarₖ₊₁) * √τₖ₊₁
+      history && push!(rNorms, rNorm)
+
+      # Update directions for x.
+      if iter ≥ 2
+        @kswap(wₖ₋₂, wₖ₋₁)
+      end
+
+      # Update ζbarₖ, βₖ, γₖ and τₖ.
+      ζbarₖ = ζbarₖ₊₁
+      βₖ    = βₖ₊₁
+      γₖ    = γₖ₊₁
+      τₖ    = τₖ₊₁
+
+      # Stopping conditions that do not depend on user input.
+      # This is to guard against tolerances that are unreasonably small.
+      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+
+      # Update stopping criterion.
+      user_requested_exit = callback(solver) :: Bool
+      resid_decrease_lim = rNorm ≤ ε
+      solved = resid_decrease_lim || resid_decrease_mach
+      tired = iter ≥ itmax
+      breakdown = !solved && (pᴴq == 0)
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
+    end
+    (verbose > 0) && @printf(iostream, "\n")
+
+    # Termination status
+    tired               && (status = "maximum number of iterations exceeded")
+    breakdown           && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
+    solved              && (status = "solution good enough given atol and rtol")
+    user_requested_exit && (status = "user-requested exit")
+    overtimed           && (status = "time limit exceeded")
+
+    # Update x
+    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    solver.warm_start = false
+
+    # Update stats
+    stats.niter = iter
+    stats.solved = solved
+    stats.inconsistent = false
+    stats.status = status
+    return solver
   end
-  (verbose > 0) && @printf(iostream, "\n")
-
-  # Termination status
-  tired               && (status = "maximum number of iterations exceeded")
-  breakdown           && (status = "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
-  solved              && (status = "solution good enough given atol and rtol")
-  user_requested_exit && (status = "user-requested exit")
-  overtimed           && (status = "time limit exceeded")
-
-  # Update x
-  warm_start && @kaxpy!(n, one(FC), Δx, x)
-  solver.warm_start = false
-
-  # Update stats
-  stats.niter = iter
-  stats.solved = solved
-  stats.inconsistent = false
-  stats.status = status
-  return solver
 end

@@ -123,156 +123,153 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     bicgstab!(solver, A, b; $(kwargs_bicgstab...))
     return solver
   end
-end
 
-function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC};
-                   c :: AbstractVector{FC}=b, M=I, N=I,
-                   ldiv :: Bool=false, atol :: T=√eps(T),
-                   rtol :: T=√eps(T), itmax :: Int=0,
-                   timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
-                   callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  start_time = time_ns()
-  timemax_ns = 1e9 * timemax
-  m, n = size(A)
-  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
-  m == n || error("System must be square")
-  length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf(iostream, "BICGSTAB: system of size %d\n", n)
+    # Timer
+    start_time = time_ns()
+    timemax_ns = 1e9 * timemax
 
-  # Check M = Iₙ and N = Iₙ
-  MisI = (M === I)
-  NisI = (N === I)
+    m, n = size(A)
+    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    m == n || error("System must be square")
+    length(b) == m || error("Inconsistent problem size")
+    (verbose > 0) && @printf(iostream, "BICGSTAB: system of size %d\n", n)
 
-  # Check type consistency
-  eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
-  ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
+    # Check M = Iₙ and N = Iₙ
+    MisI = (M === I)
+    NisI = (N === I)
 
-  # Set up workspace.
-  allocate_if(!MisI, solver, :t , S, n)
-  allocate_if(!NisI, solver, :yz, S, n)
-  Δx, x, r, p, v, s, qd, stats = solver.Δx, solver.x, solver.r, solver.p, solver.v, solver.s, solver.qd, solver.stats
-  warm_start = solver.warm_start
-  rNorms = stats.residuals
-  reset!(stats)
-  q = d = solver.qd
-  t = MisI ? d : solver.t
-  y = NisI ? p : solver.yz
-  z = NisI ? s : solver.yz
-  r₀ = MisI ? r : solver.qd
+    # Check type consistency
+    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
 
-  if warm_start
-    mul!(r₀, A, Δx)
-    @kaxpby!(n, one(FC), b, -one(FC), r₀)
-  else
-    r₀ .= b
-  end
+    # Set up workspace.
+    allocate_if(!MisI, solver, :t , S, n)
+    allocate_if(!NisI, solver, :yz, S, n)
+    Δx, x, r, p, v, s, qd, stats = solver.Δx, solver.x, solver.r, solver.p, solver.v, solver.s, solver.qd, solver.stats
+    warm_start = solver.warm_start
+    rNorms = stats.residuals
+    reset!(stats)
+    q = d = solver.qd
+    t = MisI ? d : solver.t
+    y = NisI ? p : solver.yz
+    z = NisI ? s : solver.yz
+    r₀ = MisI ? r : solver.qd
 
-  x .= zero(FC)                       # x₀
-  s .= zero(FC)                       # s₀
-  v .= zero(FC)                       # v₀
-  MisI || mulorldiv!(r, M, r₀, ldiv)  # r₀
-  p .= r                              # p₁
+    if warm_start
+      mul!(r₀, A, Δx)
+      @kaxpby!(n, one(FC), b, -one(FC), r₀)
+    else
+      r₀ .= b
+    end
 
-  α = one(FC) # α₀
-  ω = one(FC) # ω₀
-  ρ = one(FC) # ρ₀
+    x .= zero(FC)                       # x₀
+    s .= zero(FC)                       # s₀
+    v .= zero(FC)                       # v₀
+    MisI || mulorldiv!(r, M, r₀, ldiv)  # r₀
+    p .= r                              # p₁
 
-  # Compute residual norm ‖r₀‖₂.
-  rNorm = @knrm2(n, r)
-  history && push!(rNorms, rNorm)
-  if rNorm == 0
-    stats.niter = 0
-    stats.solved, stats.inconsistent = true, false
-    stats.status = "x = 0 is a zero-residual solution"
-    solver.warm_start = false
-    return solver
-  end
+    α = one(FC) # α₀
+    ω = one(FC) # ω₀
+    ρ = one(FC) # ρ₀
 
-  iter = 0
-  itmax == 0 && (itmax = 2*n)
-
-  ε = atol + rtol * rNorm
-  (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "|αₖ|", "|ωₖ|")
-  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
-
-  next_ρ = @kdot(n, c, r)  # ρ₁ = ⟨r̅₀,r₀⟩
-  if next_ρ == 0
-    stats.niter = 0
-    stats.solved, stats.inconsistent = false, false
-    stats.status = "Breakdown bᴴc = 0"
-    solver.warm_start = false
-    return solver
-  end
-
-  # Stopping criterion.
-  solved = rNorm ≤ ε
-  tired = iter ≥ itmax
-  breakdown = false
-  status = "unknown"
-  user_requested_exit = false
-  overtimed = false
-
-  while !(solved || tired || breakdown || user_requested_exit || overtimed)
-    # Update iteration index and ρ.
-    iter = iter + 1
-    ρ = next_ρ
-
-    NisI || mulorldiv!(y, N, p, ldiv)    # yₖ = N⁻¹pₖ
-    mul!(q, A, y)                        # qₖ = Ayₖ
-    mulorldiv!(v, M, q, ldiv)            # vₖ = M⁻¹qₖ
-    α = ρ / @kdot(n, c, v)               # αₖ = ⟨r̅₀,rₖ₋₁⟩ / ⟨r̅₀,vₖ⟩
-    @kcopy!(n, r, s)                     # sₖ = rₖ₋₁
-    @kaxpy!(n, -α, v, s)                 # sₖ = sₖ - αₖvₖ
-    @kaxpy!(n, α, y, x)                  # xₐᵤₓ = xₖ₋₁ + αₖyₖ
-    NisI || mulorldiv!(z, N, s, ldiv)    # zₖ = N⁻¹sₖ
-    mul!(d, A, z)                        # dₖ = Azₖ
-    MisI || mulorldiv!(t, M, d, ldiv)    # tₖ = M⁻¹dₖ
-    ω = @kdot(n, t, s) / @kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
-    @kaxpy!(n, ω, z, x)                  # xₖ = xₐᵤₓ + ωₖzₖ
-    @kcopy!(n, s, r)                     # rₖ = sₖ
-    @kaxpy!(n, -ω, t, r)                 # rₖ = rₖ - ωₖtₖ
-    next_ρ = @kdot(n, c, r)              # ρₖ₊₁ = ⟨r̅₀,rₖ⟩
-    β = (next_ρ / ρ) * (α / ω)           # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
-    @kaxpy!(n, -ω, v, p)                 # pₐᵤₓ = pₖ - ωₖvₖ
-    @kaxpby!(n, one(FC), r, β, p)        # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
-
-    # Compute residual norm ‖rₖ‖₂.
+    # Compute residual norm ‖r₀‖₂.
     rNorm = @knrm2(n, r)
     history && push!(rNorms, rNorm)
+    if rNorm == 0
+      stats.niter = 0
+      stats.solved, stats.inconsistent = true, false
+      stats.status = "x = 0 is a zero-residual solution"
+      solver.warm_start = false
+      return solver
+    end
 
-    # Stopping conditions that do not depend on user input.
-    # This is to guard against tolerances that are unreasonably small.
-    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+    iter = 0
+    itmax == 0 && (itmax = 2*n)
 
-    # Update stopping criterion.
-    user_requested_exit = callback(solver) :: Bool
-    resid_decrease_lim = rNorm ≤ ε
-    solved = resid_decrease_lim || resid_decrease_mach
-    tired = iter ≥ itmax
-    breakdown = (α == 0 || isnan(α))
-    timer = time_ns() - start_time
-    overtimed = timer > timemax_ns
+    ε = atol + rtol * rNorm
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "|αₖ|", "|ωₖ|")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
+
+    next_ρ = @kdot(n, c, r)  # ρ₁ = ⟨r̅₀,r₀⟩
+    if next_ρ == 0
+      stats.niter = 0
+      stats.solved, stats.inconsistent = false, false
+      stats.status = "Breakdown bᴴc = 0"
+      solver.warm_start = false
+      return solver
+    end
+
+    # Stopping criterion.
+    solved = rNorm ≤ ε
+    tired = iter ≥ itmax
+    breakdown = false
+    status = "unknown"
+    user_requested_exit = false
+    overtimed = false
+
+    while !(solved || tired || breakdown || user_requested_exit || overtimed)
+      # Update iteration index and ρ.
+      iter = iter + 1
+      ρ = next_ρ
+
+      NisI || mulorldiv!(y, N, p, ldiv)    # yₖ = N⁻¹pₖ
+      mul!(q, A, y)                        # qₖ = Ayₖ
+      mulorldiv!(v, M, q, ldiv)            # vₖ = M⁻¹qₖ
+      α = ρ / @kdot(n, c, v)               # αₖ = ⟨r̅₀,rₖ₋₁⟩ / ⟨r̅₀,vₖ⟩
+      @kcopy!(n, r, s)                     # sₖ = rₖ₋₁
+      @kaxpy!(n, -α, v, s)                 # sₖ = sₖ - αₖvₖ
+      @kaxpy!(n, α, y, x)                  # xₐᵤₓ = xₖ₋₁ + αₖyₖ
+      NisI || mulorldiv!(z, N, s, ldiv)    # zₖ = N⁻¹sₖ
+      mul!(d, A, z)                        # dₖ = Azₖ
+      MisI || mulorldiv!(t, M, d, ldiv)    # tₖ = M⁻¹dₖ
+      ω = @kdot(n, t, s) / @kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
+      @kaxpy!(n, ω, z, x)                  # xₖ = xₐᵤₓ + ωₖzₖ
+      @kcopy!(n, s, r)                     # rₖ = sₖ
+      @kaxpy!(n, -ω, t, r)                 # rₖ = rₖ - ωₖtₖ
+      next_ρ = @kdot(n, c, r)              # ρₖ₊₁ = ⟨r̅₀,rₖ⟩
+      β = (next_ρ / ρ) * (α / ω)           # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
+      @kaxpy!(n, -ω, v, p)                 # pₐᵤₓ = pₖ - ωₖvₖ
+      @kaxpby!(n, one(FC), r, β, p)        # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
+
+      # Compute residual norm ‖rₖ‖₂.
+      rNorm = @knrm2(n, r)
+      history && push!(rNorms, rNorm)
+
+      # Stopping conditions that do not depend on user input.
+      # This is to guard against tolerances that are unreasonably small.
+      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+
+      # Update stopping criterion.
+      user_requested_exit = callback(solver) :: Bool
+      resid_decrease_lim = rNorm ≤ ε
+      solved = resid_decrease_lim || resid_decrease_mach
+      tired = iter ≥ itmax
+      breakdown = (α == 0 || isnan(α))
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
+    end
+    (verbose > 0) && @printf(iostream, "\n")
+
+    # Termination status
+    tired               && (status = "maximum number of iterations exceeded")
+    breakdown           && (status = "breakdown αₖ == 0")
+    solved              && (status = "solution good enough given atol and rtol")
+    user_requested_exit && (status = "user-requested exit")
+    overtimed           && (status = "time limit exceeded")
+
+    # Update x
+    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    solver.warm_start = false
+
+    # Update stats
+    stats.niter = iter
+    stats.solved = solved
+    stats.inconsistent = false
+    stats.status = status
+    return solver
   end
-  (verbose > 0) && @printf(iostream, "\n")
-
-  # Termination status
-  tired               && (status = "maximum number of iterations exceeded")
-  breakdown           && (status = "breakdown αₖ == 0")
-  solved              && (status = "solution good enough given atol and rtol")
-  user_requested_exit && (status = "user-requested exit")
-  overtimed           && (status = "time limit exceeded")
-
-  # Update x
-  warm_start && @kaxpy!(n, one(FC), Δx, x)
-  solver.warm_start = false
-
-  # Update stats
-  stats.niter = iter
-  stats.solved = solved
-  stats.inconsistent = false
-  stats.status = status
-  return solver
 end

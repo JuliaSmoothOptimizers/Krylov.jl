@@ -122,142 +122,194 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     cr!(solver, A, b; $(kwargs_cr...))
     return solver
   end
-end
 
-function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
-             M=I, ldiv :: Bool=false, radius :: T=zero(T),
-             linesearch :: Bool=false, γ :: T=√eps(T),
-             atol :: T=√eps(T), rtol :: T=√eps(T), itmax :: Int=0,
-             timemax :: Float64=Inf, verbose :: Int=0,  history :: Bool=false,
-             callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  start_time = time_ns()
-  timemax_ns = 1e9 * timemax
-  m, n = size(A)
-  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
-  m == n || error("System must be square")
-  length(b) == n || error("Inconsistent problem size")
-  linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
-  (verbose > 0) && @printf(iostream, "CR: system of %d equations in %d variables\n", n, n)
+    # Timer
+    start_time = time_ns()
+    timemax_ns = 1e9 * timemax
 
-  # Tests M = Iₙ
-  MisI = (M === I)
+    m, n = size(A)
+    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    m == n || error("System must be square")
+    length(b) == n || error("Inconsistent problem size")
+    linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
+    (verbose > 0) && @printf(iostream, "CR: system of %d equations in %d variables\n", n, n)
 
-  # Check type consistency
-  eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    # Tests M = Iₙ
+    MisI = (M === I)
 
-  # Set up workspace
-  allocate_if(!MisI, solver, :Mq, S, n)
-  Δx, x, r, p, q, Ar, stats = solver.Δx, solver.x, solver.r, solver.p, solver.q, solver.Ar, solver.stats
-  warm_start = solver.warm_start
-  rNorms, ArNorms = stats.residuals, stats.Aresiduals
-  reset!(stats)
-  Mq = MisI ? q : solver.Mq
+    # Check type consistency
+    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
-  # Initial state.
-  x .= zero(FC)
-  if warm_start
-    mul!(p, A, Δx)
-    @kaxpby!(n, one(FC), b, -one(FC), p)
-  else
-    p .= b
-  end
-  mulorldiv!(r, M, p, ldiv)
-  mul!(Ar, A, r)
-  ρ = @kdotr(n, r, Ar)
+    # Set up workspace
+    allocate_if(!MisI, solver, :Mq, S, n)
+    Δx, x, r, p, q, Ar, stats = solver.Δx, solver.x, solver.r, solver.p, solver.q, solver.Ar, solver.stats
+    warm_start = solver.warm_start
+    rNorms, ArNorms = stats.residuals, stats.Aresiduals
+    reset!(stats)
+    Mq = MisI ? q : solver.Mq
 
-  rNorm = sqrt(@kdotr(n, r, p))   # ‖r‖
-  history && push!(rNorms, rNorm) # Values of ‖r‖
-
-  if ρ == 0
-    stats.niter = 0
-    stats.solved, stats.inconsistent = true, false
-    stats.status = "x = 0 is a zero-residual solution"
-    history && push!(ArNorms, zero(T))
-    solver.warm_start = false
-    return solver
-  end
-  p .= r
-  q .= Ar
-  (verbose > 0) && (m = zero(T)) # quadratic model
-
-  iter = 0
-  itmax == 0 && (itmax = 2 * n)
-
-  rNorm² = rNorm * rNorm
-  pNorm = rNorm
-  pNorm² = rNorm²
-  pr = rNorm²
-  abspr = pr
-  pAp = ρ
-  abspAp = abs(pAp)
-  xNorm = zero(T)
-  ArNorm = @knrm2(n, Ar) # ‖Ar‖
-  history && push!(ArNorms, ArNorm)
-  ε = atol + rtol * rNorm
-  (verbose > 0) && @printf(iostream, "%5s %8s %8s %8s\n", "k", "‖x‖", "‖r‖", "quad")
-  kdisplay(iter, verbose) && @printf(iostream, "    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
-
-  descent = pr > 0 # pᴴr > 0 means p is a descent direction
-  solved = rNorm ≤ ε
-  tired = iter ≥ itmax
-  on_boundary = false
-  npcurv = false
-  status = "unknown"
-  user_requested_exit = false
-  overtimed = false
-
-  while ! (solved || tired || user_requested_exit || overtimed)
-    if linesearch
-      if (pAp ≤ γ * pNorm²) || (ρ ≤ γ * rNorm²)
-        npcurv = true
-        (verbose > 0) && @printf(iostream, "nonpositive curvature detected: pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
-        stats.solved = solved
-        stats.inconsistent = false
-        stats.status = "nonpositive curvature"
-        return solver
-      end
-    elseif pAp ≤ 0 && radius == 0
-      error("Indefinite system and no trust region")
+    # Initial state.
+    x .= zero(FC)
+    if warm_start
+      mul!(p, A, Δx)
+      @kaxpby!(n, one(FC), b, -one(FC), p)
+    else
+      p .= b
     end
-    MisI || mulorldiv!(Mq, M, q, ldiv)
+    mulorldiv!(r, M, p, ldiv)
+    mul!(Ar, A, r)
+    ρ = @kdotr(n, r, Ar)
 
-    if radius > 0
-      (verbose > 0) && @printf(iostream, "radius = %8.1e > 0 and ‖x‖ = %8.1e\n", radius, xNorm)
-      # find t1 > 0 and t2 < 0 such that ‖x + ti * p‖² = radius²  (i = 1, 2)
-      xNorm² = xNorm * xNorm
-      t = to_boundary(n, x, p, radius; flip = false, xNorm2 = xNorm², dNorm2 = pNorm²)
-      t1 = maximum(t) # > 0
-      t2 = minimum(t) # < 0
-      tr = maximum(to_boundary(n, x, r, radius; flip = false, xNorm2 = xNorm², dNorm2 = rNorm²))
-      (verbose > 0) && @printf(iostream, "t1 = %8.1e, t2 = %8.1e and tr = %8.1e\n", t1, t2, tr)
+    rNorm = sqrt(@kdotr(n, r, p))   # ‖r‖
+    history && push!(rNorms, rNorm) # Values of ‖r‖
 
-      if abspAp ≤ γ * pNorm * @knrm2(n, q) # pᴴAp ≃ 0
-        npcurv = true # nonpositive curvature
-        (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e ≃ 0\n", pAp)
-        if abspr ≤ γ * pNorm * rNorm # pᴴr ≃ 0
-          (verbose > 0) && @printf(iostream, "pᴴr = %8.1e ≃ 0, redefining p := r\n", pr)
-          p = r # - ∇q(x)
-          q = Ar
-          # q(x + αr) = q(x) - α ‖r‖² + ½ α² rᴴAr
-          # 1) if rᴴAr > 0, the quadratic decreases from α = 0 to α = ‖r‖² / rᴴAr
-          # 2) if rᴴAr ≤ 0, the quadratic decreases to -∞ in the direction r
-          if ρ > 0 # case 1
-            (verbose > 0) && @printf(iostream, "quadratic is convex in direction r, curv = %8.1e\n", ρ)
-            α = min(tr, rNorm² / ρ)
-          else # case 2
-            (verbose > 0) && @printf(iostream, "r is a direction of nonpositive curvature: %8.1e\n", ρ)
-            α = tr
+    if ρ == 0
+      stats.niter = 0
+      stats.solved, stats.inconsistent = true, false
+      stats.status = "x = 0 is a zero-residual solution"
+      history && push!(ArNorms, zero(T))
+      solver.warm_start = false
+      return solver
+    end
+    p .= r
+    q .= Ar
+    (verbose > 0) && (m = zero(T)) # quadratic model
+
+    iter = 0
+    itmax == 0 && (itmax = 2 * n)
+
+    rNorm² = rNorm * rNorm
+    pNorm = rNorm
+    pNorm² = rNorm²
+    pr = rNorm²
+    abspr = pr
+    pAp = ρ
+    abspAp = abs(pAp)
+    xNorm = zero(T)
+    ArNorm = @knrm2(n, Ar) # ‖Ar‖
+    history && push!(ArNorms, ArNorm)
+    ε = atol + rtol * rNorm
+    (verbose > 0) && @printf(iostream, "%5s %8s %8s %8s\n", "k", "‖x‖", "‖r‖", "quad")
+    kdisplay(iter, verbose) && @printf(iostream, "    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
+
+    descent = pr > 0 # pᴴr > 0 means p is a descent direction
+    solved = rNorm ≤ ε
+    tired = iter ≥ itmax
+    on_boundary = false
+    npcurv = false
+    status = "unknown"
+    user_requested_exit = false
+    overtimed = false
+
+    while ! (solved || tired || user_requested_exit || overtimed)
+      if linesearch
+        if (pAp ≤ γ * pNorm²) || (ρ ≤ γ * rNorm²)
+          npcurv = true
+          (verbose > 0) && @printf(iostream, "nonpositive curvature detected: pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
+          stats.solved = solved
+          stats.inconsistent = false
+          stats.status = "nonpositive curvature"
+          return solver
+        end
+      elseif pAp ≤ 0 && radius == 0
+        error("Indefinite system and no trust region")
+      end
+      MisI || mulorldiv!(Mq, M, q, ldiv)
+
+      if radius > 0
+        (verbose > 0) && @printf(iostream, "radius = %8.1e > 0 and ‖x‖ = %8.1e\n", radius, xNorm)
+        # find t1 > 0 and t2 < 0 such that ‖x + ti * p‖² = radius²  (i = 1, 2)
+        xNorm² = xNorm * xNorm
+        t = to_boundary(n, x, p, radius; flip = false, xNorm2 = xNorm², dNorm2 = pNorm²)
+        t1 = maximum(t) # > 0
+        t2 = minimum(t) # < 0
+        tr = maximum(to_boundary(n, x, r, radius; flip = false, xNorm2 = xNorm², dNorm2 = rNorm²))
+        (verbose > 0) && @printf(iostream, "t1 = %8.1e, t2 = %8.1e and tr = %8.1e\n", t1, t2, tr)
+
+        if abspAp ≤ γ * pNorm * @knrm2(n, q) # pᴴAp ≃ 0
+          npcurv = true # nonpositive curvature
+          (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e ≃ 0\n", pAp)
+          if abspr ≤ γ * pNorm * rNorm # pᴴr ≃ 0
+            (verbose > 0) && @printf(iostream, "pᴴr = %8.1e ≃ 0, redefining p := r\n", pr)
+            p = r # - ∇q(x)
+            q = Ar
+            # q(x + αr) = q(x) - α ‖r‖² + ½ α² rᴴAr
+            # 1) if rᴴAr > 0, the quadratic decreases from α = 0 to α = ‖r‖² / rᴴAr
+            # 2) if rᴴAr ≤ 0, the quadratic decreases to -∞ in the direction r
+            if ρ > 0 # case 1
+              (verbose > 0) && @printf(iostream, "quadratic is convex in direction r, curv = %8.1e\n", ρ)
+              α = min(tr, rNorm² / ρ)
+            else # case 2
+              (verbose > 0) && @printf(iostream, "r is a direction of nonpositive curvature: %8.1e\n", ρ)
+              α = tr
+            end
+          else
+            # q_p = q(x + α_p * p) - q(x) = -α_p * rᴴp + ½ (α_p)² * pᴴAp
+            # q_r = q(x + α_r * r) - q(x) = -α_r * ‖r‖² + ½ (α_r)² * rᴴAr
+            # Δ = q_p - q_r. If Δ > 0, r is followed, else p is followed
+            α = descent ? t1 : t2
+            ρ > 0 && (tr = min(tr, rNorm² / ρ))
+            Δ = -α * pr + tr * rNorm² - (tr)^2 * ρ / 2 # as pᴴAp = 0
+            if Δ > 0 # direction r engenders a better decrease
+              (verbose > 0) && @printf(iostream, "direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
+              (verbose > 0) && @printf(iostream, "redefining p := r\n")
+              p = r
+              q = Ar
+              α = tr
+            else
+              (verbose > 0) && @printf(iostream, "direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
+            end
           end
-        else
-          # q_p = q(x + α_p * p) - q(x) = -α_p * rᴴp + ½ (α_p)² * pᴴAp
-          # q_r = q(x + α_r * r) - q(x) = -α_r * ‖r‖² + ½ (α_r)² * rᴴAr
-          # Δ = q_p - q_r. If Δ > 0, r is followed, else p is followed
+
+        elseif pAp > 0 && ρ > 0 # no negative curvature
+          (verbose > 0) && @printf(iostream, "positive curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
+          α = ρ / @kdotr(n, q, Mq)
+          if α ≥ t1
+            α = t1
+            on_boundary = true
+          end
+
+        elseif pAp > 0 && ρ < 0
+          npcurv = true
+          (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e > 0 and rᴴAr = %8.1e < 0\n", pAp, ρ)
+          # q_p is minimal for α_p = rᴴp / pᴴAp
+          α = descent ?  min(t1, pr / pAp) : max(t2, pr / pAp)
+          Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
+          if Δ > 0
+            (verbose > 0) && @printf(iostream, "direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
+            (verbose > 0) && @printf(iostream, "redefining p := r\n")
+            p = r
+            q = Ar
+            α = tr
+          else
+            (verbose > 0) && @printf(iostream, "direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
+          end
+
+        elseif pAp < 0 && ρ > 0
+          npcurv = true
+          (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e < 0 and rᴴAr = %8.1e > 0\n", pAp, ρ)
           α = descent ? t1 : t2
-          ρ > 0 && (tr = min(tr, rNorm² / ρ))
-          Δ = -α * pr + tr * rNorm² - (tr)^2 * ρ / 2 # as pᴴAp = 0
-          if Δ > 0 # direction r engenders a better decrease
+          tr = min(tr, rNorm² / ρ)
+          Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
+          if Δ > 0
+            (verbose > 0) && @printf(iostream, "direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
+            (verbose > 0) && @printf(iostream, "redefining p := r\n")
+            p = r
+            q = Ar
+            α = tr
+          else
+            (verbose > 0) && @printf(iostream, "direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
+          end
+
+        elseif pAp < 0 && ρ < 0
+          npcurv = true
+          (verbose > 0) && @printf(iostream, "negative curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
+          α = descent ? t1 : t2
+          Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
+          if Δ > 0
             (verbose > 0) && @printf(iostream, "direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
             (verbose > 0) && @printf(iostream, "redefining p := r\n")
             p = r
@@ -268,146 +320,91 @@ function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC};
           end
         end
 
-      elseif pAp > 0 && ρ > 0 # no negative curvature
-        (verbose > 0) && @printf(iostream, "positive curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
-        α = ρ / @kdotr(n, q, Mq)
-        if α ≥ t1
-          α = t1
-          on_boundary = true
-        end
-
-      elseif pAp > 0 && ρ < 0
-        npcurv = true
-        (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e > 0 and rᴴAr = %8.1e < 0\n", pAp, ρ)
-        # q_p is minimal for α_p = rᴴp / pᴴAp
-        α = descent ?  min(t1, pr / pAp) : max(t2, pr / pAp)
-        Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
-        if Δ > 0
-          (verbose > 0) && @printf(iostream, "direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
-          (verbose > 0) && @printf(iostream, "redefining p := r\n")
-          p = r
-          q = Ar
-          α = tr
-        else
-          (verbose > 0) && @printf(iostream, "direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
-        end
-
-      elseif pAp < 0 && ρ > 0
-        npcurv = true
-        (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e < 0 and rᴴAr = %8.1e > 0\n", pAp, ρ)
-        α = descent ? t1 : t2
-        tr = min(tr, rNorm² / ρ)
-        Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
-        if Δ > 0
-          (verbose > 0) && @printf(iostream, "direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
-          (verbose > 0) && @printf(iostream, "redefining p := r\n")
-          p = r
-          q = Ar
-          α = tr
-        else
-          (verbose > 0) && @printf(iostream, "direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
-        end
-
-      elseif pAp < 0 && ρ < 0
-        npcurv = true
-        (verbose > 0) && @printf(iostream, "negative curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
-        α = descent ? t1 : t2
-        Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
-        if Δ > 0
-          (verbose > 0) && @printf(iostream, "direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
-          (verbose > 0) && @printf(iostream, "redefining p := r\n")
-          p = r
-          q = Ar
-          α = tr
-        else
-          (verbose > 0) && @printf(iostream, "direction p engenders an equal or a bigger decrease. q_p - q_r = %8.1e ≤ 0\n", Δ)
-        end
+      elseif radius == 0
+        α = ρ / @kdotr(n, q, Mq) # step
       end
 
-    elseif radius == 0
-      α = ρ / @kdotr(n, q, Mq) # step
+      @kaxpy!(n, α, p, x)
+      xNorm = @knrm2(n, x)
+      xNorm ≈ radius && (on_boundary = true)
+      @kaxpy!(n, -α, Mq, r) # residual
+      if MisI
+        rNorm² = @kdotr(n, r, r)
+        rNorm = sqrt(rNorm²)
+      else
+        ω = sqrt(α) * sqrt(ρ)
+        rNorm = sqrt(abs(rNorm + ω)) * sqrt(abs(rNorm - ω))
+        rNorm² = rNorm * rNorm  # rNorm² = rNorm² - α * ρ
+      end
+      history && push!(rNorms, rNorm)
+      mul!(Ar, A, r)
+      ArNorm = @knrm2(n, Ar)
+      history && push!(ArNorms, ArNorm)
+
+      iter = iter + 1
+      if kdisplay(iter, verbose)
+        m = m - α * pr + α^2 * pAp / 2
+        @printf(iostream, "    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
+      end
+
+      # Stopping conditions that do not depend on user input.
+      # This is to guard against tolerances that are unreasonably small.
+      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+
+      user_requested_exit = callback(solver) :: Bool
+      resid_decrease_lim = rNorm ≤ ε
+      resid_decrease = resid_decrease_lim || resid_decrease_mach
+      solved = resid_decrease || npcurv || on_boundary
+      tired = iter ≥ itmax
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
+
+      (solved || tired || user_requested_exit || overtimed) && continue
+      ρbar = ρ
+      ρ = @kdotr(n, r, Ar)
+      β = ρ / ρbar # step for the direction computation
+      @kaxpby!(n, one(FC), r, β, p)
+      @kaxpby!(n, one(FC), Ar, β, q)
+
+      pNorm² = rNorm² + 2 * β * pr - 2 * β * α * pAp + β^2 * pNorm²
+      if pNorm² > sqrt(eps(T))
+        pNorm = sqrt(pNorm²)
+      elseif abs(pNorm²) ≤ sqrt(eps(T))
+        pNorm = zero(T)
+      else
+        stats.niter = iter
+        stats.solved = solved
+        stats.inconsistent = false
+        stats.status = "solver encountered numerical issues"
+        solver.warm_start = false
+        return solver
+      end
+      pr = rNorm² + β * pr - β * α * pAp # pᴴr
+      abspr = abs(pr)
+      pAp = ρ + β^2 * pAp # pᴴq
+      abspAp = abs(pAp)
+      descent = pr > 0
+
     end
+    (verbose > 0) && @printf(iostream, "\n")
 
-    @kaxpy!(n, α, p, x)
-    xNorm = @knrm2(n, x)
-    xNorm ≈ radius && (on_boundary = true)
-    @kaxpy!(n, -α, Mq, r) # residual
-    if MisI
-      rNorm² = @kdotr(n, r, r)
-      rNorm = sqrt(rNorm²)
-    else
-      ω = sqrt(α) * sqrt(ρ)
-      rNorm = sqrt(abs(rNorm + ω)) * sqrt(abs(rNorm - ω))
-      rNorm² = rNorm * rNorm  # rNorm² = rNorm² - α * ρ
-    end
-    history && push!(rNorms, rNorm)
-    mul!(Ar, A, r)
-    ArNorm = @knrm2(n, Ar)
-    history && push!(ArNorms, ArNorm)
+    # Termination status
+    tired               && (status = "maximum number of iterations exceeded")
+    on_boundary         && (status = "on trust-region boundary")
+    npcurv              && (status = "nonpositive curvature")
+    solved              && (status = "solution good enough given atol and rtol")
+    user_requested_exit && (status = "user-requested exit")
+    overtimed           && (status = "time limit exceeded")
 
-    iter = iter + 1
-    if kdisplay(iter, verbose)
-      m = m - α * pr + α^2 * pAp / 2
-      @printf(iostream, "    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
-    end
+    # Update x
+    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    solver.warm_start = false
 
-    # Stopping conditions that do not depend on user input.
-    # This is to guard against tolerances that are unreasonably small.
-    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-
-    user_requested_exit = callback(solver) :: Bool
-    resid_decrease_lim = rNorm ≤ ε
-    resid_decrease = resid_decrease_lim || resid_decrease_mach
-    solved = resid_decrease || npcurv || on_boundary
-    tired = iter ≥ itmax
-    timer = time_ns() - start_time
-    overtimed = timer > timemax_ns
-
-    (solved || tired || user_requested_exit || overtimed) && continue
-    ρbar = ρ
-    ρ = @kdotr(n, r, Ar)
-    β = ρ / ρbar # step for the direction computation
-    @kaxpby!(n, one(FC), r, β, p)
-    @kaxpby!(n, one(FC), Ar, β, q)
-
-    pNorm² = rNorm² + 2 * β * pr - 2 * β * α * pAp + β^2 * pNorm²
-    if pNorm² > sqrt(eps(T))
-      pNorm = sqrt(pNorm²)
-    elseif abs(pNorm²) ≤ sqrt(eps(T))
-      pNorm = zero(T)
-    else
-      stats.niter = iter
-      stats.solved = solved
-      stats.inconsistent = false
-      stats.status = "solver encountered numerical issues"
-      solver.warm_start = false
-      return solver
-    end
-    pr = rNorm² + β * pr - β * α * pAp # pᴴr
-    abspr = abs(pr)
-    pAp = ρ + β^2 * pAp # pᴴq
-    abspAp = abs(pAp)
-    descent = pr > 0
-
+    # Update stats
+    stats.niter = iter
+    stats.solved = solved
+    stats.inconsistent = false
+    stats.status = status
+    return solver
   end
-  (verbose > 0) && @printf(iostream, "\n")
-
-  # Termination status
-  tired               && (status = "maximum number of iterations exceeded")
-  on_boundary         && (status = "on trust-region boundary")
-  npcurv              && (status = "nonpositive curvature")
-  solved              && (status = "solution good enough given atol and rtol")
-  user_requested_exit && (status = "user-requested exit")
-  overtimed           && (status = "time limit exceeded")
-
-  # Update x
-  warm_start && @kaxpy!(n, one(FC), Δx, x)
-  solver.warm_start = false
-
-  # Update stats
-  stats.niter = iter
-  stats.solved = solved
-  stats.inconsistent = false
-  stats.status = status
-  return solver
 end

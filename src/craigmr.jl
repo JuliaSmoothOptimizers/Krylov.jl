@@ -150,242 +150,239 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     craigmr!(solver, A, b; $(kwargs_craigmr...))
     return (solver.x, solver.y, solver.stats)
   end
-end
 
-function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC};
-                  M=I, N=I, ldiv :: Bool=false,
-                  sqd :: Bool=false, λ :: T=zero(T), atol :: T=√eps(T),
-                  rtol :: T=√eps(T), itmax :: Int=0,
-                  timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
-                  callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function craigmr!(solver :: CraigmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_craigmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  start_time = time_ns()
-  timemax_ns = 1e9 * timemax
-  m, n = size(A)
-  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
-  length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf(iostream, "CRAIGMR: system of %d equations in %d variables\n", m, n)
+    # Timer
+    start_time = time_ns()
+    timemax_ns = 1e9 * timemax
 
-  # Check sqd and λ parameters
-  sqd && (λ ≠ 0) && error("sqd cannot be set to true if λ ≠ 0 !")
-  sqd && (λ = one(T))
+    m, n = size(A)
+    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    length(b) == m || error("Inconsistent problem size")
+    (verbose > 0) && @printf(iostream, "CRAIGMR: system of %d equations in %d variables\n", m, n)
 
-  # Tests M = Iₘ and N = Iₙ
-  MisI = (M === I)
-  NisI = (N === I)
+    # Check sqd and λ parameters
+    sqd && (λ ≠ 0) && error("sqd cannot be set to true if λ ≠ 0 !")
+    sqd && (λ = one(T))
 
-  # Check type consistency
-  eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    # Tests M = Iₘ and N = Iₙ
+    MisI = (M === I)
+    NisI = (N === I)
 
-  # Compute the adjoint of A
-  Aᴴ = A'
+    # Check type consistency
+    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
-  # Set up workspace.
-  allocate_if(!MisI, solver, :u, S, m)
-  allocate_if(!NisI, solver, :v, S, n)
-  allocate_if(λ > 0, solver, :q, S, n)
-  x, Nv, Aᴴu, d, y, Mu = solver.x, solver.Nv, solver.Aᴴu, solver.d, solver.y, solver.Mu
-  w, wbar, Av, q, stats = solver.w, solver.wbar, solver.Av, solver.q, solver.stats
-  rNorms, ArNorms = stats.residuals, stats.Aresiduals
-  reset!(stats)
-  u = MisI ? Mu : solver.u
-  v = NisI ? Nv : solver.v
+    # Compute the adjoint of A
+    Aᴴ = A'
 
-  # Compute y such that AAᴴy = b. Then recover x = Aᴴy.
-  x .= zero(FC)
-  y .= zero(FC)
-  Mu .= b
-  MisI || mulorldiv!(u, M, Mu, ldiv)
-  β = sqrt(@kdotr(m, u, Mu))
-  if β == 0
-    stats.niter = 0
-    stats.solved, stats.inconsistent = true, false
-    history && push!(rNorms, β)
-    history && push!(ArNorms, zero(T))
-    stats.status = "x = 0 is a zero-residual solution"
-    return solver
-  end
+    # Set up workspace.
+    allocate_if(!MisI, solver, :u, S, m)
+    allocate_if(!NisI, solver, :v, S, n)
+    allocate_if(λ > 0, solver, :q, S, n)
+    x, Nv, Aᴴu, d, y, Mu = solver.x, solver.Nv, solver.Aᴴu, solver.d, solver.y, solver.Mu
+    w, wbar, Av, q, stats = solver.w, solver.wbar, solver.Av, solver.q, solver.stats
+    rNorms, ArNorms = stats.residuals, stats.Aresiduals
+    reset!(stats)
+    u = MisI ? Mu : solver.u
+    v = NisI ? Nv : solver.v
 
-  # Initialize Golub-Kahan process.
-  # β₁Mu₁ = b.
-  @kscal!(m, one(FC)/β, u)
-  MisI || @kscal!(m, one(FC)/β, Mu)
-  # α₁Nv₁ = Aᴴu₁.
-  mul!(Aᴴu, Aᴴ, u)
-  Nv .= Aᴴu
-  NisI || mulorldiv!(v, N, Nv, ldiv)
-  α = sqrt(@kdotr(n, v, Nv))
-  Anorm² = α * α
-
-  iter = 0
-  itmax == 0 && (itmax = m + n)
-
-  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "α", "cos", "sin", "‖A‖²")
-  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", iter, β, α, β, α, 0, 1, Anorm²)
-
-  # Aᴴb = 0 so x = 0 is a minimum least-squares solution
-  if α == 0
-    stats.niter = 0
-    stats.solved, stats.inconsistent = true, false
-    history && push!(rNorms, β)
-    history && push!(ArNorms, zero(T))
-    stats.status = "x = 0 is a minimum least-squares solution"
-    return solver
-  end
-  @kscal!(n, one(FC)/α, v)
-  NisI || @kscal!(n, one(FC)/α, Nv)
-
-  # Regularization.
-  λₖ  = λ             # λ₁ = λ
-  cpₖ = spₖ = one(T)  # Givens sines and cosines used to zero out λₖ
-  cdₖ = sdₖ = one(T)  # Givens sines and cosines used to define λₖ₊₁
-  λ > 0 && (q .= v)   # Additional vector needed to update x, by definition q₀ = 0
-
-  if λ > 0
-    (cpₖ, spₖ, αhat) = sym_givens(α, λₖ)
-    @kscal!(n, spₖ, q)  # q̄₁ = sp₁ * v₁
-  else
-    αhat = α
-  end
-
-  # Initialize other constants.
-  ζbar = β
-  ρbar = αhat
-  θ = zero(T)
-  rNorm = ζbar
-  history && push!(rNorms, rNorm)
-  ArNorm = α
-  history && push!(ArNorms, ArNorm)
-
-  ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
-  ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
-
-  wbar .= u
-  @kscal!(m, one(FC)/αhat, wbar)
-  w .= zero(FC)
-  d .= zero(FC)
-
-  status = "unknown"
-  solved = rNorm ≤ ɛ_c
-  inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
-  tired  = iter ≥ itmax
-  user_requested_exit = false
-  overtimed = false
-
-  while ! (solved || inconsistent || tired || user_requested_exit || overtimed)
-    iter = iter + 1
-
-    # Generate next Golub-Kahan vectors.
-    # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-    mul!(Av, A, v)
-    @kaxpby!(m, one(FC), Av, -α, Mu)
+    # Compute y such that AAᴴy = b. Then recover x = Aᴴy.
+    x .= zero(FC)
+    y .= zero(FC)
+    Mu .= b
     MisI || mulorldiv!(u, M, Mu, ldiv)
     β = sqrt(@kdotr(m, u, Mu))
-    if β ≠ 0
-      @kscal!(m, one(FC)/β, u)
-      MisI || @kscal!(m, one(FC)/β, Mu)
+    if β == 0
+      stats.niter = 0
+      stats.solved, stats.inconsistent = true, false
+      history && push!(rNorms, β)
+      history && push!(ArNorms, zero(T))
+      stats.status = "x = 0 is a zero-residual solution"
+      return solver
     end
 
-    Anorm² = Anorm² + β * β  # = ‖B_{k-1}‖²
-
-    if λ > 0
-      βhat = cpₖ * β
-      λₐᵤₓ = spₖ * β
-    else
-      βhat = β
-    end
-
-    # Continue QR factorization
-    #
-    # Q [ Lₖ  β₁ e₁ ] = [ Rₖ   zₖ  ] :
-    #   [ β    0    ]   [ 0   ζbar ]
-    #
-    #       k  k+1    k    k+1      k  k+1
-    # k   [ c   s ] [ ρbar    ] = [ ρ  θ⁺    ]
-    # k+1 [ s  -c ] [ β    α⁺ ]   [    ρbar⁺ ]
-    #
-    # so that we obtain
-    #
-    # [ c  s ] [ ζbar ] = [ ζ     ]
-    # [ s -c ] [  0   ]   [ ζbar⁺ ]
-    (c, s, ρ) = sym_givens(ρbar, βhat)
-    ζ = c * ζbar
-    ζbar = s * ζbar
-    rNorm = abs(ζbar)
-    history && push!(rNorms, rNorm)
-
-    @kaxpby!(m, one(FC)/ρ, wbar, -θ/ρ, w)  # w = (wbar - θ * w) / ρ
-    @kaxpy!(m, ζ, w, y)                    # y = y + ζ * w
-
-    if λ > 0
-      # DₖRₖ = V̅ₖ with v̅ₖ = cpₖvₖ + spₖqₖ₋₁
-      if iter == 1
-        @kaxpy!(n, one(FC)/ρ, cpₖ * v, d)
-      else
-        @kaxpby!(n, one(FC)/ρ, cpₖ * v, -θ/ρ, d)
-        @kaxpy!(n, one(FC)/ρ, spₖ * q, d)
-        @kaxpby!(n, spₖ, v, -cpₖ, q)  # q̄ₖ ← spₖ * vₖ - cpₖ * qₖ₋₁
-      end
-    else
-      # DₖRₖ = Vₖ
-      if iter == 1
-        @kaxpy!(n, one(FC)/ρ, v, d)
-      else
-        @kaxpby!(n, one(FC)/ρ, v, -θ/ρ, d)
-      end
-    end
-
-    # xₖ = Dₖzₖ
-    @kaxpy!(n, ζ, d, x)
-
-    # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
+    # Initialize Golub-Kahan process.
+    # β₁Mu₁ = b.
+    @kscal!(m, one(FC)/β, u)
+    MisI || @kscal!(m, one(FC)/β, Mu)
+    # α₁Nv₁ = Aᴴu₁.
     mul!(Aᴴu, Aᴴ, u)
-    @kaxpby!(n, one(FC), Aᴴu, -β, Nv)
+    Nv .= Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
     α = sqrt(@kdotr(n, v, Nv))
-    Anorm² = Anorm² + α * α  # = ‖Lₖ‖
-    ArNorm = α * β * abs(ζ/ρ)
-    history && push!(ArNorms, ArNorm)
+    Anorm² = α * α
 
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm²)
+    iter = 0
+    itmax == 0 && (itmax = m + n)
+
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "α", "cos", "sin", "‖A‖²")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", iter, β, α, β, α, 0, 1, Anorm²)
+
+    # Aᴴb = 0 so x = 0 is a minimum least-squares solution
+    if α == 0
+      stats.niter = 0
+      stats.solved, stats.inconsistent = true, false
+      history && push!(rNorms, β)
+      history && push!(ArNorms, zero(T))
+      stats.status = "x = 0 is a minimum least-squares solution"
+      return solver
+    end
+    @kscal!(n, one(FC)/α, v)
+    NisI || @kscal!(n, one(FC)/α, Nv)
+
+    # Regularization.
+    λₖ  = λ             # λ₁ = λ
+    cpₖ = spₖ = one(T)  # Givens sines and cosines used to zero out λₖ
+    cdₖ = sdₖ = one(T)  # Givens sines and cosines used to define λₖ₊₁
+    λ > 0 && (q .= v)   # Additional vector needed to update x, by definition q₀ = 0
 
     if λ > 0
-      (cdₖ, sdₖ, λₖ₊₁) = sym_givens(λ, λₐᵤₓ)
-      @kscal!(n, sdₖ, q)  # qₖ ← sdₖ * q̄ₖ
-      (cpₖ, spₖ, αhat) = sym_givens(α, λₖ₊₁)
+      (cpₖ, spₖ, αhat) = sym_givens(α, λₖ)
+      @kscal!(n, spₖ, q)  # q̄₁ = sp₁ * v₁
     else
       αhat = α
     end
 
-    if α ≠ 0
-      @kscal!(n, one(FC)/α, v)
-      NisI || @kscal!(n, one(FC)/α, Nv)
-      @kaxpby!(m, one(T)/αhat, u, -βhat / αhat, wbar)  # wbar = (u - beta * wbar) / alpha
-    end
-    θ    =  s * αhat
-    ρbar = -c * αhat
+    # Initialize other constants.
+    ζbar = β
+    ρbar = αhat
+    θ = zero(T)
+    rNorm = ζbar
+    history && push!(rNorms, rNorm)
+    ArNorm = α
+    history && push!(ArNorms, ArNorm)
 
-    user_requested_exit = callback(solver) :: Bool
+    ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
+    ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
+
+    wbar .= u
+    @kscal!(m, one(FC)/αhat, wbar)
+    w .= zero(FC)
+    d .= zero(FC)
+
+    status = "unknown"
     solved = rNorm ≤ ɛ_c
     inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
-    tired = iter ≥ itmax
-    timer = time_ns() - start_time
-    overtimed = timer > timemax_ns
+    tired  = iter ≥ itmax
+    user_requested_exit = false
+    overtimed = false
+
+    while ! (solved || inconsistent || tired || user_requested_exit || overtimed)
+      iter = iter + 1
+
+      # Generate next Golub-Kahan vectors.
+      # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
+      mul!(Av, A, v)
+      @kaxpby!(m, one(FC), Av, -α, Mu)
+      MisI || mulorldiv!(u, M, Mu, ldiv)
+      β = sqrt(@kdotr(m, u, Mu))
+      if β ≠ 0
+        @kscal!(m, one(FC)/β, u)
+        MisI || @kscal!(m, one(FC)/β, Mu)
+      end
+
+      Anorm² = Anorm² + β * β  # = ‖B_{k-1}‖²
+
+      if λ > 0
+        βhat = cpₖ * β
+        λₐᵤₓ = spₖ * β
+      else
+        βhat = β
+      end
+
+      # Continue QR factorization
+      #
+      # Q [ Lₖ  β₁ e₁ ] = [ Rₖ   zₖ  ] :
+      #   [ β    0    ]   [ 0   ζbar ]
+      #
+      #       k  k+1    k    k+1      k  k+1
+      # k   [ c   s ] [ ρbar    ] = [ ρ  θ⁺    ]
+      # k+1 [ s  -c ] [ β    α⁺ ]   [    ρbar⁺ ]
+      #
+      # so that we obtain
+      #
+      # [ c  s ] [ ζbar ] = [ ζ     ]
+      # [ s -c ] [  0   ]   [ ζbar⁺ ]
+      (c, s, ρ) = sym_givens(ρbar, βhat)
+      ζ = c * ζbar
+      ζbar = s * ζbar
+      rNorm = abs(ζbar)
+      history && push!(rNorms, rNorm)
+
+      @kaxpby!(m, one(FC)/ρ, wbar, -θ/ρ, w)  # w = (wbar - θ * w) / ρ
+      @kaxpy!(m, ζ, w, y)                    # y = y + ζ * w
+
+      if λ > 0
+        # DₖRₖ = V̅ₖ with v̅ₖ = cpₖvₖ + spₖqₖ₋₁
+        if iter == 1
+          @kaxpy!(n, one(FC)/ρ, cpₖ * v, d)
+        else
+          @kaxpby!(n, one(FC)/ρ, cpₖ * v, -θ/ρ, d)
+          @kaxpy!(n, one(FC)/ρ, spₖ * q, d)
+          @kaxpby!(n, spₖ, v, -cpₖ, q)  # q̄ₖ ← spₖ * vₖ - cpₖ * qₖ₋₁
+        end
+      else
+        # DₖRₖ = Vₖ
+        if iter == 1
+          @kaxpy!(n, one(FC)/ρ, v, d)
+        else
+          @kaxpby!(n, one(FC)/ρ, v, -θ/ρ, d)
+        end
+      end
+
+      # xₖ = Dₖzₖ
+      @kaxpy!(n, ζ, d, x)
+
+      # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
+      mul!(Aᴴu, Aᴴ, u)
+      @kaxpby!(n, one(FC), Aᴴu, -β, Nv)
+      NisI || mulorldiv!(v, N, Nv, ldiv)
+      α = sqrt(@kdotr(n, v, Nv))
+      Anorm² = Anorm² + α * α  # = ‖Lₖ‖
+      ArNorm = α * β * abs(ζ/ρ)
+      history && push!(ArNorms, ArNorm)
+
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm²)
+
+      if λ > 0
+        (cdₖ, sdₖ, λₖ₊₁) = sym_givens(λ, λₐᵤₓ)
+        @kscal!(n, sdₖ, q)  # qₖ ← sdₖ * q̄ₖ
+        (cpₖ, spₖ, αhat) = sym_givens(α, λₖ₊₁)
+      else
+        αhat = α
+      end
+
+      if α ≠ 0
+        @kscal!(n, one(FC)/α, v)
+        NisI || @kscal!(n, one(FC)/α, Nv)
+        @kaxpby!(m, one(T)/αhat, u, -βhat / αhat, wbar)  # wbar = (u - beta * wbar) / alpha
+      end
+      θ    =  s * αhat
+      ρbar = -c * αhat
+
+      user_requested_exit = callback(solver) :: Bool
+      solved = rNorm ≤ ɛ_c
+      inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
+      tired = iter ≥ itmax
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
+    end
+    (verbose > 0) && @printf(iostream, "\n")
+
+    # Termination status
+    tired               && (status = "maximum number of iterations exceeded")
+    solved              && (status = "found approximate minimum-norm solution")
+    !tired && !solved   && (status = "found approximate minimum least-squares solution")
+    user_requested_exit && (status = "user-requested exit")
+    overtimed           && (status = "time limit exceeded")
+
+    # Update stats
+    stats.niter = iter
+    stats.solved = solved
+    stats.inconsistent = inconsistent
+    stats.status = status
+    return solver
   end
-  (verbose > 0) && @printf(iostream, "\n")
-
-  # Termination status
-  tired               && (status = "maximum number of iterations exceeded")
-  solved              && (status = "found approximate minimum-norm solution")
-  !tired && !solved   && (status = "found approximate minimum least-squares solution")
-  user_requested_exit && (status = "user-requested exit")
-  overtimed           && (status = "time limit exceeded")
-
-  # Update stats
-  stats.niter = iter
-  stats.solved = solved
-  stats.inconsistent = inconsistent
-  stats.status = status
-  return solver
 end

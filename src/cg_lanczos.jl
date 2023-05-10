@@ -111,156 +111,153 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     cg_lanczos!(solver, A, b; $(kwargs_cg_lanczos...))
     return solver
   end
-end
 
-function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{FC};
-                     M=I, ldiv :: Bool=false,
-                     check_curvature :: Bool=false, atol :: T=√eps(T),
-                     rtol :: T=√eps(T), itmax :: Int=0,
-                     timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
-                     callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  start_time = time_ns()
-  timemax_ns = 1e9 * timemax
-  m, n = size(A)
-  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
-  m == n || error("System must be square")
-  length(b) == n || error("Inconsistent problem size")
-  (verbose > 0) && @printf(iostream, "CG Lanczos: system of %d equations in %d variables\n", n, n)
+    # Timer
+    start_time = time_ns()
+    timemax_ns = 1e9 * timemax
 
-  # Tests M = Iₙ
-  MisI = (M === I)
+    m, n = size(A)
+    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    m == n || error("System must be square")
+    length(b) == n || error("Inconsistent problem size")
+    (verbose > 0) && @printf(iostream, "CG Lanczos: system of %d equations in %d variables\n", n, n)
 
-  # Check type consistency
-  eltype(A) == FC || error("eltype(A) ≠ $T")
-  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    # Tests M = Iₙ
+    MisI = (M === I)
 
-  # Set up workspace.
-  allocate_if(!MisI, solver, :v, S, n)
-  Δx, x, Mv, Mv_prev = solver.Δx, solver.x, solver.Mv, solver.Mv_prev
-  p, Mv_next, stats = solver.p, solver.Mv_next, solver.stats
-  warm_start = solver.warm_start
-  rNorms = stats.residuals
-  reset!(stats)
-  v = MisI ? Mv : solver.v
+    # Check type consistency
+    eltype(A) == FC || error("eltype(A) ≠ $T")
+    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
-  # Initial state.
-  x .= zero(FC)
-  if warm_start
-    mul!(Mv, A, Δx)
-    @kaxpby!(n, one(FC), b, -one(FC), Mv)
-  else
-    Mv .= b
-  end
-  MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹r₀
-  β = sqrt(@kdotr(n, v, Mv))          # β₁ = v₁ᴴ M v₁
-  σ = β
-  rNorm = σ
-  history && push!(rNorms, rNorm)
-  if β == 0
-    stats.niter = 0
-    stats.solved = true
-    stats.Anorm = zero(T)
-    stats.indefinite = false
-    stats.status = "x = 0 is a zero-residual solution"
-    solver.warm_start = false
-    return solver
-  end
-  p .= v
+    # Set up workspace.
+    allocate_if(!MisI, solver, :v, S, n)
+    Δx, x, Mv, Mv_prev = solver.Δx, solver.x, solver.Mv, solver.Mv_prev
+    p, Mv_next, stats = solver.p, solver.Mv_next, solver.stats
+    warm_start = solver.warm_start
+    rNorms = stats.residuals
+    reset!(stats)
+    v = MisI ? Mv : solver.v
 
-  # Initialize Lanczos process.
-  # β₁Mv₁ = b
-  @kscal!(n, one(FC) / β, v)           # v₁  ←  v₁ / β₁
-  MisI || @kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
-  Mv_prev .= Mv
-
-  iter = 0
-  itmax == 0 && (itmax = 2 * n)
-
-  # Initialize some constants used in recursions below.
-  ω = zero(T)
-  γ = one(T)
-  Anorm2 = zero(T)
-  β_prev = zero(T)
-
-  # Define stopping tolerance.
-  ε = atol + rtol * rNorm
-  (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
-  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
-
-  indefinite = false
-  solved = rNorm ≤ ε
-  tired = iter ≥ itmax
-  status = "unknown"
-  user_requested_exit = false
-  overtimed = false
-
-  # Main loop.
-  while ! (solved || tired || (check_curvature & indefinite) || user_requested_exit || overtimed)
-    # Form next Lanczos vector.
-    # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-    mul!(Mv_next, A, v)        # Mvₖ₊₁ ← Avₖ
-    δ = @kdotr(n, v, Mv_next)  # δₖ = vₖᴴ A vₖ
-
-    # Check curvature. Exit fast if requested.
-    # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᴴ A pₖ.
-    γ = one(T) / (δ - ω / γ)  # γₖ = 1 / (δₖ - ωₖ₋₁ / γₖ₋₁)
-    indefinite |= (γ ≤ 0)
-    (check_curvature & indefinite) && continue
-
-    @kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
-    if iter > 0
-      @kaxpy!(n, -β, Mv_prev, Mv_next) # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
-      @. Mv_prev = Mv                  # Mvₖ₋₁ ← Mvₖ
+    # Initial state.
+    x .= zero(FC)
+    if warm_start
+      mul!(Mv, A, Δx)
+      @kaxpby!(n, one(FC), b, -one(FC), Mv)
+    else
+      Mv .= b
     end
-    @. Mv = Mv_next                      # Mvₖ ← Mvₖ₊₁
-    MisI || mulorldiv!(v, M, Mv, ldiv)   # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
-    β = sqrt(@kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
-    @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-    MisI || @kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
-    Anorm2 += β_prev^2 + β^2 + δ^2       # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
-    β_prev = β
-
-    # Compute next CG iterate.
-    @kaxpy!(n, γ, p, x)     # xₖ₊₁ = xₖ + γₖ * pₖ
-    ω = β * γ
-    σ = -ω * σ              # σₖ₊₁ = - βₖ₊₁ * γₖ * σₖ
-    ω = ω * ω               # ωₖ = (βₖ₊₁ * γₖ)²
-    @kaxpby!(n, σ, v, ω, p) # pₖ₊₁ = σₖ₊₁ * vₖ₊₁ + ωₖ * pₖ
-    rNorm = abs(σ)          # ‖rₖ₊₁‖_M = |σₖ₊₁| because rₖ₊₁ = σₖ₊₁ * vₖ₊₁ and ‖vₖ₊₁‖_M = 1
+    MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹r₀
+    β = sqrt(@kdotr(n, v, Mv))          # β₁ = v₁ᴴ M v₁
+    σ = β
+    rNorm = σ
     history && push!(rNorms, rNorm)
-    iter = iter + 1
+    if β == 0
+      stats.niter = 0
+      stats.solved = true
+      stats.Anorm = zero(T)
+      stats.indefinite = false
+      stats.status = "x = 0 is a zero-residual solution"
+      solver.warm_start = false
+      return solver
+    end
+    p .= v
+
+    # Initialize Lanczos process.
+    # β₁Mv₁ = b
+    @kscal!(n, one(FC) / β, v)           # v₁  ←  v₁ / β₁
+    MisI || @kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
+    Mv_prev .= Mv
+
+    iter = 0
+    itmax == 0 && (itmax = 2 * n)
+
+    # Initialize some constants used in recursions below.
+    ω = zero(T)
+    γ = one(T)
+    Anorm2 = zero(T)
+    β_prev = zero(T)
+
+    # Define stopping tolerance.
+    ε = atol + rtol * rNorm
+    (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
 
-    # Stopping conditions that do not depend on user input.
-    # This is to guard against tolerances that are unreasonably small.
-    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-    
-    user_requested_exit = callback(solver) :: Bool
-    resid_decrease_lim = rNorm ≤ ε
-    solved = resid_decrease_lim || resid_decrease_mach
+    indefinite = false
+    solved = rNorm ≤ ε
     tired = iter ≥ itmax
-    timer = time_ns() - start_time
-    overtimed = timer > timemax_ns
+    status = "unknown"
+    user_requested_exit = false
+    overtimed = false
+
+    # Main loop.
+    while ! (solved || tired || (check_curvature & indefinite) || user_requested_exit || overtimed)
+      # Form next Lanczos vector.
+      # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
+      mul!(Mv_next, A, v)        # Mvₖ₊₁ ← Avₖ
+      δ = @kdotr(n, v, Mv_next)  # δₖ = vₖᴴ A vₖ
+
+      # Check curvature. Exit fast if requested.
+      # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᴴ A pₖ.
+      γ = one(T) / (δ - ω / γ)  # γₖ = 1 / (δₖ - ωₖ₋₁ / γₖ₋₁)
+      indefinite |= (γ ≤ 0)
+      (check_curvature & indefinite) && continue
+
+      @kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
+      if iter > 0
+        @kaxpy!(n, -β, Mv_prev, Mv_next) # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
+        @. Mv_prev = Mv                  # Mvₖ₋₁ ← Mvₖ
+      end
+      @. Mv = Mv_next                      # Mvₖ ← Mvₖ₊₁
+      MisI || mulorldiv!(v, M, Mv, ldiv)   # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
+      β = sqrt(@kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
+      @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+      MisI || @kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+      Anorm2 += β_prev^2 + β^2 + δ^2       # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
+      β_prev = β
+
+      # Compute next CG iterate.
+      @kaxpy!(n, γ, p, x)     # xₖ₊₁ = xₖ + γₖ * pₖ
+      ω = β * γ
+      σ = -ω * σ              # σₖ₊₁ = - βₖ₊₁ * γₖ * σₖ
+      ω = ω * ω               # ωₖ = (βₖ₊₁ * γₖ)²
+      @kaxpby!(n, σ, v, ω, p) # pₖ₊₁ = σₖ₊₁ * vₖ₊₁ + ωₖ * pₖ
+      rNorm = abs(σ)          # ‖rₖ₊₁‖_M = |σₖ₊₁| because rₖ₊₁ = σₖ₊₁ * vₖ₊₁ and ‖vₖ₊₁‖_M = 1
+      history && push!(rNorms, rNorm)
+      iter = iter + 1
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
+
+      # Stopping conditions that do not depend on user input.
+      # This is to guard against tolerances that are unreasonably small.
+      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+      
+      user_requested_exit = callback(solver) :: Bool
+      resid_decrease_lim = rNorm ≤ ε
+      solved = resid_decrease_lim || resid_decrease_mach
+      tired = iter ≥ itmax
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
+    end
+    (verbose > 0) && @printf(iostream, "\n")
+
+    # Termination status
+    tired                          && (status = "maximum number of iterations exceeded")
+    (check_curvature & indefinite) && (status = "negative curvature")
+    solved                         && (status = "solution good enough given atol and rtol")
+    user_requested_exit            && (status = "user-requested exit")
+    overtimed                      && (status = "time limit exceeded")
+
+    # Update x
+    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    solver.warm_start = false
+
+    # Update stats. TODO: Estimate Acond.
+    stats.niter = iter
+    stats.solved = solved
+    stats.Anorm = sqrt(Anorm2)
+    stats.indefinite = indefinite
+    stats.status = status
+    return solver
   end
-  (verbose > 0) && @printf(iostream, "\n")
-
-  # Termination status
-  tired                          && (status = "maximum number of iterations exceeded")
-  (check_curvature & indefinite) && (status = "negative curvature")
-  solved                         && (status = "solution good enough given atol and rtol")
-  user_requested_exit            && (status = "user-requested exit")
-  overtimed                      && (status = "time limit exceeded")
-
-  # Update x
-  warm_start && @kaxpy!(n, one(FC), Δx, x)
-  solver.warm_start = false
-
-  # Update stats. TODO: Estimate Acond.
-  stats.niter = iter
-  stats.solved = solved
-  stats.Anorm = sqrt(Anorm2)
-  stats.indefinite = indefinite
-  stats.status = status
-  return solver
 end

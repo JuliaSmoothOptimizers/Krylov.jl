@@ -109,154 +109,152 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     crls!(solver, A, b; $(kwargs_crls...))
     return (solver.x, solver.stats)
   end
-end
 
-function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC};
-               M=I, ldiv :: Bool=false, radius :: T=zero(T),
-               λ :: T=zero(T), atol :: T=√eps(T), rtol :: T=√eps(T),
-               itmax :: Int=0, timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
-               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function crls!(solver :: CrlsSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_crls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  start_time = time_ns()
-  timemax_ns = 1e9 * timemax
-  m, n = size(A)
-  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
-  length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf(iostream, "CRLS: system of %d equations in %d variables\n", m, n)
+    # Timer
+    start_time = time_ns()
+    timemax_ns = 1e9 * timemax
 
-  # Tests M = Iₙ
-  MisI = (M === I)
+    m, n = size(A)
+    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    length(b) == m || error("Inconsistent problem size")
+    (verbose > 0) && @printf(iostream, "CRLS: system of %d equations in %d variables\n", m, n)
 
-  # Check type consistency
-  eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    # Tests M = Iₙ
+    MisI = (M === I)
 
-  # Compute the adjoint of A
-  Aᴴ = A'
+    # Check type consistency
+    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
-  # Set up workspace.
-  allocate_if(!MisI, solver, :Ms, S, m)
-  x, p, Ar, q = solver.x, solver.p, solver.Ar, solver.q
-  r, Ap, s, stats = solver.r, solver.Ap, solver.s, solver.stats
-  rNorms, ArNorms = stats.residuals, stats.Aresiduals
-  reset!(stats)
-  Ms  = MisI ? s  : solver.Ms
-  Mr  = MisI ? r  : solver.Ms
-  MAp = MisI ? Ap : solver.Ms
+    # Compute the adjoint of A
+    Aᴴ = A'
 
-  x .= zero(FC)
-  r .= b
-  bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
-  rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
-  history && push!(rNorms, rNorm)
-  if bNorm == 0
-    stats.niter = 0
-    stats.solved, stats.inconsistent = true, false
-    stats.status = "x = 0 is a zero-residual solution"
-    history && push!(ArNorms, zero(T))
-    return solver
-  end
+    # Set up workspace.
+    allocate_if(!MisI, solver, :Ms, S, m)
+    x, p, Ar, q = solver.x, solver.p, solver.Ar, solver.q
+    r, Ap, s, stats = solver.r, solver.Ap, solver.s, solver.stats
+    rNorms, ArNorms = stats.residuals, stats.Aresiduals
+    reset!(stats)
+    Ms  = MisI ? s  : solver.Ms
+    Mr  = MisI ? r  : solver.Ms
+    MAp = MisI ? Ap : solver.Ms
 
-  MisI || mulorldiv!(Mr, M, r, ldiv)
-  mul!(Ar, Aᴴ, Mr)  # - λ * x0 if x0 ≠ 0.
-  mul!(s, A, Ar)
-  MisI || mulorldiv!(Ms, M, s, ldiv)
-
-  p  .= Ar
-  Ap .= s
-  mul!(q, Aᴴ, Ms)  # Ap
-  λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
-  γ  = @kdotr(m, s, Ms)  # Faster than γ = dot(s, Ms)
-  iter = 0
-  itmax == 0 && (itmax = m + n)
-
-  ArNorm = @knrm2(n, Ar)  # Marginally faster than norm(Ar)
-  λ > 0 && (γ += λ * ArNorm * ArNorm)
-  history && push!(ArNorms, ArNorm)
-  ε = atol + rtol * ArNorm
-  (verbose > 0) && @printf(iostream, "%5s  %8s  %8s\n", "k", "‖Aᴴr‖", "‖r‖")
-  kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
-
-  status = "unknown"
-  on_boundary = false
-  solved = ArNorm ≤ ε
-  tired = iter ≥ itmax
-  psd = false
-  user_requested_exit = false
-  overtimed = false
-
-  while ! (solved || tired || user_requested_exit || overtimed)
-    qNorm² = @kdotr(n, q, q) # dot(q, q)
-    α = γ / qNorm²
-
-    # if a trust-region constraint is give, compute step to the boundary
-    # (note that α > 0 in CRLS)
-    if radius > 0
-      pNorm = @knrm2(n, p)
-      if @kdotr(m, Ap, Ap) ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is constant in the direction p
-        psd = true # det(AᴴA) = 0
-        p = Ar # p = Aᴴr
-        pNorm² = ArNorm * ArNorm
-        mul!(q, Aᴴ, s)
-        α = min(ArNorm^2 / γ, maximum(to_boundary(n, x, p, radius, flip = false, dNorm2 = pNorm²))) # the quadratic is minimal in the direction Aᴴr for α = ‖Ar‖²/γ
-      else
-        pNorm² = pNorm * pNorm
-        σ = maximum(to_boundary(n, x, p, radius, flip = false, dNorm2 = pNorm²))
-        if α ≥ σ
-          α = σ
-          on_boundary = true
-        end
-      end
+    x .= zero(FC)
+    r .= b
+    bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
+    rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
+    history && push!(rNorms, rNorm)
+    if bNorm == 0
+      stats.niter = 0
+      stats.solved, stats.inconsistent = true, false
+      stats.status = "x = 0 is a zero-residual solution"
+      history && push!(ArNorms, zero(T))
+      return solver
     end
 
-    @kaxpy!(n,  α, p,   x)     # Faster than  x =  x + α *  p
-    @kaxpy!(n, -α, q,  Ar)     # Faster than Ar = Ar - α *  q
-    ArNorm = @knrm2(n, Ar)
-    solved = psd || on_boundary
-    solved && continue
-    @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap
+    MisI || mulorldiv!(Mr, M, r, ldiv)
+    mul!(Ar, Aᴴ, Mr)  # - λ * x0 if x0 ≠ 0.
     mul!(s, A, Ar)
     MisI || mulorldiv!(Ms, M, s, ldiv)
-    γ_next = @kdotr(m, s, Ms)   # Faster than γ_next = dot(s, s)
-    λ > 0 && (γ_next += λ * ArNorm * ArNorm)
-    β = γ_next / γ
 
-    @kaxpby!(n, one(FC), Ar, β, p)    # Faster than  p = Ar + β *  p
-    @kaxpby!(m, one(FC), s, β, Ap)    # Faster than Ap =  s + β * Ap
-    MisI || mulorldiv!(MAp, M, Ap, ldiv)
-    mul!(q, Aᴴ, MAp)
+    p  .= Ar
+    Ap .= s
+    mul!(q, Aᴴ, Ms)  # Ap
     λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
+    γ  = @kdotr(m, s, Ms)  # Faster than γ = dot(s, Ms)
+    iter = 0
+    itmax == 0 && (itmax = m + n)
 
-    γ = γ_next
-    if λ > 0
-      rNorm = sqrt(@kdotr(m, r, r) + λ * @kdotr(n, x, x))
-    else
-      rNorm = @knrm2(m, r)  # norm(r)
-    end
-    history && push!(rNorms, rNorm)
+    ArNorm = @knrm2(n, Ar)  # Marginally faster than norm(Ar)
+    λ > 0 && (γ += λ * ArNorm * ArNorm)
     history && push!(ArNorms, ArNorm)
-    iter = iter + 1
+    ε = atol + rtol * ArNorm
+    (verbose > 0) && @printf(iostream, "%5s  %8s  %8s\n", "k", "‖Aᴴr‖", "‖r‖")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
-    user_requested_exit = callback(solver) :: Bool
-    solved = (ArNorm ≤ ε) || on_boundary
+
+    status = "unknown"
+    on_boundary = false
+    solved = ArNorm ≤ ε
     tired = iter ≥ itmax
-    timer = time_ns() - start_time
-    overtimed = timer > timemax_ns
+    psd = false
+    user_requested_exit = false
+    overtimed = false
+
+    while ! (solved || tired || user_requested_exit || overtimed)
+      qNorm² = @kdotr(n, q, q) # dot(q, q)
+      α = γ / qNorm²
+
+      # if a trust-region constraint is give, compute step to the boundary
+      # (note that α > 0 in CRLS)
+      if radius > 0
+        pNorm = @knrm2(n, p)
+        if @kdotr(m, Ap, Ap) ≤ ε * sqrt(qNorm²) * pNorm # the quadratic is constant in the direction p
+          psd = true # det(AᴴA) = 0
+          p = Ar # p = Aᴴr
+          pNorm² = ArNorm * ArNorm
+          mul!(q, Aᴴ, s)
+          α = min(ArNorm^2 / γ, maximum(to_boundary(n, x, p, radius, flip = false, dNorm2 = pNorm²))) # the quadratic is minimal in the direction Aᴴr for α = ‖Ar‖²/γ
+        else
+          pNorm² = pNorm * pNorm
+          σ = maximum(to_boundary(n, x, p, radius, flip = false, dNorm2 = pNorm²))
+          if α ≥ σ
+            α = σ
+            on_boundary = true
+          end
+        end
+      end
+
+      @kaxpy!(n,  α, p,   x)     # Faster than  x =  x + α *  p
+      @kaxpy!(n, -α, q,  Ar)     # Faster than Ar = Ar - α *  q
+      ArNorm = @knrm2(n, Ar)
+      solved = psd || on_boundary
+      solved && continue
+      @kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap
+      mul!(s, A, Ar)
+      MisI || mulorldiv!(Ms, M, s, ldiv)
+      γ_next = @kdotr(m, s, Ms)   # Faster than γ_next = dot(s, s)
+      λ > 0 && (γ_next += λ * ArNorm * ArNorm)
+      β = γ_next / γ
+
+      @kaxpby!(n, one(FC), Ar, β, p)    # Faster than  p = Ar + β *  p
+      @kaxpby!(m, one(FC), s, β, Ap)    # Faster than Ap =  s + β * Ap
+      MisI || mulorldiv!(MAp, M, Ap, ldiv)
+      mul!(q, Aᴴ, MAp)
+      λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
+
+      γ = γ_next
+      if λ > 0
+        rNorm = sqrt(@kdotr(m, r, r) + λ * @kdotr(n, x, x))
+      else
+        rNorm = @knrm2(m, r)  # norm(r)
+      end
+      history && push!(rNorms, rNorm)
+      history && push!(ArNorms, ArNorm)
+      iter = iter + 1
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
+      user_requested_exit = callback(solver) :: Bool
+      solved = (ArNorm ≤ ε) || on_boundary
+      tired = iter ≥ itmax
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
+    end
+    (verbose > 0) && @printf(iostream, "\n")
+
+    # Termination status
+    tired               && (status = "maximum number of iterations exceeded")
+    solved              && (status = "solution good enough given atol and rtol")
+    psd                 && (status = "zero-curvature encountered")
+    on_boundary         && (status = "on trust-region boundary")
+    user_requested_exit && (status = "user-requested exit")
+    overtimed           && (status = "time limit exceeded")
+
+    # Update stats
+    stats.niter = iter
+    stats.solved = solved
+    stats.inconsistent = false
+    stats.status = status
+    return solver
   end
-  (verbose > 0) && @printf(iostream, "\n")
-
-  # Termination status
-  tired               && (status = "maximum number of iterations exceeded")
-  solved              && (status = "solution good enough given atol and rtol")
-  psd                 && (status = "zero-curvature encountered")
-  on_boundary         && (status = "on trust-region boundary")
-  user_requested_exit && (status = "user-requested exit")
-  overtimed           && (status = "time limit exceeded")
-
-  # Update stats
-  stats.niter = iter
-  stats.solved = solved
-  stats.inconsistent = false
-  stats.status = status
-  return solver
 end

@@ -183,329 +183,322 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     lslq!(solver, A, b; $(kwargs_lslq...))
     return (solver.x, solver.stats)
   end
-end
 
-function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC};
-               M=I, N=I, ldiv :: Bool=false,
-               transfer_to_lsqr :: Bool=false,
-               sqd :: Bool=false, λ :: T=zero(T),
-               σ :: T=zero(T), etol :: T=√eps(T),
-               utol :: T=√eps(T), btol :: T=√eps(T),
-               conlim :: T=1/√eps(T), atol :: T=√eps(T),
-               rtol :: T=√eps(T), itmax :: Int=0,
-               timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
-               callback=solver->false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function lslq!(solver :: LslqSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_lslq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  start_time = time_ns()
-  timemax_ns = 1e9 * timemax
-  m, n = size(A)
-  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
-  length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf(iostream, "LSLQ: system of %d equations in %d variables\n", m, n)
+    # Timer
+    start_time = time_ns()
+    timemax_ns = 1e9 * timemax
 
-  # Check sqd and λ parameters
-  sqd && (λ ≠ 0) && error("sqd cannot be set to true if λ ≠ 0 !")
-  sqd && (λ = one(T))
+    m, n = size(A)
+    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    length(b) == m || error("Inconsistent problem size")
+    (verbose > 0) && @printf(iostream, "LSLQ: system of %d equations in %d variables\n", m, n)
 
-  # Tests M = Iₙ and N = Iₘ
-  MisI = (M === I)
-  NisI = (N === I)
+    # Check sqd and λ parameters
+    sqd && (λ ≠ 0) && error("sqd cannot be set to true if λ ≠ 0 !")
+    sqd && (λ = one(T))
 
-  # Check type consistency
-  eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    # Tests M = Iₙ and N = Iₘ
+    MisI = (M === I)
+    NisI = (N === I)
 
-  # Compute the adjoint of A
-  Aᴴ = A'
+    # Check type consistency
+    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
-  # Set up workspace.
-  allocate_if(!MisI, solver, :u, S, m)
-  allocate_if(!NisI, solver, :v, S, n)
-  x, Nv, Aᴴu, w̄ = solver.x, solver.Nv, solver.Aᴴu, solver.w̄
-  Mu, Av, err_vec, stats = solver.Mu, solver.Av, solver.err_vec, solver.stats
-  rNorms, ArNorms, err_lbnds = stats.residuals, stats.Aresiduals, stats.err_lbnds
-  err_ubnds_lq, err_ubnds_cg = stats.err_ubnds_lq, stats.err_ubnds_cg
-  reset!(stats)
-  u = MisI ? Mu : solver.u
-  v = NisI ? Nv : solver.v
+    # Compute the adjoint of A
+    Aᴴ = A'
 
-  λ² = λ * λ
-  ctol = conlim > 0 ? 1/conlim : zero(T)
+    # Set up workspace.
+    allocate_if(!MisI, solver, :u, S, m)
+    allocate_if(!NisI, solver, :v, S, n)
+    x, Nv, Aᴴu, w̄ = solver.x, solver.Nv, solver.Aᴴu, solver.w̄
+    Mu, Av, err_vec, stats = solver.Mu, solver.Av, solver.err_vec, solver.stats
+    rNorms, ArNorms, err_lbnds = stats.residuals, stats.Aresiduals, stats.err_lbnds
+    err_ubnds_lq, err_ubnds_cg = stats.err_ubnds_lq, stats.err_ubnds_cg
+    reset!(stats)
+    u = MisI ? Mu : solver.u
+    v = NisI ? Nv : solver.v
 
-  x .= zero(FC)  # LSLQ point
+    λ² = λ * λ
+    ctol = conlim > 0 ? 1/conlim : zero(T)
 
-  # Initialize Golub-Kahan process.
-  # β₁ M u₁ = b.
-  Mu .= b
-  MisI || mulorldiv!(u, M, Mu, ldiv)
-  β₁ = sqrt(@kdotr(m, u, Mu))
-  if β₁ == 0
-    stats.niter = 0
-    stats.solved, stats.inconsistent = true, false
-    stats.error_with_bnd = false
-    history && push!(rNorms, zero(T))
-    history && push!(ArNorms, zero(T))
-    stats.status = "x = 0 is a zero-residual solution"
-    return solver
-  end
-  β = β₁
+    x .= zero(FC)  # LSLQ point
 
-  @kscal!(m, one(FC)/β₁, u)
-  MisI || @kscal!(m, one(FC)/β₁, Mu)
-  mul!(Aᴴu, Aᴴ, u)
-  Nv .= Aᴴu
-  NisI || mulorldiv!(v, N, Nv, ldiv)
-  α = sqrt(@kdotr(n, v, Nv))  # = α₁
-
-  # Aᴴb = 0 so x = 0 is a minimum least-squares solution
-  if α == 0
-    stats.niter = 0
-    stats.solved, stats.inconsistent = true, false
-    stats.error_with_bnd = false
-    history && push!(rNorms, β₁)
-    history && push!(ArNorms, zero(T))
-    stats.status = "x = 0 is a minimum least-squares solution"
-    return solver
-  end
-  @kscal!(n, one(FC)/α, v)
-  NisI || @kscal!(n, one(FC)/α, Nv)
-
-  Anorm = α
-  Anorm² = α * α
-
-  # condition number estimate
-  σmax = zero(T)
-  σmin = Inf
-  Acond  = zero(T)
-
-  xlqNorm  = zero(T)
-  xlqNorm² = zero(T)
-  xcgNorm  = zero(T)
-  xcgNorm² = zero(T)
-
-  w̄ .= v  # w̄₁ = v₁
-
-  err_lbnd = zero(T)
-  window = length(err_vec)
-  err_vec .= zero(T)
-  complex_error_bnd = false
-
-  # Initialize other constants.
-  αL = α
-  βL = β
-  ρ̄ = -σ
-  γ̄ = α
-  ψ = β₁
-  c = -one(T)
-  s = zero(T)
-  δ = -one(T)
-  τ = α * β₁
-  ζ = zero(T)
-  ζ̄  = zero(T)
-  ζ̃  = zero(T)
-  csig = -one(T)
-
-  rNorm = β₁
-  history && push!(rNorms, rNorm)
-  ArNorm = α * β
-  history && push!(ArNorms, ArNorm)
-
-  iter = 0
-  itmax == 0 && (itmax = m + n)
-
-  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "α", "cos", "sin", "‖A‖²", "κ(A)", "‖xL‖")
-  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm², Acond, xlqNorm)
-
-  status = "unknown"
-  ε = atol + rtol * β₁
-  solved = solved_mach = solved_lim = (rNorm ≤ ε)
-  tired  = iter ≥ itmax
-  ill_cond = ill_cond_mach = ill_cond_lim = false
-  zero_resid = zero_resid_mach = zero_resid_lim = false
-  fwd_err_lbnd = false
-  fwd_err_ubnd = false
-  user_requested_exit = false
-  overtimed = false
-
-  while ! (solved || tired || ill_cond || user_requested_exit || overtimed)
-
-    # Generate next Golub-Kahan vectors.
-    # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-    mul!(Av, A, v)
-    @kaxpby!(m, one(FC), Av, -α, Mu)
+    # Initialize Golub-Kahan process.
+    # β₁ M u₁ = b.
+    Mu .= b
     MisI || mulorldiv!(u, M, Mu, ldiv)
-    β = sqrt(@kdotr(m, u, Mu))
-    if β ≠ 0
-      @kscal!(m, one(FC)/β, u)
-      MisI || @kscal!(m, one(FC)/β, Mu)
-
-      # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
-      mul!(Aᴴu, Aᴴ, u)
-      @kaxpby!(n, one(FC), Aᴴu, -β, Nv)
-      NisI || mulorldiv!(v, N, Nv, ldiv)
-      α = sqrt(@kdotr(n, v, Nv))
-      if α ≠ 0
-        @kscal!(n, one(FC)/α, v)
-        NisI || @kscal!(n, one(FC)/α, Nv)
-      end
-
-      # rotate out regularization term if present
-      αL = α
-      βL = β
-      if λ ≠ 0
-        (cL, sL, βL) = sym_givens(β, λ)
-        αL = cL * α
-
-        # the rotation updates the next regularization parameter
-        λ = sqrt(λ² + (sL * α)^2)
-      end
-      Anorm² = Anorm² + αL * αL + βL * βL  # = ‖Lₖ‖²
-      Anorm = sqrt(Anorm²)
+    β₁ = sqrt(@kdotr(m, u, Mu))
+    if β₁ == 0
+      stats.niter = 0
+      stats.solved, stats.inconsistent = true, false
+      stats.error_with_bnd = false
+      history && push!(rNorms, zero(T))
+      history && push!(ArNorms, zero(T))
+      stats.status = "x = 0 is a zero-residual solution"
+      return solver
     end
+    β = β₁
 
-    # Continue QR factorization of Bₖ
-    #
-    #       k   k+1     k   k+1      k  k+1
-    # k   [ c'   s' ] [ γ̄      ] = [ γ   δ  ]
-    # k+1 [ s'  -c' ] [ β   α⁺ ]   [     γ̄  ]
-    (cp, sp, γ) = sym_givens(γ̄, βL)
-    τ = -τ * δ / γ  # forward substitution for t
-    δ = sp * αL
-    γ̄ = -cp * αL
+    @kscal!(m, one(FC)/β₁, u)
+    MisI || @kscal!(m, one(FC)/β₁, Mu)
+    mul!(Aᴴu, Aᴴ, u)
+    Nv .= Aᴴu
+    NisI || mulorldiv!(v, N, Nv, ldiv)
+    α = sqrt(@kdotr(n, v, Nv))  # = α₁
 
-    if σ > 0 && !complex_error_bnd
-      # Continue QR factorization for error estimate
-      μ̄ = -csig * γ
-      (csig, ssig, ρ) = sym_givens(ρ̄, γ)
-      ρ̄ = ssig * μ̄ + csig * σ
-      μ̄ = -csig * δ
-
-      # determine component of eigenvector and Gauss-Radau parameter
-      h = δ * csig / ρ̄
-      disc = σ * (σ - δ * h)
-      disc < 0 ? complex_error_bnd = true : ω = sqrt(disc)
-      (csig, ssig, ρ) = sym_givens(ρ̄, δ)
-      ρ̄ = ssig * μ̄ + csig * σ
+    # Aᴴb = 0 so x = 0 is a minimum least-squares solution
+    if α == 0
+      stats.niter = 0
+      stats.solved, stats.inconsistent = true, false
+      stats.error_with_bnd = false
+      history && push!(rNorms, β₁)
+      history && push!(ArNorms, zero(T))
+      stats.status = "x = 0 is a minimum least-squares solution"
+      return solver
     end
+    @kscal!(n, one(FC)/α, v)
+    NisI || @kscal!(n, one(FC)/α, Nv)
 
-    # Continue LQ factorization of Rₖ
-    ϵ̄ = -γ * c
-    η = γ * s
-    (c, s, ϵ) = sym_givens(ϵ̄, δ)
+    Anorm = α
+    Anorm² = α * α
 
     # condition number estimate
-    # the QLP factorization suggests that the diagonal of M̄ approximates
-    # the singular values of B.
-    σmax = max(σmax, ϵ, abs(ϵ̄))
-    σmin = min(σmin, ϵ, abs(ϵ̄))
-    Acond = σmax / σmin
+    σmax = zero(T)
+    σmin = Inf
+    Acond  = zero(T)
 
-    # forward substitution for z, ζ̄
-    ζold = ζ
-    ζ = (τ - ζ * η) / ϵ
-    ζ̄ = ζ / c
+    xlqNorm  = zero(T)
+    xlqNorm² = zero(T)
+    xcgNorm  = zero(T)
+    xcgNorm² = zero(T)
 
-    # residual norm estimate
-    rNorm = sqrt((ψ * cp - ζold * η)^2 + (ψ * sp)^2)
+    w̄ .= v  # w̄₁ = v₁
+
+    err_lbnd = zero(T)
+    window = length(err_vec)
+    err_vec .= zero(T)
+    complex_error_bnd = false
+
+    # Initialize other constants.
+    αL = α
+    βL = β
+    ρ̄ = -σ
+    γ̄ = α
+    ψ = β₁
+    c = -one(T)
+    s = zero(T)
+    δ = -one(T)
+    τ = α * β₁
+    ζ = zero(T)
+    ζ̄  = zero(T)
+    ζ̃  = zero(T)
+    csig = -one(T)
+
+    rNorm = β₁
     history && push!(rNorms, rNorm)
-
-    ArNorm = sqrt((γ * ϵ * ζ)^2 + (δ * η * ζold)^2)
+    ArNorm = α * β
     history && push!(ArNorms, ArNorm)
 
-    # Compute ψₖ
-    ψ = ψ * sp
+    iter = 0
+    itmax == 0 && (itmax = m + n)
 
-    # Compute ‖x_cg‖₂
-    xcgNorm² = xlqNorm² + ζ̄ * ζ̄
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "α", "cos", "sin", "‖A‖²", "κ(A)", "‖xL‖")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm², Acond, xlqNorm)
 
-    if σ > 0 && iter > 0 && !complex_error_bnd
-      disc = ζ̃ * ζ̃ - ζ̄  * ζ̄ 
-      if disc < 0
-        complex_error_bnd = true
-      else
-        err_ubnd_cg = sqrt(disc)
-        history && push!(err_ubnds_cg, err_ubnd_cg)
-        fwd_err_ubnd = err_ubnd_cg ≤ utol * sqrt(xcgNorm²)
-      end
-    end
-
-    test1 = rNorm
-    test2 = ArNorm / (Anorm * rNorm)
-    test3 = 1 / Acond
-    t1    = test1 / (one(T) + Anorm * xlqNorm)
-    tol   = btol + atol * Anorm * xlqNorm / β₁
-
-    # update LSLQ point for next iteration
-    @kaxpy!(n, c * ζ, w̄, x)
-    @kaxpy!(n, s * ζ, v, x)
-
-    # compute w̄
-    @kaxpby!(n, -c, v, s, w̄)
-
-    xlqNorm² += ζ * ζ
-    xlqNorm = sqrt(xlqNorm²)
-
-    # check stopping condition based on forward error lower bound
-    err_vec[mod(iter, window) + 1] = ζ
-    if iter ≥ window
-      err_lbnd = @knrm2(window, err_vec)
-      history && push!(err_lbnds, err_lbnd)
-      fwd_err_lbnd = err_lbnd ≤ etol * xlqNorm
-    end
-
-    # compute LQ forward error upper bound
-    if σ > 0 && !complex_error_bnd
-      η̃ = ω * s
-      ϵ̃ = -ω * c
-      τ̃ = -τ * δ / ω
-      ζ̃ = (τ̃ - ζ * η̃) / ϵ̃
-      history && push!(err_ubnds_lq, abs(ζ̃ ))
-    end
-
-    # Stopping conditions that do not depend on user input.
-    # This is to guard against tolerances that are unreasonably small.
-    ill_cond_mach = (one(T) + test3 ≤ one(T))
-    solved_mach = (one(T) + test2 ≤ one(T))
-    zero_resid_mach = (one(T) + t1 ≤ one(T))
-
-    # Stopping conditions based on user-provided tolerances.
-    user_requested_exit = callback(solver) :: Bool
+    status = "unknown"
+    ε = atol + rtol * β₁
+    solved = solved_mach = solved_lim = (rNorm ≤ ε)
     tired  = iter ≥ itmax
-    ill_cond_lim = (test3 ≤ ctol)
-    solved_lim = (test2 ≤ atol)
-    zero_resid_lim = (test1 ≤ ε)
+    ill_cond = ill_cond_mach = ill_cond_lim = false
+    zero_resid = zero_resid_mach = zero_resid_lim = false
+    fwd_err_lbnd = false
+    fwd_err_ubnd = false
+    user_requested_exit = false
+    overtimed = false
 
-    ill_cond = ill_cond_mach || ill_cond_lim
-    zero_resid = zero_resid_mach || zero_resid_lim
-    solved = solved_mach || solved_lim || zero_resid || fwd_err_lbnd || fwd_err_ubnd
-    timer = time_ns() - start_time
-    overtimed = timer > timemax_ns
+    while ! (solved || tired || ill_cond || user_requested_exit || overtimed)
 
-    iter = iter + 1
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
+      # Generate next Golub-Kahan vectors.
+      # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
+      mul!(Av, A, v)
+      @kaxpby!(m, one(FC), Av, -α, Mu)
+      MisI || mulorldiv!(u, M, Mu, ldiv)
+      β = sqrt(@kdotr(m, u, Mu))
+      if β ≠ 0
+        @kscal!(m, one(FC)/β, u)
+        MisI || @kscal!(m, one(FC)/β, Mu)
+
+        # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
+        mul!(Aᴴu, Aᴴ, u)
+        @kaxpby!(n, one(FC), Aᴴu, -β, Nv)
+        NisI || mulorldiv!(v, N, Nv, ldiv)
+        α = sqrt(@kdotr(n, v, Nv))
+        if α ≠ 0
+          @kscal!(n, one(FC)/α, v)
+          NisI || @kscal!(n, one(FC)/α, Nv)
+        end
+
+        # rotate out regularization term if present
+        αL = α
+        βL = β
+        if λ ≠ 0
+          (cL, sL, βL) = sym_givens(β, λ)
+          αL = cL * α
+
+          # the rotation updates the next regularization parameter
+          λ = sqrt(λ² + (sL * α)^2)
+        end
+        Anorm² = Anorm² + αL * αL + βL * βL  # = ‖Lₖ‖²
+        Anorm = sqrt(Anorm²)
+      end
+
+      # Continue QR factorization of Bₖ
+      #
+      #       k   k+1     k   k+1      k  k+1
+      # k   [ c'   s' ] [ γ̄      ] = [ γ   δ  ]
+      # k+1 [ s'  -c' ] [ β   α⁺ ]   [     γ̄  ]
+      (cp, sp, γ) = sym_givens(γ̄, βL)
+      τ = -τ * δ / γ  # forward substitution for t
+      δ = sp * αL
+      γ̄ = -cp * αL
+
+      if σ > 0 && !complex_error_bnd
+        # Continue QR factorization for error estimate
+        μ̄ = -csig * γ
+        (csig, ssig, ρ) = sym_givens(ρ̄, γ)
+        ρ̄ = ssig * μ̄ + csig * σ
+        μ̄ = -csig * δ
+
+        # determine component of eigenvector and Gauss-Radau parameter
+        h = δ * csig / ρ̄
+        disc = σ * (σ - δ * h)
+        disc < 0 ? complex_error_bnd = true : ω = sqrt(disc)
+        (csig, ssig, ρ) = sym_givens(ρ̄, δ)
+        ρ̄ = ssig * μ̄ + csig * σ
+      end
+
+      # Continue LQ factorization of Rₖ
+      ϵ̄ = -γ * c
+      η = γ * s
+      (c, s, ϵ) = sym_givens(ϵ̄, δ)
+
+      # condition number estimate
+      # the QLP factorization suggests that the diagonal of M̄ approximates
+      # the singular values of B.
+      σmax = max(σmax, ϵ, abs(ϵ̄))
+      σmin = min(σmin, ϵ, abs(ϵ̄))
+      Acond = σmax / σmin
+
+      # forward substitution for z, ζ̄
+      ζold = ζ
+      ζ = (τ - ζ * η) / ϵ
+      ζ̄ = ζ / c
+
+      # residual norm estimate
+      rNorm = sqrt((ψ * cp - ζold * η)^2 + (ψ * sp)^2)
+      history && push!(rNorms, rNorm)
+
+      ArNorm = sqrt((γ * ϵ * ζ)^2 + (δ * η * ζold)^2)
+      history && push!(ArNorms, ArNorm)
+
+      # Compute ψₖ
+      ψ = ψ * sp
+
+      # Compute ‖x_cg‖₂
+      xcgNorm² = xlqNorm² + ζ̄ * ζ̄
+
+      if σ > 0 && iter > 0 && !complex_error_bnd
+        disc = ζ̃ * ζ̃ - ζ̄  * ζ̄ 
+        if disc < 0
+          complex_error_bnd = true
+        else
+          err_ubnd_cg = sqrt(disc)
+          history && push!(err_ubnds_cg, err_ubnd_cg)
+          fwd_err_ubnd = err_ubnd_cg ≤ utol * sqrt(xcgNorm²)
+        end
+      end
+
+      test1 = rNorm
+      test2 = ArNorm / (Anorm * rNorm)
+      test3 = 1 / Acond
+      t1    = test1 / (one(T) + Anorm * xlqNorm)
+      tol   = btol + atol * Anorm * xlqNorm / β₁
+
+      # update LSLQ point for next iteration
+      @kaxpy!(n, c * ζ, w̄, x)
+      @kaxpy!(n, s * ζ, v, x)
+
+      # compute w̄
+      @kaxpby!(n, -c, v, s, w̄)
+
+      xlqNorm² += ζ * ζ
+      xlqNorm = sqrt(xlqNorm²)
+
+      # check stopping condition based on forward error lower bound
+      err_vec[mod(iter, window) + 1] = ζ
+      if iter ≥ window
+        err_lbnd = @knrm2(window, err_vec)
+        history && push!(err_lbnds, err_lbnd)
+        fwd_err_lbnd = err_lbnd ≤ etol * xlqNorm
+      end
+
+      # compute LQ forward error upper bound
+      if σ > 0 && !complex_error_bnd
+        η̃ = ω * s
+        ϵ̃ = -ω * c
+        τ̃ = -τ * δ / ω
+        ζ̃ = (τ̃ - ζ * η̃) / ϵ̃
+        history && push!(err_ubnds_lq, abs(ζ̃ ))
+      end
+
+      # Stopping conditions that do not depend on user input.
+      # This is to guard against tolerances that are unreasonably small.
+      ill_cond_mach = (one(T) + test3 ≤ one(T))
+      solved_mach = (one(T) + test2 ≤ one(T))
+      zero_resid_mach = (one(T) + t1 ≤ one(T))
+
+      # Stopping conditions based on user-provided tolerances.
+      user_requested_exit = callback(solver) :: Bool
+      tired  = iter ≥ itmax
+      ill_cond_lim = (test3 ≤ ctol)
+      solved_lim = (test2 ≤ atol)
+      zero_resid_lim = (test1 ≤ ε)
+
+      ill_cond = ill_cond_mach || ill_cond_lim
+      zero_resid = zero_resid_mach || zero_resid_lim
+      solved = solved_mach || solved_lim || zero_resid || fwd_err_lbnd || fwd_err_ubnd
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
+
+      iter = iter + 1
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm, Acond, xlqNorm)
+    end
+    (verbose > 0) && @printf(iostream, "\n")
+
+    if transfer_to_lsqr  # compute LSQR point
+      @kaxpy!(n, ζ̄ , w̄, x)
+    end
+
+    # Termination status
+    tired               && (status = "maximum number of iterations exceeded")
+    ill_cond_mach       && (status = "condition number seems too large for this machine")
+    ill_cond_lim        && (status = "condition number exceeds tolerance")
+    solved              && (status = "found approximate minimum least-squares solution")
+    zero_resid          && (status = "found approximate zero-residual solution")
+    fwd_err_lbnd        && (status = "forward error lower bound small enough")
+    fwd_err_ubnd        && (status = "forward error upper bound small enough")
+    user_requested_exit && (status = "user-requested exit")
+    overtimed           && (status = "time limit exceeded")
+
+    # Update stats
+    stats.niter = iter
+    stats.solved = solved
+    stats.inconsistent = !zero_resid
+    stats.error_with_bnd = complex_error_bnd
+    stats.status = status
+    return solver
   end
-  (verbose > 0) && @printf(iostream, "\n")
-
-  if transfer_to_lsqr  # compute LSQR point
-    @kaxpy!(n, ζ̄ , w̄, x)
-  end
-
-  # Termination status
-  tired               && (status = "maximum number of iterations exceeded")
-  ill_cond_mach       && (status = "condition number seems too large for this machine")
-  ill_cond_lim        && (status = "condition number exceeds tolerance")
-  solved              && (status = "found approximate minimum least-squares solution")
-  zero_resid          && (status = "found approximate zero-residual solution")
-  fwd_err_lbnd        && (status = "forward error lower bound small enough")
-  fwd_err_ubnd        && (status = "forward error upper bound small enough")
-  user_requested_exit && (status = "user-requested exit")
-  overtimed           && (status = "time limit exceeded")
-
-  # Update stats
-  stats.niter = iter
-  stats.solved = solved
-  stats.inconsistent = !zero_resid
-  stats.error_with_bnd = complex_error_bnd
-  stats.status = status
-  return solver
 end
