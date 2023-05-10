@@ -128,7 +128,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     MisI = (M === I)
 
     # Check type consistency
-    eltype(A) == FC || error("eltype(A) ≠ $T")
+    eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
     # Set up workspace.
