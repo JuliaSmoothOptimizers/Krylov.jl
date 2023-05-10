@@ -123,125 +123,122 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     cgne!(solver, A, b; $(kwargs_cgne...))
     return (solver.x, solver.stats)
   end
-end
 
-function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC};
-               N=I, ldiv :: Bool=false,
-               λ :: T=zero(T), atol :: T=√eps(T),
-               rtol :: T=√eps(T), itmax :: Int=0,
-               timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
-               callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cgne!(solver :: CgneSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_cgne...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  start_time = time_ns()
-  timemax_ns = 1e9 * timemax
-  m, n = size(A)
-  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
-  length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf(iostream, "CGNE: system of %d equations in %d variables\n", m, n)
+    # Timer
+    start_time = time_ns()
+    timemax_ns = 1e9 * timemax
 
-  # Tests N = Iₙ
-  NisI = (N === I)
+    m, n = size(A)
+    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    length(b) == m || error("Inconsistent problem size")
+    (verbose > 0) && @printf(iostream, "CGNE: system of %d equations in %d variables\n", m, n)
 
-  # Check type consistency
-  eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    # Tests N = Iₙ
+    NisI = (N === I)
 
-  # Compute the adjoint of A
-  Aᴴ = A'
+    # Check type consistency
+    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
-  # Set up workspace.
-  allocate_if(!NisI, solver, :z, S, m)
-  allocate_if(λ > 0, solver, :s, S, m)
-  x, p, Aᴴz, r, q, s, stats = solver.x, solver.p, solver.Aᴴz, solver.r, solver.q, solver.s, solver.stats
-  rNorms = stats.residuals
-  reset!(stats)
-  z = NisI ? r : solver.z
+    # Compute the adjoint of A
+    Aᴴ = A'
 
-  x .= zero(FC)
-  r .= b
-  NisI || mulorldiv!(z, N, r, ldiv)
-  rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
-  history && push!(rNorms, rNorm)
-  if rNorm == 0
-    stats.niter = 0
-    stats.solved, stats.inconsistent = true, false
-    stats.status = "x = 0 is a zero-residual solution"
-    return solver
-  end
-  λ > 0 && (s .= r)
-  mul!(p, Aᴴ, z)
+    # Set up workspace.
+    allocate_if(!NisI, solver, :z, S, m)
+    allocate_if(λ > 0, solver, :s, S, m)
+    x, p, Aᴴz, r, q, s, stats = solver.x, solver.p, solver.Aᴴz, solver.r, solver.q, solver.s, solver.stats
+    rNorms = stats.residuals
+    reset!(stats)
+    z = NisI ? r : solver.z
 
-  # Use ‖p‖ to detect inconsistent system.
-  # An inconsistent system will necessarily have AA' singular.
-  # Because CGNE is equivalent to CG applied to AA'y = b, there will be a
-  # conjugate direction u such that u'AA'u = 0, i.e., A'u = 0. In this
-  # implementation, p is a substitute for A'u.
-  pNorm = @knrm2(n, p)
-
-  γ = @kdotr(m, r, z)  # Faster than γ = dot(r, z)
-  iter = 0
-  itmax == 0 && (itmax = m + n)
-
-  ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
-  ɛ_i = atol + rtol * pNorm  # Stopping tolerance for inconsistent systems.
-  (verbose > 0) && @printf(iostream, "%5s  %8s\n", "k", "‖r‖")
-  kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e\n", iter, rNorm)
-
-  status = "unknown"
-  solved = rNorm ≤ ɛ_c
-  inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
-  tired = iter ≥ itmax
-  user_requested_exit = false
-  overtimed = false
-
-  while ! (solved || inconsistent || tired || user_requested_exit || overtimed)
-    mul!(q, A, p)
-    λ > 0 && @kaxpy!(m, λ, s, q)
-    δ = @kdotr(n, p, p)   # Faster than dot(p, p)
-    λ > 0 && (δ += λ * @kdotr(m, s, s))
-    α = γ / δ
-    @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
-    @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
+    x .= zero(FC)
+    r .= b
     NisI || mulorldiv!(z, N, r, ldiv)
-    γ_next = @kdotr(m, r, z)  # Faster than γ_next = dot(r, z)
-    β = γ_next / γ
-    mul!(Aᴴz, Aᴴ, z)
-    @kaxpby!(n, one(FC), Aᴴz, β, p)  # Faster than p = Aᴴz + β * p
-    pNorm = @knrm2(n, p)
-    if λ > 0
-      @kaxpby!(m, one(FC), r, β, s)  # s = r + β * s
-    end
-    γ = γ_next
-    rNorm = sqrt(γ_next)
+    rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
     history && push!(rNorms, rNorm)
-    iter = iter + 1
+    if rNorm == 0
+      stats.niter = 0
+      stats.solved, stats.inconsistent = true, false
+      stats.status = "x = 0 is a zero-residual solution"
+      return solver
+    end
+    λ > 0 && (s .= r)
+    mul!(p, Aᴴ, z)
+
+    # Use ‖p‖ to detect inconsistent system.
+    # An inconsistent system will necessarily have AA' singular.
+    # Because CGNE is equivalent to CG applied to AA'y = b, there will be a
+    # conjugate direction u such that u'AA'u = 0, i.e., A'u = 0. In this
+    # implementation, p is a substitute for A'u.
+    pNorm = @knrm2(n, p)
+
+    γ = @kdotr(m, r, z)  # Faster than γ = dot(r, z)
+    iter = 0
+    itmax == 0 && (itmax = m + n)
+
+    ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
+    ɛ_i = atol + rtol * pNorm  # Stopping tolerance for inconsistent systems.
+    (verbose > 0) && @printf(iostream, "%5s  %8s\n", "k", "‖r‖")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e\n", iter, rNorm)
 
-    # Stopping conditions that do not depend on user input.
-    # This is to guard against tolerances that are unreasonably small.
-    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-
-    user_requested_exit = callback(solver) :: Bool
-    resid_decrease_lim = rNorm ≤ ɛ_c
-    solved = resid_decrease_lim || resid_decrease_mach
+    status = "unknown"
+    solved = rNorm ≤ ɛ_c
     inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
     tired = iter ≥ itmax
-    timer = time_ns() - start_time
-    overtimed = timer > timemax_ns
+    user_requested_exit = false
+    overtimed = false
+
+    while ! (solved || inconsistent || tired || user_requested_exit || overtimed)
+      mul!(q, A, p)
+      λ > 0 && @kaxpy!(m, λ, s, q)
+      δ = @kdotr(n, p, p)   # Faster than dot(p, p)
+      λ > 0 && (δ += λ * @kdotr(m, s, s))
+      α = γ / δ
+      @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
+      @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
+      NisI || mulorldiv!(z, N, r, ldiv)
+      γ_next = @kdotr(m, r, z)  # Faster than γ_next = dot(r, z)
+      β = γ_next / γ
+      mul!(Aᴴz, Aᴴ, z)
+      @kaxpby!(n, one(FC), Aᴴz, β, p)  # Faster than p = Aᴴz + β * p
+      pNorm = @knrm2(n, p)
+      if λ > 0
+        @kaxpby!(m, one(FC), r, β, s)  # s = r + β * s
+      end
+      γ = γ_next
+      rNorm = sqrt(γ_next)
+      history && push!(rNorms, rNorm)
+      iter = iter + 1
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e\n", iter, rNorm)
+
+      # Stopping conditions that do not depend on user input.
+      # This is to guard against tolerances that are unreasonably small.
+      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+
+      user_requested_exit = callback(solver) :: Bool
+      resid_decrease_lim = rNorm ≤ ɛ_c
+      solved = resid_decrease_lim || resid_decrease_mach
+      inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
+      tired = iter ≥ itmax
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
+    end
+    (verbose > 0) && @printf(iostream, "\n")
+
+    # Termination status
+    tired               && (status = "maximum number of iterations exceeded")
+    inconsistent        && (status = "system probably inconsistent")
+    solved              && (status = "solution good enough given atol and rtol")
+    user_requested_exit && (status = "user-requested exit")
+    overtimed           && (status = "time limit exceeded")
+
+    # Update stats
+    stats.niter = iter
+    stats.solved = solved
+    stats.inconsistent = inconsistent
+    stats.status = status
+    return solver
   end
-  (verbose > 0) && @printf(iostream, "\n")
-
-  # Termination status
-  tired               && (status = "maximum number of iterations exceeded")
-  inconsistent        && (status = "system probably inconsistent")
-  solved              && (status = "solution good enough given atol and rtol")
-  user_requested_exit && (status = "user-requested exit")
-  overtimed           && (status = "time limit exceeded")
-
-  # Update stats
-  stats.niter = iter
-  stats.solved = solved
-  stats.inconsistent = inconsistent
-  stats.status = status
-  return solver
 end

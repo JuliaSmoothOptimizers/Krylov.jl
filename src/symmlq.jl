@@ -123,184 +123,76 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     symmlq!(solver, A, b; $(kwargs_symmlq...))
     return solver
   end
-end
 
-function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
-                 M=I, ldiv :: Bool=false,
-                 transfer_to_cg :: Bool=true, λ :: T=zero(T),
-                 λest :: T=zero(T), atol :: T=√eps(T),
-                 rtol :: T=√eps(T), etol :: T=√eps(T),
-                 conlim :: T=1/√eps(T), itmax :: Int=0,
-                 timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
-                 callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  start_time = time_ns()
-  timemax_ns = 1e9 * timemax
-  m, n = size(A)
-  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
-  m == n || error("System must be square")
-  length(b) == m || error("Inconsistent problem size")
-  (verbose > 0) && @printf(iostream, "SYMMLQ: system of size %d\n", n)
+    # Timer
+    start_time = time_ns()
+    timemax_ns = 1e9 * timemax
 
-  # Tests M = Iₙ
-  MisI = (M === I)
+    m, n = size(A)
+    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    m == n || error("System must be square")
+    length(b) == m || error("Inconsistent problem size")
+    (verbose > 0) && @printf(iostream, "SYMMLQ: system of size %d\n", n)
 
-  # Check type consistency
-  eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    # Tests M = Iₙ
+    MisI = (M === I)
 
-  # Set up workspace.
-  allocate_if(!MisI, solver, :v, S, n)
-  x, Mvold, Mv, Mv_next, w̅ = solver.x, solver.Mvold, solver.Mv, solver.Mv_next, solver.w̅
-  Δx, clist, zlist, sprod, stats = solver.Δx, solver.clist, solver.zlist, solver.sprod, solver.stats
-  warm_start = solver.warm_start
-  rNorms, rcgNorms = stats.residuals, stats.residualscg
-  errors, errorscg = stats.errors, stats.errorscg
-  reset!(stats)
-  v = MisI ? Mv : solver.v
-  vold = MisI ? Mvold : solver.v
+    # Check type consistency
+    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
-  ϵM = eps(T)
-  ctol = conlim > 0 ? 1 / conlim : zero(T)
+    # Set up workspace.
+    allocate_if(!MisI, solver, :v, S, n)
+    x, Mvold, Mv, Mv_next, w̅ = solver.x, solver.Mvold, solver.Mv, solver.Mv_next, solver.w̅
+    Δx, clist, zlist, sprod, stats = solver.Δx, solver.clist, solver.zlist, solver.sprod, solver.stats
+    warm_start = solver.warm_start
+    rNorms, rcgNorms = stats.residuals, stats.residualscg
+    errors, errorscg = stats.errors, stats.errorscg
+    reset!(stats)
+    v = MisI ? Mv : solver.v
+    vold = MisI ? Mvold : solver.v
 
-  # Initial solution x₀
-  x .= zero(FC)
+    ϵM = eps(T)
+    ctol = conlim > 0 ? 1 / conlim : zero(T)
 
-  if warm_start
-    mul!(Mvold, A, Δx)
-    (λ ≠ 0) && @kaxpy!(n, λ, Δx, Mvold)
-    @kaxpby!(n, one(FC), b, -one(FC), Mvold)
-  else
-    Mvold .= b
-  end
+    # Initial solution x₀
+    x .= zero(FC)
 
-  # Initialize Lanczos process.
-  # β₁ M v₁ = b.
-  MisI || mulorldiv!(vold, M, Mvold, ldiv)
-  β₁ = @kdotr(m, vold, Mvold)
-  if β₁ == 0
-    stats.niter = 0
-    stats.solved = true
-    stats.Anorm = T(NaN)
-    stats.Acond = T(NaN)
-    history && push!(rNorms, zero(T))
-    history && push!(rcgNorms, zero(T))
-    stats.status = "x = 0 is a zero-residual solution"
-    solver.warm_start = false
-    return solver
-  end
-  β₁ = sqrt(β₁)
-  β = β₁
-  @kscal!(m, one(FC) / β, vold)
-  MisI || @kscal!(m, one(FC) / β, Mvold)
-
-  w̅ .= vold
-
-  mul!(Mv, A, vold)
-  α = @kdotr(m, vold, Mv) + λ
-  @kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
-  MisI || mulorldiv!(v, M, Mv, ldiv)
-  β = @kdotr(m, v, Mv)
-  β < 0 && error("Preconditioner is not positive definite")
-  β = sqrt(β)
-  @kscal!(m, one(FC) / β, v)
-  MisI || @kscal!(m, one(FC) / β, Mv)
-
-  # Start QR factorization
-  γbar = α
-  δbar = β
-  ϵold = zero(T)
-  cold = one(T)
-  sold = zero(T)
-
-  ηold = zero(T)
-  η    = β₁
-  ζold = zero(T)
-
-  ANorm² = α * α + β * β
-
-  γmax = T(-Inf)
-  γmin = T(Inf)
-  ANorm = zero(T)
-  Acond = zero(T)
-
-  xNorm = zero(T)
-  rNorm = β₁
-  history && push!(rNorms, rNorm)
-
-  if γbar ≠ 0
-    ζbar = η / γbar
-    xcgNorm = abs(ζbar)
-    rcgNorm = β₁ * abs(ζbar)
-    history && push!(rcgNorms, rcgNorm)
-  else
-    history && push!(rcgNorms, missing)
-  end
-
-  err = T(Inf)
-  errcg = T(Inf)
-
-  window = length(clist)
-  clist .= zero(T)
-  zlist .= zero(T)
-  sprod .= one(T)
-
-  if λest ≠ 0
-    # Start QR factorization of Tₖ - λest I
-    ρbar = α - λest
-    σbar = β
-    ρ = sqrt(ρbar * ρbar + β * β)
-    cwold = -one(T)
-    cw = ρbar / ρ
-    sw = β / ρ
-
-    history && push!(errors, abs(β₁/λest))
-    if γbar ≠ 0
-      history && push!(errorscg, sqrt(errors[1]^2 - ζbar^2))
+    if warm_start
+      mul!(Mvold, A, Δx)
+      (λ ≠ 0) && @kaxpy!(n, λ, Δx, Mvold)
+      @kaxpby!(n, one(FC), b, -one(FC), Mvold)
     else
-      history && push!(errorscg, missing)
+      Mvold .= b
     end
-  end
 
-  iter = 0
-  itmax == 0 && (itmax = 2 * n)
+    # Initialize Lanczos process.
+    # β₁ M v₁ = b.
+    MisI || mulorldiv!(vold, M, Mvold, ldiv)
+    β₁ = @kdotr(m, vold, Mvold)
+    if β₁ == 0
+      stats.niter = 0
+      stats.solved = true
+      stats.Anorm = T(NaN)
+      stats.Acond = T(NaN)
+      history && push!(rNorms, zero(T))
+      history && push!(rcgNorms, zero(T))
+      stats.status = "x = 0 is a zero-residual solution"
+      solver.warm_start = false
+      return solver
+    end
+    β₁ = sqrt(β₁)
+    β = β₁
+    @kscal!(m, one(FC) / β, vold)
+    MisI || @kscal!(m, one(FC) / β, Mvold)
 
-  (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "k", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1")
-  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, β, cold, sold, ANorm, Acond)
+    w̅ .= vold
 
-  tol = atol + rtol * β₁
-  status = "unknown"
-  solved_lq = solved_mach = solved_lim = (rNorm ≤ tol)
-  solved_cg = (γbar ≠ 0) && transfer_to_cg && rcgNorm ≤ tol
-  tired = iter ≥ itmax
-  ill_cond = ill_cond_mach = ill_cond_lim = false
-  solved = zero_resid = solved_lq || solved_cg
-  fwd_err = false
-  user_requested_exit = false
-  overtimed = false
-
-  while ! (solved || tired || ill_cond || user_requested_exit || overtimed)
-    iter = iter + 1
-
-    # Continue QR factorization
-    (c, s, γ) = sym_givens(γbar, β)
-
-    # Update SYMMLQ point
-    ηold = η
-    ζ = ηold / γ
-    @kaxpy!(n, c * ζ, w̅, x)
-    @kaxpy!(n, s * ζ, v, x)
-    # Update w̅
-    @kaxpby!(n, -c, v, s, w̅)
-
-    # Generate next Lanczos vector
-    oldβ = β
-    mul!(Mv_next, A, v)
-    α = @kdotr(m, v, Mv_next) + λ
-    @kaxpy!(m, -oldβ, Mvold, Mv_next)
-    @. Mvold = Mv
-    @kaxpy!(m, -α, Mv, Mv_next)
-    @. Mv = Mv_next
+    mul!(Mv, A, vold)
+    α = @kdotr(m, vold, Mv) + λ
+    @kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
     MisI || mulorldiv!(v, M, Mv, ldiv)
     β = @kdotr(m, v, Mv)
     β < 0 && error("Preconditioner is not positive definite")
@@ -308,155 +200,258 @@ function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC};
     @kscal!(m, one(FC) / β, v)
     MisI || @kscal!(m, one(FC) / β, Mv)
 
-    # Continue A norm estimate
-    ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
+    # Start QR factorization
+    γbar = α
+    δbar = β
+    ϵold = zero(T)
+    cold = one(T)
+    sold = zero(T)
 
-    if λest ≠ 0
-      η = -oldβ * oldβ * cwold / ρbar
-      ω = λest + η
-      ψ = c * δbar + s * ω
-      ωbar = s * δbar - c * ω
-    end
+    ηold = zero(T)
+    η    = β₁
+    ζold = zero(T)
 
-    # Continue QR factorization
-    δ = δbar * c + α * s
-    γbar = δbar * s - α * c
-    ϵ = β * s
-    δbar = -β * c
-    η = -ϵold * ζold - δ * ζ
+    ANorm² = α * α + β * β
 
-    rNorm = sqrt(γ * γ * ζ * ζ + ϵold * ϵold * ζold * ζold)
-    xNorm = xNorm + ζ * ζ
+    γmax = T(-Inf)
+    γmin = T(Inf)
+    ANorm = zero(T)
+    Acond = zero(T)
+
+    xNorm = zero(T)
+    rNorm = β₁
     history && push!(rNorms, rNorm)
 
     if γbar ≠ 0
       ζbar = η / γbar
-      rcgNorm = β * abs(s * ζ - c * ζbar)
-      xcgNorm = xNorm + ζbar * ζbar
+      xcgNorm = abs(ζbar)
+      rcgNorm = β₁ * abs(ζbar)
       history && push!(rcgNorms, rcgNorm)
     else
       history && push!(rcgNorms, missing)
     end
 
-    if window > 0 && λest ≠ 0
-      if iter < window && window > 1
-        for i = iter+1 : window
-          sprod[i] = s * sprod[i]
-        end
-      end
+    err = T(Inf)
+    errcg = T(Inf)
 
-      ix = ((iter-1) % window) + 1
-      clist[ix] = c
-      zlist[ix] = ζ
-
-      if iter ≥ window
-          jx = mod(iter, window) + 1
-          zetabark = zlist[jx] / clist[jx]
-
-          if γbar ≠ 0
-            theta = zero(T)
-            for i = 1 : window
-              theta += clist[i] * sprod[i] * zlist[i]
-            end
-            theta = zetabark * abs(theta) + abs(zetabark * ζbar * sprod[ix] * s) - zetabark^2
-            history && (errorscg[iter-window+1] = sqrt(abs(errorscg[iter-window+1]^2 - 2*theta)))
-          else
-            history && (errorscg[iter-window+1] = missing)
-          end
-      end
-
-      ix = (iter % window) + 1
-      if iter ≥ window && window > 1
-         sprod .= sprod ./ sprod[(ix % window) + 1]
-         sprod[ix] = sprod[mod(ix-2, window)+1] * s
-      end
-    end
+    window = length(clist)
+    clist .= zero(T)
+    zlist .= zero(T)
+    sprod .= one(T)
 
     if λest ≠ 0
-      err = abs((ϵold * ζold + ψ * ζ) / ωbar)
-      history && push!(errors, err)
+      # Start QR factorization of Tₖ - λest I
+      ρbar = α - λest
+      σbar = β
+      ρ = sqrt(ρbar * ρbar + β * β)
+      cwold = -one(T)
+      cw = ρbar / ρ
+      sw = β / ρ
 
+      history && push!(errors, abs(β₁/λest))
       if γbar ≠ 0
-        errcg = sqrt(abs(err * err - ζbar * ζbar))
-        history && push!(errorscg, errcg)
+        history && push!(errorscg, sqrt(errors[1]^2 - ζbar^2))
       else
         history && push!(errorscg, missing)
       end
-
-      ρbar = sw * σbar - cw * (α - λest)
-      σbar = -cw * β
-      ρ = sqrt(ρbar * ρbar + β * β)
-
-      cwold = cw
-
-      cw = ρbar / ρ
-      sw = β / ρ
     end
 
-    # TODO: Use γ or γbar?
-    γmax = max(γmax, γ)
-    γmin = min(γmin, γ)
+    iter = 0
+    itmax == 0 && (itmax = 2 * n)
 
-    Acond = γmax / γmin
-    ANorm = sqrt(ANorm²)
-    test1 = rNorm / (ANorm * xNorm)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "k", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, β, cold, sold, ANorm, Acond)
 
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, β, c, s, ANorm, Acond, test1)
-
-    # Reset variables
-    ϵold = ϵ
-    ζold = ζ
-    cold = c
-
-    # Stopping conditions that do not depend on user input.
-    # This is to guard against tolerances that are unreasonably small.
-    resid_decrease_mach = (one(T) + rNorm ≤ one(T))
-    ill_cond_mach = (one(T) + one(T) / Acond ≤ one(T))
-    zero_resid_mach = (one(T) + test1 ≤ one(T))
-    # solved_mach = (ϵx ≥ β₁)
-
-    # Stopping conditions based on user-provided tolerances.
+    tol = atol + rtol * β₁
+    status = "unknown"
+    solved_lq = solved_mach = solved_lim = (rNorm ≤ tol)
+    solved_cg = (γbar ≠ 0) && transfer_to_cg && rcgNorm ≤ tol
     tired = iter ≥ itmax
-    ill_cond_lim = (one(T) / Acond ≤ ctol)
-    zero_resid_lim = (test1 ≤ tol)
-    fwd_err = (err ≤ etol) || ((γbar ≠ 0) && (errcg ≤ etol))
-    solved_lq = rNorm ≤ tol
-    solved_cg = transfer_to_cg && (γbar ≠ 0) && rcgNorm ≤ tol
-    
-    user_requested_exit = callback(solver) :: Bool
-    zero_resid = solved_lq || solved_cg
-    ill_cond = ill_cond_mach || ill_cond_lim
-    solved = solved_mach || zero_resid || zero_resid_mach || zero_resid_lim || fwd_err || resid_decrease_mach
-    timer = time_ns() - start_time
-    overtimed = timer > timemax_ns
+    ill_cond = ill_cond_mach = ill_cond_lim = false
+    solved = zero_resid = solved_lq || solved_cg
+    fwd_err = false
+    user_requested_exit = false
+    overtimed = false
+
+    while ! (solved || tired || ill_cond || user_requested_exit || overtimed)
+      iter = iter + 1
+
+      # Continue QR factorization
+      (c, s, γ) = sym_givens(γbar, β)
+
+      # Update SYMMLQ point
+      ηold = η
+      ζ = ηold / γ
+      @kaxpy!(n, c * ζ, w̅, x)
+      @kaxpy!(n, s * ζ, v, x)
+      # Update w̅
+      @kaxpby!(n, -c, v, s, w̅)
+
+      # Generate next Lanczos vector
+      oldβ = β
+      mul!(Mv_next, A, v)
+      α = @kdotr(m, v, Mv_next) + λ
+      @kaxpy!(m, -oldβ, Mvold, Mv_next)
+      @. Mvold = Mv
+      @kaxpy!(m, -α, Mv, Mv_next)
+      @. Mv = Mv_next
+      MisI || mulorldiv!(v, M, Mv, ldiv)
+      β = @kdotr(m, v, Mv)
+      β < 0 && error("Preconditioner is not positive definite")
+      β = sqrt(β)
+      @kscal!(m, one(FC) / β, v)
+      MisI || @kscal!(m, one(FC) / β, Mv)
+
+      # Continue A norm estimate
+      ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
+
+      if λest ≠ 0
+        η = -oldβ * oldβ * cwold / ρbar
+        ω = λest + η
+        ψ = c * δbar + s * ω
+        ωbar = s * δbar - c * ω
+      end
+
+      # Continue QR factorization
+      δ = δbar * c + α * s
+      γbar = δbar * s - α * c
+      ϵ = β * s
+      δbar = -β * c
+      η = -ϵold * ζold - δ * ζ
+
+      rNorm = sqrt(γ * γ * ζ * ζ + ϵold * ϵold * ζold * ζold)
+      xNorm = xNorm + ζ * ζ
+      history && push!(rNorms, rNorm)
+
+      if γbar ≠ 0
+        ζbar = η / γbar
+        rcgNorm = β * abs(s * ζ - c * ζbar)
+        xcgNorm = xNorm + ζbar * ζbar
+        history && push!(rcgNorms, rcgNorm)
+      else
+        history && push!(rcgNorms, missing)
+      end
+
+      if window > 0 && λest ≠ 0
+        if iter < window && window > 1
+          for i = iter+1 : window
+            sprod[i] = s * sprod[i]
+          end
+        end
+
+        ix = ((iter-1) % window) + 1
+        clist[ix] = c
+        zlist[ix] = ζ
+
+        if iter ≥ window
+            jx = mod(iter, window) + 1
+            zetabark = zlist[jx] / clist[jx]
+
+            if γbar ≠ 0
+              theta = zero(T)
+              for i = 1 : window
+                theta += clist[i] * sprod[i] * zlist[i]
+              end
+              theta = zetabark * abs(theta) + abs(zetabark * ζbar * sprod[ix] * s) - zetabark^2
+              history && (errorscg[iter-window+1] = sqrt(abs(errorscg[iter-window+1]^2 - 2*theta)))
+            else
+              history && (errorscg[iter-window+1] = missing)
+            end
+        end
+
+        ix = (iter % window) + 1
+        if iter ≥ window && window > 1
+           sprod .= sprod ./ sprod[(ix % window) + 1]
+           sprod[ix] = sprod[mod(ix-2, window)+1] * s
+        end
+      end
+
+      if λest ≠ 0
+        err = abs((ϵold * ζold + ψ * ζ) / ωbar)
+        history && push!(errors, err)
+
+        if γbar ≠ 0
+          errcg = sqrt(abs(err * err - ζbar * ζbar))
+          history && push!(errorscg, errcg)
+        else
+          history && push!(errorscg, missing)
+        end
+
+        ρbar = sw * σbar - cw * (α - λest)
+        σbar = -cw * β
+        ρ = sqrt(ρbar * ρbar + β * β)
+
+        cwold = cw
+
+        cw = ρbar / ρ
+        sw = β / ρ
+      end
+
+      # TODO: Use γ or γbar?
+      γmax = max(γmax, γ)
+      γmin = min(γmin, γ)
+
+      Acond = γmax / γmin
+      ANorm = sqrt(ANorm²)
+      test1 = rNorm / (ANorm * xNorm)
+
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, β, c, s, ANorm, Acond, test1)
+
+      # Reset variables
+      ϵold = ϵ
+      ζold = ζ
+      cold = c
+
+      # Stopping conditions that do not depend on user input.
+      # This is to guard against tolerances that are unreasonably small.
+      resid_decrease_mach = (one(T) + rNorm ≤ one(T))
+      ill_cond_mach = (one(T) + one(T) / Acond ≤ one(T))
+      zero_resid_mach = (one(T) + test1 ≤ one(T))
+      # solved_mach = (ϵx ≥ β₁)
+
+      # Stopping conditions based on user-provided tolerances.
+      tired = iter ≥ itmax
+      ill_cond_lim = (one(T) / Acond ≤ ctol)
+      zero_resid_lim = (test1 ≤ tol)
+      fwd_err = (err ≤ etol) || ((γbar ≠ 0) && (errcg ≤ etol))
+      solved_lq = rNorm ≤ tol
+      solved_cg = transfer_to_cg && (γbar ≠ 0) && rcgNorm ≤ tol
+      
+      user_requested_exit = callback(solver) :: Bool
+      zero_resid = solved_lq || solved_cg
+      ill_cond = ill_cond_mach || ill_cond_lim
+      solved = solved_mach || zero_resid || zero_resid_mach || zero_resid_lim || fwd_err || resid_decrease_mach
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
+    end
+    (verbose > 0) && @printf(iostream, "\n")
+
+    # Compute CG point
+    # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * w̅ₖ
+    if solved_cg
+      @kaxpy!(m, ζbar, w̅, x)
+    end
+
+    # Termination status
+    tired               && (status = "maximum number of iterations exceeded")
+    ill_cond_mach       && (status = "condition number seems too large for this machine")
+    ill_cond_lim        && (status = "condition number exceeds tolerance")
+    solved              && (status = "found approximate solution")
+    solved_lq           && (status = "solution xᴸ good enough given atol and rtol")
+    solved_cg           && (status = "solution xᶜ good enough given atol and rtol")
+    user_requested_exit && (status = "user-requested exit")
+    overtimed           && (status = "time limit exceeded")
+
+    # Update x
+    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    solver.warm_start = false
+
+    # Update stats
+    stats.niter = iter
+    stats.solved = solved
+    stats.Anorm = ANorm
+    stats.Acond = Acond
+    stats.status = status
+    return solver
   end
-  (verbose > 0) && @printf(iostream, "\n")
-
-  # Compute CG point
-  # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * w̅ₖ
-  if solved_cg
-    @kaxpy!(m, ζbar, w̅, x)
-  end
-
-  # Termination status
-  tired               && (status = "maximum number of iterations exceeded")
-  ill_cond_mach       && (status = "condition number seems too large for this machine")
-  ill_cond_lim        && (status = "condition number exceeds tolerance")
-  solved              && (status = "found approximate solution")
-  solved_lq           && (status = "solution xᴸ good enough given atol and rtol")
-  solved_cg           && (status = "solution xᶜ good enough given atol and rtol")
-  user_requested_exit && (status = "user-requested exit")
-  overtimed           && (status = "time limit exceeded")
-
-  # Update x
-  warm_start && @kaxpy!(n, one(FC), Δx, x)
-  solver.warm_start = false
-
-  # Update stats
-  stats.niter = iter
-  stats.solved = solved
-  stats.Anorm = ANorm
-  stats.Acond = Acond
-  stats.status = status
-  return solver
 end

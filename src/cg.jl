@@ -115,156 +115,153 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     cg!(solver, A, b; $(kwargs_cg...))
     return solver
   end
-end
 
-function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC};
-             M=I, ldiv :: Bool=false, radius :: T=zero(T),
-             linesearch :: Bool=false, atol :: T=√eps(T),
-             rtol :: T=√eps(T), itmax :: Int=0,
-             timemax :: Float64=Inf, verbose :: Int=0, history :: Bool=false,
-             callback = solver -> false, iostream :: IO=kstdout) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-  start_time = time_ns()
-  timemax_ns = 1e9 * timemax
-  m, n = size(A)
-  (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
-  m == n || error("System must be square")
-  length(b) == n || error("Inconsistent problem size")
-  linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
-  (verbose > 0) && @printf(iostream, "CG: system of %d equations in %d variables\n", n, n)
+    # Timer
+    start_time = time_ns()
+    timemax_ns = 1e9 * timemax
 
-  # Tests M = Iₙ
-  MisI = (M === I)
+    m, n = size(A)
+    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    m == n || error("System must be square")
+    length(b) == n || error("Inconsistent problem size")
+    linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
+    (verbose > 0) && @printf(iostream, "CG: system of %d equations in %d variables\n", n, n)
 
-  # Check type consistency
-  eltype(A) == FC || error("eltype(A) ≠ $FC")
-  ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    # Tests M = Iₙ
+    MisI = (M === I)
 
-  # Set up workspace.
-  allocate_if(!MisI, solver, :z, S, n)
-  Δx, x, r, p, Ap, stats = solver.Δx, solver.x, solver.r, solver.p, solver.Ap, solver.stats
-  warm_start = solver.warm_start
-  rNorms = stats.residuals
-  reset!(stats)
-  z = MisI ? r : solver.z
+    # Check type consistency
+    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
-  x .= zero(FC)
-  if warm_start
-    mul!(r, A, Δx)
-    @kaxpby!(n, one(FC), b, -one(FC), r)
-  else
-    r .= b
-  end
-  MisI || mulorldiv!(z, M, r, ldiv)
-  p .= z
-  γ = @kdotr(n, r, z)
-  rNorm = sqrt(γ)
-  history && push!(rNorms, rNorm)
-  if γ == 0
-    stats.niter = 0
-    stats.solved, stats.inconsistent = true, false
-    stats.status = "x = 0 is a zero-residual solution"
+    # Set up workspace.
+    allocate_if(!MisI, solver, :z, S, n)
+    Δx, x, r, p, Ap, stats = solver.Δx, solver.x, solver.r, solver.p, solver.Ap, solver.stats
+    warm_start = solver.warm_start
+    rNorms = stats.residuals
+    reset!(stats)
+    z = MisI ? r : solver.z
+
+    x .= zero(FC)
+    if warm_start
+      mul!(r, A, Δx)
+      @kaxpby!(n, one(FC), b, -one(FC), r)
+    else
+      r .= b
+    end
+    MisI || mulorldiv!(z, M, r, ldiv)
+    p .= z
+    γ = @kdotr(n, r, z)
+    rNorm = sqrt(γ)
+    history && push!(rNorms, rNorm)
+    if γ == 0
+      stats.niter = 0
+      stats.solved, stats.inconsistent = true, false
+      stats.status = "x = 0 is a zero-residual solution"
+      solver.warm_start = false
+      return solver
+    end
+
+    iter = 0
+    itmax == 0 && (itmax = 2 * n)
+
+    pAp = zero(T)
+    pNorm² = γ
+    ε = atol + rtol * rNorm
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  ", iter, rNorm)
+
+    solved = rNorm ≤ ε
+    tired = iter ≥ itmax
+    inconsistent = false
+    on_boundary = false
+    zero_curvature = false
+    user_requested_exit = false
+    overtimed = false
+
+    status = "unknown"
+
+    while !(solved || tired || zero_curvature || user_requested_exit || overtimed)
+      mul!(Ap, A, p)
+      pAp = @kdotr(n, p, Ap)
+      if (pAp ≤ eps(T) * pNorm²) && (radius == 0)
+        if abs(pAp) ≤ eps(T) * pNorm²
+          zero_curvature = true
+          inconsistent = !linesearch
+        end
+        if linesearch
+          iter == 0 && (x .= b)
+          solved = true
+        end
+      end
+      (zero_curvature || solved) && continue
+
+      α = γ / pAp
+
+      # Compute step size to boundary if applicable.
+      σ = radius > 0 ? maximum(to_boundary(n, x, p, radius, dNorm2=pNorm²)) : α
+
+      kdisplay(iter, verbose) && @printf(iostream, "%8.1e  %8.1e  %8.1e\n", pAp, α, σ)
+
+      # Move along p from x to the boundary if either
+      # the next step leads outside the trust region or
+      # we have nonpositive curvature.
+      if (radius > 0) && ((pAp ≤ 0) || (α > σ))
+        α = σ
+        on_boundary = true
+      end
+
+      @kaxpy!(n,  α,  p, x)
+      @kaxpy!(n, -α, Ap, r)
+      MisI || mulorldiv!(z, M, r, ldiv)
+      γ_next = @kdotr(n, r, z)
+      rNorm = sqrt(γ_next)
+      history && push!(rNorms, rNorm)
+
+      # Stopping conditions that do not depend on user input.
+      # This is to guard against tolerances that are unreasonably small.
+      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
+
+      resid_decrease_lim = rNorm ≤ ε
+      resid_decrease = resid_decrease_lim || resid_decrease_mach
+      solved = resid_decrease || on_boundary
+
+      if !solved
+        β = γ_next / γ
+        pNorm² = γ_next + β^2 * pNorm²
+        γ = γ_next
+        @kaxpby!(n, one(FC), z, β, p)
+      end
+
+      iter = iter + 1
+      tired = iter ≥ itmax
+      user_requested_exit = callback(solver) :: Bool
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  ", iter, rNorm)
+    end
+    (verbose > 0) && @printf(iostream, "\n")
+
+    # Termination status
+    solved && on_boundary             && (status = "on trust-region boundary")
+    solved && linesearch && (pAp ≤ 0) && (status = "nonpositive curvature detected")
+    solved && (status == "unknown")   && (status = "solution good enough given atol and rtol")
+    zero_curvature                    && (status = "zero curvature detected")
+    tired                             && (status = "maximum number of iterations exceeded")
+    user_requested_exit               && (status = "user-requested exit")
+    overtimed                         && (status = "time limit exceeded")
+
+    # Update x
+    warm_start && @kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
+
+    # Update stats
+    stats.niter = iter
+    stats.solved = solved
+    stats.inconsistent = inconsistent
+    stats.status = status
     return solver
   end
-
-  iter = 0
-  itmax == 0 && (itmax = 2 * n)
-
-  pAp = zero(T)
-  pNorm² = γ
-  ε = atol + rtol * rNorm
-  (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
-  kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  ", iter, rNorm)
-
-  solved = rNorm ≤ ε
-  tired = iter ≥ itmax
-  inconsistent = false
-  on_boundary = false
-  zero_curvature = false
-  user_requested_exit = false
-  overtimed = false
-
-  status = "unknown"
-
-  while !(solved || tired || zero_curvature || user_requested_exit || overtimed)
-    mul!(Ap, A, p)
-    pAp = @kdotr(n, p, Ap)
-    if (pAp ≤ eps(T) * pNorm²) && (radius == 0)
-      if abs(pAp) ≤ eps(T) * pNorm²
-        zero_curvature = true
-        inconsistent = !linesearch
-      end
-      if linesearch
-        iter == 0 && (x .= b)
-        solved = true
-      end
-    end
-    (zero_curvature || solved) && continue
-
-    α = γ / pAp
-
-    # Compute step size to boundary if applicable.
-    σ = radius > 0 ? maximum(to_boundary(n, x, p, radius, dNorm2=pNorm²)) : α
-
-    kdisplay(iter, verbose) && @printf(iostream, "%8.1e  %8.1e  %8.1e\n", pAp, α, σ)
-
-    # Move along p from x to the boundary if either
-    # the next step leads outside the trust region or
-    # we have nonpositive curvature.
-    if (radius > 0) && ((pAp ≤ 0) || (α > σ))
-      α = σ
-      on_boundary = true
-    end
-
-    @kaxpy!(n,  α,  p, x)
-    @kaxpy!(n, -α, Ap, r)
-    MisI || mulorldiv!(z, M, r, ldiv)
-    γ_next = @kdotr(n, r, z)
-    rNorm = sqrt(γ_next)
-    history && push!(rNorms, rNorm)
-
-    # Stopping conditions that do not depend on user input.
-    # This is to guard against tolerances that are unreasonably small.
-    resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-
-    resid_decrease_lim = rNorm ≤ ε
-    resid_decrease = resid_decrease_lim || resid_decrease_mach
-    solved = resid_decrease || on_boundary
-
-    if !solved
-      β = γ_next / γ
-      pNorm² = γ_next + β^2 * pNorm²
-      γ = γ_next
-      @kaxpby!(n, one(FC), z, β, p)
-    end
-
-    iter = iter + 1
-    tired = iter ≥ itmax
-    user_requested_exit = callback(solver) :: Bool
-    timer = time_ns() - start_time
-    overtimed = timer > timemax_ns
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  ", iter, rNorm)
-  end
-  (verbose > 0) && @printf(iostream, "\n")
-
-  # Termination status
-  solved && on_boundary             && (status = "on trust-region boundary")
-  solved && linesearch && (pAp ≤ 0) && (status = "nonpositive curvature detected")
-  solved && (status == "unknown")   && (status = "solution good enough given atol and rtol")
-  zero_curvature                    && (status = "zero curvature detected")
-  tired                             && (status = "maximum number of iterations exceeded")
-  user_requested_exit               && (status = "user-requested exit")
-  overtimed                         && (status = "time limit exceeded")
-
-  # Update x
-  warm_start && @kaxpy!(n, one(FC), Δx, x)
-  solver.warm_start = false
-
-  # Update stats
-  stats.niter = iter
-  stats.solved = solved
-  stats.inconsistent = inconsistent
-  stats.status = status
-  return solver
 end
