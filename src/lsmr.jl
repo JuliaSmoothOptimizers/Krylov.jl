@@ -156,7 +156,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
 
 @eval begin
   function lsmr(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    solver = LsmrSolver(A, b; windows)
+    solver = LsmrSolver(A, b; window)
     lsmr!(solver, A, b; $(kwargs_lsmr...))
     return (solver.x, solver.stats)
   end

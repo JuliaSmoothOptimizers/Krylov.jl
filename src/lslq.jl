@@ -179,7 +179,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
 
 @eval begin
   function lslq(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_lslq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    solver = LslqSolver(A, b; windows)
+    solver = LslqSolver(A, b; window)
     lslq!(solver, A, b; $(kwargs_lslq...))
     return (solver.x, solver.stats)
   end
