@@ -6,10 +6,11 @@
 ```
 
 ```@docs
-Krylov.kstdout
 Krylov.FloatOrComplex
 Krylov.niterations
 Krylov.Aprod
 Krylov.Atprod
+Krylov.kstdout
+Krylov.extract_parameters
 Base.show
 ```
