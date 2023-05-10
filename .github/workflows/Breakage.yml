@@ -19,7 +19,8 @@ jobs:
           "JuliaSmoothOptimizers/JSOSolvers.jl",
           "JuliaSmoothOptimizers/LLSModels.jl",
           "JuliaSmoothOptimizers/Percival.jl",
-          "JuliaSmoothOptimizers/RipQP.jl"
+          "JuliaSmoothOptimizers/RipQP.jl",
+          "SciML/LinearSolve.jl"
         ]
         pkgversion: [latest, stable]
 
