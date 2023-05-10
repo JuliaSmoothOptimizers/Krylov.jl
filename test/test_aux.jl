@@ -146,6 +146,13 @@
     end
   end
 
+  @testset "kaxes" begin
+    # test kaxes
+    A = rand(10, 5)
+    @test kaxes(A, Vector{Float64}) == (10, 5)
+    @test kaxes(A, SparseVector{Float64, Int64}) == (Base.OneTo(10), Base.OneTo(5))
+  end
+
   @testset "vector_to_matrix" begin
     # test vector_to_matrix
     for FC in (Float32, Float64, ComplexF32, ComplexF64)
@@ -179,25 +186,60 @@
       a2 = rand(T)
       b2 = rand(T)
 
-      Krylov.@kdot(n, x, y)
+      @test Krylov.@kdot(n, x, y) ≈ dot(x,y)
 
-      Krylov.@kdotr(n, x, y)
+      @test Krylov.@kdotr(n, x, x) isa T
 
-      Krylov.@knrm2(n, x)
+      @test Krylov.@knrm2(n, x) ≈ norm(x)
 
-      Krylov.@kaxpy!(n, a, x, y)
-      Krylov.@kaxpy!(n, a2, x, y)
+      @test Krylov.@kaxpy!(n, a, copy(x), copy(y)) ≈ (a * x + y)
+      @test Krylov.@kaxpy!(n, a2, copy(x), copy(y)) ≈ (a2 * x + y)
 
-      Krylov.@kaxpby!(n, a, x, b, y)
-      Krylov.@kaxpby!(n, a2, x, b, y)
-      Krylov.@kaxpby!(n, a, x, b2, y)
-      Krylov.@kaxpby!(n, a2, x, b2, y)
+      @test Krylov.@kaxpby!(n, a, copy(x), b, copy(y)) ≈ (a * x + b * y)
+      @test Krylov.@kaxpby!(n, a2, copy(x), b, copy(y)) ≈ (a2 * x + b * y)
+      @test Krylov.@kaxpby!(n, a, copy(x), b2, copy(y)) ≈ (a * x + b2 * y)
+      @test Krylov.@kaxpby!(n, a2, copy(x), b2, copy(y)) ≈ (a2 * x + b2 * y)
 
-      Krylov.@kcopy!(n, x, y)
+      xc = copy(x)
+      yc = copy(y)
+      Krylov.@kcopy!(n, xc, yc)
+      @test yc ≈ x
 
-      Krylov.@kswap(x, y)
+      xc = copy(x)
+      yc = copy(y)
+      Krylov.@kswap(xc, yc)
+      @test xc ≈ y
+      @test yc ≈ x
 
-      Krylov.@kref!(n, x, y, c, s)
+      xc = copy(x)
+      yc = copy(y)
+      Krylov.@kref!(n, xc, yc, c, s)
+      @test xc ≈ (c * x + s * y)
+      @test yc ≈ (conj(s) * x - c * y)
+    end
+  end
+
+  @testset "axpy! and axpby! with generic arrays" begin
+    for FC ∈ (Float16, Float32, Float64, ComplexF16, ComplexF32, ComplexF64)
+      n = 10
+      # S can't be a `SparseVector` but we can use this type to check
+      # that axpy! and axpby! work when S is not a `DenseVector`.
+      x = sprand(FC, n, 0.5)
+      y = sprand(FC, n, 0.5)
+      a = rand(FC)
+      b = rand(FC)
+
+      T = real(FC)
+      a2 = rand(T)
+      b2 = rand(T)
+
+      @test Krylov.@kaxpy!(n, a, copy(x), copy(y)) ≈ (a * x + y)
+      @test Krylov.@kaxpy!(n, a2, copy(x), copy(y)) ≈ (a2 * x + y)
+
+      @test Krylov.@kaxpby!(n, a, copy(x), b, copy(y)) ≈ (a * x + b * y)
+      @test Krylov.@kaxpby!(n, a2, copy(x), b, copy(y)) ≈ (a2 * x + b * y)
+      @test Krylov.@kaxpby!(n, a, copy(x), b2, copy(y)) ≈ (a * x + b2 * y)
+      @test Krylov.@kaxpby!(n, a2, copy(x), b2, copy(y)) ≈ (a2 * x + b2 * y)
     end
   end
 end

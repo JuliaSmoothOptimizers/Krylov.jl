@@ -285,7 +285,7 @@ function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC};
       # Compute vₖ₊₁.
       if !(solved || inner_tired || breakdown || user_requested_exit || overtimed)
         if !restart && (inner_iter ≥ mem)
-          push!(V, S(undef, n))
+          push!(V, similar(x))
         end
         @. V[inner_iter+1] = q / Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
       end

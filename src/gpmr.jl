@@ -442,8 +442,8 @@ function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c ::
     # Compute vₖ₊₁ and uₖ₊₁
     if !(solved || tired || breakdown || user_requested_exit || overtimed)
       if iter ≥ mem
-        push!(V, S(undef, m))
-        push!(U, S(undef, n))
+        push!(V, similar(x))
+        push!(U, similar(y))
         push!(zt, zero(FC), zero(FC))
       end
 

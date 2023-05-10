@@ -233,7 +233,7 @@ function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
         end
         push!(s, zero(FC))
         push!(c, zero(T))
-        push!(Z, S(undef, n))
+        push!(Z, similar(x))
       end
 
       # Continue the process.
@@ -302,7 +302,7 @@ function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC};
       # Compute vₖ₊₁
       if !(solved || inner_tired || breakdown || user_requested_exit || overtimed)
         if !restart && (inner_iter ≥ mem)
-          push!(V, S(undef, n))
+          push!(V, similar(x))
           push!(z, zero(FC))
         end
         @. V[inner_iter+1] = q / Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
