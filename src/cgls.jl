@@ -114,7 +114,9 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
 
 @eval begin
   function cgls(A, b :: AbstractVector{FC}; $(def_kwargs_cgls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = CglsSolver(A, b)
+    timemax -= (time_ns() - start_time) / 1e9
     cgls!(solver, A, b; $(kwargs_cgls...))
     return (solver.x, solver.stats)
   end

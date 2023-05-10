@@ -152,7 +152,9 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
 
 @eval begin
   function lsqr(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_lsqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = LsqrSolver(A, b; window)
+    timemax -= (time_ns() - start_time) / 1e9
     lsqr!(solver, A, b; $(kwargs_lsqr...))
     return (solver.x, solver.stats)
   end

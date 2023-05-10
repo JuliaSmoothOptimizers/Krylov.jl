@@ -99,20 +99,26 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
 
 @eval begin
   function fom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = FomSolver(A, b, memory)
     warm_start!(solver, x0)
+    timemax -= (time_ns() - start_time) / 1e9
     fom!(solver, A, b; $(kwargs_fom...))
     return (solver.x, solver.stats)
   end
 
   function fom(A, b :: AbstractVector{FC}; memory :: Int=20, $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = FomSolver(A, b, memory)
+    timemax -= (time_ns() - start_time) / 1e9
     fom!(solver, A, b; $(kwargs_fom...))
     return (solver.x, solver.stats)
   end
 
   function fom!(solver :: FomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    start_time = time_ns()
     warm_start!(solver, x0)
+    timemax -= (time_ns() - start_time) / 1e9
     fom!(solver, A, b; $(kwargs_fom...))
     return solver
   end

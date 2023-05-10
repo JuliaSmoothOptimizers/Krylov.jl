@@ -117,7 +117,9 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
 
 @eval begin
   function crmr(A, b :: AbstractVector{FC}; $(def_kwargs_crmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = CrmrSolver(A, b)
+    timemax -= (time_ns() - start_time) / 1e9
     crmr!(solver, A, b; $(kwargs_crmr...))
     return (solver.x, solver.stats)
   end

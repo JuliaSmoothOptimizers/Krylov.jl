@@ -104,20 +104,26 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
 
 @eval begin
   function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = UsymlqSolver(A, b)
     warm_start!(solver, x0)
+    timemax -= (time_ns() - start_time) / 1e9
     usymlq!(solver, A, b, c; $(kwargs_usymlq...))
     return (solver.x, solver.stats)
   end
 
   function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = UsymlqSolver(A, b)
+    timemax -= (time_ns() - start_time) / 1e9
     usymlq!(solver, A, b, c; $(kwargs_usymlq...))
     return (solver.x, solver.stats)
   end
 
   function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    start_time = time_ns()
     warm_start!(solver, x0)
+    timemax -= (time_ns() - start_time) / 1e9
     usymlq!(solver, A, b, c; $(kwargs_usymlq...))
     return solver
   end

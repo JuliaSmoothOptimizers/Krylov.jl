@@ -119,7 +119,9 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
 
 @eval begin
   function cgne(A, b :: AbstractVector{FC}; $(def_kwargs_cgne...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = CgneSolver(A, b)
+    timemax -= (time_ns() - start_time) / 1e9
     cgne!(solver, A, b; $(kwargs_cgne...))
     return (solver.x, solver.stats)
   end
