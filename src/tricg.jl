@@ -120,7 +120,7 @@ def_kwargs_tricg = (:(; M = I                     ),
                     :(; callback = solver -> false),
                     :(; iostream::IO = kstdout    ))
 
-def_kwargs_tricg = reduce(vcat, kw.args[1].args for kw in def_kwargs_tricg)
+def_kwargs_tricg = mapreduce(extract_parameters, vcat, def_kwargs_tricg)
 
 kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

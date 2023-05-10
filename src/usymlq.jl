@@ -98,7 +98,7 @@ def_kwargs_usymlq = (:(; transfer_to_usymcg::Bool = true),
                      :(; callback = solver -> false     ),
                      :(; iostream::IO = kstdout         ))
 
-def_kwargs_usymlq = reduce(vcat, kw.args[1].args for kw in def_kwargs_usymlq)
+def_kwargs_usymlq = mapreduce(extract_parameters, vcat, def_kwargs_usymlq)
 
 kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

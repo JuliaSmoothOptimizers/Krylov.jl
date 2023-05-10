@@ -140,7 +140,7 @@ def_kwargs_craigmr = (:(; M = I                     ),
                       :(; callback = solver -> false),
                       :(; iostream::IO = kstdout    ))
 
-def_kwargs_craigmr = reduce(vcat, kw.args[1].args for kw in def_kwargs_craigmr)
+def_kwargs_craigmr = mapreduce(extract_parameters, vcat, def_kwargs_craigmr)
 
 kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

@@ -121,7 +121,7 @@ def_kwargs_trimr = (:(; M = I                     ),
                     :(; callback = solver -> false),
                     :(; iostream::IO = kstdout    ))
 
-def_kwargs_trimr = reduce(vcat, kw.args[1].args for kw in def_kwargs_trimr)
+def_kwargs_trimr = mapreduce(extract_parameters, vcat, def_kwargs_trimr)
 
 kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

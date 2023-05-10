@@ -93,7 +93,7 @@ def_kwargs_qmr = (:(; c::AbstractVector{FC} = b ),
                   :(; callback = solver -> false),
                   :(; iostream::IO = kstdout    ))
 
-def_kwargs_qmr = reduce(vcat, kw.args[1].args for kw in def_kwargs_qmr)
+def_kwargs_qmr = mapreduce(extract_parameters, vcat, def_kwargs_qmr)
 
 kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

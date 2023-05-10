@@ -133,7 +133,7 @@ def_kwargs_gpmr = (:(; C = I                            ),
                    :(; callback = solver -> false       ),
                    :(; iostream::IO = kstdout           ))
 
-def_kwargs_gpmr = reduce(vcat, kw.args[1].args for kw in def_kwargs_gpmr)
+def_kwargs_gpmr = mapreduce(extract_parameters, vcat, def_kwargs_gpmr)
 
 kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

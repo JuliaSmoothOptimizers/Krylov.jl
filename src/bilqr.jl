@@ -90,7 +90,7 @@ def_kwargs_bilqr = (:(; transfer_to_bicg::Bool = true),
                     :(; callback = solver -> false   ),
                     :(; iostream::IO = kstdout       ))
 
-def_kwargs_bilqr = reduce(vcat, kw.args[1].args for kw in def_kwargs_bilqr)
+def_kwargs_bilqr = mapreduce(extract_parameters, vcat, def_kwargs_bilqr)
 
 kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

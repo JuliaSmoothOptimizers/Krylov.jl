@@ -89,7 +89,7 @@ def_kwargs_trilqr = (:(; transfer_to_usymcg::Bool = true),
                      :(; callback = solver -> false     ),
                      :(; iostream::IO = kstdout         ))
 
-def_kwargs_trilqr = reduce(vcat, kw.args[1].args for kw in def_kwargs_trilqr)
+def_kwargs_trilqr = mapreduce(extract_parameters, vcat, def_kwargs_trilqr)
 
 kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
