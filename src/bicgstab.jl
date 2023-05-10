@@ -101,7 +101,7 @@ def_kwargs_bicgstab = (:(; c::AbstractVector{FC} = b ),
                        :(; callback = solver -> false),
                        :(; iostream::IO = kstdout    ))
 
-def_kwargs_bicgstab = reduce(vcat, kw.args[1].args for kw in def_kwargs_bicgstab)
+def_kwargs_bicgstab = mapreduce(extract_parameters, vcat, def_kwargs_bicgstab)
 
 kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

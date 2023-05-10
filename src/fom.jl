@@ -93,7 +93,7 @@ def_kwargs_fom = (:(; M = I                            ),
                   :(; callback = solver -> false       ),
                   :(; iostream::IO = kstdout           ))
 
-def_kwargs_fom = reduce(vcat, kw.args[1].args for kw in def_kwargs_fom)
+def_kwargs_fom = mapreduce(extract_parameters, vcat, def_kwargs_fom)
 
 kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

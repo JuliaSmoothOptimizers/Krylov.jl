@@ -86,7 +86,7 @@ def_kwargs_bilq = (:(; c::AbstractVector{FC} = b    ),
                    :(; callback = solver -> false   ),
                    :(; iostream::IO = kstdout       ))
 
-def_kwargs_bilq = reduce(vcat, kw.args[1].args for kw in def_kwargs_bilq)
+def_kwargs_bilq = mapreduce(extract_parameters, vcat, def_kwargs_bilq)
 
 kwargs_bilq = (:c, :transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

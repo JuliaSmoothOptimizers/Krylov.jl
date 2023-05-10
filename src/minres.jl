@@ -115,7 +115,7 @@ def_kwargs_minres = (:(; M = I                     ),
                      :(; callback = solver -> false),
                      :(; iostream::IO = kstdout    ))
 
-def_kwargs_minres = reduce(vcat, kw.args[1].args for kw in def_kwargs_minres)
+def_kwargs_minres = mapreduce(extract_parameters, vcat, def_kwargs_minres)
 
 kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

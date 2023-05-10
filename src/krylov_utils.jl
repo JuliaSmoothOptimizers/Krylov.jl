@@ -394,3 +394,16 @@ function to_boundary(n :: Int, x :: AbstractVector{FC}, d :: AbstractVector{FC},
   roots = roots_quadratic(dNorm2, 2 * rxd, xNorm2 - radius2)
   return roots  # `σ1` and `σ2`
 end
+
+"""
+    arguments = extract_parameters(ex::Expr)
+
+Extract the arguments of an expression that is keyword parameter tuple.
+Implementation suggested by Mitchell J. O'Sullivan (@mosullivan93).
+"""
+function extract_parameters(ex::Expr)
+  Meta.isexpr(ex, :tuple, 1) &&
+  Meta.isexpr((@inbounds p = ex.args[1]), :parameters) &&
+  all(Base.Docs.validcall, p.args) || throw(ArgumentError("Given expression is not a kw parameter tuple [e.g. :(; x)]: $ex"))
+  return p.args
+end

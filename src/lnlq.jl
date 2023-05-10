@@ -147,7 +147,7 @@ def_kwargs_lnlq = (:(; M = I                         ),
                    :(; callback = solver -> false    ),
                    :(; iostream::IO = kstdout        ))
 
-def_kwargs_lnlq = reduce(vcat, kw.args[1].args for kw in def_kwargs_lnlq)
+def_kwargs_lnlq = mapreduce(extract_parameters, vcat, def_kwargs_lnlq)
 
 kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

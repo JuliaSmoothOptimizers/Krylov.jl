@@ -101,7 +101,7 @@ def_kwargs_symmlq = (:(; M = I                      ),
                      :(; callback = solver -> false ),
                      :(; iostream::IO = kstdout     ))
 
-def_kwargs_symmlq = reduce(vcat, kw.args[1].args for kw in def_kwargs_symmlq)
+def_kwargs_symmlq = mapreduce(extract_parameters, vcat, def_kwargs_symmlq)
 
 kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

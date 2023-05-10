@@ -150,7 +150,7 @@ def_kwargs_lsmr = (:(; M = I                     ),
                    :(; callback = solver -> false),
                    :(; iostream::IO = kstdout    ))
 
-def_kwargs_lsmr = reduce(vcat, kw.args[1].args for kw in def_kwargs_lsmr)
+def_kwargs_lsmr = mapreduce(extract_parameters, vcat, def_kwargs_lsmr)
 
 kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 

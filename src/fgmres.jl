@@ -100,7 +100,7 @@ def_kwargs_fgmres = (:(; M = I                            ),
                      :(; callback = solver -> false       ),
                      :(; iostream::IO = kstdout           ))
 
-def_kwargs_fgmres = reduce(vcat, kw.args[1].args for kw in def_kwargs_fgmres)
+def_kwargs_fgmres = mapreduce(extract_parameters, vcat, def_kwargs_fgmres)
 
 kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
