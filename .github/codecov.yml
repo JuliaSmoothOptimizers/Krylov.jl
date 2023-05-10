@@ -1,8 +1,11 @@
+# Drops on the order 0.01% are typical even when no change occurs
+# Having the threshold set a little higher (0.5%) than that makes it 
+# a little more tolerant to fluctuations
 coverage:
   status:
     project:
       default:
-        # Drops on the order 0.01% are typical even when no change occurs
-        # Having this threshold set a little higher (0.5%) than that makes it 
-        # a little more tolerant to fluctuations
+        threshold: 0.5%
+    patch:
+      default:
         threshold: 0.5%
