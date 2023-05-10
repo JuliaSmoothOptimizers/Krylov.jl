@@ -134,7 +134,7 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     (verbose > 0) && @printf(iostream, "USYMLQ: system of %d equations in %d variables\n", m, n)
 
     # Check type consistency
-    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
     ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
 

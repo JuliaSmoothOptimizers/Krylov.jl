@@ -129,7 +129,7 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
     (verbose > 0) && @printf(iostream, "QMR: system of size %d\n", n)
 
     # Check type consistency
-    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
     ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
 
