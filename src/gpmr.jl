@@ -139,20 +139,26 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
 
 @eval begin
   function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; memory :: Int=20, $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = GpmrSolver(A, b, memory)
     warm_start!(solver, x0, y0)
+    timemax -= (time_ns() - start_time) / 1e9
     gpmr!(solver, A, B, b, c; $(kwargs_gpmr...))
     return (solver.x, solver.y, solver.stats)
   end
 
   function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}; memory :: Int=20, $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = GpmrSolver(A, b, memory)
+    timemax -= (time_ns() - start_time) / 1e9
     gpmr!(solver, A, B, b, c; $(kwargs_gpmr...))
     return (solver.x, solver.y, solver.stats)
   end
 
   function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    start_time = time_ns()
     warm_start!(solver, x0, y0)
+    timemax -= (time_ns() - start_time) / 1e9
     gpmr!(solver, A, B, b, c; $(kwargs_gpmr...))
     return solver
   end

@@ -146,7 +146,9 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
 
 @eval begin
   function craigmr(A, b :: AbstractVector{FC}; $(def_kwargs_craigmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = CraigmrSolver(A, b)
+    timemax -= (time_ns() - start_time) / 1e9
     craigmr!(solver, A, b; $(kwargs_craigmr...))
     return (solver.x, solver.y, solver.stats)
   end

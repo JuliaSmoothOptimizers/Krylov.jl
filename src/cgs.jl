@@ -108,20 +108,26 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
 
 @eval begin
   function cgs(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = CgsSolver(A, b)
     warm_start!(solver, x0)
+    timemax -= (time_ns() - start_time) / 1e9
     cgs!(solver, A, b; $(kwargs_cgs...))
     return (solver.x, solver.stats)
   end
 
   function cgs(A, b :: AbstractVector{FC}; $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = CgsSolver(A, b)
+    timemax -= (time_ns() - start_time) / 1e9
     cgs!(solver, A, b; $(kwargs_cgs...))
     return (solver.x, solver.stats)
   end
 
   function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    start_time = time_ns()
     warm_start!(solver, x0)
+    timemax -= (time_ns() - start_time) / 1e9
     cgs!(solver, A, b; $(kwargs_cgs...))
     return solver
   end

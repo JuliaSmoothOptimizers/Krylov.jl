@@ -121,20 +121,26 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
 
 @eval begin
   function minres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = MinresSolver(A, b; window)
     warm_start!(solver, x0)
+    timemax -= (time_ns() - start_time) / 1e9
     minres!(solver, A, b; $(kwargs_minres...))
     return (solver.x, solver.stats)
   end
 
   function minres(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     solver = MinresSolver(A, b; window)
+    timemax -= (time_ns() - start_time) / 1e9
     minres!(solver, A, b; $(kwargs_minres...))
     return (solver.x, solver.stats)
   end
 
   function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    start_time = time_ns()
     warm_start!(solver, x0)
+    timemax -= (time_ns() - start_time) / 1e9
     minres!(solver, A, b; $(kwargs_minres...))
     return solver
   end

@@ -90,8 +90,10 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
 
 @eval begin
   function cg_lanczos_shift(A, b :: AbstractVector{FC}, shifts :: AbstractVector{T}; $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+    start_time = time_ns()
     nshifts = length(shifts)
     solver = CgLanczosShiftSolver(A, b, nshifts)
+    timemax -= (time_ns() - start_time) / 1e9
     cg_lanczos_shift!(solver, A, b, shifts; $(kwargs_cg_lanczos_shift...))
     return (solver.x, solver.stats)
   end
