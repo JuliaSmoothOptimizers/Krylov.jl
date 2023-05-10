@@ -140,7 +140,8 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
 @eval begin
   function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; memory :: Int=20, $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = GpmrSolver(A, b, memory)
-    gpmr!(solver, A, B, b, c, x0, y0; $(kwargs_gpmr...))
+    warm_start!(solver, x0, y0)
+    gpmr!(solver, A, B, b, c; $(kwargs_gpmr...))
     return (solver.x, solver.y, solver.stats)
   end
 

@@ -127,7 +127,8 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
 @eval begin
   function tricg(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_tricg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = TricgSolver(A, b)
-    tricg!(solver, A, b, c, x0, y0; $(kwargs_tricg...))
+    warm_start!(solver, x0, y0)
+    tricg!(solver, A, b, c; $(kwargs_tricg...))
     return (solver.x, solver.y, solver.stats)
   end
 

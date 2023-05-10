@@ -100,7 +100,8 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
 @eval begin
   function fom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = FomSolver(A, b, memory)
-    fom!(solver, A, b, x0; $(kwargs_fom...))
+    warm_start!(solver, x0)
+    fom!(solver, A, b; $(kwargs_fom...))
     return (solver.x, solver.stats)
   end
 

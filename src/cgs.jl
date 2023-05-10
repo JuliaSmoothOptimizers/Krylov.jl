@@ -109,7 +109,8 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
 @eval begin
   function cgs(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = CgsSolver(A, b)
-    cgs!(solver, A, b, x0; $(kwargs_cgs...))
+    warm_start!(solver, x0)
+    cgs!(solver, A, b; $(kwargs_cgs...))
     return (solver.x, solver.stats)
   end
 

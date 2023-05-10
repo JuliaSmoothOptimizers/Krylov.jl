@@ -107,7 +107,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 @eval begin
   function cr(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = CrSolver(A, b)
-    cr!(solver, A, b, x0; $(kwargs_cr...))
+    warm_start!(solver, x0)
+    cr!(solver, A, b; $(kwargs_cr...))
     return (solver.x, solver.stats)
   end
 

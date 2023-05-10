@@ -107,7 +107,8 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
 @eval begin
   function fgmres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, $(def_kwargs_fgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = FgmresSolver(A, b, memory)
-    fgmres!(solver, A, b, x0; $(kwargs_fgmres...))
+    warm_start!(solver, x0)
+    fgmres!(solver, A, b; $(kwargs_fgmres...))
     return (solver.x, solver.stats)
   end
 

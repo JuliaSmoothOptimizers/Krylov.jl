@@ -128,7 +128,8 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
 @eval begin
   function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = TrimrSolver(A, b)
-    trimr!(solver, A, b, c, x0, y0; $(kwargs_trimr...))
+    warm_start!(solver, x0, y0)
+    trimr!(solver, A, b, c; $(kwargs_trimr...))
     return (solver.x, solver.y, solver.stats)
   end
 

@@ -95,7 +95,7 @@ end
 function MinresSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  MinresSolver(m, n, S, window=window)
+  MinresSolver(m, n, S; windows)
 end
 
 """
@@ -234,7 +234,7 @@ end
 function SymmlqSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  SymmlqSolver(m, n, S, window=window)
+  SymmlqSolver(m, n, S; windows)
 end
 
 """
@@ -1258,7 +1258,7 @@ end
 function LslqSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  LslqSolver(m, n, S, window=window)
+  LslqSolver(m, n, S; windows)
 end
 
 """
@@ -1306,7 +1306,7 @@ end
 function LsqrSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  LsqrSolver(m, n, S, window=window)
+  LsqrSolver(m, n, S; windows)
 end
 
 """
@@ -1356,7 +1356,7 @@ end
 function LsmrSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
-  LsmrSolver(m, n, S, window=window)
+  LsmrSolver(m, n, S; windows)
 end
 
 """

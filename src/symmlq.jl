@@ -107,13 +107,14 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
 
 @eval begin
   function symmlq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    solver = SymmlqSolver(A, b, window=window)
-    symmlq!(solver, A, b, x0; $(kwargs_symmlq...))
+    solver = SymmlqSolver(A, b; windows)
+    warm_start!(solver, x0)
+    symmlq!(solver, A, b; $(kwargs_symmlq...))
     return (solver.x, solver.stats)
   end
 
   function symmlq(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    solver = SymmlqSolver(A, b, window=window)
+    solver = SymmlqSolver(A, b; windows)
     symmlq!(solver, A, b; $(kwargs_symmlq...))
     return (solver.x, solver.stats)
   end

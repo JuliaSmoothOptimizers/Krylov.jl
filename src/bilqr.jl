@@ -97,7 +97,8 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
 @eval begin
   function bilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_bilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = BilqrSolver(A, b)
-    bilqr!(solver, A, b, c, x0, y0; $(kwargs_bilqr...))
+    warm_start!(solver, x0, y0)
+    bilqr!(solver, A, b, c; $(kwargs_bilqr...))
     return (solver.x, solver.y, solver.stats)
   end
 

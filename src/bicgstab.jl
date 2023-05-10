@@ -108,7 +108,8 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
 @eval begin
   function bicgstab(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = BicgstabSolver(A, b)
-    bicgstab!(solver, A, b, x0; $(kwargs_bicgstab...))
+    warm_start!(solver, x0)
+    bicgstab!(solver, A, b; $(kwargs_bicgstab...))
     return (solver.x, solver.stats)
   end
 

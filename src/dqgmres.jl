@@ -104,7 +104,8 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
 @eval begin
   function dqgmres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, $(def_kwargs_dqgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = DqgmresSolver(A, b, memory)
-    dqgmres!(solver, A, b, x0; $(kwargs_dqgmres...))
+    warm_start!(solver, x0)
+    dqgmres!(solver, A, b; $(kwargs_dqgmres...))
     return (solver.x, solver.stats)
   end
 

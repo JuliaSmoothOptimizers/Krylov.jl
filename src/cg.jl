@@ -100,7 +100,8 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
 @eval begin
   function cg(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     solver = CgSolver(A, b)
-    cg!(solver, A, b, x0; $(kwargs_cg...))
+    warm_start!(solver, x0)
+    cg!(solver, A, b; $(kwargs_cg...))
     return (solver.x, solver.stats)
   end
 
