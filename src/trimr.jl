@@ -169,7 +169,7 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     NisI = (N === I)
 
     # Check type consistency
-    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
     ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
 

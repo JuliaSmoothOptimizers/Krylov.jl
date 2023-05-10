@@ -140,7 +140,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     MisI = (M === I)
 
     # Check type consistency
-    eltype(A) == FC || error("eltype(A) ≠ $FC")
+    eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
     # Set up workspace.
