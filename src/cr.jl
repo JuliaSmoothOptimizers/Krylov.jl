@@ -193,8 +193,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     ArNorm = @knrm2(n, Ar) # ‖Ar‖
     history && push!(ArNorms, ArNorm)
     ε = atol + rtol * rNorm
-    (verbose > 0) && @printf(iostream, "%5s %8s %8s %8s\n", "k", "‖x‖", "‖r‖", "quad")
-    kdisplay(iter, verbose) && @printf(iostream, "    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
+    (verbose > 0) && @printf(iostream, "%5s  %8s  %8s  %8s\n", "k", "‖x‖", "‖r‖", "quad")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %8.1e  %8.1e\n", iter, xNorm, rNorm, m)
 
     descent = pr > 0 # pᴴr > 0 means p is a descent direction
     solved = rNorm ≤ ε
@@ -345,7 +345,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       iter = iter + 1
       if kdisplay(iter, verbose)
         m = m - α * pr + α^2 * pAp / 2
-        @printf(iostream, "    %d  %8.1e %8.1e %8.1e\n", iter, xNorm, rNorm, m)
+        @printf(iostream, "%5d  %8.1e  %8.1e  %8.1e\n", iter, xNorm, rNorm, m)
       end
 
       # Stopping conditions that do not depend on user input.

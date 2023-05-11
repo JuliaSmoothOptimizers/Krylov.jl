@@ -171,8 +171,8 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
 
     ε = atol + rtol * rNorm
     κ = zero(T)
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖Aᴴrₖ₋₁‖")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗")
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %8s\n", "k", "‖rₖ‖", "‖Aᴴrₖ₋₁‖")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8s\n", iter, rNorm, " ✗ ✗ ✗ ✗")
 
     βₖ = @knrm2(m, r₀)           # β₁ = ‖v₁‖ = ‖r₀‖
     γₖ = @knrm2(n, c)            # γ₁ = ‖u₁‖ = ‖c‖
@@ -332,7 +332,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e\n", iter, rNorm, AᴴrNorm)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e\n", iter, rNorm, AᴴrNorm)
     end
     (verbose > 0) && @printf(iostream, "\n")
 

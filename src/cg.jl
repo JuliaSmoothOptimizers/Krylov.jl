@@ -172,7 +172,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     pNorm² = γ
     ε = atol + rtol * rNorm
     (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  ", iter, rNorm)
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e", iter, rNorm)
 
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
@@ -204,7 +204,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       # Compute step size to boundary if applicable.
       σ = radius > 0 ? maximum(to_boundary(n, x, p, radius, dNorm2=pNorm²)) : α
 
-      kdisplay(iter, verbose) && @printf(iostream, "%8.1e  %8.1e  %8.1e\n", pAp, α, σ)
+      kdisplay(iter, verbose) && @printf(iostream, "  %8.1e  %8.1e  %8.1e\n", pAp, α, σ)
 
       # Move along p from x to the boundary if either
       # the next step leads outside the trust region or
@@ -241,9 +241,9 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       user_requested_exit = callback(solver) :: Bool
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  ", iter, rNorm)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e", iter, rNorm)
     end
-    (verbose > 0) && @printf(iostream, "\n")
+    (verbose > 0) && @printf(iostream, "\n\n")
 
     # Termination status
     solved && on_boundary             && (status = "on trust-region boundary")
