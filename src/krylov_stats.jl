@@ -255,5 +255,5 @@ function show(io :: IO, stats :: KrylovStats)
       s *= @sprintf " %s\n" statfield
     end
   end
-    print(io, s)
+  print(io, s)
 end
