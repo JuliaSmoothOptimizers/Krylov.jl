@@ -12,6 +12,7 @@ Type for statistics returned by the majority of Krylov solvers, the attributes a
 - residuals
 - Aresiduals
 - Acond
+- timer
 - status
 """
 mutable struct SimpleStats{T} <: KrylovStats{T}
@@ -21,6 +22,7 @@ mutable struct SimpleStats{T} <: KrylovStats{T}
   residuals    :: Vector{T}
   Aresiduals   :: Vector{T}
   Acond        :: Vector{T}
+  timer        :: Float64
   status       :: String
 end
 
@@ -40,6 +42,7 @@ Type for statistics returned by LSMR. The attributes are:
 - Acond
 - Anorm
 - xNorm
+- timer
 - status
 """
 mutable struct LsmrStats{T} <: KrylovStats{T}
@@ -53,6 +56,7 @@ mutable struct LsmrStats{T} <: KrylovStats{T}
   Acond        :: T
   Anorm        :: T
   xNorm        :: T
+  timer        :: Float64
   status       :: String
 end
 
@@ -69,6 +73,7 @@ Type for statistics returned by CG-LANCZOS, the attributes are:
 - indefinite
 - Anorm
 - Acond
+- timer
 - status
 """
 mutable struct LanczosStats{T} <: KrylovStats{T}
@@ -78,6 +83,7 @@ mutable struct LanczosStats{T} <: KrylovStats{T}
   indefinite :: Bool
   Anorm      :: T
   Acond      :: T
+  timer      :: Float64
   status     :: String
 end
 
@@ -93,6 +99,7 @@ Type for statistics returned by CG-LANCZOS with shifts, the attributes are:
 - indefinite
 - Anorm
 - Acond
+- timer
 - status
 """
 mutable struct LanczosShiftStats{T} <: KrylovStats{T}
@@ -102,6 +109,7 @@ mutable struct LanczosShiftStats{T} <: KrylovStats{T}
   indefinite :: BitVector
   Anorm      :: T
   Acond      :: T
+  timer      :: Float64
   status     :: String
 end
 
@@ -121,6 +129,7 @@ Type for statistics returned by SYMMLQ, the attributes are:
 - errorscg
 - Anorm
 - Acond
+- timer
 - status
 """
 mutable struct SymmlqStats{T} <: KrylovStats{T}
@@ -132,6 +141,7 @@ mutable struct SymmlqStats{T} <: KrylovStats{T}
   errorscg    :: Vector{Union{T, Missing}}
   Anorm       :: T
   Acond       :: T
+  timer       :: Float64
   status      :: String
 end
 
@@ -149,6 +159,7 @@ Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the at
 - solved_dual
 - residuals_primal
 - residuals_dual
+- timer
 - status
 """
 mutable struct AdjointStats{T} <: KrylovStats{T}
@@ -157,6 +168,7 @@ mutable struct AdjointStats{T} <: KrylovStats{T}
   solved_dual      :: Bool
   residuals_primal :: Vector{T}
   residuals_dual   :: Vector{T}
+  timer            :: Float64
   status           :: String
 end
 
@@ -173,6 +185,7 @@ Type for statistics returned by the LNLQ method, the attributes are:
 - error_with_bnd
 - error_bnd_x
 - error_bnd_y
+- timer
 - status
 """
 mutable struct LNLQStats{T} <: KrylovStats{T}
@@ -182,6 +195,7 @@ mutable struct LNLQStats{T} <: KrylovStats{T}
   error_with_bnd :: Bool
   error_bnd_x    :: Vector{T}
   error_bnd_y    :: Vector{T}
+  timer          :: Float64
   status         :: String
 end
 
@@ -202,6 +216,7 @@ Type for statistics returned by the LSLQ method, the attributes are:
 - error_with_bnd
 - err_ubnds_lq
 - err_ubnds_cg
+- timer
 - status
 """
 mutable struct LSLQStats{T} <: KrylovStats{T}
@@ -214,6 +229,7 @@ mutable struct LSLQStats{T} <: KrylovStats{T}
   error_with_bnd :: Bool
   err_ubnds_lq   :: Vector{T}
   err_ubnds_cg   :: Vector{T}
+  timer          :: Float64
   status         :: String
 end
 
@@ -251,6 +267,10 @@ function show(io :: IO, stats :: KrylovStats)
     statfield = getfield(stats, field)
     if isa(statfield, AbstractVector) && eltype(statfield) <: Union{Missing, AbstractFloat}
       s *= @sprintf " %s\n" vec2str(statfield)
+    elseif field_name == "timer"
+      (statfield < 1e-3) && (s *= @sprintf " %.2fμs\n" 1e6*statfield)
+      (1e-3 ≤ statfield < 1.00) && (s *= @sprintf " %.2fms\n" 1e3*statfield)
+      (statfield ≥ 1.00) && (s *= @sprintf " %.2fs\n" statfield)
     else
       s *= @sprintf " %s\n" statfield
     end
