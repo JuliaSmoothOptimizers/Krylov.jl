@@ -196,6 +196,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     if β₁ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       history && push!(rNorms, β₁)
       history && push!(ArNorms, zero(T))
@@ -241,7 +242,6 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7s  %7s  %.2fs\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗", ktimer(start_time))
 
     ε = atol + rtol * β₁
-    stats.status = "unknown"
     solved = solved_mach = solved_lim = (rNorm ≤ rtol)
     tired  = iter ≥ itmax
     ill_cond = ill_cond_mach = ill_cond_lim = false
@@ -346,6 +346,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
         # Aᴴb = 0 so x = 0 is a minimum least-squares solution
         stats.niter = 1
         stats.solved, stats.inconsistent = true, true
+        stats.timer = ktimer(start_time)
         stats.status = "x is a minimum least-squares solution"
         solver.warm_start = false
         return solver
@@ -395,6 +396,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = !zero_resid
+    stats.timer = ktimer(start_time)
     stats.status = status
     return solver
   end

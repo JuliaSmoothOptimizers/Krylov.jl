@@ -176,6 +176,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     if ρ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       history && push!(ArNorms, zero(T))
       solver.warm_start = false
@@ -218,6 +219,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
           (verbose > 0) && @printf(iostream, "nonpositive curvature detected: pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
           stats.solved = solved
           stats.inconsistent = false
+          stats.timer = ktimer(start_time)
           stats.status = "nonpositive curvature"
           return solver
         end
@@ -382,6 +384,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         stats.niter = iter
         stats.solved = solved
         stats.inconsistent = false
+        stats.timer = ktimer(start_time)
         stats.status = "solver encountered numerical issues"
         solver.warm_start = false
         return solver
@@ -411,6 +414,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = false
+    stats.timer = ktimer(start_time)
     stats.status = status
     return solver
   end

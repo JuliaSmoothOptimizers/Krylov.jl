@@ -460,9 +460,10 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
 
     # Update stats
     stats.niter = iter
-    stats.status = status
     stats.solved_primal = solved_primal
     stats.solved_dual = solved_dual
+    stats.timer = ktimer(start_time)
+    stats.status = status
     return solver
   end
 end

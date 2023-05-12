@@ -239,6 +239,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       stats.error_with_bnd = false
       history && push!(rNorms, zero(T))
       history && push!(ArNorms, zero(T))
+      stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       return solver
     end
@@ -258,6 +259,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       stats.error_with_bnd = false
       history && push!(rNorms, β₁)
       history && push!(ArNorms, zero(T))
+      stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a minimum least-squares solution"
       return solver
     end
@@ -500,6 +502,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     stats.solved = solved
     stats.inconsistent = !zero_resid
     stats.error_with_bnd = complex_error_bnd
+    stats.timer = ktimer(start_time)
     stats.status = status
     return solver
   end

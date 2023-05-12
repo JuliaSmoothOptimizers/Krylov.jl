@@ -212,6 +212,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     if β₁ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       return solver
     end
@@ -391,6 +392,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = inconsistent
+    stats.timer = ktimer(start_time)
     stats.status = status
     return solver
   end
