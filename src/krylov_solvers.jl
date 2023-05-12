@@ -820,6 +820,7 @@ function CgsSolver(m, n, S)
   ts = S(undef, n)
   yz = S(undef, 0)
   vw = S(undef, 0)
+  
   stats = SimpleStats(0, false, false, T[], T[], T[], "unknown")
   solver = CgsSolver{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
   return solver
