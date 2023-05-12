@@ -210,6 +210,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     if β₁ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       history && push!(rNorms, zero(T))
       history && push!(ArNorms, zero(T))
@@ -270,6 +271,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     if α == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a minimum least-squares solution"
       return solver
     end
@@ -435,6 +437,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = !zero_resid
+    stats.timer = ktimer(start_time)
     stats.status = status
     return solver
   end

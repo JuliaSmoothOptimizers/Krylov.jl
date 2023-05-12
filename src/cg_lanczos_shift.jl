@@ -151,6 +151,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     if β == 0
       stats.niter = 0
       stats.solved = true
+      stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       return solver
     end
@@ -269,6 +270,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     # Update stats. TODO: Estimate Anorm and Acond.
     stats.niter = iter
     stats.solved = solved
+    stats.timer = ktimer(start_time)
     stats.status = status
     return solver
   end

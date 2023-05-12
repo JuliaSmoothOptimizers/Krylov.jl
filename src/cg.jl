@@ -166,6 +166,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     if γ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
       return solver
@@ -268,6 +269,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = inconsistent
+    stats.timer = ktimer(start_time)
     stats.status = status
     return solver
   end

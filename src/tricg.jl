@@ -464,6 +464,7 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = !solved && breakdown
+    stats.timer = ktimer(start_time)
     stats.status = status
     return solver
   end

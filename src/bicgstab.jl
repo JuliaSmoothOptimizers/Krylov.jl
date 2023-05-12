@@ -188,6 +188,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     if rNorm == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
       return solver
@@ -204,6 +205,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     if next_ρ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = false, false
+      stats.timer = ktimer(start_time)
       stats.status = "Breakdown bᴴc = 0"
       solver.warm_start = false
       return solver
@@ -276,6 +278,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = false
+    stats.timer = ktimer(start_time)
     stats.status = status
     return solver
   end

@@ -537,6 +537,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = inconsistent
+    stats.timer = ktimer(start_time)
     stats.status = status
     return solver
   end

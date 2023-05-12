@@ -182,6 +182,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       stats.niter = 0
       stats.solved_primal = false
       stats.solved_dual = false
+      stats.timer = ktimer(start_time)
       stats.status = "Breakdown bᴴc = 0"
       solver.warm_start = false
       return solver
@@ -481,9 +482,10 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
 
     # Update stats
     stats.niter = iter
-    stats.status = status
     stats.solved_primal = solved_primal
     stats.solved_dual = solved_dual
+    stats.timer = ktimer(start_time)
+    stats.status = status
     return solver
   end
 end

@@ -158,6 +158,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, 
       stats.niter = 0
       stats.solved = true
       stats.inconsistent = false
+      stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
       return solver
@@ -176,6 +177,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, 
       stats.niter = 0
       stats.solved = false
       stats.inconsistent = false
+      stats.timer = ktimer(start_time)
       stats.status = "Breakdown bᴴc = 0"
       solver.warm_start = false
       return solver
@@ -374,6 +376,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, 
     stats.niter = iter
     stats.solved = solved_lq || solved_cg
     stats.inconsistent = false
+    stats.timer = ktimer(start_time)
     stats.status = status
     return solver
   end
