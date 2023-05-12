@@ -93,7 +93,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     start_time = time_ns()
     nshifts = length(shifts)
     solver = CgLanczosShiftSolver(A, b, nshifts)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cg_lanczos_shift!(solver, A, b, shifts; $(kwargs_cg_lanczos_shift...))
     return (solver.x, solver.stats)
   end
@@ -111,7 +111,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
 
     nshifts = length(shifts)
     nshifts == solver.nshifts || error("solver.nshifts = $(solver.nshifts) is inconsistent with length(shifts) = $nshifts")
-    (verbose > 0) && @printf(iostream, "CG Lanczos: system of %d equations in %d variables with %d shifts\n", n, n, nshifts)
+    (verbose > 0) && @printf(iostream, "CG-LANCZOS-SHIFT: system of %d equations in %d variables with %d shifts\n", n, n, nshifts)
 
     # Tests M = Iₙ
     MisI = (M === I)
@@ -185,8 +185,8 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     itmax == 0 && (itmax = 2 * n)
 
     # Build format strings for printing.
-    (verbose > 0) && (fmt = Printf.Format("%5d" * repeat("  %8.1e", nshifts) * "\n"))
-    kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms...)
+    (verbose > 0) && (fmt = Printf.Format("%5d" * repeat("  %8.1e", nshifts) * "  %.2fs\n"))
+    kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms..., ktimer(start_time))
 
     solved = !reduce(|, not_cv)
     tired = iter ≥ itmax
@@ -250,7 +250,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
         not_cv[i] = check_curvature ? !(converged[i] || indefinite[i]) : !converged[i]
       end
       iter = iter + 1
-      kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms...)
+      kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms..., ktimer(start_time))
 
       user_requested_exit = callback(solver) :: Bool
       solved = !reduce(|, not_cv)

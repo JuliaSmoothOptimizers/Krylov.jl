@@ -109,7 +109,7 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
     start_time = time_ns()
     solver = FgmresSolver(A, b, memory)
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     fgmres!(solver, A, b; $(kwargs_fgmres...))
     return (solver.x, solver.stats)
   end
@@ -117,7 +117,7 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
   function fgmres(A, b :: AbstractVector{FC}; memory :: Int=20, $(def_kwargs_fgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = FgmresSolver(A, b, memory)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     fgmres!(solver, A, b; $(kwargs_fgmres...))
     return (solver.x, solver.stats)
   end
@@ -125,7 +125,7 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
   function fgmres!(solver :: FgmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_fgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     fgmres!(solver, A, b; $(kwargs_fgmres...))
     return solver
   end
@@ -196,8 +196,8 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
     itmax == 0 && (itmax = 2*n)
     inner_itmax = itmax
 
-    (verbose > 0) && @printf(iostream, "%5s  %5s  %7s  %7s\n", "pass", "k", "‖rₖ‖", "hₖ₊₁.ₖ")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7s\n", npass, iter, rNorm, "✗ ✗ ✗ ✗")
+    (verbose > 0) && @printf(iostream, "%5s  %5s  %7s  %7s  %5s\n", "pass", "k", "‖rₖ‖", "hₖ₊₁.ₖ", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7s  %.2fs\n", npass, iter, rNorm, "✗ ✗ ✗ ✗", ktimer(start_time))
 
     # Tolerance for breakdown detection.
     btol = eps(T)^(3/4)
@@ -320,7 +320,7 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
         inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
         timer = time_ns() - start_time
         overtimed = timer > timemax_ns
-        kdisplay(iter+inner_iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7.1e\n", npass, iter+inner_iter, rNorm, Hbis)
+        kdisplay(iter+inner_iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7.1e  %.2fs\n", npass, iter+inner_iter, rNorm, Hbis, ktimer(start_time))
 
         # Compute vₖ₊₁
         if !(solved || inner_tired || breakdown || user_requested_exit || overtimed)

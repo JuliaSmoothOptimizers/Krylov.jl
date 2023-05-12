@@ -106,7 +106,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     start_time = time_ns()
     solver = MinresQlpSolver(A, b)
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     minres_qlp!(solver, A, b; $(kwargs_minres_qlp...))
     return (solver.x, solver.stats)
   end
@@ -114,7 +114,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
   function minres_qlp(A, b :: AbstractVector{FC}; $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = MinresQlpSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     minres_qlp!(solver, A, b; $(kwargs_minres_qlp...))
     return (solver.x, solver.stats)
   end
@@ -122,7 +122,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
   function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     minres_qlp!(solver, A, b; $(kwargs_minres_qlp...))
     return solver
   end
@@ -196,8 +196,8 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
 
     ε = atol + rtol * rNorm
     κ = zero(T)
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %8s  %7s  %8s  %7s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁", "Rₖ.ₖ", "Lₖ.ₖ", "‖A‖", "κ(A)", "backward")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %7.1e  %8s\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", ANorm, Acond, " ✗ ✗ ✗ ✗")
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %8s  %7s  %7s  %8s  %5s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁", "Rₖ.ₖ", "Lₖ.ₖ", "‖A‖", "κ(A)", "backward", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %7.1e  %8s  %.2fs\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", ANorm, Acond, " ✗ ✗ ✗ ✗", ktimer(start_time))
 
     # Set up workspace.
     M⁻¹vₖ₋₁ .= zero(FC)
@@ -457,7 +457,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       μbarₖ₋₁ = μbarₖ
       ζbarₖ = ζbarₖ₊₁
       βₖ = βₖ₊₁
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %7.1e  %8.1e\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ, ANorm, Acond, backward)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %7.1e  %8.1e  %.2fs\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ, ANorm, Acond, backward, ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
 

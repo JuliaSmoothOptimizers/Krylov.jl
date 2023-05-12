@@ -130,7 +130,7 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     start_time = time_ns()
     solver = TrimrSolver(A, b)
     warm_start!(solver, x0, y0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     trimr!(solver, A, b, c; $(kwargs_trimr...))
     return (solver.x, solver.y, solver.stats)
   end
@@ -138,7 +138,7 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
   function trimr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = TrimrSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     trimr!(solver, A, b, c; $(kwargs_trimr...))
     return (solver.x, solver.y, solver.stats)
   end
@@ -146,7 +146,7 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
   function trimr!(solver :: TrimrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0, y0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     trimr!(solver, A, b, c; $(kwargs_trimr...))
     return solver
   end
@@ -270,8 +270,8 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     history && push!(rNorms, rNorm)
     ε = atol + rtol * rNorm
 
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "βₖ₊₁", "γₖ₊₁")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ, γₖ)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %5s\n", "k", "‖rₖ‖", "βₖ₊₁", "γₖ₊₁", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, βₖ, γₖ, ktimer(start_time))
 
     # Set up workspace.
     old_c₁ₖ = old_c₂ₖ = old_c₃ₖ = old_c₄ₖ = zero(T)
@@ -547,7 +547,7 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ₊₁, γₖ₊₁)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, βₖ₊₁, γₖ₊₁, ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
 

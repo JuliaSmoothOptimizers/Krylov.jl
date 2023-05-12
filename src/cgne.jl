@@ -121,7 +121,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
   function cgne(A, b :: AbstractVector{FC}; $(def_kwargs_cgne...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CgneSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cgne!(solver, A, b; $(kwargs_cgne...))
     return (solver.x, solver.stats)
   end
@@ -182,8 +182,8 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
 
     ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
     ɛ_i = atol + rtol * pNorm  # Stopping tolerance for inconsistent systems.
-    (verbose > 0) && @printf(iostream, "%5s  %8s\n", "k", "‖r‖")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e\n", iter, rNorm)
+    (verbose > 0) && @printf(iostream, "%5s  %8s  %5s\n", "k", "‖r‖", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %.2fs\n", iter, rNorm, ktimer(start_time))
 
     status = "unknown"
     solved = rNorm ≤ ɛ_c
@@ -213,7 +213,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       rNorm = sqrt(γ_next)
       history && push!(rNorms, rNorm)
       iter = iter + 1
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e\n", iter, rNorm)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %.2fs\n", iter, rNorm, ktimer(start_time))
 
       # Stopping conditions that do not depend on user input.
       # This is to guard against tolerances that are unreasonably small.

@@ -110,7 +110,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     start_time = time_ns()
     solver = SymmlqSolver(A, b; window)
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     symmlq!(solver, A, b; $(kwargs_symmlq...))
     return (solver.x, solver.stats)
   end
@@ -118,7 +118,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
   function symmlq(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = SymmlqSolver(A, b; window)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     symmlq!(solver, A, b; $(kwargs_symmlq...))
     return (solver.x, solver.stats)
   end
@@ -126,7 +126,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
   function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     symmlq!(solver, A, b; $(kwargs_symmlq...))
     return solver
   end
@@ -266,8 +266,8 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     iter = 0
     itmax == 0 && (itmax = 2 * n)
 
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %8s  %8s  %7s  %7s  %7s\n", "k", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e\n", iter, rNorm, β, cold, sold, ANorm, Acond)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %5s\n", "k", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7s  %.2fs\n", iter, rNorm, β, cold, sold, ANorm, Acond, "✗ ✗ ✗ ✗", ktimer(start_time))
 
     tol = atol + rtol * β₁
     status = "unknown"
@@ -402,7 +402,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       ANorm = sqrt(ANorm²)
       test1 = rNorm / (ANorm * xNorm)
 
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e\n", iter, rNorm, β, c, s, ANorm, Acond, test1)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, β, c, s, ANorm, Acond, test1, ktimer(start_time))
 
       # Reset variables
       ϵold = ϵ

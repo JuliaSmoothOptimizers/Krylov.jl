@@ -129,7 +129,7 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     start_time = time_ns()
     solver = TricgSolver(A, b)
     warm_start!(solver, x0, y0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     tricg!(solver, A, b, c; $(kwargs_tricg...))
     return (solver.x, solver.y, solver.stats)
   end
@@ -137,7 +137,7 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
   function tricg(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_tricg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = TricgSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     tricg!(solver, A, b, c; $(kwargs_tricg...))
     return (solver.x, solver.y, solver.stats)
   end
@@ -145,7 +145,7 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
   function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_tricg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0, y0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     tricg!(solver, A, b, c; $(kwargs_tricg...))
     return solver
   end
@@ -260,8 +260,8 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     history && push!(rNorms, rNorm)
     ε = atol + rtol * rNorm
 
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "βₖ₊₁", "γₖ₊₁")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ, γₖ)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %5s\n", "k", "‖rₖ‖", "βₖ₊₁", "γₖ₊₁", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, βₖ, γₖ, ktimer(start_time))
 
     # Set up workspace.
     d₂ₖ₋₃ = d₂ₖ₋₂ = zero(T)
@@ -444,7 +444,7 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, βₖ₊₁, γₖ₊₁)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, βₖ₊₁, γₖ₊₁, ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
 

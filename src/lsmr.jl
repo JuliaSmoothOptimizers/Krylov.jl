@@ -158,7 +158,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
   function lsmr(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = LsmrSolver(A, b; window)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     lsmr!(solver, A, b; $(kwargs_lsmr...))
     return (solver.x, solver.stats)
   end
@@ -263,8 +263,8 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     iter = 0
     itmax == 0 && (itmax = m + n)
 
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "α", "cos", "sin", "‖A‖²")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", iter, β₁, α, β₁, α, 0, 1, Anorm²)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %8s  %8s  %7s  %5s\n", "k", "‖r‖", "‖Aᴴr‖", "β", "α", "cos", "sin", "‖A‖²", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %.2fs\n", iter, β₁, α, β₁, α, 0, 1, Anorm², ktimer(start_time))
 
     # Aᴴb = 0 so x = 0 is a minimum least-squares solution
     if α == 0
@@ -390,7 +390,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
       t1    = test1 / (one(T) + Anorm * xNorm / β₁)
       rNormtol  = btol + axtol * Anorm * xNorm / β₁
 
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e\n", iter, rNorm, ArNorm, β, α, c, s, Anorm²)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %.2fs\n", iter, rNorm, ArNorm, β, α, c, s, Anorm², ktimer(start_time))
 
       # Stopping conditions that do not depend on user input.
       # This is to guard against tolerances that are unreasonably small.

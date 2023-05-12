@@ -111,7 +111,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     start_time = time_ns()
     solver = CgsSolver(A, b)
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cgs!(solver, A, b; $(kwargs_cgs...))
     return (solver.x, solver.stats)
   end
@@ -119,7 +119,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
   function cgs(A, b :: AbstractVector{FC}; $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CgsSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cgs!(solver, A, b; $(kwargs_cgs...))
     return (solver.x, solver.stats)
   end
@@ -127,7 +127,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
   function cgs!(solver :: CgsSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cgs!(solver, A, b; $(kwargs_cgs...))
     return solver
   end
@@ -202,8 +202,8 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     itmax == 0 && (itmax = 2*n)
 
     ε = atol + rtol * rNorm
-    (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
 
     u .= r        # u₀
     p .= r        # p₀
@@ -261,7 +261,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       breakdown = (α == 0 || isnan(α))
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
 

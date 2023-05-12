@@ -142,7 +142,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     start_time = time_ns()
     solver = GpmrSolver(A, b, memory)
     warm_start!(solver, x0, y0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     gpmr!(solver, A, B, b, c; $(kwargs_gpmr...))
     return (solver.x, solver.y, solver.stats)
   end
@@ -150,7 +150,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
   function gpmr(A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}; memory :: Int=20, $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = GpmrSolver(A, b, memory)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     gpmr!(solver, A, B, b, c; $(kwargs_gpmr...))
     return (solver.x, solver.y, solver.stats)
   end
@@ -158,7 +158,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
   function gpmr!(solver :: GpmrSolver{T,FC,S}, A, B, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0, y0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     gpmr!(solver, A, B, b, c; $(kwargs_gpmr...))
     return solver
   end
@@ -271,8 +271,8 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     zt[1] = β
     zt[2] = γ
 
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s\n", "k", "‖rₖ‖", "hₖ₊₁.ₖ", "fₖ₊₁.ₖ")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s  %7s\n", iter, rNorm, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗")
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %5s\n", "k", "‖rₖ‖", "hₖ₊₁.ₖ", "fₖ₊₁.ₖ", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s  %7s  %.2fs\n", iter, rNorm, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗", ktimer(start_time))
 
     # Tolerance for breakdown detection.
     btol = eps(T)^(3/4)
@@ -461,7 +461,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e\n", iter, rNorm, Haux, Faux)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, Haux, Faux, ktimer(start_time))
 
       # Compute vₖ₊₁ and uₖ₊₁
       if !(solved || tired || breakdown || user_requested_exit || overtimed)

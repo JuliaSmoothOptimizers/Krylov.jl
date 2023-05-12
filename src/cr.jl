@@ -109,7 +109,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     start_time = time_ns()
     solver = CrSolver(A, b)
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cr!(solver, A, b; $(kwargs_cr...))
     return (solver.x, solver.stats)
   end
@@ -117,7 +117,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
   function cr(A, b :: AbstractVector{FC}; $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CrSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cr!(solver, A, b; $(kwargs_cr...))
     return (solver.x, solver.stats)
   end
@@ -125,7 +125,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
   function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cr!(solver, A, b; $(kwargs_cr...))
     return solver
   end
@@ -199,8 +199,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     ArNorm = @knrm2(n, Ar) # ‖Ar‖
     history && push!(ArNorms, ArNorm)
     ε = atol + rtol * rNorm
-    (verbose > 0) && @printf(iostream, "%5s  %8s  %8s  %8s\n", "k", "‖x‖", "‖r‖", "quad")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %8.1e  %8.1e\n", iter, xNorm, rNorm, m)
+    (verbose > 0) && @printf(iostream, "%5s  %8s  %8s  %8s  %5s\n", "k", "‖x‖", "‖r‖", "quad", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %8.1e  %8.1e  %.2fs\n", iter, xNorm, rNorm, m, ktimer(start_time))
 
     descent = pr > 0 # pᴴr > 0 means p is a descent direction
     solved = rNorm ≤ ε
@@ -351,7 +351,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       iter = iter + 1
       if kdisplay(iter, verbose)
         m = m - α * pr + α^2 * pAp / 2
-        @printf(iostream, "%5d  %8.1e  %8.1e  %8.1e\n", iter, xNorm, rNorm, m)
+        @printf(iostream, "%5d  %8.1e  %8.1e  %8.1e  %.2fs\n", iter, xNorm, rNorm, m, ktimer(start_time))
       end
 
       # Stopping conditions that do not depend on user input.

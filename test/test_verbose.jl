@@ -39,14 +39,14 @@ function test_verbose(FC)
         @eval $fn($A, $b, verbose=1, iostream=$io)
       end
 
-      if fn ∉ (:cg, :craig, :symmlq, :minres, :minres_qlp)
-        showed = String(take!(io))
-        str = split(showed, '\n', keepempty=false)
-        first_row = fn in (:bilqr, :trilqr) ? 3 : 2
-        str = str[first_row:end]
-        len_header = length(str[1])
-        @test mapreduce(x -> length(x) == len_header, &, str)
-      end
+      showed = String(take!(io))
+      str = split(showed, '\n', keepempty=false)
+      nrows = length(str)
+      first_row = fn in (:bilqr, :trilqr) ? 3 : 2
+      last_row = fn == :cg ? nrows-1 : nrows
+      str = str[first_row:last_row]
+      len_header = length(str[1])
+      @test mapreduce(x -> length(x) == len_header, &, str)
     end
   end
 end

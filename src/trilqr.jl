@@ -98,7 +98,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     start_time = time_ns()
     solver = TrilqrSolver(A, b)
     warm_start!(solver, x0, y0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     trilqr!(solver, A, b, c; $(kwargs_trilqr...))
     return (solver.x, solver.y, solver.stats)
   end
@@ -106,7 +106,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
   function trilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = TrilqrSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     trilqr!(solver, A, b, c; $(kwargs_trilqr...))
     return (solver.x, solver.y, solver.stats)
   end
@@ -114,7 +114,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
   function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0, y0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     trilqr!(solver, A, b, c; $(kwargs_trilqr...))
     return solver
   end
@@ -172,8 +172,8 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     εL = atol + rtol * bNorm
     εQ = atol + rtol * cNorm
     ξ = zero(T)
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s\n", "k", "‖rₖ‖", "‖sₖ‖")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e\n", iter, bNorm, cNorm)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %5s\n", "k", "‖rₖ‖", "‖sₖ‖", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, bNorm, cNorm, ktimer(start_time))
 
     # Set up workspace.
     βₖ = @knrm2(m, r₀)          # β₁ = ‖r₀‖ = ‖v₁‖
@@ -422,9 +422,9 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
 
-      kdisplay(iter, verbose) &&  solved_primal && !solved_dual && @printf(iostream, "%5d  %7s  %7.1e\n", iter, "", sNorm)
-      kdisplay(iter, verbose) && !solved_primal &&  solved_dual && @printf(iostream, "%5d  %7.1e  %7s\n", iter, rNorm_lq, "")
-      kdisplay(iter, verbose) && !solved_primal && !solved_dual && @printf(iostream, "%5d  %7.1e  %7.1e\n", iter, rNorm_lq, sNorm)
+      kdisplay(iter, verbose) &&  solved_primal && !solved_dual && @printf(iostream, "%5d  %7s  %7.1e  %.2fs\n", iter, "✗ ✗ ✗ ✗", sNorm, ktimer(start_time))
+      kdisplay(iter, verbose) && !solved_primal &&  solved_dual && @printf(iostream, "%5d  %7.1e  %7s  %.2fs\n", iter, rNorm_lq, "✗ ✗ ✗ ✗", ktimer(start_time))
+      kdisplay(iter, verbose) && !solved_primal && !solved_dual && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, rNorm_lq, sNorm, ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
 

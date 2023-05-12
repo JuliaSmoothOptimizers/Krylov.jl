@@ -1,5 +1,5 @@
 @testset "stats" begin
-  stats = Krylov.SimpleStats(0, true, true, Float64[1.0], Float64[2.0], Float64[], "t")
+  stats = Krylov.SimpleStats(0, true, true, Float64[1.0], Float64[2.0], Float64[], "unknown")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -11,14 +11,14 @@
   residuals: [ 1.0e+00 ]
   Aresiduals: [ 2.0e+00 ]
   κ₂(A): []
-  status: t"""
+  status: unknown"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
   nbytes_allocated = @allocated Krylov.reset!(stats)
   @test nbytes_allocated == 0
 
-  stats = Krylov.LsmrStats(0, true, true, Float64[1.0], Float64[2.0], Float64(3.0), Float64(4.0), Float64(5.0), Float64(6.0), Float64(7.0), "t")
+  stats = Krylov.LsmrStats(0, true, true, Float64[1.0], Float64[2.0], Float64(3.0), Float64(4.0), Float64(5.0), Float64(6.0), Float64(7.0), "unknown")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -34,14 +34,14 @@
   κ₂(A): 5.0
   ‖A‖F: 6.0
   xNorm: 7.0
-  status: t"""
+  status: unknown"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
   nbytes_allocated = @allocated Krylov.reset!(stats)
   @test nbytes_allocated == 0
 
-  stats = Krylov.LanczosStats(0, true, Float64[3.0], true, NaN, NaN, "t")
+  stats = Krylov.LanczosStats(0, true, Float64[3.0], true, NaN, NaN, "unknown")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -53,14 +53,14 @@
   indefinite: true
   ‖A‖F: NaN
   κ₂(A): NaN
-  status: t"""
+  status: unknown"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
   nbytes_allocated = @allocated Krylov.reset!(stats)
   @test nbytes_allocated == 0
 
-  stats = Krylov.LanczosShiftStats(0, true, [Float64[0.9, 0.5], Float64[0.6, 0.4, 0.1]], BitVector([false, true]), NaN, NaN, "t")
+  stats = Krylov.LanczosShiftStats(0, true, [Float64[0.9, 0.5], Float64[0.6, 0.4, 0.1]], BitVector([false, true]), NaN, NaN, "unknown")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -72,13 +72,13 @@
   indefinite: Bool[0, 1]
   ‖A‖F: NaN
   κ₂(A): NaN
-  status: t"""
+  status: unknown"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   nbytes_allocated = @allocated Krylov.reset!(stats)
   @test nbytes_allocated == 0
 
-  stats = Krylov.SymmlqStats(0, true, Float64[4.0], Union{Float64,Missing}[5.0, missing], Float64[6.0], Union{Float64,Missing}[7.0, missing], NaN, NaN, "t")
+  stats = Krylov.SymmlqStats(0, true, Float64[4.0], Union{Float64,Missing}[5.0, missing], Float64[6.0], Union{Float64,Missing}[7.0, missing], NaN, NaN, "unknown")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -92,14 +92,14 @@
   errors (cg): [ 7.0e+00  ✗✗✗✗ ]
   ‖A‖F: NaN
   κ₂(A): NaN
-  status: t"""
+  status: unknown"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
   nbytes_allocated = @allocated Krylov.reset!(stats)
   @test nbytes_allocated == 0
 
-  stats = Krylov.AdjointStats(0, true, true, Float64[8.0], Float64[9.0], "t")
+  stats = Krylov.AdjointStats(0, true, true, Float64[8.0], Float64[9.0], "unknown")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -110,14 +110,14 @@
   solved dual: true
   residuals primal: [ 8.0e+00 ]
   residuals dual: [ 9.0e+00 ]
-  status: t"""
+  status: unknown"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
   nbytes_allocated = @allocated Krylov.reset!(stats)
   @test nbytes_allocated == 0
 
-  stats = Krylov.LNLQStats(0, true, Float64[10.0], false, Float64[11.0], Float64[12.0], "t")
+  stats = Krylov.LNLQStats(0, true, Float64[10.0], false, Float64[11.0], Float64[12.0], "unknown")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -129,14 +129,14 @@
   error with bnd: false
   error bnd x: [ 1.1e+01 ]
   error bnd y: [ 1.2e+01 ]
-  status: t"""
+  status: unknown"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)
   nbytes_allocated = @allocated Krylov.reset!(stats)
   @test nbytes_allocated == 0
 
-  stats = Krylov.LSLQStats(0, true, false, Float64[13.0], Float64[14.0], Float64[15.0], false, Float64[16.0], Float64[17.0], "t")
+  stats = Krylov.LSLQStats(0, true, false, Float64[13.0], Float64[14.0], Float64[15.0], false, Float64[16.0], Float64[17.0], "unknown")
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -151,7 +151,7 @@
   error with bnd: false
   error bound LQ: [ 1.6e+01 ]
   error bound CG: [ 1.7e+01 ]
-  status: t"""
+  status: unknown"""
   @test strip.(split(chomp(showed), "\n")) == strip.(split(chomp(expected), "\n"))
   Krylov.reset!(stats)
   check_reset(stats)

@@ -154,7 +154,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
   function lsqr(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_lsqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = LsqrSolver(A, b; window)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     lsqr!(solver, A, b; $(kwargs_lsqr...))
     return (solver.x, solver.stats)
   end
@@ -238,8 +238,8 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     iter = 0
     itmax == 0 && (itmax = m + n)
 
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %7s\n", "k", "α", "β", "‖r‖", "‖Aᴴr‖", "compat", "backwrd", "‖A‖", "κ(A)")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, β₁, α, β₁, α, 0, 1, Anorm, Acond)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %5s\n", "k", "α", "β", "‖r‖", "‖Aᴴr‖", "compat", "backwrd", "‖A‖", "κ(A)", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, β₁, α, β₁, α, 0, 1, Anorm, Acond, ktimer(start_time))
 
     rNorm = β₁
     r1Norm = rNorm
@@ -380,7 +380,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
       t1    = test1 / (one(T) + Anorm * xNorm / β₁)
       rNormtol = btol + axtol * Anorm * xNorm / β₁
 
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e\n", iter, α, β, rNorm, ArNorm, test1, test2, Anorm, Acond)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, α, β, rNorm, ArNorm, test1, test2, Anorm, Acond, ktimer(start_time))
 
       # Stopping conditions that do not depend on user input.
       # This is to guard against tolerances that are unreasonably small.

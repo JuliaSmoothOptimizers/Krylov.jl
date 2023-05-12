@@ -159,7 +159,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
   function craig(A, b :: AbstractVector{FC}; $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CraigSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     craig!(solver, A, b; $(kwargs_craig...))
     return (solver.x, solver.y, solver.stats)
   end
@@ -245,8 +245,8 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     ɛ_c = atol + rtol * rNorm   # Stopping tolerance for consistent systems.
     ɛ_i = atol                  # Stopping tolerance for inconsistent systems.
     ctol = conlim > 0 ? 1/conlim : zero(T)  # Stopping tolerance for ill-conditioned operators.
-    (verbose > 0) && @printf(iostream, "%5s  %8s  %8s  %8s  %8s  %8s  %7s\n", "k", "‖r‖", "‖x‖", "‖A‖", "κ(A)", "α", "β")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %8.2e  %8.2e\n", iter, rNorm, xNorm, Anorm, Acond)
+    (verbose > 0) && @printf(iostream, "%5s  %8s  %8s  %8s  %8s  %8s  %7s  %5s\n", "k", "‖r‖", "‖x‖", "‖A‖", "κ(A)", "α", "β", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8s  %7s  %.2fs\n", iter, rNorm, xNorm, Anorm, Acond, " ✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗", ktimer(start_time))
 
     bkwerr = one(T)  # initial value of the backward error ‖r‖ / √(‖b‖² + ‖A‖² ‖x‖²)
 
@@ -351,7 +351,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
 
       ρ_prev = ρ   # Only differs from α if λ > 0.
 
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8.1e  %7.1e\n", iter, rNorm, xNorm, Anorm, Acond, α, β)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8.1e  %7.1e  %.2fs\n", iter, rNorm, xNorm, Anorm, Acond, α, β, ktimer(start_time))
 
       solved_lim = bkwerr ≤ btol
       solved_mach = one(T) + bkwerr ≤ one(T)
