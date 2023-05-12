@@ -95,7 +95,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, 
     start_time = time_ns()
     solver = BilqSolver(A, b)
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     bilq!(solver, A, b; $(kwargs_bilq...))
     return (solver.x, solver.stats)
   end
@@ -103,7 +103,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, 
   function bilq(A, b :: AbstractVector{FC}; $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = BilqSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     bilq!(solver, A, b; $(kwargs_bilq...))
     return (solver.x, solver.stats)
   end
@@ -111,7 +111,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, 
   function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     bilq!(solver, A, b; $(kwargs_bilq...))
     return solver
   end
@@ -167,8 +167,8 @@ kwargs_bilq = (:c, :transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, 
     itmax == 0 && (itmax = 2*n)
 
     ε = atol + rtol * bNorm
-    (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, bNorm)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, bNorm, ktimer(start_time))
 
     # Initialize the Lanczos biorthogonalization process.
     cᴴb = @kdot(n, c, r₀)  # ⟨c,r₀⟩
@@ -348,7 +348,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, 
       breakdown = !solved_lq && !solved_cg && (pᴴq == 0)
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm_lq)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm_lq, ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
 

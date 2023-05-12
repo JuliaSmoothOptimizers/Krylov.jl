@@ -110,7 +110,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     start_time = time_ns()
     solver = BicgstabSolver(A, b)
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     bicgstab!(solver, A, b; $(kwargs_bicgstab...))
     return (solver.x, solver.stats)
   end
@@ -118,7 +118,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
   function bicgstab(A, b :: AbstractVector{FC}; $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = BicgstabSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     bicgstab!(solver, A, b; $(kwargs_bicgstab...))
     return (solver.x, solver.stats)
   end
@@ -126,7 +126,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
   function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     bicgstab!(solver, A, b; $(kwargs_bicgstab...))
     return solver
   end
@@ -197,8 +197,8 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     itmax == 0 && (itmax = 2*n)
 
     ε = atol + rtol * rNorm
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %8s\n", "k", "‖rₖ‖", "|αₖ|", "|ωₖ|")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %8s  %5s\n", "k", "‖rₖ‖", "|αₖ|", "|ωₖ|", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %8.1e  %.2fs\n", iter, rNorm, abs(α), abs(ω), ktimer(start_time))
 
     next_ρ = @kdot(n, c, r)  # ρ₁ = ⟨r̅₀,r₀⟩
     if next_ρ == 0
@@ -257,7 +257,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       breakdown = (α == 0 || isnan(α))
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %8.1e\n", iter, rNorm, abs(α), abs(ω))
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %8.1e  %.2fs\n", iter, rNorm, abs(α), abs(ω), ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
 

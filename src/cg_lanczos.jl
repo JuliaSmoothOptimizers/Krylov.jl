@@ -98,7 +98,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     start_time = time_ns()
     solver = CgLanczosSolver(A, b)
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cg_lanczos!(solver, A, b; $(kwargs_cg_lanczos...))
     return (solver.x, solver.stats)
   end
@@ -106,7 +106,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
   function cg_lanczos(A, b :: AbstractVector{FC}; $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CgLanczosSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cg_lanczos!(solver, A, b; $(kwargs_cg_lanczos...))
     return (solver.x, solver.stats)
   end
@@ -114,7 +114,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
   function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cg_lanczos!(solver, A, b; $(kwargs_cg_lanczos...))
     return solver
   end
@@ -129,7 +129,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == n || error("Inconsistent problem size")
-    (verbose > 0) && @printf(iostream, "CG Lanczos: system of %d equations in %d variables\n", n, n)
+    (verbose > 0) && @printf(iostream, "CG-LANCZOS: system of %d equations in %d variables\n", n, n)
 
     # Tests M = Iₙ
     MisI = (M === I)
@@ -188,8 +188,8 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
 
     # Define stopping tolerance.
     ε = atol + rtol * rNorm
-    (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
 
     indefinite = false
     solved = rNorm ≤ ε
@@ -233,7 +233,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       rNorm = abs(σ)          # ‖rₖ₊₁‖_M = |σₖ₊₁| because rₖ₊₁ = σₖ₊₁ * vₖ₊₁ and ‖vₖ₊₁‖_M = 1
       history && push!(rNorms, rNorm)
       iter = iter + 1
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
 
       # Stopping conditions that do not depend on user input.
       # This is to guard against tolerances that are unreasonably small.

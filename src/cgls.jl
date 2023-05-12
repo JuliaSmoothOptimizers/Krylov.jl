@@ -116,7 +116,7 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
   function cgls(A, b :: AbstractVector{FC}; $(def_kwargs_cgls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CglsSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cgls!(solver, A, b; $(kwargs_cgls...))
     return (solver.x, solver.stats)
   end
@@ -173,8 +173,8 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     history && push!(rNorms, rNorm)
     history && push!(ArNorms, ArNorm)
     ε = atol + rtol * ArNorm
-    (verbose > 0) && @printf(iostream, "%5s  %8s  %8s\n", "k", "‖Aᴴr‖", "‖r‖")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
+    (verbose > 0) && @printf(iostream, "%5s  %8s  %8s  %5s\n", "k", "‖Aᴴr‖", "‖r‖", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %.2fs\n", iter, ArNorm, rNorm, ktimer(start_time))
 
     status = "unknown"
     on_boundary = false
@@ -211,7 +211,7 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
       history && push!(rNorms, rNorm)
       history && push!(ArNorms, ArNorm)
       iter = iter + 1
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e\n", iter, ArNorm, rNorm)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %.2fs\n", iter, ArNorm, rNorm, ktimer(start_time))
       user_requested_exit = callback(solver) :: Bool
       solved = (ArNorm ≤ ε) || on_boundary
       tired = iter ≥ itmax

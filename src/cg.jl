@@ -102,7 +102,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     start_time = time_ns()
     solver = CgSolver(A, b)
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cg!(solver, A, b; $(kwargs_cg...))
     return (solver.x, solver.stats)
   end
@@ -110,7 +110,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
   function cg(A, b :: AbstractVector{FC}; $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CgSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cg!(solver, A, b; $(kwargs_cg...))
     return (solver.x, solver.stats)
   end
@@ -118,7 +118,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
   function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     cg!(solver, A, b; $(kwargs_cg...))
     return solver
   end
@@ -177,7 +177,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     pAp = zero(T)
     pNorm² = γ
     ε = atol + rtol * rNorm
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %8s  %8s\n", "k", "‖r‖", "pAp", "α", "σ")
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %8s  %8s  %5s\n", "k", "‖r‖", "pAp", "α", "σ", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e", iter, rNorm)
 
     solved = rNorm ≤ ε
@@ -210,7 +210,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       # Compute step size to boundary if applicable.
       σ = radius > 0 ? maximum(to_boundary(n, x, p, radius, dNorm2=pNorm²)) : α
 
-      kdisplay(iter, verbose) && @printf(iostream, "  %8.1e  %8.1e  %8.1e\n", pAp, α, σ)
+      kdisplay(iter, verbose) && @printf(iostream, "  %8.1e  %8.1e  %8.1e  %.2fs\n", pAp, α, σ, ktimer(start_time))
 
       # Move along p from x to the boundary if either
       # the next step leads outside the trust region or

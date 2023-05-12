@@ -102,7 +102,7 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
     start_time = time_ns()
     solver = QmrSolver(A, b)
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     qmr!(solver, A, b; $(kwargs_qmr...))
     return (solver.x, solver.stats)
   end
@@ -110,7 +110,7 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
   function qmr(A, b :: AbstractVector{FC}; $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = QmrSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     qmr!(solver, A, b; $(kwargs_qmr...))
     return (solver.x, solver.stats)
   end
@@ -118,7 +118,7 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
   function qmr!(solver :: QmrSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     qmr!(solver, A, b; $(kwargs_qmr...))
     return solver
   end
@@ -174,8 +174,8 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
     itmax == 0 && (itmax = 2*n)
 
     ε = atol + rtol * rNorm
-    (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
 
     # Initialize the Lanczos biorthogonalization process.
     cᴴb = @kdot(n, c, r₀)  # ⟨c,r₀⟩
@@ -352,7 +352,7 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
       breakdown = !solved && (pᴴq == 0)
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
 

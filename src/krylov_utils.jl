@@ -291,6 +291,8 @@ allocate_if(bool, solver, v, S, n) = bool && isempty(solver.:($v)::S) && (solver
 
 kdisplay(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
 
+ktimer(start_time::UInt64) = (time_ns() - start_time) / 1e9
+
 mulorldiv!(y, P, x, ldiv::Bool) = ldiv ? ldiv!(y, P, x) : mul!(y, P, x)
 
 kdot(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasReal = BLAS.dot(n, x, dx, y, dy)

@@ -106,7 +106,7 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
     start_time = time_ns()
     solver = DqgmresSolver(A, b, memory)
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     dqgmres!(solver, A, b; $(kwargs_dqgmres...))
     return (solver.x, solver.stats)
   end
@@ -114,7 +114,7 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
   function dqgmres(A, b :: AbstractVector{FC}; memory :: Int=20, $(def_kwargs_dqgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = DqgmresSolver(A, b, memory)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     dqgmres!(solver, A, b; $(kwargs_dqgmres...))
     return (solver.x, solver.stats)
   end
@@ -122,7 +122,7 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
   function dqgmres!(solver :: DqgmresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_dqgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     dqgmres!(solver, A, b; $(kwargs_dqgmres...))
     return solver
   end
@@ -181,8 +181,8 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
     itmax == 0 && (itmax = 2*n)
 
     ε = atol + rtol * rNorm
-    (verbose > 0) && @printf(iostream, "%5s  %7s\n", "k", "‖rₖ‖")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
 
     # Set up workspace.
     mem = length(V)  # Memory.
@@ -312,7 +312,7 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e\n", iter, rNorm)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
 

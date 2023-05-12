@@ -105,7 +105,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
     start_time = time_ns()
     solver = UsymqrSolver(A, b)
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     usymqr!(solver, A, b, c; $(kwargs_usymqr...))
     return (solver.x, solver.stats)
   end
@@ -113,7 +113,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
   function usymqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = UsymqrSolver(A, b)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     usymqr!(solver, A, b, c; $(kwargs_usymqr...))
     return (solver.x, solver.stats)
   end
@@ -121,7 +121,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
   function usymqr!(solver :: UsymqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= (time_ns() - start_time) / 1e9
+    timemax -= ktimer(start_time)
     usymqr!(solver, A, b, c; $(kwargs_usymqr...))
     return solver
   end
@@ -177,8 +177,8 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
 
     ε = atol + rtol * rNorm
     κ = zero(T)
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %8s\n", "k", "‖rₖ‖", "‖Aᴴrₖ₋₁‖")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8s\n", iter, rNorm, " ✗ ✗ ✗ ✗")
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %5s\n", "k", "‖rₖ‖", "‖Aᴴrₖ₋₁‖", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8s  %.2fs\n", iter, rNorm, " ✗ ✗ ✗ ✗", ktimer(start_time))
 
     βₖ = @knrm2(m, r₀)           # β₁ = ‖v₁‖ = ‖r₀‖
     γₖ = @knrm2(n, c)            # γ₁ = ‖u₁‖ = ‖c‖
@@ -338,7 +338,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e\n", iter, rNorm, AᴴrNorm)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %.2fs\n", iter, rNorm, AᴴrNorm, ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
 
