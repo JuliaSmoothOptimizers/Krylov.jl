@@ -98,24 +98,30 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     start_time = time_ns()
     solver = TrilqrSolver(A, b)
     warm_start!(solver, x0, y0)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     trilqr!(solver, A, b, c; $(kwargs_trilqr...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.y, solver.stats)
   end
 
   function trilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = TrilqrSolver(A, b)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     trilqr!(solver, A, b, c; $(kwargs_trilqr...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.y, solver.stats)
   end
 
   function trilqr!(solver :: TrilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0, y0)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     trilqr!(solver, A, b, c; $(kwargs_trilqr...))
+    solver.stats.timer += elapsed_time
     return solver
   end
 

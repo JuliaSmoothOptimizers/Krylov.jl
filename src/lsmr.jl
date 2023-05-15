@@ -158,8 +158,10 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
   function lsmr(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = LsmrSolver(A, b; window)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     lsmr!(solver, A, b; $(kwargs_lsmr...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 

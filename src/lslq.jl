@@ -181,8 +181,10 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
   function lslq(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_lslq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = LslqSolver(A, b; window)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     lslq!(solver, A, b; $(kwargs_lslq...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 

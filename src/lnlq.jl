@@ -155,8 +155,10 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
   function lnlq(A, b :: AbstractVector{FC}; $(def_kwargs_lnlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = LnlqSolver(A, b)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     lnlq!(solver, A, b; $(kwargs_lnlq...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.y, solver.stats)
   end
 
