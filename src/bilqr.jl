@@ -99,24 +99,30 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     start_time = time_ns()
     solver = BilqrSolver(A, b)
     warm_start!(solver, x0, y0)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     bilqr!(solver, A, b, c; $(kwargs_bilqr...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.y, solver.stats)
   end
 
   function bilqr(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_bilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = BilqrSolver(A, b)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     bilqr!(solver, A, b, c; $(kwargs_bilqr...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.y, solver.stats)
   end
 
   function bilqr!(solver :: BilqrSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_bilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0, y0)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     bilqr!(solver, A, b, c; $(kwargs_bilqr...))
+    solver.stats.timer += elapsed_time
     return solver
   end
 

@@ -121,8 +121,10 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
   function cgne(A, b :: AbstractVector{FC}; $(def_kwargs_cgne...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CgneSolver(A, b)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     cgne!(solver, A, b; $(kwargs_cgne...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 

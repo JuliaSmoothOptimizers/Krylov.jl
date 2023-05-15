@@ -107,8 +107,10 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
   function crls(A, b :: AbstractVector{FC}; $(def_kwargs_crls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CrlsSolver(A, b)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     crls!(solver, A, b; $(kwargs_crls...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 

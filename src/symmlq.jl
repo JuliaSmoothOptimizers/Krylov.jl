@@ -110,24 +110,30 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     start_time = time_ns()
     solver = SymmlqSolver(A, b; window)
     warm_start!(solver, x0)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     symmlq!(solver, A, b; $(kwargs_symmlq...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
   function symmlq(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = SymmlqSolver(A, b; window)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     symmlq!(solver, A, b; $(kwargs_symmlq...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
   function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     symmlq!(solver, A, b; $(kwargs_symmlq...))
+    solver.stats.timer += elapsed_time
     return solver
   end
 

@@ -93,8 +93,10 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     start_time = time_ns()
     nshifts = length(shifts)
     solver = CgLanczosShiftSolver(A, b, nshifts)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     cg_lanczos_shift!(solver, A, b, shifts; $(kwargs_cg_lanczos_shift...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 

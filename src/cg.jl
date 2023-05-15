@@ -102,24 +102,30 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     start_time = time_ns()
     solver = CgSolver(A, b)
     warm_start!(solver, x0)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     cg!(solver, A, b; $(kwargs_cg...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
   function cg(A, b :: AbstractVector{FC}; $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CgSolver(A, b)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     cg!(solver, A, b; $(kwargs_cg...))
+    solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
   function cg!(solver :: CgSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
     start_time = time_ns()
     warm_start!(solver, x0)
-    timemax -= ktimer(start_time)
+    elapsed_time = ktimer(start_time)
+    timemax -= elapsed_time
     cg!(solver, A, b; $(kwargs_cg...))
+    solver.stats.timer += elapsed_time
     return solver
   end
 
