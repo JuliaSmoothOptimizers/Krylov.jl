@@ -210,7 +210,7 @@ function ktypeof(v::S) where S <: DenseVector
 end
 
 function ktypeof(v::S) where S <: AbstractVector
-  if S.name.name == :Zeros || S.name.name == :Ones
+  if S.name.name == :Zeros || S.name.name == :Ones || S.name.name == :FieldVector
     T = eltype(S)
     return Vector{T}  # FillArrays
   else
