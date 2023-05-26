@@ -215,7 +215,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       α = γ / pAp
 
       # Compute step size to boundary if applicable.
-      σ = radius > 0 ? maximum(to_boundary(n, x, p, radius, dNorm2=pNorm²)) : α
+      σ = α # radius > 0 ? maximum(to_boundary(n, x, p, radius, dNorm2=pNorm²)) : α
 
       kdisplay(iter, verbose) && @printf(iostream, "  %8.1e  %8.1e  %8.1e  %.2fs\n", pAp, α, σ, ktimer(start_time))
 
