@@ -82,6 +82,8 @@ function fom! end
 def_args_fom = (:(A                    ),
                 :(b::AbstractVector{FC}))
 
+def_optargs_fom = (:(x0::AbstractVector),)
+
 def_kwargs_fom = (:(; M = I                            ),
                   :(; N = I                            ),
                   :(; ldiv::Bool = false               ),
@@ -99,6 +101,7 @@ def_kwargs_fom = (:(; M = I                            ),
 def_kwargs_fom = mapreduce(extract_parameters, vcat, def_kwargs_fom)
 
 args_fom = (:A, :b)
+optargs_fom = (:x0,)
 kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

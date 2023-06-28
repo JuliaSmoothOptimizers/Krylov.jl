@@ -89,6 +89,8 @@ function cr! end
 def_args_cr = (:(A                    ),
                :(b::AbstractVector{FC}))
 
+def_optargs_cr = (:(x0::AbstractVector),)
+
 def_kwargs_cr = (:(; M = I                     ),
                  :(; ldiv::Bool = false        ),
                  :(; radius::T = zero(T)       ),
@@ -106,6 +108,7 @@ def_kwargs_cr = (:(; M = I                     ),
 def_kwargs_cr = mapreduce(extract_parameters, vcat, def_kwargs_cr)
 
 args_cr = (:A, :b)
+optargs_cr = (:x0,)
 kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

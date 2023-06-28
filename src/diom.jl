@@ -87,6 +87,8 @@ function diom! end
 def_args_diom = (:(A                    ),
                  :(b::AbstractVector{FC}))
 
+def_optargs_diom = (:(x0::AbstractVector),)
+
 def_kwargs_diom = (:(; M = I                            ),
                    :(; N = I                            ),
                    :(; ldiv::Bool = false               ),
@@ -103,6 +105,7 @@ def_kwargs_diom = (:(; M = I                            ),
 def_kwargs_diom = mapreduce(extract_parameters, vcat, def_kwargs_diom)
 
 args_diom = (:A, :b)
+optargs_diom = (:x0,)
 kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

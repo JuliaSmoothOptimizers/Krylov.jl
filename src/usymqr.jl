@@ -91,6 +91,8 @@ def_args_usymqr = (:(A                    ),
                    :(b::AbstractVector{FC}),
                    :(c::AbstractVector{FC}))
 
+def_optargs_usymqr = (:(x0::AbstractVector),)
+
 def_kwargs_usymqr = (:(; atol::T = √eps(T)         ),
                      :(; rtol::T = √eps(T)         ),
                      :(; itmax::Int = 0            ),
@@ -103,6 +105,7 @@ def_kwargs_usymqr = (:(; atol::T = √eps(T)         ),
 def_kwargs_usymqr = mapreduce(extract_parameters, vcat, def_kwargs_usymqr)
 
 args_usymqr = (:A, :b, :c)
+optargs_usymqr = (:x0,)
 kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

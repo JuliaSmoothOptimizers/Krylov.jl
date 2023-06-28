@@ -87,6 +87,8 @@ function dqgmres! end
 def_args_dqgmres = (:(A                    ),
                     :(b::AbstractVector{FC}))
 
+def_optargs_dqgmres = (:(x0::AbstractVector),)
+
 def_kwargs_dqgmres = (:(; M = I                            ),
                       :(; N = I                            ),
                       :(; ldiv::Bool = false               ),
@@ -103,6 +105,7 @@ def_kwargs_dqgmres = (:(; M = I                            ),
 def_kwargs_dqgmres = mapreduce(extract_parameters, vcat, def_kwargs_dqgmres)
 
 args_dqgmres = (:A, :b)
+optargs_dqgmres = (:x0,)
 kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

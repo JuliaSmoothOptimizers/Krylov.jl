@@ -87,6 +87,8 @@ function minres_qlp! end
 def_args_minres_qlp = (:(A                    ),
                        :(b::AbstractVector{FC}))
 
+def_optargs_minres_qlp = (:(x0::AbstractVector),)
+
 def_kwargs_minres_qlp = (:(; M = I                     ),
                          :(; ldiv::Bool = false        ),
                          :(; λ::T = zero(T)            ),
@@ -103,6 +105,7 @@ def_kwargs_minres_qlp = (:(; M = I                     ),
 def_kwargs_minres_qlp = mapreduce(extract_parameters, vcat, def_kwargs_minres_qlp)
 
 args_minres_qlp = (:A, :b)
+optargs_minres_qlp = (:x0,)
 kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
