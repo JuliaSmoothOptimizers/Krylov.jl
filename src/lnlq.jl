@@ -129,6 +129,9 @@ See [`LnlqSolver`](@ref) for more details about the `solver`.
 """
 function lnlq! end
 
+def_args_lnlq = (:(A                    ),
+                 :(b::AbstractVector{FC}))
+
 def_kwargs_lnlq = (:(; M = I                         ),
                    :(; N = I                         ),
                    :(; ldiv::Bool = false            ),
@@ -149,6 +152,7 @@ def_kwargs_lnlq = (:(; M = I                         ),
 
 def_kwargs_lnlq = mapreduce(extract_parameters, vcat, def_kwargs_lnlq)
 
+args_lnlq = (:A, :b)
 kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

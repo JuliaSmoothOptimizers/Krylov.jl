@@ -99,6 +99,9 @@ See [`CrmrSolver`](@ref) for more details about the `solver`.
 """
 function crmr! end
 
+def_args_crmr = (:(A                    ),
+                 :(b::AbstractVector{FC}))
+
 def_kwargs_crmr = (:(; N = I                     ),
                    :(; ldiv::Bool = false        ),
                    :(; λ::T = zero(T)            ),
@@ -113,6 +116,7 @@ def_kwargs_crmr = (:(; N = I                     ),
 
 def_kwargs_crmr = mapreduce(extract_parameters, vcat, def_kwargs_crmr)
 
+args_crmr = (:A, :b)
 kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

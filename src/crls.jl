@@ -86,6 +86,9 @@ See [`CrlsSolver`](@ref) for more details about the `solver`.
 """
 function crls! end
 
+def_args_crls = (:(A                    ),
+                 :(b::AbstractVector{FC}))
+
 def_kwargs_crls = (:(; M = I                     ),
                    :(; ldiv::Bool = false        ),
                    :(; radius::T = zero(T)       ),
@@ -101,6 +104,7 @@ def_kwargs_crls = (:(; M = I                     ),
 
 def_kwargs_crls = mapreduce(extract_parameters, vcat, def_kwargs_crls)
 
+args_crls = (:A, :b)
 kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

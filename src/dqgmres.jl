@@ -84,6 +84,9 @@ See [`DqgmresSolver`](@ref) for more details about the `solver`.
 """
 function dqgmres! end
 
+def_args_dqgmres = (:(A                    ),
+                    :(b::AbstractVector{FC}))
+
 def_kwargs_dqgmres = (:(; M = I                            ),
                       :(; N = I                            ),
                       :(; ldiv::Bool = false               ),
@@ -99,6 +102,7 @@ def_kwargs_dqgmres = (:(; M = I                            ),
 
 def_kwargs_dqgmres = mapreduce(extract_parameters, vcat, def_kwargs_dqgmres)
 
+args_dqgmres = (:A, :b)
 kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

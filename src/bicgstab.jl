@@ -88,6 +88,9 @@ See [`BicgstabSolver`](@ref) for more details about the `solver`.
 """
 function bicgstab! end
 
+def_args_bicgstab = (:(A                    ),
+                     :(b::AbstractVector{FC}))
+
 def_kwargs_bicgstab = (:(; c::AbstractVector{FC} = b ),
                        :(; M = I                     ),
                        :(; N = I                     ),
@@ -103,6 +106,7 @@ def_kwargs_bicgstab = (:(; c::AbstractVector{FC} = b ),
 
 def_kwargs_bicgstab = mapreduce(extract_parameters, vcat, def_kwargs_bicgstab)
 
+args_bicgstab = (:A, :b)
 kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

@@ -153,6 +153,9 @@ See [`LslqSolver`](@ref) for more details about the `solver`.
 """
 function lslq! end
 
+def_args_lslq = (:(A                    ),
+                 :(b::AbstractVector{FC}))
+
 def_kwargs_lslq = (:(; M = I                         ),
                    :(; N = I                         ),
                    :(; ldiv::Bool = false            ),
@@ -175,6 +178,7 @@ def_kwargs_lslq = (:(; M = I                         ),
 
 def_kwargs_lslq = mapreduce(extract_parameters, vcat, def_kwargs_lslq)
 
+args_lslq = (:A, :b)
 kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

@@ -79,6 +79,9 @@ See [`FomSolver`](@ref) for more details about the `solver`.
 """
 function fom! end
 
+def_args_fom = (:(A                    ),
+                :(b::AbstractVector{FC}))
+
 def_kwargs_fom = (:(; M = I                            ),
                   :(; N = I                            ),
                   :(; ldiv::Bool = false               ),
@@ -95,6 +98,7 @@ def_kwargs_fom = (:(; M = I                            ),
 
 def_kwargs_fom = mapreduce(extract_parameters, vcat, def_kwargs_fom)
 
+args_fom = (:A, :b)
 kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

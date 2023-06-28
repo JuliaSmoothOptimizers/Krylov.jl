@@ -80,6 +80,10 @@ See [`BilqrSolver`](@ref) for more details about the `solver`.
 """
 function bilqr! end
 
+def_args_bilqr = (:(A                    ),
+                  :(b::AbstractVector{FC}),
+                  :(c::AbstractVector{FC}))
+
 def_kwargs_bilqr = (:(; transfer_to_bicg::Bool = true),
                     :(; atol::T = √eps(T)            ),
                     :(; rtol::T = √eps(T)            ),
@@ -92,6 +96,7 @@ def_kwargs_bilqr = (:(; transfer_to_bicg::Bool = true),
 
 def_kwargs_bilqr = mapreduce(extract_parameters, vcat, def_kwargs_bilqr)
 
+args_bilqr = (:A, :b, :c)
 kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

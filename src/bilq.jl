@@ -75,6 +75,9 @@ See [`BilqSolver`](@ref) for more details about the `solver`.
 """
 function bilq! end
 
+def_args_bilq = (:(A                    ),
+                 :(b::AbstractVector{FC}))
+
 def_kwargs_bilq = (:(; c::AbstractVector{FC} = b    ),
                    :(; transfer_to_bicg::Bool = true),
                    :(; atol::T = √eps(T)            ),
@@ -88,6 +91,7 @@ def_kwargs_bilq = (:(; c::AbstractVector{FC} = b    ),
 
 def_kwargs_bilq = mapreduce(extract_parameters, vcat, def_kwargs_bilq)
 
+args_bilq = (:A, :b)
 kwargs_bilq = (:c, :transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

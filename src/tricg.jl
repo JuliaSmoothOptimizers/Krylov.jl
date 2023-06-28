@@ -103,6 +103,10 @@ See [`TricgSolver`](@ref) for more details about the `solver`.
 """
 function tricg! end
 
+def_args_tricg = (:(A                    ),
+                  :(b::AbstractVector{FC}),
+                  :(c::AbstractVector{FC}))
+
 def_kwargs_tricg = (:(; M = I                     ),
                     :(; N = I                     ),
                     :(; ldiv::Bool = false        ),
@@ -122,6 +126,7 @@ def_kwargs_tricg = (:(; M = I                     ),
 
 def_kwargs_tricg = mapreduce(extract_parameters, vcat, def_kwargs_tricg)
 
+args_tricg = (:A, :b, :c)
 kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

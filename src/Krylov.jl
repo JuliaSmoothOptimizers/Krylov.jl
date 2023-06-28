@@ -51,4 +51,5 @@ include("lnlq.jl")
 include("craig.jl")
 include("craigmr.jl")
 
+include("krylov_solve.jl")
 end

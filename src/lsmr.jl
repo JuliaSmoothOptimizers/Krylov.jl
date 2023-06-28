@@ -131,6 +131,9 @@ See [`LsmrSolver`](@ref) for more details about the `solver`.
 """
 function lsmr! end
 
+def_args_lsmr = (:(A                    ),
+                 :(b::AbstractVector{FC}))
+
 def_kwargs_lsmr = (:(; M = I                     ),
                    :(; N = I                     ),
                    :(; ldiv::Bool = false        ),
@@ -152,6 +155,7 @@ def_kwargs_lsmr = (:(; M = I                     ),
 
 def_kwargs_lsmr = mapreduce(extract_parameters, vcat, def_kwargs_lsmr)
 
+args_lsmr = (:A, :b)
 kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

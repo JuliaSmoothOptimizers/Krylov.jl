@@ -79,6 +79,9 @@ See [`GmresSolver`](@ref) for more details about the `solver`.
 """
 function gmres! end
 
+def_args_gmres = (:(A                    ),
+                  :(b::AbstractVector{FC}))
+
 def_kwargs_gmres = (:(; M = I                            ),
                     :(; N = I                            ),
                     :(; ldiv::Bool = false               ),
@@ -95,6 +98,7 @@ def_kwargs_gmres = (:(; M = I                            ),
 
 def_kwargs_gmres = mapreduce(extract_parameters, vcat, def_kwargs_gmres)
 
+args_gmres = (:A, :b)
 kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

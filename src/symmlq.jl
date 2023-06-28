@@ -85,6 +85,9 @@ See [`SymmlqSolver`](@ref) for more details about the `solver`.
 """
 function symmlq! end
 
+def_args_symmlq = (:(A                    ),
+                   :(b::AbstractVector{FC}))
+
 def_kwargs_symmlq = (:(; M = I                      ),
                      :(; ldiv::Bool = false         ),
                      :(; transfer_to_cg::Bool = true),
@@ -103,6 +106,7 @@ def_kwargs_symmlq = (:(; M = I                      ),
 
 def_kwargs_symmlq = mapreduce(extract_parameters, vcat, def_kwargs_symmlq)
 
+args_symmlq = (:A, :b)
 kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

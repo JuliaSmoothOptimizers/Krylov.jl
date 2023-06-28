@@ -79,6 +79,10 @@ See [`TrilqrSolver`](@ref) for more details about the `solver`.
 """
 function trilqr! end
 
+def_args_trilqr = (:(A                    ),
+                   :(b::AbstractVector{FC}),
+                   :(c::AbstractVector{FC}))
+
 def_kwargs_trilqr = (:(; transfer_to_usymcg::Bool = true),
                      :(; atol::T = √eps(T)              ),
                      :(; rtol::T = √eps(T)              ),
@@ -91,6 +95,7 @@ def_kwargs_trilqr = (:(; transfer_to_usymcg::Bool = true),
 
 def_kwargs_trilqr = mapreduce(extract_parameters, vcat, def_kwargs_trilqr)
 
+args_trilqr = (:A, :b, :c)
 kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

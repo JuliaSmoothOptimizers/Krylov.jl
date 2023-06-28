@@ -101,6 +101,9 @@ See [`MinresSolver`](@ref) for more details about the `solver`.
 """
 function minres! end
 
+def_args_minres = (:(A                    ),
+                   :(b::AbstractVector{FC}))
+
 def_kwargs_minres = (:(; M = I                     ),
                      :(; ldiv::Bool = false        ),
                      :(; λ::T = zero(T)            ),
@@ -117,6 +120,7 @@ def_kwargs_minres = (:(; M = I                     ),
 
 def_kwargs_minres = mapreduce(extract_parameters, vcat, def_kwargs_minres)
 
+args_minres = (:A, :b)
 kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

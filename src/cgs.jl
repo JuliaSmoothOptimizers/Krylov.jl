@@ -89,6 +89,9 @@ See [`CgsSolver`](@ref) for more details about the `solver`.
 """
 function cgs! end
 
+def_args_cgs = (:(A                    ),
+                :(b::AbstractVector{FC}))
+
 def_kwargs_cgs = (:(; c::AbstractVector{FC} = b ),
                   :(; M = I                     ),
                   :(; N = I                     ),
@@ -104,6 +107,7 @@ def_kwargs_cgs = (:(; c::AbstractVector{FC} = b ),
 
 def_kwargs_cgs = mapreduce(extract_parameters, vcat, def_kwargs_cgs)
 
+args_cgs = (:A, :b)
 kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

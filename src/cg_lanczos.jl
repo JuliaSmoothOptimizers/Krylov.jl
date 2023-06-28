@@ -77,6 +77,9 @@ See [`CgLanczosSolver`](@ref) for more details about the `solver`.
 """
 function cg_lanczos! end
 
+def_args_cg_lanczos = (:(A                    ),
+                       :(b::AbstractVector{FC}))
+
 def_kwargs_cg_lanczos = (:(; M = I                        ),
                          :(; ldiv::Bool = false           ),
                          :(; check_curvature::Bool = false),
@@ -91,6 +94,7 @@ def_kwargs_cg_lanczos = (:(; M = I                        ),
 
 def_kwargs_cg_lanczos = mapreduce(extract_parameters, vcat, def_kwargs_cg_lanczos)
 
+args_cg_lanczos = (:A, :b)
 kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

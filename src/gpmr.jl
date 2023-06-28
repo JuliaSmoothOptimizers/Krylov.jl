@@ -115,6 +115,11 @@ See [`GpmrSolver`](@ref) for more details about the `solver`.
 """
 function gpmr! end
 
+def_args_gpmr = (:(A                    ),
+                 :(B                    ),
+                 :(b::AbstractVector{FC}),
+                 :(c::AbstractVector{FC}))
+
 def_kwargs_gpmr = (:(; C = I                            ),
                    :(; D = I                            ),
                    :(; E = I                            ),
@@ -135,6 +140,7 @@ def_kwargs_gpmr = (:(; C = I                            ),
 
 def_kwargs_gpmr = mapreduce(extract_parameters, vcat, def_kwargs_gpmr)
 
+args_gpmr = (:A, :B, :b, :c)
 kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
