@@ -101,6 +101,9 @@ See [`CgneSolver`](@ref) for more details about the `solver`.
 """
 function cgne! end
 
+def_args_cgne = (:(A                    ),
+                 :(b::AbstractVector{FC}))
+
 def_kwargs_cgne = (:(; N = I                     ),
                    :(; ldiv::Bool = false        ),
                    :(; λ::T = zero(T)            ),
@@ -115,6 +118,7 @@ def_kwargs_cgne = (:(; N = I                     ),
 
 def_kwargs_cgne = mapreduce(extract_parameters, vcat, def_kwargs_cgne)
 
+args_cgne = (:A, :b)
 kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

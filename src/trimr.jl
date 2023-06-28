@@ -103,6 +103,10 @@ See [`TrimrSolver`](@ref) for more details about the `solver`.
 """
 function trimr! end
 
+def_args_trimr = (:(A                    ),
+                  :(b::AbstractVector{FC}),
+                  :(c::AbstractVector{FC}))
+
 def_kwargs_trimr = (:(; M = I                     ),
                     :(; N = I                     ),
                     :(; ldiv::Bool = false        ),
@@ -123,6 +127,7 @@ def_kwargs_trimr = (:(; M = I                     ),
 
 def_kwargs_trimr = mapreduce(extract_parameters, vcat, def_kwargs_trimr)
 
+args_trimr = (:A, :b, :c)
 kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

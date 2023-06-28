@@ -95,6 +95,9 @@ See [`CglsSolver`](@ref) for more details about the `solver`.
 """
 function cgls! end
 
+def_args_cgls = (:(A                    ),
+                 :(b::AbstractVector{FC}))
+
 def_kwargs_cgls = (:(; M = I                     ),
                    :(; ldiv::Bool = false        ),
                    :(; radius::T = zero(T)       ),
@@ -110,6 +113,7 @@ def_kwargs_cgls = (:(; M = I                     ),
 
 def_kwargs_cgls = mapreduce(extract_parameters, vcat, def_kwargs_cgls)
 
+args_cgls = (:A, :b)
 kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

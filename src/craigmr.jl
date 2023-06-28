@@ -126,6 +126,9 @@ See [`CraigmrSolver`](@ref) for more details about the `solver`.
 """
 function craigmr! end
 
+def_args_craigmr = (:(A                    ),
+                    :(b::AbstractVector{FC}))
+
 def_kwargs_craigmr = (:(; M = I                     ),
                       :(; N = I                     ),
                       :(; ldiv::Bool = false        ),
@@ -142,6 +145,7 @@ def_kwargs_craigmr = (:(; M = I                     ),
 
 def_kwargs_craigmr = mapreduce(extract_parameters, vcat, def_kwargs_craigmr)
 
+args_craigmr = (:A, :b)
 kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

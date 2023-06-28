@@ -88,6 +88,10 @@ See [`UsymlqSolver`](@ref) for more details about the `solver`.
 """
 function usymlq! end
 
+def_args_usymlq = (:(A                    ),
+                   :(b::AbstractVector{FC}),
+                   :(c::AbstractVector{FC}))
+
 def_kwargs_usymlq = (:(; transfer_to_usymcg::Bool = true),
                      :(; atol::T = √eps(T)              ),
                      :(; rtol::T = √eps(T)              ),
@@ -100,6 +104,7 @@ def_kwargs_usymlq = (:(; transfer_to_usymcg::Bool = true),
 
 def_kwargs_usymlq = mapreduce(extract_parameters, vcat, def_kwargs_usymlq)
 
+args_usymlq = (:A, :b, :c)
 kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

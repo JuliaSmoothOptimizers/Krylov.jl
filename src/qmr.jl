@@ -83,6 +83,9 @@ See [`QmrSolver`](@ref) for more details about the `solver`.
 """
 function qmr! end
 
+def_args_qmr = (:(A                    ),
+                :(b::AbstractVector{FC}))
+
 def_kwargs_qmr = (:(; c::AbstractVector{FC} = b ),
                   :(; atol::T = √eps(T)         ),
                   :(; rtol::T = √eps(T)         ),
@@ -95,6 +98,7 @@ def_kwargs_qmr = (:(; c::AbstractVector{FC} = b ),
 
 def_kwargs_qmr = mapreduce(extract_parameters, vcat, def_kwargs_qmr)
 
+args_qmr = (:A, :b)
 kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

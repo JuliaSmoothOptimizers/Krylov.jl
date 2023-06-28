@@ -72,6 +72,10 @@ See [`CgLanczosShiftSolver`](@ref) for more details about the `solver`.
 """
 function cg_lanczos_shift! end
 
+def_args_cg_lanczos_shift = (:(A                        ),
+                             :(b::AbstractVector{FC}    ),
+                             :(shifts::AbstractVector{T}))
+
 def_kwargs_cg_lanczos_shift = (:(; M = I                        ),
                                :(; ldiv::Bool = false           ),
                                :(; check_curvature::Bool = false),
@@ -86,6 +90,7 @@ def_kwargs_cg_lanczos_shift = (:(; M = I                        ),
 
 def_kwargs_cg_lanczos_shift = mapreduce(extract_parameters, vcat, def_kwargs_cg_lanczos_shift)
 
+args_cg_lanczos_shift = (:A, :b, :shifts)
 kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

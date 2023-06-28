@@ -134,6 +134,9 @@ See [`CraigSolver`](@ref) for more details about the `solver`.
 """
 function craig! end
 
+def_args_craig = (:(A                    ),
+                  :(b::AbstractVector{FC}))
+
 def_kwargs_craig = (:(; M = I                         ),
                     :(; N = I                         ),
                     :(; ldiv::Bool = false            ),
@@ -153,6 +156,7 @@ def_kwargs_craig = (:(; M = I                         ),
 
 def_kwargs_craig = mapreduce(extract_parameters, vcat, def_kwargs_craig)
 
+args_craig = (:A, :b)
 kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
