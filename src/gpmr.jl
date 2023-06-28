@@ -120,6 +120,9 @@ def_args_gpmr = (:(A                    ),
                  :(b::AbstractVector{FC}),
                  :(c::AbstractVector{FC}))
 
+def_optargs_gpmr = (:(x0 :: AbstractVector),
+                    :(y0 :: AbstractVector))
+
 def_kwargs_gpmr = (:(; C = I                            ),
                    :(; D = I                            ),
                    :(; E = I                            ),
@@ -141,6 +144,7 @@ def_kwargs_gpmr = (:(; C = I                            ),
 def_kwargs_gpmr = mapreduce(extract_parameters, vcat, def_kwargs_gpmr)
 
 args_gpmr = (:A, :B, :b, :c)
+optargs_gpmr = (:x0, :y0)
 kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

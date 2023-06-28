@@ -83,6 +83,8 @@ function cg! end
 def_args_cg = (:(A                    ),
                :(b::AbstractVector{FC}))
 
+def_optargs_cg = (:(x0::AbstractVector),)
+
 def_kwargs_cg = (:(; M = I                     ),
                  :(; ldiv::Bool = false        ),
                  :(; radius::T = zero(T)       ),
@@ -99,6 +101,7 @@ def_kwargs_cg = (:(; M = I                     ),
 def_kwargs_cg = mapreduce(extract_parameters, vcat, def_kwargs_cg)
 
 args_cg = (:A, :b)
+optargs_cg = (:x0,)
 kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

@@ -80,6 +80,8 @@ function cg_lanczos! end
 def_args_cg_lanczos = (:(A                    ),
                        :(b::AbstractVector{FC}))
 
+def_optargs_cg_lanczos = (:(x0::AbstractVector),)
+
 def_kwargs_cg_lanczos = (:(; M = I                        ),
                          :(; ldiv::Bool = false           ),
                          :(; check_curvature::Bool = false),
@@ -95,6 +97,7 @@ def_kwargs_cg_lanczos = (:(; M = I                        ),
 def_kwargs_cg_lanczos = mapreduce(extract_parameters, vcat, def_kwargs_cg_lanczos)
 
 args_cg_lanczos = (:A, :b)
+optargs_cg_lanczos = (:x0,)
 kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

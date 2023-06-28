@@ -88,6 +88,8 @@ function symmlq! end
 def_args_symmlq = (:(A                    ),
                    :(b::AbstractVector{FC}))
 
+def_optargs_symmlq = (:(x0::AbstractVector),)
+
 def_kwargs_symmlq = (:(; M = I                      ),
                      :(; ldiv::Bool = false         ),
                      :(; transfer_to_cg::Bool = true),
@@ -107,6 +109,7 @@ def_kwargs_symmlq = (:(; M = I                      ),
 def_kwargs_symmlq = mapreduce(extract_parameters, vcat, def_kwargs_symmlq)
 
 args_symmlq = (:A, :b)
+optargs_symmlq = (:x0,)
 kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

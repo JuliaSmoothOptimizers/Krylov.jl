@@ -84,6 +84,9 @@ def_args_bilqr = (:(A                    ),
                   :(b::AbstractVector{FC}),
                   :(c::AbstractVector{FC}))
 
+def_optargs_bilqr = (:(x0 :: AbstractVector),
+                     :(y0 :: AbstractVector))
+
 def_kwargs_bilqr = (:(; transfer_to_bicg::Bool = true),
                     :(; atol::T = √eps(T)            ),
                     :(; rtol::T = √eps(T)            ),
@@ -97,6 +100,7 @@ def_kwargs_bilqr = (:(; transfer_to_bicg::Bool = true),
 def_kwargs_bilqr = mapreduce(extract_parameters, vcat, def_kwargs_bilqr)
 
 args_bilqr = (:A, :b, :c)
+optargs_bilqr = (:x0, :y0)
 kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

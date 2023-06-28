@@ -89,6 +89,8 @@ function fgmres! end
 def_args_fgmres = (:(A                    ),
                    :(b::AbstractVector{FC}))
 
+def_optargs_fgmres = (:(x0::AbstractVector),)
+
 def_kwargs_fgmres = (:(; M = I                            ),
                      :(; N = I                            ),
                      :(; ldiv::Bool = false               ),
@@ -106,6 +108,7 @@ def_kwargs_fgmres = (:(; M = I                            ),
 def_kwargs_fgmres = mapreduce(extract_parameters, vcat, def_kwargs_fgmres)
 
 args_fgmres = (:A, :b)
+optargs_fgmres = (:x0,)
 kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

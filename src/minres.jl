@@ -104,6 +104,8 @@ function minres! end
 def_args_minres = (:(A                    ),
                    :(b::AbstractVector{FC}))
 
+def_optargs_minres = (:(x0::AbstractVector),)
+
 def_kwargs_minres = (:(; M = I                     ),
                      :(; ldiv::Bool = false        ),
                      :(; λ::T = zero(T)            ),
@@ -121,6 +123,7 @@ def_kwargs_minres = (:(; M = I                     ),
 def_kwargs_minres = mapreduce(extract_parameters, vcat, def_kwargs_minres)
 
 args_minres = (:A, :b)
+optargs_minres = (:x0,)
 kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin

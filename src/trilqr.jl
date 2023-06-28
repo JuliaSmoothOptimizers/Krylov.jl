@@ -83,6 +83,9 @@ def_args_trilqr = (:(A                    ),
                    :(b::AbstractVector{FC}),
                    :(c::AbstractVector{FC}))
 
+def_optargs_trilqr = (:(x0::AbstractVector),
+                      :(y0::AbstractVector))
+
 def_kwargs_trilqr = (:(; transfer_to_usymcg::Bool = true),
                      :(; atol::T = √eps(T)              ),
                      :(; rtol::T = √eps(T)              ),
@@ -96,6 +99,7 @@ def_kwargs_trilqr = (:(; transfer_to_usymcg::Bool = true),
 def_kwargs_trilqr = mapreduce(extract_parameters, vcat, def_kwargs_trilqr)
 
 args_trilqr = (:A, :b, :c)
+optargs_trilqr = (:x0, :y0)
 kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
