@@ -7,11 +7,6 @@ task:
         matrix:
           - JULIA_VERSION: 1.6
           - JULIA_VERSION: 1
-    - name: Linux ARMv8
-      arm_container:
-        image: ubuntu:latest
-      env:
-        - JULIA_VERSION: 1
     - name: musl Linux
       container:
         image: alpine:3.14
