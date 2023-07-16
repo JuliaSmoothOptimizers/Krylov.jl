@@ -112,38 +112,28 @@ optargs_cr = (:x0,)
 kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cr(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function cr($(def_args_cr...), $(def_optargs_cr...); $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CrSolver(A, b)
-    warm_start!(solver, x0)
+    warm_start!(solver, $(optargs_cr...))
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    cr!(solver, A, b; $(kwargs_cr...))
+    cr!(solver, $(args_cr...); $(kwargs_cr...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function cr(A, b :: AbstractVector{FC}; $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function cr($(def_args_cr...); $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CrSolver(A, b)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    cr!(solver, A, b; $(kwargs_cr...))
+    cr!(solver, $(args_cr...); $(kwargs_cr...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-    start_time = time_ns()
-    warm_start!(solver, x0)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    cr!(solver, A, b; $(kwargs_cr...))
-    solver.stats.timer += elapsed_time
-    return solver
-  end
-
-  function cr!(solver :: CrSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cr!(solver :: CrSolver{T,FC,S}, $(def_args_cr...); $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

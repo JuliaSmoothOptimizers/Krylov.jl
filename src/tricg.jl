@@ -134,38 +134,28 @@ optargs_tricg = (:x0, :y0)
 kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function tricg(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_tricg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function tricg($(def_args_tricg...), $(def_optargs_tricg...); $(def_kwargs_tricg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = TricgSolver(A, b)
-    warm_start!(solver, x0, y0)
+    warm_start!(solver, $(optargs_tricg...))
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    tricg!(solver, A, b, c; $(kwargs_tricg...))
+    tricg!(solver, $(args_tricg...); $(kwargs_tricg...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.y, solver.stats)
   end
 
-  function tricg(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_tricg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function tricg($(def_args_tricg...); $(def_kwargs_tricg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = TricgSolver(A, b)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    tricg!(solver, A, b, c; $(kwargs_tricg...))
+    tricg!(solver, $(args_tricg...); $(kwargs_tricg...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.y, solver.stats)
   end
 
-  function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector, y0 :: AbstractVector; $(def_kwargs_tricg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-    start_time = time_ns()
-    warm_start!(solver, x0, y0)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    tricg!(solver, A, b, c; $(kwargs_tricg...))
-    solver.stats.timer += elapsed_time
-    return solver
-  end
-
-  function tricg!(solver :: TricgSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_tricg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function tricg!(solver :: TricgSolver{T,FC,S}, $(def_args_tricg...); $(def_kwargs_tricg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

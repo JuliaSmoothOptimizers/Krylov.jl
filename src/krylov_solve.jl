@@ -44,6 +44,16 @@ for (KS, fun, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
     solve!(solver :: $KS{T,FC,S}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}} = $(fun)(solver, $(args...); $(kwargs...))
 
     if !isempty($optargs)
+      function $(fun)(solver :: $KS{T,FC,S}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+        start_time = time_ns()
+        warm_start!(solver, $(optargs...))
+        elapsed_time = ktimer(start_time)
+        timemax -= elapsed_time
+        $(fun)(solver, $(args...); $(kwargs...))
+        solver.stats.timer += elapsed_time
+        return solver
+      end
+
       solve!(solver :: $KS{T,FC,S}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}} = $(fun)(solver, $(args...), $(optargs...); $(kwargs...))
     end
   end

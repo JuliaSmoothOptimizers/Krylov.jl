@@ -160,17 +160,17 @@ args_craig = (:A, :b)
 kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function craig(A, b :: AbstractVector{FC}; $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function craig($(def_args_craig...); $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CraigSolver(A, b)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    craig!(solver, A, b; $(kwargs_craig...))
+    craig!(solver, $(args_craig...); $(kwargs_craig...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.y, solver.stats)
   end
 
-  function craig!(solver :: CraigSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function craig!(solver :: CraigSolver{T,FC,S}, $(def_args_craig...); $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

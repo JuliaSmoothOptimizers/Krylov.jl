@@ -127,38 +127,28 @@ optargs_minres = (:x0,)
 kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function minres(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function minres($(def_args_minres...), $(def_optargs_minres...); window :: Int=5, $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = MinresSolver(A, b; window)
-    warm_start!(solver, x0)
+    warm_start!(solver, $(optargs_minres...))
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    minres!(solver, A, b; $(kwargs_minres...))
+    minres!(solver, $(args_minres...); $(kwargs_minres...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function minres(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function minres($(def_args_minres...); window :: Int=5, $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = MinresSolver(A, b; window)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    minres!(solver, A, b; $(kwargs_minres...))
+    minres!(solver, $(args_minres...); $(kwargs_minres...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-    start_time = time_ns()
-    warm_start!(solver, x0)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    minres!(solver, A, b; $(kwargs_minres...))
-    solver.stats.timer += elapsed_time
-    return solver
-  end
-
-  function minres!(solver :: MinresSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function minres!(solver :: MinresSolver{T,FC,S}, $(def_args_minres...); $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

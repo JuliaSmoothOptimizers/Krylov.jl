@@ -98,38 +98,28 @@ optargs_bilq = (:x0,)
 kwargs_bilq = (:c, :transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function bilq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function bilq($(def_args_bilq...), $(def_optargs_bilq...); $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = BilqSolver(A, b)
-    warm_start!(solver, x0)
+    warm_start!(solver, $(optargs_bilq...))
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    bilq!(solver, A, b; $(kwargs_bilq...))
+    bilq!(solver, $(args_bilq...); $(kwargs_bilq...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function bilq(A, b :: AbstractVector{FC}; $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function bilq($(def_args_bilq...); $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = BilqSolver(A, b)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    bilq!(solver, A, b; $(kwargs_bilq...))
+    bilq!(solver, $(args_bilq...); $(kwargs_bilq...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-    start_time = time_ns()
-    warm_start!(solver, x0)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    bilq!(solver, A, b; $(kwargs_bilq...))
-    solver.stats.timer += elapsed_time
-    return solver
-  end
-
-  function bilq!(solver :: BilqSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function bilq!(solver :: BilqSolver{T,FC,S}, $(def_args_bilq...); $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

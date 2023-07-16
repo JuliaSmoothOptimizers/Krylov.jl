@@ -94,18 +94,18 @@ args_cg_lanczos_shift = (:A, :b, :shifts)
 kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cg_lanczos_shift(A, b :: AbstractVector{FC}, shifts :: AbstractVector{T}; $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function cg_lanczos_shift($(def_args_cg_lanczos_shift...); $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     nshifts = length(shifts)
     solver = CgLanczosShiftSolver(A, b, nshifts)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    cg_lanczos_shift!(solver, A, b, shifts; $(kwargs_cg_lanczos_shift...))
+    cg_lanczos_shift!(solver, $(args_cg_lanczos_shift...); $(kwargs_cg_lanczos_shift...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: AbstractVector{T}; $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, $(def_args_cg_lanczos_shift...); $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
