@@ -2,7 +2,7 @@ steps:
   - label: "Nvidia GPUs -- CUDA.jl"
     plugins:
       - JuliaCI/julia#v1:
-          version: 1.8
+          version: 1.9
     agents:
       queue: "juliagpu"
       cuda: "*"
@@ -19,29 +19,30 @@ steps:
         include("test/gpu/nvidia.jl")'
     timeout_in_minutes: 30
 
-  # - label: "AMD GPUs -- AMDGPU.jl"
-  #   plugins:
-  #     - JuliaCI/julia#v1:
-  #         version: 1.8
-  #   agents:
-  #     queue: "juliagpu"
-  #     rocm: "*"
-  #     rocmgpu: "*"
-  #   env:
-  #     JULIA_AMDGPU_CORE_MUST_LOAD: "1"
-  #     JULIA_AMDGPU_HIP_MUST_LOAD: "1"
-  #   command: |
-  #     julia --color=yes --project -e '
-  #     using Pkg
-  #       Pkg.add("AMDGPU")
-  #       Pkg.instantiate()
-  #       include("test/gpu/amd.jl")'
-  #   timeout_in_minutes: 30
+  - label: "AMD GPUs -- AMDGPU.jl"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: 1.9
+    agents:
+      queue: "juliagpu"
+      rocm: "*"
+      rocmgpu: "gfx1031"
+    env:
+      JULIA_AMDGPU_CORE_MUST_LOAD: "1"
+      JULIA_AMDGPU_HIP_MUST_LOAD: "1"
+      JULIA_AMDGPU_DISABLE_ARTIFACTS: "1"
+    command: |
+      julia --color=yes --project -e '
+      using Pkg
+        Pkg.add("AMDGPU")
+        Pkg.instantiate()
+        include("test/gpu/amd.jl")'
+    timeout_in_minutes: 30
 
   - label: "Intel GPUs -- oneAPI.jl"
     plugins:
       - JuliaCI/julia#v1:
-          version: 1.8
+          version: 1.9
     agents:
       queue: "juliagpu"
       intel: "*"
@@ -56,7 +57,7 @@ steps:
   - label: "Apple M1 GPUs -- Metal.jl"
     plugins:
       - JuliaCI/julia#v1:
-          version: 1.8
+          version: 1.9
     agents:
       queue: "juliaecosystem"
       os: "macos"
