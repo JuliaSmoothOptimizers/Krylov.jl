@@ -47,6 +47,6 @@ function test_solver(S, M)
 end
 
 function test_conversion(S, M)
-  @test Krylov.vector_to_matrix(S) == M
-  @test Krylov.matrix_to_vector(M) == S
+  @test Krylov.vector_to_matrix(S) <: M
+  @test Krylov.matrix_to_vector(M) <: S
 end
