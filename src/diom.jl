@@ -109,38 +109,28 @@ optargs_diom = (:x0,)
 kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function diom(A, b :: AbstractVector{FC}, x0 :: AbstractVector; memory :: Int=20, $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function diom($(def_args_diom...), $(def_optargs_diom...); memory :: Int=20, $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = DiomSolver(A, b, memory)
-    warm_start!(solver, x0)
+    warm_start!(solver, $(optargs_diom...))
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    diom!(solver, A, b; $(kwargs_diom...))
+    diom!(solver, $(args_diom...); $(kwargs_diom...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function diom(A, b :: AbstractVector{FC}; memory :: Int=20, $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function diom($(def_args_diom...); memory :: Int=20, $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = DiomSolver(A, b, memory)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    diom!(solver, A, b; $(kwargs_diom...))
+    diom!(solver, $(args_diom...); $(kwargs_diom...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-    start_time = time_ns()
-    warm_start!(solver, x0)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    diom!(solver, A, b; $(kwargs_diom...))
-    solver.stats.timer += elapsed_time
-    return solver
-  end
-
-  function diom!(solver :: DiomSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function diom!(solver :: DiomSolver{T,FC,S}, $(def_args_diom...); $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

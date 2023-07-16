@@ -159,17 +159,17 @@ args_lsmr = (:A, :b)
 kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function lsmr(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function lsmr($(def_args_lsmr...); window :: Int=5, $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = LsmrSolver(A, b; window)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    lsmr!(solver, A, b; $(kwargs_lsmr...))
+    lsmr!(solver, $(args_lsmr...); $(kwargs_lsmr...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function lsmr!(solver :: LsmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function lsmr!(solver :: LsmrSolver{T,FC,S}, $(def_args_lsmr...); $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

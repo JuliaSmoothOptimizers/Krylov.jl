@@ -120,17 +120,17 @@ args_crmr = (:A, :b)
 kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function crmr(A, b :: AbstractVector{FC}; $(def_kwargs_crmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function crmr($(def_args_crmr...); $(def_kwargs_crmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = CrmrSolver(A, b)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    crmr!(solver, A, b; $(kwargs_crmr...))
+    crmr!(solver, $(args_crmr...); $(kwargs_crmr...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function crmr!(solver :: CrmrSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_crmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function crmr!(solver :: CrmrSolver{T,FC,S}, $(def_args_crmr...); $(def_kwargs_crmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

@@ -113,38 +113,28 @@ optargs_bicgstab = (:x0,)
 kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function bicgstab(A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function bicgstab($(def_args_bicgstab...), $(def_optargs_bicgstab...); $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = BicgstabSolver(A, b)
-    warm_start!(solver, x0)
+    warm_start!(solver, $(optargs_bicgstab...))
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    bicgstab!(solver, A, b; $(kwargs_bicgstab...))
+    bicgstab!(solver, $(args_bicgstab...); $(kwargs_bicgstab...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function bicgstab(A, b :: AbstractVector{FC}; $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function bicgstab($(def_args_bicgstab...); $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = BicgstabSolver(A, b)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    bicgstab!(solver, A, b; $(kwargs_bicgstab...))
+    bicgstab!(solver, $(args_bicgstab...); $(kwargs_bicgstab...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-    start_time = time_ns()
-    warm_start!(solver, x0)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    bicgstab!(solver, A, b; $(kwargs_bicgstab...))
-    solver.stats.timer += elapsed_time
-    return solver
-  end
-
-  function bicgstab!(solver :: BicgstabSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function bicgstab!(solver :: BicgstabSolver{T,FC,S}, $(def_args_bicgstab...); $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

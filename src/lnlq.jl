@@ -156,17 +156,17 @@ args_lnlq = (:A, :b)
 kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function lnlq(A, b :: AbstractVector{FC}; $(def_kwargs_lnlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function lnlq($(def_args_lnlq...); $(def_kwargs_lnlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = LnlqSolver(A, b)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    lnlq!(solver, A, b; $(kwargs_lnlq...))
+    lnlq!(solver, $(args_lnlq...); $(kwargs_lnlq...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.y, solver.stats)
   end
 
-  function lnlq!(solver :: LnlqSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_lnlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function lnlq!(solver :: LnlqSolver{T,FC,S}, $(def_args_lnlq...); $(def_kwargs_lnlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

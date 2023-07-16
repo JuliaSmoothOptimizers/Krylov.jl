@@ -111,38 +111,28 @@ optargs_usymlq = (:x0,)
 kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function usymlq($(def_args_usymlq...), $(def_optargs_usymlq...); $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = UsymlqSolver(A, b)
-    warm_start!(solver, x0)
+    warm_start!(solver, $(optargs_usymlq...))
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    usymlq!(solver, A, b, c; $(kwargs_usymlq...))
+    usymlq!(solver, $(args_usymlq...); $(kwargs_usymlq...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function usymlq(A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function usymlq($(def_args_usymlq...); $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = UsymlqSolver(A, b)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    usymlq!(solver, A, b, c; $(kwargs_usymlq...))
+    usymlq!(solver, $(args_usymlq...); $(kwargs_usymlq...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-    start_time = time_ns()
-    warm_start!(solver, x0)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    usymlq!(solver, A, b, c; $(kwargs_usymlq...))
-    solver.stats.timer += elapsed_time
-    return solver
-  end
-
-  function usymlq!(solver :: UsymlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, c :: AbstractVector{FC}; $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function usymlq!(solver :: UsymlqSolver{T,FC,S}, $(def_args_usymlq...); $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

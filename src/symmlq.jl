@@ -113,38 +113,28 @@ optargs_symmlq = (:x0,)
 kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function symmlq(A, b :: AbstractVector{FC}, x0 :: AbstractVector; window :: Int=5, $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function symmlq($(def_args_symmlq...), $(def_optargs_symmlq...); window :: Int=5, $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = SymmlqSolver(A, b; window)
-    warm_start!(solver, x0)
+    warm_start!(solver, $(optargs_symmlq...))
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    symmlq!(solver, A, b; $(kwargs_symmlq...))
+    symmlq!(solver, $(args_symmlq...); $(kwargs_symmlq...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function symmlq(A, b :: AbstractVector{FC}; window :: Int=5, $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function symmlq($(def_args_symmlq...); window :: Int=5, $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     solver = SymmlqSolver(A, b; window)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    symmlq!(solver, A, b; $(kwargs_symmlq...))
+    symmlq!(solver, $(args_symmlq...); $(kwargs_symmlq...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC}, x0 :: AbstractVector; $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-    start_time = time_ns()
-    warm_start!(solver, x0)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    symmlq!(solver, A, b; $(kwargs_symmlq...))
-    solver.stats.timer += elapsed_time
-    return solver
-  end
-
-  function symmlq!(solver :: SymmlqSolver{T,FC,S}, A, b :: AbstractVector{FC}; $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function symmlq!(solver :: SymmlqSolver{T,FC,S}, $(def_args_symmlq...); $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
