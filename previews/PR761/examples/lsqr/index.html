@@ -19,7 +19,7 @@ b = MatrixMarket.mmread(joinpath(path[1], &quot;$(matrix.name[1])_b.mtx&quot;))[
 show(stats)
 resid = norm(A&#39; * (A * x - b) + λ * x) / norm(b)
 @printf(&quot;LSQR: Relative residual: %8.1e\n&quot;, resid)
-@printf(&quot;LSQR: ‖x‖: %8.1e\n&quot;, norm(x))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"> Downloading artifact: HB/illc1033.MM
+@printf(&quot;LSQR: ‖x‖: %8.1e\n&quot;, norm(x))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr32"><span class="sgr1"> Downloading</span></span> artifact: HB/illc1033.MM
 System size: 1033 rows and 320 columns
 SimpleStats
  niter: 1353
@@ -28,7 +28,7 @@ SimpleStats
  residuals: []
  Aresiduals: []
  κ₂(A): []
- timer: 23.04ms
+ timer: 16.58ms
  status: maximum number of iterations exceeded
 LSQR: Relative residual:  1.4e-03
-LSQR: ‖x‖:  9.4e+03</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../crls/">« CRLS</a><a class="docs-footer-nextpage" href="../lsmr/">LSMR »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Tuesday 25 July 2023 00:19">Tuesday 25 July 2023</span>. Using Julia version 1.9.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+LSQR: ‖x‖:  9.4e+03</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../crls/">« CRLS</a><a class="docs-footer-nextpage" href="../lsmr/">LSMR »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Tuesday 25 July 2023 00:25">Tuesday 25 July 2023</span>. Using Julia version 1.9.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
