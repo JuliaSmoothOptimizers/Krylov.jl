@@ -103,9 +103,9 @@ In-place methods limit memory allocations and deallocations, which are particula
 ## Performance optimizations and storage requirements
 
 Operator-vector products and vector operations are the most expensive operations in Krylov.jl.
-To speed up these procedures, we rely on BLAS when the linear problems are solved on CPU and stored in a representation supported by BLAS.
-Because the vectors manipulated by Krylov methods are always dense, the use of BLAS directly affects the efficiency of our implementations.
-We also dispatch to BLAS for operator-vector products when the operator is a dense matrix.
+The vectors in Krylov.jl are always dense.
+One may then expect that taking advantage of an optimized BLAS library when one is available on CPU and when the problem data is stored in a supported representation should improve performance.
+Thus, we dispatch vector-vector operations to BLAS1 routines, and operator-vector operations to BLAS2 routines when the operator is a dense matrix.
 By default, Julia ships with OpenBLAS and provides multithreaded routines.
 Since Julia 1.6, users can also switch dynamically to other BLAS backends, such as the Intel MKL, BLIS or Apple Accelerate, thanks to the BLAS demuxing library `libblastrampoline`, if an optimized BLAS is available.
 
