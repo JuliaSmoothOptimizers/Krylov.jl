@@ -14,4 +14,4 @@ jobs:
         with:
           version: '1'
       - name: Aqua.jl
-        run: julia --color=yes -e 'using Pkg; Pkg.add("Aqua"); Pkg.develop(path="."); using Aqua, Krylov; Aqua.test_all(Krylov, stale_deps=false); Aqua.test_stale_deps(Krylov; ignore=[:Requires])'
+        run: julia --color=yes -e 'using Pkg; Pkg.add("Aqua"); Pkg.develop(path="."); using Aqua, Krylov; Aqua.test_all(Krylov)'
