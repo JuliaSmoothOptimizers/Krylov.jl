@@ -1,13 +1,43 @@
-@testset "extensions" begin
-    @testset "KrylovStaticArraysExt" begin
-        A = rand(Float32, 2, 2)
-        b = SVector{2}(rand(Float32, 2))
-        @test Krylov.ktypeof(b) == Vector{Float32}
-        @test gmres(A, b)[2].solved
+using StaticArrays
+using FillArrays
 
-        A = rand(Float64, 3, 3)
-        b = MVector{3}(rand(Float64, 3))
-        @test Krylov.ktypeof(b) == Vector{Float64}
-        @test gmres(A, b)[2].solved
+@testset "extensions" begin
+    @testset "StaticArrays" begin
+        n = 5
+        for T in (Float32, Float64)
+            A = rand(T, n, n)
+
+            b = SVector{n}(rand(T, n))
+            @test Krylov.ktypeof(b) == Vector{T}
+            x, stats = gmres(A, b)
+            @test stats.solved
+
+            b = MVector{n}(rand(T, n))
+            @test Krylov.ktypeof(b) == Vector{T}
+            x, stats = gmres(A, b)
+            @test stats.solved
+
+            b = SizedVector{n}(rand(T, n))
+            @test Krylov.ktypeof(b) == Vector{T}
+            x, stats = gmres(A, b)
+            @test stats.solved
+        end
+    end
+
+    @testset "FillArrays" begin
+        n = 5
+        for T in (Float32, Float64)
+            A = rand(T, n, n)
+
+            b = Ones(T, n)
+            @test Krylov.ktypeof(b) == Vector{T}
+            x, stats = gmres(A, b)
+            @test stats.solved
+
+            b = Zeros(T, n)
+            @test Krylov.ktypeof(b) == Vector{T}
+            x, stats = gmres(A, b)
+            @test stats.solved
+        end
     end
 end

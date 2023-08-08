@@ -1,9 +1,10 @@
 module Krylov
 
 using LinearAlgebra, SparseArrays, Printf
+using PackageExtensionCompat
 
-if !isdefined(Base, :get_extension)
-    using Requires
+function __init__()
+    @require_extensions
 end
 
 include("krylov_utils.jl")
@@ -56,11 +57,5 @@ include("craig.jl")
 include("craigmr.jl")
 
 include("krylov_solve.jl")
-
-function __init__()
-    @static if !isdefined(Base, :get_extension)
-        @require StaticArrays = "90137ffa-7385-5640-81b9-e52037218182" include("../ext/KrylovStaticArraysExt.jl")
-    end
-end
 
 end
