@@ -2,7 +2,7 @@ module Krylov
 
 using LinearAlgebra, SparseArrays, Printf
 
-@static if !isdefined(Base, :get_extension)
+if !isdefined(Base, :get_extension)
     using Requires
 end
 
