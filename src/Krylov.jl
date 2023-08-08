@@ -52,4 +52,13 @@ include("craig.jl")
 include("craigmr.jl")
 
 include("krylov_solve.jl")
+
+# This symbol is only defined on Julia versions that support extensions
+@static if !isdefined(Base, :get_extension)
+    using Requires
+    function __init__()
+        @require StaticArrays = "90137ffa-7385-5640-81b9-e52037218182" include("../ext/KrylovStaticArraysExt.jl")
+    end
+end
+
 end

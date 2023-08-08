@@ -1,4 +1,4 @@
-using Krylov, LinearAlgebra, SparseArrays, Printf, Random, Test
+using Krylov, LinearAlgebra, SparseArrays, StaticArrays, Printf, Random, Test
 import Krylov.KRYLOV_SOLVERS
 
 include("test_utils.jl")
