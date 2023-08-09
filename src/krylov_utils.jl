@@ -210,9 +210,9 @@ function ktypeof(v::S) where S <: DenseVector
 end
 
 function ktypeof(v::S) where S <: AbstractVector
-  if S.name.name == :Zeros || S.name.name == :Ones || S.name.name == :SArray || S.name.name == :MArray || S.name.name == :SizedArray
+  if S.name.name == :Zeros || S.name.name == :Ones || S.name.name == :SArray || S.name.name == :MArray || S.name.name == :SizedArray || S.name.name == :FieldArray || S.name.name == :ComponentArray
     T = eltype(S)
-    return Vector{T}  # FillArrays, StaticArrays
+    return Vector{T}  # FillArrays, StaticArrays, ComponentsArrays
   else
     return S  # BlockArrays, PartitionedArrays, etc...
   end
