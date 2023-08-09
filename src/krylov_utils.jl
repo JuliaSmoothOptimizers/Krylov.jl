@@ -237,7 +237,7 @@ function ktypeof(v::S) where {S<:SubArray}
     end
 end
 
-function ktypeof(v::S) where {T,S<:Base.ReshapedArray{T}}
+function ktypeof(v::S) where {T,S<:Base.ReshapedArray{T,1}}
     return Vector{T}
 end
 
