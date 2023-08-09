@@ -6,7 +6,7 @@ using ComponentArrays: ComponentVector
 """
     Krylov.ktypeof(::ComponentVector{T,V}) where {T,V}
 
-Return the corresponding (non-static) `V` type.
+Return the underlying `V` type.
 """
 Krylov.ktypeof(::ComponentVector{T,V}) where {T,V} = V
 
