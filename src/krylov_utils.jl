@@ -212,7 +212,7 @@ end
 function ktypeof(v::S) where S <: AbstractVector
   if S.name.name == :Zeros || S.name.name == :Ones || S.name.name == :SArray || S.name.name == :MArray || S.name.name == :SizedArray || S.name.name == :FieldArray || S.name.name == :ComponentArray
     T = eltype(S)
-    return Vector{T}  # FillArrays, StaticArrays, ComponentsArrays
+    return Vector{T}  # FillArrays, StaticArrays, ComponentArrays
   else
     return S  # BlockArrays, PartitionedArrays, etc...
   end
