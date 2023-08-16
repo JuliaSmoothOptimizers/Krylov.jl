@@ -61,7 +61,7 @@ where
 * `symmetric` and `hermitian` should be set to `true` or `false`;
 * `prod(y, v)`, `tprod(y, w)` and `ctprod(u, w)` are called when writing `mul!(y, A, v)`, `mul!(y, transpose(A), w)`, and `mul!(y, A', u)`, respectively.
 
-See the [tutorial](https://juliasmoothoptimizers.github.io/tutorials/introduction-to-linear-operators/) and the detailed [documentation](https://juliasmoothoptimizers.github.io/LinearOperators.jl/dev/) for more information on `LinearOperators.jl`.
+See the [tutorial](https://jso.dev/tutorials/introduction-to-linear-operators/) and the detailed [documentation](https://jso.dev/LinearOperators.jl/dev/) for more information on `LinearOperators.jl`.
 
 ## Examples
 

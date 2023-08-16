@@ -17,7 +17,13 @@ There exist three variants of preconditioning:
 
 where $P_{\ell}$ and $P_r$ are square and nonsingular.
 
-In Krylov.jl , we call $P_{\ell}^{-1}$ and $P_r^{-1}$ the preconditioners and we assume that we can apply them with the operation $y \leftarrow P^{-1} * x$.
+The left preconditioning preserves the error $x_k - x^{\star}$ whereas the right preconditioning keeps invariant the residual $b - A x_k$.
+Two-sided preconditioning is the only variant that allows to preserve the hermicity of a linear system.
+
+!!! note
+    Because det$(P^{-1}A - \lambda I)$ = det$(A - \lambda P)$ det$(P^{-1})$ = det$(AP^{-1} - \lambda I)$, the eigenvalues of $P^{-1}A$ and $AP^{-1}$ are identical. If $P = LL^{H}$, $L^{-1}AL^{-H}$ also has the same eigenvalues.
+
+In Krylov.jl, we call $P_{\ell}^{-1}$ and $P_r^{-1}$ the preconditioners and we assume that we can apply them with the operation $y \leftarrow P^{-1} * x$.
 It is also common to call $P_{\ell}$ and $P_r$ the preconditioners if the equivalent operation $y \leftarrow P~\backslash~x$ is available.
 Krylov.jl supports both approaches thanks to the argument `ldiv` of the Krylov solvers.
 
