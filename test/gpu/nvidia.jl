@@ -16,9 +16,14 @@ include("gpu.jl")
 
     A_cpu = sprand(200, 100, 0.3)
     b_cpu = rand(200)
-    A_gpu = CuSparseMatrixCSC(A_cpu)
+    A_csc_gpu = CuSparseMatrixCSC(A_cpu)
+    A_csr_gpu = CuSparseMatrixCSR(A_cpu)
+    A_coo_gpu = CuSparseMatrixCOO(A_cpu)
     b_gpu = CuVector(b_cpu)
-    x, stats = lsmr(A_gpu, b_gpu)
+    b_gpu = CuVector(b_cpu)
+    x_csc, stats_csc = lslq(A_csc_gpu, b_gpu, verbose=1)
+    x_csr, stats_csr = lsqr(A_csr_gpu, b_gpu, verbose=1)
+    x_coo, stats_coo = lsmr(A_coo_gpu, b_gpu, verbose=1)
 
     @testset "ic0" begin
       A_cpu, b_cpu = sparse_laplacian()

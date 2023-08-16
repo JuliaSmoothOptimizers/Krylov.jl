@@ -40,14 +40,19 @@ if CUDA.functional()
   b_cpu = rand(200)
 
   # GPU Arrays
-  A_gpu = CuSparseMatrixCSC(A_cpu)
+  A_csc_gpu = CuSparseMatrixCSC(A_cpu)
+  A_csr_gpu = CuSparseMatrixCSR(A_cpu)
+  A_coo_gpu = CuSparseMatrixCOO(A_cpu)
   b_gpu = CuVector(b_cpu)
 
   # Solve a rectangular and sparse system on an Nvidia GPU
-  x, stats = lsmr(A_gpu, b_gpu)
+  x_csc, stats_csc = lslq(A_csc_gpu, b_gpu)
+  x_csr, stats_csr = lsqr(A_csr_gpu, b_gpu)
+  x_coo, stats_coo = lsmr(A_coo_gpu, b_gpu)
 end
 ```
 
+If you use a Krylov method that only requires `A * v` products (see @factorization-free), the most efficient format is `CuSparseMatrixCSR`.
 Optimized operator-vector products that exploit GPU features can be also used by means of linear operators.
 
 Preconditioners, especially incomplete Cholesky or Incomplete LU factorizations that involve triangular solves,
