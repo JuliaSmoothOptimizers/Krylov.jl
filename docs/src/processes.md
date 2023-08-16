@@ -91,7 +91,7 @@ Note that $T_{k+1,k}$ is a real tridiagonal matrix even if $A$ is a complex matr
 
 The function [`hermitian_lanczos`](@ref hermitian_lanczos) returns $V_{k+1}$ and $T_{k+1,k}$.
 
-Related methods: [`SYMMLQ`](@ref symmlq), [`CG`](@ref cg), [`CR`](@ref cr), [`MINRES`](@ref minres), [`MINRES-QLP`](@ref minres_qlp), [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`CG-LANCZOS`](@ref cg_lanczos) and [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift).
+Related methods: [`SYMMLQ`](@ref symmlq), [`CG`](@ref cg), [`CR`](@ref cr), [`CAR`](@ref car), [`MINRES`](@ref minres), [`MINRES-QLP`](@ref minres_qlp), [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`CG-LANCZOS`](@ref cg_lanczos) and [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift).
 
 ```@docs
 hermitian_lanczos

@@ -19,6 +19,7 @@ KrylovSolver
 MinresSolver
 CgSolver
 CrSolver
+CarSolver
 SymmlqSolver
 CgLanczosSolver
 CgLanczosShiftSolver

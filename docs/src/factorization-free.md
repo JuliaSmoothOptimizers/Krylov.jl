@@ -37,7 +37,7 @@ Some methods only require `A * v` products, whereas other ones also require `A' 
 
 | A * v                                  | A * v and A' * u                         |
 |:--------------------------------------:|:----------------------------------------:|
-| CG, CR                                 | CGLS, CRLS, CGNE, CRMR                   |
+| CG, CR, CAR                            | CGLS, CRLS, CGNE, CRMR                   |
 | SYMMLQ, CG-LANCZOS, MINRES, MINRES-QLP | LSLQ, LSQR, LSMR, LNLQ, CRAIG, CRAIGMR   |
 | DIOM, FOM, DQGMRES, GMRES, FGMRES      | BiLQ, QMR, BiLQR, USYMLQ, USYMQR, TriLQR |
 | CGS, BICGSTAB                          | TriCG, TriMR                             |

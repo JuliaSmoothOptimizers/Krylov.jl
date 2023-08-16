@@ -30,6 +30,7 @@ makedocs(
            "Callbacks" => "callbacks.md",
            "Performance tips" => "tips.md",
            "Tutorials" => ["CG" => "examples/cg.md",
+                           "CAR" => "examples/car.md",
                            "CG-LANCZOS-SHIFT" => "examples/cg_lanczos_shift.md",
                            "SYMMLQ" => "examples/symmlq.md",
                            "MINRES-QLP" => "examples/minres_qlp.md",

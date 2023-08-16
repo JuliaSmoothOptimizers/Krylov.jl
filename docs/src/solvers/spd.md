@@ -16,6 +16,13 @@ cr
 cr!
 ```
 
+## CAR
+
+```@docs
+car
+car!
+```
+
 ## CG-LANCZOS
 
 ```@docs

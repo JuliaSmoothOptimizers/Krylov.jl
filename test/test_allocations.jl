@@ -100,6 +100,22 @@
         @test inplace_cr_bytes == 0
       end
 
+      @testset "CAR" begin
+        # CAR needs:
+        # 7 n-vectors: x, r, p, s, q, t, u
+        storage_car_bytes(n) = nbits_FC * 7 * n
+
+        expected_car_bytes = storage_car_bytes(n)
+        car(A, b)  # warmup
+        actual_car_bytes = @allocated car(A, b)
+        @test expected_car_bytes ≤ actual_car_bytes ≤ 1.02 * expected_car_bytes
+
+        solver = CarSolver(A, b)
+        car!(solver, A, b)  # warmup
+        inplace_car_bytes = @allocated car!(solver, A, b)
+        @test inplace_car_bytes == 0
+      end
+
       @testset "MINRES" begin
         # MINRES needs:
         # 6 n-vectors: x, r1, r2, w1, w2, y

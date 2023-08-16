@@ -3,7 +3,7 @@ CgLanczosShiftSolver, MinresQlpSolver, DqgmresSolver, DiomSolver, UsymlqSolver,
 UsymqrSolver, TricgSolver, TrimrSolver, TrilqrSolver, CgsSolver, BicgstabSolver,
 BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CrlsSolver, CgneSolver, CrmrSolver,
 LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
-GmresSolver, FomSolver, GpmrSolver, FgmresSolver
+GmresSolver, FomSolver, GpmrSolver, FgmresSolver, CarSolver
 
 export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual,
 niterations, Aprod, Atprod, Bprod, warm_start!
@@ -13,6 +13,7 @@ import Base.size, Base.sizeof, Base.format_bytes
 const KRYLOV_SOLVERS = Dict(
   :cg               => :CgSolver            ,
   :cr               => :CrSolver            ,
+  :car              => :CarSolver           ,
   :symmlq           => :SymmlqSolver        ,
   :cg_lanczos       => :CgLanczosSolver     ,
   :cg_lanczos_shift => :CgLanczosShiftSolver,
@@ -184,6 +185,53 @@ function CrSolver(A, b)
   m, n = size(A)
   S = ktypeof(b)
   CrSolver(m, n, S)
+end
+
+"""
+Type for storing the vectors required by the in-place version of CAR.
+
+The outer constructors
+
+    solver = CarSolver(m, n, S)
+    solver = CarSolver(A, b)
+
+may be used in order to create these vectors.
+"""
+mutable struct CarSolver{T,FC,S} <: KrylovSolver{T,FC,S}
+  m          :: Int
+  n          :: Int
+  Δx         :: S
+  x          :: S
+  r          :: S
+  p          :: S
+  s          :: S
+  q          :: S
+  t          :: S
+  u          :: S
+  warm_start :: Bool
+  stats      :: SimpleStats{T}
+end
+
+function CarSolver(m, n, S)
+  FC = eltype(S)
+  T  = real(FC)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  r  = S(undef, n)
+  p  = S(undef, n)
+  s  = S(undef, n)
+  q  = S(undef, n)
+  t  = S(undef, n)
+  u  = S(undef, n)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = CarSolver{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, false, stats)
+  return solver
+end
+
+function CarSolver(A, b)
+  m, n = size(A)
+  S = ktypeof(b)
+  CarSolver(m, n, S)
 end
 
 """
@@ -1789,6 +1837,7 @@ Return the number of operator-vector products with `A'` performed by the Krylov 
 function Atprod end
 
 for (KS, fun, nsol, nA, nAt, warm_start) in [
+  (:CarSolver           , :car!             , 1, 1, 0, true )
   (:LsmrSolver          , :lsmr!            , 1, 1, 1, false)
   (:CgsSolver           , :cgs!             , 1, 2, 0, true )
   (:UsymlqSolver        , :usymlq!          , 1, 1, 1, true )

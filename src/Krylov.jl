@@ -9,6 +9,7 @@ include("krylov_processes.jl")
 
 include("cg.jl")
 include("cr.jl")
+include("car.jl")
 
 include("symmlq.jl")
 include("cg_lanczos.jl")
