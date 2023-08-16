@@ -13,6 +13,8 @@ include("gpu.jl")
     A_gpu = CuMatrix(A_cpu)
     b_gpu = CuVector(b_cpu)
     x, stats = bilq(A_gpu, b_gpu)
+    r_gpu = b_gpu - A_gpu * x
+    @test norm(r_gpu) ≤ 1e-4
 
     A_cpu = sprand(200, 100, 0.3)
     b_cpu = rand(200)
@@ -22,17 +24,15 @@ include("gpu.jl")
     b_gpu = CuVector(b_cpu)
     b_gpu = CuVector(b_cpu)
     x_csc, stats_csc = lslq(A_csc_gpu, b_gpu)
-    Aᴴr_csc = A_csc_gpu' * (b_gpu - A_csc_gpu * x_csc)
-    println("cas 1")
-    println(norm(Aᴴr_csc))
     x_csr, stats_csr = lsqr(A_csr_gpu, b_gpu)
-    Aᴴr_csr = A_csr_gpu' * (b_gpu - A_csr_gpu * x_csr)
-    println("cas 2")
-    println(norm(Aᴴr_csr))
     x_coo, stats_coo = lsmr(A_coo_gpu, b_gpu)
+    Aᴴr_csc = A_csc_gpu' * (b_gpu - A_csc_gpu * x_csc)
+    Aᴴr_csr = A_csr_gpu' * (b_gpu - A_csr_gpu * x_csr)
     Aᴴr_coo = A_coo_gpu' * (b_gpu - A_coo_gpu * x_coo)
-    println("cas 3")
-    println(norm(Aᴴr_coo))
+    @test norm(Aᴴr_csc) ≤ 1e-4
+    @test norm(Aᴴr_csr) ≤ 1e-4
+    @test norm(Aᴴr_coo) ≤ 1e-4
+
 
     @testset "ic0" begin
       A_cpu, b_cpu = sparse_laplacian()
