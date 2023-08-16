@@ -26,16 +26,17 @@ BLAS.get_num_threads()
 The recommended number of BLAS threads is the number of physical and not logical cores, which is in general `N = NMAX / 2` if your CPU supports simultaneous multithreading (SMT).
 
 By default Julia ships with OpenBLAS but it's also possible to use Intel MKL BLAS and LAPACK with [MKL.jl](https://github.com/JuliaLinearAlgebra/MKL.jl).
+If your operating system is MacOS 13.4 or later, it's recommended to use Accelerate BLAS and LAPACK with [AppleAccelerate.jl](https://github.com/JuliaLinearAlgebra/AppleAccelerate.jl).
 
 ```julia
 using LinearAlgebra
-BLAS.vendor()  # get_config() for Julia ≥ 1.7
+BLAS.get_config()  # BLAS.vendor() for Julia 1.6
 ```
 
 ## Multi-threaded sparse matrix-vector products
 
 For sparse matrices, the Julia implementation of `mul!` of [SparseArrays](https://docs.julialang.org/en/v1/stdlib/SparseArrays/) library is not parallelized.
-A siginifiant speed-up can be observed with the multhreaded `mul!` of [MKLSparse.jl](https://github.com/JuliaSparse/MKLSparse.jl).
+A significant speed-up can be observed with the multhreaded `mul!` of [MKLSparse.jl](https://github.com/JuliaSparse/MKLSparse.jl) or [ThreadedSparseCSR.jl](https://github.com/BacAmorim/ThreadedSparseCSR.jl).
 
 It's also possible to implement a generic multithreaded julia version.
 For instance, the following function can be used for symmetric matrices
