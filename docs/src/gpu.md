@@ -52,7 +52,7 @@ if CUDA.functional()
 end
 ```
 
-If you use a Krylov method that only requires `A * v` products (see @factorization-free), the most efficient format is `CuSparseMatrixCSR`.
+If you use a Krylov method that only requires `A * v` products (see [here](@ref factorization-free)), the most efficient format is `CuSparseMatrixCSR`.
 Optimized operator-vector products that exploit GPU features can be also used by means of linear operators.
 
 Preconditioners, especially incomplete Cholesky or Incomplete LU factorizations that involve triangular solves,
