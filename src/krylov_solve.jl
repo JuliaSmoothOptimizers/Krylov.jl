@@ -21,6 +21,7 @@ for (KS, fun, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
   (:UsymqrSolver        , :usymqr!          , args_usymqr          , def_args_usymqr          , optargs_usymqr    , def_optargs_usymqr    , kwargs_usymqr          , def_kwargs_usymqr          )
   (:BilqrSolver         , :bilqr!           , args_bilqr           , def_args_bilqr           , optargs_bilqr     , def_optargs_bilqr     , kwargs_bilqr           , def_kwargs_bilqr           )
   (:CrSolver            , :cr!              , args_cr              , def_args_cr              , optargs_cr        , def_optargs_cr        , kwargs_cr              , def_kwargs_cr              )
+  (:CarSolver           , :car!             , args_car             , def_args_car             , optargs_car       , def_optargs_car       , kwargs_car             , def_kwargs_car             )
   (:CraigmrSolver       , :craigmr!         , args_craigmr         , def_args_craigmr         , ()                , ()                    , kwargs_craigmr         , def_kwargs_craigmr         )
   (:TricgSolver         , :tricg!           , args_tricg           , def_args_tricg           , optargs_tricg     , def_optargs_tricg     , kwargs_tricg           , def_kwargs_tricg           )
   (:CraigSolver         , :craig!           , args_craig           , def_args_craig           , ()                , ()                    , kwargs_craig           , def_kwargs_craig           )

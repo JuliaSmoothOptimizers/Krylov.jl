@@ -49,9 +49,9 @@ Each table summarizes the storage requirements of Krylov methods recommended to 
 
 #### Hermitian positive definite linear systems
 
-| Methods | [`CG`](@ref cg) | [`CR`](@ref cr) | [`CG-LANCZOS`](@ref cg_lanczos) | [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift) |
-|:-------:|:---------------:|:---------------:|:-------------------------------:|:-------------------------------------------:|
- Storage  | $4n$            | $5n$            | $5n$                            | $3n + 2np + 5p$                             |
+| Methods | [`CG`](@ref cg) | [`CR`](@ref cr) | [`CAR`](@ref car) | [`CG-LANCZOS`](@ref cg_lanczos) | [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift) |
+|:-------:|:---------------:|:---------------:|:-----------------:|:-------------------------------:|:-------------------------------------------:|
+ Storage  | $4n$            | $5n$            | $7n$              | $5n$                            | $3n + 2np + 5p$                             |
 
 #### Hermitian indefinite linear systems
 

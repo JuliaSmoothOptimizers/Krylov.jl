@@ -119,6 +119,17 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  x, stats = car(A, b, x0)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+
+  solver = CarSolver(A, b)
+  solve!(solver, A, b, x0)
+  r = b - A * solver.x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+
   x, stats = cg_lanczos(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
