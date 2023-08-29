@@ -4,9 +4,9 @@
   for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
 
-      # Cubic spline matrix.
+      # Symmetric and positive definite system.
       A, b = symmetric_definite(FC=FC)
-      (x, stats) = car(A, b, itmax=10)
+      (x, stats) = car(A, b)
       r = b - A * x
       resid = norm(r) / norm(b)
       @test(resid ≤ car_tol)
@@ -27,12 +27,12 @@
       @test stats.status == "x = 0 is a zero-residual solution"
 
       # Test with Jacobi (or diagonal) preconditioner
-      # A, b, M = square_preconditioned(FC=FC)
-      # (x, stats) = car(A, b, M=M)
-      # r = b - A * x
-      # resid = sqrt(real(dot(r, M * r))) / norm(b)
-      # @test(resid ≤ car_tol)
-      # @test(stats.solved)
+      A, b, M = square_preconditioned(FC=FC)
+      (x, stats) = car(A, b, M=M)
+      r = b - A * x
+      resid = norm(M * r) / norm(M * b)
+      @test(resid ≤ car_tol)
+      @test(stats.solved)
 
       # Test singular and consistent system
       A, b = singular_consistent(FC=FC)

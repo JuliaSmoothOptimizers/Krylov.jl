@@ -208,6 +208,7 @@ mutable struct CarSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   q          :: S
   t          :: S
   u          :: S
+  Mu         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
@@ -223,8 +224,9 @@ function CarSolver(m, n, S)
   q  = S(undef, n)
   t  = S(undef, n)
   u  = S(undef, n)
+  Mu = S(undef, 0)
   stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CarSolver{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, false, stats)
+  solver = CarSolver{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
   return solver
 end
 
