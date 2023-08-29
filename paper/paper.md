@@ -55,13 +55,13 @@ We refer interested readers to [@ipsen-meyer-1998] for an introduction to Krylov
 
 ##  Largest collection of Krylov processes and methods
 
-Krylov.jl aims to provide a user-friendly and unified interface for the largest collection of Krylov processes and methods, all programming languages taken together, with six and thirty-three implementations, respectively:
+Krylov.jl aims to provide a user-friendly and unified interface for the largest collection of Krylov processes and methods, all programming languages taken together, with six and thirty-five implementations, respectively:
 
 - \textbf{Krylov processes}: \textsc{Arnoldi}, \textsc{Golub-Kahan}, \textsc{Hermitian Lanczos}, \textsc{Montoison-Orban}, \textsc{Non-Hermitian Lanczos},  \textsc{Saunders-Simon-Yip};
-- \textbf{Krylov methods}: \textsc{Bicgstab}, \textsc{Bilq}, \textsc{Bilqr}, \textsc{Cg}, \textsc{Cg-lanczos}, \textsc{Cg-lanczos-shift}, \textsc{Cgls}, \textsc{Cgne}, \textsc{Cgs}, \textsc{Cr}, \textsc{Craig}, \textsc{Craigmr}, \textsc{Crls}, \textsc{Crmr}, \textsc{Diom}, \textsc{Dqgmres}, \textsc{Fgmres}, \textsc{Fom}, \textsc{Gmres}, \textsc{Gpmr}, \textsc{Lnlq}, \textsc{Lslq}, \textsc{Lsmr}, \textsc{Lsqr}, \textsc{Minres}, \textsc{Minres-qlp}, \textsc{Qmr}, \textsc{Symmlq}, \textsc{Tricg}, \textsc{Trilqr}, \textsc{Trimr}, \textsc{Usymlq}, \textsc{Usymqr}.
+- \textbf{Krylov methods}: \textsc{Bicgstab}, \textsc{Bilq}, \textsc{Bilqr}, \textsc{Car}, \textsc{Cg}, \textsc{Cg-lanczos}, \textsc{Cg-lanczos-shift}, \textsc{Cgls}, \textsc{Cgne}, \textsc{Cgs}, \textsc{Cr}, \textsc{Craig}, \textsc{Craigmr}, \textsc{Crls}, \textsc{Crmr}, \textsc{Diom}, \textsc{Dqgmres}, \textsc{Fgmres}, \textsc{Fom}, \textsc{Gmres}, \textsc{Gpmr}, \textsc{Lnlq}, \textsc{Lslq}, \textsc{Lsmr}, \textsc{Lsqr}, \textsc{Minares}, \textsc{Minres}, \textsc{Minres-qlp}, \textsc{Qmr}, \textsc{Symmlq}, \textsc{Tricg}, \textsc{Trilqr}, \textsc{Trimr}, \textsc{Usymlq}, \textsc{Usymqr}.
 
 Hence Krylov.jl is a suitable toolbox for easily comparing existing methods with each other as well as new ones.
-The number of distinct Krylov methods is eighteen for PETSc [@petsc], eleven for @MATLAB and [KrylovMethods.jl](https://github.com/JuliaInv/KrylovMethods.jl), nine for [IterativeSolvers.jl](https://github.com/JuliaLinearAlgebra/IterativeSolvers.jl) and three for [KrylovKit.jl](https://github.com/Jutho/KrylovKit.jl).
+The number of distinct Krylov methods is twenty-two for PETSc [@petsc], eleven for @MATLAB and [KrylovMethods.jl](https://github.com/JuliaInv/KrylovMethods.jl), nine for [IterativeSolvers.jl](https://github.com/JuliaLinearAlgebra/IterativeSolvers.jl) and three for [KrylovKit.jl](https://github.com/Jutho/KrylovKit.jl).
 However Krylov.jl doesn't have implementations of recycling Krylov methods nor block Krylov methods unlike some alternatives, except for special cases, including \textsc{Tricg}, \textsc{Trimr}, and \textsc{Gpmr}.
 Note that we only consider the number of Krylov methods that generate different iterates without preconditioning.
 Variants with preconditioning are not counted except if it is a flexible one such as \textsc{Fgmres}.
