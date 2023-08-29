@@ -4,7 +4,7 @@
 #
 # A. Montoison, D. Orban and M. A. Saunders
 # MinAres: An Iterative Solver for Symmetric Linear Systems
-# Cahier du GERAD G-2023-XX.
+# Cahier du GERAD G-2023-40.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Osaka, August 2023.
@@ -27,6 +27,8 @@ export car, car!
 CAR can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
 
 CAR solves the Hermitian linear system Ax = b of size n.
+CAR minimizes ‖Arₖ‖₂ when M = Iₙ and ‖AMrₖ‖_M otherwise.
+The estimates computed every iteration are ‖Mrₖ‖₂ and ‖AMrₖ‖_M.
 
 #### Input arguments
 
@@ -56,7 +58,7 @@ CAR solves the Hermitian linear system Ax = b of size n.
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### Reference
-* A. Montoison, D. Orban and M. A. Saunders, [*MinAres: An Iterative Solver for Symmetric Linear Systems*](https://dx.doi.org/...), Cahier du GERAD G-2023-XX, GERAD, Montréal, 2023.
+* A. Montoison, D. Orban and M. A. Saunders, [*MinAres: An Iterative Solver for Symmetric Linear Systems*](https://dx.doi.org/...), Cahier du GERAD G-2023-40, GERAD, Montréal, 2023.
 """
 function car end
 
@@ -128,14 +130,15 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
 
     # Tests M = Iₙ
     MisI = (M === I)
-    !MisI && error("The support of a preconditioner is not implemented in CAR.")
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
     # Set up workspace.
+    allocate_if(!MisI, solver, :Mu, S, n)
     Δx, x, r, p, s, q, t, u, stats = solver.Δx, solver.x, solver.r, solver.p, solver.s, solver.q, solver.t, solver.u, solver.stats
+    Mu = MisI ? u : solver.Mu
     warm_start = solver.warm_start
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
@@ -147,11 +150,27 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     else
       r .= b
     end
-    p .= r               # p₀ = r₀
-    mul!(s, A, r)        # s₀ = Ar₀
-    q .= s               # q₀ = Ap₀
-    mul!(t, A, s)        # t₀ = A²r₀
-    u .= t               # u₀ = A²p₀
+
+    # p₀ = r₀ = M(b - Ax₀)
+    if MisI
+      p .= r
+    else
+      mulorldiv!(p, M, r, ldiv)
+      r .= p
+    end
+
+    mul!(s, A, r)  # s₀ = Ar₀
+
+    # q₀ = MAp₀ and s₀ = MAr₀
+    if MisI
+      q .= s
+    else
+      mulorldiv!(q, M, s, ldiv)
+      s .= q
+    end
+
+    mul!(t, A, s)        # t₀ = As₀
+    u .= t               # u₀ = Aq₀
     ρ = @kdotr(n, t, s)  # ρ₀ = ⟨t₀ , s₀⟩
 
     # Compute ‖r₀‖
@@ -159,7 +178,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     history && push!(rNorms, rNorm)
 
     # Compute ‖Ar₀‖
-    ArNorm = @knrm2(n, s)
+    ArNorm = MisI ? @knrm2(n, s) : sqrt(@kdotr(n, r, u))
     history && push!(ArNorms, ArNorm)
 
     if rNorm == 0
@@ -186,19 +205,15 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     status = "unknown"
 
     while !(solved || tired || user_requested_exit || overtimed)
-
-      α = ρ / @kdotr(n, u, u)  # αₖ = ρₖ / ‖uₖ‖²
-      @kaxpy!(n,  α, p, x)     # xₖ₊₁ = xₖ + αₖ * pₖ
-      @kaxpy!(n, -α, q, r)     # rₖ₊₁ = rₖ - αₖ * qₖ
-      @kaxpy!(n, -α, u, s)     # sₖ₊₁ = sₖ - αₖ * uₖ
+      MisI || mulorldiv!(Mu, M, u, ldiv)
+      α = ρ / @kdotr(n, u, Mu)  # αₖ = ρₖ / ⟨uₖ, Muₖ⟩
+      @kaxpy!(n,  α, p, x)      # xₖ₊₁ = xₖ + αₖ * pₖ
+      @kaxpy!(n, -α, q, r)      # rₖ₊₁ = rₖ - αₖ * qₖ
+      @kaxpy!(n, -α, Mu, s)     # sₖ₊₁ = sₖ - αₖ * Muₖ
 
       # Compute ‖rₖ‖
       rNorm = @knrm2(n, r)
       history && push!(rNorms, rNorm)
-
-      # Compute ‖Arₖ‖
-      ArNorm = @knrm2(n, s)
-      history && push!(ArNorms, ArNorm)
 
       # Stopping conditions that do not depend on user input.
       # This is to guard against tolerances that are unreasonably small.
@@ -211,9 +226,13 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
         ρ_next = @kdotr(n, t, s)       # ρₖ₊₁ = ⟨tₖ₊₁ , sₖ₊₁⟩
         β = ρ_next / ρ                 # βₖ = ρₖ₊₁ / ρₖ
         ρ = ρ_next
-        @kaxpby!(n, one(FC), r, β, p)  # pₖ₊₁ = rₖ₊₁ + βₖ * pₖ 
+        @kaxpby!(n, one(FC), r, β, p)  # pₖ₊₁ = rₖ₊₁ + βₖ * pₖ
         @kaxpby!(n, one(FC), s, β, q)  # qₖ₊₁ = sₖ₊₁ + βₖ * qₖ
         @kaxpby!(n, one(FC), t, β, u)  # uₖ₊₁ = tₖ₊₁ + βₖ * uₖ
+
+        # Compute ‖Arₖ‖
+        ArNorm = MisI ? @knrm2(n, s) : sqrt(@kdotr(n, r, u))
+        history && push!(ArNorms, ArNorm)
       end
 
       iter = iter + 1
@@ -222,7 +241,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
       kdisplay(iter, verbose) && !solved && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, ArNorm, α, β, ktimer(start_time))
-      kdisplay(iter, verbose) &&  solved && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7s  %.2fs\n", iter, rNorm, ArNorm, α, "✗ ✗ ✗ ✗", ktimer(start_time))
+      kdisplay(iter, verbose) &&  solved && @printf(iostream, "%5d  %7.1e  %7s  %7.1e  %7s  %.2fs\n", iter, rNorm, "✗ ✗ ✗ ✗", α, "✗ ✗ ✗ ✗", ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
 

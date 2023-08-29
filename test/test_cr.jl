@@ -59,7 +59,7 @@
       A, b, M = square_preconditioned(FC=FC)
       (x, stats) = cr(A, b, M=M)
       r = b - A * x
-      resid = sqrt(real(dot(r, M * r))) / norm(b)
+      resid = sqrt(real(dot(r, M * r))) / sqrt(real(dot(b, M * b)))
       @test(resid ≤ cr_tol)
       @test(stats.solved)
 

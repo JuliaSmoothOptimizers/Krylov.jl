@@ -169,7 +169,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     else
       p .= b
     end
-    mulorldiv!(r, M, p, ldiv)
+    MisI && (r .= p)
+    MisI || mulorldiv!(r, M, p, ldiv)
     mul!(Ar, A, r)
     ρ = @kdotr(n, r, Ar)
 
