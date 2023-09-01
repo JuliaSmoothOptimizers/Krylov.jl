@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>GPU support · Krylov.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/style.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Krylov.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">Krylov.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../api/">API</a></li><li><a class="tocitem" href="../processes/">Krylov processes</a></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Krylov methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../solvers/spd/">Hermitian positive definite linear systems</a></li><li><a class="tocitem" href="../solvers/sid/">Hermitian indefinite linear systems</a></li><li><a class="tocitem" href="../solvers/unsymmetric/">Non-Hermitian square linear systems</a></li><li><a class="tocitem" href="../solvers/ln/">Least-norm problems</a></li><li><a class="tocitem" href="../solvers/ls/">Least-squares problems</a></li><li><a class="tocitem" href="../solvers/as/">Adjoint systems</a></li><li><a class="tocitem" href="../solvers/sp_sqd/">Saddle-point and Hermitian quasi-definite systems</a></li><li><a class="tocitem" href="../solvers/gsp/">Generalized saddle-point and non-Hermitian partitioned systems</a></li></ul></li><li><a class="tocitem" href="../inplace/">In-place methods</a></li><li><a class="tocitem" href="../preconditioners/">Preconditioners</a></li><li><a class="tocitem" href="../storage/">Storage requirements</a></li><li class="is-active"><a class="tocitem" href>GPU support</a><ul class="internal"><li><a class="tocitem" href="#Nvidia-GPUs"><span>Nvidia GPUs</span></a></li><li><a class="tocitem" href="#AMD-GPUs"><span>AMD GPUs</span></a></li><li><a class="tocitem" href="#Intel-GPUs"><span>Intel GPUs</span></a></li><li><a class="tocitem" href="#Apple-M1-GPUs"><span>Apple M1 GPUs</span></a></li></ul></li><li><a class="tocitem" href="../warm-start/">Warm-start</a></li><li><a class="tocitem" href="../factorization-free/">Factorization-free operators</a></li><li><a class="tocitem" href="../callbacks/">Callbacks</a></li><li><a class="tocitem" href="../tips/">Performance tips</a></li><li><input class="collapse-toggle" id="menuitem-13" type="checkbox"/><label class="tocitem" for="menuitem-13"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../examples/cg/">CG</a></li><li><a class="tocitem" href="../examples/car/">CAR</a></li><li><a class="tocitem" href="../examples/cg_lanczos_shift/">CG-LANCZOS-SHIFT</a></li><li><a class="tocitem" href="../examples/symmlq/">SYMMLQ</a></li><li><a class="tocitem" href="../examples/minres_qlp/">MINRES-QLP</a></li><li><a class="tocitem" href="../examples/minares/">MINARES</a></li><li><a class="tocitem" href="../examples/tricg/">TriCG</a></li><li><a class="tocitem" href="../examples/trimr/">TriMR</a></li><li><a class="tocitem" href="../examples/bicgstab/">BICGSTAB</a></li><li><a class="tocitem" href="../examples/dqgmres/">DQGMRES</a></li><li><a class="tocitem" href="../examples/cgne/">CGNE</a></li><li><a class="tocitem" href="../examples/crmr/">CRMR</a></li><li><a class="tocitem" href="../examples/craig/">CRAIG</a></li><li><a class="tocitem" href="../examples/craigmr/">CRAIGMR</a></li><li><a class="tocitem" href="../examples/cgls/">CGLS</a></li><li><a class="tocitem" href="../examples/crls/">CRLS</a></li><li><a class="tocitem" href="../examples/lsqr/">LSQR</a></li><li><a class="tocitem" href="../examples/lsmr/">LSMR</a></li></ul></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>GPU support</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>GPU support</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/docs/src/gpu.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="gpu"><a class="docs-heading-anchor" href="#gpu">GPU support</a><a id="gpu-1"></a><a class="docs-heading-anchor-permalink" href="#gpu" title="Permalink"></a></h1><p>Krylov methods are well suited for GPU computations because they only require matrix-vector products (<span>$u \leftarrow Av$</span>, <span>$u \leftarrow A^{H}w$</span>) and vector operations (<span>$\|v\|$</span>, <span>$u^H v$</span>, <span>$v \leftarrow \alpha u + \beta v$</span>), which are highly parallelizable.</p><p>The implementations in Krylov.jl are generic so as to take advantage of the multiple dispatch and broadcast features of Julia. Those allow the implementations to be specialized automatically by the compiler for both CPU and GPU. Thus, Krylov.jl works with GPU backends that build on <a href="https://github.com/JuliaGPU/GPUArrays.jl">GPUArrays.jl</a>, such as <a href="https://github.com/JuliaGPU/CUDA.jl">CUDA.jl</a>, <a href="https://github.com/JuliaGPU/AMDGPU.jl">AMDGPU.jl</a>, <a href="https://github.com/JuliaGPU/oneAPI.jl">oneAPI.jl</a> or <a href="https://github.com/JuliaGPU/Metal.jl">Metal.jl</a>.</p><h2 id="Nvidia-GPUs"><a class="docs-heading-anchor" href="#Nvidia-GPUs">Nvidia GPUs</a><a id="Nvidia-GPUs-1"></a><a class="docs-heading-anchor-permalink" href="#Nvidia-GPUs" title="Permalink"></a></h2><p>All solvers in Krylov.jl can be used with <a href="https://github.com/JuliaGPU/CUDA.jl">CUDA.jl</a> and allow computations on Nvidia GPUs. Problems stored in CPU format (<code>Matrix</code> and <code>Vector</code>) must first be converted to the related GPU format (<code>CuMatrix</code> and <code>CuVector</code>).</p><pre><code class="language-julia hljs">using CUDA, Krylov
+
+if CUDA.functional()
+  # CPU Arrays
+  A_cpu = rand(20, 20)
+  b_cpu = rand(20)
+
+  # GPU Arrays
+  A_gpu = CuMatrix(A_cpu)
+  b_gpu = CuVector(b_cpu)
+
+  # Solve a square and dense system on an Nivida GPU
+  x, stats = bilq(A_gpu, b_gpu)
+end</code></pre><p>Sparse matrices have a specific storage on Nvidia GPUs (<code>CuSparseMatrixCSC</code>, <code>CuSparseMatrixCSR</code> or <code>CuSparseMatrixCOO</code>):</p><pre><code class="language-julia hljs">using CUDA, Krylov
+using CUDA.CUSPARSE, SparseArrays
+
+if CUDA.functional()
+  # CPU Arrays
+  A_cpu = sprand(200, 100, 0.3)
+  b_cpu = rand(200)
+
+  # GPU Arrays
+  A_csc_gpu = CuSparseMatrixCSC(A_cpu)
+  A_csr_gpu = CuSparseMatrixCSR(A_cpu)
+  A_coo_gpu = CuSparseMatrixCOO(A_cpu)
+  b_gpu = CuVector(b_cpu)
+
+  # Solve a rectangular and sparse system on an Nvidia GPU
+  x_csc, stats_csc = lslq(A_csc_gpu, b_gpu)
+  x_csr, stats_csr = lsqr(A_csr_gpu, b_gpu)
+  x_coo, stats_coo = lsmr(A_coo_gpu, b_gpu)
+end</code></pre><p>If you use a Krylov method that only requires <code>A * v</code> products (see <a href="../factorization-free/#factorization-free">here</a>), the most efficient format is <code>CuSparseMatrixCSR</code>. Optimized operator-vector products that exploit GPU features can be also used by means of linear operators.</p><p>Preconditioners, especially incomplete Cholesky or Incomplete LU factorizations that involve triangular solves, can be applied directly on GPU thanks to efficient operators that take advantage of CUSPARSE routines.</p><h3 id="Example-with-a-symmetric-positive-definite-system"><a class="docs-heading-anchor" href="#Example-with-a-symmetric-positive-definite-system">Example with a symmetric positive-definite system</a><a id="Example-with-a-symmetric-positive-definite-system-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-a-symmetric-positive-definite-system" title="Permalink"></a></h3><pre><code class="language-julia hljs">using SparseArrays, Krylov, LinearOperators
+using CUDA, CUDA.CUSPARSE
+
+if CUDA.functional()
+  # Transfer the linear system from the CPU to the GPU
+  A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
+  b_gpu = CuVector(b_cpu)
+
+  # IC(0) decomposition LLᴴ ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+  P = ic02(A_gpu)
+
+  # Additional vector required for solving triangular systems
+  n = length(b_gpu)
+  T = eltype(b_gpu)
+  z = CUDA.zeros(T, n)
+
+  # Solve Py = x
+  function ldiv_ic0!(P::CuSparseMatrixCSR, x, y, z)
+    ldiv!(z, LowerTriangular(P), x)   # Forward substitution with L
+    ldiv!(y, LowerTriangular(P)&#39;, z)  # Backward substitution with Lᴴ
+    return y
+  end
+
+  function ldiv_ic0!(P::CuSparseMatrixCSC, x, y, z)
+    ldiv!(z, UpperTriangular(P)&#39;, x)  # Forward substitution with L
+    ldiv!(y, UpperTriangular(P), z)   # Backward substitution with Lᴴ
+    return y
+  end
+
+  # Operator that model P⁻¹
+  symmetric = hermitian = true
+  opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -&gt; ldiv_ic0!(P, x, y, z))
+
+  # Solve an Hermitian positive definite system with an IC(0) preconditioner on GPU
+  x, stats = cg(A_gpu, b_gpu, M=opM)
+end</code></pre><h3 id="Example-with-a-general-square-system"><a class="docs-heading-anchor" href="#Example-with-a-general-square-system">Example with a general square system</a><a id="Example-with-a-general-square-system-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-a-general-square-system" title="Permalink"></a></h3><pre><code class="language-julia hljs">using SparseArrays, Krylov, LinearOperators
+using CUDA, CUDA.CUSPARSE, CUDA.CUSOLVER
+
+if CUDA.functional()
+  # Optional -- Compute a permutation vector p such that A[:,p] has no zero diagonal
+  p = zfd(A_cpu)
+  p .+= 1
+  A_cpu = A_cpu[:,p]
+
+  # Transfer the linear system from the CPU to the GPU
+  A_gpu = CuSparseMatrixCSR(A_cpu)  # A_gpu = CuSparseMatrixCSC(A_cpu)
+  b_gpu = CuVector(b_cpu)
+
+  # ILU(0) decomposition LU ≈ A for CuSparseMatrixCSC or CuSparseMatrixCSR matrices
+  P = ilu02(A_gpu)
+
+  # Additional vector required for solving triangular systems
+  n = length(b_gpu)
+  T = eltype(b_gpu)
+  z = CUDA.zeros(T, n)
+
+  # Solve Py = x
+  function ldiv_ilu0!(P::CuSparseMatrixCSR, x, y, z)
+    ldiv!(z, UnitLowerTriangular(P), x)  # Forward substitution with L
+    ldiv!(y, UpperTriangular(P), z)      # Backward substitution with U
+    return y
+  end
+
+  function ldiv_ilu0!(P::CuSparseMatrixCSC, x, y, z)
+    ldiv!(z, LowerTriangular(P), x)      # Forward substitution with L
+    ldiv!(y, UnitUpperTriangular(P), z)  # Backward substitution with U
+    return y
+  end
+
+  # Operator that model P⁻¹
+  symmetric = hermitian = false
+  opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -&gt; ldiv_ilu0!(P, x, y, z))
+
+  # Solve a non-Hermitian system with an ILU(0) preconditioner on GPU
+  x̄, stats = bicgstab(A_gpu, b_gpu, M=opM)
+
+  # Recover the solution of Ax = b with the solution of A[:,p]x̄ = b
+  invp = invperm(p)
+  x = x̄[invp]
+end</code></pre><h2 id="AMD-GPUs"><a class="docs-heading-anchor" href="#AMD-GPUs">AMD GPUs</a><a id="AMD-GPUs-1"></a><a class="docs-heading-anchor-permalink" href="#AMD-GPUs" title="Permalink"></a></h2><p>All solvers in Krylov.jl can be used with <a href="https://github.com/JuliaGPU/AMDGPU.jl">AMDGPU.jl</a> and allow computations on AMD GPUs. Problems stored in CPU format (<code>Matrix</code> and <code>Vector</code>) must first be converted to the related GPU format (<code>ROCMatrix</code> and <code>ROCVector</code>).</p><pre><code class="language-julia hljs">using Krylov, AMDGPU
+
+if AMDGPU.functional()
+  # CPU Arrays
+  A_cpu = rand(ComplexF64, 20, 20)
+  A_cpu = A_cpu + A_cpu&#39;
+  b_cpu = rand(ComplexF64, 20)
+
+  A_gpu = ROCMatrix(A_cpu)
+  b_gpu = ROCVector(b_cpu)
+
+  # Solve a dense Hermitian system on an AMD GPU
+  x, stats = minres(A_gpu, b_gpu)
+end</code></pre><div class="admonition is-info"><header class="admonition-header">Info</header><div class="admonition-body"><p>The library <code>rocSPARSE</code> is not interfaced yet in AMDGPU.jl and only dense linear systems are supported.</p></div></div><h2 id="Intel-GPUs"><a class="docs-heading-anchor" href="#Intel-GPUs">Intel GPUs</a><a id="Intel-GPUs-1"></a><a class="docs-heading-anchor-permalink" href="#Intel-GPUs" title="Permalink"></a></h2><p>All solvers in Krylov.jl can be used with <a href="https://github.com/JuliaGPU/oneAPI.jl">oneAPI.jl</a> and allow computations on Intel GPUs. Problems stored in CPU format (<code>Matrix</code> and <code>Vector</code>) must first be converted to the related GPU format (<code>oneMatrix</code> and <code>oneVector</code>).</p><pre><code class="language-julia hljs">using Krylov, oneAPI
+
+if oneAPI.functional()
+  T = Float32  # oneAPI.jl also works with ComplexF32
+  m = 20
+  n = 10
+
+  # CPU Arrays
+  A_cpu = rand(T, m, n)
+  b_cpu = rand(T, m)
+
+  # GPU Arrays
+  A_gpu = oneMatrix(A_cpu)
+  b_gpu = oneVector(b_cpu)
+
+  # Solve a dense least-squares problem on an Intel GPU
+  x, stats = lsqr(A_gpu, b_gpu)
+end</code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>The library <code>oneMKL</code> is interfaced in oneAPI.jl and accelerates linear algebra operations on Intel GPUs. Only dense linear systems are supported for the time being because sparse linear algebra routines are not interfaced yet.</p></div></div><h2 id="Apple-M1-GPUs"><a class="docs-heading-anchor" href="#Apple-M1-GPUs">Apple M1 GPUs</a><a id="Apple-M1-GPUs-1"></a><a class="docs-heading-anchor-permalink" href="#Apple-M1-GPUs" title="Permalink"></a></h2><p>All solvers in Krylov.jl can be used with <a href="https://github.com/JuliaGPU/Metal.jl">Metal.jl</a> and allow computations on Apple M1 GPUs. Problems stored in CPU format (<code>Matrix</code> and <code>Vector</code>) must first be converted to the related GPU format (<code>MtlMatrix</code> and <code>MtlVector</code>).</p><pre><code class="language-julia hljs">using Krylov, Metal
+
+T = Float32  # Metal.jl also works with ComplexF32
+n = 10
+m = 20
+
+# CPU Arrays
+A_cpu = rand(T, n, m)
+b_cpu = rand(T, n)
+
+# GPU Arrays
+A_gpu = MtlMatrix(A_cpu)
+b_gpu = MtlVector(b_cpu)
+
+# Solve a dense least-norm problem on an Apple M1 GPU
+x, stats = craig(A_gpu, b_gpu)</code></pre><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>Metal.jl is under heavy development and is considered experimental for now.</p></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../storage/">« Storage requirements</a><a class="docs-footer-nextpage" href="../warm-start/">Warm-start »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Friday 1 September 2023 19:51">Friday 1 September 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
