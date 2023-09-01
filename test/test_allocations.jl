@@ -148,6 +148,22 @@
         @test inplace_minres_qlp_bytes == 0
       end
 
+      @testset "MINARES" begin
+        # MINARES needs:
+        # 8 n-vectors: vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q
+        storage_minares_bytes(n) = nbits_FC * 8 * n
+
+        expected_minares_bytes = storage_minares_bytes(n)
+        minares(A, b)  # warmup
+        actual_minares_bytes = @allocated minares(A, b)
+        @test expected_minares_bytes ≤ actual_minares_bytes ≤ 1.02 * expected_minares_bytes
+
+        solver = MinaresSolver(A, b)
+        minares!(solver, A, b)  # warmup
+        inplace_minares_bytes = @allocated minares!(solver, A, b)
+        @test inplace_minares_bytes == 0
+      end
+
       @testset "DIOM" begin
         # DIOM needs:
         # - 2 n-vectors: x, t

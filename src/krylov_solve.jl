@@ -14,6 +14,7 @@ for (KS, fun, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
   (:CrlsSolver          , :crls!            , args_crls            , def_args_crls            , ()                , ()                    , kwargs_crls            , def_kwargs_crls            )
   (:LsqrSolver          , :lsqr!            , args_lsqr            , def_args_lsqr            , ()                , ()                    , kwargs_lsqr            , def_kwargs_lsqr            )
   (:MinresSolver        , :minres!          , args_minres          , def_args_minres          , optargs_minres    , def_optargs_minres    , kwargs_minres          , def_kwargs_minres          )
+  (:MinaresSolver       , :minares!         , args_minares         , def_args_minares         , optargs_minares   , def_optargs_minares   , kwargs_minares         , def_kwargs_minares         )
   (:CgneSolver          , :cgne!            , args_cgne            , def_args_cgne            , ()                , ()                    , kwargs_cgne            , def_kwargs_cgne            )
   (:DqgmresSolver       , :dqgmres!         , args_dqgmres         , def_args_dqgmres         , optargs_dqgmres   , def_optargs_dqgmres   , kwargs_dqgmres         , def_kwargs_dqgmres         )
   (:SymmlqSolver        , :symmlq!          , args_symmlq          , def_args_symmlq          , optargs_symmlq    , def_optargs_symmlq    , kwargs_symmlq          , def_kwargs_symmlq          )

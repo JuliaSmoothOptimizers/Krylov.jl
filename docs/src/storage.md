@@ -55,9 +55,9 @@ Each table summarizes the storage requirements of Krylov methods recommended to 
 
 #### Hermitian indefinite linear systems
 
-| Methods | [`SYMMLQ`](@ref symmlq) | [`MINRES`](@ref minres) | [`MINRES-QLP`](@ref minres_qlp) |
-|:-------:|:-----------------------:|:-----------------------:|:-------------------------------:|
-| Storage | $5n$                    | $6n$                    | $6n$                            |
+| Methods | [`SYMMLQ`](@ref symmlq) | [`MINRES`](@ref minres) | [`MINRES-QLP`](@ref minres_qlp) | [`MINARES`](@ref minares) |
+|:-------:|:-----------------------:|:-----------------------:|:-------------------------------:|:-------------------------:|
+| Storage | $5n$                    | $6n$                    | $6n$                            | $8n$                      |
 
 #### Non-Hermitian square linear systems
 

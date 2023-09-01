@@ -17,7 +17,7 @@
 #
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Brussels, Belgium, June 2015.
-# Montreal, August 2015.
+# Montréal, August 2015.
 
 export minres, minres!
 
@@ -262,7 +262,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
       @kscal!(n, one(FC) / β, y)
       iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y) # (y = y - β / oldβ * r1)
 
-      α = real((@kdot(n, v, y) / β))
+      α = @kdotr(n, v, y) / β
       @kaxpy!(n, -α / β, r2, y)  # y = y - α / β * r2
 
       # Compute w.

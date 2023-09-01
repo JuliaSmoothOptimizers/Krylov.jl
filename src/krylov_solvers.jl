@@ -3,7 +3,7 @@ CgLanczosShiftSolver, MinresQlpSolver, DqgmresSolver, DiomSolver, UsymlqSolver,
 UsymqrSolver, TricgSolver, TrimrSolver, TrilqrSolver, CgsSolver, BicgstabSolver,
 BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CrlsSolver, CgneSolver, CrmrSolver,
 LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
-GmresSolver, FomSolver, GpmrSolver, FgmresSolver, CarSolver
+GmresSolver, FomSolver, GpmrSolver, FgmresSolver, CarSolver, MinaresSolver
 
 export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual,
 niterations, Aprod, Atprod, Bprod, warm_start!
@@ -17,6 +17,7 @@ const KRYLOV_SOLVERS = Dict(
   :symmlq           => :SymmlqSolver        ,
   :cg_lanczos       => :CgLanczosSolver     ,
   :cg_lanczos_shift => :CgLanczosShiftSolver,
+  :minares          => :MinaresSolver       ,
   :minres           => :MinresSolver        ,
   :minres_qlp       => :MinresQlpSolver     ,
   :diom             => :DiomSolver          ,
@@ -97,6 +98,55 @@ function MinresSolver(A, b; window :: Int=5)
   m, n = size(A)
   S = ktypeof(b)
   MinresSolver(m, n, S; window)
+end
+
+"""
+Type for storing the vectors required by the in-place version of MINARES.
+
+The outer constructors
+
+    solver = MinaresSolver(m, n, S)
+    solver = MinaresSolver(A, b)
+
+may be used in order to create these vectors.
+"""
+mutable struct MinaresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
+  m          :: Int
+  n          :: Int
+  Δx         :: S
+  vₖ         :: S
+  vₖ₊₁       :: S
+  x          :: S
+  wₖ₋₂       :: S
+  wₖ₋₁       :: S
+  dₖ₋₂       :: S
+  dₖ₋₁       :: S
+  q          :: S
+  warm_start :: Bool
+  stats      :: SimpleStats{T}
+end
+
+function MinaresSolver(m, n, S)
+  FC   = eltype(S)
+  T    = real(FC)
+  Δx   = S(undef, 0)
+  vₖ   = S(undef, n)
+  vₖ₊₁ = S(undef, n)
+  x    = S(undef, n)
+  wₖ₋₂ = S(undef, n)
+  wₖ₋₁ = S(undef, n)
+  dₖ₋₂ = S(undef, n)
+  dₖ₋₁ = S(undef, n)
+  q    = S(undef, n)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = MinaresSolver{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
+  return solver
+end
+
+function MinaresSolver(A, b)
+  m, n = size(A)
+  S = ktypeof(b)
+  MinaresSolver(m, n, S)
 end
 
 """
@@ -1848,6 +1898,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:CrlsSolver          , :crls!            , 1, 1, 1, false)
   (:LsqrSolver          , :lsqr!            , 1, 1, 1, false)
   (:MinresSolver        , :minres!          , 1, 1, 0, true )
+  (:MinaresSolver       , :minares!         , 1, 1, 0, true )
   (:CgneSolver          , :cgne!            , 1, 1, 1, false)
   (:DqgmresSolver       , :dqgmres!         , 1, 1, 0, true )
   (:SymmlqSolver        , :symmlq!          , 1, 1, 0, true )

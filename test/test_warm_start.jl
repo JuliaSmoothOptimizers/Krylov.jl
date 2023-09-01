@@ -8,6 +8,7 @@ function test_warm_start(FC)
   nshifts = 5
   tol = 1.0e-6
 
+  # BILQR
   x, y, stats = bilqr(A, b, c, x0, y0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -25,6 +26,7 @@ function test_warm_start(FC)
   resid = norm(s) / norm(c)
   @test(resid ≤ tol)
 
+  # TRILQR
   x, y, stats = trilqr(A, b, c, x0, y0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -42,6 +44,7 @@ function test_warm_start(FC)
   resid = norm(s) / norm(c)
   @test(resid ≤ tol)
 
+  # TRICG
   x, y, stats = tricg(A, b, b, x0, y0)
   r = [b - x - A * y; b - A' * x + y]
   resid = norm(r) / norm([b; b])
@@ -53,6 +56,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm([b; b])
   @test(resid ≤ tol)
 
+  # TRIMR
   x, y, stats = trimr(A, b, b, x0, y0)
   r = [b - x - A * y; b - A' * x + y]
   resid = norm(r) / norm([b; b])
@@ -64,6 +68,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm([b; b])
   @test(resid ≤ tol)
 
+  # GPMR
   x, y, stats = gpmr(A, A', b, b, x0, y0)
   r = [b - x - A * y; b - A' * x - y]
   resid = norm(r) / norm([b; b])
@@ -75,6 +80,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm([b; b])
   @test(resid ≤ tol)
 
+  # MINRES-QLP
   x, stats = minres_qlp(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -86,6 +92,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # SYMMLQ
   x, stats = symmlq(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -97,6 +104,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # CG
   x, stats = cg(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -108,6 +116,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # CR
   x, stats = cr(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -119,6 +128,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # CAR
   x, stats = car(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -130,6 +140,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # CG-LANCZOS
   x, stats = cg_lanczos(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -141,6 +152,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # MINRES
   x, stats = minres(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -152,6 +164,19 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # MINARES
+  x, stats = minares(A, b, x0)
+  r = b - A * x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+
+  solver = MinaresSolver(A, b)
+  solve!(solver, A, b, x0)
+  r = b - A * solver.x
+  resid = norm(r) / norm(b)
+  @test(resid ≤ tol)
+
+  # DIOM
   x, stats = diom(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -163,6 +188,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # DQGMRES
   x, stats = dqgmres(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -174,6 +200,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # FOM
   x, stats = fom(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -185,6 +212,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # GMRES
   x, stats = gmres(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -196,6 +224,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # FGMRES
   x, stats = fgmres(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -207,6 +236,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # BICGSTAB
   x, stats = bicgstab(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -218,6 +248,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # CGS
   x, stats = cgs(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -229,6 +260,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # BILQ
   x, stats = bilq(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -240,6 +272,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # QMR
   x, stats = qmr(A, b, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -251,6 +284,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # USYMLQ
   x, stats = usymlq(A, b, c, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
@@ -262,6 +296,7 @@ function test_warm_start(FC)
   resid = norm(r) / norm(b)
   @test(resid ≤ tol)
 
+  # USYMQR
   x, stats = usymqr(A, b, c, x0)
   r = b - A * x
   resid = norm(r) / norm(b)
