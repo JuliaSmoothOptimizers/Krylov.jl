@@ -17,6 +17,7 @@ Krylov.LsmrStats
 ```@docs
 KrylovSolver
 MinresSolver
+MinaresSolver
 CgSolver
 CrSolver
 CarSolver

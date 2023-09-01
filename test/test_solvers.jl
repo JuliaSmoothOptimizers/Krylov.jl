@@ -18,6 +18,7 @@ function test_solvers(FC)
     $solvers[:car] = $(KRYLOV_SOLVERS[:car])($n, $n, $S)
     $solvers[:symmlq] = $(KRYLOV_SOLVERS[:symmlq])($n, $n, $S)
     $solvers[:minres] = $(KRYLOV_SOLVERS[:minres])($n, $n, $S)
+    $solvers[:minares] = $(KRYLOV_SOLVERS[:minares])($n, $n, $S)
     $solvers[:cg_lanczos] = $(KRYLOV_SOLVERS[:cg_lanczos])($n, $n, $S)
     $solvers[:cg_lanczos_shift] = $(KRYLOV_SOLVERS[:cg_lanczos_shift])($n, $n, $nshifts, $S)
     $solvers[:diom] = $(KRYLOV_SOLVERS[:diom])($n, $n, $mem, $S)
@@ -61,7 +62,7 @@ function test_solvers(FC)
     c2  = Au2 * ones(FC, n2)
     shifts2 = [1.0; 2.0; 3.0; 4.0; 5.0; 6.0]
     for (method, solver) in solvers
-      if method ∈ (:cg, :cr, :car, :symmlq, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr)
+      if method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr)
         @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)") solve!(solver, A2, b2)
       end
       method == :cg_lanczos_shift && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)") solve!(solver, A2, b2, shifts2)
@@ -79,7 +80,7 @@ function test_solvers(FC)
   @testset "Test the keyword argument timemax" begin
     timemax = 0.0
     for (method, solver) in solvers
-      method ∈ (:cg, :cr, :car, :symmlq, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr) && solve!(solver, A, b, timemax=timemax)
+      method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr) && solve!(solver, A, b, timemax=timemax)
       method == :cg_lanczos_shift && solve!(solver, A, b, shifts, timemax=timemax)
       method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && solve!(solver, Au, c, timemax=timemax)
       method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr) && solve!(solver, Ao, b, timemax=timemax)
@@ -101,7 +102,7 @@ function test_solvers(FC)
         b  = 5 * b
         c  = 3 * c
 
-        if method ∈ (:cg, :cr, :car, :symmlq, :minres, :minres_qlp, :cg_lanczos, :diom, :fom,
+        if method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom,
                      :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr, :cg_lanczos_shift)
           method == :cg_lanczos_shift ? solve!(solver, A, b, shifts) : solve!(solver, A, b)
           niter = niterations(solver)

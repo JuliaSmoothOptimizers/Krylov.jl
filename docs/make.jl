@@ -34,6 +34,7 @@ makedocs(
                            "CG-LANCZOS-SHIFT" => "examples/cg_lanczos_shift.md",
                            "SYMMLQ" => "examples/symmlq.md",
                            "MINRES-QLP" => "examples/minres_qlp.md",
+                           "MINARES" => "examples/minares.md",
                            "TriCG" => "examples/tricg.md",
                            "TriMR" => "examples/trimr.md",
                            "BICGSTAB" => "examples/bicgstab.md",

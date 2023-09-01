@@ -35,12 +35,12 @@ The `A` or `B` input arguments of Krylov.jl solvers can be any object that repre
 
 Some methods only require `A * v` products, whereas other ones also require `A' * u` products. In the latter case, `adjoint(A)` must also be implemented.
 
-| A * v                                  | A * v and A' * u                         |
-|:--------------------------------------:|:----------------------------------------:|
-| CG, CR, CAR                            | CGLS, CRLS, CGNE, CRMR                   |
-| SYMMLQ, CG-LANCZOS, MINRES, MINRES-QLP | LSLQ, LSQR, LSMR, LNLQ, CRAIG, CRAIGMR   |
-| DIOM, FOM, DQGMRES, GMRES, FGMRES      | BiLQ, QMR, BiLQR, USYMLQ, USYMQR, TriLQR |
-| CGS, BICGSTAB                          | TriCG, TriMR                             |
+| A * v                                           | A * v and A' * u                         |
+|:-----------------------------------------------:|:----------------------------------------:|
+| CG, CR, CAR                                     | CGLS, CRLS, CGNE, CRMR                   |
+| SYMMLQ, CG-LANCZOS, MINRES, MINRES-QLP, MINARES | LSLQ, LSQR, LSMR, LNLQ, CRAIG, CRAIGMR   |
+| DIOM, FOM, DQGMRES, GMRES, FGMRES               | BiLQ, QMR, BiLQR, USYMLQ, USYMQR, TriLQR |
+| CGS, BICGSTAB                                   | TriCG, TriMR                             |
 
 !!! info
     GPMR is the only method that requires `A * v` and `B * w` products.

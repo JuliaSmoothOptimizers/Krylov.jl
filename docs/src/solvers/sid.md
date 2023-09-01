@@ -22,3 +22,10 @@ minres!
 minres_qlp
 minres_qlp!
 ```
+
+## MINARES
+
+```@docs
+minares
+minares!
+```

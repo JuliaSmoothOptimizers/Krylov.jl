@@ -26,7 +26,7 @@ export car, car!
 
 CAR can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
 
-CAR solves the Hermitian linear system Ax = b of size n.
+CAR solves the Hermitian and positive definite linear system Ax = b of size n.
 CAR minimizes ‖Arₖ‖₂ when M = Iₙ and ‖AMrₖ‖_M otherwise.
 The estimates computed every iteration are ‖Mrₖ‖₂ and ‖AMrₖ‖_M.
 
@@ -58,7 +58,7 @@ The estimates computed every iteration are ‖Mrₖ‖₂ and ‖AMrₖ‖_M.
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### Reference
-* A. Montoison, D. Orban and M. A. Saunders, [*MinAres: An Iterative Solver for Symmetric Linear Systems*](https://dx.doi.org/...), Cahier du GERAD G-2023-40, GERAD, Montréal, 2023.
+* A. Montoison, D. Orban and M. A. Saunders, *MinAres: An Iterative Solver for Symmetric Linear Systems*, Cahier du GERAD G-2023-40, GERAD, Montréal, 2023.
 """
 function car end
 
