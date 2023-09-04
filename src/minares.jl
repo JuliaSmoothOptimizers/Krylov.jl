@@ -158,6 +158,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     # β₁v₁ = r₀
     if warm_start
       mul!(vₖ, A, Δx)  # r₀ = b - Ax₀
+      (λ ≠ 0) && @kaxpy!(n, λ, Δx, vₖ)
       @kaxpby!(n, one(FC), b, -one(FC), vₖ)
     else
       vₖ .= b  # r₀ = b
