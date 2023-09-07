@@ -122,7 +122,25 @@ if AMDGPU.functional()
 
   # Solve a dense Hermitian system on an AMD GPU
   x, stats = minres(A_gpu, b_gpu)
-end</code></pre><div class="admonition is-info"><header class="admonition-header">Info</header><div class="admonition-body"><p>The library <code>rocSPARSE</code> is not interfaced yet in AMDGPU.jl and only dense linear systems are supported.</p></div></div><h2 id="Intel-GPUs"><a class="docs-heading-anchor" href="#Intel-GPUs">Intel GPUs</a><a id="Intel-GPUs-1"></a><a class="docs-heading-anchor-permalink" href="#Intel-GPUs" title="Permalink"></a></h2><p>All solvers in Krylov.jl can be used with <a href="https://github.com/JuliaGPU/oneAPI.jl">oneAPI.jl</a> and allow computations on Intel GPUs. Problems stored in CPU format (<code>Matrix</code> and <code>Vector</code>) must first be converted to the related GPU format (<code>oneMatrix</code> and <code>oneVector</code>).</p><pre><code class="language-julia hljs">using Krylov, oneAPI
+end</code></pre><p>Sparse matrices have a specific storage on AMD GPUs (<code>ROCSparseMatrixCSC</code>, <code>ROCSparseMatrixCSR</code> or <code>ROCSparseMatrixCOO</code>):</p><pre><code class="language-julia hljs">using AMDGPU, Krylov
+using AMDGPU.rocSPARSE, SparseArrays
+
+if AMDGPU.functional()
+  # CPU Arrays
+  A_cpu = sprand(100, 200, 0.3)
+  b_cpu = rand(100)
+
+  # GPU Arrays
+  A_csc_gpu = ROCSparseMatrixCSC(A_cpu)
+  A_csr_gpu = ROCSparseMatrixCSR(A_cpu)
+  A_coo_gpu = ROCSparseMatrixCOO(A_cpu)
+  b_gpu = CuVector(b_cpu)
+
+  # Solve a rectangular and sparse system on an AMD GPU
+  x_csc, y_csc, stats_csc = lnlq(A_csc_gpu, b_gpu)
+  x_csr, y_csr, stats_csr = craig(A_csr_gpu, b_gpu)
+  x_coo, y_coo, stats_coo = craigmr(A_coo_gpu, b_gpu)
+end</code></pre><h2 id="Intel-GPUs"><a class="docs-heading-anchor" href="#Intel-GPUs">Intel GPUs</a><a id="Intel-GPUs-1"></a><a class="docs-heading-anchor-permalink" href="#Intel-GPUs" title="Permalink"></a></h2><p>All solvers in Krylov.jl can be used with <a href="https://github.com/JuliaGPU/oneAPI.jl">oneAPI.jl</a> and allow computations on Intel GPUs. Problems stored in CPU format (<code>Matrix</code> and <code>Vector</code>) must first be converted to the related GPU format (<code>oneMatrix</code> and <code>oneVector</code>).</p><pre><code class="language-julia hljs">using Krylov, oneAPI
 
 if oneAPI.functional()
   T = Float32  # oneAPI.jl also works with ComplexF32
@@ -154,4 +172,4 @@ A_gpu = MtlMatrix(A_cpu)
 b_gpu = MtlVector(b_cpu)
 
 # Solve a dense least-norm problem on an Apple M1 GPU
-x, stats = craig(A_gpu, b_gpu)</code></pre><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>Metal.jl is under heavy development and is considered experimental for now.</p></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../storage/">« Storage requirements</a><a class="docs-footer-nextpage" href="../warm-start/">Warm-start »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Monday 4 September 2023 03:38">Monday 4 September 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+x, stats = craig(A_gpu, b_gpu)</code></pre><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>Metal.jl is under heavy development and is considered experimental for now.</p></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../storage/">« Storage requirements</a><a class="docs-footer-nextpage" href="../warm-start/">Warm-start »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Thursday 7 September 2023 16:30">Thursday 7 September 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
