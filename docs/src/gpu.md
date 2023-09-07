@@ -171,8 +171,29 @@ if AMDGPU.functional()
 end
 ```
 
-!!! info
-    The library `rocSPARSE` is not interfaced yet in AMDGPU.jl and only dense linear systems are supported.
+Sparse matrices have a specific storage on AMD GPUs (`ROCSparseMatrixCSC`, `ROCSparseMatrixCSR` or `ROCSparseMatrixCOO`):
+
+```julia
+using AMDGPU, Krylov
+using AMDGPU.rocSPARSE, SparseArrays
+
+if AMDGPU.functional()
+  # CPU Arrays
+  A_cpu = sprand(100, 200, 0.3)
+  b_cpu = rand(100)
+
+  # GPU Arrays
+  A_csc_gpu = ROCSparseMatrixCSC(A_cpu)
+  A_csr_gpu = ROCSparseMatrixCSR(A_cpu)
+  A_coo_gpu = ROCSparseMatrixCOO(A_cpu)
+  b_gpu = CuVector(b_cpu)
+
+  # Solve a rectangular and sparse system on an AMD GPU
+  x_csc, y_csc, stats_csc = lnlq(A_csc_gpu, b_gpu)
+  x_csr, y_csr, stats_csr = craig(A_csr_gpu, b_gpu)
+  x_coo, y_coo, stats_coo = craigmr(A_coo_gpu, b_gpu)
+end
+```
 
 ## Intel GPUs
 

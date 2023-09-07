@@ -1,4 +1,4 @@
-using AMDGPU
+using AMDGPU, AMDGPU.rocSPARSE
 
 include("gpu.jl")
 
@@ -14,6 +14,25 @@ include("gpu.jl")
     A_gpu = ROCMatrix(A_cpu)
     b_gpu = ROCVector(b_cpu)
     x, stats = minres(A_gpu, b_gpu)
+    r_gpu = b_gpu - A_gpu * x
+    @test norm(r_gpu) ≤ 1e-4
+
+    A_cpu = sprand(100, 200, 0.3)
+    b_cpu = rand(100)
+    A_csc_gpu = ROCSparseMatrixCSC(A_cpu)
+    A_csr_gpu = ROCSparseMatrixCSR(A_cpu)
+    A_coo_gpu = ROCSparseMatrixCOO(A_cpu)
+    b_gpu = ROXVector(b_cpu)
+    b_gpu = ROCVector(b_cpu)
+    x_csc, y_csc, stats_csc = lnlq(A_csc_gpu, b_gpu)
+    x_csr, y_csr, stats_csr = craig(A_csr_gpu, b_gpu)
+    x_coo, y_coo, stats_coo = craigmr(A_coo_gpu, b_gpu)
+    r_csc = b_gpu - A_csc_gpu * x_csc
+    r_csr = b_gpu - A_csr_gpu * x_csr
+    r_coo = b_gpu - A_coo_gpu * x_coo
+    @test norm(r_csc) ≤ 1e-4
+    @test norm(r_csr) ≤ 1e-4
+    @test norm(r_coo) ≤ 1e-4
   end
 
   for FC in (Float32, Float64, ComplexF32, ComplexF64)
