@@ -1,5 +1,7 @@
-using LinearAlgebra, SparseArrays, Test
-using Krylov
+using SparseArrays, Random, Test
+using LinearAlgebra, Krylov
+
+Random.seed!(666)
 
 include("../test_utils.jl")
 

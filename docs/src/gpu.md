@@ -186,7 +186,7 @@ if AMDGPU.functional()
   A_csc_gpu = ROCSparseMatrixCSC(A_cpu)
   A_csr_gpu = ROCSparseMatrixCSR(A_cpu)
   A_coo_gpu = ROCSparseMatrixCOO(A_cpu)
-  b_gpu = CuVector(b_cpu)
+  b_gpu = ROCVector(b_cpu)
 
   # Solve a rectangular and sparse system on an AMD GPU
   x_csc, y_csc, stats_csc = lnlq(A_csc_gpu, b_gpu)
