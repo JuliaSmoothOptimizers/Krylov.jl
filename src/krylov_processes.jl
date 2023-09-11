@@ -5,7 +5,7 @@ export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_s
 
 #### Input arguments
 
-* `A`: a linear operator that models a Hermitian matrix of dimension n;
+* `A`: a linear operator that models an Hermitian matrix of dimension n;
 * `b`: a vector of length n;
 * `k`: the number of iterations of the Hermitian Lanczos process.
 
