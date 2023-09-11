@@ -53,15 +53,15 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
       vᵢ .= b ./ βᵢ
     end
     mul!(q, A, vᵢ)
-    αᵢ = @kdotr(n, vᵢ, q)
-    nzval[pαᵢ] = αᵢ  # Tᵢ.ᵢ = αᵢ
-    @kaxpy!(n, -αᵢ, vᵢ, q)
     if i ≥ 2
       vᵢ₋₁ = view(V,:,i-1)
       βᵢ = nzval[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
       nzval[pαᵢ-1] = βᵢ  # Tᵢ₋₁.ᵢ = βᵢ
       @kaxpy!(n, -βᵢ, vᵢ₋₁, q)
     end
+    αᵢ = @kdotr(n, vᵢ, q)
+    nzval[pαᵢ] = αᵢ  # Tᵢ.ᵢ = αᵢ
+    @kaxpy!(n, -αᵢ, vᵢ, q)
     βᵢ₊₁ = @knrm2(n, q)
     nzval[pαᵢ+1] = βᵢ₊₁  # Tᵢ₊₁.ᵢ = βᵢ₊₁
     vᵢ₊₁ .= q ./ βᵢ₊₁
