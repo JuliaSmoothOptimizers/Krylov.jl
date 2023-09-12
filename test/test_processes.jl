@@ -58,18 +58,20 @@ end
       end
 
       @testset "Arnoldi" begin
-        A, b = nonsymmetric_indefinite(n, FC=FC)
-        V, H = arnoldi(A, b, k)
+        for reorthogonalization in (false, true)
+          A, b = nonsymmetric_indefinite(n, FC=FC)
+          V, H = arnoldi(A, b, k; reorthogonalization)
 
-        @test A * V[:,1:k] ≈ V * H
+          @test A * V[:,1:k] ≈ V * H
 
-        function storage_arnoldi_bytes(n, k)
-          return k*(k+1) * nbits_FC + n*(k+1) * nbits_FC
+          function storage_arnoldi_bytes(n, k)
+            return k*(k+1) * nbits_FC + n*(k+1) * nbits_FC
+          end
+
+          expected_arnoldi_bytes = storage_arnoldi_bytes(n, k)
+          actual_arnoldi_bytes = @allocated arnoldi(A, b, k; reorthogonalization)
+          @test expected_arnoldi_bytes ≤ actual_arnoldi_bytes ≤ 1.02 * expected_arnoldi_bytes
         end
-
-        expected_arnoldi_bytes = storage_arnoldi_bytes(n, k)
-        actual_arnoldi_bytes = @allocated arnoldi(A, b, k)
-        @test expected_arnoldi_bytes ≤ actual_arnoldi_bytes ≤ 1.02 * expected_arnoldi_bytes
       end
 
       @testset "Golub-Kahan" begin
@@ -116,30 +118,32 @@ end
       end
 
       @testset "Montoison-Orban" begin
-        A, b = under_consistent(m, n, FC=FC)
-        B, c = over_consistent(n, m, FC=FC)
-        V, H, U, F = montoison_orban(A, B, b, c, k)
+        for reorthogonalization in (false, true)
+          A, b = under_consistent(m, n, FC=FC)
+          B, c = over_consistent(n, m, FC=FC)
+          V, H, U, F = montoison_orban(A, B, b, c, k; reorthogonalization)
 
-        @test A * U[:,1:k] ≈ V * H
-        @test B * V[:,1:k] ≈ U * F
-        @test B * A * U[:,1:k-1] ≈ U * F * H[1:k,1:k-1]
-        @test A * B * V[:,1:k-1] ≈ V * H * F[1:k,1:k-1]
+          @test A * U[:,1:k] ≈ V * H
+          @test B * V[:,1:k] ≈ U * F
+          @test B * A * U[:,1:k-1] ≈ U * F * H[1:k,1:k-1]
+          @test A * B * V[:,1:k-1] ≈ V * H * F[1:k,1:k-1]
 
-        K = [zeros(FC,m,m) A; B zeros(FC,n,n)]
-        Pₖ = permutation_paige(k)
-        Wₖ = [V[:,1:k] zeros(FC,m,k); zeros(FC,n,k) U[:,1:k]] * Pₖ
-        Pₖ₊₁ = permutation_paige(k+1)
-        Wₖ₊₁ = [V zeros(FC,m,k+1); zeros(FC,n,k+1) U] * Pₖ₊₁
-        G = Pₖ₊₁' * [zeros(FC,k+1,k) H; F zeros(FC,k+1,k)] * Pₖ
-        @test K * Wₖ ≈ Wₖ₊₁ * G
+          K = [zeros(FC,m,m) A; B zeros(FC,n,n)]
+          Pₖ = permutation_paige(k)
+          Wₖ = [V[:,1:k] zeros(FC,m,k); zeros(FC,n,k) U[:,1:k]] * Pₖ
+          Pₖ₊₁ = permutation_paige(k+1)
+          Wₖ₊₁ = [V zeros(FC,m,k+1); zeros(FC,n,k+1) U] * Pₖ₊₁
+          G = Pₖ₊₁' * [zeros(FC,k+1,k) H; F zeros(FC,k+1,k)] * Pₖ
+          @test K * Wₖ ≈ Wₖ₊₁ * G
 
-        function storage_montoison_orban_bytes(m, n, k)
-          return 2*k*(k+1) * nbits_FC + (n+m)*(k+1) * nbits_FC
+          function storage_montoison_orban_bytes(m, n, k)
+            return 2*k*(k+1) * nbits_FC + (n+m)*(k+1) * nbits_FC
+          end
+
+          expected_montoison_orban_bytes = storage_montoison_orban_bytes(m, n, k)
+          actual_montoison_orban_bytes = @allocated montoison_orban(A, B, b, c, k; reorthogonalization)
+          @test expected_montoison_orban_bytes ≤ actual_montoison_orban_bytes ≤ 1.02 * expected_montoison_orban_bytes
         end
-
-        expected_montoison_orban_bytes = storage_montoison_orban_bytes(m, n, k)
-        actual_montoison_orban_bytes = @allocated montoison_orban(A, B, b, c, k)
-        @test expected_montoison_orban_bytes ≤ actual_montoison_orban_bytes ≤ 1.02 * expected_montoison_orban_bytes
       end
     end
   end
