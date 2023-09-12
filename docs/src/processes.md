@@ -75,10 +75,10 @@ where $V_k$ is an orthonormal basis of the Krylov subspace $\mathcal{K}_k (A,b)$
 ```math
 T_k =
 \begin{bmatrix}
-  \alpha_1 & \beta_2  &          &         \\
-  \beta_2  & \alpha_2 & \ddots   &         \\
-           & \ddots   & \ddots   & \beta_k \\
-           &          & \beta_k  & \alpha_k
+  \alpha_1 & \bar{\beta}_2 &         &               \\
+  \beta_2  & \alpha_2      & \ddots  &               \\
+           & \ddots        & \ddots  & \bar{\beta}_k \\
+           &               & \beta_k & \alpha_k
 \end{bmatrix}
 , \qquad
 T_{k+1,k} =
@@ -87,7 +87,7 @@ T_{k+1,k} =
   \beta_{k+1} e_{k}^T
 \end{bmatrix}.
 ```
-Note that $T_{k+1,k}$ is a real tridiagonal matrix even if $A$ is a complex matrix.
+Note that depending on how we normalize the vectors that compose $V_k$, $T_{k+1,k}$ can be a real tridiagonal matrix even if $A$ is a complex matrix.
 
 The function [`hermitian_lanczos`](@ref hermitian_lanczos) returns $V_{k+1}$ and $T_{k+1,k}$.
 
@@ -190,7 +190,7 @@ After $k$ iterations of the Golub-Kahan bidiagonalization process, the situation
 ```math
 \begin{align*}
   A V_k &= U_{k+1} B_k,   \\
-  A^H U_{k+1} &= V_k B_k^H + \alpha_{k+1} v_{k+1} e_{k+1}^T = V_{k+1} L_{k+1}^H, \\
+  A^H U_{k+1} &= V_k B_k^H + \bar{\alpha}_{k+1} v_{k+1} e_{k+1}^T = V_{k+1} L_{k+1}^H, \\
   V_k^H V_k &= U_k^H U_k = I_k,
 \end{align*}
 ```
@@ -218,7 +218,7 @@ B_k =
   \beta_{k+1} e_{k}^T
 \end{bmatrix}.
 ```
-Note that $L_k$ is a real bidiagonal matrix even if $A$ is a complex matrix.
+Note that depending on how we normalize the vectors that compose $V_k$ and $U_k$, $L_k$ can be a real bidiagonal matrix even if $A$ is a complex matrix.
 
 The function [`golub_kahan`](@ref golub_kahan) returns $V_{k+1}$, $U_{k+1}$ and $L_{k+1}$.
 
@@ -240,7 +240,7 @@ After $k$ iterations of the Saunders-Simon-Yip process (also named the orthogona
 ```math
 \begin{align*}
   A U_k &= V_k T_k   + \beta_{k+1}  v_{k+1} e_k^T = V_{k+1} T_{k+1,k},   \\
-  A^H V_k &= U_k T_k^H + \gamma_{k+1} u_{k+1} e_k^T = U_{k+1} T_{k,k+1}^H, \\
+  A^H V_k &= U_k T_k^H + \bar{\gamma}_{k+1} u_{k+1} e_k^T = U_{k+1} T_{k,k+1}^H, \\
   V_k^H V_k &= U_k^H U_k = I_k,
 \end{align*}
 ```
