@@ -165,13 +165,17 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
 end
 
 """
-    V, H = arnoldi(A, b, k)
+    V, H = arnoldi(A, b, k; reorthogonalization=false)
 
 #### Input arguments
 
 * `A`: a linear operator that models a square matrix of dimension n;
 * `b`: a vector of length n;
 * `k`: the number of iterations of the Arnoldi process.
+
+#### Keyword arguments
+
+* `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against all previous vectors.
 
 #### Output arguments
 
@@ -182,7 +186,7 @@ end
 
 * W. E. Arnoldi, [*The principle of minimized iterations in the solution of the matrix eigenvalue problem*](https://doi.org/10.1090/qam/42792), Quarterly of Applied Mathematics, 9, pp. 17--29, 1951.
 """
-function arnoldi(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
+function arnoldi(A, b::AbstractVector{FC}, k::Int; reorthogonalization::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
   S = ktypeof(b)
   M = vector_to_matrix(S)
@@ -190,21 +194,29 @@ function arnoldi(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   V = M(undef, n, k+1)
   H = zeros(FC, k+1, k)
 
-  for i = 1:k
-    vᵢ = view(V,:,i)
-    vᵢ₊₁ = q = view(V,:,i+1)
-    if i == 1
+  for j = 1:k
+    vⱼ = view(V,:,j)
+    vⱼ₊₁ = q = view(V,:,j+1)
+    if j == 1
       β = @knrm2(n, b)
-      vᵢ .= b ./ β
+      vⱼ .= b ./ β
     end
-    mul!(q, A, vᵢ)
-    for j = 1:i
-      vⱼ = view(V,:,j)
-      H[j,i] = @kdot(n, vⱼ, q)
-      @kaxpy!(n, -H[j,i], vⱼ, q)
+    mul!(q, A, vⱼ)
+    for i = 1:j
+      vᵢ = view(V,:,i)
+      H[i,j] = @kdot(n, vᵢ, q)
+      @kaxpy!(n, -H[i,j], vᵢ, q)
     end
-    H[i+1,i] = @knrm2(n, q)
-    vᵢ₊₁ .= q ./ H[i+1,i]
+    if reorthogonalization
+      for i = 1:j
+        vᵢ = view(V,:,i)
+        Htmp = @kdot(n, vᵢ, q)
+        @kaxpy!(n, -Htmp, vᵢ, q)
+        H[i,j] += Htmp
+      end
+    end
+    H[j+1,j] = @knrm2(n, q)
+    vⱼ₊₁ .= q ./ H[j+1,j]
   end
   return V, H
 end
@@ -378,7 +390,7 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
 end
 
 """
-    V, H, U, F = montoison_orban(A, B, b, c, k)
+    V, H, U, F = montoison_orban(A, B, b, c, k; reorthogonalization=false)
 
 #### Input arguments
 
@@ -387,6 +399,10 @@ end
 * `b`: a vector of length m;
 * `c`: a vector of length n;
 * `k`: the number of iterations of the Montoison-Orban process.
+
+#### Keyword arguments
+
+* `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against all previous vectors.
 
 #### Output arguments
 
@@ -399,7 +415,7 @@ end
 
 * A. Montoison and D. Orban, [*GPMR: An Iterative Method for Unsymmetric Partitioned Linear Systems*](https://doi.org/10.1137/21M1459265), SIAM Journal on Matrix Analysis and Applications, 44(1), pp. 293--311, 2023.
 """
-function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
+function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int; reorthogonalization::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
   S = ktypeof(b)
   M = vector_to_matrix(S)
@@ -409,31 +425,43 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
   H = zeros(FC, k+1, k)
   F = zeros(FC, k+1, k)
 
-  for i = 1:k
-    vᵢ = view(V,:,i)
-    uᵢ = view(U,:,i)
-    vᵢ₊₁ = q = view(V,:,i+1)
-    uᵢ₊₁ = p = view(U,:,i+1)
-    if i == 1
+  for j = 1:k
+    vⱼ = view(V,:,j)
+    uⱼ = view(U,:,j)
+    vⱼ₊₁ = q = view(V,:,j+1)
+    uⱼ₊₁ = p = view(U,:,j+1)
+    if j == 1
       β = @knrm2(m, b)
       γ = @knrm2(n, c)
-      vᵢ .= b ./ β
-      uᵢ .= c ./ γ
+      vⱼ .= b ./ β
+      uⱼ .= c ./ γ
     end
-    mul!(q, A, uᵢ)
-    mul!(p, B, vᵢ)
-    for j = 1:i
-      vⱼ = view(V,:,j)
-      uⱼ = view(U,:,j)
-      H[j,i] = @kdot(m, vⱼ, q)
-      @kaxpy!(n, -H[j,i], vⱼ, q)
-      F[j,i] = @kdot(n, uⱼ, p)
-      @kaxpy!(m, -F[j,i], uⱼ, p)
+    mul!(q, A, uⱼ)
+    mul!(p, B, vⱼ)
+    for i = 1:j
+      vᵢ = view(V,:,i)
+      uᵢ = view(U,:,i)
+      H[i,j] = @kdot(m, vᵢ, q)
+      @kaxpy!(n, -H[i,j], vᵢ, q)
+      F[i,j] = @kdot(n, uᵢ, p)
+      @kaxpy!(m, -F[i,j], uᵢ, p)
     end
-    H[i+1,i] = @knrm2(m, q)
-    vᵢ₊₁ .= q ./ H[i+1,i]
-    F[i+1,i] = @knrm2(n, p)
-    uᵢ₊₁ .= p ./ F[i+1,i]
+    if reorthogonalization
+      for i = 1:j
+        vᵢ = view(V,:,i)
+        uᵢ = view(U,:,i)
+        Htmp = @kdot(m, vᵢ, q)
+        @kaxpy!(m, -Htmp, vᵢ, q)
+        H[i,j] += Htmp
+        Ftmp = @kdot(n, uᵢ, p)
+        @kaxpy!(n, -Ftmp, uᵢ, p)
+        F[i,j] += Ftmp
+      end
+    end
+    H[j+1,j] = @knrm2(m, q)
+    vⱼ₊₁ .= q ./ H[j+1,j]
+    F[j+1,j] = @knrm2(n, p)
+    uⱼ₊₁ .= p ./ F[j+1,j]
   end
   return V, H, U, F
 end
