@@ -143,6 +143,32 @@ Related methods: [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), 
 nonhermitian_lanczos
 ```
 
+The non-Hermitian Lanczos process can be also implemented without $A^H$ (transpose-free variant).
+To derive it, we can observe that $\beta_{k+1} v_{k+1} = P_k(A) b~~$ and $\bar{\gamma}_{k+1} u_{k+1} = Q_k(A^H) c~~$ where $P_k$ and $Q_k$ are polynomials of degree $k$.
+The polynomials are defined from the recursions:
+```math
+\begin{align*}
+  P_0(A)   &= I_n, \\
+  P_1(A)   &= \left(\dfrac{A - \alpha_1 I_n}{\beta_1}\right) P_0(A), \\
+  P_k(A)   &= \left(\dfrac{A - \alpha_k I_n}{\beta_k}\right) P_{k-1}(A) - \dfrac{\gamma_k}{\beta_{k-1}} P_{k-2}(A), \quad k \ge 2, \\
+           & \\
+  Q_0(A^H) &= I_n, \\
+  Q_1(A^H) &= \left(\dfrac{A^H - \bar{\alpha}_1 I_n}{\bar{\gamma}_1}\right) Q_0(A^H), \\
+  Q_k(A^H) &= \left(\dfrac{A^H - \bar{\alpha}_k I_n}{\bar{\gamma}_k}\right) Q_{k-1}(A^H) - \dfrac{\bar{\beta}_k}{\bar{\gamma}_{k-1}} Q_{k-2}(A^H), \quad k \ge 2.
+\end{align*}
+```
+
+Because $\alpha_k = u_k^H A v_k$ and $(\bar{\gamma}_{k+1} u_{k+1})^H (\beta_{k+1} v_{k+1}) = \gamma_{k+1} \beta_{k+1}$, we can define the coefficients of $T_{k+1,k}$ and $T_{k,k+1}^H$ as follows:
+```math
+\begin{align*}
+  \alpha_k &= \dfrac{1}{\gamma_k \beta_k} \langle~Q_{k-1}(A^H) c \, , \, A P_{k-1}(A) b~\rangle \\
+           &= \dfrac{1}{\gamma_k \beta_k} \langle~c \, , \, \bar{Q}_{k-1}(A) A P_{k-1}(A) b~\rangle, \\
+           & \\
+  \beta_{k+1} \gamma_{k+1} &= \langle~Q_k(A^H) c \, , \, P_k(A) b~\rangle \\
+                           &= \langle~c \, , \, \bar{Q}_k(A) P_k(A) b~\rangle.
+\end{align*}
+```
+
 ## Arnoldi
 
 ![arnoldi](./graphics/arnoldi.png)
