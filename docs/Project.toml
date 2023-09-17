@@ -14,5 +14,6 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SuiteSparseMatrixCollection = "ac199af8-68bc-55b8-82c4-7abd6f96ed98"
 
 [compat]
+Documenter = "=0.27.5"
 LinearOperators = "~2.2.1"
 SuiteSparseMatrixCollection = "~0.5.3"
