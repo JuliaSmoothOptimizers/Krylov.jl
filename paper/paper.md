@@ -48,7 +48,7 @@ Krylov methods are iterative methods based on @krylov-1931 subspaces.
 They are an alternative to direct methods such as Gaussian elimination or QR decomposition when storage requirements or computational costs become prohibitive, which is often the case for large and sparse linear problems.
 Contrary to direct methods, which require storing $A$ explicitly, Krylov methods support linear operators to model operator-vector products $u \leftarrow Av$, and in some instances $u \leftarrow A^{H\!}w$ because Krylov processes only require those operations to build Krylov subspaces.
 The same goes with preconditioners, i.e., transformations that modify a linear system into an equivalent form with favorable spectral properties that may yield faster convergence in finite-precision arithmetic.
-We refer interested readers to [@ipsen-meyer-1998] for an introduction to Krylov methods along with [@greenbaum-1997] and [@saad-2003] for more details.
+We refer interested readers to @ipsen-meyer-1998 for an introduction to Krylov methods along with @greenbaum-1997 and @saad-2003 for more details.
 
 <!-- # Features and Functionalities -->
 # Statement of need
@@ -57,14 +57,14 @@ We refer interested readers to [@ipsen-meyer-1998] for an introduction to Krylov
 
 Krylov.jl aims to provide a user-friendly and unified interface for the largest collection of Krylov processes and methods, all programming languages taken together, with six and thirty-five implementations, respectively:
 
-- \textbf{Krylov processes}: \textsc{Arnoldi}, \textsc{Golub-Kahan}, \textsc{Hermitian Lanczos}, \textsc{Montoison-Orban}, \textsc{Non-Hermitian Lanczos},  \textsc{Saunders-Simon-Yip};
-- \textbf{Krylov methods}: \textsc{Bicgstab}, \textsc{Bilq}, \textsc{Bilqr}, \textsc{Car}, \textsc{Cg}, \textsc{Cg-lanczos}, \textsc{Cg-lanczos-shift}, \textsc{Cgls}, \textsc{Cgne}, \textsc{Cgs}, \textsc{Cr}, \textsc{Craig}, \textsc{Craigmr}, \textsc{Crls}, \textsc{Crmr}, \textsc{Diom}, \textsc{Dqgmres}, \textsc{Fgmres}, \textsc{Fom}, \textsc{Gmres}, \textsc{Gpmr}, \textsc{Lnlq}, \textsc{Lslq}, \textsc{Lsmr}, \textsc{Lsqr}, \textsc{Minares}, \textsc{Minres}, \textsc{Minres-qlp}, \textsc{Qmr}, \textsc{Symmlq}, \textsc{Tricg}, \textsc{Trilqr}, \textsc{Trimr}, \textsc{Usymlq}, \textsc{Usymqr}.
+- \textbf{Krylov processes}: \textsc{Arnoldi}, \textsc{Golub-Kahan}, \textsc{Hermitian Lanczos}, \textsc{Montoison-Orban}, \textsc{Non-Hermitian Lanczos},  \textsc{Saunders-Simon-Yip}
+- \textbf{Krylov methods}: \textsc{Bicgstab}, \textsc{Bilq}, \textsc{Bilqr}, \textsc{Car}, \textsc{Cg}, \textsc{Cg-lanczos}, \textsc{Cg-lanczos-shift}, \textsc{Cgls}, \textsc{Cgne}, \textsc{Cgs}, \textsc{Cr}, \textsc{Craig}, \textsc{Craigmr}, \textsc{Crls}, \textsc{Crmr}, \textsc{Diom}, \textsc{Dqgmres}, \textsc{Fgmres}, \textsc{Fom}, \textsc{Gmres}, \textsc{Gpmr}, \textsc{Lnlq}, \textsc{Lslq}, \textsc{Lsmr}, \textsc{Lsqr}, \textsc{Minares}, \textsc{Minres}, \textsc{Minres-qlp}, \textsc{Qmr}, \textsc{Symmlq}, \textsc{Tricg}, \textsc{Trilqr}, \textsc{Trimr}, \textsc{Usymlq}, \textsc{Usymqr}
 
 Hence Krylov.jl is a suitable toolbox for easily comparing existing methods with each other as well as new ones.
 The number of distinct Krylov methods is twenty-two for PETSc [@petsc], eleven for @MATLAB and [KrylovMethods.jl](https://github.com/JuliaInv/KrylovMethods.jl), nine for [IterativeSolvers.jl](https://github.com/JuliaLinearAlgebra/IterativeSolvers.jl) and three for [KrylovKit.jl](https://github.com/Jutho/KrylovKit.jl).
-However Krylov.jl doesn't have implementations of recycling Krylov methods nor block Krylov methods unlike some alternatives, except for special cases, including \textsc{Tricg}, \textsc{Trimr}, and \textsc{Gpmr}.
+However Krylov.jl doesn't have implementations of recycling Krylov methods nor block Krylov methods, unlike some alternatives, except for special cases, including \textsc{Tricg}, \textsc{Trimr}, and \textsc{Gpmr}.
 Note that we only consider the number of Krylov methods that generate different iterates without preconditioning.
-Variants with preconditioning are not counted except if it is a flexible one such as \textsc{Fgmres}.
+Variants with preconditioning are not counted except flexible ones such as \textsc{Fgmres}.
 
 Some processes and methods are not available elsewhere and are the product of our own research.
 References for each process and method are available in the extensive [documentation](https://juliasmoothoptimizers.github.io/Krylov.jl/stable/).
@@ -82,7 +82,7 @@ Working in high precision has obvious benefits in terms of accuracy.
 Krylov methods are well suited for GPU computations because they only require operator-vector products ($u \leftarrow Av$, $u \leftarrow A^{H\!}w$) and vector operations ($\|v\|$, $u^H v$, $v \leftarrow \alpha u + \beta v$), which are highly parallelizable.
 The implementations in Krylov.jl are generic so as to take advantage of the multiple dispatch and broadcast features of Julia.
 Those allow the implementations to be specialized automatically by the compiler for both CPU and GPU.
-Thus, Krylov.jl works with GPU backends that build on [GPUArrays.jl](https://github.com/JuliaGPU/GPUArrays.jl), including [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl), [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) and [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl), the Julia interfaces to NVIDIA, AMD, and Intel GPUs.
+Thus, Krylov.jl works with GPU backends that build on [GPUArrays.jl](https://github.com/JuliaGPU/GPUArrays.jl), including [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl), [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl), and [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl), the Julia interfaces to NVIDIA, AMD, and Intel GPUs.
 <!-- Our implementations target the CUDA, ROCm or OneAPI libraries for efficient operator-vector products and vector operations on NVIDIA, AMD and Intel GPUs. -->
 
 ## Support for linear operators
