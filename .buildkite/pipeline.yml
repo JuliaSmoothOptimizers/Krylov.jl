@@ -26,17 +26,3 @@ steps:
       Pkg.instantiate()
       include("paper/example2/example2.jl")'
     timeout_in_minutes: 30
-
-  - label: "CPUs -- StaticArrays.jl"
-    plugins:
-      - JuliaCI/julia#v1:
-          version: 1.9
-    agents:
-      queue: "juliaecosystem"
-    command: |
-      julia --color=yes --project -e '
-        using Pkg
-        Pkg.add("StaticArrays")
-        Pkg.instantiate()
-        include("test/test_extensions.jl")'
-    timeout_in_minutes: 30
