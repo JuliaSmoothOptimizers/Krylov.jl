@@ -32,8 +32,10 @@ if CUDA.functional()
 
   # Solve Py = x
   function ldiv_ic0!(P, x, y, z)
-    ldiv!(z, LowerTriangular(P), x)   # Forward substitution with L
-    ldiv!(y, LowerTriangular(P)', z)  # Backward substitution with Lᴴ
+    L = LowerTriangular(P)
+    Lᴴ = adjoint(L)
+    ldiv!(z, L, x)   # Forward substitution with L
+    ldiv!(y, Lᴴ, z)  # Backward substitution with Lᴴ
     return y
   end
 
