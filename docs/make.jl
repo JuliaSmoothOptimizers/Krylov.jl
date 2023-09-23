@@ -4,7 +4,6 @@ makedocs(
   modules = [Krylov],
   doctest = true,
   linkcheck = true,
-  strict = true,
   format = Documenter.HTML(assets = ["assets/style.css"],
                            ansicolor = true,
                            prettyurls = get(ENV, "CI", nothing) == "true",
