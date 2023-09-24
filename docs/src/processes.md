@@ -60,18 +60,18 @@ For matrices $C \in \mathbb{C}^{n \times n} \enspace$ and $\enspace T \in \mathb
 \left\{\sum_{i=0}^{k-1} C^i T \, \Omega_i \, \middle \vert \, \Omega_i \in \mathbb{C}^{p \times p},~0 \le i \le k-1 \right\}.
 ```
 
-## Hermitian Lanczos
+## [Hermitian Lanczos](@id hermitian-lanczos)
 
 ![hermitian_lanczos](./graphics/hermitian_lanczos.png)
 
 After $k$ iterations of the Hermitian Lanczos process, the situation may be summarized as
 ```math
 \begin{align*}
-  A V_k &= V_k T_k + \beta_{k+1,k} v_{k+1} e_k^T = V_{k+1}  T_{k+1,k}, \\
+  A V_k &= V_k T_k + \beta_{k+1,k} v_{k+1} e_k^T = V_{k+1} T_{k+1,k}, \\
   V_k^H V_k &= I_k,
 \end{align*}
 ```
-where $V_k$ is an orthonormal basis of the Krylov subspace $\mathcal{K}_k (A,b)$,
+where $V_k$ is an orthonormal basis of the Krylov subspace $\mathcal{K}_k(A,b)$,
 ```math
 T_k =
 \begin{bmatrix}
@@ -89,22 +89,22 @@ T_{k+1,k} =
 ```
 Note that depending on how we normalize the vectors that compose $V_k$, $T_{k+1,k}$ can be a real tridiagonal matrix even if $A$ is a complex matrix.
 
-The function [`hermitian_lanczos`](@ref hermitian_lanczos) returns $V_{k+1}$ and $T_{k+1,k}$.
+The function [`hermitian_lanczos`](@ref hermitian_lanczos(::Any, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)) returns $V_{k+1}$, $\beta_1$ and $T_{k+1,k}$.
 
 Related methods: [`SYMMLQ`](@ref symmlq), [`CG`](@ref cg), [`CR`](@ref cr), [`CAR`](@ref car), [`MINRES`](@ref minres), [`MINRES-QLP`](@ref minres_qlp), [`MINARES`](@ref minares), [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`CG-LANCZOS`](@ref cg_lanczos) and [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift).
 
 ```@docs
-hermitian_lanczos
+hermitian_lanczos(::Any, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)
 ```
 
-## Non-Hermitian Lanczos
+## [Non-Hermitian Lanczos](@id nonhermitian-lanczos)
 
 ![nonhermitian_lanczos](./graphics/nonhermitian_lanczos.png)
 
 After $k$ iterations of the non-Hermitian Lanczos process (also named the Lanczos biorthogonalization process), the situation may be summarized as
 ```math
 \begin{align*}
-  A V_k &= V_k T_k   +        \beta_{k+1} v_{k+1} e_k^T = V_{k+1} T_{k+1,k},   \\
+  A V_k &= V_k T_k + \beta_{k+1} v_{k+1} e_k^T = V_{k+1} T_{k+1,k}, \\
   A^H U_k &= U_k T_k^H + \bar{\gamma}_{k+1} u_{k+1} e_k^T = U_{k+1} T_{k,k+1}^H, \\
   V_k^H U_k &= U_k^H V_k = I_k,
 \end{align*}
@@ -131,7 +131,7 @@ T_{k,k+1} =
 \end{bmatrix}.
 ```
 
-The function [`nonhermitian_lanczos`](@ref nonhermitian_lanczos) returns $V_{k+1}$, $T_{k+1,k}$, $U_{k+1}$ and $T_{k,k+1}^H$.
+The function [`nonhermitian_lanczos`](@ref nonhermitian_lanczos(::Any, ::AbstractVector{FC}, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)) returns $V_{k+1}$, $\beta_1$, $T_{k+1,k}$, $U_{k+1}$, $\bar{\gamma}_1$ and $T_{k,k+1}^H$.
 
 Related methods: [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), [`CGS`](@ref cgs) and [`BICGSTAB`](@ref bicgstab).
 
@@ -140,7 +140,7 @@ Related methods: [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), 
     With these scaling factors, the non-Hermitian Lanczos process coincides with the Hermitian Lanczos process when $A = A^H$ and $b = c$.
 
 ```@docs
-nonhermitian_lanczos
+nonhermitian_lanczos(::Any, ::AbstractVector{FC}, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)
 ```
 
 The non-Hermitian Lanczos process can be also implemented without $A^H$ (transpose-free variant).
@@ -158,7 +158,7 @@ The polynomials are defined from the recursions:
 \end{align*}
 ```
 
-Because $\alpha_k = u_k^H A v_k$ and $(\bar{\gamma}_{k+1} u_{k+1})^H (\beta_{k+1} v_{k+1}) = \gamma_{k+1} \beta_{k+1}$, we can define the coefficients of $T_{k+1,k}$ and $T_{k,k+1}^H$ as follows:
+Because $\alpha_k = u_k^H A v_k$ and $(\bar{\gamma}_{k+1} u_{k+1})^H (\beta_{k+1} v_{k+1}) = \gamma_{k+1} \beta_{k+1}$, we can determine the coefficients of $T_{k+1,k}$ and $T_{k,k+1}^H$ as follows:
 ```math
 \begin{align*}
   \alpha_k &= \dfrac{1}{\gamma_k \beta_k} \langle~Q_{k-1}(A^H) c \, , \, A P_{k-1}(A) b~\rangle \\
@@ -169,7 +169,7 @@ Because $\alpha_k = u_k^H A v_k$ and $(\bar{\gamma}_{k+1} u_{k+1})^H (\beta_{k+1
 \end{align*}
 ```
 
-## Arnoldi
+## [Arnoldi](@id arnoldi)
 
 ![arnoldi](./graphics/arnoldi.png)
 
@@ -197,7 +197,7 @@ H_{k+1,k} =
 \end{bmatrix}.
 ```
 
-The function [`arnoldi`](@ref arnoldi) returns $V_{k+1}$ and $H_{k+1,k}$.
+The function [`arnoldi`](@ref arnoldi(::Any, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)) returns $V_{k+1}$, $\beta$ and $H_{k+1,k}$.
 
 Related methods: [`DIOM`](@ref diom), [`FOM`](@ref fom), [`DQGMRES`](@ref dqgmres), [`GMRES`](@ref gmres) and [`FGMRES`](@ref fgmres).
 
@@ -205,17 +205,17 @@ Related methods: [`DIOM`](@ref diom), [`FOM`](@ref fom), [`DQGMRES`](@ref dqgmre
     The Arnoldi process coincides with the Hermitian Lanczos process when $A$ is Hermitian.
 
 ```@docs
-arnoldi
+arnoldi(::Any, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)
 ```
 
-## Golub-Kahan
+## [Golub-Kahan](@id golub-kahan)
 
 ![golub_kahan](./graphics/golub_kahan.png)
 
 After $k$ iterations of the Golub-Kahan bidiagonalization process, the situation may be summarized as
 ```math
 \begin{align*}
-  A V_k &= U_{k+1} B_k,   \\
+  A V_k &= U_{k+1} B_k, \\
   A^H U_{k+1} &= V_k B_k^H + \bar{\alpha}_{k+1} v_{k+1} e_{k+1}^T = V_{k+1} L_{k+1}^H, \\
   V_k^H V_k &= U_k^H U_k = I_k,
 \end{align*}
@@ -246,7 +246,7 @@ B_k =
 ```
 Note that depending on how we normalize the vectors that compose $V_k$ and $U_k$, $L_k$ can be a real bidiagonal matrix even if $A$ is a complex matrix.
 
-The function [`golub_kahan`](@ref golub_kahan) returns $V_{k+1}$, $U_{k+1}$ and $L_{k+1}$.
+The function [`golub_kahan`](@ref golub_kahan(::Any, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)) returns $V_{k+1}$, $U_{k+1}$, $\beta_1$ and $L_{k+1}$.
 
 Related methods: [`LNLQ`](@ref lnlq), [`CRAIG`](@ref craig), [`CRAIGMR`](@ref craigmr), [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).
 
@@ -255,17 +255,17 @@ Related methods: [`LNLQ`](@ref lnlq), [`CRAIG`](@ref craig), [`CRAIGMR`](@ref cr
     It is also related to the Hermitian Lanczos process applied to $\begin{bmatrix} 0 & A \\ A^H & 0 \end{bmatrix}$ with initial vector $\begin{bmatrix} b \\ 0 \end{bmatrix}$.
 
 ```@docs
-golub_kahan
+golub_kahan(::Any, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)
 ```
 
-## Saunders-Simon-Yip
+## [Saunders-Simon-Yip](@id saunders-simon-yip)
 
 ![saunders_simon_yip](./graphics/saunders_simon_yip.png)
 
 After $k$ iterations of the Saunders-Simon-Yip process (also named the orthogonal tridiagonalization process), the situation may be summarized as
 ```math
 \begin{align*}
-  A U_k &= V_k T_k   + \beta_{k+1}  v_{k+1} e_k^T = V_{k+1} T_{k+1,k},   \\
+  A U_k &= V_k T_k + \beta_{k+1} v_{k+1} e_k^T = V_{k+1} T_{k+1,k}, \\
   A^H V_k &= U_k T_k^H + \bar{\gamma}_{k+1} u_{k+1} e_k^T = U_{k+1} T_{k,k+1}^H, \\
   V_k^H V_k &= U_k^H U_k = I_k,
 \end{align*}
@@ -292,18 +292,18 @@ T_{k,k+1} =
 \end{bmatrix}.
 ```
 
-The function [`saunders_simon_yip`](@ref saunders_simon_yip) returns $V_{k+1}$, $T_{k+1,k}$, $U_{k+1}$ and $T_{k,k+1}^H$.
+The function [`saunders_simon_yip`](@ref saunders_simon_yip(::Any, ::AbstractVector{FC}, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)) returns $V_{k+1}$, $\beta_1$, $T_{k+1,k}$, $U_{k+1}$, $\bar{\gamma}_1$ and $T_{k,k+1}^H$.
 
 Related methods: [`USYMLQ`](@ref usymlq), [`USYMQR`](@ref usymqr), [`TriLQR`](@ref trilqr), [`TriCG`](@ref tricg) and [`TriMR`](@ref trimr).
-
-```@docs
-saunders_simon_yip
-```
 
 !!! note
     The Saunders-Simon-Yip is equivalent to the block-Lanczos process applied to $\begin{bmatrix} 0 & A \\ A^H & 0 \end{bmatrix}$ with initial matrix $\begin{bmatrix} b & 0 \\ 0 & c \end{bmatrix}$.
 
-## Montoison-Orban
+```@docs
+saunders_simon_yip(::Any, ::AbstractVector{FC}, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)
+```
+
+## [Montoison-Orban](@id montoison-orban)
 
 ![montoison_orban](./graphics/montoison_orban.png)
 
@@ -347,7 +347,7 @@ F_{k+1,k} =
 \end{bmatrix}.
 ```
 
-The function [`montoison_orban`](@ref montoison_orban) returns $V_{k+1}$, $H_{k+1,k}$, $U_{k+1}$ and $F_{k+1,k}$.
+The function [`montoison_orban`](@ref montoison_orban(::Any, ::Any, ::AbstractVector{FC}, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)) returns $V_{k+1}$, $\beta$, $H_{k+1,k}$, $U_{k+1}$, $\gamma$ and $F_{k+1,k}$.
 
 Related methods: [`GPMR`](@ref gpmr).
 
@@ -356,5 +356,5 @@ Related methods: [`GPMR`](@ref gpmr).
     It also coincides with the Saunders-Simon-Yip process when $B = A^H$.
 
 ```@docs
-montoison_orban
+montoison_orban(::Any, ::Any, ::AbstractVector{FC}, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)
 ```
