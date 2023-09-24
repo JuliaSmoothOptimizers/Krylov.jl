@@ -1,7 +1,7 @@
 export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_simon_yip, montoison_orban
 
 """
-    V, T = hermitian_lanczos(A, b, k)
+    V, β, T = hermitian_lanczos(A, b, k)
 
 #### Input arguments
 
@@ -12,6 +12,7 @@ export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_s
 #### Output arguments
 
 * `V`: a dense n × (k+1) matrix;
+* `β`: a coefficient such that βv₁ = b;
 * `T`: a sparse (k+1) × k tridiagonal matrix.
 
 #### Reference
@@ -41,6 +42,7 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
     end
   end
 
+  local β₁
   V = M(undef, n, k+1)
   T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval)
 
@@ -49,8 +51,8 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
     vᵢ = view(V,:,i)
     vᵢ₊₁ = q = view(V,:,i+1)
     if i == 1
-      βᵢ = @knrm2(n, b)
-      vᵢ .= b ./ βᵢ
+      β₁ = @knrm2(n, b)
+      vᵢ .= b ./ β₁
     end
     mul!(q, A, vᵢ)
     if i ≥ 2
@@ -67,11 +69,11 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
     vᵢ₊₁ .= q ./ βᵢ₊₁
     pαᵢ = pαᵢ + 3
   end
-  return V, T
+  return V, β₁, T
 end
 
 """
-    V, T, U, Tᴴ = nonhermitian_lanczos(A, b, c, k)
+    V, β, T, U, γᴴ, Tᴴ = nonhermitian_lanczos(A, b, c, k)
 
 #### Input arguments
 
@@ -83,8 +85,10 @@ end
 #### Output arguments
 
 * `V`: a dense n × (k+1) matrix;
+* `β`: a coefficient such that βv₁ = b;
 * `T`: a sparse (k+1) × k tridiagonal matrix;
 * `U`: a dense n × (k+1) matrix;
+* `γᴴ`: a coefficient such that γᴴu₁ = c;
 * `Tᴴ`: a sparse (k+1) × k tridiagonal matrix.
 
 #### Reference
@@ -115,6 +119,7 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     end
   end
 
+  local β₁, γ₁ᴴ
   V = M(undef, n, k+1)
   U = M(undef, n, k+1)
   T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_T)
@@ -128,10 +133,10 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     uᵢ₊₁ = p = view(U,:,i+1)
     if i == 1
       cᴴb = @kdot(n, c, b)
-      βᵢ = √(abs(cᴴb))
-      γᵢ = cᴴb / βᵢ
-      vᵢ .= b ./ βᵢ
-      uᵢ .= c ./ conj(γᵢ)
+      β₁ = √(abs(cᴴb))
+      γ₁ᴴ = conj(cᴴb / β₁)
+      vᵢ .= b ./ β₁
+      uᵢ .= c ./ γ₁ᴴ
     end
     mul!(q, A , vᵢ)
     mul!(p, Aᴴ, uᵢ)
@@ -161,11 +166,11 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     end
     pαᵢ = pαᵢ + 3
   end
-  return V, T, U, Tᴴ
+  return V, β₁, T, U, γ₁ᴴ, Tᴴ
 end
 
 """
-    V, H = arnoldi(A, b, k; reorthogonalization=false)
+    V, β, H = arnoldi(A, b, k; reorthogonalization=false)
 
 #### Input arguments
 
@@ -180,6 +185,7 @@ end
 #### Output arguments
 
 * `V`: a dense n × (k+1) matrix;
+* `β`: a coefficient such that βv₁ = b;
 * `H`: a dense (k+1) × k upper Hessenberg matrix.
 
 #### Reference
@@ -191,6 +197,7 @@ function arnoldi(A, b::AbstractVector{FC}, k::Int; reorthogonalization::Bool=fal
   S = ktypeof(b)
   M = vector_to_matrix(S)
 
+  local β
   V = M(undef, n, k+1)
   H = zeros(FC, k+1, k)
 
@@ -218,11 +225,11 @@ function arnoldi(A, b::AbstractVector{FC}, k::Int; reorthogonalization::Bool=fal
     H[j+1,j] = @knrm2(n, q)
     vⱼ₊₁ .= q ./ H[j+1,j]
   end
-  return V, H
+  return V, β, H
 end
 
 """
-    V, U, L = golub_kahan(A, b, k)
+    V, U, β, L = golub_kahan(A, b, k)
 
 #### Input arguments
 
@@ -234,6 +241,7 @@ end
 
 * `V`: a dense n × (k+1) matrix;
 * `U`: a dense m × (k+1) matrix;
+* `β`: a coefficient such that βu₁ = b;
 * `L`: a sparse (k+1) × (k+1) lower bidiagonal matrix.
 
 #### References
@@ -262,6 +270,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
   rowval[2k+1] = k+1
   colptr[k+2] = 2k+2
 
+  local β₁
   V = M(undef, n, k+1)
   U = M(undef, m, k+1)
   L = SparseMatrixCSC(k+1, k+1, colptr, rowval, nzval)
@@ -274,8 +283,8 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
     vᵢ₊₁ = p = view(V,:,i+1)
     if i == 1
       wᵢ = vᵢ
-      βᵢ = @knrm2(m, b)
-      uᵢ .= b ./ βᵢ
+      β₁ = @knrm2(m, b)
+      uᵢ .= b ./ β₁
       mul!(wᵢ, Aᴴ, uᵢ)
       αᵢ = @knrm2(n, wᵢ)
       nzval[pαᵢ] = αᵢ  # Lᵢ.ᵢ = αᵢ
@@ -294,11 +303,11 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
     nzval[pαᵢ+2] = αᵢ₊₁  # Lᵢ₊₁.ᵢ₊₁ = αᵢ₊₁
     pαᵢ = pαᵢ + 2
   end
-  return V, U, L
+  return V, U, β₁, L
 end
 
 """
-    V, T, U, Tᴴ = saunders_simon_yip(A, b, c, k)
+    V, β, T, U, γᴴ, Tᴴ = saunders_simon_yip(A, b, c, k)
 
 #### Input arguments
 
@@ -310,8 +319,10 @@ end
 #### Output arguments
 
 * `V`: a dense m × (k+1) matrix;
+* `β`: a coefficient such that βv₁ = b;
 * `T`: a sparse (k+1) × k tridiagonal matrix;
 * `U`: a dense n × (k+1) matrix;
+* `γᴴ`: a coefficient such that γᴴu₁ = c;
 * `Tᴴ`: a sparse (k+1) × k tridiagonal matrix.
 
 #### Reference
@@ -342,6 +353,7 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     end
   end
 
+  local β₁, γ₁ᴴ
   V = M(undef, m, k+1)
   U = M(undef, n, k+1)
   T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_T)
@@ -354,10 +366,10 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     vᵢ₊₁ = q = view(V,:,i+1)
     uᵢ₊₁ = p = view(U,:,i+1)
     if i == 1
-      β = @knrm2(m, b)
-      γ = @knrm2(n, c)
-      vᵢ .= b ./ β
-      uᵢ .= c ./ γ
+      β₁ = @knrm2(m, b)
+      γ₁ᴴ = @knrm2(n, c)
+      vᵢ .= b ./ β₁
+      uᵢ .= c ./ γ₁ᴴ
     end
     mul!(q, A , uᵢ)
     mul!(p, Aᴴ, vᵢ)
@@ -386,11 +398,11 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     end
     pαᵢ = pαᵢ + 3
   end
-  return V, T, U, Tᴴ
+  return V, β₁, T, U, γ₁ᴴ, Tᴴ
 end
 
 """
-    V, H, U, F = montoison_orban(A, B, b, c, k; reorthogonalization=false)
+    V, β, H, U, γ, F = montoison_orban(A, B, b, c, k; reorthogonalization=false)
 
 #### Input arguments
 
@@ -407,8 +419,10 @@ end
 #### Output arguments
 
 * `V`: a dense m × (k+1) matrix;
+* `β`: a coefficient such that βv₁ = b;
 * `H`: a dense (k+1) × k upper Hessenberg matrix;
 * `U`: a dense n × (k+1) matrix;
+* `γ`: a coefficient such that γu₁ = c;
 * `F`: a dense (k+1) × k upper Hessenberg matrix.
 
 #### Reference
@@ -420,6 +434,7 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
   S = ktypeof(b)
   M = vector_to_matrix(S)
 
+  local β, γ
   V = M(undef, m, k+1)
   U = M(undef, n, k+1)
   H = zeros(FC, k+1, k)
@@ -463,5 +478,5 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     F[j+1,j] = @knrm2(n, p)
     uⱼ₊₁ .= p ./ F[j+1,j]
   end
-  return V, H, U, F
+  return V, β, H, U, γ, F
 end

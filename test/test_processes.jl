@@ -19,6 +19,7 @@ end
   m = 250
   n = 500
   k = 20
+  s = 5
   
   for FC in (Float64, ComplexF64)
     R = real(FC)
@@ -29,9 +30,13 @@ end
     @testset "Data Type: $FC" begin
       
       @testset "Hermitian Lanczos" begin
-        A, b = symmetric_indefinite(n, FC=FC)
-        V, T = hermitian_lanczos(A, b, k)
+        A = rand(FC, n, n)
+        A = A' * A
+        b = rand(FC, n)
+        V, β₁, T = hermitian_lanczos(A, b, k)
 
+        @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
+        @test β₁ * V[:,1] ≈ b
         @test A * V[:,1:k] ≈ V * T
 
         storage_hermitian_lanczos_bytes(n, k) = 4k * nbits_I + (3k-1) * nbits_R + n*(k+1) * nbits_FC
@@ -42,10 +47,15 @@ end
       end
 
       @testset "Non-Hermitian Lanczos" begin
-        A, b = nonsymmetric_definite(n, FC=FC)
-        c = -b
-        V, T, U, Tᴴ = nonhermitian_lanczos(A, b, c, k)
+        A = rand(FC, n, n)
+        b = rand(FC, n)
+        c = rand(FC, n)
+        V, β₁, T, U, γ₁ᴴ, Tᴴ = nonhermitian_lanczos(A, b, c, k)
 
+        @test norm(V[:,1:s]' * U[:,1:s] - I) ≤ 1e-4
+        @test norm(U[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
+        @test β₁ * V[:,1] ≈ b
+        @test γ₁ᴴ * U[:,1] ≈ c
         @test T[1:k,1:k] ≈ Tᴴ[1:k,1:k]'
         @test A  * V[:,1:k] ≈ V * T
         @test A' * U[:,1:k] ≈ U * Tᴴ
@@ -58,10 +68,13 @@ end
       end
 
       @testset "Arnoldi" begin
+        A = rand(FC, n, n)
+        b = rand(FC, n)
         for reorthogonalization in (false, true)
-          A, b = nonsymmetric_indefinite(n, FC=FC)
-          V, H = arnoldi(A, b, k; reorthogonalization)
+          V, β, H = arnoldi(A, b, k; reorthogonalization)
 
+          @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
+          @test β * V[:,1] ≈ b
           @test A * V[:,1:k] ≈ V * H
 
           function storage_arnoldi_bytes(n, k)
@@ -75,10 +88,14 @@ end
       end
 
       @testset "Golub-Kahan" begin
-        A, b = under_consistent(m, n, FC=FC)
-        V, U, L = golub_kahan(A, b, k)
+        A = rand(FC, m, n)
+        b = rand(FC, m)
+        V, U, β₁, L = golub_kahan(A, b, k)
         B = L[1:k+1,1:k]
 
+        @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
+        @test norm(U[:,1:s]' * U[:,1:s] - I) ≤ 1e-4
+        @test β₁ * U[:,1] ≈ b
         @test A  * V[:,1:k] ≈ U * B
         @test A' * U ≈ V * L'
         @test A' * A  * V[:,1:k] ≈ V * L' * B
@@ -92,10 +109,15 @@ end
       end
 
       @testset "Saunders-Simon-Yip" begin
-        A, b = under_consistent(m, n, FC=FC)
-        _, c = over_consistent(n, m, FC=FC)
-        V, T, U, Tᴴ = saunders_simon_yip(A, b, c, k)
+        A = rand(FC, m, n)
+        b = rand(FC, m)
+        c = rand(FC, n)
+        V, β₁, T, U, γ₁ᴴ, Tᴴ = saunders_simon_yip(A, b, c, k)
 
+        @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
+        @test norm(U[:,1:s]' * U[:,1:s] - I) ≤ 1e-4
+        @test β₁ * V[:,1] ≈ b
+        @test γ₁ᴴ * U[:,1] ≈ c
         @test T[1:k,1:k] ≈ Tᴴ[1:k,1:k]'
         @test A  * U[:,1:k] ≈ V * T
         @test A' * V[:,1:k] ≈ U * Tᴴ
@@ -118,11 +140,17 @@ end
       end
 
       @testset "Montoison-Orban" begin
+        A = rand(FC, m, n)
+        B = rand(FC, n, m)
+        b = rand(FC, m)
+        c = rand(FC, n)
         for reorthogonalization in (false, true)
-          A, b = under_consistent(m, n, FC=FC)
-          B, c = over_consistent(n, m, FC=FC)
-          V, H, U, F = montoison_orban(A, B, b, c, k; reorthogonalization)
+          V, β, H, U, γ, F = montoison_orban(A, B, b, c, k; reorthogonalization)
 
+          @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
+          @test norm(U[:,1:s]' * U[:,1:s] - I) ≤ 1e-4
+          @test β * V[:,1] ≈ b
+          @test γ * U[:,1] ≈ c
           @test A * U[:,1:k] ≈ V * H
           @test B * V[:,1:k] ≈ U * F
           @test B * A * U[:,1:k-1] ≈ U * F * H[1:k,1:k-1]
