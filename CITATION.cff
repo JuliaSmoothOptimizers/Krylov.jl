@@ -1,38 +1,36 @@
-cff-version: 1.2.0
-title: >-
-  Krylov.jl: A Julia Basket of Hand-Picked Krylov Methods
-message: >-
-  If you use this software, please cite it using the
-  metadata from this file.
-type: software
+cff-version: "1.2.0"
 authors:
-  - given-names: Alexis
-    family-names: Montoison
-    email: alexis.montoison@polymtl.ca
-    affiliation: >-
-      GERAD and Department of Mathematics and
-      Industrial Engineering, Polytechnique Montréal,
-      QC, Canada.
-    orcid: 'https://orcid.org/0000-0002-3403-5450'
-  - given-names: Dominique
-    family-names: Orban
-    email: dominique.orban@gerad.ca
-    orcid: 'https://orcid.org/0000-0002-8017-7687'
-    affiliation: >-
-      GERAD and Department of Mathematics and
-      Industrial Engineering, Polytechnique Montréal,
-      QC, Canada
-identifiers:
-  - description: Zenodo archive
-    type: doi
-    value: 10.5281/zenodo.822073
-keywords:
-  - Julia
-  - linear algebra
-  - Krylov methods
-  - Krylov processes
-  - sparse linear systems
-  - GPU computing
-license: MPL-2.0
-repository-code: >-
-  https://github.com/JuliaSmoothOptimizers/Krylov.jl
+- family-names: Montoison
+  given-names: Alexis
+  orcid: "https://orcid.org/0000-0002-3403-5450"
+- family-names: Orban
+  given-names: Dominique
+  orcid: "https://orcid.org/0000-0002-8017-7687"
+contact:
+- family-names: Montoison
+  given-names: Alexis
+  orcid: "https://orcid.org/0000-0002-3403-5450"
+doi: 10.5281/zenodo.8310030
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Montoison
+    given-names: Alexis
+    orcid: "https://orcid.org/0000-0002-3403-5450"
+  - family-names: Orban
+    given-names: Dominique
+    orcid: "https://orcid.org/0000-0002-8017-7687"
+  date-published: 2023-09-26
+  doi: 10.21105/joss.05187
+  issn: 2475-9066
+  issue: 89
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 5187
+  title: "Krylov.jl: A Julia basket of hand-picked Krylov methods"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.05187"
+  volume: 8
+title: "Krylov.jl: A Julia basket of hand-picked Krylov methods"

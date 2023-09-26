@@ -1,6 +1,6 @@
 # Krylov.jl: A Julia basket of hand-picked Krylov methods
 
-| **Documentation** | **Linux/macOS/Windows/FreeBSD** | **Coverage** | **DOI** | **Downloads** |
+| **Documentation** | **CI** | **Coverage** | **DOI** | **Downloads** |
 |:-----------------:|:-------------------------------:|:------------:|:-------:|:-------------:|
 | [![docs-stable][docs-stable-img]][docs-stable-url] [![docs-dev][docs-dev-img]][docs-dev-url] | [![build-gh][build-gh-img]][build-gh-url] [![build-cirrus][build-cirrus-img]][build-cirrus-url] | [![codecov][codecov-img]][codecov-url] | [![doi][doi-img]][doi-url] | [![downloads][downloads-img]][downloads-url] |
 
@@ -14,14 +14,14 @@
 [build-cirrus-url]: https://cirrus-ci.com/github/JuliaSmoothOptimizers/Krylov.jl
 [codecov-img]: https://codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl/branch/main/graph/badge.svg
 [codecov-url]: https://app.codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl
-[doi-img]: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.822073-blue.svg
-[doi-url]: https://doi.org/10.5281/zenodo.822073
+[doi-img]: https://joss.theoj.org/papers/10.21105/joss.05187/status.svg
+[doi-url]: https://doi.org/10.21105/joss.05187
 [downloads-img]: https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/Krylov
 [downloads-url]: https://pkgs.genieframework.com?packages=Krylov
 
 ## How to Cite
 
-If you use Krylov.jl in your work, please cite using the format given in [`CITATION.bib`](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/CITATION.bib).
+If you use Krylov.jl in your work, please cite using the format given in [`CITATION.cff`](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/CITATION.cff).
 
 ## Content
 
