@@ -21,7 +21,22 @@
 
 ## How to Cite
 
-If you use Krylov.jl in your work, please cite using the format given in [`CITATION.cff`](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/CITATION.cff).
+If you use Krylov.jl in your work, please cite it using the metadata given in [`CITATION.cff`](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/CITATION.cff).
+
+#### BibTeX
+
+```
+@article{montoison-orban-2023,
+  author  = {Montoison, Alexis and Orban, Dominique},
+  title   = {{Krylov.jl: A Julia basket of hand-picked Krylov methods}},
+  journal = {Journal of Open Source Software},
+  volume  = {8},
+  number  = {89},
+  pages   = {5187},
+  year    = {2023},
+  doi     = {10.21105/joss.05187}
+}
+```
 
 ## Content
 
