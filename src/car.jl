@@ -58,7 +58,7 @@ The estimates computed every iteration are ‖Mrₖ‖₂ and ‖AMrₖ‖_M.
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### Reference
-* A. Montoison, D. Orban and M. A. Saunders, *MinAres: An Iterative Solver for Symmetric Linear Systems*, Cahier du GERAD G-2023-40, GERAD, Montréal, 2023.
+* A. Montoison, D. Orban and M. A. Saunders, [*MinAres: An Iterative Solver for Symmetric Linear Systems*](https://doi.org/10.13140/RG.2.2.18163.91683), Cahier du GERAD G-2023-40, GERAD, Montréal, 2023.
 """
 function car end
 
