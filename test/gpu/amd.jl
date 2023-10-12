@@ -36,6 +36,7 @@ include("gpu.jl")
 
   for FC in (Float32, Float64, ComplexF32, ComplexF64)
     S = ROCVector{FC}
+    V = ROCSparseVector{FC}
     M = ROCMatrix{FC}
     T = real(FC)
     n = 10
