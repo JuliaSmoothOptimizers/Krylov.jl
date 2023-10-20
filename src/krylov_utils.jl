@@ -288,6 +288,7 @@ Create a vector of storage type `S` of length `n` only composed of one.
 kones(S, n) = fill!(S(undef, n), one(eltype(S)))
 
 allocate_if(bool, solver, v, S, n) = bool && isempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, n))
+allocate_if(bool, solver, v, S, m, n) = bool && isempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, m, n))
 
 kdisplay(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
 

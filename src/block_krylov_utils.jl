@@ -185,3 +185,63 @@ function reduced_qr(A::AbstractMatrix{FC}, algo::String) where FC <: FloatOrComp
   end
   return Q, R
 end
+
+function copy_triangle(Q::Matrix{FC}, R::Matrix{FC}, k::Int) where FC <: FloatOrComplex
+    for i = 1:k
+        for j = i:k
+            R[i,j] = Q[i,j]
+        end
+    end
+end
+
+@kernel function copy_triangle_kernel!(dest, src)
+    i, j = @index(Global, NTuple)
+    if j >= i
+        @inbounds dest[i, j] = src[i, j]
+    end
+end
+
+function copy_triangle(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, k::Int) where FC <: FloatOrComplex
+    backend = get_backend(Q)
+    ndrange = (k, k)
+    copy_triangle_kernel!(backend)(R, Q; ndrange=ndrange)
+    KernelAbstractions.synchronize(backend)
+end
+
+# Reduced QR factorization with Householder reflections:
+# Q, R = householder(A)
+#
+# Input :
+# A an n-by-k matrix, n ≥ k
+#
+# Output :
+# Q an n-by-k orthonormal matrix: QᴴQ = Iₖ
+# R an k-by-k upper triangular matrix: QR = A
+function householder(A::AbstractMatrix{FC}; compact::Bool=false) where FC <: FloatOrComplex
+    n, k = size(A)
+    Q = copy(A)
+    τ = zeros(FC, k)
+    R = zeros(FC, k, k)
+    householder!(Q, R, τ; compact)
+end
+
+function householder!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, τ::AbstractVector{FC}; compact::Bool=false) where FC <: FloatOrComplex
+    n, k = size(Q)
+    R .= zero(FC)
+    LAPACK.geqrf!(Q, τ)
+    copy_triangle(Q, R, k)
+    !compact && LAPACK.orgqr!(Q, τ)
+    return Q, R
+end
+
+mutable struct BlockGmresStats{T} <: KrylovStats{T}
+    niter     :: Int
+    solved    :: Bool
+    residuals :: Vector{T}
+    timer     :: Float64
+    status    :: String
+end
+
+function reset!(stats :: BlockGmresStats)
+    empty!(stats.residuals)
+end
