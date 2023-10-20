@@ -1,9 +1,12 @@
 using Krylov, LinearAlgebra, SparseArrays, Printf, Random, Test
 import Krylov.KRYLOV_SOLVERS
 
+Random.seed!(666)
+
 include("test_utils.jl")
 include("test_aux.jl")
 include("test_stats.jl")
+include("test_block_processes.jl")
 include("test_processes.jl")
 
 include("test_minares.jl")

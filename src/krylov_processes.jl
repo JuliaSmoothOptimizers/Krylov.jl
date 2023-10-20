@@ -30,19 +30,20 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
   nzval = zeros(R, 3k-1)
 
   colptr[1] = 1
-  rowval[1] = 1
-  rowval[2] = 2
   for i = 1:k
+    pos = colptr[i]
     colptr[i+1] = 3i
-    if i ≥ 2
-      pos = colptr[i]
+    if i == 1
+      rowval[pos] = i
+      rowval[pos+1] = i+1
+    else
       rowval[pos] = i-1
       rowval[pos+1] = i
       rowval[pos+2] = i+1
     end
   end
 
-  local β₁
+  β₁ = zero(R)
   V = M(undef, n, k+1)
   T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval)
 
@@ -98,6 +99,7 @@ end
 function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   m, n = size(A)
   Aᴴ = A'
+  R = real(FC)
   S = ktypeof(b)
   M = vector_to_matrix(S)
 
@@ -107,19 +109,20 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
   nzval_Tᴴ = zeros(FC, 3k-1)
 
   colptr[1] = 1
-  rowval[1] = 1
-  rowval[2] = 2
   for i = 1:k
+    pos = colptr[i]
     colptr[i+1] = 3i
-    if i ≥ 2
-      pos = colptr[i]
+    if i == 1
+      rowval[pos] = i
+      rowval[pos+1] = i+1
+    else
       rowval[pos] = i-1
       rowval[pos+1] = i
       rowval[pos+2] = i+1
     end
   end
 
-  local β₁, γ₁ᴴ
+  β₁ = γ₁ᴴ = zero(R)
   V = M(undef, n, k+1)
   U = M(undef, n, k+1)
   T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_T)
@@ -178,7 +181,7 @@ end
 * `b`: a vector of length n;
 * `k`: the number of iterations of the Arnoldi process.
 
-#### Keyword arguments
+#### Keyword argument
 
 * `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against all previous vectors.
 
@@ -194,10 +197,11 @@ end
 """
 function arnoldi(A, b::AbstractVector{FC}, k::Int; reorthogonalization::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
+  R = real(FC)
   S = ktypeof(b)
   M = vector_to_matrix(S)
 
-  local β
+  β = zero(R)
   V = M(undef, n, k+1)
   H = zeros(FC, k+1, k)
 
@@ -261,16 +265,19 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
   nzval = zeros(R, 2k+1)
 
   colptr[1] = 1
-  for i = 1:k
+  for i = 1:k+1
     pos = colptr[i]
-    colptr[i+1] = pos+2
-    rowval[pos] = i
-    rowval[pos+1] = i+1
+    if i ≤ k
+      colptr[i+1] = pos + 2
+      rowval[pos] = i
+      rowval[pos+1] = i+1
+    else
+      colptr[i+1] = pos + 1
+      rowval[pos] = i
+    end
   end
-  rowval[2k+1] = k+1
-  colptr[k+2] = 2k+2
 
-  local β₁
+  β₁ = zero(R)
   V = M(undef, n, k+1)
   U = M(undef, m, k+1)
   L = SparseMatrixCSC(k+1, k+1, colptr, rowval, nzval)
@@ -332,6 +339,7 @@ end
 function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
   m, n = size(A)
   Aᴴ = A'
+  R = real(FC)
   S = ktypeof(b)
   M = vector_to_matrix(S)
 
@@ -341,19 +349,20 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
   nzval_Tᴴ = zeros(FC, 3k-1)
 
   colptr[1] = 1
-  rowval[1] = 1
-  rowval[2] = 2
   for i = 1:k
+    pos = colptr[i]
     colptr[i+1] = 3i
-    if i ≥ 2
-      pos = colptr[i]
+    if i == 1
+      rowval[pos] = i
+      rowval[pos+1] = i+1
+    else
       rowval[pos] = i-1
       rowval[pos+1] = i
       rowval[pos+2] = i+1
     end
   end
 
-  local β₁, γ₁ᴴ
+  β₁ = γ₁ᴴ = zero(R)
   V = M(undef, m, k+1)
   U = M(undef, n, k+1)
   T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval_T)
@@ -412,7 +421,7 @@ end
 * `c`: a vector of length n;
 * `k`: the number of iterations of the Montoison-Orban process.
 
-#### Keyword arguments
+#### Keyword argument
 
 * `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against all previous vectors.
 
@@ -431,10 +440,11 @@ end
 """
 function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int; reorthogonalization::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
+  R = real(FC)
   S = ktypeof(b)
   M = vector_to_matrix(S)
 
-  local β, γ
+  β = γ = zero(R)
   V = M(undef, m, k+1)
   U = M(undef, n, k+1)
   H = zeros(FC, k+1, k)

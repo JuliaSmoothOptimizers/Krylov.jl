@@ -12,6 +12,7 @@ makedocs(
   pages = ["Home" => "index.md",
            "API" => "api.md",
            "Krylov processes" => "processes.md",
+           "Block Krylov processes" => "block_processes.md",
            "Krylov methods" => ["Hermitian positive definite linear systems" => "solvers/spd.md",
                                 "Hermitian indefinite linear systems" => "solvers/sid.md",
                                 "Non-Hermitian square linear systems" => "solvers/unsymmetric.md",
