@@ -23,7 +23,6 @@
 
         # Sparse Laplacian
         A, _ = sparse_laplacian(FC=FC)
-        Random.seed!(0)
         b = randn(size(A, 1))
         itmax = 0
         # case: ‖x*‖ > Δ

@@ -20,7 +20,7 @@ end
   n = 500
   k = 20
   s = 5
-  
+
   for FC in (Float64, ComplexF64)
     R = real(FC)
     nbits_FC = sizeof(FC)
@@ -28,7 +28,7 @@ end
     nbits_I = sizeof(Int)
 
     @testset "Data Type: $FC" begin
-      
+
       @testset "Hermitian Lanczos" begin
         A = rand(FC, n, n)
         A = A' * A
