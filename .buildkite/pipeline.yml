@@ -35,8 +35,7 @@ steps:
     command: |
       julia --color=yes --project -e '
         using Pkg
-        # Pkg.add("AMDGPU")
-        Pkg.add(url="https://github.com/JuliaGPU/AMDGPU.jl", rev="master")
+        Pkg.add("AMDGPU")
         Pkg.instantiate()
         include("test/gpu/amd.jl")'
     timeout_in_minutes: 30
