@@ -16,11 +16,12 @@
 # This method, sometimes known under the name CRAIG, is the
 # Golub-Kahan implementation of CGNE, and is described in
 #
+# J. E. Craig, The N-step iteration procedures,
+# Journal of Mathematics and Physics, 34(1-4), pp. 64--73, 1955.
+#
 # C. C. Paige and M. A. Saunders, LSQR: An Algorithm for Sparse
 # Linear Equations and Sparse Least Squares, ACM Transactions on
 # Mathematical Software, 8(1), pp. 43--71, 1982.
-#
-# and
 #
 # M. A. Saunders, Solutions of Sparse Rectangular Systems Using LSQR and CRAIG,
 # BIT Numerical Mathematics, 35(4), pp. 588--604, 1995.
@@ -120,6 +121,7 @@ In this implementation, both the x and y-parts of the solution are returned.
 
 #### References
 
+* J. E. Craig, [*The N-step iteration procedures*](https://doi.org/10.1002/sapm195534164), Journal of Mathematics and Physics, 34(1-4), pp. 64--73, 1955.
 * C. C. Paige and M. A. Saunders, [*LSQR: An Algorithm for Sparse Linear Equations and Sparse Least Squares*](https://doi.org/10.1145/355984.355989), ACM Transactions on Mathematical Software, 8(1), pp. 43--71, 1982.
 * M. A. Saunders, [*Solutions of Sparse Rectangular Systems Using LSQR and CRAIG*](https://doi.org/10.1007/BF01739829), BIT Numerical Mathematics, 35(4), pp. 588--604, 1995.
 """
