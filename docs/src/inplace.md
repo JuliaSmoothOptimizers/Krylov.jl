@@ -15,7 +15,7 @@ Given an operator `A` and a right-hand side `b`, you can create a `KrylovSolver`
 For example, use `S = Vector{Float64}` if you want to solve linear systems in double precision on the CPU and `S = CuVector{Float32}` if you want to solve linear systems in single precision on an Nvidia GPU.
 
 !!! note
-    `DiomSolver`, `FomSolver`, `DqgmresSolver`, `GmresSolver`, `FgmresSolver`, `GpmrSolver` and `CgLanczosShiftSolver` require an additional argument (`memory` or `nshifts`).
+    `DiomSolver`, `FomSolver`, `DqgmresSolver`, `GmresSolver`, `BlockGmresSolver`, `FgmresSolver`, `GpmrSolver` and `CgLanczosShiftSolver` require an additional argument (`memory` or `nshifts`).
 
 The workspace is always the first argument of the in-place methods:
 

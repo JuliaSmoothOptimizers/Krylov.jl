@@ -43,8 +43,6 @@ for (KS, fun, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
   (:GpmrSolver          , :gpmr!            , args_gpmr            , def_args_gpmr            , optargs_gpmr      , def_optargs_gpmr      , kwargs_gpmr            , def_kwargs_gpmr            )
 ]
   @eval begin
-    solve!(solver :: $KS{T,FC,S}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}} = $(fun)(solver, $(args...); $(kwargs...))
-
     if !isempty($optargs)
       function $(fun)(solver :: $KS{T,FC,S}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
         start_time = time_ns()
@@ -56,7 +54,29 @@ for (KS, fun, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
         return solver
       end
 
+      solve!(solver :: $KS{T,FC,S}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}} = $(fun)(solver, $(args...); $(kwargs...))
       solve!(solver :: $KS{T,FC,S}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}} = $(fun)(solver, $(args...), $(optargs...); $(kwargs...))
     end
+  end
+end
+
+for (KS, fun, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
+  (:BlockGmresSolver, :block_gmres!, args_block_gmres, def_args_block_gmres, optargs_block_gmres, def_optargs_block_gmres, kwargs_block_gmres, def_kwargs_block_gmres),
+]
+  @eval begin
+    if !isempty($optargs)
+      function $(fun)(solver :: $KS{T,FC,SV,SM}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
+        start_time = time_ns()
+        warm_start!(solver, $(optargs...))
+        elapsed_time = ktimer(start_time)
+        timemax -= elapsed_time
+        $(fun)(solver, $(args...); $(kwargs...))
+        solver.stats.timer += elapsed_time
+        return solver
+      end
+    end
+
+    solve!(solver :: $KS{T,FC,SV,SM}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}} = $(fun)(solver, $(args...); $(kwargs...))
+    solve!(solver :: $KS{T,FC,SV,SM}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}} = $(fun)(solver, $(args...), $(optargs...); $(kwargs...))
   end
 end

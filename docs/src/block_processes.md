@@ -99,6 +99,8 @@ H_{k+1,k} =
 
 The function [`arnoldi`](@ref arnoldi(::Any, ::AbstractMatrix{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)) returns $V_{k+1}$, $\Gamma$, and $H_{k+1,k}$.
 
+Related method: [`BLOCK-GMRES`](@ref block_gmres).
+
 ```@docs
 arnoldi(::Any, ::AbstractMatrix{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)
 ```

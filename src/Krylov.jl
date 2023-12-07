@@ -2,13 +2,17 @@ module Krylov
 
 using LinearAlgebra, SparseArrays, Printf
 
-include("krylov_utils.jl")
 include("krylov_stats.jl")
+
+include("krylov_utils.jl")
+include("krylov_processes.jl")
 include("krylov_solvers.jl")
 
-include("processes_utils.jl")
-include("krylov_processes.jl")
+include("block_krylov_utils.jl")
 include("block_krylov_processes.jl")
+include("block_krylov_solvers.jl")
+
+include("block_gmres.jl")
 
 include("cg.jl")
 include("cr.jl")

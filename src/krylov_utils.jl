@@ -209,6 +209,10 @@ function ktypeof(v::S) where S <: DenseVector
   return S
 end
 
+function ktypeof(v::S) where S <: DenseMatrix
+  return S
+end
+
 function ktypeof(v::S) where S <: AbstractVector
   if S.name.name == :Zeros || S.name.name == :Ones || S.name.name == :SArray || S.name.name == :MArray || S.name.name == :SizedArray || S.name.name == :FieldArray || S.name.name == :ComponentArray
     T = eltype(S)
@@ -288,6 +292,7 @@ Create a vector of storage type `S` of length `n` only composed of one.
 kones(S, n) = fill!(S(undef, n), one(eltype(S)))
 
 allocate_if(bool, solver, v, S, n) = bool && isempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, n))
+allocate_if(bool, solver, v, S, m, n) = bool && isempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, m, n))
 
 kdisplay(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
 
@@ -322,34 +327,9 @@ kaxpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, t 
 kcopy!(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.blascopy!(n, x, dx, y, dy)
 kcopy!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: FloatOrComplex = copyto!(y, x)
 
-# geqrf -- Computes the QR factorization of a general m-by-n matrix.
-# orgqr -- Generates the real orthogonal matrix of the QR factorization formed by geqrf.
-# ungqr -- Generates the complex unitary matrix of the QR factorization formed by geqrf.
-# ormqr -- Multiplies a real matrix by the orthogonal matrix of the QR factorization formed by geqrf.
-# unmqr -- Multiplies a complex matrix by the unitary matrix of the QR factorization formed by geqrf.
-
-# getrf -- Computes the LU factorization of a general m-by-n matrix.
-# getrs -- Solves a system of linear equations with an LU-factored square matrix.
-# getri -- Computes the inverse of an LU-factored general matrix.
-
-# sytrf -- Computes the Bunch-Kaufman factorization of a symmetric matrix.
-# sytrs -- Solves a system of linear equations with an LDLᵀ-factored symmetric matrix.
-# sytri -- Computes the inverse of a symmetric matrix using LDLᵀ Bunch-Kaufman factorization.
-
-# hetrf -- Computes the Bunch-Kaufman factorization of a complex Hermitian matrix.
-# hetrs -- Solves a system of linear equations with an LDLᴴ-factored Hermitian matrix.
-# hetri -- Computes the inverse of a complex Hermitian matrix using LDLᴴ Bunch-Kaufman factorization.
-
-# potrf -- Computes the Cholesky factorization of a symmetric (Hermitian) positive-definite matrix.
-# potrs -- Solves a system of linear equations with a Cholesky-factored symmetric (Hermitian) positive-definite matrix.
-# potri -- Computes the inverse of a Cholesky-factored symmetric (Hermitian) positive-definite matrix.
-
-# trtrs -- Solves a system of linear equations with a triangular matrix.
-# trtri -- Computes the inverse of a triangular matrix.
-
-kgeqrf!(A :: Matrix{T}, tau :: Vector{T}) where T <: BLAS.BlasFloat = LAPACK.geqrf!(A, tau)
-korgqr!(A :: Matrix{T}, tau :: Vector{T}) where T <: BLAS.BlasFloat = LAPACK.orgqr!(A, tau)
-kormqr!(side :: Char, trans :: Char, A :: Matrix{T}, tau :: Vector{T}, C :: Matrix{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)
+kgeqrf!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.geqrf!(A, tau)
+korgqr!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.orgqr!(A, tau)
+kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVector{T}, C :: AbstractMatrix{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)
 
 macro kgeqrf!(A, tau)
   return esc(:(Krylov.kgeqrf!($A, $tau)))
