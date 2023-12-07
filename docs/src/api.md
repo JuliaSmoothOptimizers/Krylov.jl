@@ -16,6 +16,7 @@ Krylov.LsmrStats
 
 ```@docs
 KrylovSolver
+BlockKrylovSolver
 MinresSolver
 MinaresSolver
 CgSolver
@@ -51,6 +52,7 @@ CraigSolver
 CraigmrSolver
 GpmrSolver
 FgmresSolver
+BlockGmresSolver
 ```
 
 ## Utilities

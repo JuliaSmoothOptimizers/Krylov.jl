@@ -68,36 +68,6 @@ function mgs!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}) where FC <: FloatOrC
   return Q, R
 end
 
-# Reduced QR factorization with Householder reflections:
-# Q, R = householder(A)
-#
-# Input :
-# A an n-by-k matrix, n ≥ k
-#
-# Output :
-# Q an n-by-k orthonormal matrix: QᴴQ = Iₖ
-# R an k-by-k upper triangular matrix: QR = A
-function householder(A::AbstractMatrix{FC}) where FC <: FloatOrComplex
-  n, k = size(A)
-  Q = copy(A)
-  τ = zeros(FC, k)
-  R = zeros(FC, k, k)
-  householder!(Q, R, τ)
-end
-
-function householder!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, τ::AbstractVector{FC}) where FC <: FloatOrComplex
-  n, k = size(Q)
-  R .= zero(FC)
-  @kgeqrf!(Q, τ)
-  for i = 1:k
-    for j = i:k
-      R[i,j] = Q[i,j]
-    end
-  end
-  @korgqr!(Q, τ)
-  return Q, R
-end
-
 # Reduced QR factorization with Givens reflections:
 # Q, R = givens(A)
 #
@@ -183,5 +153,58 @@ function reduced_qr(A::AbstractMatrix{FC}, algo::String) where FC <: FloatOrComp
   else
     error("$algo is not a supported method to perform a reduced QR.")
   end
+  return Q, R
+end
+
+# @kernel function copy_triangle_kernel!(dest, src)
+#   i, j = @index(Global, NTuple)
+#   if j >= i
+#     @inbounds dest[i, j] = src[i, j]
+#   end
+# end
+
+# function copy_triangle(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, k::Int) where FC <: FloatOrComplex
+#   backend = get_backend(Q)
+#   ndrange = (k, k)
+#   copy_triangle_kernel!(backend)(R, Q; ndrange=ndrange)
+#   KernelAbstractions.synchronize(backend)
+# end
+
+function copy_triangle(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, k::Int) where FC <: FloatOrComplex
+  if VERSION < v"1.11"
+    for i = 1:k
+      for j = i:k
+        R[i,j] = Q[i,j]
+      end
+    end
+  else
+    copytrito!(R, Q, 'U')
+  end
+  return R
+end
+
+# Reduced QR factorization with Householder reflections:
+# Q, R = householder(A)
+#
+# Input :
+# A an n-by-k matrix, n ≥ k
+#
+# Output :
+# Q an n-by-k orthonormal matrix: QᴴQ = Iₖ
+# R an k-by-k upper triangular matrix: QR = A
+function householder(A::AbstractMatrix{FC}; compact::Bool=false) where FC <: FloatOrComplex
+  n, k = size(A)
+  Q = copy(A)
+  τ = zeros(FC, k)
+  R = zeros(FC, k, k)
+  householder!(Q, R, τ; compact)
+end
+
+function householder!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, τ::AbstractVector{FC}; compact::Bool=false) where FC <: FloatOrComplex
+  n, k = size(Q)
+  R .= zero(FC)
+  @kgeqrf!(Q, τ)
+  copy_triangle(Q, R, k)
+  !compact && @korgqr!(Q, τ)
   return Q, R
 end
