@@ -156,20 +156,6 @@ function reduced_qr(A::AbstractMatrix{FC}, algo::String) where FC <: FloatOrComp
   return Q, R
 end
 
-# @kernel function copy_triangle_kernel!(dest, src)
-#   i, j = @index(Global, NTuple)
-#   if j >= i
-#     @inbounds dest[i, j] = src[i, j]
-#   end
-# end
-
-# function copy_triangle(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, k::Int) where FC <: FloatOrComplex
-#   backend = get_backend(Q)
-#   ndrange = (k, k)
-#   copy_triangle_kernel!(backend)(R, Q; ndrange=ndrange)
-#   KernelAbstractions.synchronize(backend)
-# end
-
 function copy_triangle(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, k::Int) where FC <: FloatOrComplex
   if VERSION < v"1.11"
     for i = 1:k
