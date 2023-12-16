@@ -1,6 +1,8 @@
 export KrylovStats, SimpleStats, LsmrStats, LanczosStats, LanczosShiftStats,
 SymmlqStats, AdjointStats, LNLQStats, LSLQStats
 
+import Base.copyto!
+
 "Abstract type for statistics returned by a solver"
 abstract type KrylovStats{T} end
 
@@ -30,6 +32,18 @@ function reset!(stats :: SimpleStats)
   empty!(stats.residuals)
   empty!(stats.Aresiduals)
   empty!(stats.Acond)
+end
+
+function copyto!(dest :: SimpleStats, src :: SimpleStats)
+  dest.niter        = src.niter
+  dest.solved       = src.solved
+  dest.inconsistent = src.inconsistent
+  dest.residuals    = copy(src.residuals)
+  dest.Aresiduals   = copy(src.Aresiduals)
+  dest.Acond        = copy(src.Acond)
+  dest.timer        = src.timer
+  dest.status       = src.status
+  return dest
 end
 
 """
@@ -65,6 +79,22 @@ function reset!(stats :: LsmrStats)
   empty!(stats.Aresiduals)
 end
 
+function copyto!(dest :: LsmrStats, src :: LsmrStats)
+  dest.niter        = src.niter
+  dest.solved       = src.solved
+  dest.inconsistent = src.inconsistent
+  dest.residuals    = copy(src.residuals)
+  dest.Aresiduals   = copy(src.Aresiduals)
+  dest.residual     = src.residual
+  dest.Aresidual    = src.Aresidual
+  dest.Acond        = src.Acond
+  dest.Anorm        = src.Anorm
+  dest.xNorm        = src.xNorm
+  dest.timer        = src.timer
+  dest.status       = src.status
+  return dest
+end
+
 """
 Type for statistics returned by CG-LANCZOS, the attributes are:
 - niter
@@ -89,6 +119,18 @@ end
 
 function reset!(stats :: LanczosStats)
   empty!(stats.residuals)
+end
+
+function copyto!(dest :: LanczosStats, src :: LanczosStats)
+  dest.niter      = src.niter
+  dest.solved     = src.solved
+  dest.residuals  = copy(src.residuals)
+  dest.indefinite = src.indefinite
+  dest.Anorm      = src.Anorm
+  dest.Acond      = src.Acond
+  dest.timer      = src.timer
+  dest.status     = src.status
+  return dest
 end
 
 """
@@ -117,6 +159,18 @@ function reset!(stats :: LanczosShiftStats)
   for vec in stats.residuals
     empty!(vec)
   end
+end
+
+function copyto!(dest :: LanczosShiftStats, src :: LanczosShiftStats)
+  dest.niter      = src.niter
+  dest.solved     = src.solved
+  dest.residuals  = deepcopy(src.residuals)
+  dest.indefinite = src.indefinite
+  dest.Anorm      = src.Anorm
+  dest.Acond      = src.Acond
+  dest.timer      = src.timer
+  dest.status     = src.status
+  return dest
 end
 
 """
@@ -152,6 +206,20 @@ function reset!(stats :: SymmlqStats)
   empty!(stats.errorscg)
 end
 
+function copyto!(dest :: SymmlqStats, src :: SymmlqStats)
+  dest.niter       = src.niter
+  dest.solved      = src.solved
+  dest.residuals   = copy(src.residuals)
+  dest.residualscg = copy(src.residualscg)
+  dest.errors      = copy(src.errors)
+  dest.errorscg    = copy(src.errorscg)
+  dest.Anorm       = src.Anorm
+  dest.Acond       = src.Acond
+  dest.timer       = src.timer
+  dest.status      = src.status
+  return dest
+end
+
 """
 Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the attributes are:
 - niter
@@ -176,6 +244,18 @@ function reset!(stats :: AdjointStats)
   empty!(stats.residuals_primal)
   empty!(stats.residuals_dual)
 end
+
+function copyto!(dest :: AdjointStats, src :: AdjointStats)
+  dest.niter            = src.niter
+  dest.solved_primal    = src.solved_primal
+  dest.solved_dual      = src.solved_dual
+  dest.residuals_primal = copy(src.residuals_primal)
+  dest.residuals_dual   = copy(src.residuals_dual)
+  dest.timer            = src.timer
+  dest.status           = src.status
+  return dest
+end
+
 
 """
 Type for statistics returned by the LNLQ method, the attributes are:
@@ -203,6 +283,18 @@ function reset!(stats :: LNLQStats)
   empty!(stats.residuals)
   empty!(stats.error_bnd_x)
   empty!(stats.error_bnd_y)
+end
+
+function copyto!(dest :: LNLQStats, src :: LNLQStats)
+  dest.niter          = src.niter
+  dest.solved         = src.solved
+  dest.residuals      = copy(src.residuals)
+  dest.error_with_bnd = src.error_with_bnd
+  dest.error_bnd_x    = copy(src.error_bnd_x)
+  dest.error_bnd_y    = copy(src.error_bnd_y)
+  dest.timer          = src.timer
+  dest.status         = src.status
+  return dest
 end
 
 """
@@ -239,6 +331,21 @@ function reset!(stats :: LSLQStats)
   empty!(stats.err_lbnds)
   empty!(stats.err_ubnds_lq)
   empty!(stats.err_ubnds_cg)
+end
+
+function copyto!(dest :: LSLQStats, src :: LSLQStats)
+  dest.niter          = src.niter
+  dest.solved         = src.solved
+  dest.inconsistent   = src.inconsistent
+  dest.residuals      = copy(src.residuals)
+  dest.Aresiduals     = copy(src.Aresiduals)
+  dest.err_lbnds      = copy(src.err_lbnds)
+  dest.error_with_bnd = src.error_with_bnd
+  dest.err_ubnds_lq   = copy(src.err_ubnds_lq)
+  dest.err_ubnds_cg   = copy(src.err_ubnds_cg)
+  dest.timer          = src.timer
+  dest.status         = src.status
+  return dest
 end
 
 import Base.show
