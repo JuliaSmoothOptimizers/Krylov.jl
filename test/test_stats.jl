@@ -1,5 +1,7 @@
 @testset "stats" begin
   stats = Krylov.SimpleStats(0, true, true, Float64[1.0], Float64[2.0], Float64[], 1.234, "unknown")
+  stats2 = Krylov.SimpleStats(1, true, true, Float64[1.0], Float64[2.0], Float64[], 1.234, "unknown")
+  copyto!(stats2, stats)
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -20,6 +22,8 @@
   @test nbytes_allocated == 0
 
   stats = Krylov.LsmrStats(0, true, true, Float64[1.0], Float64[2.0], Float64(3.0), Float64(4.0), Float64(5.0), Float64(6.0), Float64(7.0), 0.1234, "unknown")
+  stats2 = Krylov.LsmrStats(1, true, true, Float64[1.0], Float64[2.0], Float64(3.0), Float64(4.0), Float64(5.0), Float64(6.0), Float64(7.0), 0.1234, "unknown")
+  copyto!(stats2, stats)
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -44,6 +48,8 @@
   @test nbytes_allocated == 0
 
   stats = Krylov.LanczosStats(0, true, Float64[3.0], true, NaN, NaN, 1.234, "unknown")
+  stats2 = Krylov.LanczosStats(1, true, Float64[3.0], true, NaN, NaN, 1.234, "unknown")
+  copyto!(stats2, stats)
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -64,6 +70,8 @@
   @test nbytes_allocated == 0
 
   stats = Krylov.LanczosShiftStats(0, true, [Float64[0.9, 0.5], Float64[0.6, 0.4, 0.1]], BitVector([false, true]), NaN, NaN, 0.00056789, "unknown")
+  stats2 = Krylov.LanczosShiftStats(1, true, [Float64[0.9, 0.5], Float64[0.6, 0.4, 0.1]], BitVector([false, true]), NaN, NaN, 0.00056789, "unknown")
+  copyto!(stats2, stats)
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -83,6 +91,8 @@
   @test nbytes_allocated == 0
 
   stats = Krylov.SymmlqStats(0, true, Float64[4.0], Union{Float64,Missing}[5.0, missing], Float64[6.0], Union{Float64,Missing}[7.0, missing], NaN, NaN, 1.234, "unknown")
+  stats2 = Krylov.SymmlqStats(1, true, Float64[4.0], Union{Float64,Missing}[5.0, missing], Float64[6.0], Union{Float64,Missing}[7.0, missing], NaN, NaN, 1.234, "unknown")
+  copyto!(stats2, stats)
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -105,6 +115,8 @@
   @test nbytes_allocated == 0
 
   stats = Krylov.AdjointStats(0, true, true, Float64[8.0], Float64[9.0], 1.234, "unknown")
+  stats2 = Krylov.AdjointStats(1, true, true, Float64[8.0], Float64[9.0], 1.234, "unknown")
+  copyto!(stats2, stats)
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -124,6 +136,8 @@
   @test nbytes_allocated == 0
 
   stats = Krylov.LNLQStats(0, true, Float64[10.0], false, Float64[11.0], Float64[12.0], 1.234, "unknown")
+  stats2 = Krylov.LNLQStats(1, true, Float64[10.0], false, Float64[11.0], Float64[12.0], 1.234, "unknown")
+  copyto!(stats2, stats)
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
@@ -144,6 +158,8 @@
   @test nbytes_allocated == 0
 
   stats = Krylov.LSLQStats(0, true, false, Float64[13.0], Float64[14.0], Float64[15.0], false, Float64[16.0], Float64[17.0], 1.234, "unknown")
+  stats2 = Krylov.LSLQStats(1, true, false, Float64[13.0], Float64[14.0], Float64[15.0], false, Float64[16.0], Float64[17.0], 1.234, "unknown")
+  copyto!(stats2, stats)
   io = IOBuffer()
   show(io, stats)
   showed = String(take!(io))
