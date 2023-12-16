@@ -53,7 +53,20 @@ end
 ```
 
 If you use a Krylov method that only requires `A * v` products (see [here](@ref factorization-free)), the most efficient format is `CuSparseMatrixCSR`.
-Optimized operator-vector products that exploit GPU features can be also used by means of linear operators.
+Optimized operator-vector and operator-matrix products that exploit GPU features can be also used by means of linear operators.
+
+For instance, when executing sparse matrix products on NVIDIA GPUs, the `mul!` function utilized by Krylov.jl internally calls three routines from CUSPARSE.
+The first one conducts an analysis of the sparse matrix's structure, the second one determines the size of the buffer that needs to be allocated, and the last one handles the product using the allocated buffer.
+To circumvent the need for repeated analysis computations and buffer allocation/deallocation with each product, we introduce a `KrylovOperator` in [KrylovPreconditioners.jl](https://github.com/JuliaSmoothOptimizers/KrylovPreconditioners.jl).
+This operator performs the analysis and allocates the buffer only once.
+
+```julia
+using Krylov, KrylovOperators
+
+# A_gpu can be a sparse COO, CSC or CSR matrix
+opA_gpu = KrylovOperator(A_gpu)
+x_gpu, stats = gmres(opA_gpu, b_gpu)
+```
 
 Preconditioners, especially incomplete Cholesky or Incomplete LU factorizations that involve triangular solves,
 can be applied directly on GPU thanks to efficient operators that take advantage of CUSPARSE routines.
@@ -193,6 +206,19 @@ if AMDGPU.functional()
   x_csr, y_csr, stats_csr = craig(A_csr_gpu, b_gpu)
   x_coo, y_coo, stats_coo = craigmr(A_coo_gpu, b_gpu)
 end
+```
+
+When executing sparse products on AMD GPUs, the `mul!` function utilized by Krylov.jl internally calls three routines from rocSPARSE.
+The first one conducts an analysis of the sparse matrix's structure, the second one determines the size of the buffer that needs to be allocated, and the last one handles the product using the allocated buffer.
+To circumvent the need for repeated analysis computations and buffer allocation/deallocation with each product, we introduce a `KrylovOperator` in [KrylovPreconditioners.jl](https://github.com/JuliaSmoothOptimizers/KrylovPreconditioners.jl).
+This operator performs the analysis and allocates the buffer only once.
+
+```julia
+using Krylov, KrylovOperators
+
+# A_gpu can be a sparse COO, CSC or CSR matrix
+opA_gpu = KrylovOperator(A_gpu)
+x_gpu, stats = bicgstab(opA_gpu, b_gpu)
 ```
 
 ## Intel GPUs
