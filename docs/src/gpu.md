@@ -61,7 +61,7 @@ To circumvent the need for repeated analysis computations and buffer allocation/
 This operator performs the analysis and allocates the buffer only once.
 
 ```julia
-using Krylov, KrylovOperators
+using Krylov, KrylovPreconditioners
 
 # A_gpu can be a sparse COO, CSC or CSR matrix
 opA_gpu = KrylovOperator(A_gpu)
@@ -214,7 +214,7 @@ To circumvent the need for repeated analysis computations and buffer allocation/
 This operator performs the analysis and allocates the buffer only once.
 
 ```julia
-using Krylov, KrylovOperators
+using Krylov, KrylovPreconditioners
 
 # A_gpu can be a sparse COO, CSC or CSR matrix
 opA_gpu = KrylovOperator(A_gpu)
