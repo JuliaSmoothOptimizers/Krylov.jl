@@ -41,6 +41,7 @@ BilqSolver
 QmrSolver
 BilqrSolver
 CglsSolver
+CglsLanczosShiftSolver
 CrlsSolver
 CgneSolver
 CrmrSolver
