@@ -3,7 +3,7 @@
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos, :dqgmres, :diom, :cr, :gpmr,
              :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab, :craigmr, :crls, :symmlq, :minres,
              :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr, :gmres, :fom,
-             :car, :minares, :fgmres, :cg_lanczos_shift)
+             :car, :minares, :fgmres, :cg_lanczos_shift, :cgls_lanczos_shift)
     @testset "$fn" begin
       for T in (Float16, Float32, Float64, BigFloat)
         for FC in (T, Complex{T})

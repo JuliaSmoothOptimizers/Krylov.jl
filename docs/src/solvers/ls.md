@@ -7,6 +7,8 @@
 ```@docs
 cgls
 cgls!
+cgls_lanczos_shift
+cgls_lanczos_shift!
 ```
 
 ## CRLS

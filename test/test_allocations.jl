@@ -394,6 +394,30 @@
         @test inplace_cgls_bytes == 0
       end
 
+      @testset "CGLS-LANCZOS-SHIFT" begin
+        # CGLS-LANCZOS-SHIFT needs:
+        # - 3 n-vectors: x, p, s
+        # - 2 m-vectors: r, q
+
+        # - 2 n-vectors: Mv, v
+        # - 3 m-vectors: Mv_prev, Mv_next, u
+        # - 2 (n*nshifts)-matrices: x, p
+        # - 5 nshifts-vectors: σ, δhat, ω, γ, rNorms
+        # - 2 nshifts-bitVector: converged, not_cv
+       
+        storage_cgls_lanczos_shift_bytes(m, n) = nbits_FC * (3 * n + 2 * m)
+
+        expected_cgls_lanczos_shift_bytes = storage_cgls_lanczos_shift_bytes(m, k)
+        (x, stats) = cgls_lanczos_shift(Ao, b)  # warmup
+        actual_cgls_lanczos_shift_bytes = @allocated cgls_lanczos_shift(Ao, b)
+        @test expected_cgls_lanczos_shift_bytes ≤ actual_cgls_lanczos_shift_bytes ≤ 1.02 * expected_cgls_lanczos_shift_bytes
+
+        solver = CglsSolver(Ao, b)
+        cgls_lanczos_shift!(solver, Ao, b)  # warmup
+        inplace_cgls_lanczos_shift_bytes = @allocated cgls_lanczos_shift!(solver, Ao, b)
+        @test inplace_cgls_lanczos_shift_bytes == 0
+      end
+
       @testset "LSLQ" begin
         # LSLQ needs:
         # - 4 n-vectors: x_lq, v, Aᴴu, w̄ (= x_cg)
