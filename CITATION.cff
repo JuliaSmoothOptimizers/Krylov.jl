@@ -11,17 +11,19 @@ authors:
     family-names: Orban
     orcid: "https://orcid.org/0000-0002-8017-7687"
     affiliation: "GERAD and Department of Mathematics and Industrial Engineering, Polytechnique Montréal, QC, Canada."
+  - given-names: contributors
 contact:
   - given-names: Alexis
     family-names: Montoison
+    email: alexis.montoison@gerad.ca
     orcid: "https://orcid.org/0000-0002-3403-5450"
 identifiers:
   - description: Zenodo archive
     type: doi
     value: 10.5281/zenodo.822073
   - description: JOSS paper
-    type: other
-    value: "https://joss.theoj.org/papers/10.21105/joss.05187"
+    type: doi
+    value: 10.21105/joss.05187"
 keywords:
   - Julia
   - linear algebra
