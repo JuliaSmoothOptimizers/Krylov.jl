@@ -1199,6 +1199,9 @@ The outer constructors
 may be used in order to create these vectors.
 """
 mutable struct CglsLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
+  m          :: Int
+  n          :: Int
+  nshifts    :: Int
   Mv         :: S
   Mv_prev    :: S
   Mv_next    :: S
@@ -1213,7 +1216,7 @@ mutable struct CglsLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   rNorms     :: Vector{T}
   converged  :: BitVector
   not_cv     :: BitVector
-  stats      :: SimpleShiftsStats{T}
+  stats      :: LanczosShiftStats{T}
 end
 
 function CglsLanczosShiftSolver(m, n, nshifts, S)
@@ -1234,8 +1237,8 @@ function CglsLanczosShiftSolver(m, n, nshifts, S)
   indefinite = BitVector(undef, nshifts)
   converged  = BitVector(undef, nshifts)
   not_cv     = BitVector(undef, nshifts)
-  stats = SimpleShiftsStats(0, false, zeros(Bool, nshifts), indefinite, [T[] for i = 1 : nshifts], [T[] for i = 1 : nshifts], zeros(T, nshifts), ["unknown" for i = 1 : nshifts])
-  solver = new{T,FC,S}(Mv, Mv_prev, Mv_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
+  solver = CglsLanczosShiftSolver{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return solver
 end
 
@@ -1997,7 +2000,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:CgSolver            , :cg!              , 1, 1, 0, true )
   (:CgLanczosShiftSolver, :cg_lanczos_shift!, 1, 1, 0, false)
   (:CglsSolver          , :cgls!            , 1, 1, 1, false)
-  (:CglsLanczosShiftSolver, :cgls_lanczos_shift!, 1, 1, 0, false)
+  (:CglsLanczosShiftSolver, :cgls_lanczos_shift!, 1, 1, 1, false)
   (:CgLanczosSolver     , :cg_lanczos!      , 1, 1, 0, true )
   (:BilqSolver          , :bilq!            , 1, 1, 1, true )
   (:MinresQlpSolver     , :minres_qlp!      , 1, 1, 0, true )
