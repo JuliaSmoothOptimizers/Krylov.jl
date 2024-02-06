@@ -83,7 +83,7 @@ Each table summarizes the storage requirements of Krylov methods recommended to 
 
 | Methods | [`USYMQR`](@ref usymqr) | [`CGLS`](@ref cgls) | [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift) | [`CRLS`](@ref crls) | [`LSLQ`](@ref lslq) | [`LSQR`](@ref lsqr) | [`LSMR`](@ref lsmr) |
 |:-------:|:-----------------------:|:-------------------:|:-------------------:|:-------------------:|:-------------------:|:-------------------:|
-| Storage | $6n + 3m$               | $3n + 2m$           | $3n + 2m + Xp$      | $4n + 3m$           | $4n + 2m$           | $4n + 2m$           | $5n + 2m$           |
+| Storage | $6n + 3m$               | $3n + 2m$           | $3n + 2m + 5p + 2np$      | $4n + 3m$           | $4n + 2m$           | $4n + 2m$           | $5n + 2m$           |
 
 #### Adjoint systems
 

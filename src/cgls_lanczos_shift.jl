@@ -73,51 +73,47 @@ See [`CglsLanczosShiftSolver`](@ref) for more details about the `solver`.
 """
 function cgls_lanczos_shift! end
 
-def_args_cg_lanczos_shift = (:(A                        ),
-                             :(b::AbstractVector{FC}    ),
-                             :(shifts::AbstractVector{T}))
+def_args_cgls_lanczos_shift = (:(A                        ),
+                               :(b::AbstractVector{FC}    ),
+                               :(shifts::AbstractVector{T}))
 
-def_kwargs_cg_lanczos_shift = (:(; M = I                        ),
-                               :(; ldiv::Bool = false           ),
-                               :(; check_curvature::Bool = false),
-                               :(; atol::T = √eps(T)            ),
-                               :(; rtol::T = √eps(T)            ),
-                               :(; itmax::Int = 0               ),
-                               :(; timemax::Float64 = Inf       ),
-                               :(; verbose::Int = 0             ),
-                               :(; history::Bool = false        ),
-                               :(; callback = solver -> false   ),
-                               :(; iostream::IO = kstdout       ))
+def_kwargs_cgls_lanczos_shift = (:(; M = I                        ),
+                                 :(; ldiv::Bool = false           ),
+                                 :(; check_curvature::Bool = false),
+                                 :(; atol::T = √eps(T)            ),
+                                 :(; rtol::T = √eps(T)            ),
+                                 :(; itmax::Int = 0               ),
+                                 :(; timemax::Float64 = Inf       ),
+                                 :(; verbose::Int = 0             ),
+                                 :(; history::Bool = false        ),
+                                 :(; callback = solver -> false   ),
+                                 :(; iostream::IO = kstdout       ))
 
-def_kwargs_cg_lanczos_shift = mapreduce(extract_parameters, vcat, def_kwargs_cg_lanczos_shift)
+def_kwargs_cgls_lanczos_shift = mapreduce(extract_parameters, vcat, def_kwargs_cgls_lanczos_shift)
 
-args_cg_lanczos_shift = (:A, :b, :shifts)
-kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
-
-solver :: CglsLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: AbstractVector{T};
-        M=I, atol :: T=√eps(T), rtol :: T=√eps(T),
-        itmax :: Int=0, verbose :: Int=0, history :: Bool=false,
-        callback = solver -> false) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: DenseVector{FC}}
+args_cgls_lanczos_shift = (:A, :b, :shifts)
+kwargs_cgls_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgls_lanczos_shift($(def_args_cg_lanczos_shift...); $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+  function cgls_lanczos_shift($(def_args_cgls_lanczos_shift...); $(def_kwargs_cgls_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
     start_time = time_ns()
     nshifts = length(shifts)
     solver = CglsLanczosShiftSolver(A, b, nshifts)
     elapsed_time = ktimer(start_time)
     timemax -= elapsed_time
-    cgls_lanczos_shift!(solver, $(args_cg_lanczos_shift...); $(kwargs_cg_lanczos_shift...))
+    cgls_lanczos_shift!(solver, $(args_cgls_lanczos_shift...); $(kwargs_cgls_lanczos_shift...))
     solver.stats.timer += elapsed_time
     return (solver.x, solver.stats)
   end
 
-  function cgls_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, $(def_args_cgls_lanczos_shift...); $(def_kwargs_cgls_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cgls_lanczos_shift!(solver :: CglsLanczosShiftSolver{T,FC,S}, $(def_args_cgls_lanczos_shift...); $(def_kwargs_cgls_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
+    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
 
     nshifts = length(shifts)
@@ -144,9 +140,9 @@ solver :: CglsLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: 
     x, p, σ, δhat = solver.x, solver.p, solver.σ, solver.δhat
     ω, γ, rNorms, converged = solver.ω, solver.γ, solver.rNorms, solver.converged
     not_cv, stats = solver.not_cv, solver.stats
-    rNorms_history, indefinite, status = stats.residuals, stats.indefinite, stats.status
+    rNorms_history, status = stats.residuals, stats.status
     reset!(stats)
-    v = solver.v # v = MisI ? Mv : solver.v
+    v = solver.v
 
     # Initial state.
     ## Distribute x similarly to shifts.
@@ -165,14 +161,11 @@ solver :: CglsLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: 
       end
     end
 
-    # Keep track of shifted systems with negative curvature if required.
-    indefinite .= false
-
     if β == 0
       stats.niter = 0
       stats.solved = true
       stats.timer = ktimer(start_time)
-      status .= "x = 0 is a zero-residual solution"
+      status = "x = 0 is a zero-residual solution"
       return solver
     end
 
@@ -184,8 +177,6 @@ solver :: CglsLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: 
     # Initialize Lanczos process.
     # β₁v₁ = b
     @kscal!(n, one(FC) / β, v)          # v₁  ←  v₁ / β₁
-    # MisI || @kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
-    # Mv_prev .= Mv
     @kscal!(m, one(FC) / β, u)
 
     # Initialize some constants used in recursions below.
@@ -212,7 +203,7 @@ solver :: CglsLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: 
 
     solved = !reduce(|, not_cv) # ArNorm ≤ ε
     tired = iter ≥ itmax
-    status .= "unknown"
+    status = "unknown"
     user_requested_exit = false
     overtimed = false
 
@@ -220,14 +211,14 @@ solver :: CglsLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: 
     while ! (solved || tired || user_requested_exit || overtimed)
 
       # Form next Lanczos vector.
-      mul!(utilde, A, v)                 # utildeₖ ← Avₖ
-      δ = @kdotr(m, utilde, utilde)       # δₖ = vₖᵀAᵀAvₖ
-      @kaxpy!(m, -δ, u, utilde)          # uₖ₊₁ = utildeₖ - δₖuₖ - βₖuₖ₋₁
+      mul!(utilde, A, v)                   # utildeₖ ← Avₖ
+      δ = @kdotr(m, utilde, utilde)        # δₖ = vₖᵀAᵀAvₖ
+      @kaxpy!(m, -δ, u, utilde)            # uₖ₊₁ = utildeₖ - δₖuₖ - βₖuₖ₋₁
       @kaxpy!(m, -β, u_prev, utilde)
-      mul!(v, A', utilde)                # vₖ₊₁ = Aᵀuₖ₊₁
-      β = sqrt(@kdotr(n, v, v))           # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
-      @kscal!(n, one(FC) / β, v)            # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-      @kscal!(m, one(FC) / β, utilde)       # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
+      mul!(v, A', utilde)                  # vₖ₊₁ = Aᵀuₖ₊₁
+      β = sqrt(@kdotr(n, v, v))            # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+      @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+      @kscal!(m, one(FC) / β, utilde)      # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
       u_prev .= u
       u .= utilde
 
@@ -275,18 +266,15 @@ solver :: CglsLanczosShiftSolver{T,FC,S}, A, b :: AbstractVector{FC}, shifts :: 
     (verbose > 0) && @printf(iostream, "\n")
 
     # Termination status
-    overtimed && (status = "time limit exceeded")
-    for i = 1 : nshifts
-      tired  && (stats.status[i] = "maximum number of iterations exceeded")
-      converged[i] && (stats.status[i] = "solution good enough given atol and rtol")
-    end
-    user_requested_exit && (status .= "user-requested exit")
+    tired               && (status = "maximum number of iterations exceeded")
+    solved              && (status = "solution good enough given atol and rtol")
+    user_requested_exit && (status = "user-requested exit")
+    overtimed           && (status = "time limit exceeded")
 
-      # Update stats
+    # Update stats
     stats.niter = iter
     stats.solved = solved
     stats.timer = ktimer(start_time)
-    stats.inconsistent .= false
     return solver
   end
 end
