@@ -409,7 +409,7 @@
         actual_cgls_lanczos_shift_bytes = @allocated cgls_lanczos_shift(Ao, b, shifts)
         @test expected_cgls_lanczos_shift_bytes ≤ actual_cgls_lanczos_shift_bytes ≤ 1.02 * expected_cgls_lanczos_shift_bytes
 
-        solver = CglsLanczosShiftSolver(Ao, b)
+        solver = CglsLanczosShiftSolver(Ao, b, length(shifts))
         cgls_lanczos_shift!(solver, Ao, b, shifts)  # warmup
         inplace_cgls_lanczos_shift_bytes = @allocated cgls_lanczos_shift!(solver, Ao, b, shifts)
         @test inplace_cgls_lanczos_shift_bytes == 0
