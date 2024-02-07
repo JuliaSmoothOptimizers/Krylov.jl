@@ -5,7 +5,7 @@ using LinearAlgebra, Printf
 
 function residuals(A, b, shifts, x)
   nshifts = length(shifts)
-  r = [ A' * (A * x - b) + shifts[i] * x[i] for i = 1 : nshifts ]
+  r = [ A' * (A * x[i] - b) + shifts[i] * x[i] for i = 1 : nshifts ]
   return r
 end
 ssmc = ssmc_db(verbose=false)
