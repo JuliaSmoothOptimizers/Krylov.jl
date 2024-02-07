@@ -165,7 +165,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, 
       stats.niter = 0
       stats.solved = true
       stats.timer = ktimer(start_time)
-      status = "x = 0 is a zero-residual solution"
+      stats.status = "x = 0 is a zero-residual solution"
       return solver
     end
 
@@ -275,6 +275,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, 
     stats.niter = iter
     stats.solved = solved
     stats.timer = ktimer(start_time)
+    stats.status = status
     return solver
   end
 end

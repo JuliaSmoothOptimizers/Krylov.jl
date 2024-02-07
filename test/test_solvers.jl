@@ -4,8 +4,8 @@ function test_solvers(FC)
   m   = div(n, 2)
   Au  = A[1:m,:]  # Dimension m x n
   Ao  = A[:,1:m]  # Dimension n x m
-  b   = Ao * ones(FC, m) # Dimension n
-  c   = Au * ones(FC, n) # Dimension m
+  b   = Ao * ones(FC, m) # Dimension m
+  c   = Au * ones(FC, n) # Dimension n
   mem = 10
   shifts = [1.0; 2.0; 3.0; 4.0; 5.0]
   nshifts = 5
@@ -70,8 +70,8 @@ function test_solvers(FC)
       method == :cg_lanczos_shift && @test_throws ErrorException("solver.nshifts = $(solver.nshifts) is inconsistent with length(shifts) = $(length(shifts2))") solve!(solver, A, b, shifts2)
       method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m2, $n2)") solve!(solver, Au2, c2)
       method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr) && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)") solve!(solver, Ao2, b2)
-      hod == :cg_lanczos_shift && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)") solve!(solver, Ao2, b2, shifts2)
-      method == :cg_lanczos_shift && @test_throws ErrorException("solver.nshifts = $(solver.nshifts) is inconsistent with length(shifts) = $(length(shifts2))") solve!(solver, A, b, shifts2)
+      method == :cgls_lanczos_shift && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)") solve!(solver, Ao2, b2, shifts2)
+      method == :cgls_lanczos_shift && @test_throws ErrorException("solver.nshifts = $(solver.nshifts) is inconsistent with length(shifts) = $(length(shifts2))") solve!(solver, Ao, b, shifts2)
       method ∈ (:bilqr, :trilqr) && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $n2)") solve!(solver, A2, b2, b2)
       method == :gpmr && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)") solve!(solver, Ao2, Au2, b2, c2)
       method ∈ (:tricg, :trimr) && @test_throws ErrorException("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($n2, $m2)") solve!(solver, Ao2, b2, c2)
@@ -87,6 +87,7 @@ function test_solvers(FC)
       method == :cg_lanczos_shift && solve!(solver, A, b, shifts, timemax=timemax)
       method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && solve!(solver, Au, c, timemax=timemax)
       method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr) && solve!(solver, Ao, b, timemax=timemax)
+      method == :cgls_lanczos_shift && solve!(solver, Ao, b, shifts, timemax=timemax)
       method ∈ (:bilqr, :trilqr) && solve!(solver, A, b, b, timemax=timemax)
       method == :gpmr && solve!(solver, Ao, Au, b, c, timemax=timemax)
       method ∈ (:tricg, :trimr) && solve!(solver, Au, c, b, timemax=timemax)
@@ -125,8 +126,8 @@ function test_solvers(FC)
           (nsolution == 2) && (@test solution(solver, 2) == solver.y)
         end
 
-        if method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr)
-          solve!(solver, Ao, b)
+        if method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr, :cgls_lanczos_shift)
+          method == :cgls_lanczos_shift ? solve!(solver, Ao, b, shifts) : solve!(solver, Ao, b)
           niter = niterations(solver)
           @test Aprod(solver) == niter
           @test Atprod(solver) == niter

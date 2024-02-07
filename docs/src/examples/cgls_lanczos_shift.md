@@ -1,5 +1,3 @@
-# TODO
-
 ```@example cgls_lanczos_shift
 using MatrixMarket, SuiteSparseMatrixCollection
 using Krylov, LinearOperators
