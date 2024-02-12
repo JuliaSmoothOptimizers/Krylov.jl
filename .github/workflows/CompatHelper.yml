@@ -1,3 +1,4 @@
+# CompatHelper v3.5.0
 name: CompatHelper
 on:
   schedule:
@@ -42,3 +43,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMPATHELPER_PRIV: ${{ secrets.DOCUMENTER_KEY }}
+          # COMPATHELPER_PRIV: ${{ secrets.COMPATHELPER_PRIV }}
