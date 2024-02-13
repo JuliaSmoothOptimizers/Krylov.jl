@@ -46,6 +46,7 @@ makedocs(
                            "CRAIG" => "examples/craig.md",
                            "CRAIGMR" => "examples/craigmr.md",
                            "CGLS" => "examples/cgls.md",
+                           "CGLS-LANCZOS-SHIFT" => "examples/cgls_lanczos_shift.md",
                            "CRLS" => "examples/crls.md",
                            "LSQR" => "examples/lsqr.md",
                            "LSMR" => "examples/lsmr.md"],

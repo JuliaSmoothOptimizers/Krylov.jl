@@ -150,3 +150,16 @@ function restarted_gmres_callback_n2(solver::GmresSolver, A, b, stor, N, storage
   storage_vec .-= b
   return (norm(storage_vec) ≤ tol)
 end
+
+mutable struct TestCallbackN2LSShifts{T, S, M}
+  A::M
+  b::S
+  shifts::Vector{T}
+  tol::T
+end
+TestCallbackN2LSShifts(A, b, shifts; tol = 0.1) = TestCallbackN2LSShifts(A, b, shifts, tol)
+
+function (cb_n2::TestCallbackN2LSShifts)(solver)
+  r = residuals_ls(cb_n2.A, cb_n2.b, cb_n2.shifts, solver.x)
+  return all(map(norm, r) .≤ cb_n2.tol)
+end
