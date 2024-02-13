@@ -1,5 +1,5 @@
 # An implementation of the Lanczos version of the conjugate gradient method
-# for a family of shifted systems of the form (AᵀA + λI) x = b.
+# for a family of shifted systems of the form (AᴴA + λI) x = Aᴴb.
 #
 # The implementation follows
 # A. Frommer and P. Maass, Fast CG-Based Methods for Tikhonov-Phillips Regularization,
@@ -27,11 +27,11 @@ Solve the regularized linear least-squares problem
 using the Conjugate Gradient (CG) method, where λ ≥ 0 is a regularization
 parameter. This method is equivalent to applying CG to the normal equations
 
-    (AᵀA + λI) x = Aᵀb
+    (AᴴA + λI) x = Aᴴb
 
 but is more stable.
 
-CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖Aᵀr‖₂.
+CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖Aᴴr‖₂.
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 
@@ -131,7 +131,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, 
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
     # Compute the adjoint of A
-    Aᵀ = A'
+    Aᴴ = A'
 
     # Set up workspace.
     allocate_if(!MisI, solver, :v, S, n)
@@ -152,7 +152,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, 
 
     u .= b
     u_prev .= zero(T)
-    mul!(v, A', u)                      # v₁ ← A' * b
+    mul!(v, Aᴴ, u)                      # v₁ ← Aᴴ * b
     β = sqrt(@kdotr(n, v, v))           # β₁ = v₁ᵀ M v₁
     rNorms .= β
     if history
@@ -212,10 +212,10 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, 
 
       # Form next Lanczos vector.
       mul!(utilde, A, v)                   # utildeₖ ← Avₖ
-      δ = @kdotr(m, utilde, utilde)        # δₖ = vₖᵀAᵀAvₖ
+      δ = @kdotr(m, utilde, utilde)        # δₖ = vₖᵀAᴴAvₖ
       @kaxpy!(m, -δ, u, utilde)            # uₖ₊₁ = utildeₖ - δₖuₖ - βₖuₖ₋₁
       @kaxpy!(m, -β, u_prev, utilde)
-      mul!(v, A', utilde)                  # vₖ₊₁ = Aᵀuₖ₊₁
+      mul!(v, Aᴴ, utilde)                  # vₖ₊₁ = Aᴴuₖ₊₁
       β = sqrt(@kdotr(n, v, v))            # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
       @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
       @kscal!(m, one(FC) / β, utilde)      # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
