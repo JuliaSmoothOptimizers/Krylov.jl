@@ -206,7 +206,12 @@ Return the most relevant storage type `S` based on the type of `v`.
 function ktypeof end
 
 function ktypeof(v::S) where S <: DenseVector
-  return S
+  if S.name.name == :ComponentArray
+    T = eltype(S)
+    return Vector{T}
+  else
+    return S
+  end
 end
 
 function ktypeof(v::S) where S <: DenseMatrix
@@ -214,9 +219,9 @@ function ktypeof(v::S) where S <: DenseMatrix
 end
 
 function ktypeof(v::S) where S <: AbstractVector
-  if S.name.name == :Zeros || S.name.name == :Ones || S.name.name == :SArray || S.name.name == :MArray || S.name.name == :SizedArray || S.name.name == :FieldArray || S.name.name == :ComponentArray
+  if S.name.name == :Zeros || S.name.name == :Ones || S.name.name == :SArray || S.name.name == :MArray || S.name.name == :SizedArray || S.name.name == :FieldArray
     T = eltype(S)
-    return Vector{T}  # FillArrays, StaticArrays, ComponentArrays
+    return Vector{T}  # FillArrays, StaticArrays
   else
     return S  # BlockArrays, PartitionedArrays, etc...
   end
