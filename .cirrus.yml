@@ -14,7 +14,7 @@ task:
         - JULIA_VERSION: 1
     - name: MacOS M1
       macos_instance:
-        image: ghcr.io/cirruslabs/macos-monterey-base:latest
+        image: ghcr.io/cirruslabs/macos-ventura-base:latest
       env:
         - JULIA_VERSION: 1
   install_script: |
