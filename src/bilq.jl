@@ -172,7 +172,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       @kaxpby!(n, one(FC), b, -one(FC), r₀)
     end
     if !MisI
-      mul!(p, M, r₀)
+      mulorldiv!(p, M, r₀, ldiv)
       r₀ = p
     end
 

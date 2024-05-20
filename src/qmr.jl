@@ -178,7 +178,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       @kaxpby!(n, one(FC), b, -one(FC), r₀)
     end
     if !MisI
-      mul!(p, M, r₀)
+      mulorldiv!(p, M, r₀, ldiv)
       r₀ = p
     end
 
