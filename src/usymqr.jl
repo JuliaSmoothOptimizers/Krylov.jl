@@ -310,8 +310,8 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       history && push!(AᴴrNorms, AᴴrNorm)
 
       # Compute uₖ₊₁ and uₖ₊₁.
-      @kcopy!(m, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
-      @kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
+      @kcopy!(m, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ
+      @kcopy!(n, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
         vₖ .= q ./ βₖ₊₁ # βₖ₊₁vₖ₊₁ = q

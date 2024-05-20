@@ -349,8 +349,8 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       @kaxpy!(n, ζₖ, wₖ, x)
 
       # Compute vₖ₊₁ and uₖ₊₁.
-      @kcopy!(n, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
-      @kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
+      @kcopy!(n, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ
+      @kcopy!(n, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ
 
       if pᴴq ≠ zero(FC)
         vₖ .= q ./ βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
