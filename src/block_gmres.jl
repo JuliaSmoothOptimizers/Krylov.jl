@@ -338,11 +338,6 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
     end
     (verbose > 0) && @printf(iostream, "\n")
 
-    # Storage requirements
-    (verbose > 0) && (storage = sizeof(solver))
-    (verbose > 0) && @printf(iostream, "Size of the workspace: %s.\n", format_bytes(storage))
-    (verbose > 0) && @printf(iostream, "\n")
-
     # Termination status
     tired               && (status = "maximum number of iterations exceeded")
     solved              && (status = "solution good enough given atol and rtol")
