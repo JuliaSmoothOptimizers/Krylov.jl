@@ -30,12 +30,13 @@ Krylov.jl supports both approaches thanks to the argument `ldiv` of the Krylov s
 ## How to use preconditioners in Krylov.jl?
 
 !!! info
-    - A preconditioner only need support the operation `mul!(y, P⁻¹, x)` when `ldiv=false` or `ldiv!(y, P, x)` when `ldiv=true` to be used in Krylov.jl.
+    - A preconditioner only needs to support the operation `mul!(y, P⁻¹, x)` when `ldiv=false` or `ldiv!(y, P, x)` when `ldiv=true` to be used in Krylov.jl.
+    - Additional support for `adjoint` with preconditioners is required in the methods [`BILQ`](@ref bilq) and [`QMR`](@ref qmr).
     - The default value of a preconditioner in Krylov.jl is the identity operator `I`.
 
 ### Square non-Hermitian linear systems
 
-Methods concerned: [`CGS`](@ref cgs), [`BiCGSTAB`](@ref bicgstab), [`DQGMRES`](@ref dqgmres), [`GMRES`](@ref gmres), [`BLOCK-GMRES`](@ref block_gmres), [`FGMRES`](@ref fgmres), [`DIOM`](@ref diom) and [`FOM`](@ref fom).
+Methods concerned: [`CGS`](@ref cgs), [`BILQ`](@ref bilq), [`QMR`](@ref qmr), [`BiCGSTAB`](@ref bicgstab), [`DQGMRES`](@ref dqgmres), [`GMRES`](@ref gmres), [`BLOCK-GMRES`](@ref block_gmres), [`FGMRES`](@ref fgmres), [`DIOM`](@ref diom) and [`FOM`](@ref fom).
 
 A Krylov method dedicated to non-Hermitian linear systems allows the three variants of preconditioning.
 

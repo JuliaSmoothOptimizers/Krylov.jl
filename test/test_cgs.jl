@@ -62,7 +62,7 @@
       A, b, N = square_preconditioned(FC=FC)
       (x, stats) = cgs(A, b, N=N)
       r = b - A * x
-      resid = norm(r) / norm(b)
+      resid = norm(M * r) / norm(M * b)
       @test(resid ≤ cgs_tol)
       @test(stats.solved)
 
@@ -70,7 +70,7 @@
       A, b, M, N = two_preconditioners(FC=FC)
       (x, stats) = cgs(A, b, M=M, N=N)
       r = b - A * x
-      resid = norm(r) / norm(b)
+      resid = norm(M * r) / norm(M * b)
       @test(resid ≤ cgs_tol)
       @test(stats.solved)
 

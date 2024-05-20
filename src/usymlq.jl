@@ -38,7 +38,8 @@ USYMLQ determines the least-norm solution of the consistent linear system Ax = b
 USYMLQ is based on the orthogonal tridiagonalization process and requires two initial nonzero vectors `b` and `c`.
 The vector `c` is only used to initialize the process and a default value can be `b` or `Aᴴb` depending on the shape of `A`.
 The error norm ‖x - x*‖ monotonously decreases in USYMLQ.
-It's considered as a generalization of SYMMLQ.
+When `A` is Hermitian and `b = c`, USYMLQ is equivalent to SYMMLQ.
+USYMLQ is considered as a generalization of SYMMLQ.
 
 It can also be applied to under-determined and over-determined problems.
 In all cases, problems must be consistent.

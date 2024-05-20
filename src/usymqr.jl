@@ -38,7 +38,8 @@ USYMQR solves Ax = b if it is consistent.
 USYMQR is based on the orthogonal tridiagonalization process and requires two initial nonzero vectors `b` and `c`.
 The vector `c` is only used to initialize the process and a default value can be `b` or `Aᴴb` depending on the shape of `A`.
 The residual norm ‖b - Ax‖ monotonously decreases in USYMQR.
-It's considered as a generalization of MINRES.
+When `A` is Hermitian and `b = c`, QMR is equivalent to MINRES.
+USYMQR is considered as a generalization of MINRES.
 
 It can also be applied to under-determined and over-determined problems.
 USYMQR finds the minimum-norm solution if problems are inconsistent.
