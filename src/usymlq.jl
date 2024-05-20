@@ -296,21 +296,21 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       # Compute d̅ₖ.
       if iter == 1
         # d̅₁ = u₁
-        @. d̅ = uₖ
+        @kcopy!(n, d̅, uₖ)
       else
         # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
         @kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
       end
 
       # Compute uₖ₊₁ and uₖ₊₁.
-      @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
-      @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
+      @kcopy!(m, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
+      @kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
-        @. vₖ = q / βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
+        vₖ .= q ./ βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
       end
       if γₖ₊₁ ≠ zero(T)
-        @. uₖ = p / γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
+        uₖ .= p ./ γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
       end
 
       # Compute USYMLQ residual norm
