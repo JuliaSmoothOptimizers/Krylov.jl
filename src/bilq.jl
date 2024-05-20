@@ -172,8 +172,8 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       @kaxpby!(n, one(FC), b, -one(FC), r₀)
     end
     if !MisI
-      mulorldiv!(p, M, r₀, ldiv)
-      r₀ = p
+      mulorldiv!(solver.t, M, r₀, ldiv)
+      r₀ = solver.t
     end
 
     # Initial solution x₀ and residual norm ‖r₀‖.
