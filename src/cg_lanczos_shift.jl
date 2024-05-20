@@ -211,9 +211,9 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
       @kaxpy!(n, -δ, Mv, Mv_next)          # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
       if iter > 0
         @kaxpy!(n, -β, Mv_prev, Mv_next)   # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
-        @. Mv_prev = Mv                    # Mvₖ₋₁ ← Mvₖ
+        @kcopy!(n, Mv, Mv_prev)            # Mvₖ₋₁ ← Mvₖ
       end
-      @. Mv = Mv_next                      # Mvₖ ← Mvₖ₊₁
+      @kcopy!(n, Mv_next, Mv)              # Mvₖ ← Mvₖ₊₁
       MisI || mulorldiv!(v, M, Mv, ldiv)   # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
       β = sqrt(@kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
       @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁

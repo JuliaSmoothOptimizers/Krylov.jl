@@ -303,9 +303,9 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       mul!(Mv_next, A, v)
       α = @kdotr(m, v, Mv_next) + λ
       @kaxpy!(m, -oldβ, Mvold, Mv_next)
-      @. Mvold = Mv
+      @kcopy!(m, Mv, Mvold)  # Mvold ← Mv
       @kaxpy!(m, -α, Mv, Mv_next)
-      @. Mv = Mv_next
+      @kcopy!(m, Mv_next, Mv)  # Mv ← Mv_next
       MisI || mulorldiv!(v, M, Mv, ldiv)
       β = @kdotr(m, v, Mv)
       β < 0 && error("Preconditioner is not positive definite")

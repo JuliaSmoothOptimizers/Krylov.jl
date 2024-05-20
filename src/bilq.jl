@@ -329,19 +329,19 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       # Compute d̅ₖ.
       if iter == 1
         # d̅₁ = v₁
-        @. d̅ = vₖ
+        @kcopy!(n, vₖ, d̅)  # d̅ ← vₖ
       else
         # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * vₖ
         @kaxpby!(n, -cₖ, vₖ, conj(sₖ), d̅)
       end
 
       # Compute vₖ₊₁ and uₖ₊₁.
-      @. vₖ₋₁ = vₖ # vₖ₋₁ ← vₖ
-      @. uₖ₋₁ = uₖ # uₖ₋₁ ← uₖ
+      @kcopy!(n, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ
+      @kcopy!(n, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ
 
       if pᴴq ≠ 0
-        @. vₖ = q / βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
-        @. uₖ = p / conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
+        vₖ .= q ./ βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
+        uₖ .= p ./ conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
       end
 
       # Compute ⟨vₖ,vₖ₊₁⟩ and ‖vₖ₊₁‖

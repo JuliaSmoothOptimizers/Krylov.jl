@@ -235,7 +235,7 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
       # Initial ζ₁ and V₁
       β = @knrm2(n, r₀)
       z[1] = β
-      @. V[1] = r₀ / rNorm
+      V[1] .= r₀ ./ rNorm
 
       npass = npass + 1
       solver.inner_iter = 0
@@ -325,7 +325,7 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
             push!(V, S(undef, n))
             push!(z, zero(FC))
           end
-          @. V[inner_iter+1] = q / Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
+          V[inner_iter+1] .= q ./ Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
           z[inner_iter+1] = ζₖ₊₁
         end
       end

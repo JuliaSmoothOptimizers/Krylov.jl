@@ -276,8 +276,8 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
       end
       @kaxpy!(n, one(FC) / β, v, w)
 
-      @. r1 = r2
-      @. r2 = y
+      @kcopy!(n, r2, r1)  # r1 ← r2
+      @kcopy!(n, y, r2)   # r2 ← y
       MisI || mulorldiv!(v, M, r2, ldiv)
       oldβ = β
       β = @kdotr(n, r2, v)

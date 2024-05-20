@@ -326,14 +326,14 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       if iter == 1
         wₖ = wₖ₋₁
         @kaxpy!(n, one(FC), vₖ, wₖ)
-        @. wₖ = wₖ / δₖ
+        wₖ .= wₖ ./ δₖ
       end
       # w₂ = (v₂ - λ₁w₁) / δ₂
       if iter == 2
         wₖ = wₖ₋₂
         @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
         @kaxpy!(n, one(FC), vₖ, wₖ)
-        @. wₖ = wₖ / δₖ
+        wₖ .= wₖ ./ δₖ
       end
       # wₖ = (vₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
       if iter ≥ 3
@@ -341,7 +341,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
         wₖ = wₖ₋₂
         @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
         @kaxpy!(n, one(FC), vₖ, wₖ)
-        @. wₖ = wₖ / δₖ
+        wₖ .= wₖ ./ δₖ
       end
 
       # Compute solution xₖ.
@@ -349,12 +349,12 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       @kaxpy!(n, ζₖ, wₖ, x)
 
       # Compute vₖ₊₁ and uₖ₊₁.
-      @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
-      @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
+      @kcopy!(n, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ
+      @kcopy!(n, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ
 
       if pᴴq ≠ zero(FC)
-        @. vₖ = q / βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
-        @. uₖ = p / conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
+        vₖ .= q ./ βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
+        uₖ .= p ./ conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
       end
 
       # Compute τₖ₊₁ = τₖ + ‖vₖ₊₁‖²

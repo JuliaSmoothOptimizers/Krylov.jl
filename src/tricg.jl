@@ -369,22 +369,22 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
       if iter == 1
         # [ 1  0 ] [ gx₁ gy₁ ] = [ v₁ 0  ]
         # [ δ̄₁ 1 ] [ gx₂ gy₂ ]   [ 0  u₁ ]
-        @. gx₂ₖ₋₁ = vₖ
-        @. gx₂ₖ   = - conj(δₖ) * gx₂ₖ₋₁
-        @. gy₂ₖ   = uₖ
+        @kcopy!(m, vₖ, gx₂ₖ₋₁)  # gx₂ₖ₋₁ ← vₖ
+        gx₂ₖ .= -conj(δₖ) .* gx₂ₖ₋₁
+        @kcopy!(n, uₖ, gy₂ₖ)  # gy₂ₖ ← uₖ
       else
         # [ 0  σ̄ₖ 1  0 ] [ gx₂ₖ₋₃ gy₂ₖ₋₃ ] = [ vₖ 0  ]
         # [ η̄ₖ λ̄ₖ δ̄ₖ 1 ] [ gx₂ₖ₋₂ gy₂ₖ₋₂ ]   [ 0  uₖ ]
         #                [ gx₂ₖ₋₁ gy₂ₖ₋₁ ]
         #                [ gx₂ₖ   gy₂ₖ   ]
-        @. gx₂ₖ₋₁ = conj(ηₖ) * gx₂ₖ₋₁ + conj(λₖ) * gx₂ₖ
-        @. gy₂ₖ₋₁ = conj(ηₖ) * gy₂ₖ₋₁ + conj(λₖ) * gy₂ₖ
+        gx₂ₖ₋₁ .= conj(ηₖ) .* gx₂ₖ₋₁ .+ conj(λₖ) .* gx₂ₖ
+        gy₂ₖ₋₁ .= conj(ηₖ) .* gy₂ₖ₋₁ .+ conj(λₖ) .* gy₂ₖ
 
-        @. gx₂ₖ = vₖ - conj(σₖ) * gx₂ₖ
-        @. gy₂ₖ =    - conj(σₖ) * gy₂ₖ
+        gx₂ₖ .= vₖ .- conj(σₖ) .* gx₂ₖ
+        gy₂ₖ .=    .- conj(σₖ) .* gy₂ₖ
 
-        @. gx₂ₖ₋₁ =    - gx₂ₖ₋₁ - conj(δₖ) * gx₂ₖ
-        @. gy₂ₖ₋₁ = uₖ - gy₂ₖ₋₁ - conj(δₖ) * gy₂ₖ
+        gx₂ₖ₋₁ .=    .- gx₂ₖ₋₁ .- conj(δₖ) .* gx₂ₖ
+        gy₂ₖ₋₁ .= uₖ .- gy₂ₖ₋₁ .- conj(δₖ) .* gy₂ₖ
 
         # g₂ₖ₋₃ == g₂ₖ and g₂ₖ₋₂ == g₂ₖ₋₁
         @kswap(gx₂ₖ₋₁, gx₂ₖ)
