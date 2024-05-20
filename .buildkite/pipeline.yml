@@ -98,3 +98,17 @@ steps:
         Pkg.instantiate()
         include("test/cpu/component_arrays.jl")'
     timeout_in_minutes: 30
+
+  - label: "CPUs -- LinearOperators.jl"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1.10"
+    agents:
+      queue: "juliaecosystem"
+    command: |
+      julia --color=yes --project -e '
+        using Pkg
+        Pkg.add("LinearOperators")
+        Pkg.instantiate()
+        include("test/cpu/linear_operators.jl")'
+    timeout_in_minutes: 30
