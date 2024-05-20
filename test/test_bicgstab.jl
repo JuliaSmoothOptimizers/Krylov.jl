@@ -62,7 +62,7 @@
       A, b, M = square_preconditioned(FC=FC)
       (x, stats) = bicgstab(A, b, M=M)
       r = b - A * x
-      resid = norm(r) / norm(b)
+      resid = norm(M * r) / norm(M * b)
       @test(resid ≤ bicgstab_tol)
       @test(stats.solved)
 
@@ -78,7 +78,7 @@
       A, b, M, N = two_preconditioners(500, 32)
       (x, stats) = bicgstab(A, b, M=M, N=N)
       r = b - A * x
-      resid = norm(r) / norm(b)
+      resid = norm(M * r) / norm(M * b)
       @test(resid ≤ bicgstab_tol)
       @test(stats.solved)
 
