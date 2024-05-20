@@ -148,6 +148,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
     # Define the blocks D1 and D2
     D1 = view(D, 1:p, :)
     D2 = view(D, p+1:2p, :)
+    trans = FC <: AbstractFloat ? 'T' : 'C'
 
     # Coefficients for mul!
     α = -one(FC)
@@ -263,7 +264,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         for i = 1 : inner_iter-1
           D1 .= R[nr+i]
           D2 .= R[nr+i+1]
-          @kormqr!('L', 'T', H[i], τ[i], D)
+          @kormqr!('L', trans, H[i], τ[i], D)
           R[nr+i] .= D1
           R[nr+i+1] .= D2
         end
@@ -276,7 +277,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         # Update Zₖ = (Qₖ)ᴴΓE₁ = (Λ₁, ..., Λₖ, Λbarₖ₊₁)
         D1 .= Z[inner_iter]
         D2 .= zero(FC)
-        @kormqr!('L', 'T', H[inner_iter], τ[inner_iter], D)
+        @kormqr!('L', trans, H[inner_iter], τ[inner_iter], D)
         Z[inner_iter] .= D1
 
         # Update residual norm estimate.
