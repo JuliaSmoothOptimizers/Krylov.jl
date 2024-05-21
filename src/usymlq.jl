@@ -153,6 +153,7 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       stats.niter = 0
       stats.solved = true
       stats.inconsistent = false
+      stats.storage = sizeof(solver)
       stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
@@ -350,6 +351,7 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     stats.niter = iter
     stats.solved = solved_lq || solved_cg
     stats.inconsistent = false
+    stats.storage = sizeof(solver)
     stats.timer = start_time |> ktimer
     stats.status = status
     return solver

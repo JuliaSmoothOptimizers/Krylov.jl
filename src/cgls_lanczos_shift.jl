@@ -151,6 +151,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     if β == 0
       stats.niter = 0
       stats.solved = true
+      stats.storage = sizeof(solver)
       stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       return solver
@@ -261,6 +262,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     # Update stats
     stats.niter = iter
     stats.solved = solved
+    stats.storage = sizeof(solver)
     stats.timer = start_time |> ktimer
     stats.status = status
     return solver

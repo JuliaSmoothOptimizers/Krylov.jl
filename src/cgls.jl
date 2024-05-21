@@ -152,6 +152,7 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     if bNorm == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.storage = sizeof(solver)
       stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       history && push!(rNorms, zero(T))
@@ -228,6 +229,7 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = false
+    stats.storage = sizeof(solver)
     stats.timer = start_time |> ktimer
     stats.status = status
     return solver

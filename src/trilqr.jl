@@ -446,6 +446,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     stats.niter = iter
     stats.solved_primal = solved_primal
     stats.solved_dual = solved_dual
+    stats.storage = sizeof(solver)
     stats.timer = start_time |> ktimer
     stats.status = status
     return solver

@@ -178,6 +178,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     if β₁ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.storage = sizeof(solver)
       stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       history && push!(rNorms, β₁)
@@ -328,6 +329,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
         # Aᴴb = 0 so x = 0 is a minimum least-squares solution
         stats.niter = 1
         stats.solved, stats.inconsistent = true, true
+        stats.storage = sizeof(solver)
         stats.timer = start_time |> ktimer
         stats.status = "x is a minimum least-squares solution"
         solver.warm_start = false
@@ -378,6 +380,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = !zero_resid
+    stats.storage = sizeof(solver)
     stats.timer = start_time |> ktimer
     stats.status = status
     return solver

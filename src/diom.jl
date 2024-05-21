@@ -154,6 +154,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     if rNorm == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.storage = sizeof(solver)
       stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
@@ -311,6 +312,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = false
+    stats.storage = sizeof(solver)
     stats.timer = start_time |> ktimer
     stats.status = status
     return solver
