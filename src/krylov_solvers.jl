@@ -89,7 +89,7 @@ function MinresSolver(m, n, S; window :: Int=5)
   y  = S(undef, n)
   v  = S(undef, 0)
   err_vec = zeros(T, window)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = MinresSolver{T,FC,S}(m, n, Δx, x, r1, r2, w1, w2, y, v, err_vec, false, stats)
   return solver
 end
@@ -138,7 +138,7 @@ function MinaresSolver(m, n, S)
   dₖ₋₂ = S(undef, n)
   dₖ₋₁ = S(undef, n)
   q    = S(undef, n)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = MinaresSolver{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
   return solver
 end
@@ -181,7 +181,7 @@ function CgSolver(m, n, S)
   p  = S(undef, n)
   Ap = S(undef, n)
   z  = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = CgSolver{T,FC,S}(m, n, Δx, x, r, p, Ap, z, false, stats)
   return solver
 end
@@ -226,7 +226,7 @@ function CrSolver(m, n, S)
   q  = S(undef, n)
   Ar = S(undef, n)
   Mq = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = CrSolver{T,FC,S}(m, n, Δx, x, r, p, q, Ar, Mq, false, stats)
   return solver
 end
@@ -275,7 +275,7 @@ function CarSolver(m, n, S)
   t  = S(undef, n)
   u  = S(undef, n)
   Mu = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = CarSolver{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
   return solver
 end
@@ -326,7 +326,7 @@ function SymmlqSolver(m, n, S; window :: Int=5)
   clist   = zeros(T, window)
   zlist   = zeros(T, window)
   sprod   = ones(T, window)
-  stats = SymmlqStats(0, false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), 0.0, "unknown")
+  stats = SymmlqStats(0, false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), 0, 0.0, "unknown")
   solver = SymmlqSolver{T,FC,S}(m, n, Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, false, stats)
   return solver
 end
@@ -371,7 +371,7 @@ function CgLanczosSolver(m, n, S)
   p       = S(undef, n)
   Mv_next = S(undef, n)
   v       = S(undef, 0)
-  stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), 0.0, "unknown")
+  stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), 0, 0.0, "unknown")
   solver = CgLanczosSolver{T,FC,S}(m, n, Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
   return solver
 end
@@ -429,7 +429,7 @@ function CgLanczosShiftSolver(m, n, nshifts, S)
   indefinite = BitVector(undef, nshifts)
   converged  = BitVector(undef, nshifts)
   not_cv     = BitVector(undef, nshifts)
-  stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
+  stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0, 0.0, "unknown")
   solver = CgLanczosShiftSolver{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return solver
 end
@@ -476,7 +476,7 @@ function MinresQlpSolver(m, n, S)
   x       = S(undef, n)
   p       = S(undef, n)
   vₖ      = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = MinresQlpSolver{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
   return solver
 end
@@ -529,7 +529,7 @@ function DqgmresSolver(m, n, memory, S)
   c  = Vector{T}(undef, memory)
   s  = Vector{FC}(undef, memory)
   H  = Vector{FC}(undef, memory+1)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = DqgmresSolver{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
   return solver
 end
@@ -580,7 +580,7 @@ function DiomSolver(m, n, memory, S)
   V  = S[S(undef, n) for i = 1 : memory]
   L  = Vector{FC}(undef, memory-1)
   H  = Vector{FC}(undef, memory)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = DiomSolver{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
   return solver
 end
@@ -629,7 +629,7 @@ function UsymlqSolver(m, n, S)
   vₖ₋₁ = S(undef, m)
   vₖ   = S(undef, m)
   q    = S(undef, m)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = UsymlqSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
   return solver
 end
@@ -680,7 +680,7 @@ function UsymqrSolver(m, n, S)
   uₖ₋₁ = S(undef, n)
   uₖ   = S(undef, n)
   p    = S(undef, n)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = UsymqrSolver{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
   return solver
 end
@@ -743,7 +743,7 @@ function TricgSolver(m, n, S)
   Δy      = S(undef, 0)
   uₖ      = S(undef, 0)
   vₖ      = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = TricgSolver{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return solver
 end
@@ -814,7 +814,7 @@ function TrimrSolver(m, n, S)
   Δy      = S(undef, 0)
   uₖ      = S(undef, 0)
   vₖ      = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = TrimrSolver{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return solver
 end
@@ -871,7 +871,7 @@ function TrilqrSolver(m, n, S)
   y    = S(undef, m)
   wₖ₋₃ = S(undef, m)
   wₖ₋₂ = S(undef, m)
-  stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
+  stats = AdjointStats(0, false, false, T[], T[], 0, 0.0, "unknown")
   solver = TrilqrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
   return solver
 end
@@ -920,7 +920,7 @@ function CgsSolver(m, n, S)
   ts = S(undef, n)
   yz = S(undef, 0)
   vw = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = CgsSolver{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
   return solver
 end
@@ -969,7 +969,7 @@ function BicgstabSolver(m, n, S)
   qd = S(undef, n)
   yz = S(undef, 0)
   t  = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = BicgstabSolver{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
   return solver
 end
@@ -1022,7 +1022,7 @@ function BilqSolver(m, n, S)
   d̅    = S(undef, n)
   t    = S(undef, 0)
   s    = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = BilqSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
   return solver
 end
@@ -1077,7 +1077,7 @@ function QmrSolver(m, n, S)
   wₖ₋₁ = S(undef, n)
   t    = S(undef, 0)
   s    = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = QmrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
   return solver
 end
@@ -1134,7 +1134,7 @@ function BilqrSolver(m, n, S)
   d̅    = S(undef, n)
   wₖ₋₃ = S(undef, n)
   wₖ₋₂ = S(undef, n)
-  stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
+  stats = AdjointStats(0, false, false, T[], T[], 0, 0.0, "unknown")
   solver = BilqrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, false, stats)
   return solver
 end
@@ -1176,7 +1176,7 @@ function CglsSolver(m, n, S)
   r  = S(undef, m)
   q  = S(undef, m)
   Mr = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = CglsSolver{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
   return solver
 end
@@ -1222,7 +1222,7 @@ function CrlsSolver(m, n, S)
   Ap = S(undef, m)
   s  = S(undef, m)
   Ms = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = CrlsSolver{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
   return solver
 end
@@ -1266,7 +1266,7 @@ function CgneSolver(m, n, S)
   q   = S(undef, m)
   s   = S(undef, 0)
   z   = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = CgneSolver{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
   return solver
 end
@@ -1310,7 +1310,7 @@ function CrmrSolver(m, n, S)
   q   = S(undef, m)
   Nq  = S(undef, 0)
   s   = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = CrmrSolver{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
   return solver
 end
@@ -1358,7 +1358,7 @@ function LslqSolver(m, n, S; window :: Int=5)
   u   = S(undef, 0)
   v   = S(undef, 0)
   err_vec = zeros(T, window)
-  stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], 0.0, "unknown")
+  stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], 0, 0.0, "unknown")
   solver = LslqSolver{T,FC,S}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
   return solver
 end
@@ -1406,7 +1406,7 @@ function LsqrSolver(m, n, S; window :: Int=5)
   u   = S(undef, 0)
   v   = S(undef, 0)
   err_vec = zeros(T, window)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = LsqrSolver{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
   return solver
 end
@@ -1456,7 +1456,7 @@ function LsmrSolver(m, n, S; window :: Int=5)
   u    = S(undef, 0)
   v    = S(undef, 0)
   err_vec = zeros(T, window)
-  stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), 0.0, "unknown")
+  stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), 0, 0.0, "unknown")
   solver = LsmrSolver{T,FC,S}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
   return solver
 end
@@ -1506,7 +1506,7 @@ function LnlqSolver(m, n, S)
   u   = S(undef, 0)
   v   = S(undef, 0)
   q   = S(undef, 0)
-  stats = LNLQStats(0, false, T[], false, T[], T[], 0.0, "unknown")
+  stats = LNLQStats(0, false, T[], false, T[], T[], 0, 0.0, "unknown")
   solver = LnlqSolver{T,FC,S}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
   return solver
 end
@@ -1556,7 +1556,7 @@ function CraigSolver(m, n, S)
   u   = S(undef, 0)
   v   = S(undef, 0)
   w2  = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = CraigSolver{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
   return solver
 end
@@ -1610,7 +1610,7 @@ function CraigmrSolver(m, n, S)
   u    = S(undef, 0)
   v    = S(undef, 0)
   q    = S(undef, 0)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = CraigmrSolver{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
   return solver
 end
@@ -1664,7 +1664,7 @@ function GmresSolver(m, n, memory, S)
   s  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = GmresSolver{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
   return solver
 end
@@ -1718,7 +1718,7 @@ function FgmresSolver(m, n, memory, S)
   s  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = FgmresSolver{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
   return solver
 end
@@ -1769,7 +1769,7 @@ function FomSolver(m, n, memory, S)
   l  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   U  = Vector{FC}(undef, div(memory * (memory+1), 2))
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = FomSolver{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
   return solver
 end
@@ -1834,7 +1834,7 @@ function GpmrSolver(m, n, memory, S)
   gc = Vector{T}(undef, 4 * memory)
   zt = Vector{FC}(undef, 2 * memory)
   R  = Vector{FC}(undef, memory * (2 * memory + 1))
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = GpmrSolver{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
   return solver
 end
