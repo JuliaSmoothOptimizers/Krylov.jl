@@ -184,6 +184,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     if rNorm == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.storage = sizeof(solver)
       stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
@@ -259,6 +260,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = inconsistent
+    stats.storage = sizeof(solver)
     stats.timer = ktimer(start_time)
     stats.status = status
     return solver

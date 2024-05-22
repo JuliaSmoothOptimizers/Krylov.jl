@@ -186,6 +186,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     if rNorm == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.storage = sizeof(solver)
       stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
@@ -197,6 +198,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     if ρ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = false, false
+      stats.storage = sizeof(solver)
       stats.timer = ktimer(start_time)
       stats.status = "Breakdown bᴴc = 0"
       solver.warm_start =false
@@ -285,6 +287,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = false
+    stats.storage = sizeof(solver)
     stats.timer = ktimer(start_time)
     stats.status = status
     return solver

@@ -207,6 +207,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       stats.solved, stats.inconsistent = true, false
       history && push!(rNorms, β)
       history && push!(ArNorms, zero(T))
+      stats.storage = sizeof(solver)
       stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       return solver
@@ -235,6 +236,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       stats.solved, stats.inconsistent = true, false
       history && push!(rNorms, β)
       history && push!(ArNorms, zero(T))
+      stats.storage = sizeof(solver)
       stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a minimum least-squares solution"
       return solver
@@ -392,6 +394,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = inconsistent
+    stats.storage = sizeof(solver)
     stats.timer = ktimer(start_time)
     stats.status = status
     return solver
