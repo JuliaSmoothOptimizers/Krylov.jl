@@ -164,7 +164,13 @@ function copy_triangle(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, k::Int) whe
       end
     end
   else
-    copytrito!(R, Q, 'U')
+    mR, nR = size(R)
+    mQ, nQ = size(Q)
+    if (mR == mQ) && (nR == nQ)
+      copytrito!(R, Q, 'U')
+    else
+      copytrito!(R, view(Q, 1:k, 1:k), 'U')
+    end
   end
   return R
 end

@@ -22,7 +22,7 @@ export qmr, qmr!
 
 """
     (x, stats) = qmr(A, b::AbstractVector{FC};
-                     c::AbstractVector{FC}=b, atol::T=√eps(T),
+                     c::AbstractVector{FC}=b, M=I, N=I, ldiv::Bool=false, atol::T=√eps(T),
                      rtol::T=√eps(T), itmax::Int=0, timemax::Float64=Inf, verbose::Int=0,
                      history::Bool=false, callback=solver->false, iostream::IO=kstdout)
 
@@ -38,6 +38,7 @@ Solve the square linear system Ax = b of size n using QMR.
 QMR is based on the Lanczos biorthogonalization process and requires two initial vectors `b` and `c`.
 The relation `bᴴc ≠ 0` must be satisfied and by default `c = b`.
 When `A` is Hermitian and `b = c`, QMR is equivalent to MINRES.
+QMR requires support for `adjoint(M)` and `adjoint(N)` if preconditioners are provided.
 
 #### Input arguments
 
@@ -51,6 +52,9 @@ When `A` is Hermitian and `b = c`, QMR is equivalent to MINRES.
 #### Keyword arguments
 
 * `c`: the second initial vector of length `n` required by the Lanczos biorthogonalization process;
+* `M`: linear operator that models a nonsingular matrix of size `n` used for left preconditioning;
+* `N`: linear operator that models a nonsingular matrix of size `n` used for right preconditioning;
+* `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
@@ -89,6 +93,9 @@ def_args_qmr = (:(A                    ),
 def_optargs_qmr = (:(x0::AbstractVector),)
 
 def_kwargs_qmr = (:(; c::AbstractVector{FC} = b ),
+                  :(; M = I                     ),
+                  :(; N = I                     ),
+                  :(; ldiv::Bool = false        ),
                   :(; atol::T = √eps(T)         ),
                   :(; rtol::T = √eps(T)         ),
                   :(; itmax::Int = 0            ),
@@ -102,7 +109,7 @@ def_kwargs_qmr = mapreduce(extract_parameters, vcat, def_kwargs_qmr)
 
 args_qmr = (:A, :b)
 optargs_qmr = (:x0,)
-kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
   function qmr($(def_args_qmr...), $(def_optargs_qmr...); $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
@@ -138,25 +145,41 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "QMR: system of size %d\n", n)
 
+    # Check M = Iₙ and N = Iₙ
+    MisI = (M === I)
+    NisI = (N === I)
+
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
     ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
 
-    # Compute the adjoint of A
+    # Compute the adjoint of A, M and N
     Aᴴ = A'
+    Mᴴ = M'
+    Nᴴ = N'
 
     # Set up workspace.
+    allocate_if(!MisI, solver, :t, S, n)
+    allocate_if(!NisI, solver, :s, S, n)
     uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
     Δx, x, wₖ₋₂, wₖ₋₁, stats = solver.Δx, solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.stats
     warm_start = solver.warm_start
     rNorms = stats.residuals
     reset!(stats)
     r₀ = warm_start ? q : b
+    Mᴴuₖ = MisI ? uₖ : solver.t
+    t = MisI ? q : solver.t
+    Nvₖ = NisI ? vₖ : solver.s
+    s = NisI ? p : solver.s
 
     if warm_start
       mul!(r₀, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), r₀)
+    end
+    if !MisI
+      mulorldiv!(solver.t, M, r₀, ldiv)
+      r₀ = solver.t
     end
 
     # Initial solution x₀ and residual norm ‖r₀‖.
@@ -177,10 +200,6 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
     iter = 0
     itmax == 0 && (itmax = 2*n)
 
-    ε = atol + rtol * rNorm
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
-
     # Initialize the Lanczos biorthogonalization process.
     cᴴb = @kdot(n, c, r₀)  # ⟨c,r₀⟩
     if cᴴb == 0
@@ -192,6 +211,10 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
       solver.warm_start = false
       return solver
     end
+
+    ε = atol + rtol * rNorm
+    (verbose > 0) && @printf(iostream, "%5s  %8s  %7s  %5s\n", "k", "αₖ", "‖rₖ‖", "timer")
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %.2fs\n", iter, cᴴb, rNorm, ktimer(start_time))
 
     βₖ = √(abs(cᴴb))             # β₁γ₁ = cᴴ(b - Ax₀)
     γₖ = cᴴb / βₖ                # β₁γ₁ = cᴴ(b - Ax₀)
@@ -219,23 +242,30 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
       iter = iter + 1
 
       # Continue the Lanczos biorthogonalization process.
-      # AVₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
-      # AᴴUₖ = Uₖ(Tₖ)ᴴ + γ̄ₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
+      # MANVₖ    = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
+      # NᴴAᴴMᴴUₖ = Uₖ(Tₖ)ᴴ + γ̄ₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
-      mul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
-      mul!(p, Aᴴ, uₖ)  # Forms uₖ₊₁ : p ← Aᴴuₖ
+      # Forms vₖ₊₁ : q ← MANvₖ
+      NisI || mulorldiv!(Nvₖ, N, vₖ, ldiv)
+      mul!(t, A, Nvₖ)
+      MisI || mulorldiv!(q, M, t, ldiv)
+
+      # Forms uₖ₊₁ : p ← NᴴAᴴMᴴuₖ
+      MisI || mulorldiv!(Mᴴuₖ, Mᴴ, uₖ, ldiv)
+      mul!(s, Aᴴ, Mᴴuₖ)
+      NisI || mulorldiv!(p, Nᴴ, s, ldiv)
 
       @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
       @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
 
-      αₖ = @kdot(n, uₖ, q)      # αₖ = ⟨uₖ,q⟩
+      αₖ = @kdot(n, uₖ, q)  # αₖ = ⟨uₖ,q⟩
 
-      @kaxpy!(n, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
-      @kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
+      @kaxpy!(n, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
+      @kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
 
-      pᴴq = @kdot(n, p, q)      # pᴴq  = ⟨p,q⟩
-      βₖ₊₁ = √(abs(pᴴq))        # βₖ₊₁ = √(|pᴴq|)
-      γₖ₊₁ = pᴴq / βₖ₊₁         # γₖ₊₁ = pᴴq / βₖ₊₁
+      pᴴq = @kdot(n, p, q)  # pᴴq  = ⟨p,q⟩
+      βₖ₊₁ = √(abs(pᴴq))    # βₖ₊₁ = √(|pᴴq|)
+      γₖ₊₁ = pᴴq / βₖ₊₁     # γₖ₊₁ = pᴴq / βₖ₊₁
 
       # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
       #                                            [ Oᵀ ]
@@ -296,14 +326,14 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
       if iter == 1
         wₖ = wₖ₋₁
         @kaxpy!(n, one(FC), vₖ, wₖ)
-        @. wₖ = wₖ / δₖ
+        wₖ .= wₖ ./ δₖ
       end
       # w₂ = (v₂ - λ₁w₁) / δ₂
       if iter == 2
         wₖ = wₖ₋₂
         @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
         @kaxpy!(n, one(FC), vₖ, wₖ)
-        @. wₖ = wₖ / δₖ
+        wₖ .= wₖ ./ δₖ
       end
       # wₖ = (vₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
       if iter ≥ 3
@@ -311,7 +341,7 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
         wₖ = wₖ₋₂
         @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
         @kaxpy!(n, one(FC), vₖ, wₖ)
-        @. wₖ = wₖ / δₖ
+        wₖ .= wₖ ./ δₖ
       end
 
       # Compute solution xₖ.
@@ -319,12 +349,12 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
       @kaxpy!(n, ζₖ, wₖ, x)
 
       # Compute vₖ₊₁ and uₖ₊₁.
-      @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
-      @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
+      @kcopy!(n, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ
+      @kcopy!(n, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ
 
       if pᴴq ≠ zero(FC)
-        @. vₖ = q / βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
-        @. uₖ = p / conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
+        vₖ .= q ./ βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
+        uₖ .= p ./ conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
       end
 
       # Compute τₖ₊₁ = τₖ + ‖vₖ₊₁‖²
@@ -357,7 +387,7 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
       breakdown = !solved && (pᴴq == 0)
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %.2fs\n", iter, αₖ, rNorm, ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
 
@@ -369,6 +399,10 @@ kwargs_qmr = (:c, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback,
     overtimed           && (status = "time limit exceeded")
 
     # Update x
+    if !NisI
+      copyto!(solver.s, x)
+      mulorldiv!(x, N, solver.s, ldiv)
+    end
     warm_start && @kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 

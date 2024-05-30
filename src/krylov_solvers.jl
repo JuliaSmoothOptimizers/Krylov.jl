@@ -1002,6 +1002,8 @@ mutable struct BilqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   Δx         :: S
   x          :: S
   d̅          :: S
+  t          :: S
+  s          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
@@ -1018,8 +1020,10 @@ function BilqSolver(m, n, S)
   Δx   = S(undef, 0)
   x    = S(undef, n)
   d̅    = S(undef, n)
+  t    = S(undef, 0)
+  s    = S(undef, 0)
   stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = BilqSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, false, stats)
+  solver = BilqSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
   return solver
 end
 
@@ -1052,6 +1056,8 @@ mutable struct QmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   x          :: S
   wₖ₋₂       :: S
   wₖ₋₁       :: S
+  t          :: S
+  s          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
@@ -1069,8 +1075,10 @@ function QmrSolver(m, n, S)
   x    = S(undef, n)
   wₖ₋₂ = S(undef, n)
   wₖ₋₁ = S(undef, n)
+  t    = S(undef, 0)
+  s    = S(undef, 0)
   stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = QmrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, false, stats)
+  solver = QmrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
   return solver
 end
 

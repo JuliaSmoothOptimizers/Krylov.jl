@@ -38,7 +38,8 @@ USYMQR solves Ax = b if it is consistent.
 USYMQR is based on the orthogonal tridiagonalization process and requires two initial nonzero vectors `b` and `c`.
 The vector `c` is only used to initialize the process and a default value can be `b` or `Aᴴb` depending on the shape of `A`.
 The residual norm ‖b - Ax‖ monotonously decreases in USYMQR.
-It's considered as a generalization of MINRES.
+When `A` is Hermitian and `b = c`, QMR is equivalent to MINRES.
+USYMQR is considered as a generalization of MINRES.
 
 It can also be applied to under-determined and over-determined problems.
 USYMQR finds the minimum-norm solution if problems are inconsistent.
@@ -278,14 +279,14 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       if iter == 1
         wₖ = wₖ₋₁
         @kaxpy!(n, one(FC), uₖ, wₖ)
-        @. wₖ = wₖ / δₖ
+        wₖ .= wₖ ./ δₖ
       end
       # w₂ = (u₂ - λ₁w₁) / δ₂
       if iter == 2
         wₖ = wₖ₋₂
         @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
         @kaxpy!(n, one(FC), uₖ, wₖ)
-        @. wₖ = wₖ / δₖ
+        wₖ .= wₖ ./ δₖ
       end
       # wₖ = (uₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
       if iter ≥ 3
@@ -293,7 +294,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
         wₖ = wₖ₋₂
         @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
         @kaxpy!(n, one(FC), uₖ, wₖ)
-        @. wₖ = wₖ / δₖ
+        wₖ .= wₖ ./ δₖ
       end
 
       # Compute solution xₖ.
@@ -309,14 +310,14 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       history && push!(AᴴrNorms, AᴴrNorm)
 
       # Compute uₖ₊₁ and uₖ₊₁.
-      @. vₖ₋₁ = vₖ # vₖ₋₁ ← vₖ
-      @. uₖ₋₁ = uₖ # uₖ₋₁ ← uₖ
+      @kcopy!(m, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ
+      @kcopy!(n, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
-        @. vₖ = q / βₖ₊₁ # βₖ₊₁vₖ₊₁ = q
+        vₖ .= q ./ βₖ₊₁ # βₖ₊₁vₖ₊₁ = q
       end
       if γₖ₊₁ ≠ zero(T)
-        @. uₖ = p / γₖ₊₁ # γₖ₊₁uₖ₊₁ = p
+        uₖ .= p ./ γₖ₊₁ # γₖ₊₁uₖ₊₁ = p
       end
 
       # Update directions for x.

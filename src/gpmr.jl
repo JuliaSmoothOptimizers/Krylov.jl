@@ -261,12 +261,12 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     # βv₁ = Cb
     β = @knrm2(m, b₀)
     β ≠ 0 || error("b must be nonzero")
-    @. V[1] = b₀ / β
+    V[1] .= b₀ ./ β
 
     # γu₁ = Dc
     γ = @knrm2(n, c₀)
     γ ≠ 0 || error("c must be nonzero")
-    @. U[1] = c₀ / γ
+    U[1] .= c₀ ./ γ
 
     # Compute ‖r₀‖² = γ² + β²
     rNorm = sqrt(γ^2 + β^2)
@@ -479,7 +479,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
 
         # hₖ₊₁.ₖ ≠ 0
         if Haux > btol
-          @. V[k+1] = q / Haux  # hₖ₊₁.ₖvₖ₊₁ = q
+          V[k+1] .= q ./ Haux  # hₖ₊₁.ₖvₖ₊₁ = q
         else
           # Breakdown -- hₖ₊₁.ₖ = ‖q‖₂ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
           V[k+1] .= zero(FC)  # vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
@@ -487,7 +487,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
 
         # fₖ₊₁.ₖ ≠ 0
         if Faux > btol
-          @. U[k+1] = p / Faux  # fₖ₊₁.ₖuₖ₊₁ = p
+          U[k+1] .= p ./ Faux  # fₖ₊₁.ₖuₖ₊₁ = p
         else
           # Breakdown -- fₖ₊₁.ₖ = ‖p‖₂ = 0 and Bvₖ ∈ Span{u₁, ..., uₖ}
           U[k+1] .= zero(FC)  # uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}

@@ -300,7 +300,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
         # Compute d̅ₖ.
         if iter == 1
           # d̅₁ = u₁
-          @. d̅ = uₖ
+          @kcopy!(n, uₖ, d̅)  # d̅ ← uₖ
         else
           # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
           @kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
@@ -351,14 +351,14 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
         if iter == 2
           wₖ₋₁ = wₖ₋₂
           @kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
-          @. wₖ₋₁ = vₖ₋₁ / conj(δₖ₋₁)
+          wₖ₋₁ .= vₖ₋₁ ./ conj(δₖ₋₁)
         end
         # w₂ = (v₂ - λ̄₁w₁) / δ̄₂
         if iter == 3
           wₖ₋₁ = wₖ₋₃
           @kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
           @kaxpy!(m, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
-          @. wₖ₋₁ = wₖ₋₁ / conj(δₖ₋₁)
+          wₖ₋₁ .= wₖ₋₁ ./ conj(δₖ₋₁)
         end
         # wₖ₋₁ = (vₖ₋₁ - λ̄ₖ₋₂wₖ₋₂ - ϵ̄ₖ₋₃wₖ₋₃) / δ̄ₖ₋₁
         if iter ≥ 4
@@ -366,7 +366,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
           wₖ₋₁ = wₖ₋₃
           @kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
           @kaxpy!(m, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
-          @. wₖ₋₁ = wₖ₋₁ / conj(δₖ₋₁)
+          wₖ₋₁ .= wₖ₋₁ ./ conj(δₖ₋₁)
         end
 
         if iter ≥ 3
@@ -399,14 +399,14 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       end
 
       # Compute uₖ₊₁ and uₖ₊₁.
-      @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
-      @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
+      @kcopy!(m, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ
+      @kcopy!(n, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
-        @. vₖ = q / βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
+        vₖ .= q ./ βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
       end
       if γₖ₊₁ ≠ zero(T)
-        @. uₖ = p / γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
+        uₖ .= p ./ γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
       end
 
       # Update ϵₖ₋₃, λₖ₋₂, δbarₖ₋₁, cₖ₋₁, sₖ₋₁, γₖ and βₖ.

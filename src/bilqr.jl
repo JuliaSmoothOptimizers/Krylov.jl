@@ -316,7 +316,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
         # Compute d̅ₖ.
         if iter == 1
           # d̅₁ = v₁
-          @. d̅ = vₖ
+          @kcopy!(n, vₖ, d̅)  # d̅ ← vₖ
         else
           # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * vₖ
           @kaxpby!(n, -cₖ, vₖ, conj(sₖ), d̅)
@@ -375,14 +375,14 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
         if iter == 2
           wₖ₋₁ = wₖ₋₂
           @kaxpy!(n, one(FC), uₖ₋₁, wₖ₋₁)
-          @. wₖ₋₁ = uₖ₋₁ / conj(δₖ₋₁)
+          wₖ₋₁ .= uₖ₋₁ ./ conj(δₖ₋₁)
         end
         # w₂ = (u₂ - λ̄₁w₁) / δ̄₂
         if iter == 3
           wₖ₋₁ = wₖ₋₃
           @kaxpy!(n, one(FC), uₖ₋₁, wₖ₋₁)
           @kaxpy!(n, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
-          @. wₖ₋₁ = wₖ₋₁ / conj(δₖ₋₁)
+          wₖ₋₁ .= wₖ₋₁ ./ conj(δₖ₋₁)
         end
         # wₖ₋₁ = (uₖ₋₁ - λ̄ₖ₋₂wₖ₋₂ - ϵ̄ₖ₋₃wₖ₋₃) / δ̄ₖ₋₁
         if iter ≥ 4
@@ -390,7 +390,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
           wₖ₋₁ = wₖ₋₃
           @kaxpy!(n, one(FC), uₖ₋₁, wₖ₋₁)
           @kaxpy!(n, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
-          @. wₖ₋₁ = wₖ₋₁ / conj(δₖ₋₁)
+          wₖ₋₁ .= wₖ₋₁ ./ conj(δₖ₋₁)
         end
 
         if iter ≥ 3
@@ -421,12 +421,12 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       end
 
       # Compute vₖ₊₁ and uₖ₊₁.
-      @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
-      @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
+      @kcopy!(n, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ
+      @kcopy!(n, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ
 
       if pᴴq ≠ zero(FC)
-        @. vₖ = q / βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
-        @. uₖ = p / conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
+        vₖ .= q ./ βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
+        uₖ .= p ./ conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
       end
 
       # Update ϵₖ₋₃, λₖ₋₂, δbarₖ₋₁, cₖ₋₁, sₖ₋₁, γₖ and βₖ.

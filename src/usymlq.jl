@@ -38,7 +38,8 @@ USYMLQ determines the least-norm solution of the consistent linear system Ax = b
 USYMLQ is based on the orthogonal tridiagonalization process and requires two initial nonzero vectors `b` and `c`.
 The vector `c` is only used to initialize the process and a default value can be `b` or `Aᴴb` depending on the shape of `A`.
 The error norm ‖x - x*‖ monotonously decreases in USYMLQ.
-It's considered as a generalization of SYMMLQ.
+When `A` is Hermitian and `b = c`, USYMLQ is equivalent to SYMMLQ.
+USYMLQ is considered as a generalization of SYMMLQ.
 
 It can also be applied to under-determined and over-determined problems.
 In all cases, problems must be consistent.
@@ -295,21 +296,21 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       # Compute d̅ₖ.
       if iter == 1
         # d̅₁ = u₁
-        @. d̅ = uₖ
+        @kcopy!(n, uₖ, d̅)  # d̅ ← vₖ
       else
         # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
         @kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
       end
 
       # Compute uₖ₊₁ and uₖ₊₁.
-      @. vₖ₋₁ = vₖ  # vₖ₋₁ ← vₖ
-      @. uₖ₋₁ = uₖ  # uₖ₋₁ ← uₖ
+      @kcopy!(m, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ
+      @kcopy!(n, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
-        @. vₖ = q / βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
+        vₖ .= q ./ βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
       end
       if γₖ₊₁ ≠ zero(T)
-        @. uₖ = p / γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
+        uₖ .= p ./ γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
       end
 
       # Compute USYMLQ residual norm

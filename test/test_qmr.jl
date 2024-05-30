@@ -58,6 +58,30 @@
       @test(resid ≤ qmr_tol)
       @test(stats.solved)
 
+      # Left preconditioning
+      A, b, M = square_preconditioned(FC=FC)
+      (x, stats) = qmr(A, b, M=M)
+      r = b - A * x
+      resid = norm(M * r) / norm(M * b)
+      @test(resid ≤ qmr_tol)
+      @test(stats.solved)
+
+      # Right preconditioning
+      A, b, N = square_preconditioned(FC=FC)
+      (x, stats) = qmr(A, b, N=N)
+      r = b - A * x
+      resid = norm(r) / norm(b)
+      @test(resid ≤ qmr_tol)
+      @test(stats.solved)
+
+      # Split preconditioning
+      A, b, M, N = two_preconditioners(FC=FC)
+      (x, stats) = qmr(A, b, M=M, N=N)
+      r = b - A * x
+      resid = norm(M * r) / norm(M * b)
+      @test(resid ≤ qmr_tol)
+      @test(stats.solved)
+
       # Test bᴴc == 0
       A, b, c = bc_breakdown(FC=FC)
       (x, stats) = qmr(A, b, c=c)
