@@ -106,13 +106,14 @@
     n = 5
     x = ones(n)
     d = ones(n); d[1:2:n] .= -1
-    @test_throws ErrorException Krylov.to_boundary(n, x, d, -1.0)
-    @test_throws ErrorException Krylov.to_boundary(n, x, d, 0.5)
-    @test_throws ErrorException Krylov.to_boundary(n, x, zeros(n), 1.0)
-    @test maximum(Krylov.to_boundary(n, x, d, 5.0)) ≈ 2.209975124224178
-    @test minimum(Krylov.to_boundary(n, x, d, 5.0)) ≈ -1.8099751242241782
-    @test maximum(Krylov.to_boundary(n, x, d, 5.0, flip=true)) ≈ 1.8099751242241782
-    @test minimum(Krylov.to_boundary(n, x, d, 5.0, flip=true)) ≈ -2.209975124224178
+    z = similar(d) # <-- placeholder for preconditioning storage
+    @test_throws ErrorException Krylov.to_boundary(n, x, d, z, -1.0)
+    @test_throws ErrorException Krylov.to_boundary(n, x, d, z, 0.5)
+    @test_throws ErrorException Krylov.to_boundary(n, x, zeros(n), z, 1.0)
+    @test maximum(Krylov.to_boundary(n, x, d, z, 5.0)) ≈ 2.209975124224178
+    @test minimum(Krylov.to_boundary(n, x, d, z, 5.0)) ≈ -1.8099751242241782
+    @test maximum(Krylov.to_boundary(n, x, d, z, 5.0, flip=true)) ≈ 1.8099751242241782
+    @test minimum(Krylov.to_boundary(n, x, d, z, 5.0, flip=true)) ≈ -2.209975124224178
   end
 
   @testset "kzeros" begin
