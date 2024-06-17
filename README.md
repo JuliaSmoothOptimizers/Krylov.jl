@@ -16,8 +16,8 @@
 [codecov-url]: https://app.codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl
 [doi-img]: https://joss.theoj.org/papers/10.21105/joss.05187/status.svg
 [doi-url]: https://doi.org/10.21105/joss.05187
-[downloads-img]: https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/Krylov
-[downloads-url]: https://pkgs.genieframework.com?packages=Krylov
+[downloads-img]: https://img.shields.io/badge/dynamic/json?url=http%3A%2F%2Fjuliapkgstats.com%2Fapi%2Fv1%2Fmonthly_downloads%2FKrylov&query=total_requests&suffix=%2Fmonth&label=Downloads
+[downloads-url]: https://juliapkgstats.com/pkg/Krylov
 
 ## How to Cite
 
