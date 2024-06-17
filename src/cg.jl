@@ -210,9 +210,15 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       (zero_curvature || solved) && continue
 
       α = γ / pAp
-
+ 
       # Compute step size to boundary if applicable.
-      σ = radius > 0 ? maximum(to_boundary(n, x, p, radius, dNorm2=pNorm²)) : α
+      if radius == 0
+         σ = α
+      elseif MisI 
+         σ = maximum(to_boundary(n, x, p, z, radius, dNorm2=pNorm²))
+      else
+         σ = maximum(to_boundary(n, x, p, z, radius, M=M, ldiv=!ldiv)) 
+      end
 
       kdisplay(iter, verbose) && @printf(iostream, "  %8.1e  %8.1e  %8.1e  %.2fs\n", pAp, α, σ, ktimer(start_time))
 
