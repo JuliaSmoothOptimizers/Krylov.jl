@@ -61,7 +61,7 @@ However, there is no need to specify $L$ and one may specify $P_c = LL^H$ or its
 
 ### Linear least-squares problems
 
-Methods concerned: [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).
+Methods concerned: [`CGLS`](@ref cgls), [`CGLS-LANCZOS-SHIFT`](@ref cgls_lanczos_shift), [`CRLS`](@ref crls), [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).
 
 | Formulation           | Without preconditioning              | With preconditioning                        |
 |:---------------------:|:------------------------------------:|:-------------------------------------------:|

@@ -32,6 +32,7 @@ for (KS, fun, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
   (:CrmrSolver          , :crmr!            , args_crmr            , def_args_crmr            , ()                , ()                    , kwargs_crmr            , def_kwargs_crmr            )
   (:CgSolver            , :cg!              , args_cg              , def_args_cg              , optargs_cg        , def_optargs_cg        , kwargs_cg              , def_kwargs_cg              )
   (:CgLanczosShiftSolver, :cg_lanczos_shift!, args_cg_lanczos_shift, def_args_cg_lanczos_shift, ()                , ()                    , kwargs_cg_lanczos_shift, def_kwargs_cg_lanczos_shift)
+  (:CglsLanczosShiftSolver, :cgls_lanczos_shift!, args_cgls_lanczos_shift, def_args_cgls_lanczos_shift, ()                , ()                    , kwargs_cgls_lanczos_shift, def_kwargs_cgls_lanczos_shift)
   (:CglsSolver          , :cgls!            , args_cgls            , def_args_cgls            , ()                , ()                    , kwargs_cgls            , def_kwargs_cgls            )
   (:CgLanczosSolver     , :cg_lanczos!      , args_cg_lanczos      , def_args_cg_lanczos      , optargs_cg_lanczos, def_optargs_cg_lanczos, kwargs_cg_lanczos      , def_kwargs_cg_lanczos      )
   (:BilqSolver          , :bilq!            , args_bilq            , def_args_bilq            , optargs_bilq      , def_optargs_bilq      , kwargs_bilq            , def_kwargs_bilq            )
