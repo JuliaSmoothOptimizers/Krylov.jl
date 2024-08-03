@@ -204,10 +204,10 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
           p = Ar # p = Aᴴr
           pNorm² = ArNorm * ArNorm
           mul!(q, Aᴴ, s)
-          α = min(ArNorm^2 / γ, maximum(to_boundary(n, x, p, radius, flip = false, dNorm2 = pNorm²))) # the quadratic is minimal in the direction Aᴴr for α = ‖Ar‖²/γ
+          α = min(ArNorm^2 / γ, maximum(to_boundary(n, x, p, Ms, radius, flip = false, dNorm2 = pNorm²))) # the quadratic is minimal in the direction Aᴴr for α = ‖Ar‖²/γ
         else
           pNorm² = pNorm * pNorm
-          σ = maximum(to_boundary(n, x, p, radius, flip = false, dNorm2 = pNorm²))
+          σ = maximum(to_boundary(n, x, p, Ms, radius, flip = false, dNorm2 = pNorm²))
           if α ≥ σ
             α = σ
             on_boundary = true
