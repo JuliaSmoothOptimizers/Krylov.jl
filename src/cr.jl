@@ -236,10 +236,10 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         (verbose > 0) && @printf(iostream, "radius = %8.1e > 0 and ‖x‖ = %8.1e\n", radius, xNorm)
         # find t1 > 0 and t2 < 0 such that ‖x + ti * p‖² = radius²  (i = 1, 2)
         xNorm² = xNorm * xNorm
-        t = to_boundary(n, x, p, radius; flip = false, xNorm2 = xNorm², dNorm2 = pNorm²)
+        t = to_boundary(n, x, p, Mq, radius; flip = false, xNorm2 = xNorm², dNorm2 = pNorm²)
         t1 = maximum(t) # > 0
         t2 = minimum(t) # < 0
-        tr = maximum(to_boundary(n, x, r, radius; flip = false, xNorm2 = xNorm², dNorm2 = rNorm²))
+        tr = maximum(to_boundary(n, x, r, Mq, radius; flip = false, xNorm2 = xNorm², dNorm2 = rNorm²))
         (verbose > 0) && @printf(iostream, "t1 = %8.1e, t2 = %8.1e and tr = %8.1e\n", t1, t2, tr)
 
         if abspAp ≤ γ * pNorm * @knrm2(n, q) # pᴴAp ≃ 0

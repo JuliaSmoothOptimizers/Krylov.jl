@@ -346,7 +346,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
       # the step ϕ/ρ is not necessarily positive
       σ = ϕ / ρ
       if radius > 0
-        t1, t2 = to_boundary(n, x, w, radius)
+        t1, t2 = to_boundary(n, x, w, v, radius)
         tmax, tmin = max(t1, t2), min(t1, t2)
         on_boundary = σ > tmax || σ < tmin
         σ = σ > 0 ? min(σ, tmax) : max(σ, tmin)
