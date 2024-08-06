@@ -14,16 +14,20 @@ jobs:
       fail-fast: false
       matrix:
         version: ['1.6', '1']
-        os: [ubuntu-latest, macos-13, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         arch: [x64]
         allow_failure: [false]
         include:
+          - version: '1'
+            os: macos-latest
+            arch: arm64
+            allow_failure: false
           - version: 'nightly'
             os: ubuntu-latest
             arch: x64
             allow_failure: true
           - version: 'nightly'
-            os: macos-13
+            os: macos-latest
             arch: x64
             allow_failure: true
           - version: 'nightly'
