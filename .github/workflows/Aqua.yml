@@ -14,4 +14,7 @@ jobs:
         with:
           version: '1'
       - name: Aqua.jl
-        run: julia --color=yes -e 'using Pkg; Pkg.add("Aqua"); Pkg.develop(path="."); using Aqua, Krylov; Aqua.test_all(Krylov)'
+        run: |
+          PKG_SRC_PATH=`pwd`
+          PKG_SRC_NAME=`basename -s ".jl" $PKG_SRC_PATH`
+          julia --color=yes -e "using Pkg; Pkg.add(\"Aqua\"); Pkg.develop(path=\"$PKG_SRC_PATH\"); using Aqua, $PKG_SRC_NAME; Aqua.test_all($PKG_SRC_NAME)"
