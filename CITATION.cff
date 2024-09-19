@@ -23,7 +23,7 @@ identifiers:
     value: 10.5281/zenodo.822073
   - description: JOSS paper
     type: doi
-    value: 10.21105/joss.05187"
+    value: 10.21105/joss.05187
 keywords:
   - Julia
   - linear algebra
