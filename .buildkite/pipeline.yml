@@ -50,7 +50,8 @@ steps:
     command: |
       julia --color=yes --project -e '
         using Pkg
-        Pkg.add("oneAPI")
+        Pkg.add(url="https://github.com/JuliaGPU/oneAPI.jl", rev="master")
+        # Pkg.add("oneAPI")
         Pkg.instantiate()
         include("test/gpu/intel.jl")'
     timeout_in_minutes: 30
