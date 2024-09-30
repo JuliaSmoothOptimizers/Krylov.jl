@@ -26,7 +26,7 @@ steps:
     agents:
       queue: "juliagpu"
       rocm: "*"
-      rocmgpu: "gfx1031"
+      rocmgpu: "*"
     env:
       JULIA_NUM_THREADS: 4
       JULIA_AMDGPU_CORE_MUST_LOAD: "1"
@@ -78,6 +78,8 @@ steps:
           version: "1.10"
     agents:
       queue: "juliaecosystem"
+      os: "linux"
+      arch: "x86_64"
     command: |
       julia --color=yes --project -e '
         using Pkg
@@ -92,6 +94,8 @@ steps:
           version: "1.10"
     agents:
       queue: "juliaecosystem"
+      os: "linux"
+      arch: "x86_64"
     command: |
       julia --color=yes --project -e '
         using Pkg
@@ -106,6 +110,8 @@ steps:
           version: "1.10"
     agents:
       queue: "juliaecosystem"
+      os: "linux"
+      arch: "x86_64"
     command: |
       julia --color=yes --project -e '
         using Pkg
