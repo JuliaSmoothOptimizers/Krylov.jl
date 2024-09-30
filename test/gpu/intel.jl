@@ -79,7 +79,7 @@ include("gpu.jl")
     rtol = √ε
 
     @testset "GMRES -- $FC" begin
-      A, b = nonsymmetric_indefinite(FC=FC)
+      A, b = symmetric_definite(FC=FC)
       A = M(A)
       b = S(b)
       x, stats = gmres(A, b)
@@ -87,7 +87,7 @@ include("gpu.jl")
     end
 
     @testset "block-GMRES -- $FC" begin
-      A, b = nonsymmetric_indefinite(FC=FC)
+      A, b = symmetric_definite(FC=FC)
       B = hcat(b, -b)
       A = M(A)
       B = M(B)
