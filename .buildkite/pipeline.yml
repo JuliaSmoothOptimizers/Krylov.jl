@@ -11,6 +11,7 @@ steps:
         using Pkg
         Pkg.add("CUDA")
         Pkg.add("LinearOperators")
+        Pkg.add("KernelAbstractions")
         Pkg.instantiate()
         using CUDA
         # CUDA.set_runtime_version!(v"11.8")'
@@ -36,6 +37,7 @@ steps:
       julia --color=yes --project -e '
         using Pkg
         Pkg.add("AMDGPU")
+        Pkg.add("KernelAbstractions")
         Pkg.instantiate()
         include("test/gpu/amd.jl")'
     timeout_in_minutes: 30
@@ -52,6 +54,7 @@ steps:
         using Pkg
         Pkg.add(url="https://github.com/JuliaGPU/oneAPI.jl", rev="master")
         # Pkg.add("oneAPI")
+        Pkg.add("KernelAbstractions")
         Pkg.instantiate()
         include("test/gpu/intel.jl")'
     timeout_in_minutes: 30
@@ -68,6 +71,7 @@ steps:
       julia --color=yes --project -e '
         using Pkg
         Pkg.add("Metal")
+        Pkg.add("KernelAbstractions")
         Pkg.instantiate()
         include("test/gpu/metal.jl")'
     timeout_in_minutes: 30
