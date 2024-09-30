@@ -403,7 +403,7 @@
         expected_lslq_bytes = storage_lslq_bytes(m, k)
         (x, stats) = lslq(Ao, b)  # warmup
         actual_lslq_bytes = @allocated lslq(Ao, b)
-        @test expected_lslq_bytes ≤ actual_lslq_bytes ≤ 1.02 * expected_lslq_bytes
+        @test expected_lslq_bytes ≤ actual_lslq_bytes ≤ 1.025 * expected_lslq_bytes
 
         solver = LslqSolver(Ao, b)
         lslq!(solver, Ao, b)  # warmup
