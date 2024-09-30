@@ -18,7 +18,7 @@ include("gpu.jl")
     x, stats = lsqr(A_gpu, b_gpu)
   end
 
-  for FC ∈ (Float32, # ComplexF32)
+  for FC ∈ (Float32, ) # ComplexF32)
     S = oneVector{FC}
     M = oneMatrix{FC}
     T = real(FC)
