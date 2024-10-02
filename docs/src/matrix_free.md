@@ -27,9 +27,9 @@ html.theme--documenter-dark .content table th:last-child {
 </style>
 ```
 
-## [Factorization-free operators](@id factorization-free)
+## [Matrix-free operators](@id matrix-free)
 
-All methods are factorization-free, which means that you only need to provide operator-vector products.
+All methods are matrix-free, which means that you only need to provide operator-vector products.
 
 The `A` or `B` input arguments of Krylov.jl solvers can be any object that represents a linear operator. That object must implement `mul!`, for multiplication with a vector, `size()` and `eltype()`. For certain methods it must also implement `adjoint()`.
 

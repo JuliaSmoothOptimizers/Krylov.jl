@@ -137,7 +137,7 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 
 ## Packages that provide preconditioners
 
-- [IncompleteLU.jl](https://github.com/haampie/IncompleteLU.jl) implements the left-looking and Crout versions of ILU decompositions.
+- [KrylovPreconditioners.jl](https://github.com/JuliaSmoothOptimizers/KrylovPreconditioners.jl) implements block-Jacobi, IC(0) and ILU(0) preconditioners.
 - [ILUZero.jl](https://github.com/mcovalt/ILUZero.jl) is a Julia implementation of incomplete LU factorization with zero level of fill-in. 
 - [LimitedLDLFactorizations.jl](https://github.com/JuliaSmoothOptimizers/LimitedLDLFactorizations.jl) for limited-memory LDLᵀ factorization of symmetric matrices.
 - [AlgebraicMultigrid.jl](https://github.com/JuliaLinearAlgebra/AlgebraicMultigrid.jl) provides two algebraic multigrid (AMG) preconditioners.
@@ -145,6 +145,13 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 - [BasicLU.jl](https://github.com/JuliaSmoothOptimizers/BasicLU.jl) uses a sparse LU factorization to compute a maximum volume basis that can be used as a preconditioner for least-norm and least-squares problems.
 
 ## Examples
+
+```julia
+using KrylovPreconditioners, Krylov
+
+P⁻¹ = BlockJacobiPreconditioner(A)  # Block-Jacobi preconditioner
+x, stats = gmres(A, b, M=P⁻¹)
+```
 
 ```julia
 using Krylov
@@ -163,7 +170,7 @@ x, stats = minres(A, b, M=P⁻¹)
 ```
 
 ```julia
-using IncompleteLU, Krylov
+using KrylovPreconditioners, Krylov
 Pℓ = ilu(A)
 x, stats = gmres(A, b, M=Pℓ, ldiv=true)  # left preconditioning
 ```

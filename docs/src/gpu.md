@@ -52,7 +52,7 @@ if CUDA.functional()
 end
 ```
 
-If you use a Krylov method that only requires `A * v` products (see [here](@ref factorization-free)), the most efficient format is `CuSparseMatrixCSR`.
+If you use a Krylov method that only requires `A * v` products (see [here](@ref matrix-free)), the most efficient format is `CuSparseMatrixCSR`.
 Optimized operator-vector and operator-matrix products that exploit GPU features can be also used by means of linear operators.
 
 For instance, when executing sparse matrix products on NVIDIA GPUs, the `mul!` function utilized by Krylov.jl internally calls three routines from CUSPARSE.
@@ -68,8 +68,8 @@ opA_gpu = KrylovOperator(A_gpu)
 x_gpu, stats = gmres(opA_gpu, b_gpu)
 ```
 
-Preconditioners, especially incomplete Cholesky or Incomplete LU factorizations that involve triangular solves,
-can be applied directly on GPU thanks to efficient operators that take advantage of CUSPARSE routines.
+Preconditioners, especially incomplete Cholesky or incomplete LU factorizations that involve sparse triangular solves,
+can be applied directly on GPU thanks to efficient operators (like `TriangularOperator`) that take advantage of CUSPARSE routines.
 
 ### Example with a symmetric positive-definite system
 
@@ -220,6 +220,10 @@ using Krylov, KrylovPreconditioners
 opA_gpu = KrylovOperator(A_gpu)
 x_gpu, stats = bicgstab(opA_gpu, b_gpu)
 ```
+
+Preconditioners, especially incomplete Cholesky or incomplete LU factorizations that involve sparse triangular solves,
+can be applied directly on GPU thanks to efficient operators (like `TriangularOperator`) that take advantage of rocSPARSE routines.
+
 
 ## Intel GPUs
 

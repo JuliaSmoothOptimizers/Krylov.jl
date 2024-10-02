@@ -1,7 +1,8 @@
-## In-place methods
+## [In-place methods](@id in-place)
 
 All solvers in Krylov.jl have an in-place variant implemented in a method whose name ends with `!`.
-A workspace (`KrylovSolver`) that contains the storage needed by a Krylov method can be used to solve multiple linear systems that have the same dimensions in the same floating-point precision.
+A workspace (`KrylovSolver`), which contains the storage needed by a Krylov method, can be used to solve multiple linear systems with the same dimensions and the same floating-point precision.
+The section [storage requirements](@ref storage-requirements) specifies the memory needed for each Krylov method.
 Each `KrylovSolver` has two constructors:
 
 ```@constructors
@@ -50,7 +51,7 @@ Krylov.issolved
 ## Examples
 
 We illustrate the use of in-place Krylov solvers with two well-known optimization methods.
-The details of the optimization methods are described in the section about [Factorization-free operators](@ref factorization-free).
+The details of the optimization methods are described in the section about [Factorization-free operators](@ref matrix-free).
 
 ### Example 1: Newton's method for convex optimization without linesearch
 
