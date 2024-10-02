@@ -2,7 +2,7 @@
 
 All solvers in Krylov.jl have an in-place variant implemented in a method whose name ends with `!`.
 A workspace (`KrylovSolver`), which contains the storage needed by a Krylov method, can be used to solve multiple linear systems with the same dimensions and the same floating-point precision.
-The section [storage requirements](@id storage-requirements) specifies the memory needed for each Krylov method.
+The section [storage requirements](@ref storage-requirements) specifies the memory needed for each Krylov method.
 Each `KrylovSolver` has two constructors:
 
 ```@constructors
