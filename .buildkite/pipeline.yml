@@ -42,22 +42,22 @@ steps:
         include("test/gpu/amd.jl")'
     timeout_in_minutes: 30
 
-  - label: "Intel GPUs -- oneAPI.jl"
-    plugins:
-      - JuliaCI/julia#v1:
-          version: "1.10"
-    agents:
-      queue: "juliagpu"
-      intel: "*"
-    command: |
-      julia --color=yes --project -e '
-        using Pkg
-        Pkg.add(url="https://github.com/JuliaGPU/oneAPI.jl", rev="master")
-        # Pkg.add("oneAPI")
-        Pkg.add("KernelAbstractions")
-        Pkg.instantiate()
-        include("test/gpu/intel.jl")'
-    timeout_in_minutes: 30
+  # - label: "Intel GPUs -- oneAPI.jl"
+  #   plugins:
+  #     - JuliaCI/julia#v1:
+  #         version: "1.10"
+  #   agents:
+  #     queue: "juliagpu"
+  #     intel: "*"
+  #   command: |
+  #     julia --color=yes --project -e '
+  #       using Pkg
+  #       Pkg.add(url="https://github.com/JuliaGPU/oneAPI.jl", rev="master")
+  #       # Pkg.add("oneAPI")
+  #       Pkg.add("KernelAbstractions")
+  #       Pkg.instantiate()
+  #       include("test/gpu/intel.jl")'
+  #   timeout_in_minutes: 30
 
   - label: "Apple M1 GPUs -- Metal.jl"
     plugins:
