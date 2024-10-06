@@ -205,7 +205,7 @@ using RandomizedPreconditioners, Krylov
 Â = NystromSketch(A, k, r)
 
 P = NystromPreconditioner(Â, μ)
-x, stats = cg(A + μ*I, b; M=P)
+x, stats = cg(A + μ*I, b; M=P, ldiv=true)
 
 P⁻¹ = NystromPreconditionerInverse(Â, μ)
 x, stats = cg(A + μ*I, b; M=P⁻¹)
