@@ -26,7 +26,6 @@ makedocs(
             "Storage requirements" => "storage.md",
            "Preconditioners" => "preconditioners.md",
            "GPU support" => "gpu.md",
-           # "KrylovPreconditioners.jl" => "krylov_preconditioners.md",
            "Warm-start" => "warm-start.md",
            "Matrix-free operators" => "matrix_free.md",
            "Callbacks" => "callbacks.md",
