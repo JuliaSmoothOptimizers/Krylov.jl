@@ -189,6 +189,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       stats.Acond = T(NaN)
       history && push!(rNorms, zero(T))
       history && push!(rcgNorms, zero(T))
+      stats.storage = sizeof(solver)
       stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
@@ -462,6 +463,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     stats.solved = solved
     stats.Anorm = ANorm
     stats.Acond = Acond
+    stats.storage = sizeof(solver)
     stats.timer = ktimer(start_time)
     stats.status = status
     return solver

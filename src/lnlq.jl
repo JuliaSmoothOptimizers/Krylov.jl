@@ -217,6 +217,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       stats.solved = true
       stats.error_with_bnd = false
       history && push!(rNorms, bNorm)
+      stats.storage = sizeof(solver)
       stats.timer = ktimer(start_time)
       stats.status = "x = 0 is a zero-residual solution"
       return solver
@@ -553,6 +554,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     stats.niter = iter
     stats.solved = solved_lq || solved_cg
     stats.error_with_bnd = complex_error_bnd
+    stats.storage = sizeof(solver)
     stats.timer = ktimer(start_time)
     stats.status = status
     return solver
