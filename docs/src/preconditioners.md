@@ -200,6 +200,18 @@ x, y, stats = tricg(A, b, c, M=M, N=N, ldiv=true)
 ```
 
 ```julia
+using RandomizedPreconditioners, Krylov
+
+Â = NystromSketch(A, k, r)
+
+P = NystromPreconditioner(Â, μ)
+x, stats = cg(A + μ*I, b; M=P)
+
+P⁻¹ = NystromPreconditionerInverse(Â, μ)
+x, stats = cg(A + μ*I, b; M=P⁻¹)
+```
+
+```julia
 using SuiteSparse, Krylov
 import LinearAlgebra.ldiv!
 
