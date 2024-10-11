@@ -1,5 +1,6 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 HarwellRutherfordBoeing = "ce388394-9b3f-5993-a911-eb95552e4f2e"
 ILUZero = "88f59080-6952-5380-9ea5-54057fb9a43f"
