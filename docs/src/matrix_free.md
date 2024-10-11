@@ -166,7 +166,7 @@ For a function $u(x)$ discretized on a periodic grid with $n$ points, the FFT of
 \hat{u}_k = \sum_{j=0}^{n-1} u_j e^{-i k x_j},
 ```
 
-where $\hat{u}_k$ represents the Fourier coefficients for the frequency $k$, and $u_j$ is the value of $u$ at the grid point $x_j$ defined as $x_j = \frec{2 \pi j}{L} with period $L$.
+where $\hat{u}_k$ represents the Fourier coefficients for the frequency $k$, and $u_j$ is the value of $u$ at the grid point $x_j$ defined as $x_j = \frac{2 \pi j}{L} with period $L$.
 The inverse FFT (IFFT) reconstructs $u$ from its Fourier coefficients:
 
 ```math
