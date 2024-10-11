@@ -152,6 +152,106 @@ opJ = LinearOperator(Float64, 3, 2, false, false, (y, v) -> J(y, v),
 lsmr(opJ, -F(xk))
 ```
 
+### Example 3: Solving the Poisson equation with FFT and IFFT
+
+In applications related to partial differential equations (PDEs), linear systems can arise from discretizing differential operators.
+Storing such operators as explicit matrices is computationally expensive and unnecessary when matrix-free methods can be used, particularly with structured grids.
+
+The FFT is an algorithm that computes the discrete Fourier transform (DFT) of a sequence, transforming data from the spatial domain to the frequency domain.
+In the context of solving PDEs, it simplifies the application of differential operators like the Laplacian by converting derivatives into algebraic operations.
+
+For a function $u(x)$ discretized on a periodic grid with $n$ points, the FFT of $u$ is:
+
+```math
+\hat{u}_k = \sum_{j=0}^{n-1} u_j e^{-i k x_j},
+```
+
+where $\hat{u}_k$ represents the Fourier coefficients for the frequency $k$, and $u_j$ is the value of $u$ at the grid point $x_j$ defined as $x_j = \frec{2 \pi j}{L} with period $L$.
+The inverse FFT (IFFT) reconstructs $u$ from its Fourier coefficients:
+
+```math
+u_j = \frac{1}{n} \sum_{k=0}^{n-1} \hat{u}_k e^{i k x_j}.
+```
+
+In Fourier space, the Laplacian operator $\frac{d^2}{dx^2}$ becomes a simple multiplication by $-k^2$, where $k$ is the wavenumber derived from the grid size.
+This transforms the Poisson equation $\frac{d^2 u(x)}{dx^2} = f(x)$ into an algebraic equation in the frequency domain:
+
+```math
+-k^2 \hat{u}_k = \hat{f}_k.
+```
+
+By solving for $\hat{u}_k$ and applying the inverse FFT, we can recover the solution $u(x)$ efficiently.
+
+The inverse FFT (IFFT) is used to convert data from the frequency domain back to the spatial domain.
+Once the solution in frequency space is obtained by dividing the Fourier coefficients $\hat{f}_k$ by $-k^2$, the IFFT is applied to transform the result back to the original grid points in the spatial domain.
+
+This example consists of solving the 1D Poisson equation on a periodic domain $[0, 4\pi]$:
+
+```math
+\frac{d^2 u(x)}{dx^2} = f(x),
+```
+
+where $u(x)$ is the unknown solution, and $f(x)$ is the given source term.
+We solve this equation using [FFTW.jl](https://github.com/JuliaMath/FFTW.jl) to compute the matrix-free action of the Laplacian within CG.
+
+```@example fft_poisson
+using FFTW, Krylov, LinearAlgebra
+
+# Define the problem size and domain
+n = 32768                         # Number of grid points (2^15)
+L = 4π                            # Length of the domain
+x = LinRange(0, L, n+1)[1:end-1]  # Periodic grid (excluding the last point)
+
+# Define the source term f(x)
+f = sin.(x)
+
+# Define a matrix-free operator using fft and ifft
+struct FFTPoissonOperator
+    n::Int
+    L::Float64
+    k::Vector{Float64}  # Store Fourier wave numbers
+end
+
+# The wave numbers k are given by k = 2πj / L,
+# where j are the indices corresponding to the Fourier modes.
+
+function FFTPoissonOperator(n::Int, L::Float64)
+    k = Vector{Float64}(undef, n)
+    k[1] = 0  # DC component -- f(x) = sin(x) has a mean of 0
+    for j in 1:(n ÷ 2)
+        k[j+1] = 2*π*j / L  # Positive wave numbers
+    end
+    for j in 1:(n ÷ 2 - 1)
+        k[n-j+1] = -2*π*j / L  # Negative wave numbers
+    end
+    return FFTPoissonOperator(n, L, k)
+end
+
+Base.size(A::FFTPoissonOperator) = (n, n)
+Base.eltype(A::FFTPoissonOperator) = Float64
+
+function LinearAlgebra.mul!(y::Vector{Float64}, A::FFTPoissonOperator, u::Vector{Float64})
+    # Apply `fft` to the input vector
+    u_hat = fft(u)
+
+    # Solve in Fourier space (multiply by -k^2 for second derivative)
+    u_hat .= -u_hat .* (A.k .^ 2)
+
+    # Apply `ifft` to recover the result in real space and store in y
+    y .= real(ifft(u_hat))
+end
+
+# Create the matrix-free operator for the Poisson equation
+A = FFTPoissonOperator(n, L)
+
+# Solve the linear system using CR
+u_sol, stats = cg(A, f, atol=1e-10, rtol=0.0, verbose=1)
+
+# The exact solution is u(x) = -sin(x)
+u_star = -sin.(x)
+u_star ≈ u_sol
+```
+
 Note that preconditioners can be also implemented as abstract operators.
 For instance, we could compute the Cholesky factorization of $M$ and $N$ and create linear operators that perform the forward and backsolves.
 
