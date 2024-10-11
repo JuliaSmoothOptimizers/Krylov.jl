@@ -205,44 +205,67 @@ x = LinRange(0, L, n+1)[1:end-1]  # Periodic grid (excluding the last point)
 # Define the source term f(x)
 f = sin.(x)
 
-# Define a matrix-free operator using fft and ifft
+# Define a matrix-free operator using FFT and IFFT
 struct FFTPoissonOperator
     n::Int
     L::Float64
+    complex::Bool
     k::Vector{Float64}  # Store Fourier wave numbers
 end
 
-# The wave numbers k are given by k = 2πj / L,
-# where j are the indices corresponding to the Fourier modes.
-
-function FFTPoissonOperator(n::Int, L::Float64)
-    k = Vector{Float64}(undef, n)
+function FFTPoissonOperator(n::Int, L::Float64, complex::Bool)
+    if complex
+        k = Vector{Float64}(undef, n)
+    else
+        k = Vector{Float64}(undef, n÷2 + 1)
+    end
     k[1] = 0  # DC component -- f(x) = sin(x) has a mean of 0
-    for j in 1:(n ÷ 2)
-        k[j+1] = 2*π*j / L  # Positive wave numbers
+    for j in 1:(n÷2)
+        k[j+1] = 2 * π * j / L  # Positive wave numbers
     end
-    for j in 1:(n ÷ 2 - 1)
-        k[n-j+1] = -2*π*j / L  # Negative wave numbers
+    if complex
+        for j in 1:(n÷2 - 1)
+            k[n-j+1] = -2 * π * j / L  # Negative wave numbers
+        end
     end
-    return FFTPoissonOperator(n, L, k)
+    return FFTPoissonOperator(n, L, complex, k)
 end
 
 Base.size(A::FFTPoissonOperator) = (n, n)
-Base.eltype(A::FFTPoissonOperator) = Float64
 
-function LinearAlgebra.mul!(y::Vector{Float64}, A::FFTPoissonOperator, u::Vector{Float64})
-    # Apply `fft` to the input vector
-    u_hat = fft(u)
-
-    # Solve in Fourier space (multiply by -k^2 for second derivative)
-    u_hat .= -u_hat .* (A.k .^ 2)
-
-    # Apply `ifft` to recover the result in real space and store in y
-    y .= real(ifft(u_hat))
+function Base.eltype(A::FFTPoissonOperator)
+    type = A.complex ? ComplexF64 : Float64
+    return type
 end
 
+function LinearAlgebra.mul!(y::Vector, A::FFTPoissonOperator, u::Vector)
+    # Transform the input vector `u` to the frequency domain using `fft` or `rfft`.
+    # If the operator is complex, use the full FFT; otherwise, use the real FFT.
+    if A.complex
+        u_hat = fft(u)
+    else
+        u_hat = rfft(u)
+    end
+
+    # In Fourier space, solve the system by multiplying with -k^2 (corresponding to the second derivative).
+    # This step applies the Laplacian operator in the frequency domain.
+    u_hat .= -u_hat .* (A.k .^ 2)
+
+    # Transform the result back to the spatial domain using `ifft` or `irfft`.
+    # If the operator is complex, use the full inverse FFT; otherwise, use the inverse real FFT.
+    if A.complex
+        y .= ifft(u_hat)
+    else
+        y .= irfft(u_hat, A.n)
+    end
+
+    return y
+end
+
+
 # Create the matrix-free operator for the Poisson equation
-A = FFTPoissonOperator(n, L)
+complex = false
+A = FFTPoissonOperator(n, L, complex)
 
 # Solve the linear system using CR
 u_sol, stats = cg(A, f, atol=1e-10, rtol=0.0, verbose=1)
