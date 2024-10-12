@@ -1,10 +1,7 @@
-## Block-GMRES
-
 !!! note
-    `block_gmres` works on GPUs
-     with Julia 1.11.
+    `block_minres` and `block_gmres` work on GPUs with Julia 1.11.
 
-If you want to use `block_gmres` on previous Julia versions, you can overload the function `Krylov.copy_triangle` with the following code:
+If you want to use `block_minres` and `block_gmres` on previous Julia versions, you can overload the function `Krylov.copy_triangle` with the following code:
 ```julia
 using KernelAbstractions, Krylov
 
@@ -22,6 +19,15 @@ function Krylov.copy_triangle(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, k::I
   KernelAbstractions.synchronize(backend)
 end
 ```
+
+## Block-MINRES
+
+```@docs
+block_minres
+block_minres!
+```
+
+## Block-GMRES
 
 ```@docs
 block_gmres

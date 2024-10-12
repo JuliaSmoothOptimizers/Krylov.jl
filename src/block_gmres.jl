@@ -1,6 +1,6 @@
 # An implementation of block-GMRES for the solution of the square linear system AX = B.
 #
-# Alexis Montoison, <alexis.montoison@polymtl.ca>
+# Alexis Montoison, <alexis.montoison@polymtl.ca> -- <amontoison@anl.gov>
 # Argonne National Laboratory -- Chicago, October 2023.
 
 export block_gmres, block_gmres!

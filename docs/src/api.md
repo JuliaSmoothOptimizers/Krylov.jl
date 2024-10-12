@@ -12,11 +12,10 @@ Krylov.LSLQStats
 Krylov.LsmrStats
 ```
 
-## Solver Types
+## Workspace of Krylov methods
 
 ```@docs
 KrylovSolver
-BlockKrylovSolver
 MinresSolver
 MinaresSolver
 CgSolver
@@ -52,6 +51,13 @@ CraigSolver
 CraigmrSolver
 GpmrSolver
 FgmresSolver
+```
+
+## Workspace of block-Krylov methods
+
+```@docs
+BlockKrylovSolver
+BlockMinresSolver
 BlockGmresSolver
 ```
 

@@ -309,7 +309,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       AᴴrNorm = abs(ζbarₖ) * √(abs2(δbarₖ) + abs2(cₖ₋₁ * γₖ₊₁))
       history && push!(AᴴrNorms, AᴴrNorm)
 
-      # Compute uₖ₊₁ and uₖ₊₁.
+      # Compute vₖ₊₁ and uₖ₊₁.
       @kcopy!(m, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ
       @kcopy!(n, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ
 

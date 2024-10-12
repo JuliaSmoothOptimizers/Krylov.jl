@@ -5,6 +5,7 @@ Use the in-place Krylov method associated to `solver`.
 """
 function solve! end
 
+# Krylov methods
 for (KS, fun, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
   (:LsmrSolver          , :lsmr!            , args_lsmr            , def_args_lsmr            , ()                , ()                    , kwargs_lsmr            , def_kwargs_lsmr            )
   (:CgsSolver           , :cgs!             , args_cgs             , def_args_cgs             , optargs_cgs       , def_optargs_cgs       , kwargs_cgs             , def_kwargs_cgs             )
@@ -61,8 +62,10 @@ for (KS, fun, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
   end
 end
 
+# Block-Krylov methods
 for (KS, fun, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
-  (:BlockGmresSolver, :block_gmres!, args_block_gmres, def_args_block_gmres, optargs_block_gmres, def_optargs_block_gmres, kwargs_block_gmres, def_kwargs_block_gmres),
+  (:BlockMinresSolver, :block_minres!, args_block_minres, def_args_block_minres, optargs_block_minres, def_optargs_block_minres, kwargs_block_minres, def_kwargs_block_minres)
+  (:BlockGmresSolver , :block_gmres! , args_block_gmres , def_args_block_gmres , optargs_block_gmres , def_optargs_block_gmres , kwargs_block_gmres , def_kwargs_block_gmres )
 ]
   @eval begin
     solve!(solver :: $KS{T,FC,SV,SM}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}} = $(fun)(solver, $(args...); $(kwargs...))
