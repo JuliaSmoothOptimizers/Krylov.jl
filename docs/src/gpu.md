@@ -107,7 +107,7 @@ if CUDA.functional()
   symmetric = hermitian = true
   opM = LinearOperator(T, n, n, symmetric, hermitian, (y, x) -> ldiv_ic0!(P, x, y, z))
 
-  # Solve an Hermitian positive definite system with an IC(0) preconditioner on GPU
+  # Solve a Hermitian positive definite system with an IC(0) preconditioner on GPU
   x, stats = cg(A_gpu, b_gpu, M=opM)
 end
 ```
