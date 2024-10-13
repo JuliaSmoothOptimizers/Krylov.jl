@@ -122,16 +122,6 @@ args_cgne = (:A, :b)
 kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgne($(def_args_cgne...); $(def_kwargs_cgne...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = CgneSolver(A, b)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    cgne!(solver, $(args_cgne...); $(kwargs_cgne...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function cgne!(solver :: CgneSolver{T,FC,S}, $(def_args_cgne...); $(def_kwargs_cgne...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

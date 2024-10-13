@@ -91,27 +91,6 @@ optargs_block_gmres = (:X0,)
 kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function block_gmres($(def_args_block_gmres...), $(def_optargs_block_gmres...); memory :: Int=20, $(def_kwargs_block_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = BlockGmresSolver(A, B; memory)
-    warm_start!(solver, $(optargs_block_gmres...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    block_gmres!(solver, $(args_block_gmres...); $(kwargs_block_gmres...))
-    solver.stats.timer += elapsed_time
-    return solver.X, solver.stats
-  end
-
-  function block_gmres($(def_args_block_gmres...); memory :: Int=20, $(def_kwargs_block_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = BlockGmresSolver(A, B; memory)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    block_gmres!(solver, $(args_block_gmres...); $(kwargs_block_gmres...))
-    solver.stats.timer += elapsed_time
-    return solver.X, solver.stats
-  end
-
   function block_gmres!(solver :: BlockGmresSolver{T,FC,SV,SM}, $(def_args_block_gmres...); $(def_kwargs_block_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
 
     # Timer

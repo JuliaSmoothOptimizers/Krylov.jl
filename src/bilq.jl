@@ -106,27 +106,6 @@ optargs_bilq = (:x0,)
 kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function bilq($(def_args_bilq...), $(def_optargs_bilq...); $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = BilqSolver(A, b)
-    warm_start!(solver, $(optargs_bilq...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    bilq!(solver, $(args_bilq...); $(kwargs_bilq...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
-  function bilq($(def_args_bilq...); $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = BilqSolver(A, b)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    bilq!(solver, $(args_bilq...); $(kwargs_bilq...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function bilq!(solver :: BilqSolver{T,FC,S}, $(def_args_bilq...); $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

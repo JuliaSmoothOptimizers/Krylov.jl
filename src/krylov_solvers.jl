@@ -1896,6 +1896,21 @@ Return the number of operator-vector products with `A'` performed by the Krylov 
 """
 function Atprod end
 
+"""
+    results(solver)
+
+Return a tuple containing the solution(s) and the statistics associated with the `solver`.
+Allows retrieving the output arguments of an out-of-place method from the in-place method.
+
+For example, instead of `x, stats = cg(A, b)`, you can use:
+```julia
+    solver = CgSolver(A, b)
+    cg!(solver, A, b)
+    x, stats = results(solver)
+```
+"""
+function results end
+
 for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:CarSolver           , :car!             , 1, 1, 0, true )
   (:LsmrSolver          , :lsmr!            , 1, 1, 1, false)
@@ -1946,10 +1961,12 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     if $nsol == 1
       solution(solver :: $KS) = solver.x
       solution(solver :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
+      results(solver :: $KS) = (solver.x, solver.stats)
     end
     if $nsol == 2
-      solution(solver :: $KS) = solver.x, solver.y
+      solution(solver :: $KS) = (solver.x, solver.y)
       solution(solver :: $KS, p :: Integer) = (1 ≤ p ≤ 2) ? solution(solver)[p] : error("solution(solver) has only two outputs.")
+      results(solver :: $KS) = (solver.x, solver.y, solver.stats)
     end
     if $KS ∈ (BilqrSolver, TrilqrSolver)
       issolved_primal(solver :: $KS) = solver.stats.solved_primal

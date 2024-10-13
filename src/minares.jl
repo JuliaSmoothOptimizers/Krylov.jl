@@ -100,27 +100,6 @@ optargs_minares = (:x0,)
 kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function minares($(def_args_minares...), $(def_optargs_minares...); $(def_kwargs_minares...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = MinaresSolver(A, b)
-    warm_start!(solver, $(optargs_minares...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    minares!(solver, $(args_minares...); $(kwargs_minares...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
-  function minares($(def_args_minares...); $(def_kwargs_minares...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = MinaresSolver(A, b)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    minares!(solver, $(args_minares...); $(kwargs_minares...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function minares!(solver :: MinaresSolver{T,FC,S}, $(def_args_minares...); $(def_kwargs_minares...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

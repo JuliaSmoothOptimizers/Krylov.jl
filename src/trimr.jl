@@ -135,27 +135,6 @@ optargs_trimr = (:x0, :y0)
 kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function trimr($(def_args_trimr...), $(def_optargs_trimr...); $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = TrimrSolver(A, b)
-    warm_start!(solver, $(optargs_trimr...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    trimr!(solver, $(args_trimr...); $(kwargs_trimr...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.y, solver.stats)
-  end
-
-  function trimr($(def_args_trimr...); $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = TrimrSolver(A, b)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    trimr!(solver, $(args_trimr...); $(kwargs_trimr...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.y, solver.stats)
-  end
-
   function trimr!(solver :: TrimrSolver{T,FC,S}, $(def_args_trimr...); $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

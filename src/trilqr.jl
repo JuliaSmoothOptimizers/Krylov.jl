@@ -103,27 +103,6 @@ optargs_trilqr = (:x0, :y0)
 kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function trilqr($(def_args_trilqr...), $(def_optargs_trilqr...); $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = TrilqrSolver(A, b)
-    warm_start!(solver, $(optargs_trilqr...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    trilqr!(solver, $(args_trilqr...); $(kwargs_trilqr...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.y, solver.stats)
-  end
-
-  function trilqr($(def_args_trilqr...); $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = TrilqrSolver(A, b)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    trilqr!(solver, $(args_trilqr...); $(kwargs_trilqr...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.y, solver.stats)
-  end
-
   function trilqr!(solver :: TrilqrSolver{T,FC,S}, $(def_args_trilqr...); $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

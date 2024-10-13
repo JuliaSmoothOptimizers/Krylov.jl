@@ -114,27 +114,6 @@ optargs_cgs = (:x0,)
 kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgs($(def_args_cgs...), $(def_optargs_cgs...); $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = CgsSolver(A, b)
-    warm_start!(solver, $(optargs_cgs...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    cgs!(solver, $(args_cgs...); $(kwargs_cgs...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
-  function cgs($(def_args_cgs...); $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = CgsSolver(A, b)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    cgs!(solver, $(args_cgs...); $(kwargs_cgs...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function cgs!(solver :: CgsSolver{T,FC,S}, $(def_args_cgs...); $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
