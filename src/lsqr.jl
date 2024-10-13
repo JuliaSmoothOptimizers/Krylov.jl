@@ -149,7 +149,7 @@ def_kwargs_lsqr = (:(; M = I                     ),
                    :(; callback = solver -> false),
                    :(; iostream::IO = kstdout    ))
 
-def_kwargs_lsqr = mapreduce(extract_parameters, vcat, def_kwargs_lsqr)
+def_kwargs_lsqr = extract_parameters.(def_kwargs_lsqr)
 
 args_lsqr = (:A, :b)
 kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)

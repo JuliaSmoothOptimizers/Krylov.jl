@@ -105,7 +105,7 @@ def_kwargs_qmr = (:(; c::AbstractVector{FC} = b ),
                   :(; callback = solver -> false),
                   :(; iostream::IO = kstdout    ))
 
-def_kwargs_qmr = mapreduce(extract_parameters, vcat, def_kwargs_qmr)
+def_kwargs_qmr = extract_parameters.(def_kwargs_qmr)
 
 args_qmr = (:A, :b)
 optargs_qmr = (:x0,)

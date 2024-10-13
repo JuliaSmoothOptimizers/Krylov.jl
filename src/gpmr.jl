@@ -141,7 +141,7 @@ def_kwargs_gpmr = (:(; C = I                            ),
                    :(; callback = solver -> false       ),
                    :(; iostream::IO = kstdout           ))
 
-def_kwargs_gpmr = mapreduce(extract_parameters, vcat, def_kwargs_gpmr)
+def_kwargs_gpmr = extract_parameters.(def_kwargs_gpmr)
 
 args_gpmr = (:A, :B, :b, :c)
 optargs_gpmr = (:x0, :y0)

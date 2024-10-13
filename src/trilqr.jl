@@ -96,7 +96,7 @@ def_kwargs_trilqr = (:(; transfer_to_usymcg::Bool = true),
                      :(; callback = solver -> false     ),
                      :(; iostream::IO = kstdout         ))
 
-def_kwargs_trilqr = mapreduce(extract_parameters, vcat, def_kwargs_trilqr)
+def_kwargs_trilqr = extract_parameters.(def_kwargs_trilqr)
 
 args_trilqr = (:A, :b, :c)
 optargs_trilqr = (:x0, :y0)

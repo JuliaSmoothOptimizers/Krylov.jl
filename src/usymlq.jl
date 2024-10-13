@@ -105,7 +105,7 @@ def_kwargs_usymlq = (:(; transfer_to_usymcg::Bool = true),
                      :(; callback = solver -> false     ),
                      :(; iostream::IO = kstdout         ))
 
-def_kwargs_usymlq = mapreduce(extract_parameters, vcat, def_kwargs_usymlq)
+def_kwargs_usymlq = extract_parameters.(def_kwargs_usymlq)
 
 args_usymlq = (:A, :b, :c)
 optargs_usymlq = (:x0,)

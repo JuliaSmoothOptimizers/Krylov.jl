@@ -102,7 +102,7 @@ def_kwargs_crls = (:(; M = I                     ),
                    :(; callback = solver -> false),
                    :(; iostream::IO = kstdout    ))
 
-def_kwargs_crls = mapreduce(extract_parameters, vcat, def_kwargs_crls)
+def_kwargs_crls = extract_parameters.(def_kwargs_crls)
 
 args_crls = (:A, :b)
 kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)

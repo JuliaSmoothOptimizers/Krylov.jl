@@ -108,7 +108,7 @@ def_kwargs_usymqr = (:(; atol::T = √eps(T)         ),
                      :(; callback = solver -> false),
                      :(; iostream::IO = kstdout    ))
 
-def_kwargs_usymqr = mapreduce(extract_parameters, vcat, def_kwargs_usymqr)
+def_kwargs_usymqr = extract_parameters.(def_kwargs_usymqr)
 
 args_usymqr = (:A, :b, :c)
 optargs_usymqr = (:x0,)

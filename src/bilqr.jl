@@ -97,7 +97,7 @@ def_kwargs_bilqr = (:(; transfer_to_bicg::Bool = true),
                     :(; callback = solver -> false   ),
                     :(; iostream::IO = kstdout       ))
 
-def_kwargs_bilqr = mapreduce(extract_parameters, vcat, def_kwargs_bilqr)
+def_kwargs_bilqr = extract_parameters.(def_kwargs_bilqr)
 
 args_bilqr = (:A, :b, :c)
 optargs_bilqr = (:x0, :y0)

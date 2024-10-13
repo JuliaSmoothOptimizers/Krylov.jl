@@ -88,7 +88,7 @@ def_kwargs_car = (:(; M = I                     ),
                   :(; callback = solver -> false),
                   :(; iostream::IO = kstdout    ))
 
-def_kwargs_car = mapreduce(extract_parameters, vcat, def_kwargs_car)
+def_kwargs_car = extract_parameters.(def_kwargs_car)
 
 args_car = (:A, :b)
 optargs_car = (:x0,)

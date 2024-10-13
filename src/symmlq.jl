@@ -106,7 +106,7 @@ def_kwargs_symmlq = (:(; M = I                      ),
                      :(; callback = solver -> false ),
                      :(; iostream::IO = kstdout     ))
 
-def_kwargs_symmlq = mapreduce(extract_parameters, vcat, def_kwargs_symmlq)
+def_kwargs_symmlq = extract_parameters.(def_kwargs_symmlq)
 
 args_symmlq = (:A, :b)
 optargs_symmlq = (:x0,)

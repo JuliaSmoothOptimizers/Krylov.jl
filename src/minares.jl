@@ -93,7 +93,7 @@ def_kwargs_minares = (:(; M = I                     ),
                       :(; callback = solver -> false),
                       :(; iostream::IO = kstdout    ))
 
-def_kwargs_minares = mapreduce(extract_parameters, vcat, def_kwargs_minares)
+def_kwargs_minares = extract_parameters.(def_kwargs_minares)
 
 args_minares = (:A, :b)
 optargs_minares = (:x0,)

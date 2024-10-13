@@ -84,7 +84,7 @@ def_kwargs_block_gmres = (:(; M = I                            ),
                           :(; callback = solver -> false       ),
                           :(; iostream::IO = kstdout           ))
 
-def_kwargs_block_gmres = mapreduce(extract_parameters, vcat, def_kwargs_block_gmres)
+def_kwargs_block_gmres = extract_parameters.(def_kwargs_block_gmres)
 
 args_block_gmres = (:A, :B)
 optargs_block_gmres = (:X0,)

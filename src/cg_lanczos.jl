@@ -94,7 +94,7 @@ def_kwargs_cg_lanczos = (:(; M = I                        ),
                          :(; callback = solver -> false   ),
                          :(; iostream::IO = kstdout       ))
 
-def_kwargs_cg_lanczos = mapreduce(extract_parameters, vcat, def_kwargs_cg_lanczos)
+def_kwargs_cg_lanczos = extract_parameters.(def_kwargs_cg_lanczos)
 
 args_cg_lanczos = (:A, :b)
 optargs_cg_lanczos = (:x0,)

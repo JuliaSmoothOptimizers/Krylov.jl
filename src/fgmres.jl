@@ -105,7 +105,7 @@ def_kwargs_fgmres = (:(; M = I                            ),
                      :(; callback = solver -> false       ),
                      :(; iostream::IO = kstdout           ))
 
-def_kwargs_fgmres = mapreduce(extract_parameters, vcat, def_kwargs_fgmres)
+def_kwargs_fgmres = extract_parameters.(def_kwargs_fgmres)
 
 args_fgmres = (:A, :b)
 optargs_fgmres = (:x0,)
