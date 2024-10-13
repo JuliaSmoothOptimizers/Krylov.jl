@@ -39,13 +39,14 @@ Krylov.solve!
 
 In-place methods return an updated `solver` workspace.
 Solutions and statistics can be recovered via `solver.x`, `solver.y` and `solver.stats`.
-Functions `solution` and `statistics` can be also used.
+Functions `solution`, `statistics` and `results` can be also used.
 
 ```@docs
 Krylov.nsolution
+Krylov.issolved
 Krylov.solution
 Krylov.statistics
-Krylov.issolved
+Krylov.results
 ```
 
 ## Examples
