@@ -115,27 +115,6 @@ optargs_usymqr = (:x0,)
 kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function usymqr($(def_args_usymqr...), $(def_optargs_usymqr...); $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = UsymqrSolver(A, b)
-    warm_start!(solver, $(optargs_usymqr...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    usymqr!(solver, $(args_usymqr...); $(kwargs_usymqr...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
-  function usymqr($(def_args_usymqr...); $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = UsymqrSolver(A, b)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    usymqr!(solver, $(args_usymqr...); $(kwargs_usymqr...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function usymqr!(solver :: UsymqrSolver{T,FC,S}, $(def_args_usymqr...); $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

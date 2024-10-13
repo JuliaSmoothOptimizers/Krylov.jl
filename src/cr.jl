@@ -112,27 +112,6 @@ optargs_cr = (:x0,)
 kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cr($(def_args_cr...), $(def_optargs_cr...); $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = CrSolver(A, b)
-    warm_start!(solver, $(optargs_cr...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    cr!(solver, $(args_cr...); $(kwargs_cr...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
-  function cr($(def_args_cr...); $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = CrSolver(A, b)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    cr!(solver, $(args_cr...); $(kwargs_cr...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function cr!(solver :: CrSolver{T,FC,S}, $(def_args_cr...); $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

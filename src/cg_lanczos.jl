@@ -101,27 +101,6 @@ optargs_cg_lanczos = (:x0,)
 kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cg_lanczos($(def_args_cg_lanczos...), $(def_optargs_cg_lanczos...); $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = CgLanczosSolver(A, b)
-    warm_start!(solver, $(optargs_cg_lanczos...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    cg_lanczos!(solver, $(args_cg_lanczos...); $(kwargs_cg_lanczos...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
-  function cg_lanczos($(def_args_cg_lanczos...); $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = CgLanczosSolver(A, b)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    cg_lanczos!(solver, $(args_cg_lanczos...); $(kwargs_cg_lanczos...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, $(def_args_cg_lanczos...); $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

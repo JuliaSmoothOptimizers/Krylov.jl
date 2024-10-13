@@ -117,16 +117,6 @@ args_cgls = (:A, :b)
 kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgls($(def_args_cgls...); $(def_kwargs_cgls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = CglsSolver(A, b)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    cgls!(solver, $(args_cgls...); $(kwargs_cgls...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function cgls!(solver :: CglsSolver{T,FC,S}, $(def_args_cgls...); $(def_kwargs_cgls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

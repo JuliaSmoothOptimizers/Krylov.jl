@@ -112,27 +112,6 @@ optargs_qmr = (:x0,)
 kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function qmr($(def_args_qmr...), $(def_optargs_qmr...); $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = QmrSolver(A, b)
-    warm_start!(solver, $(optargs_qmr...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    qmr!(solver, $(args_qmr...); $(kwargs_qmr...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
-  function qmr($(def_args_qmr...); $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = QmrSolver(A, b)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    qmr!(solver, $(args_qmr...); $(kwargs_qmr...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function qmr!(solver :: QmrSolver{T,FC,S}, $(def_args_qmr...); $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

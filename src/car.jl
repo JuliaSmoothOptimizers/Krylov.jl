@@ -95,27 +95,6 @@ optargs_car = (:x0,)
 kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function car($(def_args_car...), $(def_optargs_car...); $(def_kwargs_car...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = CarSolver(A, b)
-    warm_start!(solver, $(optargs_car...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    car!(solver, $(args_car...); $(kwargs_car...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
-  function car($(def_args_car...); $(def_kwargs_car...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = CarSolver(A, b)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    car!(solver, $(args_car...); $(kwargs_car...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function car!(solver :: CarSolver{T,FC,S}, $(def_args_car...); $(def_kwargs_car...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
