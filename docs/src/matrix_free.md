@@ -267,7 +267,7 @@ end
 complex = false
 A = FFTPoissonOperator(n, L, complex)
 
-# Solve the linear system using CR
+# Solve the linear system using CG
 u_sol, stats = cg(A, f, atol=1e-10, rtol=0.0, verbose=1)
 
 # The exact solution is u(x) = -sin(x)
