@@ -1944,14 +1944,14 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     end
     nsolution(solver :: $KS) = $nsol
     if $nsol == 1
-      solution_tuple(solver :: $KS) = (solver.x,)
       solution(solver :: $KS) = solver.x
       solution(solver :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
+      results(solver :: $KS) = (solver.x, solver.stats)
     end
     if $nsol == 2
-      solution_tuple(solver :: $KS) = (solver.x, solver.y)
       solution(solver :: $KS) = (solver.x, solver.y)
       solution(solver :: $KS, p :: Integer) = (1 ≤ p ≤ 2) ? solution(solver)[p] : error("solution(solver) has only two outputs.")
+      results(solver :: $KS) = (solver.x, solver.y, solver.stats)
     end
     if $KS ∈ (BilqrSolver, TrilqrSolver)
       issolved_primal(solver :: $KS) = solver.stats.solved_primal

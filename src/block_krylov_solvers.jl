@@ -13,7 +13,7 @@ Type for storing the vectors required by the in-place version of BLOCK-GMRES.
 The outer constructors
 
     solver = BlockGmresSolver(m, n, p, memory, SV, SM)
-    solver = BlockGmresSolver(A, B; memory=5)
+    solver = BlockGmresSolver(A, B, memory = 5)
 
 may be used in order to create these vectors.
 `memory` is set to `div(n,p)` if the value given is larger than `div(n,p)`.
@@ -59,7 +59,7 @@ function BlockGmresSolver(m, n, p, memory, SV, SM)
   return solver
 end
 
-function BlockGmresSolver(A, B; memory::Int=5)
+function BlockGmresSolver(A, B, memory = 5)
   m, n = size(A)
   s, p = size(B)
   SM = typeof(B)
@@ -79,9 +79,9 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     Atprod(solver :: $KS) = $nAt * solver.stats.niter
     nsolution(solver :: $KS) = $nsol
     if $nsol == 1
-      solution_tuple(solver :: $KS) = (solver.X,)
       solution(solver :: $KS) = solver.X
       solution(solver :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
+      results(solver :: $KS) = (solver.X, solver.stats)
     end
     issolved(solver :: $KS) = solver.stats.solved
     if $warm_start
