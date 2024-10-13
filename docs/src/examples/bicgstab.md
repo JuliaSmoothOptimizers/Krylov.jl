@@ -1,5 +1,5 @@
 ```@example bicgstab
-using Krylov, LinearOperators, IncompleteLU, HarwellRutherfordBoeing
+using Krylov, LinearOperators, KrylovPreconditioners, HarwellRutherfordBoeing
 using LinearAlgebra, Printf, SuiteSparseMatrixCollection, SparseArrays
 
 ssmc = ssmc_db(verbose=false)
