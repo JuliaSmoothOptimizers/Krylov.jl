@@ -120,7 +120,7 @@ def_kwargs_minres = (:(; M = I                     ),
                      :(; callback = solver -> false),
                      :(; iostream::IO = kstdout    ))
 
-def_kwargs_minres = mapreduce(extract_parameters, vcat, def_kwargs_minres)
+def_kwargs_minres = extract_parameters.(def_kwargs_minres)
 
 args_minres = (:A, :b)
 optargs_minres = (:x0,)

@@ -102,7 +102,7 @@ def_kwargs_diom = (:(; M = I                            ),
                    :(; callback = solver -> false       ),
                    :(; iostream::IO = kstdout           ))
 
-def_kwargs_diom = mapreduce(extract_parameters, vcat, def_kwargs_diom)
+def_kwargs_diom = extract_parameters.(def_kwargs_diom)
 
 args_diom = (:A, :b)
 optargs_diom = (:x0,)

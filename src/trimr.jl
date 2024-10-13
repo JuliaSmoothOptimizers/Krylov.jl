@@ -128,7 +128,7 @@ def_kwargs_trimr = (:(; M = I                     ),
                     :(; callback = solver -> false),
                     :(; iostream::IO = kstdout    ))
 
-def_kwargs_trimr = mapreduce(extract_parameters, vcat, def_kwargs_trimr)
+def_kwargs_trimr = extract_parameters.(def_kwargs_trimr)
 
 args_trimr = (:A, :b, :c)
 optargs_trimr = (:x0, :y0)

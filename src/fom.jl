@@ -98,7 +98,7 @@ def_kwargs_fom = (:(; M = I                            ),
                   :(; callback = solver -> false       ),
                   :(; iostream::IO = kstdout           ))
 
-def_kwargs_fom = mapreduce(extract_parameters, vcat, def_kwargs_fom)
+def_kwargs_fom = extract_parameters.(def_kwargs_fom)
 
 args_fom = (:A, :b)
 optargs_fom = (:x0,)

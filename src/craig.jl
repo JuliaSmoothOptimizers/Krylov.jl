@@ -156,7 +156,7 @@ def_kwargs_craig = (:(; M = I                         ),
                     :(; callback = solver -> false    ),
                     :(; iostream::IO = kstdout        ))
 
-def_kwargs_craig = mapreduce(extract_parameters, vcat, def_kwargs_craig)
+def_kwargs_craig = extract_parameters.(def_kwargs_craig)
 
 args_craig = (:A, :b)
 kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)

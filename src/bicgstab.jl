@@ -106,7 +106,7 @@ def_kwargs_bicgstab = (:(; c::AbstractVector{FC} = b ),
                        :(; callback = solver -> false),
                        :(; iostream::IO = kstdout    ))
 
-def_kwargs_bicgstab = mapreduce(extract_parameters, vcat, def_kwargs_bicgstab)
+def_kwargs_bicgstab = extract_parameters.(def_kwargs_bicgstab)
 
 args_bicgstab = (:A, :b)
 optargs_bicgstab = (:x0,)

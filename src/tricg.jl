@@ -127,7 +127,7 @@ def_kwargs_tricg = (:(; M = I                     ),
                     :(; callback = solver -> false),
                     :(; iostream::IO = kstdout    ))
 
-def_kwargs_tricg = mapreduce(extract_parameters, vcat, def_kwargs_tricg)
+def_kwargs_tricg = extract_parameters.(def_kwargs_tricg)
 
 args_tricg = (:A, :b, :c)
 optargs_tricg = (:x0, :y0)

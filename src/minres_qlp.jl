@@ -102,7 +102,7 @@ def_kwargs_minres_qlp = (:(; M = I                     ),
                          :(; callback = solver -> false),
                          :(; iostream::IO = kstdout    ))
 
-def_kwargs_minres_qlp = mapreduce(extract_parameters, vcat, def_kwargs_minres_qlp)
+def_kwargs_minres_qlp = extract_parameters.(def_kwargs_minres_qlp)
 
 args_minres_qlp = (:A, :b)
 optargs_minres_qlp = (:x0,)

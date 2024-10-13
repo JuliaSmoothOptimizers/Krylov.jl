@@ -99,7 +99,7 @@ def_kwargs_bilq = (:(; c::AbstractVector{FC} = b    ),
                    :(; callback = solver -> false   ),
                    :(; iostream::IO = kstdout       ))
 
-def_kwargs_bilq = mapreduce(extract_parameters, vcat, def_kwargs_bilq)
+def_kwargs_bilq = extract_parameters.(def_kwargs_bilq)
 
 args_bilq = (:A, :b)
 optargs_bilq = (:x0,)

@@ -116,7 +116,7 @@ def_kwargs_cgne = (:(; N = I                     ),
                    :(; callback = solver -> false),
                    :(; iostream::IO = kstdout    ))
 
-def_kwargs_cgne = mapreduce(extract_parameters, vcat, def_kwargs_cgne)
+def_kwargs_cgne = extract_parameters.(def_kwargs_cgne)
 
 args_cgne = (:A, :b)
 kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)

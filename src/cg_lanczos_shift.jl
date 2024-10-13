@@ -88,7 +88,7 @@ def_kwargs_cg_lanczos_shift = (:(; M = I                        ),
                                :(; callback = solver -> false   ),
                                :(; iostream::IO = kstdout       ))
 
-def_kwargs_cg_lanczos_shift = mapreduce(extract_parameters, vcat, def_kwargs_cg_lanczos_shift)
+def_kwargs_cg_lanczos_shift = extract_parameters.(def_kwargs_cg_lanczos_shift)
 
 args_cg_lanczos_shift = (:A, :b, :shifts)
 kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
