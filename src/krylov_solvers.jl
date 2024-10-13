@@ -1896,6 +1896,21 @@ Return the number of operator-vector products with `A'` performed by the Krylov 
 """
 function Atprod end
 
+"""
+    results(solver)
+
+Return a tuple containing the solution(s) and the statistics associated with the `solver`.
+Allows retrieving the output arguments of an out-of-place method from the in-place method.
+
+For example, instead of `x, stats = cg(A, b)`, you can use:
+```julia
+    solver = CgSolver(A, b)
+    cg!(solver, A, b)
+    x, stats = results(solver)
+```
+"""
+function results end
+
 for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:CarSolver           , :car!             , 1, 1, 0, true )
   (:LsmrSolver          , :lsmr!            , 1, 1, 1, false)
