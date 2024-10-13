@@ -56,7 +56,7 @@ for (KS, fun, fun2, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in
         timemax -= elapsed_time
         $(fun)(solver, $(args...); $(kwargs...))
         solver.stats.timer += elapsed_time
-        return ((solution(solver),)..., solver.stats)
+        return (solution_tuple(solver)..., solver.stats)
       end
 
       if !isempty($optargs)
@@ -68,7 +68,7 @@ for (KS, fun, fun2, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in
           timemax -= elapsed_time
           $(fun)(solver, $(args...); $(kwargs...))
           solver.stats.timer += elapsed_time
-          return ((solution(solver),)..., solver.stats)
+          return (solution_tuple(solver)..., solver.stats)
         end
       end
     end
@@ -107,7 +107,7 @@ for (KS, fun, fun2, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in
       timemax -= elapsed_time
       $(fun)(solver, $(args...); $(kwargs...))
       solver.stats.timer += elapsed_time
-      return ((solution(solver),)..., solver.stats)
+      return (solution_tuple(solver)..., solver.stats)
     end
 
     if !isempty($optargs)
@@ -119,7 +119,7 @@ for (KS, fun, fun2, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in
         timemax -= elapsed_time
         $(fun)(solver, $(args...); $(kwargs...))
         solver.stats.timer += elapsed_time
-        return ((solution(solver),)..., solver.stats)
+        return (solution_tuple(solver)..., solver.stats)
       end
     end
 

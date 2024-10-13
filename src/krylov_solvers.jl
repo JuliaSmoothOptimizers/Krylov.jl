@@ -1944,11 +1944,13 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     end
     nsolution(solver :: $KS) = $nsol
     if $nsol == 1
+      solution_tuple(solver :: $KS) = (solver.x,)
       solution(solver :: $KS) = solver.x
       solution(solver :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
     end
     if $nsol == 2
-      solution(solver :: $KS) = solver.x, solver.y
+      solution_tuple(solver :: $KS) = (solver.x, solver.y)
+      solution(solver :: $KS) = (solver.x, solver.y)
       solution(solver :: $KS, p :: Integer) = (1 ≤ p ≤ 2) ? solution(solver)[p] : error("solution(solver) has only two outputs.")
     end
     if $KS ∈ (BilqrSolver, TrilqrSolver)

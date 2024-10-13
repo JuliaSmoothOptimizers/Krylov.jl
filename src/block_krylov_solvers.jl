@@ -79,6 +79,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     Atprod(solver :: $KS) = $nAt * solver.stats.niter
     nsolution(solver :: $KS) = $nsol
     if $nsol == 1
+      solution_tuple(solver :: $KS) = (solver.X,)
       solution(solver :: $KS) = solver.X
       solution(solver :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
     end
