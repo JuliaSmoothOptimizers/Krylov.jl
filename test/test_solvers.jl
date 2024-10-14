@@ -4,8 +4,8 @@ function test_solvers(FC)
   m   = div(n, 2)
   Au  = A[1:m,:]  # Dimension m x n
   Ao  = A[:,1:m]  # Dimension n x m
-  b   = Ao * ones(FC, m) # Dimension m
-  c   = Au * ones(FC, n) # Dimension n
+  b   = Ao * ones(FC, m) # Dimension n
+  c   = Au * ones(FC, n) # Dimension m
   mem = 10
   shifts = [1.0; 2.0; 3.0; 4.0; 5.0]
   nshifts = 5

@@ -37,18 +37,17 @@ but simpler to implement.
 
 #### Input arguments
 
-* `A`: a linear operator that models a Hermitian matrix of dimension n;
-* `b`: a vector of length n;
+* `A`: a linear operator that models a matrix of dimension m × n;
+* `b`: a vector of length m;
 * `shifts`: a vector of length p.
 
 #### Keyword arguments
 
-* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
+* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
-* `check_curvature`: if `true`, check that the curvature of the quadratic along the search direction is positive, and abort if not, unless `linesearch` is also `true`;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
-* `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
+* `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
@@ -81,7 +80,6 @@ def_args_cgls_lanczos_shift = (:(A                        ),
 
 def_kwargs_cgls_lanczos_shift = (:(; M = I                        ),
                                  :(; ldiv::Bool = false           ),
-                                 :(; check_curvature::Bool = false),
                                  :(; atol::T = √eps(T)            ),
                                  :(; rtol::T = √eps(T)            ),
                                  :(; itmax::Int = 0               ),
@@ -94,7 +92,7 @@ def_kwargs_cgls_lanczos_shift = (:(; M = I                        ),
 def_kwargs_cgls_lanczos_shift = extract_parameters.(def_kwargs_cgls_lanczos_shift)
 
 args_cgls_lanczos_shift = (:A, :b, :shifts)
-kwargs_cgls_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
   function cgls_lanczos_shift!(solver :: CglsLanczosShiftSolver{T,FC,S}, $(def_args_cgls_lanczos_shift...); $(def_kwargs_cgls_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
@@ -184,7 +182,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, 
       not_cv[i] = !converged[i]
     end
     iter = 0
-    itmax == 0 && (itmax = 2 * max(m, n))
+    itmax == 0 && (itmax = m + n)
 
     # Build format strings for printing.
     (verbose > 0) && (fmt = Printf.Format("%5d" * repeat("  %8.1e", nshifts) * "  %.2fs\n"))
