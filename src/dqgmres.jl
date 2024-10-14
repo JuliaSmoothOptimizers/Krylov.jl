@@ -109,27 +109,6 @@ optargs_dqgmres = (:x0,)
 kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function dqgmres($(def_args_dqgmres...), $(def_optargs_dqgmres...); memory :: Int=20, $(def_kwargs_dqgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = DqgmresSolver(A, b, memory)
-    warm_start!(solver, $(optargs_dqgmres...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    dqgmres!(solver, $(args_dqgmres...); $(kwargs_dqgmres...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
-  function dqgmres($(def_args_dqgmres...); memory :: Int=20, $(def_kwargs_dqgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = DqgmresSolver(A, b, memory)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    dqgmres!(solver, $(args_dqgmres...); $(kwargs_dqgmres...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function dqgmres!(solver :: DqgmresSolver{T,FC,S}, $(def_args_dqgmres...); $(def_kwargs_dqgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

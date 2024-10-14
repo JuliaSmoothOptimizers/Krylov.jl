@@ -105,27 +105,6 @@ optargs_fom = (:x0,)
 kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function fom($(def_args_fom...), $(def_optargs_fom...); memory :: Int=20, $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = FomSolver(A, b, memory)
-    warm_start!(solver, $(optargs_fom...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    fom!(solver, $(args_fom...); $(kwargs_fom...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
-  function fom($(def_args_fom...); memory :: Int=20, $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = FomSolver(A, b, memory)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    fom!(solver, $(args_fom...); $(kwargs_fom...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function fom!(solver :: FomSolver{T,FC,S}, $(def_args_fom...); $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

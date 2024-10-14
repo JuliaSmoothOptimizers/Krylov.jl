@@ -45,7 +45,6 @@ for (KS, fun, fun2, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in
   (:CglsLanczosShiftSolver, :cgls_lanczos_shift!, :cgls_lanczos_shift, args_cgls_lanczos_shift, def_args_cgls_lanczos_shift, (), (), kwargs_cgls_lanczos_shift, def_kwargs_cgls_lanczos_shift)
 ]
   # window :: 5 -> lslq, lsmr, lsqr, minres, symmlq
-  # memory :: 20 -> diom, dqgmres, fom, gmres, fgmres, gpmr
   if fun2 in (:cg_lanczos_shift, :cgls_lanczos_shift)
     @eval begin
       ## Out-of-place
@@ -58,6 +57,32 @@ for (KS, fun, fun2, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in
         $(fun)(solver, $(args...); $(kwargs...))
         solver.stats.timer += elapsed_time
         return results(solver)
+      end
+    end
+  elseif fun2 in (:diom, :dqgmres, :fom, :gmres, :fgmres, :gpmr)
+    @eval begin
+      ## Out-of-place
+      function $(fun2)($(def_args...); memory::Int=20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+        start_time = time_ns()
+        solver = $KS(A, b, memory)
+        elapsed_time = ktimer(start_time)
+        timemax -= elapsed_time
+        $(fun)(solver, $(args...); $(kwargs...))
+        solver.stats.timer += elapsed_time
+        return results(solver)
+      end
+
+      if !isempty($optargs)
+        function $(fun2)($(def_args...), $(def_optargs...); memory::Int=20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+          start_time = time_ns()
+          solver = $KS(A, b, memory)
+          warm_start!(solver, $(optargs...))
+          elapsed_time = ktimer(start_time)
+          timemax -= elapsed_time
+          $(fun)(solver, $(args...); $(kwargs...))
+          solver.stats.timer += elapsed_time
+          return results(solver)
+        end
       end
     end
   elseif fun2 ∉ (:cg_lanczos_shift, :cgls_lanczos_shift, :lslq, :lsmr, :lsqr, :minres, :symmlq, :diom, :dqgmres, :fom, :gmres, :fgmres, :gpmr)
