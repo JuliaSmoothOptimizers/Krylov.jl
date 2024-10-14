@@ -181,10 +181,16 @@ This transforms the Poisson equation $\frac{d^2 u(x)}{dx^2} = f(x)$ into an alge
 -k^2 \hat{u}_k = \hat{f}_k.
 ```
 
-By solving for $\hat{u}_k$ and applying the inverse FFT, we can recover the solution $u(x)$ efficiently.
+By solving for $\hat{u}_k$ and applying the IFFT, we can recover the solution $u(x)$ efficiently.
 
-The inverse FFT (IFFT) is used to convert data from the frequency domain back to the spatial domain.
-Once the solution in frequency space is obtained by dividing the Fourier coefficients $\hat{f}_k$ by $-k^2$, the IFFT is applied to transform the result back to the original grid points in the spatial domain.
+The inverse FFT is used to convert data from the frequency domain back to the spatial domain.
+Once the solution in frequency space is obtained by dividing the Fourier coefficients $\hat{f}_k$ by $-k^2$,
+the IFFT is applied to transform the result back to the original grid points in the spatial domain.
+
+In some cases, even though the FFT provides an efficient way to apply differential operators (such as the Laplacian)
+in the frequency domain, a direct solution may not be feasible due to complex boundary conditions,
+variable coefficients, or grid irregularities.
+In these situations, the FFT must be coupled with a Krylov method to iteratively solve the problem.
 
 This example consists of solving the 1D Poisson equation on a periodic domain $[0, 4\pi]$:
 
@@ -194,6 +200,9 @@ This example consists of solving the 1D Poisson equation on a periodic domain $[
 
 where $u(x)$ is the unknown solution, and $f(x)$ is the given source term.
 We solve this equation using [FFTW.jl](https://github.com/JuliaMath/FFTW.jl) to compute the matrix-free action of the Laplacian within the conjugate gradient solver.
+
+Note that while a direct FFT-based approach can be used here due to the simplicity of the periodic boundary conditions,
+this example illustrates how a Krylov method can be employed to solve more challenging problems.
 
 ```@example fft_poisson
 using FFTW, Krylov, LinearAlgebra
