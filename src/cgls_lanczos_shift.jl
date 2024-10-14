@@ -67,8 +67,10 @@ but simpler to implement.
 function cgls_lanczos_shift end
 
 """
-    solver = cgls_lanczos_shift!(solver::CglsLanczosShiftSolver, A, b; kwargs...)
+    solver = cgls_lanczos_shift!(solver::CglsLanczosShiftSolver, A, b, shifts; kwargs...)
+
 where `kwargs` are keyword arguments of [`cgls_lanczos_shift`](@ref).
+
 See [`CglsLanczosShiftSolver`](@ref) for more details about the `solver`.
 """
 function cgls_lanczos_shift! end
@@ -89,7 +91,7 @@ def_kwargs_cgls_lanczos_shift = (:(; M = I                        ),
                                  :(; callback = solver -> false   ),
                                  :(; iostream::IO = kstdout       ))
 
-def_kwargs_cgls_lanczos_shift = mapreduce(extract_parameters, vcat, def_kwargs_cgls_lanczos_shift)
+def_kwargs_cgls_lanczos_shift = extract_parameters.(def_kwargs_cgls_lanczos_shift)
 
 args_cgls_lanczos_shift = (:A, :b, :shifts)
 kwargs_cgls_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
@@ -111,9 +113,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, 
 
     # Tests M = Iₙ
     MisI = (M === I)
-    if !MisI
-      @warn "Preconditioner not implemented"
-    end
+    !MisI && error("Preconditioner `M` is not supported.")
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
