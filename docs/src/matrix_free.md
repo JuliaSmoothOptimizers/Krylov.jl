@@ -284,35 +284,36 @@ In the field of partial differential equations, the implementation of high-perfo
 ### Example 4: Solving the Poisson equation with a matrix-free multigrid preconditioner
 
 onsider the Poisson equation in a two-dimensional domain $\Omega$:
-$$
+```math
 -\Delta u = f \quad \text{in } \Omega,
-$$
+```
 with Dirichlet boundary conditions, where $u$ is the unknown solution and $f$ is a given source term.
 
 The Laplacian operator $\Delta$ can be discretized using finite differences or finite elements, leading to a large linear system of the form:
-$$
+```math
 A \mathbf{u} = \mathbf{f},
-$$
+```
 where $A$ is a sparse matrix representing the discretized Laplacian, $\mathbf{u}$ is the vector of unknowns, and $\mathbf{f}$ is the discretized source term.
 
 Instead of explicitly forming the matrix $A$, we will implement the matrix-vector product as a function that applies the discretized Laplacian to a vector.
 
 For the discretized Laplacian using finite differences, the matrix-vector product can be represented as:
-$$
+```math
 A \mathbf{v} \approx \frac{1}{h^2} \left( \mathbf{v}_{i+1,j} + \mathbf{v}_{i-1,j} + \mathbf{v}_{i,j+1} + \mathbf{v}_{i,j-1} - 4 \mathbf{v}_{i,j} \right),
-$$
+```
 where $h$ is the grid spacing, and $\mathbf{v}_{i,j}$ represents the value at grid point $(i, j)$.
 
-For a grid defined on a domain $[0,1] \times [0,1]$ with dimensions $N \times N$, where $N$ is the number of points along each dimension, the values of the grid can be represented in a vector $v$ of length $N^2$. The mapping from a 2D grid index $(i, j)$ to a 1D vector index is done using the following formula:
-
-$$
+For a grid defined on a domain $[0,1] \times [0,1]$ with dimensions $N \times N$, where $N$ is the number of points along each dimension, the values of the grid can be represented in a vector $v$ of length $N^2$.
+The mapping from a 2D grid index $(i, j)$ to a 1D vector index is done using the following formula:
+```math
 v[(i-1) \times N + j]
-$$
+```
 
 The multigrid approach, which is employed as a preconditioner, involves a hierarchy of grid levels, and the solution process typically follows these steps:
 
 1. **Smoothing**:
-- Reduce high-frequency errors using a relaxation method such as Jacobi or Gauss-Seidel. Given the linear system $A \mathbf{u} = \mathbf{f}$, a Jacobi iteration can be written as:
+- Reduce high-frequency errors using a relaxation method such as Jacobi or Gauss-Seidel.
+Given the linear system $A \mathbf{u} = \mathbf{f}$, a Jacobi iteration can be written as:
 ```math
 \mathbf{u}^{(k+1)} = \mathbf{u}^{(k)} + D^{-1} (\mathbf{f} - A \mathbf{u}^{(k)}),
 ```
