@@ -59,7 +59,7 @@ for (KS, fun, fun2, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in
         return results(solver)
       end
     end
-  elseif fun ∉ (:cg_lanczos_shift, :lslq, :lsmr, :lsqr, :minres, :symmlq, :diom, :dqgmres, :fom, :gmres, :fgmres, :gpmr)
+  elseif fun2 ∉ (:cg_lanczos_shift, :lslq, :lsmr, :lsqr, :minres, :symmlq, :diom, :dqgmres, :fom, :gmres, :fgmres, :gpmr)
     @eval begin
       ## Out-of-place
       function $(fun2)($(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
