@@ -20,7 +20,6 @@ include("car.jl")
 
 include("symmlq.jl")
 include("cg_lanczos.jl")
-include("cg_lanczos_shift.jl")
 include("minres.jl")
 include("minres_qlp.jl")
 include("minares.jl")
@@ -47,7 +46,6 @@ include("qmr.jl")
 include("bilqr.jl")
 
 include("cgls.jl")
-include("cgls_lanczos_shift.jl")
 include("crls.jl")
 
 include("cgne.jl")
@@ -60,6 +58,9 @@ include("lsmr.jl")
 include("lnlq.jl")
 include("craig.jl")
 include("craigmr.jl")
+
+include("cg_lanczos_shift.jl")
+include("cgls_lanczos_shift.jl")
 
 include("krylov_solve.jl")
 end

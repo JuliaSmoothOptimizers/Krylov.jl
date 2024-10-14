@@ -28,17 +28,15 @@ end
       end
       @test stats.status == "x = 0 is a zero-residual solution"
 
-      #=
       # Not implemented
       # Test with Jacobi (or diagonal) preconditioner
-      A, b, M = square_preconditioned(FC=FC)
-      shifts = [1.0; 2.0; 3.0; 4.0; 5.0; 6.0]
-      (x, stats) = cgls_lanczos_shift(A, b, shifts, M=M)
-      r = residuals(A, b, shifts, x)
-      resids = map(norm, r) / norm(b)
-      @test(all(resids .≤ cgls_lanczos_shift_tol))
-      @test(stats.solved)
-      =#
+      # A, b, M = square_preconditioned(FC=FC)
+      # shifts = [1.0; 2.0; 3.0; 4.0; 5.0; 6.0]
+      # (x, stats) = cgls_lanczos_shift(A, b, shifts, M=M)
+      # r = residuals(A, b, shifts, x)
+      # resids = map(norm, r) / norm(b)
+      # @test(all(resids .≤ cgls_lanczos_shift_tol))
+      # @test(stats.solved)
 
       # test callback function
       A, b = symmetric_definite(FC=FC)

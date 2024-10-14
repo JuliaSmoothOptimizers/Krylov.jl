@@ -43,8 +43,8 @@
             @test norm((A + I) * x[2] - b) ≤ Κ * (atol + norm(b) * rtol)
             @test eltype(x) == Vector{FC}
           elseif fn == :cgls_lanczos_shift
-            @test norm(A' * (b - A * x[1]) + x[1]) ≤ Κ * (atol + norm(b) * rtol)
-            @test norm(A' * (b - A * x[2]) - x[2]) ≤ Κ * (atol + norm(b) * rtol)
+            @test norm(A' * (b - A * x[1]) + x[1]) ≤ Κ * (atol + norm(A' * b) * rtol)
+            @test norm(A' * (b - A * x[2]) - x[2]) ≤ Κ * (atol + norm(A' * b) * rtol)
             @test eltype(x) == Vector{FC}
           else
             @test norm(A * x - b) ≤ Κ * (atol + norm(b) * rtol)

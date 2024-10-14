@@ -1189,14 +1189,14 @@ function CglsSolver(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of CGLS-LANCZOS-SHIFT.
+Workspace for the in-place version of CGLS-LANCZOS-SHIFT.
 
-The outer constructors
+The outer constructors:
 
     solver = CglsLanczosShiftSolver(m, n, nshifts, S)
     solver = CglsLanczosShiftSolver(A, b, nshifts)
 
-may be used in order to create these vectors.
+can be used to initialize this workspace.
 """
 mutable struct CglsLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int

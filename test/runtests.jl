@@ -35,7 +35,6 @@ include("test_minres_qlp.jl")
 include("test_symmlq.jl")
 include("test_bilq.jl")
 include("test_cgls.jl")
-
 include("test_cgls_lanczos_shift.jl")
 include("test_crls.jl")
 include("test_cgne.jl")

@@ -13,7 +13,7 @@
       mem = 200
 
       T = real(FC)
-      shifts  = T[1; 2; 3; 4; 5]
+      shifts = T[1; 2; 3; 4; 5]
       nshifts = 5
       nbits_FC = sizeof(FC)  # 8 bits for ComplexF32 and 16 bits for ComplexF64
       nbits_T = sizeof(T)    # 4 bits for Float32 and 8 bits for Float64
@@ -401,7 +401,6 @@
         # - 2 (n*nshifts)-matrices: x, p
         # - 5 nshifts-vectors: σ, δhat, ω, γ, rNorms
         # - 3 nshifts-bitVector: converged, indefinite, not_cv
-       
         storage_cgls_lanczos_shift_bytes(m, n, nshifts) = nbits_FC * (2 * n + 3 * m + 2 * n * nshifts) + nbits_T * (5 * nshifts) + (3 * nshifts)
 
         expected_cgls_lanczos_shift_bytes = storage_cgls_lanczos_shift_bytes(m, k, nshifts)
@@ -409,7 +408,7 @@
         actual_cgls_lanczos_shift_bytes = @allocated cgls_lanczos_shift(Ao, b, shifts)
         @test expected_cgls_lanczos_shift_bytes ≤ actual_cgls_lanczos_shift_bytes ≤ 1.03 * expected_cgls_lanczos_shift_bytes
 
-        solver = CglsLanczosShiftSolver(Ao, b, length(shifts))
+        solver = CglsLanczosShiftSolver(Ao, b, nshifts)
         cgls_lanczos_shift!(solver, Ao, b, shifts)  # warmup
         inplace_cgls_lanczos_shift_bytes = @allocated cgls_lanczos_shift!(solver, Ao, b, shifts)
         @test inplace_cgls_lanczos_shift_bytes == 0
