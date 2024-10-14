@@ -303,7 +303,7 @@ A \mathbf{v} \approx \frac{1}{h^2} \left( \mathbf{v}_{i+1,j} + \mathbf{v}_{i-1,j
 $$
 where $h$ is the grid spacing, and $\mathbf{v}_{i,j}$ represents the value at grid point $(i, j)$.
 
-For a grid defined on a domain \([0,1] \times [0,1]\) with dimensions \(N \times N\), where \(N\) is the number of points along each dimension, the values of the grid can be represented in a vector \(v\) of length \(N^2\). The mapping from a 2D grid index \((i, j)\) to a 1D vector index is done using the following formula:
+For a grid defined on a domain $[0,1] \times [0,1]$ with dimensions $N \times N$, where $N$ is the number of points along each dimension, the values of the grid can be represented in a vector $v$ of length $N^2$. The mapping from a 2D grid index $(i, j)$ to a 1D vector index is done using the following formula:
 
 $$
 v[(i-1) \times N + j]
@@ -313,36 +313,36 @@ The multigrid approach, which is employed as a preconditioner, involves a hierar
 
 1. **Smoothing**:
 - Reduce high-frequency errors using a relaxation method such as Jacobi or Gauss-Seidel. Given the linear system $A \mathbf{u} = \mathbf{f}$, a Jacobi iteration can be written as:
-$$
+```math
 \mathbf{u}^{(k+1)} = \mathbf{u}^{(k)} + D^{-1} (\mathbf{f} - A \mathbf{u}^{(k)}),
-$$
+```
 where $D$ is the diagonal part of $A$.
 
 In contrast, the Gauss-Seidel method updates the solution sequentially, using the most recent values as soon as they are computed.
 The Gauss-Seidel iteration can be expressed as:
-$$
+```math
 \mathbf{u}_i^{(k+1)} = \frac{1}{A_{ii}} \left( f_i - \sum_{j=1}^{i-1} A_{ij} \mathbf{u}_j^{(k+1)} - \sum_{j=i+1}^{N} A_{ij} \mathbf{u}_j^{(k)} \right),
-$$
+```
 where $A_{ii}$ is the diagonal element of $A$ corresponding to the $i$-th equation.
 This approach allows for the incorporation of updated values into subsequent calculations, often leading to faster convergence than the Jacobi method, especially for diagonally dominant or symmetric positive definite matrices.
 
 2. **Restriction**:
 - Transfer the residual $\mathbf{r} = \mathbf{f} - A \mathbf{u}$ to a coarser grid using the restriction operator $R$:
-$$
+```math
 \mathbf{r}_c = R \mathbf{r}.
-$$
+```
 
 3. **Coarse-grid Correction**:
 - On the coarse grid, solve the system approximately:
-$$
+```math
 A_c \mathbf{e}_c = \mathbf{r}_c.
-$$
+```
 
 4. **Prolongation**:
 - Transfer the coarse-grid correction back to the fine grid using the prolongation operator $P$:
-$$
+```math
 \mathbf{u} = \mathbf{u} + P \mathbf{e}_c.
-$$
+```
 
 5. **Post-smoothing**:
 - Apply another smoothing step to reduce any new high-frequency errors introduced by the coarse-grid correction.
