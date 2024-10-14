@@ -41,6 +41,7 @@ Some methods only require `A * v` products, whereas other ones also require `A' 
 | SYMMLQ, CG-LANCZOS, MINRES, MINRES-QLP, MINARES | LSLQ, LSQR, LSMR, LNLQ, CRAIG, CRAIGMR   |
 | DIOM, FOM, DQGMRES, GMRES, FGMRES, BLOCK-GMRES  | BiLQ, QMR, BiLQR, USYMLQ, USYMQR, TriLQR |
 | CGS, BICGSTAB                                   | TriCG, TriMR                             |
+| CG-LANCZOS-SHIFT                                | CGLS-LANCZOS-SHIFT                       |
 
 !!! info
     GPMR is the only method that requires `A * v` and `B * w` products.

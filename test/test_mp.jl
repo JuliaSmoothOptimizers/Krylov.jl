@@ -3,7 +3,7 @@
   for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos, :dqgmres, :diom, :cr, :gpmr,
              :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab, :craigmr, :crls, :symmlq, :minres,
              :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr, :gmres, :fom,
-             :car, :minares, :fgmres, :cg_lanczos_shift)
+             :car, :minares, :fgmres, :cg_lanczos_shift, :cgls_lanczos_shift)
     @testset "$fn" begin
       for T in (Float16, Float32, Float64, BigFloat)
         for FC in (T, Complex{T})
@@ -22,7 +22,7 @@
             x, y, _ = @eval $fn($A, $B, $b, $c)
           elseif fn in (:lnlq, :craig, :craigmr)
             x, y, _ = @eval $fn($A, $b)
-          elseif fn == :cg_lanczos_shift
+          elseif fn in (:cg_lanczos_shift, :cgls_lanczos_shift)
             x, _ = @eval $fn($A, $b, $shifts)
           else
             x, _ = @eval $fn($A, $b)
@@ -41,6 +41,10 @@
           elseif fn == :cg_lanczos_shift
             @test norm((A - I) * x[1] - b) ≤ Κ * (atol + norm(b) * rtol)
             @test norm((A + I) * x[2] - b) ≤ Κ * (atol + norm(b) * rtol)
+            @test eltype(x) == Vector{FC}
+          elseif fn == :cgls_lanczos_shift
+            @test norm(A' * (b - A * x[1]) + x[1]) ≤ Κ * (atol + norm(A' * b) * rtol)
+            @test norm(A' * (b - A * x[2]) - x[2]) ≤ Κ * (atol + norm(A' * b) * rtol)
             @test eltype(x) == Vector{FC}
           else
             @test norm(A * x - b) ≤ Κ * (atol + norm(b) * rtol)
