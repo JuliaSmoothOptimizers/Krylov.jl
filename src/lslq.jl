@@ -182,16 +182,6 @@ args_lslq = (:A, :b)
 kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function lslq($(def_args_lslq...); window :: Int=5, $(def_kwargs_lslq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = LslqSolver(A, b; window)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    lslq!(solver, $(args_lslq...); $(kwargs_lslq...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function lslq!(solver :: LslqSolver{T,FC,S}, $(def_args_lslq...); $(def_kwargs_lslq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer

@@ -44,10 +44,9 @@ for (KS, fun, fun2, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in
   (:CgLanczosShiftSolver  , :cg_lanczos_shift!  , :cg_lanczos_shift  , args_cg_lanczos_shift  , def_args_cg_lanczos_shift  , (), (), kwargs_cg_lanczos_shift  , def_kwargs_cg_lanczos_shift  )
   (:CglsLanczosShiftSolver, :cgls_lanczos_shift!, :cgls_lanczos_shift, args_cgls_lanczos_shift, def_args_cgls_lanczos_shift, (), (), kwargs_cgls_lanczos_shift, def_kwargs_cgls_lanczos_shift)
 ]
-  # window :: 5 -> lslq, lsmr, lsqr, minres, symmlq
+  ## Out-of-place
   if fun2 in (:cg_lanczos_shift, :cgls_lanczos_shift)
     @eval begin
-      ## Out-of-place
       function $(fun2)($(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
         nshifts = length(shifts)
@@ -61,7 +60,6 @@ for (KS, fun, fun2, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in
     end
   elseif fun2 in (:diom, :dqgmres, :fom, :gmres, :fgmres, :gpmr)
     @eval begin
-      ## Out-of-place
       function $(fun2)($(def_args...); memory::Int=20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
         solver = $KS(A, b, memory)
@@ -85,9 +83,33 @@ for (KS, fun, fun2, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in
         end
       end
     end
-  elseif fun2 ∉ (:cg_lanczos_shift, :cgls_lanczos_shift, :lslq, :lsmr, :lsqr, :minres, :symmlq, :diom, :dqgmres, :fom, :gmres, :fgmres, :gpmr)
+  elseif fun2 in (:lslq, :lsmr, :lsqr, :minres, :symmlq)
     @eval begin
-      ## Out-of-place
+      function $(fun2)($(def_args...); window::Int=5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+        start_time = time_ns()
+        solver = $KS(A, b; window)
+        elapsed_time = ktimer(start_time)
+        timemax -= elapsed_time
+        $(fun)(solver, $(args...); $(kwargs...))
+        solver.stats.timer += elapsed_time
+        return results(solver)
+      end
+
+      if !isempty($optargs)
+        function $(fun2)($(def_args...), $(def_optargs...); window::Int=5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+          start_time = time_ns()
+          solver = $KS(A, b; window)
+          warm_start!(solver, $(optargs...))
+          elapsed_time = ktimer(start_time)
+          timemax -= elapsed_time
+          $(fun)(solver, $(args...); $(kwargs...))
+          solver.stats.timer += elapsed_time
+          return results(solver)
+        end
+      end
+    end
+  else
+    @eval begin
       function $(fun2)($(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
         solver = $KS(A, b)
@@ -113,8 +135,8 @@ for (KS, fun, fun2, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in
     end
   end
 
+  ## In-place
   @eval begin
-    ## In-place
     solve!(solver :: $KS{T,FC,S}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}} = $(fun)(solver, $(args...); $(kwargs...))
 
     if !isempty($optargs)
