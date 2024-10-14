@@ -155,16 +155,6 @@ args_lsqr = (:A, :b)
 kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function lsqr($(def_args_lsqr...); window :: Int=5, $(def_kwargs_lsqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = LsqrSolver(A, b; window)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    lsqr!(solver, $(args_lsqr...); $(kwargs_lsqr...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function lsqr!(solver :: LsqrSolver{T,FC,S}, $(def_args_lsqr...); $(def_kwargs_lsqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
