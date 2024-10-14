@@ -105,27 +105,6 @@ optargs_gmres = (:x0,)
 kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function gmres($(def_args_gmres...), $(def_optargs_gmres...); memory :: Int=20, $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = GmresSolver(A, b, memory)
-    warm_start!(solver, $(optargs_gmres...))
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    gmres!(solver, $(args_gmres...); $(kwargs_gmres...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
-  function gmres($(def_args_gmres...); memory :: Int=20, $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    solver = GmresSolver(A, b, memory)
-    elapsed_time = ktimer(start_time)
-    timemax -= elapsed_time
-    gmres!(solver, $(args_gmres...); $(kwargs_gmres...))
-    solver.stats.timer += elapsed_time
-    return (solver.x, solver.stats)
-  end
-
   function gmres!(solver :: GmresSolver{T,FC,S}, $(def_args_gmres...); $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
