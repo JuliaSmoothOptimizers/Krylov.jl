@@ -275,8 +275,162 @@ u_star = -sin.(x)
 u_star ≈ u_sol
 ```
 
-Note that preconditioners can be also implemented as abstract operators.
+Preconditioners can be also implemented as abstract operators.
 For instance, we could compute the Cholesky factorization of $M$ and $N$ and create linear operators that perform the forward and backsolves.
 
 Krylov methods combined with factorization free operators allow to reduce computation time and memory requirements considerably by avoiding building and storing the system matrix.
 In the field of partial differential equations, the implementation of high-performance factorization free operators and assembly free preconditioning is a subject of active research.
+
+### Example 4: Solving the Poisson equation with a matrix-free multigrid preconditioner
+
+onsider the Poisson equation in a two-dimensional domain $\Omega$:
+$$
+-\Delta u = f \quad \text{in } \Omega,
+$$
+with Dirichlet boundary conditions, where $u$ is the unknown solution and $f$ is a given source term.
+
+The Laplacian operator $\Delta$ can be discretized using finite differences or finite elements, leading to a large linear system of the form:
+$$
+A \mathbf{u} = \mathbf{f},
+$$
+where $A$ is a sparse matrix representing the discretized Laplacian, $\mathbf{u}$ is the vector of unknowns, and $\mathbf{f}$ is the discretized source term.
+
+Instead of explicitly forming the matrix $A$, we will implement the matrix-vector product as a function that applies the discretized Laplacian to a vector.
+
+For the discretized Laplacian using finite differences, the matrix-vector product can be represented as:
+$$
+A \mathbf{v} \approx \frac{1}{h^2} \left( \mathbf{v}_{i+1,j} + \mathbf{v}_{i-1,j} + \mathbf{v}_{i,j+1} + \mathbf{v}_{i,j-1} - 4 \mathbf{v}_{i,j} \right),
+$$
+where $h$ is the grid spacing, and $\mathbf{v}_{i,j}$ represents the value at grid point $(i, j)$.
+
+For a grid defined on a domain \([0,1] \times [0,1]\) with dimensions \(N \times N\), where \(N\) is the number of points along each dimension, the values of the grid can be represented in a vector \(v\) of length \(N^2\). The mapping from a 2D grid index \((i, j)\) to a 1D vector index is done using the following formula:
+
+$$
+v[(i-1) \times N + j]
+$$
+
+The multigrid approach, which is employed as a preconditioner, involves a hierarchy of grid levels, and the solution process typically follows these steps:
+
+1. **Smoothing**:
+- Reduce high-frequency errors using a relaxation method such as Jacobi or Gauss-Seidel. Given the linear system $A \mathbf{u} = \mathbf{f}$, a Jacobi iteration can be written as:
+$$
+\mathbf{u}^{(k+1)} = \mathbf{u}^{(k)} + D^{-1} (\mathbf{f} - A \mathbf{u}^{(k)}),
+$$
+where $D$ is the diagonal part of $A$.
+
+In contrast, the Gauss-Seidel method updates the solution sequentially, using the most recent values as soon as they are computed.
+The Gauss-Seidel iteration can be expressed as:
+$$
+\mathbf{u}_i^{(k+1)} = \frac{1}{A_{ii}} \left( f_i - \sum_{j=1}^{i-1} A_{ij} \mathbf{u}_j^{(k+1)} - \sum_{j=i+1}^{N} A_{ij} \mathbf{u}_j^{(k)} \right),
+$$
+where $A_{ii}$ is the diagonal element of $A$ corresponding to the $i$-th equation.
+This approach allows for the incorporation of updated values into subsequent calculations, often leading to faster convergence than the Jacobi method, especially for diagonally dominant or symmetric positive definite matrices.
+
+2. **Restriction**:
+- Transfer the residual $\mathbf{r} = \mathbf{f} - A \mathbf{u}$ to a coarser grid using the restriction operator $R$:
+$$
+\mathbf{r}_c = R \mathbf{r}.
+$$
+
+3. **Coarse-grid Correction**:
+- On the coarse grid, solve the system approximately:
+$$
+A_c \mathbf{e}_c = \mathbf{r}_c.
+$$
+
+4. **Prolongation**:
+- Transfer the coarse-grid correction back to the fine grid using the prolongation operator $P$:
+$$
+\mathbf{u} = \mathbf{u} + P \mathbf{e}_c.
+$$
+
+5. **Post-smoothing**:
+- Apply another smoothing step to reduce any new high-frequency errors introduced by the coarse-grid correction.
+
+By incorporating the multigrid method as a preconditioner, we can achieve improved convergence rates for iterative solvers, particularly for problems characterized by large linear systems, such as the Poisson equation.
+
+```julia
+using SparseArrays, LinearAlgebra, Krylov
+
+# Define parameters
+N = 64  # Grid size
+h = 1.0 / (N + 1)  # Grid spacing
+f = zeros(N, N)  # Source term
+u = zeros(N, N)  # Initial guess
+
+# Define the source term (e.g., a simple function)
+for i in 1:N
+    for j in 1:N
+        f[i, j] = sin(π * i * h) * sin(π * j * h)  # Example source term
+    end
+end
+
+# Function for the matrix-vector product using the discretized Laplacian
+function laplacian_matrix_vector_product(v)
+    result = zeros(size(v))
+    for i in 2:N-1
+        for j in 2:N-1
+            result[i, j] = (v[i+1, j] + v[i-1, j] + v[i, j+1] + v[i, j-1] - 4 * v[i, j]) / h^2
+        end
+    end
+    return result
+end
+
+# Define a function for the Jacobi smoothing step
+function jacobi_smoothing(u, f, iterations=10)
+    for _ in 1:iterations
+        u_old = copy(u)
+        for i in 2:N-1
+            for j in 2:N-1
+                u[i, j] = u_old[i, j] + (f[i, j] - laplacian_matrix_vector_product(u_old)[i, j]) / 4  # Update rule
+            end
+        end
+    end
+    return u
+end
+
+# Define the restriction operator (simple averaging)
+function restriction(r)
+    return 0.25 * (r[1:end-1:2, 1:end-1:2] + r[2:end-1:2, 1:end-1:2] + r[1:end-1:2, 2:end-1:2] + r[2:end-1:2, 2:end-1:2])
+end
+
+# Define the prolongation operator (simple linear interpolation)
+function prolongation(ec)
+    fine_size = 2 * size(ec, 1) - 1
+    u = zeros(fine_size, fine_size)
+    u[1:end-1:2, 1:end-1:2] .= ec  # Copy coarse correction
+    u[2:end-1:2, 1:end-1:2] .= 0.5 * (ec[1:end-1, :] .+ ec[2:end, :])  # Linear interpolation
+    u[1:end-1:2, 2:end-1:2] .= 0.5 * (ec[:, 1:end-1] .+ ec[:, 2:end])  # Linear interpolation
+    return u
+end
+
+# Main multigrid V-cycle function
+function multigrid_v_cycle(u, f, iterations=10)
+    # 1. Pre-smoothing
+    u = jacobi_smoothing(u, f, iterations)
+
+    # 2. Compute residual
+    r = f - laplacian_matrix_vector_product(u)
+
+    # 3. Restrict the residual to the coarse grid
+    rc = restriction(r)
+
+    # 4. Solve the coarse-grid problem (approximate)
+    ec = zeros(size(rc))  # Initial guess for the coarse grid correction
+    ec = jacobi_smoothing(ec, rc, iterations)  # Use Jacobi for coarse correction
+
+    # 5. Prolongate correction back to fine grid
+    u += prolongation(ec)
+
+    # 6. Post-smoothing
+    u = jacobi_smoothing(u, f, iterations)
+
+    return u
+end
+
+# Run the multigrid V-cycle
+u = multigrid_v_cycle(u, f)
+
+# TO DO!
+# add multi_grid_v_cycle in a Krylov solver.
+```
