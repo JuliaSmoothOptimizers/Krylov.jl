@@ -141,7 +141,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       @kcopy!(r, b)
     end
     MisI || mulorldiv!(z, M, r, ldiv)
-    @kcopy!(p, z)
+    @kcopy!(n, p, z)
     γ = @kdotr(n, r, z)
     rNorm = sqrt(γ)
     history && push!(rNorms, rNorm)
