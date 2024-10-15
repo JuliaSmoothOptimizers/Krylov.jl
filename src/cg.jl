@@ -138,7 +138,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       mul!(r, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), r)
     else
-      @kcopy!(r, b)
+      @kcopy!(n, r, b)
     end
     MisI || mulorldiv!(z, M, r, ldiv)
     @kcopy!(n, p, z)
