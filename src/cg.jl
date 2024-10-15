@@ -182,7 +182,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
           inconsistent = !linesearch
         end
         if linesearch
-          iter == 0 && (kcopy!(x, b))
+          iter == 0 && (@kcopy!(n, x, b))
           solved = true
         end
       end
