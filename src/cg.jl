@@ -133,15 +133,15 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     reset!(stats)
     z = MisI ? r : solver.z
 
-    x .= zero(FC)
+    fill!(x, zero(FC))
     if warm_start
       mul!(r, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), r)
     else
-      r .= b
+      @kcopy!(r, b)
     end
     MisI || mulorldiv!(z, M, r, ldiv)
-    p .= z
+    @kcopy!(p, z)
     γ = @kdotr(n, r, z)
     rNorm = sqrt(γ)
     history && push!(rNorms, rNorm)
@@ -182,7 +182,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
           inconsistent = !linesearch
         end
         if linesearch
-          iter == 0 && (x .= b)
+          iter == 0 && (kcopy!(x, b))
           solved = true
         end
       end
