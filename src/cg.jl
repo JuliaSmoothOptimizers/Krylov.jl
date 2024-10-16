@@ -133,7 +133,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     reset!(stats)
     z = MisI ? r : solver.z
 
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
     if warm_start
       mul!(r, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), r)

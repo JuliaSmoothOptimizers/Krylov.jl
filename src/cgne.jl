@@ -151,7 +151,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     reset!(stats)
     z = NisI ? r : solver.z
 
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
     r .= b
     NisI || mulorldiv!(z, N, r, ldiv)
     rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
@@ -167,10 +167,10 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     mul!(p, Aᴴ, z)
 
     # Use ‖p‖ to detect inconsistent system.
-    # An inconsistent system will necessarily have AA' singular.
-    # Because CGNE is equivalent to CG applied to AA'y = b, there will be a
-    # conjugate direction u such that u'AA'u = 0, i.e., A'u = 0. In this
-    # implementation, p is a substitute for A'u.
+    # An inconsistent system will necessarily have AAᴴ singular.
+    # Because CGNE is equivalent to CG applied to AAᴴy = b, there will be a
+    # conjugate direction u such that uᴴAAᴴu = 0, i.e., Aᴴu = 0. In this
+    # implementation, p is a substitute for Aᴴu.
     pNorm = @knrm2(n, p)
 
     γ = @kdotr(m, r, z)  # Faster than γ = dot(r, z)

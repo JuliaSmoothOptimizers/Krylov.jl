@@ -129,7 +129,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     # Initial state.
     ## Distribute x similarly to shifts.
     for i = 1 : nshifts
-      x[i] .= zero(FC)  # x₀
+      @kfill!(x[i], zero(FC))  # x₀
     end
     Mv .= b                             # Mv₁ ← b
     MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹ * Mv₁
@@ -142,7 +142,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     end
 
     # Keep track of shifted systems with negative curvature if required.
-    indefinite .= false
+    @kfill!(indefinite, false)
 
     if β == 0
       stats.niter = 0
@@ -165,10 +165,10 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
 
     # Initialize some constants used in recursions below.
     ρ = one(T)
-    σ .= β
-    δhat .= zero(T)
-    ω .= zero(T)
-    γ .= one(T)
+    @kfill!(σ, β)
+    @kfill!(δhat, zero(T))
+    @kfill!(ω, zero(T))
+    @kfill!(γ, one(T))
 
     # Define stopping tolerance.
     ε = atol + rtol * β

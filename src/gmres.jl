@@ -139,7 +139,7 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
     xr = restart ? Δx : x
 
     # Initial solution x₀.
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
 
     # Initial residual r₀.
     if warm_start
@@ -195,15 +195,15 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
       # Initialize workspace.
       nr = 0  # Number of coefficients stored in Rₖ.
       for i = 1 : mem
-        V[i] .= zero(FC)  # Orthogonal basis of Kₖ(MAN, Mr₀).
+        @kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
       end
-      s .= zero(FC)  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
-      c .= zero(T)   # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
-      R .= zero(FC)  # Upper triangular matrix Rₖ.
-      z .= zero(FC)  # Right-hand of the least squares problem min ‖Hₖ₊₁.ₖyₖ - βe₁‖₂.
+      @kfill!(s, zero(FC))  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
+      @kfill!(c, zero(T))   # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
+      @kfill!(R, zero(FC))  # Upper triangular matrix Rₖ.
+      @kfill!(z, zero(FC))  # Right-hand of the least squares problem min ‖Hₖ₊₁.ₖyₖ - βe₁‖₂.
 
       if restart
-        xr .= zero(FC)  # xr === Δx when restart is set to true
+        @kfill!(xr, zero(FC))  # xr === Δx when restart is set to true
         if npass ≥ 1
           mul!(w, A, x)
           @kaxpby!(n, one(FC), b, -one(FC), w)

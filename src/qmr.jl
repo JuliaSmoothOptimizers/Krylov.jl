@@ -162,7 +162,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     end
 
     # Initial solution x₀ and residual norm ‖r₀‖.
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
     rNorm = @knrm2(n, r₀)  # ‖r₀‖ = ‖b₀ - Ax₀‖
 
     history && push!(rNorms, rNorm)
@@ -197,14 +197,14 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
 
     βₖ = √(abs(cᴴb))             # β₁γ₁ = cᴴ(b - Ax₀)
     γₖ = cᴴb / βₖ                # β₁γ₁ = cᴴ(b - Ax₀)
-    vₖ₋₁ .= zero(FC)             # v₀ = 0
-    uₖ₋₁ .= zero(FC)             # u₀ = 0
+    @kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
+    @kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
     vₖ .= r₀ ./ βₖ               # v₁ = (b - Ax₀) / β₁
     uₖ .= c ./ conj(γₖ)          # u₁ = c / γ̄₁
     cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
     sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-    wₖ₋₂ .= zero(FC)             # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
-    wₖ₋₁ .= zero(FC)             # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
+    @kfill!(wₖ₋₂, zero(FC))      # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
+    @kfill!(wₖ₋₁, zero(FC))      # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
     ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᴴβ₁e₁
     τₖ = @kdotr(n, vₖ, vₖ)       # τₖ is used for the residual norm estimate
 

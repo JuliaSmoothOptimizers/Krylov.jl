@@ -141,11 +141,11 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     end
 
     # Initial solution x₀ and residual r₀ = b - Ax₀.
-    x .= zero(FC)          # x₀
+    @kfill!(x, zero(FC))   # x₀
     bNorm = @knrm2(m, r₀)  # rNorm = ‖r₀‖
 
     # Initial solution y₀ and residual s₀ = c - Aᴴy₀.
-    t .= zero(FC)          # t₀
+    @kfill!(t, zero(FC))   # t₀
     cNorm = @knrm2(n, s₀)  # sNorm = ‖s₀‖
 
     iter = 0
@@ -162,8 +162,8 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     # Set up workspace.
     βₖ = @knrm2(m, r₀)          # β₁ = ‖r₀‖ = ‖v₁‖
     γₖ = @knrm2(n, s₀)          # γ₁ = ‖s₀‖ = ‖u₁‖
-    vₖ₋₁ .= zero(FC)            # v₀ = 0
-    uₖ₋₁ .= zero(FC)            # u₀ = 0
+    @kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
+    @kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
     vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
     uₖ .= s₀ ./ γₖ              # u₁ = (c - Aᴴy₀) / γ₁
     cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
@@ -174,8 +174,8 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
     ψbarₖ₋₁ = ψₖ₋₁ = zero(FC)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
     ϵₖ₋₃ = λₖ₋₂ = zero(FC)      # Components of Lₖ₋₁
-    wₖ₋₃ .= zero(FC)            # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᴴ
-    wₖ₋₂ .= zero(FC)            # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᴴ
+    @kfill!(wₖ₋₃, zero(FC))     # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᴴ
+    @kfill!(wₖ₋₂, zero(FC))     # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᴴ
 
     # Stopping criterion.
     inconsistent = false

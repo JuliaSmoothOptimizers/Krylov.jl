@@ -147,7 +147,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     ctol = conlim > 0 ? 1 / conlim : zero(T)
 
     # Initial solution x₀
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
 
     if warm_start
       mul!(Mvold, A, Δx)
@@ -225,9 +225,9 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     errcg = T(Inf)
 
     window = length(clist)
-    clist .= zero(T)
-    zlist .= zero(T)
-    sprod .= one(T)
+    @kfill!(clist, zero(T))
+    @kfill!(zlist, zero(T))
+    @kfill!(sprod, one(T))
 
     if λest ≠ 0
       # Start QR factorization of Tₖ - λest I

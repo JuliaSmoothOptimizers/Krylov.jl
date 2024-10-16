@@ -141,7 +141,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     Mq = MisI ? q : solver.Mq
 
     # Initial state.
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
     if warm_start
       mul!(p, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), p)

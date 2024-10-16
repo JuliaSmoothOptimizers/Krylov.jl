@@ -122,7 +122,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
 
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
     if warm_start
       mul!(r, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), r)

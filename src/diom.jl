@@ -141,7 +141,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     r₀ = MisI ? t : solver.w
 
     # Initial solution x₀ and residual r₀.
-    x .= zero(FC)  # x₀
+    @kfill!(x, zero(FC))  # x₀
     if warm_start
       mul!(t, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), t)
@@ -169,17 +169,17 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
 
     mem = length(V)  # Memory
     for i = 1 : mem
-      V[i] .= zero(FC)  # Orthogonal basis of Kₖ(MAN, Mr₀).
+      @kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
     end
     for i = 1 : mem-1
-      P[i] .= zero(FC)  # Directions Pₖ = NVₖ(Uₖ)⁻¹.
+      @kfill!(P[i], zero(FC))  # Directions Pₖ = NVₖ(Uₖ)⁻¹.
     end
-    H .= zero(FC)  # Last column of the band hessenberg matrix Hₖ = LₖUₖ.
+    @kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ = LₖUₖ.
     # Each column has at most mem + 1 nonzero elements.
     # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
     # k-i+1 represents the indice of the diagonal where hᵢ.ₖ is located.
     # In addition of that, the last column of Uₖ is stored in H.
-    L .= zero(FC)  # Last mem-1 pivots of Lₖ.
+    @kfill!(L, zero(FC))  # Last mem-1 pivots of Lₖ.
 
     # Initial ξ₁ and V₁.
     ξ = rNorm

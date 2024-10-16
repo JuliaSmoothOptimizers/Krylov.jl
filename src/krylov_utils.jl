@@ -332,6 +332,8 @@ kaxpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, dx :: Integer, t 
 kcopy!(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Integer) where T <: BLAS.BlasFloat = BLAS.blascopy!(n, x, dx, y, dy)
 kcopy!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: FloatOrComplex = copyto!(y, x)
 
+kfill!(x :: AbstractVector{T}, val :: T) where T <: FloatOrComplex = fill!(x, val)
+
 kgeqrf!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.geqrf!(A, tau)
 korgqr!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.orgqr!(A, tau)
 kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVector{T}, C :: AbstractMatrix{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)
@@ -375,6 +377,14 @@ end
 
 macro kcopy!(n, x, y)
   return esc(:(Krylov.kcopy!($n, $x, 1, $y, 1)))
+end
+
+macro kcopyto!(n, y, x)
+  return esc(:(Krylov.kcopy!($n, $x, 1, $y, 1)))
+end
+
+macro kfill!(x, val)
+  return esc(:(Krylov.kfill!($x, $val)))
 end
 
 macro kswap(x, y)

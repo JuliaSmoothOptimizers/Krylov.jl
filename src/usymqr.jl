@@ -149,7 +149,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
     end
 
     # Initial solution x₀ and residual norm ‖r₀‖.
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
     rNorm = @knrm2(m, r₀)
     history && push!(rNorms, rNorm)
     if rNorm == 0
@@ -172,14 +172,14 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
 
     βₖ = @knrm2(m, r₀)           # β₁ = ‖v₁‖ = ‖r₀‖
     γₖ = @knrm2(n, c)            # γ₁ = ‖u₁‖ = ‖c‖
-    vₖ₋₁ .= zero(FC)             # v₀ = 0
-    uₖ₋₁ .= zero(FC)             # u₀ = 0
+    @kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
+    @kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
     vₖ .= r₀ ./ βₖ               # v₁ = (b - Ax₀) / β₁
     uₖ .= c ./ γₖ                # u₁ = c / γ₁
     cₖ₋₂ = cₖ₋₁ = cₖ = one(T)    # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
     sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-    wₖ₋₂ .= zero(FC)             # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
-    wₖ₋₁ .= zero(FC)             # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
+    @kfill!(wₖ₋₂, zero(FC))      # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
+    @kfill!(wₖ₋₁, zero(FC))      # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
     ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᴴβ₁e₁
 
     # Stopping criterion.

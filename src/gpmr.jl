@@ -198,8 +198,8 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     p  = DisI ? dB : solver.p
 
     # Initial solutions x₀ and y₀.
-    x .= zero(FC)
-    y .= zero(FC)
+    @kfill!(x, zero(FC))
+    @kfill!(y, zero(FC))
 
     iter = 0
     itmax == 0 && (itmax = m+n)
@@ -209,13 +209,13 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     mem = length(V)  # Memory
     ωₖ = zero(FC)    # Auxiliary variable to store fₖₖ
     for i = 1 : mem
-      V[i] .= zero(FC)
-      U[i] .= zero(FC)
+      @kfill!(V[i], zero(FC))
+      @kfill!(U[i], zero(FC))
     end
-    gs .= zero(FC)  # Givens sines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
-    gc .= zero(T)   # Givens cosines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
-    R  .= zero(FC)  # Upper triangular matrix Rₖ.
-    zt .= zero(FC)  # Rₖzₖ = tₖ with (tₖ, τbar₂ₖ₊₁, τbar₂ₖ₊₂) = (Qₖ)ᴴ(βe₁ + γe₂).
+    @kfill!(gs, zero(FC))  # Givens sines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
+    @kfill!(gc, zero(T))   # Givens cosines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
+    @kfill!(R , zero(FC))  # Upper triangular matrix Rₖ.
+    @kfill!(zt, zero(FC))  # Rₖzₖ = tₖ with (tₖ, τbar₂ₖ₊₁, τbar₂ₖ₊₂) = (Qₖ)ᴴ(βe₁ + γe₂).
 
     # Warm-start
     # If λ ≠ 0, Cb₀ = Cb - CAΔy - λΔx because CM = Iₘ and E = Iₘ
@@ -461,7 +461,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
           V[k+1] .= q ./ Haux  # hₖ₊₁.ₖvₖ₊₁ = q
         else
           # Breakdown -- hₖ₊₁.ₖ = ‖q‖₂ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
-          V[k+1] .= zero(FC)  # vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
+          @kfill!(V[k+1], zero(FC))  # vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
         end
 
         # fₖ₊₁.ₖ ≠ 0
@@ -469,7 +469,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
           U[k+1] .= p ./ Faux  # fₖ₊₁.ₖuₖ₊₁ = p
         else
           # Breakdown -- fₖ₊₁.ₖ = ‖p‖₂ = 0 and Bvₖ ∈ Span{u₁, ..., uₖ}
-          U[k+1] .= zero(FC)  # uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
+          @kfill!(U[k+1], zero(FC))  # uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
         end
 
         zt[2k+1] = τbar₂ₖ₊₁

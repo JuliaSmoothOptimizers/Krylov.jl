@@ -139,7 +139,7 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     Mr  = MisI ? r  : solver.Ms
     MAp = MisI ? Ap : solver.Ms
 
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
     r .= b
     bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
     rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.

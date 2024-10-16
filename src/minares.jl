@@ -131,7 +131,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     iter = 0
     itmax == 0 && (itmax = 2*n)
 
-    x .= zero(FC)  # x₀
+    @kfill!(x, zero(FC))  # x₀
 
     # Initialize the Lanczos process.
     # β₁v₁ = r₀
@@ -173,12 +173,12 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     c̃₂ₖ₋₂ = s̃₂ₖ₋₂ = zero(T)
     c̃₂ₖ₋₁ = s̃₂ₖ₋₁ = zero(T)
     c̃₂ₖ   = s̃₂ₖ   = zero(T)
-    wₖ₋₂ .= zero(T)             # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
-    wₖ₋₁ .= zero(T)             # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
-    dₖ₋₂ .= zero(T)             # Column k-2 of Dₖ = Wₖ(Uₖ)⁻¹
-    dₖ₋₁ .= zero(T)             # Column k-1 of Dₖ = Wₖ(Uₖ)⁻¹
-    β₁α₁ = βₖ * αₖ              # Variable used to update zₖ
-    β₁β₂ = βₖ * βₖ₊₁            # Variable used to update zₖ
+    @kfill!(wₖ₋₂, zero(FC))  # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
+    @kfill!(wₖ₋₁, zero(FC))  # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
+    @kfill!(dₖ₋₂, zero(FC))  # Column k-2 of Dₖ = Wₖ(Uₖ)⁻¹
+    @kfill!(dₖ₋₁, zero(FC))  # Column k-1 of Dₖ = Wₖ(Uₖ)⁻¹
+    β₁α₁ = βₖ * αₖ           # Variable used to update zₖ
+    β₁β₂ = βₖ * βₖ₊₁         # Variable used to update zₖ
     ϵₖ₋₂ = ϵₖ₋₁ = zero(T)
     ℓ = itmax + 2
 

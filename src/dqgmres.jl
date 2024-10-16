@@ -141,7 +141,7 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
     r₀ = MisI ? t : solver.w
 
     # Initial solution x₀ and residual r₀.
-    x .= zero(FC)  # x₀
+    @kfill!(x, zero(FC))  # x₀
     if warm_start
       mul!(t, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), t)
@@ -170,12 +170,12 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
     # Set up workspace.
     mem = length(V)  # Memory.
     for i = 1 : mem
-      V[i] .= zero(FC)  # Orthogonal basis of Kₖ(MAN, Mr₀).
-      P[i] .= zero(FC)  # Directions for x : Pₖ = NVₖ(Rₖ)⁻¹.
+      @kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
+      @kfill!(P[i], zero(FC))  # Directions for x : Pₖ = NVₖ(Rₖ)⁻¹.
     end
-    c .= zero(T)   # Last mem Givens cosines used for the factorization QₖRₖ = Hₖ.
-    s .= zero(FC)  # Last mem Givens sines used for the factorization QₖRₖ = Hₖ.
-    H .= zero(FC)  # Last column of the band hessenberg matrix Hₖ.
+    @kfill!(c, zero(T))   # Last mem Givens cosines used for the factorization QₖRₖ = Hₖ.
+    @kfill!(s, zero(FC))  # Last mem Givens sines used for the factorization QₖRₖ = Hₖ.
+    @kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ.
     # Each column has at most mem + 1 nonzero elements.
     # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
     # k-i+1 represents the indice of the diagonal where hᵢ.ₖ is located.

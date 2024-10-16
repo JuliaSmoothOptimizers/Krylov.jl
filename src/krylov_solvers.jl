@@ -2047,8 +2047,8 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
           S = typeof(solver.x)
           allocate_if(true, solver, :Δx, S, n)
           allocate_if(true, solver, :Δy, S, m)
-          solver.Δx .= x0
-          solver.Δy .= y0
+          @kcopyto!(n, solver.Δx, x0)
+          @kcopyto!(m, solver.Δy, y0)
           solver.warm_start = true
           return solver
         end
@@ -2058,7 +2058,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
           S = typeof(solver.x)
           length(x0) == n || error("x0 should have size $n")
           allocate_if(true, solver, :Δx, S, n)
-          solver.Δx .= x0
+          @kcopyto!(n, solver.Δx, x0)
           solver.warm_start = true
           return solver
         end
