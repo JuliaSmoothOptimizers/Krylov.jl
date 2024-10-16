@@ -375,11 +375,7 @@ macro kaxpby!(n, s, x, t, y)
   return esc(:(Krylov.kaxpby!($n, $s, $x, 1, $t, $y, 1)))
 end
 
-macro kcopy!(n, x, y)
-  return esc(:(Krylov.kcopy!($n, $x, 1, $y, 1)))
-end
-
-macro kcopyto!(n, y, x)
+macro kcopy!(n, y, x)
   return esc(:(Krylov.kcopy!($n, $x, 1, $y, 1)))
 end
 

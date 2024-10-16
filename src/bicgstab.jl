@@ -210,7 +210,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       mul!(q, A, y)                        # qₖ = Ayₖ
       mulorldiv!(v, M, q, ldiv)            # vₖ = M⁻¹qₖ
       α = ρ / @kdot(n, c, v)               # αₖ = ⟨r̅₀,rₖ₋₁⟩ / ⟨r̅₀,vₖ⟩
-      @kcopy!(n, r, s)                     # sₖ = rₖ₋₁
+      @kcopy!(n, s, r)                     # sₖ = rₖ₋₁
       @kaxpy!(n, -α, v, s)                 # sₖ = sₖ - αₖvₖ
       @kaxpy!(n, α, y, x)                  # xₐᵤₓ = xₖ₋₁ + αₖyₖ
       NisI || mulorldiv!(z, N, s, ldiv)    # zₖ = N⁻¹sₖ
@@ -218,7 +218,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       MisI || mulorldiv!(t, M, d, ldiv)    # tₖ = M⁻¹dₖ
       ω = @kdot(n, t, s) / @kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
       @kaxpy!(n, ω, z, x)                  # xₖ = xₐᵤₓ + ωₖzₖ
-      @kcopy!(n, s, r)                     # rₖ = sₖ
+      @kcopy!(n, r, s)                     # rₖ = sₖ
       @kaxpy!(n, -ω, t, r)                 # rₖ = rₖ - ωₖtₖ
       next_ρ = @kdot(n, c, r)              # ρₖ₊₁ = ⟨r̅₀,rₖ⟩
       β = (next_ρ / ρ) * (α / ω)           # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)

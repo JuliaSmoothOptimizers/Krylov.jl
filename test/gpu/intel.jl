@@ -59,7 +59,7 @@ include("gpu.jl")
     end
 
     @testset "kcopy! -- $FC" begin
-      Krylov.@kcopy!(n, x, y)
+      Krylov.@kcopy!(n, y, x)
     end
 
     @testset "kswap -- $FC" begin
