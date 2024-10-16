@@ -147,7 +147,7 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     Mq = MisI ? q : solver.Mr
 
     @kfill!(x, zero(FC))
-    r .= b
+    @kcopy!(m, r, b)  # r ← b
     bNorm = @knrm2(m, r)   # Marginally faster than norm(b)
     if bNorm == 0
       stats.niter = 0
@@ -160,7 +160,7 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     end
     MisI || mulorldiv!(Mr, M, r, ldiv)
     mul!(s, Aᴴ, Mr)
-    p .= s
+    @kcopy!(n, p, s)  # p ← s
     γ = @kdotr(n, s, s)  # γ = sᴴs
     iter = 0
     itmax == 0 && (itmax = m + n)

@@ -153,7 +153,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       mul!(r₀, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), r₀)
     else
-      r₀ .= b
+      @kcopy!(n, r₀, b)  # r₀ ← b
     end
 
     @kfill!(x, zero(FC))                # x₀
@@ -189,9 +189,9 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
 
-    u .= r               # u₀
-    p .= r               # p₀
-    @kfill!(q, zero(FC)) # q₋₁
+    @kcopy!(n, u, r)      # u₀
+    @kcopy!(n, p, r)      # p₀
+    @kfill!(q, zero(FC))  # q₋₁
 
     # Stopping criterion.
     solved = rNorm ≤ ε

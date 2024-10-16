@@ -135,7 +135,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       mul!(Mv, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), Mv)
     else
-      Mv .= b
+      @kcopy!(n, Mv, b)  # Mv ← b
     end
     MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹r₀
     β = sqrt(@kdotr(n, v, Mv))          # β₁ = v₁ᴴ M v₁
@@ -152,13 +152,13 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       solver.warm_start = false
       return solver
     end
-    p .= v
+    @kcopy!(n, p, v)  # p ← v
 
     # Initialize Lanczos process.
     # β₁Mv₁ = b
     @kscal!(n, one(FC) / β, v)           # v₁  ←  v₁ / β₁
     MisI || @kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
-    Mv_prev .= Mv
+    @kcopy!(n, Mv_prev, Mv)              # Mv_prev ← Mv
 
     iter = 0
     itmax == 0 && (itmax = 2 * n)

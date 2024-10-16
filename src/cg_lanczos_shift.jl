@@ -131,10 +131,10 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     for i = 1 : nshifts
       @kfill!(x[i], zero(FC))  # x₀
     end
-    Mv .= b                             # Mv₁ ← b
+    @kcopy!(n, Mv, b)                   # Mv₁ ← b
     MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹ * Mv₁
     β = sqrt(@kdotr(n, v, Mv))          # β₁ = v₁ᴴ M v₁
-    rNorms .= β
+    @kfill!(rNorms, β)
     if history
       for i = 1 : nshifts
         push!(rNorms_history[i], rNorms[i])
@@ -155,14 +155,14 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
 
     # Initialize each p to v.
     for i = 1 : nshifts
-      p[i] .= v
+      @kcopy!(n, p[i], v)  # pᵢ ← v
     end
 
     # Initialize Lanczos process.
     # β₁Mv₁ = b
     @kscal!(n, one(FC) / β, v)           # v₁  ←  v₁ / β₁
     MisI || @kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
-    Mv_prev .= Mv
+    @kcopy!(n, Mv_prev, Mv)              # Mv_prev ← Mv
 
     # Initialize some constants used in recursions below.
     ρ = one(T)

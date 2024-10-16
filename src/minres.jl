@@ -166,12 +166,12 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
       (λ ≠ 0) && @kaxpy!(n, λ, Δx, r1)
       @kaxpby!(n, one(FC), b, -one(FC), r1)
     else
-      r1 .= b
+      @kcopy!(n, r1, b)  # r1 ← b
     end
 
     # Initialize Lanczos process.
     # β₁ M v₁ = b.
-    r2 .= r1
+    @kcopy!(n, r2, r1)  # r2 ← r1
     MisI || mulorldiv!(v, M, r1, ldiv)
     β₁ = @kdotr(m, r1, v)
     β₁ < 0 && error("Preconditioner is not positive definite")

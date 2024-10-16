@@ -226,7 +226,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
 
     # Initialize generalized Golub-Kahan bidiagonalization.
     # β₁Mu₁ = b.
-    Mu .= b
+    @kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)  # u₁ = M⁻¹ * Mu₁
     βₖ = sqrt(@kdotr(m, u, Mu))         # β₁ = ‖u₁‖_M
     if βₖ ≠ 0
@@ -236,7 +236,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
 
     # α₁Nv₁ = Aᴴu₁.
     mul!(Aᴴu, Aᴴ, u)
-    Nv .= Aᴴu
+    @kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)  # v₁ = N⁻¹ * Nv₁
     αₖ = sqrt(@kdotr(n, v, Nv))         # α₁ = ‖v₁‖_N
     if αₖ ≠ 0
@@ -244,7 +244,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       NisI || @kscal!(n, one(FC) / αₖ, Nv)
     end
 
-    w̄ .= u           # Direction w̄₁
+    @kcopy!(m, w̄, u) # Direction w̄₁
     cₖ = zero(T)     # Givens cosines used for the LQ factorization of (Lₖ)ᴴ
     sₖ = zero(FC)    # Givens sines used for the LQ factorization of (Lₖ)ᴴ
     ζₖ₋₁ = zero(FC)  # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
@@ -254,7 +254,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     λₖ  = λ             # λ₁ = λ
     cpₖ = spₖ = one(T)  # Givens sines and cosines used to zero out λₖ
     cdₖ = sdₖ = one(FC) # Givens sines and cosines used to define λₖ₊₁
-    λ > 0 && (q .= v)   # Additional vector needed to update x, by definition q₀ = 0
+    λ > 0 && @kcopy!(n, q, v)  # Additional vector needed to update x, by definition q₀ = 0
 
     # Initialize the regularization.
     if λ > 0

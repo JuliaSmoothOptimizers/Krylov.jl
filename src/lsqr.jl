@@ -197,7 +197,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
 
     # Initialize Golub-Kahan process.
     # β₁ M u₁ = b.
-    Mu .= b
+    @kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)
     β₁ = sqrt(@kdotr(m, u, Mu))
     if β₁ == 0
@@ -214,7 +214,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     @kscal!(m, one(FC)/β₁, u)
     MisI || @kscal!(m, one(FC)/β₁, Mu)
     mul!(Aᴴu, Aᴴ, u)
-    Nv .= Aᴴu
+    @kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
     Anorm² = @kdotr(n, v, Nv)
     Anorm = sqrt(Anorm²)
@@ -255,7 +255,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     end
     @kscal!(n, one(FC)/α, v)
     NisI || @kscal!(n, one(FC)/α, Nv)
-    w .= v
+    @kcopy!(n, w, v)  # w ← v
 
     # Initialize other constants.
     ϕbar = β₁

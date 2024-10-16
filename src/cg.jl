@@ -138,10 +138,10 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       mul!(r, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), r)
     else
-      r .= b
+      @kcopy!(n, r, b)  # r ← b
     end
     MisI || mulorldiv!(z, M, r, ldiv)
-    p .= z
+    @kcopy!(n, p, z)  # p ← z
     γ = @kdotr(n, r, z)
     rNorm = sqrt(γ)
     history && push!(rNorms, rNorm)
@@ -182,7 +182,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
           inconsistent = !linesearch
         end
         if linesearch
-          iter == 0 && (x .= b)
+          iter == 0 && @kcopy!(n, x, b)  # x ← b
           solved = true
         end
       end

@@ -147,7 +147,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
       @kaxpby!(n, one(FC), b, -one(FC), w)
       restart && @kaxpy!(n, one(FC), Δx, x)
     else
-      w .= b
+      @kcopy!(n, w, b)  # w ← b
     end
     MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M(b - Ax₀)
     β = @knrm2(n, r₀)                   # β = ‖r₀‖₂
@@ -314,7 +314,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
         @kaxpy!(n, y[i], V[i], xr)
       end
       if !NisI
-        solver.p .= xr
+        @kcopy!(n, solver.p, xr)  # p ← xr
         mulorldiv!(xr, N, solver.p, ldiv)
       end
       restart && @kaxpy!(n, one(FC), xr, x)

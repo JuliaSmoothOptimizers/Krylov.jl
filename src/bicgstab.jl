@@ -151,14 +151,14 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       mul!(r₀, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), r₀)
     else
-      r₀ .= b
+      @kcopy!(n, r₀, b)  # r₀ ← b
     end
 
     @kfill!(x, zero(FC))                # x₀
     @kfill!(s, zero(FC))                # s₀
     @kfill!(v, zero(FC))                # v₀
     MisI || mulorldiv!(r, M, r₀, ldiv)  # r₀
-    p .= r                              # p₁
+    @kcopy!(n, p, r)                    # p₁
 
     α = one(FC) # α₀
     ω = one(FC) # ω₀

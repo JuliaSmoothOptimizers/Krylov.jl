@@ -146,9 +146,9 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       mul!(p, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), p)
     else
-      p .= b
+      @kcopy!(n, p, b)  # p ← b
     end
-    MisI && (r .= p)
+    MisI && @kcopy!(n, r, p)  # r ← p
     MisI || mulorldiv!(r, M, p, ldiv)
     mul!(Ar, A, r)
     ρ = @kdotr(n, r, Ar)
@@ -165,8 +165,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       solver.warm_start = false
       return solver
     end
-    p .= r
-    q .= Ar
+    @kcopy!(n, p, r)   # p ← r
+    @kcopy!(n, q, Ar)  # q ← Ar
     (verbose > 0) && (m = zero(T)) # quadratic model
 
     iter = 0

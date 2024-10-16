@@ -152,7 +152,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     z = NisI ? r : solver.z
 
     @kfill!(x, zero(FC))
-    r .= b
+    @kcopy!(m, r, b)  # r ← b
     NisI || mulorldiv!(z, N, r, ldiv)
     rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
     history && push!(rNorms, rNorm)
@@ -163,7 +163,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       stats.status = "x = 0 is a zero-residual solution"
       return solver
     end
-    λ > 0 && (s .= r)
+    λ > 0 && @kcopy!(m, s, r)  # s ← r
     mul!(p, Aᴴ, z)
 
     # Use ‖p‖ to detect inconsistent system.

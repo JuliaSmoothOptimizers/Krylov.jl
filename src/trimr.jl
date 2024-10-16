@@ -218,7 +218,7 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     end
 
     # β₁Ev₁ = b ↔ β₁v₁ = Mb
-    M⁻¹vₖ .= b₀
+    @kcopy!(m, M⁻¹vₖ, b₀)  # M⁻¹vₖ ← b₀
     MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
     βₖ = sqrt(@kdotr(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
     if βₖ ≠ 0
@@ -229,7 +229,7 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     end
 
     # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
-    N⁻¹uₖ .= c₀
+    @kcopy!(n, N⁻¹uₖ, c₀)  # N⁻¹uₖ ← c₀
     NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
     γₖ = sqrt(@kdotr(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
     if γₖ ≠ 0
@@ -484,16 +484,16 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
       history && push!(rNorms, rNorm)
 
       # Update vₖ and uₖ
-      MisI || (vₖ .= vₖ₊₁)
-      NisI || (uₖ .= uₖ₊₁)
+      MisI || @kcopy!(m, vₖ, vₖ₊₁)  # vₖ ← vₖ₊₁
+      NisI || @kcopy!(n, uₖ, uₖ₊₁)  # uₖ ← uₖ₊₁
 
       # Update M⁻¹vₖ₋₁ and N⁻¹uₖ₋₁
-      M⁻¹vₖ₋₁ .= M⁻¹vₖ
-      N⁻¹uₖ₋₁ .= N⁻¹uₖ
+      @kcopy!(m, M⁻¹vₖ₋₁, M⁻¹vₖ)  # M⁻¹vₖ₋₁ ← M⁻¹vₖ
+      @kcopy!(n, N⁻¹uₖ₋₁, N⁻¹uₖ)  # N⁻¹uₖ₋₁ ← N⁻¹uₖ
 
       # Update M⁻¹vₖ and N⁻¹uₖ
-      M⁻¹vₖ .= q
-      N⁻¹uₖ .= p
+      @kcopy!(m, M⁻¹vₖ, q)  # M⁻¹vₖ ← q
+      @kcopy!(n, N⁻¹uₖ, p)  # N⁻¹uₖ ← p
 
       # Update cosines and sines
       old_s₁ₖ = s₁ₖ

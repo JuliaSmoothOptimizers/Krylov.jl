@@ -500,11 +500,11 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
       @kaxpy!(n, zt[2i]  , U[i], y)  # xₖ = ζ₂u₁ + ζ₄u₂ + ••• + ζ₂ₖuₖ
     end
     if !EisI
-      wB .= x
+      @kcopy!(m, wB, x)  # wB ← x
       mulorldiv!(x, E, wB, ldiv)
     end
     if !FisI
-      wA .= y
+      @kcopy!(n, wA, y)  # wA ← y
       mulorldiv!(y, F, wA, ldiv)
     end
     warm_start && @kaxpy!(m, one(FC), Δx, x)

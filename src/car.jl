@@ -127,29 +127,29 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       mul!(r, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), r)
     else
-      r .= b
+      @kcopy!(n, r, b)  # r ← b
     end
 
     # p₀ = r₀ = M(b - Ax₀)
     if MisI
-      p .= r
+      @kcopy!(n, p, r)  # p ← r
     else
       mulorldiv!(p, M, r, ldiv)
-      r .= p
+      @kcopy!(n, r, p)  # r ← p
     end
 
     mul!(s, A, r)  # s₀ = Ar₀
 
     # q₀ = MAp₀ and s₀ = MAr₀
     if MisI
-      q .= s
+      @kcopy!(n, q, s)  # q ← s
     else
       mulorldiv!(q, M, s, ldiv)
-      s .= q
+      @kcopy!(n, s, q)  # s ← q
     end
 
     mul!(t, A, s)        # t₀ = As₀
-    u .= t               # u₀ = Aq₀
+    @kcopy!(n, u, t)     # u₀ = Aq₀
     ρ = @kdotr(n, t, s)  # ρ₀ = ⟨t₀ , s₀⟩
 
     # Compute ‖r₀‖

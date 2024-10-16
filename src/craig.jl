@@ -202,7 +202,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     @kfill!(x, zero(FC))
     @kfill!(y, zero(FC))
 
-    Mu .= b
+    @kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)
     β₁ = sqrt(@kdotr(m, u, Mu))
     rNorm  = β₁
