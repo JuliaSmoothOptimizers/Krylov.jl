@@ -142,7 +142,8 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     end
 
     # Keep track of shifted systems with negative curvature if required.
-    @kfill!(indefinite, false)
+    # We don't want to use @kfill! here because "indefinite" is a BitVector.
+    fill!(indefinite, false)
 
     if β == 0
       stats.niter = 0
