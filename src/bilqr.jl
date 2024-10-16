@@ -295,7 +295,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
         # Compute d̅ₖ.
         if iter == 1
           # d̅₁ = v₁
-          @kcopy!(n, vₖ, d̅)  # d̅ ← vₖ
+          @kcopy!(n, d̅, vₖ)  # d̅ ← vₖ
         else
           # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * vₖ
           @kaxpby!(n, -cₖ, vₖ, conj(sₖ), d̅)
@@ -400,8 +400,8 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       end
 
       # Compute vₖ₊₁ and uₖ₊₁.
-      @kcopy!(n, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ
-      @kcopy!(n, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ
+      @kcopy!(n, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
+      @kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if pᴴq ≠ zero(FC)
         vₖ .= q ./ βₖ₊₁        # βₖ₊₁vₖ₊₁ = q

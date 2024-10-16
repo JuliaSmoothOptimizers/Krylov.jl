@@ -194,7 +194,7 @@
       Krylov.@kaxpby!(n, a, x, b2, y)
       Krylov.@kaxpby!(n, a2, x, b2, y)
 
-      Krylov.@kcopy!(n, x, y)
+      Krylov.@kcopy!(n, y, x)
 
       Krylov.@kfill!(x, a)
 

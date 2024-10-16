@@ -208,7 +208,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       MisI || mulorldiv!(v, M, t, ldiv)  # vₖ = M⁻¹tₖ
       σ = @kdot(n, c, v)                 # σₖ = ⟨ r̅₀,M⁻¹AN⁻¹pₖ ⟩
       α = ρ / σ                          # αₖ = ρₖ / σₖ
-      @kcopy!(n, u, q)                   # qₖ = uₖ
+      @kcopy!(n, q, u)                   # qₖ = uₖ
       @kaxpy!(n, -α, v, q)               # qₖ = qₖ - αₖ * M⁻¹AN⁻¹pₖ
       @kaxpy!(n, one(FC), q, u)          # uₖ₊½ = uₖ + qₖ
       NisI || mulorldiv!(z, N, u, ldiv)  # zₖ = N⁻¹uₖ₊½
@@ -218,7 +218,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       @kaxpy!(n, -α, w, r)               # rₖ₊₁ = rₖ - αₖ * M⁻¹AN⁻¹(uₖ + qₖ)
       ρ_next = @kdot(n, c, r)            # ρₖ₊₁ = ⟨ r̅₀,rₖ₊₁ ⟩
       β = ρ_next / ρ                     # βₖ = ρₖ₊₁ / ρₖ
-      @kcopy!(n, r, u)                   # uₖ₊₁ = rₖ₊₁
+      @kcopy!(n, u, r)                   # uₖ₊₁ = rₖ₊₁
       @kaxpy!(n, β, q, u)                # uₖ₊₁ = uₖ₊₁ + βₖ * qₖ
       @kaxpby!(n, one(FC), q, β, p)      # pₐᵤₓ = qₖ + βₖ * pₖ
       @kaxpby!(n, one(FC), u, β, p)      # pₖ₊₁ = uₖ₊₁ + βₖ * pₐᵤₓ

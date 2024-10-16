@@ -275,15 +275,15 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       # Compute d̅ₖ.
       if iter == 1
         # d̅₁ = u₁
-        @kcopy!(n, uₖ, d̅)  # d̅ ← vₖ
+        @kcopy!(n, d̅, uₖ)  # d̅ ← vₖ
       else
         # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
         @kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
       end
 
       # Compute uₖ₊₁ and uₖ₊₁.
-      @kcopy!(m, vₖ, vₖ₋₁)  # vₖ₋₁ ← vₖ
-      @kcopy!(n, uₖ, uₖ₋₁)  # uₖ₋₁ ← uₖ
+      @kcopy!(m, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
+      @kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
         vₖ .= q ./ βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
