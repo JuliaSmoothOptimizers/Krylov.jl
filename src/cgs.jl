@@ -190,7 +190,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
 
     @kcopy!(n, u, r)      # u₀
-    @kcopy!(n, p, r)       # p₀
+    @kcopy!(n, p, r)      # p₀
     @kfill!(q, zero(FC))  # q₋₁
 
     # Stopping criterion.
