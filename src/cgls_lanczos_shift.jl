@@ -138,7 +138,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     end
 
     u .= b
-    @kfill!(u_prev, zero(T))
+    @kfill!(u_prev, zero(FC))
     mul!(v, Aᴴ, u)                      # v₁ ← Aᴴ * b
     β = sqrt(@kdotr(n, v, v))           # β₁ = v₁ᵀ M v₁
     rNorms .= β
