@@ -141,7 +141,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     @kfill!(u_prev, zero(FC))
     mul!(v, Aᴴ, u)               # v₁ ← Aᴴ * b
     β = sqrt(@kdotr(n, v, v))    # β₁ = v₁ᵀ M v₁
-    @kcopy!(nshifts, rNorms, β)  # rNorms ← β
+    @kfill!(rNorms, β)
     if history
       for i = 1 : nshifts
         push!(rNorms_history[i], rNorms[i])
