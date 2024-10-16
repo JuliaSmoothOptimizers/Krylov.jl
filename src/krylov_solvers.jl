@@ -11,42 +11,42 @@ niterations, Aprod, Atprod, Bprod, warm_start!
 import Base.size, Base.sizeof, Base.format_bytes
 
 const KRYLOV_SOLVERS = Dict(
-  :cg               => :CgSolver            ,
-  :cr               => :CrSolver            ,
-  :car              => :CarSolver           ,
-  :symmlq           => :SymmlqSolver        ,
-  :cg_lanczos       => :CgLanczosSolver     ,
-  :cg_lanczos_shift => :CgLanczosShiftSolver,
-  :minares          => :MinaresSolver       ,
-  :minres           => :MinresSolver        ,
-  :minres_qlp       => :MinresQlpSolver     ,
-  :diom             => :DiomSolver          ,
-  :fom              => :FomSolver           ,
-  :dqgmres          => :DqgmresSolver       ,
-  :gmres            => :GmresSolver         ,
-  :fgmres           => :FgmresSolver        ,
-  :gpmr             => :GpmrSolver          ,
-  :usymlq           => :UsymlqSolver        ,
-  :usymqr           => :UsymqrSolver        ,
-  :tricg            => :TricgSolver         ,
-  :trimr            => :TrimrSolver         ,
-  :trilqr           => :TrilqrSolver        ,
-  :cgs              => :CgsSolver           ,
-  :bicgstab         => :BicgstabSolver      ,
-  :bilq             => :BilqSolver          ,
-  :qmr              => :QmrSolver           ,
-  :bilqr            => :BilqrSolver         ,
-  :cgls             => :CglsSolver          ,
+  :cg         => :CgSolver       ,
+  :cr         => :CrSolver       ,
+  :car        => :CarSolver      ,
+  :symmlq     => :SymmlqSolver   ,
+  :cg_lanczos => :CgLanczosSolver,
+  :minares    => :MinaresSolver  ,
+  :minres     => :MinresSolver   ,
+  :minres_qlp => :MinresQlpSolver,
+  :diom       => :DiomSolver     ,
+  :fom        => :FomSolver      ,
+  :dqgmres    => :DqgmresSolver  ,
+  :gmres      => :GmresSolver    ,
+  :fgmres     => :FgmresSolver   ,
+  :gpmr       => :GpmrSolver     ,
+  :usymlq     => :UsymlqSolver   ,
+  :usymqr     => :UsymqrSolver   ,
+  :tricg      => :TricgSolver    ,
+  :trimr      => :TrimrSolver    ,
+  :trilqr     => :TrilqrSolver   ,
+  :cgs        => :CgsSolver      ,
+  :bicgstab   => :BicgstabSolver ,
+  :bilq       => :BilqSolver     ,
+  :qmr        => :QmrSolver      ,
+  :bilqr      => :BilqrSolver    ,
+  :cgls       => :CglsSolver     ,
+  :crls       => :CrlsSolver     ,
+  :cgne       => :CgneSolver     ,
+  :crmr       => :CrmrSolver     ,
+  :lslq       => :LslqSolver     ,
+  :lsqr       => :LsqrSolver     ,
+  :lsmr       => :LsmrSolver     ,
+  :lnlq       => :LnlqSolver     ,
+  :craig      => :CraigSolver    ,
+  :craigmr    => :CraigmrSolver  ,
+  :cg_lanczos_shift   => :CgLanczosShiftSolver  ,
   :cgls_lanczos_shift => :CglsLanczosShiftSolver,
-  :crls             => :CrlsSolver          ,
-  :cgne             => :CgneSolver          ,
-  :crmr             => :CrmrSolver          ,
-  :lslq             => :LslqSolver          ,
-  :lsqr             => :LsqrSolver          ,
-  :lsmr             => :LsmrSolver          ,
-  :lnlq             => :LnlqSolver          ,
-  :craig            => :CraigSolver         ,
-  :craigmr          => :CraigmrSolver       ,
 )
 
 "Abstract type for using Krylov solvers in-place"
@@ -1973,42 +1973,42 @@ For example, instead of `x, stats = cg(A, b)`, you can use:
 function results end
 
 for (KS, fun, nsol, nA, nAt, warm_start) in [
-  (:CarSolver           , :car!             , 1, 1, 0, true )
-  (:LsmrSolver          , :lsmr!            , 1, 1, 1, false)
-  (:CgsSolver           , :cgs!             , 1, 2, 0, true )
-  (:UsymlqSolver        , :usymlq!          , 1, 1, 1, true )
-  (:LnlqSolver          , :lnlq!            , 2, 1, 1, false)
-  (:BicgstabSolver      , :bicgstab!        , 1, 2, 0, true )
-  (:CrlsSolver          , :crls!            , 1, 1, 1, false)
-  (:LsqrSolver          , :lsqr!            , 1, 1, 1, false)
-  (:MinresSolver        , :minres!          , 1, 1, 0, true )
-  (:MinaresSolver       , :minares!         , 1, 1, 0, true )
-  (:CgneSolver          , :cgne!            , 1, 1, 1, false)
-  (:DqgmresSolver       , :dqgmres!         , 1, 1, 0, true )
-  (:SymmlqSolver        , :symmlq!          , 1, 1, 0, true )
-  (:TrimrSolver         , :trimr!           , 2, 1, 1, true )
-  (:UsymqrSolver        , :usymqr!          , 1, 1, 1, true )
-  (:BilqrSolver         , :bilqr!           , 2, 1, 1, true )
-  (:CrSolver            , :cr!              , 1, 1, 0, true )
-  (:CraigmrSolver       , :craigmr!         , 2, 1, 1, false)
-  (:TricgSolver         , :tricg!           , 2, 1, 1, true )
-  (:CraigSolver         , :craig!           , 2, 1, 1, false)
-  (:DiomSolver          , :diom!            , 1, 1, 0, true )
-  (:LslqSolver          , :lslq!            , 1, 1, 1, false)
-  (:TrilqrSolver        , :trilqr!          , 2, 1, 1, true )
-  (:CrmrSolver          , :crmr!            , 1, 1, 1, false)
-  (:CgSolver            , :cg!              , 1, 1, 0, true )
-  (:CgLanczosShiftSolver, :cg_lanczos_shift!, 1, 1, 0, false)
-  (:CglsSolver          , :cgls!            , 1, 1, 1, false)
+  (:CarSolver      , :car!       , 1, 1, 0, true )
+  (:LsmrSolver     , :lsmr!      , 1, 1, 1, false)
+  (:CgsSolver      , :cgs!       , 1, 2, 0, true )
+  (:UsymlqSolver   , :usymlq!    , 1, 1, 1, true )
+  (:LnlqSolver     , :lnlq!      , 2, 1, 1, false)
+  (:BicgstabSolver , :bicgstab!  , 1, 2, 0, true )
+  (:CrlsSolver     , :crls!      , 1, 1, 1, false)
+  (:LsqrSolver     , :lsqr!      , 1, 1, 1, false)
+  (:MinresSolver   , :minres!    , 1, 1, 0, true )
+  (:MinaresSolver  , :minares!   , 1, 1, 0, true )
+  (:CgneSolver     , :cgne!      , 1, 1, 1, false)
+  (:DqgmresSolver  , :dqgmres!   , 1, 1, 0, true )
+  (:SymmlqSolver   , :symmlq!    , 1, 1, 0, true )
+  (:TrimrSolver    , :trimr!     , 2, 1, 1, true )
+  (:UsymqrSolver   , :usymqr!    , 1, 1, 1, true )
+  (:BilqrSolver    , :bilqr!     , 2, 1, 1, true )
+  (:CrSolver       , :cr!        , 1, 1, 0, true )
+  (:CraigmrSolver  , :craigmr!   , 2, 1, 1, false)
+  (:TricgSolver    , :tricg!     , 2, 1, 1, true )
+  (:CraigSolver    , :craig!     , 2, 1, 1, false)
+  (:DiomSolver     , :diom!      , 1, 1, 0, true )
+  (:LslqSolver     , :lslq!      , 1, 1, 1, false)
+  (:TrilqrSolver   , :trilqr!    , 2, 1, 1, true )
+  (:CrmrSolver     , :crmr!      , 1, 1, 1, false)
+  (:CgSolver       , :cg!        , 1, 1, 0, true )
+  (:CglsSolver     , :cgls!      , 1, 1, 1, false)
+  (:CgLanczosSolver, :cg_lanczos!, 1, 1, 0, true )
+  (:BilqSolver     , :bilq!      , 1, 1, 1, true )
+  (:MinresQlpSolver, :minres_qlp!, 1, 1, 0, true )
+  (:QmrSolver      , :qmr!       , 1, 1, 1, true )
+  (:GmresSolver    , :gmres!     , 1, 1, 0, true )
+  (:FgmresSolver   , :fgmres!    , 1, 1, 0, true )
+  (:FomSolver      , :fom!       , 1, 1, 0, true )
+  (:GpmrSolver     , :gpmr!      , 2, 1, 0, true )
+  (:CgLanczosShiftSolver  , :cg_lanczos_shift!  , 1, 1, 0, false)
   (:CglsLanczosShiftSolver, :cgls_lanczos_shift!, 1, 1, 1, false)
-  (:CgLanczosSolver     , :cg_lanczos!      , 1, 1, 0, true )
-  (:BilqSolver          , :bilq!            , 1, 1, 1, true )
-  (:MinresQlpSolver     , :minres_qlp!      , 1, 1, 0, true )
-  (:QmrSolver           , :qmr!             , 1, 1, 1, true )
-  (:GmresSolver         , :gmres!           , 1, 1, 0, true )
-  (:FgmresSolver        , :fgmres!          , 1, 1, 0, true )
-  (:FomSolver           , :fom!             , 1, 1, 0, true )
-  (:GpmrSolver          , :gpmr!            , 2, 1, 0, true )
 ]
   @eval begin
     size(solver :: $KS) = solver.m, solver.n

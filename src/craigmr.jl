@@ -189,7 +189,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     # Compute y such that AAᴴy = b. Then recover x = Aᴴy.
     @kfill!(x, zero(FC))
     @kfill!(y, zero(FC))
-    Mu .= b
+    @kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)
     β = sqrt(@kdotr(m, u, Mu))
     if β == 0
@@ -208,7 +208,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     MisI || @kscal!(m, one(FC)/β, Mu)
     # α₁Nv₁ = Aᴴu₁.
     mul!(Aᴴu, Aᴴ, u)
-    Nv .= Aᴴu
+    @kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
     α = sqrt(@kdotr(n, v, Nv))
     Anorm² = α * α
@@ -233,10 +233,10 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     NisI || @kscal!(n, one(FC)/α, Nv)
 
     # Regularization.
-    λₖ  = λ             # λ₁ = λ
-    cpₖ = spₖ = one(T)  # Givens sines and cosines used to zero out λₖ
-    cdₖ = sdₖ = one(T)  # Givens sines and cosines used to define λₖ₊₁
-    λ > 0 && (q .= v)   # Additional vector needed to update x, by definition q₀ = 0
+    λₖ  = λ                    # λ₁ = λ
+    cpₖ = spₖ = one(T)         # Givens sines and cosines used to zero out λₖ
+    cdₖ = sdₖ = one(T)         # Givens sines and cosines used to define λₖ₊₁
+    λ > 0 && @kcopy!(n, q, v)  # Additional vector needed to update x, by definition q₀ = 0
 
     if λ > 0
       (cpₖ, spₖ, αhat) = sym_givens(α, λₖ)
@@ -257,7 +257,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
     ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
 
-    wbar .= u
+    @kcopy!(m, wbar, u)
     @kscal!(m, one(FC)/αhat, wbar)
     @kfill!(w, zero(FC))
     @kfill!(d, zero(FC))

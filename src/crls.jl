@@ -140,7 +140,7 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     MAp = MisI ? Ap : solver.Ms
 
     @kfill!(x, zero(FC))
-    r .= b
+    @kcopy!(m, r, b)  # r ← b
     bNorm = @knrm2(m, r)  # norm(b - A * x0) if x0 ≠ 0.
     rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
     history && push!(rNorms, rNorm)
@@ -158,8 +158,8 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     mul!(s, A, Ar)
     MisI || mulorldiv!(Ms, M, s, ldiv)
 
-    p  .= Ar
-    Ap .= s
+    @kcopy!(n, p, Ar)  # p ← Ar
+    @kcopy!(m, Ap, s)  # Ap ← s
     mul!(q, Aᴴ, Ms)  # Ap
     λ > 0 && @kaxpy!(n, λ, p, q)  # q = q + λ * p
     γ  = @kdotr(m, s, Ms)  # Faster than γ = dot(s, Ms)

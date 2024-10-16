@@ -226,7 +226,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
 
     # Initialize Golub-Kahan process.
     # β₁ M u₁ = b.
-    Mu .= b
+    @kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)
     β₁ = sqrt(@kdotr(m, u, Mu))
     if β₁ == 0
@@ -244,7 +244,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     @kscal!(m, one(FC)/β₁, u)
     MisI || @kscal!(m, one(FC)/β₁, Mu)
     mul!(Aᴴu, Aᴴ, u)
-    Nv .= Aᴴu
+    @kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
     α = sqrt(@kdotr(n, v, Nv))  # = α₁
 
@@ -275,7 +275,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     xcgNorm  = zero(T)
     xcgNorm² = zero(T)
 
-    w̄ .= v  # w̄₁ = v₁
+    @kcopy!(n, w̄, v)  # w̄₁ = v₁
 
     err_lbnd = zero(T)
     window = length(err_vec)

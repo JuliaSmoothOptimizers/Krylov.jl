@@ -152,7 +152,7 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
       @kaxpby!(n, one(FC), b, -one(FC), w)
       restart && @kaxpy!(n, one(FC), Δx, x)
     else
-      w .= b
+      @kcopy!(n, w, b)  # w ← b
     end
     MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M(b - Ax₀)
     β = @knrm2(n, r₀)                   # β = ‖r₀‖₂

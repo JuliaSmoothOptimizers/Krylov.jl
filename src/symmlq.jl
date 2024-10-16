@@ -154,7 +154,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       (λ ≠ 0) && @kaxpy!(n, λ, Δx, Mvold)
       @kaxpby!(n, one(FC), b, -one(FC), Mvold)
     else
-      Mvold .= b
+      @kcopy!(n, Mvold, b)  # Mvold ← b
     end
 
     # Initialize Lanczos process.
@@ -178,7 +178,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     @kscal!(m, one(FC) / β, vold)
     MisI || @kscal!(m, one(FC) / β, Mvold)
 
-    w̅ .= vold
+    @kcopy!(n, w̅, vold)  # w̅ ← vold
 
     mul!(Mv, A, vold)
     α = @kdotr(m, vold, Mv) + λ

@@ -163,9 +163,9 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       history && push!(ArNorms, zero(T))
       return solver
     end
-    λ > 0 && (s .= r)
+    λ > 0 && @kcopy!(m, s, r)  # s ← r
     mul!(Aᴴr, Aᴴ, r)  # - λ * x0 if x0 ≠ 0.
-    p .= Aᴴr
+    @kcopy!(n, p, Aᴴr)  # p ← Aᴴr
     γ = @kdotr(n, Aᴴr, Aᴴr)  # Faster than γ = dot(Aᴴr, Aᴴr)
     λ > 0 && (γ += λ * rNorm * rNorm)
     iter = 0

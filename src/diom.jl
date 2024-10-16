@@ -146,7 +146,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       mul!(t, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), t)
     else
-      t .= b
+      @kcopy!(n, t, b)  # t ← b
     end
     MisI || mulorldiv!(r₀, M, t, ldiv)  # M(b - Ax₀)
     rNorm = @knrm2(n, r₀)               # β = ‖r₀‖₂

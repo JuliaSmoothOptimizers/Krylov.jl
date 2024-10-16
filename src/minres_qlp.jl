@@ -146,7 +146,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       (λ ≠ 0) && @kaxpy!(n, λ, Δx, M⁻¹vₖ)
       @kaxpby!(n, one(FC), b, -one(FC), M⁻¹vₖ)
     else
-      M⁻¹vₖ .= b
+      @kcopy!(n, M⁻¹vₖ, b)  # M⁻¹vₖ ← b
     end
 
     # β₁v₁ = Mb
@@ -373,9 +373,9 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       end
 
       # Update vₖ, M⁻¹vₖ₋₁, M⁻¹vₖ
-      MisI || (vₖ .= vₖ₊₁)
-      M⁻¹vₖ₋₁ .= M⁻¹vₖ
-      M⁻¹vₖ .= p
+      MisI || @kcopy!(n, vₖ, vₖ₊₁)  # vₖ ← vₖ₊₁
+      @kcopy!(n, M⁻¹vₖ₋₁, M⁻¹vₖ)    # M⁻¹vₖ₋₁ ← M⁻¹vₖ
+      @kcopy!(n, M⁻¹vₖ, p)          # M⁻¹vₖ ← p
 
       # Update ‖rₖ‖ estimate
       # ‖ rₖ ‖ = |ζbarₖ₊₁|

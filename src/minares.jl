@@ -140,7 +140,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       (λ ≠ 0) && @kaxpy!(n, λ, Δx, vₖ)
       @kaxpby!(n, one(FC), b, -one(FC), vₖ)
     else
-      vₖ .= b  # r₀ = b
+      @kcopy!(n, vₖ, b)  # r₀ = b
     end
     βₖ = @knrm2(n, vₖ)  # β₁ = ‖v₁‖
     if βₖ ≠ 0
