@@ -168,7 +168,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
 
     # Initialize some constants used in recursions below.
     ρ = one(T)
-    @kcopy!(nshifts, σ, β)  # σ ← β
+    @kfill!(σ, β)
     @kfill!(δhat, zero(T))
     @kfill!(ω, zero(T))
     @kfill!(γ, one(T))
