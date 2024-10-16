@@ -333,6 +333,7 @@ kcopy!(n :: Integer, x :: Vector{T}, dx :: Integer, y :: Vector{T}, dy :: Intege
 kcopy!(n :: Integer, x :: AbstractVector{T}, dx :: Integer, y :: AbstractVector{T}, dy :: Integer) where T <: FloatOrComplex = copyto!(y, x)
 
 kfill!(x :: AbstractVector{T}, val :: T) where T <: FloatOrComplex = fill!(x, val)
+kfill!(X :: AbstractMatrix{T}, val :: T) where T <: FloatOrComplex = fill!(X, val)
 
 kgeqrf!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.geqrf!(A, tau)
 korgqr!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.orgqr!(A, tau)
