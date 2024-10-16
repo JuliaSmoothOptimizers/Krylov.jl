@@ -199,8 +199,8 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     u = MisI ? Mu : solver.u
     v = NisI ? Nv : solver.v
 
-    x .= zero(FC)
-    y .= zero(FC)
+    @kfill!(x, zero(FC))
+    @kfill!(y, zero(FC))
 
     Mu .= b
     MisI || mulorldiv!(u, M, Mu, ldiv)
@@ -226,10 +226,10 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     @kscal!(m, one(FC) / β₁, u)
     MisI || @kscal!(m, one(FC) / β₁, Mu)
 
-    Nv .= zero(FC)
-    w .= zero(FC)  # Used to update y.
+    @kfill!(Nv, zero(FC))
+    @kfill!(w, zero(FC))  # Used to update y.
 
-    λ > 0 && (w2 .= zero(FC))
+    λ > 0 && @kfill!(w2, zero(FC))
 
     Anorm² = zero(T) # Estimate of ‖A‖²_F.
     Anorm  = zero(T)

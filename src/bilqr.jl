@@ -143,11 +143,11 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     end
 
     # Initial solution x₀ and residual norm ‖r₀‖ = ‖b - Ax₀‖.
-    x .= zero(FC)          # x₀
+    @kfill!(x, zero(FC))   # x₀
     bNorm = @knrm2(n, r₀)  # rNorm = ‖r₀‖
 
     # Initial solution t₀ and residual norm ‖s₀‖ = ‖c - Aᴴy₀‖.
-    t .= zero(FC)          # t₀
+    @kfill!(t, zero(FC))   # t₀
     cNorm = @knrm2(n, s₀)  # sNorm = ‖s₀‖
 
     iter = 0
@@ -175,21 +175,21 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     # Set up workspace.
     βₖ = √(abs(cᴴb))            # β₁γ₁ = (c - Aᴴy₀)ᴴ(b - Ax₀)
     γₖ = cᴴb / βₖ               # β₁γ₁ = (c - Aᴴy₀)ᴴ(b - Ax₀)
-    vₖ₋₁ .= zero(FC)            # v₀ = 0
-    uₖ₋₁ .= zero(FC)            # u₀ = 0
+    @kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
+    @kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
     vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
     uₖ .= s₀ ./ conj(γₖ)        # u₁ = (c - Aᴴy₀) / γ̄₁
     cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
     sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-    d̅ .= zero(FC)               # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
+    @kfill!(d̅, zero(FC))        # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
     ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
     ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
     δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
     ψbarₖ₋₁ = ψₖ₋₁ = zero(FC)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ̄₁e₁
     norm_vₖ = bNorm / βₖ        # ‖vₖ‖ is used for residual norm estimates
     ϵₖ₋₃ = λₖ₋₂ = zero(FC)      # Components of Lₖ₋₁
-    wₖ₋₃ .= zero(FC)            # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᴴ
-    wₖ₋₂ .= zero(FC)            # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᴴ
+    @kfill!(wₖ₋₃, zero(FC))     # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᴴ
+    @kfill!(wₖ₋₂, zero(FC))     # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᴴ
     τₖ = zero(T)                # τₖ is used for the dual residual norm estimate
 
     # Stopping criterion.

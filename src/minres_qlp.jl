@@ -139,7 +139,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     vₖ₊₁ = MisI ? p : M⁻¹vₖ₋₁
 
     # Initial solution x₀
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
 
     if warm_start
       mul!(M⁻¹vₖ, A, Δx)
@@ -183,14 +183,14 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %7.1e  %8s  %.2fs\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", ANorm, Acond, " ✗ ✗ ✗ ✗", ktimer(start_time))
 
     # Set up workspace.
-    M⁻¹vₖ₋₁ .= zero(FC)
+    @kfill!(M⁻¹vₖ₋₁, zero(FC))
     ζbarₖ = βₖ
     ξₖ₋₁ = zero(T)
     τₖ₋₂ = τₖ₋₁ = τₖ = zero(T)
     ψbarₖ₋₂ = zero(T)
     μbisₖ₋₂ = μbarₖ₋₁ = zero(T)
-    wₖ₋₁ .= zero(FC)
-    wₖ .= zero(FC)
+    @kfill!(wₖ₋₁, zero(FC))
+    @kfill!(wₖ, zero(FC))
     cₖ₋₂ = cₖ₋₁ = cₖ = one(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
     sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
 

@@ -187,8 +187,8 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     v = NisI ? Nv : solver.v
 
     # Compute y such that AAᴴy = b. Then recover x = Aᴴy.
-    x .= zero(FC)
-    y .= zero(FC)
+    @kfill!(x, zero(FC))
+    @kfill!(y, zero(FC))
     Mu .= b
     MisI || mulorldiv!(u, M, Mu, ldiv)
     β = sqrt(@kdotr(m, u, Mu))
@@ -259,8 +259,8 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
 
     wbar .= u
     @kscal!(m, one(FC)/αhat, wbar)
-    w .= zero(FC)
-    d .= zero(FC)
+    @kfill!(w, zero(FC))
+    @kfill!(d, zero(FC))
 
     status = "unknown"
     solved = rNorm ≤ ɛ_c

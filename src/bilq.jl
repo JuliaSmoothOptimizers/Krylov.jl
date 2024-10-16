@@ -156,7 +156,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
     end
 
     # Initial solution x₀ and residual norm ‖r₀‖.
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
     bNorm = @knrm2(n, r₀)  # ‖r₀‖ = ‖b₀ - Ax₀‖
 
     history && push!(rNorms, bNorm)
@@ -191,13 +191,13 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
 
     βₖ = √(abs(cᴴb))            # β₁γ₁ = cᴴ(b - Ax₀)
     γₖ = cᴴb / βₖ               # β₁γ₁ = cᴴ(b - Ax₀)
-    vₖ₋₁ .= zero(FC)            # v₀ = 0
-    uₖ₋₁ .= zero(FC)            # u₀ = 0
+    @kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
+    @kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
     vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
     uₖ .= c ./ conj(γₖ)         # u₁ = c / γ̄₁
     cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
     sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-    d̅ .= zero(FC)               # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
+    @kfill!(d̅, zero(FC))        # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
     ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
     ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
     δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations

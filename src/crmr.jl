@@ -150,7 +150,7 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     reset!(stats)
     Nq = NisI ? q : solver.Nq
 
-    x .= zero(FC)              # initial estimation x = 0
+    @kfill!(x, zero(FC))       # initial estimation x = 0
     mulorldiv!(r, N, b, ldiv)  # initial residual r = N * (b - Ax) = N * b
     bNorm = @knrm2(m, r)       # norm(b - A * x0) if x0 ≠ 0.
     rNorm = bNorm              # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.

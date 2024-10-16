@@ -134,11 +134,11 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     # Initial state.
     ## Distribute x similarly to shifts.
     for i = 1 : nshifts
-      x[i] .= zero(FC) # x₀
+      @kfill!(x[i], zero(FC))  # x₀
     end
 
     u .= b
-    u_prev .= zero(T)
+    @kfill!(u_prev, zero(FC))
     mul!(v, Aᴴ, u)                      # v₁ ← Aᴴ * b
     β = sqrt(@kdotr(n, v, v))           # β₁ = v₁ᵀ M v₁
     rNorms .= β
@@ -169,9 +169,9 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     # Initialize some constants used in recursions below.
     ρ = one(T)
     σ .= β
-    δhat .= zero(T)
-    ω .= zero(T)
-    γ .= one(T)
+    @kfill!(δhat, zero(T))
+    @kfill!(ω, zero(T))
+    @kfill!(γ, one(T))
 
     # Define stopping tolerance.
     ε = atol + rtol * β

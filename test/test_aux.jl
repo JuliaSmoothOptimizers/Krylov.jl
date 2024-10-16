@@ -196,6 +196,8 @@
 
       Krylov.@kcopy!(n, x, y)
 
+      Krylov.@kfill!(x, a)
+
       Krylov.@kswap(x, y)
 
       Krylov.@kref!(n, x, y, c, s)

@@ -139,7 +139,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
     xr = restart ? Δx : x
 
     # Initial solution x₀.
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
 
     # Initial residual r₀.
     if warm_start
@@ -194,14 +194,14 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
       # Initialize workspace.
       nr = 0  # Number of coefficients stored in Uₖ.
       for i = 1 : mem
-        V[i] .= zero(FC)  # Orthogonal basis of Kₖ(MAN, Mr₀).
+        @kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
       end
-      l .= zero(FC)  # Lower unit triangular matrix Lₖ.
-      U .= zero(FC)  # Upper triangular matrix Uₖ.
-      z .= zero(FC)  # Solution of Lₖzₖ = βe₁.
+      @kfill!(l, zero(FC))  # Lower unit triangular matrix Lₖ.
+      @kfill!(U, zero(FC))  # Upper triangular matrix Uₖ.
+      @kfill!(z, zero(FC))  # Solution of Lₖzₖ = βe₁.
 
       if restart
-        xr .= zero(FC)  # xr === Δx when restart is set to true
+        @kfill!(xr, zero(FC))  # xr === Δx when restart is set to true
         if npass ≥ 1
           mul!(w, A, x)
           @kaxpby!(n, one(FC), b, -one(FC), w)

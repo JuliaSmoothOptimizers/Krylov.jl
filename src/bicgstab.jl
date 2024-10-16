@@ -154,9 +154,9 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       r₀ .= b
     end
 
-    x .= zero(FC)                       # x₀
-    s .= zero(FC)                       # s₀
-    v .= zero(FC)                       # v₀
+    @kfill!(x, zero(FC))                # x₀
+    @kfill!(s, zero(FC))                # s₀
+    @kfill!(v, zero(FC))                # v₀
     MisI || mulorldiv!(r, M, r₀, ldiv)  # r₀
     p .= r                              # p₁
 

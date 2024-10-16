@@ -198,8 +198,8 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     complex_error_bnd = false
 
     # Initial solutions (x₀, y₀) and residual norm ‖r₀‖.
-    x .= zero(FC)
-    y .= zero(FC)
+    @kfill!(x, zero(FC))
+    @kfill!(y, zero(FC))
 
     bNorm = @knrm2(m, b)
     if bNorm == 0

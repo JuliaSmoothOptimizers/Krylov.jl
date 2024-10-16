@@ -196,15 +196,15 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     reset!(stats)
 
     # Initial solutions x₀ and y₀.
-    xₖ .= zero(FC)
-    yₖ .= zero(FC)
+    @kfill!(xₖ, zero(FC))
+    @kfill!(yₖ, zero(FC))
 
     iter = 0
     itmax == 0 && (itmax = m+n)
 
     # Initialize preconditioned orthogonal tridiagonalization process.
-    M⁻¹vₖ₋₁ .= zero(FC)  # v₀ = 0
-    N⁻¹uₖ₋₁ .= zero(FC)  # u₀ = 0
+    @kfill!(M⁻¹vₖ₋₁, zero(FC))  # v₀ = 0
+    @kfill!(N⁻¹uₖ₋₁, zero(FC))  # u₀ = 0
 
     # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
     # [  Aᴴ  νI ] [ yₖ ]   [ c - AᴴΔx - νΔy ]   [ c₀ ]
@@ -240,14 +240,14 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     end
 
     # Initialize directions Gₖ such that (GₖRₖ)ᵀ = (Wₖ)ᵀ.
-    gx₂ₖ₋₃ .= zero(FC)
-    gy₂ₖ₋₃ .= zero(FC)
-    gx₂ₖ₋₂ .= zero(FC)
-    gy₂ₖ₋₂ .= zero(FC)
-    gx₂ₖ₋₁ .= zero(FC)
-    gy₂ₖ₋₁ .= zero(FC)
-    gx₂ₖ   .= zero(FC)
-    gy₂ₖ   .= zero(FC)
+    @kfill!(gx₂ₖ₋₃, zero(FC))
+    @kfill!(gy₂ₖ₋₃, zero(FC))
+    @kfill!(gx₂ₖ₋₂, zero(FC))
+    @kfill!(gy₂ₖ₋₂, zero(FC))
+    @kfill!(gx₂ₖ₋₁, zero(FC))
+    @kfill!(gy₂ₖ₋₁, zero(FC))
+    @kfill!(gx₂ₖ  , zero(FC))
+    @kfill!(gy₂ₖ  , zero(FC))
 
     # Compute ‖r₀‖² = (γ₁)² + (β₁)²
     rNorm = sqrt(γₖ^2 + βₖ^2)

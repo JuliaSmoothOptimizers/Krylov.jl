@@ -146,7 +146,7 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     Mr = MisI ? r : solver.Mr
     Mq = MisI ? q : solver.Mr
 
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
     r .= b
     bNorm = @knrm2(m, r)   # Marginally faster than norm(b)
     if bNorm == 0

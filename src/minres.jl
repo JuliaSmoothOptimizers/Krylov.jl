@@ -159,7 +159,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     ctol = conlim > 0 ? 1 / conlim : zero(T)
 
     # Initial solution x₀
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
 
     if warm_start
       mul!(r1, A, Δx)
@@ -201,8 +201,8 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     γmin = T(Inf)
     cs = -one(T)
     sn = zero(T)
-    w1 .= zero(FC)
-    w2 .= zero(FC)
+    @kfill!(w1, zero(FC))
+    @kfill!(w2, zero(FC))
 
     ANorm² = zero(T)
     ANorm = zero(T)
@@ -215,7 +215,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     xENorm² = zero(T)
     err_lbnd = zero(T)
     window = length(err_vec)
-    err_vec .= zero(T)
+    @kfill!(err_vec, zero(T))
 
     iter = 0
     itmax == 0 && (itmax = 2*n)

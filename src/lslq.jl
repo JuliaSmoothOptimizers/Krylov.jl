@@ -222,7 +222,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     λ² = λ * λ
     ctol = conlim > 0 ? 1/conlim : zero(T)
 
-    x .= zero(FC)  # LSLQ point
+    @kfill!(x, zero(FC))  # LSLQ point
 
     # Initialize Golub-Kahan process.
     # β₁ M u₁ = b.
@@ -279,7 +279,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
 
     err_lbnd = zero(T)
     window = length(err_vec)
-    err_vec .= zero(T)
+    @kfill!(err_vec, zero(T))
     complex_error_bnd = false
 
     # Initialize other constants.

@@ -130,7 +130,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     v = MisI ? Mv : solver.v
 
     # Initial state.
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
     if warm_start
       mul!(Mv, A, Δx)
       @kaxpby!(n, one(FC), b, -one(FC), Mv)

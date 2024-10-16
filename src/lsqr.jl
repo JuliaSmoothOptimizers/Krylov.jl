@@ -193,7 +193,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
 
     λ² = λ * λ
     ctol = conlim > 0 ? 1/conlim : zero(T)
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
 
     # Initialize Golub-Kahan process.
     # β₁ M u₁ = b.
@@ -230,7 +230,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     xENorm² = zero(T)
     err_lbnd = zero(T)
     window = length(err_vec)
-    err_vec .= zero(T)
+    @kfill!(err_vec, zero(T))
 
     iter = 0
     itmax == 0 && (itmax = m + n)

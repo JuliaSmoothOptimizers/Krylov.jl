@@ -20,7 +20,7 @@ end
 function gs!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, v::AbstractVector{FC}) where FC <: FloatOrComplex
   n, k = size(Q)
   aⱼ = v
-  R .= zero(FC)
+  @kfill!(R, zero(FC))
   for j = 1:k
     qⱼ = view(Q,:,j)
     aⱼ .= qⱼ
@@ -54,7 +54,7 @@ end
 
 function mgs!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}) where FC <: FloatOrComplex
   n, k = size(Q)
-  R .= zero(FC)
+  @kfill!(R, zero(FC))
   for i = 1:k
     qᵢ = view(Q,:,i)
     R[i,i] = @knrm2(n, qᵢ)  # rᵢᵢ = ‖qᵢ‖
@@ -90,7 +90,7 @@ end
 
 function givens!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, C::AbstractVector{T}, S::AbstractVector{FC}) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
   n, k = size(Q)
-  R .= zero(FC)
+  @kfill!(R, zero(FC))
   pos = 0
   for j = 1:k
     for i = n-1:-1:j
@@ -106,7 +106,7 @@ function givens!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, C::AbstractVector
       R[i,j] = Q[i,j]
     end
   end
-  Q .= zero(FC)
+  @kfill!(Q, zero(FC))
   for i = 1:k
     Q[i,i] = one(FC)
   end
@@ -194,7 +194,7 @@ end
 
 function householder!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, τ::AbstractVector{FC}; compact::Bool=false) where FC <: FloatOrComplex
   n, k = size(Q)
-  R .= zero(FC)
+  @kfill!(R, zero(FC))
   @kgeqrf!(Q, τ)
   copy_triangle(Q, R, k)
   !compact && @korgqr!(Q, τ)

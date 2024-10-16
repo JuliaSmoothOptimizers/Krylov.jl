@@ -196,7 +196,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     v = NisI ? Nv : solver.v
 
     ctol = conlim > 0 ? 1/conlim : zero(T)
-    x .= zero(FC)
+    @kfill!(x, zero(FC))
 
     # Initialize Golub-Kahan process.
     # β₁ M u₁ = b.
@@ -255,7 +255,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     xENorm² = zero(T)
     err_lbnd = zero(T)
     window = length(err_vec)
-    err_vec .= zero(T)
+    @kfill!(err_vec, zero(T))
 
     iter = 0
     itmax == 0 && (itmax = m + n)
@@ -275,7 +275,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     NisI || @kscal!(n, one(FC)/α, Nv)
 
     h .= v
-    hbar .= zero(FC)
+    @kfill!(hbar, zero(FC))
 
     status = "unknown"
     on_boundary = false

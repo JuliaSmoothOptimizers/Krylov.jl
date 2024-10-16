@@ -156,7 +156,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       r₀ .= b
     end
 
-    x .= zero(FC)                       # x₀
+    @kfill!(x, zero(FC))                # x₀
     MisI || mulorldiv!(r, M, r₀, ldiv)  # r₀
 
     # Compute residual norm ‖r₀‖₂.
@@ -189,9 +189,9 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
 
-    u .= r        # u₀
-    p .= r        # p₀
-    q .= zero(FC) # q₋₁
+    u .= r               # u₀
+    p .= r               # p₀
+    @kfill!(q, zero(FC)) # q₋₁
 
     # Stopping criterion.
     solved = rNorm ≤ ε
