@@ -91,7 +91,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
         SM = typeof(solver.X)
         (n == n2 && p == p2) || error("X0 should have size ($n, $p)")
         allocate_if(true, solver, :ΔX, SM, n, p)
-        @kcopyto!(solver.ΔX, X0)
+        copyto!(solver.ΔX, X0)
         solver.warm_start = true
         return solver
       end
