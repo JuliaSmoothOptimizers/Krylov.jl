@@ -138,7 +138,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       kcopy!(n, Mv, b)  # Mv ← b
     end
     MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹r₀
-    β = sqrt(kdotr(n, v, Mv))           # β₁ = v₁ᴴ M v₁
+    β = knorm_elliptic(n, v, Mv)        # β₁ = v₁ᴴ M v₁
     σ = β
     rNorm = σ
     history && push!(rNorms, rNorm)
@@ -201,7 +201,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       end
       kcopy!(n, Mv, Mv_next)              # Mvₖ ← Mvₖ₊₁
       MisI || mulorldiv!(v, M, Mv, ldiv)  # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
-      β = sqrt(kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
+      β = knorm_elliptic(n, v, Mv)        # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
       kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
       MisI || kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
       Anorm2 += β_prev^2 + β^2 + δ^2      # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.

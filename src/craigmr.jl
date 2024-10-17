@@ -191,7 +191,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     kfill!(y, zero(FC))
     kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)
-    β = sqrt(kdotr(m, u, Mu))
+    β = knorm_elliptic(m, u, Mu)
     if β == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
@@ -210,7 +210,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     mul!(Aᴴu, Aᴴ, u)
     kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
-    α = sqrt(kdotr(n, v, Nv))
+    α = knorm_elliptic(n, v, Nv)
     Anorm² = α * α
 
     iter = 0
@@ -277,7 +277,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       mul!(Av, A, v)
       kaxpby!(m, one(FC), Av, -α, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)
-      β = sqrt(kdotr(m, u, Mu))
+      β = knorm_elliptic(m, u, Mu)
       if β ≠ 0
         kscal!(m, one(FC)/β, u)
         MisI || kscal!(m, one(FC)/β, Mu)
@@ -339,7 +339,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       mul!(Aᴴu, Aᴴ, u)
       kaxpby!(n, one(FC), Aᴴu, -β, Nv)
       NisI || mulorldiv!(v, N, Nv, ldiv)
-      α = sqrt(kdotr(n, v, Nv))
+      α = knorm_elliptic(n, v, Nv)
       Anorm² = Anorm² + α * α  # = ‖Lₖ‖
       ArNorm = α * β * abs(ζ/ρ)
       history && push!(ArNorms, ArNorm)

@@ -151,7 +151,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
 
     # β₁v₁ = Mb
     MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
-    βₖ = sqrt(kdotr(n, vₖ, M⁻¹vₖ))
+    βₖ = knorm_elliptic(n, vₖ, M⁻¹vₖ)
     if βₖ ≠ 0
       kscal!(n, one(FC) / βₖ, M⁻¹vₖ)
       MisI || kscal!(n, one(FC) / βₖ, vₖ)
@@ -231,7 +231,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
 
       MisI || mulorldiv!(vₖ₊₁, M, p, ldiv)  # βₖ₊₁vₖ₊₁ = MAvₖ - γₖvₖ₋₁ - αₖvₖ
 
-      βₖ₊₁ = sqrt(kdotr(m, vₖ₊₁, p))
+      βₖ₊₁ = knorm_elliptic(m, vₖ₊₁, p)
 
       # βₖ₊₁.ₖ ≠ 0
       if βₖ₊₁ > btol

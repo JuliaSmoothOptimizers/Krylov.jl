@@ -214,7 +214,7 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     # β₁Ev₁ = b ↔ β₁v₁ = Mb
     kcopy!(m, M⁻¹vₖ, b₀)  # M⁻¹vₖ ← b₀
     MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
-    βₖ = sqrt(kdotr(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
+    βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
     if βₖ ≠ 0
       kscal!(m, one(FC) / βₖ, M⁻¹vₖ)
       MisI || kscal!(m, one(FC) / βₖ, vₖ)
@@ -225,7 +225,7 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
     kcopy!(n, N⁻¹uₖ, c₀)  # M⁻¹uₖ ← c₀
     NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
-    γₖ = sqrt(kdotr(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
+    γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     if γₖ ≠ 0
       kscal!(n, one(FC) / γₖ, N⁻¹uₖ)
       NisI || kscal!(n, one(FC) / γₖ, uₖ)
@@ -382,8 +382,8 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
       MisI || mulorldiv!(vₖ₊₁, M, q, ldiv)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
       NisI || mulorldiv!(uₖ₊₁, N, p, ldiv)  # γₖ₊₁uₖ₊₁ = NAᴴvₖ - βₖuₖ₋₁ - ᾱₖuₖ
 
-      βₖ₊₁ = sqrt(kdotr(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
-      γₖ₊₁ = sqrt(kdotr(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F
+      βₖ₊₁ = knorm_elliptic(m, vₖ₊₁, q)  # βₖ₊₁ = ‖vₖ₊₁‖_E
+      γₖ₊₁ = knorm_elliptic(n, uₖ₊₁, p)  # γₖ₊₁ = ‖uₖ₊₁‖_F
 
       # βₖ₊₁ ≠ 0
       if βₖ₊₁ > btol

@@ -204,7 +204,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
 
     kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)
-    β₁ = sqrt(kdotr(m, u, Mu))
+    β₁ = knorm_elliptic(m, u, Mu)
     rNorm  = β₁
     history && push!(rNorms, rNorm)
     if β₁ == 0
@@ -270,7 +270,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
       mul!(Aᴴu, Aᴴ, u)
       kaxpby!(n, one(FC), Aᴴu, -β, Nv)
       NisI || mulorldiv!(v, N, Nv, ldiv)
-      α = sqrt(kdotr(n, v, Nv))
+      α = knorm_elliptic(n, v, Nv)
       if α == 0
         inconsistent = true
         continue
@@ -313,7 +313,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
       mul!(Av, A, v)
       kaxpby!(m, one(FC), Av, -α, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)
-      β = sqrt(kdotr(m, u, Mu))
+      β = knorm_elliptic(m, u, Mu)
       if β ≠ 0
         kscal!(m, one(FC) / β, u)
         MisI || kscal!(m, one(FC) / β, Mu)
