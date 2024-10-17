@@ -64,7 +64,7 @@ where
 
 See the [tutorial](https://jso.dev/tutorials/introduction-to-linear-operators/) and the detailed [documentation](https://jso.dev/LinearOperators.jl/dev/) for more information on `LinearOperators.jl`.
 
-## Examples
+## Examples with automatic differentiation
 
 In the field of nonlinear optimization, finding critical points of a continuous function frequently involves linear systems with a Hessian or Jacobian as coefficient. Materializing such operators as matrices is expensive in terms of operations and memory consumption and is unreasonable for high-dimensional problems. However, it is often possible to implement efficient Hessian-vector and Jacobian-vector products, for example with the help of automatic differentiation tools, and used within Krylov solvers. We now illustrate variants with explicit matrices and with matrix-free operators for two well-known optimization methods.
 
@@ -152,6 +152,8 @@ opJ = LinearOperator(Float64, 3, 2, false, false, (y, v) -> J(y, v),
 
 lsmr(opJ, -F(xk))
 ```
+
+## Example with FFT and IFFT
 
 ### Example 3: Solving the Poisson equation with FFT and IFFT
 
