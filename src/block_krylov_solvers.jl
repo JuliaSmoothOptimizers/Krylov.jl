@@ -17,6 +17,7 @@ The outer constructors
 
 may be used in order to create these vectors.
 `memory` is set to `div(n,p)` if the value given is larger than `div(n,p)`.
+`memory` is an optional argument in the second constructor.
 """
 mutable struct BlockGmresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
   m          :: Int
