@@ -340,7 +340,7 @@ kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVect
 
 kref!(n, x, y, c, s) = reflect!(x, y, c, s)
 
-macro @kswap!(x, y)
+macro kswap!(x, y)
   quote
     local tmp = $(esc(x))
     $(esc(x)) = $(esc(y))
