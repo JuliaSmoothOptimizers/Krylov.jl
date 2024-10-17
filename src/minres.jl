@@ -237,9 +237,9 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
 
       # Generate next Lanczos vector.
       mul!(y, A, v)
-      λ ≠ 0 && kaxpy!(n, λ, v, y)             # (y = y + λ * v)
+      λ ≠ 0 && kaxpy!(n, λ, v, y)              # (y = y + λ * v)
       kscal!(n, one(FC) / β, y)
-      iter ≥ 2 && kaxpy!(n, -β / oldβ, r1, y) # (y = y - β / oldβ * r1)
+      iter ≥ 2 && kaxpy!(n, -β / oldβ, r1, y)  # (y = y - β / oldβ * r1)
 
       α = kdotr(n, v, y) / β
       kaxpy!(n, -α / β, r2, y)  # y = y - α / β * r2

@@ -166,15 +166,15 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, bNorm, ktimer(start_time))
 
-    βₖ = knorm(m, r₀)          # β₁ = ‖v₁‖ = ‖r₀‖
-    γₖ = knorm(n, c)           # γ₁ = ‖u₁‖ = ‖c‖
-    kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
-    kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
+    βₖ = knorm(m, r₀)           # β₁ = ‖v₁‖ = ‖r₀‖
+    γₖ = knorm(n, c)            # γ₁ = ‖u₁‖ = ‖c‖
+    kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
     vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
     uₖ .= c ./ γₖ               # u₁ = c / γ₁
     cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
     sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-    kfill!(d̅, zero(FC))        # Last column of D̅ₖ = Uₖ(Qₖ)ᴴ
+    kfill!(d̅, zero(FC))         # Last column of D̅ₖ = Uₖ(Qₖ)ᴴ
     ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
     ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
     δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and Lₖ modified over the course of two iterations
@@ -203,8 +203,8 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
 
       αₖ = kdot(m, vₖ, q)      # αₖ = ⟨vₖ,q⟩
 
-      kaxpy!(m, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
-      kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
+      kaxpy!(m, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
+      kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
 
       βₖ₊₁ = knorm(m, q)       # βₖ₊₁ = ‖q‖
       γₖ₊₁ = knorm(n, p)       # γₖ₊₁ = ‖p‖

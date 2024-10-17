@@ -147,8 +147,8 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     Mq = MisI ? q : solver.Mr
 
     kfill!(x, zero(FC))
-    kcopy!(m, r, b)  # r ← b
-    bNorm = knorm(m, r)   # Marginally faster than norm(b)
+    kcopy!(m, r, b)      # r ← b
+    bNorm = knorm(m, r)  # Marginally faster than norm(b)
     if bNorm == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
@@ -160,7 +160,7 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     end
     MisI || mulorldiv!(Mr, M, r, ldiv)
     mul!(s, Aᴴ, Mr)
-    kcopy!(n, p, s)  # p ← s
+    kcopy!(n, p, s)     # p ← s
     γ = kdotr(n, s, s)  # γ = sᴴs
     iter = 0
     itmax == 0 && (itmax = m + n)
@@ -194,12 +194,12 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
         on_boundary = true
       end
 
-      kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
-      kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
+      kaxpy!(n,  α, p, x)  # Faster than x = x + α * p
+      kaxpy!(m, -α, q, r)  # Faster than r = r - α * q
       MisI || mulorldiv!(Mr, M, r, ldiv)
       mul!(s, Aᴴ, Mr)
-      λ > 0 && kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x
-      γ_next = kdotr(n, s, s)   # γ_next = sᴴs
+      λ > 0 && kaxpy!(n, -λ, x, s)  # s = A' * r - λ * x
+      γ_next = kdotr(n, s, s)  # γ_next = sᴴs
       β = γ_next / γ
       kaxpby!(n, one(FC), s, β, p) # p = s + βp
       γ = γ_next

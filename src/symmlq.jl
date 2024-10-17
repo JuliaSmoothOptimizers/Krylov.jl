@@ -238,7 +238,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       cw = ρbar / ρ
       sw = β / ρ
 
-      history && push!(errors, abs(β₁/λest))
+      history && push!(errors, abs(β₁ / λest))
       if γbar ≠ 0
         history && push!(errorscg, sqrt(errors[1]^2 - ζbar^2))
       else

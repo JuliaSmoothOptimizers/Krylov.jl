@@ -150,9 +150,9 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     reset!(stats)
     Nq = NisI ? q : solver.Nq
 
-    kfill!(x, zero(FC))       # initial estimation x = 0
+    kfill!(x, zero(FC))        # initial estimation x = 0
     mulorldiv!(r, N, b, ldiv)  # initial residual r = N * (b - Ax) = N * b
-    bNorm = knorm(m, r)       # norm(b - A * x0) if x0 ≠ 0.
+    bNorm = knorm(m, r)        # norm(b - A * x0) if x0 ≠ 0.
     rNorm = bNorm              # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
     history && push!(rNorms, rNorm)
     if bNorm == 0
@@ -164,16 +164,16 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       return solver
     end
     λ > 0 && kcopy!(m, s, r)  # s ← r
-    mul!(Aᴴr, Aᴴ, r)  # - λ * x0 if x0 ≠ 0.
-    kcopy!(n, p, Aᴴr)  # p ← Aᴴr
-    γ = kdotr(n, Aᴴr, Aᴴr)  # Faster than γ = dot(Aᴴr, Aᴴr)
+    mul!(Aᴴr, Aᴴ, r)          # - λ * x0 if x0 ≠ 0.
+    kcopy!(n, p, Aᴴr)         # p ← Aᴴr
+    γ = kdotr(n, Aᴴr, Aᴴr)    # Faster than γ = dot(Aᴴr, Aᴴr)
     λ > 0 && (γ += λ * rNorm * rNorm)
     iter = 0
     itmax == 0 && (itmax = m + n)
 
     ArNorm = sqrt(γ)
     history && push!(ArNorms, ArNorm)
-    ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
+    ɛ_c = atol + rtol * rNorm   # Stopping tolerance for consistent systems.
     ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
     (verbose > 0) && @printf(iostream, "%5s  %8s  %8s  %5s\n", "k", "‖Aᴴr‖", "‖r‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %.2fs\n", iter, ArNorm, rNorm, ktimer(start_time))
@@ -189,10 +189,10 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       mul!(q, A, p)
       λ > 0 && kaxpy!(m, λ, s, q)  # q = q + λ * s
       NisI || mulorldiv!(Nq, N, q, ldiv)
-      α = γ / kdotr(m, q, Nq)   # Compute qᴴ * N * q
-      kaxpy!(n,  α, p, x)       # Faster than  x =  x + α *  p
-      kaxpy!(m, -α, Nq, r)      # Faster than  r =  r - α * Nq
-      rNorm = knorm(m, r)       # norm(r)
+      α = γ / kdotr(m, q, Nq)  # Compute qᴴ * N * q
+      kaxpy!(n,  α, p, x)      # Faster than  x =  x + α *  p
+      kaxpy!(m, -α, Nq, r)     # Faster than  r =  r - α * Nq
+      rNorm = knorm(m, r)      # norm(r)
       mul!(Aᴴr, Aᴴ, r)
       γ_next = kdotr(n, Aᴴr, Aᴴr)  # Faster than γ_next = dot(Aᴴr, Aᴴr)
       λ > 0 && (γ_next += λ * rNorm * rNorm)
@@ -200,7 +200,7 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
 
       kaxpby!(n, one(FC), Aᴴr, β, p)  # Faster than  p = Aᴴr + β * p
       if λ > 0
-        kaxpby!(m, one(FC), r, β, s) # s = r + β * s
+        kaxpby!(m, one(FC), r, β, s)  # s = r + β * s
       end
 
       γ = γ_next

@@ -137,10 +137,10 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
       kfill!(x[i], zero(FC))  # x₀
     end
 
-    kcopy!(m, u, b)             # u ← b
+    kcopy!(m, u, b)           # u ← b
     kfill!(u_prev, zero(FC))
-    mul!(v, Aᴴ, u)               # v₁ ← Aᴴ * b
-    β = sqrt(kdotr(n, v, v))    # β₁ = v₁ᵀ M v₁
+    mul!(v, Aᴴ, u)            # v₁ ← Aᴴ * b
+    β = sqrt(kdotr(n, v, v))  # β₁ = v₁ᵀ M v₁
     kfill!(rNorms, β)
     if history
       for i = 1 : nshifts
@@ -198,16 +198,16 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     while ! (solved || tired || user_requested_exit || overtimed)
 
       # Form next Lanczos vector.
-      mul!(utilde, A, v)                   # utildeₖ ← Avₖ
-      δ = kdotr(m, utilde, utilde)        # δₖ = vₖᵀAᴴAvₖ
-      kaxpy!(m, -δ, u, utilde)            # uₖ₊₁ = utildeₖ - δₖuₖ - βₖuₖ₋₁
+      mul!(utilde, A, v)              # utildeₖ ← Avₖ
+      δ = kdotr(m, utilde, utilde)    # δₖ = vₖᵀAᴴAvₖ
+      kaxpy!(m, -δ, u, utilde)        # uₖ₊₁ = utildeₖ - δₖuₖ - βₖuₖ₋₁
       kaxpy!(m, -β, u_prev, utilde)
-      mul!(v, Aᴴ, utilde)                  # vₖ₊₁ = Aᴴuₖ₊₁
-      β = sqrt(kdotr(n, v, v))            # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
-      kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-      kscal!(m, one(FC) / β, utilde)      # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
-      kcopy!(m, u_prev, u)  # u_prev ← u
-      kcopy!(m, u, utilde)  # u ← utilde
+      mul!(v, Aᴴ, utilde)             # vₖ₊₁ = Aᴴuₖ₊₁
+      β = sqrt(kdotr(n, v, v))        # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+      kscal!(n, one(FC) / β, v)       # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+      kscal!(m, one(FC) / β, utilde)  # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
+      kcopy!(m, u_prev, u)            # u_prev ← u
+      kcopy!(m, u, utilde)            # u ← utilde
 
       MisI || (ρ = kdotr(n, v, v))
       for i = 1 : nshifts

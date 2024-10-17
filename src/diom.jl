@@ -149,7 +149,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       kcopy!(n, t, b)  # t ← b
     end
     MisI || mulorldiv!(r₀, M, t, ldiv)  # M(b - Ax₀)
-    rNorm = knorm(n, r₀)               # β = ‖r₀‖₂
+    rNorm = knorm(n, r₀)                # β = ‖r₀‖₂
     history && push!(rNorms, rNorm)
     if rNorm == 0
       stats.niter = 0
@@ -225,7 +225,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       end
 
       # Compute hₖ₊₁.ₖ and vₖ₊₁.
-      Haux = knorm(n, w)         # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+      Haux = knorm(n, w)          # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
       if Haux ≠ 0                 # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
         V[next_pos] .= w ./ Haux  # vₖ₊₁ = w / hₖ₊₁.ₖ
       end

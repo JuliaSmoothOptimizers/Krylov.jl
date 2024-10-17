@@ -228,7 +228,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     # β₁Mu₁ = b.
     kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)  # u₁ = M⁻¹ * Mu₁
-    βₖ = sqrt(kdotr(m, u, Mu))         # β₁ = ‖u₁‖_M
+    βₖ = sqrt(kdotr(m, u, Mu))          # β₁ = ‖u₁‖_M
     if βₖ ≠ 0
       kscal!(m, one(FC) / βₖ, u)
       MisI || kscal!(m, one(FC) / βₖ, Mu)
@@ -238,22 +238,22 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     mul!(Aᴴu, Aᴴ, u)
     kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)  # v₁ = N⁻¹ * Nv₁
-    αₖ = sqrt(kdotr(n, v, Nv))         # α₁ = ‖v₁‖_N
+    αₖ = sqrt(kdotr(n, v, Nv))          # α₁ = ‖v₁‖_N
     if αₖ ≠ 0
       kscal!(n, one(FC) / αₖ, v)
       NisI || kscal!(n, one(FC) / αₖ, Nv)
     end
 
-    kcopy!(m, w̄, u) # Direction w̄₁
+    kcopy!(m, w̄, u)  # Direction w̄₁
     cₖ = zero(T)     # Givens cosines used for the LQ factorization of (Lₖ)ᴴ
     sₖ = zero(FC)    # Givens sines used for the LQ factorization of (Lₖ)ᴴ
     ζₖ₋₁ = zero(FC)  # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
     ηₖ = zero(FC)    # Coefficient of M̅ₖ
 
     # Variable used for the regularization.
-    λₖ  = λ             # λ₁ = λ
-    cpₖ = spₖ = one(T)  # Givens sines and cosines used to zero out λₖ
-    cdₖ = sdₖ = one(FC) # Givens sines and cosines used to define λₖ₊₁
+    λₖ  = λ              # λ₁ = λ
+    cpₖ = spₖ = one(T)   # Givens sines and cosines used to zero out λₖ
+    cdₖ = sdₖ = one(FC)  # Givens sines and cosines used to define λₖ₊₁
     λ > 0 && kcopy!(n, q, v)  # Additional vector needed to update x, by definition q₀ = 0
 
     # Initialize the regularization.
@@ -346,7 +346,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       mul!(Av, A, v)
       kaxpby!(m, one(FC), Av, -αₖ, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)  # uₖ₊₁ = M⁻¹ * Muₖ₊₁
-      βₖ₊₁ = sqrt(kdotr(m, u, Mu))       # βₖ₊₁ = ‖uₖ₊₁‖_M
+      βₖ₊₁ = sqrt(kdotr(m, u, Mu))        # βₖ₊₁ = ‖uₖ₊₁‖_M
       if βₖ₊₁ ≠ 0
         kscal!(m, one(FC) / βₖ₊₁, u)
         MisI || kscal!(m, one(FC) / βₖ₊₁, Mu)
@@ -356,7 +356,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       mul!(Aᴴu, Aᴴ, u)
       kaxpby!(n, one(FC), Aᴴu, -βₖ₊₁, Nv)
       NisI || mulorldiv!(v, N, Nv, ldiv)  # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
-      αₖ₊₁ = sqrt(kdotr(n, v, Nv))       # αₖ₊₁ = ‖vₖ₊₁‖_N
+      αₖ₊₁ = sqrt(kdotr(n, v, Nv))        # αₖ₊₁ = ‖vₖ₊₁‖_N
       if αₖ₊₁ ≠ 0
         kscal!(n, one(FC) / αₖ₊₁, v)
         NisI || kscal!(n, one(FC) / αₖ₊₁, Nv)

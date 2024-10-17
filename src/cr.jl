@@ -153,7 +153,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     mul!(Ar, A, r)
     ρ = kdotr(n, r, Ar)
 
-    rNorm = sqrt(kdotr(n, r, p))   # ‖r‖
+    rNorm = sqrt(kdotr(n, r, p))    # ‖r‖
     history && push!(rNorms, rNorm) # Values of ‖r‖
 
     if ρ == 0
@@ -167,7 +167,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     end
     kcopy!(n, p, r)   # p ← r
     kcopy!(n, q, Ar)  # q ← Ar
-    (verbose > 0) && (m = zero(T)) # quadratic model
+    (verbose > 0) && (m = zero(T))  # quadratic model
 
     iter = 0
     itmax == 0 && (itmax = 2 * n)
@@ -221,12 +221,12 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         tr = maximum(to_boundary(n, x, r, Mq, radius; flip = false, xNorm2 = xNorm², dNorm2 = rNorm²))
         (verbose > 0) && @printf(iostream, "t1 = %8.1e, t2 = %8.1e and tr = %8.1e\n", t1, t2, tr)
 
-        if abspAp ≤ γ * pNorm * knorm(n, q) # pᴴAp ≃ 0
-          npcurv = true # nonpositive curvature
+        if abspAp ≤ γ * pNorm * knorm(n, q)  # pᴴAp ≃ 0
+          npcurv = true  # nonpositive curvature
           (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e ≃ 0\n", pAp)
-          if abspr ≤ γ * pNorm * rNorm # pᴴr ≃ 0
+          if abspr ≤ γ * pNorm * rNorm  # pᴴr ≃ 0
             (verbose > 0) && @printf(iostream, "pᴴr = %8.1e ≃ 0, redefining p := r\n", pr)
-            p = r # - ∇q(x)
+            p = r  # - ∇q(x)
             q = Ar
             # q(x + αr) = q(x) - α ‖r‖² + ½ α² rᴴAr
             # 1) if rᴴAr > 0, the quadratic decreases from α = 0 to α = ‖r‖² / rᴴAr
@@ -245,7 +245,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
             α = descent ? t1 : t2
             ρ > 0 && (tr = min(tr, rNorm² / ρ))
             Δ = -α * pr + tr * rNorm² - (tr)^2 * ρ / 2 # as pᴴAp = 0
-            if Δ > 0 # direction r engenders a better decrease
+            if Δ > 0  # direction r engenders a better decrease
               (verbose > 0) && @printf(iostream, "direction r engenders a bigger decrease. q_p - q_r = %8.1e > 0\n", Δ)
               (verbose > 0) && @printf(iostream, "redefining p := r\n")
               p = r
@@ -256,7 +256,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
             end
           end
 
-        elseif pAp > 0 && ρ > 0 # no negative curvature
+        elseif pAp > 0 && ρ > 0  # no negative curvature
           (verbose > 0) && @printf(iostream, "positive curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
           α = ρ / kdotr(n, q, Mq)
           if α ≥ t1
@@ -313,13 +313,13 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         end
 
       elseif radius == 0
-        α = ρ / kdotr(n, q, Mq) # step
+        α = ρ / kdotr(n, q, Mq)  # step
       end
 
       kaxpy!(n, α, p, x)
       xNorm = knorm(n, x)
       xNorm ≈ radius && (on_boundary = true)
-      kaxpy!(n, -α, Mq, r) # residual
+      kaxpy!(n, -α, Mq, r)  # residual
       if MisI
         rNorm² = kdotr(n, r, r)
         rNorm = sqrt(rNorm²)
@@ -372,9 +372,9 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         solver.warm_start = false
         return solver
       end
-      pr = rNorm² + β * pr - β * α * pAp # pᴴr
+      pr = rNorm² + β * pr - β * α * pAp  # pᴴr
       abspr = abs(pr)
-      pAp = ρ + β^2 * pAp # pᴴq
+      pAp = ρ + β^2 * pAp  # pᴴq
       abspAp = abs(pAp)
       descent = pr > 0
 

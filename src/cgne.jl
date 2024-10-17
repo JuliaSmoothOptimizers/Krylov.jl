@@ -154,7 +154,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     kfill!(x, zero(FC))
     kcopy!(m, r, b)  # r ← b
     NisI || mulorldiv!(z, N, r, ldiv)
-    rNorm = knorm(m, r)   # Marginally faster than norm(r)
+    rNorm = knorm(m, r)  # Marginally faster than norm(r)
     history && push!(rNorms, rNorm)
     if rNorm == 0
       stats.niter = 0
@@ -195,8 +195,8 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       δ = kdotr(n, p, p)   # Faster than dot(p, p)
       λ > 0 && (δ += λ * kdotr(m, s, s))
       α = γ / δ
-      kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
-      kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
+      kaxpy!(n,  α, p, x)  # Faster than x = x + α * p
+      kaxpy!(m, -α, q, r)  # Faster than r = r - α * q
       NisI || mulorldiv!(z, N, r, ldiv)
       γ_next = kdotr(m, r, z)  # Faster than γ_next = dot(r, z)
       β = γ_next / γ

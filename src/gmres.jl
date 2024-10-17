@@ -150,7 +150,7 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
       kcopy!(n, w, b)  # w ← b
     end
     MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M(b - Ax₀)
-    β = knorm(n, r₀)                   # β = ‖r₀‖₂
+    β = knorm(n, r₀)                    # β = ‖r₀‖₂
 
     rNorm = β
     history && push!(rNorms, β)
@@ -241,8 +241,8 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
         mul!(w, A, p)                                  # w ← ANvₖ
         MisI || mulorldiv!(q, M, w, ldiv)              # q ← MANvₖ
         for i = 1 : inner_iter
-          R[nr+i] = kdot(n, V[i], q)      # hᵢₖ = (vᵢ)ᴴq
-          kaxpy!(n, -R[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
+          R[nr+i] = kdot(n, V[i], q)    # hᵢₖ = (vᵢ)ᴴq
+          kaxpy!(n, -R[nr+i], V[i], q)  # q ← q - hᵢₖvᵢ
         end
 
         # Reorthogonalization of the Krylov basis.

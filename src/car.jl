@@ -148,7 +148,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       kcopy!(n, s, q)  # s ← q
     end
 
-    mul!(t, A, s)        # t₀ = As₀
+    mul!(t, A, s)       # t₀ = As₀
     kcopy!(n, u, t)     # u₀ = Aq₀
     ρ = kdotr(n, t, s)  # ρ₀ = ⟨t₀ , s₀⟩
 
@@ -201,9 +201,9 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       solved = resid_decrease_lim || resid_decrease_mach
 
       if !solved
-        mul!(t, A, s)                  # tₖ₊₁ = A * sₖ₊₁
+        mul!(t, A, s)                 # tₖ₊₁ = A * sₖ₊₁
         ρ_next = kdotr(n, t, s)       # ρₖ₊₁ = ⟨tₖ₊₁ , sₖ₊₁⟩
-        β = ρ_next / ρ                 # βₖ = ρₖ₊₁ / ρₖ
+        β = ρ_next / ρ                # βₖ = ρₖ₊₁ / ρₖ
         ρ = ρ_next
         kaxpby!(n, one(FC), r, β, p)  # pₖ₊₁ = rₖ₊₁ + βₖ * pₖ
         kaxpby!(n, one(FC), s, β, q)  # qₖ₊₁ = sₖ₊₁ + βₖ * qₖ

@@ -332,8 +332,8 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
       iter ≥ window && (err_lbnd = knorm(window, err_vec))
 
       # Update h, hbar and x.
-      δ = θbar * ρ / (ρold * ρbarold) # δₖ = θbarₖ * ρₖ / (ρₖ₋₁ * ρbarₖ₋₁)
-      kaxpby!(n, one(FC), h, -δ, hbar)   # ĥₖ = hₖ - δₖ * ĥₖ₋₁
+      δ = θbar * ρ / (ρold * ρbarold)   # δₖ = θbarₖ * ρₖ / (ρₖ₋₁ * ρbarₖ₋₁)
+      kaxpby!(n, one(FC), h, -δ, hbar)  # ĥₖ = hₖ - δₖ * ĥₖ₋₁
 
       # if a trust-region constraint is given, compute step to the boundary
       # the step ϕ/ρ is not necessarily positive
@@ -345,8 +345,8 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
         σ = σ > 0 ? min(σ, tmax) : max(σ, tmin)
       end
 
-      kaxpy!(n, σ, hbar, x) # xₖ = xₖ₋₁ + σₖ * ĥₖ
-      kaxpby!(n, one(FC), v, -θnew / ρ, h) # hₖ₊₁ = vₖ₊₁ - (θₖ₊₁/ρₖ) * hₖ
+      kaxpy!(n, σ, hbar, x)                 # xₖ = xₖ₋₁ + σₖ * ĥₖ
+      kaxpby!(n, one(FC), v, -θnew / ρ, h)  # hₖ₊₁ = vₖ₊₁ - (θₖ₊₁/ρₖ) * hₖ
 
       # Estimate ‖r‖.
       βacute =  chat * βdd
