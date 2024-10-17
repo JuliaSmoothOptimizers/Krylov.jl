@@ -228,7 +228,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     # β₁Mu₁ = b.
     kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)  # u₁ = M⁻¹ * Mu₁
-    βₖ = sqrt(kdotr(m, u, Mu))          # β₁ = ‖u₁‖_M
+    βₖ = knorm_elliptic(m, u, Mu)       # β₁ = ‖u₁‖_M
     if βₖ ≠ 0
       kscal!(m, one(FC) / βₖ, u)
       MisI || kscal!(m, one(FC) / βₖ, Mu)
@@ -238,7 +238,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     mul!(Aᴴu, Aᴴ, u)
     kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)  # v₁ = N⁻¹ * Nv₁
-    αₖ = sqrt(kdotr(n, v, Nv))          # α₁ = ‖v₁‖_N
+    αₖ = knorm_elliptic(n, v, Nv)       # α₁ = ‖v₁‖_N
     if αₖ ≠ 0
       kscal!(n, one(FC) / αₖ, v)
       NisI || kscal!(n, one(FC) / αₖ, Nv)
@@ -346,7 +346,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       mul!(Av, A, v)
       kaxpby!(m, one(FC), Av, -αₖ, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)  # uₖ₊₁ = M⁻¹ * Muₖ₊₁
-      βₖ₊₁ = sqrt(kdotr(m, u, Mu))        # βₖ₊₁ = ‖uₖ₊₁‖_M
+      βₖ₊₁ = knorm_elliptic(m, u, Mu)     # βₖ₊₁ = ‖uₖ₊₁‖_M
       if βₖ₊₁ ≠ 0
         kscal!(m, one(FC) / βₖ₊₁, u)
         MisI || kscal!(m, one(FC) / βₖ₊₁, Mu)
@@ -356,7 +356,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       mul!(Aᴴu, Aᴴ, u)
       kaxpby!(n, one(FC), Aᴴu, -βₖ₊₁, Nv)
       NisI || mulorldiv!(v, N, Nv, ldiv)  # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
-      αₖ₊₁ = sqrt(kdotr(n, v, Nv))        # αₖ₊₁ = ‖vₖ₊₁‖_N
+      αₖ₊₁ = knorm_elliptic(n, v, Nv)     # αₖ₊₁ = ‖vₖ₊₁‖_N
       if αₖ₊₁ ≠ 0
         kscal!(n, one(FC) / αₖ₊₁, v)
         NisI || kscal!(n, one(FC) / αₖ₊₁, Nv)

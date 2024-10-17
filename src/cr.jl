@@ -153,8 +153,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     mul!(Ar, A, r)
     ρ = kdotr(n, r, Ar)
 
-    rNorm = sqrt(kdotr(n, r, p))    # ‖r‖
-    history && push!(rNorms, rNorm) # Values of ‖r‖
+    rNorm = knorm_elliptic(n, r, p)  # ‖r‖
+    history && push!(rNorms, rNorm)  # Values of ‖r‖
 
     if ρ == 0
       stats.niter = 0

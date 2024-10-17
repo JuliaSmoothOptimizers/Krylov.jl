@@ -157,7 +157,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     history && push!(rNorms, rNorm)
 
     # Compute ‖Ar₀‖
-    ArNorm = MisI ? knorm(n, s) : sqrt(kdotr(n, r, u))
+    ArNorm = MisI ? knorm(n, s) : knorm_elliptic(n, r, u)
     history && push!(ArNorms, ArNorm)
 
     if rNorm == 0
@@ -210,7 +210,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
         kaxpby!(n, one(FC), t, β, u)  # uₖ₊₁ = tₖ₊₁ + βₖ * uₖ
 
         # Compute ‖Arₖ‖
-        ArNorm = MisI ? knorm(n, s) : sqrt(kdotr(n, r, u))
+        ArNorm = MisI ? knorm(n, s) : knorm_elliptic(n, r, u)
         history && push!(ArNorms, ArNorm)
       end
 
