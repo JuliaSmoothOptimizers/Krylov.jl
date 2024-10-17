@@ -498,6 +498,7 @@ The outer constructors
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
+`memory` is an optional argument in the second constructor.
 """
 mutable struct DqgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
@@ -551,6 +552,7 @@ The outer constructors
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
+`memory` is an optional argument in the second constructor.
 """
 mutable struct DiomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
@@ -1692,6 +1694,7 @@ The outer constructors
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
+`memory` is an optional argument in the second constructor.
 """
 mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
@@ -1746,6 +1749,7 @@ The outer constructors
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
+`memory` is an optional argument in the second constructor.
 """
 mutable struct FgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
@@ -1800,6 +1804,7 @@ The outer constructors
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
+`memory` is an optional argument in the second constructor.
 """
 mutable struct FomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
@@ -1851,6 +1856,7 @@ The outer constructors
 
 may be used in order to create these vectors.
 `memory` is set to `n + m` if the value given is larger than `n + m`.
+`memory` is an optional argument in the second constructor.
 """
 mutable struct GpmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
