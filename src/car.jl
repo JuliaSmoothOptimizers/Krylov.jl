@@ -122,42 +122,42 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
 
-    @kfill!(x, zero(FC))
+    kfill!(x, zero(FC))
     if warm_start
       mul!(r, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), r)
+      kaxpby!(n, one(FC), b, -one(FC), r)
     else
-      @kcopy!(n, r, b)  # r ← b
+      kcopy!(n, r, b)  # r ← b
     end
 
     # p₀ = r₀ = M(b - Ax₀)
     if MisI
-      @kcopy!(n, p, r)  # p ← r
+      kcopy!(n, p, r)  # p ← r
     else
       mulorldiv!(p, M, r, ldiv)
-      @kcopy!(n, r, p)  # r ← p
+      kcopy!(n, r, p)  # r ← p
     end
 
     mul!(s, A, r)  # s₀ = Ar₀
 
     # q₀ = MAp₀ and s₀ = MAr₀
     if MisI
-      @kcopy!(n, q, s)  # q ← s
+      kcopy!(n, q, s)  # q ← s
     else
       mulorldiv!(q, M, s, ldiv)
-      @kcopy!(n, s, q)  # s ← q
+      kcopy!(n, s, q)  # s ← q
     end
 
     mul!(t, A, s)        # t₀ = As₀
-    @kcopy!(n, u, t)     # u₀ = Aq₀
-    ρ = @kdotr(n, t, s)  # ρ₀ = ⟨t₀ , s₀⟩
+    kcopy!(n, u, t)     # u₀ = Aq₀
+    ρ = kdotr(n, t, s)  # ρ₀ = ⟨t₀ , s₀⟩
 
     # Compute ‖r₀‖
-    rNorm = @knrm2(n, r)
+    rNorm = knorm(n, r)
     history && push!(rNorms, rNorm)
 
     # Compute ‖Ar₀‖
-    ArNorm = MisI ? @knrm2(n, s) : sqrt(@kdotr(n, r, u))
+    ArNorm = MisI ? knorm(n, s) : sqrt(kdotr(n, r, u))
     history && push!(ArNorms, ArNorm)
 
     if rNorm == 0
@@ -185,13 +185,13 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
 
     while !(solved || tired || user_requested_exit || overtimed)
       MisI || mulorldiv!(Mu, M, u, ldiv)
-      α = ρ / @kdotr(n, u, Mu)  # αₖ = ρₖ / ⟨uₖ, Muₖ⟩
-      @kaxpy!(n,  α, p, x)      # xₖ₊₁ = xₖ + αₖ * pₖ
-      @kaxpy!(n, -α, q, r)      # rₖ₊₁ = rₖ - αₖ * qₖ
-      @kaxpy!(n, -α, Mu, s)     # sₖ₊₁ = sₖ - αₖ * Muₖ
+      α = ρ / kdotr(n, u, Mu)  # αₖ = ρₖ / ⟨uₖ, Muₖ⟩
+      kaxpy!(n,  α, p, x)      # xₖ₊₁ = xₖ + αₖ * pₖ
+      kaxpy!(n, -α, q, r)      # rₖ₊₁ = rₖ - αₖ * qₖ
+      kaxpy!(n, -α, Mu, s)     # sₖ₊₁ = sₖ - αₖ * Muₖ
 
       # Compute ‖rₖ‖
-      rNorm = @knrm2(n, r)
+      rNorm = knorm(n, r)
       history && push!(rNorms, rNorm)
 
       # Stopping conditions that do not depend on user input.
@@ -202,15 +202,15 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
 
       if !solved
         mul!(t, A, s)                  # tₖ₊₁ = A * sₖ₊₁
-        ρ_next = @kdotr(n, t, s)       # ρₖ₊₁ = ⟨tₖ₊₁ , sₖ₊₁⟩
+        ρ_next = kdotr(n, t, s)       # ρₖ₊₁ = ⟨tₖ₊₁ , sₖ₊₁⟩
         β = ρ_next / ρ                 # βₖ = ρₖ₊₁ / ρₖ
         ρ = ρ_next
-        @kaxpby!(n, one(FC), r, β, p)  # pₖ₊₁ = rₖ₊₁ + βₖ * pₖ
-        @kaxpby!(n, one(FC), s, β, q)  # qₖ₊₁ = sₖ₊₁ + βₖ * qₖ
-        @kaxpby!(n, one(FC), t, β, u)  # uₖ₊₁ = tₖ₊₁ + βₖ * uₖ
+        kaxpby!(n, one(FC), r, β, p)  # pₖ₊₁ = rₖ₊₁ + βₖ * pₖ
+        kaxpby!(n, one(FC), s, β, q)  # qₖ₊₁ = sₖ₊₁ + βₖ * qₖ
+        kaxpby!(n, one(FC), t, β, u)  # uₖ₊₁ = tₖ₊₁ + βₖ * uₖ
 
         # Compute ‖Arₖ‖
-        ArNorm = MisI ? @knrm2(n, s) : sqrt(@kdotr(n, r, u))
+        ArNorm = MisI ? knorm(n, s) : sqrt(kdotr(n, r, u))
         history && push!(ArNorms, ArNorm)
       end
 
@@ -231,7 +231,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

@@ -133,16 +133,16 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     reset!(stats)
     z = MisI ? r : solver.z
 
-    @kfill!(x, zero(FC))
+    kfill!(x, zero(FC))
     if warm_start
       mul!(r, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), r)
+      kaxpby!(n, one(FC), b, -one(FC), r)
     else
-      @kcopy!(n, r, b)  # r ← b
+      kcopy!(n, r, b)  # r ← b
     end
     MisI || mulorldiv!(z, M, r, ldiv)
-    @kcopy!(n, p, z)  # p ← z
-    γ = @kdotr(n, r, z)
+    kcopy!(n, p, z)  # p ← z
+    γ = kdotr(n, r, z)
     rNorm = sqrt(γ)
     history && push!(rNorms, rNorm)
     if γ == 0
@@ -175,14 +175,14 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
 
     while !(solved || tired || zero_curvature || user_requested_exit || overtimed)
       mul!(Ap, A, p)
-      pAp = @kdotr(n, p, Ap)
+      pAp = kdotr(n, p, Ap)
       if (pAp ≤ eps(T) * pNorm²) && (radius == 0)
         if abs(pAp) ≤ eps(T) * pNorm²
           zero_curvature = true
           inconsistent = !linesearch
         end
         if linesearch
-          iter == 0 && @kcopy!(n, x, b)  # x ← b
+          iter == 0 && kcopy!(n, x, b)  # x ← b
           solved = true
         end
       end
@@ -209,10 +209,10 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
         on_boundary = true
       end
 
-      @kaxpy!(n,  α,  p, x)
-      @kaxpy!(n, -α, Ap, r)
+      kaxpy!(n,  α,  p, x)
+      kaxpy!(n, -α, Ap, r)
       MisI || mulorldiv!(z, M, r, ldiv)
-      γ_next = @kdotr(n, r, z)
+      γ_next = kdotr(n, r, z)
       rNorm = sqrt(γ_next)
       history && push!(rNorms, rNorm)
 
@@ -228,7 +228,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
         β = γ_next / γ
         pNorm² = γ_next + β^2 * pNorm²
         γ = γ_next
-        @kaxpby!(n, one(FC), z, β, p)
+        kaxpby!(n, one(FC), z, β, p)
       end
 
       iter = iter + 1
@@ -250,7 +250,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     overtimed                         && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

@@ -130,15 +130,15 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     v = MisI ? Mv : solver.v
 
     # Initial state.
-    @kfill!(x, zero(FC))
+    kfill!(x, zero(FC))
     if warm_start
       mul!(Mv, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), Mv)
+      kaxpby!(n, one(FC), b, -one(FC), Mv)
     else
-      @kcopy!(n, Mv, b)  # Mv ← b
+      kcopy!(n, Mv, b)  # Mv ← b
     end
     MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹r₀
-    β = sqrt(@kdotr(n, v, Mv))          # β₁ = v₁ᴴ M v₁
+    β = sqrt(kdotr(n, v, Mv))          # β₁ = v₁ᴴ M v₁
     σ = β
     rNorm = σ
     history && push!(rNorms, rNorm)
@@ -152,13 +152,13 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       solver.warm_start = false
       return solver
     end
-    @kcopy!(n, p, v)  # p ← v
+    kcopy!(n, p, v)  # p ← v
 
     # Initialize Lanczos process.
     # β₁Mv₁ = b
-    @kscal!(n, one(FC) / β, v)           # v₁  ←  v₁ / β₁
-    MisI || @kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
-    @kcopy!(n, Mv_prev, Mv)              # Mv_prev ← Mv
+    kscal!(n, one(FC) / β, v)           # v₁  ←  v₁ / β₁
+    MisI || kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
+    kcopy!(n, Mv_prev, Mv)              # Mv_prev ← Mv
 
     iter = 0
     itmax == 0 && (itmax = 2 * n)
@@ -186,7 +186,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       # Form next Lanczos vector.
       # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
       mul!(Mv_next, A, v)        # Mvₖ₊₁ ← Avₖ
-      δ = @kdotr(n, v, Mv_next)  # δₖ = vₖᴴ A vₖ
+      δ = kdotr(n, v, Mv_next)  # δₖ = vₖᴴ A vₖ
 
       # Check curvature. Exit fast if requested.
       # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᴴ A pₖ.
@@ -194,25 +194,25 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       indefinite |= (γ ≤ 0)
       (check_curvature & indefinite) && continue
 
-      @kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
+      kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
       if iter > 0
-        @kaxpy!(n, -β, Mv_prev, Mv_next) # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
-        @kcopy!(n, Mv_prev, Mv)          # Mvₖ₋₁ ← Mvₖ
+        kaxpy!(n, -β, Mv_prev, Mv_next) # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
+        kcopy!(n, Mv_prev, Mv)          # Mvₖ₋₁ ← Mvₖ
       end
-      @kcopy!(n, Mv, Mv_next)              # Mvₖ ← Mvₖ₊₁
+      kcopy!(n, Mv, Mv_next)              # Mvₖ ← Mvₖ₊₁
       MisI || mulorldiv!(v, M, Mv, ldiv)   # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
-      β = sqrt(@kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
-      @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-      MisI || @kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+      β = sqrt(kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
+      kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+      MisI || kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
       Anorm2 += β_prev^2 + β^2 + δ^2       # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
       β_prev = β
 
       # Compute next CG iterate.
-      @kaxpy!(n, γ, p, x)     # xₖ₊₁ = xₖ + γₖ * pₖ
+      kaxpy!(n, γ, p, x)     # xₖ₊₁ = xₖ + γₖ * pₖ
       ω = β * γ
       σ = -ω * σ              # σₖ₊₁ = - βₖ₊₁ * γₖ * σₖ
       ω = ω * ω               # ωₖ = (βₖ₊₁ * γₖ)²
-      @kaxpby!(n, σ, v, ω, p) # pₖ₊₁ = σₖ₊₁ * vₖ₊₁ + ωₖ * pₖ
+      kaxpby!(n, σ, v, ω, p) # pₖ₊₁ = σₖ₊₁ * vₖ₊₁ + ωₖ * pₖ
       rNorm = abs(σ)          # ‖rₖ₊₁‖_M = |σₖ₊₁| because rₖ₊₁ = σₖ₊₁ * vₖ₊₁ and ‖vₖ₊₁‖_M = 1
       history && push!(rNorms, rNorm)
       iter = iter + 1
@@ -239,7 +239,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     overtimed                      && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats. TODO: Estimate Acond.

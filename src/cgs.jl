@@ -151,16 +151,16 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
 
     if warm_start
       mul!(r₀, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), r₀)
+      kaxpby!(n, one(FC), b, -one(FC), r₀)
     else
-      @kcopy!(n, r₀, b)  # r₀ ← b
+      kcopy!(n, r₀, b)  # r₀ ← b
     end
 
-    @kfill!(x, zero(FC))                # x₀
+    kfill!(x, zero(FC))                # x₀
     MisI || mulorldiv!(r, M, r₀, ldiv)  # r₀
 
     # Compute residual norm ‖r₀‖₂.
-    rNorm = @knrm2(n, r)
+    rNorm = knorm(n, r)
     history && push!(rNorms, rNorm)
     if rNorm == 0
       stats.niter = 0
@@ -172,7 +172,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     end
 
     # Compute ρ₀ = ⟨ r̅₀,r₀ ⟩
-    ρ = @kdot(n, c, r)
+    ρ = kdot(n, c, r)
     if ρ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = false, false
@@ -189,9 +189,9 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, ktimer(start_time))
 
-    @kcopy!(n, u, r)      # u₀
-    @kcopy!(n, p, r)      # p₀
-    @kfill!(q, zero(FC))  # q₋₁
+    kcopy!(n, u, r)      # u₀
+    kcopy!(n, p, r)      # p₀
+    kfill!(q, zero(FC))  # q₋₁
 
     # Stopping criterion.
     solved = rNorm ≤ ε
@@ -206,22 +206,22 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       NisI || mulorldiv!(y, N, p, ldiv)  # yₖ = N⁻¹pₖ
       mul!(t, A, y)                      # tₖ = Ayₖ
       MisI || mulorldiv!(v, M, t, ldiv)  # vₖ = M⁻¹tₖ
-      σ = @kdot(n, c, v)                 # σₖ = ⟨ r̅₀,M⁻¹AN⁻¹pₖ ⟩
+      σ = kdot(n, c, v)                 # σₖ = ⟨ r̅₀,M⁻¹AN⁻¹pₖ ⟩
       α = ρ / σ                          # αₖ = ρₖ / σₖ
-      @kcopy!(n, q, u)                   # qₖ = uₖ
-      @kaxpy!(n, -α, v, q)               # qₖ = qₖ - αₖ * M⁻¹AN⁻¹pₖ
-      @kaxpy!(n, one(FC), q, u)          # uₖ₊½ = uₖ + qₖ
+      kcopy!(n, q, u)                   # qₖ = uₖ
+      kaxpy!(n, -α, v, q)               # qₖ = qₖ - αₖ * M⁻¹AN⁻¹pₖ
+      kaxpy!(n, one(FC), q, u)          # uₖ₊½ = uₖ + qₖ
       NisI || mulorldiv!(z, N, u, ldiv)  # zₖ = N⁻¹uₖ₊½
-      @kaxpy!(n, α, z, x)                # xₖ₊₁ = xₖ + αₖ * N⁻¹(uₖ + qₖ)
+      kaxpy!(n, α, z, x)                # xₖ₊₁ = xₖ + αₖ * N⁻¹(uₖ + qₖ)
       mul!(s, A, z)                      # sₖ = Azₖ
       MisI || mulorldiv!(w, M, s, ldiv)  # wₖ = M⁻¹sₖ
-      @kaxpy!(n, -α, w, r)               # rₖ₊₁ = rₖ - αₖ * M⁻¹AN⁻¹(uₖ + qₖ)
-      ρ_next = @kdot(n, c, r)            # ρₖ₊₁ = ⟨ r̅₀,rₖ₊₁ ⟩
+      kaxpy!(n, -α, w, r)               # rₖ₊₁ = rₖ - αₖ * M⁻¹AN⁻¹(uₖ + qₖ)
+      ρ_next = kdot(n, c, r)            # ρₖ₊₁ = ⟨ r̅₀,rₖ₊₁ ⟩
       β = ρ_next / ρ                     # βₖ = ρₖ₊₁ / ρₖ
-      @kcopy!(n, u, r)                   # uₖ₊₁ = rₖ₊₁
-      @kaxpy!(n, β, q, u)                # uₖ₊₁ = uₖ₊₁ + βₖ * qₖ
-      @kaxpby!(n, one(FC), q, β, p)      # pₐᵤₓ = qₖ + βₖ * pₖ
-      @kaxpby!(n, one(FC), u, β, p)      # pₖ₊₁ = uₖ₊₁ + βₖ * pₐᵤₓ
+      kcopy!(n, u, r)                   # uₖ₊₁ = rₖ₊₁
+      kaxpy!(n, β, q, u)                # uₖ₊₁ = uₖ₊₁ + βₖ * qₖ
+      kaxpby!(n, one(FC), q, β, p)      # pₐᵤₓ = qₖ + βₖ * pₖ
+      kaxpby!(n, one(FC), u, β, p)      # pₖ₊₁ = uₖ₊₁ + βₖ * pₐᵤₓ
 
       # Update ρ.
       ρ = ρ_next # ρₖ ← ρₖ₊₁
@@ -230,7 +230,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       iter = iter + 1
 
       # Compute residual norm ‖rₖ‖₂.
-      rNorm = @knrm2(n, r)
+      rNorm = knorm(n, r)
       history && push!(rNorms, rNorm)
 
       # Stopping conditions that do not depend on user input.
@@ -257,7 +257,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

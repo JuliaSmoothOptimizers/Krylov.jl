@@ -146,9 +146,9 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     Mr = MisI ? r : solver.Mr
     Mq = MisI ? q : solver.Mr
 
-    @kfill!(x, zero(FC))
-    @kcopy!(m, r, b)  # r ← b
-    bNorm = @knrm2(m, r)   # Marginally faster than norm(b)
+    kfill!(x, zero(FC))
+    kcopy!(m, r, b)  # r ← b
+    bNorm = knorm(m, r)   # Marginally faster than norm(b)
     if bNorm == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
@@ -160,8 +160,8 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     end
     MisI || mulorldiv!(Mr, M, r, ldiv)
     mul!(s, Aᴴ, Mr)
-    @kcopy!(n, p, s)  # p ← s
-    γ = @kdotr(n, s, s)  # γ = sᴴs
+    kcopy!(n, p, s)  # p ← s
+    γ = kdotr(n, s, s)  # γ = sᴴs
     iter = 0
     itmax == 0 && (itmax = m + n)
 
@@ -183,8 +183,8 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     while ! (solved || tired || user_requested_exit || overtimed)
       mul!(q, A, p)
       MisI || mulorldiv!(Mq, M, q, ldiv)
-      δ = @kdotr(m, q, Mq)  # δ = qᴴMq
-      λ > 0 && (δ += λ * @kdotr(n, p, p))  # δ = δ + pᴴp
+      δ = kdotr(m, q, Mq)  # δ = qᴴMq
+      λ > 0 && (δ += λ * kdotr(n, p, p))  # δ = δ + pᴴp
       α = γ / δ
 
       # if a trust-region constraint is give, compute step to the boundary
@@ -194,16 +194,16 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
         on_boundary = true
       end
 
-      @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
-      @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
+      kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
+      kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
       MisI || mulorldiv!(Mr, M, r, ldiv)
       mul!(s, Aᴴ, Mr)
-      λ > 0 && @kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x
-      γ_next = @kdotr(n, s, s)   # γ_next = sᴴs
+      λ > 0 && kaxpy!(n, -λ, x, s)   # s = A' * r - λ * x
+      γ_next = kdotr(n, s, s)   # γ_next = sᴴs
       β = γ_next / γ
-      @kaxpby!(n, one(FC), s, β, p) # p = s + βp
+      kaxpby!(n, one(FC), s, β, p) # p = s + βp
       γ = γ_next
-      rNorm = @knrm2(m, r)  # Marginally faster than norm(r)
+      rNorm = knorm(m, r)  # Marginally faster than norm(r)
       ArNorm = sqrt(γ)
       history && push!(rNorms, rNorm)
       history && push!(ArNorms, ArNorm)

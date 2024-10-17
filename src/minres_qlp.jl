@@ -139,22 +139,22 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     vₖ₊₁ = MisI ? p : M⁻¹vₖ₋₁
 
     # Initial solution x₀
-    @kfill!(x, zero(FC))
+    kfill!(x, zero(FC))
 
     if warm_start
       mul!(M⁻¹vₖ, A, Δx)
-      (λ ≠ 0) && @kaxpy!(n, λ, Δx, M⁻¹vₖ)
-      @kaxpby!(n, one(FC), b, -one(FC), M⁻¹vₖ)
+      (λ ≠ 0) && kaxpy!(n, λ, Δx, M⁻¹vₖ)
+      kaxpby!(n, one(FC), b, -one(FC), M⁻¹vₖ)
     else
-      @kcopy!(n, M⁻¹vₖ, b)  # M⁻¹vₖ ← b
+      kcopy!(n, M⁻¹vₖ, b)  # M⁻¹vₖ ← b
     end
 
     # β₁v₁ = Mb
     MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
-    βₖ = sqrt(@kdotr(n, vₖ, M⁻¹vₖ))
+    βₖ = sqrt(kdotr(n, vₖ, M⁻¹vₖ))
     if βₖ ≠ 0
-      @kscal!(n, one(FC) / βₖ, M⁻¹vₖ)
-      MisI || @kscal!(n, one(FC) / βₖ, vₖ)
+      kscal!(n, one(FC) / βₖ, M⁻¹vₖ)
+      MisI || kscal!(n, one(FC) / βₖ, vₖ)
     end
 
     rNorm = βₖ
@@ -183,14 +183,14 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %7.1e  %8s  %.2fs\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", ANorm, Acond, " ✗ ✗ ✗ ✗", ktimer(start_time))
 
     # Set up workspace.
-    @kfill!(M⁻¹vₖ₋₁, zero(FC))
+    kfill!(M⁻¹vₖ₋₁, zero(FC))
     ζbarₖ = βₖ
     ξₖ₋₁ = zero(T)
     τₖ₋₂ = τₖ₋₁ = τₖ = zero(T)
     ψbarₖ₋₂ = zero(T)
     μbisₖ₋₂ = μbarₖ₋₁ = zero(T)
-    @kfill!(wₖ₋₁, zero(FC))
-    @kfill!(wₖ, zero(FC))
+    kfill!(wₖ₋₁, zero(FC))
+    kfill!(wₖ, zero(FC))
     cₖ₋₂ = cₖ₋₁ = cₖ = one(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
     sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
 
@@ -218,25 +218,25 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
 
       mul!(p, A, vₖ)          # p ← Avₖ
       if λ ≠ 0
-        @kaxpy!(n, λ, vₖ, p)  # p ← p + λvₖ
+        kaxpy!(n, λ, vₖ, p)  # p ← p + λvₖ
       end
 
       if iter ≥ 2
-        @kaxpy!(n, -βₖ, M⁻¹vₖ₋₁, p) # p ← p - βₖ * M⁻¹vₖ₋₁
+        kaxpy!(n, -βₖ, M⁻¹vₖ₋₁, p) # p ← p - βₖ * M⁻¹vₖ₋₁
       end
 
-      αₖ = @kdotr(n, vₖ, p)  # αₖ = ⟨vₖ,p⟩
+      αₖ = kdotr(n, vₖ, p)  # αₖ = ⟨vₖ,p⟩
 
-      @kaxpy!(n, -αₖ, M⁻¹vₖ, p)  # p ← p - αₖM⁻¹vₖ
+      kaxpy!(n, -αₖ, M⁻¹vₖ, p)  # p ← p - αₖM⁻¹vₖ
 
       MisI || mulorldiv!(vₖ₊₁, M, p, ldiv)  # βₖ₊₁vₖ₊₁ = MAvₖ - γₖvₖ₋₁ - αₖvₖ
 
-      βₖ₊₁ = sqrt(@kdotr(m, vₖ₊₁, p))
+      βₖ₊₁ = sqrt(kdotr(m, vₖ₊₁, p))
 
       # βₖ₊₁.ₖ ≠ 0
       if βₖ₊₁ > btol
-        @kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
-        MisI || @kscal!(m, one(FC) / βₖ₊₁, p)
+        kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
+        MisI || kscal!(m, one(FC) / βₖ₊₁, p)
       end
 
       ANorm² = ANorm² + αₖ * αₖ + βₖ * βₖ + βₖ₊₁ * βₖ₊₁
@@ -348,13 +348,13 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       # Compute directions wₖ₋₂, ẘₖ₋₁ and w̄ₖ, last columns of Wₖ = Vₖ(Pₖ)ᴴ
       if iter == 1
         # w̅₁ = v₁
-        @kcopy!(n, wₖ, vₖ)
+        kcopy!(n, wₖ, vₖ)
       elseif iter == 2
         # [w̅ₖ₋₁ vₖ] [cpₖ  spₖ] = [ẘₖ₋₁ w̅ₖ] ⟷ ẘₖ₋₁ = cpₖ * w̅ₖ₋₁ + spₖ * vₖ
         #           [spₖ -cpₖ]             ⟷ w̅ₖ   = spₖ * w̅ₖ₋₁ - cpₖ * vₖ
-        @kswap(wₖ₋₁, wₖ)
+        @kswap!(wₖ₋₁, wₖ)
         wₖ .= spₖ .* wₖ₋₁ .- cpₖ .* vₖ
-        @kaxpby!(n, spₖ, vₖ, cpₖ, wₖ₋₁)
+        kaxpby!(n, spₖ, vₖ, cpₖ, wₖ₋₁)
       else
         # [ẘₖ₋₂ w̄ₖ₋₁ vₖ] [cpₖ  0   spₖ] [1   0    0 ] = [wₖ₋₂ ẘₖ₋₁ w̄ₖ] ⟷ wₖ₋₂ = cpₖ * ẘₖ₋₂ + spₖ * vₖ
         #                [ 0   1    0 ] [0  cdₖ  sdₖ]                  ⟷ ẘₖ₋₁ = cdₖ * w̄ₖ₋₁ + sdₖ * (spₖ * ẘₖ₋₂ - cpₖ * vₖ)
@@ -362,20 +362,20 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
         ẘₖ₋₂ = wₖ₋₁
         w̄ₖ₋₁ = wₖ
         # Update the solution x
-        @kaxpy!(n, cpₖ * τₖ₋₂, ẘₖ₋₂, x)
-        @kaxpy!(n, spₖ * τₖ₋₂, vₖ, x)
+        kaxpy!(n, cpₖ * τₖ₋₂, ẘₖ₋₂, x)
+        kaxpy!(n, spₖ * τₖ₋₂, vₖ, x)
         # Compute wₐᵤₓ = spₖ * ẘₖ₋₂ - cpₖ * vₖ
-        @kaxpby!(n, -cpₖ, vₖ, spₖ, ẘₖ₋₂)
+        kaxpby!(n, -cpₖ, vₖ, spₖ, ẘₖ₋₂)
         wₐᵤₓ = ẘₖ₋₂
         # Compute ẘₖ₋₁ and w̄ₖ
-        @kref!(n, w̄ₖ₋₁, wₐᵤₓ, cdₖ, sdₖ)
-        @kswap(wₖ₋₁, wₖ)
+        kref!(n, w̄ₖ₋₁, wₐᵤₓ, cdₖ, sdₖ)
+        @kswap!(wₖ₋₁, wₖ)
       end
 
       # Update vₖ, M⁻¹vₖ₋₁, M⁻¹vₖ
-      MisI || @kcopy!(n, vₖ, vₖ₊₁)  # vₖ ← vₖ₊₁
-      @kcopy!(n, M⁻¹vₖ₋₁, M⁻¹vₖ)    # M⁻¹vₖ₋₁ ← M⁻¹vₖ
-      @kcopy!(n, M⁻¹vₖ, p)          # M⁻¹vₖ ← p
+      MisI || kcopy!(n, vₖ, vₖ₊₁)  # vₖ ← vₖ₊₁
+      kcopy!(n, M⁻¹vₖ₋₁, M⁻¹vₖ)    # M⁻¹vₖ₋₁ ← M⁻¹vₖ
+      kcopy!(n, M⁻¹vₖ, p)          # M⁻¹vₖ ← p
 
       # Update ‖rₖ‖ estimate
       # ‖ rₖ ‖ = |ζbarₖ₊₁|
@@ -403,7 +403,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       end
       Acond = μmax / μmin
       history && push!(Aconds, Acond)
-      xNorm = @knrm2(n, x)
+      xNorm = knorm(n, x)
       backward = rNorm / (ANorm * xNorm)
 
       # Update stopping criterion.
@@ -446,10 +446,10 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
 
     # Finalize the update of x
     if iter ≥ 2
-      @kaxpy!(n, τₖ₋₁, wₖ₋₁, x)
+      kaxpy!(n, τₖ₋₁, wₖ₋₁, x)
     end
     if !inconsistent
-      @kaxpy!(n, τₖ, wₖ, x)
+      kaxpy!(n, τₖ, wₖ, x)
     end
 
     # Termination status
@@ -462,7 +462,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
    # Update stats

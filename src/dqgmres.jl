@@ -141,15 +141,15 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
     r₀ = MisI ? t : solver.w
 
     # Initial solution x₀ and residual r₀.
-    @kfill!(x, zero(FC))  # x₀
+    kfill!(x, zero(FC))  # x₀
     if warm_start
       mul!(t, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), t)
+      kaxpby!(n, one(FC), b, -one(FC), t)
     else
-      @kcopy!(n, t, b)  # t ← b
+      kcopy!(n, t, b)  # t ← b
     end
     MisI || mulorldiv!(r₀, M, t, ldiv)  # M(b - Ax₀)
-    rNorm = @knrm2(n, r₀)               # β = ‖r₀‖₂
+    rNorm = knorm(n, r₀)               # β = ‖r₀‖₂
     history && push!(rNorms, rNorm)
     if rNorm == 0
       stats.niter = 0
@@ -170,12 +170,12 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
     # Set up workspace.
     mem = length(V)  # Memory.
     for i = 1 : mem
-      @kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
-      @kfill!(P[i], zero(FC))  # Directions for x : Pₖ = NVₖ(Rₖ)⁻¹.
+      kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
+      kfill!(P[i], zero(FC))  # Directions for x : Pₖ = NVₖ(Rₖ)⁻¹.
     end
-    @kfill!(c, zero(T))   # Last mem Givens cosines used for the factorization QₖRₖ = Hₖ.
-    @kfill!(s, zero(FC))  # Last mem Givens sines used for the factorization QₖRₖ = Hₖ.
-    @kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ.
+    kfill!(c, zero(T))   # Last mem Givens cosines used for the factorization QₖRₖ = Hₖ.
+    kfill!(s, zero(FC))  # Last mem Givens sines used for the factorization QₖRₖ = Hₖ.
+    kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ.
     # Each column has at most mem + 1 nonzero elements.
     # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
     # k-i+1 represents the indice of the diagonal where hᵢ.ₖ is located.
@@ -211,8 +211,8 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
       for i = max(1, iter-mem+1) : iter
         ipos = mod(i-1, mem) + 1  # Position corresponding to vᵢ in the circular stack V.
         diag = iter - i + 1
-        H[diag] = @kdot(n, w, V[ipos])    # hᵢ.ₖ = ⟨MANvₖ, vᵢ⟩
-        @kaxpy!(n, -H[diag], V[ipos], w)  # w ← w - hᵢ.ₖvᵢ
+        H[diag] = kdot(n, w, V[ipos])    # hᵢ.ₖ = ⟨MANvₖ, vᵢ⟩
+        kaxpy!(n, -H[diag], V[ipos], w)  # w ← w - hᵢ.ₖvᵢ
       end
 
       # Partial reorthogonalization of the Krylov basis.
@@ -220,14 +220,14 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
         for i = max(1, iter-mem+1) : iter
           ipos = mod(i-1, mem) + 1
           diag = iter - i + 1
-          Htmp = @kdot(n, w, V[ipos])
+          Htmp = kdot(n, w, V[ipos])
           H[diag] += Htmp
-          @kaxpy!(n, -Htmp, V[ipos], w)
+          kaxpy!(n, -Htmp, V[ipos], w)
         end
       end
 
       # Compute hₖ₊₁.ₖ and vₖ₊₁.
-      Haux = @knrm2(n, w)         # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+      Haux = knorm(n, w)         # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
       if Haux ≠ 0                 # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
         V[next_pos] .= w ./ Haux  # vₖ₊₁ = w / hₖ₊₁.ₖ
       end
@@ -261,20 +261,20 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
         diag = iter - i + 1
         if ipos == pos
           # pₐᵤₓ ← -hₖ₋ₘₑₘ.ₖ * pₖ₋ₘₑₘ
-          @kscal!(n, -H[diag], P[pos])
+          kscal!(n, -H[diag], P[pos])
         else
           # pₐᵤₓ ← pₐᵤₓ - hᵢ.ₖ * pᵢ
-          @kaxpy!(n, -H[diag], P[ipos], P[pos])
+          kaxpy!(n, -H[diag], P[ipos], P[pos])
         end
       end
       # pₐᵤₓ ← pₐᵤₓ + Nvₖ
-      @kaxpy!(n, one(FC), z, P[pos])
+      kaxpy!(n, one(FC), z, P[pos])
       # pₖ = pₐᵤₓ / hₖ.ₖ
       P[pos] .= P[pos] ./ H[1]
 
       # Compute solution xₖ.
       # xₖ ← xₖ₋₁ + γₖ * pₖ
-      @kaxpy!(n, γₖ, P[pos], x)
+      kaxpy!(n, γₖ, P[pos], x)
 
       # Update residual norm estimate.
       # ‖ M(b - Axₖ) ‖₂ ≈ |γₖ₊₁|
@@ -306,7 +306,7 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

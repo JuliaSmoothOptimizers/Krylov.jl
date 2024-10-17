@@ -180,27 +180,27 @@
       a2 = rand(T)
       b2 = rand(T)
 
-      Krylov.@kdot(n, x, y)
+      Krylov.kdot(n, x, y)
 
-      Krylov.@kdotr(n, x, y)
+      Krylov.kdotr(n, x, y)
 
-      Krylov.@knrm2(n, x)
+      Krylov.knorm(n, x)
 
-      Krylov.@kaxpy!(n, a, x, y)
-      Krylov.@kaxpy!(n, a2, x, y)
+      Krylov.kaxpy!(n, a, x, y)
+      Krylov.kaxpy!(n, a2, x, y)
 
-      Krylov.@kaxpby!(n, a, x, b, y)
-      Krylov.@kaxpby!(n, a2, x, b, y)
-      Krylov.@kaxpby!(n, a, x, b2, y)
-      Krylov.@kaxpby!(n, a2, x, b2, y)
+      Krylov.kaxpby!(n, a, x, b, y)
+      Krylov.kaxpby!(n, a2, x, b, y)
+      Krylov.kaxpby!(n, a, x, b2, y)
+      Krylov.kaxpby!(n, a2, x, b2, y)
 
-      Krylov.@kcopy!(n, y, x)
+      Krylov.kcopy!(n, y, x)
 
-      Krylov.@kfill!(x, a)
+      Krylov.kfill!(x, a)
 
-      Krylov.@kswap(x, y)
+      Krylov.@kswap!(x, y)
 
-      Krylov.@kref!(n, x, y, c, s)
+      Krylov.kref!(n, x, y, c, s)
     end
   end
 end

@@ -145,12 +145,12 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
 
     if warm_start
       mul!(r₀, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), r₀)
+      kaxpby!(n, one(FC), b, -one(FC), r₀)
     end
 
     # Initial solution x₀ and residual norm ‖r₀‖.
-    @kfill!(x, zero(FC))
-    rNorm = @knrm2(m, r₀)
+    kfill!(x, zero(FC))
+    rNorm = knorm(m, r₀)
     history && push!(rNorms, rNorm)
     if rNorm == 0
       stats.niter = 0
@@ -170,16 +170,16 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %5s\n", "k", "‖rₖ‖", "‖Aᴴrₖ₋₁‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8s  %.2fs\n", iter, rNorm, " ✗ ✗ ✗ ✗", ktimer(start_time))
 
-    βₖ = @knrm2(m, r₀)           # β₁ = ‖v₁‖ = ‖r₀‖
-    γₖ = @knrm2(n, c)            # γ₁ = ‖u₁‖ = ‖c‖
-    @kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
-    @kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
+    βₖ = knorm(m, r₀)           # β₁ = ‖v₁‖ = ‖r₀‖
+    γₖ = knorm(n, c)            # γ₁ = ‖u₁‖ = ‖c‖
+    kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
     vₖ .= r₀ ./ βₖ               # v₁ = (b - Ax₀) / β₁
     uₖ .= c ./ γₖ                # u₁ = c / γ₁
     cₖ₋₂ = cₖ₋₁ = cₖ = one(T)    # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
     sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-    @kfill!(wₖ₋₂, zero(FC))      # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
-    @kfill!(wₖ₋₁, zero(FC))      # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
+    kfill!(wₖ₋₂, zero(FC))      # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
+    kfill!(wₖ₋₁, zero(FC))      # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
     ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᴴβ₁e₁
 
     # Stopping criterion.
@@ -201,16 +201,16 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
       mul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
 
-      @kaxpy!(m, -γₖ, vₖ₋₁, q) # q ← q - γₖ * vₖ₋₁
-      @kaxpy!(n, -βₖ, uₖ₋₁, p) # p ← p - βₖ * uₖ₋₁
+      kaxpy!(m, -γₖ, vₖ₋₁, q) # q ← q - γₖ * vₖ₋₁
+      kaxpy!(n, -βₖ, uₖ₋₁, p) # p ← p - βₖ * uₖ₋₁
 
-      αₖ = @kdot(m, vₖ, q)     # αₖ = ⟨vₖ,q⟩
+      αₖ = kdot(m, vₖ, q)     # αₖ = ⟨vₖ,q⟩
 
-      @kaxpy!(m, -     αₖ , vₖ, q)   # q ← q - αₖ * vₖ
-      @kaxpy!(n, -conj(αₖ), uₖ, p)   # p ← p - ᾱₖ * uₖ
+      kaxpy!(m, -     αₖ , vₖ, q)   # q ← q - αₖ * vₖ
+      kaxpy!(n, -conj(αₖ), uₖ, p)   # p ← p - ᾱₖ * uₖ
 
-      βₖ₊₁ = @knrm2(m, q)      # βₖ₊₁ = ‖q‖
-      γₖ₊₁ = @knrm2(n, p)      # γₖ₊₁ = ‖p‖
+      βₖ₊₁ = knorm(m, q)      # βₖ₊₁ = ‖q‖
+      γₖ₊₁ = knorm(n, p)      # γₖ₊₁ = ‖p‖
 
       # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
       #                                            [ Oᵀ ]
@@ -262,28 +262,28 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       # w₁ = u₁ / δ₁
       if iter == 1
         wₖ = wₖ₋₁
-        @kaxpy!(n, one(FC), uₖ, wₖ)
+        kaxpy!(n, one(FC), uₖ, wₖ)
         wₖ .= wₖ ./ δₖ
       end
       # w₂ = (u₂ - λ₁w₁) / δ₂
       if iter == 2
         wₖ = wₖ₋₂
-        @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
-        @kaxpy!(n, one(FC), uₖ, wₖ)
+        kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
+        kaxpy!(n, one(FC), uₖ, wₖ)
         wₖ .= wₖ ./ δₖ
       end
       # wₖ = (uₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
       if iter ≥ 3
-        @kscal!(n, -ϵₖ₋₂, wₖ₋₂)
+        kscal!(n, -ϵₖ₋₂, wₖ₋₂)
         wₖ = wₖ₋₂
-        @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
-        @kaxpy!(n, one(FC), uₖ, wₖ)
+        kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
+        kaxpy!(n, one(FC), uₖ, wₖ)
         wₖ .= wₖ ./ δₖ
       end
 
       # Compute solution xₖ.
       # xₖ ← xₖ₋₁ + ζₖ * wₖ
-      @kaxpy!(n, ζₖ, wₖ, x)
+      kaxpy!(n, ζₖ, wₖ, x)
 
       # Compute ‖rₖ‖ = |ζbarₖ₊₁|.
       rNorm = abs(ζbarₖ₊₁)
@@ -294,8 +294,8 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       history && push!(AᴴrNorms, AᴴrNorm)
 
       # Compute uₖ₊₁ and uₖ₊₁.
-      @kcopy!(m, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
-      @kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
+      kcopy!(m, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
+      kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
         vₖ .= q ./ βₖ₊₁ # βₖ₊₁vₖ₊₁ = q
@@ -306,7 +306,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
 
       # Update directions for x.
       if iter ≥ 2
-        @kswap(wₖ₋₂, wₖ₋₁)
+        @kswap!(wₖ₋₂, wₖ₋₁)
       end
 
       # Update sₖ₋₂, cₖ₋₂, sₖ₋₁, cₖ₋₁, ζbarₖ, γₖ, βₖ.
@@ -339,7 +339,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

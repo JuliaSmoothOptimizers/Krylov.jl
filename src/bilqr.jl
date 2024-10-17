@@ -137,18 +137,18 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
 
     if warm_start
       mul!(r₀, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), r₀)
+      kaxpby!(n, one(FC), b, -one(FC), r₀)
       mul!(s₀, Aᴴ, Δy)
-      @kaxpby!(n, one(FC), c, -one(FC), s₀)
+      kaxpby!(n, one(FC), c, -one(FC), s₀)
     end
 
     # Initial solution x₀ and residual norm ‖r₀‖ = ‖b - Ax₀‖.
-    @kfill!(x, zero(FC))   # x₀
-    bNorm = @knrm2(n, r₀)  # rNorm = ‖r₀‖
+    kfill!(x, zero(FC))   # x₀
+    bNorm = knorm(n, r₀)  # rNorm = ‖r₀‖
 
     # Initial solution t₀ and residual norm ‖s₀‖ = ‖c - Aᴴy₀‖.
-    @kfill!(t, zero(FC))   # t₀
-    cNorm = @knrm2(n, s₀)  # sNorm = ‖s₀‖
+    kfill!(t, zero(FC))   # t₀
+    cNorm = knorm(n, s₀)  # sNorm = ‖s₀‖
 
     iter = 0
     itmax == 0 && (itmax = 2*n)
@@ -161,7 +161,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, bNorm, cNorm, ktimer(start_time))
 
     # Initialize the Lanczos biorthogonalization process.
-    cᴴb = @kdot(n, s₀, r₀)  # ⟨s₀,r₀⟩ = ⟨c - Aᴴy₀,b - Ax₀⟩
+    cᴴb = kdot(n, s₀, r₀)  # ⟨s₀,r₀⟩ = ⟨c - Aᴴy₀,b - Ax₀⟩
     if cᴴb == 0
       stats.niter = 0
       stats.solved_primal = false
@@ -175,21 +175,21 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     # Set up workspace.
     βₖ = √(abs(cᴴb))            # β₁γ₁ = (c - Aᴴy₀)ᴴ(b - Ax₀)
     γₖ = cᴴb / βₖ               # β₁γ₁ = (c - Aᴴy₀)ᴴ(b - Ax₀)
-    @kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
-    @kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
+    kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
     vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
     uₖ .= s₀ ./ conj(γₖ)        # u₁ = (c - Aᴴy₀) / γ̄₁
     cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
     sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-    @kfill!(d̅, zero(FC))        # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
+    kfill!(d̅, zero(FC))        # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
     ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
     ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
     δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
     ψbarₖ₋₁ = ψₖ₋₁ = zero(FC)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ̄₁e₁
     norm_vₖ = bNorm / βₖ        # ‖vₖ‖ is used for residual norm estimates
     ϵₖ₋₃ = λₖ₋₂ = zero(FC)      # Components of Lₖ₋₁
-    @kfill!(wₖ₋₃, zero(FC))     # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᴴ
-    @kfill!(wₖ₋₂, zero(FC))     # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᴴ
+    kfill!(wₖ₋₃, zero(FC))     # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᴴ
+    kfill!(wₖ₋₂, zero(FC))     # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᴴ
     τₖ = zero(T)                # τₖ is used for the dual residual norm estimate
 
     # Stopping criterion.
@@ -216,15 +216,15 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       mul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
       mul!(p, Aᴴ, uₖ)  # Forms uₖ₊₁ : p ← Aᴴuₖ
 
-      @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
-      @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
+      kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
+      kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
 
-      αₖ = @kdot(n, uₖ, q)  # αₖ = ⟨uₖ,q⟩
+      αₖ = kdot(n, uₖ, q)  # αₖ = ⟨uₖ,q⟩
 
-      @kaxpy!(n, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
-      @kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
+      kaxpy!(n, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
+      kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
 
-      pᴴq = @kdot(n, p, q)  # pᴴq  = ⟨p,q⟩
+      pᴴq = kdot(n, p, q)  # pᴴq  = ⟨p,q⟩
       βₖ₊₁ = √(abs(pᴴq))    # βₖ₊₁ = √(|pᴴq|)
       γₖ₊₁ = pᴴq / βₖ₊₁     # γₖ₊₁ = pᴴq / βₖ₊₁
 
@@ -288,22 +288,22 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
         if iter ≥ 2
           # Compute solution xₖ.
           # (xᴸ)ₖ ← (xᴸ)ₖ₋₁ + ζₖ₋₁ * dₖ₋₁
-          @kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
-          @kaxpy!(n, ζₖ₋₁ * sₖ, vₖ, x)
+          kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
+          kaxpy!(n, ζₖ₋₁ * sₖ, vₖ, x)
         end
 
         # Compute d̅ₖ.
         if iter == 1
           # d̅₁ = v₁
-          @kcopy!(n, d̅, vₖ)  # d̅ ← vₖ
+          kcopy!(n, d̅, vₖ)  # d̅ ← vₖ
         else
           # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * vₖ
-          @kaxpby!(n, -cₖ, vₖ, conj(sₖ), d̅)
+          kaxpby!(n, -cₖ, vₖ, conj(sₖ), d̅)
         end
 
         # Compute ⟨vₖ,vₖ₊₁⟩ and ‖vₖ₊₁‖
-        vₖᴴvₖ₊₁ = @kdot(n, vₖ, q) / βₖ₊₁
-        norm_vₖ₊₁ = @knrm2(n, q) / βₖ₊₁
+        vₖᴴvₖ₊₁ = kdot(n, vₖ, q) / βₖ₊₁
+        norm_vₖ₊₁ = knorm(n, q) / βₖ₊₁
 
         # Compute BiLQ residual norm
         # ‖rₖ‖ = √(|μₖ|²‖vₖ‖² + |ωₖ|²‖vₖ₊₁‖² + μ̄ₖωₖ⟨vₖ,vₖ₊₁⟩ + μₖω̄ₖ⟨vₖ₊₁,vₖ⟩)
@@ -353,41 +353,41 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
         # w₁ = u₁ / δ̄₁
         if iter == 2
           wₖ₋₁ = wₖ₋₂
-          @kaxpy!(n, one(FC), uₖ₋₁, wₖ₋₁)
+          kaxpy!(n, one(FC), uₖ₋₁, wₖ₋₁)
           wₖ₋₁ .= uₖ₋₁ ./ conj(δₖ₋₁)
         end
         # w₂ = (u₂ - λ̄₁w₁) / δ̄₂
         if iter == 3
           wₖ₋₁ = wₖ₋₃
-          @kaxpy!(n, one(FC), uₖ₋₁, wₖ₋₁)
-          @kaxpy!(n, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
+          kaxpy!(n, one(FC), uₖ₋₁, wₖ₋₁)
+          kaxpy!(n, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
           wₖ₋₁ .= wₖ₋₁ ./ conj(δₖ₋₁)
         end
         # wₖ₋₁ = (uₖ₋₁ - λ̄ₖ₋₂wₖ₋₂ - ϵ̄ₖ₋₃wₖ₋₃) / δ̄ₖ₋₁
         if iter ≥ 4
-          @kscal!(n, -conj(ϵₖ₋₃), wₖ₋₃)
+          kscal!(n, -conj(ϵₖ₋₃), wₖ₋₃)
           wₖ₋₁ = wₖ₋₃
-          @kaxpy!(n, one(FC), uₖ₋₁, wₖ₋₁)
-          @kaxpy!(n, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
+          kaxpy!(n, one(FC), uₖ₋₁, wₖ₋₁)
+          kaxpy!(n, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
           wₖ₋₁ .= wₖ₋₁ ./ conj(δₖ₋₁)
         end
 
         if iter ≥ 3
           # Swap pointers.
-          @kswap(wₖ₋₃, wₖ₋₂)
+          @kswap!(wₖ₋₃, wₖ₋₂)
         end
 
         if iter ≥ 2
           # Compute solution tₖ₋₁.
           # tₖ₋₁ ← tₖ₋₂ + ψₖ₋₁ * wₖ₋₁
-          @kaxpy!(n, ψₖ₋₁, wₖ₋₁, t)
+          kaxpy!(n, ψₖ₋₁, wₖ₋₁, t)
         end
 
         # Update ψbarₖ₋₁
         ψbarₖ₋₁ = ψbarₖ
 
         # Compute τₖ = τₖ₋₁ + ‖uₖ‖²
-        τₖ += @kdotr(n, uₖ, uₖ)
+        τₖ += kdotr(n, uₖ, uₖ)
 
         # Compute QMR residual norm ‖sₖ₋₁‖ ≤ |ψbarₖ| * √τₖ
         sNorm = abs(ψbarₖ) * √τₖ
@@ -400,8 +400,8 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       end
 
       # Compute vₖ₊₁ and uₖ₊₁.
-      @kcopy!(n, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
-      @kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
+      kcopy!(n, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
+      kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if pᴴq ≠ zero(FC)
         vₖ .= q ./ βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
@@ -436,7 +436,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     # Compute BICG point
     # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ
     if solved_cg
-      @kaxpy!(n, ζbarₖ, d̅, x)
+      kaxpy!(n, ζbarₖ, d̅, x)
     end
 
     # Termination status
@@ -460,8 +460,8 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     overtimed                        && (status = "time limit exceeded")
 
     # Update x and y
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
-    warm_start && @kaxpy!(n, one(FC), Δy, t)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δy, t)
     solver.warm_start = false
 
     # Update stats

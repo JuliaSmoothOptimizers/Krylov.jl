@@ -222,13 +222,13 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     λ² = λ * λ
     ctol = conlim > 0 ? 1/conlim : zero(T)
 
-    @kfill!(x, zero(FC))  # LSLQ point
+    kfill!(x, zero(FC))  # LSLQ point
 
     # Initialize Golub-Kahan process.
     # β₁ M u₁ = b.
-    @kcopy!(m, Mu, b)  # Mu ← b
+    kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)
-    β₁ = sqrt(@kdotr(m, u, Mu))
+    β₁ = sqrt(kdotr(m, u, Mu))
     if β₁ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
@@ -241,12 +241,12 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     end
     β = β₁
 
-    @kscal!(m, one(FC)/β₁, u)
-    MisI || @kscal!(m, one(FC)/β₁, Mu)
+    kscal!(m, one(FC)/β₁, u)
+    MisI || kscal!(m, one(FC)/β₁, Mu)
     mul!(Aᴴu, Aᴴ, u)
-    @kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
+    kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
-    α = sqrt(@kdotr(n, v, Nv))  # = α₁
+    α = sqrt(kdotr(n, v, Nv))  # = α₁
 
     # Aᴴb = 0 so x = 0 is a minimum least-squares solution
     if α == 0
@@ -259,8 +259,8 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       stats.status = "x = 0 is a minimum least-squares solution"
       return solver
     end
-    @kscal!(n, one(FC)/α, v)
-    NisI || @kscal!(n, one(FC)/α, Nv)
+    kscal!(n, one(FC)/α, v)
+    NisI || kscal!(n, one(FC)/α, Nv)
 
     Anorm = α
     Anorm² = α * α
@@ -275,11 +275,11 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     xcgNorm  = zero(T)
     xcgNorm² = zero(T)
 
-    @kcopy!(n, w̄, v)  # w̄₁ = v₁
+    kcopy!(n, w̄, v)  # w̄₁ = v₁
 
     err_lbnd = zero(T)
     window = length(err_vec)
-    @kfill!(err_vec, zero(T))
+    kfill!(err_vec, zero(T))
     complex_error_bnd = false
 
     # Initialize other constants.
@@ -324,21 +324,21 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       # Generate next Golub-Kahan vectors.
       # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
       mul!(Av, A, v)
-      @kaxpby!(m, one(FC), Av, -α, Mu)
+      kaxpby!(m, one(FC), Av, -α, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)
-      β = sqrt(@kdotr(m, u, Mu))
+      β = sqrt(kdotr(m, u, Mu))
       if β ≠ 0
-        @kscal!(m, one(FC)/β, u)
-        MisI || @kscal!(m, one(FC)/β, Mu)
+        kscal!(m, one(FC)/β, u)
+        MisI || kscal!(m, one(FC)/β, Mu)
 
         # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
         mul!(Aᴴu, Aᴴ, u)
-        @kaxpby!(n, one(FC), Aᴴu, -β, Nv)
+        kaxpby!(n, one(FC), Aᴴu, -β, Nv)
         NisI || mulorldiv!(v, N, Nv, ldiv)
-        α = sqrt(@kdotr(n, v, Nv))
+        α = sqrt(kdotr(n, v, Nv))
         if α ≠ 0
-          @kscal!(n, one(FC)/α, v)
-          NisI || @kscal!(n, one(FC)/α, Nv)
+          kscal!(n, one(FC)/α, v)
+          NisI || kscal!(n, one(FC)/α, Nv)
         end
 
         # rotate out regularization term if present
@@ -428,11 +428,11 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       tol   = btol + atol * Anorm * xlqNorm / β₁
 
       # update LSLQ point for next iteration
-      @kaxpy!(n, c * ζ, w̄, x)
-      @kaxpy!(n, s * ζ, v, x)
+      kaxpy!(n, c * ζ, w̄, x)
+      kaxpy!(n, s * ζ, v, x)
 
       # compute w̄
-      @kaxpby!(n, -c, v, s, w̄)
+      kaxpby!(n, -c, v, s, w̄)
 
       xlqNorm² += ζ * ζ
       xlqNorm = sqrt(xlqNorm²)
@@ -440,7 +440,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       # check stopping condition based on forward error lower bound
       err_vec[mod(iter, window) + 1] = ζ
       if iter ≥ window
-        err_lbnd = @knrm2(window, err_vec)
+        err_lbnd = knorm(window, err_vec)
         history && push!(err_lbnds, err_lbnd)
         fwd_err_lbnd = err_lbnd ≤ etol * xlqNorm
       end
@@ -479,7 +479,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     (verbose > 0) && @printf(iostream, "\n")
 
     if transfer_to_lsqr  # compute LSQR point
-      @kaxpy!(n, ζ̄ , w̄, x)
+      kaxpy!(n, ζ̄ , w̄, x)
     end
 
     # Termination status

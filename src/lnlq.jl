@@ -198,10 +198,10 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     complex_error_bnd = false
 
     # Initial solutions (x₀, y₀) and residual norm ‖r₀‖.
-    @kfill!(x, zero(FC))
-    @kfill!(y, zero(FC))
+    kfill!(x, zero(FC))
+    kfill!(y, zero(FC))
 
-    bNorm = @knrm2(m, b)
+    bNorm = knorm(m, b)
     if bNorm == 0
       stats.niter = 0
       stats.solved = true
@@ -226,25 +226,25 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
 
     # Initialize generalized Golub-Kahan bidiagonalization.
     # β₁Mu₁ = b.
-    @kcopy!(m, Mu, b)  # Mu ← b
+    kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)  # u₁ = M⁻¹ * Mu₁
-    βₖ = sqrt(@kdotr(m, u, Mu))         # β₁ = ‖u₁‖_M
+    βₖ = sqrt(kdotr(m, u, Mu))         # β₁ = ‖u₁‖_M
     if βₖ ≠ 0
-      @kscal!(m, one(FC) / βₖ, u)
-      MisI || @kscal!(m, one(FC) / βₖ, Mu)
+      kscal!(m, one(FC) / βₖ, u)
+      MisI || kscal!(m, one(FC) / βₖ, Mu)
     end
 
     # α₁Nv₁ = Aᴴu₁.
     mul!(Aᴴu, Aᴴ, u)
-    @kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
+    kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)  # v₁ = N⁻¹ * Nv₁
-    αₖ = sqrt(@kdotr(n, v, Nv))         # α₁ = ‖v₁‖_N
+    αₖ = sqrt(kdotr(n, v, Nv))         # α₁ = ‖v₁‖_N
     if αₖ ≠ 0
-      @kscal!(n, one(FC) / αₖ, v)
-      NisI || @kscal!(n, one(FC) / αₖ, Nv)
+      kscal!(n, one(FC) / αₖ, v)
+      NisI || kscal!(n, one(FC) / αₖ, Nv)
     end
 
-    @kcopy!(m, w̄, u) # Direction w̄₁
+    kcopy!(m, w̄, u) # Direction w̄₁
     cₖ = zero(T)     # Givens cosines used for the LQ factorization of (Lₖ)ᴴ
     sₖ = zero(FC)    # Givens sines used for the LQ factorization of (Lₖ)ᴴ
     ζₖ₋₁ = zero(FC)  # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
@@ -254,7 +254,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     λₖ  = λ             # λ₁ = λ
     cpₖ = spₖ = one(T)  # Givens sines and cosines used to zero out λₖ
     cdₖ = sdₖ = one(FC) # Givens sines and cosines used to define λₖ₊₁
-    λ > 0 && @kcopy!(n, q, v)  # Additional vector needed to update x, by definition q₀ = 0
+    λ > 0 && kcopy!(n, q, v)  # Additional vector needed to update x, by definition q₀ = 0
 
     # Initialize the regularization.
     if λ > 0
@@ -264,7 +264,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       (cpₖ, spₖ, αhatₖ) = sym_givens(αₖ, λₖ)
 
       # q̄₁ = sp₁ * v₁
-      @kscal!(n, spₖ, q)
+      kscal!(n, spₖ, q)
     else
       αhatₖ = αₖ
     end
@@ -316,15 +316,15 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       # Update of (xᵃᵘˣ)ₖ = Vₖtₖ
       if λ > 0
         # (xᵃᵘˣ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖ * (cpₖvₖ + spₖqₖ₋₁)
-        @kaxpy!(n, τₖ * cpₖ, v, x)
+        kaxpy!(n, τₖ * cpₖ, v, x)
         if iter ≥ 2
-          @kaxpy!(n, τₖ * spₖ, q, x)
+          kaxpy!(n, τₖ * spₖ, q, x)
           # q̄ₖ ← spₖ * vₖ - cpₖ * qₖ₋₁
-          @kaxpby!(n, spₖ, v, -cpₖ, q)
+          kaxpby!(n, spₖ, v, -cpₖ, q)
         end
       else
         # (xᵃᵘˣ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖ * vₖ
-        @kaxpy!(n, τₖ, v, x)
+        kaxpy!(n, τₖ, v, x)
       end
 
       # Continue the generalized Golub-Kahan bidiagonalization.
@@ -344,22 +344,22 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
 
       # βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
       mul!(Av, A, v)
-      @kaxpby!(m, one(FC), Av, -αₖ, Mu)
+      kaxpby!(m, one(FC), Av, -αₖ, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)  # uₖ₊₁ = M⁻¹ * Muₖ₊₁
-      βₖ₊₁ = sqrt(@kdotr(m, u, Mu))       # βₖ₊₁ = ‖uₖ₊₁‖_M
+      βₖ₊₁ = sqrt(kdotr(m, u, Mu))       # βₖ₊₁ = ‖uₖ₊₁‖_M
       if βₖ₊₁ ≠ 0
-        @kscal!(m, one(FC) / βₖ₊₁, u)
-        MisI || @kscal!(m, one(FC) / βₖ₊₁, Mu)
+        kscal!(m, one(FC) / βₖ₊₁, u)
+        MisI || kscal!(m, one(FC) / βₖ₊₁, Mu)
       end
 
       # αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
       mul!(Aᴴu, Aᴴ, u)
-      @kaxpby!(n, one(FC), Aᴴu, -βₖ₊₁, Nv)
+      kaxpby!(n, one(FC), Aᴴu, -βₖ₊₁, Nv)
       NisI || mulorldiv!(v, N, Nv, ldiv)  # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
-      αₖ₊₁ = sqrt(@kdotr(n, v, Nv))       # αₖ₊₁ = ‖vₖ₊₁‖_N
+      αₖ₊₁ = sqrt(kdotr(n, v, Nv))       # αₖ₊₁ = ‖vₖ₊₁‖_N
       if αₖ₊₁ ≠ 0
-        @kscal!(n, one(FC) / αₖ₊₁, v)
-        NisI || @kscal!(n, one(FC) / αₖ₊₁, Nv)
+        kscal!(n, one(FC) / αₖ₊₁, v)
+        NisI || kscal!(n, one(FC) / αₖ₊₁, Nv)
       end
 
       # Continue the regularization.
@@ -376,7 +376,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
         (cdₖ, sdₖ, λₖ₊₁) = sym_givens(λ, θₖ₊₁)
 
         # qₖ ← sdₖ * q̄ₖ
-        @kscal!(n, sdₖ, q)
+        kscal!(n, sdₖ, q)
 
         #       k+1   2k+1      k+1    2k+1        k+1     2k+1
         # k+1 [ αₖ₊₁  λₖ₊₁ ] [ cpₖ₊₁  spₖ₊₁ ] = [ αhatₖ₊₁   0   ]
@@ -428,11 +428,11 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       #           [sₖ₊₁ -cₖ₊₁]             → w̄ₖ₊₁ = sₖ₊₁ * w̄ₖ - cₖ₊₁ * uₖ₊₁
 
       # (yᴸ)ₖ₊₁ ← (yᴸ)ₖ + ζₖ * wₖ
-      @kaxpy!(m, ζₖ * cₖ₊₁, w̄, y)
-      @kaxpy!(m, ζₖ * sₖ₊₁, u, y)
+      kaxpy!(m, ζₖ * cₖ₊₁, w̄, y)
+      kaxpy!(m, ζₖ * sₖ₊₁, u, y)
 
       # Compute w̄ₖ₊₁
-      @kaxpby!(m, -cₖ₊₁, u, sₖ₊₁, w̄)
+      kaxpby!(m, -cₖ₊₁, u, sₖ₊₁, w̄)
 
       if σₑₛₜ > 0 && !complex_error_bnd
         if transfer_to_craig
@@ -509,26 +509,26 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     if solved_cg
       if λ > 0
         # (xᶜ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖ * (cpₖvₖ + spₖqₖ₋₁)
-        @kaxpy!(n, τₖ * cpₖ, v, x)
+        kaxpy!(n, τₖ * cpₖ, v, x)
         if iter ≥ 2
-          @kaxpy!(n, τₖ * spₖ, q, x)
+          kaxpy!(n, τₖ * spₖ, q, x)
         end
       else
         # (xᶜ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖ * vₖ
-        @kaxpy!(n, τₖ, v, x)
+        kaxpy!(n, τₖ, v, x)
       end
       # (yᶜ)ₖ ← (yᴸ)ₖ₋₁ + ζbarₖ * w̄ₖ
-      @kaxpy!(m, ζbarₖ, w̄, y)
+      kaxpy!(m, ζbarₖ, w̄, y)
     else
       if λ > 0
         # (xᴸ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + ηₖζₖ₋₁ * (cpₖvₖ + spₖqₖ₋₁)
-        @kaxpy!(n, ηₖ * ζₖ₋₁ * cpₖ, v, x)
+        kaxpy!(n, ηₖ * ζₖ₋₁ * cpₖ, v, x)
         if iter ≥ 2
-          @kaxpy!(n, ηₖ * ζₖ₋₁ * spₖ, q, x)
+          kaxpy!(n, ηₖ * ζₖ₋₁ * spₖ, q, x)
         end
       else
         # (xᴸ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + ηₖζₖ₋₁ * vₖ
-        @kaxpy!(n, ηₖ * ζₖ₋₁, v, x)
+        kaxpy!(n, ηₖ * ζₖ₋₁, v, x)
       end
     end
 

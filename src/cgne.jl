@@ -151,10 +151,10 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     reset!(stats)
     z = NisI ? r : solver.z
 
-    @kfill!(x, zero(FC))
-    @kcopy!(m, r, b)  # r ← b
+    kfill!(x, zero(FC))
+    kcopy!(m, r, b)  # r ← b
     NisI || mulorldiv!(z, N, r, ldiv)
-    rNorm = @knrm2(m, r)   # Marginally faster than norm(r)
+    rNorm = knorm(m, r)   # Marginally faster than norm(r)
     history && push!(rNorms, rNorm)
     if rNorm == 0
       stats.niter = 0
@@ -163,7 +163,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       stats.status = "x = 0 is a zero-residual solution"
       return solver
     end
-    λ > 0 && @kcopy!(m, s, r)  # s ← r
+    λ > 0 && kcopy!(m, s, r)  # s ← r
     mul!(p, Aᴴ, z)
 
     # Use ‖p‖ to detect inconsistent system.
@@ -171,9 +171,9 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     # Because CGNE is equivalent to CG applied to AAᴴy = b, there will be a
     # conjugate direction u such that uᴴAAᴴu = 0, i.e., Aᴴu = 0. In this
     # implementation, p is a substitute for Aᴴu.
-    pNorm = @knrm2(n, p)
+    pNorm = knorm(n, p)
 
-    γ = @kdotr(m, r, z)  # Faster than γ = dot(r, z)
+    γ = kdotr(m, r, z)  # Faster than γ = dot(r, z)
     iter = 0
     itmax == 0 && (itmax = m + n)
 
@@ -191,20 +191,20 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
 
     while ! (solved || inconsistent || tired || user_requested_exit || overtimed)
       mul!(q, A, p)
-      λ > 0 && @kaxpy!(m, λ, s, q)
-      δ = @kdotr(n, p, p)   # Faster than dot(p, p)
-      λ > 0 && (δ += λ * @kdotr(m, s, s))
+      λ > 0 && kaxpy!(m, λ, s, q)
+      δ = kdotr(n, p, p)   # Faster than dot(p, p)
+      λ > 0 && (δ += λ * kdotr(m, s, s))
       α = γ / δ
-      @kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
-      @kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
+      kaxpy!(n,  α, p, x)     # Faster than x = x + α * p
+      kaxpy!(m, -α, q, r)     # Faster than r = r - α * q
       NisI || mulorldiv!(z, N, r, ldiv)
-      γ_next = @kdotr(m, r, z)  # Faster than γ_next = dot(r, z)
+      γ_next = kdotr(m, r, z)  # Faster than γ_next = dot(r, z)
       β = γ_next / γ
       mul!(Aᴴz, Aᴴ, z)
-      @kaxpby!(n, one(FC), Aᴴz, β, p)  # Faster than p = Aᴴz + β * p
-      pNorm = @knrm2(n, p)
+      kaxpby!(n, one(FC), Aᴴz, β, p)  # Faster than p = Aᴴz + β * p
+      pNorm = knorm(n, p)
       if λ > 0
-        @kaxpby!(m, one(FC), r, β, s)  # s = r + β * s
+        kaxpby!(m, one(FC), r, β, s)  # s = r + β * s
       end
       γ = γ_next
       rNorm = sqrt(γ_next)

@@ -148,7 +148,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
 
     if warm_start
       mul!(r₀, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), r₀)
+      kaxpby!(n, one(FC), b, -one(FC), r₀)
     end
     if !MisI
       mulorldiv!(solver.t, M, r₀, ldiv)
@@ -156,8 +156,8 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
     end
 
     # Initial solution x₀ and residual norm ‖r₀‖.
-    @kfill!(x, zero(FC))
-    bNorm = @knrm2(n, r₀)  # ‖r₀‖ = ‖b₀ - Ax₀‖
+    kfill!(x, zero(FC))
+    bNorm = knorm(n, r₀)  # ‖r₀‖ = ‖b₀ - Ax₀‖
 
     history && push!(rNorms, bNorm)
     if bNorm == 0
@@ -174,7 +174,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
     itmax == 0 && (itmax = 2*n)
 
     # Initialize the Lanczos biorthogonalization process.
-    cᴴb = @kdot(n, c, r₀)  # ⟨c,r₀⟩
+    cᴴb = kdot(n, c, r₀)  # ⟨c,r₀⟩
     if cᴴb == 0
       stats.niter = 0
       stats.solved = false
@@ -191,13 +191,13 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
 
     βₖ = √(abs(cᴴb))            # β₁γ₁ = cᴴ(b - Ax₀)
     γₖ = cᴴb / βₖ               # β₁γ₁ = cᴴ(b - Ax₀)
-    @kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
-    @kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
+    kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
     vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
     uₖ .= c ./ conj(γₖ)         # u₁ = c / γ̄₁
     cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
     sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-    @kfill!(d̅, zero(FC))        # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
+    kfill!(d̅, zero(FC))        # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
     ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
     ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
     δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
@@ -230,15 +230,15 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       mul!(s, Aᴴ, Mᴴuₖ)
       NisI || mulorldiv!(p, Nᴴ, s, ldiv)
 
-      @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
-      @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
+      kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
+      kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
 
-      αₖ = @kdot(n, uₖ, q)  # αₖ = ⟨uₖ,q⟩
+      αₖ = kdot(n, uₖ, q)  # αₖ = ⟨uₖ,q⟩
 
-      @kaxpy!(n, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
-      @kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
+      kaxpy!(n, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
+      kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
 
-      pᴴq = @kdot(n, p, q)  # pᴴq  = ⟨p,q⟩
+      pᴴq = kdot(n, p, q)  # pᴴq  = ⟨p,q⟩
       βₖ₊₁ = √(abs(pᴴq))    # βₖ₊₁ = √(|pᴴq|)
       γₖ₊₁ = pᴴq / βₖ₊₁     # γₖ₊₁ = pᴴq / βₖ₊₁
 
@@ -301,22 +301,22 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       if iter ≥ 2
         # Compute solution xₖ.
         # (xᴸ)ₖ₋₁ ← (xᴸ)ₖ₋₂ + ζₖ₋₁ * dₖ₋₁
-        @kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
-        @kaxpy!(n, ζₖ₋₁ * sₖ, vₖ, x)
+        kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
+        kaxpy!(n, ζₖ₋₁ * sₖ, vₖ, x)
       end
 
       # Compute d̅ₖ.
       if iter == 1
         # d̅₁ = v₁
-        @kcopy!(n, d̅, vₖ)  # d̅ ← vₖ
+        kcopy!(n, d̅, vₖ)  # d̅ ← vₖ
       else
         # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * vₖ
-        @kaxpby!(n, -cₖ, vₖ, conj(sₖ), d̅)
+        kaxpby!(n, -cₖ, vₖ, conj(sₖ), d̅)
       end
 
       # Compute vₖ₊₁ and uₖ₊₁.
-      @kcopy!(n, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
-      @kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
+      kcopy!(n, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
+      kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if pᴴq ≠ 0
         vₖ .= q ./ βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
@@ -324,8 +324,8 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       end
 
       # Compute ⟨vₖ,vₖ₊₁⟩ and ‖vₖ₊₁‖
-      vₖᴴvₖ₊₁ = @kdot(n, vₖ₋₁, vₖ)
-      norm_vₖ₊₁ = @knrm2(n, vₖ)
+      vₖᴴvₖ₊₁ = kdot(n, vₖ₋₁, vₖ)
+      norm_vₖ₊₁ = knorm(n, vₖ)
 
       # Compute BiLQ residual norm
       # ‖rₖ‖ = √(|μₖ|²‖vₖ‖² + |ωₖ|²‖vₖ₊₁‖² + μ̄ₖωₖ⟨vₖ,vₖ₊₁⟩ + μₖω̄ₖ⟨vₖ₊₁,vₖ⟩)
@@ -370,7 +370,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
     # Compute BICG point
     # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ
     if solved_cg
-      @kaxpy!(n, ζbarₖ, d̅, x)
+      kaxpy!(n, ζbarₖ, d̅, x)
     end
 
     # Termination status
@@ -386,7 +386,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       copyto!(solver.s, x)
       mulorldiv!(x, N, solver.s, ldiv)
     end
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

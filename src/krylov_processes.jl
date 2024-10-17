@@ -52,7 +52,7 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
     vᵢ = view(V,:,i)
     vᵢ₊₁ = q = view(V,:,i+1)
     if i == 1
-      β₁ = @knrm2(n, b)
+      β₁ = knorm(n, b)
       vᵢ .= b ./ β₁
     end
     mul!(q, A, vᵢ)
@@ -60,12 +60,12 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
       vᵢ₋₁ = view(V,:,i-1)
       βᵢ = nzval[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
       nzval[pαᵢ-1] = βᵢ  # Tᵢ₋₁.ᵢ = βᵢ
-      @kaxpy!(n, -βᵢ, vᵢ₋₁, q)
+      kaxpy!(n, -βᵢ, vᵢ₋₁, q)
     end
-    αᵢ = @kdotr(n, vᵢ, q)
+    αᵢ = kdotr(n, vᵢ, q)
     nzval[pαᵢ] = αᵢ  # Tᵢ.ᵢ = αᵢ
-    @kaxpy!(n, -αᵢ, vᵢ, q)
-    βᵢ₊₁ = @knrm2(n, q)
+    kaxpy!(n, -αᵢ, vᵢ, q)
+    βᵢ₊₁ = knorm(n, q)
     nzval[pαᵢ+1] = βᵢ₊₁  # Tᵢ₊₁.ᵢ = βᵢ₊₁
     vᵢ₊₁ .= q ./ βᵢ₊₁
     pαᵢ = pαᵢ + 3
@@ -135,7 +135,7 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     vᵢ₊₁ = q = view(V,:,i+1)
     uᵢ₊₁ = p = view(U,:,i+1)
     if i == 1
-      cᴴb = @kdot(n, c, b)
+      cᴴb = kdot(n, c, b)
       β₁ = √(abs(cᴴb))
       γ₁ᴴ = conj(cᴴb / β₁)
       vᵢ .= b ./ β₁
@@ -148,15 +148,15 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
       uᵢ₋₁ = view(U,:,i-1)
       βᵢ = nzval_T[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
       γᵢ = nzval_T[pαᵢ-1]  # γᵢ = Tᵢ₋₁.ᵢ
-      @kaxpy!(n, -     γᵢ , vᵢ₋₁, q)
-      @kaxpy!(n, -conj(βᵢ), uᵢ₋₁, p)
+      kaxpy!(n, -     γᵢ , vᵢ₋₁, q)
+      kaxpy!(n, -conj(βᵢ), uᵢ₋₁, p)
     end
-    αᵢ = @kdot(n, uᵢ, q)
+    αᵢ = kdot(n, uᵢ, q)
     nzval_T[pαᵢ]  = αᵢ        # Tᵢ.ᵢ  = αᵢ
     nzval_Tᴴ[pαᵢ] = conj(αᵢ)  # Tᴴᵢ.ᵢ = ᾱᵢ
-    @kaxpy!(m, -     αᵢ , vᵢ, q)
-    @kaxpy!(n, -conj(αᵢ), uᵢ, p)
-    pᴴq = @kdot(n, p, q)
+    kaxpy!(m, -     αᵢ , vᵢ, q)
+    kaxpy!(n, -conj(αᵢ), uᵢ, p)
+    pᴴq = kdot(n, p, q)
     βᵢ₊₁ = √(abs(pᴴq))
     γᵢ₊₁ = pᴴq / βᵢ₊₁
     vᵢ₊₁ .= q ./ βᵢ₊₁
@@ -209,24 +209,24 @@ function arnoldi(A, b::AbstractVector{FC}, k::Int; reorthogonalization::Bool=fal
     vⱼ = view(V,:,j)
     vⱼ₊₁ = q = view(V,:,j+1)
     if j == 1
-      β = @knrm2(n, b)
+      β = knorm(n, b)
       vⱼ .= b ./ β
     end
     mul!(q, A, vⱼ)
     for i = 1:j
       vᵢ = view(V,:,i)
-      H[i,j] = @kdot(n, vᵢ, q)
-      @kaxpy!(n, -H[i,j], vᵢ, q)
+      H[i,j] = kdot(n, vᵢ, q)
+      kaxpy!(n, -H[i,j], vᵢ, q)
     end
     if reorthogonalization
       for i = 1:j
         vᵢ = view(V,:,i)
-        Htmp = @kdot(n, vᵢ, q)
-        @kaxpy!(n, -Htmp, vᵢ, q)
+        Htmp = kdot(n, vᵢ, q)
+        kaxpy!(n, -Htmp, vᵢ, q)
         H[i,j] += Htmp
       end
     end
-    H[j+1,j] = @knrm2(n, q)
+    H[j+1,j] = knorm(n, q)
     vⱼ₊₁ .= q ./ H[j+1,j]
   end
   return V, β, H
@@ -290,21 +290,21 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
     vᵢ₊₁ = p = view(V,:,i+1)
     if i == 1
       wᵢ = vᵢ
-      β₁ = @knrm2(m, b)
+      β₁ = knorm(m, b)
       uᵢ .= b ./ β₁
       mul!(wᵢ, Aᴴ, uᵢ)
-      αᵢ = @knrm2(n, wᵢ)
+      αᵢ = knorm(n, wᵢ)
       nzval[pαᵢ] = αᵢ  # Lᵢ.ᵢ = αᵢ
       vᵢ .= wᵢ ./ αᵢ
     end
     mul!(q, A, vᵢ)
     αᵢ = nzval[pαᵢ]  # αᵢ = Lᵢ.ᵢ
-    @kaxpy!(m, -αᵢ, uᵢ, q)
-    βᵢ₊₁ = @knrm2(m, q)
+    kaxpy!(m, -αᵢ, uᵢ, q)
+    βᵢ₊₁ = knorm(m, q)
     uᵢ₊₁ .= q ./ βᵢ₊₁
     mul!(p, Aᴴ, uᵢ₊₁)
-    @kaxpy!(n, -βᵢ₊₁, vᵢ, p)
-    αᵢ₊₁ = @knrm2(n, p)
+    kaxpy!(n, -βᵢ₊₁, vᵢ, p)
+    αᵢ₊₁ = knorm(n, p)
     vᵢ₊₁ .= p ./ αᵢ₊₁
     nzval[pαᵢ+1] = βᵢ₊₁  # Lᵢ₊₁.ᵢ   = βᵢ₊₁
     nzval[pαᵢ+2] = αᵢ₊₁  # Lᵢ₊₁.ᵢ₊₁ = αᵢ₊₁
@@ -375,8 +375,8 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     vᵢ₊₁ = q = view(V,:,i+1)
     uᵢ₊₁ = p = view(U,:,i+1)
     if i == 1
-      β₁ = @knrm2(m, b)
-      γ₁ᴴ = @knrm2(n, c)
+      β₁ = knorm(m, b)
+      γ₁ᴴ = knorm(n, c)
       vᵢ .= b ./ β₁
       uᵢ .= c ./ γ₁ᴴ
     end
@@ -387,16 +387,16 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
       uᵢ₋₁ = view(U,:,i-1)
       βᵢ = nzval_T[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
       γᵢ = nzval_T[pαᵢ-1]  # γᵢ = Tᵢ₋₁.ᵢ
-      @kaxpy!(m, -γᵢ, vᵢ₋₁, q)
-      @kaxpy!(n, -βᵢ, uᵢ₋₁, p)
+      kaxpy!(m, -γᵢ, vᵢ₋₁, q)
+      kaxpy!(n, -βᵢ, uᵢ₋₁, p)
     end
-    αᵢ = @kdot(m, vᵢ, q)
+    αᵢ = kdot(m, vᵢ, q)
     nzval_T[pαᵢ]  = αᵢ        # Tᵢ.ᵢ  = αᵢ
     nzval_Tᴴ[pαᵢ] = conj(αᵢ)  # Tᴴᵢ.ᵢ = ᾱᵢ
-    @kaxpy!(m, -     αᵢ , vᵢ, q)
-    @kaxpy!(n, -conj(αᵢ), uᵢ, p)
-    βᵢ₊₁ = @knrm2(m, q)
-    γᵢ₊₁ = @knrm2(n, p)
+    kaxpy!(m, -     αᵢ , vᵢ, q)
+    kaxpy!(n, -conj(αᵢ), uᵢ, p)
+    βᵢ₊₁ = knorm(m, q)
+    γᵢ₊₁ = knorm(n, p)
     vᵢ₊₁ .= q ./ βᵢ₊₁
     uᵢ₊₁ .= p ./ γᵢ₊₁
     nzval_T[pαᵢ+1]  = βᵢ₊₁  # Tᵢ₊₁.ᵢ  = βᵢ₊₁
@@ -456,8 +456,8 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     vⱼ₊₁ = q = view(V,:,j+1)
     uⱼ₊₁ = p = view(U,:,j+1)
     if j == 1
-      β = @knrm2(m, b)
-      γ = @knrm2(n, c)
+      β = knorm(m, b)
+      γ = knorm(n, c)
       vⱼ .= b ./ β
       uⱼ .= c ./ γ
     end
@@ -466,26 +466,26 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     for i = 1:j
       vᵢ = view(V,:,i)
       uᵢ = view(U,:,i)
-      H[i,j] = @kdot(m, vᵢ, q)
-      @kaxpy!(n, -H[i,j], vᵢ, q)
-      F[i,j] = @kdot(n, uᵢ, p)
-      @kaxpy!(m, -F[i,j], uᵢ, p)
+      H[i,j] = kdot(m, vᵢ, q)
+      kaxpy!(n, -H[i,j], vᵢ, q)
+      F[i,j] = kdot(n, uᵢ, p)
+      kaxpy!(m, -F[i,j], uᵢ, p)
     end
     if reorthogonalization
       for i = 1:j
         vᵢ = view(V,:,i)
         uᵢ = view(U,:,i)
-        Htmp = @kdot(m, vᵢ, q)
-        @kaxpy!(m, -Htmp, vᵢ, q)
+        Htmp = kdot(m, vᵢ, q)
+        kaxpy!(m, -Htmp, vᵢ, q)
         H[i,j] += Htmp
-        Ftmp = @kdot(n, uᵢ, p)
-        @kaxpy!(n, -Ftmp, uᵢ, p)
+        Ftmp = kdot(n, uᵢ, p)
+        kaxpy!(n, -Ftmp, uᵢ, p)
         F[i,j] += Ftmp
       end
     end
-    H[j+1,j] = @knrm2(m, q)
+    H[j+1,j] = knorm(m, q)
     vⱼ₊₁ .= q ./ H[j+1,j]
-    F[j+1,j] = @knrm2(n, p)
+    F[j+1,j] = knorm(n, p)
     uⱼ₊₁ .= p ./ F[j+1,j]
   end
   return V, β, H, U, γ, F

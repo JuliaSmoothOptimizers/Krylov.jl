@@ -20,16 +20,16 @@ end
 function gs!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, v::AbstractVector{FC}) where FC <: FloatOrComplex
   n, k = size(Q)
   aⱼ = v
-  @kfill!(R, zero(FC))
+  kfill!(R, zero(FC))
   for j = 1:k
     qⱼ = view(Q,:,j)
     aⱼ .= qⱼ
     for i = 1:j-1
       qᵢ = view(Q,:,i)
-      R[i,j] = @kdot(n, qᵢ, aⱼ)    # rᵢⱼ = ⟨qᵢ , aⱼ⟩
-      @kaxpy!(n, -R[i,j], qᵢ, qⱼ)  # qⱼ = qⱼ - rᵢⱼqᵢ
+      R[i,j] = kdot(n, qᵢ, aⱼ)    # rᵢⱼ = ⟨qᵢ , aⱼ⟩
+      kaxpy!(n, -R[i,j], qᵢ, qⱼ)  # qⱼ = qⱼ - rᵢⱼqᵢ
     end
-    R[j,j] = @knrm2(n, qⱼ)  # rⱼⱼ = ‖qⱼ‖
+    R[j,j] = knorm(n, qⱼ)  # rⱼⱼ = ‖qⱼ‖
     qⱼ ./= R[j,j]           # qⱼ = qⱼ / rⱼⱼ
   end
   return Q, R
@@ -54,15 +54,15 @@ end
 
 function mgs!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}) where FC <: FloatOrComplex
   n, k = size(Q)
-  @kfill!(R, zero(FC))
+  kfill!(R, zero(FC))
   for i = 1:k
     qᵢ = view(Q,:,i)
-    R[i,i] = @knrm2(n, qᵢ)  # rᵢᵢ = ‖qᵢ‖
+    R[i,i] = knorm(n, qᵢ)  # rᵢᵢ = ‖qᵢ‖
     qᵢ ./= R[i,i]           # qᵢ = qᵢ / rᵢᵢ
     for j = i+1:k
       qⱼ = view(Q,:,j)
-      R[i,j] = @kdot(n, qᵢ, qⱼ)    # rᵢⱼ = ⟨qᵢ , qⱼ⟩
-      @kaxpy!(n, -R[i,j], qᵢ, qⱼ)  # qⱼ = qⱼ - rᵢⱼqᵢ
+      R[i,j] = kdot(n, qᵢ, qⱼ)    # rᵢⱼ = ⟨qᵢ , qⱼ⟩
+      kaxpy!(n, -R[i,j], qᵢ, qⱼ)  # qⱼ = qⱼ - rᵢⱼqᵢ
     end
   end
   return Q, R
@@ -90,7 +90,7 @@ end
 
 function givens!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, C::AbstractVector{T}, S::AbstractVector{FC}) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
   n, k = size(Q)
-  @kfill!(R, zero(FC))
+  kfill!(R, zero(FC))
   pos = 0
   for j = 1:k
     for i = n-1:-1:j
@@ -106,7 +106,7 @@ function givens!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, C::AbstractVector
       R[i,j] = Q[i,j]
     end
   end
-  @kfill!(Q, zero(FC))
+  kfill!(Q, zero(FC))
   for i = 1:k
     Q[i,i] = one(FC)
   end
@@ -194,9 +194,9 @@ end
 
 function householder!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, τ::AbstractVector{FC}; compact::Bool=false) where FC <: FloatOrComplex
   n, k = size(Q)
-  @kfill!(R, zero(FC))
-  @kgeqrf!(Q, τ)
+  kfill!(R, zero(FC))
+  kgeqrf!(Q, τ)
   copy_triangle(Q, R, k)
-  !compact && @korgqr!(Q, τ)
+  !compact && korgqr!(Q, τ)
   return Q, R
 end
