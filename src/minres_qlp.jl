@@ -216,13 +216,13 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       # M(A + λI)Vₖ = Vₖ₊₁Tₖ₊₁.ₖ
       # βₖ₊₁vₖ₊₁ = M(A + λI)vₖ - αₖvₖ - βₖvₖ₋₁
 
-      mul!(p, A, vₖ)          # p ← Avₖ
+      mul!(p, A, vₖ)         # p ← Avₖ
       if λ ≠ 0
         kaxpy!(n, λ, vₖ, p)  # p ← p + λvₖ
       end
 
       if iter ≥ 2
-        kaxpy!(n, -βₖ, M⁻¹vₖ₋₁, p) # p ← p - βₖ * M⁻¹vₖ₋₁
+        kaxpy!(n, -βₖ, M⁻¹vₖ₋₁, p)  # p ← p - βₖ * M⁻¹vₖ₋₁
       end
 
       αₖ = kdotr(n, vₖ, p)  # αₖ = ⟨vₖ,p⟩

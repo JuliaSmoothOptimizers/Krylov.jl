@@ -155,7 +155,7 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
       kcopy!(n, w, b)  # w ← b
     end
     MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M(b - Ax₀)
-    β = knorm(n, r₀)                   # β = ‖r₀‖₂
+    β = knorm(n, r₀)                    # β = ‖r₀‖₂
 
     rNorm = β
     history && push!(rNorms, β)

@@ -170,16 +170,16 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %5s\n", "k", "‖rₖ‖", "‖Aᴴrₖ₋₁‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8s  %.2fs\n", iter, rNorm, " ✗ ✗ ✗ ✗", ktimer(start_time))
 
-    βₖ = knorm(m, r₀)           # β₁ = ‖v₁‖ = ‖r₀‖
-    γₖ = knorm(n, c)            # γ₁ = ‖u₁‖ = ‖c‖
-    kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
-    kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
+    βₖ = knorm(m, r₀)            # β₁ = ‖v₁‖ = ‖r₀‖
+    γₖ = knorm(n, c)             # γ₁ = ‖u₁‖ = ‖c‖
+    kfill!(vₖ₋₁, zero(FC))       # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))       # u₀ = 0
     vₖ .= r₀ ./ βₖ               # v₁ = (b - Ax₀) / β₁
     uₖ .= c ./ γₖ                # u₁ = c / γ₁
     cₖ₋₂ = cₖ₋₁ = cₖ = one(T)    # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
     sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-    kfill!(wₖ₋₂, zero(FC))      # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
-    kfill!(wₖ₋₁, zero(FC))      # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
+    kfill!(wₖ₋₂, zero(FC))       # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
+    kfill!(wₖ₋₁, zero(FC))       # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
     ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᴴβ₁e₁
 
     # Stopping criterion.
@@ -201,16 +201,16 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
       mul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
 
-      kaxpy!(m, -γₖ, vₖ₋₁, q) # q ← q - γₖ * vₖ₋₁
-      kaxpy!(n, -βₖ, uₖ₋₁, p) # p ← p - βₖ * uₖ₋₁
+      kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
+      kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
 
-      αₖ = kdot(m, vₖ, q)     # αₖ = ⟨vₖ,q⟩
+      αₖ = kdot(m, vₖ, q)  # αₖ = ⟨vₖ,q⟩
 
-      kaxpy!(m, -     αₖ , vₖ, q)   # q ← q - αₖ * vₖ
-      kaxpy!(n, -conj(αₖ), uₖ, p)   # p ← p - ᾱₖ * uₖ
+      kaxpy!(m, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
+      kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
 
-      βₖ₊₁ = knorm(m, q)      # βₖ₊₁ = ‖q‖
-      γₖ₊₁ = knorm(n, p)      # γₖ₊₁ = ‖p‖
+      βₖ₊₁ = knorm(m, q)  # βₖ₊₁ = ‖q‖
+      γₖ₊₁ = knorm(n, p)  # γₖ₊₁ = ‖p‖
 
       # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
       #                                            [ Oᵀ ]
@@ -298,10 +298,10 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
-        vₖ .= q ./ βₖ₊₁ # βₖ₊₁vₖ₊₁ = q
+        vₖ .= q ./ βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
       end
       if γₖ₊₁ ≠ zero(T)
-        uₖ .= p ./ γₖ₊₁ # γₖ₊₁uₖ₊₁ = p
+        uₖ .= p ./ γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
       end
 
       # Update directions for x.

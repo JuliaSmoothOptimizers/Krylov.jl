@@ -131,9 +131,9 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     for i = 1 : nshifts
       kfill!(x[i], zero(FC))  # x₀
     end
-    kcopy!(n, Mv, b)                   # Mv₁ ← b
+    kcopy!(n, Mv, b)                    # Mv₁ ← b
     MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹ * Mv₁
-    β = sqrt(kdotr(n, v, Mv))          # β₁ = v₁ᴴ M v₁
+    β = sqrt(kdotr(n, v, Mv))           # β₁ = v₁ᴴ M v₁
     kfill!(rNorms, β)
     if history
       for i = 1 : nshifts
@@ -196,7 +196,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     while ! (solved || tired || user_requested_exit || overtimed)
       # Form next Lanczos vector.
       # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-      mul!(Mv_next, A, v)                  # Mvₖ₊₁ ← Avₖ
+      mul!(Mv_next, A, v)                 # Mvₖ₊₁ ← Avₖ
       δ = kdotr(n, v, Mv_next)            # δₖ = vₖᴴ A vₖ
       kaxpy!(n, -δ, Mv, Mv_next)          # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
       if iter > 0
@@ -204,7 +204,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
         kcopy!(n, Mv_prev, Mv)            # Mvₖ₋₁ ← Mvₖ
       end
       kcopy!(n, Mv, Mv_next)              # Mvₖ ← Mvₖ₊₁
-      MisI || mulorldiv!(v, M, Mv, ldiv)   # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
+      MisI || mulorldiv!(v, M, Mv, ldiv)  # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
       β = sqrt(kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
       kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
       MisI || kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁

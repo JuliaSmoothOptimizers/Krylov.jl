@@ -233,9 +233,9 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     NisI || kscal!(n, one(FC)/α, Nv)
 
     # Regularization.
-    λₖ  = λ                    # λ₁ = λ
-    cpₖ = spₖ = one(T)         # Givens sines and cosines used to zero out λₖ
-    cdₖ = sdₖ = one(T)         # Givens sines and cosines used to define λₖ₊₁
+    λₖ  = λ                   # λ₁ = λ
+    cpₖ = spₖ = one(T)        # Givens sines and cosines used to zero out λₖ
+    cdₖ = sdₖ = one(T)        # Givens sines and cosines used to define λₖ₊₁
     λ > 0 && kcopy!(n, q, v)  # Additional vector needed to update x, by definition q₀ = 0
 
     if λ > 0
@@ -254,7 +254,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     ArNorm = α
     history && push!(ArNorms, ArNorm)
 
-    ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
+    ɛ_c = atol + rtol * rNorm   # Stopping tolerance for consistent systems.
     ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
 
     kcopy!(m, wbar, u)

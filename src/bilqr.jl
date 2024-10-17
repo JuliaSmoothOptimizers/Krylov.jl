@@ -175,21 +175,21 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     # Set up workspace.
     βₖ = √(abs(cᴴb))            # β₁γ₁ = (c - Aᴴy₀)ᴴ(b - Ax₀)
     γₖ = cᴴb / βₖ               # β₁γ₁ = (c - Aᴴy₀)ᴴ(b - Ax₀)
-    kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
-    kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
+    kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
     vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
     uₖ .= s₀ ./ conj(γₖ)        # u₁ = (c - Aᴴy₀) / γ̄₁
     cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
     sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-    kfill!(d̅, zero(FC))        # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
+    kfill!(d̅, zero(FC))         # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
     ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
     ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
     δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
     ψbarₖ₋₁ = ψₖ₋₁ = zero(FC)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ̄₁e₁
     norm_vₖ = bNorm / βₖ        # ‖vₖ‖ is used for residual norm estimates
     ϵₖ₋₃ = λₖ₋₂ = zero(FC)      # Components of Lₖ₋₁
-    kfill!(wₖ₋₃, zero(FC))     # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᴴ
-    kfill!(wₖ₋₂, zero(FC))     # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᴴ
+    kfill!(wₖ₋₃, zero(FC))      # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᴴ
+    kfill!(wₖ₋₂, zero(FC))      # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᴴ
     τₖ = zero(T)                # τₖ is used for the dual residual norm estimate
 
     # Stopping criterion.
@@ -225,8 +225,8 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
 
       pᴴq = kdot(n, p, q)  # pᴴq  = ⟨p,q⟩
-      βₖ₊₁ = √(abs(pᴴq))    # βₖ₊₁ = √(|pᴴq|)
-      γₖ₊₁ = pᴴq / βₖ₊₁     # γₖ₊₁ = pᴴq / βₖ₊₁
+      βₖ₊₁ = √(abs(pᴴq))   # βₖ₊₁ = √(|pᴴq|)
+      γₖ₊₁ = pᴴq / βₖ₊₁    # γₖ₊₁ = pᴴq / βₖ₊₁
 
       # Update the LQ factorization of Tₖ = L̅ₖQₖ.
       # [ α₁ γ₂ 0  •  •  •  0 ]   [ δ₁   0    •   •   •    •    0   ]

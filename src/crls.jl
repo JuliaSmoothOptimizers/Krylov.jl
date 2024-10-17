@@ -140,9 +140,9 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     MAp = MisI ? Ap : solver.Ms
 
     kfill!(x, zero(FC))
-    kcopy!(m, r, b)  # r ← b
+    kcopy!(m, r, b)      # r ← b
     bNorm = knorm(m, r)  # norm(b - A * x0) if x0 ≠ 0.
-    rNorm = bNorm  # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
+    rNorm = bNorm        # + λ * ‖x0‖ if x0 ≠ 0 and λ > 0.
     history && push!(rNorms, rNorm)
     if bNorm == 0
       stats.niter = 0
@@ -160,7 +160,7 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
 
     kcopy!(n, p, Ar)  # p ← Ar
     kcopy!(m, Ap, s)  # Ap ← s
-    mul!(q, Aᴴ, Ms)  # Ap
+    mul!(q, Aᴴ, Ms)   # Ap
     λ > 0 && kaxpy!(n, λ, p, q)  # q = q + λ * p
     γ  = kdotr(m, s, Ms)  # Faster than γ = dot(s, Ms)
     iter = 0
@@ -205,20 +205,20 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
         end
       end
 
-      kaxpy!(n,  α, p,   x)     # Faster than  x =  x + α *  p
-      kaxpy!(n, -α, q,  Ar)     # Faster than Ar = Ar - α *  q
+      kaxpy!(n,  α, p,   x)  # Faster than  x =  x + α *  p
+      kaxpy!(n, -α, q,  Ar)  # Faster than Ar = Ar - α *  q
       ArNorm = knorm(n, Ar)
       solved = psd || on_boundary
       solved && continue
-      kaxpy!(m, -α, Ap,  r)     # Faster than  r =  r - α * Ap
+      kaxpy!(m, -α, Ap,  r)  # Faster than  r =  r - α * Ap
       mul!(s, A, Ar)
       MisI || mulorldiv!(Ms, M, s, ldiv)
-      γ_next = kdotr(m, s, Ms)   # Faster than γ_next = dot(s, s)
+      γ_next = kdotr(m, s, Ms)  # Faster than γ_next = dot(s, s)
       λ > 0 && (γ_next += λ * ArNorm * ArNorm)
       β = γ_next / γ
 
-      kaxpby!(n, one(FC), Ar, β, p)    # Faster than  p = Ar + β *  p
-      kaxpby!(m, one(FC), s, β, Ap)    # Faster than Ap =  s + β * Ap
+      kaxpby!(n, one(FC), Ar, β, p)  # Faster than  p = Ar + β *  p
+      kaxpby!(m, one(FC), s, β, Ap)  # Faster than Ap =  s + β * Ap
       MisI || mulorldiv!(MAp, M, Ap, ldiv)
       mul!(q, Aᴴ, MAp)
       λ > 0 && kaxpy!(n, λ, p, q)  # q = q + λ * p
@@ -227,7 +227,7 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
       if λ > 0
         rNorm = sqrt(kdotr(m, r, r) + λ * kdotr(n, x, x))
       else
-        rNorm = knorm(m, r)  # norm(r)
+        rNorm = knorm(m, r)
       end
       history && push!(rNorms, rNorm)
       history && push!(ArNorms, ArNorm)

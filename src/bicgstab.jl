@@ -154,15 +154,15 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       kcopy!(n, r₀, b)  # r₀ ← b
     end
 
-    kfill!(x, zero(FC))                # x₀
-    kfill!(s, zero(FC))                # s₀
-    kfill!(v, zero(FC))                # v₀
+    kfill!(x, zero(FC))                 # x₀
+    kfill!(s, zero(FC))                 # s₀
+    kfill!(v, zero(FC))                 # v₀
     MisI || mulorldiv!(r, M, r₀, ldiv)  # r₀
-    kcopy!(n, p, r)                    # p₁
+    kcopy!(n, p, r)                     # p₁
 
-    α = one(FC) # α₀
-    ω = one(FC) # ω₀
-    ρ = one(FC) # ρ₀
+    α = one(FC)  # α₀
+    ω = one(FC)  # ω₀
+    ρ = one(FC)  # ρ₀
 
     # Compute residual norm ‖r₀‖₂.
     rNorm = knorm(n, r)
@@ -206,24 +206,24 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       iter = iter + 1
       ρ = next_ρ
 
-      NisI || mulorldiv!(y, N, p, ldiv)    # yₖ = N⁻¹pₖ
-      mul!(q, A, y)                        # qₖ = Ayₖ
-      mulorldiv!(v, M, q, ldiv)            # vₖ = M⁻¹qₖ
-      α = ρ / kdot(n, c, v)               # αₖ = ⟨r̅₀,rₖ₋₁⟩ / ⟨r̅₀,vₖ⟩
-      kcopy!(n, s, r)                     # sₖ = rₖ₋₁
-      kaxpy!(n, -α, v, s)                 # sₖ = sₖ - αₖvₖ
-      kaxpy!(n, α, y, x)                  # xₐᵤₓ = xₖ₋₁ + αₖyₖ
-      NisI || mulorldiv!(z, N, s, ldiv)    # zₖ = N⁻¹sₖ
-      mul!(d, A, z)                        # dₖ = Azₖ
-      MisI || mulorldiv!(t, M, d, ldiv)    # tₖ = M⁻¹dₖ
+      NisI || mulorldiv!(y, N, p, ldiv)  # yₖ = N⁻¹pₖ
+      mul!(q, A, y)                      # qₖ = Ayₖ
+      mulorldiv!(v, M, q, ldiv)          # vₖ = M⁻¹qₖ
+      α = ρ / kdot(n, c, v)              # αₖ = ⟨r̅₀,rₖ₋₁⟩ / ⟨r̅₀,vₖ⟩
+      kcopy!(n, s, r)                    # sₖ = rₖ₋₁
+      kaxpy!(n, -α, v, s)                # sₖ = sₖ - αₖvₖ
+      kaxpy!(n, α, y, x)                 # xₐᵤₓ = xₖ₋₁ + αₖyₖ
+      NisI || mulorldiv!(z, N, s, ldiv)  # zₖ = N⁻¹sₖ
+      mul!(d, A, z)                      # dₖ = Azₖ
+      MisI || mulorldiv!(t, M, d, ldiv)  # tₖ = M⁻¹dₖ
       ω = kdot(n, t, s) / kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
-      kaxpy!(n, ω, z, x)                  # xₖ = xₐᵤₓ + ωₖzₖ
-      kcopy!(n, r, s)                     # rₖ = sₖ
-      kaxpy!(n, -ω, t, r)                 # rₖ = rₖ - ωₖtₖ
-      next_ρ = kdot(n, c, r)              # ρₖ₊₁ = ⟨r̅₀,rₖ⟩
-      β = (next_ρ / ρ) * (α / ω)           # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
-      kaxpy!(n, -ω, v, p)                 # pₐᵤₓ = pₖ - ωₖvₖ
-      kaxpby!(n, one(FC), r, β, p)        # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
+      kaxpy!(n, ω, z, x)                 # xₖ = xₐᵤₓ + ωₖzₖ
+      kcopy!(n, r, s)                    # rₖ = sₖ
+      kaxpy!(n, -ω, t, r)                # rₖ = rₖ - ωₖtₖ
+      next_ρ = kdot(n, c, r)             # ρₖ₊₁ = ⟨r̅₀,rₖ⟩
+      β = (next_ρ / ρ) * (α / ω)         # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
+      kaxpy!(n, -ω, v, p)                # pₐᵤₓ = pₖ - ωₖvₖ
+      kaxpby!(n, one(FC), r, β, p)       # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
 
       # Compute residual norm ‖rₖ‖₂.
       rNorm = knorm(n, r)

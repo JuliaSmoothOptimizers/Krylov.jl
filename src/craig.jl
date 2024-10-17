@@ -305,7 +305,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
 
       # Recur y.
       kaxpby!(m, one(FC), u, -θ/ρ_prev, w)  # w = u - θ/ρ_prev * w
-      kaxpy!(m, ξ/ρ, w, y)  # y = y + ξ/ρ * w
+      kaxpy!(m, ξ/ρ, w, y)                  # y = y + ξ/ρ * w
 
       Dnorm² += knorm(m, w)
 

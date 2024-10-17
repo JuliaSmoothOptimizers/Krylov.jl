@@ -160,10 +160,10 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, bNorm, cNorm, ktimer(start_time))
 
     # Set up workspace.
-    βₖ = knorm(m, r₀)          # β₁ = ‖r₀‖ = ‖v₁‖
-    γₖ = knorm(n, s₀)          # γ₁ = ‖s₀‖ = ‖u₁‖
-    kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
-    kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
+    βₖ = knorm(m, r₀)           # β₁ = ‖r₀‖ = ‖v₁‖
+    γₖ = knorm(n, s₀)           # γ₁ = ‖s₀‖ = ‖u₁‖
+    kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
     vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
     uₖ .= s₀ ./ γₖ              # u₁ = (c - Aᴴy₀) / γ₁
     cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
@@ -174,8 +174,8 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
     ψbarₖ₋₁ = ψₖ₋₁ = zero(FC)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
     ϵₖ₋₃ = λₖ₋₂ = zero(FC)      # Components of Lₖ₋₁
-    kfill!(wₖ₋₃, zero(FC))     # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᴴ
-    kfill!(wₖ₋₂, zero(FC))     # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᴴ
+    kfill!(wₖ₋₃, zero(FC))      # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᴴ
+    kfill!(wₖ₋₂, zero(FC))      # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᴴ
 
     # Stopping criterion.
     inconsistent = false
@@ -204,13 +204,13 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
       kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
 
-      αₖ = kdot(m, vₖ, q)      # αₖ = ⟨vₖ,q⟩
+      αₖ = kdot(m, vₖ, q)  # αₖ = ⟨vₖ,q⟩
 
-      kaxpy!(m, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
-      kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
+      kaxpy!(m, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
+      kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
 
-      βₖ₊₁ = knorm(m, q)       # βₖ₊₁ = ‖q‖
-      γₖ₊₁ = knorm(n, p)       # γₖ₊₁ = ‖p‖
+      βₖ₊₁ = knorm(m, q)  # βₖ₊₁ = ‖q‖
+      γₖ₊₁ = knorm(n, p)  # γₖ₊₁ = ‖p‖
 
       # Update the LQ factorization of Tₖ = L̅ₖQₖ.
       # [ α₁ γ₂ 0  •  •  •  0 ]   [ δ₁   0    •   •   •    •    0   ]

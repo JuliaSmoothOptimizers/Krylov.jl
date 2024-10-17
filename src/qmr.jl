@@ -197,16 +197,16 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
 
     βₖ = √(abs(cᴴb))             # β₁γ₁ = cᴴ(b - Ax₀)
     γₖ = cᴴb / βₖ                # β₁γ₁ = cᴴ(b - Ax₀)
-    kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
-    kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
+    kfill!(vₖ₋₁, zero(FC))       # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))       # u₀ = 0
     vₖ .= r₀ ./ βₖ               # v₁ = (b - Ax₀) / β₁
     uₖ .= c ./ conj(γₖ)          # u₁ = c / γ̄₁
     cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
     sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-    kfill!(wₖ₋₂, zero(FC))      # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
-    kfill!(wₖ₋₁, zero(FC))      # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
+    kfill!(wₖ₋₂, zero(FC))       # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
+    kfill!(wₖ₋₁, zero(FC))       # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
     ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᴴβ₁e₁
-    τₖ = kdotr(n, vₖ, vₖ)       # τₖ is used for the residual norm estimate
+    τₖ = kdotr(n, vₖ, vₖ)        # τₖ is used for the residual norm estimate
 
     # Stopping criterion.
     solved    = rNorm ≤ ε
@@ -243,8 +243,8 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
 
       pᴴq = kdot(n, p, q)  # pᴴq  = ⟨p,q⟩
-      βₖ₊₁ = √(abs(pᴴq))    # βₖ₊₁ = √(|pᴴq|)
-      γₖ₊₁ = pᴴq / βₖ₊₁     # γₖ₊₁ = pᴴq / βₖ₊₁
+      βₖ₊₁ = √(abs(pᴴq))   # βₖ₊₁ = √(|pᴴq|)
+      γₖ₊₁ = pᴴq / βₖ₊₁    # γₖ₊₁ = pᴴq / βₖ₊₁
 
       # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
       #                                            [ Oᵀ ]

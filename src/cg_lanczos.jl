@@ -138,7 +138,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       kcopy!(n, Mv, b)  # Mv ← b
     end
     MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹r₀
-    β = sqrt(kdotr(n, v, Mv))          # β₁ = v₁ᴴ M v₁
+    β = sqrt(kdotr(n, v, Mv))           # β₁ = v₁ᴴ M v₁
     σ = β
     rNorm = σ
     history && push!(rNorms, rNorm)
@@ -185,7 +185,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     while ! (solved || tired || (check_curvature & indefinite) || user_requested_exit || overtimed)
       # Form next Lanczos vector.
       # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-      mul!(Mv_next, A, v)        # Mvₖ₊₁ ← Avₖ
+      mul!(Mv_next, A, v)       # Mvₖ₊₁ ← Avₖ
       δ = kdotr(n, v, Mv_next)  # δₖ = vₖᴴ A vₖ
 
       # Check curvature. Exit fast if requested.
@@ -194,25 +194,25 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       indefinite |= (γ ≤ 0)
       (check_curvature & indefinite) && continue
 
-      kaxpy!(n, -δ, Mv, Mv_next)        # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
+      kaxpy!(n, -δ, Mv, Mv_next)          # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
       if iter > 0
-        kaxpy!(n, -β, Mv_prev, Mv_next) # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
-        kcopy!(n, Mv_prev, Mv)          # Mvₖ₋₁ ← Mvₖ
+        kaxpy!(n, -β, Mv_prev, Mv_next)   # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
+        kcopy!(n, Mv_prev, Mv)            # Mvₖ₋₁ ← Mvₖ
       end
       kcopy!(n, Mv, Mv_next)              # Mvₖ ← Mvₖ₊₁
-      MisI || mulorldiv!(v, M, Mv, ldiv)   # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
+      MisI || mulorldiv!(v, M, Mv, ldiv)  # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
       β = sqrt(kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
       kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
       MisI || kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
-      Anorm2 += β_prev^2 + β^2 + δ^2       # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
+      Anorm2 += β_prev^2 + β^2 + δ^2      # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
       β_prev = β
 
       # Compute next CG iterate.
-      kaxpy!(n, γ, p, x)     # xₖ₊₁ = xₖ + γₖ * pₖ
+      kaxpy!(n, γ, p, x)      # xₖ₊₁ = xₖ + γₖ * pₖ
       ω = β * γ
       σ = -ω * σ              # σₖ₊₁ = - βₖ₊₁ * γₖ * σₖ
       ω = ω * ω               # ωₖ = (βₖ₊₁ * γₖ)²
-      kaxpby!(n, σ, v, ω, p) # pₖ₊₁ = σₖ₊₁ * vₖ₊₁ + ωₖ * pₖ
+      kaxpby!(n, σ, v, ω, p)  # pₖ₊₁ = σₖ₊₁ * vₖ₊₁ + ωₖ * pₖ
       rNorm = abs(σ)          # ‖rₖ₊₁‖_M = |σₖ₊₁| because rₖ₊₁ = σₖ₊₁ * vₖ₊₁ and ‖vₖ₊₁‖_M = 1
       history && push!(rNorms, rNorm)
       iter = iter + 1
