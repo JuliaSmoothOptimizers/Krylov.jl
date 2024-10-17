@@ -369,9 +369,9 @@ function to_boundary(n :: Int, x :: AbstractVector{FC}, d :: AbstractVector{FC},
 
   if M === I
     # ‖d‖² σ² + (xᴴd + dᴴx) σ + (‖x‖² - Δ²).
-    rxd = @kdotr(n, x, d)
-    dNorm2 == zero(T) && (dNorm2 = @kdotr(n, d, d))
-    xNorm2 == zero(T) && (xNorm2 = @kdotr(n, x, x))
+    rxd = kdotr(n, x, d)
+    dNorm2 == zero(T) && (dNorm2 = kdotr(n, d, d))
+    xNorm2 == zero(T) && (xNorm2 = kdotr(n, x, x))
   else
     # (dᴴMd) σ² + (xᴴMd + dᴴMx) σ + (xᴴMx - Δ²).
     mulorldiv!(z, M, x, ldiv)
