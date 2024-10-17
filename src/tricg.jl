@@ -225,7 +225,7 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
     kcopy!(n, N⁻¹uₖ, c₀)  # M⁻¹uₖ ← c₀
     NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
-    γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
+    γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     if γₖ ≠ 0
       kscal!(n, one(FC) / γₖ, N⁻¹uₖ)
       NisI || kscal!(n, one(FC) / γₖ, uₖ)
