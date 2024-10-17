@@ -9,7 +9,7 @@
 
 #### Keyword arguments
 
-* `algo`: the algorithm to perform reduced QR factorizations ("gs", "mgs", "givens" or "householder").
+* `algo`: the algorithm to perform reduced QR factorizations (`"gs"`, `"mgs"`, `"givens"` or `"householder"`).
 
 #### Output arguments
 
@@ -237,7 +237,7 @@ end
 
 #### Keyword arguments
 
-* `algo`: the algorithm to perform reduced QR factorizations ("gs", "mgs", "givens" or "householder").
+* `algo`: the algorithm to perform reduced QR factorizations (`"gs"`, `"mgs"`, `"givens"` or `"householder"`).
 * `reorthogonalization`: reorthogonalize the new matrices of the block Krylov basis against all previous matrices.
 
 #### Output arguments
@@ -314,7 +314,7 @@ end
 
 #### Keyword argument
 
-* `algo`: the algorithm to perform reduced QR factorizations ("gs", "mgs", "givens" or "householder").
+* `algo`: the algorithm to perform reduced QR factorizations (`"gs"`, `"mgs"`, `"givens"` or `"householder"`).
 
 #### Output arguments
 
@@ -428,7 +428,7 @@ end
 
 #### Keyword argument
 
-* `algo`: the algorithm to perform reduced QR factorizations ("gs", "mgs", "givens" or "householder").
+* `algo`: the algorithm to perform reduced QR factorizations (`"gs"`, `"mgs"`, `"givens"` or `"householder"`).
 
 #### Output arguments
 
@@ -568,7 +568,7 @@ end
 
 #### Keyword arguments
 
-* `algo`: the algorithm to perform reduced QR factorizations ("gs", "mgs", "givens" or "householder").
+* `algo`: the algorithm to perform reduced QR factorizations (`"gs"`, `"mgs"`, `"givens"` or `"householder"`).
 * `reorthogonalization`: reorthogonalize the new matrices of the block Krylov basis against all previous matrices.
 
 #### Output arguments
