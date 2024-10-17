@@ -34,6 +34,7 @@ include("gpmr.jl")
 
 include("usymlq.jl")
 include("usymqr.jl")
+include("usymlqr.jl")
 include("tricg.jl")
 include("trimr.jl")
 include("trilqr.jl")

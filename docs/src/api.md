@@ -32,6 +32,7 @@ DqgmresSolver
 GmresSolver
 UsymlqSolver
 UsymqrSolver
+UsymlqrSolver
 TricgSolver
 TrimrSolver
 TrilqrSolver
