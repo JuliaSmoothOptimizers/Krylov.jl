@@ -330,6 +330,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
     # Update stats
     stats.niter = iter
     stats.solved = solved
+    stats.storage = sizeof(solver)
     stats.timer = ktimer(start_time)
     stats.status = status
     return solver
