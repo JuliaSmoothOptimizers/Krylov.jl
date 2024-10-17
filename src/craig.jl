@@ -199,12 +199,12 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     u = MisI ? Mu : solver.u
     v = NisI ? Nv : solver.v
 
-    @kfill!(x, zero(FC))
-    @kfill!(y, zero(FC))
+    kfill!(x, zero(FC))
+    kfill!(y, zero(FC))
 
-    @kcopy!(m, Mu, b)  # Mu ← b
+    kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)
-    β₁ = sqrt(@kdotr(m, u, Mu))
+    β₁ = sqrt(kdotr(m, u, Mu))
     rNorm  = β₁
     history && push!(rNorms, rNorm)
     if β₁ == 0
@@ -223,13 +223,13 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
 
     # Initialize Golub-Kahan process.
     # β₁Mu₁ = b.
-    @kscal!(m, one(FC) / β₁, u)
-    MisI || @kscal!(m, one(FC) / β₁, Mu)
+    kscal!(m, one(FC) / β₁, u)
+    MisI || kscal!(m, one(FC) / β₁, Mu)
 
-    @kfill!(Nv, zero(FC))
-    @kfill!(w, zero(FC))  # Used to update y.
+    kfill!(Nv, zero(FC))
+    kfill!(w, zero(FC))  # Used to update y.
 
-    λ > 0 && @kfill!(w2, zero(FC))
+    λ > 0 && kfill!(w2, zero(FC))
 
     Anorm² = zero(T) # Estimate of ‖A‖²_F.
     Anorm  = zero(T)
@@ -268,15 +268,15 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
       # Generate the next Golub-Kahan vectors
       # 1. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
       mul!(Aᴴu, Aᴴ, u)
-      @kaxpby!(n, one(FC), Aᴴu, -β, Nv)
+      kaxpby!(n, one(FC), Aᴴu, -β, Nv)
       NisI || mulorldiv!(v, N, Nv, ldiv)
-      α = sqrt(@kdotr(n, v, Nv))
+      α = sqrt(kdotr(n, v, Nv))
       if α == 0
         inconsistent = true
         continue
       end
-      @kscal!(n, one(FC) / α, v)
-      NisI || @kscal!(n, one(FC) / α, Nv)
+      kscal!(n, one(FC) / α, v)
+      NisI || kscal!(n, one(FC) / α, Nv)
 
       Anorm² += α * α + λ * λ
 
@@ -296,27 +296,27 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
         # w1 = c₁ * v + s₁ * w2
         # w2 = s₁ * v - c₁ * w2
         # x  = x + ξ * w1
-        @kaxpy!(n, ξ * c₁, v, x)
-        @kaxpy!(n, ξ * s₁, w2, x)
-        @kaxpby!(n, s₁, v, -c₁, w2)
+        kaxpy!(n, ξ * c₁, v, x)
+        kaxpy!(n, ξ * s₁, w2, x)
+        kaxpby!(n, s₁, v, -c₁, w2)
       else
-        @kaxpy!(n, ξ, v, x)  # x = x + ξ * v
+        kaxpy!(n, ξ, v, x)  # x = x + ξ * v
       end
 
       # Recur y.
-      @kaxpby!(m, one(FC), u, -θ/ρ_prev, w)  # w = u - θ/ρ_prev * w
-      @kaxpy!(m, ξ/ρ, w, y)  # y = y + ξ/ρ * w
+      kaxpby!(m, one(FC), u, -θ/ρ_prev, w)  # w = u - θ/ρ_prev * w
+      kaxpy!(m, ξ/ρ, w, y)  # y = y + ξ/ρ * w
 
-      Dnorm² += @knrm2(m, w)
+      Dnorm² += knorm(m, w)
 
       # 2. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
       mul!(Av, A, v)
-      @kaxpby!(m, one(FC), Av, -α, Mu)
+      kaxpby!(m, one(FC), Av, -α, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)
-      β = sqrt(@kdotr(m, u, Mu))
+      β = sqrt(kdotr(m, u, Mu))
       if β ≠ 0
-        @kscal!(m, one(FC) / β, u)
-        MisI || @kscal!(m, one(FC) / β, Mu)
+        kscal!(m, one(FC) / β, u)
+        MisI || kscal!(m, one(FC) / β, Mu)
       end
 
       # Finish  updates from the first Givens rotation.
@@ -333,7 +333,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
         # k+1 [  γ    λ ] [ -c₂   s₂ ] = [  0    δ ]
         # k+2 [  0    0 ] [  s₂   c₂ ]   [  0    0 ]
         c₂, s₂, δ = sym_givens(λ, γ)
-        @kscal!(n, s₂, w2)
+        kscal!(n, s₂, w2)
       end
 
       Anorm² += β * β
@@ -373,7 +373,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     # transfer to LSQR point if requested
     if λ > 0 && transfer_to_lsqr
       ξ *= -θ / δ
-      @kaxpy!(n, ξ, w2, x)
+      kaxpy!(n, ξ, w2, x)
       # TODO: update y
     end
 

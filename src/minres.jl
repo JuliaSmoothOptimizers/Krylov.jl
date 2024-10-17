@@ -159,21 +159,21 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     ctol = conlim > 0 ? 1 / conlim : zero(T)
 
     # Initial solution x₀
-    @kfill!(x, zero(FC))
+    kfill!(x, zero(FC))
 
     if warm_start
       mul!(r1, A, Δx)
-      (λ ≠ 0) && @kaxpy!(n, λ, Δx, r1)
-      @kaxpby!(n, one(FC), b, -one(FC), r1)
+      (λ ≠ 0) && kaxpy!(n, λ, Δx, r1)
+      kaxpby!(n, one(FC), b, -one(FC), r1)
     else
-      @kcopy!(n, r1, b)  # r1 ← b
+      kcopy!(n, r1, b)  # r1 ← b
     end
 
     # Initialize Lanczos process.
     # β₁ M v₁ = b.
-    @kcopy!(n, r2, r1)  # r2 ← r1
+    kcopy!(n, r2, r1)  # r2 ← r1
     MisI || mulorldiv!(v, M, r1, ldiv)
-    β₁ = @kdotr(m, r1, v)
+    β₁ = kdotr(m, r1, v)
     β₁ < 0 && error("Preconditioner is not positive definite")
     if β₁ == 0
       stats.niter = 0
@@ -201,8 +201,8 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     γmin = T(Inf)
     cs = -one(T)
     sn = zero(T)
-    @kfill!(w1, zero(FC))
-    @kfill!(w2, zero(FC))
+    kfill!(w1, zero(FC))
+    kfill!(w2, zero(FC))
 
     ANorm² = zero(T)
     ANorm = zero(T)
@@ -215,7 +215,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     xENorm² = zero(T)
     err_lbnd = zero(T)
     window = length(err_vec)
-    @kfill!(err_vec, zero(T))
+    kfill!(err_vec, zero(T))
 
     iter = 0
     itmax == 0 && (itmax = 2*n)
@@ -237,29 +237,29 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
 
       # Generate next Lanczos vector.
       mul!(y, A, v)
-      λ ≠ 0 && @kaxpy!(n, λ, v, y)             # (y = y + λ * v)
-      @kscal!(n, one(FC) / β, y)
-      iter ≥ 2 && @kaxpy!(n, -β / oldβ, r1, y) # (y = y - β / oldβ * r1)
+      λ ≠ 0 && kaxpy!(n, λ, v, y)             # (y = y + λ * v)
+      kscal!(n, one(FC) / β, y)
+      iter ≥ 2 && kaxpy!(n, -β / oldβ, r1, y) # (y = y - β / oldβ * r1)
 
-      α = @kdotr(n, v, y) / β
-      @kaxpy!(n, -α / β, r2, y)  # y = y - α / β * r2
+      α = kdotr(n, v, y) / β
+      kaxpy!(n, -α / β, r2, y)  # y = y - α / β * r2
 
       # Compute w.
       δ = cs * δbar + sn * α
       if iter == 1
         w = w2
       else
-        iter ≥ 3 && @kscal!(n, -ϵ, w1)
+        iter ≥ 3 && kscal!(n, -ϵ, w1)
         w = w1
-        @kaxpy!(n, -δ, w2, w)
+        kaxpy!(n, -δ, w2, w)
       end
-      @kaxpy!(n, one(FC) / β, v, w)
+      kaxpy!(n, one(FC) / β, v, w)
 
-      @kcopy!(n, r1, r2)  # r1 ← r2
-      @kcopy!(n, r2, y)   # r2 ← y
+      kcopy!(n, r1, r2)  # r1 ← r2
+      kcopy!(n, r2, y)   # r2 ← y
       MisI || mulorldiv!(v, M, r2, ldiv)
       oldβ = β
-      β = @kdotr(n, r2, v)
+      β = kdotr(n, r2, v)
       β < 0 && error("Preconditioner is not positive definite")
       β = sqrt(β)
       ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
@@ -283,20 +283,20 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
       ϕbar = sn * ϕbar
 
       # Final update of w.
-      @kscal!(n, one(FC) / γ, w)
+      kscal!(n, one(FC) / γ, w)
 
       # Update x.
-      @kaxpy!(n, ϕ, w, x)  # x = x + ϕ * w
+      kaxpy!(n, ϕ, w, x)  # x = x + ϕ * w
       xENorm² = xENorm² + ϕ * ϕ
 
       # Update directions for x.
       if iter ≥ 2
-        @kswap(w1, w2)
+        @kswap!(w1, w2)
       end
 
       # Compute lower bound on forward error.
       err_vec[mod(iter, window) + 1] = ϕ
-      iter ≥ window && (err_lbnd = @knrm2(window, err_vec))
+      iter ≥ window && (err_lbnd = knorm(window, err_vec))
 
       γmax = max(γmax, γ)
       γmin = min(γmin, γ)
@@ -306,7 +306,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
 
       # Estimate various norms.
       ANorm = sqrt(ANorm²)
-      xNorm = @knrm2(n, x)
+      xNorm = knorm(n, x)
       ϵA = ANorm * ϵM
       ϵx = ANorm * xNorm * ϵM
       ϵr = ANorm * xNorm * rtol
@@ -371,7 +371,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

@@ -144,18 +144,18 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
     xr = restart ? Δx : x
 
     # Initial solution x₀.
-    @kfill!(x, zero(FC))
+    kfill!(x, zero(FC))
 
     # Initial residual r₀.
     if warm_start
       mul!(w, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), w)
-      restart && @kaxpy!(n, one(FC), Δx, x)
+      kaxpby!(n, one(FC), b, -one(FC), w)
+      restart && kaxpy!(n, one(FC), Δx, x)
     else
-      @kcopy!(n, w, b)  # w ← b
+      kcopy!(n, w, b)  # w ← b
     end
     MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M(b - Ax₀)
-    β = @knrm2(n, r₀)                   # β = ‖r₀‖₂
+    β = knorm(n, r₀)                   # β = ‖r₀‖₂
 
     rNorm = β
     history && push!(rNorms, β)
@@ -200,25 +200,25 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
       # Initialize workspace.
       nr = 0  # Number of coefficients stored in Rₖ.
       for i = 1 : mem
-        @kfill!(V[i], zero(FC))  # Orthogonal basis of {Mr₀, MANₖr₀, ..., (MANₖ)ᵏ⁻¹r₀}.
-        @kfill!(Z[i], zero(FC))  # Zₖ = [N₁v₁, ..., Nₖvₖ]
+        kfill!(V[i], zero(FC))  # Orthogonal basis of {Mr₀, MANₖr₀, ..., (MANₖ)ᵏ⁻¹r₀}.
+        kfill!(Z[i], zero(FC))  # Zₖ = [N₁v₁, ..., Nₖvₖ]
       end
-      @kfill!(s, zero(FC))  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
-      @kfill!(c, zero(T))   # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
-      @kfill!(R, zero(FC))  # Upper triangular matrix Rₖ.
-      @kfill!(z, zero(FC))  # Right-hand of the least squares problem min ‖Hₖ₊₁.ₖyₖ - βe₁‖₂.
+      kfill!(s, zero(FC))  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
+      kfill!(c, zero(T))   # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
+      kfill!(R, zero(FC))  # Upper triangular matrix Rₖ.
+      kfill!(z, zero(FC))  # Right-hand of the least squares problem min ‖Hₖ₊₁.ₖyₖ - βe₁‖₂.
 
       if restart
-        @kfill!(xr, zero(FC))  # xr === Δx when restart is set to true
+        kfill!(xr, zero(FC))  # xr === Δx when restart is set to true
         if npass ≥ 1
           mul!(w, A, x)
-          @kaxpby!(n, one(FC), b, -one(FC), w)
+          kaxpby!(n, one(FC), b, -one(FC), w)
           MisI || mulorldiv!(r₀, M, w, ldiv)
         end
       end
 
       # Initial ζ₁ and V₁
-      β = @knrm2(n, r₀)
+      β = knorm(n, r₀)
       z[1] = β
       V[1] .= r₀ ./ rNorm
 
@@ -248,21 +248,21 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
         mul!(w, A, Z[inner_iter])                          # w  ← Azₖ
         MisI || mulorldiv!(q, M, w, ldiv)                  # q  ← MAzₖ
         for i = 1 : inner_iter
-          R[nr+i] = @kdot(n, V[i], q)      # hᵢₖ = (vᵢ)ᴴq
-          @kaxpy!(n, -R[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
+          R[nr+i] = kdot(n, V[i], q)      # hᵢₖ = (vᵢ)ᴴq
+          kaxpy!(n, -R[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
         end
 
         # Reorthogonalization of the basis.
         if reorthogonalization
           for i = 1 : inner_iter
-            Htmp = @kdot(n, V[i], q)
+            Htmp = kdot(n, V[i], q)
             R[nr+i] += Htmp
-            @kaxpy!(n, -Htmp, V[i], q)
+            kaxpy!(n, -Htmp, V[i], q)
           end
         end
 
         # Compute hₖ₊₁.ₖ
-        Hbis = @knrm2(n, q)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+        Hbis = knorm(n, q)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
 
         # Update the QR factorization of Hₖ₊₁.ₖ.
         # Apply previous Givens reflections Ωᵢ.
@@ -335,9 +335,9 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
 
       # Form xₖ = N₁v₁y₁ + ... + Nₖvₖyₖ = z₁y₁ + ... + zₖyₖ
       for i = 1 : inner_iter
-        @kaxpy!(n, y[i], Z[i], xr)
+        kaxpy!(n, y[i], Z[i], xr)
       end
-      restart && @kaxpy!(n, one(FC), xr, x)
+      restart && kaxpy!(n, one(FC), xr, x)
 
       # Update inner_itmax, iter and tired variables.
       inner_itmax = inner_itmax - inner_iter
@@ -356,7 +356,7 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && !restart && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && !restart && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

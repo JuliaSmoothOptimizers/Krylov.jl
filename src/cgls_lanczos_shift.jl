@@ -134,14 +134,14 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     # Initial state.
     ## Distribute x similarly to shifts.
     for i = 1 : nshifts
-      @kfill!(x[i], zero(FC))  # x₀
+      kfill!(x[i], zero(FC))  # x₀
     end
 
-    @kcopy!(m, u, b)             # u ← b
-    @kfill!(u_prev, zero(FC))
+    kcopy!(m, u, b)             # u ← b
+    kfill!(u_prev, zero(FC))
     mul!(v, Aᴴ, u)               # v₁ ← Aᴴ * b
-    β = sqrt(@kdotr(n, v, v))    # β₁ = v₁ᵀ M v₁
-    @kfill!(rNorms, β)
+    β = sqrt(kdotr(n, v, v))    # β₁ = v₁ᵀ M v₁
+    kfill!(rNorms, β)
     if history
       for i = 1 : nshifts
         push!(rNorms_history[i], rNorms[i])
@@ -158,20 +158,20 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
 
     # Initialize each p to v.
     for i = 1 : nshifts
-      @kcopy!(n, p[i], v)  # pᵢ ← v
+      kcopy!(n, p[i], v)  # pᵢ ← v
     end
 
     # Initialize Lanczos process.
     # β₁v₁ = b
-    @kscal!(n, one(FC) / β, v)  # v₁ ← v₁ / β₁
-    @kscal!(m, one(FC) / β, u)
+    kscal!(n, one(FC) / β, v)  # v₁ ← v₁ / β₁
+    kscal!(m, one(FC) / β, u)
 
     # Initialize some constants used in recursions below.
     ρ = one(T)
-    @kfill!(σ, β)
-    @kfill!(δhat, zero(T))
-    @kfill!(ω, zero(T))
-    @kfill!(γ, one(T))
+    kfill!(σ, β)
+    kfill!(δhat, zero(T))
+    kfill!(ω, zero(T))
+    kfill!(γ, one(T))
 
     # Define stopping tolerance.
     ε = atol + rtol * β
@@ -199,17 +199,17 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
 
       # Form next Lanczos vector.
       mul!(utilde, A, v)                   # utildeₖ ← Avₖ
-      δ = @kdotr(m, utilde, utilde)        # δₖ = vₖᵀAᴴAvₖ
-      @kaxpy!(m, -δ, u, utilde)            # uₖ₊₁ = utildeₖ - δₖuₖ - βₖuₖ₋₁
-      @kaxpy!(m, -β, u_prev, utilde)
+      δ = kdotr(m, utilde, utilde)        # δₖ = vₖᵀAᴴAvₖ
+      kaxpy!(m, -δ, u, utilde)            # uₖ₊₁ = utildeₖ - δₖuₖ - βₖuₖ₋₁
+      kaxpy!(m, -β, u_prev, utilde)
       mul!(v, Aᴴ, utilde)                  # vₖ₊₁ = Aᴴuₖ₊₁
-      β = sqrt(@kdotr(n, v, v))            # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
-      @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-      @kscal!(m, one(FC) / β, utilde)      # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
-      @kcopy!(m, u_prev, u)  # u_prev ← u
-      @kcopy!(m, u, utilde)  # u ← utilde
+      β = sqrt(kdotr(n, v, v))            # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+      kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+      kscal!(m, one(FC) / β, utilde)      # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
+      kcopy!(m, u_prev, u)  # u_prev ← u
+      kcopy!(m, u, utilde)  # u ← utilde
 
-      MisI || (ρ = @kdotr(n, v, v))
+      MisI || (ρ = kdotr(n, v, v))
       for i = 1 : nshifts
         δhat[i] = δ + ρ * shifts[i]
         γ[i] = 1 / (δhat[i] - ω[i] / γ[i])
@@ -219,11 +219,11 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
       for i = 1 : nshifts
         not_cv[i] = !converged[i]
         if not_cv[i]
-          @kaxpy!(n, γ[i], p[i], x[i])
+          kaxpy!(n, γ[i], p[i], x[i])
           ω[i] = β * γ[i]
           σ[i] *= -ω[i]
           ω[i] *= ω[i]
-          @kaxpby!(n, σ[i], v, ω[i], p[i])
+          kaxpby!(n, σ[i], v, ω[i], p[i])
 
           # Update list of systems that have not converged.
           rNorms[i] = abs(σ[i])

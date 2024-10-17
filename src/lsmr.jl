@@ -196,13 +196,13 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     v = NisI ? Nv : solver.v
 
     ctol = conlim > 0 ? 1/conlim : zero(T)
-    @kfill!(x, zero(FC))
+    kfill!(x, zero(FC))
 
     # Initialize Golub-Kahan process.
     # β₁ M u₁ = b.
-    @kcopy!(m, Mu, b)  # Mu ← b
+    kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)
-    β₁ = sqrt(@kdotr(m, u, Mu))
+    β₁ = sqrt(kdotr(m, u, Mu))
     if β₁ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
@@ -214,12 +214,12 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     end
     β = β₁
 
-    @kscal!(m, one(FC)/β₁, u)
-    MisI || @kscal!(m, one(FC)/β₁, Mu)
+    kscal!(m, one(FC)/β₁, u)
+    MisI || kscal!(m, one(FC)/β₁, Mu)
     mul!(Aᴴu, Aᴴ, u)
-    @kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
+    kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
-    α = sqrt(@kdotr(n, v, Nv))
+    α = sqrt(kdotr(n, v, Nv))
 
     ζbar = α * β
     αbar = α
@@ -255,7 +255,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     xENorm² = zero(T)
     err_lbnd = zero(T)
     window = length(err_vec)
-    @kfill!(err_vec, zero(T))
+    kfill!(err_vec, zero(T))
 
     iter = 0
     itmax == 0 && (itmax = m + n)
@@ -271,11 +271,11 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
       stats.status = "x = 0 is a minimum least-squares solution"
       return solver
     end
-    @kscal!(n, one(FC)/α, v)
-    NisI || @kscal!(n, one(FC)/α, Nv)
+    kscal!(n, one(FC)/α, v)
+    NisI || kscal!(n, one(FC)/α, Nv)
 
-    @kcopy!(n, h, v)  # h ← v
-    @kfill!(hbar, zero(FC))
+    kcopy!(n, h, v)  # h ← v
+    kfill!(hbar, zero(FC))
 
     status = "unknown"
     on_boundary = false
@@ -293,21 +293,21 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
       # Generate next Golub-Kahan vectors.
       # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
       mul!(Av, A, v)
-      @kaxpby!(m, one(FC), Av, -α, Mu)
+      kaxpby!(m, one(FC), Av, -α, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)
-      β = sqrt(@kdotr(m, u, Mu))
+      β = sqrt(kdotr(m, u, Mu))
       if β ≠ 0
-        @kscal!(m, one(FC)/β, u)
-        MisI || @kscal!(m, one(FC)/β, Mu)
+        kscal!(m, one(FC)/β, u)
+        MisI || kscal!(m, one(FC)/β, Mu)
 
         # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
         mul!(Aᴴu, Aᴴ, u)
-        @kaxpby!(n, one(FC), Aᴴu, -β, Nv)
+        kaxpby!(n, one(FC), Aᴴu, -β, Nv)
         NisI || mulorldiv!(v, N, Nv, ldiv)
-        α = sqrt(@kdotr(n, v, Nv))
+        α = sqrt(kdotr(n, v, Nv))
         if α ≠ 0
-          @kscal!(n, one(FC)/α, v)
-          NisI || @kscal!(n, one(FC)/α, Nv)
+          kscal!(n, one(FC)/α, v)
+          NisI || kscal!(n, one(FC)/α, Nv)
         end
       end
 
@@ -329,11 +329,11 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
 
       xENorm² = xENorm² + ζ * ζ
       err_vec[mod(iter, window) + 1] = ζ
-      iter ≥ window && (err_lbnd = @knrm2(window, err_vec))
+      iter ≥ window && (err_lbnd = knorm(window, err_vec))
 
       # Update h, hbar and x.
       δ = θbar * ρ / (ρold * ρbarold) # δₖ = θbarₖ * ρₖ / (ρₖ₋₁ * ρbarₖ₋₁)
-      @kaxpby!(n, one(FC), h, -δ, hbar)   # ĥₖ = hₖ - δₖ * ĥₖ₋₁
+      kaxpby!(n, one(FC), h, -δ, hbar)   # ĥₖ = hₖ - δₖ * ĥₖ₋₁
 
       # if a trust-region constraint is given, compute step to the boundary
       # the step ϕ/ρ is not necessarily positive
@@ -345,8 +345,8 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
         σ = σ > 0 ? min(σ, tmax) : max(σ, tmin)
       end
 
-      @kaxpy!(n, σ, hbar, x) # xₖ = xₖ₋₁ + σₖ * ĥₖ
-      @kaxpby!(n, one(FC), v, -θnew / ρ, h) # hₖ₊₁ = vₖ₊₁ - (θₖ₊₁/ρₖ) * hₖ
+      kaxpy!(n, σ, hbar, x) # xₖ = xₖ₋₁ + σₖ * ĥₖ
+      kaxpby!(n, one(FC), v, -θnew / ρ, h) # hₖ₊₁ = vₖ₊₁ - (θₖ₊₁/ρₖ) * hₖ
 
       # Estimate ‖r‖.
       βacute =  chat * βdd
@@ -380,7 +380,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
       # Test for convergence.
       ArNorm = abs(ζbar)
       history && push!(ArNorms, ArNorm)
-      xNorm = @knrm2(n, x)
+      xNorm = knorm(n, x)
 
       test1 = rNorm / β₁
       test2 = ArNorm / (Anorm * rNorm)

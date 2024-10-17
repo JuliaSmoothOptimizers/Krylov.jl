@@ -139,18 +139,18 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
     xr = restart ? Δx : x
 
     # Initial solution x₀.
-    @kfill!(x, zero(FC))
+    kfill!(x, zero(FC))
 
     # Initial residual r₀.
     if warm_start
       mul!(w, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), w)
-      restart && @kaxpy!(n, one(FC), Δx, x)
+      kaxpby!(n, one(FC), b, -one(FC), w)
+      restart && kaxpy!(n, one(FC), Δx, x)
     else
-      @kcopy!(n, w, b)  # w ← b
+      kcopy!(n, w, b)  # w ← b
     end
     MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M(b - Ax₀)
-    β = @knrm2(n, r₀)                   # β = ‖r₀‖₂
+    β = knorm(n, r₀)                   # β = ‖r₀‖₂
 
     rNorm = β
     history && push!(rNorms, β)
@@ -194,23 +194,23 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
       # Initialize workspace.
       nr = 0  # Number of coefficients stored in Uₖ.
       for i = 1 : mem
-        @kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
+        kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
       end
-      @kfill!(l, zero(FC))  # Lower unit triangular matrix Lₖ.
-      @kfill!(U, zero(FC))  # Upper triangular matrix Uₖ.
-      @kfill!(z, zero(FC))  # Solution of Lₖzₖ = βe₁.
+      kfill!(l, zero(FC))  # Lower unit triangular matrix Lₖ.
+      kfill!(U, zero(FC))  # Upper triangular matrix Uₖ.
+      kfill!(z, zero(FC))  # Solution of Lₖzₖ = βe₁.
 
       if restart
-        @kfill!(xr, zero(FC))  # xr === Δx when restart is set to true
+        kfill!(xr, zero(FC))  # xr === Δx when restart is set to true
         if npass ≥ 1
           mul!(w, A, x)
-          @kaxpby!(n, one(FC), b, -one(FC), w)
+          kaxpby!(n, one(FC), b, -one(FC), w)
           MisI || mulorldiv!(r₀, M, w, ldiv)
         end
       end
 
       # Initial ζ₁ and V₁
-      β = @knrm2(n, r₀)
+      β = knorm(n, r₀)
       z[1] = β
       V[1] .= r₀ ./ rNorm
 
@@ -238,21 +238,21 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
         mul!(w, A, p)                                  # w ← ANvₖ
         MisI || mulorldiv!(q, M, w, ldiv)              # q ← MANvₖ
         for i = 1 : inner_iter
-          U[nr+i] = @kdot(n, V[i], q)      # hᵢₖ = (vᵢ)ᴴq
-          @kaxpy!(n, -U[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
+          U[nr+i] = kdot(n, V[i], q)      # hᵢₖ = (vᵢ)ᴴq
+          kaxpy!(n, -U[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
         end
 
         # Reorthogonalization of the Krylov basis.
         if reorthogonalization
           for i = 1 : inner_iter
-            Htmp = @kdot(n, V[i], q)
+            Htmp = kdot(n, V[i], q)
             U[nr+i] += Htmp
-            @kaxpy!(n, -Htmp, V[i], q)
+            kaxpy!(n, -Htmp, V[i], q)
           end
         end
 
         # Compute hₖ₊₁.ₖ
-        Hbis = @knrm2(n, q)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+        Hbis = knorm(n, q)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
 
         # Update the LU factorization of Hₖ.
         if inner_iter ≥ 2
@@ -311,13 +311,13 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
 
       # Form xₖ = NVₖyₖ
       for i = 1 : inner_iter
-        @kaxpy!(n, y[i], V[i], xr)
+        kaxpy!(n, y[i], V[i], xr)
       end
       if !NisI
-        @kcopy!(n, solver.p, xr)  # p ← xr
+        kcopy!(n, solver.p, xr)  # p ← xr
         mulorldiv!(xr, N, solver.p, ldiv)
       end
-      restart && @kaxpy!(n, one(FC), xr, x)
+      restart && kaxpy!(n, one(FC), xr, x)
 
       # Update inner_itmax, iter, tired and overtimed variables.
       inner_itmax = inner_itmax - inner_iter
@@ -336,7 +336,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && !restart && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && !restart && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

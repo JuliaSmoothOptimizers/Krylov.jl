@@ -129,12 +129,12 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     # Initial state.
     ## Distribute x similarly to shifts.
     for i = 1 : nshifts
-      @kfill!(x[i], zero(FC))  # x₀
+      kfill!(x[i], zero(FC))  # x₀
     end
-    @kcopy!(n, Mv, b)                   # Mv₁ ← b
+    kcopy!(n, Mv, b)                   # Mv₁ ← b
     MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹ * Mv₁
-    β = sqrt(@kdotr(n, v, Mv))          # β₁ = v₁ᴴ M v₁
-    @kfill!(rNorms, β)
+    β = sqrt(kdotr(n, v, Mv))          # β₁ = v₁ᴴ M v₁
+    kfill!(rNorms, β)
     if history
       for i = 1 : nshifts
         push!(rNorms_history[i], rNorms[i])
@@ -142,7 +142,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     end
 
     # Keep track of shifted systems with negative curvature if required.
-    # We don't want to use @kfill! here because "indefinite" is a BitVector.
+    # We don't want to use kfill! here because "indefinite" is a BitVector.
     fill!(indefinite, false)
 
     if β == 0
@@ -155,21 +155,21 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
 
     # Initialize each p to v.
     for i = 1 : nshifts
-      @kcopy!(n, p[i], v)  # pᵢ ← v
+      kcopy!(n, p[i], v)  # pᵢ ← v
     end
 
     # Initialize Lanczos process.
     # β₁Mv₁ = b
-    @kscal!(n, one(FC) / β, v)           # v₁  ←  v₁ / β₁
-    MisI || @kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
-    @kcopy!(n, Mv_prev, Mv)              # Mv_prev ← Mv
+    kscal!(n, one(FC) / β, v)           # v₁  ←  v₁ / β₁
+    MisI || kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
+    kcopy!(n, Mv_prev, Mv)              # Mv_prev ← Mv
 
     # Initialize some constants used in recursions below.
     ρ = one(T)
-    @kfill!(σ, β)
-    @kfill!(δhat, zero(T))
-    @kfill!(ω, zero(T))
-    @kfill!(γ, one(T))
+    kfill!(σ, β)
+    kfill!(δhat, zero(T))
+    kfill!(ω, zero(T))
+    kfill!(γ, one(T))
 
     # Define stopping tolerance.
     ε = atol + rtol * β
@@ -197,21 +197,21 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
       # Form next Lanczos vector.
       # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
       mul!(Mv_next, A, v)                  # Mvₖ₊₁ ← Avₖ
-      δ = @kdotr(n, v, Mv_next)            # δₖ = vₖᴴ A vₖ
-      @kaxpy!(n, -δ, Mv, Mv_next)          # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
+      δ = kdotr(n, v, Mv_next)            # δₖ = vₖᴴ A vₖ
+      kaxpy!(n, -δ, Mv, Mv_next)          # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
       if iter > 0
-        @kaxpy!(n, -β, Mv_prev, Mv_next)   # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
-        @kcopy!(n, Mv_prev, Mv)            # Mvₖ₋₁ ← Mvₖ
+        kaxpy!(n, -β, Mv_prev, Mv_next)   # Mvₖ₊₁ ← Mvₖ₊₁ - βₖMvₖ₋₁
+        kcopy!(n, Mv_prev, Mv)            # Mvₖ₋₁ ← Mvₖ
       end
-      @kcopy!(n, Mv, Mv_next)              # Mvₖ ← Mvₖ₊₁
+      kcopy!(n, Mv, Mv_next)              # Mvₖ ← Mvₖ₊₁
       MisI || mulorldiv!(v, M, Mv, ldiv)   # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
-      β = sqrt(@kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
-      @kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-      MisI || @kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+      β = sqrt(kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
+      kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+      MisI || kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
 
       # Check curvature: vₖᴴ(A + sᵢI)vₖ = vₖᴴAvₖ + sᵢ‖vₖ‖² = δₖ + ρₖ * sᵢ with ρₖ = ‖vₖ‖².
       # It is possible to show that σₖ² (δₖ + ρₖ * sᵢ - ωₖ₋₁ / γₖ₋₁) = pₖᴴ (A + sᵢ I) pₖ.
-      MisI || (ρ = @kdotr(n, v, v))
+      MisI || (ρ = kdotr(n, v, v))
       for i = 1 : nshifts
         δhat[i] = δ + ρ * shifts[i]
         γ[i] = 1 / (δhat[i] - ω[i] / γ[i])
@@ -225,11 +225,11 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
       for i = 1 : nshifts
         not_cv[i] = check_curvature ? !(converged[i] || indefinite[i]) : !converged[i]
         if not_cv[i]
-          @kaxpy!(n, γ[i], p[i], x[i])
+          kaxpy!(n, γ[i], p[i], x[i])
           ω[i] = β * γ[i]
           σ[i] *= -ω[i]
           ω[i] *= ω[i]
-          @kaxpby!(n, σ[i], v, ω[i], p[i])
+          kaxpby!(n, σ[i], v, ω[i], p[i])
 
           # Update list of systems that have not converged.
           rNorms[i] = abs(σ[i])

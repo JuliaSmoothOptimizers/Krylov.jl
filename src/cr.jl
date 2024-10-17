@@ -141,19 +141,19 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     Mq = MisI ? q : solver.Mq
 
     # Initial state.
-    @kfill!(x, zero(FC))
+    kfill!(x, zero(FC))
     if warm_start
       mul!(p, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), p)
+      kaxpby!(n, one(FC), b, -one(FC), p)
     else
-      @kcopy!(n, p, b)  # p ← b
+      kcopy!(n, p, b)  # p ← b
     end
-    MisI && @kcopy!(n, r, p)  # r ← p
+    MisI && kcopy!(n, r, p)  # r ← p
     MisI || mulorldiv!(r, M, p, ldiv)
     mul!(Ar, A, r)
-    ρ = @kdotr(n, r, Ar)
+    ρ = kdotr(n, r, Ar)
 
-    rNorm = sqrt(@kdotr(n, r, p))   # ‖r‖
+    rNorm = sqrt(kdotr(n, r, p))   # ‖r‖
     history && push!(rNorms, rNorm) # Values of ‖r‖
 
     if ρ == 0
@@ -165,8 +165,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       solver.warm_start = false
       return solver
     end
-    @kcopy!(n, p, r)   # p ← r
-    @kcopy!(n, q, Ar)  # q ← Ar
+    kcopy!(n, p, r)   # p ← r
+    kcopy!(n, q, Ar)  # q ← Ar
     (verbose > 0) && (m = zero(T)) # quadratic model
 
     iter = 0
@@ -180,7 +180,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     pAp = ρ
     abspAp = abs(pAp)
     xNorm = zero(T)
-    ArNorm = @knrm2(n, Ar) # ‖Ar‖
+    ArNorm = knorm(n, Ar) # ‖Ar‖
     history && push!(ArNorms, ArNorm)
     ε = atol + rtol * rNorm
     (verbose > 0) && @printf(iostream, "%5s  %8s  %8s  %8s  %5s\n", "k", "‖x‖", "‖r‖", "quad", "timer")
@@ -221,7 +221,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         tr = maximum(to_boundary(n, x, r, Mq, radius; flip = false, xNorm2 = xNorm², dNorm2 = rNorm²))
         (verbose > 0) && @printf(iostream, "t1 = %8.1e, t2 = %8.1e and tr = %8.1e\n", t1, t2, tr)
 
-        if abspAp ≤ γ * pNorm * @knrm2(n, q) # pᴴAp ≃ 0
+        if abspAp ≤ γ * pNorm * knorm(n, q) # pᴴAp ≃ 0
           npcurv = true # nonpositive curvature
           (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e ≃ 0\n", pAp)
           if abspr ≤ γ * pNorm * rNorm # pᴴr ≃ 0
@@ -258,7 +258,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
         elseif pAp > 0 && ρ > 0 # no negative curvature
           (verbose > 0) && @printf(iostream, "positive curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
-          α = ρ / @kdotr(n, q, Mq)
+          α = ρ / kdotr(n, q, Mq)
           if α ≥ t1
             α = t1
             on_boundary = true
@@ -313,15 +313,15 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         end
 
       elseif radius == 0
-        α = ρ / @kdotr(n, q, Mq) # step
+        α = ρ / kdotr(n, q, Mq) # step
       end
 
-      @kaxpy!(n, α, p, x)
-      xNorm = @knrm2(n, x)
+      kaxpy!(n, α, p, x)
+      xNorm = knorm(n, x)
       xNorm ≈ radius && (on_boundary = true)
-      @kaxpy!(n, -α, Mq, r) # residual
+      kaxpy!(n, -α, Mq, r) # residual
       if MisI
-        rNorm² = @kdotr(n, r, r)
+        rNorm² = kdotr(n, r, r)
         rNorm = sqrt(rNorm²)
       else
         ω = sqrt(α) * sqrt(ρ)
@@ -330,7 +330,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       end
       history && push!(rNorms, rNorm)
       mul!(Ar, A, r)
-      ArNorm = @knrm2(n, Ar)
+      ArNorm = knorm(n, Ar)
       history && push!(ArNorms, ArNorm)
 
       iter = iter + 1
@@ -353,10 +353,10 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
       (solved || tired || user_requested_exit || overtimed) && continue
       ρbar = ρ
-      ρ = @kdotr(n, r, Ar)
+      ρ = kdotr(n, r, Ar)
       β = ρ / ρbar # step for the direction computation
-      @kaxpby!(n, one(FC), r, β, p)
-      @kaxpby!(n, one(FC), Ar, β, q)
+      kaxpby!(n, one(FC), r, β, p)
+      kaxpby!(n, one(FC), Ar, β, q)
 
       pNorm² = rNorm² + 2 * β * pr - 2 * β * α * pAp + β^2 * pNorm²
       if pNorm² > sqrt(eps(T))
@@ -390,7 +390,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

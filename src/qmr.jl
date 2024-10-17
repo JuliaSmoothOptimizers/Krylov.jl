@@ -154,7 +154,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
 
     if warm_start
       mul!(r₀, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), r₀)
+      kaxpby!(n, one(FC), b, -one(FC), r₀)
     end
     if !MisI
       mulorldiv!(solver.t, M, r₀, ldiv)
@@ -162,8 +162,8 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     end
 
     # Initial solution x₀ and residual norm ‖r₀‖.
-    @kfill!(x, zero(FC))
-    rNorm = @knrm2(n, r₀)  # ‖r₀‖ = ‖b₀ - Ax₀‖
+    kfill!(x, zero(FC))
+    rNorm = knorm(n, r₀)  # ‖r₀‖ = ‖b₀ - Ax₀‖
 
     history && push!(rNorms, rNorm)
     if rNorm == 0
@@ -180,7 +180,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     itmax == 0 && (itmax = 2*n)
 
     # Initialize the Lanczos biorthogonalization process.
-    cᴴb = @kdot(n, c, r₀)  # ⟨c,r₀⟩
+    cᴴb = kdot(n, c, r₀)  # ⟨c,r₀⟩
     if cᴴb == 0
       stats.niter = 0
       stats.solved = false
@@ -197,16 +197,16 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
 
     βₖ = √(abs(cᴴb))             # β₁γ₁ = cᴴ(b - Ax₀)
     γₖ = cᴴb / βₖ                # β₁γ₁ = cᴴ(b - Ax₀)
-    @kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
-    @kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
+    kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
     vₖ .= r₀ ./ βₖ               # v₁ = (b - Ax₀) / β₁
     uₖ .= c ./ conj(γₖ)          # u₁ = c / γ̄₁
     cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
     sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-    @kfill!(wₖ₋₂, zero(FC))      # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
-    @kfill!(wₖ₋₁, zero(FC))      # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
+    kfill!(wₖ₋₂, zero(FC))      # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
+    kfill!(wₖ₋₁, zero(FC))      # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
     ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᴴβ₁e₁
-    τₖ = @kdotr(n, vₖ, vₖ)       # τₖ is used for the residual norm estimate
+    τₖ = kdotr(n, vₖ, vₖ)       # τₖ is used for the residual norm estimate
 
     # Stopping criterion.
     solved    = rNorm ≤ ε
@@ -234,15 +234,15 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       mul!(s, Aᴴ, Mᴴuₖ)
       NisI || mulorldiv!(p, Nᴴ, s, ldiv)
 
-      @kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
-      @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
+      kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
+      kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
 
-      αₖ = @kdot(n, uₖ, q)  # αₖ = ⟨uₖ,q⟩
+      αₖ = kdot(n, uₖ, q)  # αₖ = ⟨uₖ,q⟩
 
-      @kaxpy!(n, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
-      @kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
+      kaxpy!(n, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
+      kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
 
-      pᴴq = @kdot(n, p, q)  # pᴴq  = ⟨p,q⟩
+      pᴴq = kdot(n, p, q)  # pᴴq  = ⟨p,q⟩
       βₖ₊₁ = √(abs(pᴴq))    # βₖ₊₁ = √(|pᴴq|)
       γₖ₊₁ = pᴴq / βₖ₊₁     # γₖ₊₁ = pᴴq / βₖ₊₁
 
@@ -304,32 +304,32 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       # w₁ = v₁ / δ₁
       if iter == 1
         wₖ = wₖ₋₁
-        @kaxpy!(n, one(FC), vₖ, wₖ)
+        kaxpy!(n, one(FC), vₖ, wₖ)
         wₖ .= wₖ ./ δₖ
       end
       # w₂ = (v₂ - λ₁w₁) / δ₂
       if iter == 2
         wₖ = wₖ₋₂
-        @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
-        @kaxpy!(n, one(FC), vₖ, wₖ)
+        kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
+        kaxpy!(n, one(FC), vₖ, wₖ)
         wₖ .= wₖ ./ δₖ
       end
       # wₖ = (vₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
       if iter ≥ 3
-        @kscal!(n, -ϵₖ₋₂, wₖ₋₂)
+        kscal!(n, -ϵₖ₋₂, wₖ₋₂)
         wₖ = wₖ₋₂
-        @kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
-        @kaxpy!(n, one(FC), vₖ, wₖ)
+        kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
+        kaxpy!(n, one(FC), vₖ, wₖ)
         wₖ .= wₖ ./ δₖ
       end
 
       # Compute solution xₖ.
       # xₖ ← xₖ₋₁ + ζₖ * wₖ
-      @kaxpy!(n, ζₖ, wₖ, x)
+      kaxpy!(n, ζₖ, wₖ, x)
 
       # Compute vₖ₊₁ and uₖ₊₁.
-      @kcopy!(n, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
-      @kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
+      kcopy!(n, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
+      kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if pᴴq ≠ zero(FC)
         vₖ .= q ./ βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
@@ -337,7 +337,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       end
 
       # Compute τₖ₊₁ = τₖ + ‖vₖ₊₁‖²
-      τₖ₊₁ = τₖ + @kdotr(n, vₖ, vₖ)
+      τₖ₊₁ = τₖ + kdotr(n, vₖ, vₖ)
 
       # Compute ‖rₖ‖ ≤ |ζbarₖ₊₁|√τₖ₊₁
       rNorm = abs(ζbarₖ₊₁) * √τₖ₊₁
@@ -345,7 +345,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
 
       # Update directions for x.
       if iter ≥ 2
-        @kswap(wₖ₋₂, wₖ₋₁)
+        @kswap!(wₖ₋₂, wₖ₋₁)
       end
 
       # Update ζbarₖ, βₖ, γₖ and τₖ.
@@ -382,7 +382,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       copyto!(solver.s, x)
       mulorldiv!(x, N, solver.s, ldiv)
     end
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

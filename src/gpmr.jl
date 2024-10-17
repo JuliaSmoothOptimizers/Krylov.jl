@@ -198,8 +198,8 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     p  = DisI ? dB : solver.p
 
     # Initial solutions x₀ and y₀.
-    @kfill!(x, zero(FC))
-    @kfill!(y, zero(FC))
+    kfill!(x, zero(FC))
+    kfill!(y, zero(FC))
 
     iter = 0
     itmax == 0 && (itmax = m+n)
@@ -209,41 +209,41 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     mem = length(V)  # Memory
     ωₖ = zero(FC)    # Auxiliary variable to store fₖₖ
     for i = 1 : mem
-      @kfill!(V[i], zero(FC))
-      @kfill!(U[i], zero(FC))
+      kfill!(V[i], zero(FC))
+      kfill!(U[i], zero(FC))
     end
-    @kfill!(gs, zero(FC))  # Givens sines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
-    @kfill!(gc, zero(T))   # Givens cosines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
-    @kfill!(R , zero(FC))  # Upper triangular matrix Rₖ.
-    @kfill!(zt, zero(FC))  # Rₖzₖ = tₖ with (tₖ, τbar₂ₖ₊₁, τbar₂ₖ₊₂) = (Qₖ)ᴴ(βe₁ + γe₂).
+    kfill!(gs, zero(FC))  # Givens sines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
+    kfill!(gc, zero(T))   # Givens cosines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
+    kfill!(R , zero(FC))  # Upper triangular matrix Rₖ.
+    kfill!(zt, zero(FC))  # Rₖzₖ = tₖ with (tₖ, τbar₂ₖ₊₁, τbar₂ₖ₊₂) = (Qₖ)ᴴ(βe₁ + γe₂).
 
     # Warm-start
     # If λ ≠ 0, Cb₀ = Cb - CAΔy - λΔx because CM = Iₘ and E = Iₘ
     # E ≠ Iₘ is only allowed when λ = 0 because E⁻¹Δx can't be computed to use CME = Iₘ
     # Compute C(b - AΔy) - λΔx
     warm_start && mul!(b₀, A, Δy)
-    warm_start && @kaxpby!(m, one(FC), b, -one(FC), b₀)
+    warm_start && kaxpby!(m, one(FC), b, -one(FC), b₀)
     !CisI && mulorldiv!(q, C, b₀, ldiv)
     !CisI && (b₀ = q)
-    warm_start && (λ ≠ 0) && @kaxpy!(m, -λ, Δx, b₀)
+    warm_start && (λ ≠ 0) && kaxpy!(m, -λ, Δx, b₀)
 
     # If μ ≠ 0, Dc₀ = Dc - DBΔx - μΔy because DN = Iₙ and F = Iₙ
     # F ≠ Iₙ is only allowed when μ = 0 because F⁻¹Δy can't be computed to use DNF = Iₘ
     # Compute D(c - BΔx) - μΔy
     warm_start && mul!(c₀, B, Δx)
-    warm_start && @kaxpby!(n, one(FC), c, -one(FC), c₀)
+    warm_start && kaxpby!(n, one(FC), c, -one(FC), c₀)
     !DisI && mulorldiv!(p, D, c₀, ldiv)
     !DisI && (c₀ = p)
-    warm_start && (μ ≠ 0) && @kaxpy!(n, -μ, Δy, c₀)
+    warm_start && (μ ≠ 0) && kaxpy!(n, -μ, Δy, c₀)
 
     # Initialize the orthogonal Hessenberg reduction process.
     # βv₁ = Cb
-    β = @knrm2(m, b₀)
+    β = knorm(m, b₀)
     β ≠ 0 || error("b must be nonzero")
     V[1] .= b₀ ./ β
 
     # γu₁ = Dc
-    γ = @knrm2(n, c₀)
+    γ = knorm(n, c₀)
     γ ≠ 0 || error("c must be nonzero")
     U[1] .= c₀ ./ γ
 
@@ -303,10 +303,10 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
       DisI || mulorldiv!(p, D, dB, ldiv)        # p  = DBEvₖ
 
       for i = 1 : iter
-        hᵢₖ = @kdot(m, V[i], q)    # hᵢ.ₖ = (vᵢ)ᴴq
-        fᵢₖ = @kdot(n, U[i], p)    # fᵢ.ₖ = (uᵢ)ᴴp
-        @kaxpy!(m, -hᵢₖ, V[i], q)  # q ← q - hᵢ.ₖvᵢ
-        @kaxpy!(n, -fᵢₖ, U[i], p)  # p ← p - fᵢ.ₖuᵢ
+        hᵢₖ = kdot(m, V[i], q)    # hᵢ.ₖ = (vᵢ)ᴴq
+        fᵢₖ = kdot(n, U[i], p)    # fᵢ.ₖ = (uᵢ)ᴴp
+        kaxpy!(m, -hᵢₖ, V[i], q)  # q ← q - hᵢ.ₖvᵢ
+        kaxpy!(n, -fᵢₖ, U[i], p)  # p ← p - fᵢ.ₖuᵢ
         R[nr₂ₖ + 2i-1] = hᵢₖ
         (i < iter) ? R[nr₂ₖ₋₁ + 2i] = fᵢₖ : ωₖ = fᵢₖ
       end
@@ -314,17 +314,17 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
       # Reorthogonalization of the Krylov basis.
       if reorthogonalization
         for i = 1 : iter
-          Htmp = @kdot(m, V[i], q)    # hₜₘₚ = (vᵢ)ᴴq
-          Ftmp = @kdot(n, U[i], p)    # fₜₘₚ = (uᵢ)ᴴp
-          @kaxpy!(m, -Htmp, V[i], q)  # q ← q - hₜₘₚvᵢ
-          @kaxpy!(n, -Ftmp, U[i], p)  # p ← p - fₜₘₚuᵢ
+          Htmp = kdot(m, V[i], q)    # hₜₘₚ = (vᵢ)ᴴq
+          Ftmp = kdot(n, U[i], p)    # fₜₘₚ = (uᵢ)ᴴp
+          kaxpy!(m, -Htmp, V[i], q)  # q ← q - hₜₘₚvᵢ
+          kaxpy!(n, -Ftmp, U[i], p)  # p ← p - fₜₘₚuᵢ
           R[nr₂ₖ + 2i-1] += Htmp                            # hᵢ.ₖ = hᵢ.ₖ + hₜₘₚ
           (i < iter) ? R[nr₂ₖ₋₁ + 2i] += Ftmp : ωₖ += Ftmp  # fᵢ.ₖ = fᵢ.ₖ + fₜₘₚ
         end
       end
 
-      Haux = @knrm2(m, q)   # hₖ₊₁.ₖ = ‖q‖₂
-      Faux = @knrm2(n, p)   # fₖ₊₁.ₖ = ‖p‖₂
+      Haux = knorm(m, q)   # hₖ₊₁.ₖ = ‖q‖₂
+      Faux = knorm(n, p)   # fₖ₊₁.ₖ = ‖p‖₂
 
       # Add regularization terms.
       R[nr₂ₖ₋₁ + 2k-1] = λ  # S₂ₖ₋₁.₂ₖ₋₁ = λ
@@ -461,7 +461,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
           V[k+1] .= q ./ Haux  # hₖ₊₁.ₖvₖ₊₁ = q
         else
           # Breakdown -- hₖ₊₁.ₖ = ‖q‖₂ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
-          @kfill!(V[k+1], zero(FC))  # vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
+          kfill!(V[k+1], zero(FC))  # vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
         end
 
         # fₖ₊₁.ₖ ≠ 0
@@ -469,7 +469,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
           U[k+1] .= p ./ Faux  # fₖ₊₁.ₖuₖ₊₁ = p
         else
           # Breakdown -- fₖ₊₁.ₖ = ‖p‖₂ = 0 and Bvₖ ∈ Span{u₁, ..., uₖ}
-          @kfill!(U[k+1], zero(FC))  # uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
+          kfill!(U[k+1], zero(FC))  # uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
         end
 
         zt[2k+1] = τbar₂ₖ₊₁
@@ -496,19 +496,19 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
 
     # Compute xₖ and yₖ
     for i = 1 : iter
-      @kaxpy!(m, zt[2i-1], V[i], x)  # xₖ = ζ₁v₁ + ζ₃v₂ + ••• + ζ₂ₖ₋₁vₖ
-      @kaxpy!(n, zt[2i]  , U[i], y)  # xₖ = ζ₂u₁ + ζ₄u₂ + ••• + ζ₂ₖuₖ
+      kaxpy!(m, zt[2i-1], V[i], x)  # xₖ = ζ₁v₁ + ζ₃v₂ + ••• + ζ₂ₖ₋₁vₖ
+      kaxpy!(n, zt[2i]  , U[i], y)  # xₖ = ζ₂u₁ + ζ₄u₂ + ••• + ζ₂ₖuₖ
     end
     if !EisI
-      @kcopy!(m, wB, x)  # wB ← x
+      kcopy!(m, wB, x)  # wB ← x
       mulorldiv!(x, E, wB, ldiv)
     end
     if !FisI
-      @kcopy!(n, wA, y)  # wA ← y
+      kcopy!(n, wA, y)  # wA ← y
       mulorldiv!(y, F, wA, ldiv)
     end
-    warm_start && @kaxpy!(m, one(FC), Δx, x)
-    warm_start && @kaxpy!(n, one(FC), Δy, y)
+    warm_start && kaxpy!(m, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δy, y)
     solver.warm_start = false
 
     # Termination status

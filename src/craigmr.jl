@@ -187,11 +187,11 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     v = NisI ? Nv : solver.v
 
     # Compute y such that AAᴴy = b. Then recover x = Aᴴy.
-    @kfill!(x, zero(FC))
-    @kfill!(y, zero(FC))
-    @kcopy!(m, Mu, b)  # Mu ← b
+    kfill!(x, zero(FC))
+    kfill!(y, zero(FC))
+    kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)
-    β = sqrt(@kdotr(m, u, Mu))
+    β = sqrt(kdotr(m, u, Mu))
     if β == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
@@ -204,13 +204,13 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
 
     # Initialize Golub-Kahan process.
     # β₁Mu₁ = b.
-    @kscal!(m, one(FC)/β, u)
-    MisI || @kscal!(m, one(FC)/β, Mu)
+    kscal!(m, one(FC)/β, u)
+    MisI || kscal!(m, one(FC)/β, Mu)
     # α₁Nv₁ = Aᴴu₁.
     mul!(Aᴴu, Aᴴ, u)
-    @kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
+    kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
-    α = sqrt(@kdotr(n, v, Nv))
+    α = sqrt(kdotr(n, v, Nv))
     Anorm² = α * α
 
     iter = 0
@@ -229,18 +229,18 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       stats.status = "x = 0 is a minimum least-squares solution"
       return solver
     end
-    @kscal!(n, one(FC)/α, v)
-    NisI || @kscal!(n, one(FC)/α, Nv)
+    kscal!(n, one(FC)/α, v)
+    NisI || kscal!(n, one(FC)/α, Nv)
 
     # Regularization.
     λₖ  = λ                    # λ₁ = λ
     cpₖ = spₖ = one(T)         # Givens sines and cosines used to zero out λₖ
     cdₖ = sdₖ = one(T)         # Givens sines and cosines used to define λₖ₊₁
-    λ > 0 && @kcopy!(n, q, v)  # Additional vector needed to update x, by definition q₀ = 0
+    λ > 0 && kcopy!(n, q, v)  # Additional vector needed to update x, by definition q₀ = 0
 
     if λ > 0
       (cpₖ, spₖ, αhat) = sym_givens(α, λₖ)
-      @kscal!(n, spₖ, q)  # q̄₁ = sp₁ * v₁
+      kscal!(n, spₖ, q)  # q̄₁ = sp₁ * v₁
     else
       αhat = α
     end
@@ -257,10 +257,10 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     ɛ_c = atol + rtol * rNorm  # Stopping tolerance for consistent systems.
     ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
 
-    @kcopy!(m, wbar, u)
-    @kscal!(m, one(FC)/αhat, wbar)
-    @kfill!(w, zero(FC))
-    @kfill!(d, zero(FC))
+    kcopy!(m, wbar, u)
+    kscal!(m, one(FC)/αhat, wbar)
+    kfill!(w, zero(FC))
+    kfill!(d, zero(FC))
 
     status = "unknown"
     solved = rNorm ≤ ɛ_c
@@ -275,12 +275,12 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       # Generate next Golub-Kahan vectors.
       # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
       mul!(Av, A, v)
-      @kaxpby!(m, one(FC), Av, -α, Mu)
+      kaxpby!(m, one(FC), Av, -α, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)
-      β = sqrt(@kdotr(m, u, Mu))
+      β = sqrt(kdotr(m, u, Mu))
       if β ≠ 0
-        @kscal!(m, one(FC)/β, u)
-        MisI || @kscal!(m, one(FC)/β, Mu)
+        kscal!(m, one(FC)/β, u)
+        MisI || kscal!(m, one(FC)/β, Mu)
       end
 
       Anorm² = Anorm² + β * β  # = ‖B_{k-1}‖²
@@ -311,35 +311,35 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       rNorm = abs(ζbar)
       history && push!(rNorms, rNorm)
 
-      @kaxpby!(m, one(FC)/ρ, wbar, -θ/ρ, w)  # w = (wbar - θ * w) / ρ
-      @kaxpy!(m, ζ, w, y)                    # y = y + ζ * w
+      kaxpby!(m, one(FC)/ρ, wbar, -θ/ρ, w)  # w = (wbar - θ * w) / ρ
+      kaxpy!(m, ζ, w, y)                    # y = y + ζ * w
 
       if λ > 0
         # DₖRₖ = V̅ₖ with v̅ₖ = cpₖvₖ + spₖqₖ₋₁
         if iter == 1
-          @kaxpy!(n, one(FC)/ρ, cpₖ * v, d)
+          kaxpy!(n, one(FC)/ρ, cpₖ * v, d)
         else
-          @kaxpby!(n, one(FC)/ρ, cpₖ * v, -θ/ρ, d)
-          @kaxpy!(n, one(FC)/ρ, spₖ * q, d)
-          @kaxpby!(n, spₖ, v, -cpₖ, q)  # q̄ₖ ← spₖ * vₖ - cpₖ * qₖ₋₁
+          kaxpby!(n, one(FC)/ρ, cpₖ * v, -θ/ρ, d)
+          kaxpy!(n, one(FC)/ρ, spₖ * q, d)
+          kaxpby!(n, spₖ, v, -cpₖ, q)  # q̄ₖ ← spₖ * vₖ - cpₖ * qₖ₋₁
         end
       else
         # DₖRₖ = Vₖ
         if iter == 1
-          @kaxpy!(n, one(FC)/ρ, v, d)
+          kaxpy!(n, one(FC)/ρ, v, d)
         else
-          @kaxpby!(n, one(FC)/ρ, v, -θ/ρ, d)
+          kaxpby!(n, one(FC)/ρ, v, -θ/ρ, d)
         end
       end
 
       # xₖ = Dₖzₖ
-      @kaxpy!(n, ζ, d, x)
+      kaxpy!(n, ζ, d, x)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
       mul!(Aᴴu, Aᴴ, u)
-      @kaxpby!(n, one(FC), Aᴴu, -β, Nv)
+      kaxpby!(n, one(FC), Aᴴu, -β, Nv)
       NisI || mulorldiv!(v, N, Nv, ldiv)
-      α = sqrt(@kdotr(n, v, Nv))
+      α = sqrt(kdotr(n, v, Nv))
       Anorm² = Anorm² + α * α  # = ‖Lₖ‖
       ArNorm = α * β * abs(ζ/ρ)
       history && push!(ArNorms, ArNorm)
@@ -348,16 +348,16 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
 
       if λ > 0
         (cdₖ, sdₖ, λₖ₊₁) = sym_givens(λ, λₐᵤₓ)
-        @kscal!(n, sdₖ, q)  # qₖ ← sdₖ * q̄ₖ
+        kscal!(n, sdₖ, q)  # qₖ ← sdₖ * q̄ₖ
         (cpₖ, spₖ, αhat) = sym_givens(α, λₖ₊₁)
       else
         αhat = α
       end
 
       if α ≠ 0
-        @kscal!(n, one(FC)/α, v)
-        NisI || @kscal!(n, one(FC)/α, Nv)
-        @kaxpby!(m, one(T)/αhat, u, -βhat / αhat, wbar)  # wbar = (u - beta * wbar) / alpha
+        kscal!(n, one(FC)/α, v)
+        NisI || kscal!(n, one(FC)/α, Nv)
+        kaxpby!(m, one(T)/αhat, u, -βhat / αhat, wbar)  # wbar = (u - beta * wbar) / alpha
       end
       θ    =  s * αhat
       ρbar = -c * αhat

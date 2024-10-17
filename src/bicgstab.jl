@@ -149,23 +149,23 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
 
     if warm_start
       mul!(r₀, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), r₀)
+      kaxpby!(n, one(FC), b, -one(FC), r₀)
     else
-      @kcopy!(n, r₀, b)  # r₀ ← b
+      kcopy!(n, r₀, b)  # r₀ ← b
     end
 
-    @kfill!(x, zero(FC))                # x₀
-    @kfill!(s, zero(FC))                # s₀
-    @kfill!(v, zero(FC))                # v₀
+    kfill!(x, zero(FC))                # x₀
+    kfill!(s, zero(FC))                # s₀
+    kfill!(v, zero(FC))                # v₀
     MisI || mulorldiv!(r, M, r₀, ldiv)  # r₀
-    @kcopy!(n, p, r)                    # p₁
+    kcopy!(n, p, r)                    # p₁
 
     α = one(FC) # α₀
     ω = one(FC) # ω₀
     ρ = one(FC) # ρ₀
 
     # Compute residual norm ‖r₀‖₂.
-    rNorm = @knrm2(n, r)
+    rNorm = knorm(n, r)
     history && push!(rNorms, rNorm)
     if rNorm == 0
       stats.niter = 0
@@ -183,7 +183,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %8s  %5s\n", "k", "‖rₖ‖", "|αₖ|", "|ωₖ|", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %8.1e  %.2fs\n", iter, rNorm, abs(α), abs(ω), ktimer(start_time))
 
-    next_ρ = @kdot(n, c, r)  # ρ₁ = ⟨r̅₀,r₀⟩
+    next_ρ = kdot(n, c, r)  # ρ₁ = ⟨r̅₀,r₀⟩
     if next_ρ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = false, false
@@ -209,24 +209,24 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       NisI || mulorldiv!(y, N, p, ldiv)    # yₖ = N⁻¹pₖ
       mul!(q, A, y)                        # qₖ = Ayₖ
       mulorldiv!(v, M, q, ldiv)            # vₖ = M⁻¹qₖ
-      α = ρ / @kdot(n, c, v)               # αₖ = ⟨r̅₀,rₖ₋₁⟩ / ⟨r̅₀,vₖ⟩
-      @kcopy!(n, s, r)                     # sₖ = rₖ₋₁
-      @kaxpy!(n, -α, v, s)                 # sₖ = sₖ - αₖvₖ
-      @kaxpy!(n, α, y, x)                  # xₐᵤₓ = xₖ₋₁ + αₖyₖ
+      α = ρ / kdot(n, c, v)               # αₖ = ⟨r̅₀,rₖ₋₁⟩ / ⟨r̅₀,vₖ⟩
+      kcopy!(n, s, r)                     # sₖ = rₖ₋₁
+      kaxpy!(n, -α, v, s)                 # sₖ = sₖ - αₖvₖ
+      kaxpy!(n, α, y, x)                  # xₐᵤₓ = xₖ₋₁ + αₖyₖ
       NisI || mulorldiv!(z, N, s, ldiv)    # zₖ = N⁻¹sₖ
       mul!(d, A, z)                        # dₖ = Azₖ
       MisI || mulorldiv!(t, M, d, ldiv)    # tₖ = M⁻¹dₖ
-      ω = @kdot(n, t, s) / @kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
-      @kaxpy!(n, ω, z, x)                  # xₖ = xₐᵤₓ + ωₖzₖ
-      @kcopy!(n, r, s)                     # rₖ = sₖ
-      @kaxpy!(n, -ω, t, r)                 # rₖ = rₖ - ωₖtₖ
-      next_ρ = @kdot(n, c, r)              # ρₖ₊₁ = ⟨r̅₀,rₖ⟩
+      ω = kdot(n, t, s) / kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
+      kaxpy!(n, ω, z, x)                  # xₖ = xₐᵤₓ + ωₖzₖ
+      kcopy!(n, r, s)                     # rₖ = sₖ
+      kaxpy!(n, -ω, t, r)                 # rₖ = rₖ - ωₖtₖ
+      next_ρ = kdot(n, c, r)              # ρₖ₊₁ = ⟨r̅₀,rₖ⟩
       β = (next_ρ / ρ) * (α / ω)           # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
-      @kaxpy!(n, -ω, v, p)                 # pₐᵤₓ = pₖ - ωₖvₖ
-      @kaxpby!(n, one(FC), r, β, p)        # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
+      kaxpy!(n, -ω, v, p)                 # pₐᵤₓ = pₖ - ωₖvₖ
+      kaxpby!(n, one(FC), r, β, p)        # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
 
       # Compute residual norm ‖rₖ‖₂.
-      rNorm = @knrm2(n, r)
+      rNorm = knorm(n, r)
       history && push!(rNorms, rNorm)
 
       # Stopping conditions that do not depend on user input.
@@ -253,7 +253,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

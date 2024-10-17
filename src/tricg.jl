@@ -190,54 +190,54 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     reset!(stats)
 
     # Initial solutions x₀ and y₀.
-    @kfill!(xₖ, zero(FC))
-    @kfill!(yₖ, zero(FC))
+    kfill!(xₖ, zero(FC))
+    kfill!(yₖ, zero(FC))
 
     iter = 0
     itmax == 0 && (itmax = m+n)
 
     # Initialize preconditioned orthogonal tridiagonalization process.
-    @kfill!(M⁻¹vₖ₋₁, zero(FC))  # v₀ = 0
-    @kfill!(N⁻¹uₖ₋₁, zero(FC))  # u₀ = 0
+    kfill!(M⁻¹vₖ₋₁, zero(FC))  # v₀ = 0
+    kfill!(N⁻¹uₖ₋₁, zero(FC))  # u₀ = 0
 
     # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
     # [  Aᴴ  νI ] [ yₖ ]   [ c - AᴴΔx - νΔy ]   [ c₀ ]
     if warm_start
       mul!(b₀, A, Δy)
-      (τ ≠ 0) && @kaxpy!(m, τ, Δx, b₀)
-      @kaxpby!(m, one(FC), b, -one(FC), b₀)
+      (τ ≠ 0) && kaxpy!(m, τ, Δx, b₀)
+      kaxpby!(m, one(FC), b, -one(FC), b₀)
       mul!(c₀, Aᴴ, Δx)
-      (ν ≠ 0) && @kaxpy!(n, ν, Δy, c₀)
-      @kaxpby!(n, one(FC), c, -one(FC), c₀)
+      (ν ≠ 0) && kaxpy!(n, ν, Δy, c₀)
+      kaxpby!(n, one(FC), c, -one(FC), c₀)
     end
 
     # β₁Ev₁ = b ↔ β₁v₁ = Mb
-    @kcopy!(m, M⁻¹vₖ, b₀)  # M⁻¹vₖ ← b₀
+    kcopy!(m, M⁻¹vₖ, b₀)  # M⁻¹vₖ ← b₀
     MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
-    βₖ = sqrt(@kdotr(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
+    βₖ = sqrt(kdotr(m, vₖ, M⁻¹vₖ))  # β₁ = ‖v₁‖_E
     if βₖ ≠ 0
-      @kscal!(m, one(FC) / βₖ, M⁻¹vₖ)
-      MisI || @kscal!(m, one(FC) / βₖ, vₖ)
+      kscal!(m, one(FC) / βₖ, M⁻¹vₖ)
+      MisI || kscal!(m, one(FC) / βₖ, vₖ)
     else
       error("b must be nonzero")
     end
 
     # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
-    @kcopy!(n, N⁻¹uₖ, c₀)  # M⁻¹uₖ ← c₀
+    kcopy!(n, N⁻¹uₖ, c₀)  # M⁻¹uₖ ← c₀
     NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
-    γₖ = sqrt(@kdotr(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
+    γₖ = sqrt(kdotr(n, uₖ, N⁻¹uₖ))  # γ₁ = ‖u₁‖_F
     if γₖ ≠ 0
-      @kscal!(n, one(FC) / γₖ, N⁻¹uₖ)
-      NisI || @kscal!(n, one(FC) / γₖ, uₖ)
+      kscal!(n, one(FC) / γₖ, N⁻¹uₖ)
+      NisI || kscal!(n, one(FC) / γₖ, uₖ)
     else
       error("c must be nonzero")
     end
 
     # Initialize directions Gₖ such that L̄ₖ(Gₖ)ᵀ = (Wₖ)ᵀ
-    @kfill!(gx₂ₖ₋₁, zero(FC))
-    @kfill!(gy₂ₖ₋₁, zero(FC))
-    @kfill!(gx₂ₖ  , zero(FC))
-    @kfill!(gy₂ₖ  , zero(FC))
+    kfill!(gx₂ₖ₋₁, zero(FC))
+    kfill!(gy₂ₖ₋₁, zero(FC))
+    kfill!(gx₂ₖ  , zero(FC))
+    kfill!(gy₂ₖ  , zero(FC))
 
     # Compute ‖r₀‖² = (γ₁)² + (β₁)²
     rNorm = sqrt(γₖ^2 + βₖ^2)
@@ -275,18 +275,18 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
       mul!(p, Aᴴ, vₖ)  # Forms Fuₖ₊₁ : p ← Aᴴvₖ
 
       if iter ≥ 2
-        @kaxpy!(m, -γₖ, M⁻¹vₖ₋₁, q)  # q ← q - γₖ * M⁻¹vₖ₋₁
-        @kaxpy!(n, -βₖ, N⁻¹uₖ₋₁, p)  # p ← p - βₖ * N⁻¹uₖ₋₁
+        kaxpy!(m, -γₖ, M⁻¹vₖ₋₁, q)  # q ← q - γₖ * M⁻¹vₖ₋₁
+        kaxpy!(n, -βₖ, N⁻¹uₖ₋₁, p)  # p ← p - βₖ * N⁻¹uₖ₋₁
       end
 
-      αₖ = @kdot(m, vₖ, q)  # αₖ = ⟨vₖ,q⟩
+      αₖ = kdot(m, vₖ, q)  # αₖ = ⟨vₖ,q⟩
 
-      @kaxpy!(m, -     αₖ , M⁻¹vₖ, q)  # q ← q - αₖ * M⁻¹vₖ
-      @kaxpy!(n, -conj(αₖ), N⁻¹uₖ, p)  # p ← p - ᾱₖ * N⁻¹uₖ
+      kaxpy!(m, -     αₖ , M⁻¹vₖ, q)  # q ← q - αₖ * M⁻¹vₖ
+      kaxpy!(n, -conj(αₖ), N⁻¹uₖ, p)  # p ← p - ᾱₖ * N⁻¹uₖ
 
       # Update M⁻¹vₖ₋₁ and N⁻¹uₖ₋₁
-      @kcopy!(m, M⁻¹vₖ₋₁, M⁻¹vₖ)  # M⁻¹vₖ₋₁ ← M⁻¹vₖ
-      @kcopy!(n, N⁻¹uₖ₋₁, N⁻¹uₖ)  # N⁻¹uₖ₋₁ ← N⁻¹uₖ
+      kcopy!(m, M⁻¹vₖ₋₁, M⁻¹vₖ)  # M⁻¹vₖ₋₁ ← M⁻¹vₖ
+      kcopy!(n, N⁻¹uₖ₋₁, N⁻¹uₖ)  # N⁻¹uₖ₋₁ ← N⁻¹uₖ
 
       # Notations : Wₖ = [w₁ ••• wₖ] = [v₁ 0  ••• vₖ 0 ]
       #                                [0  u₁ ••• 0  uₖ]
@@ -348,9 +348,9 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
       if iter == 1
         # [ 1  0 ] [ gx₁ gy₁ ] = [ v₁ 0  ]
         # [ δ̄₁ 1 ] [ gx₂ gy₂ ]   [ 0  u₁ ]
-        @kcopy!(m, gx₂ₖ₋₁, vₖ)  # gx₂ₖ₋₁ ← vₖ
+        kcopy!(m, gx₂ₖ₋₁, vₖ)  # gx₂ₖ₋₁ ← vₖ
         gx₂ₖ .= -conj(δₖ) .* gx₂ₖ₋₁
-        @kcopy!(n, gy₂ₖ, uₖ)  # gy₂ₖ ← uₖ
+        kcopy!(n, gy₂ₖ, uₖ)  # gy₂ₖ ← uₖ
       else
         # [ 0  σ̄ₖ 1  0 ] [ gx₂ₖ₋₃ gy₂ₖ₋₃ ] = [ vₖ 0  ]
         # [ η̄ₖ λ̄ₖ δ̄ₖ 1 ] [ gx₂ₖ₋₂ gy₂ₖ₋₂ ]   [ 0  uₖ ]
@@ -366,40 +366,40 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
         gy₂ₖ₋₁ .= uₖ .- gy₂ₖ₋₁ .- conj(δₖ) .* gy₂ₖ
 
         # g₂ₖ₋₃ == g₂ₖ and g₂ₖ₋₂ == g₂ₖ₋₁
-        @kswap(gx₂ₖ₋₁, gx₂ₖ)
-        @kswap(gy₂ₖ₋₁, gy₂ₖ)
+        @kswap!(gx₂ₖ₋₁, gx₂ₖ)
+        @kswap!(gy₂ₖ₋₁, gy₂ₖ)
       end
 
       # Update xₖ = Gxₖ * pₖ
-      @kaxpy!(m, π₂ₖ₋₁, gx₂ₖ₋₁, xₖ)
-      @kaxpy!(m, π₂ₖ  , gx₂ₖ  , xₖ)
+      kaxpy!(m, π₂ₖ₋₁, gx₂ₖ₋₁, xₖ)
+      kaxpy!(m, π₂ₖ  , gx₂ₖ  , xₖ)
 
       # Update yₖ = Gyₖ * pₖ
-      @kaxpy!(n, π₂ₖ₋₁, gy₂ₖ₋₁, yₖ)
-      @kaxpy!(n, π₂ₖ  , gy₂ₖ  , yₖ)
+      kaxpy!(n, π₂ₖ₋₁, gy₂ₖ₋₁, yₖ)
+      kaxpy!(n, π₂ₖ  , gy₂ₖ  , yₖ)
 
       # Compute vₖ₊₁ and uₖ₊₁
       MisI || mulorldiv!(vₖ₊₁, M, q, ldiv)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
       NisI || mulorldiv!(uₖ₊₁, N, p, ldiv)  # γₖ₊₁uₖ₊₁ = NAᴴvₖ - βₖuₖ₋₁ - ᾱₖuₖ
 
-      βₖ₊₁ = sqrt(@kdotr(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
-      γₖ₊₁ = sqrt(@kdotr(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F
+      βₖ₊₁ = sqrt(kdotr(m, vₖ₊₁, q))  # βₖ₊₁ = ‖vₖ₊₁‖_E
+      γₖ₊₁ = sqrt(kdotr(n, uₖ₊₁, p))  # γₖ₊₁ = ‖uₖ₊₁‖_F
 
       # βₖ₊₁ ≠ 0
       if βₖ₊₁ > btol
-        @kscal!(m, one(FC) / βₖ₊₁, q)
-        MisI || @kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
+        kscal!(m, one(FC) / βₖ₊₁, q)
+        MisI || kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
       end
 
       # γₖ₊₁ ≠ 0
       if γₖ₊₁ > btol
-        @kscal!(n, one(FC) / γₖ₊₁, p)
-        NisI || @kscal!(n, one(FC) / γₖ₊₁, uₖ₊₁)
+        kscal!(n, one(FC) / γₖ₊₁, p)
+        NisI || kscal!(n, one(FC) / γₖ₊₁, uₖ₊₁)
       end
 
       # Update M⁻¹vₖ and N⁻¹uₖ
-      @kcopy!(m, M⁻¹vₖ, q)  # M⁻¹vₖ ← q
-      @kcopy!(n, N⁻¹uₖ, p)  # N⁻¹uₖ ← p
+      kcopy!(m, M⁻¹vₖ, q)  # M⁻¹vₖ ← q
+      kcopy!(n, N⁻¹uₖ, p)  # N⁻¹uₖ ← p
 
       # Compute ‖rₖ‖² = |γₖ₊₁ζ₂ₖ₋₁|² + |βₖ₊₁ζ₂ₖ|²
       ζ₂ₖ₋₁ = π₂ₖ₋₁ - conj(δₖ) * π₂ₖ
@@ -440,8 +440,8 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     overtimed           && (status = "time limit exceeded")
 
     # Update x and y
-    warm_start && @kaxpy!(m, one(FC), Δx, xₖ)
-    warm_start && @kaxpy!(n, one(FC), Δy, yₖ)
+    warm_start && kaxpy!(m, one(FC), Δx, xₖ)
+    warm_start && kaxpy!(n, one(FC), Δy, yₖ)
     solver.warm_start = false
 
     # Update stats

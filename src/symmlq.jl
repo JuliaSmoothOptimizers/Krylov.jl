@@ -147,20 +147,20 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     ctol = conlim > 0 ? 1 / conlim : zero(T)
 
     # Initial solution x₀
-    @kfill!(x, zero(FC))
+    kfill!(x, zero(FC))
 
     if warm_start
       mul!(Mvold, A, Δx)
-      (λ ≠ 0) && @kaxpy!(n, λ, Δx, Mvold)
-      @kaxpby!(n, one(FC), b, -one(FC), Mvold)
+      (λ ≠ 0) && kaxpy!(n, λ, Δx, Mvold)
+      kaxpby!(n, one(FC), b, -one(FC), Mvold)
     else
-      @kcopy!(n, Mvold, b)  # Mvold ← b
+      kcopy!(n, Mvold, b)  # Mvold ← b
     end
 
     # Initialize Lanczos process.
     # β₁ M v₁ = b.
     MisI || mulorldiv!(vold, M, Mvold, ldiv)
-    β₁ = @kdotr(m, vold, Mvold)
+    β₁ = kdotr(m, vold, Mvold)
     if β₁ == 0
       stats.niter = 0
       stats.solved = true
@@ -175,20 +175,20 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     end
     β₁ = sqrt(β₁)
     β = β₁
-    @kscal!(m, one(FC) / β, vold)
-    MisI || @kscal!(m, one(FC) / β, Mvold)
+    kscal!(m, one(FC) / β, vold)
+    MisI || kscal!(m, one(FC) / β, Mvold)
 
-    @kcopy!(n, w̅, vold)  # w̅ ← vold
+    kcopy!(n, w̅, vold)  # w̅ ← vold
 
     mul!(Mv, A, vold)
-    α = @kdotr(m, vold, Mv) + λ
-    @kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
+    α = kdotr(m, vold, Mv) + λ
+    kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
     MisI || mulorldiv!(v, M, Mv, ldiv)
-    β = @kdotr(m, v, Mv)
+    β = kdotr(m, v, Mv)
     β < 0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
-    @kscal!(m, one(FC) / β, v)
-    MisI || @kscal!(m, one(FC) / β, Mv)
+    kscal!(m, one(FC) / β, v)
+    MisI || kscal!(m, one(FC) / β, Mv)
 
     # Start QR factorization
     γbar = α
@@ -225,9 +225,9 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     errcg = T(Inf)
 
     window = length(clist)
-    @kfill!(clist, zero(T))
-    @kfill!(zlist, zero(T))
-    @kfill!(sprod, one(T))
+    kfill!(clist, zero(T))
+    kfill!(zlist, zero(T))
+    kfill!(sprod, one(T))
 
     if λest ≠ 0
       # Start QR factorization of Tₖ - λest I
@@ -272,25 +272,25 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       # Update SYMMLQ point
       ηold = η
       ζ = ηold / γ
-      @kaxpy!(n, c * ζ, w̅, x)
-      @kaxpy!(n, s * ζ, v, x)
+      kaxpy!(n, c * ζ, w̅, x)
+      kaxpy!(n, s * ζ, v, x)
       # Update w̅
-      @kaxpby!(n, -c, v, s, w̅)
+      kaxpby!(n, -c, v, s, w̅)
 
       # Generate next Lanczos vector
       oldβ = β
       mul!(Mv_next, A, v)
-      α = @kdotr(m, v, Mv_next) + λ
-      @kaxpy!(m, -oldβ, Mvold, Mv_next)
-      @kcopy!(m, Mvold, Mv)  # Mvold ← Mv
-      @kaxpy!(m, -α, Mv, Mv_next)
-      @kcopy!(m, Mv, Mv_next)  # Mv ← Mv_next
+      α = kdotr(m, v, Mv_next) + λ
+      kaxpy!(m, -oldβ, Mvold, Mv_next)
+      kcopy!(m, Mvold, Mv)  # Mvold ← Mv
+      kaxpy!(m, -α, Mv, Mv_next)
+      kcopy!(m, Mv, Mv_next)  # Mv ← Mv_next
       MisI || mulorldiv!(v, M, Mv, ldiv)
-      β = @kdotr(m, v, Mv)
+      β = kdotr(m, v, Mv)
       β < 0 && error("Preconditioner is not positive definite")
       β = sqrt(β)
-      @kscal!(m, one(FC) / β, v)
-      MisI || @kscal!(m, one(FC) / β, Mv)
+      kscal!(m, one(FC) / β, v)
+      MisI || kscal!(m, one(FC) / β, Mv)
 
       # Continue A norm estimate
       ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
@@ -419,7 +419,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     # Compute CG point
     # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * w̅ₖ
     if solved_cg
-      @kaxpy!(m, ζbar, w̅, x)
+      kaxpy!(m, ζbar, w̅, x)
     end
 
     # Termination status
@@ -433,7 +433,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

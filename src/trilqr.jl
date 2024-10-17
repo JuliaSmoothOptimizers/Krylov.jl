@@ -135,18 +135,18 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
 
     if warm_start
       mul!(r₀, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), r₀)
+      kaxpby!(n, one(FC), b, -one(FC), r₀)
       mul!(s₀, Aᴴ, Δy)
-      @kaxpby!(n, one(FC), c, -one(FC), s₀)
+      kaxpby!(n, one(FC), c, -one(FC), s₀)
     end
 
     # Initial solution x₀ and residual r₀ = b - Ax₀.
-    @kfill!(x, zero(FC))   # x₀
-    bNorm = @knrm2(m, r₀)  # rNorm = ‖r₀‖
+    kfill!(x, zero(FC))   # x₀
+    bNorm = knorm(m, r₀)  # rNorm = ‖r₀‖
 
     # Initial solution y₀ and residual s₀ = c - Aᴴy₀.
-    @kfill!(t, zero(FC))   # t₀
-    cNorm = @knrm2(n, s₀)  # sNorm = ‖s₀‖
+    kfill!(t, zero(FC))   # t₀
+    cNorm = knorm(n, s₀)  # sNorm = ‖s₀‖
 
     iter = 0
     itmax == 0 && (itmax = m+n)
@@ -160,10 +160,10 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, bNorm, cNorm, ktimer(start_time))
 
     # Set up workspace.
-    βₖ = @knrm2(m, r₀)          # β₁ = ‖r₀‖ = ‖v₁‖
-    γₖ = @knrm2(n, s₀)          # γ₁ = ‖s₀‖ = ‖u₁‖
-    @kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
-    @kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
+    βₖ = knorm(m, r₀)          # β₁ = ‖r₀‖ = ‖v₁‖
+    γₖ = knorm(n, s₀)          # γ₁ = ‖s₀‖ = ‖u₁‖
+    kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
     vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
     uₖ .= s₀ ./ γₖ              # u₁ = (c - Aᴴy₀) / γ₁
     cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
@@ -174,8 +174,8 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
     ψbarₖ₋₁ = ψₖ₋₁ = zero(FC)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ₁e₁
     ϵₖ₋₃ = λₖ₋₂ = zero(FC)      # Components of Lₖ₋₁
-    @kfill!(wₖ₋₃, zero(FC))     # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᴴ
-    @kfill!(wₖ₋₂, zero(FC))     # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᴴ
+    kfill!(wₖ₋₃, zero(FC))     # Column k-3 of Wₖ = Vₖ(Lₖ)⁻ᴴ
+    kfill!(wₖ₋₂, zero(FC))     # Column k-2 of Wₖ = Vₖ(Lₖ)⁻ᴴ
 
     # Stopping criterion.
     inconsistent = false
@@ -201,16 +201,16 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
       mul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
 
-      @kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
-      @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
+      kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
+      kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
 
-      αₖ = @kdot(m, vₖ, q)      # αₖ = ⟨vₖ,q⟩
+      αₖ = kdot(m, vₖ, q)      # αₖ = ⟨vₖ,q⟩
 
-      @kaxpy!(m, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
-      @kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
+      kaxpy!(m, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
+      kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
 
-      βₖ₊₁ = @knrm2(m, q)       # βₖ₊₁ = ‖q‖
-      γₖ₊₁ = @knrm2(n, p)       # γₖ₊₁ = ‖p‖
+      βₖ₊₁ = knorm(m, q)       # βₖ₊₁ = ‖q‖
+      γₖ₊₁ = knorm(n, p)       # γₖ₊₁ = ‖p‖
 
       # Update the LQ factorization of Tₖ = L̅ₖQₖ.
       # [ α₁ γ₂ 0  •  •  •  0 ]   [ δ₁   0    •   •   •    •    0   ]
@@ -272,17 +272,17 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
         if iter ≥ 2
           # Compute solution xₖ.
           # (xᴸ)ₖ ← (xᴸ)ₖ₋₁ + ζₖ₋₁ * dₖ₋₁
-          @kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
-          @kaxpy!(n, ζₖ₋₁ * sₖ, uₖ, x)
+          kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
+          kaxpy!(n, ζₖ₋₁ * sₖ, uₖ, x)
         end
 
         # Compute d̅ₖ.
         if iter == 1
           # d̅₁ = u₁
-          @kcopy!(n, d̅, uₖ)  # d̅ ← uₖ
+          kcopy!(n, d̅, uₖ)  # d̅ ← uₖ
         else
           # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
-          @kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
+          kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
         end
 
         # Compute USYMLQ residual norm
@@ -329,34 +329,34 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
         # w₁ = v₁ / δ̄₁
         if iter == 2
           wₖ₋₁ = wₖ₋₂
-          @kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
+          kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
           wₖ₋₁ .= vₖ₋₁ ./ conj(δₖ₋₁)
         end
         # w₂ = (v₂ - λ̄₁w₁) / δ̄₂
         if iter == 3
           wₖ₋₁ = wₖ₋₃
-          @kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
-          @kaxpy!(m, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
+          kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
+          kaxpy!(m, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
           wₖ₋₁ .= wₖ₋₁ ./ conj(δₖ₋₁)
         end
         # wₖ₋₁ = (vₖ₋₁ - λ̄ₖ₋₂wₖ₋₂ - ϵ̄ₖ₋₃wₖ₋₃) / δ̄ₖ₋₁
         if iter ≥ 4
-          @kscal!(m, -conj(ϵₖ₋₃), wₖ₋₃)
+          kscal!(m, -conj(ϵₖ₋₃), wₖ₋₃)
           wₖ₋₁ = wₖ₋₃
-          @kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
-          @kaxpy!(m, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
+          kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
+          kaxpy!(m, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
           wₖ₋₁ .= wₖ₋₁ ./ conj(δₖ₋₁)
         end
 
         if iter ≥ 3
           # Swap pointers.
-          @kswap(wₖ₋₃, wₖ₋₂)
+          @kswap!(wₖ₋₃, wₖ₋₂)
         end
 
         if iter ≥ 2
           # Compute solution tₖ₋₁.
           # tₖ₋₁ ← tₖ₋₂ + ψₖ₋₁ * wₖ₋₁
-          @kaxpy!(m, ψₖ₋₁, wₖ₋₁, t)
+          kaxpy!(m, ψₖ₋₁, wₖ₋₁, t)
         end
 
         # Update ψbarₖ₋₁
@@ -378,8 +378,8 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       end
 
       # Compute uₖ₊₁ and uₖ₊₁.
-      @kcopy!(m, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
-      @kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
+      kcopy!(m, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
+      kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
         vₖ .= q ./ βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
@@ -415,7 +415,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     # Compute USYMCG point
     # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ
     if solved_cg
-      @kaxpy!(n, ζbarₖ, d̅, x)
+      kaxpy!(n, ζbarₖ, d̅, x)
     end
 
     # Termination status
@@ -438,8 +438,8 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     overtimed                        && (status = "time limit exceeded")
 
     # Update x and y
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
-    warm_start && @kaxpy!(m, one(FC), Δy, t)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(m, one(FC), Δy, t)
     solver.warm_start = false
 
     # Update stats

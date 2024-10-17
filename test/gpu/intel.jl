@@ -35,39 +35,39 @@ include("gpu.jl")
     c = rand(T)
 
     @testset "kdot -- $FC" begin
-      Krylov.@kdot(n, x, y)
+      Krylov.kdot(n, x, y)
     end
 
     @testset "kdotr -- $FC" begin
-      Krylov.@kdotr(n, x, y)
+      Krylov.kdotr(n, x, y)
     end
 
-    @testset "knrm2 -- $FC" begin
-      Krylov.@knrm2(n, x)
+    @testset "knorm -- $FC" begin
+      Krylov.knorm(n, x)
     end
 
     @testset "kaxpy! -- $FC" begin
-      Krylov.@kaxpy!(n, a, x, y)
-      Krylov.@kaxpy!(n, a2, x, y)
+      Krylov.kaxpy!(n, a, x, y)
+      Krylov.kaxpy!(n, a2, x, y)
     end
 
     @testset "kaxpby! -- $FC" begin
-      Krylov.@kaxpby!(n, a, x, b, y)
-      Krylov.@kaxpby!(n, a2, x, b, y)
-      Krylov.@kaxpby!(n, a, x, b2, y)
-      Krylov.@kaxpby!(n, a2, x, b2, y)
+      Krylov.kaxpby!(n, a, x, b, y)
+      Krylov.kaxpby!(n, a2, x, b, y)
+      Krylov.kaxpby!(n, a, x, b2, y)
+      Krylov.kaxpby!(n, a2, x, b2, y)
     end
 
     @testset "kcopy! -- $FC" begin
-      Krylov.@kcopy!(n, y, x)
+      Krylov.kcopy!(n, y, x)
     end
 
     @testset "kswap -- $FC" begin
-      Krylov.@kswap(x, y)
+      Krylov.@kswap!(x, y)
     end
 
     @testset "kref! -- $FC" begin
-      Krylov.@kref!(n, x, y, c, s)
+      Krylov.kref!(n, x, y, c, s)
     end
 
     @testset "conversion -- $FC" begin

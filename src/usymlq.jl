@@ -142,12 +142,12 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
 
     if warm_start
       mul!(r₀, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), r₀)
+      kaxpby!(n, one(FC), b, -one(FC), r₀)
     end
 
     # Initial solution x₀ and residual norm ‖r₀‖.
     kfill!(x, zero(FC))
-    bNorm = @knrm2(m, r₀)
+    bNorm = knorm(m, r₀)
     history && push!(rNorms, bNorm)
     if bNorm == 0
       stats.niter = 0
@@ -166,15 +166,15 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, bNorm, ktimer(start_time))
 
-    βₖ = @knrm2(m, r₀)          # β₁ = ‖v₁‖ = ‖r₀‖
-    γₖ = @knrm2(n, c)           # γ₁ = ‖u₁‖ = ‖c‖
-    @kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
-    @kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
+    βₖ = knorm(m, r₀)          # β₁ = ‖v₁‖ = ‖r₀‖
+    γₖ = knorm(n, c)           # γ₁ = ‖u₁‖ = ‖c‖
+    kfill!(vₖ₋₁, zero(FC))     # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))     # u₀ = 0
     vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
     uₖ .= c ./ γₖ               # u₁ = c / γ₁
     cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
     sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-    @kfill!(d̅, zero(FC))        # Last column of D̅ₖ = Uₖ(Qₖ)ᴴ
+    kfill!(d̅, zero(FC))        # Last column of D̅ₖ = Uₖ(Qₖ)ᴴ
     ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
     ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
     δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and Lₖ modified over the course of two iterations
@@ -198,16 +198,16 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
       mul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
 
-      @kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
-      @kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
+      kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
+      kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
 
-      αₖ = @kdot(m, vₖ, q)      # αₖ = ⟨vₖ,q⟩
+      αₖ = kdot(m, vₖ, q)      # αₖ = ⟨vₖ,q⟩
 
-      @kaxpy!(m, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
-      @kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
+      kaxpy!(m, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
+      kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
 
-      βₖ₊₁ = @knrm2(m, q)       # βₖ₊₁ = ‖q‖
-      γₖ₊₁ = @knrm2(n, p)       # γₖ₊₁ = ‖p‖
+      βₖ₊₁ = knorm(m, q)       # βₖ₊₁ = ‖q‖
+      γₖ₊₁ = knorm(n, p)       # γₖ₊₁ = ‖p‖
 
       # Update the LQ factorization of Tₖ = L̅ₖQₖ.
       # [ α₁ γ₂ 0  •  •  •  0 ]   [ δ₁   0    •   •   •    •    0   ]
@@ -268,22 +268,22 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       if iter ≥ 2
         # Compute solution xₖ.
         # (xᴸ)ₖ₋₁ ← (xᴸ)ₖ₋₂ + ζₖ₋₁ * dₖ₋₁
-        @kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
-        @kaxpy!(n, ζₖ₋₁ * sₖ, uₖ, x)
+        kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
+        kaxpy!(n, ζₖ₋₁ * sₖ, uₖ, x)
       end
 
       # Compute d̅ₖ.
       if iter == 1
         # d̅₁ = u₁
-        @kcopy!(n, d̅, uₖ)  # d̅ ← vₖ
+        kcopy!(n, d̅, uₖ)  # d̅ ← vₖ
       else
         # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
-        @kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
+        kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
       end
 
       # Compute uₖ₊₁ and uₖ₊₁.
-      @kcopy!(m, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
-      @kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
+      kcopy!(m, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
+      kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
         vₖ .= q ./ βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
@@ -332,7 +332,7 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     # Compute USYMCG point
     # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ
     if solved_cg
-      @kaxpy!(n, ζbarₖ, d̅, x)
+      kaxpy!(n, ζbarₖ, d̅, x)
     end
 
     # Termination status
@@ -343,7 +343,7 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

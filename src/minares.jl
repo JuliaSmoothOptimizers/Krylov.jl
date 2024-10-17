@@ -131,33 +131,33 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     iter = 0
     itmax == 0 && (itmax = 2*n)
 
-    @kfill!(x, zero(FC))  # x₀
+    kfill!(x, zero(FC))  # x₀
 
     # Initialize the Lanczos process.
     # β₁v₁ = r₀
     if warm_start
       mul!(vₖ, A, Δx)  # r₀ = b - Ax₀
-      (λ ≠ 0) && @kaxpy!(n, λ, Δx, vₖ)
-      @kaxpby!(n, one(FC), b, -one(FC), vₖ)
+      (λ ≠ 0) && kaxpy!(n, λ, Δx, vₖ)
+      kaxpby!(n, one(FC), b, -one(FC), vₖ)
     else
-      @kcopy!(n, vₖ, b)  # r₀ = b
+      kcopy!(n, vₖ, b)  # r₀ = b
     end
-    βₖ = @knrm2(n, vₖ)  # β₁ = ‖v₁‖
+    βₖ = knorm(n, vₖ)  # β₁ = ‖v₁‖
     if βₖ ≠ 0
-      @kscal!(n, one(FC) / βₖ, vₖ)
+      kscal!(n, one(FC) / βₖ, vₖ)
     end
     β₁ = βₖ
 
     # β₂v₂ = (A + λI)v₁ - α₁v₁
     mul!(vₖ₊₁, A, vₖ)
     if λ ≠ 0
-      @kaxpy!(n, λ, vₖ, vₖ₊₁)
+      kaxpy!(n, λ, vₖ, vₖ₊₁)
     end
-    αₖ = @kdotr(n, vₖ, vₖ₊₁)   # α₁ = (vₖ)ᵀ(A + λI)vₖ
-    @kaxpy!(n, -αₖ, vₖ, vₖ₊₁)
-    βₖ₊₁ = @knrm2(n, vₖ₊₁)    # β₂ = ‖v₂‖
+    αₖ = kdotr(n, vₖ, vₖ₊₁)   # α₁ = (vₖ)ᵀ(A + λI)vₖ
+    kaxpy!(n, -αₖ, vₖ, vₖ₊₁)
+    βₖ₊₁ = knorm(n, vₖ₊₁)    # β₂ = ‖v₂‖
     if βₖ₊₁ ≠ 0
-      @kscal!(n, one(FC) / βₖ₊₁, vₖ₊₁)
+      kscal!(n, one(FC) / βₖ₊₁, vₖ₊₁)
     end
 
     ξₖ₋₁ = zero(T)
@@ -173,10 +173,10 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     c̃₂ₖ₋₂ = s̃₂ₖ₋₂ = zero(T)
     c̃₂ₖ₋₁ = s̃₂ₖ₋₁ = zero(T)
     c̃₂ₖ   = s̃₂ₖ   = zero(T)
-    @kfill!(wₖ₋₂, zero(FC))  # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
-    @kfill!(wₖ₋₁, zero(FC))  # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
-    @kfill!(dₖ₋₂, zero(FC))  # Column k-2 of Dₖ = Wₖ(Uₖ)⁻¹
-    @kfill!(dₖ₋₁, zero(FC))  # Column k-1 of Dₖ = Wₖ(Uₖ)⁻¹
+    kfill!(wₖ₋₂, zero(FC))  # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
+    kfill!(wₖ₋₁, zero(FC))  # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
+    kfill!(dₖ₋₂, zero(FC))  # Column k-2 of Dₖ = Wₖ(Uₖ)⁻¹
+    kfill!(dₖ₋₁, zero(FC))  # Column k-1 of Dₖ = Wₖ(Uₖ)⁻¹
     β₁α₁ = βₖ * αₖ           # Variable used to update zₖ
     β₁β₂ = βₖ * βₖ₊₁         # Variable used to update zₖ
     ϵₖ₋₂ = ϵₖ₋₁ = zero(T)
@@ -241,23 +241,23 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       # w₁ = v₁ / λ₁
       if iter == 1
         wₖ = wₖ₋₁
-        @kaxpy!(n, one(T), vₖ, wₖ)
-        @kscal!(n, one(T) / λₖ, wₖ)
+        kaxpy!(n, one(T), vₖ, wₖ)
+        kscal!(n, one(T) / λₖ, wₖ)
       end
       # w₂ = (v₂ - γ₁w₁) / λ₂
       if iter == 2
         wₖ = wₖ₋₂
-        @kaxpy!(n, -γₖ₋₁, wₖ₋₁, wₖ)
-        @kaxpy!(n, one(T), vₖ, wₖ)
-        @kscal!(n, one(T) / λₖ, wₖ)
+        kaxpy!(n, -γₖ₋₁, wₖ₋₁, wₖ)
+        kaxpy!(n, one(T), vₖ, wₖ)
+        kscal!(n, one(T) / λₖ, wₖ)
       end
       # wₖ = (vₖ - γₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / λₖ
       if iter ≥ 3
-        @kscal!(n, -ϵₖ₋₂, wₖ₋₂)
+        kscal!(n, -ϵₖ₋₂, wₖ₋₂)
         wₖ = wₖ₋₂
-        @kaxpy!(n, -γₖ₋₁, wₖ₋₁, wₖ)
-        @kaxpy!(n, one(T), vₖ, wₖ)
-        @kscal!(n, one(T) / λₖ, wₖ)
+        kaxpy!(n, -γₖ₋₁, wₖ₋₁, wₖ)
+        kaxpy!(n, one(T), vₖ, wₖ)
+        kscal!(n, one(T) / λₖ, wₖ)
       end
 
       # Continue the Lanczos process.
@@ -265,19 +265,19 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       # βₖ₊₂vₖ₊₂ = M(A + λI)vₖ₊₁ - αₖ₊₁vₖ₊₁ - βₖ₊₁vₖ
       if iter ≤ ℓ-1
         mul!(q, A, vₖ₊₁)  # q ← Avₖ
-        @kaxpby!(n, one(T), q, -βₖ₊₁, vₖ)  # Forms vₖ₊₂ : vₖ ← Avₖ₊₁ - βₖ₊₁vₖ
+        kaxpby!(n, one(T), q, -βₖ₊₁, vₖ)  # Forms vₖ₊₂ : vₖ ← Avₖ₊₁ - βₖ₊₁vₖ
         if λ ≠ 0
-          @kaxpy!(n, λ, vₖ₊₁, vₖ)          # vₖ ← vₖ + λvₖ₊₁
+          kaxpy!(n, λ, vₖ₊₁, vₖ)          # vₖ ← vₖ + λvₖ₊₁
         end
-        αₖ₊₁ = @kdotr(n, vₖ, vₖ₊₁)         # αₖ₊₁ = ⟨(A + λI)vₖ₊₁ - βₖ₊₁vₖ , vₖ₊₁⟩
-        @kaxpy!(n, -αₖ₊₁, vₖ₊₁, vₖ)        # vₖ ← vₖ - αₖ₊₁vₖ₊₁
-        βₖ₊₂ = @knrm2(n, vₖ)               # βₖ₊₂ = ‖vₖ₊₂‖
+        αₖ₊₁ = kdotr(n, vₖ, vₖ₊₁)         # αₖ₊₁ = ⟨(A + λI)vₖ₊₁ - βₖ₊₁vₖ , vₖ₊₁⟩
+        kaxpy!(n, -αₖ₊₁, vₖ₊₁, vₖ)        # vₖ ← vₖ - αₖ₊₁vₖ₊₁
+        βₖ₊₂ = knorm(n, vₖ)               # βₖ₊₂ = ‖vₖ₊₂‖
       
         # Detection of early termination
         if βₖ₊₂ ≤ btol
           ℓ = iter + 1
         else
-          @kscal!(n, one(FC) / βₖ₊₂, vₖ)
+          kscal!(n, one(FC) / βₖ₊₂, vₖ)
         end
       end
 
@@ -388,27 +388,27 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       # d₁ = w₁ / μ₁
       if iter == 1
         dₖ = dₖ₋₁
-        @kaxpy!(n, one(T), wₖ, dₖ)
-        @kscal!(n, one(T) / μₖ, dₖ)
+        kaxpy!(n, one(T), wₖ, dₖ)
+        kscal!(n, one(T) / μₖ, dₖ)
       end
       # d₂ = (w₂ - ϕ₁d₁) / μ₂
       if iter == 2
         dₖ = dₖ₋₂
-        @kaxpy!(n, -ϕₖ₋₁, dₖ₋₁, dₖ)
-        @kaxpy!(n, one(T), wₖ, dₖ)
-        @kscal!(n, one(T) / μₖ, dₖ)
+        kaxpy!(n, -ϕₖ₋₁, dₖ₋₁, dₖ)
+        kaxpy!(n, one(T), wₖ, dₖ)
+        kscal!(n, one(T) / μₖ, dₖ)
       end
       # dₖ = (wₖ - ϕₖ₋₁dₖ₋₁ - ρₖ₋₂dₖ₋₂) / μₖ
       if iter ≥ 3
-        @kscal!(n, -ρₖ₋₂, dₖ₋₂)
+        kscal!(n, -ρₖ₋₂, dₖ₋₂)
         dₖ = dₖ₋₂
-        @kaxpy!(n, -ϕₖ₋₁, dₖ₋₁, dₖ)
-        @kaxpy!(n, one(T), wₖ, dₖ)
-        @kscal!(n, one(T) / μₖ, dₖ)
+        kaxpy!(n, -ϕₖ₋₁, dₖ₋₁, dₖ)
+        kaxpy!(n, one(T), wₖ, dₖ)
+        kscal!(n, one(T) / μₖ, dₖ)
       end
 
       # x = Vₖyₖ = Dₖzₖ = x₋₁ + ζₖdₖ
-      @kaxpy!(n, ζₖ, dₖ, x)
+      kaxpy!(n, ζₖ, dₖ, x)
 
       # Update ‖Arₖ‖ estimate
       (iter ≤ ℓ-2)  && (ArNorm = sqrt(ζbisₖ₊₁^2 + ζbarₖ₊₂^2))
@@ -528,10 +528,10 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       user_requested_exit = callback(solver) :: Bool
 
       # Update variables
-      @kswap(vₖ, vₖ₊₁)
+      @kswap!(vₖ, vₖ₊₁)
       if iter ≥ 2
-        @kswap(wₖ₋₂, wₖ₋₁)
-        @kswap(dₖ₋₂, dₖ₋₁)
+        @kswap!(wₖ₋₂, wₖ₋₁)
+        @kswap!(dₖ₋₂, dₖ₋₁)
         ϵₖ₋₂ = ϵₖ₋₁
         c̃₂ₖ₋₄ = c̃₂ₖ₋₂
         s̃₂ₖ₋₄ = s̃₂ₖ₋₂
@@ -572,7 +572,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

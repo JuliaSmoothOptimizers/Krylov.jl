@@ -141,15 +141,15 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     r₀ = MisI ? t : solver.w
 
     # Initial solution x₀ and residual r₀.
-    @kfill!(x, zero(FC))  # x₀
+    kfill!(x, zero(FC))  # x₀
     if warm_start
       mul!(t, A, Δx)
-      @kaxpby!(n, one(FC), b, -one(FC), t)
+      kaxpby!(n, one(FC), b, -one(FC), t)
     else
-      @kcopy!(n, t, b)  # t ← b
+      kcopy!(n, t, b)  # t ← b
     end
     MisI || mulorldiv!(r₀, M, t, ldiv)  # M(b - Ax₀)
-    rNorm = @knrm2(n, r₀)               # β = ‖r₀‖₂
+    rNorm = knorm(n, r₀)               # β = ‖r₀‖₂
     history && push!(rNorms, rNorm)
     if rNorm == 0
       stats.niter = 0
@@ -169,17 +169,17 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
 
     mem = length(V)  # Memory
     for i = 1 : mem
-      @kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
+      kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
     end
     for i = 1 : mem-1
-      @kfill!(P[i], zero(FC))  # Directions Pₖ = NVₖ(Uₖ)⁻¹.
+      kfill!(P[i], zero(FC))  # Directions Pₖ = NVₖ(Uₖ)⁻¹.
     end
-    @kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ = LₖUₖ.
+    kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ = LₖUₖ.
     # Each column has at most mem + 1 nonzero elements.
     # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
     # k-i+1 represents the indice of the diagonal where hᵢ.ₖ is located.
     # In addition of that, the last column of Uₖ is stored in H.
-    @kfill!(L, zero(FC))  # Last mem-1 pivots of Lₖ.
+    kfill!(L, zero(FC))  # Last mem-1 pivots of Lₖ.
 
     # Initial ξ₁ and V₁.
     ξ = rNorm
@@ -209,8 +209,8 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       for i = max(1, iter-mem+1) : iter
         ipos = mod(i-1, mem) + 1  # Position corresponding to vᵢ in the circular stack V.
         diag = iter - i + 1
-        H[diag] = @kdot(n, w, V[ipos])    # hᵢ.ₖ = ⟨MANvₖ, vᵢ⟩
-        @kaxpy!(n, -H[diag], V[ipos], w)  # w ← w - hᵢ.ₖvᵢ
+        H[diag] = kdot(n, w, V[ipos])    # hᵢ.ₖ = ⟨MANvₖ, vᵢ⟩
+        kaxpy!(n, -H[diag], V[ipos], w)  # w ← w - hᵢ.ₖvᵢ
       end
 
       # Partial reorthogonalization of the Krylov basis.
@@ -218,14 +218,14 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
         for i = max(1, iter-mem+1) : iter
           ipos = mod(i-1, mem) + 1
           diag = iter - i + 1
-          Htmp = @kdot(n, w, V[ipos])
+          Htmp = kdot(n, w, V[ipos])
           H[diag] += Htmp
-          @kaxpy!(n, -Htmp, V[ipos], w)
+          kaxpy!(n, -Htmp, V[ipos], w)
         end
       end
 
       # Compute hₖ₊₁.ₖ and vₖ₊₁.
-      Haux = @knrm2(n, w)         # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+      Haux = knorm(n, w)         # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
       if Haux ≠ 0                 # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
         V[next_pos] .= w ./ Haux  # vₖ₊₁ = w / hₖ₊₁.ₖ
       end
@@ -262,20 +262,20 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
         diag = iter - i + 1
         if ipos == ppos
           # pₖ ← -uₖ₋ₘₑₘ₊₁.ₖ * pₖ₋ₘₑₘ₊₁
-          @kscal!(n, -H[diag], P[ppos])
+          kscal!(n, -H[diag], P[ppos])
         else
           # pₖ ← pₖ - uᵢ.ₖ * pᵢ
-          @kaxpy!(n, -H[diag], P[ipos], P[ppos])
+          kaxpy!(n, -H[diag], P[ipos], P[ppos])
         end
       end
       # pₐᵤₓ ← pₐᵤₓ + Nvₖ
-      @kaxpy!(n, one(FC), z, P[ppos])
+      kaxpy!(n, one(FC), z, P[ppos])
       # pₖ = pₐᵤₓ / uₖ.ₖ
       P[ppos] .= P[ppos] ./ H[1]
 
       # Update solution xₖ.
       # xₖ = xₖ₋₁ + ξₖ * pₖ
-      @kaxpy!(n, ξ, P[ppos], x)
+      kaxpy!(n, ξ, P[ppos], x)
 
       # Compute residual norm.
       # ‖ M(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ξₖ / uₖ.ₖ|
@@ -304,7 +304,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     overtimed           && (status = "time limit exceeded")
 
     # Update x
-    warm_start && @kaxpy!(n, one(FC), Δx, x)
+    warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
 
     # Update stats

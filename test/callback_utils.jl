@@ -35,7 +35,7 @@ function get_x_restarted_gmres!(solver::GmresSolver{T,FC,S}, A,
 
   # Form xₖ = N⁻¹Vₖyₖ
   for i = 1 : solver.inner_iter
-    Krylov.@kaxpy!(n, y2[i], V[i], x2)
+    Krylov.kaxpy!(n, y2[i], V[i], x2)
   end
   if !NisI
     p2 .= solver.p
