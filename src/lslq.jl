@@ -228,7 +228,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     # β₁ M u₁ = b.
     kcopy!(m, Mu, b)  # Mu ← b
     MisI || mulorldiv!(u, M, Mu, ldiv)
-    β₁ = sqrt(kdotr(m, u, Mu))
+    β₁ = knorm_elliptic(m, u, Mu)
     if β₁ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
@@ -246,7 +246,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     mul!(Aᴴu, Aᴴ, u)
     kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
-    α = sqrt(kdotr(n, v, Nv))  # = α₁
+    α = knorm_elliptic(n, v, Nv)  # = α₁
 
     # Aᴴb = 0 so x = 0 is a minimum least-squares solution
     if α == 0
@@ -326,7 +326,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       mul!(Av, A, v)
       kaxpby!(m, one(FC), Av, -α, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)
-      β = sqrt(kdotr(m, u, Mu))
+      β = knorm_elliptic(m, u, Mu)
       if β ≠ 0
         kscal!(m, one(FC)/β, u)
         MisI || kscal!(m, one(FC)/β, Mu)
@@ -335,7 +335,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
         mul!(Aᴴu, Aᴴ, u)
         kaxpby!(n, one(FC), Aᴴu, -β, Nv)
         NisI || mulorldiv!(v, N, Nv, ldiv)
-        α = sqrt(kdotr(n, v, Nv))
+        α = knorm_elliptic(n, v, Nv)
         if α ≠ 0
           kscal!(n, one(FC)/α, v)
           NisI || kscal!(n, one(FC)/α, Nv)

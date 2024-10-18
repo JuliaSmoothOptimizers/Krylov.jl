@@ -133,7 +133,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     end
     kcopy!(n, Mv, b)                    # Mv₁ ← b
     MisI || mulorldiv!(v, M, Mv, ldiv)  # v₁ = M⁻¹ * Mv₁
-    β = sqrt(kdotr(n, v, Mv))           # β₁ = v₁ᴴ M v₁
+    β = knorm_elliptic(n, v, Mv)        # β₁ = v₁ᴴ M v₁
     kfill!(rNorms, β)
     if history
       for i = 1 : nshifts
@@ -205,7 +205,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
       end
       kcopy!(n, Mv, Mv_next)              # Mvₖ ← Mvₖ₊₁
       MisI || mulorldiv!(v, M, Mv, ldiv)  # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
-      β = sqrt(kdotr(n, v, Mv))           # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
+      β = knorm_elliptic(n, v, Mv)        # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
       kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
       MisI || kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
 
