@@ -287,6 +287,142 @@ u_star = -sin.(x)
 u_star ≈ u_sol
 ```
 
+## Example with PDE
+
+### Example 4: Solving the 3D Helmholtz equation
+
+The Helmholtz equation in 3D is a fundamental equation used in various fields like acoustics, electromagnetism, and quantum mechanics to model stationary wave phenomena.
+It is given by:
+```math
+\nabla^2 u + k^2 u = 0
+```
+where:
+- $u(x, y, z)$ is the unknown function representing, for example, a pressure field in acoustics, a scalar potential in electromagnetism, or a wave function in quantum mechanics,
+- $\nabla^2$ is the Laplacian operator in three dimensions,
+- $k$ is the wave number, related to the frequency of the wave by $k = \frac{2\pi}{\lambda}$, where $\lambda$ is the wavelength.
+
+We can discretize the Helmholtz equation using finite differences on a uniform 3D grid with grid spacings $\Delta x$, $\Delta y$, and $\Delta z$.
+For a grid point $(i, j, k)$, the second derivatives are approximated as follows:
+
+- In the $x$-direction:
+```math
+\frac{\partial^2 u}{\partial x^2} \approx \frac{u_{i+1,j,k} - 2u_{i,j,k} + u_{i-1,j,k}}{\Delta x^2}
+```
+- In the $y$-direction:
+```math
+\frac{\partial^2 u}{\partial y^2} \approx \frac{u_{i,j+1,k} - 2u_{i,j,k} + u_{i,j-1,k}}{\Delta y^2}
+```
+- In the $z$-direction:
+```math
+\frac{\partial^2 u}{\partial z^2} \approx \frac{u_{i,j,k+1} - 2u_{i,j,k} + u_{i,j,k-1}}{\Delta z^2}
+```
+Combining these, the discretized Helmholtz equation becomes:
+```math
+\frac{u_{i+1,j,k} - 2u_{i,j,k} + u_{i-1,j,k}}{\Delta x^2} + \frac{u_{i,j+1,k} - 2u_{i,j,k} + u_{i,j-1,k}}{\Delta y^2} + \frac{u_{i,j,k+1} - 2u_{i,j,k} + u_{i,j,k-1}}{\Delta z^2} + k^2 u_{i,j,k} = 0
+```
+
+This discretization leads to an equation at each grid point, resulting in a large and sparse linear system when assembled across the entire 3D grid.
+
+Explicitly constructing this large sparse matrix is often impractical and unnecessary.
+Instead, we can define a function that directly applies the Helmholtz operator to the 3D grid, avoiding the need to form the matrix explicitly.
+
+Krylov.jl operates on vectors, so we need to vectorize both the solution and the computational domain.
+However, we can still maintain the structure of the original 3D operator by using `reshape` and `vec`.
+This approach enables us to efficiently apply the operator in 3D while leveraging the vectorized framework for linear algebra operations.
+
+We will solve the Helmholtz equation in a cubic domain using Dirichlet boundary conditions.
+
+```@example helmholtz
+using Krylov, LinearAlgebra
+
+# Parameters
+L = 1.0                  # Length of the cubic domain
+Nx, Ny, Nz = 40, 40, 40  # Number of grid points
+Δx = L / (Nx - 1)        # Grid spacing in x
+Δy = L / (Ny - 1)        # Grid spacing in y
+Δz = L / (Nz - 1)        # Grid spacing in z
+wavelength = 0.1         # Wavelength of the wave
+k = 2 * π / wavelength   # Wave number
+
+# Define a matrix-free Helmholtz operator
+struct HelmholtzOperator
+    Nx::Int
+    Ny::Int
+    Nz::Int
+    Δx::Float64
+    Δy::Float64
+    Δz::Float64
+    k::Float64
+end
+
+Base.size(A::HelmholtzOperator) = (A.Nx * A.Ny * A.Nz, A.Nx * A.Ny * A.Nz)
+
+Base.eltype(A::HelmholtzOperator) = Float64
+
+function LinearAlgebra.mul!(y::Vector, A::HelmholtzOperator, u::Vector)
+    # We reshape the vectors y and u into 3D arrays
+    U = reshape(u, A.Nx, A.Ny, A.Nz)
+    Y = reshape(y, A.Nx, A.Ny, A.Nz)
+
+    # Apply the discrete Laplacian in 3D and add k^2 * u
+    for i in 2:A.Nx-1
+        for j in 2:A.Ny-1
+            for k in 2:A.Nz-1
+                Y[i,j,k] = (
+                    (U[i+1,j,k] - 2 * U[i,j,k] + U[i-1,j,k]) / (A.Δx)^2 +
+                    (U[i,j+1,k] - 2 * U[i,j,k] + U[i,j-1,k]) / (A.Δy)^2 +
+                    (U[i,j,k+1] - 2 * U[i,j,k] + U[i,j,k-1]) / (A.Δz)^2 +
+                    (A.k)^2 * U[i,j,k]
+                )
+            end
+        end
+    end
+
+    return y
+end
+
+# Create the matrix-free operator for the Helmholtz equation
+A = HelmholtzOperator(Nx, Ny, Nz, Δx, Δy, Δz, k)
+
+# Create the right-hand side
+B = zeros(Nx, Ny, Nz)
+B[1, :, :] .= 1   # Set boundary at x = 0
+B[Nx, :, :] .= 1  # Set boundary at x = 1
+B[:, 1, :] .= 1   # Set boundary at y = 0
+B[:, Ny, :] .= 1  # Set boundary at y = 1
+B[:, :, 1] .= 1   # Set boundary at z = 0
+B[:, :, Nz] .= 1  # Set boundary at z = 1
+
+# Vectorize the right-hand side
+b = vec(B)
+
+# u(x,y,z) = − sin(πx) * sin(πy) * sin(πz) + 1
+
+# Solve the linear system using GMRES
+u_sol, stats = gmres(A, b, atol=1e-10, rtol=0.0, verbose=1)
+
+# Reshape the solution back to a 3D array for visualization or further processing
+U_sol = reshape(u_sol, Nx, Ny, Nz)
+
+# The exact solution is
+# u(x,y,z) = - sin(πx) * sin(πy) * sin(πz) + 1
+
+# Create the grid points
+x = 0:Δx:L  # Points in x dimension
+y = 0:Δy:L  # Points in y dimension
+z = 0:Δz:L  # Points in z dimension
+
+# Compute the exact solution
+U_star = zeros(Nx, Ny, Nz)
+for i in 1:Nx
+    for j in 1:Ny
+        for k in 1:Nz
+            U_star[i,j,k] = -sin(π * x[i]) * sin(π * y[j]) * sin(π * z[k]) + 1
+        end
+    end
+end
+```
+
 Note that preconditioners can be also implemented as abstract operators.
 For instance, we could compute the Cholesky factorization of $M$ and $N$ and create linear operators that perform the forward and backsolves.
 
