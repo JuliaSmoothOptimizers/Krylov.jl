@@ -186,8 +186,12 @@ This transforms the Poisson equation $\frac{d^2 u(x)}{dx^2} = f(x)$ into an alge
 By solving for $\hat{u}_k$ and applying the IFFT, we can recover the solution $u(x)$ efficiently.
 
 The inverse FFT is used to convert data from the frequency domain back to the spatial domain.
-Once the solution in frequency space is obtained by dividing the Fourier coefficients $\hat{f}_k$ by $-k^2$,
+Once the solution in frequency space is obtained by dividing the Fourier coefficients $\hat{f}_k$ by $-k^2$ for $k \neq 0$,
 the IFFT is applied to transform the result back to the original grid points in the spatial domain.
+At $k = 0$, the equation $-k^2 \hat{u}_0 = \hat{f}_0$ becomes indeterminate since $k^2 = 0$.
+This situation corresponds to the zero-frequency component $\hat{f}_0$, which represents the mean of $f(x)$.
+In such cases, $\hat{u}_0$ is treated separately.
+It is typically set to 0 to remove the constant mode, or adjusted based on boundary conditions or other constraints.
 
 In some cases, even though the FFT provides an efficient way to apply differential operators (such as the Laplacian)
 in the frequency domain, a direct solution may not be feasible due to complex boundary conditions,
@@ -231,7 +235,7 @@ function FFTPoissonOperator(n::Int, L::Float64, complex::Bool)
     else
         k = Vector{Float64}(undef, n÷2 + 1)
     end
-    k[1] = 0  # DC component -- f(x) = sin(x) has a mean of 0
+    k[1] = sum(f) / n  # average value of f(x) over the domain
     for j in 1:(n÷2)
         k[j+1] = 2 * π * j / L  # Positive wave numbers
     end
@@ -273,7 +277,6 @@ function LinearAlgebra.mul!(y::Vector, A::FFTPoissonOperator, u::Vector)
 
     return y
 end
-
 
 # Create the matrix-free operator for the Poisson equation
 complex = false
