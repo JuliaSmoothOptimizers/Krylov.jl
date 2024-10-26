@@ -52,7 +52,7 @@ cg(opH, -g(xk))</code></pre><pre class="documenter-example-output"><code class="
  residuals: []
  Aresiduals: []
  κ₂(A): []
- timer: 587.00ms
+ timer: 611.20ms
  status: solution good enough given atol and rtol
 )</code></pre><h3 id="Example-2:-The-Gauss-Newton-Method-for-Nonlinear-Least-Squares"><a class="docs-heading-anchor" href="#Example-2:-The-Gauss-Newton-Method-for-Nonlinear-Least-Squares">Example 2: The Gauss-Newton Method for Nonlinear Least Squares</a><a id="Example-2:-The-Gauss-Newton-Method-for-Nonlinear-Least-Squares-1"></a><a class="docs-heading-anchor-permalink" href="#Example-2:-The-Gauss-Newton-Method-for-Nonlinear-Least-Squares" title="Permalink"></a></h3><p>At each iteration of the Gauss-Newton method applied to a nonlinear least-squares objective <span>$f(x) = \tfrac{1}{2}\| F(x)\|^2$</span> where <span>$F : \mathbb{R}^n \rightarrow \mathbb{R}^m$</span> is <span>$\mathcal{C}^1$</span>, we solve the subproblem:</p><p class="math-container">\[\min_{d \in \mathbb{R}^n}~~\tfrac{1}{2}~\|J(x_k) d + F(x_k)\|^2,\]</p><p>where <span>$J(x)$</span> is the Jacobian of <span>$F$</span> at <span>$x$</span>.</p><p>An appropriate iterative method to solve the above linear least-squares problems is LSMR. We could pass the explicit Jacobian to LSMR as follows:</p><pre><code class="language- hljs">using ForwardDiff, Krylov
 
@@ -85,9 +85,9 @@ lsmr(opJ, -F(xk))</code></pre><pre class="documenter-example-output"><code class
  κ₂(A): 1.2777264193293685
  ‖A‖F: 5.328138145631234
  xNorm: 0.5623144027914095
- timer: 607.21ms
+ timer: 614.33ms
  status: found approximate minimum least-squares solution
-)</code></pre><h2 id="Example-with-FFT-and-IFFT"><a class="docs-heading-anchor" href="#Example-with-FFT-and-IFFT">Example with FFT and IFFT</a><a id="Example-with-FFT-and-IFFT-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-FFT-and-IFFT" title="Permalink"></a></h2><h3 id="Example-3:-Solving-the-Poisson-equation-with-FFT-and-IFFT"><a class="docs-heading-anchor" href="#Example-3:-Solving-the-Poisson-equation-with-FFT-and-IFFT">Example 3: Solving the Poisson equation with FFT and IFFT</a><a id="Example-3:-Solving-the-Poisson-equation-with-FFT-and-IFFT-1"></a><a class="docs-heading-anchor-permalink" href="#Example-3:-Solving-the-Poisson-equation-with-FFT-and-IFFT" title="Permalink"></a></h3><p>In applications related to partial differential equations (PDEs), linear systems can arise from discretizing differential operators. Storing such operators as explicit matrices is computationally expensive and unnecessary when matrix-free methods can be used, particularly with structured grids.</p><p>The FFT is an algorithm that computes the discrete Fourier transform (DFT) of a sequence, transforming data from the spatial domain to the frequency domain. In the context of solving PDEs, it simplifies the application of differential operators like the Laplacian by converting derivatives into algebraic operations.</p><p>For a function <span>$u(x)$</span> discretized on a periodic grid with <span>$n$</span> points, the FFT of <span>$u$</span> is:</p><p class="math-container">\[\hat{u}_k = \sum_{j=0}^{n-1} u_j e^{-i k x_j},\]</p><p>where <span>$\hat{u}_k$</span> represents the Fourier coefficients for the frequency <span>$k$</span>, and <span>$u_j$</span> is the value of <span>$u$</span> at the grid point <span>$x_j$</span> defined as <span>$x_j = \frac{2 \pi j}{L}$</span> with period <span>$L$</span>. The inverse FFT (IFFT) reconstructs <span>$u$</span> from its Fourier coefficients:</p><p class="math-container">\[u_j = \frac{1}{n} \sum_{k=0}^{n-1} \hat{u}_k e^{i k x_j}.\]</p><p>In Fourier space, the Laplacian operator <span>$\frac{d^2}{dx^2}$</span> becomes a simple multiplication by <span>$-k^2$</span>, where <span>$k$</span> is the wavenumber derived from the grid size. This transforms the Poisson equation <span>$\frac{d^2 u(x)}{dx^2} = f(x)$</span> into an algebraic equation in the frequency domain:</p><p class="math-container">\[-k^2 \hat{u}_k = \hat{f}_k.\]</p><p>By solving for <span>$\hat{u}_k$</span> and applying the IFFT, we can recover the solution <span>$u(x)$</span> efficiently.</p><p>The inverse FFT is used to convert data from the frequency domain back to the spatial domain. Once the solution in frequency space is obtained by dividing the Fourier coefficients <span>$\hat{f}_k$</span> by <span>$-k^2$</span>, the IFFT is applied to transform the result back to the original grid points in the spatial domain.</p><p>In some cases, even though the FFT provides an efficient way to apply differential operators (such as the Laplacian) in the frequency domain, a direct solution may not be feasible due to complex boundary conditions, variable coefficients, or grid irregularities. In these situations, the FFT must be coupled with a Krylov method to iteratively solve the problem.</p><p>This example consists of solving the 1D Poisson equation on a periodic domain <span>$[0, 4\pi]$</span>:</p><p class="math-container">\[\frac{d^2 u(x)}{dx^2} = f(x),\]</p><p>where <span>$u(x)$</span> is the unknown solution, and <span>$f(x)$</span> is the given source term. We solve this equation using <a href="https://github.com/JuliaMath/FFTW.jl">FFTW.jl</a> to compute the matrix-free action of the Laplacian within the conjugate gradient solver.</p><p>Note that while a direct FFT-based approach can be used here due to the simplicity of the periodic boundary conditions, this example illustrates how a Krylov method can be employed to solve more challenging problems.</p><pre><code class="language-julia hljs">using FFTW, Krylov, LinearAlgebra
+)</code></pre><h2 id="Example-with-FFT-and-IFFT"><a class="docs-heading-anchor" href="#Example-with-FFT-and-IFFT">Example with FFT and IFFT</a><a id="Example-with-FFT-and-IFFT-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-FFT-and-IFFT" title="Permalink"></a></h2><h3 id="Example-3:-Solving-the-Poisson-equation-with-FFT-and-IFFT"><a class="docs-heading-anchor" href="#Example-3:-Solving-the-Poisson-equation-with-FFT-and-IFFT">Example 3: Solving the Poisson equation with FFT and IFFT</a><a id="Example-3:-Solving-the-Poisson-equation-with-FFT-and-IFFT-1"></a><a class="docs-heading-anchor-permalink" href="#Example-3:-Solving-the-Poisson-equation-with-FFT-and-IFFT" title="Permalink"></a></h3><p>In applications related to partial differential equations (PDEs), linear systems can arise from discretizing differential operators. Storing such operators as explicit matrices is computationally expensive and unnecessary when matrix-free methods can be used, particularly with structured grids.</p><p>The FFT is an algorithm that computes the discrete Fourier transform (DFT) of a sequence, transforming data from the spatial domain to the frequency domain. In the context of solving PDEs, it simplifies the application of differential operators like the Laplacian by converting derivatives into algebraic operations.</p><p>For a function <span>$u(x)$</span> discretized on a periodic grid with <span>$n$</span> points, the FFT of <span>$u$</span> is:</p><p class="math-container">\[\hat{u}_k = \sum_{j=0}^{n-1} u_j e^{-i k x_j},\]</p><p>where <span>$\hat{u}_k$</span> represents the Fourier coefficients for the frequency <span>$k$</span>, and <span>$u_j$</span> is the value of <span>$u$</span> at the grid point <span>$x_j$</span> defined as <span>$x_j = \frac{2 \pi j}{L}$</span> with period <span>$L$</span>. The inverse FFT (IFFT) reconstructs <span>$u$</span> from its Fourier coefficients:</p><p class="math-container">\[u_j = \frac{1}{n} \sum_{k=0}^{n-1} \hat{u}_k e^{i k x_j}.\]</p><p>In Fourier space, the Laplacian operator <span>$\frac{d^2}{dx^2}$</span> becomes a simple multiplication by <span>$-k^2$</span>, where <span>$k$</span> is the wavenumber derived from the grid size. This transforms the Poisson equation <span>$\frac{d^2 u(x)}{dx^2} = f(x)$</span> into an algebraic equation in the frequency domain:</p><p class="math-container">\[-k^2 \hat{u}_k = \hat{f}_k.\]</p><p>By solving for <span>$\hat{u}_k$</span> and applying the IFFT, we can recover the solution <span>$u(x)$</span> efficiently.</p><p>The inverse FFT is used to convert data from the frequency domain back to the spatial domain. Once the solution in frequency space is obtained by dividing the Fourier coefficients <span>$\hat{f}_k$</span> by <span>$-k^2$</span> for <span>$k \neq 0$</span>, the IFFT is applied to transform the result back to the original grid points in the spatial domain. At <span>$k = 0$</span>, the equation <span>$-k^2 \hat{u}_0 = \hat{f}_0$</span> becomes indeterminate since <span>$k^2 = 0$</span>. This situation corresponds to the zero-frequency component <span>$\hat{f}_0$</span>, which represents the mean of <span>$f(x)$</span>. In such cases, <span>$\hat{u}_0$</span> is treated separately. It is typically set to 0 to remove the constant mode, or adjusted based on boundary conditions or other constraints.</p><p>In some cases, even though the FFT provides an efficient way to apply differential operators (such as the Laplacian) in the frequency domain, a direct solution may not be feasible due to complex boundary conditions, variable coefficients, or grid irregularities. In these situations, the FFT must be coupled with a Krylov method to iteratively solve the problem.</p><p>This example consists of solving the 1D Poisson equation on a periodic domain <span>$[0, 4\pi]$</span>:</p><p class="math-container">\[\frac{d^2 u(x)}{dx^2} = f(x),\]</p><p>where <span>$u(x)$</span> is the unknown solution, and <span>$f(x)$</span> is the given source term. We solve this equation using <a href="https://github.com/JuliaMath/FFTW.jl">FFTW.jl</a> to compute the matrix-free action of the Laplacian within the conjugate gradient solver.</p><p>Note that while a direct FFT-based approach can be used here due to the simplicity of the periodic boundary conditions, this example illustrates how a Krylov method can be employed to solve more challenging problems.</p><pre><code class="language-julia hljs">using FFTW, Krylov, LinearAlgebra
 
 # Define the problem size and domain
 n = 32768                         # Number of grid points (2^15)
@@ -111,7 +111,7 @@ function FFTPoissonOperator(n::Int, L::Float64, complex::Bool)
     else
         k = Vector{Float64}(undef, n÷2 + 1)
     end
-    k[1] = 0  # DC component -- f(x) = sin(x) has a mean of 0
+    k[1] = sum(f) / n  # average value of f(x) over the domain
     for j in 1:(n÷2)
         k[j+1] = 2 * π * j / L  # Positive wave numbers
     end
@@ -154,7 +154,6 @@ function LinearAlgebra.mul!(y::Vector, A::FFTPoissonOperator, u::Vector)
     return y
 end
 
-
 # Create the matrix-free operator for the Poisson equation
 complex = false
 A = FFTPoissonOperator(n, L, complex)
@@ -164,16 +163,23 @@ u_sol, stats = cg(A, f, atol=1e-10, rtol=0.0, verbose=1)
 
 # The exact solution is u(x) = -sin(x)
 u_star = -sin.(x)
-u_star ≈ u_sol</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><h2 id="Example-with-PDE"><a class="docs-heading-anchor" href="#Example-with-PDE">Example with PDE</a><a id="Example-with-PDE-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-PDE" title="Permalink"></a></h2><h3 id="Example-4:-Solving-the-3D-Helmholtz-equation"><a class="docs-heading-anchor" href="#Example-4:-Solving-the-3D-Helmholtz-equation">Example 4: Solving the 3D Helmholtz equation</a><a id="Example-4:-Solving-the-3D-Helmholtz-equation-1"></a><a class="docs-heading-anchor-permalink" href="#Example-4:-Solving-the-3D-Helmholtz-equation" title="Permalink"></a></h3><p>The Helmholtz equation in 3D is a fundamental equation used in various fields like acoustics, electromagnetism, and quantum mechanics to model stationary wave phenomena. It is given by:</p><p class="math-container">\[\nabla^2 u + k^2 u = 0\]</p><p>where:</p><ul><li><p class="math-container">\[u(x, y, z)\]</p>is the unknown function representing, for example, a pressure field in acoustics, a scalar potential in electromagnetism, or a wave function in quantum mechanics,</li><li><p class="math-container">\[\nabla^2\]</p>is the Laplacian operator in three dimensions,</li><li><p class="math-container">\[k\]</p>is the wave number, related to the frequency of the wave by <span>$k = \frac{2\pi}{\lambda}$</span>, where <span>$\lambda$</span> is the wavelength.</li></ul><p>We can discretize the Helmholtz equation using finite differences on a uniform 3D grid with grid spacings <span>$\Delta x$</span>, <span>$\Delta y$</span>, and <span>$\Delta z$</span>. For a grid point <span>$(i, j, k)$</span>, the second derivatives are approximated as follows:</p><ul><li>In the <span>$x$</span>-direction:</li></ul><p class="math-container">\[\frac{\partial^2 u}{\partial x^2} \approx \frac{u_{i+1,j,k} - 2u_{i,j,k} + u_{i-1,j,k}}{\Delta x^2}\]</p><ul><li>In the <span>$y$</span>-direction:</li></ul><p class="math-container">\[\frac{\partial^2 u}{\partial y^2} \approx \frac{u_{i,j+1,k} - 2u_{i,j,k} + u_{i,j-1,k}}{\Delta y^2}\]</p><ul><li>In the <span>$z$</span>-direction:</li></ul><p class="math-container">\[\frac{\partial^2 u}{\partial z^2} \approx \frac{u_{i,j,k+1} - 2u_{i,j,k} + u_{i,j,k-1}}{\Delta z^2}\]</p><p>Combining these, the discretized Helmholtz equation becomes:</p><p class="math-container">\[\frac{u_{i+1,j,k} - 2u_{i,j,k} + u_{i-1,j,k}}{\Delta x^2} + \frac{u_{i,j+1,k} - 2u_{i,j,k} + u_{i,j-1,k}}{\Delta y^2} + \frac{u_{i,j,k+1} - 2u_{i,j,k} + u_{i,j,k-1}}{\Delta z^2} + k^2 u_{i,j,k} = 0\]</p><p>This discretization leads to an equation at each grid point, resulting in a large and sparse linear system when assembled across the entire 3D grid.</p><p>Explicitly constructing this large sparse matrix is often impractical and unnecessary. Instead, we can define a function that directly applies the Helmholtz operator to the 3D grid, avoiding the need to form the matrix explicitly.</p><p>Krylov.jl operates on vectors, so we need to vectorize both the solution and the computational domain. However, we can still maintain the structure of the original 3D operator by using <code>reshape</code> and <code>vec</code>. This approach enables us to efficiently apply the operator in 3D while leveraging the vectorized framework for linear algebra operations.</p><p>We will solve the Helmholtz equation in a cubic domain using Dirichlet boundary conditions.</p><pre><code class="language-julia hljs">using Krylov, LinearAlgebra
+u_star ≈ u_sol</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><h2 id="Example-with-PDE"><a class="docs-heading-anchor" href="#Example-with-PDE">Example with PDE</a><a id="Example-with-PDE-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-PDE" title="Permalink"></a></h2><h3 id="Example-4:-Solving-the-3D-Helmholtz-equation"><a class="docs-heading-anchor" href="#Example-4:-Solving-the-3D-Helmholtz-equation">Example 4: Solving the 3D Helmholtz equation</a><a id="Example-4:-Solving-the-3D-Helmholtz-equation-1"></a><a class="docs-heading-anchor-permalink" href="#Example-4:-Solving-the-3D-Helmholtz-equation" title="Permalink"></a></h3><p>The Helmholtz equation in 3D is a fundamental equation used in various fields like acoustics, electromagnetism, and quantum mechanics to model stationary wave phenomena. It is given by:</p><p class="math-container">\[\nabla^2 u(x,y,z) + k^2 u(x,y,z) = f(x,y,z)\]</p><p>where:</p><ul><li><p class="math-container">\[u(x, y, z)\]</p>is the unknown function representing, for example, a pressure field in acoustics, a scalar potential in electromagnetism, or a wave function in quantum mechanics,</li><li><p class="math-container">\[\nabla^2\]</p>is the Laplacian operator in three dimensions,</li><li><p class="math-container">\[k\]</p>is the wave number, related to the frequency of the wave by <span>$k = \frac{2\pi}{\lambda}$</span>, where <span>$\lambda$</span> is the wavelength,</li><li><p class="math-container">\[f(x,y,z)\]</p>is a source term that drives the wave phenomena, such as a forcing function or external influence.</li></ul><p>To discretize the Helmholtz equation, we use finite differences on a uniform 3D grid with grid spacings <span>$\Delta x$</span>, <span>$\Delta y$</span>, and <span>$\Delta z$</span>. For a grid point <span>$(i, j, k)$</span>, the second derivatives are approximated as follows:</p><ul><li>In the <span>$x$</span>-direction:</li></ul><p class="math-container">\[\frac{\partial^2 u}{\partial x^2} \approx \frac{u_{i+1,j,k} - 2u_{i,j,k} + u_{i-1,j,k}}{\Delta x^2}\]</p><ul><li>In the <span>$y$</span>-direction:</li></ul><p class="math-container">\[\frac{\partial^2 u}{\partial y^2} \approx \frac{u_{i,j+1,k} - 2u_{i,j,k} + u_{i,j-1,k}}{\Delta y^2}\]</p><ul><li>In the <span>$z$</span>-direction:</li></ul><p class="math-container">\[\frac{\partial^2 u}{\partial z^2} \approx \frac{u_{i,j,k+1} - 2u_{i,j,k} + u_{i,j,k-1}}{\Delta z^2}\]</p><p>Combining these, the discretized Helmholtz equation becomes:</p><p class="math-container">\[\frac{u_{i+1,j,k} - 2u_{i,j,k} + u_{i-1,j,k}}{\Delta x^2} + \frac{u_{i,j+1,k} - 2u_{i,j,k} + u_{i,j-1,k}}{\Delta y^2} + \frac{u_{i,j,k+1} - 2u_{i,j,k} + u_{i,j,k-1}}{\Delta z^2} + k^2 u_{i,j,k} = f_{i,j,k}\]</p><p>This discretization results in an equation at each grid point, resulting in a large and sparse linear system when assembled across the entire 3D grid.</p><p>Explicitly constructing this large sparse matrix is often impractical and unnecessary. Instead, we can define a function that directly applies the Helmholtz operator to the 3D grid, avoiding the need to form the matrix explicitly.</p><p>Krylov.jl operates on vectors, so we must vectorize both the solution and the computational domain. However, we can still maintain the structure of the original 3D operator by using <code>reshape</code> and <code>vec</code>. This approach enables a simpler and efficient application of the operator in 3D while leveraging the vectorized framework for linear algebra operations.</p><pre><code class="language-julia hljs">using Krylov, LinearAlgebra
 
 # Parameters
-L = 1.0                  # Length of the cubic domain
-Nx, Ny, Nz = 40, 40, 40  # Number of grid points
-Δx = L / (Nx - 1)        # Grid spacing in x
-Δy = L / (Ny - 1)        # Grid spacing in y
-Δz = L / (Nz - 1)        # Grid spacing in z
-wavelength = 0.1         # Wavelength of the wave
-k = 2 * π / wavelength   # Wave number
+L = 1.0                 # Length of the cubic domain
+Nx = 400                # Number of interior grid points in x
+Ny = 400                # Number of interior grid points in y
+Nz = 400                # Number of interior grid points in z
+Δx = L / (Nx + 1)       # Grid spacing in x
+Δy = L / (Ny + 1)       # Grid spacing in y
+Δz = L / (Nz + 1)       # Grid spacing in z
+wavelength = 0.5        # Wavelength of the wave
+k = 2 * π / wavelength  # Wave number
+
+# Create the grid points
+x = 0:Δx:L  # Points in x dimension (Nx + 2)
+y = 0:Δy:L  # Points in y dimension (Ny + 2)
+z = 0:Δz:L  # Points in z dimension (Nz + 2)
 
 # Define a matrix-free Helmholtz operator
 struct HelmholtzOperator
@@ -191,20 +197,40 @@ Base.size(A::HelmholtzOperator) = (A.Nx * A.Ny * A.Nz, A.Nx * A.Ny * A.Nz)
 Base.eltype(A::HelmholtzOperator) = Float64
 
 function LinearAlgebra.mul!(y::Vector, A::HelmholtzOperator, u::Vector)
-    # We reshape the vectors y and u into 3D arrays
+    # Reshape vectors y and u into 3D arrays
     U = reshape(u, A.Nx, A.Ny, A.Nz)
     Y = reshape(y, A.Nx, A.Ny, A.Nz)
 
-    # Apply the discrete Laplacian in 3D and add k^2 * u
-    for i in 2:A.Nx-1
-        for j in 2:A.Ny-1
-            for k in 2:A.Nz-1
-                Y[i,j,k] = (
-                    (U[i+1,j,k] - 2 * U[i,j,k] + U[i-1,j,k]) / (A.Δx)^2 +
-                    (U[i,j+1,k] - 2 * U[i,j,k] + U[i,j-1,k]) / (A.Δy)^2 +
-                    (U[i,j,k+1] - 2 * U[i,j,k] + U[i,j,k-1]) / (A.Δz)^2 +
-                    (A.k)^2 * U[i,j,k]
-                )
+    # Apply the discrete Laplacian in 3D with k^2 * u
+    for i in 1:A.Nx
+        for j in 1:A.Ny
+            for k in 1:A.Nz
+                if i == 1
+                    dx2 = (U[i+1,j,k] -2 * U[i,j,k]) / (A.Δx)^2
+                elseif i == A.Nx
+                    dx2 = (-2 * U[i,j,k] + U[i-1,j,k]) / (A.Δx)^2
+                else
+                    # Centered difference for interior points
+                    dx2 = (U[i+1,j,k] -2 * U[i,j,k] + U[i-1,j,k]) / (A.Δx)^2
+                end
+
+                if j == 1
+                    dy2 = (U[i,j+1,k] -2 * U[i,j,k]) / (A.Δy)^2
+                elseif j == A.Ny
+                    dy2 = (-2 * U[i,j,k] + U[i,j-1,k]) / (A.Δy)^2
+                else
+                    dy2 = (U[i,j+1,k] -2 * U[i,j,k] + U[i,j-1,k]) / (A.Δy)^2
+                end
+
+                if k == 1
+                    dz2 = (U[i,j,k+1] -2 * U[i,j,k]) / (A.Δz)^2
+                elseif k == A.Nz
+                    dz2 = (-2 * U[i,j,k] + U[i,j,k-1]) / (A.Δz)^2
+                else
+                    dz2 = (U[i,j,k+1] -2 * U[i,j,k] + U[i,j,k-1]) / (A.Δz)^2
+                end
+
+                Y[i,j,k] = dx2 + dy2 + dz2 + (A.k)^2 * U[i,j,k]
             end
         end
     end
@@ -215,1766 +241,158 @@ end
 # Create the matrix-free operator for the Helmholtz equation
 A = HelmholtzOperator(Nx, Ny, Nz, Δx, Δy, Δz, k)
 
-# Create the right-hand side
-B = zeros(Nx, Ny, Nz)
-B[1, :, :] .= 1   # Set boundary at x = 0
-B[Nx, :, :] .= 1  # Set boundary at x = 1
-B[:, 1, :] .= 1   # Set boundary at y = 0
-B[:, Ny, :] .= 1  # Set boundary at y = 1
-B[:, :, 1] .= 1   # Set boundary at z = 0
-B[:, :, Nz] .= 1  # Set boundary at z = 1
+# Create the right-hand side with the source term
+# f(x, y, z) = -2k² * sin(kx) * sin(ky) * sin(kz)
+F = zeros(Nx, Ny, Nz)
+for ii in 1:Nx
+    for jj in 1:Ny
+        for kk in 1:Nz
+            F[ii,jj,kk] = -2 * k^2 * sin(k * x[ii+1]) * sin(k * y[jj+1]) * sin(k * z[kk+1])
+        end
+    end
+end
 
 # Vectorize the right-hand side
-b = vec(B)
+f = vec(F)
 
-# u(x,y,z) = − sin(πx) * sin(πy) * sin(πz) + 1
-
-# Solve the linear system using GMRES
-u_sol, stats = gmres(A, b, atol=1e-10, rtol=0.0, verbose=1)
+# Solve the linear system using MinAres
+u_sol, stats = minares(A, f, atol=1e-10, rtol=0.0, verbose=1)
 
 # Reshape the solution back to a 3D array for visualization or further processing
 U_sol = reshape(u_sol, Nx, Ny, Nz)
 
-# The exact solution is
-# u(x,y,z) = - sin(πx) * sin(πy) * sin(πz) + 1
+# Compare U_sol with the exact solution u(x,y,z) = sin(kx) * sin(ky) * sin(kz)
+# U_sol[ii,jj,kk] ≈ sin(k * x[ii+1]) * sin(k * y[jj+1]) * sin(k * z[kk+1])</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">400×400×400 Array{Float64, 3}:
+[:, :, 1] =
+  3.07636e-5    6.14969e-5    9.21699e-5   …  -6.14969e-5   -3.07636e-5
+  6.14969e-5    0.000122933   0.000184249     -0.000122933  -6.14969e-5
+  9.21699e-5    0.000184249   0.000276148     -0.000184249  -9.21699e-5
+  0.000122752   0.000245384   0.000367775     -0.000245384  -0.000122752
+  0.000153214   0.000306278   0.000459041     -0.000306278  -0.000153214
+  0.000183526   0.000366871   0.000549856  …  -0.000366871  -0.000183526
+  0.000213657   0.000427104   0.000640132     -0.000427104  -0.000213657
+  0.000243578   0.000486918   0.000729779     -0.000486918  -0.000243578
+  0.000273261   0.000546253   0.000818709     -0.000546253  -0.000273261
+  0.000302675   0.000605052   0.000906835     -0.000605052  -0.000302675
+  ⋮                                        ⋱                
+ -0.000273261  -0.000546253  -0.000818709      0.000546253   0.000273261
+ -0.000243578  -0.000486918  -0.000729779      0.000486918   0.000243578
+ -0.000213657  -0.000427104  -0.000640132      0.000427104   0.000213657
+ -0.000183526  -0.000366871  -0.000549856      0.000366871   0.000183526
+ -0.000153214  -0.000306278  -0.000459041  …   0.000306278   0.000153214
+ -0.000122752  -0.000245384  -0.000367775      0.000245384   0.000122752
+ -9.21699e-5   -0.000184249  -0.000276148      0.000184249   9.21699e-5
+ -6.14969e-5   -0.000122933  -0.000184249      0.000122933   6.14969e-5
+ -3.07636e-5   -6.14969e-5   -9.21699e-5       6.14969e-5    3.07636e-5
 
-# Create the grid points
-x = 0:Δx:L  # Points in x dimension
-y = 0:Δy:L  # Points in y dimension
-z = 0:Δz:L  # Points in z dimension
+[:, :, 2] =
+  6.14969e-5    0.000122933   0.000184249  …  -0.000122933  -6.14969e-5
+  0.000122933   0.000245746   0.000368318     -0.000245746  -0.000122933
+  0.000184249   0.000368318   0.000552024     -0.000368318  -0.000184249
+  0.000245384   0.000490527   0.000735189     -0.000490527  -0.000245384
+  0.000306278   0.000612255   0.000917631     -0.000612255  -0.000306278
+  0.000366871   0.000733382   0.00109917   …  -0.000733382  -0.000366871
+  0.000427104   0.000853789   0.00127964      -0.000853789  -0.000427104
+  0.000486918   0.000973357   0.00145884      -0.000973357  -0.000486918
+  0.000546253   0.00109197    0.00163661      -0.00109197   -0.000546253
+  0.000605052   0.00120951    0.00181278      -0.00120951   -0.000605052
+  ⋮                                        ⋱                
+ -0.000546253  -0.00109197   -0.00163661       0.00109197    0.000546253
+ -0.000486918  -0.000973357  -0.00145884       0.000973357   0.000486918
+ -0.000427104  -0.000853789  -0.00127964       0.000853789   0.000427104
+ -0.000366871  -0.000733382  -0.00109917       0.000733382   0.000366871
+ -0.000306278  -0.000612255  -0.000917631  …   0.000612255   0.000306278
+ -0.000245384  -0.000490527  -0.000735189      0.000490527   0.000245384
+ -0.000184249  -0.000368318  -0.000552024      0.000368318   0.000184249
+ -0.000122933  -0.000245746  -0.000368318      0.000245746   0.000122933
+ -6.14969e-5   -0.000122933  -0.000184249      0.000122933   6.14969e-5
 
-# Compute the exact solution
-U_star = zeros(Nx, Ny, Nz)
-for i in 1:Nx
-    for j in 1:Ny
-        for k in 1:Nz
-            U_star[i,j,k] = -sin(π * x[i]) * sin(π * y[j]) * sin(π * z[k]) + 1
-        end
-    end
-end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">GMRES: system of size 64000
- pass      k     ‖rₖ‖   hₖ₊₁.ₖ  timer
-    0      0  9.6e+01  ✗ ✗ ✗ ✗  0.00s
-    1      1  9.5e+01  1.6e+03  0.21s
-    1      2  9.5e+01  1.7e+03  0.45s
-    1      3  9.5e+01  2.2e+03  0.45s
-    1      4  9.5e+01  3.2e+03  0.45s
-    1      5  9.5e+01  3.2e+03  0.45s
-    1      6  9.5e+01  4.2e+03  0.45s
-    1      7  9.5e+01  4.2e+03  0.45s
-    1      8  9.5e+01  4.2e+03  0.45s
-    1      9  9.5e+01  4.4e+03  0.45s
-    1     10  9.5e+01  4.4e+03  0.45s
-    1     11  9.5e+01  4.4e+03  0.45s
-    1     12  9.5e+01  4.5e+03  0.45s
-    1     13  9.5e+01  4.5e+03  0.45s
-    1     14  9.5e+01  4.5e+03  0.46s
-    1     15  9.5e+01  4.5e+03  0.46s
-    1     16  9.5e+01  4.5e+03  0.46s
-    1     17  9.5e+01  4.5e+03  0.46s
-    1     18  9.5e+01  4.5e+03  0.46s
-    1     19  9.5e+01  4.5e+03  0.46s
-    1     20  9.5e+01  4.5e+03  0.46s
-    1     21  9.5e+01  4.5e+03  0.46s
-    1     22  9.4e+01  4.5e+03  0.46s
-    1     23  9.4e+01  4.5e+03  0.46s
-    1     24  9.4e+01  4.5e+03  0.46s
-    1     25  9.4e+01  4.5e+03  0.46s
-    1     26  9.4e+01  4.6e+03  0.46s
-    1     27  9.4e+01  4.5e+03  0.46s
-    1     28  9.4e+01  4.6e+03  0.47s
-    1     29  9.4e+01  4.6e+03  0.47s
-    1     30  9.4e+01  4.6e+03  0.47s
-    1     31  9.4e+01  4.6e+03  0.47s
-    1     32  9.4e+01  4.6e+03  0.47s
-    1     33  9.4e+01  4.4e+03  0.47s
-    1     34  9.4e+01  4.3e+03  0.47s
-    1     35  9.4e+01  4.2e+03  0.47s
-    1     36  9.4e+01  4.5e+03  0.47s
-    1     37  9.4e+01  4.8e+03  0.48s
-    1     38  9.4e+01  4.6e+03  0.48s
-    1     39  9.4e+01  4.3e+03  0.48s
-    1     40  9.4e+01  4.3e+03  0.48s
-    1     41  9.4e+01  4.7e+03  0.48s
-    1     42  9.4e+01  4.6e+03  0.48s
-    1     43  9.4e+01  4.2e+03  0.48s
-    1     44  9.4e+01  4.5e+03  0.48s
-    1     45  9.4e+01  4.7e+03  0.49s
-    1     46  9.4e+01  4.3e+03  0.49s
-    1     47  9.4e+01  4.4e+03  0.49s
-    1     48  9.4e+01  4.7e+03  0.49s
-    1     49  9.4e+01  4.4e+03  0.49s
-    1     50  9.4e+01  4.3e+03  0.49s
-    1     51  9.4e+01  4.6e+03  0.49s
-    1     52  9.4e+01  4.4e+03  0.49s
-    1     53  9.4e+01  4.3e+03  0.49s
-    1     54  9.4e+01  4.5e+03  0.50s
-    1     55  9.4e+01  4.4e+03  0.50s
-    1     56  9.4e+01  4.2e+03  0.50s
-    1     57  9.3e+01  4.5e+03  0.50s
-    1     58  9.3e+01  4.6e+03  0.50s
-    1     59  9.3e+01  4.2e+03  0.50s
-    1     60  9.3e+01  4.5e+03  0.50s
-    1     61  9.3e+01  4.2e+03  0.51s
-    1     62  9.3e+01  4.3e+03  0.51s
-    1     63  9.3e+01  4.3e+03  0.51s
-    1     64  9.3e+01  4.3e+03  0.51s
-    1     65  9.3e+01  4.2e+03  0.51s
-    1     66  9.3e+01  4.5e+03  0.51s
-    1     67  9.3e+01  4.3e+03  0.51s
-    1     68  9.3e+01  4.4e+03  0.52s
-    1     69  9.3e+01  4.3e+03  0.52s
-    1     70  9.3e+01  4.4e+03  0.52s
-    1     71  9.3e+01  4.3e+03  0.52s
-    1     72  9.3e+01  4.7e+03  0.52s
-    1     73  9.3e+01  4.3e+03  0.52s
-    1     74  9.3e+01  4.4e+03  0.53s
-    1     75  9.3e+01  4.3e+03  0.53s
-    1     76  9.3e+01  4.3e+03  0.53s
-    1     77  9.3e+01  4.4e+03  0.53s
-    1     78  9.3e+01  4.3e+03  0.54s
-    1     79  9.3e+01  4.1e+03  0.54s
-    1     80  9.3e+01  4.4e+03  0.54s
-    1     81  9.3e+01  4.5e+03  0.54s
-    1     82  9.3e+01  4.3e+03  0.55s
-    1     83  9.3e+01  4.3e+03  0.55s
-    1     84  9.3e+01  4.1e+03  0.55s
-    1     85  9.3e+01  4.5e+03  0.55s
-    1     86  9.3e+01  4.4e+03  0.55s
-    1     87  9.3e+01  4.3e+03  0.56s
-    1     88  9.3e+01  4.6e+03  0.56s
-    1     89  9.3e+01  4.3e+03  0.56s
-    1     90  9.3e+01  4.3e+03  0.56s
-    1     91  9.3e+01  4.3e+03  0.56s
-    1     92  9.3e+01  4.3e+03  0.57s
-    1     93  9.3e+01  4.2e+03  0.57s
-    1     94  9.3e+01  4.1e+03  0.57s
-    1     95  9.3e+01  4.3e+03  0.57s
-    1     96  9.3e+01  4.3e+03  0.57s
-    1     97  9.3e+01  4.4e+03  0.58s
-    1     98  9.3e+01  4.4e+03  0.58s
-    1     99  9.3e+01  4.2e+03  0.58s
-    1    100  9.3e+01  4.0e+03  0.58s
-    1    101  9.3e+01  4.2e+03  0.59s
-    1    102  9.3e+01  4.3e+03  0.59s
-    1    103  9.3e+01  4.2e+03  0.59s
-    1    104  9.3e+01  4.5e+03  0.59s
-    1    105  9.3e+01  4.4e+03  0.60s
-    1    106  9.3e+01  4.1e+03  0.60s
-    1    107  9.3e+01  4.2e+03  0.60s
-    1    108  9.3e+01  4.4e+03  0.60s
-    1    109  9.3e+01  4.4e+03  0.60s
-    1    110  9.3e+01  4.4e+03  0.61s
-    1    111  9.3e+01  4.2e+03  0.61s
-    1    112  9.3e+01  4.0e+03  0.61s
-    1    113  9.2e+01  4.1e+03  0.61s
-    1    114  9.2e+01  4.2e+03  0.62s
-    1    115  9.2e+01  4.0e+03  0.62s
-    1    116  9.2e+01  4.0e+03  0.62s
-    1    117  9.2e+01  4.1e+03  0.62s
-    1    118  9.2e+01  4.3e+03  0.63s
-    1    119  9.2e+01  4.2e+03  0.63s
-    1    120  9.2e+01  4.2e+03  0.63s
-    1    121  9.2e+01  4.1e+03  0.64s
-    1    122  9.2e+01  4.4e+03  0.64s
-    1    123  9.2e+01  4.4e+03  0.64s
-    1    124  9.2e+01  4.0e+03  0.64s
-    1    125  9.2e+01  4.0e+03  0.65s
-    1    126  9.2e+01  4.2e+03  0.65s
-    1    127  9.2e+01  4.2e+03  0.65s
-    1    128  9.2e+01  4.0e+03  0.66s
-    1    129  9.2e+01  4.0e+03  0.66s
-    1    130  9.2e+01  4.2e+03  0.66s
-    1    131  9.2e+01  4.1e+03  0.66s
-    1    132  9.2e+01  4.1e+03  0.67s
-    1    133  9.2e+01  4.1e+03  0.67s
-    1    134  9.2e+01  4.3e+03  0.67s
-    1    135  9.2e+01  4.0e+03  0.68s
-    1    136  9.2e+01  4.1e+03  0.68s
-    1    137  9.2e+01  4.3e+03  0.68s
-    1    138  9.2e+01  4.0e+03  0.69s
-    1    139  9.1e+01  4.1e+03  0.69s
-    1    140  9.1e+01  4.1e+03  0.69s
-    1    141  9.1e+01  4.5e+03  0.69s
-    1    142  9.1e+01  4.2e+03  0.70s
-    1    143  9.1e+01  4.5e+03  0.70s
-    1    144  9.1e+01  4.6e+03  0.70s
-    1    145  9.1e+01  4.4e+03  0.71s
-    1    146  9.1e+01  4.1e+03  0.71s
-    1    147  9.1e+01  4.2e+03  0.71s
-    1    148  9.1e+01  4.3e+03  0.72s
-    1    149  9.1e+01  4.0e+03  0.72s
-    1    150  9.1e+01  4.1e+03  0.72s
-    1    151  9.1e+01  4.5e+03  0.73s
-    1    152  9.1e+01  4.5e+03  0.73s
-    1    153  9.1e+01  4.1e+03  0.73s
-    1    154  9.1e+01  4.1e+03  0.74s
-    1    155  9.1e+01  4.4e+03  0.74s
-    1    156  9.1e+01  4.6e+03  0.75s
-    1    157  9.1e+01  4.8e+03  0.75s
-    1    158  9.1e+01  4.5e+03  0.75s
-    1    159  9.1e+01  4.1e+03  0.76s
-    1    160  9.0e+01  4.3e+03  0.76s
-    1    161  9.0e+01  4.5e+03  0.76s
-    1    162  9.0e+01  4.4e+03  0.77s
-    1    163  9.0e+01  4.6e+03  0.77s
-    1    164  9.0e+01  4.4e+03  0.77s
-    1    165  9.0e+01  4.3e+03  0.78s
-    1    166  9.0e+01  4.7e+03  0.78s
-    1    167  9.0e+01  4.7e+03  0.79s
-    1    168  9.0e+01  4.3e+03  0.79s
-    1    169  9.0e+01  4.4e+03  0.79s
-    1    170  9.0e+01  3.9e+03  0.80s
-    1    171  9.0e+01  4.2e+03  0.80s
-    1    172  9.0e+01  3.8e+03  0.81s
-    1    173  9.0e+01  4.3e+03  0.81s
-    1    174  9.0e+01  4.3e+03  0.81s
-    1    175  9.0e+01  5.0e+03  0.82s
-    1    176  8.9e+01  4.8e+03  0.82s
-    1    177  8.9e+01  4.8e+03  0.83s
-    1    178  8.9e+01  4.6e+03  0.83s
-    1    179  8.9e+01  4.3e+03  0.83s
-    1    180  8.9e+01  3.9e+03  0.84s
-    1    181  8.9e+01  4.1e+03  0.84s
-    1    182  8.9e+01  4.0e+03  0.85s
-    1    183  8.9e+01  4.0e+03  0.85s
-    1    184  8.9e+01  4.2e+03  0.85s
-    1    185  8.9e+01  4.5e+03  0.86s
-    1    186  8.9e+01  4.6e+03  0.86s
-    1    187  8.9e+01  4.5e+03  0.87s
-    1    188  8.9e+01  4.7e+03  0.87s
-    1    189  8.9e+01  4.7e+03  0.87s
-    1    190  8.8e+01  4.6e+03  0.88s
-    1    191  8.8e+01  4.2e+03  0.88s
-    1    192  8.8e+01  4.3e+03  0.89s
-    1    193  8.8e+01  4.1e+03  0.89s
-    1    194  8.8e+01  4.0e+03  0.90s
-    1    195  8.8e+01  4.2e+03  0.90s
-    1    196  8.8e+01  4.6e+03  0.91s
-    1    197  8.8e+01  4.4e+03  0.91s
-    1    198  8.8e+01  4.4e+03  0.91s
-    1    199  8.8e+01  4.3e+03  0.92s
-    1    200  8.8e+01  4.1e+03  0.92s
-    1    201  8.8e+01  4.4e+03  0.93s
-    1    202  8.8e+01  4.5e+03  0.93s
-    1    203  8.7e+01  4.3e+03  0.94s
-    1    204  8.7e+01  4.7e+03  0.94s
-    1    205  8.7e+01  4.7e+03  0.95s
-    1    206  8.7e+01  4.4e+03  0.95s
-    1    207  8.7e+01  4.4e+03  0.95s
-    1    208  8.7e+01  4.3e+03  0.96s
-    1    209  8.7e+01  4.2e+03  0.96s
-    1    210  8.6e+01  4.2e+03  0.97s
-    1    211  8.6e+01  4.1e+03  0.97s
-    1    212  8.6e+01  4.4e+03  0.98s
-    1    213  8.6e+01  4.8e+03  0.98s
-    1    214  8.6e+01  5.1e+03  0.99s
-    1    215  8.6e+01  4.8e+03  0.99s
-    1    216  8.6e+01  4.3e+03  1.00s
-    1    217  8.6e+01  4.1e+03  1.00s
-    1    218  8.6e+01  4.1e+03  1.01s
-    1    219  8.6e+01  4.3e+03  1.01s
-    1    220  8.5e+01  4.0e+03  1.02s
-    1    221  8.5e+01  4.2e+03  1.02s
-    1    222  8.5e+01  4.3e+03  1.03s
-    1    223  8.5e+01  5.2e+03  1.03s
-    1    224  8.5e+01  4.5e+03  1.04s
-    1    225  8.5e+01  4.6e+03  1.04s
-    1    226  8.5e+01  4.7e+03  1.05s
-    1    227  8.5e+01  4.3e+03  1.05s
-    1    228  8.5e+01  4.1e+03  1.06s
-    1    229  8.5e+01  3.9e+03  1.06s
-    1    230  8.4e+01  4.3e+03  1.07s
-    1    231  8.4e+01  4.2e+03  1.07s
-    1    232  8.4e+01  4.9e+03  1.08s
-    1    233  8.4e+01  4.7e+03  1.08s
-    1    234  8.4e+01  4.4e+03  1.09s
-    1    235  8.4e+01  4.4e+03  1.09s
-    1    236  8.4e+01  4.3e+03  1.10s
-    1    237  8.4e+01  4.2e+03  1.10s
-    1    238  8.4e+01  4.0e+03  1.11s
-    1    239  8.4e+01  4.4e+03  1.12s
-    1    240  8.3e+01  4.4e+03  1.12s
-    1    241  8.3e+01  4.4e+03  1.13s
-    1    242  8.3e+01  4.1e+03  1.13s
-    1    243  8.3e+01  4.2e+03  1.14s
-    1    244  8.3e+01  4.4e+03  1.14s
-    1    245  8.3e+01  4.4e+03  1.15s
-    1    246  8.3e+01  4.4e+03  1.15s
-    1    247  8.3e+01  4.1e+03  1.16s
-    1    248  8.2e+01  4.4e+03  1.17s
-    1    249  8.2e+01  4.6e+03  1.17s
-    1    250  8.2e+01  4.2e+03  1.18s
-    1    251  8.2e+01  4.1e+03  1.18s
-    1    252  8.2e+01  4.2e+03  1.19s
-    1    253  8.2e+01  4.3e+03  1.19s
-    1    254  8.2e+01  4.6e+03  1.20s
-    1    255  8.2e+01  4.7e+03  1.21s
-    1    256  8.2e+01  4.4e+03  1.21s
-    1    257  8.2e+01  4.4e+03  1.22s
-    1    258  8.1e+01  4.4e+03  1.22s
-    1    259  8.1e+01  4.2e+03  1.23s
-    1    260  8.1e+01  4.1e+03  1.23s
-    1    261  8.1e+01  4.0e+03  1.24s
-    1    262  8.1e+01  4.3e+03  1.25s
-    1    263  8.1e+01  4.7e+03  1.25s
-    1    264  8.1e+01  4.8e+03  1.26s
-    1    265  8.0e+01  4.7e+03  1.27s
-    1    266  8.0e+01  4.2e+03  1.28s
-    1    267  8.0e+01  3.9e+03  1.28s
-    1    268  8.0e+01  4.1e+03  1.29s
-    1    269  8.0e+01  3.8e+03  1.30s
-    1    270  8.0e+01  4.4e+03  1.30s
-    1    271  8.0e+01  4.9e+03  1.31s
-    1    272  8.0e+01  4.9e+03  1.34s
-    1    273  8.0e+01  4.6e+03  1.35s
-    1    274  7.9e+01  4.1e+03  1.35s
-    1    275  7.9e+01  4.4e+03  1.36s
-    1    276  7.9e+01  4.0e+03  1.37s
-    1    277  7.9e+01  4.5e+03  1.37s
-    1    278  7.9e+01  4.2e+03  1.38s
-    1    279  7.9e+01  4.7e+03  1.39s
-    1    280  7.9e+01  4.4e+03  1.39s
-    1    281  7.8e+01  4.2e+03  1.40s
-    1    282  7.8e+01  4.3e+03  1.41s
-    1    283  7.8e+01  4.7e+03  1.41s
-    1    284  7.8e+01  4.2e+03  1.42s
-    1    285  7.8e+01  4.4e+03  1.42s
-    1    286  7.8e+01  4.5e+03  1.43s
-    1    287  7.8e+01  4.2e+03  1.44s
-    1    288  7.7e+01  4.1e+03  1.44s
-    1    289  7.7e+01  4.4e+03  1.45s
-    1    290  7.7e+01  4.7e+03  1.46s
-    1    291  7.7e+01  4.4e+03  1.46s
-    1    292  7.7e+01  4.6e+03  1.47s
-    1    293  7.7e+01  4.3e+03  1.48s
-    1    294  7.6e+01  4.1e+03  1.48s
-    1    295  7.6e+01  4.4e+03  1.49s
-    1    296  7.6e+01  4.0e+03  1.50s
-    1    297  7.6e+01  4.0e+03  1.50s
-    1    298  7.6e+01  4.8e+03  1.51s
-    1    299  7.6e+01  4.6e+03  1.52s
-    1    300  7.6e+01  4.5e+03  1.52s
-    1    301  7.5e+01  4.3e+03  1.53s
-    1    302  7.5e+01  4.1e+03  1.54s
-    1    303  7.5e+01  4.1e+03  1.54s
-    1    304  7.5e+01  4.3e+03  1.55s
-    1    305  7.5e+01  4.2e+03  1.56s
-    1    306  7.5e+01  4.6e+03  1.56s
-    1    307  7.5e+01  4.9e+03  1.57s
-    1    308  7.4e+01  4.8e+03  1.58s
-    1    309  7.4e+01  4.2e+03  1.59s
-    1    310  7.4e+01  3.8e+03  1.59s
-    1    311  7.4e+01  3.7e+03  1.60s
-    1    312  7.4e+01  4.2e+03  1.61s
-    1    313  7.4e+01  4.8e+03  1.61s
-    1    314  7.3e+01  4.9e+03  1.62s
-    1    315  7.3e+01  4.9e+03  1.63s
-    1    316  7.3e+01  4.1e+03  1.63s
-    1    317  7.3e+01  3.9e+03  1.64s
-    1    318  7.3e+01  4.0e+03  1.65s
-    1    319  7.2e+01  4.0e+03  1.65s
-    1    320  7.2e+01  4.5e+03  1.66s
-    1    321  7.2e+01  4.9e+03  1.67s
-    1    322  7.2e+01  4.5e+03  1.68s
-    1    323  7.2e+01  4.6e+03  1.68s
-    1    324  7.2e+01  4.0e+03  1.69s
-    1    325  7.1e+01  4.1e+03  1.70s
-    1    326  7.1e+01  4.1e+03  1.71s
-    1    327  7.1e+01  4.0e+03  1.71s
-    1    328  7.1e+01  4.4e+03  1.72s
-    1    329  7.0e+01  4.8e+03  1.73s
-    1    330  7.0e+01  4.4e+03  1.74s
-    1    331  7.0e+01  4.3e+03  1.74s
-    1    332  7.0e+01  4.3e+03  1.75s
-    1    333  7.0e+01  4.0e+03  1.76s
-    1    334  6.9e+01  4.0e+03  1.76s
-    1    335  6.9e+01  4.7e+03  1.77s
-    1    336  6.9e+01  4.5e+03  1.78s
-    1    337  6.9e+01  4.1e+03  1.79s
-    1    338  6.9e+01  4.6e+03  1.79s
-    1    339  6.8e+01  4.5e+03  1.80s
-    1    340  6.8e+01  4.4e+03  1.81s
-    1    341  6.8e+01  4.3e+03  1.82s
-    1    342  6.8e+01  4.5e+03  1.82s
-    1    343  6.8e+01  4.0e+03  1.83s
-    1    344  6.8e+01  4.3e+03  1.84s
-    1    345  6.7e+01  4.4e+03  1.85s
-    1    346  6.7e+01  4.3e+03  1.85s
-    1    347  6.7e+01  4.5e+03  1.86s
-    1    348  6.7e+01  4.7e+03  1.87s
-    1    349  6.7e+01  4.5e+03  1.88s
-    1    350  6.7e+01  4.3e+03  1.88s
-    1    351  6.7e+01  4.0e+03  1.89s
-    1    352  6.6e+01  4.1e+03  1.90s
-    1    353  6.6e+01  4.4e+03  1.91s
-    1    354  6.6e+01  4.9e+03  1.91s
-    1    355  6.6e+01  4.7e+03  1.92s
-    1    356  6.6e+01  4.4e+03  1.93s
-    1    357  6.6e+01  4.0e+03  1.94s
-    1    358  6.5e+01  4.0e+03  1.95s
-    1    359  6.5e+01  4.2e+03  1.95s
-    1    360  6.5e+01  4.8e+03  1.96s
-    1    361  6.5e+01  5.1e+03  1.97s
-    1    362  6.5e+01  4.6e+03  1.98s
-    1    363  6.5e+01  4.1e+03  1.99s
-    1    364  6.5e+01  4.1e+03  1.99s
-    1    365  6.5e+01  4.3e+03  2.00s
-    1    366  6.4e+01  4.8e+03  2.01s
-    1    367  6.4e+01  5.0e+03  2.02s
-    1    368  6.4e+01  4.5e+03  2.03s
-    1    369  6.4e+01  4.2e+03  2.03s
-    1    370  6.4e+01  4.1e+03  2.04s
-    1    371  6.4e+01  4.2e+03  2.05s
-    1    372  6.4e+01  4.7e+03  2.06s
-    1    373  6.4e+01  5.1e+03  2.07s
-    1    374  6.4e+01  4.5e+03  2.08s
-    1    375  6.3e+01  4.2e+03  2.08s
-    1    376  6.3e+01  3.9e+03  2.09s
-    1    377  6.3e+01  4.1e+03  2.10s
-    1    378  6.3e+01  4.5e+03  2.11s
-    1    379  6.3e+01  4.7e+03  2.12s
-    1    380  6.3e+01  4.7e+03  2.31s
-    1    381  6.3e+01  4.3e+03  2.31s
-    1    382  6.3e+01  4.2e+03  2.32s
-    1    383  6.2e+01  4.3e+03  2.33s
-    1    384  6.2e+01  4.2e+03  2.34s
-    1    385  6.2e+01  4.5e+03  2.35s
-    1    386  6.2e+01  4.5e+03  2.36s
-    1    387  6.2e+01  4.3e+03  2.37s
-    1    388  6.2e+01  4.4e+03  2.37s
-    1    389  6.1e+01  4.0e+03  2.38s
-    1    390  6.1e+01  4.1e+03  2.39s
-    1    391  6.1e+01  4.4e+03  2.40s
-    1    392  6.1e+01  4.5e+03  2.41s
-    1    393  6.1e+01  4.1e+03  2.42s
-    1    394  6.1e+01  4.4e+03  2.42s
-    1    395  6.1e+01  4.1e+03  2.43s
-    1    396  6.1e+01  4.6e+03  2.44s
-    1    397  6.1e+01  4.5e+03  2.45s
-    1    398  6.1e+01  4.5e+03  2.46s
-    1    399  6.1e+01  4.1e+03  2.47s
-    1    400  6.1e+01  4.1e+03  2.48s
-    1    401  6.1e+01  4.9e+03  2.48s
-    1    402  6.0e+01  5.0e+03  2.49s
-    1    403  6.0e+01  4.6e+03  2.50s
-    1    404  6.0e+01  4.2e+03  2.51s
-    1    405  6.0e+01  4.2e+03  2.52s
-    1    406  6.0e+01  4.6e+03  2.53s
-    1    407  6.0e+01  4.9e+03  2.54s
-    1    408  6.0e+01  4.9e+03  2.54s
-    1    409  6.0e+01  4.1e+03  2.55s
-    1    410  6.0e+01  4.1e+03  2.56s
-    1    411  6.0e+01  3.7e+03  2.57s
-    1    412  6.0e+01  4.6e+03  2.58s
-    1    413  5.9e+01  4.9e+03  2.59s
-    1    414  5.9e+01  4.6e+03  2.60s
-    1    415  5.9e+01  4.2e+03  2.61s
-    1    416  5.9e+01  3.8e+03  2.62s
-    1    417  5.9e+01  4.0e+03  2.63s
-    1    418  5.9e+01  4.7e+03  2.63s
-    1    419  5.9e+01  4.6e+03  2.64s
-    1    420  5.9e+01  4.6e+03  2.65s
-    1    421  5.9e+01  4.2e+03  2.66s
-    1    422  5.9e+01  4.1e+03  2.67s
-    1    423  5.8e+01  4.2e+03  2.68s
-    1    424  5.8e+01  4.5e+03  2.69s
-    1    425  5.8e+01  4.2e+03  2.70s
-    1    426  5.8e+01  4.3e+03  2.71s
-    1    427  5.8e+01  4.3e+03  2.72s
-    1    428  5.8e+01  4.3e+03  2.73s
-    1    429  5.8e+01  4.5e+03  2.74s
-    1    430  5.8e+01  4.2e+03  2.74s
-    1    431  5.8e+01  4.1e+03  2.75s
-    1    432  5.8e+01  4.1e+03  2.76s
-    1    433  5.7e+01  4.5e+03  2.77s
-    1    434  5.7e+01  4.7e+03  2.78s
-    1    435  5.7e+01  4.7e+03  2.79s
-    1    436  5.7e+01  4.2e+03  2.80s
-    1    437  5.7e+01  3.8e+03  2.81s
-    1    438  5.7e+01  4.0e+03  2.82s
-    1    439  5.7e+01  4.5e+03  2.83s
-    1    440  5.7e+01  5.0e+03  2.84s
-    1    441  5.7e+01  4.6e+03  2.85s
-    1    442  5.7e+01  4.2e+03  2.86s
-    1    443  5.7e+01  3.9e+03  2.87s
-    1    444  5.6e+01  3.8e+03  2.88s
-    1    445  5.6e+01  4.3e+03  2.89s
-    1    446  5.6e+01  5.1e+03  2.90s
-    1    447  5.6e+01  4.8e+03  2.91s
-    1    448  5.6e+01  4.1e+03  2.91s
-    1    449  5.6e+01  3.9e+03  2.92s
-    1    450  5.6e+01  3.9e+03  2.93s
-    1    451  5.6e+01  4.5e+03  2.94s
-    1    452  5.6e+01  4.9e+03  2.95s
-    1    453  5.6e+01  4.7e+03  2.96s
-    1    454  5.6e+01  4.1e+03  2.97s
-    1    455  5.6e+01  4.1e+03  2.98s
-    1    456  5.6e+01  4.4e+03  2.99s
-    1    457  5.6e+01  4.5e+03  3.00s
-    1    458  5.6e+01  4.5e+03  3.01s
-    1    459  5.6e+01  4.4e+03  3.02s
-    1    460  5.6e+01  4.5e+03  3.03s
-    1    461  5.6e+01  4.3e+03  3.04s
-    1    462  5.6e+01  4.3e+03  3.05s
-    1    463  5.6e+01  4.4e+03  3.06s
-    1    464  5.6e+01  4.4e+03  3.07s
-    1    465  5.6e+01  4.5e+03  3.08s
-    1    466  5.6e+01  4.3e+03  3.09s
-    1    467  5.6e+01  4.3e+03  3.10s
-    1    468  5.5e+01  4.5e+03  3.11s
-    1    469  5.5e+01  4.4e+03  3.13s
-    1    470  5.5e+01  4.2e+03  3.14s
-    1    471  5.5e+01  4.4e+03  3.15s
-    1    472  5.5e+01  4.9e+03  3.16s
-    1    473  5.5e+01  4.9e+03  3.17s
-    1    474  5.5e+01  4.1e+03  3.18s
-    1    475  5.5e+01  3.8e+03  3.19s
-    1    476  5.5e+01  4.6e+03  3.20s
-    1    477  5.5e+01  5.3e+03  3.21s
-    1    478  5.5e+01  4.4e+03  3.22s
-    1    479  5.5e+01  3.8e+03  3.23s
-    1    480  5.5e+01  4.0e+03  3.24s
-    1    481  5.5e+01  4.7e+03  3.25s
-    1    482  5.5e+01  4.8e+03  3.26s
-    1    483  5.5e+01  4.5e+03  3.27s
-    1    484  5.5e+01  4.0e+03  3.28s
-    1    485  5.5e+01  3.9e+03  3.29s
-    1    486  5.5e+01  4.2e+03  3.30s
-    1    487  5.5e+01  4.7e+03  3.32s
-    1    488  5.5e+01  4.6e+03  3.33s
-    1    489  5.5e+01  4.4e+03  3.34s
-    1    490  5.5e+01  4.0e+03  3.35s
-    1    491  5.5e+01  3.9e+03  3.36s
-    1    492  5.4e+01  4.2e+03  3.38s
-    1    493  5.4e+01  4.9e+03  3.39s
-    1    494  5.4e+01  4.8e+03  3.40s
-    1    495  5.4e+01  3.9e+03  3.41s
-    1    496  5.4e+01  3.9e+03  3.42s
-    1    497  5.4e+01  4.1e+03  3.43s
-    1    498  5.4e+01  4.6e+03  3.44s
-    1    499  5.4e+01  4.7e+03  3.45s
-    1    500  5.4e+01  4.7e+03  3.46s
-    1    501  5.4e+01  4.1e+03  3.47s
-    1    502  5.4e+01  4.0e+03  3.48s
-    1    503  5.4e+01  3.8e+03  3.49s
-    1    504  5.4e+01  4.6e+03  3.50s
-    1    505  5.4e+01  4.9e+03  3.52s
-    1    506  5.4e+01  4.4e+03  3.53s
-    1    507  5.4e+01  3.9e+03  3.54s
-    1    508  5.4e+01  4.3e+03  3.55s
-    1    509  5.4e+01  4.6e+03  3.56s
-    1    510  5.4e+01  4.5e+03  3.57s
-    1    511  5.4e+01  4.3e+03  3.58s
-    1    512  5.4e+01  4.3e+03  3.59s
-    1    513  5.4e+01  4.7e+03  3.60s
-    1    514  5.3e+01  4.7e+03  3.61s
-    1    515  5.3e+01  4.3e+03  3.63s
-    1    516  5.3e+01  4.2e+03  3.64s
-    1    517  5.3e+01  4.5e+03  3.65s
-    1    518  5.3e+01  4.9e+03  3.66s
-    1    519  5.3e+01  4.6e+03  3.67s
-    1    520  5.3e+01  4.2e+03  3.68s
-    1    521  5.3e+01  4.0e+03  3.69s
-    1    522  5.3e+01  4.4e+03  3.70s
-    1    523  5.3e+01  4.9e+03  3.71s
-    1    524  5.3e+01  4.8e+03  3.73s
-    1    525  5.3e+01  3.8e+03  3.74s
-    1    526  5.3e+01  3.7e+03  3.75s
-    1    527  5.3e+01  4.4e+03  3.76s
-    1    528  5.3e+01  4.9e+03  3.77s
-    1    529  5.3e+01  4.8e+03  3.78s
-    1    530  5.3e+01  4.1e+03  3.79s
-    1    531  5.3e+01  3.8e+03  3.80s
-    1    532  5.2e+01  4.1e+03  3.82s
-    1    533  5.2e+01  4.8e+03  3.83s
-    1    534  5.2e+01  4.7e+03  3.84s
-    1    535  5.2e+01  4.3e+03  3.85s
-    1    536  5.2e+01  4.0e+03  3.86s
-    1    537  5.2e+01  3.9e+03  3.87s
-    1    538  5.2e+01  4.3e+03  3.89s
-    1    539  5.2e+01  4.9e+03  3.90s
-    1    540  5.2e+01  4.5e+03  3.91s
-    1    541  5.2e+01  4.2e+03  3.92s
-    1    542  5.2e+01  4.0e+03  3.93s
-    1    543  5.2e+01  4.4e+03  3.95s
-    1    544  5.2e+01  4.5e+03  3.96s
-    1    545  5.2e+01  4.7e+03  3.97s
-    1    546  5.2e+01  4.4e+03  3.98s
-    1    547  5.2e+01  4.5e+03  3.99s
-    1    548  5.2e+01  4.4e+03  4.01s
-    1    549  5.2e+01  4.4e+03  4.02s
-    1    550  5.2e+01  4.7e+03  4.03s
-    1    551  5.2e+01  4.2e+03  4.04s
-    1    552  5.2e+01  4.2e+03  4.05s
-    1    553  5.2e+01  4.4e+03  4.06s
-    1    554  5.2e+01  4.3e+03  4.08s
-    1    555  5.2e+01  4.3e+03  4.09s
-    1    556  5.1e+01  4.3e+03  4.10s
-    1    557  5.1e+01  4.5e+03  4.11s
-    1    558  5.1e+01  4.2e+03  4.12s
-    1    559  5.1e+01  4.2e+03  4.13s
-    1    560  5.1e+01  4.2e+03  4.15s
-    1    561  5.1e+01  4.5e+03  4.16s
-    1    562  5.1e+01  4.5e+03  4.17s
-    1    563  5.1e+01  4.4e+03  4.18s
-    1    564  5.1e+01  4.0e+03  4.20s
-    1    565  5.1e+01  4.2e+03  4.21s
-    1    566  5.1e+01  4.4e+03  4.22s
-    1    567  5.1e+01  4.6e+03  4.23s
-    1    568  5.1e+01  4.5e+03  4.24s
-    1    569  5.1e+01  4.1e+03  4.26s
-    1    570  5.1e+01  4.0e+03  4.27s
-    1    571  5.1e+01  4.5e+03  4.28s
-    1    572  5.1e+01  4.6e+03  4.29s
-    1    573  5.1e+01  4.5e+03  4.31s
-    1    574  5.1e+01  4.4e+03  4.32s
-    1    575  5.1e+01  4.2e+03  4.33s
-    1    576  5.0e+01  4.5e+03  4.35s
-    1    577  5.0e+01  4.7e+03  4.37s
-    1    578  5.0e+01  4.7e+03  4.38s
-    1    579  5.0e+01  3.9e+03  4.39s
-    1    580  5.0e+01  4.1e+03  4.40s
-    1    581  5.0e+01  5.0e+03  4.41s
-    1    582  5.0e+01  4.8e+03  4.43s
-    1    583  5.0e+01  3.9e+03  4.44s
-    1    584  5.0e+01  3.7e+03  4.45s
-    1    585  5.0e+01  4.2e+03  4.46s
-    1    586  5.0e+01  4.9e+03  4.48s
-    1    587  4.9e+01  4.6e+03  4.49s
-    1    588  4.9e+01  4.1e+03  4.50s
-    1    589  4.9e+01  3.8e+03  4.52s
-    1    590  4.9e+01  4.2e+03  4.53s
-    1    591  4.9e+01  4.8e+03  4.54s
-    1    592  4.9e+01  4.7e+03  4.55s
-    1    593  4.9e+01  4.4e+03  4.57s
-    1    594  4.9e+01  3.7e+03  4.58s
-    1    595  4.9e+01  4.2e+03  4.59s
-    1    596  4.9e+01  4.9e+03  4.61s
-    1    597  4.9e+01  4.7e+03  4.62s
-    1    598  4.9e+01  4.2e+03  4.63s
-    1    599  4.9e+01  4.2e+03  4.64s
-    1    600  4.8e+01  4.4e+03  4.66s
-    1    601  4.8e+01  4.8e+03  4.67s
-    1    602  4.8e+01  4.5e+03  4.68s
-    1    603  4.8e+01  4.3e+03  4.70s
-    1    604  4.8e+01  4.3e+03  4.71s
-    1    605  4.8e+01  4.6e+03  4.72s
-    1    606  4.8e+01  4.5e+03  4.74s
-    1    607  4.8e+01  4.4e+03  4.75s
-    1    608  4.8e+01  4.2e+03  4.76s
-    1    609  4.8e+01  4.2e+03  4.78s
-    1    610  4.8e+01  4.5e+03  4.79s
-    1    611  4.8e+01  4.3e+03  4.80s
-    1    612  4.8e+01  4.4e+03  4.82s
-    1    613  4.8e+01  4.5e+03  4.83s
-    1    614  4.8e+01  4.7e+03  4.84s
-    1    615  4.8e+01  4.3e+03  4.86s
-    1    616  4.8e+01  3.7e+03  4.87s
-    1    617  4.8e+01  4.5e+03  4.88s
-    1    618  4.8e+01  5.0e+03  4.90s
-    1    619  4.8e+01  4.6e+03  4.91s
-    1    620  4.8e+01  3.8e+03  4.92s
-    1    621  4.8e+01  4.0e+03  4.94s
-    1    622  4.8e+01  4.5e+03  4.95s
-    1    623  4.8e+01  5.0e+03  4.96s
-    1    624  4.8e+01  4.5e+03  4.98s
-    1    625  4.8e+01  3.8e+03  4.99s
-    1    626  4.8e+01  4.1e+03  5.00s
-    1    627  4.8e+01  4.8e+03  5.02s
-    1    628  4.8e+01  4.8e+03  5.03s
-    1    629  4.8e+01  4.2e+03  5.05s
-    1    630  4.7e+01  3.9e+03  5.06s
-    1    631  4.7e+01  4.3e+03  5.07s
-    1    632  4.7e+01  4.5e+03  5.09s
-    1    633  4.7e+01  4.6e+03  5.10s
-    1    634  4.7e+01  4.4e+03  5.11s
-    1    635  4.7e+01  3.8e+03  5.13s
-    1    636  4.7e+01  3.9e+03  5.14s
-    1    637  4.7e+01  4.5e+03  5.15s
-    1    638  4.7e+01  4.9e+03  5.17s
-    1    639  4.7e+01  4.2e+03  5.18s
-    1    640  4.7e+01  3.7e+03  5.20s
-    1    641  4.7e+01  3.7e+03  5.21s
-    1    642  4.7e+01  4.8e+03  5.22s
-    1    643  4.7e+01  4.9e+03  5.24s
-    1    644  4.7e+01  3.9e+03  5.25s
-    1    645  4.7e+01  3.5e+03  5.27s
-    1    646  4.7e+01  4.7e+03  5.28s
-    1    647  4.7e+01  4.6e+03  5.29s
-    1    648  4.7e+01  4.6e+03  5.31s
-    1    649  4.7e+01  3.9e+03  5.32s
-    1    650  4.7e+01  4.2e+03  5.34s
-    1    651  4.7e+01  4.8e+03  5.35s
-    1    652  4.7e+01  4.7e+03  5.37s
-    1    653  4.7e+01  4.3e+03  5.39s
-    1    654  4.7e+01  4.5e+03  5.40s
-    1    655  4.7e+01  4.5e+03  5.42s
-    1    656  4.7e+01  4.6e+03  5.43s
-    1    657  4.7e+01  4.4e+03  5.45s
-    1    658  4.7e+01  4.1e+03  5.47s
-    1    659  4.7e+01  4.6e+03  5.48s
-    1    660  4.7e+01  4.7e+03  5.50s
-    1    661  4.7e+01  4.0e+03  5.51s
-    1    662  4.7e+01  4.0e+03  5.53s
-    1    663  4.7e+01  4.3e+03  5.54s
-    1    664  4.7e+01  4.7e+03  5.56s
-    1    665  4.7e+01  4.5e+03  5.57s
-    1    666  4.7e+01  3.7e+03  5.59s
-    1    667  4.7e+01  4.0e+03  5.60s
-    1    668  4.7e+01  4.7e+03  5.61s
-    1    669  4.7e+01  4.7e+03  5.63s
-    1    670  4.7e+01  4.2e+03  5.64s
-    1    671  4.6e+01  3.9e+03  5.66s
-    1    672  4.6e+01  4.1e+03  5.67s
-    1    673  4.6e+01  5.0e+03  5.69s
-    1    674  4.6e+01  4.6e+03  5.70s
-    1    675  4.6e+01  4.4e+03  5.72s
-    1    676  4.6e+01  4.2e+03  5.73s
-    1    677  4.6e+01  4.7e+03  5.75s
-    1    678  4.6e+01  4.9e+03  5.76s
-    1    679  4.6e+01  4.6e+03  5.78s
-    1    680  4.6e+01  4.1e+03  5.79s
-    1    681  4.6e+01  4.3e+03  5.81s
-    1    682  4.6e+01  4.5e+03  5.82s
-    1    683  4.6e+01  4.6e+03  5.84s
-    1    684  4.6e+01  4.2e+03  5.85s
-    1    685  4.6e+01  4.3e+03  5.87s
-    1    686  4.6e+01  4.2e+03  5.88s
-    1    687  4.6e+01  4.2e+03  5.90s
-    1    688  4.6e+01  4.4e+03  5.91s
-    1    689  4.6e+01  4.6e+03  5.93s
-    1    690  4.6e+01  4.5e+03  5.94s
-    1    691  4.6e+01  4.3e+03  5.96s
-    1    692  4.6e+01  3.9e+03  5.98s
-    1    693  4.6e+01  4.4e+03  5.99s
-    1    694  4.6e+01  5.0e+03  6.01s
-    1    695  4.6e+01  4.5e+03  6.02s
-    1    696  4.6e+01  3.8e+03  6.03s
-    1    697  4.6e+01  4.1e+03  6.05s
-    1    698  4.5e+01  4.7e+03  6.06s
-    1    699  4.5e+01  4.6e+03  6.08s
-    1    700  4.5e+01  4.3e+03  6.09s
-    1    701  4.5e+01  3.7e+03  6.11s
-    1    702  4.5e+01  4.5e+03  6.12s
-    1    703  4.5e+01  5.0e+03  6.14s
-    1    704  4.5e+01  4.4e+03  6.15s
-    1    705  4.5e+01  3.6e+03  6.17s
-    1    706  4.5e+01  4.2e+03  6.18s
-    1    707  4.5e+01  4.9e+03  6.20s
-    1    708  4.5e+01  4.5e+03  6.22s
-    1    709  4.5e+01  4.0e+03  6.23s
-    1    710  4.5e+01  4.3e+03  6.25s
-    1    711  4.5e+01  4.7e+03  6.26s
-    1    712  4.4e+01  4.6e+03  6.28s
-    1    713  4.4e+01  4.2e+03  6.29s
-    1    714  4.4e+01  4.2e+03  6.31s
-    1    715  4.4e+01  4.2e+03  6.33s
-    1    716  4.4e+01  4.9e+03  6.34s
-    1    717  4.4e+01  4.3e+03  6.36s
-    1    718  4.4e+01  4.0e+03  6.37s
-    1    719  4.4e+01  4.1e+03  6.39s
-    1    720  4.4e+01  4.5e+03  6.41s
-    1    721  4.4e+01  4.5e+03  6.42s
-    1    722  4.3e+01  4.2e+03  6.44s
-    1    723  4.3e+01  3.9e+03  6.45s
-    1    724  4.3e+01  4.7e+03  6.47s
-    1    725  4.3e+01  4.6e+03  6.49s
-    1    726  4.3e+01  4.3e+03  6.50s
-    1    727  4.3e+01  4.1e+03  6.52s
-    1    728  4.3e+01  4.4e+03  6.54s
-    1    729  4.3e+01  4.4e+03  6.55s
-    1    730  4.3e+01  4.6e+03  6.57s
-    1    731  4.3e+01  4.2e+03  6.58s
-    1    732  4.2e+01  4.3e+03  6.60s
-    1    733  4.2e+01  4.3e+03  6.62s
-    1    734  4.2e+01  4.7e+03  6.63s
-    1    735  4.2e+01  4.3e+03  6.65s
-    1    736  4.2e+01  4.3e+03  6.66s
-    1    737  4.2e+01  4.5e+03  6.68s
-    1    738  4.2e+01  4.1e+03  6.69s
-    1    739  4.2e+01  4.3e+03  6.71s
-    1    740  4.2e+01  4.8e+03  6.73s
-    1    741  4.2e+01  4.3e+03  6.74s
-    1    742  4.1e+01  3.9e+03  6.76s
-    1    743  4.1e+01  4.4e+03  6.78s
-    1    744  4.1e+01  4.5e+03  6.79s
-    1    745  4.1e+01  4.3e+03  6.81s
-    1    746  4.1e+01  4.0e+03  6.82s
-    1    747  4.1e+01  4.1e+03  6.84s
-    1    748  4.1e+01  4.4e+03  6.86s
-    1    749  4.0e+01  4.7e+03  6.87s
-    1    750  4.0e+01  4.3e+03  6.89s
-    1    751  4.0e+01  3.8e+03  6.91s
-    1    752  4.0e+01  4.2e+03  6.92s
-    1    753  4.0e+01  4.8e+03  6.94s
-    1    754  4.0e+01  4.5e+03  6.96s
-    1    755  4.0e+01  3.8e+03  6.97s
-    1    756  3.9e+01  3.8e+03  6.99s
-    1    757  3.9e+01  4.7e+03  7.01s
-    1    758  3.9e+01  4.7e+03  7.02s
-    1    759  3.9e+01  4.0e+03  7.04s
-    1    760  3.8e+01  3.8e+03  7.06s
-    1    761  3.8e+01  4.4e+03  7.07s
-    1    762  3.8e+01  4.8e+03  7.09s
-    1    763  3.7e+01  4.3e+03  7.11s
-    1    764  3.7e+01  3.8e+03  7.13s
-    1    765  3.7e+01  4.0e+03  7.14s
-    1    766  3.7e+01  5.0e+03  7.16s
-    1    767  3.7e+01  4.7e+03  7.18s
-    1    768  3.7e+01  3.7e+03  7.20s
-    1    769  3.6e+01  3.9e+03  7.21s
-    1    770  3.6e+01  4.9e+03  7.23s
-    1    771  3.6e+01  4.9e+03  7.25s
-    1    772  3.6e+01  4.2e+03  7.26s
-    1    773  3.5e+01  4.1e+03  7.28s
-    1    774  3.5e+01  4.7e+03  7.30s
-    1    775  3.5e+01  4.9e+03  7.31s
-    1    776  3.5e+01  4.2e+03  7.33s
-    1    777  3.5e+01  3.8e+03  7.35s
-    1    778  3.5e+01  4.5e+03  7.36s
-    1    779  3.5e+01  4.4e+03  7.38s
-    1    780  3.4e+01  4.3e+03  7.40s
-    1    781  3.4e+01  4.1e+03  7.41s
-    1    782  3.4e+01  4.1e+03  7.44s
-    1    783  3.4e+01  4.3e+03  7.46s
-    1    784  3.4e+01  4.3e+03  7.47s
-    1    785  3.4e+01  4.2e+03  7.49s
-    1    786  3.3e+01  4.3e+03  7.51s
-    1    787  3.3e+01  4.3e+03  7.53s
-    1    788  3.3e+01  4.3e+03  7.54s
-    1    789  3.3e+01  4.5e+03  7.56s
-    1    790  3.2e+01  4.4e+03  7.58s
-    1    791  3.2e+01  4.3e+03  7.60s
-    1    792  3.2e+01  4.5e+03  7.61s
-    1    793  3.1e+01  4.5e+03  7.63s
-    1    794  3.1e+01  4.7e+03  7.65s
-    1    795  3.1e+01  4.4e+03  7.67s
-    1    796  3.1e+01  4.2e+03  7.69s
-    1    797  3.1e+01  4.3e+03  7.70s
-    1    798  3.0e+01  4.6e+03  7.72s
-    1    799  3.0e+01  4.4e+03  7.74s
-    1    800  3.0e+01  3.9e+03  7.76s
-    1    801  3.0e+01  4.0e+03  7.78s
-    1    802  3.0e+01  4.6e+03  7.80s
-    1    803  2.9e+01  4.6e+03  7.81s
-    1    804  2.9e+01  3.9e+03  7.83s
-    1    805  2.9e+01  4.1e+03  7.85s
-    1    806  2.9e+01  4.6e+03  7.87s
-    1    807  2.8e+01  4.8e+03  7.89s
-    1    808  2.8e+01  4.2e+03  7.90s
-    1    809  2.8e+01  4.0e+03  7.92s
-    1    810  2.8e+01  4.8e+03  7.94s
-    1    811  2.8e+01  5.3e+03  7.96s
-    1    812  2.8e+01  4.2e+03  7.97s
-    1    813  2.8e+01  3.9e+03  7.99s
-    1    814  2.7e+01  4.9e+03  8.01s
-    1    815  2.7e+01  4.8e+03  8.02s
-    1    816  2.7e+01  3.9e+03  8.04s
-    1    817  2.7e+01  3.9e+03  8.06s
-    1    818  2.7e+01  4.6e+03  8.08s
-    1    819  2.7e+01  4.6e+03  8.10s
-    1    820  2.6e+01  4.2e+03  8.11s
-    1    821  2.6e+01  4.3e+03  8.13s
-    1    822  2.6e+01  4.5e+03  8.15s
-    1    823  2.6e+01  4.6e+03  8.17s
-    1    824  2.6e+01  4.5e+03  8.18s
-    1    825  2.6e+01  4.3e+03  8.20s
-    1    826  2.6e+01  4.6e+03  8.22s
-    1    827  2.6e+01  4.4e+03  8.24s
-    1    828  2.6e+01  4.2e+03  8.25s
-    1    829  2.6e+01  4.3e+03  8.27s
-    1    830  2.5e+01  4.2e+03  8.29s
-    1    831  2.5e+01  4.1e+03  8.31s
-    1    832  2.5e+01  4.3e+03  8.33s
-    1    833  2.5e+01  4.1e+03  8.34s
-    1    834  2.5e+01  4.6e+03  8.36s
-    1    835  2.5e+01  4.1e+03  8.38s
-    1    836  2.5e+01  4.0e+03  8.40s
-    1    837  2.5e+01  4.2e+03  8.42s
-    1    838  2.4e+01  4.7e+03  8.44s
-    1    839  2.4e+01  4.2e+03  8.46s
-    1    840  2.4e+01  4.1e+03  8.48s
-    1    841  2.4e+01  4.2e+03  8.50s
-    1    842  2.4e+01  4.6e+03  8.52s
-    1    843  2.4e+01  4.5e+03  8.53s
-    1    844  2.4e+01  4.1e+03  8.55s
-    1    845  2.4e+01  4.5e+03  8.57s
-    1    846  2.4e+01  4.8e+03  8.59s
-    1    847  2.4e+01  4.5e+03  8.61s
-    1    848  2.4e+01  3.9e+03  8.62s
-    1    849  2.4e+01  4.5e+03  8.64s
-    1    850  2.3e+01  4.7e+03  8.66s
-    1    851  2.3e+01  4.3e+03  8.68s
-    1    852  2.3e+01  3.8e+03  8.70s
-    1    853  2.3e+01  4.2e+03  8.71s
-    1    854  2.3e+01  5.0e+03  8.73s
-    1    855  2.3e+01  4.2e+03  8.75s
-    1    856  2.3e+01  3.7e+03  8.77s
-    1    857  2.3e+01  4.4e+03  8.79s
-    1    858  2.3e+01  4.8e+03  8.81s
-    1    859  2.3e+01  4.3e+03  8.82s
-    1    860  2.3e+01  3.9e+03  8.84s
-    1    861  2.3e+01  4.3e+03  8.86s
-    1    862  2.3e+01  4.6e+03  8.88s
-    1    863  2.3e+01  4.5e+03  8.90s
-    1    864  2.2e+01  4.2e+03  8.91s
-    1    865  2.2e+01  4.2e+03  8.93s
-    1    866  2.2e+01  4.5e+03  8.95s
-    1    867  2.2e+01  4.4e+03  8.97s
-    1    868  2.2e+01  4.3e+03  8.99s
-    1    869  2.2e+01  4.3e+03  9.01s
-    1    870  2.2e+01  4.2e+03  9.03s
-    1    871  2.2e+01  4.4e+03  9.04s
-    1    872  2.1e+01  4.2e+03  9.06s
-    1    873  2.1e+01  4.1e+03  9.08s
-    1    874  2.1e+01  4.1e+03  9.10s
-    1    875  2.1e+01  4.4e+03  9.12s
-    1    876  2.1e+01  4.2e+03  9.14s
-    1    877  2.1e+01  4.2e+03  9.16s
-    1    878  2.1e+01  4.1e+03  9.18s
-    1    879  2.1e+01  4.2e+03  9.20s
-    1    880  2.0e+01  4.3e+03  9.22s
-    1    881  2.0e+01  4.5e+03  9.23s
-    1    882  2.0e+01  4.1e+03  9.25s
-    1    883  2.0e+01  4.5e+03  9.27s
-    1    884  2.0e+01  4.7e+03  9.29s
-    1    885  2.0e+01  4.6e+03  9.31s
-    1    886  2.0e+01  4.3e+03  9.33s
-    1    887  2.0e+01  4.4e+03  9.35s
-    1    888  2.0e+01  4.7e+03  9.36s
-    1    889  2.0e+01  4.1e+03  9.38s
-    1    890  2.0e+01  4.1e+03  9.40s
-    1    891  2.0e+01  4.3e+03  9.42s
-    1    892  2.0e+01  4.6e+03  9.44s
-    1    893  1.9e+01  4.2e+03  9.46s
-    1    894  1.9e+01  4.0e+03  9.48s
-    1    895  1.9e+01  4.3e+03  9.51s
-    1    896  1.9e+01  4.6e+03  9.53s
-    1    897  1.9e+01  4.4e+03  9.55s
-    1    898  1.9e+01  4.1e+03  9.57s
-    1    899  1.9e+01  4.4e+03  9.59s
-    1    900  1.9e+01  4.8e+03  9.60s
-    1    901  1.9e+01  4.4e+03  9.62s
-    1    902  1.9e+01  4.0e+03  9.64s
-    1    903  1.9e+01  4.5e+03  9.66s
-    1    904  1.9e+01  4.8e+03  9.68s
-    1    905  1.9e+01  4.3e+03  9.70s
-    1    906  1.9e+01  3.9e+03  9.72s
-    1    907  1.8e+01  4.1e+03  9.74s
-    1    908  1.8e+01  4.8e+03  9.76s
-    1    909  1.8e+01  4.3e+03  9.78s
-    1    910  1.8e+01  3.8e+03  9.80s
-    1    911  1.8e+01  4.0e+03  9.82s
-    1    912  1.8e+01  4.9e+03  9.84s
-    1    913  1.8e+01  4.5e+03  9.85s
-    1    914  1.8e+01  4.0e+03  9.87s
-    1    915  1.8e+01  4.2e+03  9.89s
-    1    916  1.8e+01  4.9e+03  9.91s
-    1    917  1.8e+01  4.7e+03  9.93s
-    1    918  1.8e+01  4.0e+03  9.95s
-    1    919  1.8e+01  4.4e+03  9.97s
-    1    920  1.8e+01  5.0e+03  9.99s
-    1    921  1.8e+01  4.5e+03  10.01s
-    1    922  1.8e+01  3.9e+03  10.03s
-    1    923  1.8e+01  4.4e+03  10.05s
-    1    924  1.8e+01  4.7e+03  10.07s
-    1    925  1.8e+01  4.2e+03  10.09s
-    1    926  1.8e+01  3.7e+03  10.11s
-    1    927  1.8e+01  4.3e+03  10.13s
-    1    928  1.8e+01  4.6e+03  10.15s
-    1    929  1.8e+01  4.3e+03  10.17s
-    1    930  1.8e+01  4.2e+03  10.19s
-    1    931  1.8e+01  4.6e+03  10.21s
-    1    932  1.7e+01  4.2e+03  10.23s
-    1    933  1.7e+01  4.4e+03  10.25s
-    1    934  1.7e+01  4.5e+03  10.27s
-    1    935  1.7e+01  4.4e+03  10.29s
-    1    936  1.7e+01  4.1e+03  10.31s
-    1    937  1.7e+01  4.2e+03  10.33s
-    1    938  1.7e+01  4.6e+03  10.35s
-    1    939  1.7e+01  4.3e+03  10.37s
-    1    940  1.7e+01  4.1e+03  10.39s
-    1    941  1.7e+01  4.3e+03  10.41s
-    1    942  1.7e+01  4.6e+03  10.43s
-    1    943  1.7e+01  4.0e+03  10.45s
-    1    944  1.7e+01  4.1e+03  10.47s
-    1    945  1.7e+01  4.5e+03  10.49s
-    1    946  1.7e+01  4.4e+03  10.51s
-    1    947  1.7e+01  4.1e+03  10.54s
-    1    948  1.7e+01  4.0e+03  10.56s
-    1    949  1.7e+01  4.4e+03  10.58s
-    1    950  1.7e+01  4.7e+03  10.60s
-    1    951  1.7e+01  3.9e+03  10.62s
-    1    952  1.7e+01  4.2e+03  10.64s
-    1    953  1.7e+01  4.6e+03  10.66s
-    1    954  1.7e+01  4.6e+03  10.68s
-    1    955  1.7e+01  3.8e+03  10.70s
-    1    956  1.7e+01  4.0e+03  10.72s
-    1    957  1.7e+01  4.8e+03  10.74s
-    1    958  1.7e+01  4.3e+03  10.76s
-    1    959  1.7e+01  3.8e+03  10.79s
-    1    960  1.7e+01  4.2e+03  10.81s
-    1    961  1.7e+01  4.9e+03  10.83s
-    1    962  1.7e+01  4.4e+03  10.85s
-    1    963  1.7e+01  3.7e+03  10.87s
-    1    964  1.7e+01  4.3e+03  10.89s
-    1    965  1.7e+01  4.9e+03  10.91s
-    1    966  1.7e+01  4.3e+03  10.93s
-    1    967  1.7e+01  3.8e+03  10.95s
-    1    968  1.7e+01  4.4e+03  10.97s
-    1    969  1.7e+01  4.8e+03  10.99s
-    1    970  1.7e+01  4.2e+03  11.01s
-    1    971  1.7e+01  4.2e+03  11.03s
-    1    972  1.7e+01  4.4e+03  11.05s
-    1    973  1.7e+01  4.3e+03  11.07s
-    1    974  1.7e+01  4.3e+03  11.09s
-    1    975  1.7e+01  4.3e+03  11.11s
-    1    976  1.7e+01  4.5e+03  11.13s
-    1    977  1.7e+01  4.3e+03  11.15s
-    1    978  1.7e+01  4.6e+03  11.17s
-    1    979  1.7e+01  4.4e+03  11.19s
-    1    980  1.7e+01  4.5e+03  11.21s
-    1    981  1.7e+01  4.4e+03  11.24s
-    1    982  1.7e+01  4.3e+03  11.26s
-    1    983  1.7e+01  4.3e+03  11.28s
-    1    984  1.7e+01  4.2e+03  11.30s
-    1    985  1.7e+01  4.4e+03  11.32s
-    1    986  1.6e+01  4.2e+03  11.34s
-    1    987  1.6e+01  4.2e+03  11.36s
-    1    988  1.6e+01  4.5e+03  11.38s
-    1    989  1.6e+01  4.4e+03  11.41s
-    1    990  1.6e+01  4.1e+03  11.43s
-    1    991  1.6e+01  4.3e+03  11.45s
-    1    992  1.6e+01  4.5e+03  11.47s
-    1    993  1.6e+01  4.4e+03  11.49s
-    1    994  1.6e+01  4.3e+03  11.51s
-    1    995  1.6e+01  4.3e+03  11.53s
-    1    996  1.6e+01  4.5e+03  11.56s
-    1    997  1.6e+01  4.3e+03  11.58s
-    1    998  1.6e+01  4.4e+03  11.60s
-    1    999  1.6e+01  4.0e+03  11.62s
-    1   1000  1.6e+01  4.6e+03  11.65s
-    1   1001  1.6e+01  4.5e+03  11.67s
-    1   1002  1.6e+01  3.9e+03  11.69s
-    1   1003  1.6e+01  4.2e+03  11.71s
-    1   1004  1.6e+01  4.5e+03  11.73s
-    1   1005  1.6e+01  4.6e+03  11.76s
-    1   1006  1.6e+01  3.9e+03  11.78s
-    1   1007  1.6e+01  4.3e+03  11.80s
-    1   1008  1.6e+01  4.5e+03  11.82s
-    1   1009  1.6e+01  4.4e+03  11.85s
-    1   1010  1.6e+01  3.9e+03  11.87s
-    1   1011  1.6e+01  4.1e+03  11.89s
-    1   1012  1.6e+01  4.7e+03  11.92s
-    1   1013  1.6e+01  4.3e+03  11.94s
-    1   1014  1.6e+01  3.9e+03  11.96s
-    1   1015  1.5e+01  4.5e+03  11.98s
-    1   1016  1.5e+01  4.6e+03  12.00s
-    1   1017  1.5e+01  4.2e+03  12.03s
-    1   1018  1.5e+01  4.4e+03  12.05s
-    1   1019  1.5e+01  4.5e+03  12.07s
-    1   1020  1.5e+01  4.6e+03  12.10s
-    1   1021  1.5e+01  4.5e+03  12.12s
-    1   1022  1.5e+01  4.1e+03  12.14s
-    1   1023  1.5e+01  4.4e+03  12.16s
-    1   1024  1.5e+01  4.5e+03  12.19s
-    1   1025  1.5e+01  4.1e+03  12.21s
-    1   1026  1.5e+01  4.2e+03  12.23s
-    1   1027  1.5e+01  4.6e+03  12.25s
-    1   1028  1.5e+01  4.4e+03  12.28s
-    1   1029  1.5e+01  4.5e+03  12.30s
-    1   1030  1.5e+01  4.4e+03  12.32s
-    1   1031  1.5e+01  4.2e+03  12.34s
-    1   1032  1.5e+01  4.4e+03  12.36s
-    1   1033  1.5e+01  4.3e+03  12.39s
-    1   1034  1.5e+01  4.1e+03  12.41s
-    1   1035  1.5e+01  4.3e+03  12.43s
-    1   1036  1.5e+01  4.3e+03  12.45s
-    1   1037  1.5e+01  4.4e+03  12.47s
-    1   1038  1.5e+01  4.0e+03  12.50s
-    1   1039  1.5e+01  4.3e+03  12.52s
-    1   1040  1.5e+01  4.9e+03  12.54s
-    1   1041  1.5e+01  4.0e+03  12.57s
-    1   1042  1.5e+01  3.7e+03  12.59s
-    1   1043  1.5e+01  4.5e+03  12.61s
-    1   1044  1.5e+01  4.6e+03  12.64s
-    1   1045  1.5e+01  3.8e+03  12.66s
-    1   1046  1.5e+01  4.0e+03  12.68s
-    1   1047  1.5e+01  4.7e+03  12.71s
-    1   1048  1.5e+01  4.4e+03  12.73s
-    1   1049  1.5e+01  3.9e+03  12.75s
-    1   1050  1.5e+01  4.4e+03  12.77s
-    1   1051  1.5e+01  4.7e+03  12.79s
-    1   1052  1.5e+01  4.1e+03  12.82s
-    1   1053  1.5e+01  3.9e+03  12.84s
-    1   1054  1.5e+01  4.4e+03  12.87s
-    1   1055  1.5e+01  4.6e+03  12.89s
-    1   1056  1.5e+01  4.0e+03  12.92s
-    1   1057  1.5e+01  3.9e+03  12.94s
-    1   1058  1.5e+01  4.7e+03  12.96s
-    1   1059  1.5e+01  4.5e+03  12.98s
-    1   1060  1.4e+01  4.0e+03  13.01s
-    1   1061  1.4e+01  4.2e+03  13.03s
-    1   1062  1.4e+01  4.8e+03  13.05s
-    1   1063  1.4e+01  4.0e+03  13.08s
-    1   1064  1.4e+01  3.9e+03  13.10s
-    1   1065  1.4e+01  4.7e+03  13.12s
-    1   1066  1.4e+01  4.5e+03  13.14s
-    1   1067  1.4e+01  3.8e+03  13.17s
-    1   1068  1.4e+01  4.2e+03  13.19s
-    1   1069  1.4e+01  5.1e+03  13.21s
-    1   1070  1.4e+01  4.0e+03  13.24s
-    1   1071  1.4e+01  3.9e+03  13.26s
-    1   1072  1.4e+01  4.4e+03  13.28s
-    1   1073  1.4e+01  4.7e+03  13.30s
-    1   1074  1.4e+01  3.9e+03  13.33s
-    1   1075  1.4e+01  3.8e+03  13.35s
-    1   1076  1.4e+01  4.6e+03  13.38s
-    1   1077  1.4e+01  4.4e+03  13.40s
-    1   1078  1.4e+01  3.6e+03  13.43s
-    1   1079  1.4e+01  4.1e+03  13.45s
-    1   1080  1.4e+01  4.6e+03  13.47s
-    1   1081  1.4e+01  4.2e+03  13.50s
-    1   1082  1.4e+01  3.9e+03  13.52s
-    1   1083  1.4e+01  4.5e+03  13.54s
-    1   1084  1.4e+01  4.5e+03  13.57s
-    1   1085  1.4e+01  4.1e+03  13.59s
-    1   1086  1.3e+01  4.3e+03  13.61s
-    1   1087  1.3e+01  4.1e+03  13.64s
-    1   1088  1.3e+01  4.1e+03  13.66s
-    1   1089  1.3e+01  4.3e+03  13.68s
-    1   1090  1.3e+01  4.3e+03  13.71s
-    1   1091  1.3e+01  3.8e+03  13.73s
-    1   1092  1.3e+01  4.1e+03  13.75s
-    1   1093  1.3e+01  4.5e+03  13.78s
-    1   1094  1.3e+01  4.2e+03  13.80s
-    1   1095  1.3e+01  3.8e+03  13.82s
-    1   1096  1.3e+01  4.5e+03  13.85s
-    1   1097  1.2e+01  4.8e+03  13.87s
-    1   1098  1.2e+01  3.9e+03  13.89s
-    1   1099  1.2e+01  4.1e+03  13.92s
-    1   1100  1.2e+01  5.0e+03  13.94s
-    1   1101  1.2e+01  4.1e+03  13.96s
-    1   1102  1.2e+01  3.8e+03  13.99s
-    1   1103  1.2e+01  4.8e+03  14.01s
-    1   1104  1.2e+01  4.6e+03  14.04s
-    1   1105  1.1e+01  3.9e+03  14.06s
-    1   1106  1.1e+01  4.0e+03  14.08s
-    1   1107  1.1e+01  4.7e+03  14.11s
-    1   1108  1.1e+01  4.3e+03  14.13s
-    1   1109  1.1e+01  3.6e+03  14.16s
-    1   1110  1.0e+01  4.5e+03  14.18s
-    1   1111  1.0e+01  4.7e+03  14.21s
-    1   1112  1.0e+01  3.9e+03  14.23s
-    1   1113  9.7e+00  4.1e+03  14.25s
-    1   1114  9.5e+00  4.7e+03  14.28s
-    1   1115  9.4e+00  4.3e+03  14.30s
-    1   1116  8.9e+00  4.0e+03  14.33s
-    1   1117  8.5e+00  4.4e+03  14.35s
-    1   1118  8.4e+00  4.2e+03  14.37s
-    1   1119  8.2e+00  4.2e+03  14.40s
-    1   1120  7.8e+00  4.2e+03  14.42s
-    1   1121  7.6e+00  4.4e+03  14.45s
-    1   1122  7.6e+00  4.3e+03  14.47s
-    1   1123  7.3e+00  4.2e+03  14.50s
-    1   1124  7.1e+00  4.1e+03  14.52s
-    1   1125  7.0e+00  4.2e+03  14.54s
-    1   1126  7.0e+00  4.4e+03  14.57s
-    1   1127  6.8e+00  4.2e+03  14.59s
-    1   1128  6.7e+00  4.2e+03  14.62s
-    1   1129  6.7e+00  4.0e+03  14.64s
-    1   1130  6.7e+00  4.5e+03  14.67s
-    1   1131  6.6e+00  4.5e+03  14.70s
-    1   1132  6.5e+00  4.0e+03  14.72s
-    1   1133  6.5e+00  3.9e+03  14.75s
-    1   1134  6.5e+00  4.7e+03  14.77s
-    1   1135  6.5e+00  4.5e+03  14.80s
-    1   1136  6.5e+00  3.6e+03  14.83s
-    1   1137  6.5e+00  4.1e+03  14.85s
-    1   1138  6.5e+00  5.0e+03  14.88s
-    1   1139  6.4e+00  3.8e+03  14.90s
-    1   1140  6.4e+00  3.6e+03  14.93s
-    1   1141  6.4e+00  4.6e+03  14.95s
-    1   1142  6.4e+00  4.6e+03  14.98s
-    1   1143  6.4e+00  3.6e+03  15.00s
-    1   1144  6.3e+00  4.5e+03  15.03s
-    1   1145  6.3e+00  4.9e+03  15.05s
-    1   1146  6.3e+00  4.1e+03  15.08s
-    1   1147  6.3e+00  4.2e+03  15.10s
-    1   1148  6.3e+00  4.7e+03  15.13s
-    1   1149  6.3e+00  4.4e+03  15.15s
-    1   1150  6.2e+00  3.7e+03  15.18s
-    1   1151  6.2e+00  4.2e+03  15.20s
-    1   1152  6.2e+00  4.6e+03  15.23s
-    1   1153  6.1e+00  4.0e+03  15.25s
-    1   1154  6.1e+00  3.7e+03  15.28s
-    1   1155  6.0e+00  4.6e+03  15.30s
-    1   1156  6.0e+00  4.3e+03  15.33s
-    1   1157  5.9e+00  4.0e+03  15.35s
-    1   1158  5.8e+00  4.4e+03  15.38s
-    1   1159  5.8e+00  4.9e+03  15.40s
-    1   1160  5.7e+00  4.3e+03  15.43s
-    1   1161  5.5e+00  4.1e+03  15.45s
-    1   1162  5.4e+00  4.6e+03  15.48s
-    1   1163  5.4e+00  4.4e+03  15.50s
-    1   1164  5.2e+00  4.2e+03  15.53s
-    1   1165  4.9e+00  4.2e+03  15.55s
-    1   1166  4.8e+00  4.3e+03  15.58s
-    1   1167  4.8e+00  4.2e+03  15.60s
-    1   1168  4.5e+00  4.4e+03  15.63s
-    1   1169  4.3e+00  4.2e+03  15.65s
-    1   1170  4.3e+00  4.3e+03  15.68s
-    1   1171  4.2e+00  4.6e+03  15.70s
-    1   1172  4.0e+00  4.5e+03  15.73s
-    1   1173  3.9e+00  4.1e+03  15.76s
-    1   1174  3.9e+00  4.6e+03  15.78s
-    1   1175  3.7e+00  4.6e+03  15.81s
-    1   1176  3.4e+00  4.0e+03  15.83s
-    1   1177  3.3e+00  4.1e+03  15.86s
-    1   1178  3.3e+00  4.6e+03  15.89s
-    1   1179  3.1e+00  4.1e+03  15.91s
-    1   1180  2.8e+00  3.8e+03  15.94s
-    1   1181  2.7e+00  4.4e+03  15.97s
-    1   1182  2.7e+00  4.5e+03  15.99s
-    1   1183  2.5e+00  4.0e+03  16.02s
-    1   1184  2.3e+00  3.8e+03  16.04s
-    1   1185  2.3e+00  4.6e+03  16.07s
-    1   1186  2.2e+00  4.4e+03  16.10s
-    1   1187  2.0e+00  3.8e+03  16.12s
-    1   1188  1.9e+00  4.5e+03  16.15s
-    1   1189  1.9e+00  4.7e+03  16.17s
-    1   1190  1.8e+00  4.3e+03  16.20s
-    1   1191  1.6e+00  4.0e+03  16.22s
-    1   1192  1.6e+00  4.8e+03  16.25s
-    1   1193  1.5e+00  4.4e+03  16.28s
-    1   1194  1.4e+00  3.6e+03  16.30s
-    1   1195  1.3e+00  4.4e+03  16.33s
-    1   1196  1.2e+00  4.6e+03  16.36s
-    1   1197  1.2e+00  3.8e+03  16.38s
-    1   1198  9.9e-01  3.7e+03  16.41s
-    1   1199  8.9e-01  4.4e+03  16.43s
-    1   1200  8.9e-01  4.3e+03  16.46s
-    1   1201  8.1e-01  3.9e+03  16.49s
-    1   1202  6.9e-01  4.3e+03  16.51s
-    1   1203  6.7e-01  4.4e+03  16.54s
-    1   1204  6.5e-01  4.1e+03  16.57s
-    1   1205  5.6e-01  4.3e+03  16.60s
-    1   1206  5.2e-01  4.4e+03  16.63s
-    1   1207  5.2e-01  4.4e+03  16.65s
-    1   1208  4.7e-01  4.3e+03  16.68s
-    1   1209  4.2e-01  4.2e+03  16.71s
-    1   1210  4.1e-01  4.2e+03  16.74s
-    1   1211  4.1e-01  4.4e+03  16.77s
-    1   1212  3.7e-01  4.2e+03  16.79s
-    1   1213  3.5e-01  4.4e+03  16.82s
-    1   1214  3.5e-01  4.2e+03  16.85s
-    1   1215  3.3e-01  4.2e+03  16.88s
-    1   1216  3.1e-01  4.4e+03  16.90s
-    1   1217  3.0e-01  4.1e+03  16.93s
-    1   1218  3.0e-01  4.1e+03  16.96s
-    1   1219  2.9e-01  4.4e+03  16.98s
-    1   1220  2.7e-01  4.4e+03  17.01s
-    1   1221  2.7e-01  4.3e+03  17.04s
-    1   1222  2.6e-01  4.2e+03  17.06s
-    1   1223  2.5e-01  4.6e+03  17.09s
-    1   1224  2.5e-01  4.1e+03  17.12s
-    1   1225  2.5e-01  4.4e+03  17.15s
-    1   1226  2.4e-01  4.7e+03  17.18s
-    1   1227  2.3e-01  4.3e+03  17.20s
-    1   1228  2.3e-01  4.1e+03  17.23s
-    1   1229  2.3e-01  4.5e+03  17.26s
-    1   1230  2.2e-01  4.4e+03  17.28s
-    1   1231  2.2e-01  4.0e+03  17.31s
-    1   1232  2.2e-01  4.2e+03  17.33s
-    1   1233  2.1e-01  4.4e+03  17.36s
-    1   1234  2.1e-01  4.1e+03  17.39s
-    1   1235  2.1e-01  4.3e+03  17.42s
-    1   1236  2.1e-01  4.6e+03  17.45s
-    1   1237  2.0e-01  4.4e+03  17.47s
-    1   1238  2.0e-01  4.4e+03  17.50s
-    1   1239  2.0e-01  4.4e+03  17.53s
-    1   1240  1.9e-01  4.5e+03  17.55s
-    1   1241  1.9e-01  3.7e+03  17.58s
-    1   1242  1.8e-01  4.0e+03  17.61s
-    1   1243  1.8e-01  4.5e+03  17.64s
-    1   1244  1.8e-01  4.2e+03  17.67s
-    1   1245  1.8e-01  3.9e+03  17.70s
-    1   1246  1.8e-01  4.4e+03  17.72s
-    1   1247  1.7e-01  4.5e+03  17.75s
-    1   1248  1.7e-01  4.2e+03  17.78s
-    1   1249  1.7e-01  4.2e+03  17.81s
-    1   1250  1.7e-01  4.7e+03  17.83s
-    1   1251  1.7e-01  4.4e+03  17.86s
-    1   1252  1.7e-01  4.0e+03  17.89s
-    1   1253  1.7e-01  4.5e+03  17.91s
-    1   1254  1.6e-01  4.5e+03  17.94s
-    1   1255  1.6e-01  3.9e+03  17.97s
-    1   1256  1.6e-01  3.9e+03  18.00s
-    1   1257  1.6e-01  4.6e+03  18.02s
-    1   1258  1.6e-01  4.1e+03  18.05s
-    1   1259  1.6e-01  3.8e+03  18.08s
-    1   1260  1.6e-01  4.6e+03  18.10s
-    1   1261  1.6e-01  4.6e+03  18.13s
-    1   1262  1.6e-01  4.0e+03  18.16s
-    1   1263  1.6e-01  4.6e+03  18.18s
-    1   1264  1.6e-01  4.6e+03  18.21s
-    1   1265  1.6e-01  4.2e+03  18.24s
-    1   1266  1.6e-01  4.3e+03  18.27s
-    1   1267  1.5e-01  4.3e+03  18.29s
-    1   1268  1.5e-01  4.1e+03  18.32s
-    1   1269  1.5e-01  4.2e+03  18.35s
-    1   1270  1.5e-01  4.3e+03  18.37s
-    1   1271  1.5e-01  4.1e+03  18.40s
-    1   1272  1.5e-01  4.4e+03  18.43s
-    1   1273  1.5e-01  4.1e+03  18.46s
-    1   1274  1.5e-01  4.4e+03  18.48s
-    1   1275  1.5e-01  4.5e+03  18.51s
-    1   1276  1.5e-01  4.2e+03  18.54s
-    1   1277  1.4e-01  4.2e+03  18.57s
-    1   1278  1.4e-01  4.4e+03  18.60s
-    1   1279  1.4e-01  4.6e+03  18.62s
-    1   1280  1.4e-01  4.2e+03  18.65s
-    1   1281  1.3e-01  4.1e+03  18.68s
-    1   1282  1.3e-01  4.6e+03  18.70s
-    1   1283  1.3e-01  4.3e+03  18.73s
-    1   1284  1.2e-01  3.9e+03  18.76s
-    1   1285  1.2e-01  4.5e+03  18.79s
-    1   1286  1.2e-01  4.5e+03  18.82s
-    1   1287  1.1e-01  4.0e+03  18.85s
-    1   1288  1.1e-01  4.3e+03  18.88s
-    1   1289  1.1e-01  4.8e+03  18.91s
-    1   1290  1.0e-01  4.3e+03  18.93s
-    1   1291  9.2e-02  4.1e+03  18.96s
-    1   1292  9.1e-02  4.8e+03  18.99s
-    1   1293  8.8e-02  4.3e+03  19.02s
-    1   1294  7.8e-02  3.9e+03  19.04s
-    1   1295  7.5e-02  4.4e+03  19.07s
-    1   1296  7.4e-02  4.4e+03  19.10s
-    1   1297  6.7e-02  3.8e+03  19.13s
-    1   1298  6.0e-02  3.9e+03  19.15s
-    1   1299  5.9e-02  4.7e+03  19.18s
-    1   1300  5.6e-02  4.1e+03  19.21s
-    1   1301  4.9e-02  3.8e+03  19.23s
-    1   1302  4.6e-02  4.8e+03  19.26s
-    1   1303  4.6e-02  4.6e+03  19.29s
-    1   1304  4.0e-02  3.9e+03  19.32s
-    1   1305  3.6e-02  4.6e+03  19.34s
-    1   1306  3.6e-02  4.8e+03  19.37s
-    1   1307  3.2e-02  4.0e+03  19.40s
-    1   1308  2.7e-02  4.0e+03  19.43s
-    1   1309  2.6e-02  4.7e+03  19.45s
-    1   1310  2.5e-02  4.1e+03  19.48s
-    1   1311  2.1e-02  3.8e+03  19.51s
-    1   1312  1.9e-02  4.5e+03  19.54s
-    1   1313  1.9e-02  4.4e+03  19.56s
-    1   1314  1.7e-02  4.0e+03  19.59s
-    1   1315  1.5e-02  4.6e+03  19.62s
-    1   1316  1.4e-02  4.9e+03  19.65s
-    1   1317  1.3e-02  4.0e+03  19.68s
-    1   1318  1.1e-02  4.4e+03  19.70s
-    1   1319  1.1e-02  4.6e+03  19.73s
-    1   1320  1.1e-02  3.9e+03  19.76s
-    1   1321  9.4e-03  4.2e+03  19.79s
-    1   1322  8.4e-03  4.2e+03  19.82s
-    1   1323  8.3e-03  4.0e+03  19.85s
-    1   1324  8.0e-03  4.0e+03  19.88s
-    1   1325  7.0e-03  4.3e+03  19.91s
-    1   1326  6.6e-03  3.9e+03  19.93s
-    1   1327  6.5e-03  4.4e+03  19.96s
-    1   1328  6.1e-03  4.7e+03  19.99s
-    1   1329  5.5e-03  3.9e+03  20.02s
-    1   1330  5.4e-03  4.6e+03  20.05s
-    1   1331  5.2e-03  4.6e+03  20.07s
-    1   1332  4.5e-03  4.0e+03  20.10s
-    1   1333  4.4e-03  4.3e+03  20.13s
-    1   1334  4.3e-03  4.6e+03  20.16s
-    1   1335  3.8e-03  3.9e+03  20.19s
-    1   1336  3.3e-03  3.9e+03  20.22s
-    1   1337  3.3e-03  4.6e+03  20.25s
-    1   1338  3.1e-03  4.5e+03  20.28s
-    1   1339  2.6e-03  3.9e+03  20.31s
-    1   1340  2.6e-03  4.7e+03  20.34s
-    1   1341  2.5e-03  4.6e+03  20.37s
-    1   1342  2.1e-03  3.8e+03  20.40s
-    1   1343  1.9e-03  4.5e+03  20.43s
-    1   1344  1.9e-03  4.7e+03  20.46s
-    1   1345  1.6e-03  3.9e+03  20.49s
-    1   1346  1.4e-03  4.0e+03  20.52s
-    1   1347  1.3e-03  4.7e+03  20.54s
-    1   1348  1.2e-03  4.0e+03  20.57s
-    1   1349  1.0e-03  3.6e+03  20.60s
-    1   1350  9.0e-04  4.5e+03  20.63s
-    1   1351  9.0e-04  4.4e+03  20.66s
-    1   1352  7.4e-04  3.7e+03  20.69s
-    1   1353  6.5e-04  4.3e+03  20.72s
-    1   1354  6.5e-04  4.7e+03  20.75s
-    1   1355  5.6e-04  4.0e+03  20.78s
-    1   1356  4.7e-04  4.0e+03  20.81s
-    1   1357  4.5e-04  5.0e+03  20.84s
-    1   1358  4.3e-04  4.2e+03  20.87s
-    1   1359  3.5e-04  3.7e+03  20.90s
-    1   1360  3.0e-04  4.8e+03  20.93s
-    1   1361  3.0e-04  4.3e+03  20.96s
-    1   1362  2.6e-04  3.6e+03  20.99s
-    1   1363  2.1e-04  4.5e+03  21.02s
-    1   1364  2.0e-04  4.5e+03  21.05s
-    1   1365  1.9e-04  3.9e+03  21.07s
-    1   1366  1.6e-04  4.3e+03  21.10s
-    1   1367  1.5e-04  4.6e+03  21.13s
-    1   1368  1.5e-04  4.3e+03  21.16s
-    1   1369  1.3e-04  4.2e+03  21.20s
-    1   1370  1.1e-04  4.6e+03  21.23s
-    1   1371  1.1e-04  4.2e+03  21.26s
-    1   1372  1.0e-04  4.1e+03  21.29s
-    1   1373  8.8e-05  4.3e+03  21.32s
-    1   1374  8.5e-05  4.2e+03  21.36s
-    1   1375  8.2e-05  3.9e+03  21.39s
-    1   1376  7.1e-05  4.1e+03  21.42s
-    1   1377  6.4e-05  4.1e+03  21.45s
-    1   1378  6.3e-05  4.1e+03  21.48s
-    1   1379  5.9e-05  4.1e+03  21.51s
-    1   1380  5.1e-05  4.3e+03  21.54s
-    1   1381  4.9e-05  4.1e+03  21.57s
-    1   1382  4.8e-05  4.5e+03  21.61s
-    1   1383  4.2e-05  4.3e+03  21.64s
-    1   1384  4.0e-05  4.4e+03  21.67s
-    1   1385  3.9e-05  4.2e+03  21.70s
-    1   1386  3.6e-05  4.4e+03  21.73s
-    1   1387  3.3e-05  4.1e+03  21.76s
-    1   1388  3.3e-05  4.3e+03  21.79s
-    1   1389  3.1e-05  4.1e+03  21.82s
-    1   1390  2.7e-05  4.4e+03  21.86s
-    1   1391  2.7e-05  4.0e+03  21.89s
-    1   1392  2.6e-05  4.2e+03  21.92s
-    1   1393  2.4e-05  4.3e+03  21.96s
-    1   1394  2.3e-05  4.2e+03  22.00s
-    1   1395  2.3e-05  4.3e+03  22.03s
-    1   1396  2.1e-05  4.4e+03  22.06s
-    1   1397  2.0e-05  4.2e+03  22.09s
-    1   1398  2.0e-05  4.4e+03  22.12s
-    1   1399  1.8e-05  4.3e+03  22.15s
-    1   1400  1.6e-05  4.2e+03  22.18s
-    1   1401  1.6e-05  4.4e+03  22.21s
-    1   1402  1.5e-05  4.3e+03  22.25s
-    1   1403  1.3e-05  3.8e+03  22.28s
-    1   1404  1.3e-05  4.3e+03  22.30s
-    1   1405  1.2e-05  4.3e+03  22.34s
-    1   1406  1.1e-05  3.8e+03  22.37s
-    1   1407  1.0e-05  4.3e+03  22.40s
-    1   1408  1.0e-05  4.5e+03  22.43s
-    1   1409  8.9e-06  4.0e+03  22.46s
-    1   1410  8.2e-06  4.2e+03  22.49s
-    1   1411  8.2e-06  4.5e+03  22.53s
-    1   1412  7.6e-06  4.3e+03  22.56s
-    1   1413  6.7e-06  3.9e+03  22.59s
-    1   1414  6.6e-06  4.6e+03  22.62s
-    1   1415  6.5e-06  4.4e+03  22.65s
-    1   1416  5.7e-06  3.7e+03  22.68s
-    1   1417  5.3e-06  4.6e+03  22.71s
-    1   1418  5.3e-06  4.4e+03  22.74s
-    1   1419  4.8e-06  3.6e+03  22.78s
-    1   1420  4.2e-06  4.3e+03  22.81s
-    1   1421  4.2e-06  4.8e+03  22.85s
-    1   1422  4.0e-06  3.8e+03  22.88s
-    1   1423  3.4e-06  4.1e+03  22.91s
-    1   1424  3.2e-06  4.9e+03  22.94s
-    1   1425  3.2e-06  3.8e+03  22.98s
-    1   1426  2.8e-06  4.3e+03  23.01s
-    1   1427  2.6e-06  4.7e+03  23.04s
-    1   1428  2.6e-06  4.0e+03  23.07s
-    1   1429  2.4e-06  4.2e+03  23.11s
-    1   1430  2.2e-06  4.7e+03  23.14s
-    1   1431  2.2e-06  3.8e+03  23.17s
-    1   1432  2.1e-06  4.0e+03  23.20s
-    1   1433  1.9e-06  4.5e+03  23.24s
-    1   1434  1.9e-06  4.1e+03  23.27s
-    1   1435  1.9e-06  4.0e+03  23.30s
-    1   1436  1.8e-06  4.5e+03  23.33s
-    1   1437  1.7e-06  4.4e+03  23.37s
-    1   1438  1.7e-06  4.1e+03  23.41s
-    1   1439  1.6e-06  4.4e+03  23.44s
-    1   1440  1.6e-06  4.4e+03  23.47s
-    1   1441  1.6e-06  4.2e+03  23.50s
-    1   1442  1.5e-06  4.1e+03  23.53s
-    1   1443  1.4e-06  4.4e+03  23.56s
-    1   1444  1.4e-06  4.2e+03  23.59s
-    1   1445  1.4e-06  4.1e+03  23.62s
-    1   1446  1.2e-06  4.1e+03  23.65s
-    1   1447  1.2e-06  4.1e+03  23.68s
-    1   1448  1.2e-06  4.2e+03  23.72s
-    1   1449  1.1e-06  4.3e+03  23.75s
-    1   1450  1.0e-06  4.1e+03  23.78s
-    1   1451  1.0e-06  4.4e+03  23.81s
-    1   1452  9.9e-07  4.1e+03  23.84s
-    1   1453  9.1e-07  4.4e+03  23.87s
-    1   1454  8.9e-07  4.4e+03  23.90s
-    1   1455  8.7e-07  4.1e+03  23.94s
-    1   1456  7.8e-07  4.0e+03  23.97s
-    1   1457  7.4e-07  4.3e+03  24.00s
-    1   1458  7.4e-07  4.3e+03  24.04s
-    1   1459  6.8e-07  4.0e+03  24.07s
-    1   1460  6.2e-07  4.1e+03  24.11s
-    1   1461  6.1e-07  4.6e+03  24.14s
-    1   1462  6.0e-07  4.0e+03  24.17s
-    1   1463  5.3e-07  3.8e+03  24.20s
-    1   1464  5.0e-07  4.6e+03  24.23s
-    1   1465  4.9e-07  4.3e+03  24.26s
-    1   1466  4.3e-07  3.8e+03  24.29s
-    1   1467  4.0e-07  4.5e+03  24.33s
-    1   1468  4.0e-07  4.4e+03  24.36s
-    1   1469  3.7e-07  4.0e+03  24.39s
-    1   1470  3.3e-07  4.2e+03  24.42s
-    1   1471  3.2e-07  4.6e+03  24.45s
-    1   1472  3.1e-07  4.1e+03  24.48s
-    1   1473  2.8e-07  4.0e+03  24.52s
-    1   1474  2.6e-07  4.7e+03  24.55s
-    1   1475  2.6e-07  4.1e+03  24.58s
-    1   1476  2.4e-07  4.1e+03  24.61s
-    1   1477  2.2e-07  4.6e+03  24.64s
-    1   1478  2.2e-07  4.1e+03  24.67s
-    1   1479  2.1e-07  4.2e+03  24.70s
-    1   1480  1.9e-07  4.5e+03  24.74s
-    1   1481  1.8e-07  4.2e+03  24.77s
-    1   1482  1.8e-07  4.6e+03  24.80s
-    1   1483  1.7e-07  4.3e+03  24.83s
-    1   1484  1.6e-07  3.8e+03  24.87s
-    1   1485  1.6e-07  4.5e+03  24.90s
-    1   1486  1.5e-07  4.0e+03  24.93s
-    1   1487  1.3e-07  3.6e+03  24.97s
-    1   1488  1.3e-07  4.5e+03  25.00s
-    1   1489  1.2e-07  4.0e+03  25.04s
-    1   1490  1.1e-07  3.9e+03  25.08s
-    1   1491  1.0e-07  4.4e+03  25.11s
-    1   1492  1.0e-07  4.5e+03  25.15s
-    1   1493  9.4e-08  3.8e+03  25.18s
-    1   1494  8.6e-08  4.5e+03  25.21s
-    1   1495  8.6e-08  4.6e+03  25.24s
-    1   1496  8.1e-08  3.9e+03  25.27s
-    1   1497  7.4e-08  4.2e+03  25.31s
-    1   1498  7.3e-08  4.7e+03  25.34s
-    1   1499  7.0e-08  3.8e+03  25.37s
-    1   1500  6.2e-08  4.0e+03  25.41s
-    1   1501  6.1e-08  4.6e+03  25.44s
-    1   1502  6.0e-08  4.1e+03  25.47s
-    1   1503  5.3e-08  3.7e+03  25.50s
-    1   1504  5.0e-08  4.7e+03  25.54s
-    1   1505  5.0e-08  4.3e+03  25.57s
-    1   1506  4.6e-08  3.9e+03  25.60s
-    1   1507  4.2e-08  4.8e+03  25.63s
-    1   1508  4.2e-08  4.5e+03  25.67s
-    1   1509  3.9e-08  3.7e+03  25.70s
-    1   1510  3.6e-08  4.7e+03  25.73s
-    1   1511  3.6e-08  4.3e+03  25.77s
-    1   1512  3.4e-08  3.6e+03  25.80s
-    1   1513  3.1e-08  4.3e+03  25.84s
-    1   1514  3.0e-08  4.5e+03  25.87s
-    1   1515  3.0e-08  3.9e+03  25.90s
-    1   1516  2.7e-08  4.4e+03  25.94s
-    1   1517  2.6e-08  4.7e+03  25.97s
-    1   1518  2.6e-08  3.9e+03  26.00s
-    1   1519  2.3e-08  4.3e+03  26.04s
-    1   1520  2.2e-08  4.7e+03  26.07s
-    1   1521  2.2e-08  3.9e+03  26.12s
-    1   1522  2.0e-08  4.3e+03  26.15s
-    1   1523  1.8e-08  4.3e+03  26.18s
-    1   1524  1.8e-08  4.0e+03  26.22s
-    1   1525  1.7e-08  4.1e+03  26.25s
-    1   1526  1.5e-08  4.1e+03  26.28s
-    1   1527  1.5e-08  4.2e+03  26.32s
-    1   1528  1.5e-08  4.5e+03  26.35s
-    1   1529  1.3e-08  4.0e+03  26.39s
-    1   1530  1.3e-08  4.5e+03  26.42s
-    1   1531  1.3e-08  4.4e+03  26.45s
-    1   1532  1.2e-08  3.8e+03  26.48s
-    1   1533  1.1e-08  4.3e+03  26.52s
-    1   1534  1.1e-08  4.4e+03  26.55s
-    1   1535  1.0e-08  3.9e+03  26.59s
-    1   1536  9.3e-09  4.0e+03  26.62s
-    1   1537  9.2e-09  4.6e+03  26.66s
-    1   1538  8.7e-09  4.0e+03  26.69s
-    1   1539  7.9e-09  4.3e+03  26.73s
-    1   1540  7.7e-09  4.5e+03  26.76s
-    1   1541  7.6e-09  4.1e+03  26.80s
-    1   1542  6.8e-09  3.9e+03  26.83s
-    1   1543  6.6e-09  4.7e+03  26.87s
-    1   1544  6.6e-09  4.0e+03  26.90s
-    1   1545  6.1e-09  3.9e+03  26.94s
-    1   1546  5.7e-09  4.6e+03  26.98s
-    1   1547  5.7e-09  4.3e+03  27.01s
-    1   1548  5.3e-09  3.7e+03  27.05s
-    1   1549  5.0e-09  4.7e+03  27.09s
-    1   1550  5.0e-09  4.5e+03  27.13s
-    1   1551  4.6e-09  3.8e+03  27.17s
-    1   1552  4.3e-09  4.4e+03  27.20s
-    1   1553  4.3e-09  4.4e+03  27.24s
-    1   1554  4.0e-09  3.6e+03  27.27s
-    1   1555  3.7e-09  4.3e+03  27.31s
-    1   1556  3.7e-09  4.6e+03  27.34s
-    1   1557  3.5e-09  3.6e+03  27.38s
-    1   1558  3.2e-09  4.4e+03  27.41s
-    1   1559  3.2e-09  4.8e+03  27.45s
-    1   1560  3.1e-09  3.9e+03  27.48s
-    1   1561  2.9e-09  4.3e+03  27.52s
-    1   1562  2.8e-09  4.6e+03  27.55s
-    1   1563  2.8e-09  4.1e+03  27.59s
-    1   1564  2.5e-09  4.0e+03  27.62s
-    1   1565  2.4e-09  4.6e+03  27.66s
-    1   1566  2.4e-09  4.0e+03  27.69s
-    1   1567  2.3e-09  4.1e+03  27.72s
-    1   1568  2.1e-09  4.7e+03  27.76s
-    1   1569  2.1e-09  4.1e+03  27.79s
-    1   1570  2.1e-09  4.2e+03  27.82s
-    1   1571  1.9e-09  4.3e+03  27.86s
-    1   1572  1.9e-09  4.1e+03  27.90s
-    1   1573  1.8e-09  4.2e+03  27.93s
-    1   1574  1.7e-09  4.1e+03  27.97s
-    1   1575  1.6e-09  4.2e+03  28.00s
-    1   1576  1.6e-09  4.0e+03  28.03s
-    1   1577  1.5e-09  4.3e+03  28.07s
-    1   1578  1.4e-09  4.2e+03  28.10s
-    1   1579  1.4e-09  4.0e+03  28.14s
-    1   1580  1.4e-09  4.1e+03  28.17s
-    1   1581  1.3e-09  4.4e+03  28.21s
-    1   1582  1.3e-09  4.2e+03  28.25s
-    1   1583  1.2e-09  4.0e+03  28.28s
-    1   1584  1.1e-09  4.3e+03  28.32s
-    1   1585  1.1e-09  4.5e+03  28.36s
-    1   1586  1.1e-09  4.3e+03  28.39s
-    1   1587  1.0e-09  4.2e+03  28.42s
-    1   1588  9.9e-10  4.3e+03  28.46s
-    1   1589  9.7e-10  4.1e+03  28.49s
-    1   1590  8.8e-10  4.1e+03  28.53s
-    1   1591  8.5e-10  4.2e+03  28.56s
-    1   1592  8.4e-10  4.0e+03  28.60s
-    1   1593  7.6e-10  4.0e+03  28.63s
-    1   1594  7.2e-10  4.2e+03  28.66s
-    1   1595  7.1e-10  4.2e+03  28.70s
-    1   1596  6.7e-10  4.1e+03  28.73s
-    1   1597  6.2e-10  4.3e+03  28.77s
-    1   1598  6.2e-10  4.1e+03  28.81s
-    1   1599  6.0e-10  4.3e+03  28.84s
-    1   1600  5.6e-10  4.2e+03  28.88s
-    1   1601  5.6e-10  4.4e+03  28.91s
-    1   1602  5.5e-10  4.3e+03  28.95s
-    1   1603  5.2e-10  4.0e+03  28.98s
-    1   1604  5.0e-10  4.5e+03  29.02s
-    1   1605  5.0e-10  4.4e+03  29.05s
-    1   1606  4.7e-10  4.0e+03  29.09s
-    1   1607  4.6e-10  4.6e+03  29.12s
-    1   1608  4.6e-10  4.2e+03  29.16s
-    1   1609  4.4e-10  3.9e+03  29.19s
-    1   1610  4.2e-10  4.4e+03  29.24s
-    1   1611  4.1e-10  4.3e+03  29.27s
-    1   1612  4.0e-10  3.6e+03  29.31s
-    1   1613  3.8e-10  4.1e+03  29.34s
-    1   1614  3.8e-10  4.6e+03  29.37s
-    1   1615  3.8e-10  3.5e+03  29.41s
-    1   1616  3.6e-10  4.4e+03  29.44s
-    1   1617  3.6e-10  4.6e+03  29.48s
-    1   1618  3.6e-10  3.9e+03  29.51s
-    1   1619  3.5e-10  4.5e+03  29.55s
-    1   1620  3.4e-10  4.5e+03  29.58s
-    1   1621  3.4e-10  4.0e+03  29.62s
-    1   1622  3.4e-10  4.4e+03  29.65s
-    1   1623  3.3e-10  4.4e+03  29.69s
-    1   1624  3.3e-10  3.7e+03  29.72s
-    1   1625  3.3e-10  4.2e+03  29.76s
-    1   1626  3.3e-10  4.3e+03  29.80s
-    1   1627  3.2e-10  3.7e+03  29.84s
-    1   1628  3.2e-10  4.0e+03  29.87s
-    1   1629  3.2e-10  4.5e+03  29.91s
-    1   1630  3.2e-10  3.9e+03  29.94s
-    1   1631  3.1e-10  4.2e+03  29.98s
-    1   1632  3.1e-10  4.8e+03  30.01s
-    1   1633  3.1e-10  4.0e+03  30.05s
-    1   1634  3.1e-10  4.0e+03  30.09s
-    1   1635  3.1e-10  4.8e+03  30.12s
-    1   1636  3.0e-10  3.9e+03  30.16s
-    1   1637  3.0e-10  3.7e+03  30.19s
-    1   1638  2.9e-10  4.5e+03  30.23s
-    1   1639  2.9e-10  4.0e+03  30.27s
-    1   1640  2.9e-10  3.7e+03  30.31s
-    1   1641  2.8e-10  4.4e+03  30.35s
-    1   1642  2.8e-10  4.3e+03  30.38s
-    1   1643  2.7e-10  3.8e+03  30.42s
-    1   1644  2.6e-10  4.7e+03  30.45s
-    1   1645  2.6e-10  4.3e+03  30.49s
-    1   1646  2.5e-10  4.1e+03  30.52s
-    1   1647  2.4e-10  4.4e+03  30.56s
-    1   1648  2.4e-10  4.2e+03  30.60s
-    1   1649  2.4e-10  3.8e+03  30.63s
-    1   1650  2.2e-10  4.1e+03  30.66s
-    1   1651  2.1e-10  4.2e+03  30.70s
-    1   1652  2.1e-10  4.0e+03  30.74s
-    1   1653  2.1e-10  4.4e+03  30.77s
-    1   1654  2.0e-10  4.4e+03  30.81s
-    1   1655  2.0e-10  4.5e+03  30.85s
-    1   1656  1.9e-10  4.2e+03  30.88s
-    1   1657  1.8e-10  4.6e+03  30.92s
-    1   1658  1.8e-10  4.0e+03  30.95s
-    1   1659  1.8e-10  4.1e+03  30.99s
-    1   1660  1.7e-10  4.2e+03  31.02s
-    1   1661  1.6e-10  4.2e+03  31.06s
-    1   1662  1.6e-10  4.2e+03  31.10s
-    1   1663  1.5e-10  4.1e+03  31.14s
-    1   1664  1.5e-10  4.6e+03  31.17s
-    1   1665  1.5e-10  4.1e+03  31.21s
-    1   1666  1.5e-10  4.2e+03  31.24s
-    1   1667  1.4e-10  4.4e+03  31.28s
-    1   1668  1.4e-10  4.3e+03  31.32s
-    1   1669  1.4e-10  3.9e+03  31.35s
-    1   1670  1.3e-10  4.3e+03  31.39s
-    1   1671  1.3e-10  4.2e+03  31.43s
-    1   1672  1.3e-10  3.7e+03  31.46s
-    1   1673  1.3e-10  4.4e+03  31.50s
-    1   1674  1.3e-10  4.0e+03  31.54s
-    1   1675  1.3e-10  3.8e+03  31.57s
-    1   1676  1.2e-10  4.1e+03  31.61s
-    1   1677  1.2e-10  4.1e+03  31.64s
-    1   1678  1.2e-10  3.8e+03  31.68s
-    1   1679  1.2e-10  4.1e+03  31.74s
-    1   1680  1.2e-10  4.4e+03  31.79s
-    1   1681  1.2e-10  4.0e+03  31.84s
-    1   1682  1.2e-10  4.2e+03  31.88s
-    1   1683  1.2e-10  4.4e+03  31.92s
-    1   1684  1.2e-10  4.3e+03  31.96s
-    1   1685  1.2e-10  4.2e+03  32.00s
-    1   1686  1.2e-10  4.3e+03  32.04s
-    1   1687  1.1e-10  4.1e+03  32.07s
-    1   1688  1.1e-10  4.0e+03  32.11s
-    1   1689  1.1e-10  4.1e+03  32.14s
-    1   1690  1.1e-10  4.2e+03  32.18s
-    1   1691  1.1e-10  4.1e+03  32.22s
-    1   1692  1.1e-10  4.3e+03  32.25s
-    1   1693  1.1e-10  4.3e+03  32.29s
-    1   1694  1.1e-10  4.2e+03  32.33s
-    1   1695  1.1e-10  4.6e+03  32.37s
-    1   1696  1.1e-10  4.0e+03  32.41s
-    1   1697  1.1e-10  4.2e+03  32.45s
-    1   1698  1.1e-10  4.4e+03  32.49s
-    1   1699  1.1e-10  3.8e+03  32.53s
-    1   1700  1.1e-10  4.1e+03  32.57s
-    1   1701  1.1e-10  4.2e+03  32.61s
-    1   1702  1.1e-10  3.9e+03  32.64s
-    1   1703  1.1e-10  4.3e+03  32.68s
-    1   1704  1.1e-10  4.1e+03  32.72s
-    1   1705  1.1e-10  4.2e+03  32.76s
-    1   1706  1.1e-10  4.4e+03  32.79s
-    1   1707  1.1e-10  4.2e+03  32.83s
-    1   1708  1.0e-10  4.3e+03  32.87s
-    1   1709  1.0e-10  4.5e+03  32.90s
-    1   1710  1.0e-10  3.9e+03  32.94s
-    1   1711  1.0e-10  4.2e+03  32.97s
-    1   1712  1.0e-10  4.3e+03  33.01s
-    1   1713  1.0e-10  3.7e+03  33.05s
-    1   1714  1.0e-10  4.3e+03  33.09s
-    1   1715  1.0e-10  4.3e+03  33.13s
-    1   1716  1.0e-10  3.6e+03  33.17s
-    1   1717  1.0e-10  4.5e+03  33.20s
-    1   1718  1.0e-10  4.6e+03  33.24s
-    1   1719  1.0e-10  3.7e+03  33.28s
-    1   1720  1.0e-10  4.8e+03  33.31s
-    1   1721  1.0e-10  4.3e+03  33.36s
-    1   1722  1.0e-10  3.7e+03  33.40s
-    1   1723  1.0e-10  4.7e+03  33.44s
-    1   1724  1.0e-10  4.0e+03  33.47s</code></pre><p>Note that preconditioners can be also implemented as abstract operators. For instance, we could compute the Cholesky factorization of <span>$M$</span> and <span>$N$</span> and create linear operators that perform the forward and backsolves.</p><p>Krylov methods combined with factorization free operators allow to reduce computation time and memory requirements considerably by avoiding building and storing the system matrix. In the field of partial differential equations, the implementation of high-performance factorization free operators and assembly free preconditioning is a subject of active research.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../warm-start/">« Warm-start</a><a class="docs-footer-nextpage" href="../callbacks/">Callbacks »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Thursday 24 October 2024 16:42">Thursday 24 October 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+[:, :, 3] =
+  9.21699e-5    0.000184249   0.000276148  …  -0.000184249  -9.21699e-5
+  0.000184249   0.000368318   0.000552024     -0.000368318  -0.000184249
+  0.000276148   0.000552024   0.000827359     -0.000552024  -0.000276148
+  0.000367775   0.000735189   0.00110188      -0.000735189  -0.000367775
+  0.000459041   0.000917631   0.00137532      -0.000917631  -0.000459041
+  0.000549856   0.00109917    0.00164741   …  -0.00109917   -0.000549856
+  0.000640132   0.00127964    0.00191788      -0.00127964   -0.000640132
+  0.000729779   0.00145884    0.00218647      -0.00145884   -0.000729779
+  0.000818709   0.00163661    0.00245291      -0.00163661   -0.000818709
+  0.000906835   0.00181278    0.00271694      -0.00181278   -0.000906835
+  ⋮                                        ⋱                
+ -0.000818709  -0.00163661   -0.00245291       0.00163661    0.000818709
+ -0.000729779  -0.00145884   -0.00218647       0.00145884    0.000729779
+ -0.000640132  -0.00127964   -0.00191788       0.00127964    0.000640132
+ -0.000549856  -0.00109917   -0.00164741       0.00109917    0.000549856
+ -0.000459041  -0.000917631  -0.00137532   …   0.000917631   0.000459041
+ -0.000367775  -0.000735189  -0.00110188       0.000735189   0.000367775
+ -0.000276148  -0.000552024  -0.000827359      0.000552024   0.000276148
+ -0.000184249  -0.000368318  -0.000552024      0.000368318   0.000184249
+ -9.21699e-5   -0.000184249  -0.000276148      0.000184249   9.21699e-5
+
+;;; … 
+
+[:, :, 398] =
+ -9.21699e-5   -0.000184249  -0.000276148  …   0.000184249   9.21699e-5
+ -0.000184249  -0.000368318  -0.000552024      0.000368318   0.000184249
+ -0.000276148  -0.000552024  -0.000827359      0.000552024   0.000276148
+ -0.000367775  -0.000735189  -0.00110188       0.000735189   0.000367775
+ -0.000459041  -0.000917631  -0.00137532       0.000917631   0.000459041
+ -0.000549856  -0.00109917   -0.00164741   …   0.00109917    0.000549856
+ -0.000640132  -0.00127964   -0.00191788       0.00127964    0.000640132
+ -0.000729779  -0.00145884   -0.00218647       0.00145884    0.000729779
+ -0.000818709  -0.00163661   -0.00245291       0.00163661    0.000818709
+ -0.000906835  -0.00181278   -0.00271694       0.00181278    0.000906835
+  ⋮                                        ⋱                
+  0.000818709   0.00163661    0.00245291      -0.00163661   -0.000818709
+  0.000729779   0.00145884    0.00218647      -0.00145884   -0.000729779
+  0.000640132   0.00127964    0.00191788      -0.00127964   -0.000640132
+  0.000549856   0.00109917    0.00164741      -0.00109917   -0.000549856
+  0.000459041   0.000917631   0.00137532   …  -0.000917631  -0.000459041
+  0.000367775   0.000735189   0.00110188      -0.000735189  -0.000367775
+  0.000276148   0.000552024   0.000827359     -0.000552024  -0.000276148
+  0.000184249   0.000368318   0.000552024     -0.000368318  -0.000184249
+  9.21699e-5    0.000184249   0.000276148     -0.000184249  -9.21699e-5
+
+[:, :, 399] =
+ -6.14969e-5   -0.000122933  -0.000184249  …   0.000122933   6.14969e-5
+ -0.000122933  -0.000245746  -0.000368318      0.000245746   0.000122933
+ -0.000184249  -0.000368318  -0.000552024      0.000368318   0.000184249
+ -0.000245384  -0.000490527  -0.000735189      0.000490527   0.000245384
+ -0.000306278  -0.000612255  -0.000917631      0.000612255   0.000306278
+ -0.000366871  -0.000733382  -0.00109917   …   0.000733382   0.000366871
+ -0.000427104  -0.000853789  -0.00127964       0.000853789   0.000427104
+ -0.000486918  -0.000973357  -0.00145884       0.000973357   0.000486918
+ -0.000546253  -0.00109197   -0.00163661       0.00109197    0.000546253
+ -0.000605052  -0.00120951   -0.00181278       0.00120951    0.000605052
+  ⋮                                        ⋱                
+  0.000546253   0.00109197    0.00163661      -0.00109197   -0.000546253
+  0.000486918   0.000973357   0.00145884      -0.000973357  -0.000486918
+  0.000427104   0.000853789   0.00127964      -0.000853789  -0.000427104
+  0.000366871   0.000733382   0.00109917      -0.000733382  -0.000366871
+  0.000306278   0.000612255   0.000917631  …  -0.000612255  -0.000306278
+  0.000245384   0.000490527   0.000735189     -0.000490527  -0.000245384
+  0.000184249   0.000368318   0.000552024     -0.000368318  -0.000184249
+  0.000122933   0.000245746   0.000368318     -0.000245746  -0.000122933
+  6.14969e-5    0.000122933   0.000184249     -0.000122933  -6.14969e-5
+
+[:, :, 400] =
+ -3.07636e-5   -6.14969e-5   -9.21699e-5   …   6.14969e-5    3.07636e-5
+ -6.14969e-5   -0.000122933  -0.000184249      0.000122933   6.14969e-5
+ -9.21699e-5   -0.000184249  -0.000276148      0.000184249   9.21699e-5
+ -0.000122752  -0.000245384  -0.000367775      0.000245384   0.000122752
+ -0.000153214  -0.000306278  -0.000459041      0.000306278   0.000153214
+ -0.000183526  -0.000366871  -0.000549856  …   0.000366871   0.000183526
+ -0.000213657  -0.000427104  -0.000640132      0.000427104   0.000213657
+ -0.000243578  -0.000486918  -0.000729779      0.000486918   0.000243578
+ -0.000273261  -0.000546253  -0.000818709      0.000546253   0.000273261
+ -0.000302675  -0.000605052  -0.000906835      0.000605052   0.000302675
+  ⋮                                        ⋱                
+  0.000273261   0.000546253   0.000818709     -0.000546253  -0.000273261
+  0.000243578   0.000486918   0.000729779     -0.000486918  -0.000243578
+  0.000213657   0.000427104   0.000640132     -0.000427104  -0.000213657
+  0.000183526   0.000366871   0.000549856     -0.000366871  -0.000183526
+  0.000153214   0.000306278   0.000459041  …  -0.000306278  -0.000153214
+  0.000122752   0.000245384   0.000367775     -0.000245384  -0.000122752
+  9.21699e-5    0.000184249   0.000276148     -0.000184249  -9.21699e-5
+  6.14969e-5    0.000122933   0.000184249     -0.000122933  -6.14969e-5
+  3.07636e-5    6.14969e-5    9.21699e-5      -6.14969e-5   -3.07636e-5</code></pre><p>Note that preconditioners can be also implemented as abstract operators. For instance, we could compute the Cholesky factorization of <span>$M$</span> and <span>$N$</span> and create linear operators that perform the forward and backsolves.</p><p>Krylov methods combined with factorization free operators allow to reduce computation time and memory requirements considerably by avoiding building and storing the system matrix. In the field of partial differential equations, the implementation of high-performance factorization free operators and assembly free preconditioning is a subject of active research.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../warm-start/">« Warm-start</a><a class="docs-footer-nextpage" href="../callbacks/">Callbacks »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Saturday 26 October 2024 08:05">Saturday 26 October 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
