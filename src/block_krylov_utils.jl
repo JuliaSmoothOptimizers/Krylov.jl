@@ -192,6 +192,16 @@ function householder(A::AbstractMatrix{FC}; compact::Bool=false) where FC <: Flo
   householder!(Q, R, τ; compact)
 end
 
+function householder!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, τ::AbstractVector{FC}, tmp::AbstractMatrix{FC}; compact::Bool=false) where FC <: FloatOrComplex
+  n, k = size(Q)
+  kfill!(R, zero(FC))
+  kgeqrf!(Q, τ)
+  copyto!(tmp, view(Q, 1:k, 1:k))
+  copy_triangle(tmp, R, k)
+  !compact && korgqr!(Q, τ)
+  return Q, R
+end
+
 function householder!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, τ::AbstractVector{FC}; compact::Bool=false) where FC <: FloatOrComplex
   n, k = size(Q)
   kfill!(R, zero(FC))
