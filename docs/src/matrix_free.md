@@ -290,6 +290,145 @@ u_star = -sin.(x)
 u_star ≈ u_sol
 ```
 
+## Example with discretized PDE
+
+### Example 4: Solving the 3D Helmholtz equation
+
+The Helmholtz equation in 3D is a fundamental equation used in various fields like acoustics, electromagnetism, and quantum mechanics to model stationary wave phenomena.
+
+The equation is given by:
+```math
+\nabla^2 u(x,y,z) + k^2 u(x,y,z) = f(x,y,z)
+```
+In this equation, $u(x, y, z)$ represents the unknown function, which could describe a pressure field in acoustics, a scalar potential in electromagnetism, or a wave function in quantum mechanics.
+The operator $\nabla^2$ denotes the Laplacian in three dimensions. The wave number $k$ is related to the frequency of the wave through the equation $k = \frac{2\pi}{\lambda}$, where $\lambda$ is the wavelength.
+Finally, $f(x,y,z)$ is a source term that drives the wave phenomena, acting as a forcing function or external influence.
+
+To discretize the Helmholtz equation, we use finite differences on a uniform 3D grid with grid spacings $\Delta x$, $\Delta y$, and $\Delta z$.
+For a grid point $(i, j, k)$, the second derivatives are approximated as follows:
+
+- In the $x$-direction:
+```math
+\frac{\partial^2 u}{\partial x^2} \approx \frac{u_{i+1,j,k} - 2u_{i,j,k} + u_{i-1,j,k}}{\Delta x^2}
+```
+- In the $y$-direction:
+```math
+\frac{\partial^2 u}{\partial y^2} \approx \frac{u_{i,j+1,k} - 2u_{i,j,k} + u_{i,j-1,k}}{\Delta y^2}
+```
+- In the $z$-direction:
+```math
+\frac{\partial^2 u}{\partial z^2} \approx \frac{u_{i,j,k+1} - 2u_{i,j,k} + u_{i,j,k-1}}{\Delta z^2}
+```
+Combining these, the discretized Helmholtz equation becomes:
+```math
+\frac{u_{i+1,j,k} - 2u_{i,j,k} + u_{i-1,j,k}}{\Delta x^2} + \frac{u_{i,j+1,k} - 2u_{i,j,k} + u_{i,j-1,k}}{\Delta y^2} + \frac{u_{i,j,k+1} - 2u_{i,j,k} + u_{i,j,k-1}}{\Delta z^2} + k^2 u_{i,j,k} = f_{i,j,k}
+```
+
+This discretization results in an equation at each grid point, resulting in a large and sparse linear system when assembled across the entire 3D grid.
+To simplify the example, we impose Dirichlet boundary conditions with the solution $u(x, y, z) = 0$ on the boundary of the cubic domain.
+
+Explicitly constructing this large sparse matrix is often impractical and unnecessary.
+Instead, we can define a function that directly applies the Helmholtz operator to the 3D grid, avoiding the need to form the matrix explicitly.
+
+Krylov.jl operates on vectors, so we must vectorize both the solution and the computational domain.
+However, we can still maintain the structure of the original 3D operator by using `reshape` and `vec`.
+This approach enables a simpler and efficient application of the operator in 3D while leveraging the vectorized framework for linear algebra operations.
+
+```@example helmholtz
+using Krylov, LinearAlgebra
+
+# Parameters
+L = 1.0                 # Length of the cubic domain
+Nx = 200                # Number of interior grid points in x
+Ny = 200                # Number of interior grid points in y
+Nz = 200                # Number of interior grid points in z
+Δx = L / (Nx + 1)       # Grid spacing in x
+Δy = L / (Ny + 1)       # Grid spacing in y
+Δz = L / (Nz + 1)       # Grid spacing in z
+wavelength = 0.5        # Wavelength of the wave
+k = 2 * π / wavelength  # Wave number
+
+# Create the grid points
+x = 0:Δx:L  # Points in x dimension (Nx + 2)
+y = 0:Δy:L  # Points in y dimension (Ny + 2)
+z = 0:Δz:L  # Points in z dimension (Nz + 2)
+
+# Define a matrix-free Helmholtz operator
+struct HelmholtzOperator
+    Nx::Int
+    Ny::Int
+    Nz::Int
+    Δx::Float64
+    Δy::Float64
+    Δz::Float64
+    k::Float64
+end
+
+Base.size(A::HelmholtzOperator) = (A.Nx * A.Ny * A.Nz, A.Nx * A.Ny * A.Nz)
+
+Base.eltype(A::HelmholtzOperator) = Float64
+
+function LinearAlgebra.mul!(y::Vector, A::HelmholtzOperator, u::Vector)
+    # Reshape vectors y and u into 3D arrays
+    U = reshape(u, A.Nx, A.Ny, A.Nz)
+    Y = reshape(y, A.Nx, A.Ny, A.Nz)
+
+    # Apply the discrete Laplacian in 3D with k^2 * u
+    for i in 1:A.Nx
+        for j in 1:A.Ny
+            for k in 1:A.Nz
+                if i == 1
+                    dx2 = (U[i+1,j,k] -2 * U[i,j,k]) / (A.Δx)^2
+                elseif i == A.Nx
+                    dx2 = (-2 * U[i,j,k] + U[i-1,j,k]) / (A.Δx)^2
+                else
+                    dx2 = (U[i+1,j,k] -2 * U[i,j,k] + U[i-1,j,k]) / (A.Δx)^2
+                end
+
+                if j == 1
+                    dy2 = (U[i,j+1,k] -2 * U[i,j,k]) / (A.Δy)^2
+                elseif j == A.Ny
+                    dy2 = (-2 * U[i,j,k] + U[i,j-1,k]) / (A.Δy)^2
+                else
+                    dy2 = (U[i,j+1,k] -2 * U[i,j,k] + U[i,j-1,k]) / (A.Δy)^2
+                end
+
+                if k == 1
+                    dz2 = (U[i,j,k+1] -2 * U[i,j,k]) / (A.Δz)^2
+                elseif k == A.Nz
+                    dz2 = (-2 * U[i,j,k] + U[i,j,k-1]) / (A.Δz)^2
+                else
+                    dz2 = (U[i,j,k+1] -2 * U[i,j,k] + U[i,j,k-1]) / (A.Δz)^2
+                end
+
+                Y[i,j,k] = dx2 + dy2 + dz2 + (A.k)^2 * U[i,j,k]
+            end
+        end
+    end
+
+    return y
+end
+
+# Create the matrix-free operator for the Helmholtz equation
+A = HelmholtzOperator(Nx, Ny, Nz, Δx, Δy, Δz, k)
+
+# Source term f(x, y, z) = -2k² * sin(kx) * sin(ky) * sin(kz)
+F = [-2 * k^2 * sin(k * x[ii+1]) * sin(k * y[jj+1]) * sin(k * z[kk+1]) for ii in 1:Nx, jj in 1:Ny, kk in 1:Nz]
+f = vec(F)
+
+# Solve the linear system using MinAres
+u_sol, stats = minares(A, f, atol=1e-10, rtol=0.0, verbose=1)
+
+# Solution as 3D array
+U_sol = reshape(u_sol, Nx, Ny, Nz)
+
+# Exact solution u(x,y,z) = sin(kx) * sin(ky) * sin(kz)
+U_star = [sin(k * x[ii+1]) * sin(k * y[jj+1]) * sin(k * z[kk+1]) for ii in 1:Nx, jj in 1:Ny, kk in 1:Nz]
+
+# Compute the maximum error between the numerical solution U_sol and the exact solution U_star
+norm(U_sol - U_star, Inf)
+```
+
 Note that preconditioners can be also implemented as abstract operators.
 For instance, we could compute the Cholesky factorization of $M$ and $N$ and create linear operators that perform the forward and backsolves.
 
