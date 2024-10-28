@@ -191,7 +191,7 @@ include("gpu.jl")
       B = hcat(b, -b)
       A = M(A)
       B = M(B)
-      X, stats = block_gmres(A, B)
+      X, stats = block_gmres(A, B, reorthogonalization=true)
       @test norm(B - A * X) ≤ atol + rtol * norm(B)
     end
 
