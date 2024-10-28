@@ -117,6 +117,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
     allocate_if(restart, solver, :ΔX, SM, n, p)
     ΔX, X, W, V, Z = solver.ΔX, solver.X, solver.W, solver.V, solver.Z
     C, D, R, H, τ, stats = solver.C, solver.D, solver.R, solver.H, solver.τ, solver.stats
+    Ψtmp = C
     warm_start = solver.warm_start
     RNorms = stats.residuals
     reset!(stats)
