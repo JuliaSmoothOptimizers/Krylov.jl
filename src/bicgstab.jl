@@ -25,7 +25,7 @@ export bicgstab, bicgstab!
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
-
+""
     (x, stats) = bicgstab(A, b, x0::AbstractVector; kwargs...)
 
 BICGSTAB can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
@@ -44,12 +44,12 @@ BICGSTAB stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol 
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n;
-* `b`: a vector of length n.
+* `A`: a linear operator that models a matrix of dimension `n`;
+* `b`: a vector of length `n`.
 
 #### Optional argument
 
-* `x0`: a vector of length n that represents an initial guess of the solution x.
+* `x0`: a vector of length `n` that represents an initial guess of the solution `x`.
 
 #### Keyword arguments
 
@@ -68,7 +68,7 @@ BICGSTAB stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol 
 
 #### Output arguments
 
-* `x`: a dense vector of length n;
+* `x`: a dense vector of length `n`;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### References

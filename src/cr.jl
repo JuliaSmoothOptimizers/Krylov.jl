@@ -39,12 +39,12 @@ M also indicates the weighted norm in which residuals are measured.
 
 #### Input arguments
 
-* `A`: a linear operator that models a Hermitian positive definite matrix of dimension n;
-* `b`: a vector of length n.
+* `A`: a linear operator that models a Hermitian positive definite matrix of dimension `n`;
+* `b`: a vector of length `n`.
 
 #### Optional argument
 
-* `x0`: a vector of length n that represents an initial guess of the solution x.
+* `x0`: a vector of length `n` that represents an initial guess of the solution `x`.
 
 #### Keyword arguments
 
@@ -64,7 +64,7 @@ M also indicates the weighted norm in which residuals are measured.
 
 #### Output arguments
 
-* `x`: a dense vector of length n;
+* `x`: a dense vector of length `n`;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### References

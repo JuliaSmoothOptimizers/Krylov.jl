@@ -37,14 +37,14 @@ QMR is used for solving dual system `Aᴴy = c` of size n.
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n;
-* `b`: a vector of length n;
-* `c`: a vector of length n.
+* `A`: a linear operator that models a matrix of dimension `n`;
+* `b`: a vector of length `n`;
+* `c`: a vector of length `n`.
 
 #### Optional arguments
 
-* `x0`: a vector of length n that represents an initial guess of the solution x;
-* `y0`: a vector of length n that represents an initial guess of the solution y.
+* `x0`: a vector of length `n` that represents an initial guess of the solution `x`;
+* `y0`: a vector of length `n` that represents an initial guess of the solution `y`.
 
 #### Keyword arguments
 
@@ -60,8 +60,8 @@ QMR is used for solving dual system `Aᴴy = c` of size n.
 
 #### Output arguments
 
-* `x`: a dense vector of length n;
-* `y`: a dense vector of length n;
+* `x`: a dense vector of length `n`;
+* `y`: a dense vector of length `n`;
 * `stats`: statistics collected on the run in an [`AdjointStats`](@ref) structure.
 
 #### Reference

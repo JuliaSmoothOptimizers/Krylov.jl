@@ -1,13 +1,16 @@
 # """
-# Gram-Schmidt orthogonalization for a reduced QR decomposition:
-# Q, R = gs(A)
+#     Q, R = gs(A)
 #
-# Input :
-# A an n-by-k matrix, n ≥ k
+# Gram-Schmidt orthogonalization for a reduced QR decomposition.
 #
-# Output :
-# Q an n-by-k orthonormal matrix: QᴴQ = Iₖ
-# R an k-by-k upper triangular matrix: QR = A
+# #### Input argument
+#
+# * `A`: an n-by-k matrix, n ≥ k
+#
+# #### Output arguments
+#
+# * `Q` an n-by-k orthonormal matrix: QᴴQ = Iₖ
+# * `R` an k-by-k upper triangular matrix: QR = A
 # """
 function gs(A::AbstractMatrix{FC}) where FC <: FloatOrComplex
   n, k = size(A)

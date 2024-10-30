@@ -61,8 +61,8 @@ but simpler to implement. Only the x-part of the solution is returned.
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension m × n;
-* `b`: a vector of length m.
+* `A`: a linear operator that models a matrix of dimension `m × n`;
+* `b`: a vector of length `m`.
 
 #### Keyword arguments
 
@@ -80,7 +80,7 @@ but simpler to implement. Only the x-part of the solution is returned.
 
 #### Output arguments
 
-* `x`: a dense vector of length n;
+* `x`: a dense vector of length `n`;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### References

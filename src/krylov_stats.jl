@@ -10,7 +10,7 @@ abstract type KrylovStats{T} end
 Type for storing statistics returned by the majority of Krylov solvers.
 The fields are as follows:
 - `niter`: The total number of iterations completed by the solver;
-- `solved`: Indicates whether the solver successfully reached convergence (`true` if solved, ``false` otherwise);
+- `solved`: Indicates whether the solver successfully reached convergence (`true` if solved, `false` otherwise);
 - `inconsistent`: Flags whether the system was detected as inconsistent (i.e., when `b` is not in the range of `A`);
 - `residuals`: A vector containing the residual norms at each iteration;
 - `Aresiduals`: A vector of `A'`-residual norms at each iteration;
