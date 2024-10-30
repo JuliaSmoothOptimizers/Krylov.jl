@@ -7,15 +7,16 @@ import Base.copyto!
 abstract type KrylovStats{T} end
 
 """
-Type for statistics returned by the majority of Krylov solvers, the attributes are:
-- niter
-- solved
-- inconsistent
-- residuals
-- Aresiduals
-- Acond
-- timer
-- status
+Type for storing statistics returned by the majority of Krylov solvers.
+The fields are as follows:
+- `niter`: The total number of iterations completed by the solver;
+- `solved`: Indicates whether the solver successfully reached convergence (`true` if solved, ``false` otherwise);
+- `inconsistent`: Flags whether the system was detected as inconsistent (i.e., when `b` is not in the range of `A`);
+- `residuals`: A vector containing the residual norms at each iteration;
+- `Aresiduals`: A vector of `A'`-residual norms at each iteration;
+- `Acond`: An estimate of the condition number of matrix `A`.
+- `timer`: The elapsed time (in seconds) taken by the solver to complete all iterations;
+- `status`: A string indicating the outcome of the solve, providing additional details beyond `solved`.
 """
 mutable struct SimpleStats{T} <: KrylovStats{T}
   niter        :: Int
@@ -47,7 +48,8 @@ function copyto!(dest :: SimpleStats, src :: SimpleStats)
 end
 
 """
-Type for statistics returned by LSMR. The attributes are:
+Type for storing statistics returned by LSMR.
+The fields are as follows:
 - niter
 - solved
 - inconsistent
@@ -96,7 +98,8 @@ function copyto!(dest :: LsmrStats, src :: LsmrStats)
 end
 
 """
-Type for statistics returned by CG-LANCZOS, the attributes are:
+Type for storing statistics returned by CG-LANCZOS.
+The fields are as follows:
 - niter
 - solved
 - residuals
@@ -134,7 +137,8 @@ function copyto!(dest :: LanczosStats, src :: LanczosStats)
 end
 
 """
-Type for statistics returned by CG-LANCZOS with shifts, the attributes are:
+Type for storing statistics returned by CG-LANCZOS-SHIFT and CGLS-LANCZOS-SHIFT.
+The fields are as follows:
 - niter
 - solved
 - residuals
@@ -174,7 +178,8 @@ function copyto!(dest :: LanczosShiftStats, src :: LanczosShiftStats)
 end
 
 """
-Type for statistics returned by SYMMLQ, the attributes are:
+Type for storing statistics returned by SYMMLQ.
+The fields are as follows:
 - niter
 - solved
 - residuals
@@ -221,7 +226,8 @@ function copyto!(dest :: SymmlqStats, src :: SymmlqStats)
 end
 
 """
-Type for statistics returned by adjoint systems solvers BiLQR and TriLQR, the attributes are:
+Type for storing statistics returned by adjoint systems solvers BiLQR and TriLQR.
+The fields are as follows:
 - niter
 - solved_primal
 - solved_dual
@@ -258,7 +264,8 @@ end
 
 
 """
-Type for statistics returned by the LNLQ method, the attributes are:
+Type for storing statistics returned by the LNLQ method.
+The fields are as follows:
 - niter
 - solved
 - residuals
@@ -298,7 +305,8 @@ function copyto!(dest :: LNLQStats, src :: LNLQStats)
 end
 
 """
-Type for statistics returned by the LSLQ method, the attributes are:
+Type for storing statistics returned by the LSLQ method.
+The fields are as follows:
 - niter
 - solved
 - inconsistent
