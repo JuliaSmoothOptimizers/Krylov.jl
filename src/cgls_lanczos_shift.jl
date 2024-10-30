@@ -37,9 +37,9 @@ but simpler to implement.
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension m × n;
-* `b`: a vector of length m;
-* `shifts`: a vector of length p.
+* `A`: a linear operator that models a matrix of dimension `m × n`;
+* `b`: a vector of length `m`;
+* `shifts`: a vector of length `p`.
 
 #### Keyword arguments
 
@@ -56,7 +56,7 @@ but simpler to implement.
 
 #### Output arguments
 
-* `x`: a vector of p dense vectors, each one of length n;
+* `x`: a vector of `p` dense vectors, each one of length `n`;
 * `stats`: statistics collected on the run in a [`LanczosShiftStats`](@ref) structure.
 
 #### References

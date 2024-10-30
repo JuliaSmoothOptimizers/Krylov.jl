@@ -24,12 +24,12 @@ Solve the linear system AX = B of size n with p right-hand sides using block-GMR
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension n;
-* `B`: a matrix of size n × p.
+* `A`: a linear operator that models a matrix of dimension `n`;
+* `B`: a matrix of size `n × p`.
 
 #### Optional argument
 
-* `X0`: a matrix of size n × p that represents an initial guess of the solution X.
+* `X0`: a matrix of size `n × p` that represents an initial guess of the solution `X`.
 
 #### Keyword arguments
 
@@ -50,7 +50,7 @@ Solve the linear system AX = B of size n with p right-hand sides using block-GMR
 
 #### Output arguments
 
-* `X`: a dense matrix of size n × p;
+* `X`: a dense matrix of size `n × p`;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 """
 function block_gmres end

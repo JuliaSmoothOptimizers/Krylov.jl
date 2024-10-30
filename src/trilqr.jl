@@ -36,14 +36,14 @@ USYMQR is used for solving dual system `Aᴴy = c` of size n × m.
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension m × n;
-* `b`: a vector of length m;
-* `c`: a vector of length n.
+* `A`: a linear operator that models a matrix of dimension `m × n`;
+* `b`: a vector of length `m`;
+* `c`: a vector of length `n`.
 
 #### Optional arguments
 
-* `x0`: a vector of length n that represents an initial guess of the solution x;
-* `y0`: a vector of length m that represents an initial guess of the solution y.
+* `x0`: a vector of length `n` that represents an initial guess of the solution `x`;
+* `y0`: a vector of length `m` that represents an initial guess of the solution `y`.
 
 #### Keyword arguments
 
@@ -59,8 +59,8 @@ USYMQR is used for solving dual system `Aᴴy = c` of size n × m.
 
 #### Output arguments
 
-* `x`: a dense vector of length n;
-* `y`: a dense vector of length m;
+* `x`: a dense vector of length `n`;
+* `y`: a dense vector of length `m`;
 * `stats`: statistics collected on the run in an [`AdjointStats`](@ref) structure.
 
 #### Reference

@@ -3,8 +3,8 @@
 
 #### Input arguments
 
-* `A`: a linear operator that models an Hermitian matrix of dimension n;
-* `B`: a matrix of size n × p;
+* `A`: a linear operator that models an Hermitian matrix of dimension `n`;
+* `B`: a matrix of size `n × p`;
 * `k`: the number of iterations of the block Hermitian Lanczos process.
 
 #### Keyword arguments
@@ -13,9 +13,9 @@
 
 #### Output arguments
 
-* `V`: a dense n × p(k+1) matrix;
-* `Ψ`: a dense p × p upper triangular matrix such that V₁Ψ = B;
-* `T`: a sparse p(k+1) × pk block tridiagonal matrix with a bandwidth p.
+* `V`: a dense `n × p(k+1)` matrix;
+* `Ψ`: a dense `p × p` upper triangular matrix such that `V₁Ψ = B`;
+* `T`: a sparse `p(k+1) × pk` block tridiagonal matrix with a bandwidth `p`.
 """
 function hermitian_lanczos(A, B::AbstractMatrix{FC}, k::Int; algo::String="householder") where FC <: FloatOrComplex
   m, n = size(A)
@@ -101,19 +101,19 @@ end
 
 #### Input arguments
 
-* `A`: a linear operator that models a square matrix of dimension n;
-* `B`: a matrix of size n × p;
-* `C`: a matrix of size n × p;
+* `A`: a linear operator that models a square matrix of dimension `n`;
+* `B`: a matrix of size `n × p`;
+* `C`: a matrix of size `n × p`;
 * `k`: the number of iterations of the block non-Hermitian Lanczos process.
 
 #### Output arguments
 
-* `V`: a dense n × p(k+1) matrix;
-* `Ψ`: a dense p × p upper triangular matrix such that V₁Ψ = B;
-* `T`: a sparse p(k+1) × pk block tridiagonal matrix with a bandwidth p;
-* `U`: a dense n × p(k+1) matrix;
-* `Φᴴ`: a dense p × p upper triangular matrix such that U₁Φᴴ = C;
-* `Tᴴ`: a sparse p(k+1) × pk block tridiagonal matrix with a bandwidth p.
+* `V`: a dense `n × p(k+1)` matrix;
+* `Ψ`: a dense `p × p` upper triangular matrix such that `V₁Ψ = B`;
+* `T`: a sparse `p(k+1) × pk` block tridiagonal matrix with a bandwidth `p`;
+* `U`: a dense `n × p(k+1)` matrix;
+* `Φᴴ`: a dense `p × p` upper triangular matrix such that `U₁Φᴴ = C`;
+* `Tᴴ`: a sparse `p(k+1) × pk` block tridiagonal matrix with a bandwidth `p`.
 """
 function nonhermitian_lanczos(A, B::AbstractMatrix{FC}, C::AbstractMatrix{FC}, k::Int) where FC <: FloatOrComplex
   m, n = size(A)
@@ -231,8 +231,8 @@ end
 
 #### Input arguments
 
-* `A`: a linear operator that models a square matrix of dimension n;
-* `B`: a matrix of size n × p;
+* `A`: a linear operator that models a square matrix of dimension `n`;
+* `B`: a matrix of size `n × p`;
 * `k`: the number of iterations of the block Arnoldi process.
 
 #### Keyword arguments
@@ -242,9 +242,9 @@ end
 
 #### Output arguments
 
-* `V`: a dense n × p(k+1) matrix;
-* `Γ`: a dense p × p upper triangular matrix such that V₁Γ = B;
-* `H`: a dense p(k+1) × pk block upper Hessenberg matrix with a lower bandwidth p.
+* `V`: a dense `n × p(k+1)` matrix;
+* `Γ`: a dense `p × p` upper triangular matrix such that `V₁Γ = B`;
+* `H`: a dense `p(k+1) × pk` block upper Hessenberg matrix with a lower bandwidth `p`.
 """
 function arnoldi(A, B::AbstractMatrix{FC}, k::Int; algo::String="householder", reorthogonalization::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
@@ -308,8 +308,8 @@ end
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension m × n;
-* `B`: a matrix of size m × p;
+* `A`: a linear operator that models a matrix of dimension `m × n`;
+* `B`: a matrix of size `m × p`;
 * `k`: the number of iterations of the block Golub-Kahan process.
 
 #### Keyword argument
@@ -318,10 +318,10 @@ end
 
 #### Output arguments
 
-* `V`: a dense n × p(k+1) matrix;
-* `U`: a dense m × p(k+1) matrix;
-* `Ψ`: a dense p × p upper triangular matrix such that U₁Ψ = B;
-* `L`: a sparse p(k+1) × p(k+1) block lower bidiagonal matrix with a lower bandwidth p.
+* `V`: a dense `n × p(k+1)` matrix;
+* `U`: a dense `m × p(k+1)` matrix;
+* `Ψ`: a dense `p × p` upper triangular matrix such that `U₁Ψ = B`;
+* `L`: a sparse `p(k+1) × p(k+1)` block lower bidiagonal matrix with a lower bandwidth `p`.
 """
 function golub_kahan(A, B::AbstractMatrix{FC}, k::Int; algo::String="householder") where FC <: FloatOrComplex
   m, n = size(A)
@@ -421,9 +421,9 @@ end
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension m × n;
-* `B`: a matrix of size m × p;
-* `C`: a matrix of size n × p;
+* `A`: a linear operator that models a matrix of dimension `m × n`;
+* `B`: a matrix of size `m × p`;
+* `C`: a matrix of size `n × p`;
 * `k`: the number of iterations of the block Saunders-Simon-Yip process.
 
 #### Keyword argument
@@ -432,12 +432,12 @@ end
 
 #### Output arguments
 
-* `V`: a dense m × p(k+1) matrix;
-* `Ψ`: a dense p × p upper triangular matrix such that V₁Ψ = B;
-* `T`: a sparse p(k+1) × pk block tridiagonal matrix with a bandwidth p;
-* `U`: a dense n × p(k+1) matrix;
-* `Φᴴ`: a dense p × p upper triangular matrix such that U₁Φᴴ = C;
-* `Tᴴ`: a sparse p(k+1) × pk block tridiagonal matrix with a bandwidth p.
+* `V`: a dense `m × p(k+1)` matrix;
+* `Ψ`: a dense `p × p` upper triangular matrix such that `V₁Ψ = B`;
+* `T`: a sparse `p(k+1) × pk` block tridiagonal matrix with a bandwidth `p`;
+* `U`: a dense `n × p(k+1)` matrix;
+* `Φᴴ`: a dense `p × p` upper triangular matrix such that `U₁Φᴴ = C`;
+* `Tᴴ`: a sparse `p(k+1) × pk` block tridiagonal matrix with a bandwidth `p`.
 """
 function saunders_simon_yip(A, B::AbstractMatrix{FC}, C::AbstractMatrix{FC}, k::Int; algo::String="householder") where FC <: FloatOrComplex
   m, n = size(A)
@@ -560,10 +560,10 @@ end
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension m × n;
-* `B`: a linear operator that models a matrix of dimension n × m;
-* `D`: a matrix of size m × p;
-* `C`: a matrix of size n × p;
+* `A`: a linear operator that models a matrix of dimension `m × n`;
+* `B`: a linear operator that models a matrix of dimension `n × m`;
+* `D`: a matrix of size `m × p`;
+* `C`: a matrix of size `n × p`;
 * `k`: the number of iterations of the block Montoison-Orban process.
 
 #### Keyword arguments
@@ -573,12 +573,12 @@ end
 
 #### Output arguments
 
-* `V`: a dense m × p(k+1) matrix;
-* `Γ`: a dense p × p upper triangular matrix such that V₁Γ = D;
-* `H`: a dense p(k+1) × pk block upper Hessenberg matrix with a lower bandwidth p;
-* `U`: a dense n × p(k+1) matrix;
-* `Λ`: a dense p × p upper triangular matrix such that U₁Λ = C;
-* `F`: a dense p(k+1) × pk block upper Hessenberg matrix with a lower bandwidth p.
+* `V`: a dense `m × p(k+1)` matrix;
+* `Γ`: a dense `p × p` upper triangular matrix such that `V₁Γ = D`;
+* `H`: a dense `p(k+1) × pk` block upper Hessenberg matrix with a lower bandwidth `p`;
+* `U`: a dense `n × p(k+1)` matrix;
+* `Λ`: a dense `p × p` upper triangular matrix such that `U₁Λ = C`;
+* `F`: a dense `p(k+1) × pk` block upper Hessenberg matrix with a lower bandwidth `p`.
 """
 function montoison_orban(A, B, D::AbstractMatrix{FC}, C::AbstractMatrix{FC}, k::Int; algo::String="householder", reorthogonalization::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)

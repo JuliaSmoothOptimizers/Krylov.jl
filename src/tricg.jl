@@ -54,14 +54,14 @@ TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension m × n;
-* `b`: a vector of length m;
-* `c`: a vector of length n.
+* `A`: a linear operator that models a matrix of dimension `m × n`;
+* `b`: a vector of length `m`;
+* `c`: a vector of length `n`.
 
 #### Optional arguments
 
-* `x0`: a vector of length m that represents an initial guess of the solution x;
-* `y0`: a vector of length n that represents an initial guess of the solution y.
+* `x0`: a vector of length `m` that represents an initial guess of the solution `x`;
+* `y0`: a vector of length `n` that represents an initial guess of the solution `y`.
 
 #### Keyword arguments
 
@@ -83,8 +83,8 @@ TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 
 #### Output arguments
 
-* `x`: a dense vector of length m;
-* `y`: a dense vector of length n;
+* `x`: a dense vector of length `m`;
+* `y`: a dense vector of length `n`;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### Reference
