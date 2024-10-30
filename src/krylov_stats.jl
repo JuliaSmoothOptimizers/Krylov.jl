@@ -13,7 +13,7 @@ The fields are as follows:
 - `solved`: Indicates whether the solver successfully reached convergence (`true` if solved, ``false` otherwise);
 - `inconsistent`: Flags whether the system was detected as inconsistent (i.e., when `b` is not in the range of `A`);
 - `residuals`: A vector containing the residual norms at each iteration;
-- `Aresiduals`: A vector of `Aᴴ`-residual norms at each iteration;
+- `Aresiduals`: A vector of `A'`-residual norms at each iteration;
 - `Acond`: An estimate of the condition number of matrix `A`.
 - `timer`: The elapsed time (in seconds) taken by the solver to complete all iterations;
 - `status`: A string indicating the outcome of the solve, providing additional details beyond `solved`.
