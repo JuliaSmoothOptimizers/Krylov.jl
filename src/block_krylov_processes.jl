@@ -560,10 +560,10 @@ end
 
 #### Input arguments
 
-* `A`: a linear operator that models a matrix of dimension m × n;
-* `B`: a linear operator that models a matrix of dimension n × m;
-* `D`: a matrix of size m × p;
-* `C`: a matrix of size n × p;
+* `A`: a linear operator that models a matrix of dimension `m × n`;
+* `B`: a linear operator that models a matrix of dimension `n × m`;
+* `D`: a matrix of size `m × p`;
+* `C`: a matrix of size `n × p`;
 * `k`: the number of iterations of the block Montoison-Orban process.
 
 #### Keyword arguments
