@@ -25,6 +25,7 @@ export bicgstab, bicgstab!
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
+
     (x, stats) = bicgstab(A, b, x0::AbstractVector; kwargs...)
 
 BICGSTAB can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
