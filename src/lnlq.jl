@@ -207,7 +207,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       stats.solved = true
       stats.error_with_bnd = false
       history && push!(rNorms, bNorm)
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       return solver
     end
@@ -219,7 +219,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     itmax == 0 && (itmax = m + n)
 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, bNorm, ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, bNorm, start_time |> ktimer)
 
     # Update iteration index
     iter = iter + 1
@@ -499,7 +499,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       end
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm_lq, ktimer(start_time))
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm_lq, start_time |> ktimer)
 
       # Update iteration index.
       iter = iter + 1
@@ -543,7 +543,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     stats.niter = iter
     stats.solved = solved_lq || solved_cg
     stats.error_with_bnd = complex_error_bnd
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

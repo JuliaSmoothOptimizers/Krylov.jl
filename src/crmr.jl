@@ -158,7 +158,7 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     if bNorm == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       history && push!(ArNorms, zero(T))
       return solver
@@ -176,7 +176,7 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     ɛ_c = atol + rtol * rNorm   # Stopping tolerance for consistent systems.
     ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
     (verbose > 0) && @printf(iostream, "%5s  %8s  %8s  %5s\n", "k", "‖Aᴴr‖", "‖r‖", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %.2fs\n", iter, ArNorm, rNorm, ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %.2fs\n", iter, ArNorm, rNorm, start_time |> ktimer)
 
     status = "unknown"
     solved = rNorm ≤ ɛ_c
@@ -208,7 +208,7 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       history && push!(rNorms, rNorm)
       history && push!(ArNorms, ArNorm)
       iter = iter + 1
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %.2fs\n", iter, ArNorm, rNorm, ktimer(start_time))
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %.2fs\n", iter, ArNorm, rNorm, start_time |> ktimer)
       user_requested_exit = callback(solver) :: Bool
       solved = rNorm ≤ ɛ_c
       inconsistent = (rNorm > 100 * ɛ_c) && (ArNorm ≤ ɛ_i)
@@ -229,7 +229,7 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = inconsistent
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

@@ -148,7 +148,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     if β == 0
       stats.niter = 0
       stats.solved = true
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       return solver
     end
@@ -184,7 +184,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
 
     # Build format strings for printing.
     (verbose > 0) && (fmt = Printf.Format("%5d" * repeat("  %8.1e", nshifts) * "  %.2fs\n"))
-    kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms..., ktimer(start_time))
+    kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms..., start_time |> ktimer)
 
     solved = !reduce(|, not_cv)
     tired = iter ≥ itmax
@@ -248,7 +248,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
         not_cv[i] = check_curvature ? !(converged[i] || indefinite[i]) : !converged[i]
       end
       iter = iter + 1
-      kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms..., ktimer(start_time))
+      kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms..., start_time |> ktimer)
 
       user_requested_exit = callback(solver) :: Bool
       solved = !reduce(|, not_cv)
@@ -267,7 +267,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     # Update stats. TODO: Estimate Anorm and Acond.
     stats.niter = iter
     stats.solved = solved
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

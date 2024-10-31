@@ -257,7 +257,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     zt[2] = γ
 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %5s\n", "k", "‖rₖ‖", "hₖ₊₁.ₖ", "fₖ₊₁.ₖ", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s  %7s  %.2fs\n", iter, rNorm, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗", ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s  %7s  %.2fs\n", iter, rNorm, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗", start_time |> ktimer)
 
     # Tolerance for breakdown detection.
     btol = eps(T)^(3/4)
@@ -446,7 +446,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, Haux, Faux, ktimer(start_time))
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, Haux, Faux, start_time |> ktimer)
 
       # Compute vₖ₊₁ and uₖ₊₁
       if !(solved || tired || breakdown || user_requested_exit || overtimed)
@@ -522,7 +522,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = inconsistent
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

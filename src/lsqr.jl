@@ -203,7 +203,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     if β₁ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       history && push!(rNorms, zero(T))
       history && push!(ArNorms, zero(T))
@@ -236,7 +236,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     itmax == 0 && (itmax = m + n)
 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %7s  %5s\n", "k", "α", "β", "‖r‖", "‖Aᴴr‖", "compat", "backwrd", "‖A‖", "κ(A)", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, β₁, α, β₁, α, 0, 1, Anorm, Acond, ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, β₁, α, β₁, α, 0, 1, Anorm, Acond, start_time |> ktimer)
 
     rNorm = β₁
     r1Norm = rNorm
@@ -249,7 +249,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     if α == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a minimum least-squares solution"
       return solver
     end
@@ -378,7 +378,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
       t1    = test1 / (one(T) + Anorm * xNorm / β₁)
       rNormtol = btol + axtol * Anorm * xNorm / β₁
 
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, α, β, rNorm, ArNorm, test1, test2, Anorm, Acond, ktimer(start_time))
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, α, β, rNorm, ArNorm, test1, test2, Anorm, Acond, start_time |> ktimer)
 
       # Stopping conditions that do not depend on user input.
       # This is to guard against tolerances that are unreasonably small.
@@ -418,7 +418,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = !zero_resid
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

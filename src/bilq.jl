@@ -164,7 +164,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       stats.niter = 0
       stats.solved = true
       stats.inconsistent = false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
       return solver
@@ -179,7 +179,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       stats.niter = 0
       stats.solved = false
       stats.inconsistent = false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "Breakdown bᴴc = 0"
       solver.warm_start = false
       return solver
@@ -187,7 +187,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
 
     ε = atol + rtol * bNorm
     (verbose > 0) && @printf(iostream, "%5s  %8s  %7s  %5s\n", "k", "αₖ", "‖rₖ‖", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %.2fs\n", iter, cᴴb, bNorm, ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %.2fs\n", iter, cᴴb, bNorm, start_time |> ktimer)
 
     βₖ = √(abs(cᴴb))            # β₁γ₁ = cᴴ(b - Ax₀)
     γₖ = cᴴb / βₖ               # β₁γ₁ = cᴴ(b - Ax₀)
@@ -363,7 +363,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       breakdown = !solved_lq && !solved_cg && (pᴴq == 0)
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %.2fs\n", iter, αₖ, rNorm_lq, ktimer(start_time))
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %.2fs\n", iter, αₖ, rNorm_lq, start_time |> ktimer)
     end
     (verbose > 0) && @printf(iostream, "\n")
 
@@ -393,7 +393,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
     stats.niter = iter
     stats.solved = solved_lq || solved_cg
     stats.inconsistent = false
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

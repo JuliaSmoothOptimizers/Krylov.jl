@@ -168,7 +168,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     if rNorm == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
       return solver
@@ -180,7 +180,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     ε = atol + rtol * rNorm
     κ = zero(T)
     (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %8s  %7s  %7s  %8s  %5s\n", "k", "‖rₖ‖", "‖Arₖ₋₁‖", "βₖ₊₁", "Rₖ.ₖ", "Lₖ.ₖ", "‖A‖", "κ(A)", "backward", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %7.1e  %8s  %.2fs\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", ANorm, Acond, " ✗ ✗ ✗ ✗", ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7s  %7.1e  %7s  %8s  %7.1e  %7.1e  %8s  %.2fs\n", iter, rNorm, "✗ ✗ ✗ ✗", βₖ, "✗ ✗ ✗ ✗", " ✗ ✗ ✗ ✗", ANorm, Acond, " ✗ ✗ ✗ ✗", start_time |> ktimer)
 
     # Set up workspace.
     kfill!(M⁻¹vₖ₋₁, zero(FC))
@@ -440,7 +440,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       μbarₖ₋₁ = μbarₖ
       ζbarₖ = ζbarₖ₊₁
       βₖ = βₖ₊₁
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %7.1e  %8.1e  %.2fs\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ, ANorm, Acond, backward, ktimer(start_time))
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %7.1e  %8.1e  %.2fs\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ, ANorm, Acond, backward, start_time |> ktimer)
     end
     (verbose > 0) && @printf(iostream, "\n")
 
@@ -469,7 +469,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = inconsistent
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

@@ -159,7 +159,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
     if β == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
       return solver
@@ -175,7 +175,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
     inner_itmax = itmax
 
     (verbose > 0) && @printf(iostream, "%5s  %5s  %7s  %7s  %5s\n", "pass", "k", "‖rₖ‖", "hₖ₊₁.ₖ", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7s  %.2fs\n", npass, iter, rNorm, "✗ ✗ ✗ ✗", ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7s  %.2fs\n", npass, iter, rNorm, "✗ ✗ ✗ ✗", start_time |> ktimer)
 
     # Tolerance for breakdown detection.
     btol = eps(T)^(3/4)
@@ -286,7 +286,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
         inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
         timer = time_ns() - start_time
         overtimed = timer > timemax_ns
-        kdisplay(iter+inner_iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7.1e  %.2fs\n", npass, iter+inner_iter, rNorm, Hbis, ktimer(start_time))
+        kdisplay(iter+inner_iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7.1e  %.2fs\n", npass, iter+inner_iter, rNorm, Hbis, start_time |> ktimer)
 
         # Compute vₖ₊₁.
         if !(solved || inner_tired || breakdown || user_requested_exit || overtimed)
@@ -343,7 +343,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = !solved && breakdown
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

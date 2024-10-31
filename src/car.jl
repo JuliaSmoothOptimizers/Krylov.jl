@@ -164,7 +164,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     if rNorm == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
       return solver
@@ -175,7 +175,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
 
     ε = atol + rtol * rNorm
     (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %5s\n", "k", "‖rₖ‖", "‖Arₖ‖", "α", "β", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7s  %7s  %.2fs\n", iter, rNorm, ArNorm, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗", ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7s  %7s  %.2fs\n", iter, rNorm, ArNorm, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗", start_time |> ktimer)
 
     solved = rNorm ≤ ε
     tired = iter ≥ itmax
@@ -220,8 +220,8 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       user_requested_exit = callback(solver) :: Bool
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && !solved && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, ArNorm, α, β, ktimer(start_time))
-      kdisplay(iter, verbose) &&  solved && @printf(iostream, "%5d  %7.1e  %7s  %7.1e  %7s  %.2fs\n", iter, rNorm, "✗ ✗ ✗ ✗", α, "✗ ✗ ✗ ✗", ktimer(start_time))
+      kdisplay(iter, verbose) && !solved && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, ArNorm, α, β, start_time |> ktimer)
+      kdisplay(iter, verbose) &&  solved && @printf(iostream, "%5d  %7.1e  %7s  %7.1e  %7s  %.2fs\n", iter, rNorm, "✗ ✗ ✗ ✗", α, "✗ ✗ ✗ ✗", start_time |> ktimer)
     end
     (verbose > 0) && @printf(iostream, "\n")
 
@@ -239,7 +239,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = inconsistent
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end
