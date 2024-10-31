@@ -253,9 +253,9 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       # [ •           •  βₖ  αₖ ]      [ 0  •  •  •  •  0  λₖ ]
       # [ 0  •  •  •  •  0  βₖ₊₁]      [ 0  •  •  •  •  •  0  ]
       #
-      # If k = 1, we don't have any previous reflexion.
-      # If k = 2, we apply the last reflexion.
-      # If k ≥ 3, we only apply the two previous reflexions.
+      # If k = 1, we don't have any previous reflection.
+      # If k = 2, we apply the last reflection.
+      # If k ≥ 3, we only apply the two previous reflections.
 
       # Apply previous Givens reflections Qₖ₋₂.ₖ₋₁
       if iter ≥ 3

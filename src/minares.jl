@@ -305,7 +305,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       # [ •               •   ϵₖ₋₁ γₖ ]      [ 0   •   •   •   •    •   0    ]
       # [ 0  •    •   •   •    0   ϵₖ ]      [ 0   •   •   •   •    •   0    ]
 
-      # If k = 1, we don't have any previous reflexion.
+      # If k = 1, we don't have any previous reflection.
       # If k = 2, we apply the reflections Q̃ₖ₊₁.ₖ₋₁ and Q̃ₖ.ₖ₋₁.
       # If k ≥ 3, we apply the reflections Q̃ₖ.ₖ₋₁, Q̃ₖ₊₁.ₖ₋₁ and Q̃ₖ.ₖ₋₂.
 
