@@ -157,7 +157,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     εQ = atol + rtol * cNorm
     ξ = zero(T)
     (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %5s\n", "k", "‖rₖ‖", "‖sₖ‖", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, bNorm, cNorm, ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, bNorm, cNorm, start_time |> ktimer)
 
     # Set up workspace.
     βₖ = knorm(m, r₀)           # β₁ = ‖r₀‖ = ‖v₁‖
@@ -406,9 +406,9 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
 
-      kdisplay(iter, verbose) &&  solved_primal && !solved_dual && @printf(iostream, "%5d  %7s  %7.1e  %.2fs\n", iter, "✗ ✗ ✗ ✗", sNorm, ktimer(start_time))
-      kdisplay(iter, verbose) && !solved_primal &&  solved_dual && @printf(iostream, "%5d  %7.1e  %7s  %.2fs\n", iter, rNorm_lq, "✗ ✗ ✗ ✗", ktimer(start_time))
-      kdisplay(iter, verbose) && !solved_primal && !solved_dual && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, rNorm_lq, sNorm, ktimer(start_time))
+      kdisplay(iter, verbose) &&  solved_primal && !solved_dual && @printf(iostream, "%5d  %7s  %7.1e  %.2fs\n", iter, "✗ ✗ ✗ ✗", sNorm, start_time |> ktimer)
+      kdisplay(iter, verbose) && !solved_primal &&  solved_dual && @printf(iostream, "%5d  %7.1e  %7s  %.2fs\n", iter, rNorm_lq, "✗ ✗ ✗ ✗", start_time |> ktimer)
+      kdisplay(iter, verbose) && !solved_primal && !solved_dual && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, rNorm_lq, sNorm, start_time |> ktimer)
     end
     (verbose > 0) && @printf(iostream, "\n")
 
@@ -446,7 +446,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     stats.niter = iter
     stats.solved_primal = solved_primal
     stats.solved_dual = solved_dual
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

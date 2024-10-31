@@ -151,7 +151,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     if β == 0
       stats.niter = 0
       stats.solved = true
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       return solver
     end
@@ -186,7 +186,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
 
     # Build format strings for printing.
     (verbose > 0) && (fmt = Printf.Format("%5d" * repeat("  %8.1e", nshifts) * "  %.2fs\n"))
-    kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms..., ktimer(start_time))
+    kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms..., start_time |> ktimer)
 
     solved = !reduce(|, not_cv) # ArNorm ≤ ε
     tired = iter ≥ itmax
@@ -242,7 +242,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
         not_cv[i] = !converged[i]
       end
       iter = iter + 1
-      kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms..., ktimer(start_time))
+      kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms..., start_time |> ktimer)
 
       user_requested_exit = callback(solver) :: Bool
       solved = !reduce(|, not_cv)
@@ -261,7 +261,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     # Update stats
     stats.niter = iter
     stats.solved = solved
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

@@ -156,7 +156,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       stats.niter = 0
       stats.solved = true
       stats.inconsistent = false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
       return solver
@@ -168,7 +168,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
     ε = atol + rtol * rNorm
     κ = zero(T)
     (verbose > 0) && @printf(iostream, "%5s  %7s  %8s  %5s\n", "k", "‖rₖ‖", "‖Aᴴrₖ₋₁‖", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8s  %.2fs\n", iter, rNorm, " ✗ ✗ ✗ ✗", ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8s  %.2fs\n", iter, rNorm, " ✗ ✗ ✗ ✗", start_time |> ktimer)
 
     βₖ = knorm(m, r₀)            # β₁ = ‖v₁‖ = ‖r₀‖
     γₖ = knorm(n, c)             # γ₁ = ‖u₁‖ = ‖c‖
@@ -328,7 +328,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %.2fs\n", iter, rNorm, AᴴrNorm, ktimer(start_time))
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %.2fs\n", iter, rNorm, AᴴrNorm, start_time |> ktimer)
     end
     (verbose > 0) && @printf(iostream, "\n")
 
@@ -346,7 +346,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = inconsistent
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

@@ -148,7 +148,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     if γ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
       return solver
@@ -199,7 +199,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
          σ = maximum(to_boundary(n, x, p, z, radius, M=M, ldiv=!ldiv)) 
       end
 
-      kdisplay(iter, verbose) && @printf(iostream, "  %8.1e  %8.1e  %8.1e  %.2fs\n", pAp, α, σ, ktimer(start_time))
+      kdisplay(iter, verbose) && @printf(iostream, "  %8.1e  %8.1e  %8.1e  %.2fs\n", pAp, α, σ, start_time |> ktimer)
 
       # Move along p from x to the boundary if either
       # the next step leads outside the trust region or
@@ -257,7 +257,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = inconsistent
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

@@ -168,7 +168,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       stats.Acond = T(NaN)
       history && push!(rNorms, zero(T))
       history && push!(rcgNorms, zero(T))
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
       return solver
@@ -250,7 +250,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     itmax == 0 && (itmax = 2 * n)
 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %8s  %8s  %7s  %7s  %7s  %5s\n", "k", "‖r‖", "β", "cos", "sin", "‖A‖", "κ(A)", "test1", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7s  %.2fs\n", iter, rNorm, β, cold, sold, ANorm, Acond, "✗ ✗ ✗ ✗", ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7s  %.2fs\n", iter, rNorm, β, cold, sold, ANorm, Acond, "✗ ✗ ✗ ✗", start_time |> ktimer)
 
     tol = atol + rtol * β₁
     status = "unknown"
@@ -385,7 +385,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       ANorm = sqrt(ANorm²)
       test1 = rNorm / (ANorm * xNorm)
 
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, β, c, s, ANorm, Acond, test1, ktimer(start_time))
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, β, c, s, ANorm, Acond, test1, start_time |> ktimer)
 
       # Reset variables
       ϵold = ϵ
@@ -441,7 +441,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     stats.solved = solved
     stats.Anorm = ANorm
     stats.Acond = Acond
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

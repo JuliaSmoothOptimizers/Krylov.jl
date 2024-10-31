@@ -194,14 +194,14 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     if rNorm == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
       return solver
     end
 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %8s  %5s\n", "k", "‖rₖ‖", "‖Arₖ‖", "βₖ₊₁", "ζₖ", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %8s  %.2fs\n", iter, rNorm, ArNorm, β₁, " ✗ ✗ ✗ ✗", ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %8s  %.2fs\n", iter, rNorm, ArNorm, β₁, " ✗ ✗ ✗ ✗", start_time |> ktimer)
 
     # Tolerance for breakdown detection.
     btol = eps(T)^(3/4)
@@ -562,7 +562,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         ζbarₖ₊₁ = ζbarₖ₊₂
       end
 
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %8.1e  %.2fs\n", iter, rNorm, ArNorm, βₖ, ζₖ, ktimer(start_time))
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %8.1e  %.2fs\n", iter, rNorm, ArNorm, βₖ, ζₖ, start_time |> ktimer)
     end
     (verbose > 0) && @printf(iostream, "\n")
 
@@ -580,7 +580,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     stats.niter = iter
     stats.solved = solved
     # stats.inconsistent = inconsistent
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

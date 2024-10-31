@@ -210,7 +210,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     if β₁ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       return solver
     end
@@ -245,7 +245,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     ɛ_i = atol                  # Stopping tolerance for inconsistent systems.
     ctol = conlim > 0 ? 1/conlim : zero(T)  # Stopping tolerance for ill-conditioned operators.
     (verbose > 0) && @printf(iostream, "%5s  %8s  %8s  %8s  %8s  %8s  %7s  %5s\n", "k", "‖r‖", "‖x‖", "‖A‖", "κ(A)", "α", "β", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8s  %7s  %.2fs\n", iter, rNorm, xNorm, Anorm, Acond, " ✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗", ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8s  %7s  %.2fs\n", iter, rNorm, xNorm, Anorm, Acond, " ✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗", start_time |> ktimer)
 
     bkwerr = one(T)  # initial value of the backward error ‖r‖ / √(‖b‖² + ‖A‖² ‖x‖²)
 
@@ -350,7 +350,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
 
       ρ_prev = ρ   # Only differs from α if λ > 0.
 
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8.1e  %7.1e  %.2fs\n", iter, rNorm, xNorm, Anorm, Acond, α, β, ktimer(start_time))
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %8.2e  %8.2e  %8.1e  %7.1e  %.2fs\n", iter, rNorm, xNorm, Anorm, Acond, α, β, start_time |> ktimer)
 
       solved_lim = bkwerr ≤ btol
       solved_mach = one(T) + bkwerr ≤ one(T)
@@ -390,7 +390,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = inconsistent
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

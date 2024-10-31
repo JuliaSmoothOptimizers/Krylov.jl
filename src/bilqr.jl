@@ -158,7 +158,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     εL = atol + rtol * bNorm
     εQ = atol + rtol * cNorm
     (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %5s\n", "k", "‖rₖ‖", "‖sₖ‖", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, bNorm, cNorm, ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, bNorm, cNorm, start_time |> ktimer)
 
     # Initialize the Lanczos biorthogonalization process.
     cᴴb = kdot(n, s₀, r₀)  # ⟨s₀,r₀⟩ = ⟨c - Aᴴy₀,b - Ax₀⟩
@@ -166,7 +166,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       stats.niter = 0
       stats.solved_primal = false
       stats.solved_dual = false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "Breakdown bᴴc = 0"
       solver.warm_start = false
       return solver
@@ -427,9 +427,9 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
 
-      kdisplay(iter, verbose) &&  solved_primal && !solved_dual && @printf(iostream, "%5d  %7s  %7.1e  %.2fs\n", iter, "✗ ✗ ✗ ✗", sNorm, ktimer(start_time))
-      kdisplay(iter, verbose) && !solved_primal &&  solved_dual && @printf(iostream, "%5d  %7.1e  %7s  %.2fs\n", iter, rNorm_lq, "✗ ✗ ✗ ✗", ktimer(start_time))
-      kdisplay(iter, verbose) && !solved_primal && !solved_dual && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, rNorm_lq, sNorm, ktimer(start_time))
+      kdisplay(iter, verbose) &&  solved_primal && !solved_dual && @printf(iostream, "%5d  %7s  %7.1e  %.2fs\n", iter, "✗ ✗ ✗ ✗", sNorm, start_time |> ktimer)
+      kdisplay(iter, verbose) && !solved_primal &&  solved_dual && @printf(iostream, "%5d  %7.1e  %7s  %.2fs\n", iter, rNorm_lq, "✗ ✗ ✗ ✗", start_time |> ktimer)
+      kdisplay(iter, verbose) && !solved_primal && !solved_dual && @printf(iostream, "%5d  %7.1e  %7.1e  %.2fs\n", iter, rNorm_lq, sNorm, start_time |> ktimer)
     end
     (verbose > 0) && @printf(iostream, "\n")
 
@@ -468,7 +468,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     stats.niter = iter
     stats.solved_primal = solved_primal
     stats.solved_dual = solved_dual
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

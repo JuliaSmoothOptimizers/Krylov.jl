@@ -159,7 +159,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     if ρ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
-      stats.timer = ktimer(start_time)
+      stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       history && push!(ArNorms, zero(T))
       solver.warm_start = false
@@ -184,7 +184,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     history && push!(ArNorms, ArNorm)
     ε = atol + rtol * rNorm
     (verbose > 0) && @printf(iostream, "%5s  %8s  %8s  %8s  %5s\n", "k", "‖x‖", "‖r‖", "quad", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %8.1e  %8.1e  %.2fs\n", iter, xNorm, rNorm, m, ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %8.1e  %8.1e  %.2fs\n", iter, xNorm, rNorm, m, start_time |> ktimer)
 
     descent = pr > 0 # pᴴr > 0 means p is a descent direction
     solved = rNorm ≤ ε
@@ -202,7 +202,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
           (verbose > 0) && @printf(iostream, "nonpositive curvature detected: pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
           stats.solved = solved
           stats.inconsistent = false
-          stats.timer = ktimer(start_time)
+          stats.timer = start_time |> ktimer
           stats.status = "nonpositive curvature"
           return solver
         end
@@ -336,7 +336,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       iter = iter + 1
       if kdisplay(iter, verbose)
         m = m - α * pr + α^2 * pAp / 2
-        @printf(iostream, "%5d  %8.1e  %8.1e  %8.1e  %.2fs\n", iter, xNorm, rNorm, m, ktimer(start_time))
+        @printf(iostream, "%5d  %8.1e  %8.1e  %8.1e  %.2fs\n", iter, xNorm, rNorm, m, start_time |> ktimer)
       end
 
       # Stopping conditions that do not depend on user input.
@@ -367,7 +367,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         stats.niter = iter
         stats.solved = solved
         stats.inconsistent = false
-        stats.timer = ktimer(start_time)
+        stats.timer = start_time |> ktimer
         stats.status = "solver encountered numerical issues"
         solver.warm_start = false
         return solver
@@ -397,7 +397,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = false
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end

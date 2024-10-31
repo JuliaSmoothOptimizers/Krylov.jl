@@ -162,7 +162,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
     inner_itmax = itmax
 
     (verbose > 0) && @printf(iostream, "%5s  %5s  %7s  %5s\n", "pass", "k", "‖Rₖ‖", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %.2fs\n", npass, iter, RNorm, ktimer(start_time))
+    kdisplay(iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %.2fs\n", npass, iter, RNorm, start_time |> ktimer)
 
     # Stopping criterion
     solved = RNorm ≤ ε
@@ -287,7 +287,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
         timer = time_ns() - start_time
         overtimed = timer > timemax_ns
-        kdisplay(iter+inner_iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %.2fs\n", npass, iter+inner_iter, RNorm, ktimer(start_time))
+        kdisplay(iter+inner_iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %.2fs\n", npass, iter+inner_iter, RNorm, start_time |> ktimer)
 
         # Compute Vₖ₊₁.
         if !(solved || inner_tired || user_requested_exit || overtimed)
@@ -343,7 +343,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
     # Update stats
     stats.niter = iter
     stats.solved = solved
-    stats.timer = ktimer(start_time)
+    stats.timer = start_time |> ktimer
     stats.status = status
     return solver
   end
