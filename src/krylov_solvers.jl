@@ -1239,7 +1239,7 @@ function CglsLanczosShiftSolver(m, n, nshifts, S)
   indefinite = BitVector(undef, nshifts)
   converged  = BitVector(undef, nshifts)
   not_cv     = BitVector(undef, nshifts)
-  stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0. 0.0, "unknown")
+  stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0, 0.0, "unknown")
   solver = CglsLanczosShiftSolver{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return solver
 end
