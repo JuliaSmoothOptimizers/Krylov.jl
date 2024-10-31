@@ -8,14 +8,14 @@ const BLOCK_KRYLOV_SOLVERS = Dict(:block_gmres => :BlockGmresSolver)
 abstract type BlockKrylovSolver{T,FC,SV,SM} end
 
 """
-Type for storing the vectors required by the in-place version of BLOCK-GMRES.
+Workspace for the in-place version of BLOCK-GMRES.
 
-The outer constructors
+The outer constructors:
 
     solver = BlockGmresSolver(m, n, p, memory, SV, SM)
     solver = BlockGmresSolver(A, B, memory = 5)
 
-may be used in order to create these vectors.
+can be used to initialize this workspace.
 `memory` is set to `div(n,p)` if the value given is larger than `div(n,p)`.
 `memory` is an optional argument in the second constructor.
 """
