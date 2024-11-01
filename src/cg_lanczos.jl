@@ -147,6 +147,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       stats.solved = true
       stats.Anorm = zero(T)
       stats.indefinite = false
+      stats.storage = sizeof(solver)
       stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
@@ -247,6 +248,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     stats.solved = solved
     stats.Anorm = sqrt(Anorm2)
     stats.indefinite = indefinite
+    stats.storage = sizeof(solver)
     stats.timer = start_time |> ktimer
     stats.status = status
     return solver

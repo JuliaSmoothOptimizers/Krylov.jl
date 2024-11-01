@@ -14,7 +14,8 @@ The fields are as follows:
 - `inconsistent`: Flags whether the system was detected as inconsistent (i.e., when `b` is not in the range of `A`);
 - `residuals`: A vector containing the residual norms at each iteration;
 - `Aresiduals`: A vector of `A'`-residual norms at each iteration;
-- `Acond`: An estimate of the condition number of matrix `A`.
+- `Acond`: An estimate of the condition number of matrix `A`;
+- `storage`: Total number of bytes required for the workspace;
 - `timer`: The elapsed time (in seconds) taken by the solver to complete all iterations;
 - `status`: A string indicating the outcome of the solve, providing additional details beyond `solved`.
 """
@@ -25,6 +26,7 @@ mutable struct SimpleStats{T} <: KrylovStats{T}
   residuals    :: Vector{T}
   Aresiduals   :: Vector{T}
   Acond        :: Vector{T}
+  storage      :: Int
   timer        :: Float64
   status       :: String
 end
@@ -42,6 +44,7 @@ function copyto!(dest :: SimpleStats, src :: SimpleStats)
   dest.residuals    = copy(src.residuals)
   dest.Aresiduals   = copy(src.Aresiduals)
   dest.Acond        = copy(src.Acond)
+  dest.storage      = src.storage
   dest.timer        = src.timer
   dest.status       = src.status
   return dest
@@ -72,6 +75,7 @@ mutable struct LsmrStats{T} <: KrylovStats{T}
   Acond        :: T
   Anorm        :: T
   xNorm        :: T
+  storage      :: Int
   timer        :: Float64
   status       :: String
 end
@@ -92,6 +96,7 @@ function copyto!(dest :: LsmrStats, src :: LsmrStats)
   dest.Acond        = src.Acond
   dest.Anorm        = src.Anorm
   dest.xNorm        = src.xNorm
+  dest.storage      = src.storage
   dest.timer        = src.timer
   dest.status       = src.status
   return dest
@@ -116,6 +121,7 @@ mutable struct LanczosStats{T} <: KrylovStats{T}
   indefinite :: Bool
   Anorm      :: T
   Acond      :: T
+  storage    :: Int
   timer      :: Float64
   status     :: String
 end
@@ -131,6 +137,7 @@ function copyto!(dest :: LanczosStats, src :: LanczosStats)
   dest.indefinite = src.indefinite
   dest.Anorm      = src.Anorm
   dest.Acond      = src.Acond
+  dest.storage    = src.storage
   dest.timer      = src.timer
   dest.status     = src.status
   return dest
@@ -155,6 +162,7 @@ mutable struct LanczosShiftStats{T} <: KrylovStats{T}
   indefinite :: BitVector
   Anorm      :: T
   Acond      :: T
+  storage    :: Int
   timer      :: Float64
   status     :: String
 end
@@ -172,6 +180,7 @@ function copyto!(dest :: LanczosShiftStats, src :: LanczosShiftStats)
   dest.indefinite = src.indefinite
   dest.Anorm      = src.Anorm
   dest.Acond      = src.Acond
+  dest.storage    = src.storage
   dest.timer      = src.timer
   dest.status     = src.status
   return dest
@@ -200,6 +209,7 @@ mutable struct SymmlqStats{T} <: KrylovStats{T}
   errorscg    :: Vector{Union{T, Missing}}
   Anorm       :: T
   Acond       :: T
+  storage     :: Int
   timer       :: Float64
   status      :: String
 end
@@ -220,6 +230,7 @@ function copyto!(dest :: SymmlqStats, src :: SymmlqStats)
   dest.errorscg    = copy(src.errorscg)
   dest.Anorm       = src.Anorm
   dest.Acond       = src.Acond
+  dest.storage     = src.storage
   dest.timer       = src.timer
   dest.status      = src.status
   return dest
@@ -242,6 +253,7 @@ mutable struct AdjointStats{T} <: KrylovStats{T}
   solved_dual      :: Bool
   residuals_primal :: Vector{T}
   residuals_dual   :: Vector{T}
+  storage          :: Int
   timer            :: Float64
   status           :: String
 end
@@ -257,6 +269,7 @@ function copyto!(dest :: AdjointStats, src :: AdjointStats)
   dest.solved_dual      = src.solved_dual
   dest.residuals_primal = copy(src.residuals_primal)
   dest.residuals_dual   = copy(src.residuals_dual)
+  dest.storage          = src.storage
   dest.timer            = src.timer
   dest.status           = src.status
   return dest
@@ -282,6 +295,7 @@ mutable struct LNLQStats{T} <: KrylovStats{T}
   error_with_bnd :: Bool
   error_bnd_x    :: Vector{T}
   error_bnd_y    :: Vector{T}
+  storage        :: Int
   timer          :: Float64
   status         :: String
 end
@@ -299,6 +313,7 @@ function copyto!(dest :: LNLQStats, src :: LNLQStats)
   dest.error_with_bnd = src.error_with_bnd
   dest.error_bnd_x    = copy(src.error_bnd_x)
   dest.error_bnd_y    = copy(src.error_bnd_y)
+  dest.storage        = src.storage
   dest.timer          = src.timer
   dest.status         = src.status
   return dest
@@ -329,6 +344,7 @@ mutable struct LSLQStats{T} <: KrylovStats{T}
   error_with_bnd :: Bool
   err_ubnds_lq   :: Vector{T}
   err_ubnds_cg   :: Vector{T}
+  storage        :: Int
   timer          :: Float64
   status         :: String
 end
@@ -351,6 +367,7 @@ function copyto!(dest :: LSLQStats, src :: LSLQStats)
   dest.error_with_bnd = src.error_with_bnd
   dest.err_ubnds_lq   = copy(src.err_ubnds_lq)
   dest.err_ubnds_cg   = copy(src.err_ubnds_cg)
+  dest.storage        = src.storage
   dest.timer          = src.timer
   dest.status         = src.status
   return dest
@@ -382,13 +399,20 @@ function show(io :: IO, stats :: KrylovStats)
     statfield = getfield(stats, field)
     if isa(statfield, AbstractVector) && eltype(statfield) <: Union{Missing, AbstractFloat}
       s *= @sprintf " %s\n" vec2str(statfield)
+    elseif field_name == "storage"
+      s *= @sprintf " %s\n" format_bytes(statfield)
     elseif field_name == "timer"
-      (statfield < 1e-3) && (s *= @sprintf " %.2fμs\n" 1e6*statfield)
-      (1e-3 ≤ statfield < 1.00) && (s *= @sprintf " %.2fms\n" 1e3*statfield)
-      (statfield ≥ 1.00) && (s *= @sprintf " %.2fs\n" statfield)
+      s *= display_timer(statfield)
     else
       s *= @sprintf " %s\n" statfield
     end
   end
   print(io, s)
+end
+
+function display_timer(timer::Float64)
+  (timer < 1e-3) && (s = @sprintf(" %.2fμs\n", 1e6 * timer))
+  (1e-3 ≤ timer < 1.00) && (s = @sprintf(" %.2fms\n", 1e3 * timer))
+  (timer ≥ 1.00) && (s = @sprintf(" %.2fs\n", timer))
+  return s
 end

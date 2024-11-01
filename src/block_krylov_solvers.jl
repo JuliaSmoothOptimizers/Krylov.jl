@@ -57,7 +57,7 @@ function BlockGmresSolver(m, n, p, memory, SV, SM)
   H  = SM[SM(undef, 2p, p) for i = 1 : memory]
   τ  = SV[SV(undef, p) for i = 1 : memory]
   tmp = C isa Matrix ? SM(undef, 0, 0) : SM(undef, p, p)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = BlockGmresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, tmp, false, stats)
   return solver
 end
@@ -103,8 +103,8 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
 end
 
 function ksizeof(attribute)
-  if isa(attribute, Vector{<:AbstractVector}) && !isempty(attribute)
-    # A vector of vectors is a vector of pointers in Julia.
+  if isa(attribute, Vector) && !isempty(attribute)
+    # A vector of arrays is a vector of pointers in Julia.
     # All vectors inside a vector have the same size in Krylov.jl
     size_attribute = sizeof(attribute) + length(attribute) * ksizeof(attribute[1])
   else
@@ -113,16 +113,28 @@ function ksizeof(attribute)
   return size_attribute
 end
 
-function sizeof(stats_solver :: Union{KrylovStats, KrylovSolver, BlockKrylovSolver})
-  type = typeof(stats_solver)
-  nfields = fieldcount(type)
-  storage = 0
-  for i = 1:nfields
-    field_i = getfield(stats_solver, i)
-    size_i = ksizeof(field_i)
-    storage += size_i
+# function sizeof(stats_solver :: Union{KrylovStats, KrylovSolver, BlockKrylovSolver})
+#   type = typeof(stats_solver)
+#   nfields = fieldcount(type)
+#   storage::Int = 0
+#   for i = 1:nfields
+#     field_name = fieldname(type, i)
+#     field_type::DataType = fieldtype(type, field_name)
+#     field = getfield(stats_solver, field_name)
+#     storage += ksizeof(field)::Int
+#   end
+#   return storage
+# end
+
+@generated function Base.sizeof(stats_solver::T) where T <: Union{KrylovStats, KrylovSolver, BlockKrylovSolver}
+  nfields = fieldcount(T)
+  quote
+    storage = 0
+    Base.Cartesian.@nexprs $nfields i -> begin
+     storage += ksizeof(getfield(stats_solver, i))
+    end
+    return storage
   end
-  return storage
 end
 
 """

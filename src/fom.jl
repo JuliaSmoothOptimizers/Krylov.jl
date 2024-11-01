@@ -159,6 +159,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
     if β == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
+      stats.storage = sizeof(solver)
       stats.timer = start_time |> ktimer
       stats.status = "x = 0 is a zero-residual solution"
       solver.warm_start = false
@@ -343,6 +344,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = !solved && breakdown
+    stats.storage = sizeof(solver)
     stats.timer = start_time |> ktimer
     stats.status = status
     return solver

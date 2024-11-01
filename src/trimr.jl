@@ -551,6 +551,7 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     stats.niter = iter
     stats.solved = solved
     stats.inconsistent = !solved && breakdown
+    stats.storage = sizeof(solver)
     stats.timer = start_time |> ktimer
     stats.status = status
     return solver
