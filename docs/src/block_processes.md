@@ -27,6 +27,8 @@ T_{k+1,k} =
 
 The function [`hermitian_lanczos`](@ref hermitian_lanczos(::Any, ::AbstractMatrix{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)) returns $V_{k+1}$, $\Psi_1$ and $T_{k+1,k}$.
 
+Related method: [`BLOCK-MINRES`](@ref block_minres).
+
 ```@docs
 hermitian_lanczos(::Any, ::AbstractMatrix{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)
 ```

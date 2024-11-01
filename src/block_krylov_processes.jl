@@ -3,7 +3,7 @@
 
 #### Input arguments
 
-* `A`: a linear operator that models an Hermitian matrix of dimension `n`;
+* `A`: a linear operator that models a Hermitian matrix of dimension `n`;
 * `B`: a matrix of size `n × p`;
 * `k`: the number of iterations of the block Hermitian Lanczos process.
 
