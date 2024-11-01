@@ -62,7 +62,7 @@ include("gpu.jl")
       Krylov.kcopy!(n, y, x)
     end
 
-    @testset "kswap -- $FC" begin
+    @testset "kswap! -- $FC" begin
       Krylov.@kswap!(x, y)
     end
 

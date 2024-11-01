@@ -12,6 +12,7 @@ include("block_krylov_utils.jl")
 include("block_krylov_processes.jl")
 include("block_krylov_solvers.jl")
 
+include("block_minres.jl")
 include("block_gmres.jl")
 
 include("cg.jl")

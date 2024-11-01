@@ -281,7 +281,7 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
         kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
       end
 
-      # Compute uₖ₊₁ and uₖ₊₁.
+      # Compute vₖ₊₁ and uₖ₊₁.
       kcopy!(m, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
       kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
