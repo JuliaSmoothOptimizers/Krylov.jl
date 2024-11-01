@@ -57,7 +57,7 @@ function BlockGmresSolver(m, n, p, memory, SV, SM)
   H  = SM[SM(undef, 2p, p) for i = 1 : memory]
   τ  = SV[SV(undef, p) for i = 1 : memory]
   tmp = C isa Matrix ? SM(undef, 0, 0) : SM(undef, p, p)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0, 0.0, "unknown")
   solver = BlockGmresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, tmp, false, stats)
   return solver
 end
@@ -103,8 +103,8 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
 end
 
 function ksizeof(attribute)
-  if isa(attribute, Vector) && isa(eltype(attribute), Vector) && !isempty(attribute)
-    # A vector of vectors is a vector of pointers in Julia.
+  if isa(attribute, Vector) && !isempty(attribute)
+    # A vector of arrays is a vector of pointers in Julia.
     # All vectors inside a vector have the same size in Krylov.jl
     size_attribute = sizeof(attribute) + length(attribute) * ksizeof(attribute[1])
   else
