@@ -318,7 +318,7 @@ knorm(n :: Integer, x :: AbstractVector{T}) where T <: FloatOrComplex = norm(x)
 knorm_elliptic(n :: Integer, x :: AbstractVector{T}, y :: AbstractVector{T}) where T <: FloatOrComplex = (x === y) ? knorm(n, x) : sqrt(kdotr(n, x, y))
 
 kscal!(n :: Integer, s :: T, x :: Vector{T}) where T <: BLAS.BlasFloat = BLAS.scal!(n, s, x, 1)
-kscal!(n :: Integer, s :: T, x :: AbstractVector{T}) where T <: FloatOrComplex = (x .*= s)
+kscal!(n :: Integer, s :: T, x :: AbstractVector{T}) where T <: FloatOrComplex = rmul!(x, s)
 kscal!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}) where T <: AbstractFloat = kscal!(n, Complex{T}(s), x)
 
 kaxpy!(n :: Integer, s :: T, x :: Vector{T}, y :: Vector{T}) where T <: BLAS.BlasFloat = BLAS.axpy!(n, s, x, 1, y, 1)
