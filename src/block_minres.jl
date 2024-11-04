@@ -116,14 +116,14 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
     R₀ = warm_start ? Q : B
 
     # Temporary buffers -- should be stored in the solver
-    Ψₖ = zeros(p, p)
-    Ωₖ = zeros(p, p)
-    Ψₖ₊₁ = zeros(p, p)
-    Πₖ₋₂ = zeros(p, p)
-    Γbarₖ₋₁ = zeros(p, p)
-    Γₖ₋₁ = zeros(p, p)
-    Λbarₖ = zeros(p, p)
-    Λₖ = zeros(p, p)
+    Ψₖ = similar(B, p, p)
+    Ωₖ = similar(B, p, p)
+    Ψₖ₊₁ = similar(B, p, p)
+    Πₖ₋₂ = similar(B, p, p)
+    Γbarₖ₋₁ = similar(B, p, p)
+    Γₖ₋₁ = similar(B, p, p)
+    Λbarₖ = similar(B, p, p)
+    Λₖ = similar(B, p, p)
 
     # Define the blocks D1 and D2
     D1 = view(D, 1:p, :)
