@@ -113,10 +113,9 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
     warm_start = solver.warm_start
     RNorms = stats.residuals
     reset!(stats)
-    R₀ = warm_start ? W : B
+    R₀ = warm_start ? Q : B
 
     # Temporary buffers -- should be stored in the solver
-    Ψₖ₋₁ = zeros(p, p)
     Ψₖ = zeros(p, p)
     Ωₖ = zeros(p, p)
     Ψₖ₊₁ = zeros(p, p)
@@ -200,7 +199,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
       # Apply previous Householder reflections Θₖ₋₂.
       if iter ≥ 3
         D1 .= zero(T)
-        D2 .= Ψₖ₋₁'
+        D2 .= Ψₖ'
         kormqr!('L', trans, Hₖ₋₂, τₖ₋₂, D)
         Πₖ₋₂ .= D1
         Γbarₖ₋₁ .= D2
@@ -208,7 +207,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
 
       # Apply previous Householder reflections Θₖ₋₁.
       if iter ≥ 2
-        (iter == 2) && (Γbarₖ₋₁ .= Ψₖ₋₁')
+        (iter == 2) && (Γbarₖ₋₁ .= Ψₖ')
         D1 .= Γbarₖ₋₁
         D2 .= Ωₖ
         kormqr!('L', trans, Hₖ₋₁, τₖ₋₁, D)
@@ -216,28 +215,25 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
         Λbarₖ .= D2
       end
 
-      # Vₖ₊₁ and Ψₖ₊₁ are stored in Vₖ₋₁ and C.
+      # Vₖ₊₁ and Ψₖ₊₁ are stored in Q and Ψₖ₊₁.
       τ = τₖ₋₂
-      copyto!(Vₖ₋₁, Q)
       if C isa Matrix
-        householder!(Vₖ₋₁, C, τ)
+        householder!(Q, Ψₖ₊₁, τ)
       else
-        householder!(Vₖ₋₁, C, τ, solver.tmp)
+        householder!(Q, Ψₖ₊₁, τ, solver.tmp)
       end
 
       # Compute and apply current Householder reflection θₖ.
-      Ψₖ₊₁ = C
       Hₖ = Hₖ₋₂
       τₖ = τₖ₋₂
       (iter == 1) && (Λbarₖ .= Ωₖ)
       Hₖ[1:p,:] .= Λbarₖ
       Hₖ[p+1:2p,:] .= Ψₖ₊₁
       if C isa Matrix
-        householder!(Hₖ, Ψₖ₊₁, τₖ, compact=true)
+        householder!(Hₖ, Λₖ, τₖ, compact=true)
       else
-        householder!(Hₖ, Ψₖ₊₁, τₖ, solver.tmp, compact=true)
+        householder!(Hₖ, Λₖ, τₖ, solver.tmp, compact=true)
       end
-      Λₖ .= view(Hₖ, 1:p, 1:p)
 
       # Update Zₖ = (Qₖ)ᴴΨ₁E₁ = (Φ₁, ..., Φₖ, Φbarₖ₊₁)
       D1 .= Φbarₖ
@@ -246,31 +242,31 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
       Φₖ .= D1
 
       # Compute the directions Wₖ, the last columns of Wₖ = Vₖ(Rₖ)⁻¹ ⟷ (Rₖ)ᵀ(Wₖ)ᵀ = (Vₖ)ᵀ
-      # (Λ₁)ᵀw₁ = v₁
+      # w₁Λ₁ = v₁
       if iter == 1
         wₖ = wₖ₋₁
-        wₖ .+= Vₖ
-        ldiv!(LowerTriangular(Λₖ |> transpose), transpose(wₖ))
+        wₖ .= Vₖ
+        rdiv!(wₖ, UpperTriangular(Λₖ))
       end
-      # (Λ₂)ᵀw₂ = v₂ - (Γ₁)ᵀw₁
+      # w₂Λ₂ = v₂ - w₁Γ₁
       if iter == 2
         wₖ = wₖ₋₂
-        transpose(wₖ) .-= transpose(Γₖ₋₁) * transpose(wₖ₋₁)
+        wₖ .= (-wₖ₋₁ * Γₖ₋₁)
         wₖ .+= Vₖ
-        ldiv!(LowerTriangular(Λₖ |> transpose), transpose(wₖ))
+        rdiv!(wₖ, UpperTriangular(Λₖ))
       end
-      # (Λₖ)ᵀwₖ = vₖ - (Γₖ₋₁)ᵀwₖ₋₁ - (Πₖ₋₂)ᵀwₖ₋₂
+      # wₖΛₖ = vₖ - wₖ₋₁Γₖ₋₁ - wₖ₋₂Πₖ₋₂
       if iter ≥ 3
-        wₖ₋₂ .= (wₖ₋₂ * Πₖ₋₂)
-        # lmul!(transpose(Πₖ₋₂), transpose(wₖ₋₂))
         wₖ = wₖ₋₂
-        transpose(wₖ) .-= transpose(Γₖ₋₁) * transpose(wₖ₋₁)
+        wₖ .= (-wₖ₋₂ * Πₖ₋₂)
+        wₖ .= (wₖ - wₖ₋₁ * Γₖ₋₁)
         wₖ .+= Vₖ
-        ldiv!(LowerTriangular(Λₖ |> transpose), transpose(wₖ))
+        rdiv!(wₖ, UpperTriangular(Λₖ))
       end
 
       # Update Xₖ = VₖYₖ = WₖZₖ
       # Xₖ = Xₖ₋₁ + wₖ * Φₖ
+      R = B - A * X
       mul!(X, wₖ, Φₖ, γ, β)
 
       # Update residual norm estimate.
@@ -283,16 +279,16 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
       copyto!(Vₖ₋₁, Vₖ)  # vₖ₋₁ ← vₖ
       copyto!(Vₖ, Q)     # vₖ ← vₖ₊₁
 
-      # Update directions for X
+      # Update directions for X and other variables...
       if iter ≥ 2
         @kswap!(wₖ₋₂, wₖ₋₁)
-      end
-
-      # Update other variables...
-      if iter ≥ 2
         @kswap!(Hₖ₋₂, Hₖ₋₁)
         @kswap!(τₖ₋₂, τₖ₋₁)
-        copyto!(Ψₖ₋₁, Ψₖ)
+      end
+
+      if iter == 1
+        copyto!(Hₖ₋₁, Hₖ)
+        copyto!(τₖ₋₁, τₖ)
       end
       copyto!(Ψₖ, Ψₖ₊₁)
 
