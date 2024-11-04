@@ -186,6 +186,15 @@ include("gpu.jl")
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
     end
 
+    @testset "block-MINRES -- $FC" begin
+      A, b = symmetric_indefinite(FC=FC)
+      B = hcat(b, -b)
+      A = M(A)
+      B = M(B)
+      X, stats = block_minres(A, B)
+      @test norm(B - A * X) ≤ atol + rtol * norm(B)
+    end
+
     @testset "block-GMRES -- $FC" begin
       A, b = nonsymmetric_indefinite(FC=FC)
       B = hcat(b, -b)
