@@ -353,7 +353,10 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
         # [w̅ₖ₋₁ vₖ] [cpₖ  spₖ] = [ẘₖ₋₁ w̅ₖ] ⟷ ẘₖ₋₁ = cpₖ * w̅ₖ₋₁ + spₖ * vₖ
         #           [spₖ -cpₖ]             ⟷ w̅ₖ   = spₖ * w̅ₖ₋₁ - cpₖ * vₖ
         @kswap!(wₖ₋₁, wₖ)
-        wₖ .= spₖ .* wₖ₋₁ .- cpₖ .* vₖ
+        # Compute w̅ₖ
+        kcopy!(n, wₖ, wₖ₋₁)
+        kaxpby!(n, -cpₖ, vₖ, spₖ, wₖ)
+        # Compute ẘₖ₋₁
         kaxpby!(n, spₖ, vₖ, cpₖ, wₖ₋₁)
       else
         # [ẘₖ₋₂ w̄ₖ₋₁ vₖ] [cpₖ  0   spₖ] [1   0    0 ] = [wₖ₋₂ ẘₖ₋₁ w̄ₖ] ⟷ wₖ₋₂ = cpₖ * ẘₖ₋₂ + spₖ * vₖ
