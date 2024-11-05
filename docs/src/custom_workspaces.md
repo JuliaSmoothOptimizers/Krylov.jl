@@ -6,7 +6,7 @@ The Poisson equation is a fundamental partial differential equation (PDE) common
 In a 2D Cartesian domain, it can be expressed as:
 
 ```math
-\frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} = f(x, y)
+\nabla u(x, y) = f(x, y)
 ```
 
 Here, $u(x, y)$ represents the potential function we seek, while $f(x, y)$ is a known function (the "source term") that indicates the distribution of sources or sinks within the domain.
@@ -292,4 +292,4 @@ This approach leads to faster execution times while preserving optimal performan
 The flexibility of `MyVector` also makes it easy to extend for more complex stencils or additional dimensions, such as 3D grids.
 
 !!! info
-    The package [Oceanigans.jl](https://github.com/CliMA/Oceananigans.jl) utilizes a similar approach with its type `Field` to solve linear systems involving millions of variables efficiently with Krylov.jl.
+    The package [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) utilizes a similar approach with its type `Field` to solve linear systems involving millions of variables efficiently with Krylov.jl.
