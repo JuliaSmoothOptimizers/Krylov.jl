@@ -29,6 +29,7 @@ makedocs(
            "Warm-start" => "warm-start.md",
            "Matrix-free operators" => "matrix_free.md",
            "Callbacks" => "callbacks.md",
+           "Advanced features" => "internal.md",
            "Performance tips" => "tips.md",
            "Tutorials" => ["CG" => "examples/cg.md",
                            "CAR" => "examples/car.md",
