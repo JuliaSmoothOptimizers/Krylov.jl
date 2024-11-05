@@ -390,7 +390,7 @@ function to_boundary(n :: Int, x :: AbstractVector{FC}, d :: AbstractVector{FC},
 
   # q₂ = ‖d‖², q₁ = xᴴd + dᴴx, q₀ = ‖x‖² - Δ²
   # ‖x‖² ≤ Δ² ⟹ (q₁)² - 4 * q₂ * q₀ ≥ 0
-  roots = roots_quadratic(dNorm2, 2 * rxd, xNorm2 - radius2)
+  roots = roots_quadratic(dNorm2, 2 * real(rxd), xNorm2 - radius2)
 
   return roots  # `σ1` and `σ2`
 end
