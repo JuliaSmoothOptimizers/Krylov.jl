@@ -239,8 +239,24 @@ function Krylov.kfill!(x::MyVector{T}, val::T) where T <: FloatOrComplex
     end
     return x
 end
+
+function Krylov.kref!(n::Integer, x::MyVector{T}, y::MyVector{T}, c::T, s::T) where T <: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    _y = y.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            x_ij = _x[i,j]
+            y_ij = _y[i,j]
+            _x[i,j] = c       * _x[i,j] + s * _y[i,j]
+            _x[i,j] = conj(s) * _x[i,j] - c * _y[i,j]
+        end
+    end
+    return x, y
+end
 ```
 
+Note that `Krylov.kref!` is only needed for `minres_qlp`.
 These methods enable Krylov.jl to utilize custom vector types, enhancing the flexibility and performance of Krylov solvers.
 
 ### Solve the 2D poisson equation
