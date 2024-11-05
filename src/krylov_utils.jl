@@ -336,11 +336,11 @@ kcopy!(n :: Integer, y :: AbstractVector{T}, x :: AbstractVector{T}) where T <: 
 
 kfill!(x :: AbstractArray{T}, val :: T) where T <: FloatOrComplex = fill!(x, val)
 
+kref!(n, x, y, c, s) = reflect!(x, y, c, s)
+
 kgeqrf!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.geqrf!(A, tau)
 korgqr!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.orgqr!(A, tau)
 kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVector{T}, C :: AbstractMatrix{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)
-
-kref!(n, x, y, c, s) = reflect!(x, y, c, s)
 
 macro kswap!(x, y)
   quote
@@ -377,10 +377,10 @@ function to_boundary(n :: Int, x :: AbstractVector{FC}, d :: AbstractVector{FC},
   else
     # (dᴴMd) σ² + (xᴴMd + dᴴMx) σ + (xᴴMx - Δ²).
     mulorldiv!(z, M, x, ldiv)
-    rxd = dot(z, d)
-    xNorm2 = dot(z, x)
+    rxd = kdot(n, z, d)
+    xNorm2 = kdotr(n, z, x)
     mulorldiv!(z, M, d, ldiv) 
-    dNorm2 = dot(z, d)
+    dNorm2 = kdotr(n, z, d)
   end 
   dNorm2 == zero(T) && error("zero direction")
   flip && (rxd = -rxd)
