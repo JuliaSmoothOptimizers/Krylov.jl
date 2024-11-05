@@ -248,8 +248,8 @@ function Krylov.kref!(n::Integer, x::MyVector{T}, y::MyVector{T}, c::T, s::T) wh
         for j = 1:nx-1
             x_ij = _x[i,j]
             y_ij = _y[i,j]
-            _x[i,j] = c       * _x[i,j] + s * _y[i,j]
-            _x[i,j] = conj(s) * _x[i,j] - c * _y[i,j]
+            _x[i,j] = c       * x_ij + s * y_ij
+            _x[i,j] = conj(s) * x_ij - c * y_ij
         end
     end
     return x, y
