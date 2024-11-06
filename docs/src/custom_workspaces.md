@@ -2,27 +2,24 @@
 
 ### Introduction
 
-The Poisson equation is a fundamental partial differential equation (PDE) commonly used in physics and mathematics to model phenomena such as temperature distribution and incompressible fluid flow.
+The Poisson equation is a fundamental partial differential equation (PDE) in physics and mathematics, modeling phenomena like temperature distribution and incompressible fluid flow.
 In a 2D Cartesian domain, it can be expressed as:
 
 ```math
-\nabla u(x, y) = f(x, y)
+\nabla^2 u(x, y) = f(x, y)
 ```
 
-Here, $u(x, y)$ represents the potential function we seek, while $f(x, y)$ is a known function (the "source term") that indicates the distribution of sources or sinks within the domain.
-This equation is typically solved over a rectangular region with boundary conditions specified at the edges.
+Here, $u(x, y)$ is the potential function and $f(x, y)$ represents the source term within the domain.
 
-This overview will discuss the numerical methods used to solve the Poisson equation, emphasizing the application of a Laplacian operator on a specialized data structure that incorporates halo regions. 
+This page explains how to use a Krylov method to solve the Poisson equation over a rectangular region with specified boundary conditions, detailing the use of a Laplacian operator within a data structure that incorporates **halo regions**.
 
 ### Finite difference discretization
 
-To numerically solve the Poisson equation, we use the finite difference method to approximate the second derivatives on a grid.
-This approach involves dividing the domain into a grid of points, where each point represents an approximation of the solution $u$ at its corresponding coordinates.
+We solve the Poisson equation numerically by discretizing the 2D domain using a finite difference method.
+For a square domain $[0, L] \times [0, L]$, divided into a grid of points, each point approximates the solution $u$ at that position.
 
-Assuming a square domain $[0, L] \times [0, L]$, we discretize it with $(N_x + 2, N_y + 2)$ points in each dimension, leading to grid spacings defined as $h_x = \frac{L}{N_x + 1}$ and $h_y = \frac{L}{N_y + 1}$.
-Let $u_{i,j}$ denote the approximation of $u(x_i, y_j)$ at the grid point $(x_i, y_j) = (ih, jh)$.
-
-The 2D Laplacian can be approximated at each of the $N^2$ interior grid points $(i, j)$ using the central difference formula:
+With grid spacings $h_x = \frac{L}{N_x + 1}$ and $h_y = \frac{L}{N_y + 1}$, let $u_{i,j}$ denote the approximation of $u(x_i, y_j)$ at grid point $(x_i, y_j) = (ih, jh)$.
+The 2D Laplacian can be approximated at each interior grid point $(i, j)$ by combining the following central difference formulas:
 
 ```math
 \frac{\partial^2 u}{\partial x^2} \approx \frac{u_{i+1,j} - 2u_{i,j} + u_{i-1,j}}{h^2}
@@ -32,78 +29,73 @@ The 2D Laplacian can be approximated at each of the $N^2$ interior grid points $
 \frac{\partial^2 u}{\partial y^2} \approx \frac{u_{i,j+1} - 2u_{i,j} + u_{i,j-1}}{h^2}
 ```
 
-Combining these approximations yields the discrete form of the Poisson equation, which can be expressed as:
+This yields the discrete Poisson equation:
 
 ```math
 \frac{u_{i+1,j} - 2u_{i,j} + u_{i-1,j}}{h^2} + \frac{u_{i,j+1} - 2u_{i,j} + u_{i,j-1}}{h^2} = f_{i,j}
 ```
 
-This results in a system of linear equations for the unknowns $u_{i,j}$ at each interior grid point.
+resulting in a system of linear equations for the $N^2$ unknowns $u_{i,j}$ at each interior grid point.
 
 ### Boundary conditions
 
-To complete the system, we need to define boundary conditions for $u$ along the edges of the domain. Common options include:
+Boundary conditions complete the system. Common choices are:
 
-- **Dirichlet boundary conditions**: These specify the value of $u$ directly on the boundary.
-- **Neumann boundary conditions**: These specify the derivative (or flux) of $u$ normal to the boundary.
+- **Dirichlet**: Specifies values of $u$ on the boundary.
+- **Neumann**: Specifies the normal derivative (or flux) of $u$ on the boundary.
 
-### Implementing halo regions with `MyVector`
+### Implementing halo regions with HaloVector
 
-In practical applications, particularly in parallel computing, it is common to introduce **halo regions** (or ghost cells) around the grid.
-These additional layers store boundary values from neighboring subdomains, allowing each subdomain to compute stencils near its boundaries independently, without the need for immediate communication with neighboring domains. Halo regions thus simplify boundary condition management in distributed or multi-threaded environments.
+In parallel computing, **halo regions** (or ghost cells) around the grid store boundary values from neighboring subdomains, allowing independent stencil computation near boundaries.
+This setup streamlines boundary management in distributed environments.
 
-In the context of Krylov.jl, while internal storage for each Krylov method typically expects an `AbstractVector`, specific applications can benefit from structured data layouts.
-This is where a specialized vector type called **`MyVector`** becomes advantageous.
+For specialized applications, Krylov.jl’s internal storage expects an `AbstractVector`, which can benefit from a structured data layout.
+A **`HaloVector`** provides this structure, using halo regions to enable finite difference stencils without boundary condition checks.
+The `OffsetArray` type from [OffsetArrays.jl](https://github.com/JuliaArrays/OffsetArrays.jl) facilitates custom indexing, making it ideal for grids with halo regions.
+By embedding an `OffsetArray` within `HaloVector`, we achieve seamless grid alignment, allowing **"if-less"** stencil application.
 
-By using `MyVector` with halo regions, we can implement finite difference stencils without the overhead of boundary condition checks.
-This not only enhances code readability but also improves performance.
-The type **`OffsetArray`** from the package [OffsetArrays.jl](https://github.com/JuliaArrays/OffsetArrays.jl) supports custom indexing, making it ideal for grids that include halo regions.
-By wrapping an `OffsetArray` within a `MyVector`, we can access elements using custom offsets that align with the physical layout of the grid.
-This configuration enables **"if-less"** stencils, effectively avoiding direct boundary condition checks within the core loop, resulting in cleaner and potentially faster code.
+This setup reduces boundary condition checks in the core loop, yielding clearer and faster code.
+The flexible design of `HaloVector` supports 1D, 2D, or 3D configurations, adapting easily to different grid layouts.
 
-Moreover, the design of `MyVector` is flexible and can be easily adapted for 1D, 2D, or 3D problems with minimal changes, providing versatility in handling various grid configurations.
+### Definition and usage of the HaloVector
 
-### Definition of the `MyVector`
-
-The `MyVector` type is a specialized vector designed for efficient handling of grid-based computations, particularly in the context of finite difference methods with halo regions.
+`HaloVector` is a specialized vector for grid-based computations, especially finite difference methods with halo regions.
 It is parameterized by:
 
 - **`FC`**: The element type of the vector.
-- **`D`**: The type of the data array, which utilizes `OffsetArray` to facilitate custom indexing.
-
-Below is the definition of `MyVector`:
+- **`D`**: The data array type, which uses `OffsetArray` to enable custom indexing.
 
 ```julia
 using OffsetArrays
 
-struct MyVector{FC, D} <: AbstractVector{FC}
+struct HaloVector{FC, D} <: AbstractVector{FC}
     data::D
 
-    function MyVector(data::D) where {D}
+    function HaloVector(data::D) where {D}
         FC = eltype(data)
         return new{FC, D}(data)
     end
 end
 
-function MyVector{FC,D}(::UndefInitializer, l::Int64) where {FC,D}
+function HaloVector{FC,D}(::UndefInitializer, l::Int64) where {FC,D}
     m = n = sqrt(l) |> Int
     data = zeros(FC, m + 2, n + 2)
     v = OffsetMatrix(data, 0:m + 1, 0:n + 1)
-    return MyVector(v)
+    return HaloVector(v)
 end
 
-function Base.length(v::MyVector)
+function Base.length(v::HaloVector)
     m, n = size(v.data)
     l = (m - 2) * (n - 2)
     return l
 end
 
-function Base.size(v::MyVector)
+function Base.size(v::HaloVector)
     l = length(v)
     return (l,)
 end
 
-function Base.getindex(v::MyVector, idx)
+function Base.getindex(v::HaloVector, idx)
     m, n = size(v.data)
     row = div(idx - 1, n - 2) + 1
     col = mod(idx - 1, n - 2) + 1
@@ -111,12 +103,12 @@ function Base.getindex(v::MyVector, idx)
 end
 ```
 
-The `size` and `getindex` functions are defined to facilitate display in the REPL, allowing for easy interaction with `MyVector`, although they are not strictly necessary for the functionality of Krylov.jl.
+The `size` and `getindex` functions support REPL display, aiding interaction, though they are optional for Krylov.jl’s functionality.
 
-### Stencil implementation
+### Efficient stencil implementation
 
-To efficiently apply the discrete Laplacian operator using a matrix-free approach and a typical 5-point stencil operation, we leverage `OffsetArray` for handling halo regions.
-This allows seamless access to boundary values, enabling clear and performant computation of the Laplacian without the need for direct boundary condition checks within the core stencil loop.
+Using `HaloVector` with `OffsetArray`, we can apply the discrete Laplacian operator in a matrix-free approach with a 5-point stencil, managing halo regions effectively.
+This layout allows **clean and efficient Laplacian computation** without boundary checks within the core loop.
 
 ```julia
 # Define a matrix-free Laplacian operator
@@ -131,7 +123,7 @@ end
 Base.size(A::LaplacianOperator) = (A.Nx * A.Ny, A.Nx * A.Ny)
 Base.eltype(A::LaplacianOperator) = Float64
 
-function LinearAlgebra.mul!(y::MyVector{Float64}, A::LaplacianOperator, u::MyVector{Float64})
+function LinearAlgebra.mul!(y::HaloVector{Float64}, A::LaplacianOperator, u::HaloVector{Float64})
     # Apply the discrete Laplacian in 2D
     for i in 1:A.Nx
         for j in 1:A.Ny
@@ -148,16 +140,16 @@ function LinearAlgebra.mul!(y::MyVector{Float64}, A::LaplacianOperator, u::MyVec
 end
 ```
 
-### Required methods for Krylov.jl compatibility
+### Methods to overload for compatibility with Krylov.jl
 
-To use `MyVector` within Krylov.jl, we must define several essential vector operations such as dot products, norms, scalar multiplication, and element-wise updates.
-Below, we present the required methods that ensure `MyVector` is compatible with Krylov.jl:
+To integrate `HaloVector` with Krylov.jl, we define essential vector operations, including dot products, norms, scalar multiplication, and element-wise updates.
+These implementations allow Krylov.jl to leverage custom vector types, enhancing both solver flexibility and performance.
 
 ```julia
 using Krylov
 import Krylov.FloatOrComplex
 
-function Krylov.kdot(n::Integer, x::MyVector{T}, y::MyVector{T}) where T <: FloatOrComplex
+function Krylov.kdot(n::Integer, x::HaloVector{T}, y::HaloVector{T}) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
@@ -170,7 +162,7 @@ function Krylov.kdot(n::Integer, x::MyVector{T}, y::MyVector{T}) where T <: Floa
     return res
 end
 
-function Krylov.knorm(n::Integer, x::MyVector{T}) where T <: FloatOrComplex
+function Krylov.knorm(n::Integer, x::HaloVector{T}) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
     res = zero(T)
@@ -182,7 +174,7 @@ function Krylov.knorm(n::Integer, x::MyVector{T}) where T <: FloatOrComplex
     return sqrt(res)
 end
 
-function Krylov.kscal!(n::Integer, s::T, x::MyVector{T}) where T <: FloatOrComplex
+function Krylov.kscal!(n::Integer, s::T, x::HaloVector{T}) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
     for i = 1:mx-1
@@ -193,7 +185,7 @@ function Krylov.kscal!(n::Integer, s::T, x::MyVector{T}) where T <: FloatOrCompl
     return x
 end
 
-function Krylov.kaxpy!(n::Integer, s::T, x::MyVector{T}, y::MyVector{T}) where T <: FloatOrComplex
+function Krylov.kaxpy!(n::Integer, s::T, x::HaloVector{T}, y::HaloVector{T}) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
@@ -205,7 +197,7 @@ function Krylov.kaxpy!(n::Integer, s::T, x::MyVector{T}, y::MyVector{T}) where T
     return y
 end
 
-function Krylov.kaxpby!(n::Integer, s::T, x::MyVector{T}, t::T, y::MyVector{T}) where T <: FloatOrComplex
+function Krylov.kaxpby!(n::Integer, s::T, x::HaloVector{T}, t::T, y::HaloVector{T}) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
@@ -217,7 +209,7 @@ function Krylov.kaxpby!(n::Integer, s::T, x::MyVector{T}, t::T, y::MyVector{T}) 
     return y
 end
 
-function Krylov.kcopy!(n::Integer, y::MyVector{T}, x::MyVector{T}) where T <: FloatOrComplex
+function Krylov.kcopy!(n::Integer, y::HaloVector{T}, x::HaloVector{T}) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
@@ -229,7 +221,7 @@ function Krylov.kcopy!(n::Integer, y::MyVector{T}, x::MyVector{T}) where T <: Fl
     return y
 end
 
-function Krylov.kfill!(x::MyVector{T}, val::T) where T <: FloatOrComplex
+function Krylov.kfill!(x::HaloVector{T}, val::T) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
     for i = 1:mx-1
@@ -240,7 +232,7 @@ function Krylov.kfill!(x::MyVector{T}, val::T) where T <: FloatOrComplex
     return x
 end
 
-function Krylov.kref!(n::Integer, x::MyVector{T}, y::MyVector{T}, c::T, s::T) where T <: FloatOrComplex
+function Krylov.kref!(n::Integer, x::HaloVector{T}, y::HaloVector{T}, c::T, s::T) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
@@ -256,10 +248,9 @@ function Krylov.kref!(n::Integer, x::MyVector{T}, y::MyVector{T}, c::T, s::T) wh
 end
 ```
 
-Note that `Krylov.kref!` is only needed for `minres_qlp`.
-These methods enable Krylov.jl to utilize custom vector types, enhancing the flexibility and performance of Krylov solvers.
+Note that `Krylov.kref!` is only required for `minres_qlp`.
 
-### Solve the 2D poisson equation
+### 2D Poisson equation solver with Krylov methods
 
 ```julia
 using Krylov, LinearAlgebra, OffsetArrays
@@ -287,7 +278,7 @@ for i in 1:Nx
         data[i,j] = f(xi, yj)
     end
 end
-b = MyVector(data)
+b = HaloVector(data)
 
 # Solve the system with CG
 u_sol, stats = Krylov.cg(A, b, atol=1e-12, rtol=0.0, verbose=1)
@@ -299,13 +290,10 @@ norm(u_sol.data[1:Nx, 1:Ny] - u_star, Inf)
 
 ### Conclusion
 
-The implementation of a 2D Poisson equation solver using `MyVector` offers several notable advantages that enhance both code clarity and efficiency.
-With the custom indexing capabilities of `OffsetArray`, we can seamlessly incorporate boundary data from halo regions, simplifying the code by eliminating boundary checks within the core loop.
-This results in a more readable and maintainable code structure.
-
-Moreover, by removing boundary checks, we reduce branching in the code, which improves computational efficiency, especially for large grids.
-This approach leads to faster execution times while preserving optimal performance.
-The flexibility of `MyVector` also makes it easy to extend for more complex stencils or additional dimensions, such as 3D grids.
+Implementing a 2D Poisson equation solver with `HaloVector` improves code clarity and efficiency.
+Custom indexing with `OffsetArray` streamlines halo region management, eliminating boundary checks within the core loop.
+This approach reduces branching, yielding faster execution, especially on large grids.
+`HaloVector`'s flexibility also makes it easy to extend to 3D grids or more complex stencils.
 
 !!! info
-    The package [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) utilizes a similar approach with its type `Field` to solve linear systems involving millions of variables efficiently with Krylov.jl.
+    [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) uses a similar strategy with its `Field` type, efficiently solving large linear systems with Krylov.jl.
