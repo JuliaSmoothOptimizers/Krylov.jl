@@ -160,6 +160,42 @@ jobs:
           done >> summary.md
 
       - name: PR comment with file
-        uses: thollander/actions-comment-pull-request@v2
+        uses: actions/github-script@v6
         with:
-          filePath: breakage/summary.md
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Import file content from summary.md
+            const fs = require('fs')
+            const filePath = 'breakage/summary.md'
+            const msg = fs.readFileSync(filePath, 'utf8')
+
+            // Get the current PR number from context
+            const prNumber = context.payload.pull_request.number
+
+            // Fetch existing comments on the PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            })
+
+            // Find a previous comment by the bot to update
+            const botComment = comments.find(comment => comment.user.id === 41898282)
+
+            if (botComment) {
+              // Update the existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: msg
+              })
+            } else {
+              // Create a new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: msg
+              })
+            }
