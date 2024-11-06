@@ -284,7 +284,9 @@ A = FFTPoissonOperator(n, L, complex)
 
 # Solve the linear system using CG
 u_sol, stats = cg(A, f, atol=1e-10, rtol=0.0, verbose=1)
+```
 
+```@example fft_poisson
 # The exact solution is u(x) = -sin(x)
 u_star = -sin.(x)
 u_star ≈ u_sol
@@ -418,7 +420,9 @@ f = vec(F)
 
 # Solve the linear system using MinAres
 u_sol, stats = minares(A, f, atol=1e-10, rtol=0.0, verbose=1)
+```
 
+```@example helmholtz
 # Solution as 3D array
 U_sol = reshape(u_sol, Nx, Ny, Nz)
 
