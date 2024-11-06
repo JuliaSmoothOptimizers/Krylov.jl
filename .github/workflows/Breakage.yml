@@ -19,16 +19,15 @@ jobs:
           "JuliaSmoothOptimizers/JSOSolvers.jl",
           "JuliaSmoothOptimizers/LLSModels.jl",
           "JuliaSmoothOptimizers/Percival.jl",
-          "JuliaSmoothOptimizers/RipQP.jl",
-          "SciML/LinearSolve.jl"
+          "JuliaSmoothOptimizers/RipQP.jl"
         ]
         pkgversion: [latest, stable]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Install Julia
-      - uses: julia-actions/setup-julia@v1
+      - uses: julia-actions/setup-julia@v2
         with:
           version: '1'
           arch: x64
@@ -86,7 +85,7 @@ jobs:
               end;
             end'
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: pr
           path: pr/
@@ -95,9 +94,9 @@ jobs:
     needs: break
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: pr
           path: pr/
@@ -128,7 +127,7 @@ jobs:
             fi
           done >> MSG
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: pr
           path: pr/
