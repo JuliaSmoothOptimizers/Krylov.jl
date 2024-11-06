@@ -7,21 +7,53 @@ on:
   pull_request:
 
 jobs:
+  # Build dynamically the matrix on which the "break" job will run.
+  # The matrix contains the packages that depend on ${{ env.pkg }}.
+  # Job "setup_matrix" outputs variable "matrix", which is in turn
+  # the output of the "getmatrix" step.
+  # The contents of "matrix" is a JSON description of a matrix used
+  # in the next step. It has the form
+  # {
+  #   "pkg": [
+  #     "PROPACK",
+  #     "LLSModels",
+  #     "FletcherPenaltySolver"
+  #   ]
+  # }
+  setup_matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.getmatrix.outputs.matrix }}
+    env:
+      pkg: ${{ github.event.repository.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: 1
+          arch: x64
+      - id: getmatrix
+        run: |
+          julia -e 'using Pkg; Pkg.Registry.add(RegistrySpec(url = "https://github.com/JuliaRegistries/General.git"))'
+          julia --project=.breakage -e 'using Pkg; Pkg.update(); Pkg.instantiate()'
+          pkgs=$(julia --project=.breakage .breakage/get_jso_users.jl ${{ env.pkg }})
+          vs='["latest", "stable"]'
+          # Check if pkgs is empty, and set it to a JSON array if necessary
+          if [[ -z "$pkgs" || "$pkgs" == "String[]" ]]; then
+            echo "No packages found; exiting successfully."
+            exit 0
+          fi
+          vs='["latest", "stable"]'
+          matrix=$(jq -cn --argjson deps "$pkgs" --argjson vers "$vs" '{pkg: $deps, pkgversion: $vers}')  # don't escape quotes like many posts suggest
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
   break:
+    needs: setup_matrix
+    if: needs.setup_matrix.result == 'success' && needs.setup_matrix.outputs.matrix != ''
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        pkg: [
-          "JuliaSmoothOptimizers/CaNNOLeS.jl",
-          "JuliaSmoothOptimizers/DCISolver.jl",
-          "JuliaSmoothOptimizers/FletcherPenaltySolver.jl",
-          "JuliaSmoothOptimizers/JSOSolvers.jl",
-          "JuliaSmoothOptimizers/LLSModels.jl",
-          "JuliaSmoothOptimizers/Percival.jl",
-          "JuliaSmoothOptimizers/RipQP.jl"
-        ]
-        pkgversion: [latest, stable]
+      matrix: ${{ fromJSON(needs.setup_matrix.outputs.matrix) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -29,9 +61,9 @@ jobs:
       # Install Julia
       - uses: julia-actions/setup-julia@v2
         with:
-          version: '1'
+          version: 1
           arch: x64
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         env:
           cache-name: cache-artifacts
         with:
@@ -46,15 +78,13 @@ jobs:
       # Breakage test
       - name: 'Breakage of ${{ matrix.pkg }}, ${{ matrix.pkgversion }} version'
         env:
-          URL: ${{ matrix.pkg }}
+          PKG: ${{ matrix.pkg }}
           VERSION: ${{ matrix.pkgversion }}
         run: |
           set -v
-          mkdir -p ./pr
-          echo "${{ github.event.number }}" > ./pr/NR
-          git clone https://github.com/$URL
-          export PKG=$(echo $URL | cut -f2 -d/)
-          cd $PKG
+          mkdir -p ./breakage
+          git clone https://github.com/JuliaSmoothOptimizers/$PKG.jl.git
+          cd $PKG.jl
           if [ $VERSION == "stable" ]; then
             TAG=$(git tag -l "v*" --sort=-creatordate | head -n1)
             if [ -z "$TAG" ]; then
@@ -69,12 +99,15 @@ jobs:
           julia -e 'using Pkg;
             PKG, TAG, VERSION = ENV["PKG"], ENV["TAG"], ENV["VERSION"]
             joburl = joinpath(ENV["GITHUB_SERVER_URL"], ENV["GITHUB_REPOSITORY"], "actions/runs", ENV["GITHUB_RUN_ID"])
-            open("../pr/$PKG-$VERSION", "w") do io
+            open("../breakage/breakage-$PKG-$VERSION", "w") do io
               try
-                TAG == "no_tag" && error("Not tag for $VERSION")
+                TAG == "no_tag" && error("No tag for $VERSION")
                 pkg"activate .";
                 pkg"instantiate";
                 pkg"dev ../";
+                if TAG == "latest"
+                  global TAG = chomp(read(`git rev-parse --short HEAD`, String))
+                end
                 pkg"build";
                 pkg"test";
 
@@ -87,8 +120,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: pr
-          path: pr/
+          name: breakage-${{ matrix.pkg }}-${{ matrix.pkgversion }}
+          path: breakage/breakage-*
 
   upload:
     needs: break
@@ -98,21 +131,20 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: pr
-          path: pr/
+          path: breakage
+          pattern: breakage-*
+          merge-multiple: true
 
-      - run: ls
+      - run: ls -R
       - run: |
-          cd pr
-          echo "| Package name | latest | stable |" > MSG
-          echo "|--|--|--|" >> MSG
+          cd breakage
+          echo "| Package name | latest | stable |" > summary.md
+          echo "|--|--|--|" >> summary.md
           count=0
-          for file in *
+          for file in breakage-*
           do
-            [ "$file" == "NR" ] && continue
-            [ "$file" == "MSG" ] && continue
             if [ $count == "0" ]; then
-              name=$(echo $file | cut -f1 -d-)
+              name=$(echo $file | cut -f2 -d-)
               echo -n "| $name | "
             else
               echo -n "| "
@@ -125,9 +157,45 @@ jobs:
               echo " |"
               count=0
             fi
-          done >> MSG
+          done >> summary.md
 
-      - uses: actions/upload-artifact@v4
+      - name: PR comment with file
+        uses: actions/github-script@v6
         with:
-          name: pr
-          path: pr/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Import file content from summary.md
+            const fs = require('fs')
+            const filePath = 'breakage/summary.md'
+            const msg = fs.readFileSync(filePath, 'utf8')
+
+            // Get the current PR number from context
+            const prNumber = context.payload.pull_request.number
+
+            // Fetch existing comments on the PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            })
+
+            // Find a previous comment by the bot to update
+            const botComment = comments.find(comment => comment.user.id === 41898282)
+
+            if (botComment) {
+              // Update the existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: msg
+              })
+            } else {
+              // Create a new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: msg
+              })
+            }
