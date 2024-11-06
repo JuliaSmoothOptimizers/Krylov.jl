@@ -65,7 +65,7 @@ It is parameterized by:
 - **`FC`**: The element type of the vector.
 - **`D`**: The data array type, which uses `OffsetArray` to enable custom indexing.
 
-```julia
+```@example halo-regions; continued = true
 using OffsetArrays
 
 struct HaloVector{FC, D} <: AbstractVector{FC}
@@ -110,7 +110,9 @@ The `size` and `getindex` functions support REPL display, aiding interaction, th
 Using `HaloVector` with `OffsetArray`, we can apply the discrete Laplacian operator in a matrix-free approach with a 5-point stencil, managing halo regions effectively.
 This layout allows **clean and efficient Laplacian computation** without boundary checks within the core loop.
 
-```julia
+```@example halo-regions; continued = true
+using LinearAlgebra
+
 # Define a matrix-free Laplacian operator
 struct LaplacianOperator
     Nx::Int        # Number of grid points in the x-direction
@@ -145,7 +147,7 @@ end
 To integrate `HaloVector` with Krylov.jl, we define essential vector operations, including dot products, norms, scalar multiplication, and element-wise updates.
 These implementations allow Krylov.jl to leverage custom vector types, enhancing both solver flexibility and performance.
 
-```julia
+```@example halo-regions; continued = true
 using Krylov
 import Krylov.FloatOrComplex
 
@@ -252,8 +254,8 @@ Note that `Krylov.kref!` is only required for `minres_qlp`.
 
 ### 2D Poisson equation solver with Krylov methods
 
-```julia
-using Krylov, LinearAlgebra, OffsetArrays
+```@example halo-regions
+using Krylov, OffsetArrays
 
 # Parameters
 L = 1.0            # Length of the square domain
@@ -282,7 +284,9 @@ b = HaloVector(data)
 
 # Solve the system with CG
 u_sol, stats = Krylov.cg(A, b, atol=1e-12, rtol=0.0, verbose=1)
+```
 
+```@example halo-regions
 # The exact solution is u(x,y) = sin(πx) * sin(πy)
 u_star = [sin(π * i * Δx) * sin(π * j * Δy) for i=1:Nx, j=1:Ny]
 norm(u_sol.data[1:Nx, 1:Ny] - u_star, Inf)
