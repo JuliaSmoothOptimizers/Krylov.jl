@@ -46,7 +46,7 @@ A Krylov method dedicated to non-Hermitian linear systems allows the three varia
 
 ### Hermitian linear systems
 
-Methods concerned: [`SYMMLQ`](@ref symmlq), [`CG`](@ref cg), [`CG-LANCZOS`](@ref cg_lanczos), [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift), [`CR`](@ref cr), [`CAR`](@ref car), [`MINRES`](@ref minres), [`MINRES-QLP`](@ref minres_qlp) and [`MINARES`](@ref minares).
+Methods concerned: [`SYMMLQ`](@ref symmlq), [`CG`](@ref cg), [`CG-LANCZOS`](@ref cg_lanczos), [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift), [`CR`](@ref cr), [`CAR`](@ref car), [`MINRES`](@ref minres), [`BLOCK-MINRES`](@ref block_minres), [`MINRES-QLP`](@ref minres_qlp) and [`MINARES`](@ref minares).
 
 When $A$ is Hermitian, we can only use centered preconditioning $L^{-1}AL^{-H}y = L^{-1}b$ with $x = L^{-H}y$.
 Centered preconditioning is a special case of two-sided preconditioning with $P_{\ell} = L = P_r^H$ that maintains hermicity.

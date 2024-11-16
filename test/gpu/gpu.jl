@@ -1,18 +1,20 @@
 using SparseArrays, Random, Test
 using LinearAlgebra, Krylov, KernelAbstractions
 
-@kernel function copy_triangle_kernel!(dest, src)
-  i, j = @index(Global, NTuple)
-  if j >= i
-    @inbounds dest[i, j] = src[i, j]
+if VERSION < v"1.11"
+  @kernel function copy_triangle_kernel!(dest, src)
+    i, j = @index(Global, NTuple)
+    if j >= i
+      @inbounds dest[i, j] = src[i, j]
+    end
   end
-end
 
-function Krylov.copy_triangle(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, k::Int) where FC <: Krylov.FloatOrComplex
-  backend = get_backend(Q)
-  ndrange = (k, k)
-  copy_triangle_kernel!(backend)(R, Q; ndrange=ndrange)
-  KernelAbstractions.synchronize(backend)
+  function Krylov.copy_triangle(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, k::Int) where FC <: Krylov.FloatOrComplex
+    backend = get_backend(Q)
+    ndrange = (k, k)
+    copy_triangle_kernel!(backend)(R, Q; ndrange=ndrange)
+    KernelAbstractions.synchronize(backend)
+  end
 end
 
 Random.seed!(666)

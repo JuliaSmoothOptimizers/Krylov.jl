@@ -162,7 +162,7 @@ include("gpu.jl")
       Krylov.kcopy!(n, y, x)
     end
 
-    @testset "kswap -- $FC" begin
+    @testset "kswap! -- $FC" begin
       Krylov.@kswap!(x, y)
     end
 
@@ -184,6 +184,15 @@ include("gpu.jl")
       b = S(b)
       x, stats = gmres(A, b)
       @test norm(b - A * x) ≤ atol + rtol * norm(b)
+    end
+
+    @testset "block-MINRES -- $FC" begin
+      A, b = symmetric_indefinite(FC=FC)
+      B = hcat(b, -b)
+      A = M(A)
+      B = M(B)
+      X, stats = block_minres(A, B)
+      @test norm(B - A * X) ≤ atol + rtol * norm(B)
     end
 
     @testset "block-GMRES -- $FC" begin

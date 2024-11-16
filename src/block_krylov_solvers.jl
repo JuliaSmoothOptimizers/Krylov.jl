@@ -1,11 +1,79 @@
 export BlockKrylovSolver
 
-export BlockGmresSolver
+export BlockMinresSolver, BlockGmresSolver
 
-const BLOCK_KRYLOV_SOLVERS = Dict(:block_gmres => :BlockGmresSolver)
+const BLOCK_KRYLOV_SOLVERS = Dict(:block_minres => :BlockMinresSolver,
+                                  :block_gmres  => :BlockGmresSolver )
 
 "Abstract type for using block Krylov solvers in-place"
 abstract type BlockKrylovSolver{T,FC,SV,SM} end
+
+"""
+Type for storing the vectors required by the in-place version of BLOCK-MINRES.
+
+The outer constructors
+
+    solver = BlockMinresSolver(m, n, p, SV, SM)
+    solver = BlockMinresSolver(A, B)
+
+may be used in order to create these vectors.
+`memory` is set to `div(n,p)` if the value given is larger than `div(n,p)`.
+"""
+mutable struct BlockMinresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
+  m          :: Int
+  n          :: Int
+  p          :: Int
+  ΔX         :: SM
+  X          :: SM
+  P          :: SM
+  Q          :: SM
+  C          :: SM
+  D          :: SM
+  Φ          :: SM
+  tmp        :: SM
+  Vₖ₋₁       :: SM
+  Vₖ         :: SM
+  wₖ₋₂       :: SM
+  wₖ₋₁       :: SM
+  Hₖ₋₂       :: SM
+  Hₖ₋₁       :: SM
+  τₖ₋₂       :: SV
+  τₖ₋₁       :: SV
+  warm_start :: Bool
+  stats      :: SimpleStats{T}
+end
+
+function BlockMinresSolver(m, n, p, SV, SM)
+  FC = eltype(SV)
+  T  = real(FC)
+  ΔX = SM(undef, 0, 0)
+  X  = SM(undef, n, p)
+  P  = SM(undef, 0, 0)
+  Q  = SM(undef, n, p)
+  C  = SM(undef, p, p)
+  D  = SM(undef, 2p, p)
+  Φ  = SM(undef, p, p)
+  tmp = C isa Matrix ? SM(undef, 0, 0) : SM(undef, p, p)
+  Vₖ₋₁ = SM(undef, n, p)
+  Vₖ   = SM(undef, n, p)
+  wₖ₋₂ = SM(undef, n, p)
+  wₖ₋₁ = SM(undef, n, p)
+  Hₖ₋₂ = SM(undef, 2p, p)
+  Hₖ₋₁ = SM(undef, 2p, p)
+  τₖ₋₂ = SV(undef, p)
+  τₖ₋₁ = SV(undef, p)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = BlockMinresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, tmp, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, false, stats)
+  return solver
+end
+
+function BlockMinresSolver(A, B)
+  m, n = size(A)
+  s, p = size(B)
+  SM = typeof(B)
+  SV = matrix_to_vector(SM)
+  BlockMinresSolver(m, n, p, SV, SM)
+end
 
 """
 Type for storing the vectors required by the in-place version of BLOCK-GMRES.
@@ -71,7 +139,8 @@ function BlockGmresSolver(A, B, memory = 5)
 end
 
 for (KS, fun, nsol, nA, nAt, warm_start) in [
-  (:BlockGmresSolver, :block_gmres!, 1, 1, 0, true)
+  (:BlockMinresSolver, :block_minres!, 1, 1, 0, true)
+  (:BlockGmresSolver , :block_gmres! , 1, 1, 0, true)
 ]
   @eval begin
     size(solver :: $KS) = solver.m, solver.n
