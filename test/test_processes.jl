@@ -189,8 +189,8 @@ end
   end
 
   @testset "Montoison-Orban" begin
-    @test_throws ErrorException("Exact breakdown βᵢ₊₁ == 0 at iteration i = 1.") montoison_orban(A1, A1', b1, c1, 1)
-    @test_throws ErrorException("Exact breakdown βᵢ₊₁ == 0 at iteration i = 2.") montoison_orban(A2, A2', b2, c2, 2)
-    @test_throws ErrorException("Exact breakdown γᵢ₊₁ == 0 at iteration i = 2.") montoison_orban(A3, A3', b3, c3, 2)
+    @test_throws ErrorException("Exact breakdown Hᵢ₊₁.ᵢ == 0 at iteration i = 1.") montoison_orban(A1, A1', b1, c1, 1)
+    @test_throws ErrorException("Exact breakdown Hᵢ₊₁.ᵢ == 0 at iteration i = 2.") montoison_orban(A2, A2', b2, c2, 2)
+    @test_throws ErrorException("Exact breakdown Fᵢ₊₁.ᵢ == 0 at iteration i = 2.") montoison_orban(A3, A3', b3, c3, 2)
   end
 end
