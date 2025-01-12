@@ -34,7 +34,6 @@ Given a matrix `A` of dimension m × n, TriMR solves the symmetric linear system
     [  Aᴴ  νF ] [ y ]   [ c ],
 
 of size (n+m) × (n+m) where τ and ν are real numbers, E = M⁻¹ ≻ 0, F = N⁻¹ ≻ 0.
-`b` and `c` must both be nonzero.
 TriMR handles saddle-point systems (`τ = 0` or `ν = 0`) and adjoint systems (`τ = 0` and `ν = 0`) without any risk of breakdown.
 
 By default, TriMR solves symmetric and quasi-definite linear systems with τ = 1 and ν = -1.
@@ -225,7 +224,9 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
       kscal!(m, one(FC) / βₖ, M⁻¹vₖ)
       MisI || kscal!(m, one(FC) / βₖ, vₖ)
     else
-      error("b must be nonzero")
+      # v₁ = 0 such that v₁ ⊥ Span{v₁, ..., vₖ}
+      kfill!(M⁻¹vₖ, zero(FC))
+      MisI || kfill!(vₖ, zero(FC))
     end
 
     # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
@@ -233,10 +234,12 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
     γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     if γₖ ≠ 0
+      # u₁ = 0 such that u₁ ⊥ Span{u₁, ..., uₖ}
       kscal!(n, one(FC) / γₖ, N⁻¹uₖ)
       NisI || kscal!(n, one(FC) / γₖ, uₖ)
     else
-      error("c must be nonzero")
+      kfill!(N⁻¹uₖ, zero(FC))
+      NisI || kfill!(uₖ, zero(FC))
     end
 
     # Initialize directions Gₖ such that (GₖRₖ)ᵀ = (Wₖ)ᵀ.
@@ -310,12 +313,16 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
         kscal!(m, one(FC) / βₖ₊₁, q)
         MisI || kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
       end
+      # Note that if βₖ₊₁ == 0 then vₖ₊₁ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
+      # We can keep vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
 
       # γₖ₊₁ ≠ 0
       if γₖ₊₁ > btol
         kscal!(n, one(FC) / γₖ₊₁, p)
         NisI || kscal!(n, one(FC) / γₖ₊₁, uₖ₊₁)
       end
+      # Note that if γₖ₊₁ == 0 then uₖ₊₁ = 0 and Aᴴvₖ ∈ Span{u₁, ..., uₖ}
+      # We can keep uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
 
       # Notations : Wₖ = [w₁ ••• wₖ] = [v₁ 0  ••• vₖ 0 ]
       #                                [0  u₁ ••• 0  uₖ]
