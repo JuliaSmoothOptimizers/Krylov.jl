@@ -34,7 +34,6 @@ Given a matrix `A` of dimension m × n, TriCG solves the Hermitian linear system
     [  Aᴴ  νF ] [ y ]   [ c ],
 
 of size (n+m) × (n+m) where τ and ν are real numbers, E = M⁻¹ ≻ 0 and F = N⁻¹ ≻ 0.
-`b` and `c` must both be nonzero.
 TriCG could breakdown if `τ = 0` or `ν = 0`.
 It's recommended to use TriMR in these cases.
 
@@ -219,7 +218,9 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
       kscal!(m, one(FC) / βₖ, M⁻¹vₖ)
       MisI || kscal!(m, one(FC) / βₖ, vₖ)
     else
-      error("b must be nonzero")
+      # v₁ = 0 such that v₁ ⊥ Span{v₁, ..., vₖ}
+      kfill!(M⁻¹vₖ, zero(FC))
+      MisI || kfill!(vₖ, zero(FC))
     end
 
     # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
@@ -230,7 +231,9 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
       kscal!(n, one(FC) / γₖ, N⁻¹uₖ)
       NisI || kscal!(n, one(FC) / γₖ, uₖ)
     else
-      error("c must be nonzero")
+      # u₁ = 0 such that u₁ ⊥ Span{u₁, ..., uₖ}
+      kfill!(N⁻¹uₖ, zero(FC))
+      NisI || kfill!(uₖ, zero(FC))
     end
 
     # Initialize directions Gₖ such that L̄ₖ(Gₖ)ᵀ = (Wₖ)ᵀ
@@ -390,12 +393,16 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
         kscal!(m, one(FC) / βₖ₊₁, q)
         MisI || kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
       end
+      # Note that if βₖ₊₁ == 0 then vₖ₊₁ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
+      # We can keep vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
 
       # γₖ₊₁ ≠ 0
       if γₖ₊₁ > btol
         kscal!(n, one(FC) / γₖ₊₁, p)
         NisI || kscal!(n, one(FC) / γₖ₊₁, uₖ₊₁)
       end
+      # Note that if γₖ₊₁ == 0 then uₖ₊₁ = 0 and Aᴴvₖ ∈ Span{u₁, ..., uₖ}
+      # We can keep uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
 
       # Update M⁻¹vₖ and N⁻¹uₖ
       kcopy!(m, M⁻¹vₖ, q)  # M⁻¹vₖ ← q

@@ -36,7 +36,7 @@ GPMR solves the non-Hermitian partitioned linear system
 
 of size (n+m) × (n+m) where λ and μ are real or complex numbers.
 `A` can have any shape and `B` has the shape of `Aᴴ`.
-`A`, `B`, `b` and `c` must be all nonzero.
+`A` and `B` must both be nonzero.
 
 This implementation allows left and right block diagonal preconditioners
 
@@ -239,13 +239,21 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     # Initialize the orthogonal Hessenberg reduction process.
     # βv₁ = Cb
     β = knorm(m, b₀)
-    β ≠ 0 || error("b must be nonzero")
-    V[1] .= b₀ ./ β
+    if β ≠ 0
+      V[1] .= b₀ ./ β
+    else
+      # β = ‖b₀‖₂ = 0
+      kfill!(V[1], zero(FC))  # v₁ = 0 such that v₁ ⊥ Span{v₁, ..., vₖ}
+    end
 
     # γu₁ = Dc
     γ = knorm(n, c₀)
-    γ ≠ 0 || error("c must be nonzero")
-    U[1] .= c₀ ./ γ
+    if γ ≠ 0
+      U[1] .= c₀ ./ γ
+    else
+      # γ = ‖c₀‖₂ = 0
+      kfill!(U[1], zero(FC))  # u₁ = 0 such that u₁ ⊥ Span{u₁, ..., uₖ}
+    end
 
     # Compute ‖r₀‖² = γ² + β²
     rNorm = sqrt(γ^2 + β^2)

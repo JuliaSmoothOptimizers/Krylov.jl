@@ -4,10 +4,44 @@
   for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
 
+      # Test specific brekdowns
+      A, b, c = ssy_mo_breakdown2(FC)
+      K = [I A; A' -I]
+      d = [b; c]
+      x, y, stats = gpmr(A, b, c)
+      r = d - K * [x; y]
+      resid = norm(r) / norm(d)
+      @test(resid ≤ gpmr_tol)
+
+      A, b, c = ssy_mo_breakdown3(FC)
+      K = [I A; A' -I]
+      d = [b; c]
+      x, y, stats = gpmr(A, b, c)
+      r = d - K * [x; y]
+      resid = norm(r) / norm(d)
+      @test(resid ≤ gpmr_tol)
+
       for transpose ∈ (false, true)
         A, B, b, c, M, N = gsp(transpose, FC=FC)
         K = [I A; B I]
         d = [b; c]
+
+        # Test b == 0 or c == 0
+        m = length(b)
+        b_zero = zeros(m)
+        x, y, stats = gpmr(A, B, b_zero, c)
+        rhs = [b_zero; c]
+        r = rhs - K * [x; y]
+        resid = norm(r) / norm(rhs)
+        @test(resid ≤ gpmr_tol)
+
+        n = length(c)
+        c_zero = zeros(n)
+        x, y, stats = gpmr(A, B, b, c_zero)
+        rhs = [b; c_zero]
+        r = rhs - K * [x; y]
+        resid = norm(r) / norm(rhs)
+        @test(resid ≤ gpmr_tol)
 
         # Test reorthogonalization
         x, y, stats = gpmr(A, B, b, c, reorthogonalization=true)
@@ -39,16 +73,10 @@
         resid = norm(P⁻¹ * r) / norm(P⁻¹ * d)
         @test(resid ≤ gpmr_tol)
 
-        # Test b=0 or c=0
-        c .= 0
-        @test_throws ErrorException("c must be nonzero") gpmr(A, B, b, c)
-        b .= 0
-        @test_throws ErrorException("b must be nonzero") gpmr(A, B, b, c)
-
         # Test breakdowns
         A, b, c = ssy_mo_breakdown(transpose, FC=FC)
-        λ = 1.0
-        μ = -1.0
+        λ = one(FC)
+        μ = -one(FC)
         K = [I A; A' -I]
         d = [b; c]
         x, y, stats = gpmr(A, A', b, c, λ=λ, μ=μ)

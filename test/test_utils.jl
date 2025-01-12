@@ -345,13 +345,27 @@ end
 # Generate a breakdown in the orthogonal tridiagonalization process and the orthogonal Hessenberg reduction process.
 function ssy_mo_breakdown(transpose :: Bool=false; FC=Float64)
   if transpose
-    A = [1.0 -1.0; 0.0 1.0; -1.0 0.0]
+    A = FC[1 -1; 0 1; -1 0]
   else
-    A = [1.0 0.0 -1.0; -1.0 1.0 0.0]
+    A = FC[1 0 -1; -1 1 0]
   end
   n, m = size(A)
-  b = ones(n)
-  c = ones(m)
+  b = ones(FC, n)
+  c = ones(FC, m)
+  return A, b, c
+end
+
+function ssy_mo_breakdown2(FC=Float64)
+  A = FC[-1 2 0; 1 -1 1; 0 0 -1]
+  b = FC[1; 0; 0]
+  c = FC[1; 0; 0]
+  return A, b, c
+end
+
+function ssy_mo_breakdown3(FC=Float64)
+  A = FC[-1 1 0; 3 -1 0; 0 1 -1]
+  b = FC[1; 0; 0]
+  c = FC[1; 0; 0]
   return A, b, c
 end
 

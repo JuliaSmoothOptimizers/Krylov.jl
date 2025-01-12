@@ -162,11 +162,37 @@
       resid = norm(r) / norm(B)
       @test(resid ≤ trimr_tol)
 
-      # Test b=0 or c=0
-      c .= 0
-      @test_throws ErrorException("c must be nonzero") trimr(A, b, c)
-      b .= 0
-      @test_throws ErrorException("b must be nonzero") trimr(A, b, c)
+      # Test b == 0 or c == 0
+      b_zero = zeros(m)
+      x, y, stats = trimr(A, b_zero, c)
+      rhs = [b_zero; c]
+      r =  rhs - [I A; A' -I] * [x; y]
+      resid = norm(r) / norm(rhs)
+      @test(resid ≤ trimr_tol)
+
+      c_zero = zeros(n)
+      x, y, stats = trimr(A, b, c_zero)
+      rhs = [b; c_zero]
+      r =  rhs - [I A; A' -I] * [x; y]
+      resid = norm(r) / norm(rhs)
+      @test(resid ≤ trimr_tol)
+
+      # Test specific brekdowns
+      A, b, c = ssy_mo_breakdown2(FC)
+      K = [I A; A' -I]
+      d = [b; c]
+      x, y, stats = trimr(A, b, c)
+      r = d - K * [x; y]
+      resid = norm(r) / norm(d)
+      @test(resid ≤ trimr_tol)
+
+      A, b, c = ssy_mo_breakdown3(FC)
+      K = [I A; A' -I]
+      d = [b; c]
+      x, y, stats = trimr(A, b, c)
+      r = d - K * [x; y]
+      resid = norm(r) / norm(d)
+      @test(resid ≤ trimr_tol)
 
       # Test dimension of additional vectors
       for transpose ∈ (false, true)
