@@ -6,17 +6,17 @@
 
       # Test specific brekdowns
       A, b, c = ssy_mo_breakdown2(FC)
-      K = [I A; A' -I]
+      K = [I A; A' I]
       d = [b; c]
-      x, y, stats = gpmr(A, b, c)
+      x, y, stats = gpmr(A, A', b, c)
       r = d - K * [x; y]
       resid = norm(r) / norm(d)
       @test(resid ≤ gpmr_tol)
 
       A, b, c = ssy_mo_breakdown3(FC)
-      K = [I A; A' -I]
+      K = [I A; A' I]
       d = [b; c]
-      x, y, stats = gpmr(A, b, c)
+      x, y, stats = gpmr(A, A', b, c)
       r = d - K * [x; y]
       resid = norm(r) / norm(d)
       @test(resid ≤ gpmr_tol)
