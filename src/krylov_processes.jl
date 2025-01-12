@@ -1,13 +1,17 @@
 export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_simon_yip, montoison_orban
 
 """
-    V, β, T = hermitian_lanczos(A, b, k)
+    V, β, T = hermitian_lanczos(A, b, k; allow_breakdown=false)
 
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian matrix of dimension `n`;
 * `b`: a vector of length `n`;
 * `k`: the number of iterations of the Hermitian Lanczos process.
+
+#### Keyword argument
+
+* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs.
 
 #### Output arguments
 
@@ -19,7 +23,8 @@ export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_s
 
 * C. Lanczos, [*An Iteration Method for the Solution of the Eigenvalue Problem of Linear Differential and Integral Operators*](https://doi.org/10.6028/jres.045.026), Journal of Research of the National Bureau of Standards, 45(4), pp. 225--280, 1950.
 """
-function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
+function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
+                           allow_breakdown::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
   R = real(FC)
   S = ktypeof(b)
@@ -53,7 +58,12 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
     vᵢ₊₁ = q = view(V,:,i+1)
     if i == 1
       β₁ = knorm(n, b)
-      vᵢ .= b ./ β₁
+      if β₁ == 0
+        !allow_breakdown && error("Exact breakdown β₁ == 0.")
+        kfill(vᵢ, zero(FC))
+      else
+        vᵢ .= b ./ β₁
+      end
     end
     mul!(q, A, vᵢ)
     if i ≥ 2
@@ -66,15 +76,20 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOr
     nzval[pαᵢ] = αᵢ  # Tᵢ.ᵢ = αᵢ
     kaxpy!(n, -αᵢ, vᵢ, q)
     βᵢ₊₁ = knorm(n, q)
+    if βᵢ₊₁ == 0
+      !allow_breakdown && error("Exact breakdown βᵢ₊₁ == 0 at iteration i = $i.")
+      kfill(vᵢ₊₁, zero(FC))
+    else
+      vᵢ₊₁ .= q ./ βᵢ₊₁
+    end
     nzval[pαᵢ+1] = βᵢ₊₁  # Tᵢ₊₁.ᵢ = βᵢ₊₁
-    vᵢ₊₁ .= q ./ βᵢ₊₁
     pαᵢ = pαᵢ + 3
   end
   return V, β₁, T
 end
 
 """
-    V, β, T, U, γᴴ, Tᴴ = nonhermitian_lanczos(A, b, c, k)
+    V, β, T, U, γᴴ, Tᴴ = nonhermitian_lanczos(A, b, c, k; allow_breakdown=false)
 
 #### Input arguments
 
@@ -82,6 +97,10 @@ end
 * `b`: a vector of length `n`;
 * `c`: a vector of length `n`;
 * `k`: the number of iterations of the non-Hermitian Lanczos process.
+
+#### Keyword argument
+
+* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs.
 
 #### Output arguments
 
@@ -96,7 +115,8 @@ end
 
 * C. Lanczos, [*An Iteration Method for the Solution of the Eigenvalue Problem of Linear Differential and Integral Operators*](https://doi.org/10.6028/jres.045.026), Journal of Research of the National Bureau of Standards, 45(4), pp. 225--280, 1950.
 """
-function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
+function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int;
+                              allow_breakdown::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
   Aᴴ = A'
   R = real(FC)
@@ -136,10 +156,18 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     uᵢ₊₁ = p = view(U,:,i+1)
     if i == 1
       cᴴb = kdot(n, c, b)
-      β₁ = √(abs(cᴴb))
-      γ₁ᴴ = conj(cᴴb / β₁)
-      vᵢ .= b ./ β₁
-      uᵢ .= c ./ γ₁ᴴ
+      if cᴴb == 0
+        !allow_breakdown && error("Exact breakdown β₁γ₁ == 0.")
+        βᵢ₊₁ = zero(FC)
+        γᵢ₊₁ = zero(FC)
+        kfill!(vᵢ₊₁, zero(FC))
+        kfill!(uᵢ₊₁, zero(FC))
+      else
+        β₁ = √(abs(cᴴb))
+        γ₁ᴴ = conj(cᴴb / β₁)
+        vᵢ .= b ./ β₁
+        uᵢ .= c ./ γ₁ᴴ
+      end
     end
     mul!(q, A , vᵢ)
     mul!(p, Aᴴ, uᵢ)
@@ -157,10 +185,18 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     kaxpy!(m, -     αᵢ , vᵢ, q)
     kaxpy!(n, -conj(αᵢ), uᵢ, p)
     pᴴq = kdot(n, p, q)
-    βᵢ₊₁ = √(abs(pᴴq))
-    γᵢ₊₁ = pᴴq / βᵢ₊₁
-    vᵢ₊₁ .= q ./ βᵢ₊₁
-    uᵢ₊₁ .= p ./ conj(γᵢ₊₁)
+    if pᴴq == 0
+      !allow_breakdown && error("Exact breakdown βᵢ₊₁γᵢ₊₁ == 0 at iteration i = $i.")
+      βᵢ₊₁ = zero(FC)
+      γᵢ₊₁ = zero(FC)
+      kfill!(vᵢ₊₁, zero(FC))
+      kfill!(uᵢ₊₁, zero(FC))
+    else
+      βᵢ₊₁ = √(abs(pᴴq))
+      γᵢ₊₁ = pᴴq / βᵢ₊₁
+      vᵢ₊₁ .= q ./ βᵢ₊₁
+      uᵢ₊₁ .= p ./ conj(γᵢ₊₁)
+    end
     nzval_T[pαᵢ+1]  = βᵢ₊₁        # Tᵢ₊₁.ᵢ  = βᵢ₊₁
     nzval_Tᴴ[pαᵢ+1] = conj(γᵢ₊₁)  # Tᴴᵢ₊₁.ᵢ = γ̄ᵢ₊₁
     if i ≤ k-1
@@ -173,7 +209,7 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
 end
 
 """
-    V, β, H = arnoldi(A, b, k; reorthogonalization=false)
+    V, β, H = arnoldi(A, b, k; allow_breakdown=false, reorthogonalization=false)
 
 #### Input arguments
 
@@ -181,8 +217,9 @@ end
 * `b`: a vector of length `n`;
 * `k`: the number of iterations of the Arnoldi process.
 
-#### Keyword argument
+#### Keyword arguments
 
+* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs;
 * `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against all previous vectors.
 
 #### Output arguments
@@ -195,7 +232,8 @@ end
 
 * W. E. Arnoldi, [*The principle of minimized iterations in the solution of the matrix eigenvalue problem*](https://doi.org/10.1090/qam/42792), Quarterly of Applied Mathematics, 9, pp. 17--29, 1951.
 """
-function arnoldi(A, b::AbstractVector{FC}, k::Int; reorthogonalization::Bool=false) where FC <: FloatOrComplex
+function arnoldi(A, b::AbstractVector{FC}, k::Int;
+                 allow_breakdown::Bool=false, reorthogonalization::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
   R = real(FC)
   S = ktypeof(b)
@@ -210,7 +248,12 @@ function arnoldi(A, b::AbstractVector{FC}, k::Int; reorthogonalization::Bool=fal
     vⱼ₊₁ = q = view(V,:,j+1)
     if j == 1
       β = knorm(n, b)
-      vⱼ .= b ./ β
+      if β == 0
+        !allow_breakdown && error("Exact breakdown β == 0.")
+        kfill!(vⱼ, zero(FC))
+      else
+        vⱼ .= b ./ β
+      end
     end
     mul!(q, A, vⱼ)
     for i = 1:j
@@ -227,19 +270,28 @@ function arnoldi(A, b::AbstractVector{FC}, k::Int; reorthogonalization::Bool=fal
       end
     end
     H[j+1,j] = knorm(n, q)
-    vⱼ₊₁ .= q ./ H[j+1,j]
+    if H[j+1,j] == 0
+      !allow_breakdown && error("Exact breakdown Hᵢ₊₁.ᵢ == 0 at iteration i = $j.")
+      kfill!(vⱼ₊₁, zero(FC))
+    else
+      vⱼ₊₁ .= q ./ H[j+1,j]
+    end
   end
   return V, β, H
 end
 
 """
-    V, U, β, L = golub_kahan(A, b, k)
+    V, U, β, L = golub_kahan(A, b, k; allow_breakdown=false)
 
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
 * `b`: a vector of length `m`;
 * `k`: the number of iterations of the Golub-Kahan process.
+
+#### Keyword argument
+
+* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs.
 
 #### Output arguments
 
@@ -253,7 +305,8 @@ end
 * G. H. Golub and W. Kahan, [*Calculating the Singular Values and Pseudo-Inverse of a Matrix*](https://doi.org/10.1137/0702016), SIAM Journal on Numerical Analysis, 2(2), pp. 225--224, 1965.
 * C. C. Paige, [*Bidiagonalization of Matrices and Solution of Linear Equations*](https://doi.org/10.1137/0711019), SIAM Journal on Numerical Analysis, 11(1), pp. 197--209, 1974.
 """
-function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
+function golub_kahan(A, b::AbstractVector{FC}, k::Int;
+                     allow_breakdown::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
   R = real(FC)
   Aᴴ = A'
@@ -291,21 +344,41 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
     if i == 1
       wᵢ = vᵢ
       β₁ = knorm(m, b)
-      uᵢ .= b ./ β₁
+      if β₁ == 0
+        !allow_breakdown && error("Exact breakdown β₁ == 0.")
+        kfill!(uᵢ, zero(FC))
+      else
+        uᵢ .= b ./ β₁
+      end
       mul!(wᵢ, Aᴴ, uᵢ)
       αᵢ = knorm(n, wᵢ)
+      if αᵢ == 0
+        !allow_breakdown && error("Exact breakdown α₁ == 0.")
+        kfill!(vᵢ, zero(FC))
+      else
+        vᵢ .= wᵢ ./ αᵢ
+      end
       nzval[pαᵢ] = αᵢ  # Lᵢ.ᵢ = αᵢ
-      vᵢ .= wᵢ ./ αᵢ
     end
     mul!(q, A, vᵢ)
     αᵢ = nzval[pαᵢ]  # αᵢ = Lᵢ.ᵢ
     kaxpy!(m, -αᵢ, uᵢ, q)
     βᵢ₊₁ = knorm(m, q)
-    uᵢ₊₁ .= q ./ βᵢ₊₁
+    if βᵢ₊₁ == 0
+      !allow_breakdown && error("Exact breakdown βᵢ₊₁ == 0 at iteration i = $i.")
+      kfill!(uᵢ₊₁, zero(FC))
+    else
+      uᵢ₊₁ .= q ./ βᵢ₊₁
+    end
     mul!(p, Aᴴ, uᵢ₊₁)
     kaxpy!(n, -βᵢ₊₁, vᵢ, p)
     αᵢ₊₁ = knorm(n, p)
-    vᵢ₊₁ .= p ./ αᵢ₊₁
+    if αᵢ₊₁ == 0
+      !allow_breakdown && error("Exact breakdown αᵢ₊₁ == 0 at iteration i = $i.")
+      kfill!(vᵢ₊₁, zero(FC))
+    else
+      vᵢ₊₁ .= p ./ αᵢ₊₁
+    end
     nzval[pαᵢ+1] = βᵢ₊₁  # Lᵢ₊₁.ᵢ   = βᵢ₊₁
     nzval[pαᵢ+2] = αᵢ₊₁  # Lᵢ₊₁.ᵢ₊₁ = αᵢ₊₁
     pαᵢ = pαᵢ + 2
@@ -314,7 +387,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int) where FC <: FloatOrComple
 end
 
 """
-    V, β, T, U, γᴴ, Tᴴ = saunders_simon_yip(A, b, c, k)
+    V, β, T, U, γᴴ, Tᴴ = saunders_simon_yip(A, b, c, k; allow_breakdown=false)
 
 #### Input arguments
 
@@ -322,6 +395,10 @@ end
 * `b`: a vector of length `m`;
 * `c`: a vector of length `n`;
 * `k`: the number of iterations of the Saunders-Simon-Yip process.
+
+#### Keyword argument
+
+* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs.
 
 #### Output arguments
 
@@ -336,7 +413,8 @@ end
 
 * M. A. Saunders, H. D. Simon, and E. L. Yip, [*Two Conjugate-Gradient-Type Methods for Unsymmetric Linear Equations*](https://doi.org/10.1137/0725052), SIAM Journal on Numerical Analysis, 25(4), pp. 927--940, 1988.
 """
-function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int) where FC <: FloatOrComplex
+function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int;
+                            allow_breakdown::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
   Aᴴ = A'
   R = real(FC)
@@ -376,9 +454,19 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     uᵢ₊₁ = p = view(U,:,i+1)
     if i == 1
       β₁ = knorm(m, b)
+      if β₁ == 0
+        !allow_breakdown && error("Exact breakdown β₁ == 0.")
+        kfill!(vᵢ, zero(FC))
+      else
+        vᵢ .= b ./ β₁
+      end
       γ₁ᴴ = knorm(n, c)
-      vᵢ .= b ./ β₁
-      uᵢ .= c ./ γ₁ᴴ
+      if γ₁ᴴ == 0
+        !allow_breakdown && error("Exact breakdown γ₁ᴴ == 0.")
+        kfill!(u₁, zero(FC))
+      else
+        uᵢ .= c ./ γ₁ᴴ
+      end
     end
     mul!(q, A , uᵢ)
     mul!(p, Aᴴ, vᵢ)
@@ -396,9 +484,19 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     kaxpy!(m, -     αᵢ , vᵢ, q)
     kaxpy!(n, -conj(αᵢ), uᵢ, p)
     βᵢ₊₁ = knorm(m, q)
+    if βᵢ₊₁ == 0
+      !allow_breakdown && error("Exact breakdown βᵢ₊₁ == 0 at iteration i = $i.")
+      kfill!(vᵢ₊₁, zero(FC))
+    else
+      vᵢ₊₁ .= q ./ βᵢ₊₁
+    end
     γᵢ₊₁ = knorm(n, p)
-    vᵢ₊₁ .= q ./ βᵢ₊₁
-    uᵢ₊₁ .= p ./ γᵢ₊₁
+    if γᵢ₊₁ == 0
+      !allow_breakdown && error("Exact breakdown γᵢ₊₁ == 0 at iteration i = $i.")
+      kfill!(uᵢ₊₁, zero(FC))
+    else
+      uᵢ₊₁ .= p ./ γᵢ₊₁
+    end
     nzval_T[pαᵢ+1]  = βᵢ₊₁  # Tᵢ₊₁.ᵢ  = βᵢ₊₁
     nzval_Tᴴ[pαᵢ+1] = γᵢ₊₁  # Tᴴᵢ₊₁.ᵢ = γᵢ₊₁
     if i ≤ k-1
@@ -411,7 +509,7 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
 end
 
 """
-    V, β, H, U, γ, F = montoison_orban(A, B, b, c, k; reorthogonalization=false)
+    V, β, H, U, γ, F = montoison_orban(A, B, b, c, k; allow_breakdown=false, reorthogonalization=false)
 
 #### Input arguments
 
@@ -421,8 +519,9 @@ end
 * `c`: a vector of length `n`;
 * `k`: the number of iterations of the Montoison-Orban process.
 
-#### Keyword argument
+#### Keyword arguments
 
+* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs;
 * `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against all previous vectors.
 
 #### Output arguments
@@ -438,7 +537,8 @@ end
 
 * A. Montoison and D. Orban, [*GPMR: An Iterative Method for Unsymmetric Partitioned Linear Systems*](https://doi.org/10.1137/21M1459265), SIAM Journal on Matrix Analysis and Applications, 44(1), pp. 293--311, 2023.
 """
-function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int; reorthogonalization::Bool=false) where FC <: FloatOrComplex
+function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int;
+                         allow_breakdown::Bool=false, reorthogonalization::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
   R = real(FC)
   S = ktypeof(b)
@@ -457,9 +557,19 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     uⱼ₊₁ = p = view(U,:,j+1)
     if j == 1
       β = knorm(m, b)
+      if β == 0
+        !allow_breakdown && error("Exact breakdown β == 0.")
+        kfill!(vⱼ, zero(FC))
+      else
+        vⱼ .= b ./ β
+      end
       γ = knorm(n, c)
-      vⱼ .= b ./ β
-      uⱼ .= c ./ γ
+      if γ == 0
+        !allow_breakdown && error("Exact breakdown γ == 0.")
+        kfill!(uⱼ, zero(FC))
+      else
+       uⱼ .= c ./ γ
+      end
     end
     mul!(q, A, uⱼ)
     mul!(p, B, vⱼ)
@@ -484,9 +594,19 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
       end
     end
     H[j+1,j] = knorm(m, q)
-    vⱼ₊₁ .= q ./ H[j+1,j]
+    if H[j+1,j] == 0
+      !allow_breakdown && error("Exact breakdown Hᵢ₊₁.ᵢ == 0 at iteration i = $j.")
+      kfill!(vⱼ₊₁, zero(FC))
+    else
+      vⱼ₊₁ .= q ./ H[j+1,j]
+    end
     F[j+1,j] = knorm(n, p)
-    uⱼ₊₁ .= p ./ F[j+1,j]
+    if F[j+1,j] == 0
+      !allow_breakdown && error("Exact breakdown Fᵢ₊₁.ᵢ == 0 at iteration i = $j.")
+      kfill!(uⱼ₊₁, zero(FC))
+    else
+      uⱼ₊₁ .= p ./ F[j+1,j]
+    end
   end
   return V, β, H, U, γ, F
 end

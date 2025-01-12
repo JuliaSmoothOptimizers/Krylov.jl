@@ -176,3 +176,21 @@ end
     end
   end
 end
+
+@testset "breakdown" begin
+  A1, b1, c1 = ssy_mo_breakdown()
+  A2, b2, c2 = ssy_mo_breakdown2()
+  A3, b3, c3 = ssy_mo_breakdown3()
+
+  @testset "Saunders-Simon-Yip" begin
+    @test_throws ErrorException("Exact breakdown βᵢ₊₁ == 0 at iteration i = 1.") saunders_simon_yip(A1, b1, c1, 1)
+    @test_throws ErrorException("Exact breakdown βᵢ₊₁ == 0 at iteration i = 2.") saunders_simon_yip(A2, b2, c2, 2)
+    @test_throws ErrorException("Exact breakdown γᵢ₊₁ == 0 at iteration i = 2.") saunders_simon_yip(A3, b3, c3, 2)
+  end
+
+  @testset "Montoison-Orban" begin
+    @test_throws ErrorException("Exact breakdown βᵢ₊₁ == 0 at iteration i = 1.") montoison_orban(A1, A1', b1, c1, 1)
+    @test_throws ErrorException("Exact breakdown βᵢ₊₁ == 0 at iteration i = 2.") montoison_orban(A2, A2', b2, c2, 2)
+    @test_throws ErrorException("Exact breakdown γᵢ₊₁ == 0 at iteration i = 2.") montoison_orban(A3, A3', b3, c3, 2)
+  end
+end
