@@ -60,7 +60,7 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
       β₁ = knorm(n, b)
       if β₁ == 0
         !allow_breakdown && error("Exact breakdown β₁ == 0.")
-        kfill(vᵢ, zero(FC))
+        kfill!(vᵢ, zero(FC))
       else
         vᵢ .= b ./ β₁
       end
@@ -78,7 +78,7 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
     βᵢ₊₁ = knorm(n, q)
     if βᵢ₊₁ == 0
       !allow_breakdown && error("Exact breakdown βᵢ₊₁ == 0 at iteration i = $i.")
-      kfill(vᵢ₊₁, zero(FC))
+      kfill!(vᵢ₊₁, zero(FC))
     else
       vᵢ₊₁ .= q ./ βᵢ₊₁
     end
@@ -463,7 +463,7 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
       γ₁ᴴ = knorm(n, c)
       if γ₁ᴴ == 0
         !allow_breakdown && error("Exact breakdown γ₁ᴴ == 0.")
-        kfill!(u₁, zero(FC))
+        kfill!(uᵢ, zero(FC))
       else
         uᵢ .= c ./ γ₁ᴴ
       end
