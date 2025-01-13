@@ -178,17 +178,46 @@ end
 end
 
 @testset "breakdown" begin
+  A0, b0, c0 = Float64[1 0; 0 1], Float64[0; 0], Float64[1; 1]
   A1, b1, c1 = ssy_mo_breakdown()
   A2, b2, c2 = ssy_mo_breakdown2()
   A3, b3, c3 = ssy_mo_breakdown3()
 
+  @testset "Hermitian Lanczos" begin
+    @test_throws ErrorException("Exact breakdown β₁ == 0.") hermitian_lanczos(A0, b0, 2)
+    hermitian_lanczos(A0, b0, 2, allow_breakdown=true)
+  end
+
+  @testset "Non-Hermitian Lanczos" begin
+    @test_throws ErrorException("Exact breakdown β₁γ₁ == 0.") nonhermitian_lanczos(A0, b0, c0, 2)
+    nonhermitian_lanczos(A0, b0, c0, 2, allow_breakdown=true)
+  end
+
+  @testset "Arnoldi" begin
+    @test_throws ErrorException("Exact breakdown β == 0.") arnoldi(A0, b0, 2)
+    arnoldi(A0, b0, 2, allow_breakdown=true)
+  end
+
+  @testset "Golub-Kahan" begin
+    @test_throws ErrorException("Exact breakdown β₁ == 0.") golub_kahan(A0, b0, 2)
+    golub_kahan(A0, b0, 2, allow_breakdown=true)
+  end
+
   @testset "Saunders-Simon-Yip" begin
+    @test_throws ErrorException("Exact breakdown β₁ == 0.") saunders_simon_yip(A0, b0, c0, 2)
+    saunders_simon_yip(A0, b0, c0, 2, allow_breakdown=true)
+    @test_throws ErrorException("Exact breakdown γ₁ᴴ == 0.") saunders_simon_yip(A0, c0, b0, 2)
+    saunders_simon_yip(A0, c0, b0, 2, allow_breakdown=true)
     @test_throws ErrorException("Exact breakdown βᵢ₊₁ == 0 at iteration i = 1.") saunders_simon_yip(A1, b1, c1, 1)
     @test_throws ErrorException("Exact breakdown βᵢ₊₁ == 0 at iteration i = 2.") saunders_simon_yip(A2, b2, c2, 2)
     @test_throws ErrorException("Exact breakdown γᵢ₊₁ == 0 at iteration i = 2.") saunders_simon_yip(A3, b3, c3, 2)
   end
 
   @testset "Montoison-Orban" begin
+    @test_throws ErrorException("Exact breakdown β == 0.") montoison_orban(A0, A0', b0, c0, 2)
+    montoison_orban(A0, A0', b0, c0, 2, allow_breakdown=true)
+    @test_throws ErrorException("Exact breakdown γ == 0.") montoison_orban(A0, A0', c0, b0, 2)
+    montoison_orban(A0, A0', c0, b0, 2, allow_breakdown=true)
     @test_throws ErrorException("Exact breakdown Hᵢ₊₁.ᵢ == 0 at iteration i = 1.") montoison_orban(A1, A1', b1, c1, 1)
     @test_throws ErrorException("Exact breakdown Hᵢ₊₁.ᵢ == 0 at iteration i = 2.") montoison_orban(A2, A2', b2, c2, 2)
     @test_throws ErrorException("Exact breakdown Fᵢ₊₁.ᵢ == 0 at iteration i = 2.") montoison_orban(A3, A3', b3, c3, 2)
