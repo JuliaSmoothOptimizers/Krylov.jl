@@ -52,26 +52,26 @@ const KRYLOV_SOLVERS = Dict(
 )
 
 """
-    KrylovConstructor(vn; vn_empty=vn)
-    KrylovConstructor(vn, vm; vn_empty=vn, vm_empty=vm)
+    KrylovConstructor(vm; vm_empty=vm)
+    KrylovConstructor(vm, vn; vm_empty=vm, vn_empty=vn)
 
 A type containing vectors used to determine the ones that need to be allocated in the Krylov solvers using `Krylov.ksimilar`.
 By default, `Krylov.ksimilar(v)` simply calls `similar(v)`.
 If a different behavior is required, the function `Krylov.ksimilar` can be specialized with additional methods for your specific type.
 """
 struct KrylovConstructor{S}
-  vn::S
   vm::S
-  vn_empty::S
+  vn::S
   vm_empty::S
+  vn_empty::S
 end
 
-function KrylovConstructor(vn; vn_empty=vn)
-  return KrylovConstructor(vn, vn, vn_empty, vn_empty)
+function KrylovConstructor(vm; vm_empty=vm)
+  return KrylovConstructor(vm, vm, vm_empty, vm_empty)
 end
 
-function KrylovConstructor(vn, vm; vn_empty=vn, vm_empty=vm)
-  return KrylovConstructor(vn, vm, vn_empty, vm_empty)
+function KrylovConstructor(vm, vn; vm_empty=vm, vn_empty=vn)
+  return KrylovConstructor(vm, vn, vm_empty, vn_empty)
 end
 
 "Abstract type for using Krylov solvers in-place"
@@ -105,7 +105,7 @@ mutable struct MinresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function MinresSolver(kc::KrylovConstructor; window :: Int=5)
-  S  = typeof(kc.vn)
+  S  = typeof(kc.vm)
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -175,7 +175,7 @@ mutable struct MinaresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function MinaresSolver(kc::KrylovConstructor)
-  S    = typeof(kc.vn)
+  S    = typeof(kc.vm)
   FC   = eltype(S)
   T    = real(FC)
   m    = length(kc.vm)
@@ -242,7 +242,7 @@ mutable struct CgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CgSolver(kc::KrylovConstructor)
-  S  = typeof(kc.vn)
+  S  = typeof(kc.vm)
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -304,7 +304,7 @@ mutable struct CrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CrSolver(kc::KrylovConstructor)
-  S  = typeof(kc.vn)
+  S  = typeof(kc.vm)
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -370,7 +370,7 @@ mutable struct CarSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CarSolver(kc::KrylovConstructor)
-  S  = typeof(kc.vn)
+  S  = typeof(kc.vm)
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -441,7 +441,7 @@ mutable struct SymmlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function SymmlqSolver(kc::KrylovConstructor; window :: Int=5)
-  S       = typeof(kc.vn)
+  S       = typeof(kc.vm)
   FC      = eltype(S)
   T       = real(FC)
   m       = length(kc.vm)
@@ -511,7 +511,7 @@ mutable struct CgLanczosSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CgLanczosSolver(kc::KrylovConstructor)
-  S       = typeof(kc.vn)
+  S       = typeof(kc.vm)
   FC      = eltype(S)
   T       = real(FC)
   m       = length(kc.vm)
@@ -581,7 +581,7 @@ mutable struct CgLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CgLanczosShiftSolver(kc::KrylovConstructor, nshifts)
-  S          = typeof(kc.vn)
+  S          = typeof(kc.vm)
   FC         = eltype(S)
   T          = real(FC)
   m          = length(kc.vm)
@@ -660,7 +660,7 @@ mutable struct MinresQlpSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function MinresQlpSolver(kc::KrylovConstructor)
-  S       = typeof(kc.vn)
+  S       = typeof(kc.vm)
   FC      = eltype(S)
   T       = real(FC)
   m       = length(kc.vm)
@@ -731,7 +731,7 @@ mutable struct DqgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function DqgmresSolver(kc::KrylovConstructor, memory = 20)
-  S      = typeof(kc.vn)
+  S      = typeof(kc.vm)
   FC     = eltype(S)
   T      = real(FC)
   m      = length(kc.vm)
@@ -807,7 +807,7 @@ mutable struct DiomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function DiomSolver(kc::KrylovConstructor, memory = 20)
-  S      = typeof(kc.vn)
+  S      = typeof(kc.vm)
   FC     = eltype(S)
   T      = real(FC)
   m      = length(kc.vm)
@@ -879,7 +879,7 @@ mutable struct UsymlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function UsymlqSolver(kc::KrylovConstructor)
-  S    = typeof(kc.vn)
+  S    = typeof(kc.vm)
   FC   = eltype(S)
   T    = real(FC)
   m    = length(kc.vm)
@@ -950,7 +950,7 @@ mutable struct UsymqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function UsymqrSolver(kc::KrylovConstructor)
-  S    = typeof(kc.vn)
+  S    = typeof(kc.vm)
   FC   = eltype(S)
   T    = real(FC)
   m    = length(kc.vm)
@@ -1029,7 +1029,7 @@ mutable struct TricgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function TricgSolver(kc::KrylovConstructor)
-  S       = typeof(kc.vn)
+  S       = typeof(kc.vm)
   FC      = eltype(S)
   T       = real(FC)
   m       = length(kc.vm)
@@ -1124,7 +1124,7 @@ mutable struct TrimrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function TrimrSolver(kc::KrylovConstructor)
-  S       = typeof(kc.vn)
+  S       = typeof(kc.vm)
   FC      = eltype(S)
   T       = real(FC)
   m       = length(kc.vm)
@@ -1220,7 +1220,7 @@ mutable struct TrilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function TrilqrSolver(kc::KrylovConstructor)
-  S    = typeof(kc.vn)
+  S    = typeof(kc.vm)
   FC   = eltype(S)
   T    = real(FC)
   m    = length(kc.vm)
@@ -1298,7 +1298,7 @@ mutable struct CgsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function CgsSolver(kc::KrylovConstructor)
-  S  = typeof(kc.vn)
+  S  = typeof(kc.vm)
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -1368,7 +1368,7 @@ mutable struct BicgstabSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function BicgstabSolver(kc::KrylovConstructor)
-  S  = typeof(kc.vn)
+  S  = typeof(kc.vm)
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -1440,7 +1440,7 @@ mutable struct BilqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
 end
 
 function BilqSolver(kc::KrylovConstructor)
-  S    = typeof(kc.vn)
+  S    = typeof(kc.vm)
   FC   = eltype(S)
   T    = real(FC)
   m    = length(kc.vm)
@@ -1516,6 +1516,29 @@ mutable struct QmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
+function QmrSolver(kc::KrylovConstructor)
+  S    = typeof(kc.vm)
+  FC   = eltype(S)
+  T    = real(FC)
+  m    = length(kc.vm)
+  n    = length(kc.vn)
+  uₖ₋₁ = ksimilar(kc.vn)
+  uₖ   = ksimilar(kc.vn)
+  q    = ksimilar(kc.vn)
+  vₖ₋₁ = ksimilar(kc.vn)
+  vₖ   = ksimilar(kc.vn)
+  p    = ksimilar(kc.vn)
+  Δx   = ksimilar(kc.vn_empty)
+  x    = ksimilar(kc.vn)
+  wₖ₋₂ = ksimilar(kc.vn)
+  wₖ₋₁ = ksimilar(kc.vn)
+  t    = ksimilar(kc.vn_empty)
+  s    = ksimilar(kc.vn_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = QmrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
+  return solver
+end
+
 function QmrSolver(m, n, S)
   FC   = eltype(S)
   T    = real(FC)
@@ -1573,6 +1596,30 @@ mutable struct BilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: AdjointStats{T}
 end
 
+function BilqrSolver(kc::KrylovConstructor)
+  S    = typeof(kc.vm)
+  FC   = eltype(S)
+  T    = real(FC)
+  m    = length(kc.vm)
+  n    = length(kc.vn)
+  uₖ₋₁ = ksimilar(kc.vn)
+  uₖ   = ksimilar(kc.vn)
+  q    = ksimilar(kc.vn)
+  vₖ₋₁ = ksimilar(kc.vn)
+  vₖ   = ksimilar(kc.vn)
+  p    = ksimilar(kc.vn)
+  Δx   = ksimilar(kc.vn_empty)
+  x    = ksimilar(kc.vn)
+  Δy   = ksimilar(kc.vn_empty)
+  y    = ksimilar(kc.vn)
+  d̅    = ksimilar(kc.vn)
+  wₖ₋₃ = ksimilar(kc.vn)
+  wₖ₋₂ = ksimilar(kc.vn)
+  stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
+  solver = BilqrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, false, stats)
+  return solver
+end
+
 function BilqrSolver(m, n, S)
   FC   = eltype(S)
   T    = real(FC)
@@ -1621,6 +1668,23 @@ mutable struct CglsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   q     :: S
   Mr    :: S
   stats :: SimpleStats{T}
+end
+
+function CglsSolver(kc::KrylovConstructor)
+  S  = typeof(kc.vm)
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  x  = ksimilar(kc.vn)
+  p  = ksimilar(kc.vn)
+  s  = ksimilar(kc.vn)
+  r  = ksimilar(kc.vm)
+  q  = ksimilar(kc.vm)
+  Mr = ksimilar(kc.vm_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = CglsSolver{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
+  return solver
 end
 
 function CglsSolver(m, n, S)
@@ -1675,6 +1739,32 @@ mutable struct CglsLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: LanczosShiftStats{T}
 end
 
+function CglsLanczosShiftSolver(kc::KrylovConstructor, nshifts)
+  S          = typeof(kc.vm)
+  FC         = eltype(S)
+  T          = real(FC)
+  m          = length(kc.vm)
+  n          = length(kc.vn)
+  Mv         = ksimilar(kc.vn)
+  Mv_prev    = ksimilar(kc.vm)
+  Mv_next    = ksimilar(kc.vm)
+  u          = ksimilar(kc.vm)
+  v          = ksimilar(kc.vn)
+  x          = S[ksimilar(kc.vn) for i = 1 : nshifts]
+  p          = S[ksimilar(kc.vn) for i = 1 : nshifts]
+  σ          = Vector{T}(undef, nshifts)
+  δhat       = Vector{T}(undef, nshifts)
+  ω          = Vector{T}(undef, nshifts)
+  γ          = Vector{T}(undef, nshifts)
+  rNorms     = Vector{T}(undef, nshifts)
+  indefinite = BitVector(undef, nshifts)
+  converged  = BitVector(undef, nshifts)
+  not_cv     = BitVector(undef, nshifts)
+  stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
+  solver = CglsLanczosShiftSolver{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  return solver
+end
+
 function CglsLanczosShiftSolver(m, n, nshifts, S)
   FC         = eltype(S)
   T          = real(FC)
@@ -1683,8 +1773,8 @@ function CglsLanczosShiftSolver(m, n, nshifts, S)
   Mv_next    = S(undef, m)
   u          = S(undef, m)
   v          = S(undef, n)
-  x          = [S(undef, n) for i = 1 : nshifts]
-  p          = [S(undef, n) for i = 1 : nshifts]
+  x          = S[S(undef, n) for i = 1 : nshifts]
+  p          = S[S(undef, n) for i = 1 : nshifts]
   σ          = Vector{T}(undef, nshifts)
   δhat       = Vector{T}(undef, nshifts)
   ω          = Vector{T}(undef, nshifts)
@@ -1727,6 +1817,25 @@ mutable struct CrlsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   s     :: S
   Ms    :: S
   stats :: SimpleStats{T}
+end
+
+function CrlsSolver(kc::KrylovConstructor)
+  S  = typeof(kc.vm)
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  x  = ksimilar(kc.vn)
+  p  = ksimilar(kc.vn)
+  Ar = ksimilar(kc.vn)
+  q  = ksimilar(kc.vn)
+  r  = ksimilar(kc.vm)
+  Ap = ksimilar(kc.vm)
+  s  = ksimilar(kc.vm)
+  Ms = ksimilar(kc.vm_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = CrlsSolver{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
+  return solver
 end
 
 function CrlsSolver(m, n, S)
@@ -1775,6 +1884,24 @@ mutable struct CgneSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: SimpleStats{T}
 end
 
+function CgneSolver(kc::KrylovConstructor)
+  S   = typeof(kc.vm)
+  FC  = eltype(S)
+  T   = real(FC)
+  m   = length(kc.vm)
+  n   = length(kc.vn)
+  x   = ksimilar(kc.vn)
+  p   = ksimilar(kc.vn)
+  Aᴴz = ksimilar(kc.vn)
+  r   = ksimilar(kc.vm)
+  q   = ksimilar(kc.vm)
+  s   = ksimilar(kc.vm_empty)
+  z   = ksimilar(kc.vm_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = CgneSolver{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
+  return solver
+end
+
 function CgneSolver(m, n, S)
   FC  = eltype(S)
   T   = real(FC)
@@ -1818,6 +1945,24 @@ mutable struct CrmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   Nq    :: S
   s     :: S
   stats :: SimpleStats{T}
+end
+
+function CrmrSolver(kc::KrylovConstructor)
+  S   = typeof(kc.vm)
+  FC  = eltype(S)
+  T   = real(FC)
+  m   = length(kc.vm)
+  n   = length(kc.vn)
+  x   = ksimilar(kc.vn)
+  p   = ksimilar(kc.vn)
+  Aᴴr = ksimilar(kc.vn)
+  r   = ksimilar(kc.vm)
+  q   = ksimilar(kc.vm)
+  Nq  = ksimilar(kc.vm_empty)
+  s   = ksimilar(kc.vm_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = CrmrSolver{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
+  return solver
 end
 
 function CrmrSolver(m, n, S)
@@ -1865,6 +2010,26 @@ mutable struct LslqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v       :: S
   err_vec :: Vector{T}
   stats   :: LSLQStats{T}
+end
+
+function LslqSolver(kc::KrylovConstructor; window :: Int=5)
+  S   = typeof(kc.vm)
+  FC  = eltype(S)
+  T   = real(FC)
+  m   = length(kc.vm)
+  n   = length(kc.vn)
+  x   = ksimilar(kc.vn)
+  Nv  = ksimilar(kc.vn)
+  Aᴴu = ksimilar(kc.vn)
+  w̄   = ksimilar(kc.vn)
+  Mu  = ksimilar(kc.vm)
+  Av  = ksimilar(kc.vm)
+  u   = ksimilar(kc.vm_empty)
+  v   = ksimilar(kc.vn_empty)
+  err_vec = zeros(T, window)
+  stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], 0.0, "unknown")
+  solver = LslqSolver{T,FC,S}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
+  return solver
 end
 
 function LslqSolver(m, n, S; window :: Int=5)
@@ -1916,6 +2081,26 @@ mutable struct LsqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats   :: SimpleStats{T}
 end
 
+function LsqrSolver(kc::KrylovConstructor; window :: Int=5)
+  S   = typeof(kc.vm)
+  FC  = eltype(S)
+  T   = real(FC)
+  m   = length(kc.vm)
+  n   = length(kc.vn)
+  x   = ksimilar(kc.vn)
+  Nv  = ksimilar(kc.vn)
+  Aᴴu = ksimilar(kc.vn)
+  w   = ksimilar(kc.vn)
+  Mu  = ksimilar(kc.vm)
+  Av  = ksimilar(kc.vm)
+  u   = ksimilar(kc.vm_empty)
+  v   = ksimilar(kc.vn_empty)
+  err_vec = zeros(T, window)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = LsqrSolver{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
+  return solver
+end
+
 function LsqrSolver(m, n, S; window :: Int=5)
   FC  = eltype(S)
   T   = real(FC)
@@ -1964,6 +2149,27 @@ mutable struct LsmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v       :: S
   err_vec :: Vector{T}
   stats   :: LsmrStats{T}
+end
+
+function LsmrSolver(kc::KrylovConstructor; window :: Int=5)
+  S    = typeof(kc.vm)
+  FC   = eltype(S)
+  T    = real(FC)
+  m    = length(kc.vm)
+  n    = length(kc.vn)
+  x    = ksimilar(kc.vn)
+  Nv   = ksimilar(kc.vn)
+  Aᴴu  = ksimilar(kc.vn)
+  h    = ksimilar(kc.vn)
+  hbar = ksimilar(kc.vn)
+  Mu   = ksimilar(kc.vm)
+  Av   = ksimilar(kc.vm)
+  u    = ksimilar(kc.vm_empty)
+  v    = ksimilar(kc.vn_empty)
+  err_vec = zeros(T, window)
+  stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), 0.0, "unknown")
+  solver = LsmrSolver{T,FC,S}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
+  return solver
 end
 
 function LsmrSolver(m, n, S; window :: Int=5)
@@ -2017,6 +2223,27 @@ mutable struct LnlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats :: LNLQStats{T}
 end
 
+function LnlqSolver(kc::KrylovConstructor)
+  S   = typeof(kc.vm)
+  FC  = eltype(S)
+  T   = real(FC)
+  m   = length(kc.vm)
+  n   = length(kc.vn)
+  x   = ksimilar(kc.vn)
+  Nv  = ksimilar(kc.vn)
+  Aᴴu = ksimilar(kc.vn)
+  y   = ksimilar(kc.vm)
+  w̄   = ksimilar(kc.vm)
+  Mu  = ksimilar(kc.vm)
+  Av  = ksimilar(kc.vm)
+  u   = ksimilar(kc.vm_empty)
+  v   = ksimilar(kc.vn_empty)
+  q   = ksimilar(kc.vn_empty)
+  stats = LNLQStats(0, false, T[], false, T[], T[], 0.0, "unknown")
+  solver = LnlqSolver{T,FC,S}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
+  return solver
+end
+
 function LnlqSolver(m, n, S)
   FC  = eltype(S)
   T   = real(FC)
@@ -2066,6 +2293,27 @@ mutable struct CraigSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v     :: S
   w2    :: S
   stats :: SimpleStats{T}
+end
+
+function CraigSolver(kc::KrylovConstructor)
+  S   = typeof(kc.vm)
+  FC  = eltype(S)
+  T   = real(FC)
+  m   = length(kc.vm)
+  n   = length(kc.vn)
+  x   = ksimilar(kc.vn)
+  Nv  = ksimilar(kc.vn)
+  Aᴴu = ksimilar(kc.vn)
+  y   = ksimilar(kc.vm)
+  w   = ksimilar(kc.vm)
+  Mu  = ksimilar(kc.vm)
+  Av  = ksimilar(kc.vm)
+  u   = ksimilar(kc.vm_empty)
+  v   = ksimilar(kc.vn_empty)
+  w2  = ksimilar(kc.vn_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = CraigSolver{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
+  return solver
 end
 
 function CraigSolver(m, n, S)
@@ -2119,6 +2367,29 @@ mutable struct CraigmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v     :: S
   q     :: S
   stats :: SimpleStats{T}
+end
+
+function CraigmrSolver(kc::KrylovConstructor)
+  S    = typeof(kc.vm)
+  FC   = eltype(S)
+  T    = real(FC)
+  m    = length(kc.vm)
+  n    = length(kc.vn)
+  x    = ksimilar(kc.vn)
+  Nv   = ksimilar(kc.vn)
+  Aᴴu  = ksimilar(kc.vn)
+  d    = ksimilar(kc.vn)
+  y    = ksimilar(kc.vm)
+  Mu   = ksimilar(kc.vm)
+  w    = ksimilar(kc.vm)
+  wbar = ksimilar(kc.vm)
+  Av   = ksimilar(kc.vm)
+  u    = ksimilar(kc.vm_empty)
+  v    = ksimilar(kc.vn_empty)
+  q    = ksimilar(kc.vn_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = CraigmrSolver{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
+  return solver
 end
 
 function CraigmrSolver(m, n, S)
@@ -2178,6 +2449,28 @@ mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
+function GmresSolver(kc::KrylovConstructor, memory = 20)
+  S  = typeof(kc.vm)
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  memory = min(m, memory)
+  Δx = ksimilar(kc.vn_empty)
+  x  = ksimilar(kc.vn)
+  w  = ksimilar(kc.vn)
+  p  = ksimilar(kc.vn_empty)
+  q  = ksimilar(kc.vn_empty)
+  V  = S[ksimilar(kc.vn) for i = 1 : memory]
+  c  = Vector{T}(undef, memory)
+  s  = Vector{FC}(undef, memory)
+  z  = Vector{FC}(undef, memory)
+  R  = Vector{FC}(undef, div(memory * (memory+1), 2))
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = GmresSolver{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
+  return solver
+end
+
 function GmresSolver(m, n, memory, S)
   memory = min(m, memory)
   FC = eltype(S)
@@ -2234,6 +2527,28 @@ mutable struct FgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
+function FgmresSolver(kc::KrylovConstructor, memory = 20)
+  S  = typeof(kc.vm)
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  memory = min(m, memory)
+  Δx = ksimilar(kc.vn_empty)
+  x  = ksimilar(kc.vn)
+  w  = ksimilar(kc.vn)
+  q  = ksimilar(kc.vn_empty)
+  V  = S[ksimilar(kc.vn) for i = 1 : memory]
+  Z  = S[ksimilar(kc.vn) for i = 1 : memory]
+  c  = Vector{T}(undef, memory)
+  s  = Vector{FC}(undef, memory)
+  z  = Vector{FC}(undef, memory)
+  R  = Vector{FC}(undef, div(memory * (memory+1), 2))
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = FgmresSolver{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
+  return solver
+end
+
 function FgmresSolver(m, n, memory, S)
   memory = min(m, memory)
   FC = eltype(S)
@@ -2286,6 +2601,27 @@ mutable struct FomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   U          :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function FomSolver(kc::KrylovConstructor, memory = 20)
+  S  = typeof(kc.vm)
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  memory = min(m, memory)
+  Δx = ksimilar(kc.vn_empty)
+  x  = ksimilar(kc.vn)
+  w  = ksimilar(kc.vn)
+  p  = ksimilar(kc.vn_empty)
+  q  = ksimilar(kc.vn_empty)
+  V  = S[ksimilar(kc.vn) for i = 1 : memory]
+  l  = Vector{FC}(undef, memory)
+  z  = Vector{FC}(undef, memory)
+  U  = Vector{FC}(undef, div(memory * (memory+1), 2))
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = FomSolver{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
+  return solver
 end
 
 function FomSolver(m, n, memory, S)
@@ -2346,6 +2682,34 @@ mutable struct GpmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   R          :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function GpmrSolver(kc::KrylovConstructor, memory = 20)
+  S  = typeof(kc.vm)
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  memory = min(n + m, memory)
+  wA = ksimilar(kc.vn_empty)
+  wB = ksimilar(kc.vm_empty)
+  dA = ksimilar(kc.vm)
+  dB = ksimilar(kc.vn)
+  Δx = ksimilar(kc.vm_empty)
+  Δy = ksimilar(kc.vn_empty)
+  x  = ksimilar(kc.vm)
+  y  = ksimilar(kc.vn)
+  q  = ksimilar(kc.vm_empty)
+  p  = ksimilar(kc.vn_empty)
+  V  = S[ksimilar(kc.vm) for i = 1 : memory]
+  U  = S[ksimilar(kc.vn) for i = 1 : memory]
+  gs = Vector{FC}(undef, 4 * memory)
+  gc = Vector{T}(undef, 4 * memory)
+  zt = Vector{FC}(undef, 2 * memory)
+  R  = Vector{FC}(undef, memory * (2 * memory + 1))
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = GpmrSolver{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
+  return solver
 end
 
 function GpmrSolver(m, n, memory, S)
