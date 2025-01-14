@@ -130,8 +130,8 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :w, S, n)
-    allocate_if(!NisI, solver, :z, S, n)
+    allocate_if(!MisI, solver, :w, S, solver.n)
+    allocate_if(!NisI, solver, :z, S, solver.n)
     Δx, x, t, P, V = solver.Δx, solver.x, solver.t, solver.P, solver.V
     c, s, H, stats = solver.c, solver.s, solver.H, solver.stats
     warm_start = solver.warm_start

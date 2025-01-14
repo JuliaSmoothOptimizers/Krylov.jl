@@ -186,8 +186,8 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :u, S, m)
-    allocate_if(!NisI, solver, :v, S, n)
+    allocate_if(!MisI, solver, :u, S, solver.m)
+    allocate_if(!NisI, solver, :v, S, solver.n)
     x, Nv, Aᴴu, h, hbar = solver.x, solver.Nv, solver.Aᴴu, solver.h, solver.hbar
     Mu, Av, err_vec, stats = solver.Mu, solver.Av, solver.err_vec, solver.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals

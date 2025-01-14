@@ -183,9 +183,9 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :u, S, m)
-    allocate_if(!NisI, solver, :v, S, n)
-    allocate_if(λ > 0, solver, :q, S, n)
+    allocate_if(!MisI, solver, :u, S, solver.m)
+    allocate_if(!NisI, solver, :v, S, solver.n)
+    allocate_if(λ > 0, solver, :q, S, solver.n)
     x, Nv, Aᴴu, y, w̄ = solver.x, solver.Nv, solver.Aᴴu, solver.y, solver.w̄
     Mu, Av, q, stats = solver.Mu, solver.Av, solver.q, solver.stats
     rNorms, xNorms, yNorms = stats.residuals, stats.error_bnd_x, stats.error_bnd_y

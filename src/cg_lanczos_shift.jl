@@ -117,7 +117,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, n)
+    allocate_if(!MisI, solver, :v, S, solver.n)
     Mv, Mv_prev, Mv_next = solver.Mv, solver.Mv_prev, solver.Mv_next
     x, p, σ, δhat = solver.x, solver.p, solver.σ, solver.δhat
     ω, γ, rNorms, converged = solver.ω, solver.γ, solver.rNorms, solver.converged

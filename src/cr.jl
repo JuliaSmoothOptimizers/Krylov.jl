@@ -133,7 +133,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
     # Set up workspace
-    allocate_if(!MisI, solver, :Mq, S, n)
+    allocate_if(!MisI, solver, :Mq, S, solver.n)
     Δx, x, r, p, q, Ar, stats = solver.Δx, solver.x, solver.r, solver.p, solver.q, solver.Ar, solver.stats
     warm_start = solver.warm_start
     rNorms, ArNorms = stats.residuals, stats.Aresiduals

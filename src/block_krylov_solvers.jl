@@ -160,11 +160,10 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     issolved(solver :: $KS) = solver.stats.solved
     if $warm_start
       function warm_start!(solver :: $KS, X0)
-        n, p = size(solver.X)
         n2, p2 = size(X0)
         SM = typeof(solver.X)
-        (n == n2 && p == p2) || error("X0 should have size ($n, $p)")
-        allocate_if(true, solver, :ΔX, SM, n, p)
+        (solver.n == n2 && solver.p == p2) || error("X0 should have size ($n, $p)")
+        allocate_if(true, solver, :ΔX, SM, solver.n, solver.p)
         copyto!(solver.ΔX, X0)
         solver.warm_start = true
         return solver
