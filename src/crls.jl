@@ -130,7 +130,7 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :Ms, S, m)
+    allocate_if(!MisI, solver, :Ms, S, solver.m)
     x, p, Ar, q = solver.x, solver.p, solver.Ar, solver.q
     r, Ap, s, stats = solver.r, solver.Ap, solver.s, solver.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals

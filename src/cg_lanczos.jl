@@ -121,7 +121,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, n)
+    allocate_if(!MisI, solver, :v, S, solver.n)
     Δx, x, Mv, Mv_prev = solver.Δx, solver.x, solver.Mv, solver.Mv_prev
     p, Mv_next, stats = solver.p, solver.Mv_next, solver.stats
     warm_start = solver.warm_start

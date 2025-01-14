@@ -183,10 +183,10 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     warm_start && (μ ≠ 0) && !FisI && error("Warm-start with right preconditioners is not supported.")
 
     # Set up workspace.
-    allocate_if(!CisI, solver, :q , S, m)
-    allocate_if(!DisI, solver, :p , S, n)
-    allocate_if(!EisI, solver, :wB, S, m)
-    allocate_if(!FisI, solver, :wA, S, n)
+    allocate_if(!CisI, solver, :q , S, solver.m)
+    allocate_if(!DisI, solver, :p , S, solver.n)
+    allocate_if(!EisI, solver, :wB, S, solver.m)
+    allocate_if(!FisI, solver, :wA, S, solver.n)
     wA, wB, dA, dB, Δx, Δy = solver.wA, solver.wB, solver.dA, solver.dB, solver.Δx, solver.Δy
     x, y, V, U, gs, gc = solver.x, solver.y, solver.V, solver.U, solver.gs, solver.gc
     zt, R, stats = solver.zt, solver.R, solver.stats

@@ -2877,25 +2877,22 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     if $warm_start
       if $KS in (BilqrSolver, TrilqrSolver, TricgSolver, TrimrSolver, GpmrSolver)
         function warm_start!(solver :: $KS, x0, y0)
-          n = length(solver.x)
-          m = length(solver.y)
-          length(x0) == n || error("x0 should have size $n")
-          length(y0) == m || error("y0 should have size $m")
+          length(x0) == solver.n || error("x0 should have size $n")
+          length(y0) == solver.m || error("y0 should have size $m")
           S = typeof(solver.x)
-          allocate_if(true, solver, :Δx, S, n)
-          allocate_if(true, solver, :Δy, S, m)
-          copyto!(solver.Δx, x0)
-          copyto!(solver.Δy, y0)
+          allocate_if(true, solver, :Δx, S, solver.n)
+          allocate_if(true, solver, :Δy, S, solver.m)
+          kcopy!(solver.n, solver.Δx, x0)
+          kcopy!(solver.m, solver.Δy, y0)
           solver.warm_start = true
           return solver
         end
       else
         function warm_start!(solver :: $KS, x0)
-          n = length(solver.x)
           S = typeof(solver.x)
-          length(x0) == n || error("x0 should have size $n")
-          allocate_if(true, solver, :Δx, S, n)
-          copyto!(solver.Δx, x0)
+          length(x0) == solver.n || error("x0 should have size $n")
+          allocate_if(true, solver, :Δx, S, solver.n)
+          kcopy!(solver.n, solver.Δx, x0)
           solver.warm_start = true
           return solver
         end

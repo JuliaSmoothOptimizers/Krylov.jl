@@ -296,8 +296,8 @@ Create a vector of storage type `S` of length `n` only composed of one.
 """
 kones(S, n) = fill!(S(undef, n), one(eltype(S)))
 
-allocate_if(bool, solver, v, S, n) = bool && isempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, n))
-allocate_if(bool, solver, v, S, m, n) = bool && isempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, m, n))
+allocate_if(bool, solver, v, S, n::Int) = bool && kisempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, n))
+allocate_if(bool, solver, v, S, m::Int, n::Int) = bool && kisempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, m, n))
 
 kdisplay(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
 
@@ -310,12 +310,12 @@ kdot(n :: Integer, x :: Vector{T}, y :: Vector{T}) where T <: BLAS.BlasComplex =
 kdot(n :: Integer, x :: AbstractVector{T}, y :: AbstractVector{T}) where T <: FloatOrComplex = dot(x, y)
 
 kdotr(n :: Integer, x :: AbstractVector{T}, y :: AbstractVector{T}) where T <: AbstractFloat = kdot(n, x, y)
-kdotr(n :: Integer, x :: AbstractVector{Complex{T}}, y :: AbstractVector{Complex{T}}) where T <: AbstractFloat = real(kdot(n, x, y))
+kdotr(n :: Integer, x :: AbstractVector{Complex{T}}, y :: AbstractVector{Complex{T}}) where T <: AbstractFloat = kdot(n, x, y) |> real
 
 knorm(n :: Integer, x :: Vector{T}) where T <: BLAS.BlasFloat = BLAS.nrm2(n, x, 1)
 knorm(n :: Integer, x :: AbstractVector{T}) where T <: FloatOrComplex = norm(x)
 
-knorm_elliptic(n :: Integer, x :: AbstractVector{T}, y :: AbstractVector{T}) where T <: FloatOrComplex = (x === y) ? knorm(n, x) : sqrt(kdotr(n, x, y))
+knorm_elliptic(n :: Integer, x :: AbstractVector{T}, y :: AbstractVector{T}) where T <: FloatOrComplex = (x === y) ? knorm(n, x) : kdotr(n, x, y) |> sqrt
 
 kscal!(n :: Integer, s :: T, x :: Vector{T}) where T <: BLAS.BlasFloat = BLAS.scal!(n, s, x, 1)
 kscal!(n :: Integer, s :: T, x :: AbstractVector{T}) where T <: FloatOrComplex = rmul!(x, s)
@@ -351,6 +351,7 @@ macro kswap!(x, y)
 end
 
 ksimilar(v) = similar(v)
+kisempty(v) = isempty(v)
 
 """
     roots = to_boundary(n, x, d, radius; flip, xNorm2, dNorm2)

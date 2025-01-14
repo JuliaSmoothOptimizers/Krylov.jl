@@ -135,8 +135,8 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :t , S, n)
-    allocate_if(!NisI, solver, :yz, S, n)
+    allocate_if(!MisI, solver, :t , S, solver.n)
+    allocate_if(!NisI, solver, :yz, S, solver.n)
     Δx, x, r, p, v, s, qd, stats = solver.Δx, solver.x, solver.r, solver.p, solver.v, solver.s, solver.qd, solver.stats
     warm_start = solver.warm_start
     rNorms = stats.residuals

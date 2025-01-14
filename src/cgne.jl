@@ -144,8 +144,8 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!NisI, solver, :z, S, m)
-    allocate_if(λ > 0, solver, :s, S, m)
+    allocate_if(!NisI, solver, :z, S, solver.m)
+    allocate_if(λ > 0, solver, :s, S, solver.m)
     x, p, Aᴴz, r, q, s, stats = solver.x, solver.p, solver.Aᴴz, solver.r, solver.q, solver.s, solver.stats
     rNorms = stats.residuals
     reset!(stats)

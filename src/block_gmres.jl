@@ -112,9 +112,9 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
     ktypeof(B) <: SM || error("ktypeof(B) is not a subtype of $SM")
 
     # Set up workspace.
-    allocate_if(!MisI  , solver, :Q , SM, n, p)
-    allocate_if(!NisI  , solver, :P , SM, n, p)
-    allocate_if(restart, solver, :ΔX, SM, n, p)
+    allocate_if(!MisI  , solver, :Q , SM, solver.n, solver.p)
+    allocate_if(!NisI  , solver, :P , SM, solver.n, solver.p)
+    allocate_if(restart, solver, :ΔX, SM, solver.n, solver.p)
     ΔX, X, W, V, Z = solver.ΔX, solver.X, solver.W, solver.V, solver.Z
     C, D, R, H, τ, stats = solver.C, solver.D, solver.R, solver.H, solver.τ, solver.stats
     Ψtmp = C

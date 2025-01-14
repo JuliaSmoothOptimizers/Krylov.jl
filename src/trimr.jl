@@ -177,8 +177,8 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :vₖ, S, m)
-    allocate_if(!NisI, solver, :uₖ, S, n)
+    allocate_if(!MisI, solver, :vₖ, S, solver.m)
+    allocate_if(!NisI, solver, :uₖ, S, solver.n)
     Δy, yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p = solver.Δy, solver.y, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.p
     Δx, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = solver.Δx, solver.x, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.q
     gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ = solver.gy₂ₖ₋₃, solver.gy₂ₖ₋₂, solver.gy₂ₖ₋₁, solver.gy₂ₖ
