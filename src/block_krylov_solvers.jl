@@ -15,6 +15,7 @@ The outer constructors
 
     solver = BlockMinresSolver(m, n, p, SV, SM)
     solver = BlockMinresSolver(A, B)
+    solver = BlockMinresSolver(kc::BlockKrylovConstructor)
 
 may be used in order to create these vectors.
 `memory` is set to `div(n,p)` if the value given is larger than `div(n,p)`.
@@ -82,6 +83,7 @@ The outer constructors
 
     solver = BlockGmresSolver(m, n, p, memory, SV, SM)
     solver = BlockGmresSolver(A, B, memory = 5)
+    solver = BlockGmresSolver(kc::BlockKrylovConstructor, memory = 5)
 
 may be used in order to create these vectors.
 `memory` is set to `div(n,p)` if the value given is larger than `div(n,p)`.
