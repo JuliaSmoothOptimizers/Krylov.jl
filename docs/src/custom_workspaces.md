@@ -77,11 +77,9 @@ struct HaloVector{FC, D} <: AbstractVector{FC}
     end
 end
 
-function HaloVector{FC,D}(::UndefInitializer, l::Int64) where {FC,D}
-    m = n = sqrt(l) |> Int
-    data = zeros(FC, m + 2, n + 2)
-    v = OffsetMatrix(data, 0:m + 1, 0:n + 1)
-    return HaloVector(v)
+function Base.similar(v::HaloVector)
+    data = similar(v.data)
+    return HaloVector(data)
 end
 
 function Base.length(v::HaloVector)
@@ -103,7 +101,8 @@ function Base.getindex(v::HaloVector, idx)
 end
 ```
 
-The `size` and `getindex` functions support REPL display, aiding interaction, though they are optional for Krylov.jl’s functionality.
+The functions `similar` and `length` are mandatory and must be implemented for custom vector types.
+The functions `size` and `getindex` support REPL display, aiding interaction, though they are optional for Krylov.jl’s functionality.
 
 ### Efficient stencil implementation
 
@@ -282,8 +281,14 @@ for i in 1:Nx
 end
 b = HaloVector(data)
 
+# Allocate the workspace
+kc = KrylovConstructor(b)
+solver = CgSolver(kc)
+
 # Solve the system with CG
-u_sol, stats = Krylov.cg(A, b, atol=1e-12, rtol=0.0, verbose=1)
+Krylov.cg!(solver, A, b, atol=1e-12, rtol=0.0, verbose=1)
+u_sol = solution(solver)
+stats = statistics(solver)
 ```
 
 ```@example halo-regions
@@ -291,6 +296,9 @@ u_sol, stats = Krylov.cg(A, b, atol=1e-12, rtol=0.0, verbose=1)
 u_star = [sin(π * i * Δx) * sin(π * j * Δy) for i=1:Nx, j=1:Ny]
 norm(u_sol.data[1:Nx, 1:Ny] - u_star, Inf)
 ```
+
+!!! note
+    Only the in-place version of the Krylov methods is supported for custom vector types.
 
 ### Conclusion
 

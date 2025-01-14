@@ -350,6 +350,8 @@ macro kswap!(x, y)
   end
 end
 
+ksimilar(v) = similar(v)
+
 """
     roots = to_boundary(n, x, d, radius; flip, xNorm2, dNorm2)
 

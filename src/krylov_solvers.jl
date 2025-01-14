@@ -8,6 +8,8 @@ GmresSolver, FomSolver, GpmrSolver, FgmresSolver, CarSolver, MinaresSolver
 export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual,
 niterations, Aprod, Atprod, Bprod, warm_start!
 
+export KrylovConstructor
+
 import Base.size, Base.sizeof, Base.format_bytes
 
 const KRYLOV_SOLVERS = Dict(
@@ -49,6 +51,29 @@ const KRYLOV_SOLVERS = Dict(
   :cgls_lanczos_shift => :CglsLanczosShiftSolver,
 )
 
+"""
+    KrylovConstructor(vn; vn_empty=vn)
+    KrylovConstructor(vn, vm; vn_empty=vn, vm_empty=vm)
+
+A type containing vectors used to determine the ones that need to be allocated in the Krylov solvers using `Krylov.ksimilar`.
+By default, `Krylov.ksimilar(v)` simply calls `similar(v)`.
+If a different behavior is required, the function `Krylov.ksimilar` can be specialized with additional methods for your specific type.
+"""
+struct KrylovConstructor{S}
+  vn::S
+  vm::S
+  vn_empty::S
+  vm_empty::S
+end
+
+function KrylovConstructor(vn; vn_empty=vn)
+  return KrylovConstructor(vn, vn, vn_empty, vn_empty)
+end
+
+function KrylovConstructor(vn, vm; vn_empty=vn, vm_empty=vm)
+  return KrylovConstructor(vn, vm, vn_empty, vm_empty)
+end
+
 "Abstract type for using Krylov solvers in-place"
 abstract type KrylovSolver{T,FC,S} end
 
@@ -59,6 +84,7 @@ The outer constructors
 
     solver = MinresSolver(m, n, S; window :: Int=5)
     solver = MinresSolver(A, b; window :: Int=5)
+    solver = MinresSolver(kc::KrylovConstructor; window :: Int=5)
 
 may be used in order to create these vectors.
 """
@@ -76,6 +102,26 @@ mutable struct MinresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   err_vec    :: Vector{T}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function MinresSolver(kc::KrylovConstructor; window :: Int=5)
+  S  = typeof(kc.vn)
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  Δx = ksimilar(kc.vn_empty)
+  x  = ksimilar(kc.vn)
+  r1 = ksimilar(kc.vn)
+  r2 = ksimilar(kc.vn)
+  w1 = ksimilar(kc.vn)
+  w2 = ksimilar(kc.vn)
+  y  = ksimilar(kc.vn)
+  v  = ksimilar(kc.vn_empty)
+  err_vec = zeros(T, window)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = MinresSolver{T,FC,S}(m, n, Δx, x, r1, r2, w1, w2, y, v, err_vec, false, stats)
+  return solver
 end
 
 function MinresSolver(m, n, S; window :: Int=5)
@@ -108,6 +154,7 @@ The outer constructors
 
     solver = MinaresSolver(m, n, S)
     solver = MinaresSolver(A, b)
+    solver = MinaresSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -125,6 +172,26 @@ mutable struct MinaresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   q          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function MinaresSolver(kc::KrylovConstructor)
+  S    = typeof(kc.vn)
+  FC   = eltype(S)
+  T    = real(FC)
+  m    = length(kc.vm)
+  n    = length(kc.vn)
+  Δx   = ksimilar(kc.vn_empty)
+  vₖ   = ksimilar(kc.vn)
+  vₖ₊₁ = ksimilar(kc.vn)
+  x    = ksimilar(kc.vn)
+  wₖ₋₂ = ksimilar(kc.vn)
+  wₖ₋₁ = ksimilar(kc.vn)
+  dₖ₋₂ = ksimilar(kc.vn)
+  dₖ₋₁ = ksimilar(kc.vn)
+  q    = ksimilar(kc.vn)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = MinaresSolver{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
+  return solver
 end
 
 function MinaresSolver(m, n, S)
@@ -157,6 +224,7 @@ The outer constructors
 
     solver = CgSolver(m, n, S)
     solver = CgSolver(A, b)
+    solver = CgSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -171,6 +239,23 @@ mutable struct CgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   z          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function CgSolver(kc::KrylovConstructor)
+  S  = typeof(kc.vn)
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  Δx = ksimilar(kc.vn_empty)
+  x  = ksimilar(kc.vn)
+  r  = ksimilar(kc.vn)
+  p  = ksimilar(kc.vn)
+  Ap = ksimilar(kc.vn)
+  z  = ksimilar(kc.vn_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = CgSolver{T,FC,S}(m, n, Δx, x, r, p, Ap, z, false, stats)
+  return solver
 end
 
 function CgSolver(m, n, S)
@@ -200,6 +285,7 @@ The outer constructors
 
     solver = CrSolver(m, n, S)
     solver = CrSolver(A, b)
+    solver = CrSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -215,6 +301,24 @@ mutable struct CrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   Mq         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function CrSolver(kc::KrylovConstructor)
+  S  = typeof(kc.vn)
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  Δx = ksimilar(kc.vn_empty)
+  x  = ksimilar(kc.vn)
+  r  = ksimilar(kc.vn)
+  p  = ksimilar(kc.vn)
+  q  = ksimilar(kc.vn)
+  Ar = ksimilar(kc.vn)
+  Mq = ksimilar(kc.vn_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = CrSolver{T,FC,S}(m, n, Δx, x, r, p, q, Ar, Mq, false, stats)
+  return solver
 end
 
 function CrSolver(m, n, S)
@@ -245,6 +349,7 @@ The outer constructors
 
     solver = CarSolver(m, n, S)
     solver = CarSolver(A, b)
+    solver = CarSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -262,6 +367,26 @@ mutable struct CarSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   Mu         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function CarSolver(kc::KrylovConstructor)
+  S  = typeof(kc.vn)
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  Δx = ksimilar(kc.vn_empty)
+  x  = ksimilar(kc.vn)
+  r  = ksimilar(kc.vn)
+  p  = ksimilar(kc.vn)
+  s  = ksimilar(kc.vn)
+  q  = ksimilar(kc.vn)
+  t  = ksimilar(kc.vn)
+  u  = ksimilar(kc.vn)
+  Mu = ksimilar(kc.vn_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = CarSolver{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
+  return solver
 end
 
 function CarSolver(m, n, S)
@@ -294,6 +419,7 @@ The outer constructors
 
     solver = SymmlqSolver(m, n, S)
     solver = SymmlqSolver(A, b)
+    solver = SymmlqSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -312,6 +438,27 @@ mutable struct SymmlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   sprod      :: Vector{T}
   warm_start :: Bool
   stats      :: SymmlqStats{T}
+end
+
+function SymmlqSolver(kc::KrylovConstructor; window :: Int=5)
+  S       = typeof(kc.vn)
+  FC      = eltype(S)
+  T       = real(FC)
+  m       = length(kc.vm)
+  n       = length(kc.vn)
+  Δx      = ksimilar(kc.vn_empty)
+  x       = ksimilar(kc.vn)
+  Mvold   = ksimilar(kc.vn)
+  Mv      = ksimilar(kc.vn)
+  Mv_next = ksimilar(kc.vn)
+  w̅       = ksimilar(kc.vn)
+  v       = ksimilar(kc.vn_empty)
+  clist   = zeros(T, window)
+  zlist   = zeros(T, window)
+  sprod   = ones(T, window)
+  stats = SymmlqStats(0, false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), 0.0, "unknown")
+  solver = SymmlqSolver{T,FC,S}(m, n, Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, false, stats)
+  return solver
 end
 
 function SymmlqSolver(m, n, S; window :: Int=5)
@@ -345,6 +492,7 @@ The outer constructors
 
     solver = CgLanczosSolver(m, n, S)
     solver = CgLanczosSolver(A, b)
+    solver = CgLanczosSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -360,6 +508,24 @@ mutable struct CgLanczosSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   v          :: S
   warm_start :: Bool
   stats      :: LanczosStats{T}
+end
+
+function CgLanczosSolver(kc::KrylovConstructor)
+  S       = typeof(kc.vn)
+  FC      = eltype(S)
+  T       = real(FC)
+  m       = length(kc.vm)
+  n       = length(kc.vn)
+  Δx      = ksimilar(kc.vn_empty)
+  x       = ksimilar(kc.vn)
+  Mv      = ksimilar(kc.vn)
+  Mv_prev = ksimilar(kc.vn)
+  p       = ksimilar(kc.vn)
+  Mv_next = ksimilar(kc.vn)
+  v       = ksimilar(kc.vn_empty)
+  stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), 0.0, "unknown")
+  solver = CgLanczosSolver{T,FC,S}(m, n, Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
+  return solver
 end
 
 function CgLanczosSolver(m, n, S)
@@ -390,6 +556,7 @@ The outer constructors
 
     solver = CgLanczosShiftSolver(m, n, nshifts, S)
     solver = CgLanczosShiftSolver(A, b, nshifts)
+    solver = CgLanczosShiftSolver(kc::KrylovConstructor, nshifts)
 
 may be used in order to create these vectors.
 """
@@ -411,6 +578,31 @@ mutable struct CgLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   converged  :: BitVector
   not_cv     :: BitVector
   stats      :: LanczosShiftStats{T}
+end
+
+function CgLanczosShiftSolver(kc::KrylovConstructor, nshifts)
+  S          = typeof(kc.vn)
+  FC         = eltype(S)
+  T          = real(FC)
+  m          = length(kc.vm)
+  n          = length(kc.vn)
+  Mv         = ksimilar(kc.vn)
+  Mv_prev    = ksimilar(kc.vn)
+  Mv_next    = ksimilar(kc.vn)
+  v          = ksimilar(kc.vn_empty)
+  x          = S[ksimilar(kc.vn) for i = 1 : nshifts]
+  p          = S[ksimilar(kc.vn) for i = 1 : nshifts]
+  σ          = Vector{T}(undef, nshifts)
+  δhat       = Vector{T}(undef, nshifts)
+  ω          = Vector{T}(undef, nshifts)
+  γ          = Vector{T}(undef, nshifts)
+  rNorms     = Vector{T}(undef, nshifts)
+  indefinite = BitVector(undef, nshifts)
+  converged  = BitVector(undef, nshifts)
+  not_cv     = BitVector(undef, nshifts)
+  stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
+  solver = CgLanczosShiftSolver{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  return solver
 end
 
 function CgLanczosShiftSolver(m, n, nshifts, S)
@@ -448,6 +640,7 @@ The outer constructors
 
     solver = MinresQlpSolver(m, n, S)
     solver = MinresQlpSolver(A, b)
+    solver = MinresQlpSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -464,6 +657,25 @@ mutable struct MinresQlpSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   vₖ         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function MinresQlpSolver(kc::KrylovConstructor)
+  S       = typeof(kc.vn)
+  FC      = eltype(S)
+  T       = real(FC)
+  m       = length(kc.vm)
+  n       = length(kc.vn)
+  Δx      = ksimilar(kc.vn_empty)
+  wₖ₋₁    = ksimilar(kc.vn)
+  wₖ      = ksimilar(kc.vn)
+  M⁻¹vₖ₋₁ = ksimilar(kc.vn)
+  M⁻¹vₖ   = ksimilar(kc.vn)
+  x       = ksimilar(kc.vn)
+  p       = ksimilar(kc.vn)
+  vₖ      = ksimilar(kc.vn_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = MinresQlpSolver{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
+  return solver
 end
 
 function MinresQlpSolver(m, n, S)
@@ -495,6 +707,7 @@ The outer constructors
 
     solver = DqgmresSolver(m, n, memory, S)
     solver = DqgmresSolver(A, b, memory = 20)
+    solver = DqgmresSolver(kc::KrylovConstructor, memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
@@ -515,6 +728,28 @@ mutable struct DqgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   H          :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function DqgmresSolver(kc::KrylovConstructor, memory = 20)
+  S      = typeof(kc.vn)
+  FC     = eltype(S)
+  T      = real(FC)
+  m      = length(kc.vm)
+  n      = length(kc.vn)
+  memory = min(m, memory)
+  Δx     = ksimilar(kc.vn_empty)
+  x      = ksimilar(kc.vn)
+  t      = ksimilar(kc.vn)
+  z      = ksimilar(kc.vn_empty)
+  w      = ksimilar(kc.vn_empty)
+  P      = S[ksimilar(kc.vn) for i = 1 : memory]
+  V      = S[ksimilar(kc.vn) for i = 1 : memory]
+  c      = Vector{T}(undef, memory)
+  s      = Vector{FC}(undef, memory)
+  H      = Vector{FC}(undef, memory+1)
+  stats  = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = DqgmresSolver{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
+  return solver
 end
 
 function DqgmresSolver(m, n, memory, S)
@@ -549,6 +784,7 @@ The outer constructors
 
     solver = DiomSolver(m, n, memory, S)
     solver = DiomSolver(A, b, memory = 20)
+    solver = DiomSolver(kc::KrylovConstructor, memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
@@ -568,6 +804,27 @@ mutable struct DiomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   H          :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function DiomSolver(kc::KrylovConstructor, memory = 20)
+  S      = typeof(kc.vn)
+  FC     = eltype(S)
+  T      = real(FC)
+  m      = length(kc.vm)
+  n      = length(kc.vn)
+  memory = min(m, memory)
+  Δx     = ksimilar(kc.vn_empty)
+  x      = ksimilar(kc.vn)
+  t      = ksimilar(kc.vn)
+  z      = ksimilar(kc.vn_empty)
+  w      = ksimilar(kc.vn_empty)
+  P      = S[ksimilar(kc.vn) for i = 1 : memory-1]
+  V      = S[ksimilar(kc.vn) for i = 1 : memory]
+  L      = Vector{FC}(undef, memory-1)
+  H      = Vector{FC}(undef, memory)
+  stats  = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = DiomSolver{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
+  return solver
 end
 
 function DiomSolver(m, n, memory, S)
@@ -601,6 +858,7 @@ The outer constructors
 
     solver = UsymlqSolver(m, n, S)
     solver = UsymlqSolver(A, b)
+    solver = UsymlqSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -618,6 +876,26 @@ mutable struct UsymlqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   q          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function UsymlqSolver(kc::KrylovConstructor)
+  S    = typeof(kc.vn)
+  FC   = eltype(S)
+  T    = real(FC)
+  m    = length(kc.vm)
+  n    = length(kc.vn)
+  uₖ₋₁ = ksimilar(kc.vn)
+  uₖ   = ksimilar(kc.vn)
+  p    = ksimilar(kc.vn)
+  Δx   = ksimilar(kc.vn_empty)
+  x    = ksimilar(kc.vn)
+  d̅    = ksimilar(kc.vn)
+  vₖ₋₁ = ksimilar(kc.vm)
+  vₖ   = ksimilar(kc.vm)
+  q    = ksimilar(kc.vm)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = UsymlqSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
+  return solver
 end
 
 function UsymlqSolver(m, n, S)
@@ -650,6 +928,7 @@ The outer constructors
 
     solver = UsymqrSolver(m, n, S)
     solver = UsymqrSolver(A, b)
+    solver = UsymqrSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -668,6 +947,27 @@ mutable struct UsymqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   p          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function UsymqrSolver(kc::KrylovConstructor)
+  S    = typeof(kc.vn)
+  FC   = eltype(S)
+  T    = real(FC)
+  m    = length(kc.vm)
+  n    = length(kc.vn)
+  vₖ₋₁ = ksimilar(kc.vm)
+  vₖ   = ksimilar(kc.vm)
+  q    = ksimilar(kc.vm)
+  Δx   = ksimilar(kc.vn_empty)
+  x    = ksimilar(kc.vn)
+  wₖ₋₂ = ksimilar(kc.vn)
+  wₖ₋₁ = ksimilar(kc.vn)
+  uₖ₋₁ = ksimilar(kc.vn)
+  uₖ   = ksimilar(kc.vn)
+  p    = ksimilar(kc.vn)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = UsymqrSolver{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
+  return solver
 end
 
 function UsymqrSolver(m, n, S)
@@ -701,6 +1001,7 @@ The outer constructors
 
     solver = TricgSolver(m, n, S)
     solver = TricgSolver(A, b)
+    solver = TricgSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -725,6 +1026,33 @@ mutable struct TricgSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   vₖ         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function TricgSolver(kc::KrylovConstructor)
+  S       = typeof(kc.vn)
+  FC      = eltype(S)
+  T       = real(FC)
+  m       = length(kc.vm)
+  n       = length(kc.vn)
+  y       = ksimilar(kc.vn)
+  N⁻¹uₖ₋₁ = ksimilar(kc.vn)
+  N⁻¹uₖ   = ksimilar(kc.vn)
+  p       = ksimilar(kc.vn)
+  gy₂ₖ₋₁  = ksimilar(kc.vn)
+  gy₂ₖ    = ksimilar(kc.vn)
+  x       = ksimilar(kc.vm)
+  M⁻¹vₖ₋₁ = ksimilar(kc.vm)
+  M⁻¹vₖ   = ksimilar(kc.vm)
+  q       = ksimilar(kc.vm)
+  gx₂ₖ₋₁  = ksimilar(kc.vm)
+  gx₂ₖ    = ksimilar(kc.vm)
+  Δx      = ksimilar(kc.vm_empty)
+  Δy      = ksimilar(kc.vn_empty)
+  uₖ      = ksimilar(kc.vn_empty)
+  vₖ      = ksimilar(kc.vm_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = TricgSolver{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  return solver
 end
 
 function TricgSolver(m, n, S)
@@ -764,6 +1092,7 @@ The outer constructors
 
     solver = TrimrSolver(m, n, S)
     solver = TrimrSolver(A, b)
+    solver = TrimrSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -792,6 +1121,37 @@ mutable struct TrimrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   vₖ         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function TrimrSolver(kc::KrylovConstructor)
+  S       = typeof(kc.vn)
+  FC      = eltype(S)
+  T       = real(FC)
+  m       = length(kc.vm)
+  n       = length(kc.vn)
+  y       = ksimilar(kc.vn)
+  N⁻¹uₖ₋₁ = ksimilar(kc.vn)
+  N⁻¹uₖ   = ksimilar(kc.vn)
+  p       = ksimilar(kc.vn)
+  gy₂ₖ₋₃  = ksimilar(kc.vn)
+  gy₂ₖ₋₂  = ksimilar(kc.vn)
+  gy₂ₖ₋₁  = ksimilar(kc.vn)
+  gy₂ₖ    = ksimilar(kc.vn)
+  x       = ksimilar(kc.vm)
+  M⁻¹vₖ₋₁ = ksimilar(kc.vm)
+  M⁻¹vₖ   = ksimilar(kc.vm)
+  q       = ksimilar(kc.vm)
+  gx₂ₖ₋₃  = ksimilar(kc.vm)
+  gx₂ₖ₋₂  = ksimilar(kc.vm)
+  gx₂ₖ₋₁  = ksimilar(kc.vm)
+  gx₂ₖ    = ksimilar(kc.vm)
+  Δx      = ksimilar(kc.vm_empty)
+  Δy      = ksimilar(kc.vn_empty)
+  uₖ      = ksimilar(kc.vn_empty)
+  vₖ      = ksimilar(kc.vm_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = TrimrSolver{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  return solver
 end
 
 function TrimrSolver(m, n, S)
@@ -835,6 +1195,7 @@ The outer constructors
 
     solver = TrilqrSolver(m, n, S)
     solver = TrilqrSolver(A, b)
+    solver = TrilqrSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -856,6 +1217,30 @@ mutable struct TrilqrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   wₖ₋₂       :: S
   warm_start :: Bool
   stats      :: AdjointStats{T}
+end
+
+function TrilqrSolver(kc::KrylovConstructor)
+  S    = typeof(kc.vn)
+  FC   = eltype(S)
+  T    = real(FC)
+  m    = length(kc.vm)
+  n    = length(kc.vn)
+  uₖ₋₁ = ksimilar(kc.vn)
+  uₖ   = ksimilar(kc.vn)
+  p    = ksimilar(kc.vn)
+  d̅    = ksimilar(kc.vn)
+  Δx   = ksimilar(kc.vn_empty)
+  x    = ksimilar(kc.vn)
+  vₖ₋₁ = ksimilar(kc.vm)
+  vₖ   = ksimilar(kc.vm)
+  q    = ksimilar(kc.vm)
+  Δy   = ksimilar(kc.vm_empty)
+  y    = ksimilar(kc.vm)
+  wₖ₋₃ = ksimilar(kc.vm)
+  wₖ₋₂ = ksimilar(kc.vm)
+  stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
+  solver = TrilqrSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
+  return solver
 end
 
 function TrilqrSolver(m, n, S)
@@ -892,6 +1277,7 @@ The outer constructorss
 
     solver = CgsSolver(m, n, S)
     solver = CgsSolver(A, b)
+    solver = CgsSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -909,6 +1295,26 @@ mutable struct CgsSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   vw         :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function CgsSolver(kc::KrylovConstructor)
+  S  = typeof(kc.vn)
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  Δx = ksimilar(kc.vn_empty)
+  x  = ksimilar(kc.vn)
+  r  = ksimilar(kc.vn)
+  u  = ksimilar(kc.vn)
+  p  = ksimilar(kc.vn)
+  q  = ksimilar(kc.vn)
+  ts = ksimilar(kc.vn)
+  yz = ksimilar(kc.vn_empty)
+  vw = ksimilar(kc.vn_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = CgsSolver{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
+  return solver
 end
 
 function CgsSolver(m, n, S)
@@ -941,6 +1347,7 @@ The outer constructors
 
     solver = BicgstabSolver(m, n, S)
     solver = BicgstabSolver(A, b)
+    solver = BicgstabSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -958,6 +1365,26 @@ mutable struct BicgstabSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   t          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function BicgstabSolver(kc::KrylovConstructor)
+  S  = typeof(kc.vn)
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  Δx = ksimilar(kc.vn_empty)
+  x  = ksimilar(kc.vn)
+  r  = ksimilar(kc.vn)
+  p  = ksimilar(kc.vn)
+  v  = ksimilar(kc.vn)
+  s  = ksimilar(kc.vn)
+  qd = ksimilar(kc.vn)
+  yz = ksimilar(kc.vn_empty)
+  t  = ksimilar(kc.vn_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = BicgstabSolver{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
+  return solver
 end
 
 function BicgstabSolver(m, n, S)
@@ -990,6 +1417,7 @@ The outer constructors
 
     solver = BilqSolver(m, n, S)
     solver = BilqSolver(A, b)
+    solver = BilqSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1009,6 +1437,28 @@ mutable struct BilqSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   s          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
+end
+
+function BilqSolver(kc::KrylovConstructor)
+  S    = typeof(kc.vn)
+  FC   = eltype(S)
+  T    = real(FC)
+  m    = length(kc.vm)
+  n    = length(kc.vn)
+  uₖ₋₁ = ksimilar(kc.vn)
+  uₖ   = ksimilar(kc.vn)
+  q    = ksimilar(kc.vn)
+  vₖ₋₁ = ksimilar(kc.vn)
+  vₖ   = ksimilar(kc.vn)
+  p    = ksimilar(kc.vn)
+  Δx   = ksimilar(kc.vn_empty)
+  x    = ksimilar(kc.vn)
+  d̅    = ksimilar(kc.vn)
+  t    = ksimilar(kc.vn_empty)
+  s    = ksimilar(kc.vn_empty)
+  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = BilqSolver{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
+  return solver
 end
 
 function BilqSolver(m, n, S)
@@ -1043,6 +1493,7 @@ The outer constructors
 
     solver = QmrSolver(m, n, S)
     solver = QmrSolver(A, b)
+    solver = QmrSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1098,6 +1549,7 @@ The outer constructors
 
     solver = BilqrSolver(m, n, S)
     solver = BilqrSolver(A, b)
+    solver = BilqrSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1155,6 +1607,7 @@ The outer constructors
 
     solver = CglsSolver(m, n, S)
     solver = CglsSolver(A, b)
+    solver = CglsSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1197,6 +1650,7 @@ The outer constructors:
 
     solver = CglsLanczosShiftSolver(m, n, nshifts, S)
     solver = CglsLanczosShiftSolver(A, b, nshifts)
+    solver = CglsLanczosShiftSolver(kc::KrylovConstructor, nshifts)
 
 can be used to initialize this workspace.
 """
@@ -1257,6 +1711,7 @@ The outer constructors
 
     solver = CrlsSolver(m, n, S)
     solver = CrlsSolver(A, b)
+    solver = CrlsSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1303,6 +1758,7 @@ The outer constructors
 
     solver = CgneSolver(m, n, S)
     solver = CgneSolver(A, b)
+    solver = CgneSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1347,6 +1803,7 @@ The outer constructors
 
     solver = CrmrSolver(m, n, S)
     solver = CrmrSolver(A, b)
+    solver = CrmrSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1391,6 +1848,7 @@ The outer constructors
 
     solver = LslqSolver(m, n, S)
     solver = LslqSolver(A, b)
+    solver = LslqSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1439,6 +1897,7 @@ The outer constructors
 
     solver = LsqrSolver(m, n, S)
     solver = LsqrSolver(A, b)
+    solver = LsqrSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1487,6 +1946,7 @@ The outer constructors
 
     solver = LsmrSolver(m, n, S)
     solver = LsmrSolver(A, b)
+    solver = LsmrSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1537,6 +1997,7 @@ The outer constructors
 
     solver = LnlqSolver(m, n, S)
     solver = LnlqSolver(A, b)
+    solver = LnlqSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1587,6 +2048,7 @@ The outer constructors
 
     solver = CraigSolver(m, n, S)
     solver = CraigSolver(A, b)
+    solver = CraigSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1637,6 +2099,7 @@ The outer constructors
 
     solver = CraigmrSolver(m, n, S)
     solver = CraigmrSolver(A, b)
+    solver = CraigmrSolver(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1691,6 +2154,7 @@ The outer constructors
 
     solver = GmresSolver(m, n, memory, S)
     solver = GmresSolver(A, b, memory = 20)
+    solver = GmresSolver(kc::KrylovConstructor, memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
@@ -1746,6 +2210,7 @@ The outer constructors
 
     solver = FgmresSolver(m, n, memory, S)
     solver = FgmresSolver(A, b, memory = 20)
+    solver = FgmresSolver(kc::KrylovConstructor, memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
@@ -1801,6 +2266,7 @@ The outer constructors
 
     solver = FomSolver(m, n, memory, S)
     solver = FomSolver(A, b, memory = 20)
+    solver = FomSolver(kc::KrylovConstructor, memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
@@ -1853,6 +2319,7 @@ The outer constructors
 
     solver = GpmrSolver(m, n, memory, S)
     solver = GpmrSolver(A, b, memory = 20)
+    solver = GpmrSolver(kc::KrylovConstructor, memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n + m` if the value given is larger than `n + m`.
