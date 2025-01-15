@@ -3,15 +3,24 @@
 All solvers in Krylov.jl have an in-place variant implemented in a method whose name ends with `!`.
 A workspace (`KrylovSolver`), which contains the storage needed by a Krylov method, can be used to solve multiple linear systems with the same dimensions and the same floating-point precision.
 The section [storage requirements](@ref storage-requirements) specifies the memory needed for each Krylov method.
-Each `KrylovSolver` has two constructors:
+Each `KrylovSolver` has three constructors:
 
 ```@constructors
 XyzSolver(A, b)
 XyzSolver(m, n, S)
+XyzSolver(kc::KrylovConstructor)
 ```
 
-`Xyz` is the name of the Krylov method with lowercase letters except its first one (`Cg`, `Minres`, `Lsmr`, `Bicgstab`, ...).
-Given an operator `A` and a right-hand side `b`, you can create a `KrylovSolver` based on the size of `A` and the type of `b` or explicitly give the dimensions `(m, n)` and the storage type `S`.
+`Xyz` represents the name of the Krylov method, written in lowercase except for its first letter (e.g., `Cg`, `Minres`, `Lsmr`, `Bicgstab`, etc.).
+If the name of the Krylov method contains an underscore (e.g., `minres_qlp` or `cgls_lanczos_shift`), the workspace constructor transforms it by capitalizing each word and removing underscores, resulting in names like `MinresQlpSolver` or `CglsLanczosShiftSolver`.
+
+Given an operator `A` and a right-hand side `b`, you can create a `KrylovSolver` based on the size of `A` and the type of `b`, or explicitly provide the dimensions `(m, n)` and the storage type `S`.
+We assume that `S(undef, 0)`, `S(undef, n)`, and `S(undef, m)` are well-defined for the storage type `S`.
+For more advanced vector types, workspaces can also be created with the help of a `KrylovConstructor`.
+```@docs
+Krylov.KrylovConstructor
+```
+See the section [custom workspaces](@ref custom_workspaces) for an example where this constructor is the only applicable option.
 
 For example, use `S = Vector{Float64}` if you want to solve linear systems in double precision on the CPU and `S = CuVector{Float32}` if you want to solve linear systems in single precision on an Nvidia GPU.
 

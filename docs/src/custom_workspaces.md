@@ -1,3 +1,5 @@
+# [Custom workspaces](@id custom_workspaces)
+
 ## Custom workspaces for the Poisson equation with halo regions
 
 ### Introduction
