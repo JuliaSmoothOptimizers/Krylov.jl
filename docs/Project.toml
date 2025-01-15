@@ -17,5 +17,5 @@ SuiteSparseMatrixCollection = "ac199af8-68bc-55b8-82c4-7abd6f96ed98"
 
 [compat]
 Documenter = "1.0"
-LinearOperators = "~2.2.1"
-SuiteSparseMatrixCollection = "~0.5.3"
+LinearOperators = "2.9"
+SuiteSparseMatrixCollection = "0.5.7"
