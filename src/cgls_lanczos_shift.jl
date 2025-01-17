@@ -122,14 +122,12 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
 
     # Set up workspace.
     allocate_if(!MisI, solver, :v, S, solver.Mv)  # The length of v is n
-    u_prev, utilde = solver.Mv_prev, solver.Mv_next
-    u = solver.u
+    v, u_prev, u, u_next = solver.Mv, solver.u_prev, solver.u, solver.u_next
     x, p, σ, δhat = solver.x, solver.p, solver.σ, solver.δhat
     ω, γ, rNorms, converged = solver.ω, solver.γ, solver.rNorms, solver.converged
     not_cv, stats = solver.not_cv, solver.stats
     rNorms_history, status = stats.residuals, stats.status
     reset!(stats)
-    v = solver.v
 
     # Initial state.
     ## Distribute x similarly to shifts.
@@ -198,16 +196,16 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     while ! (solved || tired || user_requested_exit || overtimed)
 
       # Form next Lanczos vector.
-      mul!(utilde, A, v)              # utildeₖ ← Avₖ
-      δ = kdotr(m, utilde, utilde)    # δₖ = vₖᵀAᴴAvₖ
-      kaxpy!(m, -δ, u, utilde)        # uₖ₊₁ = utildeₖ - δₖuₖ - βₖuₖ₋₁
-      kaxpy!(m, -β, u_prev, utilde)
-      mul!(v, Aᴴ, utilde)             # vₖ₊₁ = Aᴴuₖ₊₁
+      mul!(u_next, A, v)              # u_nextₖ ← Avₖ
+      δ = kdotr(m, u_next, u_next)    # δₖ = vₖᵀAᴴAvₖ
+      kaxpy!(m, -δ, u, u_next)        # uₖ₊₁ = u_nextₖ - δₖuₖ - βₖuₖ₋₁
+      kaxpy!(m, -β, u_prev, u_next)
+      mul!(v, Aᴴ, u_next)             # vₖ₊₁ = Aᴴuₖ₊₁
       β = knorm_elliptic(n, v, v)     # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
       kscal!(n, one(FC) / β, v)       # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-      kscal!(m, one(FC) / β, utilde)  # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
+      kscal!(m, one(FC) / β, u_next)  # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
       kcopy!(m, u_prev, u)            # u_prev ← u
-      kcopy!(m, u, utilde)            # u ← utilde
+      kcopy!(m, u, u_next)            # u ← u_next
 
       MisI || (ρ = kdotr(n, v, v))
       for i = 1 : nshifts

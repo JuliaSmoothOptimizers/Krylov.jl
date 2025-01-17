@@ -396,12 +396,12 @@
 
       @testset "CGLS-LANCZOS-SHIFT" begin
         # CGLS-LANCZOS-SHIFT needs:
-        # - 3 n-vectors: Mv_prev, Mv, Mv_next
-        # - 1 m-vector: u
+        # - 1 n-vector: Mv
+        # - 3 m-vectors: u_prev, u, u_next
         # - 2 (n*nshifts)-matrices: x, p
         # - 5 nshifts-vectors: σ, δhat, ω, γ, rNorms
         # - 3 nshifts-bitVector: converged, indefinite, not_cv
-        storage_cgls_lanczos_shift_bytes(m, n, nshifts) = nbits_FC * (3 * n + 1 * m + 2 * n * nshifts) + nbits_T * (5 * nshifts) + (3 * nshifts)
+        storage_cgls_lanczos_shift_bytes(m, n, nshifts) = nbits_FC * (1 * n + 3 * m + 2 * n * nshifts) + nbits_T * (5 * nshifts) + (3 * nshifts)
 
         expected_cgls_lanczos_shift_bytes = storage_cgls_lanczos_shift_bytes(m, k, nshifts)
         (x, stats) = cgls_lanczos_shift(Ao, b, shifts)  # warmup
