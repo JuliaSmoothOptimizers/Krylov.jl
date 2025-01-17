@@ -244,7 +244,7 @@ function Krylov.kref!(n::Integer, x::HaloVector{T}, y::HaloVector{T}, c::T, s::T
             x_ij = _x[i,j]
             y_ij = _y[i,j]
             _x[i,j] = c       * x_ij + s * y_ij
-            _x[i,j] = conj(s) * x_ij - c * y_ij
+            _y[i,j] = conj(s) * x_ij - c * y_ij
         end
     end
     return x, y
