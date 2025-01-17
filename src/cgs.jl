@@ -136,8 +136,8 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :vw, S, solver.n)
-    allocate_if(!NisI, solver, :yz, S, solver.n)
+    allocate_if(!MisI, solver, :vw, S, solver.x)  # The length of vw is n
+    allocate_if(!NisI, solver, :yz, S, solver.x)  # The length of yz is n
     Δx, x, r, u, p, q, ts, stats = solver.Δx, solver.x, solver.r, solver.u, solver.p, solver.q, solver.ts, solver.stats
     warm_start = solver.warm_start
     rNorms = stats.residuals

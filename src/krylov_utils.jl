@@ -296,7 +296,10 @@ Create a vector of storage type `S` of length `n` only composed of one.
 """
 kones(S, n) = fill!(S(undef, n), one(eltype(S)))
 
-allocate_if(bool, solver, v, S, n::Int) = bool && kisempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, n))
+kisempty(v) = isempty(v)
+ksimilar(v) = similar(v)
+allocate_if(bool, solver, v, S, u) = bool && kisempty(solver.:($v)::S) && (solver.:($v)::S = ksimilar(u))
+# allocate_if(bool, solver, v, S, n::Int) = bool && kisempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, n))
 allocate_if(bool, solver, v, S, m::Int, n::Int) = bool && kisempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, m, n))
 
 kdisplay(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
@@ -349,9 +352,6 @@ macro kswap!(x, y)
     $(esc(y)) = tmp
   end
 end
-
-ksimilar(v) = similar(v)
-kisempty(v) = isempty(v)
 
 """
     roots = to_boundary(n, x, d, radius; flip, xNorm2, dNorm2)

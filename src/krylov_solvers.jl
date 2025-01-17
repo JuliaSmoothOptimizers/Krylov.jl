@@ -1746,10 +1746,10 @@ function CglsLanczosShiftSolver(kc::KrylovConstructor, nshifts)
   m          = length(kc.vm)
   n          = length(kc.vn)
   Mv         = ksimilar(kc.vn)
-  Mv_prev    = ksimilar(kc.vm)
-  Mv_next    = ksimilar(kc.vm)
+  Mv_prev    = ksimilar(kc.vn)
+  Mv_next    = ksimilar(kc.vn)
   u          = ksimilar(kc.vm)
-  v          = ksimilar(kc.vn)
+  v          = ksimilar(kc.vn_empty)
   x          = S[ksimilar(kc.vn) for i = 1 : nshifts]
   p          = S[ksimilar(kc.vn) for i = 1 : nshifts]
   σ          = Vector{T}(undef, nshifts)
@@ -1769,10 +1769,10 @@ function CglsLanczosShiftSolver(m, n, nshifts, S)
   FC         = eltype(S)
   T          = real(FC)
   Mv         = S(undef, n)
-  Mv_prev    = S(undef, m)
-  Mv_next    = S(undef, m)
+  Mv_prev    = S(undef, n)
+  Mv_next    = S(undef, n)
   u          = S(undef, m)
-  v          = S(undef, n)
+  v          = S(undef, 0)
   x          = S[S(undef, n) for i = 1 : nshifts]
   p          = S[S(undef, n) for i = 1 : nshifts]
   σ          = Vector{T}(undef, nshifts)
@@ -2880,8 +2880,8 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
           length(x0) == solver.n || error("x0 should have size $n")
           length(y0) == solver.m || error("y0 should have size $m")
           S = typeof(solver.x)
-          allocate_if(true, solver, :Δx, S, solver.n)
-          allocate_if(true, solver, :Δy, S, solver.m)
+          allocate_if(true, solver, :Δx, S, solver.x)  # The length of Δx is n
+          allocate_if(true, solver, :Δy, S, solver.y)  # The length of Δy is m
           kcopy!(solver.n, solver.Δx, x0)
           kcopy!(solver.m, solver.Δy, y0)
           solver.warm_start = true
@@ -2891,7 +2891,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
         function warm_start!(solver :: $KS, x0)
           S = typeof(solver.x)
           length(x0) == solver.n || error("x0 should have size $n")
-          allocate_if(true, solver, :Δx, S, solver.n)
+          allocate_if(true, solver, :Δx, S, solver.x)  # The length of Δx is n
           kcopy!(solver.n, solver.Δx, x0)
           solver.warm_start = true
           return solver

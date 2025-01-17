@@ -121,7 +121,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, solver.n)
+    allocate_if(!MisI, solver, :v, S, solver.Mv)  # The length of v is n
     u_prev, utilde = solver.Mv_prev, solver.Mv_next
     u = solver.u
     x, p, σ, δhat = solver.x, solver.p, solver.σ, solver.δhat
