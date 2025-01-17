@@ -1719,24 +1719,24 @@ The outer constructors:
 can be used to initialize this workspace.
 """
 mutable struct CglsLanczosShiftSolver{T,FC,S} <: KrylovSolver{T,FC,S}
-  m          :: Int
-  n          :: Int
-  nshifts    :: Int
-  Mv         :: S
-  Mv_prev    :: S
-  Mv_next    :: S
-  u          :: S
-  v          :: S
-  x          :: Vector{S}
-  p          :: Vector{S}
-  σ          :: Vector{T}
-  δhat       :: Vector{T}
-  ω          :: Vector{T}
-  γ          :: Vector{T}
-  rNorms     :: Vector{T}
-  converged  :: BitVector
-  not_cv     :: BitVector
-  stats      :: LanczosShiftStats{T}
+  m         :: Int
+  n         :: Int
+  nshifts   :: Int
+  Mv        :: S
+  u_prev    :: S
+  u_next    :: S
+  u         :: S
+  v         :: S
+  x         :: Vector{S}
+  p         :: Vector{S}
+  σ         :: Vector{T}
+  δhat      :: Vector{T}
+  ω         :: Vector{T}
+  γ         :: Vector{T}
+  rNorms    :: Vector{T}
+  converged :: BitVector
+  not_cv    :: BitVector
+  stats     :: LanczosShiftStats{T}
 end
 
 function CglsLanczosShiftSolver(kc::KrylovConstructor, nshifts)
@@ -1746,8 +1746,8 @@ function CglsLanczosShiftSolver(kc::KrylovConstructor, nshifts)
   m          = length(kc.vm)
   n          = length(kc.vn)
   Mv         = ksimilar(kc.vn)
-  Mv_prev    = ksimilar(kc.vn)
-  Mv_next    = ksimilar(kc.vn)
+  u_prev     = ksimilar(kc.vm)
+  u_next     = ksimilar(kc.vm)
   u          = ksimilar(kc.vm)
   v          = ksimilar(kc.vn_empty)
   x          = S[ksimilar(kc.vn) for i = 1 : nshifts]
@@ -1761,7 +1761,7 @@ function CglsLanczosShiftSolver(kc::KrylovConstructor, nshifts)
   converged  = BitVector(undef, nshifts)
   not_cv     = BitVector(undef, nshifts)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
-  solver = CglsLanczosShiftSolver{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  solver = CglsLanczosShiftSolver{T,FC,S}(m, n, nshifts, Mv, u_prev, u_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return solver
 end
 
@@ -1769,8 +1769,8 @@ function CglsLanczosShiftSolver(m, n, nshifts, S)
   FC         = eltype(S)
   T          = real(FC)
   Mv         = S(undef, n)
-  Mv_prev    = S(undef, n)
-  Mv_next    = S(undef, n)
+  u_prev     = S(undef, m)
+  u_next     = S(undef, m)
   u          = S(undef, m)
   v          = S(undef, 0)
   x          = S[S(undef, n) for i = 1 : nshifts]
@@ -1784,7 +1784,7 @@ function CglsLanczosShiftSolver(m, n, nshifts, S)
   converged  = BitVector(undef, nshifts)
   not_cv     = BitVector(undef, nshifts)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
-  solver = CglsLanczosShiftSolver{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  solver = CglsLanczosShiftSolver{T,FC,S}(m, n, nshifts, Mv, u_prev, u_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return solver
 end
 
