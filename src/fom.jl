@@ -126,9 +126,9 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
     # Set up workspace.
-    allocate_if(!MisI  , solver, :q , S, solver.n)
-    allocate_if(!NisI  , solver, :p , S, solver.n)
-    allocate_if(restart, solver, :Δx, S, solver.n)
+    allocate_if(!MisI  , solver, :q , S, solver.x)  # The length of q is n
+    allocate_if(!NisI  , solver, :p , S, solver.x)  # The length of p is n
+    allocate_if(restart, solver, :Δx, S, solver.x)  # The length of Δx is n
     Δx, x, w, V, z = solver.Δx, solver.x, solver.w, solver.V, solver.z
     l, U, stats = solver.l, solver.U, solver.stats
     warm_start = solver.warm_start

@@ -139,7 +139,7 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :Mr, S, solver.m)
+    allocate_if(!MisI, solver, :Mr, S, solver.r)  # The length of Mr is m
     x, p, s, r, q, stats = solver.x, solver.p, solver.s, solver.r, solver.q, solver.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)

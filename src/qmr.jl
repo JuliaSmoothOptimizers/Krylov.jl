@@ -139,8 +139,8 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     Nᴴ = N'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :t, S, solver.n)
-    allocate_if(!NisI, solver, :s, S, solver.n)
+    allocate_if(!MisI, solver, :t, S, solver.x)  # The length of t is n
+    allocate_if(!NisI, solver, :s, S, solver.x)  # The length of s is n
     uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
     Δx, x, wₖ₋₂, wₖ₋₁, stats = solver.Δx, solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.stats
     warm_start = solver.warm_start

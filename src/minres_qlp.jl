@@ -129,7 +129,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :vₖ, S, solver.n)
+    allocate_if(!MisI, solver, :vₖ, S, solver.x)  # The length of vₖ is n
     wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ
     Δx, x, p, stats = solver.Δx, solver.x, solver.p, solver.stats
     warm_start = solver.warm_start

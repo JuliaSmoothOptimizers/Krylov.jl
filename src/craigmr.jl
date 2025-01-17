@@ -176,9 +176,9 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :u, S, solver.m)
-    allocate_if(!NisI, solver, :v, S, solver.n)
-    allocate_if(λ > 0, solver, :q, S, solver.n)
+    allocate_if(!MisI, solver, :u, S, solver.y)  # The length of u is m
+    allocate_if(!NisI, solver, :v, S, solver.x)  # The length of v is n
+    allocate_if(λ > 0, solver, :q, S, solver.x)  # The length of q is n
     x, Nv, Aᴴu, d, y, Mu = solver.x, solver.Nv, solver.Aᴴu, solver.d, solver.y, solver.Mu
     w, wbar, Av, q, stats = solver.w, solver.wbar, solver.Av, solver.q, solver.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals

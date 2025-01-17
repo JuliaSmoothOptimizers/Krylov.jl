@@ -116,7 +116,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :Mu, S, solver.n)
+    allocate_if(!MisI, solver, :Mu, S, solver.x)  # The length of Mu is n
     Δx, x, r, p, s, q, t, u, stats = solver.Δx, solver.x, solver.r, solver.p, solver.s, solver.q, solver.t, solver.u, solver.stats
     Mu = MisI ? u : solver.Mu
     warm_start = solver.warm_start
