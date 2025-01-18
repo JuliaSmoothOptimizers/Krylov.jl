@@ -197,11 +197,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
 
       # Initial Γ and V₁
       copyto!(V[1], R₀)
-      if C isa Matrix
-        householder!(V[1], Z[1], τ[1])
-      else
-        householder!(V[1], Z[1], τ[1], solver.tmp)
-      end
+      householder!(V[1], Z[1], τ[1])
 
       npass = npass + 1
       inner_iter = 0
@@ -241,11 +237,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         end
 
         # Vₖ₊₁ and Ψₖ₊₁.ₖ are stored in Q and C.
-        if C isa Matrix
-          householder!(Q, C, τ[inner_iter])
-        else
-          householder!(Q, C, τ[inner_iter], solver.tmp)
-        end
+        householder!(Q, C, τ[inner_iter])
 
         # Update the QR factorization of Hₖ₊₁.ₖ.
         # Apply previous Householder reflections Ωᵢ.
@@ -260,11 +252,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         # Compute and apply current Householder reflection Ωₖ.
         H[inner_iter][1:p,:] .= R[nr+inner_iter]
         H[inner_iter][p+1:2p,:] .= C
-        if C isa Matrix
-          householder!(H[inner_iter], R[nr+inner_iter], τ[inner_iter], compact=true)
-        else
-          householder!(H[inner_iter], R[nr+inner_iter], τ[inner_iter], solver.tmp, compact=true)
-        end
+        householder!(H[inner_iter], R[nr+inner_iter], τ[inner_iter], compact=true)
 
         # Update Zₖ = (Qₖ)ᴴΓE₁ = (Λ₁, ..., Λₖ, Λbarₖ₊₁)
         D1 .= Z[inner_iter]

@@ -30,7 +30,6 @@ mutable struct BlockMinresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
   C          :: SM
   D          :: SM
   Φ          :: SM
-  tmp        :: SM
   Vₖ₋₁       :: SM
   Vₖ         :: SM
   wₖ₋₂       :: SM
@@ -53,7 +52,6 @@ function BlockMinresSolver(m, n, p, SV, SM)
   C  = SM(undef, p, p)
   D  = SM(undef, 2p, p)
   Φ  = SM(undef, p, p)
-  tmp = C isa Matrix ? SM(undef, 0, 0) : SM(undef, p, p)
   Vₖ₋₁ = SM(undef, n, p)
   Vₖ   = SM(undef, n, p)
   wₖ₋₂ = SM(undef, n, p)
@@ -63,7 +61,7 @@ function BlockMinresSolver(m, n, p, SV, SM)
   τₖ₋₂ = SV(undef, p)
   τₖ₋₁ = SV(undef, p)
   stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = BlockMinresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, tmp, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, false, stats)
+  solver = BlockMinresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, false, stats)
   return solver
 end
 
@@ -103,7 +101,6 @@ mutable struct BlockGmresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
   R          :: Vector{SM}
   H          :: Vector{SM}
   τ          :: Vector{SV}
-  tmp        :: SM
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
@@ -124,9 +121,8 @@ function BlockGmresSolver(m, n, p, memory, SV, SM)
   R  = SM[SM(undef, p, p) for i = 1 : div(memory * (memory+1), 2)]
   H  = SM[SM(undef, 2p, p) for i = 1 : memory]
   τ  = SV[SV(undef, p) for i = 1 : memory]
-  tmp = C isa Matrix ? SM(undef, 0, 0) : SM(undef, p, p)
   stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = BlockGmresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, tmp, false, stats)
+  solver = BlockGmresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, false, stats)
   return solver
 end
 

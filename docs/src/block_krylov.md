@@ -1,5 +1,5 @@
 !!! note
-    `block_minres` and `block_gmres` work on GPUs with Julia 1.11.
+    `block_minres` and `block_gmres` work on GPUs with Julia 1.11. Version 11.2.0 or later of `GPUArrays.jl` is also required.
 
 If you want to use `block_minres` and `block_gmres` on previous Julia versions, you can overload the function `Krylov.copy_triangle` with the following code:
 ```julia

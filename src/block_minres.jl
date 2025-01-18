@@ -164,11 +164,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
     # Initial Ψ₁ and V₁
     τ = τₖ₋₂
     copyto!(Vₖ, R₀)
-    if C isa Matrix
-      householder!(Vₖ, Φbarₖ, τ)
-    else
-      householder!(Vₖ, Φbarₖ, τ, solver.tmp)
-    end
+    householder!(Vₖ, Φbarₖ, τ)
 
     while !(solved || tired || user_requested_exit || overtimed)
       # Update iteration index.
@@ -217,11 +213,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
 
       # Vₖ₊₁ and Ψₖ₊₁ are stored in Q and Ψₖ₊₁.
       τ = τₖ₋₂
-      if C isa Matrix
-        householder!(Q, Ψₖ₊₁, τ)
-      else
-        householder!(Q, Ψₖ₊₁, τ, solver.tmp)
-      end
+      householder!(Q, Ψₖ₊₁, τ)
 
       # Compute and apply current Householder reflection θₖ.
       Hₖ = Hₖ₋₂
@@ -229,11 +221,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
       (iter == 1) && (Λbarₖ .= Ωₖ)
       Hₖ[1:p,:] .= Λbarₖ
       Hₖ[p+1:2p,:] .= Ψₖ₊₁
-      if C isa Matrix
-        householder!(Hₖ, Λₖ, τₖ, compact=true)
-      else
-        householder!(Hₖ, Λₖ, τₖ, solver.tmp, compact=true)
-      end
+      householder!(Hₖ, Λₖ, τₖ, compact=true)
 
       # Update Zₖ = (Qₖ)ᴴΨ₁E₁ = (Φ₁, ..., Φₖ, Φbarₖ₊₁)
       D1 .= Φbarₖ
