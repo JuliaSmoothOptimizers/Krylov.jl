@@ -239,7 +239,7 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
           end
           push!(s, zero(FC))
           push!(c, zero(T))
-          push!(Z, S(undef, n))
+          push!(Z, similar(solver.x))
         end
 
         # Continue the process.

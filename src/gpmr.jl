@@ -459,8 +459,8 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
       # Compute vₖ₊₁ and uₖ₊₁
       if !(solved || tired || breakdown || user_requested_exit || overtimed)
         if iter ≥ mem
-          push!(V, S(undef, m))
-          push!(U, S(undef, n))
+          push!(V, similar(solver.x))
+          push!(U, similar(solver.y))
           push!(zt, zero(FC), zero(FC))
         end
 
