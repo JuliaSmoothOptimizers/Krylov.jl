@@ -291,7 +291,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
         # Compute vₖ₊₁.
         if !(solved || inner_tired || breakdown || user_requested_exit || overtimed)
           if !restart && (inner_iter ≥ mem)
-            push!(V, S(undef, n))
+            push!(V, similar(solver.x))
           end
           V[inner_iter+1] .= q ./ Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
         end
