@@ -19,6 +19,10 @@ jobs:
         allow_failure: [false]
         include:
           - version: '1'
+            os: ubuntu-24.04-arm
+            arch: arm64
+            allow_failure: false
+          - version: '1'
             os: macos-latest
             arch: arm64
             allow_failure: false
