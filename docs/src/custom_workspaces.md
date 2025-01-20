@@ -359,7 +359,7 @@ b[Block(1)] = c
 b[Block(2)] = d
 ```
 
-For saddle point systems, a well-known preconditioner is the ``ideal preconditioner'' $P^{-1}$, as described in the paper ["A Note on Preconditioning for Indefinite Linear Systems"](https://doi.org/10.1137/S1064827599355153).
+For saddle point systems, a well-known preconditioner is the "ideal preconditioner'' $P^{-1}$, as described in the paper ["A Note on Preconditioning for Indefinite Linear Systems"](https://doi.org/10.1137/S1064827599355153).
 It is defined as:
 
 ```math
@@ -400,6 +400,7 @@ using Krylov
 kc = KrylovConstructor(b)
 solver = MinresSolver(kc)
 minres!(solver, A, b; M=P)
+
 x = solution(solver)
 stats = statistics(solver)
 niter = stats.niter
