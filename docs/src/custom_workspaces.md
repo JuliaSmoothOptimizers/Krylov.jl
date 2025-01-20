@@ -311,3 +311,97 @@ This approach reduces branching, yielding faster execution, especially on large 
 
 !!! info
     [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) uses a similar strategy with its `Field` type, efficiently solving large linear systems with Krylov.jl.
+
+## Solving saddle point systems with BlockArrays.jl and Krylov.jl
+
+[BlockArrays.jl](https://github.com/JuliaArrays/BlockArrays.jl) simplifies working with structured matrices, making it an ideal tool for solving saddle point systems.
+In this example, we solve a structured linear system $Ax = b$ of the form:
+
+```math
+\begin{bmatrix}
+   K & B^T \\
+   B & 0
+\end{bmatrix}
+\begin{bmatrix}
+   y \\
+   z
+\end{bmatrix} =
+\begin{bmatrix}
+   c \\
+   d
+\end{bmatrix}.
+```
+
+We first define the matrix $A$ and the vector $b$ using `BlockArrays.jl`:
+
+```@example block-arrays; continued = true
+using LinearAlgebra
+using BlockArrays
+
+nK = 10
+nB = 2
+K = rand(nK, nK)
+K = K * K' + I
+B = rand(nB, nK)
+c = rand(nK)
+d = rand(nB)
+
+# Create the saddle point matrix A
+A = BlockArray{Float64}(undef, [nK, nB], [nK, nB])
+A[Block(1, 1)] = K
+A[Block(1, 2)] = B'
+A[Block(2, 1)] = B
+A[Block(2, 2)] = zeros(nB, nB)
+
+# Create the right-hand side vector b
+b = BlockVector{Float64}(undef, [nK, nB])
+b[Block(1)] = c
+b[Block(2)] = d
+```
+
+For saddle point systems, a well-known preconditioner is the "ideal preconditioner" $P^{-1}$, as described in the paper ["A Note on Preconditioning for Indefinite Linear Systems"](https://doi.org/10.1137/S1064827599355153).
+It is defined as:
+
+```math
+P^{-1} =
+\begin{bmatrix}
+   K^{-1} & 0
+\\ 0      & (B K^{-1} B^T)^{-1}
+\end{bmatrix}.
+```
+
+This preconditioner guarantees convergence in exactly three iterations, as $P^{-1}A$ has only three distinct eigenvalues.
+However, this preconditioner is expensive, as it requires $K^{-1}$ and the inverse of the Schur complement $B K^{-1} B^T$.
+In practice, we approximate it.
+One common approach is to replace $K^{-1}$ with $\mathrm{diag}(K)^{-1}$, creating a cheaper preconditioner.
+
+```@example block-arrays; continued = true
+struct IdealPreconditioner{T1, T2}
+    BD1::T1
+    BD2::T2
+end
+
+function LinearAlgebra.mul!(y::BlockVector, P::IdealPreconditioner, x::BlockVector)
+    mul!(y[Block(1)], P.BD1, x[Block(1)])
+    mul!(y[Block(2)], P.BD2, x[Block(2)])
+    return y
+end
+
+# Create the ideal preconditioner
+BD1 = Diagonal(K) |> inv
+BD2 = inv(B * BD1 * B')
+P = IdealPreconditioner(BD1, BD2)
+```
+
+We now solve the system $Ax = b$ using `minres` with our preconditioner:
+
+```@example block-arrays
+using Krylov
+
+kc = KrylovConstructor(b)
+solver = MinresSolver(kc)
+minres!(solver, A, b; M=P)
+x = solution(solver)
+```
+
+This example demonstrates how `BlockArrays.jl` and `Krylov.jl` can be effectively combined to solve structured saddle point systems.
