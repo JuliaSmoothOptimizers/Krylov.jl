@@ -56,7 +56,7 @@
 
       # Test with Jacobi (or diagonal) preconditioner
       A, b, M = square_preconditioned(FC=FC)
-      (x, stats) = cr(A, b, M=M)
+      (x, stats) = cr(A, b, M=M, atol=1e-6, rtol=0.0)
       r = b - A * x
       resid = sqrt(real(dot(r, M * r))) / sqrt(real(dot(b, M * b)))
       @test(resid ≤ cr_tol)
