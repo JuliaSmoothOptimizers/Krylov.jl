@@ -359,7 +359,7 @@ b[Block(1)] = c
 b[Block(2)] = d
 ```
 
-For saddle point systems, a well-known preconditioner is the "ideal preconditioner" $P^{-1}$, as described in the paper ["A Note on Preconditioning for Indefinite Linear Systems"](https://doi.org/10.1137/S1064827599355153).
+For saddle point systems, a well-known preconditioner is the ``ideal preconditioner'' $P^{-1}$, as described in the paper ["A Note on Preconditioning for Indefinite Linear Systems"](https://doi.org/10.1137/S1064827599355153).
 It is defined as:
 
 ```math
@@ -372,7 +372,6 @@ P^{-1} =
 
 This preconditioner guarantees convergence in exactly three iterations, as $P^{-1}A$ has only three distinct eigenvalues.
 However, this preconditioner is expensive, as it requires $K^{-1}$ and the inverse of the Schur complement $B K^{-1} B^T$.
-In practice, we approximate it.
 One common approach is to replace $K^{-1}$ with $\mathrm{diag}(K)^{-1}$, creating a cheaper preconditioner.
 
 ```@example block-arrays; continued = true
@@ -382,13 +381,13 @@ struct IdealPreconditioner{T1, T2}
 end
 
 function LinearAlgebra.mul!(y::BlockVector, P::IdealPreconditioner, x::BlockVector)
-    mul!(y[Block(1)], P.BD1, x[Block(1)])
-    mul!(y[Block(2)], P.BD2, x[Block(2)])
+    mul!(y.blocks[1], P.BD1, x.blocks[1])
+    mul!(y.blocks[2], P.BD2, x.blocks[2])
     return y
 end
 
 # Create the ideal preconditioner
-BD1 = Diagonal(K) |> inv
+BD1 = inv(K)
 BD2 = inv(B * BD1 * B')
 P = IdealPreconditioner(BD1, BD2)
 ```
@@ -402,6 +401,8 @@ kc = KrylovConstructor(b)
 solver = MinresSolver(kc)
 minres!(solver, A, b; M=P)
 x = solution(solver)
+stats = statistics(solver)
+niter = stats.niter
 ```
 
 This example demonstrates how `BlockArrays.jl` and `Krylov.jl` can be effectively combined to solve structured saddle point systems.
