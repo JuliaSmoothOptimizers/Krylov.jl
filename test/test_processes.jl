@@ -33,17 +33,19 @@ end
         A = rand(FC, n, n)
         A = A' * A
         b = rand(FC, n)
-        V, β₁, T = hermitian_lanczos(A, b, k)
+        @testset "reorthogonalization = $reorthogonalization" for reorthogonalization in (false, true)
+          V, β₁, T = hermitian_lanczos(A, b, k; reorthogonalization)
 
-        @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
-        @test β₁ * V[:,1] ≈ b
-        @test A * V[:,1:k] ≈ V * T
+          @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
+          @test β₁ * V[:,1] ≈ b
+          @test A * V[:,1:k] ≈ V * T
 
-        storage_hermitian_lanczos_bytes(n, k) = 4k * nbits_I + (3k-1) * nbits_R + n*(k+1) * nbits_FC
+          storage_hermitian_lanczos_bytes(n, k) = 4k * nbits_I + (3k-1) * nbits_R + n*(k+1) * nbits_FC
 
-        expected_hermitian_lanczos_bytes = storage_hermitian_lanczos_bytes(n, k)
-        actual_hermitian_lanczos_bytes = @allocated hermitian_lanczos(A, b, k)
-        @test expected_hermitian_lanczos_bytes ≤ actual_hermitian_lanczos_bytes ≤ 1.02 * expected_hermitian_lanczos_bytes
+          expected_hermitian_lanczos_bytes = storage_hermitian_lanczos_bytes(n, k)
+          actual_hermitian_lanczos_bytes = @allocated hermitian_lanczos(A, b, k; reorthogonalization)
+          @test expected_hermitian_lanczos_bytes ≤ actual_hermitian_lanczos_bytes ≤ 1.02 * expected_hermitian_lanczos_bytes
+        end
       end
 
       @testset "Non-Hermitian Lanczos" begin
@@ -70,7 +72,7 @@ end
       @testset "Arnoldi" begin
         A = rand(FC, n, n)
         b = rand(FC, n)
-        for reorthogonalization in (false, true)
+        @testset "reorthogonalization = $reorthogonalization" for reorthogonalization in (false, true)
           V, β, H = arnoldi(A, b, k; reorthogonalization)
 
           @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
@@ -144,7 +146,7 @@ end
         B = rand(FC, n, m)
         b = rand(FC, m)
         c = rand(FC, n)
-        for reorthogonalization in (false, true)
+        @testset "reorthogonalization = $reorthogonalization" for reorthogonalization in (false, true)
           V, β, H, U, γ, F = montoison_orban(A, B, b, c, k; reorthogonalization)
 
           @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4

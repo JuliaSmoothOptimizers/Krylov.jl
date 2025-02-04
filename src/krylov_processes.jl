@@ -1,7 +1,7 @@
 export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_simon_yip, montoison_orban
 
 """
-    V, β, T = hermitian_lanczos(A, b, k; allow_breakdown=false)
+    V, β, T = hermitian_lanczos(A, b, k; allow_breakdown=false, reorthogonalization=false)
 
 #### Input arguments
 
@@ -9,9 +9,10 @@ export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_s
 * `b`: a vector of length `n`;
 * `k`: the number of iterations of the Hermitian Lanczos process.
 
-#### Keyword argument
+#### Keyword arguments
 
-* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs.
+* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs;
+* `reorthogonalization`: reorthogonalize each newly added vector of the Krylov basis against only the two previous vectors (local reorthogonalization).
 
 #### Output arguments
 
@@ -19,12 +20,13 @@ export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_s
 * `β`: a coefficient such that `βv₁ = b`;
 * `T`: a sparse `(k+1) × k` tridiagonal matrix.
 
-#### Reference
+#### References
 
 * C. Lanczos, [*An Iteration Method for the Solution of the Eigenvalue Problem of Linear Differential and Integral Operators*](https://doi.org/10.6028/jres.045.026), Journal of Research of the National Bureau of Standards, 45(4), pp. 225--280, 1950.
+* H. D. Simon, [*The Lanczos algorithm with partial reorthogonalization*](https://doi.org/10.1090/S0025-5718-1984-0725988-X), Mathematics of computation, 42(165), pp. 115--142, 1984.
 """
 function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
-                           allow_breakdown::Bool=false) where FC <: FloatOrComplex
+                           allow_breakdown::Bool=false, reorthogonalization::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
   R = real(FC)
   S = ktypeof(b)
@@ -73,8 +75,20 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
       kaxpy!(n, -βᵢ, vᵢ₋₁, q)
     end
     αᵢ = kdotr(n, vᵢ, q)
-    nzval[pαᵢ] = αᵢ  # Tᵢ.ᵢ = αᵢ
     kaxpy!(n, -αᵢ, vᵢ, q)
+    if reorthogonalization
+      if i ≥ 2
+        vᵢ₋₁ = view(V,:,i-1)
+        βtmp = kdotr(n, vᵢ₋₁, q)
+        nzval[pαᵢ-2] += βtmp
+        nzval[pαᵢ-1] += βtmp
+        kaxpy!(n, -βtmp, vᵢ₋₁, q)
+      end
+      αtmp = kdotr(n, vᵢ, q)
+      αᵢ += αtmp
+      kaxpy!(n, -αtmp, vᵢ, q)
+    end
+    nzval[pαᵢ] = αᵢ  # Tᵢ.ᵢ = αᵢ
     βᵢ₊₁ = knorm(n, q)
     if βᵢ₊₁ == 0
       !allow_breakdown && error("Exact breakdown βᵢ₊₁ == 0 at iteration i = $i.")
@@ -111,9 +125,10 @@ end
 * `γᴴ`: a coefficient such that `γᴴu₁ = c`;
 * `Tᴴ`: a sparse `(k+1) × k` tridiagonal matrix.
 
-#### Reference
+#### References
 
 * C. Lanczos, [*An Iteration Method for the Solution of the Eigenvalue Problem of Linear Differential and Integral Operators*](https://doi.org/10.6028/jres.045.026), Journal of Research of the National Bureau of Standards, 45(4), pp. 225--280, 1950.
+* H. I. van der Veen and K. Vuik, [*Bi-Lanczos with partial orthogonalization*](https://doi.org/10.1016/0045-7949(94)00565-K), Computers & structures, 56(4), pp. 605--613, 1995.
 """
 function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int;
                               allow_breakdown::Bool=false) where FC <: FloatOrComplex
@@ -182,7 +197,7 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     αᵢ = kdot(n, uᵢ, q)
     nzval_T[pαᵢ]  = αᵢ        # Tᵢ.ᵢ  = αᵢ
     nzval_Tᴴ[pαᵢ] = conj(αᵢ)  # Tᴴᵢ.ᵢ = ᾱᵢ
-    kaxpy!(m, -     αᵢ , vᵢ, q)
+    kaxpy!(n, -     αᵢ , vᵢ, q)
     kaxpy!(n, -conj(αᵢ), uᵢ, p)
     pᴴq = kdot(n, p, q)
     if pᴴq == 0
@@ -220,7 +235,7 @@ end
 #### Keyword arguments
 
 * `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs;
-* `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against all previous vectors.
+* `reorthogonalization`: reorthogonalize each newly added vector of the Krylov basis against all previous vectors (full reorthogonalization).
 
 #### Output arguments
 
@@ -522,7 +537,7 @@ end
 #### Keyword arguments
 
 * `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs;
-* `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against all previous vectors.
+* `reorthogonalization`: reorthogonalize each newly added vector of the Krylov basis against all previous vectors (full reorthogonalization).
 
 #### Output arguments
 
