@@ -201,8 +201,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         if (pAp ≤ γ * pNorm²) || (ρ ≤ γ * rNorm²)
           npcurv = true
           (verbose > 0) && @printf(iostream, "nonpositive curvature detected: pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
-          solved = true
-          stats.solved = solved
+          stats.solved = true
           stats.inconsistent = false
           stats.timer = start_time |> ktimer
           stats.status = "nonpositive curvature"
