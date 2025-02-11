@@ -21,6 +21,59 @@ function symmetric_indefinite(n :: Int=10; FC=Float64)
   return A, b
 end
 
+
+# Symmetric and indefinite system with negative curvature.
+function symmetric_indefinite_negative_curv(n::Int=10; FC=Float64, shift=5)
+  α = FC <: Complex ? FC(im) : one(FC)
+  # Build the tridiagonal matrix with 1's on the diagonal and α on the off-diagonals, and force negative curvature.
+  A = spdiagm(
+          -1 => α * ones(FC, n-1),
+           0 => ones(FC, n),
+           1 => conj(α) * ones(FC, n-1)
+      ) - shift * eye(n)
+  
+  b = A * FC[1:n;]  
+  return A, b
+end
+
+"""
+    system_zero_quad(n::Int=2; FC=Float64)
+
+Creates an n×n symmetric matrix `A` and vector `b` (with n ≥ 2) such that:
+- `A ≠ 0` and `b ≠ 0`
+- `b^T * A * b == 0`
+
+The construction embeds a 2×2 block in the upper-left corner where
+
+    A[1,1] = 1   and   A[2,2] = -1,
+
+and defines
+
+    b[1] = 1   and   b[2] = 1,
+
+with all other entries equal to zero.
+
+Example usage:
+    A, b = system_zero_quad(5, FC=Float64)
+    println("A =")
+    println(Matrix(A))
+    println("b = ", b)
+    println("b^T * A * b = ", b' * A * b)
+"""
+function system_zero_quad(n::Int=2; FC=Float64)
+    if n < 2
+        error("n must be at least 2")
+    end
+    A = zeros(FC, n, n)
+    # Define a 2×2 nontrivial block that is symmetric and indefinite.
+    A[1, 1] = one(FC)
+    A[2, 2] = -one(FC)
+    b = zeros(FC, n)
+    b[1] = one(FC)
+    b[2] = one(FC)
+    return A, b
+end
+
 # Nonsymmetric and positive definite systems.
 function nonsymmetric_definite(n :: Int=10; FC=Float64)
   if FC <: Complex

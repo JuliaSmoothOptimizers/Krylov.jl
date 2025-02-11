@@ -52,7 +52,7 @@
       A, b = zero_rhs(FC=FC)
       (x, stats) = cr(A, b)
       @test norm(x) == 0
-      @test stats.status == "x = 0 is a zero-residual solution"
+      @test stats.status == "x is a zero-residual solution"
 
       # Test with Jacobi (or diagonal) preconditioner
       A, b, M = square_preconditioned(FC=FC)
@@ -62,6 +62,31 @@
       @test(resid ≤ 10 * cr_tol)
       @test(stats.solved)
 
+      # Test linesearch
+      A, b = symmetric_indefinite(FC=FC)
+      x, stats = cr(A, b, linesearch=true)
+      @test stats.status == "nonpositive curvature"
+
+      # Test Linesearch which would stop on the first call since A is negative definite
+      A, b = symmetric_indefinite_negative_curv(FC=FC)
+      x, stats = cr(A, b, linesearch=true)
+      @test stats.status == "nonpositive curvature"
+      @test stats.niter == 0
+      @test norm(x) == norm(b)
+
+
+      # Test Linesearch is true and when b^TAb=0
+      A, b = system_zero_quad(FC=FC)
+      x, stats = cr(A, b, linesearch=true)
+      @test stats.status == "x is a zero-residual solution"
+      @test norm(x) == norm(b)
+
+      # Test when b^TAb=0 and linesearch is false
+      A, b = system_zero_quad(FC=FC)
+      x, stats = cr(A,b, linesearch=false)
+      @test stats.status == "x is a zero-residual solution"
+      @test norm(x) == zero(FC)
+ 
       # test callback function
       A, b = symmetric_definite(FC=FC)
       solver = CrSolver(A, b)
