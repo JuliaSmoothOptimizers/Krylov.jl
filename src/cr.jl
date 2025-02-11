@@ -163,6 +163,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       stats.status = "x = 0 is a zero-residual solution"
       history && push!(ArNorms, zero(T))
       solver.warm_start = false
+      linesearch && kcopy!(n, x, b)  # x ← b
       return solver
     end
     kcopy!(n, p, r)   # p ← r
@@ -200,10 +201,12 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         if (pAp ≤ γ * pNorm²) || (ρ ≤ γ * rNorm²)
           npcurv = true
           (verbose > 0) && @printf(iostream, "nonpositive curvature detected: pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
+          solved = true
           stats.solved = solved
           stats.inconsistent = false
           stats.timer = start_time |> ktimer
           stats.status = "nonpositive curvature"
+          iter == 0 && kcopy!(n, x, b)  # x ← b
           return solver
         end
       elseif pAp ≤ 0 && radius == 0
