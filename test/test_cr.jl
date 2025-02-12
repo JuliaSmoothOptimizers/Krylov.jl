@@ -68,7 +68,7 @@
       @test stats.status == "nonpositive curvature"
 
       # Test Linesearch which would stop on the first call since A is negative definite
-      A, b = symmetric_indefinite_negative_curv(FC=FC)
+      A, b = indefinite_system(FC=FC)
       x, stats = cr(A, b, linesearch=true)
       @test stats.status == "nonpositive curvature"
       @test stats.niter == 0
