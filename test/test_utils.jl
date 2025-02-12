@@ -23,7 +23,8 @@ end
 
 
 # Symmetric and indefinite system with negative curvature.
-function symmetric_indefinite_negative_curv(n::Int=10; FC=Float64, shift=5)
+# need this to test CR with Linesearch and nonpositive curvature at the first iteration
+function indefinite_system(n::Int=10; FC=Float64, shift=5)
   α = FC <: Complex ? FC(im) : one(FC)
   # Build the tridiagonal matrix with 1's on the diagonal and α on the off-diagonals, and force negative curvature.
   A = spdiagm(
