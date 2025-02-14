@@ -156,16 +156,27 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     rNorm = knorm_elliptic(n, r, p)  # ‖r‖
     history && push!(rNorms, rNorm)  # Values of ‖r‖
 
+    if rNorm == 0
+      stats.niter = 0
+      stats.solved, stats.inconsistent = true, false
+      stats.timer = start_time |> ktimer
+      stats.status = "x = 0 is a zero-residual solution"
+      history && push!(ArNorms, zero(T))
+      solver.warm_start = false
+      return solver
+    end
+    
     if ρ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
-      stats.status = "x is a zero-residual solution"
+      stats.status = "0 is a zero-curvature direction"
       history && push!(ArNorms, zero(T))
       solver.warm_start = false
       linesearch && kcopy!(n, x, b)  # x ← b
       return solver
     end
+
     kcopy!(n, p, r)   # p ← r
     kcopy!(n, q, Ar)  # q ← Ar
     (verbose > 0) && (m = zero(T))  # quadratic model
