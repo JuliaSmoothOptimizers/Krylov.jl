@@ -14,26 +14,10 @@ function symmetric_definite(n :: Int=10; FC=Float64)
 end
 
 # Symmetric and indefinite systems.
-function symmetric_indefinite(n :: Int=10; FC=Float64)
+function symmetric_indefinite(n :: Int=10; FC=Float64,  shift=0)
   α = FC <: Complex ? FC(im) : one(FC)
-  A = spdiagm(-1 => α * ones(FC, n-1), 0 => ones(FC, n), 1 => conj(α) * ones(FC, n-1))
+  A = spdiagm(-1 => α * ones(FC, n-1), 0 => ones(FC, n), 1 => conj(α) * ones(FC, n-1))- shift * eye(n)
   b = A * FC[1:n;]
-  return A, b
-end
-
-
-# Symmetric and indefinite system with negative curvature.
-# need this to test CR with Linesearch and nonpositive curvature at the first iteration
-function indefinite_system(n::Int=10; FC=Float64, shift=5)
-  α = FC <: Complex ? FC(im) : one(FC)
-  # Build the tridiagonal matrix with 1's on the diagonal and α on the off-diagonals, and force negative curvature.
-  A = spdiagm(
-          -1 => α * ones(FC, n-1),
-           0 => ones(FC, n),
-           1 => conj(α) * ones(FC, n-1)
-      ) - shift * eye(n)
-  
-  b = A * FC[1:n;]  
   return A, b
 end
 
