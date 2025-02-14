@@ -150,9 +150,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     end
     MisI && kcopy!(n, r, p)  # r ← p
     MisI || mulorldiv!(r, M, p, ldiv)
-    mul!(Ar, A, r)
-    ρ = kdotr(n, r, Ar)
-
+    
     rNorm = knorm_elliptic(n, r, p)  # ‖r‖
     history && push!(rNorms, rNorm)  # Values of ‖r‖
 
@@ -160,17 +158,20 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
-      stats.status = "x = 0 is a zero-residual solution"
+      stats.status = "x is a zero-residual solution"
       history && push!(ArNorms, zero(T))
       solver.warm_start = false
       return solver
     end
+
+    mul!(Ar, A, r)
+    ρ = kdotr(n, r, Ar)
     
     if ρ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
-      stats.status = "0 is a zero-curvature direction"
+      stats.status = "b is a zero-curvature direction"
       history && push!(ArNorms, zero(T))
       solver.warm_start = false
       linesearch && kcopy!(n, x, b)  # x ← b

@@ -52,7 +52,7 @@
       A, b = zero_rhs(FC=FC)
       (x, stats) = cr(A, b)
       @test norm(x) == 0
-      @test stats.status == "x = 0 is a zero-residual solution"
+      @test stats.status == "x is a zero-residual solution"
 
       # Test with Jacobi (or diagonal) preconditioner
       A, b, M = square_preconditioned(FC=FC)
@@ -68,7 +68,7 @@
       @test stats.status == "nonpositive curvature"
 
       # Test Linesearch which would stop on the first call since A is negative definite
-      A, b = indefinite_system(FC=FC)
+      A, b = symmetric_indefinite(FC=FC; shift = 5)
       x, stats = cr(A, b, linesearch=true)
       @test stats.status == "nonpositive curvature"
       @test stats.niter == 0
@@ -78,14 +78,14 @@
       # Test when b^TAb=0 and linesearch is true
       A, b = system_zero_quad(FC=FC)
       x, stats = cr(A, b, linesearch=true)
-      @test stats.status == "0 is a zero-curvature direction"
+      @test stats.status == "b is a zero-curvature direction"
       @test all(x .== b)
       @test stats.solved == true
 
       # Test when b^TAb=0 and linesearch is false
       A, b = system_zero_quad(FC=FC)
       x, stats = cr(A,b, linesearch=false)
-      @test stats.status == "0 is a zero-curvature direction"
+      @test stats.status == "b is a zero-curvature direction"
       @test norm(x) == zero(FC)
       @test stats.solved == true
 
