@@ -166,7 +166,8 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
-      stats.status = "x = 0 is a zero-residual solution"
+      stats.status = "x is a zero-residual solution"
+      warm_start && kaxpy!(n, one(FC), Δx, x)
       solver.warm_start = false
       return solver
     end
@@ -178,6 +179,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       stats.solved, stats.inconsistent = false, false
       stats.timer = start_time |> ktimer
       stats.status = "Breakdown bᴴc = 0"
+      warm_start && kaxpy!(n, one(FC), Δx, x)
       solver.warm_start =false
       return solver
     end

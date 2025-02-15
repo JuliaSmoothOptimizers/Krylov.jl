@@ -69,7 +69,7 @@ end
       A, b = zero_rhs(FC=FC)
       (x, stats) = crmr(A, b)
       @test norm(x) == 0
-      @test stats.status == "x = 0 is a zero-residual solution"
+      @test stats.status == "x is a zero-residual solution"
 
       # Test preconditioner with an under-determined problem:
       # Find the least norm force that transfers mass unit distance with zero final velocity

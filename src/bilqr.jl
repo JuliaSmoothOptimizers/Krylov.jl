@@ -168,6 +168,8 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       stats.solved_dual = false
       stats.timer = start_time |> ktimer
       stats.status = "Breakdown bᴴc = 0"
+      warm_start && kaxpy!(n, one(FC), Δx, x)
+      warm_start && kaxpy!(n, one(FC), Δy, t)
       solver.warm_start = false
       return solver
     end

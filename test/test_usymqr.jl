@@ -54,7 +54,7 @@
       c = copy(b)
       (x, stats) = usymqr(A, b, c)
       @test norm(x) == 0
-      @test stats.status == "x = 0 is a zero-residual solution"
+      @test stats.status == "x is a zero-residual solution"
 
       # Underdetermined and consistent systems.
       A, b = under_consistent(FC=FC)

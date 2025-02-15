@@ -82,7 +82,7 @@ end
       (x, y, stats) = craigmr(A, b, λ=1.0e-3)
       @test norm(x) == 0
       @test norm(y) == 0
-      @test stats.status == "x = 0 is a zero-residual solution"
+      @test stats.status == "x is a zero-residual solution"
 
       # Test regularization
       A, b, λ = regularization(FC=FC)

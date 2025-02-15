@@ -179,10 +179,11 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
-      stats.status = "x = 0 is a zero-residual solution"
+      stats.status = "x is a zero-residual solution"
       history && push!(rNorms, β₁)
       history && push!(ArNorms, zero(T))
       history && push!(Aconds, zero(T))
+      warm_start && kaxpy!(n, one(FC), Δx, x)
       solver.warm_start = false
       return solver
     end
@@ -330,6 +331,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
         stats.solved, stats.inconsistent = true, true
         stats.timer = start_time |> ktimer
         stats.status = "x is a minimum least-squares solution"
+        warm_start && kaxpy!(n, one(FC), Δx, x)
         solver.warm_start = false
         return solver
       end

@@ -20,7 +20,7 @@ end
       (x, y, stats) = lnlq(A, b)
       @test norm(x) == 0
       @test norm(y) == 0
-      @test stats.status == "x = 0 is a zero-residual solution"
+      @test stats.status == "x is a zero-residual solution"
 
       for transfer_to_craig ∈ (false, true)
         # Underdetermined consistent.

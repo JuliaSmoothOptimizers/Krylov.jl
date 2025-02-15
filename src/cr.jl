@@ -160,6 +160,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       history && push!(ArNorms, zero(T))
+      warm_start && kaxpy!(n, one(FC), Δx, x)
       solver.warm_start = false
       return solver
     end
@@ -219,6 +220,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
           stats.timer = start_time |> ktimer
           stats.status = "nonpositive curvature"
           iter == 0 && kcopy!(n, x, b)  # x ← b
+          solver.warm_start = false
           return solver
         end
       elseif pAp ≤ 0 && radius == 0
@@ -384,6 +386,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         stats.inconsistent = false
         stats.timer = start_time |> ktimer
         stats.status = "solver encountered numerical issues"
+        warm_start && kaxpy!(n, one(FC), Δx, x)
         solver.warm_start = false
         return solver
       end

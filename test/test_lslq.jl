@@ -29,7 +29,7 @@
       A, b = zero_rhs(FC=FC)
       (x, stats) = lslq(A, b)
       @test norm(x) == 0
-      @test stats.status == "x = 0 is a zero-residual solution"
+      @test stats.status == "x is a zero-residual solution"
 
       for transfer_to_lsqr ∈ (false, true)
         # Test with smallest singular value estimate

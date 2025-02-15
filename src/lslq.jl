@@ -236,7 +236,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       history && push!(rNorms, zero(T))
       history && push!(ArNorms, zero(T))
       stats.timer = start_time |> ktimer
-      stats.status = "x = 0 is a zero-residual solution"
+      stats.status = "x is a zero-residual solution"
       return solver
     end
     β = β₁
@@ -256,7 +256,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       history && push!(rNorms, β₁)
       history && push!(ArNorms, zero(T))
       stats.timer = start_time |> ktimer
-      stats.status = "x = 0 is a minimum least-squares solution"
+      stats.status = "x is a minimum least-squares solution"
       return solver
     end
     kscal!(n, one(FC)/α, v)
