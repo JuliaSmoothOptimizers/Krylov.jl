@@ -1,4 +1,102 @@
 """
+    V, Ψ, T = hermitian_lanczos(A, B, k; algo="householder")
+
+#### Input arguments
+
+* `A`: a linear operator that models a Hermitian matrix of dimension `n`;
+* `B`: a matrix of size `n × p`;
+* `k`: the number of iterations of the block Hermitian Lanczos process.
+
+#### Keyword arguments
+
+* `algo`: the algorithm to perform reduced QR factorizations (`"gs"`, `"mgs"`, `"givens"` or `"householder"`).
+
+#### Output arguments
+
+* `V`: a dense `n × p(k+1)` matrix;
+* `Ψ`: a dense `p × p` upper triangular matrix such that `V₁Ψ = B`;
+* `T`: a sparse `p(k+1) × pk` block tridiagonal matrix with a bandwidth `p`.
+"""
+function Krylov.hermitian_lanczos(A, B::AbstractMatrix{FC}, k::Int; algo::String="householder") where FC <: FloatOrComplex
+  m, n = size(A)
+  t, p = size(B)
+
+  nnzT = p*p + (k-1)*p*(2*p+1) + div(p*(p+1), 2)
+  colptr = zeros(Int, p*k+1)
+  rowval = zeros(Int, nnzT)
+  nzval = zeros(FC, nnzT)
+
+  colptr[1] = 1
+  for j = 1:k*p
+    pos = colptr[j]
+    for i = max(1, j-p):j+p
+      rowval[pos] = i
+      pos += 1
+    end
+    colptr[j+1] = pos
+  end
+
+  V = zeros(FC, n, (k+1)*p)
+  T = SparseMatrixCSC((k+1)*p, k*p, colptr, rowval, nzval)
+
+  α = -one(FC)
+  β = one(FC)
+  q = zeros(FC, n, p)
+  ψ₁ = zeros(FC, p, p)
+  Ωᵢ = Ψᵢ = Ψᵢ₊₁ = zeros(FC, p, p)
+
+  for i = 1:k
+    pos1 = (i-1)*p + 1
+    pos2 = i*p
+    pos3 = pos1 + p
+    pos4 = pos2 + p
+    vᵢ = view(V,:,pos1:pos2)
+    vᵢ₊₁ = view(V,:,pos3:pos4)
+
+    if i == 1
+      q .= B
+      reduced_qr!(q, ψ₁, algo)
+      vᵢ .= q
+    end
+
+    mul!(q, A, vᵢ)
+
+    if i ≥ 2
+      pos5 = pos1 - p
+      pos6 = pos2 - p
+      vᵢ₋₁ = view(V,:,pos5:pos6)
+      mul!(q, vᵢ₋₁, Ψᵢ', α, β)  # q = q - vᵢ₋₁ * Ψᵢᴴ
+    end
+
+    mul!(Ωᵢ, vᵢ', q)       # Ωᵢ = vᵢᴴ * q
+    mul!(q, vᵢ, Ωᵢ, α, β)  # q = q - vᵢ * Ωᵢᴴ
+
+    # Store the block Ωᵢ in Tₖ₊₁.ₖ
+    for ii = 1:p
+      indi = pos1+ii-1
+      for jj = 1:p
+        indj = pos1+jj-1
+        T[indi,indj] = Ωᵢ[ii,jj]
+      end
+    end
+
+    reduced_qr!(q, Ψᵢ₊₁, algo)
+    vᵢ₊₁ .= q
+
+    # Store the block Ψᵢ₊₁ in Tₖ₊₁.ₖ
+    for ii = 1:p
+      indi = pos3+ii-1
+      for jj = 1:p
+        indj = pos1+jj-1
+        (ii ≤ jj) && (T[indi,indj] = Ψᵢ₊₁[ii,jj])
+        (ii ≤ jj) && (i < k) && (T[indj,indi] = conj(Ψᵢ₊₁[ii,jj]))
+      end
+    end
+  end
+  return V, ψ₁, T
+end
+
+"""
     V, Ψ, T, U, Φᴴ, Tᴴ = nonhermitian_lanczos(A, B, C, k)
 
 #### Input arguments

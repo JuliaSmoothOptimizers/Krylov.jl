@@ -1,9 +1,20 @@
 export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_simon_yip, montoison_orban
 
-function nonhermitian_lanczos end
-function hermitian_lanczos end
-function golub_kahan end
-function saunders_simon_yip end
+function nonhermitian_lanczos(args...; kwargs...)
+  error("The function `nonhermitian_lanczos` requires the package SparseArrays. Add `using SparseArrays` to your code.\nIf SparseArrays is already loaded, check the provided arguments.")
+end
+
+function hermitian_lanczos(args...; kwargs...)
+  error("The function `hermitian_lanczos` requires the package SparseArrays. Add `using SparseArrays` to your code.\nIf SparseArrays is already loaded, check the provided arguments.")
+end
+
+function golub_kahan(args...; kwargs...)
+  error("The function `golub_kahan` requires the package SparseArrays. Add `using SparseArrays` to your code.\nIf SparseArrays is already loaded, check the provided arguments.")
+end
+
+function saunders_simon_yip(args...; kwargs...)
+  error("The function `saunders_simon_yip` requires the package SparseArrays. Add `using SparseArrays` to your code.\nIf SparseArrays is already loaded, check the provided arguments.")
+end
 
 """
     V, β, H = arnoldi(A, b, k; allow_breakdown=false, reorthogonalization=false)
