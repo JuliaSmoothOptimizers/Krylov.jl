@@ -160,7 +160,7 @@ jobs:
           done >> summary.md
 
       - name: PR comment with file
-        uses: actions/github-script@v6
+        uses: actions/github-script@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
