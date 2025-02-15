@@ -169,7 +169,8 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       history && push!(rNorms, zero(T))
       history && push!(rcgNorms, zero(T))
       stats.timer = start_time |> ktimer
-      stats.status = "x = 0 is a zero-residual solution"
+      stats.status = "x is a zero-residual solution"
+      warm_start && kaxpy!(n, one(FC), Δx, x)
       solver.warm_start = false
       return solver
     end

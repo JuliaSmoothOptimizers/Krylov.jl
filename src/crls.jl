@@ -148,7 +148,7 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
-      stats.status = "x = 0 is a zero-residual solution"
+      stats.status = "x is a zero-residual solution"
       history && push!(ArNorms, zero(T))
       return solver
     end

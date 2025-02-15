@@ -40,7 +40,7 @@
       A, b = zero_rhs(FC=FC)
       (x, stats) = minres_qlp(A, b)
       @test norm(x) == 0
-      @test stats.status == "x = 0 is a zero-residual solution"
+      @test stats.status == "x is a zero-residual solution"
 
       # Singular inconsistent system
       A, b = square_inconsistent(FC=FC)

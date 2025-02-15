@@ -26,7 +26,7 @@ end
       for xi ∈ x
         @test norm(xi) == 0
       end
-      @test stats.status == "x = 0 is a zero-residual solution"
+      @test stats.status == "x is a zero-residual solution"
 
       # Not implemented
       # Test with Jacobi (or diagonal) preconditioner

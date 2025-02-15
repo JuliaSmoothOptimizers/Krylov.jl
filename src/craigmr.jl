@@ -198,7 +198,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       history && push!(rNorms, β)
       history && push!(ArNorms, zero(T))
       stats.timer = start_time |> ktimer
-      stats.status = "x = 0 is a zero-residual solution"
+      stats.status = "x is a zero-residual solution"
       return solver
     end
 
@@ -226,7 +226,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       history && push!(rNorms, β)
       history && push!(ArNorms, zero(T))
       stats.timer = start_time |> ktimer
-      stats.status = "x = 0 is a minimum least-squares solution"
+      stats.status = "x is a minimum least-squares solution"
       return solver
     end
     kscal!(n, one(FC)/α, v)
