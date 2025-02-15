@@ -1,5 +1,8 @@
 # [Block Krylov processes](@id block-krylov-processes)
 
+!!! note
+    The block Krylov processes [`hermitian_lanczos`](@ref hermitian_lanczos), [`nonhermitian_lanczos`](@ref nonhermitian_lanczos), [`golub_kahan`](@ref craig), and [`saunders_simon_yip`](@ref saunders_simon_yip) require the package extension for `SparseArrays`.
+
 ## [Block Hermitian Lanczos](@id block-hermitian-lanczos)
 
 If the vector $b$ in the [Hermitian Lanczos](@ref hermitian-lanczos) process is replaced by a matrix $B$ with $p$ columns, we can derive the block Hermitian Lanczos process.

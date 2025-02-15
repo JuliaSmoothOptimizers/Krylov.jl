@@ -1,4 +1,4 @@
-using Documenter, Krylov
+using Documenter, Krylov, SparseArrays
 
 makedocs(
   modules = [Krylov],

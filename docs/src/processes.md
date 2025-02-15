@@ -42,6 +42,9 @@ The following table summarizes the most relevant processes for each linear probl
 | Saddle-point and Hermitian quasi-definite systems              | Golub-Kahan -- Saunders-Simon-Yip |
 | Generalized saddle-point and non-Hermitian partitioned systems | Montoison-Orban                   |
 
+!!! note
+    The Krylov processes [`hermitian_lanczos`](@ref hermitian_lanczos), [`nonhermitian_lanczos`](@ref nonhermitian_lanczos), [`golub_kahan`](@ref craig), and [`saunders_simon_yip`](@ref saunders_simon_yip) require the package extension for `SparseArrays`.
+
 ### Notation
 
 For a matrix $A$, $A^H$ denotes the conjugate transpose of $A$.
