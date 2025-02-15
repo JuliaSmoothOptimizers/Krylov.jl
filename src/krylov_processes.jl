@@ -1,11 +1,11 @@
 export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_simon_yip, montoison_orban
 
-function nonhermitian_lanczos(args...; kwargs...)
-  error("The function `nonhermitian_lanczos` requires the package SparseArrays. Add `using SparseArrays` to your code.\nIf SparseArrays is already loaded, check the provided arguments.")
-end
-
 function hermitian_lanczos(args...; kwargs...)
   error("The function `hermitian_lanczos` requires the package SparseArrays. Add `using SparseArrays` to your code.\nIf SparseArrays is already loaded, check the provided arguments.")
+end
+
+function nonhermitian_lanczos(args...; kwargs...)
+  error("The function `nonhermitian_lanczos` requires the package SparseArrays. Add `using SparseArrays` to your code.\nIf SparseArrays is already loaded, check the provided arguments.")
 end
 
 function golub_kahan(args...; kwargs...)
