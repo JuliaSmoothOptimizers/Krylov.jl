@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Custom workspaces · Krylov.jl</title><meta name="title" content="Custom workspaces · Krylov.jl"/><meta property="og:title" content="Custom workspaces · Krylov.jl"/><meta property="twitter:title" content="Custom workspaces · Krylov.jl"/><meta name="description" content="Documentation for Krylov.jl."/><meta property="og:description" content="Documentation for Krylov.jl."/><meta property="twitter:description" content="Documentation for Krylov.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/style.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Krylov.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">Krylov.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../api/">API</a></li><li><a class="tocitem" href="../processes/">Krylov processes</a></li><li><a class="tocitem" href="../block_processes/">Block Krylov processes</a></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Krylov methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../solvers/spd/">Hermitian positive definite linear systems</a></li><li><a class="tocitem" href="../solvers/sid/">Hermitian indefinite linear systems</a></li><li><a class="tocitem" href="../solvers/unsymmetric/">Non-Hermitian square linear systems</a></li><li><a class="tocitem" href="../solvers/ln/">Least-norm problems</a></li><li><a class="tocitem" href="../solvers/ls/">Least-squares problems</a></li><li><a class="tocitem" href="../solvers/as/">Adjoint systems</a></li><li><a class="tocitem" href="../solvers/sp_sqd/">Saddle-point and Hermitian quasi-definite systems</a></li><li><a class="tocitem" href="../solvers/gsp/">Generalized saddle-point and non-Hermitian partitioned systems</a></li></ul></li><li><a class="tocitem" href="../block_krylov/">Block-Krylov methods</a></li><li><a class="tocitem" href="../inplace/">In-place methods</a></li><li><a class="tocitem" href="../storage/">Storage requirements</a></li><li><a class="tocitem" href="../preconditioners/">Preconditioners</a></li><li><a class="tocitem" href="../gpu/">GPU support</a></li><li><a class="tocitem" href="../warm-start/">Warm-start</a></li><li><a class="tocitem" href="../matrix_free/">Matrix-free operators</a></li><li><a class="tocitem" href="../callbacks/">Callbacks</a></li><li class="is-active"><a class="tocitem" href>Custom workspaces</a><ul class="internal"><li><a class="tocitem" href="#Custom-workspaces-for-the-Poisson-equation-with-halo-regions"><span>Custom workspaces for the Poisson equation with halo regions</span></a></li><li><a class="tocitem" href="#Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl"><span>Solving saddle point systems with BlockArrays.jl and Krylov.jl</span></a></li></ul></li><li><a class="tocitem" href="../tips/">Performance tips</a></li><li><input class="collapse-toggle" id="menuitem-16" type="checkbox"/><label class="tocitem" for="menuitem-16"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../examples/cg/">CG</a></li><li><a class="tocitem" href="../examples/car/">CAR</a></li><li><a class="tocitem" href="../examples/cg_lanczos_shift/">CG-LANCZOS-SHIFT</a></li><li><a class="tocitem" href="../examples/symmlq/">SYMMLQ</a></li><li><a class="tocitem" href="../examples/minres_qlp/">MINRES-QLP</a></li><li><a class="tocitem" href="../examples/minares/">MINARES</a></li><li><a class="tocitem" href="../examples/tricg/">TriCG</a></li><li><a class="tocitem" href="../examples/trimr/">TriMR</a></li><li><a class="tocitem" href="../examples/bicgstab/">BICGSTAB</a></li><li><a class="tocitem" href="../examples/dqgmres/">DQGMRES</a></li><li><a class="tocitem" href="../examples/block_gmres/">BLOCK-GMRES</a></li><li><a class="tocitem" href="../examples/cgne/">CGNE</a></li><li><a class="tocitem" href="../examples/crmr/">CRMR</a></li><li><a class="tocitem" href="../examples/craig/">CRAIG</a></li><li><a class="tocitem" href="../examples/craigmr/">CRAIGMR</a></li><li><a class="tocitem" href="../examples/cgls/">CGLS</a></li><li><a class="tocitem" href="../examples/cgls_lanczos_shift/">CGLS-LANCZOS-SHIFT</a></li><li><a class="tocitem" href="../examples/crls/">CRLS</a></li><li><a class="tocitem" href="../examples/lsqr/">LSQR</a></li><li><a class="tocitem" href="../examples/lsmr/">LSMR</a></li></ul></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Custom workspaces</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Custom workspaces</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaSmoothOptimizers/Krylov.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/docs/src/custom_workspaces.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="custom_workspaces"><a class="docs-heading-anchor" href="#custom_workspaces">Custom workspaces</a><a id="custom_workspaces-1"></a><a class="docs-heading-anchor-permalink" href="#custom_workspaces" title="Permalink"></a></h1><h2 id="Custom-workspaces-for-the-Poisson-equation-with-halo-regions"><a class="docs-heading-anchor" href="#Custom-workspaces-for-the-Poisson-equation-with-halo-regions">Custom workspaces for the Poisson equation with halo regions</a><a id="Custom-workspaces-for-the-Poisson-equation-with-halo-regions-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-workspaces-for-the-Poisson-equation-with-halo-regions" title="Permalink"></a></h2><h3 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h3><p>The Poisson equation is a fundamental partial differential equation (PDE) in physics and mathematics, modeling phenomena like temperature distribution and incompressible fluid flow. In a 2D Cartesian domain, it can be expressed as:</p><p class="math-container">\[\nabla^2 u(x, y) = f(x, y)\]</p><p>Here, <span>$u(x, y)$</span> is the potential function and <span>$f(x, y)$</span> represents the source term within the domain.</p><p>This page explains how to use a Krylov method to solve the Poisson equation over a rectangular region with specified boundary conditions, detailing the use of a Laplacian operator within a data structure that incorporates <strong>halo regions</strong>.</p><h3 id="Finite-difference-discretization"><a class="docs-heading-anchor" href="#Finite-difference-discretization">Finite difference discretization</a><a id="Finite-difference-discretization-1"></a><a class="docs-heading-anchor-permalink" href="#Finite-difference-discretization" title="Permalink"></a></h3><p>We solve the Poisson equation numerically by discretizing the 2D domain using a finite difference method. For a square domain <span>$[0, L] \times [0, L]$</span>, divided into a grid of points, each point approximates the solution <span>$u$</span> at that position.</p><p>With grid spacings <span>$h_x = \frac{L}{N_x + 1}$</span> and <span>$h_y = \frac{L}{N_y + 1}$</span>, let <span>$u_{i,j}$</span> denote the approximation of <span>$u(x_i, y_j)$</span> at grid point <span>$(x_i, y_j) = (ih, jh)$</span>. The 2D Laplacian can be approximated at each interior grid point <span>$(i, j)$</span> by combining the following central difference formulas:</p><p class="math-container">\[\frac{\partial^2 u}{\partial x^2} \approx \frac{u_{i+1,j} - 2u_{i,j} + u_{i-1,j}}{h^2}\]</p><p class="math-container">\[\frac{\partial^2 u}{\partial y^2} \approx \frac{u_{i,j+1} - 2u_{i,j} + u_{i,j-1}}{h^2}\]</p><p>This yields the discrete Poisson equation:</p><p class="math-container">\[\frac{u_{i+1,j} - 2u_{i,j} + u_{i-1,j}}{h^2} + \frac{u_{i,j+1} - 2u_{i,j} + u_{i,j-1}}{h^2} = f_{i,j}\]</p><p>resulting in a system of linear equations for the <span>$N^2$</span> unknowns <span>$u_{i,j}$</span> at each interior grid point.</p><h3 id="Boundary-conditions"><a class="docs-heading-anchor" href="#Boundary-conditions">Boundary conditions</a><a id="Boundary-conditions-1"></a><a class="docs-heading-anchor-permalink" href="#Boundary-conditions" title="Permalink"></a></h3><p>Boundary conditions complete the system. Common choices are:</p><ul><li><strong>Dirichlet</strong>: Specifies values of <span>$u$</span> on the boundary.</li><li><strong>Neumann</strong>: Specifies the normal derivative (or flux) of <span>$u$</span> on the boundary.</li></ul><h3 id="Implementing-halo-regions-with-HaloVector"><a class="docs-heading-anchor" href="#Implementing-halo-regions-with-HaloVector">Implementing halo regions with HaloVector</a><a id="Implementing-halo-regions-with-HaloVector-1"></a><a class="docs-heading-anchor-permalink" href="#Implementing-halo-regions-with-HaloVector" title="Permalink"></a></h3><p>In parallel computing, <strong>halo regions</strong> (or ghost cells) around the grid store boundary values from neighboring subdomains, allowing independent stencil computation near boundaries. This setup streamlines boundary management in distributed environments.</p><p>For specialized applications, Krylov.jl’s internal storage expects an <code>AbstractVector</code>, which can benefit from a structured data layout. A <strong><code>HaloVector</code></strong> provides this structure, using halo regions to enable finite difference stencils without boundary condition checks. The <code>OffsetArray</code> type from <a href="https://github.com/JuliaArrays/OffsetArrays.jl">OffsetArrays.jl</a> facilitates custom indexing, making it ideal for grids with halo regions. By embedding an <code>OffsetArray</code> within <code>HaloVector</code>, we achieve seamless grid alignment, allowing <strong>&quot;if-less&quot;</strong> stencil application.</p><p>This setup reduces boundary condition checks in the core loop, yielding clearer and faster code. The flexible design of <code>HaloVector</code> supports 1D, 2D, or 3D configurations, adapting easily to different grid layouts.</p><h3 id="Definition-and-usage-of-the-HaloVector"><a class="docs-heading-anchor" href="#Definition-and-usage-of-the-HaloVector">Definition and usage of the HaloVector</a><a id="Definition-and-usage-of-the-HaloVector-1"></a><a class="docs-heading-anchor-permalink" href="#Definition-and-usage-of-the-HaloVector" title="Permalink"></a></h3><p><code>HaloVector</code> is a specialized vector for grid-based computations, especially finite difference methods with halo regions. It is parameterized by:</p><ul><li><strong><code>FC</code></strong>: The element type of the vector.</li><li><strong><code>D</code></strong>: The data array type, which uses <code>OffsetArray</code> to enable custom indexing.</li></ul><pre><code class="language-julia hljs">using OffsetArrays
+
+struct HaloVector{FC, D} &lt;: AbstractVector{FC}
+    data::D
+
+    function HaloVector(data::D) where {D}
+        FC = eltype(data)
+        return new{FC, D}(data)
+    end
+end
+
+function Base.similar(v::HaloVector)
+    data = similar(v.data)
+    return HaloVector(data)
+end
+
+function Base.length(v::HaloVector)
+    m, n = size(v.data)
+    l = (m - 2) * (n - 2)
+    return l
+end
+
+function Base.size(v::HaloVector)
+    l = length(v)
+    return (l,)
+end
+
+function Base.getindex(v::HaloVector, idx)
+    m, n = size(v.data)
+    row = div(idx - 1, n - 2) + 1
+    col = mod(idx - 1, n - 2) + 1
+    return v.data[row, col]
+end</code></pre><p>The functions <code>similar</code> and <code>length</code> are mandatory and must be implemented for custom vector types. The functions <code>size</code> and <code>getindex</code> support REPL display, aiding interaction, though they are optional for Krylov.jl’s functionality.</p><h3 id="Efficient-stencil-implementation"><a class="docs-heading-anchor" href="#Efficient-stencil-implementation">Efficient stencil implementation</a><a id="Efficient-stencil-implementation-1"></a><a class="docs-heading-anchor-permalink" href="#Efficient-stencil-implementation" title="Permalink"></a></h3><p>Using <code>HaloVector</code> with <code>OffsetArray</code>, we can apply the discrete Laplacian operator in a matrix-free approach with a 5-point stencil, managing halo regions effectively. This layout allows <strong>clean and efficient Laplacian computation</strong> without boundary checks within the core loop.</p><pre><code class="language-julia hljs">using LinearAlgebra
+
+# Define a matrix-free Laplacian operator
+struct LaplacianOperator
+    Nx::Int        # Number of grid points in the x-direction
+    Ny::Int        # Number of grid points in the y-direction
+    Δx::Float64    # Grid spacing in the x-direction
+    Δy::Float64    # Grid spacing in the y-direction
+end
+
+# Define size and element type for the operator
+Base.size(A::LaplacianOperator) = (A.Nx * A.Ny, A.Nx * A.Ny)
+Base.eltype(A::LaplacianOperator) = Float64
+
+function LinearAlgebra.mul!(y::HaloVector{Float64}, A::LaplacianOperator, u::HaloVector{Float64})
+    # Apply the discrete Laplacian in 2D
+    for i in 1:A.Nx
+        for j in 1:A.Ny
+            # Calculate second derivatives using finite differences
+            dx2 = (u.data[i-1,j] - 2 * u.data[i,j] + u.data[i+1,j]) / (A.Δx)^2
+            dy2 = (u.data[i,j-1] - 2 * u.data[i,j] + u.data[i,j+1]) / (A.Δy)^2
+
+            # Update the output vector with the Laplacian result
+            y.data[i,j] = dx2 + dy2
+        end
+    end
+
+    return y
+end</code></pre><h3 id="Methods-to-overload-for-compatibility-with-Krylov.jl"><a class="docs-heading-anchor" href="#Methods-to-overload-for-compatibility-with-Krylov.jl">Methods to overload for compatibility with Krylov.jl</a><a id="Methods-to-overload-for-compatibility-with-Krylov.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Methods-to-overload-for-compatibility-with-Krylov.jl" title="Permalink"></a></h3><p>To integrate <code>HaloVector</code> with Krylov.jl, we define essential vector operations, including dot products, norms, scalar multiplication, and element-wise updates. These implementations allow Krylov.jl to leverage custom vector types, enhancing both solver flexibility and performance.</p><pre><code class="language-julia hljs">using Krylov
+import Krylov.FloatOrComplex
+
+function Krylov.kdot(n::Integer, x::HaloVector{T}, y::HaloVector{T}) where T &lt;: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    _y = y.data
+    res = zero(T)
+    for i = 1:mx-1
+        for j = 1:nx-1
+            res += _x[i,j] * _y[i,j]
+        end
+    end
+    return res
+end
+
+function Krylov.knorm(n::Integer, x::HaloVector{T}) where T &lt;: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    res = zero(T)
+    for i = 1:mx-1
+        for j = 1:nx-1
+            res += _x[i,j]^2
+        end
+    end
+    return sqrt(res)
+end
+
+function Krylov.kscal!(n::Integer, s::T, x::HaloVector{T}) where T &lt;: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            _x[i,j] = s * _x[i,j]
+        end
+    end
+    return x
+end
+
+function Krylov.kaxpy!(n::Integer, s::T, x::HaloVector{T}, y::HaloVector{T}) where T &lt;: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    _y = y.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            _y[i,j] += s * _x[i,j]
+        end
+    end
+    return y
+end
+
+function Krylov.kaxpby!(n::Integer, s::T, x::HaloVector{T}, t::T, y::HaloVector{T}) where T &lt;: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    _y = y.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            _y[i,j] = s * _x[i,j] + t * _y[i,j]
+        end
+    end
+    return y
+end
+
+function Krylov.kcopy!(n::Integer, y::HaloVector{T}, x::HaloVector{T}) where T &lt;: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    _y = y.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            _y[i,j] = _x[i,j]
+        end
+    end
+    return y
+end
+
+function Krylov.kfill!(x::HaloVector{T}, val::T) where T &lt;: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            _x[i,j] = val
+        end
+    end
+    return x
+end
+
+function Krylov.kref!(n::Integer, x::HaloVector{T}, y::HaloVector{T}, c::T, s::T) where T &lt;: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    _y = y.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            x_ij = _x[i,j]
+            y_ij = _y[i,j]
+            _x[i,j] = c       * x_ij + s * y_ij
+            _y[i,j] = conj(s) * x_ij - c * y_ij
+        end
+    end
+    return x, y
+end</code></pre><p>Note that <code>Krylov.kref!</code> is only required for <code>minres_qlp</code>.</p><h3 id="2D-Poisson-equation-solver-with-Krylov-methods"><a class="docs-heading-anchor" href="#2D-Poisson-equation-solver-with-Krylov-methods">2D Poisson equation solver with Krylov methods</a><a id="2D-Poisson-equation-solver-with-Krylov-methods-1"></a><a class="docs-heading-anchor-permalink" href="#2D-Poisson-equation-solver-with-Krylov-methods" title="Permalink"></a></h3><pre><code class="language-julia hljs">using Krylov, OffsetArrays
+
+# Parameters
+L = 1.0            # Length of the square domain
+Nx = 200           # Number of interior grid points in x
+Ny = 200           # Number of interior grid points in y
+Δx = L / (Nx + 1)  # Grid spacing in x
+Δy = L / (Ny + 1)  # Grid spacing in y
+
+# Define the source term f(x,y)
+f(x,y) = -2 * π * π * sin(π * x) * sin(π * y)
+
+# Create the matrix-free Laplacian operator
+A = LaplacianOperator(Nx, Ny, Δx, Δy)
+
+# Create the right-hand side
+rhs = zeros(Float64, Nx+2, Ny+2)
+data = OffsetArray(rhs, 0:Nx+1, 0:Ny+1)
+for i in 1:Nx
+    for j in 1:Ny
+        xi = i * Δx
+        yj = j * Δy
+        data[i,j] = f(xi, yj)
+    end
+end
+b = HaloVector(data)
+
+# Allocate the workspace
+kc = KrylovConstructor(b)
+solver = CgSolver(kc)
+
+# Solve the system with CG
+Krylov.cg!(solver, A, b, atol=1e-12, rtol=0.0, verbose=1)
+u_sol = solution(solver)
+stats = statistics(solver)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SimpleStats
+ niter: 194
+ solved: true
+ inconsistent: false
+ residuals: []
+ Aresiduals: []
+ κ₂(A): []
+ timer: 690.00ms
+ status: solution good enough given atol and rtol
+</code></pre><pre><code class="language-julia hljs"># The exact solution is u(x,y) = sin(πx) * sin(πy)
+u_star = [sin(π * i * Δx) * sin(π * j * Δy) for i=1:Nx, j=1:Ny]
+norm(u_sol.data[1:Nx, 1:Ny] - u_star, Inf)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2.035659636356879e-5</code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>Only the in-place version of the Krylov methods is supported for custom vector types.</p></div></div><h3 id="Conclusion"><a class="docs-heading-anchor" href="#Conclusion">Conclusion</a><a id="Conclusion-1"></a><a class="docs-heading-anchor-permalink" href="#Conclusion" title="Permalink"></a></h3><p>Implementing a 2D Poisson equation solver with <code>HaloVector</code> improves code clarity and efficiency. Custom indexing with <code>OffsetArray</code> streamlines halo region management, eliminating boundary checks within the core loop. This approach reduces branching, yielding faster execution, especially on large grids. <code>HaloVector</code>&#39;s flexibility also makes it easy to extend to 3D grids or more complex stencils.</p><div class="admonition is-info"><header class="admonition-header">Info</header><div class="admonition-body"><p><a href="https://github.com/CliMA/Oceananigans.jl">Oceananigans.jl</a> uses a similar strategy with its <code>Field</code> type, efficiently solving large linear systems with Krylov.jl.</p></div></div><h2 id="Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl"><a class="docs-heading-anchor" href="#Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl">Solving saddle point systems with BlockArrays.jl and Krylov.jl</a><a id="Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl" title="Permalink"></a></h2><p><a href="https://github.com/JuliaArrays/BlockArrays.jl">BlockArrays.jl</a> simplifies working with structured matrices, making it an ideal tool for solving saddle point systems. In this example, we solve a structured linear system <span>$Ax = b$</span> of the form:</p><p class="math-container">\[\begin{bmatrix}
+   K &amp; B^T \\
+   B &amp; 0
+\end{bmatrix}
+\begin{bmatrix}
+   y \\
+   z
+\end{bmatrix} =
+\begin{bmatrix}
+   c \\
+   d
+\end{bmatrix}.\]</p><p>We first define the matrix <span>$A$</span> and the vector <span>$b$</span> using <code>BlockArrays.jl</code>:</p><pre><code class="language-julia hljs">using LinearAlgebra
+using BlockArrays
+
+nK = 10
+nB = 2
+K = rand(nK, nK)
+K = K * K&#39; + I
+B = rand(nB, nK)
+c = rand(nK)
+d = rand(nB)
+
+# Create the saddle point matrix A
+A = BlockArray{Float64}(undef, [nK, nB], [nK, nB])
+A[Block(1, 1)] = K
+A[Block(1, 2)] = B&#39;
+A[Block(2, 1)] = B
+A[Block(2, 2)] = zeros(nB, nB)
+
+# Create the right-hand side vector b
+b = BlockVector{Float64}(undef, [nK, nB])
+b[Block(1)] = c
+b[Block(2)] = d</code></pre><p>For saddle point systems, a well-known preconditioner is the &quot;ideal preconditioner&#39;&#39; <span>$P^{-1}$</span>, as described in the paper <a href="https://doi.org/10.1137/S1064827599355153">&quot;A Note on Preconditioning for Indefinite Linear Systems&quot;</a>. It is defined as:</p><p class="math-container">\[P^{-1} =
+\begin{bmatrix}
+   K^{-1} &amp; 0
+\\ 0      &amp; (B K^{-1} B^T)^{-1}
+\end{bmatrix}.\]</p><p>This preconditioner guarantees convergence in exactly three iterations, as <span>$P^{-1}A$</span> has only three distinct eigenvalues. However, this preconditioner is expensive, as it requires <span>$K^{-1}$</span> and the inverse of the Schur complement <span>$B K^{-1} B^T$</span>. One common approach is to replace <span>$K^{-1}$</span> with <span>$\mathrm{diag}(K)^{-1}$</span>, creating a cheaper preconditioner.</p><pre><code class="language-julia hljs">struct IdealPreconditioner{T1, T2}
+    BD1::T1
+    BD2::T2
+end
+
+function LinearAlgebra.mul!(y::BlockVector, P::IdealPreconditioner, x::BlockVector)
+    mul!(y.blocks[1], P.BD1, x.blocks[1])
+    mul!(y.blocks[2], P.BD2, x.blocks[2])
+    return y
+end
+
+# Create the ideal preconditioner
+BD1 = inv(K)
+BD2 = inv(B * BD1 * B&#39;)
+P = IdealPreconditioner(BD1, BD2)</code></pre><p>We now solve the system <span>$Ax = b$</span> using <code>minres</code> with our preconditioner:</p><pre><code class="language-julia hljs">using Krylov
+
+kc = KrylovConstructor(b)
+solver = MinresSolver(kc)
+minres!(solver, A, b; M=P)
+
+x = solution(solver)
+stats = statistics(solver)
+niter = stats.niter</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3</code></pre><p>This example demonstrates how <code>BlockArrays.jl</code> and <code>Krylov.jl</code> can be effectively combined to solve structured saddle point systems.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../callbacks/">« Callbacks</a><a class="docs-footer-nextpage" href="../tips/">Performance tips »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Sunday 16 February 2025 19:27">Sunday 16 February 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
