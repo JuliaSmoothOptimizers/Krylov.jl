@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Matrix-free operators · Krylov.jl</title><meta name="title" content="Matrix-free operators · Krylov.jl"/><meta property="og:title" content="Matrix-free operators · Krylov.jl"/><meta property="twitter:title" content="Matrix-free operators · Krylov.jl"/><meta name="description" content="Documentation for Krylov.jl."/><meta property="og:description" content="Documentation for Krylov.jl."/><meta property="twitter:description" content="Documentation for Krylov.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/style.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Krylov.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">Krylov.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../api/">API</a></li><li><a class="tocitem" href="../processes/">Krylov processes</a></li><li><a class="tocitem" href="../block_processes/">Block Krylov processes</a></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Krylov methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../solvers/spd/">Hermitian positive definite linear systems</a></li><li><a class="tocitem" href="../solvers/sid/">Hermitian indefinite linear systems</a></li><li><a class="tocitem" href="../solvers/unsymmetric/">Non-Hermitian square linear systems</a></li><li><a class="tocitem" href="../solvers/ln/">Least-norm problems</a></li><li><a class="tocitem" href="../solvers/ls/">Least-squares problems</a></li><li><a class="tocitem" href="../solvers/as/">Adjoint systems</a></li><li><a class="tocitem" href="../solvers/sp_sqd/">Saddle-point and Hermitian quasi-definite systems</a></li><li><a class="tocitem" href="../solvers/gsp/">Generalized saddle-point and non-Hermitian partitioned systems</a></li></ul></li><li><a class="tocitem" href="../block_krylov/">Block-Krylov methods</a></li><li><a class="tocitem" href="../inplace/">In-place methods</a></li><li><a class="tocitem" href="../storage/">Storage requirements</a></li><li><a class="tocitem" href="../preconditioners/">Preconditioners</a></li><li><a class="tocitem" href="../gpu/">GPU support</a></li><li><a class="tocitem" href="../warm-start/">Warm-start</a></li><li class="is-active"><a class="tocitem" href>Matrix-free operators</a><ul class="internal"><li><a class="tocitem" href="#matrix-free"><span>Matrix-free operators</span></a></li><li><a class="tocitem" href="#Examples-with-automatic-differentiation"><span>Examples with automatic differentiation</span></a></li><li><a class="tocitem" href="#Example-with-FFT-and-IFFT"><span>Example with FFT and IFFT</span></a></li><li><a class="tocitem" href="#Example-with-discretized-PDE"><span>Example with discretized PDE</span></a></li></ul></li><li><a class="tocitem" href="../callbacks/">Callbacks</a></li><li><a class="tocitem" href="../custom_workspaces/">Custom workspaces</a></li><li><a class="tocitem" href="../tips/">Performance tips</a></li><li><input class="collapse-toggle" id="menuitem-16" type="checkbox"/><label class="tocitem" for="menuitem-16"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../examples/cg/">CG</a></li><li><a class="tocitem" href="../examples/car/">CAR</a></li><li><a class="tocitem" href="../examples/cg_lanczos_shift/">CG-LANCZOS-SHIFT</a></li><li><a class="tocitem" href="../examples/symmlq/">SYMMLQ</a></li><li><a class="tocitem" href="../examples/minres_qlp/">MINRES-QLP</a></li><li><a class="tocitem" href="../examples/minares/">MINARES</a></li><li><a class="tocitem" href="../examples/tricg/">TriCG</a></li><li><a class="tocitem" href="../examples/trimr/">TriMR</a></li><li><a class="tocitem" href="../examples/bicgstab/">BICGSTAB</a></li><li><a class="tocitem" href="../examples/dqgmres/">DQGMRES</a></li><li><a class="tocitem" href="../examples/block_gmres/">BLOCK-GMRES</a></li><li><a class="tocitem" href="../examples/cgne/">CGNE</a></li><li><a class="tocitem" href="../examples/crmr/">CRMR</a></li><li><a class="tocitem" href="../examples/craig/">CRAIG</a></li><li><a class="tocitem" href="../examples/craigmr/">CRAIGMR</a></li><li><a class="tocitem" href="../examples/cgls/">CGLS</a></li><li><a class="tocitem" href="../examples/cgls_lanczos_shift/">CGLS-LANCZOS-SHIFT</a></li><li><a class="tocitem" href="../examples/crls/">CRLS</a></li><li><a class="tocitem" href="../examples/lsqr/">LSQR</a></li><li><a class="tocitem" href="../examples/lsmr/">LSMR</a></li></ul></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Matrix-free operators</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Matrix-free operators</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaSmoothOptimizers/Krylov.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/docs/src/matrix_free.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><style>
+.content table td {
+    border-right-width: 1px;
+}
+.content table th {
+    border-right-width: 1px;
+}
+.content table td:last-child {
+    border-right-width: 0px;
+}
+.content table th:last-child {
+    border-right-width: 0px;
+}
+html.theme--documenter-dark .content table td {
+    border-right-width: 1px;
+}
+html.theme--documenter-dark .content table th {
+    border-right-width: 1px;
+}
+html.theme--documenter-dark .content table td:last-child {
+    border-right-width: 0px;
+}
+html.theme--documenter-dark .content table th:last-child {
+    border-right-width: 0px;
+}
+</style><h2 id="matrix-free"><a class="docs-heading-anchor" href="#matrix-free">Matrix-free operators</a><a id="matrix-free-1"></a><a class="docs-heading-anchor-permalink" href="#matrix-free" title="Permalink"></a></h2><p>All methods are matrix-free, which means that you only need to provide operator-vector products.</p><p>The <code>A</code> or <code>B</code> input arguments of Krylov.jl solvers can be any object that represents a linear operator. That object must implement <code>mul!</code>, for multiplication with a vector, <code>size()</code> and <code>eltype()</code>. For certain methods it must also implement <code>adjoint()</code>.</p><p>Some methods only require <code>A * v</code> products, whereas other ones also require <code>A&#39; * u</code> products. In the latter case, <code>adjoint(A)</code> must also be implemented.</p><table><tr><th style="text-align: center">A * v</th><th style="text-align: center">A * v and A&#39; * u</th></tr><tr><td style="text-align: center">CG, CR, CAR</td><td style="text-align: center">CGLS, CRLS, CGNE, CRMR</td></tr><tr><td style="text-align: center">SYMMLQ, CG-LANCZOS, MINRES, MINRES-QLP, MINARES</td><td style="text-align: center">LSLQ, LSQR, LSMR, LNLQ, CRAIG, CRAIGMR</td></tr><tr><td style="text-align: center">DIOM, FOM, DQGMRES, GMRES, FGMRES, BLOCK-GMRES</td><td style="text-align: center">BiLQ, QMR, BiLQR, USYMLQ, USYMQR, TriLQR</td></tr><tr><td style="text-align: center">CGS, BICGSTAB</td><td style="text-align: center">TriCG, TriMR</td></tr><tr><td style="text-align: center">CG-LANCZOS-SHIFT</td><td style="text-align: center">CGLS-LANCZOS-SHIFT</td></tr></table><div class="admonition is-info"><header class="admonition-header">Info</header><div class="admonition-body"><p>GPMR is the only method that requires <code>A * v</code> and <code>B * w</code> products.</p></div></div><p>Preconditioners <code>M</code>, <code>N</code>, <code>C</code>, <code>D</code>, <code>E</code> or <code>F</code> can be also linear operators and must implement <code>mul!</code> or <code>ldiv!</code>.</p><p>We strongly recommend <a href="https://github.com/JuliaSmoothOptimizers/LinearOperators.jl">LinearOperators.jl</a> to model matrix-free operators, but other packages such as <a href="https://github.com/JuliaLinearAlgebra/LinearMaps.jl">LinearMaps.jl</a>, <a href="https://github.com/SciML/DiffEqOperators.jl">DiffEqOperators.jl</a> or your own operator can be used as well.</p><p>With <code>LinearOperators.jl</code>, operators are defined as</p><pre><code class="language-julia hljs">A = LinearOperator(type, nrows, ncols, symmetric, hermitian, prod, tprod, ctprod)</code></pre><p>where</p><ul><li><code>type</code> is the operator element type;</li><li><code>nrow</code> and <code>ncol</code> are its dimensions;</li><li><code>symmetric</code> and <code>hermitian</code> should be set to <code>true</code> or <code>false</code>;</li><li><code>prod(y, v)</code>, <code>tprod(y, w)</code> and <code>ctprod(u, w)</code> are called when writing <code>mul!(y, A, v)</code>, <code>mul!(y, transpose(A), w)</code>, and <code>mul!(y, A&#39;, u)</code>, respectively.</li></ul><p>See the <a href="https://jso.dev/tutorials/introduction-to-linear-operators/">tutorial</a> and the detailed <a href="https://jso.dev/LinearOperators.jl/dev/">documentation</a> for more information on <code>LinearOperators.jl</code>.</p><h2 id="Examples-with-automatic-differentiation"><a class="docs-heading-anchor" href="#Examples-with-automatic-differentiation">Examples with automatic differentiation</a><a id="Examples-with-automatic-differentiation-1"></a><a class="docs-heading-anchor-permalink" href="#Examples-with-automatic-differentiation" title="Permalink"></a></h2><p>In the field of nonlinear optimization, finding critical points of a continuous function frequently involves linear systems with a Hessian or Jacobian as coefficient. Materializing such operators as matrices is expensive in terms of operations and memory consumption and is unreasonable for high-dimensional problems. However, it is often possible to implement efficient Hessian-vector and Jacobian-vector products, for example with the help of automatic differentiation tools, and used within Krylov solvers. We now illustrate variants with explicit matrices and with matrix-free operators for two well-known optimization methods.</p><h3 id="Example-1:-Newton&#39;s-Method-for-convex-optimization"><a class="docs-heading-anchor" href="#Example-1:-Newton&#39;s-Method-for-convex-optimization">Example 1: Newton&#39;s Method for convex optimization</a><a id="Example-1:-Newton&#39;s-Method-for-convex-optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Example-1:-Newton&#39;s-Method-for-convex-optimization" title="Permalink"></a></h3><p>At each iteration of Newton&#39;s method applied to a <span>$\mathcal{C}^2$</span> strictly convex function <span>$f : \mathbb{R}^n \rightarrow \mathbb{R}$</span>, a descent direction direction is determined by minimizing the quadratic Taylor model of <span>$f$</span>:</p><p class="math-container">\[\min_{d \in \mathbb{R}^n}~~f(x_k) + \nabla f(x_k)^T d + \tfrac{1}{2}~d^T \nabla^2 f(x_k) d\]</p><p>which is equivalent to solving the symmetric and positive-definite system</p><p class="math-container">\[\nabla^2 f(x_k) d  = -\nabla f(x_k).\]</p><p>The system above can be solved with the conjugate gradient method as follows, using the explicit Hessian:</p><pre><code class="language- hljs">using ForwardDiff, Krylov
+
+xk = -ones(4)
+
+f(x) = (x[1] - 1)^2 + (x[2] - 2)^2 + (x[3] - 3)^2 + (x[4] - 4)^2
+
+g(x) = ForwardDiff.gradient(f, x)
+
+H(x) = ForwardDiff.hessian(f, x)
+
+d, stats = cg(H(xk), -g(xk))</code></pre><p>The explicit Hessian can be replaced by a linear operator that only computes Hessian-vector products:</p><pre><code class="language-julia hljs">using ForwardDiff, LinearOperators, Krylov
+
+xk = -ones(4)
+
+f(x) = (x[1] - 1)^2 + (x[2] - 2)^2 + (x[3] - 3)^2 + (x[4] - 4)^2
+
+g(x) = ForwardDiff.gradient(f, x)
+
+H(y, v) = ForwardDiff.derivative!(y, t -&gt; g(xk + t * v), 0)
+opH = LinearOperator(Float64, 4, 4, true, true, (y, v) -&gt; H(y, v))
+
+cg(opH, -g(xk))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">([2.0, 3.0, 4.0, 5.0], SimpleStats
+ niter: 1
+ solved: true
+ inconsistent: false
+ residuals: []
+ Aresiduals: []
+ κ₂(A): []
+ timer: 643.49ms
+ status: solution good enough given atol and rtol
+)</code></pre><h3 id="Example-2:-The-Gauss-Newton-Method-for-Nonlinear-Least-Squares"><a class="docs-heading-anchor" href="#Example-2:-The-Gauss-Newton-Method-for-Nonlinear-Least-Squares">Example 2: The Gauss-Newton Method for Nonlinear Least Squares</a><a id="Example-2:-The-Gauss-Newton-Method-for-Nonlinear-Least-Squares-1"></a><a class="docs-heading-anchor-permalink" href="#Example-2:-The-Gauss-Newton-Method-for-Nonlinear-Least-Squares" title="Permalink"></a></h3><p>At each iteration of the Gauss-Newton method applied to a nonlinear least-squares objective <span>$f(x) = \tfrac{1}{2}\| F(x)\|^2$</span> where <span>$F : \mathbb{R}^n \rightarrow \mathbb{R}^m$</span> is <span>$\mathcal{C}^1$</span>, we solve the subproblem:</p><p class="math-container">\[\min_{d \in \mathbb{R}^n}~~\tfrac{1}{2}~\|J(x_k) d + F(x_k)\|^2,\]</p><p>where <span>$J(x)$</span> is the Jacobian of <span>$F$</span> at <span>$x$</span>.</p><p>An appropriate iterative method to solve the above linear least-squares problems is LSMR. We could pass the explicit Jacobian to LSMR as follows:</p><pre><code class="language- hljs">using ForwardDiff, Krylov
+
+xk = ones(2)
+
+F(x) = [x[1]^4 - 3; exp(x[2]) - 2; log(x[1]) - x[2]^2]
+
+J(x) = ForwardDiff.jacobian(F, x)
+
+d, stats = lsmr(J(xk), -F(xk))</code></pre><p>However, the explicit Jacobian can be replaced by a linear operator that only computes Jacobian-vector and transposed Jacobian-vector products:</p><pre><code class="language-julia hljs">using LinearAlgebra, ForwardDiff, LinearOperators, Krylov
+
+xk = ones(2)
+
+F(x) = [x[1]^4 - 3; exp(x[2]) - 2; log(x[1]) - x[2]^2]
+
+J(y, v) = ForwardDiff.derivative!(y, t -&gt; F(xk + t * v), 0)
+Jᵀ(y, u) = ForwardDiff.gradient!(y, x -&gt; dot(F(x), u), xk)
+opJ = LinearOperator(Float64, 3, 2, false, false, (y, v) -&gt; J(y, v),
+                                                  (y, w) -&gt; Jᵀ(y, w),
+                                                  (y, u) -&gt; Jᵀ(y, u))
+
+lsmr(opJ, -F(xk))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">([0.49889007728348445, -0.2594343430903828], LsmrStats
+ niter: 2
+ solved: true
+ inconsistent: true
+ residuals: []
+ Aresiduals: []
+ residual: 0.022490204087080457
+ Aresidual: 1.994504665878452e-15
+ κ₂(A): 1.2777264193293685
+ ‖A‖F: 5.328138145631234
+ xNorm: 0.5623144027914095
+ timer: 605.41ms
+ status: found approximate minimum least-squares solution
+)</code></pre><h2 id="Example-with-FFT-and-IFFT"><a class="docs-heading-anchor" href="#Example-with-FFT-and-IFFT">Example with FFT and IFFT</a><a id="Example-with-FFT-and-IFFT-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-FFT-and-IFFT" title="Permalink"></a></h2><h3 id="Example-3:-Solving-the-Poisson-equation-with-FFT-and-IFFT"><a class="docs-heading-anchor" href="#Example-3:-Solving-the-Poisson-equation-with-FFT-and-IFFT">Example 3: Solving the Poisson equation with FFT and IFFT</a><a id="Example-3:-Solving-the-Poisson-equation-with-FFT-and-IFFT-1"></a><a class="docs-heading-anchor-permalink" href="#Example-3:-Solving-the-Poisson-equation-with-FFT-and-IFFT" title="Permalink"></a></h3><p>In applications related to partial differential equations (PDEs), linear systems can arise from discretizing differential operators. Storing such operators as explicit matrices is computationally expensive and unnecessary when matrix-free methods can be used, particularly with structured grids.</p><p>The FFT is an algorithm that computes the discrete Fourier transform (DFT) of a sequence, transforming data from the spatial domain to the frequency domain. In the context of solving PDEs, it simplifies the application of differential operators like the Laplacian by converting derivatives into algebraic operations.</p><p>For a function <span>$u(x)$</span> discretized on a periodic grid with <span>$n$</span> points, the FFT of <span>$u$</span> is:</p><p class="math-container">\[\hat{u}_k = \sum_{j=0}^{n-1} u_j e^{-i k x_j},\]</p><p>where <span>$\hat{u}_k$</span> represents the Fourier coefficients for the frequency <span>$k$</span>, and <span>$u_j$</span> is the value of <span>$u$</span> at the grid point <span>$x_j$</span> defined as <span>$x_j = \frac{2 \pi j}{L}$</span> with period <span>$L$</span>. The inverse FFT (IFFT) reconstructs <span>$u$</span> from its Fourier coefficients:</p><p class="math-container">\[u_j = \frac{1}{n} \sum_{k=0}^{n-1} \hat{u}_k e^{i k x_j}.\]</p><p>In Fourier space, the Laplacian operator <span>$\frac{d^2}{dx^2}$</span> becomes a simple multiplication by <span>$-k^2$</span>, where <span>$k$</span> is the wavenumber derived from the grid size. This transforms the Poisson equation <span>$\frac{d^2 u(x)}{dx^2} = f(x)$</span> into an algebraic equation in the frequency domain:</p><p class="math-container">\[-k^2 \hat{u}_k = \hat{f}_k.\]</p><p>By solving for <span>$\hat{u}_k$</span> and applying the IFFT, we can recover the solution <span>$u(x)$</span> efficiently.</p><p>The inverse FFT is used to convert data from the frequency domain back to the spatial domain. Once the solution in frequency space is obtained by dividing the Fourier coefficients <span>$\hat{f}_k$</span> by <span>$-k^2$</span> for <span>$k \neq 0$</span>, the IFFT is applied to transform the result back to the original grid points in the spatial domain. At <span>$k = 0$</span>, the equation <span>$-k^2 \hat{u}_0 = \hat{f}_0$</span> becomes indeterminate since <span>$k^2 = 0$</span>. This situation corresponds to the zero-frequency component <span>$\hat{f}_0$</span>, which represents the mean of <span>$f(x)$</span>. In such cases, <span>$\hat{u}_0$</span> is treated separately. It is typically set to 0 to remove the constant mode, or adjusted based on boundary conditions or other constraints.</p><p>In some cases, even though the FFT provides an efficient way to apply differential operators (such as the Laplacian) in the frequency domain, a direct solution may not be feasible due to complex boundary conditions, variable coefficients, or grid irregularities. In these situations, the FFT must be coupled with a Krylov method to iteratively solve the problem.</p><p>This example consists of solving the 1D Poisson equation on a periodic domain <span>$[0, 4\pi]$</span>:</p><p class="math-container">\[\frac{d^2 u(x)}{dx^2} = f(x),\]</p><p>where <span>$u(x)$</span> is the unknown solution, and <span>$f(x)$</span> is the given source term. We solve this equation using <a href="https://github.com/JuliaMath/FFTW.jl">FFTW.jl</a> to compute the matrix-free action of the Laplacian within the conjugate gradient solver.</p><p>Note that while a direct FFT-based approach can be used here due to the simplicity of the periodic boundary conditions, this example illustrates how a Krylov method can be employed to solve more challenging problems.</p><pre><code class="language-julia hljs">using FFTW, Krylov, LinearAlgebra
+
+# Define the problem size and domain
+n = 32768                         # Number of grid points (2^15)
+L = 4π                            # Length of the domain
+x = LinRange(0, L, n+1)[1:end-1]  # Periodic grid (excluding the last point)
+
+# Define the source term f(x)
+f = sin.(x)
+
+# Define a matrix-free operator using FFT and IFFT
+struct FFTPoissonOperator
+    n::Int
+    L::Float64
+    complex::Bool
+    k::Vector{Float64}  # Store Fourier wave numbers
+end
+
+function FFTPoissonOperator(n::Int, L::Float64, complex::Bool)
+    if complex
+        k = Vector{Float64}(undef, n)
+    else
+        k = Vector{Float64}(undef, n÷2 + 1)
+    end
+    k[1] = sum(f) / n  # average value of f(x) over the domain
+    for j in 1:(n÷2)
+        k[j+1] = 2 * π * j / L  # Positive wave numbers
+    end
+    if complex
+        for j in 1:(n÷2 - 1)
+            k[n-j+1] = -2 * π * j / L  # Negative wave numbers
+        end
+    end
+    return FFTPoissonOperator(n, L, complex, k)
+end
+
+Base.size(A::FFTPoissonOperator) = (n, n)
+
+function Base.eltype(A::FFTPoissonOperator)
+    type = A.complex ? ComplexF64 : Float64
+    return type
+end
+
+function LinearAlgebra.mul!(y::Vector, A::FFTPoissonOperator, u::Vector)
+    # Transform the input vector `u` to the frequency domain using `fft` or `rfft`.
+    # If the operator is complex, use the full FFT; otherwise, use the real FFT.
+    if A.complex
+        u_hat = fft(u)
+    else
+        u_hat = rfft(u)
+    end
+
+    # In Fourier space, solve the system by multiplying with -k^2 (corresponding to the second derivative).
+    # This step applies the Laplacian operator in the frequency domain.
+    u_hat .= -u_hat .* (A.k .^ 2)
+
+    # Transform the result back to the spatial domain using `ifft` or `irfft`.
+    # If the operator is complex, use the full inverse FFT; otherwise, use the inverse real FFT.
+    if A.complex
+        y .= ifft(u_hat)
+    else
+        y .= irfft(u_hat, A.n)
+    end
+
+    return y
+end
+
+# Create the matrix-free operator for the Poisson equation
+complex = false
+A = FFTPoissonOperator(n, L, complex)
+
+# Solve the linear system using CG
+u_sol, stats = cg(A, f, atol=1e-10, rtol=0.0, verbose=1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">([-1.4396866774607265e-16, -0.0003834951875714294, -0.0007669903187429035, -0.0011504853371140187, -0.0015339801862846551, -0.0019174748098556888, -0.0023009691514259776, -0.0026844631545961417, -0.003067956762966194, -0.0034514499201361614  …  0.0038349425697061534, 0.0034514499201357767, 0.0030679567629659133, 0.0026844631545958836, 0.0023009691514256432, 0.0019174748098553713, 0.001533980186284736, 0.0011504853371136822, 0.0007669903187424497, 0.00038349518757125917], SimpleStats
+ niter: 154
+ solved: true
+ inconsistent: false
+ residuals: []
+ Aresiduals: []
+ κ₂(A): []
+ timer: 144.03ms
+ status: solution good enough given atol and rtol
+)</code></pre><pre><code class="language-julia hljs"># The exact solution is u(x) = -sin(x)
+u_star = -sin.(x)
+u_star ≈ u_sol</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><h2 id="Example-with-discretized-PDE"><a class="docs-heading-anchor" href="#Example-with-discretized-PDE">Example with discretized PDE</a><a id="Example-with-discretized-PDE-1"></a><a class="docs-heading-anchor-permalink" href="#Example-with-discretized-PDE" title="Permalink"></a></h2><h3 id="Example-4:-Solving-the-3D-Helmholtz-equation"><a class="docs-heading-anchor" href="#Example-4:-Solving-the-3D-Helmholtz-equation">Example 4: Solving the 3D Helmholtz equation</a><a id="Example-4:-Solving-the-3D-Helmholtz-equation-1"></a><a class="docs-heading-anchor-permalink" href="#Example-4:-Solving-the-3D-Helmholtz-equation" title="Permalink"></a></h3><p>The Helmholtz equation in 3D is a fundamental equation used in various fields like acoustics, electromagnetism, and quantum mechanics to model stationary wave phenomena.</p><p>The equation is given by:</p><p class="math-container">\[\nabla^2 u(x,y,z) + k^2 u(x,y,z) = f(x,y,z)\]</p><p>In this equation, <span>$u(x, y, z)$</span> represents the unknown function, which could describe a pressure field in acoustics, a scalar potential in electromagnetism, or a wave function in quantum mechanics. The operator <span>$\nabla^2$</span> denotes the Laplacian in three dimensions. The wave number <span>$k$</span> is related to the frequency of the wave through the equation <span>$k = \frac{2\pi}{\lambda}$</span>, where <span>$\lambda$</span> is the wavelength. Finally, <span>$f(x,y,z)$</span> is a source term that drives the wave phenomena, acting as a forcing function or external influence.</p><p>To discretize the Helmholtz equation, we use finite differences on a uniform 3D grid with grid spacings <span>$\Delta x$</span>, <span>$\Delta y$</span>, and <span>$\Delta z$</span>. For a grid point <span>$(i, j, k)$</span>, the second derivatives are approximated as follows:</p><ul><li>In the <span>$x$</span>-direction:</li></ul><p class="math-container">\[\frac{\partial^2 u}{\partial x^2} \approx \frac{u_{i+1,j,k} - 2u_{i,j,k} + u_{i-1,j,k}}{\Delta x^2}\]</p><ul><li>In the <span>$y$</span>-direction:</li></ul><p class="math-container">\[\frac{\partial^2 u}{\partial y^2} \approx \frac{u_{i,j+1,k} - 2u_{i,j,k} + u_{i,j-1,k}}{\Delta y^2}\]</p><ul><li>In the <span>$z$</span>-direction:</li></ul><p class="math-container">\[\frac{\partial^2 u}{\partial z^2} \approx \frac{u_{i,j,k+1} - 2u_{i,j,k} + u_{i,j,k-1}}{\Delta z^2}\]</p><p>Combining these, the discretized Helmholtz equation becomes:</p><p class="math-container">\[\frac{u_{i+1,j,k} - 2u_{i,j,k} + u_{i-1,j,k}}{\Delta x^2} + \frac{u_{i,j+1,k} - 2u_{i,j,k} + u_{i,j-1,k}}{\Delta y^2} + \frac{u_{i,j,k+1} - 2u_{i,j,k} + u_{i,j,k-1}}{\Delta z^2} + k^2 u_{i,j,k} = f_{i,j,k}\]</p><p>This discretization results in an equation at each grid point, resulting in a large and sparse linear system when assembled across the entire 3D grid. To simplify the example, we impose Dirichlet boundary conditions with the solution <span>$u(x, y, z) = 0$</span> on the boundary of the cubic domain.</p><p>Explicitly constructing this large sparse matrix is often impractical and unnecessary. Instead, we can define a function that directly applies the Helmholtz operator to the 3D grid, avoiding the need to form the matrix explicitly.</p><p>Krylov.jl operates on vectors, so we must vectorize both the solution and the computational domain. However, we can still maintain the structure of the original 3D operator by using <code>reshape</code> and <code>vec</code>. This approach enables a simpler and efficient application of the operator in 3D while leveraging the vectorized framework for linear algebra operations.</p><pre><code class="language-julia hljs">using Krylov, LinearAlgebra
+
+# Parameters
+L = 1.0                 # Length of the cubic domain
+Nx = 200                # Number of interior grid points in x
+Ny = 200                # Number of interior grid points in y
+Nz = 200                # Number of interior grid points in z
+Δx = L / (Nx + 1)       # Grid spacing in x
+Δy = L / (Ny + 1)       # Grid spacing in y
+Δz = L / (Nz + 1)       # Grid spacing in z
+wavelength = 0.5        # Wavelength of the wave
+k = 2 * π / wavelength  # Wave number
+
+# Create the grid points
+x = 0:Δx:L  # Points in x dimension (Nx + 2)
+y = 0:Δy:L  # Points in y dimension (Ny + 2)
+z = 0:Δz:L  # Points in z dimension (Nz + 2)
+
+# Define a matrix-free Helmholtz operator
+struct HelmholtzOperator
+    Nx::Int
+    Ny::Int
+    Nz::Int
+    Δx::Float64
+    Δy::Float64
+    Δz::Float64
+    k::Float64
+end
+
+Base.size(A::HelmholtzOperator) = (A.Nx * A.Ny * A.Nz, A.Nx * A.Ny * A.Nz)
+
+Base.eltype(A::HelmholtzOperator) = Float64
+
+function LinearAlgebra.mul!(y::Vector, A::HelmholtzOperator, u::Vector)
+    # Reshape vectors y and u into 3D arrays
+    U = reshape(u, A.Nx, A.Ny, A.Nz)
+    Y = reshape(y, A.Nx, A.Ny, A.Nz)
+
+    # Apply the discrete Laplacian in 3D with k^2 * u
+    for i in 1:A.Nx
+        for j in 1:A.Ny
+            for k in 1:A.Nz
+                if i == 1
+                    dx2 = (U[i+1,j,k] -2 * U[i,j,k]) / (A.Δx)^2
+                elseif i == A.Nx
+                    dx2 = (-2 * U[i,j,k] + U[i-1,j,k]) / (A.Δx)^2
+                else
+                    dx2 = (U[i+1,j,k] -2 * U[i,j,k] + U[i-1,j,k]) / (A.Δx)^2
+                end
+
+                if j == 1
+                    dy2 = (U[i,j+1,k] -2 * U[i,j,k]) / (A.Δy)^2
+                elseif j == A.Ny
+                    dy2 = (-2 * U[i,j,k] + U[i,j-1,k]) / (A.Δy)^2
+                else
+                    dy2 = (U[i,j+1,k] -2 * U[i,j,k] + U[i,j-1,k]) / (A.Δy)^2
+                end
+
+                if k == 1
+                    dz2 = (U[i,j,k+1] -2 * U[i,j,k]) / (A.Δz)^2
+                elseif k == A.Nz
+                    dz2 = (-2 * U[i,j,k] + U[i,j,k-1]) / (A.Δz)^2
+                else
+                    dz2 = (U[i,j,k+1] -2 * U[i,j,k] + U[i,j,k-1]) / (A.Δz)^2
+                end
+
+                Y[i,j,k] = dx2 + dy2 + dz2 + (A.k)^2 * U[i,j,k]
+            end
+        end
+    end
+
+    return y
+end
+
+# Create the matrix-free operator for the Helmholtz equation
+A = HelmholtzOperator(Nx, Ny, Nz, Δx, Δy, Δz, k)
+
+# Source term f(x, y, z) = -2k² * sin(kx) * sin(ky) * sin(kz)
+F = [-2 * k^2 * sin(k * x[ii+1]) * sin(k * y[jj+1]) * sin(k * z[kk+1]) for ii in 1:Nx, jj in 1:Ny, kk in 1:Nz]
+f = vec(F)
+
+# Solve the linear system using MinAres
+u_sol, stats = minares(A, f, atol=1e-10, rtol=0.0, verbose=1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">([0.00024400839468931843, 0.0004870633547589754, 0.0007282151710249653, 0.0009665215706178858, 0.0012010513988053421, 0.0014308882573715199, 0.0016551340853373688, 0.0018729126680301527, 0.002083373060791085, 0.0022856929139432984  …  -0.0022856929139433474, -0.0020833730607911294, -0.0018729126680301987, -0.0016551340853374025, -0.001430888257371549, -0.001201051398805372, -0.00096652157061791, -0.0007282151710249842, -0.000487063354758982, -0.0002440083946893261], SimpleStats
+ niter: 1
+ solved: true
+ inconsistent: false
+ residuals: []
+ Aresiduals: []
+ κ₂(A): []
+ timer: 711.49ms
+ status: solution good enough given atol, rtol and Artol
+)</code></pre><pre><code class="language-julia hljs"># Solution as 3D array
+U_sol = reshape(u_sol, Nx, Ny, Nz)
+
+# Exact solution u(x,y,z) = sin(kx) * sin(ky) * sin(kz)
+U_star = [sin(k * x[ii+1]) * sin(k * y[jj+1]) * sin(k * z[kk+1]) for ii in 1:Nx, jj in 1:Ny, kk in 1:Nz]
+
+# Compute the maximum error between the numerical solution U_sol and the exact solution U_star
+norm(U_sol - U_star, Inf)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.0004887125253580926</code></pre><p>Note that preconditioners can be also implemented as abstract operators. For instance, we could compute the Cholesky factorization of <span>$M$</span> and <span>$N$</span> and create linear operators that perform the forward and backsolves.</p><p>Krylov methods combined with factorization free operators allow to reduce computation time and memory requirements considerably by avoiding building and storing the system matrix. In the field of partial differential equations, the implementation of high-performance factorization free operators and assembly free preconditioning is a subject of active research.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../warm-start/">« Warm-start</a><a class="docs-footer-nextpage" href="../callbacks/">Callbacks »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Sunday 16 February 2025 20:30">Sunday 16 February 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
