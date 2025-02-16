@@ -41,7 +41,7 @@ of size n. The method does _not_ abort if A + αI is not definite.
 
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
-* `check_curvature`: if `true`, check that the curvature of the quadratic along the search direction is positive, and abort if not, unless `linesearch` is also `true`;
+* `check_curvature`: if `true`, check that the curvature of the quadratic along the search direction is positive, and abort if not;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
