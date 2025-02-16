@@ -36,7 +36,7 @@
       A, b = zero_rhs(FC=FC)
       (x, stats) = lsqr(A, b)
       @test norm(x) == 0
-      @test stats.status == "x = 0 is a zero-residual solution"
+      @test stats.status == "x is a zero-residual solution"
 
       # Test with preconditioners
       A, b, M, N = two_preconditioners(FC=FC)

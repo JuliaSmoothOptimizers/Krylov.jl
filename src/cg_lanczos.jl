@@ -148,7 +148,8 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       stats.Anorm = zero(T)
       stats.indefinite = false
       stats.timer = start_time |> ktimer
-      stats.status = "x = 0 is a zero-residual solution"
+      stats.status = "x is a zero-residual solution"
+      warm_start && kaxpy!(n, one(FC), Δx, x)
       solver.warm_start = false
       return solver
     end

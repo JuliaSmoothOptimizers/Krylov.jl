@@ -165,7 +165,8 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       stats.solved = true
       stats.inconsistent = false
       stats.timer = start_time |> ktimer
-      stats.status = "x = 0 is a zero-residual solution"
+      stats.status = "x is a zero-residual solution"
+      warm_start && kaxpy!(n, one(FC), Δx, x)
       solver.warm_start = false
       return solver
     end
@@ -181,6 +182,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       stats.inconsistent = false
       stats.timer = start_time |> ktimer
       stats.status = "Breakdown bᴴc = 0"
+      warm_start && kaxpy!(n, one(FC), Δx, x)
       solver.warm_start = false
       return solver
     end

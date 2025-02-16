@@ -31,7 +31,7 @@ end
       for xi ∈ x
         @test norm(xi) == 0
       end
-      @test stats.status == "x = 0 is a zero-residual solution"
+      @test stats.status == "x is a zero-residual solution"
 
       # Test with Jacobi (or diagonal) preconditioner
       A, b, M = square_preconditioned(FC=FC)

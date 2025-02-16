@@ -39,7 +39,7 @@
       A, b = zero_rhs(FC=FC)
       (x, stats) = crls(A, b)
       @test norm(x) == 0
-      @test stats.status == "x = 0 is a zero-residual solution"
+      @test stats.status == "x is a zero-residual solution"
 
       # Test A positive semi-definite
       radius = 10.
