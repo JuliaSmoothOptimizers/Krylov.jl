@@ -331,7 +331,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
         stats.solved, stats.inconsistent = true, true
         stats.timer = start_time |> ktimer
         stats.status = "x is a minimum least-squares solution"
-        warm_start && kaxpy!(n, one(FC), Δx, x)
+        warm_start && kaxpy!(n, one(FC), Δx, x)#Linesearch
         solver.warm_start = false
         return solver
       end
@@ -345,6 +345,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
       # solved_mach = (ϵx ≥ β₁)
 
       # Stopping conditions based on user-provided tolerances.
+      #TODO test3 then update x to r2
       tired = iter ≥ itmax
       ill_cond_lim = (one(T) / Acond ≤ ctol)
       solved_lim = (test2 ≤ ε)
