@@ -18,13 +18,15 @@
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Brussels, Belgium, June 2015.
 # Montréal, August 2015.
+#
+# Liu, Yang & Roosta, Fred. (2022). A Newton-MR algorithm with complexity guarantees for nonconvex smooth unconstrained optimization. 10.48550/arXiv.2208.07095. 
 
 export minres, minres!
 
 """
     (x, stats) = minres(A, b::AbstractVector{FC};
                         M=I, ldiv::Bool=false, window::Int=5,
-                        λ::T=zero(T), atol::T=√eps(T),
+                        linesearch::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                         rtol::T=√eps(T), etol::T=√eps(T),
                         conlim::T=1/√eps(T), itmax::Int=0,
                         timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
@@ -68,6 +70,7 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `window`: number of iterations used to accumulate a lower bound on the error;
+* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If negative curvature is detected at iteration k > 0, the solution of iteration k-1 is returned. If negative curvature is detected at iteration 0, the right-hand side is returned (i.e., the negative gradient);
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
@@ -88,6 +91,8 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 #### Reference
 
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
+
+* Liu, Yang & Roosta, Fred. (2022). A Newton-MR algorithm with complexity guarantees for nonconvex smooth unconstrained optimization. 10.48550/arXiv.2208.07095. 
 """
 function minres end
 
@@ -108,6 +113,7 @@ def_optargs_minres = (:(x0::AbstractVector),)
 
 def_kwargs_minres = (:(; M = I                     ),
                      :(; ldiv::Bool = false        ),
+                     :(; linesearch::Bool = false  ),
                      :(; λ::T = zero(T)            ),
                      :(; atol::T = √eps(T)         ),
                      :(; rtol::T = √eps(T)         ),
@@ -124,7 +130,7 @@ def_kwargs_minres = extract_parameters.(def_kwargs_minres)
 
 args_minres = (:A, :b)
 optargs_minres = (:x0,)
-kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
   function minres!(solver :: MinresSolver{T,FC,S}, $(def_args_minres...); $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
@@ -173,18 +179,36 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     # β₁ M v₁ = b.
     kcopy!(n, r2, r1)  # r2 ← r1
     MisI || mulorldiv!(v, M, r1, ldiv)
+
+    rNorm =  knorm_elliptic(n, r2, r1)  # = ‖r‖
+    history && push!(rNorms, rNorm)
+
+    if rNorm == 0
+      stats.niter = 0
+      stats.solved, stats.inconsistent = true, false
+      stats.timer = start_time |> ktimer
+      stats.status = "x is a zero-residual solution"
+      history && push!(rNorms, zero(T))
+      history && push!(ArNorms, zero(T))
+      history && push!(Aconds, zero(T))
+      warm_start && kaxpy!(n, one(FC), Δx, x)
+      solver.warm_start = false
+      return solver
+    end
+
     β₁ = kdotr(m, r1, v)
     β₁ < 0 && error("Preconditioner is not positive definite")
     if β₁ == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
-      stats.status = "x is a zero-residual solution"
+      stats.status = "b is a zero-curvature directions"
       history && push!(rNorms, β₁)
       history && push!(ArNorms, zero(T))
       history && push!(Aconds, zero(T))
       warm_start && kaxpy!(n, one(FC), Δx, x)
       solver.warm_start = false
+      linesearch && kcopy!(n, x, b) # x ← b
       return solver
     end
     β₁ = sqrt(β₁)
@@ -275,6 +299,21 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
       ArNorm = ϕbar * root  # = ‖Aᴴrₖ₋₁‖
       history && push!(ArNorms, ArNorm)
 
+      # Check if -ve curvature encountered.
+      if linesearch
+        if cs * γbar ≥ 0 # or eps(T)
+          (verbose > 0) && @printf(iostream, "nonpositive curvature detected:  cs * γbar = %e\n", cs * γbar)
+          stats.solved = true
+          stats.niter = iter
+          stats.inconsistent = false
+          stats.timer = start_time |> ktimer
+          stats.status = "nonpositive curvature"
+          iter == 1 && kcopy!(n, x, b)  # x ← b # we start  at iteration 1
+          solver.warm_start = false
+          return solver
+        end
+      end
+
       # Compute the next plane rotation.
       γ = sqrt(γbar * γbar + β * β)
       γ = max(γ, ϵM)
@@ -331,7 +370,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
         stats.solved, stats.inconsistent = true, true
         stats.timer = start_time |> ktimer
         stats.status = "x is a minimum least-squares solution"
-        warm_start && kaxpy!(n, one(FC), Δx, x)#Linesearch
+        warm_start && kaxpy!(n, one(FC), Δx, x)
         solver.warm_start = false
         return solver
       end
@@ -345,7 +384,6 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
       # solved_mach = (ϵx ≥ β₁)
 
       # Stopping conditions based on user-provided tolerances.
-      #TODO test3 then update x to r2
       tired = iter ≥ itmax
       ill_cond_lim = (one(T) / Acond ≤ ctol)
       solved_lim = (test2 ≤ ε)
