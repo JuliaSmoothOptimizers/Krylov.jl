@@ -403,9 +403,9 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     tired               && (status = "maximum number of iterations exceeded")
     on_boundary         && (status = "on trust-region boundary")
     solved              && (status = "solution good enough given atol and rtol")
-    npcurv              && (status = "nonpositive curvature")
     user_requested_exit && (status = "user-requested exit")
     overtimed           && (status = "time limit exceeded")
+    npcurv              && (status = "nonpositive curvature")
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
