@@ -402,8 +402,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     # Termination status
     tired               && (status = "maximum number of iterations exceeded")
     on_boundary         && (status = "on trust-region boundary")
-    npcurv              && (status = "nonpositive curvature")
     solved              && (status = "solution good enough given atol and rtol")
+    npcurv              && (status = "nonpositive curvature")
     user_requested_exit && (status = "user-requested exit")
     overtimed           && (status = "time limit exceeded")
 
