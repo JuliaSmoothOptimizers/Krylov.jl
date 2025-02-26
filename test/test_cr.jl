@@ -67,10 +67,10 @@
       x, stats = cr(A, b, linesearch=true)
       @test stats.status == "nonpositive curvature"
 
-      #test nonpositive curvature when radius > 0
+      #test on trust-region boundary when radius > 0
       A, b = symmetric_indefinite(FC=FC, shift = 5)
       x, stats = cr(A, b, radius = one(Float64))
-      @test stats.status == "nonpositive curvature"
+      @test stats.status == "on trust-region boundary"
 
       # Test Linesearch which would stop on the first call since A is negative definite
       A, b = symmetric_indefinite(FC=FC; shift = 5)

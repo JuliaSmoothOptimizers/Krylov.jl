@@ -335,7 +335,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
       kaxpy!(n, α, p, x)
       xNorm = knorm(n, x)
-      xNorm ≈ radius && (on_boundary = true)
+      xNorm ≈ radius > 0 && (on_boundary = true)
       kaxpy!(n, -α, Mq, r)  # residual
       if MisI
         rNorm² = kdotr(n, r, r)
@@ -401,11 +401,11 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
     # Termination status
     tired               && (status = "maximum number of iterations exceeded")
-    on_boundary         && (status = "on trust-region boundary")
     solved              && (status = "solution good enough given atol and rtol")
     user_requested_exit && (status = "user-requested exit")
     overtimed           && (status = "time limit exceeded")
     npcurv              && (status = "nonpositive curvature")
+    on_boundary         && (status = "on trust-region boundary")
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
