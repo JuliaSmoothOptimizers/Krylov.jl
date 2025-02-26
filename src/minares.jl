@@ -3,7 +3,7 @@
 # This method is described in
 #
 # A. Montoison, D. Orban and M. A. Saunders
-# MinAres: An Iterative Method for Symmetric Linear Systems
+# MinAres: An Iterative Solver for Symmetric Linear Systems
 # SIAM Journal on Matrix Analysis and Applications, 46(1), pp. 509--529, 2025.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
