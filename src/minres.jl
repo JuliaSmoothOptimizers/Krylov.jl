@@ -299,16 +299,17 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       ArNorm = ϕbar * root  # = ‖Aᴴrₖ₋₁‖
       history && push!(ArNorms, ArNorm)
 
-      # Check if -ve curvature encountered.
+      # Check for nonpositive curvature
       if linesearch
-        if cs * γbar ≥ 0 # or eps(T)
-          (verbose > 0) && @printf(iostream, "nonpositive curvature detected:  cs * γbar = %e\n", cs * γbar)
+        cγ = cs * γbar
+        if cγ ≥ 0
+          (verbose > 0) && @printf(iostream, "nonpositive curvature detected:  cs * γbar = %e\n", cγ)
           stats.solved = true
           stats.niter = iter
           stats.inconsistent = false
           stats.timer = start_time |> ktimer
           stats.status = "nonpositive curvature"
-          iter == 1 && kcopy!(n, x, b)  # x ← b # we start  at iteration 1
+          iter == 1 && kcopy!(n, x, r)
           solver.warm_start = false
           return solver
         end
