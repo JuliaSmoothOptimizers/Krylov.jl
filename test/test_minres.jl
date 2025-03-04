@@ -40,7 +40,7 @@
       A, b = zero_rhs(FC=FC)
       (x, stats) = minres(A, b)
       @test norm(x) == 0
-      @test stats.status == "x is a zero-residual solution"
+      @test stats.status == "b is a zero-curvature directions"
 
       # Shifted system
       A, b = symmetric_indefinite(FC=FC)
