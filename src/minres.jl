@@ -303,10 +303,9 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
           stats.inconsistent = false
           stats.timer = start_time |> ktimer
           stats.status = "nonpositive curvature"
-          iter == 1 && kcopy!(n, x, r)
+          iter == 1 && kcopy!(n, x, r1)
           solver.warm_start = false
-          # when we use the linesearch and encounter negative curvature, we return the last residual rk
-          kcopy!(n, x, rk) # x ← rk  
+          # when we use the linesearch and encounter negative curvature, we return the last residual xk but user has access to rk from solver.rk
           stats.nonposi_curv = true
           return solver
         end
