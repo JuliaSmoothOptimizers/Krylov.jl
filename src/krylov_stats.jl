@@ -48,6 +48,58 @@ function copyto!(dest :: SimpleStats, src :: SimpleStats)
 end
 
 """
+Type for storing statistics returned by Conjugate Methods.
+Methods icludes:
+- CG (TODO)
+- CR (TODO)
+- MINRES
+The fields are as follows:
+- niter
+- solved
+- nonposi_curv: when a non-positive curvature is detected
+- linesearch: when a line search is performed
+- inconsistent
+- residuals
+- Aresiduals
+- Acond
+- timer
+- status
+"""
+mutable struct conStats{T} <: KrylovStats{T}
+  niter        :: Int
+  solved       :: Bool
+  nonposi_curv :: Bool
+  linesearch   :: Bool
+  inconsistent :: Bool
+  residuals    :: Vector{T}
+  Aresiduals   :: Vector{T}
+  Acond        :: Vector{T}
+  timer        :: Float64
+  status       :: String
+end
+
+function reset!(stats :: conStats)
+  empty!(stats.residuals)
+  empty!(stats.Aresiduals)
+  empty!(stats.Acond)
+end
+
+function copyto!(dest :: conStats, src :: conStats)
+  dest.niter        = src.niter
+  dest.solved       = src.solved
+  dest.nonposi_curv = src.nonposi_curv
+  dest.linesearch   = src.linesearch
+  dest.inconsistent = src.inconsistent
+  dest.residuals    = copy(src.residuals)
+  dest.Aresiduals   = copy(src.Aresiduals)
+  dest.Acond        = copy(src.Acond)
+  dest.timer        = src.timer
+  dest.status       = src.status
+  return dest
+end
+
+
+"""
 Type for storing statistics returned by LSMR.
 The fields are as follows:
 - niter

@@ -112,13 +112,14 @@ mutable struct MinresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   x          :: S
   r1         :: S
   r2         :: S
+  rk         :: S
   w1         :: S
   w2         :: S
   y          :: S
   v          :: S
   err_vec    :: Vector{T}
   warm_start :: Bool
-  stats      :: SimpleStats{T}
+  stats      :: conStats{T}
 end
 
 function MinresSolver(kc::KrylovConstructor; window :: Int=5)
@@ -131,13 +132,14 @@ function MinresSolver(kc::KrylovConstructor; window :: Int=5)
   x  = similar(kc.vn)
   r1 = similar(kc.vn)
   r2 = similar(kc.vn)
+  rk = similar(kc.vn_empty)
   w1 = similar(kc.vn)
   w2 = similar(kc.vn)
   y  = similar(kc.vn)
   v  = similar(kc.vn_empty)
   err_vec = zeros(T, window)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = MinresSolver{T,FC,S}(m, n, Δx, x, r1, r2, w1, w2, y, v, err_vec, false, stats)
+  stats = conStats(0, false, false, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = MinresSolver{T,FC,S}(m, n, Δx, x, r1, r2, rk, w1, w2, y, v, err_vec, false, stats)
   return solver
 end
 
@@ -148,13 +150,14 @@ function MinresSolver(m, n, S; window :: Int=5)
   x  = S(undef, n)
   r1 = S(undef, n)
   r2 = S(undef, n)
+  rk = S(undef, 0)
   w1 = S(undef, n)
   w2 = S(undef, n)
   y  = S(undef, n)
   v  = S(undef, 0)
   err_vec = zeros(T, window)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = MinresSolver{T,FC,S}(m, n, Δx, x, r1, r2, w1, w2, y, v, err_vec, false, stats)
+  stats = conStats(0, false, false, false, false, T[], T[], T[], 0.0, "unknown")
+  solver = MinresSolver{T,FC,S}(m, n, Δx, x, r1, r2, rk, w1, w2, y, v, err_vec, false, stats)
   return solver
 end
 

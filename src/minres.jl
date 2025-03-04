@@ -19,7 +19,7 @@
 # Brussels, Belgium, June 2015.
 # Montréal, August 2015.
 #
-# Liu, Yang & Roosta, Fred. (2022). A Newton-MR algorithm with complexity guarantees for nonconvex smooth unconstrained optimization. 10.48550/arXiv.2208.07095. 
+# Liu, Yang, and Fred Roosta. "MINRES: from negative curvature detection to monotonicity properties." SIAM Journal on Optimization 32, no. 4 (2022): 2636-2661.
 
 export minres, minres!
 
@@ -154,12 +154,16 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
 
     # Set up workspace.
     allocate_if(!MisI, solver, :v, S, solver.x)  # The length of v is n
+    allocate_if(linesearch, solver, :rk, S, solver.x)  # The length of rk is n
     Δx, x, r1, r2, w1, w2, y = solver.Δx, solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y
     err_vec, stats = solver.err_vec, solver.stats
     warm_start = solver.warm_start
     rNorms, ArNorms, Aconds = stats.residuals, stats.Aresiduals, stats.Acond
     reset!(stats)
+    stats.linesearch = linesearch
+
     v = MisI ? r2 : solver.v
+    rk = linesearch ? solver.rk : r2
 
     ϵM = eps(T)
     ctol = conlim > 0 ? 1 / conlim : zero(T)
@@ -175,6 +179,8 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       kcopy!(n, r1, b)  # r1 ← b
     end
 
+    linesearch && kcopy!(n, rk, r1)  # rk ← r1
+
     # Initialize Lanczos process.
     # β₁ M v₁ = b.
     kcopy!(n, r2, r1)  # r2 ← r1
@@ -183,18 +189,6 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     rNorm =  knorm_elliptic(n, r2, r1)  # = ‖r‖
     history && push!(rNorms, rNorm)
 
-    if rNorm == 0
-      stats.niter = 0
-      stats.solved, stats.inconsistent = true, false
-      stats.timer = start_time |> ktimer
-      stats.status = "x is a zero-residual solution"
-      history && push!(rNorms, zero(T))
-      history && push!(ArNorms, zero(T))
-      history && push!(Aconds, zero(T))
-      warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
-      return solver
-    end
 
     β₁ = kdotr(m, r1, v)
     β₁ < 0 && error("Preconditioner is not positive definite")
@@ -208,7 +202,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       history && push!(Aconds, zero(T))
       warm_start && kaxpy!(n, one(FC), Δx, x)
       solver.warm_start = false
-      linesearch && kcopy!(n, x, b) # x ← b
+      stats.nonposi_curv = true
       return solver
     end
     β₁ = sqrt(β₁)
@@ -263,7 +257,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       # Generate next Lanczos vector.
       mul!(y, A, v)
       λ ≠ 0 && kaxpy!(n, λ, v, y)              # (y = y + λ * v)
-      kscal!(n, one(FC) / β, y)
+      kscal!(n, one(FC) / β, y)                # (y = y / β)
       iter ≥ 2 && kaxpy!(n, -β / oldβ, r1, y)  # (y = y - β / oldβ * r1)
 
       α = kdotr(n, v, y) / β
@@ -311,6 +305,9 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
           stats.status = "nonpositive curvature"
           iter == 1 && kcopy!(n, x, r)
           solver.warm_start = false
+          # when we use the linesearch and encounter negative curvature, we return the last residual rk
+          kcopy!(n, x, rk) # x ← rk  
+          stats.nonposi_curv = true
           return solver
         end
       end
@@ -322,6 +319,16 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       sn = β / γ
       ϕ = cs * ϕbar
       ϕbar = sn * ϕbar
+
+      if linesearch
+        # calculating the residual rk = sn*sn * rk - ϕbar * cs   * v
+        sn2 = sn * sn
+        kscal!(n, sn2, rk )  # rk = sn2 * rk
+        ϕ_c = -ϕbar * cs 
+        kaxpy!(n, ϕ_c, v, rk)   # rk = rk + ϕ_c * v
+        rk = sn*sn * rk - ϕbar * cs   * v
+      end
+      
 
       # Final update of w.
       kscal!(n, one(FC) / γ, w)
@@ -412,6 +419,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     user_requested_exit && (status = "user-requested exit")
     overtimed           && (status = "time limit exceeded")
 
+    stats.nonposi_curv = zero_resid 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
