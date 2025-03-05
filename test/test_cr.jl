@@ -66,11 +66,14 @@
       A, b = symmetric_indefinite(FC=FC)
       x, stats = cr(A, b, linesearch=true)
       @test stats.status == "nonpositive curvature"
+      # @test real(dot(x, A * x)) ≤ 0
 
-      #test on trust-region boundary when radius > 0
+      # Test on trust-region boundary when radius > 0
       A, b = symmetric_indefinite(FC=FC, shift = 5)
       x, stats = cr(A, b, radius = one(Float64))
       @test stats.status == "on trust-region boundary"
+      @test real(dot(x, A * x)) ≤ 0
+      @test norm(x) ≈ 1.0
 
       # Test Linesearch which would stop on the first call since A is negative definite
       A, b = symmetric_indefinite(FC=FC; shift = 5)
@@ -95,7 +98,7 @@
       @test stats.solved == true
 
  
-      # test callback function
+      # Test callback function
       A, b = symmetric_definite(FC=FC)
       solver = CrSolver(A, b)
       tol = 1.0e-1
