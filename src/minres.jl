@@ -12,6 +12,12 @@
 # This implementation follows the original implementation by
 # Michael Saunders described in
 #
+# Negative curvature handling (following Liu, Yang, and Roosta, "MINRES: from negative curvature 
+# detection to monotonicity properties," SIAM Journal on Optimization 32, no. 4 (2022): 2636–2661):
+#
+# If linesearch is true, and if negative curvature is detected at any iteration k > 0, the solution from iteration k-1 is returned, while preserving the last computed residual as a potential search direction.
+# If negative curvature is detected at first iteration, the method returns the right-hand side (i.e., the negative gradient).
+#
 # C. C. Paige and M. A. Saunders, Solution of Sparse Indefinite Systems of Linear Equations,
 # SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 #
@@ -19,7 +25,7 @@
 # Brussels, Belgium, June 2015.
 # Montréal, August 2015.
 #
-# Liu, Yang, and Fred Roosta. "MINRES: from negative curvature detection to monotonicity properties." SIAM Journal on Optimization 32, no. 4 (2022): 2636-2661.
+
 
 export minres, minres!
 
@@ -55,6 +61,10 @@ definite, but is typically more stable and also applies to the case where
 A is indefinite.
 
 MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr‖₂.
+
+If `linesearch` is true, and if negative curvature is detected at any iteration `k > 0`, the solution from iteration `k-1` is returned, while preserving the last computed residual as a potential search direction.
+If negative curvature is detected at iteration `0`, the method returns the right-hand side
+(i.e., the negative gradient).
 
 #### Input arguments
 
@@ -144,6 +154,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     m == n || error("System must be square")
     length(b) == n || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "MINRES: system of size %d\n", n)
+    (solver.warm_start && linesearch) && error("warm_start and linesearch cannot be used together")
 
     # Tests M = Iₙ
     MisI = (M === I)
@@ -154,17 +165,17 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
 
     # Set up workspace.
     allocate_if(!MisI, solver, :v, S, solver.x)  # The length of v is n
-    allocate_if(linesearch, solver, :rk, S, solver.x)  # The length of rk is n
+    allocate_if(linesearch, solver, :npc_dir , S, solver.x)  # The length of npc_dir  is n
     Δx, x, r1, r2, w1, w2, y = solver.Δx, solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y
     err_vec, stats = solver.err_vec, solver.stats
     warm_start = solver.warm_start
     rNorms, ArNorms, Aconds = stats.residuals, stats.Aresiduals, stats.Acond
     reset!(stats)
-    stats.linesearch = linesearch
 
     v = MisI ? r2 : solver.v
-    rk = linesearch ? solver.rk : r2
-
+    if linesearch
+      npc_dir = solver.npc_dir
+    end
     ϵM = eps(T)
     ctol = conlim > 0 ? 1 / conlim : zero(T)
 
@@ -179,7 +190,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       kcopy!(n, r1, b)  # r1 ← b
     end
 
-    linesearch && kcopy!(n, rk, r1)  # rk ← r1
+    linesearch && kcopy!(n, npc_dir , r1)  # npc_dir  ← r1
 
     # Initialize Lanczos process.
     # β₁ M v₁ = b.
@@ -202,7 +213,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       history && push!(Aconds, zero(T))
       warm_start && kaxpy!(n, one(FC), Δx, x)
       solver.warm_start = false
-      stats.nonposi_curv = true
+      stats.indefinite = true
       return solver
     end
     β₁ = sqrt(β₁)
@@ -250,6 +261,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     fwd_err = false
     user_requested_exit = false
     overtimed = false
+    stats.indefinite = false
 
     while !(solved || tired || ill_cond || user_requested_exit || overtimed)
       iter = iter + 1
@@ -303,10 +315,10 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
           stats.inconsistent = false
           stats.timer = start_time |> ktimer
           stats.status = "nonpositive curvature"
-          iter == 1 && kcopy!(n, x, r1)
+          iter == 1 && kcopy!(n, x, b)
           solver.warm_start = false
-          # when we use the linesearch and encounter negative curvature, we return the last residual xk but user has access to rk from solver.rk
-          stats.nonposi_curv = true
+          # when we use the linesearch and encounter negative curvature, we return the last residual xk but user has access to npc_dir  from solver.npc_dir 
+          stats.indefinite = true
           return solver
         end
       end
@@ -320,12 +332,11 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       ϕbar = sn * ϕbar
 
       if linesearch
-        # calculating the residual rk = sn*sn * rk - ϕbar * cs   * v
+        # calculating the residual npc_dir  = sn*sn * npc_dir  - ϕbar * cs   * v
         sn2 = sn * sn
-        kscal!(n, sn2, rk )  # rk = sn2 * rk
+        kscal!(n, sn2, npc_dir  )  # npc_dir  = sn2 * npc_dir 
         ϕ_c = -ϕbar * cs 
-        kaxpy!(n, ϕ_c, v, rk)   # rk = rk + ϕ_c * v
-        rk = sn*sn * rk - ϕbar * cs   * v
+        kaxpy!(n, ϕ_c, v, npc_dir )   # npc_dir  = npc_dir  + ϕ_c * v
       end
       
 
@@ -418,7 +429,6 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     user_requested_exit && (status = "user-requested exit")
     overtimed           && (status = "time limit exceeded")
 
-    stats.nonposi_curv = zero_resid 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false
