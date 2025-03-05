@@ -68,6 +68,7 @@
       resid = norm(r) / norm(b)
       @test(resid ≤ minres_tol * norm(A) * norm(x))
       @test(stats.solved)
+      @test stats.indefinite == false
 
       # Test linesearch
       A, b = symmetric_indefinite(FC=FC)
@@ -99,6 +100,16 @@
       @test stats.solved == true
       @test stats.indefinite == true
 
+
+      # Test if warm_start and linesearch are both true, it should through an error
+      A, b = symmetric_indefinite(FC=FC)
+      @test_throws MethodError minres(A, b, warm_start = true, linesearch = true)      
+      
+      # Test the constructor warm_start and linesearch when both are true, it should through an error 
+       # Test linesearch
+       A, b = symmetric_indefinite(FC=FC)
+       solver = MinresSolver(A, b)
+       @test_throws MethodError minres!(solver, A, b, linesearch=true, warm_start = true)
 
       # test callback function
       solver = MinresSolver(A, b)
