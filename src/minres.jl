@@ -15,9 +15,6 @@
 # Negative curvature handling (following Liu, Yang, and Roosta, "MINRES: from negative curvature 
 # detection to monotonicity properties," SIAM Journal on Optimization 32, no. 4 (2022): 2636–2661):
 #
-# If linesearch is true and negative curvature is detected at iteration k > 0, the solution from iteration k-1 is returned, and `solver.npc_dir` contains the last computed residual, which is a direction of nonpositive curvature.
-# If linesearch is true and negative curvature is detected at iteration k = 0, the right-hand side is returned as solution (i.e., the negative gradient), and `solver.npc_dir` contains [WHAT?].
-#
 # C. C. Paige and M. A. Saunders, Solution of Sparse Indefinite Systems of Linear Equations,
 # SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 #
@@ -61,9 +58,8 @@ A is indefinite.
 
 MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr‖₂.
 
-If `linesearch` is true, and if negative curvature is detected at any iteration `k > 0`, the solution from iteration `k-1` is returned, while preserving the last computed residual as a potential search direction.
-If negative curvature is detected at iteration `0`, the method returns the right-hand side
-(i.e., the negative gradient).
+If linesearch is true and negative curvature is detected at iteration k > 0, the solution from iteration k-1 is returned, and `solver.npc_dir` contains the last computed residual, which is a direction of nonpositive curvature.
+If linesearch is true and negative curvature is detected at iteration k = 0, the right-hand side is returned as solution (i.e., the negative gradient), and `solver.npc_dir` contains the preconditioned initial residual.
 
 #### Input arguments
 
@@ -188,13 +184,12 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       kcopy!(n, r1, b)  # r1 ← b
     end
 
-    linesearch && kcopy!(n, npc_dir , r1)  # npc_dir  ← r1
-
     # Initialize Lanczos process.
     # β₁ M v₁ = b.
     kcopy!(n, r2, r1)  # r2 ← r1
     MisI || mulorldiv!(v, M, r1, ldiv)
 
+    linesearch && kcopy!(n, npc_dir , v)  # npc_dir  ← v; contain the preconditioned initial residual
     rNorm =  knorm_elliptic(n, r2, r1)  # = ‖r‖
     history && push!(rNorms, rNorm)
 
@@ -204,13 +199,12 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
-      stats.status = "b is a zero-curvature directions"
+      stats.status = "x is a zero-residual solution"
       history && push!(rNorms, β₁)
       history && push!(ArNorms, zero(T))
       history && push!(Aconds, zero(T))
       warm_start && kaxpy!(n, one(FC), Δx, x)
       solver.warm_start = false
-      stats.indefinite = true
       return solver
     end
     β₁ = sqrt(β₁)
