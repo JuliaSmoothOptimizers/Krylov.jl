@@ -100,7 +100,6 @@ If negative curvature is detected at iteration `0`, the method returns the right
 #### References
 
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
-
 * Liu, Yang & Roosta, Fred. (2022). A Newton-MR algorithm with complexity guarantees for nonconvex smooth unconstrained optimization. 10.48550/arXiv.2208.07095. 
 """
 function minres end
