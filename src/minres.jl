@@ -26,7 +26,6 @@
 # Montréal, August 2015.
 #
 
-
 export minres, minres!
 
 """
