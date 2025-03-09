@@ -16,7 +16,7 @@
 # detection to monotonicity properties," SIAM Journal on Optimization 32, no. 4 (2022): 2636–2661):
 #
 # If linesearch is true and negative curvature is detected at iteration k > 0, the solution from iteration k-1 is returned, and `solver.npc_dir` contains the last computed residual, which is a direction of nonpositive curvature.
-# If negative curvature is detected at first iteration, the method returns the right-hand side (i.e., the negative gradient).
+# If linesearch is true and negative curvature is detected at iteration k = 0, the right-hand side is returned as solution (i.e., the negative gradient), and `solver.npc_dir` contains [WHAT?].
 #
 # C. C. Paige and M. A. Saunders, Solution of Sparse Indefinite Systems of Linear Equations,
 # SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
