@@ -60,7 +60,7 @@ function BlockMinresSolver(m, n, p, SV, SM)
   Hₖ₋₁ = SM(undef, 2p, p)
   τₖ₋₂ = SV(undef, p)
   τₖ₋₁ = SV(undef, p)
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = BlockMinresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, false, stats)
   return solver
 end
@@ -121,7 +121,7 @@ function BlockGmresSolver(m, n, p, memory, SV, SM)
   R  = SM[SM(undef, p, p) for i = 1 : div(memory * (memory+1), 2)]
   H  = SM[SM(undef, 2p, p) for i = 1 : memory]
   τ  = SV[SV(undef, p) for i = 1 : memory]
-  stats = SimpleStats(0, false, false, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = BlockGmresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, false, stats)
   return solver
 end

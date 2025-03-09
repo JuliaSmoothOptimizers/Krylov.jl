@@ -1,6 +1,6 @@
 @testset "stats" begin
-  stats = Krylov.SimpleStats(0, true, true, Float64[1.0], Float64[2.0], Float64[], 1.234, "unknown")
-  stats2 = Krylov.SimpleStats(1, true, true, Float64[1.0], Float64[2.0], Float64[], 1.234, "unknown")
+  stats = Krylov.SimpleStats(0, true, true, false ,Float64[1.0], Float64[2.0], Float64[], 1.234, "unknown")
+  stats2 = Krylov.SimpleStats(1, true, true, false, Float64[1.0], Float64[2.0], Float64[], 1.234, "unknown")
   copyto!(stats2, stats)
   io = IOBuffer()
   show(io, stats)
@@ -10,6 +10,7 @@
   niter: 0
   solved: true
   inconsistent: true
+  indefinite: false
   residuals: [ 1.0e+00 ]
   Aresiduals: [ 2.0e+00 ]
   κ₂(A): []

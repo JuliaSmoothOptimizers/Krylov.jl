@@ -68,6 +68,48 @@
       resid = norm(r) / norm(b)
       @test(resid ≤ minres_tol * norm(A) * norm(x))
       @test(stats.solved)
+      @test stats.indefinite == false
+
+      # Test linesearch
+      A, b = symmetric_indefinite(FC=FC)
+      solver = MinresSolver(A, b)
+      minres!(solver, A, b, linesearch=true)
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      @test stats.status == "nonpositive curvature"
+      @test stats.indefinite == true
+      # Verify that the returned direction indeed exhibits nonpositive curvature.
+      # For both real and complex cases, ensure to take the real part.
+      curvature = real(dot(npc_dir, A * npc_dir))
+      @test curvature <= 0
+
+
+      # Test Linesearch which would stop on the first call since A is negative definite
+      A, b = symmetric_indefinite(FC=FC; shift = 5)
+      x, stats = minres(A, b, linesearch=true)
+      @test stats.status == "nonpositive curvature"
+      @test stats.niter == 1 # in Minres they add 1 to the number of iterations first step
+      @test all(x .== b)
+      @test stats.solved == true
+      @test stats.indefinite == true
+
+      # Test when b^TAb=0 and linesearch is true
+      A, b = system_zero_quad(FC=FC)
+      x, stats = minres(A, b, linesearch=true)
+      @test stats.status == "nonpositive curvature"
+      @test all(x .== b)
+      @test stats.solved == true
+      @test stats.indefinite == true
+
+
+      # Test if warm_start and linesearch are both true, it should through an error
+      A, b = symmetric_indefinite(FC=FC)
+      @test_throws MethodError minres(A, b, warm_start = true, linesearch = true)      
+      
+      # Test the constructor warm_start and linesearch when both are true, it should through an error 
+       # Test linesearch
+       A, b = symmetric_indefinite(FC=FC)
+       solver = MinresSolver(A, b)
+       @test_throws MethodError minres!(solver, A, b, linesearch=true, warm_start = true)
 
       # test callback function
       solver = MinresSolver(A, b)
