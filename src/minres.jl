@@ -198,7 +198,6 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     rNorm =  knorm_elliptic(n, r2, r1)  # = ‖r‖
     history && push!(rNorms, rNorm)
 
-
     β₁ = kdotr(m, r1, v)
     β₁ < 0 && error("Preconditioner is not positive definite")
     if β₁ == 0
