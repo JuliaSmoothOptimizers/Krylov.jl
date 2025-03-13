@@ -190,8 +190,6 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     MisI || mulorldiv!(v, M, r1, ldiv)
 
     linesearch && kcopy!(n, npc_dir , v)  # npc_dir  ← v; contain the preconditioned initial residual
-    rNorm =  knorm_elliptic(n, r2, r1)  # = ‖r‖
-    history && push!(rNorms, rNorm)
 
     β₁ = kdotr(m, r1, v)
     β₁ < 0 && error("Preconditioner is not positive definite")
