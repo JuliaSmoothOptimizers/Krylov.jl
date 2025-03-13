@@ -307,7 +307,6 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
           stats.status = "nonpositive curvature"
           iter == 1 && kcopy!(n, x, b)
           solver.warm_start = false
-          # when we use the linesearch and encounter negative curvature, we return the last residual xk but user has access to npc_dir  from solver.npc_dir 
           stats.indefinite = true
           return solver
         end
