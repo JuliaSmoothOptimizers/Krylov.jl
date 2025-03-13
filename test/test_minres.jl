@@ -103,7 +103,7 @@
       @test stats.solved == true
       @test stats.indefinite == true
 
-      # Test if warm_start and linesearch are both true, it should through an error
+      # Test if warm_start and linesearch are both true, it should throw an error
       A, b = symmetric_indefinite(FC=FC)
       @test_throws MethodError minres(A, b, warm_start = true, linesearch = true)      
       
