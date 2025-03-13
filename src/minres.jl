@@ -96,7 +96,7 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 
-* Liu, Yang, and Roosta, MINRES: from negative curvature detection to monotonicity properties, SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022. 
+* Y. Liu and F. Roosta, [*MINRES: From Negative Curvature Detection to Monotonicity Properties*](https://doi.org/10.1137/21M143666X), *SIAM Journal on Optimization*, 32(4), pp. 2636–2661, 2022.
 """
 function minres end
 

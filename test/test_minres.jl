@@ -97,21 +97,18 @@
 
       # Test when b^TAb=0 and linesearch is true
       A, b = system_zero_quad(FC=FC)
-      x, stats = minres(A, b, linesearch=true)
+      solver = MinresSolver(A, b)
+      minres!(solver, A, b, linesearch=true)
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
       @test stats.status == "nonpositive curvature"
       @test all(x .== b)
       @test stats.solved == true
       @test stats.indefinite == true
+      @test real(dot(npc_dir, A * npc_dir)) ≈ 0.0
 
       # Test if warm_start and linesearch are both true, it should throw an error
       A, b = symmetric_indefinite(FC=FC)
-      @test_throws MethodError minres(A, b, warm_start = true, linesearch = true)      
-      
-      # Test the constructor warm_start and linesearch when both are true, it should through an error 
-       # Test linesearch
-       A, b = symmetric_indefinite(FC=FC)
-       solver = MinresSolver(A, b)
-       @test_throws MethodError minres!(solver, A, b, linesearch=true, warm_start = true)
+      @test_throws MethodError minres(A, b, warm_start = true, linesearch = true)          
 
       # test callback function
       solver = MinresSolver(A, b)
