@@ -321,7 +321,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       ϕbar = sn * ϕbar
 
       if linesearch
-        # calculating the residual npc_dir  = sn*sn * npc_dir  - ϕbar * cs   * v
+        # compute the residual vector and store it in npc_dir
         kscal!(n, sn * sn, npc_dir  )  # npc_dir  = sn * sn * npc_dir 
         kaxpy!(n, -ϕbar * cs, v, npc_dir )   # npc_dir  = npc_dir  - ϕbar * cs * v
       end
