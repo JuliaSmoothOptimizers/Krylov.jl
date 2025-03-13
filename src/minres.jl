@@ -323,10 +323,8 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
 
       if linesearch
         # calculating the residual npc_dir  = sn*sn * npc_dir  - ϕbar * cs   * v
-        sn2 = sn * sn
-        kscal!(n, sn2, npc_dir  )  # npc_dir  = sn2 * npc_dir 
-        ϕ_c = -ϕbar * cs 
-        kaxpy!(n, ϕ_c, v, npc_dir )   # npc_dir  = npc_dir  + ϕ_c * v
+        kscal!(n, sn * sn, npc_dir  )  # npc_dir  = sn * sn * npc_dir 
+        kaxpy!(n, -ϕbar * cs, v, npc_dir )   # npc_dir  = npc_dir  - ϕbar * cs * v
       end
       
 
