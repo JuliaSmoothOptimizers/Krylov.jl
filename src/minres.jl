@@ -73,7 +73,7 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `window`: number of iterations used to accumulate a lower bound on the error;
-* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `linesearch` is true and negative curvature is detected, the solution depends on the iteration: at  k > 1, the solution from k-1 is returned with `solver.npc_dir` as the last residual; at k = 1, the right-hand side is returned with `solver.npc_dir` as the preconditioned initial residual. [Note that the MINRES solver start at iteration 1, so the first iteration is k = 1];
+* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `linesearch` is true and nonpositive curvature is detected, the solution depends on the iteration: at iteration k = 1, the right-hand side is returned with `solver.npc_dir` as the preconditioned initial residual; at iteration k > 1, the solution from iteration k-1 is returned with `solver.npc_dir` as the most recent residual. (Note that the MINRES solver starts at iteration 1, so the first iteration is k = 1);
 
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
