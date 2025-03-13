@@ -12,8 +12,9 @@
 # This implementation follows the original implementation by
 # Michael Saunders described in
 #
-# Negative curvature handling (following Liu, Yang, and Roosta, "MINRES: from negative curvature 
-# detection to monotonicity properties," SIAM Journal on Optimization 32, no. 4 (2022): 2636–2661):
+# Negative curvature detection follows
+# Liu, Yang, and Roosta, MINRES: from negative curvature detection to monotonicity properties,
+# SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
 #
 # C. C. Paige and M. A. Saunders, Solution of Sparse Indefinite Systems of Linear Equations,
 # SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
