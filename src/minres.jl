@@ -59,7 +59,6 @@ A is indefinite.
 
 MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr‖₂.
 
-If linesearch is true and negative curvature is detected at iteration k > 0, the solution from iteration k-1 is returned, and `solver.npc_dir` contains the last computed residual, which is a direction of nonpositive curvature.
 If linesearch is true and negative curvature is detected at iteration k = 0, the right-hand side is returned as solution (i.e., the negative gradient), and `solver.npc_dir` contains the preconditioned initial residual.
 
 #### Input arguments
