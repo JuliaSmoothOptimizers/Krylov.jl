@@ -82,7 +82,6 @@
       curvature = real(dot(npc_dir, A * npc_dir))
       @test curvature <= 0
 
-
       # Test Linesearch which would stop on the first call since A is negative definite
       A, b = symmetric_indefinite(FC=FC; shift = 5)
       x, stats = minres(A, b, linesearch=true)
