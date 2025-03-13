@@ -12,12 +12,12 @@
 # This implementation follows the original implementation by
 # Michael Saunders described in
 #
+# C. C. Paige and M. A. Saunders, Solution of Sparse Indefinite Systems of Linear Equations,
+# SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
+#
 # Negative curvature detection follows
 # Liu, Yang, and Roosta, MINRES: from negative curvature detection to monotonicity properties,
 # SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
-#
-# C. C. Paige and M. A. Saunders, Solution of Sparse Indefinite Systems of Linear Equations,
-# SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 #
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Brussels, Belgium, June 2015.
@@ -59,6 +59,7 @@ A is indefinite.
 
 MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr‖₂.
 
+If `linesearch` is true and negative curvature is detected, the solution depends on the iteration: at  k > 0, the solution from k-1 is returned with `solver.npc_dir` as the last residual; at k = 0, the right-hand side is returned with `solver.npc_dir` as the preconditioned initial residual.
 
 #### Input arguments
 
@@ -97,7 +98,8 @@ If linesearch is true and nonpositive curvature is detected at iteration k = 0, 
 #### References
 
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
-* Liu, Yang & Roosta, Fred. (2022). A Newton-MR algorithm with complexity guarantees for nonconvex smooth unconstrained optimization. 10.48550/arXiv.2208.07095. 
+
+* Liu, Yang, and Roosta, MINRES: from negative curvature detection to monotonicity properties, SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022. 
 """
 function minres end
 
