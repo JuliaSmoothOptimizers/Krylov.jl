@@ -327,7 +327,6 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
         kaxpy!(n, -ϕbar * cs, v, npc_dir )   # npc_dir  = npc_dir  - ϕbar * cs * v
       end
       
-
       # Final update of w.
       kscal!(n, one(FC) / γ, w)
 
