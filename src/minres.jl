@@ -15,16 +15,21 @@
 # C. C. Paige and M. A. Saunders, Solution of Sparse Indefinite Systems of Linear Equations,
 # SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 #
+# Negative curvature detection follows
+# Liu, Yang, and Roosta, MINRES: from negative curvature detection to monotonicity properties,
+# SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
+#
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Brussels, Belgium, June 2015.
 # Montréal, August 2015.
+#
 
 export minres, minres!
 
 """
     (x, stats) = minres(A, b::AbstractVector{FC};
                         M=I, ldiv::Bool=false, window::Int=5,
-                        λ::T=zero(T), atol::T=√eps(T),
+                        linesearch::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                         rtol::T=√eps(T), etol::T=√eps(T),
                         conlim::T=1/√eps(T), itmax::Int=0,
                         timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
@@ -68,6 +73,8 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `window`: number of iterations used to accumulate a lower bound on the error;
+* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `linesearch` is true and nonpositive curvature is detected, the solution depends on the iteration: at iteration k = 1, the right-hand side is returned with `solver.npc_dir` as the preconditioned initial residual; at iteration k > 1, the solution from iteration k-1 is returned with `solver.npc_dir` as the most recent residual. (Note that the MINRES solver starts at iteration 1, so the first iteration is k = 1);
+
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
@@ -85,9 +92,11 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 * `x`: a dense vector of length `n`;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
-#### Reference
+#### References
 
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
+
+* Y. Liu and F. Roosta, [*MINRES: From Negative Curvature Detection to Monotonicity Properties*](https://doi.org/10.1137/21M143666X), SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
 """
 function minres end
 
@@ -108,6 +117,7 @@ def_optargs_minres = (:(x0::AbstractVector),)
 
 def_kwargs_minres = (:(; M = I                     ),
                      :(; ldiv::Bool = false        ),
+                     :(; linesearch::Bool = false  ),
                      :(; λ::T = zero(T)            ),
                      :(; atol::T = √eps(T)         ),
                      :(; rtol::T = √eps(T)         ),
@@ -124,7 +134,7 @@ def_kwargs_minres = extract_parameters.(def_kwargs_minres)
 
 args_minres = (:A, :b)
 optargs_minres = (:x0,)
-kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
   function minres!(solver :: MinresSolver{T,FC,S}, $(def_args_minres...); $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
@@ -138,6 +148,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     m == n || error("System must be square")
     length(b) == n || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "MINRES: system of size %d\n", n)
+    (solver.warm_start && linesearch) && error("warm_start and linesearch cannot be used together")
 
     # Tests M = Iₙ
     MisI = (M === I)
@@ -148,13 +159,17 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
 
     # Set up workspace.
     allocate_if(!MisI, solver, :v, S, solver.x)  # The length of v is n
+    allocate_if(linesearch, solver, :npc_dir , S, solver.x)  # The length of npc_dir  is n
     Δx, x, r1, r2, w1, w2, y = solver.Δx, solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y
     err_vec, stats = solver.err_vec, solver.stats
     warm_start = solver.warm_start
     rNorms, ArNorms, Aconds = stats.residuals, stats.Aresiduals, stats.Acond
     reset!(stats)
-    v = MisI ? r2 : solver.v
 
+    v = MisI ? r2 : solver.v
+    if linesearch
+      npc_dir = solver.npc_dir
+    end
     ϵM = eps(T)
     ctol = conlim > 0 ? 1 / conlim : zero(T)
 
@@ -173,6 +188,9 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     # β₁ M v₁ = b.
     kcopy!(n, r2, r1)  # r2 ← r1
     MisI || mulorldiv!(v, M, r1, ldiv)
+
+    linesearch && kcopy!(n, npc_dir , v)  # npc_dir  ← v; contain the preconditioned initial residual
+
     β₁ = kdotr(m, r1, v)
     β₁ < 0 && error("Preconditioner is not positive definite")
     if β₁ == 0
@@ -232,6 +250,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
     fwd_err = false
     user_requested_exit = false
     overtimed = false
+    stats.indefinite = false
 
     while !(solved || tired || ill_cond || user_requested_exit || overtimed)
       iter = iter + 1
@@ -239,7 +258,7 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
       # Generate next Lanczos vector.
       mul!(y, A, v)
       λ ≠ 0 && kaxpy!(n, λ, v, y)              # (y = y + λ * v)
-      kscal!(n, one(FC) / β, y)
+      kscal!(n, one(FC) / β, y)                # (y = y / β)
       iter ≥ 2 && kaxpy!(n, -β / oldβ, r1, y)  # (y = y - β / oldβ * r1)
 
       α = kdotr(n, v, y) / β
@@ -275,6 +294,23 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
       ArNorm = ϕbar * root  # = ‖Aᴴrₖ₋₁‖
       history && push!(ArNorms, ArNorm)
 
+      # Check for nonpositive curvature
+      if linesearch
+        cγ = cs * γbar
+        if cγ ≥ 0
+          (verbose > 0) && @printf(iostream, "nonpositive curvature detected:  cs * γbar = %e\n", cγ)
+          stats.solved = true
+          stats.niter = iter
+          stats.inconsistent = false
+          stats.timer = start_time |> ktimer
+          stats.status = "nonpositive curvature"
+          iter == 1 && kcopy!(n, x, b)
+          solver.warm_start = false
+          stats.indefinite = true
+          return solver
+        end
+      end
+
       # Compute the next plane rotation.
       γ = sqrt(γbar * γbar + β * β)
       γ = max(γ, ϵM)
@@ -283,6 +319,12 @@ kwargs_minres = (:M, :ldiv, :λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax,
       ϕ = cs * ϕbar
       ϕbar = sn * ϕbar
 
+      if linesearch
+        # compute the residual vector and store it in npc_dir
+        kscal!(n, sn * sn, npc_dir)  # npc_dir  = sn * sn * npc_dir 
+        kaxpy!(n, -ϕbar * cs, v, npc_dir)  # npc_dir  = npc_dir  - ϕbar * cs * v
+      end
+      
       # Final update of w.
       kscal!(n, one(FC) / γ, w)
 
