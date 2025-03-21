@@ -8,12 +8,12 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
-julia = "1.6"
-LinearAlgebra = "1.6"
-Printf = "1.6"
-SparseArrays = "1.6"
-Random = "1.6"
-Test = "1.6"
+julia = "1.10"
+LinearAlgebra = "1.10"
+Printf = "1.10"
+SparseArrays = "1.10"
+Random = "1.10"
+Test = "1.10"
 
 [extras]
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
