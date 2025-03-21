@@ -18,6 +18,7 @@
     solve!(solver, args...; kwargs...)
 
 Generic function that dispatches to the appropriate in-place Krylov method based on the type of `solver`.
+This function is not exported to prevent potential conflicts with other Julia packages.
 """
 function solve! end
 

@@ -5,7 +5,7 @@ BilqSolver, QmrSolver, BilqrSolver, CglsSolver, CglsLanczosShiftSolver, CrlsSolv
 CrmrSolver, LslqSolver, LsqrSolver, LsmrSolver, LnlqSolver, CraigSolver, CraigmrSolver,
 GmresSolver, FomSolver, GpmrSolver, FgmresSolver, CarSolver, MinaresSolver
 
-export solve!, solution, nsolution, statistics, issolved, issolved_primal, issolved_dual,
+export solution, nsolution, statistics, issolved, issolved_primal, issolved_dual,
 niterations, Aprod, Atprod, Bprod, warm_start!
 
 export KrylovConstructor
