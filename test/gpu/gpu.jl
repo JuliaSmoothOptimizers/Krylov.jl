@@ -1,5 +1,6 @@
 using SparseArrays, Random, Test
 using LinearAlgebra, Krylov, KernelAbstractions
+import Krylov.solve!
 
 if VERSION < v"1.11"
   @kernel function copy_triangle_kernel!(dest, src)
