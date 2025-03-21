@@ -574,7 +574,7 @@ Type for storing the vectors required by the in-place version of CG-LANCZOS-SHIF
 
 The outer constructors
 
-    solver = CgLanczosShiftSolver(m, n, nshifts, S)
+    solver = CgLanczosShiftSolver(m, n, S, nshifts)
     solver = CgLanczosShiftSolver(A, b, nshifts)
     solver = CgLanczosShiftSolver(kc::KrylovConstructor, nshifts)
 
@@ -625,7 +625,7 @@ function CgLanczosShiftSolver(kc::KrylovConstructor, nshifts)
   return solver
 end
 
-function CgLanczosShiftSolver(m, n, nshifts, S)
+function CgLanczosShiftSolver(m, n, S, nshifts)
   FC         = eltype(S)
   T          = real(FC)
   Mv         = S(undef, n)
@@ -650,7 +650,7 @@ end
 function CgLanczosShiftSolver(A, b, nshifts)
   m, n = size(A)
   S = ktypeof(b)
-  CgLanczosShiftSolver(m, n, nshifts, S)
+  CgLanczosShiftSolver(m, n, S, nshifts)
 end
 
 """
@@ -725,13 +725,12 @@ Type for storing the vectors required by the in-place version of DQGMRES.
 
 The outer constructors
 
-    solver = DqgmresSolver(m, n, memory, S)
-    solver = DqgmresSolver(A, b, memory = 20)
-    solver = DqgmresSolver(kc::KrylovConstructor, memory = 20)
+    solver = DqgmresSolver(m, n, S; memory = 20)
+    solver = DqgmresSolver(A, b; memory = 20)
+    solver = DqgmresSolver(kc::KrylovConstructor; memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
-`memory` is an optional argument in the second constructor.
 """
 mutable struct DqgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
@@ -750,7 +749,7 @@ mutable struct DqgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function DqgmresSolver(kc::KrylovConstructor, memory = 20)
+function DqgmresSolver(kc::KrylovConstructor; memory = 20)
   S      = typeof(kc.vm)
   FC     = eltype(S)
   T      = real(FC)
@@ -772,7 +771,7 @@ function DqgmresSolver(kc::KrylovConstructor, memory = 20)
   return solver
 end
 
-function DqgmresSolver(m, n, memory, S)
+function DqgmresSolver(m, n, S; memory = 20)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -791,10 +790,10 @@ function DqgmresSolver(m, n, memory, S)
   return solver
 end
 
-function DqgmresSolver(A, b, memory = 20)
+function DqgmresSolver(A, b; memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  DqgmresSolver(m, n, memory, S)
+  DqgmresSolver(m, n, S; memory)
 end
 
 """
@@ -802,13 +801,12 @@ Type for storing the vectors required by the in-place version of DIOM.
 
 The outer constructors
 
-    solver = DiomSolver(m, n, memory, S)
-    solver = DiomSolver(A, b, memory = 20)
-    solver = DiomSolver(kc::KrylovConstructor, memory = 20)
+    solver = DiomSolver(m, n, S; memory = 20)
+    solver = DiomSolver(A, b; memory = 20)
+    solver = DiomSolver(kc::KrylovConstructor; memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
-`memory` is an optional argument in the second constructor.
 """
 mutable struct DiomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
@@ -826,7 +824,7 @@ mutable struct DiomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function DiomSolver(kc::KrylovConstructor, memory = 20)
+function DiomSolver(kc::KrylovConstructor; memory = 20)
   S      = typeof(kc.vm)
   FC     = eltype(S)
   T      = real(FC)
@@ -847,7 +845,7 @@ function DiomSolver(kc::KrylovConstructor, memory = 20)
   return solver
 end
 
-function DiomSolver(m, n, memory, S)
+function DiomSolver(m, n, S; memory = 20)
   memory = min(m, memory)
   FC  = eltype(S)
   T   = real(FC)
@@ -865,10 +863,10 @@ function DiomSolver(m, n, memory, S)
   return solver
 end
 
-function DiomSolver(A, b, memory = 20)
+function DiomSolver(A, b; memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  DiomSolver(m, n, memory, S)
+  DiomSolver(m, n, S; memory)
 end
 
 """
@@ -1732,7 +1730,7 @@ Workspace for the in-place version of CGLS-LANCZOS-SHIFT.
 
 The outer constructors:
 
-    solver = CglsLanczosShiftSolver(m, n, nshifts, S)
+    solver = CglsLanczosShiftSolver(m, n, S, nshifts)
     solver = CglsLanczosShiftSolver(A, b, nshifts)
     solver = CglsLanczosShiftSolver(kc::KrylovConstructor, nshifts)
 
@@ -1785,7 +1783,7 @@ function CglsLanczosShiftSolver(kc::KrylovConstructor, nshifts)
   return solver
 end
 
-function CglsLanczosShiftSolver(m, n, nshifts, S)
+function CglsLanczosShiftSolver(m, n, S, nshifts)
   FC         = eltype(S)
   T          = real(FC)
   Mv         = S(undef, n)
@@ -1811,7 +1809,7 @@ end
 function CglsLanczosShiftSolver(A, b, nshifts)
   m, n = size(A)
   S = ktypeof(b)
-  CglsLanczosShiftSolver(m, n, nshifts, S)
+  CglsLanczosShiftSolver(m, n, S, nshifts)
 end
 
 """
@@ -2443,13 +2441,12 @@ Type for storing the vectors required by the in-place version of GMRES.
 
 The outer constructors
 
-    solver = GmresSolver(m, n, memory, S)
-    solver = GmresSolver(A, b, memory = 20)
-    solver = GmresSolver(kc::KrylovConstructor, memory = 20)
+    solver = GmresSolver(m, n, S; memory = 20)
+    solver = GmresSolver(A, b; memory = 20)
+    solver = GmresSolver(kc::KrylovConstructor; memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
-`memory` is an optional argument in the second constructor.
 """
 mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
@@ -2469,7 +2466,7 @@ mutable struct GmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function GmresSolver(kc::KrylovConstructor, memory = 20)
+function GmresSolver(kc::KrylovConstructor; memory = 20)
   S  = typeof(kc.vm)
   FC = eltype(S)
   T  = real(FC)
@@ -2491,7 +2488,7 @@ function GmresSolver(kc::KrylovConstructor, memory = 20)
   return solver
 end
 
-function GmresSolver(m, n, memory, S)
+function GmresSolver(m, n, S; memory = 20)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -2510,10 +2507,10 @@ function GmresSolver(m, n, memory, S)
   return solver
 end
 
-function GmresSolver(A, b, memory = 20)
+function GmresSolver(A, b; memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  GmresSolver(m, n, memory, S)
+  GmresSolver(m, n, S; memory)
 end
 
 """
@@ -2521,13 +2518,12 @@ Type for storing the vectors required by the in-place version of FGMRES.
 
 The outer constructors
 
-    solver = FgmresSolver(m, n, memory, S)
-    solver = FgmresSolver(A, b, memory = 20)
-    solver = FgmresSolver(kc::KrylovConstructor, memory = 20)
+    solver = FgmresSolver(m, n, S; memory = 20)
+    solver = FgmresSolver(A, b; memory = 20)
+    solver = FgmresSolver(kc::KrylovConstructor; memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
-`memory` is an optional argument in the second constructor.
 """
 mutable struct FgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
@@ -2547,7 +2543,7 @@ mutable struct FgmresSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function FgmresSolver(kc::KrylovConstructor, memory = 20)
+function FgmresSolver(kc::KrylovConstructor; memory = 20)
   S  = typeof(kc.vm)
   FC = eltype(S)
   T  = real(FC)
@@ -2569,7 +2565,7 @@ function FgmresSolver(kc::KrylovConstructor, memory = 20)
   return solver
 end
 
-function FgmresSolver(m, n, memory, S)
+function FgmresSolver(m, n, S; memory = 20)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -2588,10 +2584,10 @@ function FgmresSolver(m, n, memory, S)
   return solver
 end
 
-function FgmresSolver(A, b, memory = 20)
+function FgmresSolver(A, b; memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  FgmresSolver(m, n, memory, S)
+  FgmresSolver(m, n, S; memory)
 end
 
 """
@@ -2599,13 +2595,12 @@ Type for storing the vectors required by the in-place version of FOM.
 
 The outer constructors
 
-    solver = FomSolver(m, n, memory, S)
-    solver = FomSolver(A, b, memory = 20)
-    solver = FomSolver(kc::KrylovConstructor, memory = 20)
+    solver = FomSolver(m, n, S; memory = 20)
+    solver = FomSolver(A, b; memory = 20)
+    solver = FomSolver(kc::KrylovConstructor; memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
-`memory` is an optional argument in the second constructor.
 """
 mutable struct FomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
@@ -2623,7 +2618,7 @@ mutable struct FomSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function FomSolver(kc::KrylovConstructor, memory = 20)
+function FomSolver(kc::KrylovConstructor; memory = 20)
   S  = typeof(kc.vm)
   FC = eltype(S)
   T  = real(FC)
@@ -2644,7 +2639,7 @@ function FomSolver(kc::KrylovConstructor, memory = 20)
   return solver
 end
 
-function FomSolver(m, n, memory, S)
+function FomSolver(m, n, S; memory = 20)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -2662,10 +2657,10 @@ function FomSolver(m, n, memory, S)
   return solver
 end
 
-function FomSolver(A, b, memory = 20)
+function FomSolver(A, b; memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  FomSolver(m, n, memory, S)
+  FomSolver(m, n, S; memory)
 end
 
 """
@@ -2673,13 +2668,12 @@ Type for storing the vectors required by the in-place version of GPMR.
 
 The outer constructors
 
-    solver = GpmrSolver(m, n, memory, S)
-    solver = GpmrSolver(A, b, memory = 20)
-    solver = GpmrSolver(kc::KrylovConstructor, memory = 20)
+    solver = GpmrSolver(m, n, S; memory = 20)
+    solver = GpmrSolver(A, b; memory = 20)
+    solver = GpmrSolver(kc::KrylovConstructor; memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n + m` if the value given is larger than `n + m`.
-`memory` is an optional argument in the second constructor.
 """
 mutable struct GpmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   m          :: Int
@@ -2704,7 +2698,7 @@ mutable struct GpmrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function GpmrSolver(kc::KrylovConstructor, memory = 20)
+function GpmrSolver(kc::KrylovConstructor; memory = 20)
   S  = typeof(kc.vm)
   FC = eltype(S)
   T  = real(FC)
@@ -2732,7 +2726,7 @@ function GpmrSolver(kc::KrylovConstructor, memory = 20)
   return solver
 end
 
-function GpmrSolver(m, n, memory, S)
+function GpmrSolver(m, n, S; memory = 20)
   memory = min(n + m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -2757,10 +2751,10 @@ function GpmrSolver(m, n, memory, S)
   return solver
 end
 
-function GpmrSolver(A, b, memory = 20)
+function GpmrSolver(A, b; memory = 20)
   m, n = size(A)
   S = ktypeof(b)
-  GpmrSolver(m, n, memory, S)
+  GpmrSolver(m, n, S; memory)
 end
 
 """

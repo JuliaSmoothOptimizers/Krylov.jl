@@ -119,7 +119,7 @@ function nonhermitian_lanczos(A, B::AbstractMatrix{FC}, C::AbstractMatrix{FC}, k
   m, n = size(A)
   t, p = size(B)
   Aᴴ = A'
-  pivoting = VERSION < v"1.9" ? Val{false}() : NoPivot()
+  pivoting = NoPivot()
 
   nnzT = p*p + (k-1)*p*(2*p+1) + div(p*(p+1), 2)
   colptr = zeros(Int, p*k+1)

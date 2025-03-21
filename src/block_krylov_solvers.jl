@@ -17,7 +17,6 @@ The outer constructors
     solver = BlockMinresSolver(A, B)
 
 may be used in order to create these vectors.
-`memory` is set to `div(n,p)` if the value given is larger than `div(n,p)`.
 """
 mutable struct BlockMinresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
   m          :: Int
@@ -78,12 +77,11 @@ Type for storing the vectors required by the in-place version of BLOCK-GMRES.
 
 The outer constructors
 
-    solver = BlockGmresSolver(m, n, p, memory, SV, SM)
-    solver = BlockGmresSolver(A, B, memory = 5)
+    solver = BlockGmresSolver(m, n, p, SV, SM; memory = 5)
+    solver = BlockGmresSolver(A, B; memory = 5)
 
 may be used in order to create these vectors.
 `memory` is set to `div(n,p)` if the value given is larger than `div(n,p)`.
-`memory` is an optional argument in the second constructor.
 """
 mutable struct BlockGmresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
   m          :: Int
@@ -105,7 +103,7 @@ mutable struct BlockGmresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
   stats      :: SimpleStats{T}
 end
 
-function BlockGmresSolver(m, n, p, memory, SV, SM)
+function BlockGmresSolver(m, n, p, SV, SM; memory = 5)
   memory = min(div(n,p), memory)
   FC = eltype(SV)
   T  = real(FC)
@@ -126,12 +124,12 @@ function BlockGmresSolver(m, n, p, memory, SV, SM)
   return solver
 end
 
-function BlockGmresSolver(A, B, memory = 5)
+function BlockGmresSolver(A, B; memory = 5)
   m, n = size(A)
   s, p = size(B)
   SM = typeof(B)
   SV = matrix_to_vector(SM)
-  BlockGmresSolver(m, n, p, memory, SV, SM)
+  BlockGmresSolver(m, n, p, SV, SM; memory)
 end
 
 for (KS, fun, nsol, nA, nAt, warm_start) in [
@@ -220,11 +218,7 @@ function show(io :: IO, solver :: Union{KrylovSolver{T,FC,S}, BlockKrylovSolver{
     type_i = fieldtype(workspace, i)
     field_i = getfield(solver, name_i)
     size_i = ksizeof(field_i)
-    if (name_i::Symbol in [:w̅, :w̄, :d̅]) && (VERSION < v"1.8.0-DEV")
-      (size_i ≠ 0) && Printf.format(io, format2, string(name_i), type_i, format_bytes(size_i))
-    else
-      (size_i ≠ 0) && Printf.format(io, format, string(name_i), type_i, format_bytes(size_i))
-    end
+    (size_i ≠ 0) && Printf.format(io, format, string(name_i), type_i, format_bytes(size_i))
   end
   @printf(io, "└%s┴%s┴%s┘\n","─"^l1,"─"^l2,"─"^l3)
   if show_stats

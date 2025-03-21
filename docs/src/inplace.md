@@ -24,27 +24,33 @@ See the section [custom workspaces](@ref custom_workspaces) for an example where
 
 For example, use `S = Vector{Float64}` if you want to solve linear systems in double precision on the CPU and `S = CuVector{Float32}` if you want to solve linear systems in single precision on an Nvidia GPU.
 
-!!! note
-    `DiomSolver`, `FomSolver`, `DqgmresSolver`, `GmresSolver`, `BlockGmresSolver`, `FgmresSolver`, `GpmrSolver`, `CgLanczosShiftSolver` and `CglsLanczosShiftSolver` require an additional argument (`memory` or `nshifts`).
-
 The workspace is always the first argument of the in-place methods:
 
 ```@solvers
-minres_solver = MinresSolver(n, n, Vector{Float64})
+minres_solver = MinresSolver(m, n, Vector{Float64})
 minres!(minres_solver, A1, b1)
 
-dqgmres_solver = DqgmresSolver(n, n, memory, Vector{BigFloat})
-dqgmres!(dqgmres_solver, A2, b2)
+bicgstab_solver = BicgstabSolver(m, n, Vector{ComplexF64})
+bicgstab!(bicgstab_solver, A2, b2)
+
+gmres_solver = GmresSolver(m, n, Vector{BigFloat})
+gmres!(gmres_solver, A3, b3)
 
 lsqr_solver = LsqrSolver(m, n, CuVector{Float32})
-lsqr!(lsqr_solver, A3, b3)
+lsqr!(lsqr_solver, A4, b4)
 ```
+
+!!! note
+    `CgLanczosShiftSolver` and `CglsLanczosShiftSolver` require an additional argument `nshifts`.
 
 A generic function `solve!` is also available and dispatches to the appropriate Krylov method.
 
 ```@docs
 Krylov.solve!
 ```
+
+!!! note
+    The function `solve!` is not exported to prevent potential conflicts with other Julia packages.
 
 In-place methods return an updated `solver` workspace.
 Solutions and statistics can be recovered via `solver.x`, `solver.y` and `solver.stats`.
