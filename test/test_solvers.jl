@@ -91,8 +91,8 @@ function test_solvers(FC; variant::Bool=false)
       $solvers[:usymlq] = $(KRYLOV_SOLVERS[:usymlq])($m, $n, $S)
       $solvers[:tricg] = $(KRYLOV_SOLVERS[:tricg])($m, $n, $S)
       $solvers[:trimr] = $(KRYLOV_SOLVERS[:trimr])($m, $n, $S)
-      $solvers[:cg_lanczos_shift] = $(KRYLOV_SOLVERS[:cg_lanczos_shift])($n, $n, $S, $nshifts)
-      $solvers[:cgls_lanczos_shift] = $(KRYLOV_SOLVERS[:cgls_lanczos_shift])($n, $m, $S, $nshifts)
+      $solvers[:cg_lanczos_shift] = $(KRYLOV_SOLVERS[:cg_lanczos_shift])($n, $n, $nshifts, $S)
+      $solvers[:cgls_lanczos_shift] = $(KRYLOV_SOLVERS[:cgls_lanczos_shift])($n, $m, $nshifts, $S)
     end
   end
 
