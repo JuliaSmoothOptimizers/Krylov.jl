@@ -175,24 +175,24 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     end
 
     # Set up workspace.
-    βₖ = √(abs(cᴴb))            # β₁γ₁ = (c - Aᴴy₀)ᴴ(b - Ax₀)
-    γₖ = cᴴb / βₖ               # β₁γ₁ = (c - Aᴴy₀)ᴴ(b - Ax₀)
-    kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
-    kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
-    vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
-    uₖ .= s₀ ./ conj(γₖ)        # u₁ = (c - Aᴴy₀) / γ̄₁
-    cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
-    sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-    kfill!(d̅, zero(FC))         # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
-    ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
-    ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
-    δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
-    ψbarₖ₋₁ = ψₖ₋₁ = zero(FC)   # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ̄₁e₁
-    norm_vₖ = bNorm / βₖ        # ‖vₖ‖ is used for residual norm estimates
-    ϵₖ₋₃ = λₖ₋₂ = zero(FC)      # Components of Lₖ₋₁
-    kfill!(wₖ₋₃, zero(FC))      # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᴴ
-    kfill!(wₖ₋₂, zero(FC))      # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᴴ
-    τₖ = zero(T)                # τₖ is used for the dual residual norm estimate
+    βₖ = √(abs(cᴴb))                # β₁γ₁ = (c - Aᴴy₀)ᴴ(b - Ax₀)
+    γₖ = cᴴb / βₖ                   # β₁γ₁ = (c - Aᴴy₀)ᴴ(b - Ax₀)
+    kfill!(vₖ₋₁, zero(FC))          # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))          # u₀ = 0
+    kdivcopy!(n, vₖ, r₀, βₖ)        # v₁ = (b - Ax₀) / β₁
+    kdivcopy!(n, uₖ, s₀, conj(γₖ))  # u₁ = (c - Aᴴy₀) / γ̄₁
+    cₖ₋₁ = cₖ = -one(T)             # Givens cosines used for the LQ factorization of Tₖ
+    sₖ₋₁ = sₖ = zero(FC)            # Givens sines used for the LQ factorization of Tₖ
+    kfill!(d̅, zero(FC))             # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
+    ζₖ₋₁ = ζbarₖ = zero(FC)         # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
+    ζₖ₋₂ = ηₖ = zero(FC)            # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
+    δbarₖ₋₁ = δbarₖ = zero(FC)      # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
+    ψbarₖ₋₁ = ψₖ₋₁ = zero(FC)       # ψₖ₋₁ and ψbarₖ are the last components of h̅ₖ = Qₖγ̄₁e₁
+    norm_vₖ = bNorm / βₖ            # ‖vₖ‖ is used for residual norm estimates
+    ϵₖ₋₃ = λₖ₋₂ = zero(FC)          # Components of Lₖ₋₁
+    kfill!(wₖ₋₃, zero(FC))          # Column k-3 of Wₖ = Uₖ(Lₖ)⁻ᴴ
+    kfill!(wₖ₋₂, zero(FC))          # Column k-2 of Wₖ = Uₖ(Lₖ)⁻ᴴ
+    τₖ = zero(T)                    # τₖ is used for the dual residual norm estimate
 
     # Stopping criterion.
     solved_lq = bNorm == 0
@@ -355,15 +355,14 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
         # w₁ = u₁ / δ̄₁
         if iter == 2
           wₖ₋₁ = wₖ₋₂
-          kaxpy!(n, one(FC), uₖ₋₁, wₖ₋₁)
-          wₖ₋₁ .= uₖ₋₁ ./ conj(δₖ₋₁)
+          kdivcopy!(n, wₖ₋₁, uₖ₋₁, conj(δₖ₋₁))
         end
         # w₂ = (u₂ - λ̄₁w₁) / δ̄₂
         if iter == 3
           wₖ₋₁ = wₖ₋₃
           kaxpy!(n, one(FC), uₖ₋₁, wₖ₋₁)
           kaxpy!(n, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
-          wₖ₋₁ .= wₖ₋₁ ./ conj(δₖ₋₁)
+          kdiv!(n, wₖ₋₁, conj(δₖ₋₁))
         end
         # wₖ₋₁ = (uₖ₋₁ - λ̄ₖ₋₂wₖ₋₂ - ϵ̄ₖ₋₃wₖ₋₃) / δ̄ₖ₋₁
         if iter ≥ 4
@@ -371,7 +370,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
           wₖ₋₁ = wₖ₋₃
           kaxpy!(n, one(FC), uₖ₋₁, wₖ₋₁)
           kaxpy!(n, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
-          wₖ₋₁ .= wₖ₋₁ ./ conj(δₖ₋₁)
+          kdiv!(n, wₖ₋₁, conj(δₖ₋₁))
         end
 
         if iter ≥ 3
@@ -405,9 +404,10 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       kcopy!(n, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
       kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
+
       if pᴴq ≠ zero(FC)
-        vₖ .= q ./ βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
-        uₖ .= p ./ conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
+        kdivcopy!(n, vₖ, q, βₖ₊₁)        # vₖ₊₁ = q / βₖ₊₁
+        kdivcopy!(n, uₖ, p, conj(γₖ₊₁))  # uₖ₊₁ = p / γ̄ₖ₊₁
       end
 
       # Update ϵₖ₋₃, λₖ₋₂, δbarₖ₋₁, cₖ₋₁, sₖ₋₁, γₖ and βₖ.

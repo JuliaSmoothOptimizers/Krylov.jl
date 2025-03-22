@@ -221,8 +221,8 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
     βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
     if βₖ ≠ 0
-      kscal!(m, one(FC) / βₖ, M⁻¹vₖ)
-      MisI || kscal!(m, one(FC) / βₖ, vₖ)
+      kdiv!(m, M⁻¹vₖ, βₖ)
+      MisI || kdiv!(m, vₖ, βₖ)
     else
       # v₁ = 0 such that v₁ ⊥ Span{v₁, ..., vₖ}
       kfill!(M⁻¹vₖ, zero(FC))
@@ -235,8 +235,8 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     if γₖ ≠ 0
       # u₁ = 0 such that u₁ ⊥ Span{u₁, ..., uₖ}
-      kscal!(n, one(FC) / γₖ, N⁻¹uₖ)
-      NisI || kscal!(n, one(FC) / γₖ, uₖ)
+      kdiv!(n, N⁻¹uₖ, γₖ)
+      NisI || kdiv!(n, uₖ, γₖ)
     else
       kfill!(N⁻¹uₖ, zero(FC))
       NisI || kfill!(uₖ, zero(FC))
@@ -310,16 +310,16 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
 
       # βₖ₊₁ ≠ 0
       if βₖ₊₁ > btol
-        kscal!(m, one(FC) / βₖ₊₁, q)
-        MisI || kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
+        kdiv!(m, q, βₖ₊₁)
+        MisI || kdiv!(m, vₖ₊₁, βₖ₊₁)
       end
       # Note that if βₖ₊₁ == 0 then vₖ₊₁ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
       # We can keep vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
 
       # γₖ₊₁ ≠ 0
       if γₖ₊₁ > btol
-        kscal!(n, one(FC) / γₖ₊₁, p)
-        NisI || kscal!(n, one(FC) / γₖ₊₁, uₖ₊₁)
+        kdiv!(n, p, γₖ₊₁)
+        NisI || kdiv!(n, uₖ₊₁, γₖ₊₁)
       end
       # Note that if γₖ₊₁ == 0 then uₖ₊₁ = 0 and Aᴴvₖ ∈ Span{u₁, ..., uₖ}
       # We can keep uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
@@ -433,9 +433,9 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
       if iter == 1
         # [ δ₁  0  ] [ gx₁ gy₁ ] = [ v₁ 0  ]
         # [ σ₁  δ₂ ] [ gx₂ gy₂ ]   [ 0  u₁ ]
-        gx₂ₖ₋₁ .= vₖ ./ δ₂ₖ₋₁
-        gx₂ₖ .= -(σ₂ₖ₋₁ / δ₂ₖ) .* gx₂ₖ₋₁
-        gy₂ₖ .= uₖ ./ δ₂ₖ
+        kdivcopy!(m, gx₂ₖ₋₁, vₖ, δ₂ₖ₋₁)
+        kscalcopy!(m, gx₂ₖ, -σ₂ₖ₋₁ / δ₂ₖ, gx₂ₖ₋₁)
+        kdivcopy!(n, gy₂ₖ, uₖ, δ₂ₖ)
       elseif iter == 2
         # [ η₁ σ₂ δ₃ 0  ] [ gx₁ gy₁ ] = [ v₂ 0  ]
         # [ λ₁ η₂ σ₃ δ₄ ] [ gx₂ gy₂ ]   [ 0  u₂ ]

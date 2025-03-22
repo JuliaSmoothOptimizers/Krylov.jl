@@ -197,18 +197,18 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     (verbose > 0) && @printf(iostream, "%5s  %8s  %7s  %5s\n", "k", "αₖ", "‖rₖ‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %.2fs\n", iter, cᴴb, rNorm, start_time |> ktimer)
 
-    βₖ = √(abs(cᴴb))             # β₁γ₁ = cᴴ(b - Ax₀)
-    γₖ = cᴴb / βₖ                # β₁γ₁ = cᴴ(b - Ax₀)
-    kfill!(vₖ₋₁, zero(FC))       # v₀ = 0
-    kfill!(uₖ₋₁, zero(FC))       # u₀ = 0
-    vₖ .= r₀ ./ βₖ               # v₁ = (b - Ax₀) / β₁
-    uₖ .= c ./ conj(γₖ)          # u₁ = c / γ̄₁
-    cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
-    sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-    kfill!(wₖ₋₂, zero(FC))       # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
-    kfill!(wₖ₋₁, zero(FC))       # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
-    ζbarₖ = βₖ                   # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᴴβ₁e₁
-    τₖ = kdotr(n, vₖ, vₖ)        # τₖ is used for the residual norm estimate
+    βₖ = √(abs(cᴴb))               # β₁γ₁ = cᴴ(b - Ax₀)
+    γₖ = cᴴb / βₖ                  # β₁γ₁ = cᴴ(b - Ax₀)
+    kfill!(vₖ₋₁, zero(FC))         # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))         # u₀ = 0
+    kdivcopy!(n, vₖ, r₀, βₖ)       # v₁ = (b - Ax₀) / β₁
+    kdivcopy!(n, uₖ, c, conj(γₖ))  # u₁ = c / γ̄₁
+    cₖ₋₂ = cₖ₋₁ = cₖ = zero(T)     # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+    sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)    # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+    kfill!(wₖ₋₂, zero(FC))         # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
+    kfill!(wₖ₋₁, zero(FC))         # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
+    ζbarₖ = βₖ                     # ζbarₖ is the last component of z̅ₖ = (Qₖ)ᴴβ₁e₁
+    τₖ = kdotr(n, vₖ, vₖ)          # τₖ is used for the residual norm estimate
 
     # Stopping criterion.
     solved    = rNorm ≤ ε
@@ -306,15 +306,14 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       # w₁ = v₁ / δ₁
       if iter == 1
         wₖ = wₖ₋₁
-        kaxpy!(n, one(FC), vₖ, wₖ)
-        wₖ .= wₖ ./ δₖ
+        kdivcopy!(n, wₖ, vₖ, δₖ)
       end
       # w₂ = (v₂ - λ₁w₁) / δ₂
       if iter == 2
         wₖ = wₖ₋₂
         kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
         kaxpy!(n, one(FC), vₖ, wₖ)
-        wₖ .= wₖ ./ δₖ
+        kdiv!(n, wₖ, δₖ)
       end
       # wₖ = (vₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
       if iter ≥ 3
@@ -322,7 +321,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
         wₖ = wₖ₋₂
         kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
         kaxpy!(n, one(FC), vₖ, wₖ)
-        wₖ .= wₖ ./ δₖ
+        kdiv!(n, wₖ, δₖ)
       end
 
       # Compute solution xₖ.
@@ -334,8 +333,8 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if pᴴq ≠ zero(FC)
-        vₖ .= q ./ βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
-        uₖ .= p ./ conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
+        kdivcopy!(n, vₖ, q, βₖ₊₁)        # vₖ₊₁ = q / βₖ₊₁
+        kdivcopy!(n, uₖ, p, conj(γₖ₊₁))  # uₖ₊₁ = p / γ̄ₖ₊₁
       end
 
       # Compute τₖ₊₁ = τₖ + ‖vₖ₊₁‖²

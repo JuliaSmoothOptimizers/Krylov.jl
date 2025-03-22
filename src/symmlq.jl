@@ -144,7 +144,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     vold = MisI ? Mvold : solver.v
 
     ϵM = eps(T)
-    ctol = conlim > 0 ? 1 / conlim : zero(T)
+    ctol = conlim > 0 ? inv(conlim) : zero(T)
 
     # Initial solution x₀
     kfill!(x, zero(FC))
@@ -176,8 +176,8 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     end
     β₁ = sqrt(β₁)
     β = β₁
-    kscal!(m, one(FC) / β, vold)
-    MisI || kscal!(m, one(FC) / β, Mvold)
+    kdiv!(m, vold, β)
+    MisI || kdiv!(m, Mvold, β)
 
     kcopy!(n, w̅, vold)  # w̅ ← vold
 
@@ -188,8 +188,8 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     β = kdotr(m, v, Mv)
     β < 0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
-    kscal!(m, one(FC) / β, v)
-    MisI || kscal!(m, one(FC) / β, Mv)
+    kdiv!(m, v, β)
+    MisI || kdiv!(m, Mv, β)
 
     # Start QR factorization
     γbar = α
@@ -290,8 +290,8 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       β = kdotr(m, v, Mv)
       β < 0 && error("Preconditioner is not positive definite")
       β = sqrt(β)
-      kscal!(m, one(FC) / β, v)
-      MisI || kscal!(m, one(FC) / β, Mv)
+      kdiv!(m, v, β)
+      MisI || kdiv!(m, Mv, β)
 
       # Continue A norm estimate
       ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
@@ -352,8 +352,8 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
 
         ix = (iter % window) + 1
         if iter ≥ window && window > 1
-           sprod .= sprod ./ sprod[(ix % window) + 1]
-           sprod[ix] = sprod[mod(ix-2, window)+1] * s
+          kdiv!(window, sprod, sprod[(ix % window) + 1])
+          sprod[ix] = sprod[mod(ix-2, window)+1] * s
         end
       end
 
@@ -396,13 +396,13 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       # Stopping conditions that do not depend on user input.
       # This is to guard against tolerances that are unreasonably small.
       resid_decrease_mach = (one(T) + rNorm ≤ one(T))
-      ill_cond_mach = (one(T) + one(T) / Acond ≤ one(T))
+      ill_cond_mach = (one(T) + inv(Acond) ≤ one(T))
       zero_resid_mach = (one(T) + test1 ≤ one(T))
       # solved_mach = (ϵx ≥ β₁)
 
       # Stopping conditions based on user-provided tolerances.
       tired = iter ≥ itmax
-      ill_cond_lim = (one(T) / Acond ≤ ctol)
+      ill_cond_lim = (inv(Acond) ≤ ctol)
       zero_resid_lim = (test1 ≤ tol)
       fwd_err = (err ≤ etol) || ((γbar ≠ 0) && (errcg ≤ etol))
       solved_lq = rNorm ≤ tol

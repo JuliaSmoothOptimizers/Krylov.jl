@@ -26,7 +26,7 @@ function gs!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, v::AbstractVector{FC}
   kfill!(R, zero(FC))
   for j = 1:k
     qⱼ = view(Q,:,j)
-    aⱼ .= qⱼ
+    kcopy!(n, aⱼ, qⱼ)
     for i = 1:j-1
       qᵢ = view(Q,:,i)
       R[i,j] = kdot(n, qᵢ, aⱼ)    # rᵢⱼ = ⟨qᵢ , aⱼ⟩

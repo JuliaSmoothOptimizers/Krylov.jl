@@ -204,8 +204,8 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
 
     # Initialize Golub-Kahan process.
     # β₁Mu₁ = b.
-    kscal!(m, one(FC)/β, u)
-    MisI || kscal!(m, one(FC)/β, Mu)
+    kdiv!(m, u, β)
+    MisI || kdiv!(m, Mu, β)
     # α₁Nv₁ = Aᴴu₁.
     mul!(Aᴴu, Aᴴ, u)
     kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
@@ -229,8 +229,8 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       stats.status = "x is a minimum least-squares solution"
       return solver
     end
-    kscal!(n, one(FC)/α, v)
-    NisI || kscal!(n, one(FC)/α, Nv)
+    kdiv!(n, v, α)
+    NisI || kdiv!(n, Nv, α)
 
     # Regularization.
     λₖ  = λ                   # λ₁ = λ
@@ -257,8 +257,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     ɛ_c = atol + rtol * rNorm   # Stopping tolerance for consistent systems.
     ɛ_i = atol + rtol * ArNorm  # Stopping tolerance for inconsistent systems.
 
-    kcopy!(m, wbar, u)
-    kscal!(m, one(FC)/αhat, wbar)
+    kdivcopy!(m, wbar, u, αhat)
     kfill!(w, zero(FC))
     kfill!(d, zero(FC))
 
@@ -279,8 +278,8 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       MisI || mulorldiv!(u, M, Mu, ldiv)
       β = knorm_elliptic(m, u, Mu)
       if β ≠ 0
-        kscal!(m, one(FC)/β, u)
-        MisI || kscal!(m, one(FC)/β, Mu)
+        kdiv!(m, u, β)
+        MisI || kdiv!(m, Mu, β)
       end
 
       Anorm² = Anorm² + β * β  # = ‖B_{k-1}‖²
@@ -317,16 +316,16 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       if λ > 0
         # DₖRₖ = V̅ₖ with v̅ₖ = cpₖvₖ + spₖqₖ₋₁
         if iter == 1
-          kaxpy!(n, one(FC)/ρ, cpₖ * v, d)
+          kaxpy!(n, cpₖ/ρ, v, d)
         else
-          kaxpby!(n, one(FC)/ρ, cpₖ * v, -θ/ρ, d)
-          kaxpy!(n, one(FC)/ρ, spₖ * q, d)
+          kaxpby!(n, cpₖ/ρ, v, -θ/ρ, d)
+          kaxpy!(n, spₖ/ρ, q, d)
           kaxpby!(n, spₖ, v, -cpₖ, q)  # q̄ₖ ← spₖ * vₖ - cpₖ * qₖ₋₁
         end
       else
         # DₖRₖ = Vₖ
         if iter == 1
-          kaxpy!(n, one(FC)/ρ, v, d)
+          kdivcopy!(n, d, v, ρ)
         else
           kaxpby!(n, one(FC)/ρ, v, -θ/ρ, d)
         end
@@ -355,9 +354,9 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       end
 
       if α ≠ 0
-        kscal!(n, one(FC)/α, v)
-        NisI || kscal!(n, one(FC)/α, Nv)
-        kaxpby!(m, one(T)/αhat, u, -βhat / αhat, wbar)  # wbar = (u - beta * wbar) / alpha
+        kdiv!(n, v, α)
+        NisI || kdiv!(n, Nv, α)
+        kaxpby!(m, one(FC)/αhat, u, -βhat / αhat, wbar)  # wbar = (u - beta * wbar) / alpha
       end
       θ    =  s * αhat
       ρbar = -c * αhat

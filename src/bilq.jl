@@ -191,19 +191,19 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
     (verbose > 0) && @printf(iostream, "%5s  %8s  %7s  %5s\n", "k", "αₖ", "‖rₖ‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %.2fs\n", iter, cᴴb, bNorm, start_time |> ktimer)
 
-    βₖ = √(abs(cᴴb))            # β₁γ₁ = cᴴ(b - Ax₀)
-    γₖ = cᴴb / βₖ               # β₁γ₁ = cᴴ(b - Ax₀)
-    kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
-    kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
-    vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
-    uₖ .= c ./ conj(γₖ)         # u₁ = c / γ̄₁
-    cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
-    sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-    kfill!(d̅, zero(FC))         # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
-    ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
-    ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
-    δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
-    norm_vₖ = bNorm / βₖ        # ‖vₖ‖ is used for residual norm estimates
+    βₖ = √(abs(cᴴb))               # β₁γ₁ = cᴴ(b - Ax₀)
+    γₖ = cᴴb / βₖ                  # β₁γ₁ = cᴴ(b - Ax₀)
+    kfill!(vₖ₋₁, zero(FC))         # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))         # u₀ = 0
+    kdivcopy!(n, vₖ, r₀, βₖ)       # v₁ = (b - Ax₀) / β₁
+    kdivcopy!(n, uₖ, c, conj(γₖ))  # u₁ = c / γ̄₁
+    cₖ₋₁ = cₖ = -one(T)            # Givens cosines used for the LQ factorization of Tₖ
+    sₖ₋₁ = sₖ = zero(FC)           # Givens sines used for the LQ factorization of Tₖ
+    kfill!(d̅, zero(FC))            # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
+    ζₖ₋₁ = ζbarₖ = zero(FC)        # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
+    ζₖ₋₂ = ηₖ = zero(FC)           # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
+    δbarₖ₋₁ = δbarₖ = zero(FC)     # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
+    norm_vₖ = bNorm / βₖ           # ‖vₖ‖ is used for residual norm estimates
 
     # Stopping criterion.
     solved_lq = bNorm ≤ ε
@@ -321,8 +321,8 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if pᴴq ≠ 0
-        vₖ .= q ./ βₖ₊₁        # βₖ₊₁vₖ₊₁ = q
-        uₖ .= p ./ conj(γₖ₊₁)  # γ̄ₖ₊₁uₖ₊₁ = p
+        kdivcopy!(n, vₖ, q, βₖ₊₁)        # vₖ₊₁ = q / βₖ₊₁
+        kdivcopy!(n, uₖ, p, conj(γₖ₊₁))  # uₖ₊₁ = p / γ̄ₖ₊₁
       end
 
       # Compute ⟨vₖ,vₖ₊₁⟩ and ‖vₖ₊₁‖

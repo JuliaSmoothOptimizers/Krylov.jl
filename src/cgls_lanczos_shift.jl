@@ -161,8 +161,8 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
 
     # Initialize Lanczos process.
     # β₁v₁ = b
-    kscal!(n, one(FC) / β, v)  # v₁ ← v₁ / β₁
-    kscal!(m, one(FC) / β, u)
+    kdiv!(n, v, β)  # v₁ ← v₁ / β₁
+    kdiv!(m, u, β)
 
     # Initialize some constants used in recursions below.
     ρ = one(T)
@@ -196,21 +196,21 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     while ! (solved || tired || user_requested_exit || overtimed)
 
       # Form next Lanczos vector.
-      mul!(u_next, A, v)              # u_nextₖ ← Avₖ
-      δ = kdotr(m, u_next, u_next)    # δₖ = vₖᵀAᴴAvₖ
-      kaxpy!(m, -δ, u, u_next)        # uₖ₊₁ = u_nextₖ - δₖuₖ - βₖuₖ₋₁
+      mul!(u_next, A, v)            # u_nextₖ ← Avₖ
+      δ = kdotr(m, u_next, u_next)  # δₖ = vₖᵀAᴴAvₖ
+      kaxpy!(m, -δ, u, u_next)      # uₖ₊₁ = u_nextₖ - δₖuₖ - βₖuₖ₋₁
       kaxpy!(m, -β, u_prev, u_next)
-      mul!(v, Aᴴ, u_next)             # vₖ₊₁ = Aᴴuₖ₊₁
-      β = knorm_elliptic(n, v, v)     # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
-      kscal!(n, one(FC) / β, v)       # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-      kscal!(m, one(FC) / β, u_next)  # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
-      kcopy!(m, u_prev, u)            # u_prev ← u
-      kcopy!(m, u, u_next)            # u ← u_next
+      mul!(v, Aᴴ, u_next)           # vₖ₊₁ = Aᴴuₖ₊₁
+      β = knorm_elliptic(n, v, v)   # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+      kdiv!(n, v, β)                # vₖ₊₁ = vₖ₊₁ / βₖ₊₁
+      kdiv!(m, u_next, β)           # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
+      kcopy!(m, u_prev, u)          # u_prev ← u
+      kcopy!(m, u, u_next)          # u ← u_next
 
       MisI || (ρ = kdotr(n, v, v))
       for i = 1 : nshifts
         δhat[i] = δ + ρ * shifts[i]
-        γ[i] = 1 / (δhat[i] - ω[i] / γ[i])
+        γ[i] = inv(δhat[i] - ω[i] / γ[i])
       end
 
       # Compute next CG iterate for each shifted system that has not yet converged.

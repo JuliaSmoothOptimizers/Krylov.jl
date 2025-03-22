@@ -188,6 +188,17 @@ function Krylov.kscal!(n::Integer, s::T, x::HaloVector{T}) where T <: FloatOrCom
     return x
 end
 
+function Krylov.kdiv!(n::Integer, x::HaloVector{T}, s::T) where T <: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            _x[i,j] = _x[i,j] / s
+        end
+    end
+    return x
+end
+
 function Krylov.kaxpy!(n::Integer, s::T, x::HaloVector{T}, y::HaloVector{T}) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
@@ -224,6 +235,30 @@ function Krylov.kcopy!(n::Integer, y::HaloVector{T}, x::HaloVector{T}) where T <
     return y
 end
 
+function Krylov.kscalcopy!(n::Integer, y::HaloVector{T}, s::T, x::HaloVector{T}) where T <: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    _y = y.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            _y[i,j] = s * _x[i,j]
+        end
+    end
+    return y
+end
+
+function Krylov.kdivcopy!(n::Integer, y::HaloVector{T}, x::HaloVector{T}, s::T) where T <: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    _y = y.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            _y[i,j] = _x[i,j] / s
+        end
+    end
+    return y
+end
+
 function Krylov.kfill!(x::HaloVector{T}, val::T) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
@@ -251,7 +286,13 @@ function Krylov.kref!(n::Integer, x::HaloVector{T}, y::HaloVector{T}, c::T, s::T
 end
 ```
 
-Note that `Krylov.kref!` is only required for `minres_qlp`.
+By default, `kdiv!(n, y, x, s)` calls `kscal!(n, y, t, x)` with `t = 1/s`, so a separate implementation isn't required.
+However, this approach may introduce numerical issues when `s` is very small.
+We do this because computing $y \leftarrow t \times x$ can often leverage SIMD or fused multiply-add (FMA) instructions on certain architectures, capabilities that a direct element-wise division $y \leftarrow x/s$ typically lacks.
+Thus, the implementation of `kdiv!` provides flexibility, allowing users to choose a trade-off between speed and numerical precision by overloading the function if needed.
+The operations provided by `kdivcopy!` and `kscalcopy!` could be implemented directly by using `kcopy!`, `kscal!`, and `kdiv!` but require two separate memory passes, which can be suboptimal for performance.
+To address this limitation, `kdivcopy!` and `kscalcopy!` fuse the copy and scaling/division operations into a single memory pass.
+Note that `Krylov.kref!` is only required for the function `minres_qlp`.
 
 ### 2D Poisson equation solver with Krylov methods
 

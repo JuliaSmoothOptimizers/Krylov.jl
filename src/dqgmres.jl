@@ -182,9 +182,9 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
     # k-i+1 represents the indice of the diagonal where hᵢ.ₖ is located.
     # In addition of that, the last column of Rₖ is also stored in H.
 
-    # Initial γ₁ and V₁.
+    # Initial γ₁ and v₁.
     γₖ = rNorm # γₖ and γₖ₊₁ are the last components of gₖ, right-hand of the least squares problem min ‖ Hₖyₖ - gₖ ‖₂.
-    V[1] .= r₀ ./ rNorm
+    kdivcopy!(n, V[1], r₀, rNorm)  # v₁ = r₀ / ‖r₀‖
 
     # The following stopping criterion compensates for the lag in the
     # residual, but usually increases the number of iterations.
@@ -228,10 +228,11 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
       end
 
       # Compute hₖ₊₁.ₖ and vₖ₊₁.
-      Haux = knorm(n, w)          # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
-      if Haux ≠ 0                 # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
-        V[next_pos] .= w ./ Haux  # vₖ₊₁ = w / hₖ₊₁.ₖ
+      Haux = knorm(n, w)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+      if Haux ≠ 0   # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
+        kdivcopy!(n, V[next_pos], w, Haux)  # vₖ₊₁ = w / hₖ₊₁.ₖ
       end
+
       # rₖ₋ₘₑₘ.ₖ ≠ 0 when k ≥ mem + 1
       # We don't want to use rₖ₋₁₋ₘₑₘ.ₖ₋₁ when we compute rₖ₋ₘₑₘ.ₖ
       if iter ≥ mem + 2
@@ -271,7 +272,7 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
       # pₐᵤₓ ← pₐᵤₓ + Nvₖ
       kaxpy!(n, one(FC), z, P[pos])
       # pₖ = pₐᵤₓ / hₖ.ₖ
-      P[pos] .= P[pos] ./ H[1]
+      kdiv!(n, P[pos], H[1])
 
       # Compute solution xₖ.
       # xₖ ← xₖ₋₁ + γₖ * pₖ

@@ -164,8 +164,8 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     γₖ = knorm(n, s₀)           # γ₁ = ‖s₀‖ = ‖u₁‖
     kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
     kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
-    vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
-    uₖ .= s₀ ./ γₖ              # u₁ = (c - Aᴴy₀) / γ₁
+    kdivcopy!(m, vₖ, r₀, βₖ)    # v₁ = (b - Ax₀) / β₁
+    kdivcopy!(n, uₖ, s₀, γₖ)    # u₁ = (c - Aᴴy₀) / γ₁
     cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
     sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
     kfill!(d̅, zero(FC))         # Last column of D̅ₖ = Uₖ(Qₖ)ᴴ
@@ -329,15 +329,14 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
         # w₁ = v₁ / δ̄₁
         if iter == 2
           wₖ₋₁ = wₖ₋₂
-          kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
-          wₖ₋₁ .= vₖ₋₁ ./ conj(δₖ₋₁)
+          kdivcopy!(m, wₖ₋₁, vₖ₋₁, conj(δₖ₋₁))
         end
         # w₂ = (v₂ - λ̄₁w₁) / δ̄₂
         if iter == 3
           wₖ₋₁ = wₖ₋₃
           kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
           kaxpy!(m, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
-          wₖ₋₁ .= wₖ₋₁ ./ conj(δₖ₋₁)
+          kdiv!(m, wₖ₋₁, conj(δₖ₋₁))
         end
         # wₖ₋₁ = (vₖ₋₁ - λ̄ₖ₋₂wₖ₋₂ - ϵ̄ₖ₋₃wₖ₋₃) / δ̄ₖ₋₁
         if iter ≥ 4
@@ -345,7 +344,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
           wₖ₋₁ = wₖ₋₃
           kaxpy!(m, one(FC), vₖ₋₁, wₖ₋₁)
           kaxpy!(m, -conj(λₖ₋₂), wₖ₋₂, wₖ₋₁)
-          wₖ₋₁ .= wₖ₋₁ ./ conj(δₖ₋₁)
+          kdiv!(m, wₖ₋₁, conj(δₖ₋₁))
         end
 
         if iter ≥ 3
@@ -382,10 +381,10 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
-        vₖ .= q ./ βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
+        kdivcopy!(m, vₖ, q, βₖ₊₁)  # vₖ₊₁ = q / βₖ₊₁
       end
       if γₖ₊₁ ≠ zero(T)
-        uₖ .= p ./ γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
+        kdivcopy!(n, uₖ, p, γₖ₊₁)  # uₖ₊₁ = p / γₖ₊₁
       end
 
       # Update ϵₖ₋₃, λₖ₋₂, δbarₖ₋₁, cₖ₋₁, sₖ₋₁, γₖ and βₖ.

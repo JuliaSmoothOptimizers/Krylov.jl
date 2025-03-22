@@ -160,9 +160,9 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
 
     # Initialize Lanczos process.
     # β₁Mv₁ = b
-    kscal!(n, one(FC) / β, v)           # v₁  ←  v₁ / β₁
-    MisI || kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
-    kcopy!(n, Mv_prev, Mv)              # Mv_prev ← Mv
+    kdiv!(n, v, β)           # v₁  ←  v₁ / β₁
+    MisI || kdiv!(n, Mv, β)  # Mv₁ ← Mv₁ / β₁
+    kcopy!(n, Mv_prev, Mv)   # Mv_prev ← Mv
 
     # Initialize some constants used in recursions below.
     ρ = one(T)
@@ -206,15 +206,15 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
       kcopy!(n, Mv, Mv_next)              # Mvₖ ← Mvₖ₊₁
       MisI || mulorldiv!(v, M, Mv, ldiv)  # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
       β = knorm_elliptic(n, v, Mv)        # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
-      kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-      MisI || kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+      kdiv!(n, v, β)                      # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+      MisI || kdiv!(n, Mv, β)             # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
 
       # Check curvature: vₖᴴ(A + sᵢI)vₖ = vₖᴴAvₖ + sᵢ‖vₖ‖² = δₖ + ρₖ * sᵢ with ρₖ = ‖vₖ‖².
       # It is possible to show that σₖ² (δₖ + ρₖ * sᵢ - ωₖ₋₁ / γₖ₋₁) = pₖᴴ (A + sᵢ I) pₖ.
       MisI || (ρ = kdotr(n, v, v))
       for i = 1 : nshifts
         δhat[i] = δ + ρ * shifts[i]
-        γ[i] = 1 / (δhat[i] - ω[i] / γ[i])
+        γ[i] = inv(δhat[i] - ω[i] / γ[i])
       end
       for i = 1 : nshifts
         indefinite[i] |= γ[i] ≤ 0

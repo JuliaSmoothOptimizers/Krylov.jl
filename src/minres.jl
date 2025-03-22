@@ -171,7 +171,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       npc_dir = solver.npc_dir
     end
     ϵM = eps(T)
-    ctol = conlim > 0 ? 1 / conlim : zero(T)
+    ctol = conlim > 0 ? inv(conlim) : zero(T)
 
     # Initial solution x₀
     kfill!(x, zero(FC))
@@ -258,7 +258,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       # Generate next Lanczos vector.
       mul!(y, A, v)
       λ ≠ 0 && kaxpy!(n, λ, v, y)              # (y = y + λ * v)
-      kscal!(n, one(FC) / β, y)                # (y = y / β)
+      kdiv!(n, y, β)                           # (y = y / β)
       iter ≥ 2 && kaxpy!(n, -β / oldβ, r1, y)  # (y = y - β / oldβ * r1)
 
       α = kdotr(n, v, y) / β
@@ -268,12 +268,13 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       δ = cs * δbar + sn * α
       if iter == 1
         w = w2
+        kdivcopy!(n, w, v, β)
       else
-        iter ≥ 3 && kscal!(n, -ϵ, w1)
         w = w1
+        iter ≥ 3 && kscal!(n, -ϵ, w)
         kaxpy!(n, -δ, w2, w)
+        kaxpy!(n, one(FC) / β, v, w)
       end
-      kaxpy!(n, one(FC) / β, v, w)
 
       kcopy!(n, r1, r2)  # r1 ← r2
       kcopy!(n, r2, y)   # r2 ← y
@@ -326,7 +327,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       end
       
       # Final update of w.
-      kscal!(n, one(FC) / γ, w)
+      kdiv!(n, w, γ)
 
       # Update x.
       kaxpy!(n, ϕ, w, x)  # x = x + ϕ * w
@@ -380,7 +381,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
 
       # Stopping conditions that do not depend on user input.
       # This is to guard against tolerances that are unreasonably small.
-      ill_cond_mach = (one(T) + one(T) / Acond ≤ one(T))
+      ill_cond_mach = (one(T) + inv(Acond) ≤ one(T))
       solved_mach = (one(T) + test2 ≤ one(T))
       zero_resid_mach = (one(T) + test1 ≤ one(T))
       resid_decrease_mach = (rNorm + one(T) ≤ one(T))
@@ -388,7 +389,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
 
       # Stopping conditions based on user-provided tolerances.
       tired = iter ≥ itmax
-      ill_cond_lim = (one(T) / Acond ≤ ctol)
+      ill_cond_lim = (inv(Acond) ≤ ctol)
       solved_lim = (test2 ≤ ε)
       zero_resid_lim = MisI && (test1 ≤ eps(T))
       resid_decrease_lim = (rNorm ≤ ε)

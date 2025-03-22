@@ -230,8 +230,8 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     MisI || mulorldiv!(u, M, Mu, ldiv)  # u₁ = M⁻¹ * Mu₁
     βₖ = knorm_elliptic(m, u, Mu)       # β₁ = ‖u₁‖_M
     if βₖ ≠ 0
-      kscal!(m, one(FC) / βₖ, u)
-      MisI || kscal!(m, one(FC) / βₖ, Mu)
+      kdiv!(m, u, βₖ)
+      MisI || kdiv!(m, Mu, βₖ)
     end
 
     # α₁Nv₁ = Aᴴu₁.
@@ -240,8 +240,8 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     NisI || mulorldiv!(v, N, Nv, ldiv)  # v₁ = N⁻¹ * Nv₁
     αₖ = knorm_elliptic(n, v, Nv)       # α₁ = ‖v₁‖_N
     if αₖ ≠ 0
-      kscal!(n, one(FC) / αₖ, v)
-      NisI || kscal!(n, one(FC) / αₖ, Nv)
+      kdiv!(n, v, αₖ)
+      NisI || kdiv!(n, Nv, αₖ)
     end
 
     kcopy!(m, w̄, u)  # Direction w̄₁
@@ -348,8 +348,8 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       MisI || mulorldiv!(u, M, Mu, ldiv)  # uₖ₊₁ = M⁻¹ * Muₖ₊₁
       βₖ₊₁ = knorm_elliptic(m, u, Mu)     # βₖ₊₁ = ‖uₖ₊₁‖_M
       if βₖ₊₁ ≠ 0
-        kscal!(m, one(FC) / βₖ₊₁, u)
-        MisI || kscal!(m, one(FC) / βₖ₊₁, Mu)
+        kdiv!(m, u, βₖ₊₁)
+        MisI || kdiv!(m, Mu, βₖ₊₁)
       end
 
       # αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
@@ -358,8 +358,8 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       NisI || mulorldiv!(v, N, Nv, ldiv)  # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
       αₖ₊₁ = knorm_elliptic(n, v, Nv)     # αₖ₊₁ = ‖vₖ₊₁‖_N
       if αₖ₊₁ ≠ 0
-        kscal!(n, one(FC) / αₖ₊₁, v)
-        NisI || kscal!(n, one(FC) / αₖ₊₁, Nv)
+        kdiv!(n, v, αₖ₊₁)
+        NisI || kdiv!(n, Nv, αₖ₊₁)
       end
 
       # Continue the regularization.
