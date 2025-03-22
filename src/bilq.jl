@@ -124,8 +124,8 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
-    ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
+    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
+    ktypeof(c) == S || error("ktypeof(c) must be equal to $S")
 
     # Compute the adjoint of A, M and N
     Aᴴ = A'

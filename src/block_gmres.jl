@@ -109,7 +109,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-matrix products."
-    ktypeof(B) <: SM || error("ktypeof(B) is not a subtype of $SM")
+    ktypeof(B) == SM || error("ktypeof(B) must be equal to $SM")
 
     # Set up workspace.
     allocate_if(!MisI  , solver, :Q , SM, solver.n, solver.p)

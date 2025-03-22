@@ -119,7 +119,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
 
     # Check type consistency
     eltype(A) == FC || error("eltype(A) ≠ $FC")
-    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
     Δx, vₖ, vₖ₊₁, x, q, stats = solver.Δx, solver.vₖ, solver.vₖ₊₁, solver.x, solver.q, solver.stats

@@ -113,7 +113,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
     allocate_if(!MisI, solver, :Mu, S, solver.x)  # The length of Mu is n

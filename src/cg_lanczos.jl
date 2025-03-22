@@ -118,7 +118,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
+    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
     allocate_if(!MisI, solver, :v, S, solver.x)  # The length of v is n

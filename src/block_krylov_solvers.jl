@@ -42,15 +42,15 @@ mutable struct BlockMinresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
 end
 
 function BlockMinresSolver(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type)
-  FC = eltype(SV)
-  T  = real(FC)
-  ΔX = SM(undef, 0, 0)
-  X  = SM(undef, n, p)
-  P  = SM(undef, 0, 0)
-  Q  = SM(undef, n, p)
-  C  = SM(undef, p, p)
-  D  = SM(undef, 2p, p)
-  Φ  = SM(undef, p, p)
+  FC   = eltype(SV)
+  T    = real(FC)
+  ΔX   = SM(undef, 0, 0)
+  X    = SM(undef, n, p)
+  P    = SM(undef, 0, 0)
+  Q    = SM(undef, n, p)
+  C    = SM(undef, p, p)
+  D    = SM(undef, 2p, p)
+  Φ    = SM(undef, p, p)
   Vₖ₋₁ = SM(undef, n, p)
   Vₖ   = SM(undef, n, p)
   wₖ₋₂ = SM(undef, n, p)
@@ -59,6 +59,8 @@ function BlockMinresSolver(m::Integer, n::Integer, p::Integer, SV::Type, SM::Typ
   Hₖ₋₁ = SM(undef, 2p, p)
   τₖ₋₂ = SV(undef, p)
   τₖ₋₁ = SV(undef, p)
+  SV = isconcretetype(SV) ? typeof(τₖ₋₁)
+  SM = isconcretetype(SM) ? typeof(X)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = BlockMinresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, false, stats)
   return solver
@@ -119,6 +121,8 @@ function BlockGmresSolver(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type
   R  = SM[SM(undef, p, p) for i = 1 : div(memory * (memory+1), 2)]
   H  = SM[SM(undef, 2p, p) for i = 1 : memory]
   τ  = SV[SV(undef, p) for i = 1 : memory]
+  SV = isconcretetype(SV) ? typeof(τ)
+  SM = isconcretetype(SM) ? typeof(X)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = BlockGmresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, false, stats)
   return solver

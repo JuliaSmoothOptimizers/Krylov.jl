@@ -160,8 +160,8 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
-    ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
+    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
+    ktypeof(c) == S || error("ktypeof(c) must be equal to $S")
 
     # Determine τ and ν associated to SQD, SPD or SND systems.
     flip && (τ = -one(T) ; ν =  one(T))

@@ -101,7 +101,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-matrix products."
-    ktypeof(B) <: SM || error("ktypeof(B) is not a subtype of $SM")
+    ktypeof(B) == SM || error("ktypeof(B) must be equal to $SM")
 
     # Set up workspace.
     Vₖ₋₁, Vₖ = solver.Vₖ₋₁, solver.Vₖ
