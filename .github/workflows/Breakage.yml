@@ -123,7 +123,7 @@ jobs:
           name: breakage-${{ matrix.pkg }}-${{ matrix.pkgversion }}
           path: breakage/breakage-*
 
-- upload:
+  upload:
     needs: break
     runs-on: ubuntu-latest
     steps:
