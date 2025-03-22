@@ -41,7 +41,7 @@ mutable struct BlockMinresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
   stats      :: SimpleStats{T}
 end
 
-function BlockMinresSolver(m::Integer, n::Integer, p::Integer, SV, SM)
+function BlockMinresSolver(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type)
   FC = eltype(SV)
   T  = real(FC)
   ΔX = SM(undef, 0, 0)
@@ -103,7 +103,7 @@ mutable struct BlockGmresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
   stats      :: SimpleStats{T}
 end
 
-function BlockGmresSolver(m::Integer, n::Integer, p::Integer, SV, SM; memory::Integer = 5)
+function BlockGmresSolver(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type; memory::Integer = 5)
   memory = min(div(n,p), memory)
   FC = eltype(SV)
   T  = real(FC)

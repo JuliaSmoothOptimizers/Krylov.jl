@@ -143,7 +143,7 @@ function MinresSolver(kc::KrylovConstructor; window::Integer = 5)
   return solver
 end
 
-function MinresSolver(m::Integer, n::Integer, S; window::Integer = 5)
+function MinresSolver(m::Integer, n::Integer, S::Type; window::Integer = 5)
   FC = eltype(S)
   T  = real(FC)
   Δx = S(undef, 0)
@@ -214,7 +214,7 @@ function MinaresSolver(kc::KrylovConstructor)
   return solver
 end
 
-function MinaresSolver(m::Integer, n::Integer, S)
+function MinaresSolver(m::Integer, n::Integer, S::Type)
   FC   = eltype(S)
   T    = real(FC)
   Δx   = S(undef, 0)
@@ -278,7 +278,7 @@ function CgSolver(kc::KrylovConstructor)
   return solver
 end
 
-function CgSolver(m::Integer, n::Integer, S)
+function CgSolver(m::Integer, n::Integer, S::Type)
   FC = eltype(S)
   T  = real(FC)
   Δx = S(undef, 0)
@@ -341,7 +341,7 @@ function CrSolver(kc::KrylovConstructor)
   return solver
 end
 
-function CrSolver(m::Integer, n::Integer, S)
+function CrSolver(m::Integer, n::Integer, S::Type)
   FC = eltype(S)
   T  = real(FC)
   Δx = S(undef, 0)
@@ -409,7 +409,7 @@ function CarSolver(kc::KrylovConstructor)
   return solver
 end
 
-function CarSolver(m::Integer, n::Integer, S)
+function CarSolver(m::Integer, n::Integer, S::Type)
   FC = eltype(S)
   T  = real(FC)
   Δx = S(undef, 0)
@@ -481,7 +481,7 @@ function SymmlqSolver(kc::KrylovConstructor; window::Integer = 5)
   return solver
 end
 
-function SymmlqSolver(m::Integer, n::Integer, S; window::Integer = 5)
+function SymmlqSolver(m::Integer, n::Integer, S::Type; window::Integer = 5)
   FC      = eltype(S)
   T       = real(FC)
   Δx      = S(undef, 0)
@@ -548,7 +548,7 @@ function CgLanczosSolver(kc::KrylovConstructor)
   return solver
 end
 
-function CgLanczosSolver(m::Integer, n::Integer, S)
+function CgLanczosSolver(m::Integer, n::Integer, S::Type)
   FC      = eltype(S)
   T       = real(FC)
   Δx      = S(undef, 0)
@@ -625,7 +625,7 @@ function CgLanczosShiftSolver(kc::KrylovConstructor, nshifts::Integer)
   return solver
 end
 
-function CgLanczosShiftSolver(m::Integer, n::Integer, nshifts::Integer, S)
+function CgLanczosShiftSolver(m::Integer, n::Integer, nshifts::Integer, S::Type)
   FC         = eltype(S)
   T          = real(FC)
   Mv         = S(undef, n)
@@ -698,7 +698,7 @@ function MinresQlpSolver(kc::KrylovConstructor)
   return solver
 end
 
-function MinresQlpSolver(m::Integer, n::Integer, S)
+function MinresQlpSolver(m::Integer, n::Integer, S::Type)
   FC      = eltype(S)
   T       = real(FC)
   Δx      = S(undef, 0)
@@ -771,7 +771,7 @@ function DqgmresSolver(kc::KrylovConstructor; memory::Integer = 20)
   return solver
 end
 
-function DqgmresSolver(m::Integer, n::Integer, S; memory = 20)
+function DqgmresSolver(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -790,7 +790,7 @@ function DqgmresSolver(m::Integer, n::Integer, S; memory = 20)
   return solver
 end
 
-function DqgmresSolver(A, b; memory = 20)
+function DqgmresSolver(A, b; memory::Integer = 20)
   m, n = size(A)
   S = ktypeof(b)
   DqgmresSolver(m, n, S; memory)
@@ -845,7 +845,7 @@ function DiomSolver(kc::KrylovConstructor; memory::Integer = 20)
   return solver
 end
 
-function DiomSolver(m::Integer, n::Integer, S; memory = 20)
+function DiomSolver(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   memory = min(m, memory)
   FC  = eltype(S)
   T   = real(FC)
@@ -863,7 +863,7 @@ function DiomSolver(m::Integer, n::Integer, S; memory = 20)
   return solver
 end
 
-function DiomSolver(A, b; memory = 20)
+function DiomSolver(A, b; memory::Integer = 20)
   m, n = size(A)
   S = ktypeof(b)
   DiomSolver(m, n, S; memory)
@@ -916,7 +916,7 @@ function UsymlqSolver(kc::KrylovConstructor)
   return solver
 end
 
-function UsymlqSolver(m::Integer, n::Integer, S)
+function UsymlqSolver(m::Integer, n::Integer, S::Type)
   FC   = eltype(S)
   T    = real(FC)
   uₖ₋₁ = S(undef, n)
@@ -988,7 +988,7 @@ function UsymqrSolver(kc::KrylovConstructor)
   return solver
 end
 
-function UsymqrSolver(m::Integer, n::Integer, S)
+function UsymqrSolver(m::Integer, n::Integer, S::Type)
   FC   = eltype(S)
   T    = real(FC)
   vₖ₋₁ = S(undef, m)
@@ -1073,7 +1073,7 @@ function TricgSolver(kc::KrylovConstructor)
   return solver
 end
 
-function TricgSolver(m::Integer, n::Integer, S)
+function TricgSolver(m::Integer, n::Integer, S::Type)
   FC      = eltype(S)
   T       = real(FC)
   y       = S(undef, n)
@@ -1172,7 +1172,7 @@ function TrimrSolver(kc::KrylovConstructor)
   return solver
 end
 
-function TrimrSolver(m::Integer, n::Integer, S)
+function TrimrSolver(m::Integer, n::Integer, S::Type)
   FC      = eltype(S)
   T       = real(FC)
   y       = S(undef, n)
@@ -1261,7 +1261,7 @@ function TrilqrSolver(kc::KrylovConstructor)
   return solver
 end
 
-function TrilqrSolver(m::Integer, n::Integer, S)
+function TrilqrSolver(m::Integer, n::Integer, S::Type)
   FC   = eltype(S)
   T    = real(FC)
   uₖ₋₁ = S(undef, n)
@@ -1335,7 +1335,7 @@ function CgsSolver(kc::KrylovConstructor)
   return solver
 end
 
-function CgsSolver(m::Integer, n::Integer, S)
+function CgsSolver(m::Integer, n::Integer, S::Type)
   FC = eltype(S)
   T  = real(FC)
   Δx = S(undef, 0)
@@ -1405,7 +1405,7 @@ function BicgstabSolver(kc::KrylovConstructor)
   return solver
 end
 
-function BicgstabSolver(m::Integer, n::Integer, S)
+function BicgstabSolver(m::Integer, n::Integer, S::Type)
   FC = eltype(S)
   T  = real(FC)
   Δx = S(undef, 0)
@@ -1479,7 +1479,7 @@ function BilqSolver(kc::KrylovConstructor)
   return solver
 end
 
-function BilqSolver(m::Integer, n::Integer, S)
+function BilqSolver(m::Integer, n::Integer, S::Type)
   FC   = eltype(S)
   T    = real(FC)
   uₖ₋₁ = S(undef, n)
@@ -1557,7 +1557,7 @@ function QmrSolver(kc::KrylovConstructor)
   return solver
 end
 
-function QmrSolver(m::Integer, n::Integer, S)
+function QmrSolver(m::Integer, n::Integer, S::Type)
   FC   = eltype(S)
   T    = real(FC)
   uₖ₋₁ = S(undef, n)
@@ -1638,7 +1638,7 @@ function BilqrSolver(kc::KrylovConstructor)
   return solver
 end
 
-function BilqrSolver(m::Integer, n::Integer, S)
+function BilqrSolver(m::Integer, n::Integer, S::Type)
   FC   = eltype(S)
   T    = real(FC)
   uₖ₋₁ = S(undef, n)
@@ -1705,7 +1705,7 @@ function CglsSolver(kc::KrylovConstructor)
   return solver
 end
 
-function CglsSolver(m::Integer, n::Integer, S)
+function CglsSolver(m::Integer, n::Integer, S::Type)
   FC = eltype(S)
   T  = real(FC)
   x  = S(undef, n)
@@ -1783,7 +1783,7 @@ function CglsLanczosShiftSolver(kc::KrylovConstructor, nshifts::Integer)
   return solver
 end
 
-function CglsLanczosShiftSolver(m::Integer, n::Integer, nshifts::Integer, S)
+function CglsLanczosShiftSolver(m::Integer, n::Integer, nshifts::Integer, S::Type)
   FC         = eltype(S)
   T          = real(FC)
   Mv         = S(undef, n)
@@ -1856,7 +1856,7 @@ function CrlsSolver(kc::KrylovConstructor)
   return solver
 end
 
-function CrlsSolver(m::Integer, n::Integer, S)
+function CrlsSolver(m::Integer, n::Integer, S::Type)
   FC = eltype(S)
   T  = real(FC)
   x  = S(undef, n)
@@ -1920,7 +1920,7 @@ function CgneSolver(kc::KrylovConstructor)
   return solver
 end
 
-function CgneSolver(m::Integer, n::Integer, S)
+function CgneSolver(m::Integer, n::Integer, S::Type)
   FC  = eltype(S)
   T   = real(FC)
   x   = S(undef, n)
@@ -1983,7 +1983,7 @@ function CrmrSolver(kc::KrylovConstructor)
   return solver
 end
 
-function CrmrSolver(m::Integer, n::Integer, S)
+function CrmrSolver(m::Integer, n::Integer, S::Type)
   FC  = eltype(S)
   T   = real(FC)
   x   = S(undef, n)
@@ -2050,7 +2050,7 @@ function LslqSolver(kc::KrylovConstructor; window::Integer = 5)
   return solver
 end
 
-function LslqSolver(m::Integer, n::Integer, S; window::Integer = 5)
+function LslqSolver(m::Integer, n::Integer, S::Type; window::Integer = 5)
   FC  = eltype(S)
   T   = real(FC)
   x   = S(undef, n)
@@ -2119,7 +2119,7 @@ function LsqrSolver(kc::KrylovConstructor; window::Integer = 5)
   return solver
 end
 
-function LsqrSolver(m::Integer, n::Integer, S; window::Integer = 5)
+function LsqrSolver(m::Integer, n::Integer, S::Type; window::Integer = 5)
   FC  = eltype(S)
   T   = real(FC)
   x   = S(undef, n)
@@ -2190,7 +2190,7 @@ function LsmrSolver(kc::KrylovConstructor; window::Integer = 5)
   return solver
 end
 
-function LsmrSolver(m::Integer, n::Integer, S; window::Integer = 5)
+function LsmrSolver(m::Integer, n::Integer, S::Type; window::Integer = 5)
   FC   = eltype(S)
   T    = real(FC)
   x    = S(undef, n)
@@ -2262,7 +2262,7 @@ function LnlqSolver(kc::KrylovConstructor)
   return solver
 end
 
-function LnlqSolver(m::Integer, n::Integer, S)
+function LnlqSolver(m::Integer, n::Integer, S::Type)
   FC  = eltype(S)
   T   = real(FC)
   x   = S(undef, n)
@@ -2334,7 +2334,7 @@ function CraigSolver(kc::KrylovConstructor)
   return solver
 end
 
-function CraigSolver(m::Integer, n::Integer, S)
+function CraigSolver(m::Integer, n::Integer, S::Type)
   FC  = eltype(S)
   T   = real(FC)
   x   = S(undef, n)
@@ -2410,7 +2410,7 @@ function CraigmrSolver(kc::KrylovConstructor)
   return solver
 end
 
-function CraigmrSolver(m::Integer, n::Integer, S)
+function CraigmrSolver(m::Integer, n::Integer, S::Type)
   FC   = eltype(S)
   T    = real(FC)
   x    = S(undef, n)
@@ -2488,7 +2488,7 @@ function GmresSolver(kc::KrylovConstructor; memory::Integer = 20)
   return solver
 end
 
-function GmresSolver(m::Integer, n::Integer, S; memory = 20)
+function GmresSolver(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -2507,7 +2507,7 @@ function GmresSolver(m::Integer, n::Integer, S; memory = 20)
   return solver
 end
 
-function GmresSolver(A, b; memory = 20)
+function GmresSolver(A, b; memory::Integer = 20)
   m, n = size(A)
   S = ktypeof(b)
   GmresSolver(m, n, S; memory)
@@ -2565,7 +2565,7 @@ function FgmresSolver(kc::KrylovConstructor; memory::Integer = 20)
   return solver
 end
 
-function FgmresSolver(m::Integer, n::Integer, S; memory = 20)
+function FgmresSolver(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -2584,7 +2584,7 @@ function FgmresSolver(m::Integer, n::Integer, S; memory = 20)
   return solver
 end
 
-function FgmresSolver(A, b; memory = 20)
+function FgmresSolver(A, b; memory::Integer = 20)
   m, n = size(A)
   S = ktypeof(b)
   FgmresSolver(m, n, S; memory)
@@ -2639,7 +2639,7 @@ function FomSolver(kc::KrylovConstructor; memory::Integer = 20)
   return solver
 end
 
-function FomSolver(m::Integer, n::Integer, S; memory = 20)
+function FomSolver(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -2657,7 +2657,7 @@ function FomSolver(m::Integer, n::Integer, S; memory = 20)
   return solver
 end
 
-function FomSolver(A, b; memory = 20)
+function FomSolver(A, b; memory::Integer = 20)
   m, n = size(A)
   S = ktypeof(b)
   FomSolver(m, n, S; memory)
@@ -2726,7 +2726,7 @@ function GpmrSolver(kc::KrylovConstructor; memory::Integer = 20)
   return solver
 end
 
-function GpmrSolver(m::Integer, n::Integer, S; memory = 20)
+function GpmrSolver(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   memory = min(n + m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -2751,7 +2751,7 @@ function GpmrSolver(m::Integer, n::Integer, S; memory = 20)
   return solver
 end
 
-function GpmrSolver(A, b; memory = 20)
+function GpmrSolver(A, b; memory::Integer = 20)
   m, n = size(A)
   S = ktypeof(b)
   GpmrSolver(m, n, S; memory)

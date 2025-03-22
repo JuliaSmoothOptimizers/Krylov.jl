@@ -14,10 +14,11 @@ XyzSolver(kc::KrylovConstructor)
 `Xyz` represents the name of the Krylov method, written in lowercase except for its first letter (e.g., `Cg`, `Minres`, `Lsmr`, `Bicgstab`, etc.).
 If the name of the Krylov method contains an underscore (e.g., `minres_qlp` or `cgls_lanczos_shift`), the workspace constructor transforms it by capitalizing each word and removing underscores, resulting in names like `MinresQlpSolver` or `CglsLanczosShiftSolver`.
 
+Given an operator `A` and a right-hand side `b`, you can create a `KrylovSolver` based on the size of `A` and the type of `b`, or explicitly provide the dimensions `(m, n)` and the storage type `S`.
+
 !!! note
     The constructors of `CgLanczosShiftSolver` and `CglsLanczosShiftSolver` require an additional argument `nshifts`.
 
-Given an operator `A` and a right-hand side `b`, you can create a `KrylovSolver` based on the size of `A` and the type of `b`, or explicitly provide the dimensions `(m, n)` and the storage type `S`.
 We assume that `S(undef, 0)`, `S(undef, n)`, and `S(undef, m)` are well-defined for the storage type `S`.
 For more advanced vector types, workspaces can also be created with the help of a `KrylovConstructor`.
 ```@docs
