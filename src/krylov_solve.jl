@@ -18,7 +18,6 @@
     solve!(solver, args...; kwargs...)
 
 Generic function that dispatches to the appropriate in-place Krylov method based on the type of `solver`.
-This function is not exported to prevent potential conflicts with other Julia packages.
 """
 function solve! end
 
@@ -82,7 +81,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
     @eval begin
       function $(krylov)($(def_args...); memory::Int=20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
-        solver = $workspace(A, b, memory)
+        solver = $workspace(A, b; memory)
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
         $(krylov!)(solver, $(args...); $(kwargs...))
@@ -93,7 +92,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
       if !isempty($optargs)
         function $(krylov)($(def_args...), $(def_optargs...); memory::Int=20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
-          solver = $workspace(A, b, memory)
+          solver = $workspace(A, b; memory)
           warm_start!(solver, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
@@ -188,7 +187,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
     @eval begin
       function $(krylov)($(def_args...); memory :: Int=20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
-        solver = $workspace(A, B, memory)
+        solver = $workspace(A, B; memory)
         elapsed_time = ktimer(start_time)
         timemax -= elapsed_time
         $(krylov!)(solver, $(args...); $(kwargs...))
@@ -199,7 +198,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
       if !isempty($optargs)
         function $(krylov)($(def_args...), $(def_optargs...); memory :: Int=20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
-          solver = $workspace(A, B, memory)
+          solver = $workspace(A, B; memory)
           warm_start!(solver, $(optargs...))
           elapsed_time = ktimer(start_time)
           timemax -= elapsed_time

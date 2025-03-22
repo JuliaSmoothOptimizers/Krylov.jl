@@ -174,11 +174,11 @@
         storage_diom_bytes(mem, n) = nbits_FC * ((2 * n) + (n * mem) + (n * (mem-1)) + (mem-1) + (mem))
 
         expected_diom_bytes = storage_diom_bytes(mem, n)
-        diom(A, b, memory=mem)  # warmup
-        actual_diom_bytes = @allocated diom(A, b, memory=mem)
+        diom(A, b; memory=mem)  # warmup
+        actual_diom_bytes = @allocated diom(A, b; memory=mem)
         @test expected_diom_bytes ≤ actual_diom_bytes ≤ 1.02 * expected_diom_bytes
 
-        solver = DiomSolver(A, b, mem)
+        solver = DiomSolver(A, b; memory=mem)
         diom!(solver, A, b)  # warmup
         inplace_diom_bytes = @allocated diom!(solver, A, b)
         @test inplace_diom_bytes == 0
@@ -193,11 +193,11 @@
         storage_fom_bytes(mem, n) = nbits_FC * ((2 * n) + (n * mem) + (2 * mem) + (mem * (mem+1) / 2))
 
         expected_fom_bytes = storage_fom_bytes(mem, n)
-        fom(A, b, memory=mem)  # warmup
-        actual_fom_bytes = @allocated fom(A, b, memory=mem)
+        fom(A, b; memory=mem)  # warmup
+        actual_fom_bytes = @allocated fom(A, b; memory=mem)
         @test expected_fom_bytes ≤ actual_fom_bytes ≤ 1.02 * expected_fom_bytes
 
-        solver = FomSolver(A, b, mem)
+        solver = FomSolver(A, b; memory=mem)
         fom!(solver, A, b)  # warmup
         inplace_fom_bytes = @allocated fom!(solver, A, b)
         @test inplace_fom_bytes == 0
@@ -212,11 +212,11 @@
         storage_dqgmres_bytes(mem, n) = nbits_FC * ((2 * n) + (2 * n * mem) + mem + (mem + 1)) + nbits_T * mem
 
         expected_dqgmres_bytes = storage_dqgmres_bytes(mem, n)
-        dqgmres(A, b, memory=mem)  # warmup
-        actual_dqgmres_bytes = @allocated dqgmres(A, b, memory=mem)
+        dqgmres(A, b; memory=mem)  # warmup
+        actual_dqgmres_bytes = @allocated dqgmres(A, b; memory=mem)
         @test expected_dqgmres_bytes ≤ actual_dqgmres_bytes ≤ 1.02 * expected_dqgmres_bytes
 
-        solver = DqgmresSolver(A, b, mem)
+        solver = DqgmresSolver(A, b; memory=mem)
         dqgmres!(solver, A, b)  # warmup
         inplace_dqgmres_bytes = @allocated dqgmres!(solver, A, b)
         @test inplace_dqgmres_bytes == 0
@@ -231,11 +231,11 @@
         storage_gmres_bytes(mem, n) = nbits_FC * ((2 * n) + (n * mem) + (2 * mem) + (mem * (mem+1) / 2)) + nbits_T * mem
 
         expected_gmres_bytes = storage_gmres_bytes(mem, n)
-        gmres(A, b, memory=mem)  # warmup
-        actual_gmres_bytes = @allocated gmres(A, b, memory=mem)
+        gmres(A, b; memory=mem)  # warmup
+        actual_gmres_bytes = @allocated gmres(A, b; memory=mem)
         @test expected_gmres_bytes ≤ actual_gmres_bytes ≤ 1.02 * expected_gmres_bytes
 
-        solver = GmresSolver(A, b, mem)
+        solver = GmresSolver(A, b; memory=mem)
         gmres!(solver, A, b)  # warmup
         inplace_gmres_bytes = @allocated gmres!(solver, A, b)
         @test inplace_gmres_bytes == 0
@@ -250,11 +250,11 @@
         storage_fgmres_bytes(mem, n) = nbits_FC * ((2 * n) + (2 * n * mem) + (2 * mem) + (mem * (mem+1) / 2)) + nbits_T * mem
 
         expected_fgmres_bytes = storage_fgmres_bytes(mem, n)
-        fgmres(A, b, memory=mem)  # warmup
-        actual_fgmres_bytes = @allocated fgmres(A, b, memory=mem)
+        fgmres(A, b; memory=mem)  # warmup
+        actual_fgmres_bytes = @allocated fgmres(A, b; memory=mem)
         @test expected_fgmres_bytes ≤ actual_fgmres_bytes ≤ 1.02 * expected_fgmres_bytes
 
-        solver = FgmresSolver(A, b, mem)
+        solver = FgmresSolver(A, b; memory=mem)
         fgmres!(solver, A, b)  # warmup
         inplace_fgmres_bytes = @allocated fgmres!(solver, A, b)
         @test inplace_fgmres_bytes == 0
@@ -631,7 +631,7 @@
         actual_gpmr_bytes = @allocated gpmr(Ao, Au, b, c, memory=mem, itmax=mem)
         @test expected_gpmr_bytes ≤ actual_gpmr_bytes ≤ 1.02 * expected_gpmr_bytes
 
-        solver = GpmrSolver(Ao, b, mem)
+        solver = GpmrSolver(Ao, b; memory=mem)
         gpmr!(solver, Ao, Au, b, c)  # warmup
         inplace_gpmr_bytes = @allocated gpmr!(solver, Ao, Au, b, c)
         @test inplace_gpmr_bytes == 0
