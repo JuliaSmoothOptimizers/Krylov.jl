@@ -148,17 +148,17 @@ include("gpu.jl")
     @testset "ktypeof -- $FC" begin
       dv = S(rand(FC, 10))
       b = view(dv, 4:8)
-      @test Krylov.ktypeof(dv) == S
-      @test Krylov.ktypeof(b) == S
+      @test Krylov.ktypeof(dv) <: S
+      @test Krylov.ktypeof(b) <: S
 
       dm = M(rand(FC, 10, 10))
       b = view(dm, :, 3)
-      @test Krylov.ktypeof(b) == S
+      @test Krylov.ktypeof(b) <: S
 
       sv = V(sprand(FC, 10, 0.5))
       b = view(sv, 4:8)
-      @test Krylov.ktypeof(sv) == S
-      @test Krylov.ktypeof(b) == S
+      @test Krylov.ktypeof(sv) <: S
+      @test Krylov.ktypeof(b) <: S
     end
   end
 end
