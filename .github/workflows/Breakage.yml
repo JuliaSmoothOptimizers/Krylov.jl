@@ -159,7 +159,13 @@ jobs:
             fi
           done >> summary.md
 
+      - name: Display summary in CI logs
+        run: |
+          echo "### Breakage Summary" >> $GITHUB_STEP_SUMMARY
+          cat breakage/summary.md >> $GITHUB_STEP_SUMMARY
+
       - name: PR comment with file
+        if: github.event.pull_request.head.repo.fork == false
         uses: actions/github-script@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
