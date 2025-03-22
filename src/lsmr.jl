@@ -214,8 +214,8 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     end
     β = β₁
 
-    kscal!(m, one(FC)/β₁, u)
-    MisI || kscal!(m, one(FC)/β₁, Mu)
+    kdiv!(m, u, β₁)
+    MisI || kdiv!(m, Mu, β₁)
     mul!(Aᴴu, Aᴴ, u)
     kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
@@ -246,7 +246,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     xNorm = zero(T)
 
     # Items for use in stopping rules.
-    ctol = conlim > 0 ? 1 / conlim : zero(T)
+    ctol = conlim > 0 ? inv(conlim) : zero(T)
     rNorm = β
     history && push!(rNorms, rNorm)
     ArNorm = ArNorm0 = α * β
@@ -271,8 +271,8 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
       stats.status = "x is a minimum least-squares solution"
       return solver
     end
-    kscal!(n, one(FC)/α, v)
-    NisI || kscal!(n, one(FC)/α, Nv)
+    kdiv!(n, v, α)
+    NisI || kdiv!(n, Nv, α)
 
     kcopy!(n, h, v)  # h ← v
     kfill!(hbar, zero(FC))
@@ -297,8 +297,8 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
       MisI || mulorldiv!(u, M, Mu, ldiv)
       β = knorm_elliptic(m, u, Mu)
       if β ≠ 0
-        kscal!(m, one(FC)/β, u)
-        MisI || kscal!(m, one(FC)/β, Mu)
+        kdiv!(m, u, β)
+        MisI || kdiv!(m, Mu, β)
 
         # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
         mul!(Aᴴu, Aᴴ, u)
@@ -306,8 +306,8 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
         NisI || mulorldiv!(v, N, Nv, ldiv)
         α = knorm_elliptic(n, v, Nv)
         if α ≠ 0
-          kscal!(n, one(FC)/α, v)
-          NisI || kscal!(n, one(FC)/α, Nv)
+          kdiv!(n, v, α)
+          NisI || kdiv!(n, Nv, α)
         end
       end
 
@@ -384,7 +384,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
 
       test1 = rNorm / β₁
       test2 = ArNorm / (Anorm * rNorm)
-      test3 = 1 / Acond
+      test3 = inv(Acond)
       t1    = test1 / (one(T) + Anorm * xNorm / β₁)
       rNormtol  = btol + axtol * Anorm * xNorm / β₁
 

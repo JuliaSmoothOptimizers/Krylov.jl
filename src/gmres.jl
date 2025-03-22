@@ -212,10 +212,10 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
         end
       end
 
-      # Initial ζ₁ and V₁
+      # Initial ζ₁ and v₁
       β = knorm(n, r₀)
       z[1] = β
-      V[1] .= r₀ ./ rNorm
+      kdivcopy!(n, V[1], r₀, rNorm)  # v₁ = r₀ / ‖r₀‖
 
       npass = npass + 1
       solver.inner_iter = 0
@@ -305,7 +305,7 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
             push!(V, similar(solver.x))
             push!(z, zero(FC))
           end
-          V[inner_iter+1] .= q ./ Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
+          kdivcopy!(n, V[inner_iter+1], q, Hbis)  # vₖ₊₁ = q / hₖ₊₁.ₖ
           z[inner_iter+1] = ζₖ₊₁
         end
       end

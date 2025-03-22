@@ -145,7 +145,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     end
     βₖ = knorm(n, vₖ)  # β₁ = ‖v₁‖
     if βₖ ≠ 0
-      kscal!(n, one(FC) / βₖ, vₖ)
+      kdiv!(n, vₖ, βₖ)
     end
     β₁ = βₖ
 
@@ -158,7 +158,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     kaxpy!(n, -αₖ, vₖ, vₖ₊₁)
     βₖ₊₁ = knorm(n, vₖ₊₁)    # β₂ = ‖v₂‖
     if βₖ₊₁ ≠ 0
-      kscal!(n, one(FC) / βₖ₊₁, vₖ₊₁)
+      kdiv!(n, vₖ₊₁, βₖ₊₁)
     end
 
     ξₖ₋₁ = zero(T)
@@ -243,15 +243,14 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       # w₁ = v₁ / λ₁
       if iter == 1
         wₖ = wₖ₋₁
-        kaxpy!(n, one(T), vₖ, wₖ)
-        kscal!(n, one(T) / λₖ, wₖ)
+        kdivcopy!(n, wₖ, vₖ, λₖ)
       end
       # w₂ = (v₂ - γ₁w₁) / λ₂
       if iter == 2
         wₖ = wₖ₋₂
         kaxpy!(n, -γₖ₋₁, wₖ₋₁, wₖ)
         kaxpy!(n, one(T), vₖ, wₖ)
-        kscal!(n, one(T) / λₖ, wₖ)
+        kdiv!(n, wₖ, λₖ)
       end
       # wₖ = (vₖ - γₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / λₖ
       if iter ≥ 3
@@ -259,7 +258,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         wₖ = wₖ₋₂
         kaxpy!(n, -γₖ₋₁, wₖ₋₁, wₖ)
         kaxpy!(n, one(T), vₖ, wₖ)
-        kscal!(n, one(T) / λₖ, wₖ)
+        kdiv!(n, wₖ, λₖ)
       end
 
       # Continue the Lanczos process.
@@ -279,7 +278,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         if βₖ₊₂ ≤ btol
           ℓ = iter + 1
         else
-          kscal!(n, one(FC) / βₖ₊₂, vₖ)
+          kdiv!(n, vₖ, βₖ₊₂)
         end
       end
 
@@ -390,15 +389,14 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       # d₁ = w₁ / μ₁
       if iter == 1
         dₖ = dₖ₋₁
-        kaxpy!(n, one(T), wₖ, dₖ)
-        kscal!(n, one(T) / μₖ, dₖ)
+        kdivcopy!(n, dₖ, wₖ, μₖ)
       end
       # d₂ = (w₂ - ϕ₁d₁) / μ₂
       if iter == 2
         dₖ = dₖ₋₂
         kaxpy!(n, -ϕₖ₋₁, dₖ₋₁, dₖ)
         kaxpy!(n, one(T), wₖ, dₖ)
-        kscal!(n, one(T) / μₖ, dₖ)
+        kdiv!(n, dₖ, μₖ)
       end
       # dₖ = (wₖ - ϕₖ₋₁dₖ₋₁ - ρₖ₋₂dₖ₋₂) / μₖ
       if iter ≥ 3
@@ -406,7 +404,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         dₖ = dₖ₋₂
         kaxpy!(n, -ϕₖ₋₁, dₖ₋₁, dₖ)
         kaxpy!(n, one(T), wₖ, dₖ)
-        kscal!(n, one(T) / μₖ, dₖ)
+        kdiv!(n, dₖ, μₖ)
       end
 
       # x = Vₖyₖ = Dₖzₖ = x₋₁ + ζₖdₖ

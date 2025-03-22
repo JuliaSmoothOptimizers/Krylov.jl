@@ -240,7 +240,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     # βv₁ = Cb
     β = knorm(m, b₀)
     if β ≠ 0
-      V[1] .= b₀ ./ β
+      kdivcopy!(m, V[1], b₀, β)
     else
       # β = ‖b₀‖₂ = 0
       kfill!(V[1], zero(FC))  # v₁ = 0 such that v₁ ⊥ Span{v₁, ..., vₖ}
@@ -249,7 +249,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     # γu₁ = Dc
     γ = knorm(n, c₀)
     if γ ≠ 0
-      U[1] .= c₀ ./ γ
+      kdivcopy!(n, U[1], c₀, γ)
     else
       # γ = ‖c₀‖₂ = 0
       kfill!(U[1], zero(FC))  # u₁ = 0 such that u₁ ⊥ Span{u₁, ..., uₖ}
@@ -466,7 +466,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
 
         # hₖ₊₁.ₖ ≠ 0
         if Haux > btol
-          V[k+1] .= q ./ Haux  # hₖ₊₁.ₖvₖ₊₁ = q
+          kdivcopy!(m, V[k+1], q, Haux)  # vₖ₊₁ = q / hₖ₊₁.ₖ
         else
           # Breakdown -- hₖ₊₁.ₖ = ‖q‖₂ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
           kfill!(V[k+1], zero(FC))  # vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
@@ -474,7 +474,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
 
         # fₖ₊₁.ₖ ≠ 0
         if Faux > btol
-          U[k+1] .= p ./ Faux  # fₖ₊₁.ₖuₖ₊₁ = p
+          kdivcopy!(n, U[k+1], p, Faux)  # fₖ₊₁.ₖuₖ₊₁ = p
         else
           # Breakdown -- fₖ₊₁.ₖ = ‖p‖₂ = 0 and Bvₖ ∈ Span{u₁, ..., uₖ}
           kfill!(U[k+1], zero(FC))  # uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}

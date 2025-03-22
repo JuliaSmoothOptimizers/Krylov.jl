@@ -171,8 +171,8 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     γₖ = knorm(n, c)            # γ₁ = ‖u₁‖ = ‖c‖
     kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
     kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
-    vₖ .= r₀ ./ βₖ              # v₁ = (b - Ax₀) / β₁
-    uₖ .= c ./ γₖ               # u₁ = c / γ₁
+    kdivcopy!(m, vₖ, r₀, βₖ)    # v₁ = (b - Ax₀) / β₁
+    kdivcopy!(n, uₖ, c, γₖ)     # u₁ = c / γ₁
     cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
     sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
     kfill!(d̅, zero(FC))         # Last column of D̅ₖ = Uₖ(Qₖ)ᴴ
@@ -287,10 +287,10 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
-        vₖ .= q ./ βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
+        kdivcopy!(m, vₖ, q, βₖ₊₁)  # vₖ₊₁ = q / βₖ₊₁
       end
       if γₖ₊₁ ≠ zero(T)
-        uₖ .= p ./ γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
+        kdivcopy!(n, uₖ, p, γₖ₊₁)  # uₖ₊₁ = p / γₖ₊₁
       end
 
       # Compute USYMLQ residual norm

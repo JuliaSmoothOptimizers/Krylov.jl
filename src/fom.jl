@@ -210,10 +210,10 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
         end
       end
 
-      # Initial ζ₁ and V₁
+      # Initial ζ₁ and v₁
       β = knorm(n, r₀)
       z[1] = β
-      V[1] .= r₀ ./ rNorm
+      kdivcopy!(n, V[1], r₀, rNorm)  # v₁ = r₀ / ‖r₀‖
 
       npass = npass + 1
       inner_iter = 0
@@ -294,7 +294,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
           if !restart && (inner_iter ≥ mem)
             push!(V, similar(solver.x))
           end
-          V[inner_iter+1] .= q ./ Hbis  # hₖ₊₁.ₖvₖ₊₁ = q
+          kdivcopy!(n, V[inner_iter+1], q, Hbis)  # vₖ₊₁ = q / hₖ₊₁.ₖ
         end
       end
 

@@ -157,9 +157,9 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
 
     # Initialize Lanczos process.
     # β₁Mv₁ = b
-    kscal!(n, one(FC) / β, v)           # v₁  ←  v₁ / β₁
-    MisI || kscal!(n, one(FC) / β, Mv)  # Mv₁ ← Mv₁ / β₁
-    kcopy!(n, Mv_prev, Mv)              # Mv_prev ← Mv
+    kdiv!(n, v, β)           # v₁  ←  v₁ / β₁
+    MisI || kdiv!(n, Mv, β)  # Mv₁ ← Mv₁ / β₁
+    kcopy!(n, Mv_prev, Mv)   # Mv_prev ← Mv
 
     iter = 0
     itmax == 0 && (itmax = 2 * n)
@@ -191,7 +191,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
 
       # Check curvature. Exit fast if requested.
       # It is possible to show that σₖ² (δₖ - ωₖ₋₁ / γₖ₋₁) = pₖᴴ A pₖ.
-      γ = one(T) / (δ - ω / γ)  # γₖ = 1 / (δₖ - ωₖ₋₁ / γₖ₋₁)
+      γ = inv(δ - ω / γ)  # γₖ = 1 / (δₖ - ωₖ₋₁ / γₖ₋₁)
       indefinite |= (γ ≤ 0)
       (check_curvature & indefinite) && continue
 
@@ -203,8 +203,8 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       kcopy!(n, Mv, Mv_next)              # Mvₖ ← Mvₖ₊₁
       MisI || mulorldiv!(v, M, Mv, ldiv)  # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
       β = knorm_elliptic(n, v, Mv)        # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
-      kscal!(n, one(FC) / β, v)           # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-      MisI || kscal!(n, one(FC) / β, Mv)  # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+      kdiv!(n, v, β)                      # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+      MisI || kdiv!(n, Mv, β)             # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
       Anorm2 += β_prev^2 + β^2 + δ^2      # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
       β_prev = β
 

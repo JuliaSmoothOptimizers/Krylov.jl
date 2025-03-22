@@ -223,8 +223,8 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
 
     # Initialize Golub-Kahan process.
     # β₁Mu₁ = b.
-    kscal!(m, one(FC) / β₁, u)
-    MisI || kscal!(m, one(FC) / β₁, Mu)
+    kdiv!(m, u, β₁)
+    MisI || kdiv!(m, Mu, β₁)
 
     kfill!(Nv, zero(FC))
     kfill!(w, zero(FC))  # Used to update y.
@@ -275,8 +275,8 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
         inconsistent = true
         continue
       end
-      kscal!(n, one(FC) / α, v)
-      NisI || kscal!(n, one(FC) / α, Nv)
+      kdiv!(n, v, α)
+      NisI || kdiv!(n, Nv, α)
 
       Anorm² += α * α + λ * λ
 
@@ -315,8 +315,8 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
       MisI || mulorldiv!(u, M, Mu, ldiv)
       β = knorm_elliptic(m, u, Mu)
       if β ≠ 0
-        kscal!(m, one(FC) / β, u)
-        MisI || kscal!(m, one(FC) / β, Mu)
+        kdiv!(m, u, β)
+        MisI || kdiv!(m, Mu, β)
       end
 
       # Finish  updates from the first Givens rotation.
@@ -358,8 +358,8 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
       solved_resid_lim = rNorm ≤ btol + atol * Anorm * xNorm / β₁
       solved = solved_mach | solved_lim | solved_resid_tol | solved_resid_lim
 
-      ill_cond_mach = one(T) + one(T) / Acond ≤ one(T)
-      ill_cond_lim = 1 / Acond ≤ ctol
+      ill_cond_mach = one(T) + inv(Acond) ≤ one(T)
+      ill_cond_lim = inv(Acond) ≤ ctol
       ill_cond = ill_cond_mach | ill_cond_lim
 
       user_requested_exit = callback(solver) :: Bool

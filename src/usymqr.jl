@@ -175,8 +175,8 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
     γₖ = knorm(n, c)             # γ₁ = ‖u₁‖ = ‖c‖
     kfill!(vₖ₋₁, zero(FC))       # v₀ = 0
     kfill!(uₖ₋₁, zero(FC))       # u₀ = 0
-    vₖ .= r₀ ./ βₖ               # v₁ = (b - Ax₀) / β₁
-    uₖ .= c ./ γₖ                # u₁ = c / γ₁
+    kdivcopy!(m, vₖ, r₀, βₖ)     # v₁ = (b - Ax₀) / β₁
+    kdivcopy!(n, uₖ, c, γₖ)      # u₁ = c / γ₁
     cₖ₋₂ = cₖ₋₁ = cₖ = one(T)    # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
     sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
     kfill!(wₖ₋₂, zero(FC))       # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
@@ -263,15 +263,14 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       # w₁ = u₁ / δ₁
       if iter == 1
         wₖ = wₖ₋₁
-        kaxpy!(n, one(FC), uₖ, wₖ)
-        wₖ .= wₖ ./ δₖ
+        kdivcopy!(n, wₖ, uₖ, δₖ)
       end
       # w₂ = (u₂ - λ₁w₁) / δ₂
       if iter == 2
         wₖ = wₖ₋₂
         kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
         kaxpy!(n, one(FC), uₖ, wₖ)
-        wₖ .= wₖ ./ δₖ
+        kdiv!(n, wₖ, δₖ)
       end
       # wₖ = (uₖ - λₖ₋₁wₖ₋₁ - ϵₖ₋₂wₖ₋₂) / δₖ
       if iter ≥ 3
@@ -279,7 +278,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
         wₖ = wₖ₋₂
         kaxpy!(n, -λₖ₋₁, wₖ₋₁, wₖ)
         kaxpy!(n, one(FC), uₖ, wₖ)
-        wₖ .= wₖ ./ δₖ
+        kdiv!(n, wₖ, δₖ)
       end
 
       # Compute solution xₖ.
@@ -299,10 +298,10 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       kcopy!(n, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
 
       if βₖ₊₁ ≠ zero(T)
-        vₖ .= q ./ βₖ₊₁  # βₖ₊₁vₖ₊₁ = q
+        kdivcopy!(m, vₖ, q, βₖ₊₁)  # vₖ₊₁ = q / βₖ₊₁
       end
       if γₖ₊₁ ≠ zero(T)
-        uₖ .= p ./ γₖ₊₁  # γₖ₊₁uₖ₊₁ = p
+        kdivcopy!(n, uₖ, p, γₖ₊₁)  # uₖ₊₁ = p / γₖ₊₁
       end
 
       # Update directions for x.

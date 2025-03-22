@@ -215,8 +215,8 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
     βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
     if βₖ ≠ 0
-      kscal!(m, one(FC) / βₖ, M⁻¹vₖ)
-      MisI || kscal!(m, one(FC) / βₖ, vₖ)
+      kdiv!(m, M⁻¹vₖ, βₖ)
+      MisI || kdiv!(m, vₖ, βₖ)
     else
       # v₁ = 0 such that v₁ ⊥ Span{v₁, ..., vₖ}
       kfill!(M⁻¹vₖ, zero(FC))
@@ -228,8 +228,8 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
     γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     if γₖ ≠ 0
-      kscal!(n, one(FC) / γₖ, N⁻¹uₖ)
-      NisI || kscal!(n, one(FC) / γₖ, uₖ)
+      kdiv!(n, N⁻¹uₖ, γₖ)
+      NisI || kdiv!(n, uₖ, γₖ)
     else
       # u₁ = 0 such that u₁ ⊥ Span{u₁, ..., uₖ}
       kfill!(N⁻¹uₖ, zero(FC))
@@ -351,24 +351,34 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
       if iter == 1
         # [ 1  0 ] [ gx₁ gy₁ ] = [ v₁ 0  ]
         # [ δ̄₁ 1 ] [ gx₂ gy₂ ]   [ 0  u₁ ]
-        kcopy!(m, gx₂ₖ₋₁, vₖ)  # gx₂ₖ₋₁ ← vₖ
-        gx₂ₖ .= -conj(δₖ) .* gx₂ₖ₋₁
-        kcopy!(n, gy₂ₖ, uₖ)  # gy₂ₖ ← uₖ
+        kcopy!(m, gx₂ₖ₋₁, vₖ)               # gx₂ₖ₋₁ = vₖ
+        kscalcopy!(m, gx₂ₖ, -conj(δₖ), vₖ)  # gx₂ₖ = -conj(δₖ) * vₖ
+        kcopy!(n, gy₂ₖ, uₖ)                 # gy₂ₖ = uₖ
       else
         # [ 0  σ̄ₖ 1  0 ] [ gx₂ₖ₋₃ gy₂ₖ₋₃ ] = [ vₖ 0  ]
         # [ η̄ₖ λ̄ₖ δ̄ₖ 1 ] [ gx₂ₖ₋₂ gy₂ₖ₋₂ ]   [ 0  uₖ ]
         #                [ gx₂ₖ₋₁ gy₂ₖ₋₁ ]
         #                [ gx₂ₖ   gy₂ₖ   ]
-        gx₂ₖ₋₁ .= conj(ηₖ) .* gx₂ₖ₋₁ .+ conj(λₖ) .* gx₂ₖ
-        gy₂ₖ₋₁ .= conj(ηₖ) .* gy₂ₖ₋₁ .+ conj(λₖ) .* gy₂ₖ
+        #
+        # gx₂ₖ₋₁ = vₖ - σ̄ₖ * gx₂ₖ₋₂
+        # gy₂ₖ₋₁ =    - σ̄ₖ * gy₂ₖ₋₂
+        # gx₂ₖ   =    - η̄ₖ * gx₂ₖ₋₃ - λ̄ₖ * gx₂ₖ₋₂ - δ̄ₖ * gx₂ₖ₋₁
+        # gy₂ₖ   = uₖ - η̄ₖ * gy₂ₖ₋₃ - λ̄ₖ * gy₂ₖ₋₂ - δ̄ₖ * gy₂ₖ₋₁
+        #
+        # gx₂ₖ and gy₂ₖ will reuse the same storage as gx₂ₖ₋₃ and gy₂ₖ₋₃
+        # gx₂ₖ₋₁ and gy₂ₖ₋₁ will reuse the same storage as gx₂ₖ₋₂ and gy₂ₖ₋₂
 
-        gx₂ₖ .= vₖ .- conj(σₖ) .* gx₂ₖ
-        gy₂ₖ .=    .- conj(σₖ) .* gy₂ₖ
+        kaxpby!(m, conj(λₖ), gx₂ₖ, conj(ηₖ), gx₂ₖ₋₁)  # gx₂ₖ₋₁ = conj(ηₖ) * gx₂ₖ₋₃ + conj(λₖ) * gx₂ₖ₋₂
+        kaxpby!(n, conj(λₖ), gy₂ₖ, conj(ηₖ), gy₂ₖ₋₁)  # gy₂ₖ₋₁ = conj(ηₖ) * gy₂ₖ₋₃ + conj(λₖ) * gy₂ₖ₋₂
 
-        gx₂ₖ₋₁ .=    .- gx₂ₖ₋₁ .- conj(δₖ) .* gx₂ₖ
-        gy₂ₖ₋₁ .= uₖ .- gy₂ₖ₋₁ .- conj(δₖ) .* gy₂ₖ
+        kaxpby!(m, one(FC), vₖ, -conj(σₖ), gx₂ₖ)  # gx₂ₖ = vₖ - conj(σₖ) * gx₂ₖ₋₂
+        kscal!(n, -conj(σₖ), gy₂ₖ)                # gy₂ₖ =    - conj(σₖ) * gy₂ₖ₋₂
 
-        # g₂ₖ₋₃ == g₂ₖ and g₂ₖ₋₂ == g₂ₖ₋₁
+        kaxpby!(m, -conj(δₖ), gx₂ₖ, -one(FC), gx₂ₖ₋₁)  # gx₂ₖ₋₁ = -gx₂ₖ₋₁ - conj(δₖ) * gx₂ₖ
+        kaxpby!(n, one(FC), uₖ, -one(FC), gy₂ₖ₋₁)      # gy₂ₖ₋₁ = uₖ - gy₂ₖ₋₁
+        kaxpy!(n, -conj(δₖ), gy₂ₖ, gy₂ₖ₋₁)             # gy₂ₖ₋₁ = gy₂ₖ₋₁ - conj(δₖ) * gy₂ₖ
+
+        # gx₂ₖ₋₁ ↔ gx₂ₖ and gy₂ₖ₋₁ ↔ gy₂ₖ
         @kswap!(gx₂ₖ₋₁, gx₂ₖ)
         @kswap!(gy₂ₖ₋₁, gy₂ₖ)
       end
@@ -390,16 +400,16 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
 
       # βₖ₊₁ ≠ 0
       if βₖ₊₁ > btol
-        kscal!(m, one(FC) / βₖ₊₁, q)
-        MisI || kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
+        kdiv!(m, q, βₖ₊₁)
+        MisI || kdiv!(m, vₖ₊₁, βₖ₊₁)
       end
       # Note that if βₖ₊₁ == 0 then vₖ₊₁ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
       # We can keep vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
 
       # γₖ₊₁ ≠ 0
       if γₖ₊₁ > btol
-        kscal!(n, one(FC) / γₖ₊₁, p)
-        NisI || kscal!(n, one(FC) / γₖ₊₁, uₖ₊₁)
+        kdiv!(n, p, γₖ₊₁)
+        NisI || kdiv!(n, uₖ₊₁, γₖ₊₁)
       end
       # Note that if γₖ₊₁ == 0 then uₖ₊₁ = 0 and Aᴴvₖ ∈ Span{u₁, ..., uₖ}
       # We can keep uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}

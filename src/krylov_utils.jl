@@ -322,6 +322,18 @@ kscal!(n :: Integer, s :: T, x :: Vector{T}) where T <: BLAS.BlasFloat = BLAS.sc
 kscal!(n :: Integer, s :: T, x :: AbstractVector{T}) where T <: FloatOrComplex = rmul!(x, s)
 kscal!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}) where T <: AbstractFloat = kscal!(n, Complex{T}(s), x)
 
+kdiv!(n :: Integer, x :: AbstractVector{T}, s :: T) where T <: FloatOrComplex = kscal!(n, one(T) / s, x)
+kdiv!(n :: Integer, x :: AbstractVector{Complex{T}}, s :: T) where T <: AbstractFloat = kscal!(n, one(T) / s, x)
+
+kcopy!(n :: Integer, y :: Vector{T}, x :: Vector{T}) where T <: BLAS.BlasFloat = BLAS.blascopy!(n, x, 1, y, 1)
+kcopy!(n :: Integer, y :: AbstractVector, x :: AbstractVector) = copyto!(y, x)
+
+kscalcopy!(n :: Integer, y :: AbstractVector{T}, s :: T, x :: AbstractVector{T}) where T <: FloatOrComplex = (y .= s .* x)
+kscalcopy!(n :: Integer, y :: AbstractVector{Complex{T}}, s :: T, x :: AbstractVector{Complex{T}}) where T <: AbstractFloat = (y .= s .* x)
+
+kdivcopy!(n :: Integer, y :: AbstractVector{T}, x :: AbstractVector{T}, s :: T) where T <: FloatOrComplex = (y .= x ./ s)
+kdivcopy!(n :: Integer, y :: AbstractVector{Complex{T}}, x :: AbstractVector{Complex{T}}, s :: T) where T <: AbstractFloat = (y .= x ./ s)
+
 kaxpy!(n :: Integer, s :: T, x :: Vector{T}, y :: Vector{T}) where T <: BLAS.BlasFloat = BLAS.axpy!(n, s, x, 1, y, 1)
 kaxpy!(n :: Integer, s :: T, x :: AbstractVector{T}, y :: AbstractVector{T}) where T <: FloatOrComplex = axpy!(s, x, y)
 kaxpy!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, y :: AbstractVector{Complex{T}}) where T <: AbstractFloat = kaxpy!(n, Complex{T}(s), x, y)
@@ -331,9 +343,6 @@ kaxpby!(n :: Integer, s :: T, x :: AbstractVector{T}, t :: T, y :: AbstractVecto
 kaxpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, t :: Complex{T}, y :: AbstractVector{Complex{T}}) where T <: AbstractFloat = kaxpby!(n, Complex{T}(s), x, t, y)
 kaxpby!(n :: Integer, s :: Complex{T}, x :: AbstractVector{Complex{T}}, t :: T, y :: AbstractVector{Complex{T}}) where T <: AbstractFloat = kaxpby!(n, s, x, Complex{T}(t), y)
 kaxpby!(n :: Integer, s :: T, x :: AbstractVector{Complex{T}}, t :: T, y :: AbstractVector{Complex{T}}) where T <: AbstractFloat = kaxpby!(n, Complex{T}(s), x, Complex{T}(t), y)
-
-kcopy!(n :: Integer, y :: Vector{T}, x :: Vector{T}) where T <: BLAS.BlasFloat = BLAS.blascopy!(n, x, 1, y, 1)
-kcopy!(n :: Integer, y :: AbstractVector, x :: AbstractVector) = copyto!(y, x)
 
 kfill!(x :: AbstractArray{T}, val :: T) where T <: FloatOrComplex = fill!(x, val)
 

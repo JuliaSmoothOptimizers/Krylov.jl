@@ -182,9 +182,9 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     # In addition of that, the last column of Uₖ is stored in H.
     kfill!(L, zero(FC))  # Last mem-1 pivots of Lₖ.
 
-    # Initial ξ₁ and V₁.
+    # Initial ξ₁ and v₁.
     ξ = rNorm
-    V[1] .= r₀ ./ rNorm
+    kdivcopy!(n, V[1], r₀, rNorm)  # v₁ = r₀ / ‖r₀‖
 
     # Stopping criterion.
     solved = rNorm ≤ ε
@@ -226,9 +226,9 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       end
 
       # Compute hₖ₊₁.ₖ and vₖ₊₁.
-      Haux = knorm(n, w)          # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
-      if Haux ≠ 0                 # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
-        V[next_pos] .= w ./ Haux  # vₖ₊₁ = w / hₖ₊₁.ₖ
+      Haux = knorm(n, w)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+      if Haux ≠ 0   # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
+        kdivcopy!(n, V[next_pos], w, Haux)  # vₖ₊₁ = w / hₖ₊₁.ₖ
       end
 
       # Update the LU factorization of Hₖ.
@@ -272,7 +272,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       # pₐᵤₓ ← pₐᵤₓ + Nvₖ
       kaxpy!(n, one(FC), z, P[ppos])
       # pₖ = pₐᵤₓ / uₖ.ₖ
-      P[ppos] .= P[ppos] ./ H[1]
+      kdiv!(n, P[ppos], H[1])
 
       # Update solution xₖ.
       # xₖ = xₖ₋₁ + ξₖ * pₖ

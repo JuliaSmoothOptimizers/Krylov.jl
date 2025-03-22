@@ -64,7 +64,7 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
         !allow_breakdown && error("Exact breakdown β₁ == 0.")
         kfill!(vᵢ, zero(FC))
       else
-        vᵢ .= b ./ β₁
+        kdivcopy!(n, vᵢ, b, β₁)
       end
     end
     mul!(q, A, vᵢ)
@@ -94,7 +94,7 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
       !allow_breakdown && error("Exact breakdown βᵢ₊₁ == 0 at iteration i = $i.")
       kfill!(vᵢ₊₁, zero(FC))
     else
-      vᵢ₊₁ .= q ./ βᵢ₊₁
+      kdivcopy!(n, vᵢ₊₁, q, βᵢ₊₁)
     end
     nzval[pαᵢ+1] = βᵢ₊₁  # Tᵢ₊₁.ᵢ = βᵢ₊₁
     pαᵢ = pαᵢ + 3
@@ -180,8 +180,8 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
       else
         β₁ = √(abs(cᴴb))
         γ₁ᴴ = conj(cᴴb / β₁)
-        vᵢ .= b ./ β₁
-        uᵢ .= c ./ γ₁ᴴ
+        kdivcopy!(n, vᵢ, b, β₁)
+        kdivcopy!(n, uᵢ, c, γ₁ᴴ)
       end
     end
     mul!(q, A , vᵢ)
@@ -209,8 +209,8 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
     else
       βᵢ₊₁ = √(abs(pᴴq))
       γᵢ₊₁ = pᴴq / βᵢ₊₁
-      vᵢ₊₁ .= q ./ βᵢ₊₁
-      uᵢ₊₁ .= p ./ conj(γᵢ₊₁)
+      kdivcopy!(n, vᵢ₊₁, q, βᵢ₊₁)
+      kdivcopy!(n, uᵢ₊₁, p, conj(γᵢ₊₁))
     end
     nzval_T[pαᵢ+1]  = βᵢ₊₁        # Tᵢ₊₁.ᵢ  = βᵢ₊₁
     nzval_Tᴴ[pαᵢ+1] = conj(γᵢ₊₁)  # Tᴴᵢ₊₁.ᵢ = γ̄ᵢ₊₁
@@ -267,7 +267,7 @@ function arnoldi(A, b::AbstractVector{FC}, k::Int;
         !allow_breakdown && error("Exact breakdown β == 0.")
         kfill!(vⱼ, zero(FC))
       else
-        vⱼ .= b ./ β
+        kdivcopy!(n, vⱼ, b, β)
       end
     end
     mul!(q, A, vⱼ)
@@ -289,7 +289,7 @@ function arnoldi(A, b::AbstractVector{FC}, k::Int;
       !allow_breakdown && error("Exact breakdown Hᵢ₊₁.ᵢ == 0 at iteration i = $j.")
       kfill!(vⱼ₊₁, zero(FC))
     else
-      vⱼ₊₁ .= q ./ H[j+1,j]
+      kdivcopy!(n, vⱼ₊₁, q, H[j+1,j])
     end
   end
   return V, β, H
@@ -363,7 +363,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int;
         !allow_breakdown && error("Exact breakdown β₁ == 0.")
         kfill!(uᵢ, zero(FC))
       else
-        uᵢ .= b ./ β₁
+        kdivcopy!(m, uᵢ, b, β₁)
       end
       mul!(wᵢ, Aᴴ, uᵢ)
       αᵢ = knorm(n, wᵢ)
@@ -371,7 +371,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int;
         !allow_breakdown && error("Exact breakdown α₁ == 0.")
         kfill!(vᵢ, zero(FC))
       else
-        vᵢ .= wᵢ ./ αᵢ
+        kdivcopy!(n, vᵢ, wᵢ, αᵢ)
       end
       nzval[pαᵢ] = αᵢ  # Lᵢ.ᵢ = αᵢ
     end
@@ -383,7 +383,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int;
       !allow_breakdown && error("Exact breakdown βᵢ₊₁ == 0 at iteration i = $i.")
       kfill!(uᵢ₊₁, zero(FC))
     else
-      uᵢ₊₁ .= q ./ βᵢ₊₁
+      kdivcopy!(m, uᵢ₊₁, q, βᵢ₊₁)
     end
     mul!(p, Aᴴ, uᵢ₊₁)
     kaxpy!(n, -βᵢ₊₁, vᵢ, p)
@@ -392,7 +392,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int;
       !allow_breakdown && error("Exact breakdown αᵢ₊₁ == 0 at iteration i = $i.")
       kfill!(vᵢ₊₁, zero(FC))
     else
-      vᵢ₊₁ .= p ./ αᵢ₊₁
+      kdivcopy!(n, vᵢ₊₁, p, αᵢ₊₁)
     end
     nzval[pαᵢ+1] = βᵢ₊₁  # Lᵢ₊₁.ᵢ   = βᵢ₊₁
     nzval[pαᵢ+2] = αᵢ₊₁  # Lᵢ₊₁.ᵢ₊₁ = αᵢ₊₁
@@ -473,14 +473,14 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
         !allow_breakdown && error("Exact breakdown β₁ == 0.")
         kfill!(vᵢ, zero(FC))
       else
-        vᵢ .= b ./ β₁
+        kdivcopy!(m, vᵢ, b, β₁)
       end
       γ₁ᴴ = knorm(n, c)
       if γ₁ᴴ == 0
         !allow_breakdown && error("Exact breakdown γ₁ᴴ == 0.")
         kfill!(uᵢ, zero(FC))
       else
-        uᵢ .= c ./ γ₁ᴴ
+        kdivcopy!(n, uᵢ, c, γ₁ᴴ)
       end
     end
     mul!(q, A , uᵢ)
@@ -503,14 +503,14 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
       !allow_breakdown && error("Exact breakdown βᵢ₊₁ == 0 at iteration i = $i.")
       kfill!(vᵢ₊₁, zero(FC))
     else
-      vᵢ₊₁ .= q ./ βᵢ₊₁
+      kdivcopy!(m, vᵢ₊₁, q, βᵢ₊₁)
     end
     γᵢ₊₁ = knorm(n, p)
     if γᵢ₊₁ == 0
       !allow_breakdown && error("Exact breakdown γᵢ₊₁ == 0 at iteration i = $i.")
       kfill!(uᵢ₊₁, zero(FC))
     else
-      uᵢ₊₁ .= p ./ γᵢ₊₁
+      kdivcopy!(n, uᵢ₊₁, p, γᵢ₊₁)
     end
     nzval_T[pαᵢ+1]  = βᵢ₊₁  # Tᵢ₊₁.ᵢ  = βᵢ₊₁
     nzval_Tᴴ[pαᵢ+1] = γᵢ₊₁  # Tᴴᵢ₊₁.ᵢ = γᵢ₊₁
@@ -576,14 +576,14 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
         !allow_breakdown && error("Exact breakdown β == 0.")
         kfill!(vⱼ, zero(FC))
       else
-        vⱼ .= b ./ β
+        kdivcopy!(m, vⱼ, b, β)
       end
       γ = knorm(n, c)
       if γ == 0
         !allow_breakdown && error("Exact breakdown γ == 0.")
         kfill!(uⱼ, zero(FC))
       else
-       uⱼ .= c ./ γ
+        kdivcopy!(n, uⱼ, c, γ)
       end
     end
     mul!(q, A, uⱼ)
@@ -613,14 +613,14 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
       !allow_breakdown && error("Exact breakdown Hᵢ₊₁.ᵢ == 0 at iteration i = $j.")
       kfill!(vⱼ₊₁, zero(FC))
     else
-      vⱼ₊₁ .= q ./ H[j+1,j]
+      kdivcopy!(m, vⱼ₊₁, q, H[j+1,j])
     end
     F[j+1,j] = knorm(n, p)
     if F[j+1,j] == 0
       !allow_breakdown && error("Exact breakdown Fᵢ₊₁.ᵢ == 0 at iteration i = $j.")
       kfill!(uⱼ₊₁, zero(FC))
     else
-      uⱼ₊₁ .= p ./ F[j+1,j]
+      kdivcopy!(n, uⱼ₊₁, p, F[j+1,j])
     end
   end
   return V, β, H, U, γ, F

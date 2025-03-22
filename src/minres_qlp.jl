@@ -153,8 +153,8 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
     βₖ = knorm_elliptic(n, vₖ, M⁻¹vₖ)
     if βₖ ≠ 0
-      kscal!(n, one(FC) / βₖ, M⁻¹vₖ)
-      MisI || kscal!(n, one(FC) / βₖ, vₖ)
+      kdiv!(n, M⁻¹vₖ, βₖ)
+      MisI || kdiv!(n, vₖ, βₖ)
     end
 
     rNorm = βₖ
@@ -236,8 +236,8 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
 
       # βₖ₊₁.ₖ ≠ 0
       if βₖ₊₁ > btol
-        kscal!(m, one(FC) / βₖ₊₁, vₖ₊₁)
-        MisI || kscal!(m, one(FC) / βₖ₊₁, p)
+        kdiv!(m, vₖ₊₁, βₖ₊₁)
+        MisI || kdiv!(m, p, βₖ₊₁)
       end
 
       ANorm² = ANorm² + αₖ * αₖ + βₖ * βₖ + βₖ₊₁ * βₖ₊₁
@@ -413,7 +413,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       # Update stopping criterion.
       # Stopping conditions that do not depend on user input.
       # This is to guard against tolerances that are unreasonably small.
-      ill_cond_mach = (one(T) + one(T) / Acond ≤ one(T))
+      ill_cond_mach = (one(T) + inv(Acond) ≤ one(T))
       resid_decrease_mach = (one(T) + rNorm ≤ one(T))
       zero_resid_mach = (one(T) + backward ≤ one(T))
 

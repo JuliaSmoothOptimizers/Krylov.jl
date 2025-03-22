@@ -241,8 +241,8 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     end
     β = β₁
 
-    kscal!(m, one(FC)/β₁, u)
-    MisI || kscal!(m, one(FC)/β₁, Mu)
+    kdiv!(m, u, β₁)
+    MisI || kdiv!(m, Mu, β₁)
     mul!(Aᴴu, Aᴴ, u)
     kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
@@ -259,8 +259,8 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       stats.status = "x is a minimum least-squares solution"
       return solver
     end
-    kscal!(n, one(FC)/α, v)
-    NisI || kscal!(n, one(FC)/α, Nv)
+    kdiv!(n, v, α)
+    NisI || kdiv!(n, Nv, α)
 
     Anorm = α
     Anorm² = α * α
@@ -328,8 +328,8 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       MisI || mulorldiv!(u, M, Mu, ldiv)
       β = knorm_elliptic(m, u, Mu)
       if β ≠ 0
-        kscal!(m, one(FC)/β, u)
-        MisI || kscal!(m, one(FC)/β, Mu)
+        kdiv!(m, u, β)
+        MisI || kdiv!(m, Mu, β)
 
         # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
         mul!(Aᴴu, Aᴴ, u)
@@ -337,8 +337,8 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
         NisI || mulorldiv!(v, N, Nv, ldiv)
         α = knorm_elliptic(n, v, Nv)
         if α ≠ 0
-          kscal!(n, one(FC)/α, v)
-          NisI || kscal!(n, one(FC)/α, Nv)
+          kdiv!(n, v, α)
+          NisI || kdiv!(n, Nv, α)
         end
 
         # rotate out regularization term if present
@@ -423,7 +423,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
 
       test1 = rNorm
       test2 = ArNorm / (Anorm * rNorm)
-      test3 = 1 / Acond
+      test3 = inv(Acond)
       t1    = test1 / (one(T) + Anorm * xlqNorm)
       tol   = btol + atol * Anorm * xlqNorm / β₁
 
