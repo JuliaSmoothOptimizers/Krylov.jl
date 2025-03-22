@@ -98,6 +98,17 @@ function Krylov.kscal!(n::Integer, s::T, x::HaloVector{T}) where T &lt;: FloatOr
     return x
 end
 
+function Krylov.kdiv!(n::Integer, x::HaloVector{T}, s::T) where T &lt;: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            _x[i,j] = _x[i,j] / s
+        end
+    end
+    return x
+end
+
 function Krylov.kaxpy!(n::Integer, s::T, x::HaloVector{T}, y::HaloVector{T}) where T &lt;: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
@@ -134,6 +145,30 @@ function Krylov.kcopy!(n::Integer, y::HaloVector{T}, x::HaloVector{T}) where T &
     return y
 end
 
+function Krylov.kscalcopy!(n::Integer, y::HaloVector{T}, s::T, x::HaloVector{T}) where T &lt;: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    _y = y.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            _y[i,j] = s * _x[i,j]
+        end
+    end
+    return y
+end
+
+function Krylov.kdivcopy!(n::Integer, y::HaloVector{T}, x::HaloVector{T}, s::T) where T &lt;: FloatOrComplex
+    mx, nx = size(x.data)
+    _x = x.data
+    _y = y.data
+    for i = 1:mx-1
+        for j = 1:nx-1
+            _y[i,j] = _x[i,j] / s
+        end
+    end
+    return y
+end
+
 function Krylov.kfill!(x::HaloVector{T}, val::T) where T &lt;: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
@@ -158,7 +193,7 @@ function Krylov.kref!(n::Integer, x::HaloVector{T}, y::HaloVector{T}, c::T, s::T
         end
     end
     return x, y
-end</code></pre><p>Note that <code>Krylov.kref!</code> is only required for <code>minres_qlp</code>.</p><h3 id="2D-Poisson-equation-solver-with-Krylov-methods"><a class="docs-heading-anchor" href="#2D-Poisson-equation-solver-with-Krylov-methods">2D Poisson equation solver with Krylov methods</a><a id="2D-Poisson-equation-solver-with-Krylov-methods-1"></a><a class="docs-heading-anchor-permalink" href="#2D-Poisson-equation-solver-with-Krylov-methods" title="Permalink"></a></h3><pre><code class="language-julia hljs">using Krylov, OffsetArrays
+end</code></pre><p>By default, <code>kdiv!(n, y, x, s)</code> calls <code>kscal!(n, y, t, x)</code> with <code>t = 1/s</code>, so a separate implementation isn&#39;t required. However, this approach may introduce numerical issues when <code>s</code> is very small. We do this because computing <span>$y \leftarrow t \times x$</span> can often leverage SIMD or fused multiply-add (FMA) instructions on certain architectures, capabilities that a direct element-wise division <span>$y \leftarrow x/s$</span> typically lacks. Thus, the implementation of <code>kdiv!</code> provides flexibility, allowing users to choose a trade-off between speed and numerical precision by overloading the function if needed. The operations provided by <code>kdivcopy!</code> and <code>kscalcopy!</code> could be implemented directly by using <code>kcopy!</code>, <code>kscal!</code>, and <code>kdiv!</code> but require two separate memory passes, which can be suboptimal for performance. To address this limitation, <code>kdivcopy!</code> and <code>kscalcopy!</code> fuse the copy and scaling/division operations into a single memory pass. Note that <code>Krylov.kref!</code> is only required for the function <code>minres_qlp</code>.</p><h3 id="2D-Poisson-equation-solver-with-Krylov-methods"><a class="docs-heading-anchor" href="#2D-Poisson-equation-solver-with-Krylov-methods">2D Poisson equation solver with Krylov methods</a><a id="2D-Poisson-equation-solver-with-Krylov-methods-1"></a><a class="docs-heading-anchor-permalink" href="#2D-Poisson-equation-solver-with-Krylov-methods" title="Permalink"></a></h3><pre><code class="language-julia hljs">using Krylov, OffsetArrays
 
 # Parameters
 L = 1.0            # Length of the square domain
@@ -200,7 +235,7 @@ stats = statistics(solver)</code></pre><pre class="documenter-example-output"><c
  residuals: []
  Aresiduals: []
  κ₂(A): []
- timer: 638.73ms
+ timer: 733.75ms
  status: solution good enough given atol and rtol
 </code></pre><pre><code class="language-julia hljs"># The exact solution is u(x,y) = sin(πx) * sin(πy)
 u_star = [sin(π * i * Δx) * sin(π * j * Δy) for i=1:Nx, j=1:Ny]
@@ -262,4 +297,4 @@ minres!(solver, A, b; M=P)
 
 x = solution(solver)
 stats = statistics(solver)
-niter = stats.niter</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3</code></pre><p>This example demonstrates how <code>BlockArrays.jl</code> and <code>Krylov.jl</code> can be effectively combined to solve structured saddle point systems.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../callbacks/">« Callbacks</a><a class="docs-footer-nextpage" href="../tips/">Performance tips »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.9.0 on <span class="colophon-date" title="Saturday 22 March 2025 11:14">Saturday 22 March 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+niter = stats.niter</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3</code></pre><p>This example demonstrates how <code>BlockArrays.jl</code> and <code>Krylov.jl</code> can be effectively combined to solve structured saddle point systems.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../callbacks/">« Callbacks</a><a class="docs-footer-nextpage" href="../tips/">Performance tips »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.9.0 on <span class="colophon-date" title="Saturday 22 March 2025 22:46">Saturday 22 March 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
