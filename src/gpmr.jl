@@ -172,8 +172,8 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     eltype(B) == FC || @warn "eltype(B) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) <: S || error("ktypeof(b) is not a subtype of $S")
-    ktypeof(c) <: S || error("ktypeof(c) is not a subtype of $S")
+    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
+    ktypeof(c) == S || error("ktypeof(c) must be equal to $S")
 
     # Determine λ and μ associated to generalized saddle point systems.
     gsp && (λ = one(FC) ; μ = zero(FC))

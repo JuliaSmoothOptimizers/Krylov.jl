@@ -149,7 +149,7 @@ include("gpu.jl")
       dv = S(rand(FC, 10))
       b = view(dv, 4:8)
       @test Krylov.ktypeof(dv) <: S
-      @test Krylov.ktypeof(b)  <: S
+      @test Krylov.ktypeof(b) <: S
 
       dm = M(rand(FC, 10, 10))
       b = view(dm, :, 3)
@@ -158,7 +158,7 @@ include("gpu.jl")
       sv = V(sprand(FC, 10, 0.5))
       b = view(sv, 4:8)
       @test Krylov.ktypeof(sv) <: S
-      @test Krylov.ktypeof(b)  <: S
+      @test Krylov.ktypeof(b) <: S
     end
   end
 end
