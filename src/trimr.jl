@@ -434,7 +434,7 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
         # [ δ₁  0  ] [ gx₁ gy₁ ] = [ v₁ 0  ]
         # [ σ₁  δ₂ ] [ gx₂ gy₂ ]   [ 0  u₁ ]
         kdivcopy!(m, gx₂ₖ₋₁, vₖ, δ₂ₖ₋₁)
-        kscalcopy!(m, gx₂ₖ, -σ₂ₖ₋₁ / δ₂ₖ, vₖ)
+        kscalcopy!(m, gx₂ₖ, -σ₂ₖ₋₁ / δ₂ₖ, gx₂ₖ₋₁)
         kdivcopy!(n, gy₂ₖ, uₖ, δ₂ₖ)
       elseif iter == 2
         # [ η₁ σ₂ δ₃ 0  ] [ gx₁ gy₁ ] = [ v₂ 0  ]
