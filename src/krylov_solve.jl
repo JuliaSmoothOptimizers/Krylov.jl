@@ -3,23 +3,53 @@
 # This file generates additional variants of this method automatically, such as:
 #
 # - `cg(A, b; kwargs...)`
-# - `solve!(solver, A, b; kwargs...)`
+# - `krylov_solve(Val{:cg}(), A, b; kwargs...)`
+# - `krylov_solve!(solver, A, b; kwargs...)`
 #
 # Since the conjugate gradient method also supports an optional argument `x0`, additional methods are generated:
 #
-# - `cg!(solver, A, b, x0; kwargs...)`
 # - `cg(A, b, x0; kwargs...)`
-# - `solve!(solver, A, b, x0; kwargs...)`
+# - `cg!(solver, A, b, x0; kwargs...)`
+# - `krylov_solve(Val{:cg}(), A, b, x0; kwargs...)`
+# - `krylov_solve!(solver, A, b, x0; kwargs...)`
+#
+# Generic constructors for each KrylovSolver and BlockKrylovSolver are also defined using metaprogramming.
+# The function `krylov_workspace` uses the first argument, `Val{solver}()`, where `solver` is a symbol used to dispatch to the appropriate method.
+# For example, the three constructors for `CgSolver` can be called using the following syntax:
+#
+# - `krylov_workspace(Val{:cg}(), kc)`
+# - `krylov_workspace(Val{:cg}(), m, n, S)`
+# - `krylov_workspace(Val{:cg}(), A, b)`
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca> -- <amontoison@anl.gov>
-# Chicago, October 2024.
+# Chicago, October 2024 -- Chicago, March 2025.
+
+export krylov_workspace, krylov_solve, krylov_solve!
 
 """
-    solve!(solver, args...; kwargs...)
+    krylov_workspace(Val{method}(), args...; kwargs...)
 
-Generic function that dispatches to the appropriate in-place Krylov method based on the type of `solver`.
+Generic function that dispatches to the appropriate workspace constructor for each subtype of [`KrylovSolver`](@ref) and [`BlockKrylovSolver`](@ref).
+The first argument `Val{method}()`, where `method` is a symbol (such as `:cg`, `:gmres` or `:block_minres`), specifies the (block) Krylov method for which a workspace is desired.
+The returned workspace can later be used by [`krylov_solve!`](@ref) to execute the (block) Krylov method in-place.
 """
-function solve! end
+function krylov_workspace end
+
+"""
+    krylov_solve(Val{method}(), args...; kwargs...)
+
+Generic function that dispatches to the appropriate out-of-place (block) Krylov method specified by symbol `method` (such as `:cg`, `:gmres` or `:block_minres`).
+"""
+
+function krylov_solve end
+
+"""
+    krylov_solve!(solver, args...; kwargs...)
+
+Generic function that dispatches to the appropriate in-place (block) Krylov method based on the type of `solver`.
+The argument `solver` must be a subtype of [`KrylovSolver`](@ref) or [`BlockKrylovSolver`](@ref) (such as `CgSolver`, `GmresSolver` or `BlockMinresSolver`).
+"""
+function krylov_solve! end
 
 # Krylov methods
 for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
@@ -63,6 +93,25 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
   # Create the symbol for the in-place method
   krylov! = Symbol(krylov, :!)
 
+  ## Generic constructors for each subtype of KrylovSolver
+  if krylov in (:cg_lanczos_shift, :cgls_lanczos_shift)
+    @eval krylov_workspace(::Val{Symbol($krylov)}, kc::KrylovConstructor, nshifts::Integer) = $workspace(kc, nshifts)
+    @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, nshifts::Integer, S::Type) = $workspace(m, n, nshifts, S)
+    @eval krylov_workspace(::Val{Symbol($krylov)}, A, b, nshifts::Integer) = $workspace(A, b, nshifts)
+  elseif krylov in (:diom, :dqgmres, :fom, :gmres, :fgmres, :gpmr)
+    @eval krylov_workspace(::Val{Symbol($krylov)}, kc::KrylovConstructor; memory::Integer = 20) = $workspace(kc; memory)
+    @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, S::Type; memory::Integer = 20) = $workspace(m, n, S; memory)
+    @eval krylov_workspace(::Val{Symbol($krylov)}, A, b; memory::Integer = 20) = $workspace(A, b; memory)
+  elseif krylov in (:lslq, :lsmr, :lsqr, :minres, :symmlq)
+    @eval krylov_workspace(::Val{Symbol($krylov)}, kc::KrylovConstructor; window::Integer = 5) = $workspace(kc; window)
+    @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, S::Type; window::Integer = 5) = $workspace(m, n, S; window)
+    @eval krylov_workspace(::Val{Symbol($krylov)}, A, b; window::Integer = 5) = $workspace(A, b; window)
+  else
+    @eval krylov_workspace(::Val{Symbol($krylov)}, kc::KrylovConstructor) = $workspace(kc)
+    @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, S::Type) = $workspace(m, n, S)
+    @eval krylov_workspace(::Val{Symbol($krylov)}, A, b) = $workspace(A, b)
+  end
+
   ## Out-of-place
   if krylov in (:cg_lanczos_shift, :cgls_lanczos_shift)
     @eval begin
@@ -76,10 +125,12 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         solver.stats.timer += elapsed_time
         return results(solver)
       end
+
+      krylov_solve(::Val{Symbol($krylov)}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); $(kwargs...))
     end
   elseif krylov in (:diom, :dqgmres, :fom, :gmres, :fgmres, :gpmr)
     @eval begin
-      function $(krylov)($(def_args...); memory::Int=20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+      function $(krylov)($(def_args...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
         solver = $workspace(A, b; memory)
         elapsed_time = start_time |> ktimer
@@ -89,8 +140,10 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         return results(solver)
       end
 
+      krylov_solve(::Val{Symbol($krylov)}, $(def_args...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); memory, $(kwargs...))
+
       if !isempty($optargs)
-        function $(krylov)($(def_args...), $(def_optargs...); memory::Int=20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+        function $(krylov)($(def_args...), $(def_optargs...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           solver = $workspace(A, b; memory)
           warm_start!(solver, $(optargs...))
@@ -100,11 +153,13 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           solver.stats.timer += elapsed_time
           return results(solver)
         end
+
+        krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); memory, $(kwargs...))
       end
     end
   elseif krylov in (:lslq, :lsmr, :lsqr, :minres, :symmlq)
     @eval begin
-      function $(krylov)($(def_args...); window::Int=5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+      function $(krylov)($(def_args...); window::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
         solver = $workspace(A, b; window)
         elapsed_time = start_time |> ktimer
@@ -114,8 +169,10 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         return results(solver)
       end
 
+      krylov_solve(::Val{Symbol($krylov)}, $(def_args...); window::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); window, $(kwargs...))
+
       if !isempty($optargs)
-        function $(krylov)($(def_args...), $(def_optargs...); window::Int=5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+        function $(krylov)($(def_args...), $(def_optargs...); window::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           solver = $workspace(A, b; window)
           warm_start!(solver, $(optargs...))
@@ -125,6 +182,8 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           solver.stats.timer += elapsed_time
           return results(solver)
         end
+
+        krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); window::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); window, $(kwargs...))
       end
     end
   else
@@ -139,6 +198,8 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         return results(solver)
       end
 
+      krylov_solve(::Val{Symbol($krylov)}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); $(kwargs...))
+
       if !isempty($optargs)
         function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
@@ -150,26 +211,28 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           solver.stats.timer += elapsed_time
           return results(solver)
         end
+
+        krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); $(kwargs...))
       end
     end
   end
 
   ## In-place
-  @eval begin
-    solve!(solver :: $workspace{T,FC,S}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}} = $(krylov!)(solver, $(args...); $(kwargs...))
+  @eval krylov_solve!(solver :: $workspace{T,FC,S}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}} = $(krylov!)(solver, $(args...); $(kwargs...))
 
-    if !isempty($optargs)
-      function $(krylov!)(solver :: $workspace{T,FC,S}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-        start_time = time_ns()
-        warm_start!(solver, $(optargs...))
-        elapsed_time = start_time |> ktimer
-        timemax -= elapsed_time
-        $(krylov!)(solver, $(args...); $(kwargs...))
-        solver.stats.timer += elapsed_time
-        return solver
+  for krylov_ip in (:krylov_solve!, krylov!)
+    @eval begin
+      if !isempty($optargs)
+        function $(krylov_ip)(solver :: $workspace{T,FC,S}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+          start_time = time_ns()
+          warm_start!(solver, $(optargs...))
+          elapsed_time = start_time |> ktimer
+          timemax -= elapsed_time
+          $(krylov!)(solver, $(args...); $(kwargs...))
+          solver.stats.timer += elapsed_time
+          return solver
+        end
       end
-
-      solve!(solver :: $workspace{T,FC,S}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}} = $(krylov!)(solver, $(args...), $(optargs...); $(kwargs...))
     end
   end
 end
@@ -182,10 +245,19 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
   # Create the symbol for the in-place method
   krylov! = Symbol(krylov, :!)
 
+  ## Generic constructors for each subtype of BlockKrylovSolver
+  if krylov == :block_gmres
+      @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, p::Integer, SV::Type, SM::Type; memory::Integer = 5) = $workspace(m, n, p, SV, SM; memory)
+      @eval krylov_workspace(::Val{Symbol($krylov)}, A, B; memory::Integer = 5) = $workspace(A, B; memory)
+  else
+      @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, p::Integer, SV::Type, SM::Type) = $workspace(m, n, p, SV, SM)
+      @eval krylov_workspace(::Val{Symbol($krylov)}, A, B) = $workspace(A, B)
+  end
+
   ## Out-of-place
   if krylov == :block_gmres
     @eval begin
-      function $(krylov)($(def_args...); memory :: Int=20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+      function $(krylov)($(def_args...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
         solver = $workspace(A, B; memory)
         elapsed_time = ktimer(start_time)
@@ -193,10 +265,12 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         $(krylov!)(solver, $(args...); $(kwargs...))
         solver.stats.timer += elapsed_time
         return results(solver)
+
+        krylov_solve(::Val{Symbol($krylov)}, $(def_args...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); memory, $(kwargs...))
       end
 
       if !isempty($optargs)
-        function $(krylov)($(def_args...), $(def_optargs...); memory :: Int=20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+        function $(krylov)($(def_args...), $(def_optargs...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           solver = $workspace(A, B; memory)
           warm_start!(solver, $(optargs...))
@@ -206,6 +280,8 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           solver.stats.timer += elapsed_time
           return results(solver)
         end
+
+        krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); memory, $(kwargs...))
       end
     end
   else
@@ -220,6 +296,8 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         return results(solver)
       end
 
+      krylov_solve(::Val{Symbol($krylov)}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); $(kwargs...))
+
       if !isempty($optargs)
         function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
@@ -231,26 +309,28 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           solver.stats.timer += elapsed_time
           return results(solver)
         end
+
+        krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); $(kwargs...))
       end
     end
   end
 
   ## In-place
-  @eval begin
-    solve!(solver :: $workspace{T,FC,SV,SM}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}} = $(krylov!)(solver, $(args...); $(kwargs...))
+  @eval krylov_solve!(solver :: $workspace{T,FC,SV,SM}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}} = $(krylov!)(solver, $(args...); $(kwargs...))
 
-    if !isempty($optargs)
-      function $(krylov!)(solver :: $workspace{T,FC,SV,SM}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
-        start_time = time_ns()
-        warm_start!(solver, $(optargs...))
-        elapsed_time = start_time |> ktimer
-        timemax -= elapsed_time
-        $(krylov!)(solver, $(args...); $(kwargs...))
-        solver.stats.timer += elapsed_time
-        return solver
+  for krylov_ip in (:krylov_solve!, krylov!)
+    @eval begin
+      if !isempty($optargs)
+        function $(krylov_ip)(solver :: $workspace{T,FC,SV,SM}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
+          start_time = time_ns()
+          warm_start!(solver, $(optargs...))
+          elapsed_time = start_time |> ktimer
+          timemax -= elapsed_time
+          $(krylov!)(solver, $(args...); $(kwargs...))
+          solver.stats.timer += elapsed_time
+          return solver
+        end
       end
-
-      solve!(solver :: $workspace{T,FC,SV,SM}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}} = $(krylov!)(solver, $(args...), $(optargs...); $(kwargs...))
     end
   end
 end

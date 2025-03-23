@@ -7,7 +7,7 @@ export block_gmres, block_gmres!
 
 """
     (X, stats) = block_gmres(A, b::AbstractMatrix{FC};
-                             memory::Int=20, M=I, N=I, ldiv::Bool=false,
+                             memory::Int=5, M=I, N=I, ldiv::Bool=false,
                              restart::Bool=false, reorthogonalization::Bool=false,
                              atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                              timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
@@ -60,6 +60,9 @@ function block_gmres end
     solver = block_gmres!(solver::BlockGmresSolver, B, X0; kwargs...)
 
 where `kwargs` are keyword arguments of [`block_gmres`](@ref).
+
+Note that the keyword argument `memory` is the only exception.
+It is required to create a `BlockGmresSolver` and can't be changed later.
 
 See [`BlockGmresSolver`](@ref) for more details about the `solver`.
 """

@@ -1,9 +1,8 @@
-export KrylovStats, SimpleStats, LsmrStats, LanczosStats, LanczosShiftStats,
-SymmlqStats, AdjointStats, LNLQStats, LSLQStats
+export SimpleStats, LsmrStats, LanczosStats, LanczosShiftStats, SymmlqStats, AdjointStats, LNLQStats, LSLQStats
 
 import Base.copyto!
 
-"Abstract type for statistics returned by a solver"
+"Abstract type for statistics returned by Krylov solvers."
 abstract type KrylovStats{T} end
 
 """
