@@ -1,7 +1,7 @@
 ## Stats Types
 
 ```@docs
-Krylov.KrylovStats
+Krylov.Krylov.KrylovStats
 Krylov.SimpleStats
 Krylov.LanczosStats
 Krylov.LanczosShiftStats
@@ -15,7 +15,7 @@ Krylov.LsmrStats
 ## Workspace of Krylov methods
 
 ```@docs
-KrylovSolver
+Krylov.KrylovSolver
 MinresSolver
 MinaresSolver
 CgSolver
@@ -57,7 +57,7 @@ FgmresSolver
 ## Workspace of block-Krylov methods
 
 ```@docs
-BlockKrylovSolver
+Krylov.BlockKrylovSolver
 BlockMinresSolver
 BlockGmresSolver
 ```

@@ -5,9 +5,9 @@ The interface is designed to be common for all methods and contains three routin
 They allow to build Krylov workspaces and call both in-place and out-of-place variants of the solvers with a unified API.
 
 ```@docs
-Krylov.krylov_workspace
-Krylov.krylov_solve!
-Krylov.krylov_solve
+krylov_workspace
+krylov_solve!
+krylov_solve
 ```
 
 In-place solvers update the workspace `solver`, from which solutions and statistics can be retrieved.
