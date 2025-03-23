@@ -265,9 +265,9 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         $(krylov!)(solver, $(args...); $(kwargs...))
         solver.stats.timer += elapsed_time
         return results(solver)
-
-        krylov_solve(::Val{Symbol($krylov)}, $(def_args...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); memory, $(kwargs...))
       end
+
+      krylov_solve(::Val{Symbol($krylov)}, $(def_args...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); memory, $(kwargs...))
 
       if !isempty($optargs)
         function $(krylov)($(def_args...), $(def_optargs...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
