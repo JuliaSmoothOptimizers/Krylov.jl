@@ -40,7 +40,6 @@ function krylov_workspace end
 
 Generic function that dispatches to the appropriate out-of-place (block) Krylov method specified by symbol `method` (such as `:cg`, `:gmres` or `:block_minres`).
 """
-
 function krylov_solve end
 
 """
