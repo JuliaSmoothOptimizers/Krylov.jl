@@ -2,11 +2,12 @@ export SimpleStats, LsmrStats, LanczosStats, LanczosShiftStats, SymmlqStats, Adj
 
 import Base.copyto!
 
-"Abstract type for statistics returned by Krylov solvers."
+"Abstract type for statistics returned by (block) Krylov solvers."
 abstract type KrylovStats{T} end
 
 """
-Type for storing statistics returned by the majority of Krylov solvers.
+Type for storing statistics returned by the majority of (block) Krylov solvers.
+
 The fields are as follows:
 - `niter`: The total number of iterations completed by the solver;
 - `solved`: Indicates whether the solver successfully reached convergence (`true` if solved, `false` otherwise);
