@@ -1,5 +1,5 @@
 using Krylov, LinearAlgebra, SparseArrays, Printf, Random, Test
-import Krylov: solve!, KrylovSolver, BlockKrylovSolver
+import Krylov: KrylovSolver, BlockKrylovSolver
 
 Random.seed!(666)
 
