@@ -72,8 +72,8 @@ function gmres end
 
 where `kwargs` are keyword arguments of [`gmres`](@ref).
 
-Note that the `memory` keyword argument is the only exception.
-It's required to create a `GmresSolver` and can't be changed later.
+Note that the keyword argument `memory` is the only exception.
+It is required to create a `GmresSolver` and can't be changed later.
 
 See [`GmresSolver`](@ref) for more details about the `solver`.
 """

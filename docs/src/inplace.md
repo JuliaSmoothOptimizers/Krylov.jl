@@ -3,21 +3,21 @@
 All solvers in Krylov.jl have an in-place variant implemented in a method whose name ends with `!`.
 A workspace (`KrylovSolver`), which contains the storage needed by a Krylov method, can be used to solve multiple linear systems with the same dimensions and the same floating-point precision.
 The section [storage requirements](@ref storage-requirements) specifies the memory needed for each Krylov method.
-Each `KrylovSolver` has three constructors:
+
+Each `KrylovSolver` has three constructors with consistent argument patterns:
 
 ```@constructors
 XyzSolver(A, b)
 XyzSolver(m, n, S)
 XyzSolver(kc::KrylovConstructor)
 ```
+The only exceptions are `CgLanczosShiftSolver` and `CglsLanczosShiftSolver`, which require an additional argument `nshifts`.
+Additionally, some constructors accept keyword arguments.
 
-`Xyz` represents the name of the Krylov method, written in lowercase except for its first letter (e.g., `Cg`, `Minres`, `Lsmr`, `Bicgstab`, etc.).
+`Xyz` represents the name of the Krylov method, written in lowercase except for its first letter (such as `Cg`, `Minres`, `Lsmr` or `Bicgstab`).
 If the name of the Krylov method contains an underscore (e.g., `minres_qlp` or `cgls_lanczos_shift`), the workspace constructor transforms it by capitalizing each word and removing underscores, resulting in names like `MinresQlpSolver` or `CglsLanczosShiftSolver`.
 
 Given an operator `A` and a right-hand side `b`, you can create a `KrylovSolver` based on the size of `A` and the type of `b`, or explicitly provide the dimensions `(m, n)` and the storage type `S`.
-
-!!! note
-    The constructors of `CgLanczosShiftSolver` and `CglsLanczosShiftSolver` require an additional argument `nshifts`.
 
 We assume that `S(undef, 0)`, `S(undef, n)`, and `S(undef, m)` are well-defined for the storage type `S`.
 For more advanced vector types, workspaces can also be created with the help of a `KrylovConstructor`.
@@ -42,27 +42,6 @@ gmres!(gmres_solver, A3, b3)
 
 lsqr_solver = LsqrSolver(m, n, CuVector{Float32})
 lsqr!(lsqr_solver, A4, b4)
-```
-
-A generic function `solve!` is also available and dispatches to the appropriate Krylov method.
-
-```@docs
-Krylov.solve!
-```
-
-!!! note
-    The function `solve!` is not exported to prevent potential conflicts with other Julia packages.
-
-In-place methods return an updated `solver` workspace.
-Solutions and statistics can be recovered via `solver.x`, `solver.y` and `solver.stats`.
-Functions `solution`, `statistics` and `results` can be also used.
-
-```@docs
-Krylov.nsolution
-Krylov.issolved
-Krylov.solution
-Krylov.statistics
-Krylov.results
 ```
 
 ## Examples

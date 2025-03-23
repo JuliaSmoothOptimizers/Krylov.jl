@@ -77,8 +77,8 @@ function dqgmres end
 
 where `kwargs` are keyword arguments of [`dqgmres`](@ref).
 
-Note that the `memory` keyword argument is the only exception.
-It's required to create a `DqgmresSolver` and can't be changed later.
+Note that the keyword argument `memory` is the only exception.
+It is required to create a `DqgmresSolver` and can't be changed later.
 
 See [`DqgmresSolver`](@ref) for more details about the `solver`.
 """

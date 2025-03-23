@@ -24,7 +24,7 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = BilqrSolver(A, b)
-    solve!(solver, A, b, c, x0, y0)
+    krylov_solve!(solver, A, b, c, x0, y0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
@@ -32,7 +32,7 @@ function test_warm_start(FC)
     resid = norm(s) / norm(c)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, d, z0, z0)
+    krylov_solve!(solver, J, d, d, z0, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -52,7 +52,7 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = TrilqrSolver(A, b)
-    solve!(solver, A, b, c, x0, y0)
+    krylov_solve!(solver, A, b, c, x0, y0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
@@ -60,7 +60,7 @@ function test_warm_start(FC)
     resid = norm(s) / norm(c)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, d, z0, z0)
+    krylov_solve!(solver, J, d, d, z0, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -77,14 +77,14 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = TricgSolver(A, b)
-    solve!(solver, A, b, b, x0, y0)
+    krylov_solve!(solver, A, b, b, x0, y0)
     r = [b - solver.x - A * solver.y; b - A' * solver.x + solver.y]
     resid = norm(r) / norm([b; b])
     @test(resid ≤ tol)
 
     τ = zero(T)
     ν = zero(T)
-    solve!(solver, J, d, d, z0, z0; τ, ν)
+    krylov_solve!(solver, J, d, d, z0, z0; τ, ν)
     r = [d - τ * solver.x - J * solver.y; d - J' * solver.x - ν * solver.y]
     resid = norm(r) / norm([d; d])
     @test(resid ≤ tol)
@@ -98,14 +98,14 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = TrimrSolver(A, b)
-    solve!(solver, A, b, b, x0, y0)
+    krylov_solve!(solver, A, b, b, x0, y0)
     r = [b - solver.x - A * solver.y; b - A' * solver.x + solver.y]
     resid = norm(r) / norm([b; b])
     @test(resid ≤ tol)
 
     τ = zero(T)
     ν = zero(T)
-    solve!(solver, J, d, d, z0, z0; τ, ν)
+    krylov_solve!(solver, J, d, d, z0, z0; τ, ν)
     r = [d - τ * solver.x - J * solver.y; d - J' * solver.x - ν * solver.y]
     resid = norm(r) / norm([d; d])
     @test(resid ≤ tol)
@@ -119,14 +119,14 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = GpmrSolver(A, b)
-    solve!(solver, A, A', b, b, x0, y0)
+    krylov_solve!(solver, A, A', b, b, x0, y0)
     r = [b - solver.x - A * solver.y; b - A' * solver.x - solver.y]
     resid = norm(r) / norm([b; b])
     @test(resid ≤ tol)
 
     λ = zero(FC)
     μ = zero(FC)
-    solve!(solver, J, J', d, d, z0, z0; λ, μ)
+    krylov_solve!(solver, J, J', d, d, z0, z0; λ, μ)
     r = [d - λ * solver.x - J * solver.y; d - J' * solver.x - μ * solver.y]
     resid = norm(r) / norm([d; d])
     @test(resid ≤ tol)
@@ -140,12 +140,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = MinresQlpSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -159,12 +159,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = SymmlqSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -178,12 +178,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = CgSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -197,12 +197,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = CrSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -216,12 +216,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = CarSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -235,12 +235,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = CgLanczosSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -254,12 +254,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = MinresSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -273,12 +273,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = MinaresSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -292,12 +292,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = DiomSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -311,12 +311,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = DqgmresSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -330,12 +330,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = FomSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -349,12 +349,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = GmresSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -368,12 +368,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = FgmresSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -387,12 +387,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = BicgstabSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -406,12 +406,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = CgsSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -425,12 +425,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = BilqSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -444,12 +444,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = QmrSolver(A, b)
-    solve!(solver, A, b, x0)
+    krylov_solve!(solver, A, b, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, z0)
+    krylov_solve!(solver, J, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -463,12 +463,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = UsymlqSolver(A, b)
-    solve!(solver, A, b, c, x0)
+    krylov_solve!(solver, A, b, c, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, d, z0)
+    krylov_solve!(solver, J, d, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
@@ -482,12 +482,12 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
 
     solver = UsymqrSolver(A, b)
-    solve!(solver, A, b, c, x0)
+    krylov_solve!(solver, A, b, c, x0)
     r = b - A * solver.x
     resid = norm(r) / norm(b)
     @test(resid ≤ tol)
 
-    solve!(solver, J, d, d, z0)
+    krylov_solve!(solver, J, d, d, z0)
     r = d - J * solver.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)

@@ -1,11 +1,6 @@
-export BlockKrylovSolver
-
 export BlockMinresSolver, BlockGmresSolver
 
-const BLOCK_KRYLOV_SOLVERS = Dict(:block_minres => :BlockMinresSolver,
-                                  :block_gmres  => :BlockGmresSolver )
-
-"Abstract type for using block Krylov solvers in-place"
+"Abstract type for using block Krylov solvers in-place."
 abstract type BlockKrylovSolver{T,FC,SV,SM} end
 
 """
