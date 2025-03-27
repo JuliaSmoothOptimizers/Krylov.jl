@@ -51,7 +51,7 @@ M also indicates the weighted norm in which residuals are measured.
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization;
-* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If negative curvature is detected at iteration k > 0, the solution of iteration k-1 is returned. If negative curvature is detected at iteration 0, the right-hand side is returned (i.e., the negative gradient);
+* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `linesearch` is true and nonpositive curvature is detected, the solution depends on the iteration: at iteration k = 0, the right-hand side is returned with `solver.npc_dir` as the preconditioned initial residual; at iteration k > 0, the solution from iteration k-1 is returned with `solver.npc_dir` as the most recent residual;
 * `γ`: tolerance to determine that the curvature of the quadratic model is nonpositive;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
@@ -124,6 +124,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     length(b) == n || error("Inconsistent problem size")
     linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
     (verbose > 0) && @printf(iostream, "CR: system of %d equations in %d variables\n", n, n)
+    (solver.warm_start && linesearch) && error("warm_start and linesearch cannot be used together")
 
     # Tests M = Iₙ
     MisI = (M === I)
@@ -134,11 +135,15 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
     # Set up workspace
     allocate_if(!MisI, solver, :Mq, S, solver.x)  # The length of Mq is n
+    allocate_if(linesearch, solver, :npc_dir , S, solver.x) # The length of npc_dir is n
     Δx, x, r, p, q, Ar, stats = solver.Δx, solver.x, solver.r, solver.p, solver.q, solver.Ar, solver.stats
     warm_start = solver.warm_start
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
     Mq = MisI ? q : solver.Mq
+    if linesearch
+      npc_dir = solver.npc_dir
+    end
 
     # Initial state.
     kfill!(x, zero(FC))
@@ -149,7 +154,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       kcopy!(n, p, b)  # p ← b
     end
     MisI && kcopy!(n, r, p)  # r ← p
-    MisI || mulorldiv!(r, M, p, ldiv)
+    MisI || mulorldiv!(r, M, p, ldiv) 
+    linesearch && kcopy!(n, npc_dir , r) # npc_dir ← r; contain the preconditioned initial residual
     
     rNorm = knorm_elliptic(n, r, p)  # ‖r‖
     history && push!(rNorms, rNorm)  # Values of ‖r‖
@@ -210,6 +216,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     overtimed = false
 
     while ! (solved || tired || user_requested_exit || overtimed)
+      linesearch && kcopy!(n, npc_dir , r) # npc_dir ← r; contain the last residual
       if linesearch
         if (pAp ≤ γ * pNorm²) || (ρ ≤ γ * rNorm²)
           npcurv = true
@@ -221,6 +228,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
           stats.status = "nonpositive curvature"
           iter == 0 && kcopy!(n, x, b)  # x ← b
           solver.warm_start = false
+          stats.indefinite = true
           return solver
         end
       elseif pAp ≤ 0 && radius == 0
@@ -335,7 +343,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
       kaxpy!(n, α, p, x)
       xNorm = knorm(n, x)
-      xNorm ≈ radius && (on_boundary = true)
+      xNorm ≈ radius > 0 && (on_boundary = true)
       kaxpy!(n, -α, Mq, r)  # residual
       if MisI
         rNorm² = kdotr(n, r, r)
@@ -401,12 +409,15 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
     # Termination status
     tired               && (status = "maximum number of iterations exceeded")
-    on_boundary         && (status = "on trust-region boundary")
-    npcurv              && (status = "nonpositive curvature")
     solved              && (status = "solution good enough given atol and rtol")
     user_requested_exit && (status = "user-requested exit")
     overtimed           && (status = "time limit exceeded")
+    npcurv              && (status = "nonpositive curvature")
+    on_boundary         && (status = "on trust-region boundary")
 
+    if npcurv && linesearch
+       stats.indefinite = true
+    end
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
     solver.warm_start = false

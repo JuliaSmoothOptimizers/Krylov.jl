@@ -318,6 +318,7 @@ mutable struct CrSolver{T,FC,S} <: KrylovSolver{T,FC,S}
   Δx         :: S
   x          :: S
   r          :: S
+  npc_dir    :: S
   p          :: S
   q          :: S
   Ar         :: S
@@ -335,12 +336,13 @@ function CrSolver(kc::KrylovConstructor)
   Δx = similar(kc.vn_empty)
   x  = similar(kc.vn)
   r  = similar(kc.vn)
+  npc_dir = similar(kc.vn_empty)
   p  = similar(kc.vn)
   q  = similar(kc.vn)
   Ar = similar(kc.vn)
   Mq = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CrSolver{T,FC,S}(m, n, Δx, x, r, p, q, Ar, Mq, false, stats)
+  solver = CrSolver{T,FC,S}(m, n, Δx, x, r, npc_dir, p, q, Ar, Mq, false, stats)
   return solver
 end
 
@@ -350,13 +352,14 @@ function CrSolver(m::Integer, n::Integer, S::Type)
   Δx = S(undef, 0)
   x  = S(undef, n)
   r  = S(undef, n)
+  npc_dir = S(undef, 0)
   p  = S(undef, n)
   q  = S(undef, n)
   Ar = S(undef, n)
   Mq = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CrSolver{T,FC,S}(m, n, Δx, x, r, p, q, Ar, Mq, false, stats)
+  solver = CrSolver{T,FC,S}(m, n, Δx, x, r, npc_dir, p, q, Ar, Mq, false, stats)
   return solver
 end
 
