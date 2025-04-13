@@ -33,10 +33,10 @@ mutable struct CallbackWorkspace{T}
   tol::T
 end
 
-function (workspace::CallbackWorkspace)(workspace::KrylovWorkspace)
-  mul!(workspace.r, workspace.A, workspace.x)
-  workspace.r .-= workspace.b
-  bool = norm(workspace.r) ≤ workspace.tol
+function (callback::CallbackWorkspace)(workspace::KrylovWorkspace)
+  mul!(callback.r, callback.A, workspace.x)
+  callback.r .-= callback.b
+  bool = norm(callback.r) ≤ callback.tol
   return bool
 end
 
