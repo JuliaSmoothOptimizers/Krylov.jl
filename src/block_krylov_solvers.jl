@@ -175,7 +175,7 @@ function ksizeof(attribute)
 end
 
 function sizeof(stats_workspace :: Union{KrylovStats, KrylovWorkspace, BlockKrylovWorkspace})
-  type = typeof(stats_solver)
+  type = typeof(stats_workspace)
   nfields = fieldcount(type)
   storage = 0
   for i = 1:nfields
@@ -198,7 +198,7 @@ function show(io :: IO, workspace :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovW
   nbytes = sizeof(workspace)
   storage = format_bytes(nbytes)
   architecture = S <: Vector ? "CPU" : "GPU"
-  l1 = max(length(name_solver), length(string(FC)) + 11)  # length("Precision: ") = 11
+  l1 = max(length(name_workspace), length(string(FC)) + 11)  # length("Precision: ") = 11
   nchar = workspace <: Union{CgLanczosShiftWorkspace, FomWorkspace, DiomWorkspace, DqgmresWorkspace, GmresWorkspace, FgmresWorkspace, GpmrWorkspace, BlockGmresWorkspace} ? 8 : 0  # length("Vector{}") = 8
   l2 = max(ndigits(workspace.m) + 7, length(architecture) + 14, length(string(S)) + nchar)  # length("nrows: ") = 7 and length("Architecture: ") = 14
   l2 = max(l2, length(name_stats) + 2 + length(string(T)))  # length("{}") = 2
@@ -206,7 +206,7 @@ function show(io :: IO, workspace :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovW
   format = Printf.Format("│%$(l1)s│%$(l2)s│%$(l3)s│\n")
   format2 = Printf.Format("│%$(l1+1)s│%$(l2)s│%$(l3)s│\n")
   @printf(io, "┌%s┬%s┬%s┐\n", "─"^l1, "─"^l2, "─"^l3)
-  Printf.format(io, format, "$(name_solver)", "nrows: $(workspace.m)", "ncols: $(workspace.n)")
+  Printf.format(io, format, "$(name_workspace)", "nrows: $(workspace.m)", "ncols: $(workspace.n)")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
   Printf.format(io, format, "Precision: $FC", "Architecture: $architecture","Storage: $storage")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
