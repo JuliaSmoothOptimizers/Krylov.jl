@@ -122,7 +122,7 @@ args_cgne = (:A, :b)
 kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgne!(solver :: CgneWorkspace{T,FC,S}, $(def_args_cgne...); $(def_kwargs_cgne...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cgne!(workspace :: CgneWorkspace{T,FC,S}, $(def_args_cgne...); $(def_kwargs_cgne...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

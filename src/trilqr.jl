@@ -103,7 +103,7 @@ optargs_trilqr = (:x0, :y0)
 kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function trilqr!(solver :: TrilqrWorkspace{T,FC,S}, $(def_args_trilqr...); $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function trilqr!(workspace :: TrilqrWorkspace{T,FC,S}, $(def_args_trilqr...); $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

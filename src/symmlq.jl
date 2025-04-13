@@ -113,7 +113,7 @@ optargs_symmlq = (:x0,)
 kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function symmlq!(solver :: SymmlqWorkspace{T,FC,S}, $(def_args_symmlq...); $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function symmlq!(workspace :: SymmlqWorkspace{T,FC,S}, $(def_args_symmlq...); $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

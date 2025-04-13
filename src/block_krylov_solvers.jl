@@ -136,21 +136,21 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:BlockGmresWorkspace , :block_gmres! , 1, 1, 0, true)
 ]
   @eval begin
-    size(solver :: $KS) = workspace.m, workspace.n
-    nrhs(solver :: $KS) = workspace.p
-    statistics(solver :: $KS) = workspace.stats
-    niterations(solver :: $KS) = workspace.stats.niter
-    Aprod(solver :: $KS) = $nA * workspace.stats.niter
-    Atprod(solver :: $KS) = $nAt * workspace.stats.niter
-    nsolution(solver :: $KS) = $nsol
+    size(workspace :: $KS) = workspace.m, workspace.n
+    nrhs(workspace :: $KS) = workspace.p
+    statistics(workspace :: $KS) = workspace.stats
+    niterations(workspace :: $KS) = workspace.stats.niter
+    Aprod(workspace :: $KS) = $nA * workspace.stats.niter
+    Atprod(workspace :: $KS) = $nAt * workspace.stats.niter
+    nsolution(workspace :: $KS) = $nsol
     if $nsol == 1
-      solution(solver :: $KS) = workspace.X
-      solution(solver :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
-      results(solver :: $KS) = (workspace.X, workspace.stats)
+      solution(workspace :: $KS) = workspace.X
+      solution(workspace :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
+      results(workspace :: $KS) = (workspace.X, workspace.stats)
     end
-    issolved(solver :: $KS) = workspace.stats.solved
+    issolved(workspace :: $KS) = workspace.stats.solved
     if $warm_start
-      function warm_start!(solver :: $KS, X0)
+      function warm_start!(workspace :: $KS, X0)
         n2, p2 = size(X0)
         SM = typeof(workspace.X)
         (workspace.n == n2 && workspace.p == p2) || error("X0 should have size ($n, $p)")
@@ -174,7 +174,7 @@ function ksizeof(attribute)
   return size_attribute
 end
 
-function sizeof(stats_solver :: Union{KrylovStats, KrylovWorkspace, BlockKrylovWorkspace})
+function sizeof(stats_workspace :: Union{KrylovStats, KrylovWorkspace, BlockKrylovWorkspace})
   type = typeof(stats_solver)
   nfields = fieldcount(type)
   storage = 0
@@ -191,7 +191,7 @@ end
 
 Statistics of `solver` are displayed if `show_stats` is set to true.
 """
-function show(io :: IO, solver :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+function show(io :: IO, workspace :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   workspace = typeof(solver)
   name_workspace = string(workspace.name.name)
   name_stats = string(typeof(workspace.stats).name.name)

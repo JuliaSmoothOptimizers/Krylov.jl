@@ -94,7 +94,7 @@ args_cg_lanczos_shift = (:A, :b, :shifts)
 kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cg_lanczos_shift!(solver :: CgLanczosShiftWorkspace{T,FC,S}, $(def_args_cg_lanczos_shift...); $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cg_lanczos_shift!(workspace :: CgLanczosShiftWorkspace{T,FC,S}, $(def_args_cg_lanczos_shift...); $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

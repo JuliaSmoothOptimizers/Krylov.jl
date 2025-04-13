@@ -113,7 +113,7 @@ optargs_bicgstab = (:x0,)
 kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function bicgstab!(solver :: BicgstabWorkspace{T,FC,S}, $(def_args_bicgstab...); $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function bicgstab!(workspace :: BicgstabWorkspace{T,FC,S}, $(def_args_bicgstab...); $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

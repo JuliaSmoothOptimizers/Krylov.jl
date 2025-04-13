@@ -149,7 +149,7 @@ args_craigmr = (:A, :b)
 kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function craigmr!(solver :: CraigmrWorkspace{T,FC,S}, $(def_args_craigmr...); $(def_kwargs_craigmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function craigmr!(workspace :: CraigmrWorkspace{T,FC,S}, $(def_args_craigmr...); $(def_kwargs_craigmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

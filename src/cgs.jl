@@ -114,7 +114,7 @@ optargs_cgs = (:x0,)
 kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgs!(solver :: CgsWorkspace{T,FC,S}, $(def_args_cgs...); $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cgs!(workspace :: CgsWorkspace{T,FC,S}, $(def_args_cgs...); $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

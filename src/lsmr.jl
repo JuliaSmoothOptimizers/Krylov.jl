@@ -159,7 +159,7 @@ args_lsmr = (:A, :b)
 kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function lsmr!(solver :: LsmrWorkspace{T,FC,S}, $(def_args_lsmr...); $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function lsmr!(workspace :: LsmrWorkspace{T,FC,S}, $(def_args_lsmr...); $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

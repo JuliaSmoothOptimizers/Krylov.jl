@@ -112,7 +112,7 @@ optargs_usymlq = (:x0,)
 kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function usymlq!(solver :: UsymlqWorkspace{T,FC,S}, $(def_args_usymlq...); $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function usymlq!(workspace :: UsymlqWorkspace{T,FC,S}, $(def_args_usymlq...); $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

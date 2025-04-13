@@ -106,7 +106,7 @@ optargs_gmres = (:x0,)
 kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function gmres!(solver :: GmresWorkspace{T,FC,S}, $(def_args_gmres...); $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function gmres!(workspace :: GmresWorkspace{T,FC,S}, $(def_args_gmres...); $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

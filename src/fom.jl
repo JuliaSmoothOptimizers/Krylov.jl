@@ -106,7 +106,7 @@ optargs_fom = (:x0,)
 kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function fom!(solver :: FomWorkspace{T,FC,S}, $(def_args_fom...); $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function fom!(workspace :: FomWorkspace{T,FC,S}, $(def_args_fom...); $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

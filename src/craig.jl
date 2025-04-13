@@ -162,7 +162,7 @@ args_craig = (:A, :b)
 kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function craig!(solver :: CraigWorkspace{T,FC,S}, $(def_args_craig...); $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function craig!(workspace :: CraigWorkspace{T,FC,S}, $(def_args_craig...); $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

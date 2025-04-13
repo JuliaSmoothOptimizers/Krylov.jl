@@ -104,7 +104,7 @@ optargs_bilqr = (:x0, :y0)
 kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function bilqr!(solver :: BilqrWorkspace{T,FC,S}, $(def_args_bilqr...); $(def_kwargs_bilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function bilqr!(workspace :: BilqrWorkspace{T,FC,S}, $(def_args_bilqr...); $(def_kwargs_bilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
