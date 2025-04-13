@@ -192,14 +192,14 @@ end
 Statistics of `workspace` are displayed if `show_stats` is set to true.
 """
 function show(io :: IO, workspace :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  workspace = typeof(workspace)
-  name_workspace = string(workspace.name.name)
+  type_workspace = typeof(workspace)
+  name_workspace = string(type_workspace.name.name)
   name_stats = string(typeof(workspace.stats).name.name)
   nbytes = sizeof(workspace)
   storage = format_bytes(nbytes)
   architecture = S <: Vector ? "CPU" : "GPU"
   l1 = max(length(name_workspace), length(string(FC)) + 11)  # length("Precision: ") = 11
-  nchar = workspace <: Union{CgLanczosShiftWorkspace, FomWorkspace, DiomWorkspace, DqgmresWorkspace, GmresWorkspace, FgmresWorkspace, GpmrWorkspace, BlockGmresWorkspace} ? 8 : 0  # length("Vector{}") = 8
+  nchar = type_workspace <: Union{CgLanczosShiftWorkspace, FomWorkspace, DiomWorkspace, DqgmresWorkspace, GmresWorkspace, FgmresWorkspace, GpmrWorkspace, BlockGmresWorkspace} ? 8 : 0  # length("Vector{}") = 8
   l2 = max(ndigits(workspace.m) + 7, length(architecture) + 14, length(string(S)) + nchar)  # length("nrows: ") = 7 and length("Architecture: ") = 14
   l2 = max(l2, length(name_stats) + 2 + length(string(T)))  # length("{}") = 2
   l3 = max(ndigits(workspace.n) + 7, length(storage) + 9)  # length("Storage: ") = 9 and length("cols: ") = 7
@@ -212,9 +212,9 @@ function show(io :: IO, workspace :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovW
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
   Printf.format(io, format, "Attribute", "Type", "Size")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
-  for i=1:fieldcount(workspace)
-    name_i = fieldname(workspace, i)
-    type_i = fieldtype(workspace, i)
+  for i=1:fieldcount(type_workspace)
+    name_i = fieldname(type_workspace, i)
+    type_i = fieldtype(type_workspace, i)
     field_i = getfield(workspace, name_i)
     size_i = ksizeof(field_i)
     (size_i ≠ 0) && Printf.format(io, format, string(name_i), type_i, format_bytes(size_i))
