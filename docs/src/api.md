@@ -15,7 +15,7 @@ Krylov.LsmrStats
 ## Workspace of Krylov methods
 
 ```@docs
-Krylov.KrylovSolver
+KrylovSolver
 MinresSolver
 MinaresSolver
 CgSolver
@@ -57,7 +57,7 @@ FgmresSolver
 ## Workspace of block-Krylov methods
 
 ```@docs
-Krylov.BlockKrylovSolver
+BlockKrylovSolver
 BlockMinresSolver
 BlockGmresSolver
 ```

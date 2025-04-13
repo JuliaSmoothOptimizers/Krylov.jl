@@ -26,10 +26,6 @@
 
 export krylov_workspace, krylov_solve, krylov_solve!
 
-# Alias to maintain partial backward compatibility.
-# `Krylov.solve!` will continue to work, but `krylov_solve!` is now the exported name (since v0.10).
-const solve! = krylov_solve!
-
 """
     krylov_workspace(Val{method}(), args...; kwargs...)
 
@@ -53,6 +49,10 @@ Generic function that dispatches to the appropriate in-place (block) Krylov meth
 The argument `solver` must be a subtype of [`KrylovSolver`](@ref) or [`BlockKrylovSolver`](@ref) (such as `CgSolver`, `GmresSolver` or `BlockMinresSolver`).
 """
 function krylov_solve! end
+
+# Alias to maintain partial backward compatibility.
+# `Krylov.solve!` will continue to work, but `krylov_solve!` is now the exported name (since v0.10).
+const solve! = krylov_solve!
 
 # Krylov methods
 for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [

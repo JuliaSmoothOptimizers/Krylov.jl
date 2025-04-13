@@ -77,8 +77,9 @@ function diom end
 
 where `kwargs` are keyword arguments of [`diom`](@ref).
 
-Note that the keyword argument `memory` is the only exception.
-It is required to create a `DiomSolver` and can't be changed later.
+The keyword argument `memory` is the only exception.
+It is only supported by `diom` and is required to create a `DiomSolver`.
+It cannot be changed later.
 
 See [`DiomSolver`](@ref) for more details about the `solver`.
 """

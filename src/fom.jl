@@ -72,8 +72,9 @@ function fom end
 
 where `kwargs` are keyword arguments of [`fom`](@ref).
 
-Note that the keyword argument `memory` is the only exception.
-It is required to create a `FomSolver` and can't be changed later.
+The keyword argument `memory` is the only exception.
+It is only supported by [`fom`](@ref) and is required to create a `FomSolver`.
+It cannot be changed later.
 
 See [`FomSolver`](@ref) for more details about the `solver`.
 """

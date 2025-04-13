@@ -61,8 +61,9 @@ function block_gmres end
 
 where `kwargs` are keyword arguments of [`block_gmres`](@ref).
 
-Note that the keyword argument `memory` is the only exception.
-It is required to create a `BlockGmresSolver` and can't be changed later.
+The keyword argument `memory` is the only exception.
+It is only supported by `block_gmres` and is required to create a `BlockGmresSolver`.
+It cannot be changed later.
 
 See [`BlockGmresSolver`](@ref) for more details about the `solver`.
 """
