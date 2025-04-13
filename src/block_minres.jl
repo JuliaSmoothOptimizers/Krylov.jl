@@ -56,7 +56,7 @@ function block_minres end
 
 where `kwargs` are keyword arguments of [`block_minres`](@ref).
 
-See [`BlockMinresWorkspace`](@ref) for more details about the `solver`.
+See [`BlockMinresWorkspace`](@ref) for more details about the `workspace`.
 """
 function block_minres! end
 

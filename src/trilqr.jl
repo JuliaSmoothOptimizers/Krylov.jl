@@ -75,7 +75,7 @@ function trilqr end
 
 where `kwargs` are keyword arguments of [`trilqr`](@ref).
 
-See [`TrilqrWorkspace`](@ref) for more details about the `solver`.
+See [`TrilqrWorkspace`](@ref) for more details about the `workspace`.
 """
 function trilqr! end
 

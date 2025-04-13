@@ -85,7 +85,7 @@ function cgs end
 
 where `kwargs` are keyword arguments of [`cgs`](@ref).
 
-See [`CgsWorkspace`](@ref) for more details about the `solver`.
+See [`CgsWorkspace`](@ref) for more details about the `workspace`.
 """
 function cgs! end
 

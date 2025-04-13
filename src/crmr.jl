@@ -95,7 +95,7 @@ function crmr end
 
 where `kwargs` are keyword arguments of [`crmr`](@ref).
 
-See [`CrmrWorkspace`](@ref) for more details about the `solver`.
+See [`CrmrWorkspace`](@ref) for more details about the `workspace`.
 """
 function crmr! end
 

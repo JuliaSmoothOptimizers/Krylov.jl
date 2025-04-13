@@ -189,7 +189,7 @@ end
 """
     show(io, solver; show_stats=true)
 
-Statistics of `solver` are displayed if `show_stats` is set to true.
+Statistics of `workspace` are displayed if `show_stats` is set to true.
 """
 function show(io :: IO, workspace :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   workspace = typeof(workspace)

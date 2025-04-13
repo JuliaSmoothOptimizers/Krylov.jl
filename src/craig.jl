@@ -132,7 +132,7 @@ function craig end
 
 where `kwargs` are keyword arguments of [`craig`](@ref).
 
-See [`CraigWorkspace`](@ref) for more details about the `solver`.
+See [`CraigWorkspace`](@ref) for more details about the `workspace`.
 """
 function craig! end
 

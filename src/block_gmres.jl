@@ -65,7 +65,7 @@ The keyword argument `memory` is the only exception.
 It is only supported by `block_gmres` and is required to create a `BlockGmresWorkspace`.
 It cannot be changed later.
 
-See [`BlockGmresWorkspace`](@ref) for more details about the `solver`.
+See [`BlockGmresWorkspace`](@ref) for more details about the `workspace`.
 """
 function block_gmres! end
 

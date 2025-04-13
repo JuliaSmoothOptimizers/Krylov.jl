@@ -84,7 +84,7 @@ function bicgstab end
 
 where `kwargs` are keyword arguments of [`bicgstab`](@ref).
 
-See [`BicgstabWorkspace`](@ref) for more details about the `solver`.
+See [`BicgstabWorkspace`](@ref) for more details about the `workspace`.
 """
 function bicgstab! end
 

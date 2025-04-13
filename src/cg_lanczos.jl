@@ -73,7 +73,7 @@ function cg_lanczos end
 
 where `kwargs` are keyword arguments of [`cg_lanczos`](@ref).
 
-See [`CgLanczosWorkspace`](@ref) for more details about the `solver`.
+See [`CgLanczosWorkspace`](@ref) for more details about the `workspace`.
 """
 function cg_lanczos! end
 

@@ -81,7 +81,7 @@ The keyword argument `memory` is the only exception.
 It is only supported by `diom` and is required to create a `DiomWorkspace`.
 It cannot be changed later.
 
-See [`DiomWorkspace`](@ref) for more details about the `solver`.
+See [`DiomWorkspace`](@ref) for more details about the `workspace`.
 """
 function diom! end
 

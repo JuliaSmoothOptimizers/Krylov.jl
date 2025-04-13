@@ -149,7 +149,7 @@ function lslq end
 
 where `kwargs` are keyword arguments of [`lslq`](@ref).
 
-See [`LslqWorkspace`](@ref) for more details about the `solver`.
+See [`LslqWorkspace`](@ref) for more details about the `workspace`.
 """
 function lslq! end
 

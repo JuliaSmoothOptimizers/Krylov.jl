@@ -91,7 +91,7 @@ function cgls end
 
 where `kwargs` are keyword arguments of [`cgls`](@ref).
 
-See [`CglsWorkspace`](@ref) for more details about the `solver`.
+See [`CglsWorkspace`](@ref) for more details about the `workspace`.
 """
 function cgls! end
 

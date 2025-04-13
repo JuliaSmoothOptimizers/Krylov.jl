@@ -122,7 +122,7 @@ function craigmr end
 
 where `kwargs` are keyword arguments of [`craigmr`](@ref).
 
-See [`CraigmrWorkspace`](@ref) for more details about the `solver`.
+See [`CraigmrWorkspace`](@ref) for more details about the `workspace`.
 """
 function craigmr! end
 

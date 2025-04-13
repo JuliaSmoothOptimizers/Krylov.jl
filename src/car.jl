@@ -69,7 +69,7 @@ function car end
 
 where `kwargs` are keyword arguments of [`car`](@ref).
 
-See [`CarWorkspace`](@ref) for more details about the `solver`.
+See [`CarWorkspace`](@ref) for more details about the `workspace`.
 """
 function car! end
 

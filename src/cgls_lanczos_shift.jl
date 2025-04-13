@@ -70,7 +70,7 @@ function cgls_lanczos_shift end
 
 where `kwargs` are keyword arguments of [`cgls_lanczos_shift`](@ref).
 
-See [`CglsLanczosShiftWorkspace`](@ref) for more details about the `solver`.
+See [`CglsLanczosShiftWorkspace`](@ref) for more details about the `workspace`.
 """
 function cgls_lanczos_shift! end
 

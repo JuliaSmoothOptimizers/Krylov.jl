@@ -85,7 +85,7 @@ function usymlq end
 
 where `kwargs` are keyword arguments of [`usymlq`](@ref).
 
-See [`UsymlqWorkspace`](@ref) for more details about the `solver`.
+See [`UsymlqWorkspace`](@ref) for more details about the `workspace`.
 """
 function usymlq! end
 

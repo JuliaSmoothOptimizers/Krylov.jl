@@ -112,7 +112,7 @@ The keyword argument `memory` is the only exception.
 It is only supported by [`gpmr`](@ref) and is required to create a `GpmrWorkspace`.
 It cannot be changed later.
 
-See [`GpmrWorkspace`](@ref) for more details about the `solver`.
+See [`GpmrWorkspace`](@ref) for more details about the `workspace`.
 """
 function gpmr! end
 

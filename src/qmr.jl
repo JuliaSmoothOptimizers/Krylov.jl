@@ -83,7 +83,7 @@ function qmr end
 
 where `kwargs` are keyword arguments of [`qmr`](@ref).
 
-See [`QmrWorkspace`](@ref) for more details about the `solver`.
+See [`QmrWorkspace`](@ref) for more details about the `workspace`.
 """
 function qmr! end
 

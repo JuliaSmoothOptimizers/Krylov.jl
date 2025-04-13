@@ -98,7 +98,7 @@ function tricg end
 
 where `kwargs` are keyword arguments of [`tricg`](@ref).
 
-See [`TricgWorkspace`](@ref) for more details about the `solver`.
+See [`TricgWorkspace`](@ref) for more details about the `workspace`.
 """
 function tricg! end
 

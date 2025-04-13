@@ -98,7 +98,7 @@ function trimr end
 
 where `kwargs` are keyword arguments of [`trimr`](@ref).
 
-See [`TrimrWorkspace`](@ref) for more details about the `solver`.
+See [`TrimrWorkspace`](@ref) for more details about the `workspace`.
 """
 function trimr! end
 

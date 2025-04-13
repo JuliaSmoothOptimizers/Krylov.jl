@@ -76,7 +76,7 @@ The keyword argument `memory` is the only exception.
 It is only supported by [`fom`](@ref) and is required to create a `FomWorkspace`.
 It cannot be changed later.
 
-See [`FomWorkspace`](@ref) for more details about the `solver`.
+See [`FomWorkspace`](@ref) for more details about the `workspace`.
 """
 function fom! end
 

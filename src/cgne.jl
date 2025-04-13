@@ -97,7 +97,7 @@ function cgne end
 
 where `kwargs` are keyword arguments of [`cgne`](@ref).
 
-See [`CgneWorkspace`](@ref) for more details about the `solver`.
+See [`CgneWorkspace`](@ref) for more details about the `workspace`.
 """
 function cgne! end
 

@@ -76,7 +76,7 @@ The keyword argument `memory` is the only exception.
 It is only supported by [`gmres`](@ref) and is required to create a `GmresWorkspace`.
 It cannot be changed later.
 
-See [`GmresWorkspace`](@ref) for more details about the `solver`.
+See [`GmresWorkspace`](@ref) for more details about the `workspace`.
 """
 function gmres! end
 

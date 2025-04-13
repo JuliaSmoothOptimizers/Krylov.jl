@@ -72,7 +72,7 @@ function minares end
 
 where `kwargs` are keyword arguments of [`minares`](@ref).
 
-See [`MinaresWorkspace`](@ref) for more details about the `solver`.
+See [`MinaresWorkspace`](@ref) for more details about the `workspace`.
 """
 function minares! end
 

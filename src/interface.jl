@@ -14,7 +14,7 @@
 # - `krylov_solve!(workspace, A, b, x0; kwargs...)`
 #
 # Generic constructors for each KrylovWorkspace and BlockKrylovWorkspace are also defined using metaprogramming.
-# The function `krylov_workspace` uses the first argument, `Val{solver}()`, where `solver` is a symbol used to dispatch to the appropriate method.
+# The function `krylov_workspace` uses the first argument, `Val{solver}()`, where `workspace` is a symbol used to dispatch to the appropriate method.
 # For example, the three constructors for `CgWorkspace` can be called using the following syntax:
 #
 # - `krylov_workspace(Val{:cg}(), kc)`
@@ -45,8 +45,8 @@ function krylov_solve end
 """
     krylov_solve!(workspace, args...; kwargs...)
 
-Generic function that dispatches to the appropriate in-place (block) Krylov method based on the type of `solver`.
-The argument `solver` must be a subtype of [`KrylovWorkspace`](@ref) or [`BlockKrylovWorkspace`](@ref) (such as `CgWorkspace`, `GmresWorkspace` or `BlockMinresWorkspace`).
+Generic function that dispatches to the appropriate in-place (block) Krylov method based on the type of `workspace`.
+The argument `workspace` must be a subtype of [`KrylovWorkspace`](@ref) or [`BlockKrylovWorkspace`](@ref) (such as `CgWorkspace`, `GmresWorkspace` or `BlockMinresWorkspace`).
 """
 function krylov_solve! end
 

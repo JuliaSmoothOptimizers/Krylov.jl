@@ -80,7 +80,7 @@ function minres_qlp end
 
 where `kwargs` are keyword arguments of [`minres_qlp`](@ref).
 
-See [`MinresQlpWorkspace`](@ref) for more details about the `solver`.
+See [`MinresQlpWorkspace`](@ref) for more details about the `workspace`.
 """
 function minres_qlp! end
 

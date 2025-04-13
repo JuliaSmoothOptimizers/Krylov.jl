@@ -123,7 +123,7 @@ function lsqr end
 
 where `kwargs` are keyword arguments of [`lsqr`](@ref).
 
-See [`LsqrWorkspace`](@ref) for more details about the `solver`.
+See [`LsqrWorkspace`](@ref) for more details about the `workspace`.
 """
 function lsqr! end
 

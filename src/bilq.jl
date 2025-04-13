@@ -76,7 +76,7 @@ function bilq end
 
 where `kwargs` are keyword arguments of [`bilq`](@ref).
 
-See [`BilqWorkspace`](@ref) for more details about the `solver`.
+See [`BilqWorkspace`](@ref) for more details about the `workspace`.
 """
 function bilq! end
 

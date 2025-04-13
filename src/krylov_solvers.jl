@@ -2757,7 +2757,7 @@ end
 """
     solution(workspace)
 
-Return the solution(s) stored in the `solver`.
+Return the solution(s) stored in the `workspace`.
 Optionally you can specify which solution you want to recover,
 `solution(workspace, 1)` returns `x` and `solution(workspace, 2)` returns `y`.
 """
@@ -2773,42 +2773,42 @@ function nsolution end
 """
     statistics(workspace)
 
-Return the statistics stored in the `solver`.
+Return the statistics stored in the `workspace`.
 """
 function statistics end
 
 """
     issolved(workspace)
 
-Return a boolean that determines whether the Krylov method associated to `solver` succeeded.
+Return a boolean that determines whether the Krylov method associated to `workspace` succeeded.
 """
 function issolved end
 
 """
     niterations(workspace)
 
-Return the number of iterations performed by the Krylov method associated to `solver`.
+Return the number of iterations performed by the Krylov method associated to `workspace`.
 """
 function niterations end
 
 """
     Aprod(workspace)
 
-Return the number of operator-vector products with `A` performed by the Krylov method associated to `solver`.
+Return the number of operator-vector products with `A` performed by the Krylov method associated to `workspace`.
 """
 function Aprod end
 
 """
     Atprod(workspace)
 
-Return the number of operator-vector products with `A'` performed by the Krylov method associated to `solver`.
+Return the number of operator-vector products with `A'` performed by the Krylov method associated to `workspace`.
 """
 function Atprod end
 
 """
     results(workspace)
 
-Return a tuple containing the solution(s) and the statistics associated with the `solver`.
+Return a tuple containing the solution(s) and the statistics associated with the `workspace`.
 Allows retrieving the output arguments of an out-of-place method from the in-place method.
 
 For example, instead of `x, stats = cg(A, b)`, you can use:

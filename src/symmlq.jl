@@ -81,7 +81,7 @@ function symmlq end
 
 where `kwargs` are keyword arguments of [`symmlq`](@ref).
 
-See [`SymmlqWorkspace`](@ref) for more details about the `solver`.
+See [`SymmlqWorkspace`](@ref) for more details about the `workspace`.
 """
 function symmlq! end
 

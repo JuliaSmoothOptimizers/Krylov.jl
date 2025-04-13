@@ -127,7 +127,7 @@ function lsmr end
 
 where `kwargs` are keyword arguments of [`lsmr`](@ref).
 
-See [`LsmrWorkspace`](@ref) for more details about the `solver`.
+See [`LsmrWorkspace`](@ref) for more details about the `workspace`.
 """
 function lsmr! end
 

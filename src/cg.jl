@@ -76,7 +76,7 @@ function cg end
 
 where `kwargs` are keyword arguments of [`cg`](@ref).
 
-See [`CgWorkspace`](@ref) for more details about the `solver`.
+See [`CgWorkspace`](@ref) for more details about the `workspace`.
 """
 function cg! end
 

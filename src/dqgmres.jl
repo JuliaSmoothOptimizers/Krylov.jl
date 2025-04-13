@@ -81,7 +81,7 @@ The keyword argument `memory` is the only exception.
 It is only supported by [`dqgmres`](@ref) and is required to create a `DqgmresWorkspace`.
 It cannot be changed later.
 
-See [`DqgmresWorkspace`](@ref) for more details about the `solver`.
+See [`DqgmresWorkspace`](@ref) for more details about the `workspace`.
 """
 function dqgmres! end
 

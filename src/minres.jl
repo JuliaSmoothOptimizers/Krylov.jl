@@ -106,7 +106,7 @@ function minres end
 
 where `kwargs` are keyword arguments of [`minres`](@ref).
 
-See [`MinresWorkspace`](@ref) for more details about the `solver`.
+See [`MinresWorkspace`](@ref) for more details about the `workspace`.
 """
 function minres! end
 

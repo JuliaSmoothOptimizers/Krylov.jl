@@ -125,7 +125,7 @@ function lnlq end
 
 where `kwargs` are keyword arguments of [`lnlq`](@ref).
 
-See [`LnlqWorkspace`](@ref) for more details about the `solver`.
+See [`LnlqWorkspace`](@ref) for more details about the `workspace`.
 """
 function lnlq! end
 

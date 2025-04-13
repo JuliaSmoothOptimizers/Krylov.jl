@@ -89,7 +89,7 @@ function usymqr end
 
 where `kwargs` are keyword arguments of [`usymqr`](@ref).
 
-See [`UsymqrWorkspace`](@ref) for more details about the `solver`.
+See [`UsymqrWorkspace`](@ref) for more details about the `workspace`.
 """
 function usymqr! end
 

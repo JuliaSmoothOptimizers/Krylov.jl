@@ -68,7 +68,7 @@ function cg_lanczos_shift end
 
 where `kwargs` are keyword arguments of [`cg_lanczos_shift`](@ref).
 
-See [`CgLanczosShiftWorkspace`](@ref) for more details about the `solver`.
+See [`CgLanczosShiftWorkspace`](@ref) for more details about the `workspace`.
 """
 function cg_lanczos_shift! end
 

@@ -82,7 +82,7 @@ function cr end
 
 where `kwargs` are keyword arguments of [`cr`](@ref).
 
-See [`CrWorkspace`](@ref) for more details about the `solver`.
+See [`CrWorkspace`](@ref) for more details about the `workspace`.
 """
 function cr! end
 

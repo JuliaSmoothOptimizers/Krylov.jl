@@ -83,7 +83,7 @@ The keyword argument `memory` is the only exception.
 It is only supported by [`fgmres`](@ref) and is required to create a `FgmresWorkspace`.
 It cannot be changed later.
 
-See [`FgmresWorkspace`](@ref) for more details about the `solver`.
+See [`FgmresWorkspace`](@ref) for more details about the `workspace`.
 """
 function fgmres! end
 

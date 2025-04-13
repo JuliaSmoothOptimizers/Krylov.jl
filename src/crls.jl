@@ -82,7 +82,7 @@ function crls end
 
 where `kwargs` are keyword arguments of [`crls`](@ref).
 
-See [`CrlsWorkspace`](@ref) for more details about the `solver`.
+See [`CrlsWorkspace`](@ref) for more details about the `workspace`.
 """
 function crls! end
 
