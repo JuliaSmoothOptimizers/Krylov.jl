@@ -58,7 +58,7 @@ M also indicates the weighted norm in which residuals are measured.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -423,7 +423,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       zero_resid_lim = MisI && (backward ≤ eps(T))
       breakdown = βₖ₊₁ ≤ btol
 
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       zero_resid = zero_resid_mach | zero_resid_lim
       resid_decrease = resid_decrease_mach | resid_decrease_lim
       solved = resid_decrease | zero_resid

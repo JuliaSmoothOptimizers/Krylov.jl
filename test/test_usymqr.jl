@@ -106,7 +106,7 @@
       cb_n2 = TestCallbackN2(A, b, tol = tol)
       usymqr!(workspace, A, b, c, atol = 0.0, rtol = 0.0, callback = cb_n2)
       @test workspace.stats.status == "user-requested exit"
-      @test cb_n2(solver)
+      @test cb_n2(workspace)
 
       @test_throws TypeError usymqr(A, b, c, callback = solver -> "string", history = true)
     end

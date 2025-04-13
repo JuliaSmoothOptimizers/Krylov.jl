@@ -48,7 +48,7 @@ of size n. The method does _not_ abort if A + αI is not definite.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -250,7 +250,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
       iter = iter + 1
       kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms..., start_time |> ktimer)
 
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       solved = !reduce(|, not_cv)
       tired = iter ≥ itmax
       timer = time_ns() - start_time

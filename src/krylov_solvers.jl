@@ -2755,7 +2755,7 @@ function GpmrWorkspace(A, b; memory::Integer = 20)
 end
 
 """
-    solution(solver)
+    solution(workspace)
 
 Return the solution(s) stored in the `solver`.
 Optionally you can specify which solution you want to recover,
@@ -2764,49 +2764,49 @@ Optionally you can specify which solution you want to recover,
 function solution end
 
 """
-    nsolution(solver)
+    nsolution(workspace)
 
-Return the number of outputs of `solution(solver)`.
+Return the number of outputs of `solution(workspace)`.
 """
 function nsolution end
 
 """
-    statistics(solver)
+    statistics(workspace)
 
 Return the statistics stored in the `solver`.
 """
 function statistics end
 
 """
-    issolved(solver)
+    issolved(workspace)
 
 Return a boolean that determines whether the Krylov method associated to `solver` succeeded.
 """
 function issolved end
 
 """
-    niterations(solver)
+    niterations(workspace)
 
 Return the number of iterations performed by the Krylov method associated to `solver`.
 """
 function niterations end
 
 """
-    Aprod(solver)
+    Aprod(workspace)
 
 Return the number of operator-vector products with `A` performed by the Krylov method associated to `solver`.
 """
 function Aprod end
 
 """
-    Atprod(solver)
+    Atprod(workspace)
 
 Return the number of operator-vector products with `A'` performed by the Krylov method associated to `solver`.
 """
 function Atprod end
 
 """
-    results(solver)
+    results(workspace)
 
 Return a tuple containing the solution(s) and the statistics associated with the `solver`.
 Allows retrieving the output arguments of an out-of-place method from the in-place method.
@@ -2815,7 +2815,7 @@ For example, instead of `x, stats = cg(A, b)`, you can use:
 ```julia
 workspace = CgWorkspace(A, b)
 cg!(workspace, A, b)
-x, stats = results(solver)
+x, stats = results(workspace)
 ```
 """
 function results end
@@ -2870,18 +2870,18 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     nsolution(workspace :: $KS) = $nsol
     if $nsol == 1
       solution(workspace :: $KS) = workspace.x
-      solution(workspace :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
+      solution(workspace :: $KS, p :: Integer) = (p == 1) ? solution(workspace) : error("solution(workspace) has only one output.")
       results(workspace :: $KS) = (workspace.x, workspace.stats)
     end
     if $nsol == 2
       solution(workspace :: $KS) = (workspace.x, workspace.y)
-      solution(workspace :: $KS, p :: Integer) = (1 ≤ p ≤ 2) ? solution(solver)[p] : error("solution(solver) has only two outputs.")
+      solution(workspace :: $KS, p :: Integer) = (1 ≤ p ≤ 2) ? solution(workspace)[p] : error("solution(workspace) has only two outputs.")
       results(workspace :: $KS) = (workspace.x, workspace.y, workspace.stats)
     end
     if $KS ∈ (BilqrWorkspace, TrilqrWorkspace)
       issolved_primal(workspace :: $KS) = workspace.stats.solved_primal
       issolved_dual(workspace :: $KS) = workspace.stats.solved_dual
-      issolved(workspace :: $KS) = issolved_primal(solver) && issolved_dual(solver)
+      issolved(workspace :: $KS) = issolved_primal(workspace) && issolved_dual(workspace)
     else
       issolved(workspace :: $KS) = workspace.stats.solved
     end

@@ -66,7 +66,7 @@ USYMQR finds the minimum-norm solution if problems are inconsistent.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -322,7 +322,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
 
       # Update stopping criterion.
       iter == 1 && (κ = atol + rtol * AᴴrNorm)
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       solved = rNorm ≤ ε
       inconsistent = !solved && AᴴrNorm ≤ κ
       tired = iter ≥ itmax

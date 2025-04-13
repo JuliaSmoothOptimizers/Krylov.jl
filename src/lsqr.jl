@@ -104,7 +104,7 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -387,7 +387,7 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
       zero_resid_mach = (one(T) + t1 ≤ one(T))
 
       # Stopping conditions based on user-provided tolerances.
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       tired  = iter ≥ itmax
       ill_cond_lim = (test3 ≤ ctol)
       solved_lim = (test2 ≤ axtol)

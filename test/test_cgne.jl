@@ -102,7 +102,7 @@ end
       cb_n2 = TestCallbackN2LN(A, b, real(zero(eltype(b))), tol = tol)
       cgne!(workspace, A, b, callback = cb_n2)
       @test workspace.stats.status == "user-requested exit"
-      @test cb_n2(solver)
+      @test cb_n2(workspace)
 
       @test_throws TypeError cgne(A, b, callback = solver -> "string", history = true)
     end

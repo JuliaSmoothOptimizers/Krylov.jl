@@ -145,7 +145,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     nsolution(workspace :: $KS) = $nsol
     if $nsol == 1
       solution(workspace :: $KS) = workspace.X
-      solution(workspace :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
+      solution(workspace :: $KS, p :: Integer) = (p == 1) ? solution(workspace) : error("solution(workspace) has only one output.")
       results(workspace :: $KS) = (workspace.X, workspace.stats)
     end
     issolved(workspace :: $KS) = workspace.stats.solved
@@ -192,10 +192,10 @@ end
 Statistics of `solver` are displayed if `show_stats` is set to true.
 """
 function show(io :: IO, workspace :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  workspace = typeof(solver)
+  workspace = typeof(workspace)
   name_workspace = string(workspace.name.name)
   name_stats = string(typeof(workspace.stats).name.name)
-  nbytes = sizeof(solver)
+  nbytes = sizeof(workspace)
   storage = format_bytes(nbytes)
   architecture = S <: Vector ? "CPU" : "GPU"
   l1 = max(length(name_solver), length(string(FC)) + 11)  # length("Precision: ") = 11

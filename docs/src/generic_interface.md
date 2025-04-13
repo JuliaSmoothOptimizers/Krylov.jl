@@ -57,17 +57,17 @@ for method in (:bicgstab, :gmres)
     krylov_solve!(workspace, A, b)
 
     # Get the statistics
-    stats = statistics(solver)
+    stats = statistics(workspace)
 
     # Retrieve the solution
-    x = solution(solver)
+    x = solution(workspace)
 
     # Check if the solver converged
-    solved = issolved(solver)
+    solved = issolved(workspace)
     println("Converged $method: ", solved)
 
     # Display the number of iterations
-    niter = niterations(solver)
+    niter = niterations(workspace)
     println("Number of iterations for $method: ", niter)
 end
 ```

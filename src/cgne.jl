@@ -77,7 +77,7 @@ but simpler to implement. Only the x-part of the solution is returned.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -216,7 +216,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       # This is to guard against tolerances that are unreasonably small.
       resid_decrease_mach = (rNorm + one(T) ≤ one(T))
 
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       resid_decrease_lim = rNorm ≤ ɛ_c
       solved = resid_decrease_lim || resid_decrease_mach
       inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)

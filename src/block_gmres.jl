@@ -45,7 +45,7 @@ Solve the linear system AX = B of size n with p right-hand sides using block-GMR
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the block-Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the block-Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -274,7 +274,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         nr = nr + inner_iter
 
         # Update stopping criterion.
-        user_requested_exit = callback(solver) :: Bool
+        user_requested_exit = callback(workspace) :: Bool
         solved = RNorm ≤ ε
         inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
         timer = time_ns() - start_time

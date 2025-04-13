@@ -6,7 +6,7 @@ The starting point is used as initial approximation to a solution.
 ```julia
 workspace = CgWorkspace(A, b)
 cg!(workspace, A, b, itmax=100)
-if !issolved(solver)
+if !issolved(workspace)
   cg!(workspace, A, b, workspace.x, itmax=100) # cg! uses the approximate solution `workspace.x` as starting point
 end
 ```
@@ -67,7 +67,7 @@ y = y₀ + Δy
 # workspace = GmresWorkspace(A, b, k)  # FomWorkspace(A, b, k)
 # workspace.x .= 0                  # workspace.x .= x₀ 
 # nrestart = 0
-# while !issolved(solver) || nrestart ≤ 10
+# while !issolved(workspace) || nrestart ≤ 10
 #   solve!(workspace, A, b, workspace.x, itmax=k)
 #   nrestart += 1
 # end

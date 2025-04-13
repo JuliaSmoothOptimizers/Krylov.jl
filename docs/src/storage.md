@@ -119,10 +119,10 @@ workspace = LsmrWorkspace(A, b)
 show(stdout, workspace, show_stats=false)
 ```
 
-If we want the total number of bytes used by the workspace, we can call `nbytes = sizeof(solver)`.
+If we want the total number of bytes used by the workspace, we can call `nbytes = sizeof(workspace)`.
 
 ```@example storage
-nbytes = sizeof(solver)
+nbytes = sizeof(workspace)
 ```
 
 Thereafter, we can use `Base.format_bytes(nbytes)` to recover what is displayed in the REPL.

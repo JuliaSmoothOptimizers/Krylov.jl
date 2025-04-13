@@ -96,7 +96,7 @@
       cb_n2 = TestCallbackN2LS(A, b, zero(eltype(b)), tol = tol)
       lsqr!(workspace, A, b, M=M⁻¹, callback = cb_n2)
       @test workspace.stats.status == "user-requested exit"
-      @test cb_n2(solver)
+      @test cb_n2(workspace)
 
       @test_throws TypeError lsqr(A, b, M=M⁻¹, callback = solver -> "string", history = true)
     end

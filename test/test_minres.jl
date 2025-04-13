@@ -115,10 +115,10 @@
       storage_vec = similar(b, size(A, 1))
       tol = 1.0e-1
       cb_n2 = TestCallbackN2(A, b, tol = tol)
-      x, stats = minres(A, b, callback = solver -> cb_n2(solver)) # n = 10
+      x, stats = minres(A, b, callback = solver -> cb_n2(workspace)) # n = 10
       minres!(workspace, A, b, callback = cb_n2)
       @test workspace.stats.status == "user-requested exit"
-      @test cb_n2(solver)
+      @test cb_n2(workspace)
 
       @test_throws TypeError minres(A, b, callback = solver -> "string", history = true)
     end

@@ -230,7 +230,7 @@
         cb_n2 = TestCallbackN2SaddlePts(A, b, c, tol = tol)
         trimr!(workspace, A, b, c, callback = cb_n2)
         @test workspace.stats.status == "user-requested exit"
-        @test cb_n2(solver)
+        @test cb_n2(workspace)
 
         @test_throws TypeError trimr(A, b, c, callback = solver -> "string", history = true)
       end

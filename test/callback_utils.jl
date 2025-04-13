@@ -53,7 +53,7 @@ mutable struct TestCallbackN2{T, S, M}
 end
 TestCallbackN2(A, b; tol = 0.1) = TestCallbackN2(A, b, similar(b), tol)
 
-function (cb_n2::TestCallbackN2)(solver)
+function (cb_n2::TestCallbackN2)(workspace)
   mul!(cb_n2.storage_vec, cb_n2.A, workspace.x)
   cb_n2.storage_vec .-= cb_n2.b
   return norm(cb_n2.storage_vec) ≤ cb_n2.tol
@@ -69,7 +69,7 @@ mutable struct TestCallbackN2Adjoint{T, S, M}
 end
 TestCallbackN2Adjoint(A, b, c; tol = 0.1) = TestCallbackN2Adjoint(A, b, c, similar(b), similar(c), tol)
 
-function (cb_n2::TestCallbackN2Adjoint)(solver)
+function (cb_n2::TestCallbackN2Adjoint)(workspace)
   mul!(cb_n2.storage_vec1, cb_n2.A, workspace.x)
   cb_n2.storage_vec1 .-= cb_n2.b
   mul!(cb_n2.storage_vec2, cb_n2.A', workspace.y)
@@ -85,7 +85,7 @@ mutable struct TestCallbackN2Shifts{T, S, M}
 end
 TestCallbackN2Shifts(A, b, shifts; tol = 0.1) = TestCallbackN2Shifts(A, b, shifts, tol)
 
-function (cb_n2::TestCallbackN2Shifts)(solver)
+function (cb_n2::TestCallbackN2Shifts)(workspace)
   r = residuals(cb_n2.A, cb_n2.b, cb_n2.shifts, workspace.x)
   return all(map(norm, r) .≤ cb_n2.tol)
 end
@@ -100,7 +100,7 @@ mutable struct TestCallbackN2LS{T, S, M}
 end
 TestCallbackN2LS(A, b, λ; tol = 0.1) = TestCallbackN2LS(A, b, λ, similar(b), similar(b, size(A, 2)), tol)
 
-function (cb_n2::TestCallbackN2LS)(solver)
+function (cb_n2::TestCallbackN2LS)(workspace)
   mul!(cb_n2.storage_vec1, cb_n2.A, workspace.x)
   cb_n2.storage_vec1 .-= cb_n2.b
   mul!(cb_n2.storage_vec2, cb_n2.A', cb_n2.storage_vec1)
@@ -117,7 +117,7 @@ mutable struct TestCallbackN2LN{T, S, M}
 end
 TestCallbackN2LN(A, b, λ; tol = 0.1) = TestCallbackN2LN(A, b, λ, similar(b), tol)
 
-function (cb_n2::TestCallbackN2LN)(solver)
+function (cb_n2::TestCallbackN2LN)(workspace)
   mul!(cb_n2.storage_vec, cb_n2.A, workspace.x)
   cb_n2.storage_vec .-= cb_n2.b
   cb_n2.λ != 0 && (cb_n2.storage_vec .+= cb_n2.λ .* workspace.x)
@@ -135,7 +135,7 @@ end
 TestCallbackN2SaddlePts(A, b, c; tol = 0.1) = 
   TestCallbackN2SaddlePts(A, b, c, similar(b), similar(c), tol)
 
-function (cb_n2::TestCallbackN2SaddlePts)(solver)
+function (cb_n2::TestCallbackN2SaddlePts)(workspace)
   mul!(cb_n2.storage_vec1, cb_n2.A, workspace.y)
   cb_n2.storage_vec1 .+= workspace.x .- cb_n2.b
   mul!(cb_n2.storage_vec2, cb_n2.A', workspace.x)
@@ -159,7 +159,7 @@ mutable struct TestCallbackN2LSShifts{T, S, M}
 end
 TestCallbackN2LSShifts(A, b, shifts; tol = 0.1) = TestCallbackN2LSShifts(A, b, shifts, tol)
 
-function (cb_n2::TestCallbackN2LSShifts)(solver)
+function (cb_n2::TestCallbackN2LSShifts)(workspace)
   r = residuals_ls(cb_n2.A, cb_n2.b, cb_n2.shifts, workspace.x)
   return all(map(norm, r) .≤ cb_n2.tol)
 end
