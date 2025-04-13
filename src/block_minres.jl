@@ -115,7 +115,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
     reset!(stats)
     R₀ = warm_start ? Q : B
 
-    # Temporary buffers -- should be stored in the solver
+    # Temporary buffers -- should be stored in the workspace
     Ψₖ = similar(B, p, p)
     Ωₖ = similar(B, p, p)
     Ψₖ₊₁ = similar(B, p, p)

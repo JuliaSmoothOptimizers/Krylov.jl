@@ -192,7 +192,7 @@
         @test workspace.stats.status == "user-requested exit"
         @test cb_n2(workspace)
 
-        @test_throws TypeError tricg(A, b, c, callback = solver -> "string", history = true)
+        @test_throws TypeError tricg(A, b, c, callback = workspace -> "string", history = true)
       end
     end
   end
