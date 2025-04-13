@@ -1,4 +1,4 @@
-export BlockMinresSolver, BlockGmresSolver
+export BlockKrylovSolver, BlockMinresSolver, BlockGmresSolver
 
 "Abstract type for using block Krylov solvers in-place."
 abstract type BlockKrylovSolver{T,FC,SV,SM} end

@@ -22,9 +22,13 @@
 # - `krylov_workspace(Val{:cg}(), A, b)`
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca> -- <amontoison@anl.gov>
-# Chicago, October 2024 -- Chicago, March 2025.
+# Chicago, October 2024 -- Chicago, April 2025.
 
 export krylov_workspace, krylov_solve, krylov_solve!
+
+# Alias to maintain partial backward compatibility.
+# `Krylov.solve!` will continue to work, but `krylov_solve!` is now the exported name (since v0.10).
+const solve! = krylov_solve!
 
 """
     krylov_workspace(Val{method}(), args...; kwargs...)
