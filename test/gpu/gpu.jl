@@ -1,6 +1,5 @@
 using SparseArrays, Random, Test
 using LinearAlgebra, Krylov, KernelAbstractions
-import Krylov.solve!
 
 if VERSION < v"1.11"
   @kernel function copy_triangle_kernel!(dest, src)
@@ -62,7 +61,7 @@ function test_solver(S, M)
   A = M(undef, n, n)
   b = S(undef, n)
   solver = GmresSolver(n, n, S; memory)
-  solve!(solver, A, b)  # Test that we don't have errors
+  krylov_solve!(solver, A, b)  # Test that we don't have errors
 end
 
 function test_conversion(S, M)

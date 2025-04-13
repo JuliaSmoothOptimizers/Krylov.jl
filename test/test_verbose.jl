@@ -12,38 +12,38 @@ function test_verbose(FC)
   shifts  = T[1; 2; 3; 4; 5]
   nshifts = 5
 
-  for fn in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos, :dqgmres, :diom, :cr, :gpmr,
-             :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab, :craigmr, :crls, :symmlq, :minres,
-             :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr, :gmres, :fom,
-             :car, :minares, :fgmres, :cg_lanczos_shift, :cgls_lanczos_shift)
+  for method in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos, :dqgmres, :diom, :cr, :gpmr,
+                 :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab, :craigmr, :crls, :symmlq, :minres,
+                 :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr, :gmres, :fom,
+                 :car, :minares, :fgmres, :cg_lanczos_shift, :cgls_lanczos_shift)
 
-    @testset "$fn" begin
+    @testset "$method" begin
       io = IOBuffer()
-      if fn in (:trilqr, :bilqr)
-        @eval $fn($A, $b, $b, verbose=1, iostream=$io)
-      elseif fn in (:tricg, :trimr)
-        @eval $fn($Au, $c, $b, verbose=1, iostream=$io)
-      elseif fn in (:lnlq, :craig, :craigmr, :cgne, :crmr)
-        @eval $fn($Au, $c, verbose=1, iostream=$io)
-      elseif fn in (:lslq, :lsqr, :lsmr, :cgls, :crls)
-        @eval $fn($Ao, $b, verbose=1, iostream=$io)
-      elseif fn == :usymlq
-        @eval $fn($Au, $c, $b, verbose=1, iostream=$io)
-      elseif fn == :usymqr
-        @eval $fn($Ao, $b, $c, verbose=1, iostream=$io)
-      elseif fn == :gpmr
-        @eval $fn($Ao, $Au, $b, $c, verbose=1, iostream=$io)
-      elseif fn in (:cg_lanczos_shift, :cgls_lanczos_shift)
-        @eval $fn($A, $b, $shifts, verbose=1, iostream=$io)
+      if method in (:trilqr, :bilqr)
+        krylov_solve(Val{method}(), A, b, b, verbose=1, iostream=io)
+      elseif method in (:tricg, :trimr)
+        krylov_solve(Val{method}(), Au, c, b, verbose=1, iostream=io)
+      elseif method in (:lnlq, :craig, :craigmr, :cgne, :crmr)
+        krylov_solve(Val{method}(), Au, c, verbose=1, iostream=io)
+      elseif method in (:lslq, :lsqr, :lsmr, :cgls, :crls)
+        krylov_solve(Val{method}(), Ao, b, verbose=1, iostream=io)
+      elseif method == :usymlq
+        krylov_solve(Val{method}(), Au, c, b, verbose=1, iostream=io)
+      elseif method == :usymqr
+        krylov_solve(Val{method}(), Ao, b, c, verbose=1, iostream=io)
+      elseif method == :gpmr
+        krylov_solve(Val{method}(), Ao, Au, b, c, verbose=1, iostream=io)
+      elseif method in (:cg_lanczos_shift, :cgls_lanczos_shift)
+        krylov_solve(Val{method}(), A, b, shifts, verbose=1, iostream=io)
       else
-        @eval $fn($A, $b, verbose=1, iostream=$io)
+        krylov_solve(Val{method}(), A, b, verbose=1, iostream=io)
       end
 
       showed = String(take!(io))
       str = split(showed, '\n', keepempty=false)
       nrows = length(str)
-      first_row = fn in (:bilqr, :trilqr) ? 3 : 2
-      last_row = fn == :cg ? nrows-1 : nrows
+      first_row = method in (:bilqr, :trilqr) ? 3 : 2
+      last_row = method == :cg ? nrows-1 : nrows
       str = str[first_row:last_row]
       len_header = length(str[1])
       @test mapreduce(x -> length(x) == len_header, &, str)

@@ -12,45 +12,6 @@ export KrylovConstructor
 
 import Base.size, Base.sizeof, Base.format_bytes
 
-const KRYLOV_SOLVERS = Dict(
-  :cg         => :CgSolver       ,
-  :cr         => :CrSolver       ,
-  :car        => :CarSolver      ,
-  :symmlq     => :SymmlqSolver   ,
-  :cg_lanczos => :CgLanczosSolver,
-  :minares    => :MinaresSolver  ,
-  :minres     => :MinresSolver   ,
-  :minres_qlp => :MinresQlpSolver,
-  :diom       => :DiomSolver     ,
-  :fom        => :FomSolver      ,
-  :dqgmres    => :DqgmresSolver  ,
-  :gmres      => :GmresSolver    ,
-  :fgmres     => :FgmresSolver   ,
-  :gpmr       => :GpmrSolver     ,
-  :usymlq     => :UsymlqSolver   ,
-  :usymqr     => :UsymqrSolver   ,
-  :tricg      => :TricgSolver    ,
-  :trimr      => :TrimrSolver    ,
-  :trilqr     => :TrilqrSolver   ,
-  :cgs        => :CgsSolver      ,
-  :bicgstab   => :BicgstabSolver ,
-  :bilq       => :BilqSolver     ,
-  :qmr        => :QmrSolver      ,
-  :bilqr      => :BilqrSolver    ,
-  :cgls       => :CglsSolver     ,
-  :crls       => :CrlsSolver     ,
-  :cgne       => :CgneSolver     ,
-  :crmr       => :CrmrSolver     ,
-  :lslq       => :LslqSolver     ,
-  :lsqr       => :LsqrSolver     ,
-  :lsmr       => :LsmrSolver     ,
-  :lnlq       => :LnlqSolver     ,
-  :craig      => :CraigSolver    ,
-  :craigmr    => :CraigmrSolver  ,
-  :cg_lanczos_shift   => :CgLanczosShiftSolver  ,
-  :cgls_lanczos_shift => :CglsLanczosShiftSolver,
-)
-
 """
     KrylovConstructor(vm; vm_empty=vm)
     KrylovConstructor(vm, vn; vm_empty=vm, vn_empty=vn)
@@ -91,7 +52,7 @@ function KrylovConstructor(vm, vn; vm_empty=vm, vn_empty=vn)
   return KrylovConstructor(vm, vn, vm_empty, vn_empty)
 end
 
-"Abstract type for using Krylov solvers in-place"
+"Abstract type for using Krylov solvers in-place."
 abstract type KrylovSolver{T,FC,S} end
 
 """

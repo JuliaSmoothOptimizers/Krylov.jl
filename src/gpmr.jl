@@ -108,8 +108,9 @@ function gpmr end
 
 where `kwargs` are keyword arguments of [`gpmr`](@ref).
 
-Note that the `memory` keyword argument is the only exception.
-It's required to create a `GpmrSolver` and can't be changed later.
+The keyword argument `memory` is the only exception.
+It is only supported by [`gpmr`](@ref) and is required to create a `GpmrSolver`.
+It cannot be changed later.
 
 See [`GpmrSolver`](@ref) for more details about the `solver`.
 """
