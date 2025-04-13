@@ -1,7 +1,7 @@
 ## Stats Types
 
 ```@docs
-Krylov.Krylov.KrylovStats
+Krylov.KrylovStats
 Krylov.SimpleStats
 Krylov.LanczosStats
 Krylov.LanczosShiftStats
