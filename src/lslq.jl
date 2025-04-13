@@ -209,8 +209,8 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :u, S, workspace.Av)  # The length of u is m
-    allocate_if(!NisI, solver, :v, S, workspace.x)   # The length of v is n
+    allocate_if(!MisI, workspace, :u, S, workspace.Av)  # The length of u is m
+    allocate_if(!NisI, workspace, :v, S, workspace.x)   # The length of v is n
     x, Nv, Aᴴu, w̄ = workspace.x, workspace.Nv, workspace.Aᴴu, workspace.w̄
     Mu, Av, err_vec, stats = workspace.Mu, workspace.Av, workspace.err_vec, workspace.stats
     rNorms, ArNorms, err_lbnds = stats.residuals, stats.Aresiduals, stats.err_lbnds

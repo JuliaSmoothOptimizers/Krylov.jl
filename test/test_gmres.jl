@@ -133,10 +133,10 @@
       solver = GmresWorkspace(A, b)
       tol = 1.0e-1
       N = Diagonal(1 ./ diag(A))
-      stor = StorageGetxRestartedGmres(solver, N = N)
+      stor = StorageGetxRestartedGmres(workspace, N = N)
       storage_vec = similar(b)
-      gmres!(solver, A, b, N = N, atol = 0.0, rtol = 0.0, restart = true, 
-             callback = solver -> restarted_gmres_callback_n2(solver, A, b, stor, N, storage_vec, tol))
+      gmres!(workspace, A, b, N = N, atol = 0.0, rtol = 0.0, restart = true, 
+             callback = solver -> restarted_gmres_callback_n2(workspace, A, b, stor, N, storage_vec, tol))
       @test workspace.stats.status == "user-requested exit"
       @test norm(A * x - b) ≤ tol
 

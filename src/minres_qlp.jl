@@ -129,7 +129,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :vₖ, S, workspace.x)  # The length of vₖ is n
+    allocate_if(!MisI, workspace, :vₖ, S, workspace.x)  # The length of vₖ is n
     wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = workspace.wₖ₋₁, workspace.wₖ, workspace.M⁻¹vₖ₋₁, workspace.M⁻¹vₖ
     Δx, x, p, stats = workspace.Δx, workspace.x, workspace.p, workspace.stats
     warm_start = workspace.warm_start

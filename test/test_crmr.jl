@@ -95,7 +95,7 @@ end
       solver = CrmrWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2LN(A, b, real(zero(eltype(b))), tol = tol)
-      crmr!(solver, A, b, callback = cb_n2)
+      crmr!(workspace, A, b, callback = cb_n2)
       @test workspace.stats.status == "user-requested exit"
       @test cb_n2(solver)
 

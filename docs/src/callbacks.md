@@ -19,7 +19,7 @@ function custom_stopping_condition(workspace::KrylovWorkspace, A, b, r, tol)
   return bool
 end
 
-cg_callback(solver) = custom_stopping_condition(solver, A, b, r, tol)
+cg_callback(solver) = custom_stopping_condition(workspace, A, b, r, tol)
 (x, stats) = cg(A, b, callback = cg_callback)
 ```
 

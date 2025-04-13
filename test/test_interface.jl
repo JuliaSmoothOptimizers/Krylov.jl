@@ -103,35 +103,35 @@ function test_krylov_solvers(FC; krylov_constructor::Bool=false)
     shifts2 = [1.0; 2.0; 3.0; 4.0; 5.0; 6.0]
     for (method, solver) in solvers
       if method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr)
-        @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $n2)") krylov_solve!(solver, A2, b2)
+        @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $n2)") krylov_solve!(workspace, A2, b2)
       end
-      method == :cg_lanczos_shift && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $n2)") krylov_solve!(solver, A2, b2, shifts2)
-      method == :cg_lanczos_shift && @test_throws ErrorException("workspace.nshifts = $(workspace.nshifts) is inconsistent with length(shifts) = $(length(shifts2))") krylov_solve!(solver, A, b, shifts2)
-      method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m2, $n2)") krylov_solve!(solver, Au2, c2)
-      method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr) && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $m2)") krylov_solve!(solver, Ao2, b2)
-      method == :cgls_lanczos_shift && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $m2)") krylov_solve!(solver, Ao2, b2, shifts2)
-      method == :cgls_lanczos_shift && @test_throws ErrorException("workspace.nshifts = $(workspace.nshifts) is inconsistent with length(shifts) = $(length(shifts2))") krylov_solve!(solver, Ao, b, shifts2)
-      method ∈ (:bilqr, :trilqr) && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $n2)") krylov_solve!(solver, A2, b2, b2)
-      method == :gpmr && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $m2)") krylov_solve!(solver, Ao2, Au2, b2, c2)
-      method ∈ (:tricg, :trimr) && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $m2)") krylov_solve!(solver, Ao2, b2, c2)
-      method == :usymlq && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m2, $n2)") krylov_solve!(solver, Au2, c2, b2)
-      method == :usymqr && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $m2)") krylov_solve!(solver, Ao2, b2, c2)
+      method == :cg_lanczos_shift && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $n2)") krylov_solve!(workspace, A2, b2, shifts2)
+      method == :cg_lanczos_shift && @test_throws ErrorException("workspace.nshifts = $(workspace.nshifts) is inconsistent with length(shifts) = $(length(shifts2))") krylov_solve!(workspace, A, b, shifts2)
+      method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m2, $n2)") krylov_solve!(workspace, Au2, c2)
+      method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr) && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $m2)") krylov_solve!(workspace, Ao2, b2)
+      method == :cgls_lanczos_shift && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $m2)") krylov_solve!(workspace, Ao2, b2, shifts2)
+      method == :cgls_lanczos_shift && @test_throws ErrorException("workspace.nshifts = $(workspace.nshifts) is inconsistent with length(shifts) = $(length(shifts2))") krylov_solve!(workspace, Ao, b, shifts2)
+      method ∈ (:bilqr, :trilqr) && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $n2)") krylov_solve!(workspace, A2, b2, b2)
+      method == :gpmr && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $m2)") krylov_solve!(workspace, Ao2, Au2, b2, c2)
+      method ∈ (:tricg, :trimr) && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $m2)") krylov_solve!(workspace, Ao2, b2, c2)
+      method == :usymlq && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m2, $n2)") krylov_solve!(workspace, Au2, c2, b2)
+      method == :usymqr && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $m2)") krylov_solve!(workspace, Ao2, b2, c2)
     end
   end
 
   @testset "Test the keyword argument timemax" begin
     timemax = 0.0
     for (method, solver) in solvers
-      method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr) && krylov_solve!(solver, A, b, timemax=timemax)
-      method == :cg_lanczos_shift && krylov_solve!(solver, A, b, shifts, timemax=timemax)
-      method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && krylov_solve!(solver, Au, c, timemax=timemax)
-      method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr) && krylov_solve!(solver, Ao, b, timemax=timemax)
-      method == :cgls_lanczos_shift && krylov_solve!(solver, Ao, b, shifts, timemax=timemax)
-      method ∈ (:bilqr, :trilqr) && krylov_solve!(solver, A, b, b, timemax=timemax)
-      method == :gpmr && krylov_solve!(solver, Ao, Au, b, c, timemax=timemax)
-      method ∈ (:tricg, :trimr) && krylov_solve!(solver, Au, c, b, timemax=timemax)
-      method == :usymlq && krylov_solve!(solver, Au, c, b, timemax=timemax)
-      method == :usymqr && krylov_solve!(solver, Ao, b, c, timemax=timemax)
+      method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr) && krylov_solve!(workspace, A, b, timemax=timemax)
+      method == :cg_lanczos_shift && krylov_solve!(workspace, A, b, shifts, timemax=timemax)
+      method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && krylov_solve!(workspace, Au, c, timemax=timemax)
+      method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr) && krylov_solve!(workspace, Ao, b, timemax=timemax)
+      method == :cgls_lanczos_shift && krylov_solve!(workspace, Ao, b, shifts, timemax=timemax)
+      method ∈ (:bilqr, :trilqr) && krylov_solve!(workspace, A, b, b, timemax=timemax)
+      method == :gpmr && krylov_solve!(workspace, Ao, Au, b, c, timemax=timemax)
+      method ∈ (:tricg, :trimr) && krylov_solve!(workspace, Au, c, b, timemax=timemax)
+      method == :usymlq && krylov_solve!(workspace, Au, c, b, timemax=timemax)
+      method == :usymqr && krylov_solve!(workspace, Ao, b, c, timemax=timemax)
       @test workspace.stats.status == "time limit exceeded"
     end
   end
@@ -149,10 +149,10 @@ function test_krylov_solvers(FC; krylov_constructor::Bool=false)
                      :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr, :cg_lanczos_shift)
           if method == :cg_lanczos_shift
             @inferred krylov_solve(Val{method}(), A, b, shifts)
-            @inferred krylov_solve!(solver, A, b, shifts)
+            @inferred krylov_solve!(workspace, A, b, shifts)
           else
             @inferred krylov_solve(Val{method}(), A, b)
-            @inferred krylov_solve!(solver, A, b)
+            @inferred krylov_solve!(workspace, A, b)
           end
           niter = niterations(solver)
           @test Aprod(solver) == (method ∈ (:cgs, :bicgstab) ? 2 * niter : niter)
@@ -163,22 +163,22 @@ function test_krylov_solvers(FC; krylov_constructor::Bool=false)
 
         if method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr)
           @inferred krylov_solve(Val{method}(), Au, c)
-          @inferred krylov_solve!(solver, Au, c)
+          @inferred krylov_solve!(workspace, Au, c)
           niter = niterations(solver)
           @test Aprod(solver) == niter
           @test Atprod(solver) == niter
-          @test solution(solver, 1) === workspace.x
+          @test solution(workspace, 1) === workspace.x
           @test nsolution(solver) == (method ∈ (:cgne, :crmr) ? 1 : 2)
-          (nsolution == 2) && (@test solution(solver, 2) == workspace.y)
+          (nsolution == 2) && (@test solution(workspace, 2) == workspace.y)
         end
 
         if method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr, :cgls_lanczos_shift)
           if method == :cgls_lanczos_shift
             @inferred krylov_solve(Val{method}(), Ao, b, shifts)
-            @inferred krylov_solve!(solver, Ao, b, shifts)
+            @inferred krylov_solve!(workspace, Ao, b, shifts)
           else
             @inferred krylov_solve(Val{method}(), Ao, b)
-            @inferred krylov_solve!(solver, Ao, b)
+            @inferred krylov_solve!(workspace, Ao, b)
           end
           niter = niterations(solver)
           @test Aprod(solver) == niter
@@ -189,12 +189,12 @@ function test_krylov_solvers(FC; krylov_constructor::Bool=false)
 
         if method ∈ (:bilqr, :trilqr)
           @inferred krylov_solve(Val{method}(), A, b, b)
-          @inferred krylov_solve!(solver, A, b, b)
+          @inferred krylov_solve!(workspace, A, b, b)
           niter = niterations(solver)
           @test Aprod(solver) == niter
           @test Atprod(solver) == niter
-          @test solution(solver, 1) === workspace.x
-          @test solution(solver, 2) === workspace.y
+          @test solution(workspace, 1) === workspace.x
+          @test solution(workspace, 2) === workspace.y
           @test nsolution(solver) == 2
           @test issolved_primal(solver)
           @test issolved_dual(solver)
@@ -203,27 +203,27 @@ function test_krylov_solvers(FC; krylov_constructor::Bool=false)
         if method ∈ (:tricg, :trimr, :gpmr)
           if method == :gpmr
             @inferred krylov_solve(Val{method}(), Ao, Au, b, c)
-            @inferred krylov_solve!(solver, Ao, Au, b, c)
+            @inferred krylov_solve!(workspace, Ao, Au, b, c)
           else
             @inferred krylov_solve(Val{method}(), Au, c, b)
-            @inferred krylov_solve!(solver, Au, c, b)
+            @inferred krylov_solve!(workspace, Au, c, b)
           end
           niter = niterations(solver)
           @test Aprod(solver) == niter
           method != :gpmr && (@test Atprod(solver) == niter)
           method == :gpmr && (@test Bprod(solver) == niter)
-          @test solution(solver, 1) === workspace.x
-          @test solution(solver, 2) === workspace.y
+          @test solution(workspace, 1) === workspace.x
+          @test solution(workspace, 2) === workspace.y
           @test nsolution(solver) == 2
         end
 
         if method ∈ (:usymlq, :usymqr)
           if method == :usymlq
             @inferred krylov_solve(Val{method}(), Au, c, b)
-            @inferred krylov_solve!(solver, Au, c, b)
+            @inferred krylov_solve!(workspace, Au, c, b)
           else
             @inferred krylov_solve(Val{method}(), Ao, b, c)
-            @inferred krylov_solve!(solver, Ao, b, c)
+            @inferred krylov_solve!(workspace, Ao, b, c)
           end
           niter = niterations(solver)
           @test Aprod(solver) == niter
@@ -260,7 +260,7 @@ function test_block_krylov_solvers(FC)
       for i = 1 : 3
         B = 5 * B
         @inferred krylov_solve(Val{method}(), A, B)
-        @inferred krylov_solve!(solver, A, B)
+        @inferred krylov_solve!(workspace, A, B)
         niter = niterations(solver)
         @test Aprod(solver) == niter
         @test Atprod(solver) == 0
@@ -278,7 +278,7 @@ end
 
 function test_show(solver)
   io = IOBuffer()
-  show(io, solver, show_stats=false)
+  show(io, workspace, show_stats=false)
   showed = String(take!(io))
 
   # Test that the lines have the same length
@@ -296,7 +296,7 @@ function test_show(solver)
   @test mapreduce(x -> length(x) - mapreduce(y -> occursin(y, x), |, ["w̅","w̄","d̅"]) == len_col3, &, str2[3:3:end])
 
   # Code coverage
-  show(io, solver, show_stats=true)
+  show(io, workspace, show_stats=true)
 end
 
 @testset "Krylov solvers" begin

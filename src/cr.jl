@@ -133,7 +133,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace
-    allocate_if(!MisI, solver, :Mq, S, workspace.x)  # The length of Mq is n
+    allocate_if(!MisI, workspace, :Mq, S, workspace.x)  # The length of Mq is n
     Δx, x, r, p, q, Ar, stats = workspace.Δx, workspace.x, workspace.r, workspace.p, workspace.q, workspace.Ar, workspace.stats
     warm_start = workspace.warm_start
     rNorms, ArNorms = stats.residuals, stats.Aresiduals

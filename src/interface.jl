@@ -1,17 +1,17 @@
 # The purpose of this file is to automatically define all variants of in-place and out-of-place methods for Krylov solvers using metaprogramming.
-# For example, the file `cg.jl` only implements the in-place method `cg!(solver, A, b; kwargs...)`.
+# For example, the file `cg.jl` only implements the in-place method `cg!(workspace, A, b; kwargs...)`.
 # This file generates additional variants of this method automatically, such as:
 #
 # - `cg(A, b; kwargs...)`
 # - `krylov_solve(Val{:cg}(), A, b; kwargs...)`
-# - `krylov_solve!(solver, A, b; kwargs...)`
+# - `krylov_solve!(workspace, A, b; kwargs...)`
 #
 # Since the conjugate gradient method also supports an optional argument `x0`, additional methods are generated:
 #
 # - `cg(A, b, x0; kwargs...)`
-# - `cg!(solver, A, b, x0; kwargs...)`
+# - `cg!(workspace, A, b, x0; kwargs...)`
 # - `krylov_solve(Val{:cg}(), A, b, x0; kwargs...)`
-# - `krylov_solve!(solver, A, b, x0; kwargs...)`
+# - `krylov_solve!(workspace, A, b, x0; kwargs...)`
 #
 # Generic constructors for each KrylovWorkspace and BlockKrylovWorkspace are also defined using metaprogramming.
 # The function `krylov_workspace` uses the first argument, `Val{solver}()`, where `solver` is a symbol used to dispatch to the appropriate method.
@@ -43,7 +43,7 @@ Generic function that dispatches to the appropriate out-of-place (block) Krylov 
 function krylov_solve end
 
 """
-    krylov_solve!(solver, args...; kwargs...)
+    krylov_solve!(workspace, args...; kwargs...)
 
 Generic function that dispatches to the appropriate in-place (block) Krylov method based on the type of `solver`.
 The argument `solver` must be a subtype of [`KrylovWorkspace`](@ref) or [`BlockKrylovWorkspace`](@ref) (such as `CgWorkspace`, `GmresWorkspace` or `BlockMinresWorkspace`).
@@ -124,7 +124,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         solver = $workspace(A, b, nshifts)
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
-        $(krylov!)(solver, $(args...); $(kwargs...))
+        $(krylov!)(workspace, $(args...); $(kwargs...))
         workspace.stats.timer += elapsed_time
         return results(solver)
       end
@@ -138,7 +138,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         solver = $workspace(A, b; memory)
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
-        $(krylov!)(solver, $(args...); $(kwargs...))
+        $(krylov!)(workspace, $(args...); $(kwargs...))
         workspace.stats.timer += elapsed_time
         return results(solver)
       end
@@ -149,10 +149,10 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         function $(krylov)($(def_args...), $(def_optargs...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           solver = $workspace(A, b; memory)
-          warm_start!(solver, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
-          $(krylov!)(solver, $(args...); $(kwargs...))
+          $(krylov!)(workspace, $(args...); $(kwargs...))
           workspace.stats.timer += elapsed_time
           return results(solver)
         end
@@ -167,7 +167,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         solver = $workspace(A, b; window)
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
-        $(krylov!)(solver, $(args...); $(kwargs...))
+        $(krylov!)(workspace, $(args...); $(kwargs...))
         workspace.stats.timer += elapsed_time
         return results(solver)
       end
@@ -178,10 +178,10 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         function $(krylov)($(def_args...), $(def_optargs...); window::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           solver = $workspace(A, b; window)
-          warm_start!(solver, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
-          $(krylov!)(solver, $(args...); $(kwargs...))
+          $(krylov!)(workspace, $(args...); $(kwargs...))
           workspace.stats.timer += elapsed_time
           return results(solver)
         end
@@ -196,7 +196,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         solver = $workspace(A, b)
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
-        $(krylov!)(solver, $(args...); $(kwargs...))
+        $(krylov!)(workspace, $(args...); $(kwargs...))
         workspace.stats.timer += elapsed_time
         return results(solver)
       end
@@ -207,10 +207,10 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           solver = $workspace(A, b)
-          warm_start!(solver, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
-          $(krylov!)(solver, $(args...); $(kwargs...))
+          $(krylov!)(workspace, $(args...); $(kwargs...))
           workspace.stats.timer += elapsed_time
           return results(solver)
         end
@@ -221,17 +221,17 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
   end
 
   ## In-place
-  @eval krylov_solve!(solver :: $workspace{T,FC,S}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}} = $(krylov!)(solver, $(args...); $(kwargs...))
+  @eval krylov_solve!(solver :: $workspace{T,FC,S}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}} = $(krylov!)(workspace, $(args...); $(kwargs...))
 
   for krylov_ip in (:krylov_solve!, krylov!)
     @eval begin
       if !isempty($optargs)
         function $(krylov_ip)(solver :: $workspace{T,FC,S}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
           start_time = time_ns()
-          warm_start!(solver, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
-          $(krylov!)(solver, $(args...); $(kwargs...))
+          $(krylov!)(workspace, $(args...); $(kwargs...))
           workspace.stats.timer += elapsed_time
           return workspace
         end
@@ -265,7 +265,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         solver = $workspace(A, B; memory)
         elapsed_time = ktimer(start_time)
         timemax -= elapsed_time
-        $(krylov!)(solver, $(args...); $(kwargs...))
+        $(krylov!)(workspace, $(args...); $(kwargs...))
         workspace.stats.timer += elapsed_time
         return results(solver)
       end
@@ -276,10 +276,10 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         function $(krylov)($(def_args...), $(def_optargs...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           solver = $workspace(A, B; memory)
-          warm_start!(solver, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = ktimer(start_time)
           timemax -= elapsed_time
-          $(krylov!)(solver, $(args...); $(kwargs...))
+          $(krylov!)(workspace, $(args...); $(kwargs...))
           workspace.stats.timer += elapsed_time
           return results(solver)
         end
@@ -294,7 +294,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         solver = $workspace(A, B)
         elapsed_time = ktimer(start_time)
         timemax -= elapsed_time
-        $(krylov!)(solver, $(args...); $(kwargs...))
+        $(krylov!)(workspace, $(args...); $(kwargs...))
         workspace.stats.timer += elapsed_time
         return results(solver)
       end
@@ -305,10 +305,10 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           solver = $workspace(A, B)
-          warm_start!(solver, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = ktimer(start_time)
           timemax -= elapsed_time
-          $(krylov!)(solver, $(args...); $(kwargs...))
+          $(krylov!)(workspace, $(args...); $(kwargs...))
           workspace.stats.timer += elapsed_time
           return results(solver)
         end
@@ -319,17 +319,17 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
   end
 
   ## In-place
-  @eval krylov_solve!(solver :: $workspace{T,FC,SV,SM}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}} = $(krylov!)(solver, $(args...); $(kwargs...))
+  @eval krylov_solve!(solver :: $workspace{T,FC,SV,SM}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}} = $(krylov!)(workspace, $(args...); $(kwargs...))
 
   for krylov_ip in (:krylov_solve!, krylov!)
     @eval begin
       if !isempty($optargs)
         function $(krylov_ip)(solver :: $workspace{T,FC,SV,SM}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
           start_time = time_ns()
-          warm_start!(solver, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
-          $(krylov!)(solver, $(args...); $(kwargs...))
+          $(krylov!)(workspace, $(args...); $(kwargs...))
           workspace.stats.timer += elapsed_time
           return workspace
         end

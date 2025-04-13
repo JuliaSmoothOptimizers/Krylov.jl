@@ -116,9 +116,9 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
     ktypeof(B) == SM || error("ktypeof(B) must be equal to $SM")
 
     # Set up workspace.
-    allocate_if(!MisI  , solver, :Q , SM, workspace.n, workspace.p)
-    allocate_if(!NisI  , solver, :P , SM, workspace.n, workspace.p)
-    allocate_if(restart, solver, :ΔX, SM, workspace.n, workspace.p)
+    allocate_if(!MisI  , workspace, :Q , SM, workspace.n, workspace.p)
+    allocate_if(!NisI  , workspace, :P , SM, workspace.n, workspace.p)
+    allocate_if(restart, workspace, :ΔX, SM, workspace.n, workspace.p)
     ΔX, X, W, V, Z = workspace.ΔX, workspace.X, workspace.W, workspace.V, workspace.Z
     C, D, R, H, τ, stats = workspace.C, workspace.D, workspace.R, workspace.H, workspace.τ, workspace.stats
     Ψtmp = C

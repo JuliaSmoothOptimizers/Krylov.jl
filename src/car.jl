@@ -116,7 +116,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :Mu, S, workspace.x)  # The length of Mu is n
+    allocate_if(!MisI, workspace, :Mu, S, workspace.x)  # The length of Mu is n
     Δx, x, r, p, s, q, t, u, stats = workspace.Δx, workspace.x, workspace.r, workspace.p, workspace.s, workspace.q, workspace.t, workspace.u, workspace.stats
     Mu = MisI ? u : workspace.Mu
     warm_start = workspace.warm_start

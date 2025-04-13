@@ -2759,7 +2759,7 @@ end
 
 Return the solution(s) stored in the `solver`.
 Optionally you can specify which solution you want to recover,
-`solution(solver, 1)` returns `x` and `solution(solver, 2)` returns `y`.
+`solution(workspace, 1)` returns `x` and `solution(workspace, 2)` returns `y`.
 """
 function solution end
 
@@ -2814,7 +2814,7 @@ Allows retrieving the output arguments of an out-of-place method from the in-pla
 For example, instead of `x, stats = cg(A, b)`, you can use:
 ```julia
 solver = CgWorkspace(A, b)
-cg!(solver, A, b)
+cg!(workspace, A, b)
 x, stats = results(solver)
 ```
 """
@@ -2891,8 +2891,8 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
           length(x0) == workspace.n || error("x0 should have size $n")
           length(y0) == workspace.m || error("y0 should have size $m")
           S = typeof(workspace.x)
-          allocate_if(true, solver, :Δx, S, workspace.x)  # The length of Δx is n
-          allocate_if(true, solver, :Δy, S, workspace.y)  # The length of Δy is m
+          allocate_if(true, workspace, :Δx, S, workspace.x)  # The length of Δx is n
+          allocate_if(true, workspace, :Δy, S, workspace.y)  # The length of Δy is m
           kcopy!(workspace.n, workspace.Δx, x0)
           kcopy!(workspace.m, workspace.Δy, y0)
           workspace.warm_start = true
@@ -2902,7 +2902,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
         function warm_start!(solver :: $KS, x0)
           S = typeof(workspace.x)
           length(x0) == workspace.n || error("x0 should have size $n")
-          allocate_if(true, solver, :Δx, S, workspace.x)  # The length of Δx is n
+          allocate_if(true, workspace, :Δx, S, workspace.x)  # The length of Δx is n
           kcopy!(workspace.n, workspace.Δx, x0)
           workspace.warm_start = true
           return workspace

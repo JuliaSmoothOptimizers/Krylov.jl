@@ -32,16 +32,16 @@ The workspace is always the first argument of the in-place methods:
 
 ```@solvers
 minres_solver = MinresWorkspace(m, n, Vector{Float64})
-minres!(minres_solver, A1, b1)
+minres!(minres_workspace, A1, b1)
 
 bicgstab_solver = BicgstabWorkspace(m, n, Vector{ComplexF64})
-bicgstab!(bicgstab_solver, A2, b2)
+bicgstab!(bicgstab_workspace, A2, b2)
 
 gmres_solver = GmresWorkspace(m, n, Vector{BigFloat})
-gmres!(gmres_solver, A3, b3)
+gmres!(gmres_workspace, A3, b3)
 
 lsqr_solver = LsqrWorkspace(m, n, CuVector{Float32})
-lsqr!(lsqr_solver, A4, b4)
+lsqr!(lsqr_workspace, A4, b4)
 ```
 
 ## Examples
@@ -71,7 +71,7 @@ function newton(∇f, ∇²f, x₀; itmax = 200, tol = 1e-8)
     while !(solved || tired)
  
         Hx = ∇²f(x)           # Compute ∇²f(xₖ)
-        cg!(solver, Hx, -gx)  # Solve ∇²f(xₖ)Δx = -∇f(xₖ)
+        cg!(workspace, Hx, -gx)  # Solve ∇²f(xₖ)Δx = -∇f(xₖ)
         x = x + Δx            # Update xₖ₊₁ = xₖ + Δx
         gx = ∇f(x)            # ∇f(xₖ₊₁)
         
@@ -106,7 +106,7 @@ function gauss_newton(F, JF, x₀; itmax = 200, tol = 1e-8)
     while !(solved || tired)
  
         Jx = JF(x)              # Compute J(xₖ)
-        lsmr!(solver, Jx, -Fx)  # Minimize ‖J(xₖ)Δx + F(xₖ)‖
+        lsmr!(workspace, Jx, -Fx)  # Minimize ‖J(xₖ)Δx + F(xₖ)‖
         x = x + Δx              # Update xₖ₊₁ = xₖ + Δx
         Fx_old = Fx             # F(xₖ)
         Fx = F(x)               # F(xₖ₊₁)

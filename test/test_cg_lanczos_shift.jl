@@ -48,7 +48,7 @@ end
       solver = CgLanczosShiftWorkspace(A, b, length(shifts))
       tol = 1.0e-1
       cb_n2 = TestCallbackN2Shifts(A, b, shifts, tol = tol)
-      cg_lanczos_shift!(solver, A, b, shifts, atol = 0.0, rtol = 0.0, callback = cb_n2)
+      cg_lanczos_shift!(workspace, A, b, shifts, atol = 0.0, rtol = 0.0, callback = cb_n2)
       @test workspace.stats.status == "user-requested exit"
       @test cb_n2(solver)
 

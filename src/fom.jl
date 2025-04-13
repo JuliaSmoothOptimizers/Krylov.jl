@@ -127,9 +127,9 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI  , solver, :q , S, workspace.x)  # The length of q is n
-    allocate_if(!NisI  , solver, :p , S, workspace.x)  # The length of p is n
-    allocate_if(restart, solver, :Δx, S, workspace.x)  # The length of Δx is n
+    allocate_if(!MisI  , workspace, :q , S, workspace.x)  # The length of q is n
+    allocate_if(!NisI  , workspace, :p , S, workspace.x)  # The length of p is n
+    allocate_if(restart, workspace, :Δx, S, workspace.x)  # The length of Δx is n
     Δx, x, w, V, z = workspace.Δx, workspace.x, workspace.w, workspace.V, workspace.z
     l, U, stats = workspace.l, workspace.U, workspace.stats
     warm_start = workspace.warm_start

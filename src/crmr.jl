@@ -142,8 +142,8 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!NisI, solver, :Nq, S, workspace.r)  # The length of Nq is m
-    allocate_if(λ > 0, solver, :s , S, workspace.r)  # The length of s is m
+    allocate_if(!NisI, workspace, :Nq, S, workspace.r)  # The length of Nq is m
+    allocate_if(λ > 0, workspace, :s , S, workspace.r)  # The length of s is m
     x, p, Aᴴr, r = workspace.x, workspace.p, workspace.Aᴴr, workspace.r
     q, s, stats = workspace.q, workspace.s, workspace.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals

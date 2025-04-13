@@ -133,7 +133,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, workspace.x)  # The length of v is n
+    allocate_if(!MisI, workspace, :v, S, workspace.x)  # The length of v is n
     x, Mvold, Mv, Mv_next, w̅ = workspace.x, workspace.Mvold, workspace.Mv, workspace.Mv_next, workspace.w̅
     Δx, clist, zlist, sprod, stats = workspace.Δx, workspace.clist, workspace.zlist, workspace.sprod, workspace.stats
     warm_start = workspace.warm_start

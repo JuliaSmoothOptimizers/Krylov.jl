@@ -158,8 +158,8 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, workspace.x)  # The length of v is n
-    allocate_if(linesearch, solver, :npc_dir , S, workspace.x)  # The length of npc_dir  is n
+    allocate_if(!MisI, workspace, :v, S, workspace.x)  # The length of v is n
+    allocate_if(linesearch, workspace, :npc_dir , S, workspace.x)  # The length of npc_dir  is n
     Δx, x, r1, r2, w1, w2, y = workspace.Δx, workspace.x, workspace.r1, workspace.r2, workspace.w1, workspace.w2, workspace.y
     err_vec, stats = workspace.err_vec, workspace.stats
     warm_start = workspace.warm_start

@@ -5,9 +5,9 @@ The starting point is used as initial approximation to a solution.
 
 ```julia
 solver = CgWorkspace(A, b)
-cg!(solver, A, b, itmax=100)
+cg!(workspace, A, b, itmax=100)
 if !issolved(solver)
-  cg!(solver, A, b, workspace.x, itmax=100) # cg! uses the approximate solution `workspace.x` as starting point
+  cg!(workspace, A, b, workspace.x, itmax=100) # cg! uses the approximate solution `workspace.x` as starting point
 end
 ```
 
@@ -20,9 +20,9 @@ cg(A, b, x0)
 It is also possible to use the `warm_start!` function to feed the starting point into the workspace.
 
 ```julia
-warm_start!(solver, x0)
-cg!(solver, A, b)
-# the previous two lines are equivalent to cg!(solver, A, b, x0)
+warm_start!(workspace, x0)
+cg!(workspace, A, b)
+# the previous two lines are equivalent to cg!(workspace, A, b, x0)
 ```
 
 If a Krylov method doesn't have the option to warm start, it can still be done explicitly.
@@ -30,10 +30,10 @@ We provide an example with `cg_lanczos!`.
 
 ```julia
 solver = CgLanczosWorkspace(A, b)
-cg_lanczos!(solver, A, b)
+cg_lanczos!(workspace, A, b)
 x₀ = workspace.x           # Ax₀ ≈ b
 r = b - A * x₀          # r = b - Ax₀
-cg_lanczos!(solver, A, r)
+cg_lanczos!(workspace, A, r)
 Δx = workspace.x           # AΔx = r
 x = x₀ + Δx             # Ax = b
 ```
@@ -68,7 +68,7 @@ y = y₀ + Δy
 # workspace.x .= 0                  # workspace.x .= x₀ 
 # nrestart = 0
 # while !issolved(solver) || nrestart ≤ 10
-#   solve!(solver, A, b, workspace.x, itmax=k)
+#   solve!(workspace, A, b, workspace.x, itmax=k)
 #   nrestart += 1
 # end
 # ```

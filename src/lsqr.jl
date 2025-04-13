@@ -182,8 +182,8 @@ kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :u, S, workspace.Av)  # The length of u is m
-    allocate_if(!NisI, solver, :v, S, workspace.x)   # The length of v is n
+    allocate_if(!MisI, workspace, :u, S, workspace.Av)  # The length of u is m
+    allocate_if(!NisI, workspace, :v, S, workspace.x)   # The length of v is n
     x, Nv, Aᴴu, w = workspace.x, workspace.Nv, workspace.Aᴴu, workspace.w
     Mu, Av, err_vec, stats = workspace.Mu, workspace.Av, workspace.err_vec, workspace.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals

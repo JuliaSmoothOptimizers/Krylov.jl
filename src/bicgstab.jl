@@ -135,8 +135,8 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     ktypeof(c) == S || error("ktypeof(c) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :t , S, workspace.x)  # The length of t is n
-    allocate_if(!NisI, solver, :yz, S, workspace.x)  # The length of yz is n
+    allocate_if(!MisI, workspace, :t , S, workspace.x)  # The length of t is n
+    allocate_if(!NisI, workspace, :yz, S, workspace.x)  # The length of yz is n
     Δx, x, r, p, v, s, qd, stats = workspace.Δx, workspace.x, workspace.r, workspace.p, workspace.v, workspace.s, workspace.qd, workspace.stats
     warm_start = workspace.warm_start
     rNorms = stats.residuals

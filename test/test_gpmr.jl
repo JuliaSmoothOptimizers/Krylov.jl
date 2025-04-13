@@ -306,7 +306,7 @@
       # until the end of the algorithm (TODO: be able to evaluate workspace.x and workspace.y ?)
       A, b, c = square_adjoint(FC=FC)
       solver = GpmrWorkspace(A, b; memory = 20)
-      gpmr!(solver, A, A', b, c, callback = solver -> true)
+      gpmr!(workspace, A, A', b, c, callback = solver -> true)
       @test workspace.stats.status == "user-requested exit"
 
       @test_throws TypeError gpmr(A, A', b, c, callback = solver -> "string", history = true)

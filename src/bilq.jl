@@ -133,8 +133,8 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
     Nᴴ = N'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :t, S, workspace.x)  # The length of t is n
-    allocate_if(!NisI, solver, :s, S, workspace.x)  # The length of s is n
+    allocate_if(!MisI, workspace, :t, S, workspace.x)  # The length of t is n
+    allocate_if(!NisI, workspace, :s, S, workspace.x)  # The length of s is n
     uₖ₋₁, uₖ, q, vₖ₋₁, vₖ = workspace.uₖ₋₁, workspace.uₖ, workspace.q, workspace.vₖ₋₁, workspace.vₖ
     p, Δx, x, d̅, stats = workspace.p, workspace.Δx, workspace.x, workspace.d̅, workspace.stats
     warm_start = workspace.warm_start

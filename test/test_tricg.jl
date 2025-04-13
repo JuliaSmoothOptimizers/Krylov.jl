@@ -188,7 +188,7 @@
         solver = TricgWorkspace(A, b)
         tol = 1.0e-1
         cb_n2 = TestCallbackN2SaddlePts(A, b, c, tol = tol)
-        tricg!(solver, A, b, c, callback = cb_n2)
+        tricg!(workspace, A, b, c, callback = cb_n2)
         @test workspace.stats.status == "user-requested exit"
         @test cb_n2(solver)
 

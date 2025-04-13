@@ -116,10 +116,10 @@ n = 12000
 A = rand(Float64, m, n)
 b = rand(Float64, m)
 solver = LsmrWorkspace(A, b)
-show(stdout, solver, show_stats=false)
+show(stdout, workspace, show_stats=false)
 ```
 
-If we want the total number of bytes used by the solver, we can call `nbytes = sizeof(solver)`.
+If we want the total number of bytes used by the workspace, we can call `nbytes = sizeof(solver)`.
 
 ```@example storage
 nbytes = sizeof(solver)

@@ -121,7 +121,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, workspace.x)  # The length of v is n
+    allocate_if(!MisI, workspace, :v, S, workspace.x)  # The length of v is n
     Δx, x, Mv, Mv_prev = workspace.Δx, workspace.x, workspace.Mv, workspace.Mv_prev
     p, Mv_next, stats = workspace.p, workspace.Mv_next, workspace.stats
     warm_start = workspace.warm_start

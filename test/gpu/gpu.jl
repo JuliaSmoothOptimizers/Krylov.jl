@@ -61,7 +61,7 @@ function test_solver(S, M)
   A = M(undef, n, n)
   b = S(undef, n)
   solver = GmresWorkspace(n, n, S; memory)
-  krylov_solve!(solver, A, b)  # Test that we don't have errors
+  krylov_solve!(workspace, A, b)  # Test that we don't have errors
 end
 
 function test_conversion(S, M)

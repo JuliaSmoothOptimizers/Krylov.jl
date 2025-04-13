@@ -103,7 +103,7 @@
       solver = UsymlqWorkspace(A, b)
       tol = 1.0
       cb_n2 = TestCallbackN2(A, b, tol = tol)
-      usymlq!(solver, A, b, c, atol = 0.0, rtol = 0.0, callback = cb_n2)
+      usymlq!(workspace, A, b, c, atol = 0.0, rtol = 0.0, callback = cb_n2)
       @test workspace.stats.status == "user-requested exit"
       @test cb_n2(solver)
 

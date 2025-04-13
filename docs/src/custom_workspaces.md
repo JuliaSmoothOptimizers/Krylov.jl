@@ -329,7 +329,7 @@ kc = KrylovConstructor(b)
 solver = CgWorkspace(kc)
 
 # Solve the system with CG
-Krylov.cg!(solver, A, b, atol=1e-12, rtol=0.0, verbose=1)
+Krylov.cg!(workspace, A, b, atol=1e-12, rtol=0.0, verbose=1)
 u_sol = solution(solver)
 stats = statistics(solver)
 ```
@@ -440,7 +440,7 @@ using Krylov
 
 kc = KrylovConstructor(b)
 solver = MinresWorkspace(kc)
-minres!(solver, A, b; M=P)
+minres!(workspace, A, b; M=P)
 
 x = solution(solver)
 stats = statistics(solver)

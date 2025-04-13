@@ -136,8 +136,8 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     ktypeof(c) == S || error("ktypeof(c) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :vw, S, workspace.x)  # The length of vw is n
-    allocate_if(!NisI, solver, :yz, S, workspace.x)  # The length of yz is n
+    allocate_if(!MisI, workspace, :vw, S, workspace.x)  # The length of vw is n
+    allocate_if(!NisI, workspace, :yz, S, workspace.x)  # The length of yz is n
     Δx, x, r, u, p, q, ts, stats = workspace.Δx, workspace.x, workspace.r, workspace.u, workspace.p, workspace.q, workspace.ts, workspace.stats
     warm_start = workspace.warm_start
     rNorms = stats.residuals

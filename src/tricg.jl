@@ -172,8 +172,8 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :vₖ, S, workspace.x)  # The length of vₖ is m
-    allocate_if(!NisI, solver, :uₖ, S, workspace.y)  # The length of uₖ is n
+    allocate_if(!MisI, workspace, :vₖ, S, workspace.x)  # The length of vₖ is m
+    allocate_if(!NisI, workspace, :uₖ, S, workspace.y)  # The length of uₖ is n
     Δy, yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p = workspace.Δy, workspace.y, workspace.N⁻¹uₖ₋₁, workspace.N⁻¹uₖ, workspace.p
     Δx, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = workspace.Δx, workspace.x, workspace.M⁻¹vₖ₋₁, workspace.M⁻¹vₖ, workspace.q
     gy₂ₖ₋₁, gy₂ₖ, gx₂ₖ₋₁, gx₂ₖ = workspace.gy₂ₖ₋₁, workspace.gy₂ₖ, workspace.gx₂ₖ₋₁, workspace.gx₂ₖ

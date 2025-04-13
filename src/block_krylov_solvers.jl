@@ -154,7 +154,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
         n2, p2 = size(X0)
         SM = typeof(workspace.X)
         (workspace.n == n2 && workspace.p == p2) || error("X0 should have size ($n, $p)")
-        allocate_if(true, solver, :ΔX, SM, workspace.n, workspace.p)
+        allocate_if(true, workspace, :ΔX, SM, workspace.n, workspace.p)
         copyto!(workspace.ΔX, X0)
         workspace.warm_start = true
         return workspace
@@ -179,7 +179,7 @@ function sizeof(stats_solver :: Union{KrylovStats, KrylovWorkspace, BlockKrylovW
   nfields = fieldcount(type)
   storage = 0
   for i = 1:nfields
-    field_i = getfield(stats_solver, i)
+    field_i = getfield(stats_workspace, i)
     size_i = ksizeof(field_i)
     storage += size_i
   end
@@ -215,7 +215,7 @@ function show(io :: IO, solver :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovWork
   for i=1:fieldcount(workspace)
     name_i = fieldname(workspace, i)
     type_i = fieldtype(workspace, i)
-    field_i = getfield(solver, name_i)
+    field_i = getfield(workspace, name_i)
     size_i = ksizeof(field_i)
     (size_i ≠ 0) && Printf.format(io, format, string(name_i), type_i, format_bytes(size_i))
   end

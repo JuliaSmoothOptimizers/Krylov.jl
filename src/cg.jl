@@ -126,7 +126,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :z, S, workspace.x)  # The length of z is n
+    allocate_if(!MisI, workspace, :z, S, workspace.x)  # The length of z is n
     Δx, x, r, p, Ap, stats = workspace.Δx, workspace.x, workspace.r, workspace.p, workspace.Ap, workspace.stats
     warm_start = workspace.warm_start
     rNorms = stats.residuals

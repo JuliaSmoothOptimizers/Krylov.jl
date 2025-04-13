@@ -117,7 +117,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, workspace.Mv)  # The length of v is n
+    allocate_if(!MisI, workspace, :v, S, workspace.Mv)  # The length of v is n
     Mv, Mv_prev, Mv_next = workspace.Mv, workspace.Mv_prev, workspace.Mv_next
     x, p, σ, δhat = workspace.x, workspace.p, workspace.σ, workspace.δhat
     ω, γ, rNorms, converged = workspace.ω, workspace.γ, workspace.rNorms, workspace.converged

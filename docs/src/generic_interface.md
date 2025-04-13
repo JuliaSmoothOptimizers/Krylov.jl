@@ -54,7 +54,7 @@ for method in (:bicgstab, :gmres)
     solver = krylov_workspace(Val(method), A, b)
 
     # Solve the system in-place
-    krylov_solve!(solver, A, b)
+    krylov_solve!(workspace, A, b)
 
     # Get the statistics
     stats = statistics(solver)

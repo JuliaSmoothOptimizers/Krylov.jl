@@ -133,8 +133,8 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI  , solver, :q , S, workspace.x)  # The length of q is n
-    allocate_if(restart, solver, :Δx, S, workspace.x)  # The length of Δx is n
+    allocate_if(!MisI  , workspace, :q , S, workspace.x)  # The length of q is n
+    allocate_if(restart, workspace, :Δx, S, workspace.x)  # The length of Δx is n
     Δx, x, w, V, Z = workspace.Δx, workspace.x, workspace.w, workspace.V, workspace.Z
     z, c, s, R, stats = workspace.z, workspace.c, workspace.s, workspace.R, workspace.stats
     warm_start = workspace.warm_start

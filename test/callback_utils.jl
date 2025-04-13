@@ -144,7 +144,7 @@ function (cb_n2::TestCallbackN2SaddlePts)(solver)
 end
 
 function restarted_gmres_callback_n2(workspace::GmresWorkspace, A, b, stor, N, storage_vec, tol)
-  get_x_restarted_gmres!(solver, A, stor, N)
+  get_x_restarted_gmres!(workspace, A, stor, N)
   x = stor.x
   mul!(storage_vec, A, x)
   storage_vec .-= b
