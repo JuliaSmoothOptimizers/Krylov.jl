@@ -7,7 +7,8 @@ The starting point is used as initial approximation to a solution.
 workspace = CgWorkspace(A, b)
 cg!(workspace, A, b, itmax=100)
 if !issolved(workspace)
-  cg!(workspace, A, b, workspace.x, itmax=100) # cg! uses the approximate solution `workspace.x` as starting point
+  # Use the approximate solution `workspace.x` as starting point
+  cg!(workspace, A, b, workspace.x, itmax=100)
 end
 ```
 
@@ -30,12 +31,14 @@ We provide an example with `cg_lanczos!`.
 
 ```julia
 workspace = CgLanczosWorkspace(A, b)
+
 cg_lanczos!(workspace, A, b)
-x₀ = workspace.x           # Ax₀ ≈ b
-r = b - A * x₀          # r = b - Ax₀
+x₀ = workspace.x  # Ax₀ ≈ b
+r = b - A * x₀    # r = b - Ax₀
+
 cg_lanczos!(workspace, A, r)
-Δx = workspace.x           # AΔx = r
-x = x₀ + Δx             # Ax = b
+Δx = workspace.x  # AΔx = r
+x = x₀ + Δx       # Ax = b
 ```
 
 Explicit restarts cannot be avoided in certain block methods, such as TriMR, due to the preconditioners.
@@ -65,7 +68,7 @@ y = y₀ + Δy
 # ```julia
 # k = 50
 # workspace = GmresWorkspace(A, b, k)  # FomWorkspace(A, b, k)
-# workspace.x .= 0                  # workspace.x .= x₀ 
+# workspace.x .= 0                     # workspace.x .= x₀
 # nrestart = 0
 # while !issolved(workspace) || nrestart ≤ 10
 #   solve!(workspace, A, b, workspace.x, itmax=k)
