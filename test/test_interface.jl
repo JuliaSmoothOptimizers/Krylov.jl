@@ -101,7 +101,7 @@ function test_krylov_solvers(FC; krylov_constructor::Bool=false)
     b2  = Ao2 * ones(FC, m2)
     c2  = Au2 * ones(FC, n2)
     shifts2 = [1.0; 2.0; 3.0; 4.0; 5.0; 6.0]
-    for (method, solver) in solvers
+    for (method, workspace) in workspaces
       if method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr)
         @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $n2)") krylov_solve!(workspace, A2, b2)
       end
@@ -121,7 +121,7 @@ function test_krylov_solvers(FC; krylov_constructor::Bool=false)
 
   @testset "Test the keyword argument timemax" begin
     timemax = 0.0
-    for (method, solver) in solvers
+    for (method, workspace) in workspaces
       method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr) && krylov_solve!(workspace, A, b, timemax=timemax)
       method == :cg_lanczos_shift && krylov_solve!(workspace, A, b, shifts, timemax=timemax)
       method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && krylov_solve!(workspace, Au, c, timemax=timemax)
@@ -136,7 +136,7 @@ function test_krylov_solvers(FC; krylov_constructor::Bool=false)
     end
   end
 
-  for (method, solver) in solvers
+  for (method, workspace) in workspaces
     @testset "$(method)" begin
       for i = 1 : 3
         A  = i * A
@@ -255,7 +255,7 @@ function test_block_krylov_solvers(FC)
   workspaces[:block_minres] = @inferred krylov_workspace(Val{:block_minres}(), m, n, p, SV, SM)
   workspaces[:block_gmres] = @inferred krylov_workspace(Val{:block_gmres}(), m, n, p, SV, SM; memory=mem)
 
-  for (method, solver) in solvers
+  for (method, workspace) in workspaces
     @testset "$(method)" begin
       for i = 1 : 3
         B = 5 * B
