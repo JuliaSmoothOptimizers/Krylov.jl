@@ -63,5 +63,5 @@ include("craigmr.jl")
 include("cg_lanczos_shift.jl")
 include("cgls_lanczos_shift.jl")
 
-include("krylov_solve.jl")
+include("interface.jl")
 end

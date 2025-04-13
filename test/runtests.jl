@@ -47,6 +47,6 @@ include("test_cr.jl")
 
 include("test_allocations.jl")
 include("test_mp.jl")
-include("test_solvers.jl")
+include("test_interface.jl")
 include("test_warm_start.jl")
 include("test_verbose.jl")
