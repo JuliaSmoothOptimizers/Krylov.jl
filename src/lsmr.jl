@@ -1,4 +1,4 @@
-# An implementation of LSMR for the solution of the
+   # An implementation of LSMR for the solution of the
 # over-determined linear least-squares problem
 #
 #  minimize ‖Ax - b‖₂
@@ -134,24 +134,24 @@ function lsmr! end
 def_args_lsmr = (:(A                    ),
                  :(b::AbstractVector{FC}))
 
-def_kwargs_lsmr = (:(; M = I                     ),
-                   :(; N = I                     ),
-                   :(; ldiv::Bool = false        ),
-                   :(; sqd::Bool = false         ),
-                   :(; λ::T = zero(T)            ),
-                   :(; radius::T = zero(T)       ),
-                   :(; etol::T = √eps(T)         ),
-                   :(; axtol::T = √eps(T)        ),
-                   :(; btol::T = √eps(T)         ),
-                   :(; conlim::T = 1/√eps(T)     ),
-                   :(; atol::T = zero(T)         ),
-                   :(; rtol::T = zero(T)         ),
-                   :(; itmax::Int = 0            ),
-                   :(; timemax::Float64 = Inf    ),
-                   :(; verbose::Int = 0          ),
-                   :(; history::Bool = false     ),
-                   :(; callback = solver -> false),
-                   :(; iostream::IO = kstdout    ))
+def_kwargs_lsmr = (:(; M = I                        ),
+                   :(; N = I                        ),
+                   :(; ldiv::Bool = false           ),
+                   :(; sqd::Bool = false            ),
+                   :(; λ::T = zero(T)               ),
+                   :(; radius::T = zero(T)          ),
+                   :(; etol::T = √eps(T)            ),
+                   :(; axtol::T = √eps(T)           ),
+                   :(; btol::T = √eps(T)            ),
+                   :(; conlim::T = 1/√eps(T)        ),
+                   :(; atol::T = zero(T)            ),
+                   :(; rtol::T = zero(T)            ),
+                   :(; itmax::Int = 0               ),
+                   :(; timemax::Float64 = Inf       ),
+                   :(; verbose::Int = 0             ),
+                   :(; history::Bool = false        ),
+                   :(; callback = workspace -> false),
+                   :(; iostream::IO = kstdout       ))
 
 def_kwargs_lsmr = extract_parameters.(def_kwargs_lsmr)
 

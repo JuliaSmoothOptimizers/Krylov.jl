@@ -78,16 +78,16 @@ def_args_car = (:(A                    ),
 
 def_optargs_car = (:(x0::AbstractVector),)
 
-def_kwargs_car = (:(; M = I                     ),
-                  :(; ldiv::Bool = false        ),
-                  :(; atol::T = √eps(T)         ),
-                  :(; rtol::T = √eps(T)         ),
-                  :(; itmax::Int = 0            ),
-                  :(; timemax::Float64 = Inf    ),
-                  :(; verbose::Int = 0          ),
-                  :(; history::Bool = false     ),
-                  :(; callback = solver -> false),
-                  :(; iostream::IO = kstdout    ))
+def_kwargs_car = (:(; M = I                        ),
+                  :(; ldiv::Bool = false           ),
+                  :(; atol::T = √eps(T)            ),
+                  :(; rtol::T = √eps(T)            ),
+                  :(; itmax::Int = 0               ),
+                  :(; timemax::Float64 = Inf       ),
+                  :(; verbose::Int = 0             ),
+                  :(; history::Bool = false        ),
+                  :(; callback = workspace -> false),
+                  :(; iostream::IO = kstdout       ))
 
 def_kwargs_car = extract_parameters.(def_kwargs_car)
 

@@ -65,16 +65,16 @@ def_args_block_minres = (:(A                    ),
 
 def_optargs_block_minres = (:(X0::AbstractMatrix),)
 
-def_kwargs_block_minres = (:(; M = I                            ),
-                           :(; ldiv::Bool = false               ),
-                           :(; atol::T = √eps(T)                ),
-                           :(; rtol::T = √eps(T)                ),
-                           :(; itmax::Int = 0                   ),
-                           :(; timemax::Float64 = Inf           ),
-                           :(; verbose::Int = 0                 ),
-                           :(; history::Bool = false            ),
-                           :(; callback = workspace -> false    ),
-                           :(; iostream::IO = kstdout           ))
+def_kwargs_block_minres = (:(; M = I                        ),
+                           :(; ldiv::Bool = false           ),
+                           :(; atol::T = √eps(T)            ),
+                           :(; rtol::T = √eps(T)            ),
+                           :(; itmax::Int = 0               ),
+                           :(; timemax::Float64 = Inf       ),
+                           :(; verbose::Int = 0             ),
+                           :(; history::Bool = false        ),
+                           :(; callback = workspace -> false),
+                           :(; iostream::IO = kstdout       ))
 
 def_kwargs_block_minres = mapreduce(extract_parameters, vcat, def_kwargs_block_minres)
 

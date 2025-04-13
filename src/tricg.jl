@@ -109,22 +109,22 @@ def_args_tricg = (:(A                    ),
 def_optargs_tricg = (:(x0::AbstractVector),
                      :(y0::AbstractVector))
 
-def_kwargs_tricg = (:(; M = I                     ),
-                    :(; N = I                     ),
-                    :(; ldiv::Bool = false        ),
-                    :(; spd::Bool = false         ),
-                    :(; snd::Bool = false         ),
-                    :(; flip::Bool = false        ),
-                    :(; τ::T = one(T)             ),
-                    :(; ν::T = -one(T)            ),
-                    :(; atol::T = √eps(T)         ),
-                    :(; rtol::T = √eps(T)         ),
-                    :(; itmax::Int = 0            ),
-                    :(; timemax::Float64 = Inf    ),
-                    :(; verbose::Int = 0          ),
-                    :(; history::Bool = false     ),
-                    :(; callback = solver -> false),
-                    :(; iostream::IO = kstdout    ))
+def_kwargs_tricg = (:(; M = I                        ),
+                    :(; N = I                        ),
+                    :(; ldiv::Bool = false           ),
+                    :(; spd::Bool = false            ),
+                    :(; snd::Bool = false            ),
+                    :(; flip::Bool = false           ),
+                    :(; τ::T = one(T)                ),
+                    :(; ν::T = -one(T)               ),
+                    :(; atol::T = √eps(T)            ),
+                    :(; rtol::T = √eps(T)            ),
+                    :(; itmax::Int = 0               ),
+                    :(; timemax::Float64 = Inf       ),
+                    :(; verbose::Int = 0             ),
+                    :(; history::Bool = false        ),
+                    :(; callback = workspace -> false),
+                    :(; iostream::IO = kstdout       ))
 
 def_kwargs_tricg = extract_parameters.(def_kwargs_tricg)
 

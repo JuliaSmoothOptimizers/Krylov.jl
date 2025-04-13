@@ -81,18 +81,18 @@ def_args_minares = (:(A                    ),
 
 def_optargs_minares = (:(x0::AbstractVector),)
 
-def_kwargs_minares = (:(; M = I                     ),
-                      :(; ldiv::Bool = false        ),
-                      :(; λ::T = zero(T)            ),
-                      :(; atol::T = √eps(T)         ),
-                      :(; rtol::T = √eps(T)         ),
-                      :(; Artol::T = √eps(T)        ),
-                      :(; itmax::Int = 0            ),
-                      :(; timemax::Float64 = Inf    ),
-                      :(; verbose::Int = 0          ),
-                      :(; history::Bool = false     ),
-                      :(; callback = solver -> false),
-                      :(; iostream::IO = kstdout    ))
+def_kwargs_minares = (:(; M = I                        ),
+                      :(; ldiv::Bool = false           ),
+                      :(; λ::T = zero(T)               ),
+                      :(; atol::T = √eps(T)            ),
+                      :(; rtol::T = √eps(T)            ),
+                      :(; Artol::T = √eps(T)           ),
+                      :(; itmax::Int = 0               ),
+                      :(; timemax::Float64 = Inf       ),
+                      :(; verbose::Int = 0             ),
+                      :(; history::Bool = false        ),
+                      :(; callback = workspace -> false),
+                      :(; iostream::IO = kstdout       ))
 
 def_kwargs_minares = extract_parameters.(def_kwargs_minares)
 

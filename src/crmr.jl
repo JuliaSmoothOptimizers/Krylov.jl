@@ -102,17 +102,17 @@ function crmr! end
 def_args_crmr = (:(A                    ),
                  :(b::AbstractVector{FC}))
 
-def_kwargs_crmr = (:(; N = I                     ),
-                   :(; ldiv::Bool = false        ),
-                   :(; λ::T = zero(T)            ),
-                   :(; atol::T = √eps(T)         ),
-                   :(; rtol::T = √eps(T)         ),
-                   :(; itmax::Int = 0            ),
-                   :(; timemax::Float64 = Inf    ),
-                   :(; verbose::Int = 0          ),
-                   :(; history::Bool = false     ),
-                   :(; callback = solver -> false),
-                   :(; iostream::IO = kstdout    ))
+def_kwargs_crmr = (:(; N = I                        ),
+                   :(; ldiv::Bool = false           ),
+                   :(; λ::T = zero(T)               ),
+                   :(; atol::T = √eps(T)            ),
+                   :(; rtol::T = √eps(T)            ),
+                   :(; itmax::Int = 0               ),
+                   :(; timemax::Float64 = Inf       ),
+                   :(; verbose::Int = 0             ),
+                   :(; history::Bool = false        ),
+                   :(; callback = workspace -> false),
+                   :(; iostream::IO = kstdout       ))
 
 def_kwargs_crmr = extract_parameters.(def_kwargs_crmr)
 

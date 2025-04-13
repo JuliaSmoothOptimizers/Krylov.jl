@@ -115,20 +115,20 @@ def_args_minres = (:(A                    ),
 
 def_optargs_minres = (:(x0::AbstractVector),)
 
-def_kwargs_minres = (:(; M = I                     ),
-                     :(; ldiv::Bool = false        ),
-                     :(; linesearch::Bool = false  ),
-                     :(; λ::T = zero(T)            ),
-                     :(; atol::T = √eps(T)         ),
-                     :(; rtol::T = √eps(T)         ),
-                     :(; etol::T = √eps(T)         ),
-                     :(; conlim::T = 1/√eps(T)     ),
-                     :(; itmax::Int = 0            ),
-                     :(; timemax::Float64 = Inf    ),
-                     :(; verbose::Int = 0          ),
-                     :(; history::Bool = false     ),
-                     :(; callback = solver -> false),
-                     :(; iostream::IO = kstdout    ))
+def_kwargs_minres = (:(; M = I                        ),
+                     :(; ldiv::Bool = false           ),
+                     :(; linesearch::Bool = false     ),
+                     :(; λ::T = zero(T)               ),
+                     :(; atol::T = √eps(T)            ),
+                     :(; rtol::T = √eps(T)            ),
+                     :(; etol::T = √eps(T)            ),
+                     :(; conlim::T = 1/√eps(T)        ),
+                     :(; itmax::Int = 0               ),
+                     :(; timemax::Float64 = Inf       ),
+                     :(; verbose::Int = 0             ),
+                     :(; history::Bool = false        ),
+                     :(; callback = workspace -> false),
+                     :(; iostream::IO = kstdout       ))
 
 def_kwargs_minres = extract_parameters.(def_kwargs_minres)
 

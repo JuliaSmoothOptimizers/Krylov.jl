@@ -94,18 +94,18 @@ def_args_cgs = (:(A                    ),
 
 def_optargs_cgs = (:(x0::AbstractVector),)
 
-def_kwargs_cgs = (:(; c::AbstractVector{FC} = b ),
-                  :(; M = I                     ),
-                  :(; N = I                     ),
-                  :(; ldiv::Bool = false        ),
-                  :(; atol::T = √eps(T)         ),
-                  :(; rtol::T = √eps(T)         ),
-                  :(; itmax::Int = 0            ),
-                  :(; timemax::Float64 = Inf    ),
-                  :(; verbose::Int = 0          ),
-                  :(; history::Bool = false     ),
-                  :(; callback = solver -> false),
-                  :(; iostream::IO = kstdout    ))
+def_kwargs_cgs = (:(; c::AbstractVector{FC} = b    ),
+                  :(; M = I                        ),
+                  :(; N = I                        ),
+                  :(; ldiv::Bool = false           ),
+                  :(; atol::T = √eps(T)            ),
+                  :(; rtol::T = √eps(T)            ),
+                  :(; itmax::Int = 0               ),
+                  :(; timemax::Float64 = Inf       ),
+                  :(; verbose::Int = 0             ),
+                  :(; history::Bool = false        ),
+                  :(; callback = workspace -> false),
+                  :(; iostream::IO = kstdout       ))
 
 def_kwargs_cgs = extract_parameters.(def_kwargs_cgs)
 

@@ -99,14 +99,14 @@ def_args_usymqr = (:(A                    ),
 
 def_optargs_usymqr = (:(x0::AbstractVector),)
 
-def_kwargs_usymqr = (:(; atol::T = √eps(T)         ),
-                     :(; rtol::T = √eps(T)         ),
-                     :(; itmax::Int = 0            ),
-                     :(; timemax::Float64 = Inf    ),
-                     :(; verbose::Int = 0          ),
-                     :(; history::Bool = false     ),
-                     :(; callback = solver -> false),
-                     :(; iostream::IO = kstdout    ))
+def_kwargs_usymqr = (:(; atol::T = √eps(T)            ),
+                     :(; rtol::T = √eps(T)            ),
+                     :(; itmax::Int = 0               ),
+                     :(; timemax::Float64 = Inf       ),
+                     :(; verbose::Int = 0             ),
+                     :(; history::Bool = false        ),
+                     :(; callback = workspace -> false),
+                     :(; iostream::IO = kstdout       ))
 
 def_kwargs_usymqr = extract_parameters.(def_kwargs_usymqr)
 

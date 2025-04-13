@@ -129,19 +129,19 @@ function craigmr! end
 def_args_craigmr = (:(A                    ),
                     :(b::AbstractVector{FC}))
 
-def_kwargs_craigmr = (:(; M = I                     ),
-                      :(; N = I                     ),
-                      :(; ldiv::Bool = false        ),
-                      :(; sqd::Bool = false         ),
-                      :(; λ::T = zero(T)            ),
-                      :(; atol::T = √eps(T)         ),
-                      :(; rtol::T = √eps(T)         ),
-                      :(; itmax::Int = 0            ),
-                      :(; timemax::Float64 = Inf    ),
-                      :(; verbose::Int = 0          ),
-                      :(; history::Bool = false     ),
-                      :(; callback = solver -> false),
-                      :(; iostream::IO = kstdout    ))
+def_kwargs_craigmr = (:(; M = I                        ),
+                      :(; N = I                        ),
+                      :(; ldiv::Bool = false           ),
+                      :(; sqd::Bool = false            ),
+                      :(; λ::T = zero(T)               ),
+                      :(; atol::T = √eps(T)            ),
+                      :(; rtol::T = √eps(T)            ),
+                      :(; itmax::Int = 0               ),
+                      :(; timemax::Float64 = Inf       ),
+                      :(; verbose::Int = 0             ),
+                      :(; history::Bool = false        ),
+                      :(; callback = workspace -> false),
+                      :(; iostream::IO = kstdout       ))
 
 def_kwargs_craigmr = extract_parameters.(def_kwargs_craigmr)
 

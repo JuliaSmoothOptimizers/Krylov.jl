@@ -89,18 +89,18 @@ def_args_minres_qlp = (:(A                    ),
 
 def_optargs_minres_qlp = (:(x0::AbstractVector),)
 
-def_kwargs_minres_qlp = (:(; M = I                     ),
-                         :(; ldiv::Bool = false        ),
-                         :(; λ::T = zero(T)            ),
-                         :(; atol::T = √eps(T)         ),
-                         :(; rtol::T = √eps(T)         ),
-                         :(; Artol::T = √eps(T)        ),
-                         :(; itmax::Int = 0            ),
-                         :(; timemax::Float64 = Inf    ),
-                         :(; verbose::Int = 0          ),
-                         :(; history::Bool = false     ),
-                         :(; callback = solver -> false),
-                         :(; iostream::IO = kstdout    ))
+def_kwargs_minres_qlp = (:(; M = I                        ),
+                         :(; ldiv::Bool = false           ),
+                         :(; λ::T = zero(T)               ),
+                         :(; atol::T = √eps(T)            ),
+                         :(; rtol::T = √eps(T)            ),
+                         :(; Artol::T = √eps(T)           ),
+                         :(; itmax::Int = 0               ),
+                         :(; timemax::Float64 = Inf       ),
+                         :(; verbose::Int = 0             ),
+                         :(; history::Bool = false        ),
+                         :(; callback = workspace -> false),
+                         :(; iostream::IO = kstdout       ))
 
 def_kwargs_minres_qlp = extract_parameters.(def_kwargs_minres_qlp)
 

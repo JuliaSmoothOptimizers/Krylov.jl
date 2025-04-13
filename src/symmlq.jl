@@ -90,21 +90,21 @@ def_args_symmlq = (:(A                    ),
 
 def_optargs_symmlq = (:(x0::AbstractVector),)
 
-def_kwargs_symmlq = (:(; M = I                      ),
-                     :(; ldiv::Bool = false         ),
-                     :(; transfer_to_cg::Bool = true),
-                     :(; λ::T = zero(T)             ),
-                     :(; λest::T = zero(T)          ),
-                     :(; atol::T = √eps(T)          ),
-                     :(; rtol::T = √eps(T)          ),
-                     :(; etol::T = √eps(T)          ),
-                     :(; conlim::T = 1/√eps(T)      ),
-                     :(; itmax::Int = 0             ),
-                     :(; timemax::Float64 = Inf     ),
-                     :(; verbose::Int = 0           ),
-                     :(; history::Bool = false      ),
-                     :(; callback = solver -> false ),
-                     :(; iostream::IO = kstdout     ))
+def_kwargs_symmlq = (:(; M = I                         ),
+                     :(; ldiv::Bool = false            ),
+                     :(; transfer_to_cg::Bool = true   ),
+                     :(; λ::T = zero(T)                ),
+                     :(; λest::T = zero(T)             ),
+                     :(; atol::T = √eps(T)             ),
+                     :(; rtol::T = √eps(T)             ),
+                     :(; etol::T = √eps(T)             ),
+                     :(; conlim::T = 1/√eps(T)         ),
+                     :(; itmax::Int = 0                ),
+                     :(; timemax::Float64 = Inf        ),
+                     :(; verbose::Int = 0              ),
+                     :(; history::Bool = false         ),
+                     :(; callback = workspace -> false ),
+                     :(; iostream::IO = kstdout        ))
 
 def_kwargs_symmlq = extract_parameters.(def_kwargs_symmlq)
 
