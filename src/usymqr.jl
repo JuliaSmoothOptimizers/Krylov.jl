@@ -27,7 +27,7 @@ export usymqr, usymqr!
     (x, stats) = usymqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                         atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                         timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                        callback=solver->false, iostream::IO=kstdout)
+                        callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.

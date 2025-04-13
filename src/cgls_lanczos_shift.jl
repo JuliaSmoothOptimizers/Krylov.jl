@@ -15,7 +15,7 @@ export cgls_lanczos_shift, cgls_lanczos_shift!
     (x, stats) = cgls_lanczos_shift(A, b::AbstractVector{FC};
                       M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                       radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      callback=solver->false)
+                      callback=workspace->false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
