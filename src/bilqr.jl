@@ -171,7 +171,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       warm_start && kaxpy!(n, one(FC), Δx, x)
       warm_start && kaxpy!(n, one(FC), Δy, t)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
 
     # Set up workspace.
@@ -472,6 +472,6 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     stats.solved_dual = solved_dual
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

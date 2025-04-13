@@ -169,7 +169,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
 
     # Compute ρ₀ = ⟨ r̅₀,r₀ ⟩
@@ -181,7 +181,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       stats.status = "Breakdown bᴴc = 0"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start =false
-      return solver
+      return workspace
     end
 
     iter = 0
@@ -268,6 +268,6 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     stats.inconsistent = false
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

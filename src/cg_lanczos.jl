@@ -151,7 +151,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
     kcopy!(n, p, v)  # p ← v
 
@@ -250,6 +250,6 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     stats.indefinite = indefinite
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

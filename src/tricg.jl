@@ -467,6 +467,6 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     stats.inconsistent = !solved && breakdown
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

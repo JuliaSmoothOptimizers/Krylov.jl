@@ -168,7 +168,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
 
     iter = 0
@@ -184,7 +184,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       stats.status = "Breakdown bᴴc = 0"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
 
     ε = atol + rtol * bNorm
@@ -397,6 +397,6 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
     stats.inconsistent = false
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

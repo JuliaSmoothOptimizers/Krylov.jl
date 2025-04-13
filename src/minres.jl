@@ -203,7 +203,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       history && push!(Aconds, zero(T))
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
     β₁ = sqrt(β₁)
     β = β₁
@@ -308,7 +308,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
           iter == 1 && kcopy!(n, x, b)
           workspace.warm_start = false
           stats.indefinite = true
-          return solver
+          return workspace
         end
       end
 
@@ -376,7 +376,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
         stats.status = "x is a minimum least-squares solution"
         warm_start && kaxpy!(n, one(FC), Δx, x)
         workspace.warm_start = false
-        return solver
+        return workspace
       end
 
       # Stopping conditions that do not depend on user input.
@@ -425,6 +425,6 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     stats.inconsistent = !zero_resid
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

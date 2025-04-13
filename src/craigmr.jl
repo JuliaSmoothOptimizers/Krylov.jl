@@ -199,7 +199,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       history && push!(ArNorms, zero(T))
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
-      return solver
+      return workspace
     end
 
     # Initialize Golub-Kahan process.
@@ -227,7 +227,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       history && push!(ArNorms, zero(T))
       stats.timer = start_time |> ktimer
       stats.status = "x is a minimum least-squares solution"
-      return solver
+      return workspace
     end
     kdiv!(n, v, α)
     NisI || kdiv!(n, Nv, α)
@@ -383,6 +383,6 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

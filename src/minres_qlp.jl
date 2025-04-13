@@ -172,7 +172,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
 
     iter = 0
@@ -475,6 +475,6 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

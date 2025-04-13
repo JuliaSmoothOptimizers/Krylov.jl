@@ -151,7 +151,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
       stats.solved = true
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
-      return solver
+      return workspace
     end
 
     # Initialize each p to v.
@@ -261,6 +261,6 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     stats.solved = solved
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

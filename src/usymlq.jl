@@ -157,7 +157,7 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
 
     iter = 0
@@ -353,6 +353,6 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     stats.inconsistent = false
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

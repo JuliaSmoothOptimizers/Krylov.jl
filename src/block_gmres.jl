@@ -337,6 +337,6 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
     stats.solved = solved
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

@@ -101,7 +101,7 @@ function MinresWorkspace(kc::KrylovConstructor; window::Integer = 5)
   err_vec = zeros(T, window)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = MinresWorkspace{T,FC,S}(m, n, Δx, x, r1, r2, npc_dir, w1, w2, y, v, err_vec, false, stats)
-  return solver
+  return workspace
 end
 
 function MinresWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
@@ -120,7 +120,7 @@ function MinresWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = MinresWorkspace{T,FC,S}(m, n, Δx, x, r1, r2, npc_dir, w1, w2, y, v, err_vec, false, stats)
-  return solver
+  return workspace
 end
 
 function MinresWorkspace(A, b; window::Integer = 5)
@@ -173,7 +173,7 @@ function MinaresWorkspace(kc::KrylovConstructor)
   q    = similar(kc.vn)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
-  return solver
+  return workspace
 end
 
 function MinaresWorkspace(m::Integer, n::Integer, S::Type)
@@ -191,7 +191,7 @@ function MinaresWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
-  return solver
+  return workspace
 end
 
 function MinaresWorkspace(A, b)
@@ -238,7 +238,7 @@ function CgWorkspace(kc::KrylovConstructor)
   z  = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CgWorkspace{T,FC,S}(m, n, Δx, x, r, p, Ap, z, false, stats)
-  return solver
+  return workspace
 end
 
 function CgWorkspace(m::Integer, n::Integer, S::Type)
@@ -253,7 +253,7 @@ function CgWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CgWorkspace{T,FC,S}(m, n, Δx, x, r, p, Ap, z, false, stats)
-  return solver
+  return workspace
 end
 
 function CgWorkspace(A, b)
@@ -302,7 +302,7 @@ function CrWorkspace(kc::KrylovConstructor)
   Mq = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CrWorkspace{T,FC,S}(m, n, Δx, x, r, p, q, Ar, Mq, false, stats)
-  return solver
+  return workspace
 end
 
 function CrWorkspace(m::Integer, n::Integer, S::Type)
@@ -318,7 +318,7 @@ function CrWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CrWorkspace{T,FC,S}(m, n, Δx, x, r, p, q, Ar, Mq, false, stats)
-  return solver
+  return workspace
 end
 
 function CrWorkspace(A, b)
@@ -371,7 +371,7 @@ function CarWorkspace(kc::KrylovConstructor)
   Mu = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CarWorkspace{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
-  return solver
+  return workspace
 end
 
 function CarWorkspace(m::Integer, n::Integer, S::Type)
@@ -389,7 +389,7 @@ function CarWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CarWorkspace{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
-  return solver
+  return workspace
 end
 
 function CarWorkspace(A, b)
@@ -444,7 +444,7 @@ function SymmlqWorkspace(kc::KrylovConstructor; window::Integer = 5)
   sprod   = ones(T, window)
   stats = SymmlqStats(0, false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), 0.0, "unknown")
   solver = SymmlqWorkspace{T,FC,S}(m, n, Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, false, stats)
-  return solver
+  return workspace
 end
 
 function SymmlqWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
@@ -463,7 +463,7 @@ function SymmlqWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SymmlqStats(0, false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), 0.0, "unknown")
   solver = SymmlqWorkspace{T,FC,S}(m, n, Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, false, stats)
-  return solver
+  return workspace
 end
 
 function SymmlqWorkspace(A, b; window::Integer = 5)
@@ -512,7 +512,7 @@ function CgLanczosWorkspace(kc::KrylovConstructor)
   v       = similar(kc.vn_empty)
   stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), 0.0, "unknown")
   solver = CgLanczosWorkspace{T,FC,S}(m, n, Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
-  return solver
+  return workspace
 end
 
 function CgLanczosWorkspace(m::Integer, n::Integer, S::Type)
@@ -528,7 +528,7 @@ function CgLanczosWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), 0.0, "unknown")
   solver = CgLanczosWorkspace{T,FC,S}(m, n, Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
-  return solver
+  return workspace
 end
 
 function CgLanczosWorkspace(A, b)
@@ -590,7 +590,7 @@ function CgLanczosShiftWorkspace(kc::KrylovConstructor, nshifts::Integer)
   not_cv     = BitVector(undef, nshifts)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
   solver = CgLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
-  return solver
+  return workspace
 end
 
 function CgLanczosShiftWorkspace(m::Integer, n::Integer, nshifts::Integer, S::Type)
@@ -613,7 +613,7 @@ function CgLanczosShiftWorkspace(m::Integer, n::Integer, nshifts::Integer, S::Ty
   S = isconcretetype(S) ? S : typeof(x)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
   solver = CgLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
-  return solver
+  return workspace
 end
 
 function CgLanczosShiftWorkspace(A, b, nshifts::Integer)
@@ -664,7 +664,7 @@ function MinresQlpWorkspace(kc::KrylovConstructor)
   vₖ      = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = MinresQlpWorkspace{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
-  return solver
+  return workspace
 end
 
 function MinresQlpWorkspace(m::Integer, n::Integer, S::Type)
@@ -681,7 +681,7 @@ function MinresQlpWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = MinresQlpWorkspace{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
-  return solver
+  return workspace
 end
 
 function MinresQlpWorkspace(A, b)
@@ -738,7 +738,7 @@ function DqgmresWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   H      = Vector{FC}(undef, memory+1)
   stats  = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = DqgmresWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
-  return solver
+  return workspace
 end
 
 function DqgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
@@ -758,7 +758,7 @@ function DqgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = DqgmresWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
-  return solver
+  return workspace
 end
 
 function DqgmresWorkspace(A, b; memory::Integer = 20)
@@ -813,7 +813,7 @@ function DiomWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   H      = Vector{FC}(undef, memory)
   stats  = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = DiomWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
-  return solver
+  return workspace
 end
 
 function DiomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
@@ -832,7 +832,7 @@ function DiomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = DiomWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
-  return solver
+  return workspace
 end
 
 function DiomWorkspace(A, b; memory::Integer = 20)
@@ -885,7 +885,7 @@ function UsymlqWorkspace(kc::KrylovConstructor)
   q    = similar(kc.vm)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = UsymlqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
-  return solver
+  return workspace
 end
 
 function UsymlqWorkspace(m::Integer, n::Integer, S::Type)
@@ -903,7 +903,7 @@ function UsymlqWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = UsymlqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
-  return solver
+  return workspace
 end
 
 function UsymlqWorkspace(A, b)
@@ -958,7 +958,7 @@ function UsymqrWorkspace(kc::KrylovConstructor)
   p    = similar(kc.vn)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = UsymqrWorkspace{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
-  return solver
+  return workspace
 end
 
 function UsymqrWorkspace(m::Integer, n::Integer, S::Type)
@@ -977,7 +977,7 @@ function UsymqrWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = UsymqrWorkspace{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
-  return solver
+  return workspace
 end
 
 function UsymqrWorkspace(A, b)
@@ -1044,7 +1044,7 @@ function TricgWorkspace(kc::KrylovConstructor)
   vₖ      = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = TricgWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
-  return solver
+  return workspace
 end
 
 function TricgWorkspace(m::Integer, n::Integer, S::Type)
@@ -1069,7 +1069,7 @@ function TricgWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = TricgWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
-  return solver
+  return workspace
 end
 
 function TricgWorkspace(A, b)
@@ -1144,7 +1144,7 @@ function TrimrWorkspace(kc::KrylovConstructor)
   vₖ      = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = TrimrWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
-  return solver
+  return workspace
 end
 
 function TrimrWorkspace(m::Integer, n::Integer, S::Type)
@@ -1173,7 +1173,7 @@ function TrimrWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = TrimrWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
-  return solver
+  return workspace
 end
 
 function TrimrWorkspace(A, b)
@@ -1234,7 +1234,7 @@ function TrilqrWorkspace(kc::KrylovConstructor)
   wₖ₋₂ = similar(kc.vm)
   stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
   solver = TrilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
-  return solver
+  return workspace
 end
 
 function TrilqrWorkspace(m::Integer, n::Integer, S::Type)
@@ -1256,7 +1256,7 @@ function TrilqrWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
   solver = TrilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
-  return solver
+  return workspace
 end
 
 function TrilqrWorkspace(A, b)
@@ -1309,7 +1309,7 @@ function CgsWorkspace(kc::KrylovConstructor)
   vw = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CgsWorkspace{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
-  return solver
+  return workspace
 end
 
 function CgsWorkspace(m::Integer, n::Integer, S::Type)
@@ -1327,7 +1327,7 @@ function CgsWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CgsWorkspace{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
-  return solver
+  return workspace
 end
 
 function CgsWorkspace(A, b)
@@ -1380,7 +1380,7 @@ function BicgstabWorkspace(kc::KrylovConstructor)
   t  = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = BicgstabWorkspace{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
-  return solver
+  return workspace
 end
 
 function BicgstabWorkspace(m::Integer, n::Integer, S::Type)
@@ -1398,7 +1398,7 @@ function BicgstabWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = BicgstabWorkspace{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
-  return solver
+  return workspace
 end
 
 function BicgstabWorkspace(A, b)
@@ -1455,7 +1455,7 @@ function BilqWorkspace(kc::KrylovConstructor)
   s    = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = BilqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
-  return solver
+  return workspace
 end
 
 function BilqWorkspace(m::Integer, n::Integer, S::Type)
@@ -1475,7 +1475,7 @@ function BilqWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = BilqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
-  return solver
+  return workspace
 end
 
 function BilqWorkspace(A, b)
@@ -1534,7 +1534,7 @@ function QmrWorkspace(kc::KrylovConstructor)
   s    = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = QmrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
-  return solver
+  return workspace
 end
 
 function QmrWorkspace(m::Integer, n::Integer, S::Type)
@@ -1555,7 +1555,7 @@ function QmrWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = QmrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
-  return solver
+  return workspace
 end
 
 function QmrWorkspace(A, b)
@@ -1616,7 +1616,7 @@ function BilqrWorkspace(kc::KrylovConstructor)
   wₖ₋₂ = similar(kc.vn)
   stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
   solver = BilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, false, stats)
-  return solver
+  return workspace
 end
 
 function BilqrWorkspace(m::Integer, n::Integer, S::Type)
@@ -1638,7 +1638,7 @@ function BilqrWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
   solver = BilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, false, stats)
-  return solver
+  return workspace
 end
 
 function BilqrWorkspace(A, b)
@@ -1684,7 +1684,7 @@ function CglsWorkspace(kc::KrylovConstructor)
   Mr = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CglsWorkspace{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
-  return solver
+  return workspace
 end
 
 function CglsWorkspace(m::Integer, n::Integer, S::Type)
@@ -1699,7 +1699,7 @@ function CglsWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CglsWorkspace{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
-  return solver
+  return workspace
 end
 
 function CglsWorkspace(A, b)
@@ -1763,7 +1763,7 @@ function CglsLanczosShiftWorkspace(kc::KrylovConstructor, nshifts::Integer)
   not_cv     = BitVector(undef, nshifts)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
   solver = CglsLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, u_prev, u_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
-  return solver
+  return workspace
 end
 
 function CglsLanczosShiftWorkspace(m::Integer, n::Integer, nshifts::Integer, S::Type)
@@ -1787,7 +1787,7 @@ function CglsLanczosShiftWorkspace(m::Integer, n::Integer, nshifts::Integer, S::
   S = isconcretetype(S) ? S : typeof(x)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
   solver = CglsLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, u_prev, u_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
-  return solver
+  return workspace
 end
 
 function CglsLanczosShiftWorkspace(A, b, nshifts::Integer)
@@ -1837,7 +1837,7 @@ function CrlsWorkspace(kc::KrylovConstructor)
   Ms = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CrlsWorkspace{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
-  return solver
+  return workspace
 end
 
 function CrlsWorkspace(m::Integer, n::Integer, S::Type)
@@ -1854,7 +1854,7 @@ function CrlsWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CrlsWorkspace{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
-  return solver
+  return workspace
 end
 
 function CrlsWorkspace(A, b)
@@ -1902,7 +1902,7 @@ function CgneWorkspace(kc::KrylovConstructor)
   z   = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CgneWorkspace{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
-  return solver
+  return workspace
 end
 
 function CgneWorkspace(m::Integer, n::Integer, S::Type)
@@ -1918,7 +1918,7 @@ function CgneWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CgneWorkspace{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
-  return solver
+  return workspace
 end
 
 function CgneWorkspace(A, b)
@@ -1966,7 +1966,7 @@ function CrmrWorkspace(kc::KrylovConstructor)
   s   = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CrmrWorkspace{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
-  return solver
+  return workspace
 end
 
 function CrmrWorkspace(m::Integer, n::Integer, S::Type)
@@ -1982,7 +1982,7 @@ function CrmrWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CrmrWorkspace{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
-  return solver
+  return workspace
 end
 
 function CrmrWorkspace(A, b)
@@ -2034,7 +2034,7 @@ function LslqWorkspace(kc::KrylovConstructor; window::Integer = 5)
   err_vec = zeros(T, window)
   stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], 0.0, "unknown")
   solver = LslqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
-  return solver
+  return workspace
 end
 
 function LslqWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
@@ -2052,7 +2052,7 @@ function LslqWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   S = isconcretetype(S) ? S : typeof(x)
   stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], 0.0, "unknown")
   solver = LslqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
-  return solver
+  return workspace
 end
 
 function LslqWorkspace(A, b; window::Integer = 5)
@@ -2104,7 +2104,7 @@ function LsqrWorkspace(kc::KrylovConstructor; window::Integer = 5)
   err_vec = zeros(T, window)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = LsqrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
-  return solver
+  return workspace
 end
 
 function LsqrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
@@ -2122,7 +2122,7 @@ function LsqrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = LsqrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
-  return solver
+  return workspace
 end
 
 function LsqrWorkspace(A, b; window::Integer = 5)
@@ -2176,7 +2176,7 @@ function LsmrWorkspace(kc::KrylovConstructor; window::Integer = 5)
   err_vec = zeros(T, window)
   stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), 0.0, "unknown")
   solver = LsmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
-  return solver
+  return workspace
 end
 
 function LsmrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
@@ -2195,7 +2195,7 @@ function LsmrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   S = isconcretetype(S) ? S : typeof(x)
   stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), 0.0, "unknown")
   solver = LsmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
-  return solver
+  return workspace
 end
 
 function LsmrWorkspace(A, b; window::Integer = 5)
@@ -2249,7 +2249,7 @@ function LnlqWorkspace(kc::KrylovConstructor)
   q   = similar(kc.vn_empty)
   stats = LNLQStats(0, false, T[], false, T[], T[], 0.0, "unknown")
   solver = LnlqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
-  return solver
+  return workspace
 end
 
 function LnlqWorkspace(m::Integer, n::Integer, S::Type)
@@ -2268,7 +2268,7 @@ function LnlqWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = LNLQStats(0, false, T[], false, T[], T[], 0.0, "unknown")
   solver = LnlqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
-  return solver
+  return workspace
 end
 
 function LnlqWorkspace(A, b)
@@ -2322,7 +2322,7 @@ function CraigWorkspace(kc::KrylovConstructor)
   w2  = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CraigWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
-  return solver
+  return workspace
 end
 
 function CraigWorkspace(m::Integer, n::Integer, S::Type)
@@ -2341,7 +2341,7 @@ function CraigWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CraigWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
-  return solver
+  return workspace
 end
 
 function CraigWorkspace(A, b)
@@ -2399,7 +2399,7 @@ function CraigmrWorkspace(kc::KrylovConstructor)
   q    = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CraigmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
-  return solver
+  return workspace
 end
 
 function CraigmrWorkspace(m::Integer, n::Integer, S::Type)
@@ -2420,7 +2420,7 @@ function CraigmrWorkspace(m::Integer, n::Integer, S::Type)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = CraigmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
-  return solver
+  return workspace
 end
 
 function CraigmrWorkspace(A, b)
@@ -2478,7 +2478,7 @@ function GmresWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = GmresWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
-  return solver
+  return workspace
 end
 
 function GmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
@@ -2498,7 +2498,7 @@ function GmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = GmresWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
-  return solver
+  return workspace
 end
 
 function GmresWorkspace(A, b; memory::Integer = 20)
@@ -2556,7 +2556,7 @@ function FgmresWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = FgmresWorkspace{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
-  return solver
+  return workspace
 end
 
 function FgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
@@ -2576,7 +2576,7 @@ function FgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = FgmresWorkspace{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
-  return solver
+  return workspace
 end
 
 function FgmresWorkspace(A, b; memory::Integer = 20)
@@ -2631,7 +2631,7 @@ function FomWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   U  = Vector{FC}(undef, div(memory * (memory+1), 2))
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = FomWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
-  return solver
+  return workspace
 end
 
 function FomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
@@ -2650,7 +2650,7 @@ function FomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = FomWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
-  return solver
+  return workspace
 end
 
 function FomWorkspace(A, b; memory::Integer = 20)
@@ -2719,7 +2719,7 @@ function GpmrWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   R  = Vector{FC}(undef, memory * (2 * memory + 1))
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = GpmrWorkspace{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
-  return solver
+  return workspace
 end
 
 function GpmrWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
@@ -2745,7 +2745,7 @@ function GpmrWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = GpmrWorkspace{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
-  return solver
+  return workspace
 end
 
 function GpmrWorkspace(A, b; memory::Integer = 20)
@@ -2896,7 +2896,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
           kcopy!(workspace.n, workspace.Δx, x0)
           kcopy!(workspace.m, workspace.Δy, y0)
           workspace.warm_start = true
-          return solver
+          return workspace
         end
       else
         function warm_start!(solver :: $KS, x0)
@@ -2905,7 +2905,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
           allocate_if(true, solver, :Δx, S, workspace.x)  # The length of Δx is n
           kcopy!(workspace.n, workspace.Δx, x0)
           workspace.warm_start = true
-          return solver
+          return workspace
         end
       end
     end

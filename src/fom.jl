@@ -164,7 +164,7 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
 
     mem = length(l)  # Memory
@@ -347,6 +347,6 @@ kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itma
     stats.inconsistent = !solved && breakdown
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

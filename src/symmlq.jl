@@ -172,7 +172,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
     β₁ = sqrt(β₁)
     β = β₁
@@ -444,6 +444,6 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     stats.Acond = Acond
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

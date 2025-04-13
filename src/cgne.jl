@@ -161,7 +161,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
-      return solver
+      return workspace
     end
     λ > 0 && kcopy!(m, s, r)  # s ← r
     mul!(p, Aᴴ, z)
@@ -239,6 +239,6 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

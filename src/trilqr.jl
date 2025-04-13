@@ -447,6 +447,6 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     stats.solved_dual = solved_dual
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

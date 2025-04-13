@@ -156,7 +156,7 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
       stats.status = "x is a zero-residual solution"
       history && push!(rNorms, zero(T))
       history && push!(ArNorms, zero(T))
-      return solver
+      return workspace
     end
     MisI || mulorldiv!(Mr, M, r, ldiv)
     mul!(s, Aᴴ, Mr)
@@ -230,6 +230,6 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     stats.inconsistent = false
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

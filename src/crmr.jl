@@ -161,7 +161,7 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       history && push!(ArNorms, zero(T))
-      return solver
+      return workspace
     end
     λ > 0 && kcopy!(m, s, r)  # s ← r
     mul!(Aᴴr, Aᴴ, r)          # - λ * x0 if x0 ≠ 0.
@@ -231,6 +231,6 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

@@ -237,7 +237,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       history && push!(ArNorms, zero(T))
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
-      return solver
+      return workspace
     end
     β = β₁
 
@@ -257,7 +257,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       history && push!(ArNorms, zero(T))
       stats.timer = start_time |> ktimer
       stats.status = "x is a minimum least-squares solution"
-      return solver
+      return workspace
     end
     kdiv!(n, v, α)
     NisI || kdiv!(n, Nv, α)
@@ -500,6 +500,6 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     stats.error_with_bnd = complex_error_bnd
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

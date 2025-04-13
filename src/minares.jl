@@ -198,7 +198,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %8s  %5s\n", "k", "‖rₖ‖", "‖Arₖ‖", "βₖ₊₁", "ζₖ", "timer")
@@ -581,6 +581,6 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     # stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

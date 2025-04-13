@@ -58,7 +58,7 @@ function BlockMinresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::
   SM = isconcretetype(SM) ? SM : typeof(X)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = BlockMinresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, false, stats)
-  return solver
+  return workspace
 end
 
 function BlockMinresWorkspace(A, B)
@@ -120,7 +120,7 @@ function BlockGmresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::T
   SM = isconcretetype(SM) ? SM : typeof(X)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
   solver = BlockGmresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, false, stats)
-  return solver
+  return workspace
 end
 
 function BlockGmresWorkspace(A, B; memory::Integer = 5)
@@ -157,7 +157,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
         allocate_if(true, solver, :ΔX, SM, workspace.n, workspace.p)
         copyto!(workspace.ΔX, X0)
         workspace.warm_start = true
-        return solver
+        return workspace
       end
     end
   end

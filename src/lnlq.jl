@@ -209,7 +209,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       history && push!(rNorms, bNorm)
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
-      return solver
+      return workspace
     end
 
     history && push!(rNorms, bNorm)
@@ -545,6 +545,6 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     stats.error_with_bnd = complex_error_bnd
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

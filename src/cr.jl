@@ -162,7 +162,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       history && push!(ArNorms, zero(T))
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
 
     mul!(Ar, A, r)
@@ -176,7 +176,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       history && push!(ArNorms, zero(T))
       workspace.warm_start = false
       linesearch && kcopy!(n, x, b)  # x ← b
-      return solver
+      return workspace
     end
 
     kcopy!(n, p, r)   # p ← r
@@ -221,7 +221,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
           stats.status = "nonpositive curvature"
           iter == 0 && kcopy!(n, x, b)  # x ← b
           workspace.warm_start = false
-          return solver
+          return workspace
         end
       elseif pAp ≤ 0 && radius == 0
         error("Indefinite system and no trust region")
@@ -388,7 +388,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         stats.status = "solver encountered numerical issues"
         warm_start && kaxpy!(n, one(FC), Δx, x)
         workspace.warm_start = false
-        return solver
+        return workspace
       end
       pr = rNorm² + β * pr - β * α * pAp  # pᴴr
       abspr = abs(pr)
@@ -417,6 +417,6 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     stats.inconsistent = false
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

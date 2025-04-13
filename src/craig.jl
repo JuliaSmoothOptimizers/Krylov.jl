@@ -212,7 +212,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
-      return solver
+      return workspace
     end
     β₁² = β₁^2
     β = β₁
@@ -392,6 +392,6 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

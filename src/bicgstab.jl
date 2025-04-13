@@ -174,7 +174,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
 
     iter = 0
@@ -192,7 +192,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       stats.status = "Breakdown bᴴc = 0"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
 
     # Stopping criterion.
@@ -264,6 +264,6 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     stats.inconsistent = false
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

@@ -159,7 +159,7 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      return solver
+      return workspace
     end
 
     iter = 0
@@ -318,6 +318,6 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
     stats.inconsistent = false
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

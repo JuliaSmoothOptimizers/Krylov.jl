@@ -560,6 +560,6 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     stats.inconsistent = !solved && breakdown
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end
