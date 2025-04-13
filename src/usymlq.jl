@@ -80,8 +80,8 @@ In all cases, problems must be consistent.
 function usymlq end
 
 """
-    solver = usymlq!(solver::UsymlqWorkspace, A, b, c; kwargs...)
-    solver = usymlq!(solver::UsymlqWorkspace, A, b, c, x0; kwargs...)
+    solver = usymlq!(workspace::UsymlqWorkspace, A, b, c; kwargs...)
+    solver = usymlq!(workspace::UsymlqWorkspace, A, b, c, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`usymlq`](@ref).
 

@@ -93,8 +93,8 @@ TriMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 function trimr end
 
 """
-    solver = trimr!(solver::TrimrWorkspace, A, b, c; kwargs...)
-    solver = trimr!(solver::TrimrWorkspace, A, b, c, x0, y0; kwargs...)
+    solver = trimr!(workspace::TrimrWorkspace, A, b, c; kwargs...)
+    solver = trimr!(workspace::TrimrWorkspace, A, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`trimr`](@ref).
 

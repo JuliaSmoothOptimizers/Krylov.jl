@@ -93,7 +93,7 @@ but simpler to implement. Only the x-part of the solution is returned.
 function cgne end
 
 """
-    solver = cgne!(solver::CgneWorkspace, A, b; kwargs...)
+    solver = cgne!(workspace::CgneWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`cgne`](@ref).
 

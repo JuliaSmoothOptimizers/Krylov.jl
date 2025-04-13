@@ -78,8 +78,8 @@ QMR requires support for `adjoint(M)` and `adjoint(N)` if preconditioners are pr
 function qmr end
 
 """
-    solver = qmr!(solver::QmrWorkspace, A, b; kwargs...)
-    solver = qmr!(solver::QmrWorkspace, A, b, x0; kwargs...)
+    solver = qmr!(workspace::QmrWorkspace, A, b; kwargs...)
+    solver = qmr!(workspace::QmrWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`qmr`](@ref).
 

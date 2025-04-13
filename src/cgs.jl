@@ -80,8 +80,8 @@ TFQMR and BICGSTAB were developed to remedy this difficulty.»
 function cgs end
 
 """
-    solver = cgs!(solver::CgsWorkspace, A, b; kwargs...)
-    solver = cgs!(solver::CgsWorkspace, A, b, x0; kwargs...)
+    solver = cgs!(workspace::CgsWorkspace, A, b; kwargs...)
+    solver = cgs!(workspace::CgsWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`cgs`](@ref).
 

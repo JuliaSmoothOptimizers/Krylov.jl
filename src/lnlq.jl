@@ -121,7 +121,7 @@ For instance σ:=(1-1e-7)σₘᵢₙ .
 function lnlq end
 
 """
-    solver = lnlq!(solver::LnlqWorkspace, A, b; kwargs...)
+    solver = lnlq!(workspace::LnlqWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`lnlq`](@ref).
 

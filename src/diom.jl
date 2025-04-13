@@ -72,8 +72,8 @@ and indefinite systems of linear equations can be handled by this single algorit
 function diom end
 
 """
-    solver = diom!(solver::DiomWorkspace, A, b; kwargs...)
-    solver = diom!(solver::DiomWorkspace, A, b, x0; kwargs...)
+    solver = diom!(workspace::DiomWorkspace, A, b; kwargs...)
+    solver = diom!(workspace::DiomWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`diom`](@ref).
 

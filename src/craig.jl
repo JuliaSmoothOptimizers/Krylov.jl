@@ -128,7 +128,7 @@ In this implementation, both the x and y-parts of the solution are returned.
 function craig end
 
 """
-    solver = craig!(solver::CraigWorkspace, A, b; kwargs...)
+    solver = craig!(workspace::CraigWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`craig`](@ref).
 

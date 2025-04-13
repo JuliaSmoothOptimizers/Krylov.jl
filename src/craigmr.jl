@@ -118,7 +118,7 @@ returned.
 function craigmr end
 
 """
-    solver = craigmr!(solver::CraigmrWorkspace, A, b; kwargs...)
+    solver = craigmr!(workspace::CraigmrWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`craigmr`](@ref).
 

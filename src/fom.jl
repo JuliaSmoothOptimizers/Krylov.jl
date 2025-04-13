@@ -67,8 +67,8 @@ FOM algorithm is based on the Arnoldi process and a Galerkin condition.
 function fom end
 
 """
-    solver = fom!(solver::FomWorkspace, A, b; kwargs...)
-    solver = fom!(solver::FomWorkspace, A, b, x0; kwargs...)
+    solver = fom!(workspace::FomWorkspace, A, b; kwargs...)
+    solver = fom!(workspace::FomWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`fom`](@ref).
 

@@ -84,8 +84,8 @@ USYMQR finds the minimum-norm solution if problems are inconsistent.
 function usymqr end
 
 """
-    solver = usymqr!(solver::UsymqrWorkspace, A, b, c; kwargs...)
-    solver = usymqr!(solver::UsymqrWorkspace, A, b, c, x0; kwargs...)
+    solver = usymqr!(workspace::UsymqrWorkspace, A, b, c; kwargs...)
+    solver = usymqr!(workspace::UsymqrWorkspace, A, b, c, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`usymqr`](@ref).
 

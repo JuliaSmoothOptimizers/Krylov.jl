@@ -66,7 +66,7 @@ but simpler to implement.
 function cgls_lanczos_shift end
 
 """
-    solver = cgls_lanczos_shift!(solver::CglsLanczosShiftWorkspace, A, b, shifts; kwargs...)
+    solver = cgls_lanczos_shift!(workspace::CglsLanczosShiftWorkspace, A, b, shifts; kwargs...)
 
 where `kwargs` are keyword arguments of [`cgls_lanczos_shift`](@ref).
 

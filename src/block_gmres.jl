@@ -56,8 +56,8 @@ Solve the linear system AX = B of size n with p right-hand sides using block-GMR
 function block_gmres end
 
 """
-    solver = block_gmres!(solver::BlockGmresWorkspace, B; kwargs...)
-    solver = block_gmres!(solver::BlockGmresWorkspace, B, X0; kwargs...)
+    solver = block_gmres!(workspace::BlockGmresWorkspace, B; kwargs...)
+    solver = block_gmres!(workspace::BlockGmresWorkspace, B, X0; kwargs...)
 
 where `kwargs` are keyword arguments of [`block_gmres`](@ref).
 

@@ -51,8 +51,8 @@ Solve the Hermitian linear system AX = B of size n with p right-hand sides using
 function block_minres end
 
 """
-    solver = block_minres!(solver::BlockMinresWorkspace, B; kwargs...)
-    solver = block_minres!(solver::BlockMinresWorkspace, B, X0; kwargs...)
+    solver = block_minres!(workspace::BlockMinresWorkspace, B; kwargs...)
+    solver = block_minres!(workspace::BlockMinresWorkspace, B, X0; kwargs...)
 
 where `kwargs` are keyword arguments of [`block_minres`](@ref).
 

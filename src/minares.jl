@@ -67,8 +67,8 @@ The estimates computed every iteration are ‖Mrₖ‖₂ and ‖AMrₖ‖_M.
 function minares end
 
 """
-    solver = minares!(solver::MinaresWorkspace, A, b; kwargs...)
-    solver = minares!(solver::MinaresWorkspace, A, b, x0; kwargs...)
+    solver = minares!(workspace::MinaresWorkspace, A, b; kwargs...)
+    solver = minares!(workspace::MinaresWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`minares`](@ref).
 

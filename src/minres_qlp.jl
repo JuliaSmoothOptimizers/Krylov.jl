@@ -75,8 +75,8 @@ M also indicates the weighted norm in which residuals are measured.
 function minres_qlp end
 
 """
-    solver = minres_qlp!(solver::MinresQlpWorkspace, A, b; kwargs...)
-    solver = minres_qlp!(solver::MinresQlpWorkspace, A, b, x0; kwargs...)
+    solver = minres_qlp!(workspace::MinresQlpWorkspace, A, b; kwargs...)
+    solver = minres_qlp!(workspace::MinresQlpWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`minres_qlp`](@ref).
 

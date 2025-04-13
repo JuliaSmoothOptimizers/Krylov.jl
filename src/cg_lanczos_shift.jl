@@ -64,7 +64,7 @@ of size n. The method does _not_ abort if A + αI is not definite.
 function cg_lanczos_shift end
 
 """
-    solver = cg_lanczos_shift!(solver::CgLanczosShiftWorkspace, A, b, shifts; kwargs...)
+    solver = cg_lanczos_shift!(workspace::CgLanczosShiftWorkspace, A, b, shifts; kwargs...)
 
 where `kwargs` are keyword arguments of [`cg_lanczos_shift`](@ref).
 

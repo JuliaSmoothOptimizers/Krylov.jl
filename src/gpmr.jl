@@ -103,8 +103,8 @@ GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 function gpmr end
 
 """
-    solver = gpmr!(solver::GpmrWorkspace, A, B, b, c; kwargs...)
-    solver = gpmr!(solver::GpmrWorkspace, A, B, b, c, x0, y0; kwargs...)
+    solver = gpmr!(workspace::GpmrWorkspace, A, B, b, c; kwargs...)
+    solver = gpmr!(workspace::GpmrWorkspace, A, B, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`gpmr`](@ref).
 

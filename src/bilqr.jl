@@ -71,8 +71,8 @@ QMR is used for solving dual system `Aᴴy = c` of size n.
 function bilqr end
 
 """
-    solver = bilqr!(solver::BilqrWorkspace, A, b, c; kwargs...)
-    solver = bilqr!(solver::BilqrWorkspace, A, b, c, x0, y0; kwargs...)
+    solver = bilqr!(workspace::BilqrWorkspace, A, b, c; kwargs...)
+    solver = bilqr!(workspace::BilqrWorkspace, A, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`bilqr`](@ref).
 

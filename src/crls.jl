@@ -78,7 +78,7 @@ but simpler to implement.
 function crls end
 
 """
-    solver = crls!(solver::CrlsWorkspace, A, b; kwargs...)
+    solver = crls!(workspace::CrlsWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`crls`](@ref).
 

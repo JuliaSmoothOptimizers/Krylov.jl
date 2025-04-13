@@ -77,8 +77,8 @@ M also indicates the weighted norm in which residuals are measured.
 function cr end
 
 """
-    solver = cr!(solver::CrWorkspace, A, b; kwargs...)
-    solver = cr!(solver::CrWorkspace, A, b, x0; kwargs...)
+    solver = cr!(workspace::CrWorkspace, A, b; kwargs...)
+    solver = cr!(workspace::CrWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`cr`](@ref).
 
