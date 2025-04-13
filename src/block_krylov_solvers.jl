@@ -187,7 +187,7 @@ function sizeof(stats_workspace :: Union{KrylovStats, KrylovWorkspace, BlockKryl
 end
 
 """
-    show(io, solver; show_stats=true)
+    show(io, workspace; show_stats=true)
 
 Statistics of `workspace` are displayed if `show_stats` is set to true.
 """
