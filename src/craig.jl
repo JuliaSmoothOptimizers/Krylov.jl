@@ -153,7 +153,7 @@ def_kwargs_craig = (:(; M = I                         ),
                     :(; timemax::Float64 = Inf        ),
                     :(; verbose::Int = 0              ),
                     :(; history::Bool = false         ),
-                    :(; callback = solver -> false    ),
+                    :(; callback = workspace -> false ),
                     :(; iostream::IO = kstdout        ))
 
 def_kwargs_craig = extract_parameters.(def_kwargs_craig)

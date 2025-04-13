@@ -93,7 +93,7 @@ def_kwargs_trilqr = (:(; transfer_to_usymcg::Bool = true),
                      :(; timemax::Float64 = Inf         ),
                      :(; verbose::Int = 0               ),
                      :(; history::Bool = false          ),
-                     :(; callback = solver -> false     ),
+                     :(; callback = workspace -> false  ),
                      :(; iostream::IO = kstdout         ))
 
 def_kwargs_trilqr = extract_parameters.(def_kwargs_trilqr)

@@ -85,7 +85,7 @@ def_kwargs_block_gmres = (:(; M = I                            ),
                           :(; timemax::Float64 = Inf           ),
                           :(; verbose::Int = 0                 ),
                           :(; history::Bool = false            ),
-                          :(; callback = solver -> false       ),
+                          :(; callback = workspace -> false    ),
                           :(; iostream::IO = kstdout           ))
 
 def_kwargs_block_gmres = extract_parameters.(def_kwargs_block_gmres)

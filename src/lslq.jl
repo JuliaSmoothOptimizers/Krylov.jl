@@ -173,7 +173,7 @@ def_kwargs_lslq = (:(; M = I                         ),
                    :(; timemax::Float64 = Inf        ),
                    :(; verbose::Int = 0              ),
                    :(; history::Bool = false         ),
-                   :(; callback = solver -> false    ),
+                   :(; callback = workspace -> false ),
                    :(; iostream::IO = kstdout        ))
 
 def_kwargs_lslq = extract_parameters.(def_kwargs_lslq)

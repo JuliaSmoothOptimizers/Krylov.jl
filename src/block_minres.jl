@@ -73,7 +73,7 @@ def_kwargs_block_minres = (:(; M = I                            ),
                            :(; timemax::Float64 = Inf           ),
                            :(; verbose::Int = 0                 ),
                            :(; history::Bool = false            ),
-                           :(; callback = solver -> false       ),
+                           :(; callback = workspace -> false    ),
                            :(; iostream::IO = kstdout           ))
 
 def_kwargs_block_minres = mapreduce(extract_parameters, vcat, def_kwargs_block_minres)

@@ -94,7 +94,7 @@ def_kwargs_bilqr = (:(; transfer_to_bicg::Bool = true),
                     :(; timemax::Float64 = Inf       ),
                     :(; verbose::Int = 0             ),
                     :(; history::Bool = false        ),
-                    :(; callback = solver -> false   ),
+                    :(; callback = workspace -> false),
                     :(; iostream::IO = kstdout       ))
 
 def_kwargs_bilqr = extract_parameters.(def_kwargs_bilqr)

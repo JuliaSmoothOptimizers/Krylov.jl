@@ -96,7 +96,7 @@ def_kwargs_bilq = (:(; c::AbstractVector{FC} = b    ),
                    :(; timemax::Float64 = Inf       ),
                    :(; verbose::Int = 0             ),
                    :(; history::Bool = false        ),
-                   :(; callback = solver -> false   ),
+                   :(; callback = workspace -> false),
                    :(; iostream::IO = kstdout       ))
 
 def_kwargs_bilq = extract_parameters.(def_kwargs_bilq)
