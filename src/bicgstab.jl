@@ -120,7 +120,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "BICGSTAB: system of size %d\n", n)
@@ -135,17 +135,17 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     ktypeof(c) == S || error("ktypeof(c) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :t , S, solver.x)  # The length of t is n
-    allocate_if(!NisI, solver, :yz, S, solver.x)  # The length of yz is n
-    Δx, x, r, p, v, s, qd, stats = solver.Δx, solver.x, solver.r, solver.p, solver.v, solver.s, solver.qd, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, solver, :t , S, workspace.x)  # The length of t is n
+    allocate_if(!NisI, solver, :yz, S, workspace.x)  # The length of yz is n
+    Δx, x, r, p, v, s, qd, stats = workspace.Δx, workspace.x, workspace.r, workspace.p, workspace.v, workspace.s, workspace.qd, workspace.stats
+    warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
-    q = d = solver.qd
-    t = MisI ? d : solver.t
-    y = NisI ? p : solver.yz
-    z = NisI ? s : solver.yz
-    r₀ = MisI ? r : solver.qd
+    q = d = workspace.qd
+    t = MisI ? d : workspace.t
+    y = NisI ? p : workspace.yz
+    z = NisI ? s : workspace.yz
+    r₀ = MisI ? r : workspace.qd
 
     if warm_start
       mul!(r₀, A, Δx)
@@ -173,7 +173,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
+      workspace.warm_start = false
       return solver
     end
 
@@ -191,7 +191,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       stats.timer = start_time |> ktimer
       stats.status = "Breakdown bᴴc = 0"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
+      workspace.warm_start = false
       return solver
     end
 
@@ -256,7 +256,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter

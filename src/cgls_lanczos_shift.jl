@@ -102,11 +102,11 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
 
     nshifts = length(shifts)
-    nshifts == solver.nshifts || error("solver.nshifts = $(solver.nshifts) is inconsistent with length(shifts) = $nshifts")
+    nshifts == workspace.nshifts || error("workspace.nshifts = $(workspace.nshifts) is inconsistent with length(shifts) = $nshifts")
     (verbose > 0) && @printf(iostream, "CGLS-LANCZOS-SHIFT: system of %d equations in %d variables with %d shifts\n", m, n, nshifts)
 
     # Tests M = Iₙ
@@ -121,11 +121,11 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, solver.Mv)  # The length of v is n
-    v, u_prev, u, u_next = solver.Mv, solver.u_prev, solver.u, solver.u_next
-    x, p, σ, δhat = solver.x, solver.p, solver.σ, solver.δhat
-    ω, γ, rNorms, converged = solver.ω, solver.γ, solver.rNorms, solver.converged
-    not_cv, stats = solver.not_cv, solver.stats
+    allocate_if(!MisI, solver, :v, S, workspace.Mv)  # The length of v is n
+    v, u_prev, u, u_next = workspace.Mv, workspace.u_prev, workspace.u, workspace.u_next
+    x, p, σ, δhat = workspace.x, workspace.p, workspace.σ, workspace.δhat
+    ω, γ, rNorms, converged = workspace.ω, workspace.γ, workspace.rNorms, workspace.converged
+    not_cv, stats = workspace.not_cv, workspace.stats
     rNorms_history, status = stats.residuals, stats.status
     reset!(stats)
 

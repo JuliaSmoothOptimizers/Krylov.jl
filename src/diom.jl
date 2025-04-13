@@ -117,7 +117,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "DIOM: system of size %d\n", n)
@@ -131,15 +131,15 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :w, S, solver.x)  # The length of w is n
-    allocate_if(!NisI, solver, :z, S, solver.x)  # The length of z is n
-    Δx, x, t, P, V = solver.Δx, solver.x, solver.t, solver.P, solver.V
-    L, H, stats = solver.L, solver.H, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, solver, :w, S, workspace.x)  # The length of w is n
+    allocate_if(!NisI, solver, :z, S, workspace.x)  # The length of z is n
+    Δx, x, t, P, V = workspace.Δx, workspace.x, workspace.t, workspace.P, workspace.V
+    L, H, stats = workspace.L, workspace.H, workspace.stats
+    warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
-    w  = MisI ? t : solver.w
-    r₀ = MisI ? t : solver.w
+    w  = MisI ? t : workspace.w
+    r₀ = MisI ? t : workspace.w
 
     # Initial solution x₀ and residual r₀.
     kfill!(x, zero(FC))  # x₀
@@ -158,7 +158,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
+      workspace.warm_start = false
       return solver
     end
 
@@ -204,7 +204,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       next_pos = mod(iter, mem) + 1  # Position corresponding to vₖ₊₁ in the circular stack V.
 
       # Incomplete Arnoldi procedure.
-      z = NisI ? V[pos] : solver.z
+      z = NisI ? V[pos] : workspace.z
       NisI || mulorldiv!(z, N, V[pos], ldiv)  # Nvₖ, forms pₖ
       mul!(t, A, z)                           # ANvₖ
       MisI || mulorldiv!(w, M, t, ldiv)       # MANvₖ, forms vₖ₊₁
@@ -307,7 +307,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter

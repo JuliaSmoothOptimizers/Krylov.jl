@@ -108,7 +108,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == n || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CG-LANCZOS: system of %d equations in %d variables\n", n, n)
@@ -121,13 +121,13 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, solver.x)  # The length of v is n
-    Δx, x, Mv, Mv_prev = solver.Δx, solver.x, solver.Mv, solver.Mv_prev
-    p, Mv_next, stats = solver.p, solver.Mv_next, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, solver, :v, S, workspace.x)  # The length of v is n
+    Δx, x, Mv, Mv_prev = workspace.Δx, workspace.x, workspace.Mv, workspace.Mv_prev
+    p, Mv_next, stats = workspace.p, workspace.Mv_next, workspace.stats
+    warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
-    v = MisI ? Mv : solver.v
+    v = MisI ? Mv : workspace.v
 
     # Initial state.
     kfill!(x, zero(FC))
@@ -150,7 +150,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
+      workspace.warm_start = false
       return solver
     end
     kcopy!(n, p, v)  # p ← v
@@ -241,7 +241,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats. TODO: Estimate Acond.
     stats.niter = iter

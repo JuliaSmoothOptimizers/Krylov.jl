@@ -7,7 +7,7 @@ The starting point is used as initial approximation to a solution.
 solver = CgWorkspace(A, b)
 cg!(solver, A, b, itmax=100)
 if !issolved(solver)
-  cg!(solver, A, b, solver.x, itmax=100) # cg! uses the approximate solution `solver.x` as starting point
+  cg!(solver, A, b, workspace.x, itmax=100) # cg! uses the approximate solution `workspace.x` as starting point
 end
 ```
 
@@ -17,7 +17,7 @@ If the user has an initial guess `x0`, it can be provided directly.
 cg(A, b, x0)
 ```
 
-It is also possible to use the `warm_start!` function to feed the starting point into the solver.
+It is also possible to use the `warm_start!` function to feed the starting point into the workspace.
 
 ```julia
 warm_start!(solver, x0)
@@ -31,10 +31,10 @@ We provide an example with `cg_lanczos!`.
 ```julia
 solver = CgLanczosWorkspace(A, b)
 cg_lanczos!(solver, A, b)
-x₀ = solver.x           # Ax₀ ≈ b
+x₀ = workspace.x           # Ax₀ ≈ b
 r = b - A * x₀          # r = b - Ax₀
 cg_lanczos!(solver, A, r)
-Δx = solver.x           # AΔx = r
+Δx = workspace.x           # AΔx = r
 x = x₀ + Δx             # Ax = b
 ```
 
@@ -65,10 +65,10 @@ y = y₀ + Δy
 # ```julia
 # k = 50
 # solver = GmresWorkspace(A, b, k)  # FomWorkspace(A, b, k)
-# solver.x .= 0                  # solver.x .= x₀ 
+# workspace.x .= 0                  # workspace.x .= x₀ 
 # nrestart = 0
 # while !issolved(solver) || nrestart ≤ 10
-#   solve!(solver, A, b, solver.x, itmax=k)
+#   solve!(solver, A, b, workspace.x, itmax=k)
 #   nrestart += 1
 # end
 # ```

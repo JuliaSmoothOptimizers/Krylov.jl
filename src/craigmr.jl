@@ -156,7 +156,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CRAIGMR: system of %d equations in %d variables\n", m, n)
 
@@ -176,15 +176,15 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :u, S, solver.y)  # The length of u is m
-    allocate_if(!NisI, solver, :v, S, solver.x)  # The length of v is n
-    allocate_if(λ > 0, solver, :q, S, solver.x)  # The length of q is n
-    x, Nv, Aᴴu, d, y, Mu = solver.x, solver.Nv, solver.Aᴴu, solver.d, solver.y, solver.Mu
-    w, wbar, Av, q, stats = solver.w, solver.wbar, solver.Av, solver.q, solver.stats
+    allocate_if(!MisI, solver, :u, S, workspace.y)  # The length of u is m
+    allocate_if(!NisI, solver, :v, S, workspace.x)  # The length of v is n
+    allocate_if(λ > 0, solver, :q, S, workspace.x)  # The length of q is n
+    x, Nv, Aᴴu, d, y, Mu = workspace.x, workspace.Nv, workspace.Aᴴu, workspace.d, workspace.y, workspace.Mu
+    w, wbar, Av, q, stats = workspace.w, workspace.wbar, workspace.Av, workspace.q, workspace.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
-    u = MisI ? Mu : solver.u
-    v = NisI ? Nv : solver.v
+    u = MisI ? Mu : workspace.u
+    v = NisI ? Nv : workspace.v
 
     # Compute y such that AAᴴy = b. Then recover x = Aᴴy.
     kfill!(x, zero(FC))

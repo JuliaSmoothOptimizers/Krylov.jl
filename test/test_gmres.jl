@@ -137,7 +137,7 @@
       storage_vec = similar(b)
       gmres!(solver, A, b, N = N, atol = 0.0, rtol = 0.0, restart = true, 
              callback = solver -> restarted_gmres_callback_n2(solver, A, b, stor, N, storage_vec, tol))
-      @test solver.stats.status == "user-requested exit"
+      @test workspace.stats.status == "user-requested exit"
       @test norm(A * x - b) ≤ tol
 
       @test_throws TypeError gmres(A, b, callback = solver -> "string", history = true)

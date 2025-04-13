@@ -169,7 +169,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CRAIG: system of %d equations in %d variables\n", m, n)
 
@@ -189,15 +189,15 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :u , S, solver.y)  # The length of u is m
-    allocate_if(!NisI, solver, :v , S, solver.x)  # The length of v is n
-    allocate_if(λ > 0, solver, :w2, S, solver.x)  # The length of w2 is n
-    x, Nv, Aᴴu, y, w = solver.x, solver.Nv, solver.Aᴴu, solver.y, solver.w
-    Mu, Av, w2, stats = solver.Mu, solver.Av, solver.w2, solver.stats
+    allocate_if(!MisI, solver, :u , S, workspace.y)  # The length of u is m
+    allocate_if(!NisI, solver, :v , S, workspace.x)  # The length of v is n
+    allocate_if(λ > 0, solver, :w2, S, workspace.x)  # The length of w2 is n
+    x, Nv, Aᴴu, y, w = workspace.x, workspace.Nv, workspace.Aᴴu, workspace.y, workspace.w
+    Mu, Av, w2, stats = workspace.Mu, workspace.Av, workspace.w2, workspace.stats
     rNorms = stats.residuals
     reset!(stats)
-    u = MisI ? Mu : solver.u
-    v = NisI ? Nv : solver.v
+    u = MisI ? Mu : workspace.u
+    v = NisI ? Nv : workspace.v
 
     kfill!(x, zero(FC))
     kfill!(y, zero(FC))

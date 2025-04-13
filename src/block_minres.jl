@@ -104,13 +104,13 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
     ktypeof(B) == SM || error("ktypeof(B) must be equal to $SM")
 
     # Set up workspace.
-    Vₖ₋₁, Vₖ = solver.Vₖ₋₁, solver.Vₖ
-    ΔX, X, Q, C = solver.ΔX, solver.X, solver.Q, solver.C
-    D, Φ, stats = solver.D, solver.Φ, solver.stats
-    wₖ₋₂, wₖ₋₁ = solver.wₖ₋₂, solver.wₖ₋₁
-    Hₖ₋₂, Hₖ₋₁ = solver.Hₖ₋₂, solver.Hₖ₋₁
-    τₖ₋₂, τₖ₋₁ = solver.τₖ₋₂, solver.τₖ₋₁
-    warm_start = solver.warm_start
+    Vₖ₋₁, Vₖ = workspace.Vₖ₋₁, workspace.Vₖ
+    ΔX, X, Q, C = workspace.ΔX, workspace.X, workspace.Q, workspace.C
+    D, Φ, stats = workspace.D, workspace.Φ, workspace.stats
+    wₖ₋₂, wₖ₋₁ = workspace.wₖ₋₂, workspace.wₖ₋₁
+    Hₖ₋₂, Hₖ₋₁ = workspace.Hₖ₋₂, workspace.Hₖ₋₁
+    τₖ₋₂, τₖ₋₁ = workspace.τₖ₋₂, workspace.τₖ₋₁
+    warm_start = workspace.warm_start
     RNorms = stats.residuals
     reset!(stats)
     R₀ = warm_start ? Q : B
@@ -298,7 +298,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
 
     # Update Xₖ
     warm_start && (X .+= ΔX)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter

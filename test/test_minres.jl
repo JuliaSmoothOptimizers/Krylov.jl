@@ -64,7 +64,7 @@
       A, b, M = square_preconditioned(FC=FC)
       solver = MinresWorkspace(A, b)
       minres!(solver, A, b, M=M)
-      r = b - A * solver.x
+      r = b - A * workspace.x
       resid = norm(r) / norm(b)
       @test(resid ≤ minres_tol * norm(A) * norm(x))
       @test(stats.solved)
@@ -74,7 +74,7 @@
       A, b = symmetric_indefinite(FC=FC)
       solver = MinresWorkspace(A, b)
       minres!(solver, A, b, linesearch=true)
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
       @test stats.status == "nonpositive curvature"
       @test stats.indefinite == true
       # Verify that the returned direction indeed exhibits nonpositive curvature.
@@ -86,7 +86,7 @@
       A, b = symmetric_indefinite(FC=FC; shift = 5)
       solver = MinresWorkspace(A, b)
       minres!(solver, A, b, linesearch=true)
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
       @test stats.status == "nonpositive curvature"
       @test stats.niter == 1 # in Minres they add 1 to the number of iterations first step
       @test all(x .== b)
@@ -99,7 +99,7 @@
       A, b = system_zero_quad(FC=FC)
       solver = MinresWorkspace(A, b)
       minres!(solver, A, b, linesearch=true)
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
       @test stats.status == "nonpositive curvature"
       @test all(x .== b)
       @test stats.solved == true
@@ -117,7 +117,7 @@
       cb_n2 = TestCallbackN2(A, b, tol = tol)
       x, stats = minres(A, b, callback = solver -> cb_n2(solver)) # n = 10
       minres!(solver, A, b, callback = cb_n2)
-      @test solver.stats.status == "user-requested exit"
+      @test workspace.stats.status == "user-requested exit"
       @test cb_n2(solver)
 
       @test_throws TypeError minres(A, b, callback = solver -> "string", history = true)

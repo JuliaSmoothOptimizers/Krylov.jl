@@ -166,7 +166,7 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "LSMR: system of %d equations in %d variables\n", m, n)
 
@@ -186,14 +186,14 @@ kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim,
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :u, S, solver.Av)  # The length of u is m
-    allocate_if(!NisI, solver, :v, S, solver.x)   # The length of v is n
-    x, Nv, Aᴴu, h, hbar = solver.x, solver.Nv, solver.Aᴴu, solver.h, solver.hbar
-    Mu, Av, err_vec, stats = solver.Mu, solver.Av, solver.err_vec, solver.stats
+    allocate_if(!MisI, solver, :u, S, workspace.Av)  # The length of u is m
+    allocate_if(!NisI, solver, :v, S, workspace.x)   # The length of v is n
+    x, Nv, Aᴴu, h, hbar = workspace.x, workspace.Nv, workspace.Aᴴu, workspace.h, workspace.hbar
+    Mu, Av, err_vec, stats = workspace.Mu, workspace.Av, workspace.err_vec, workspace.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
-    u = MisI ? Mu : solver.u
-    v = NisI ? Nv : solver.v
+    u = MisI ? Mu : workspace.u
+    v = NisI ? Nv : workspace.v
 
     ctol = conlim > 0 ? 1/conlim : zero(T)
     kfill!(x, zero(FC))

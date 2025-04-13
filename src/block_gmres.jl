@@ -116,17 +116,17 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
     ktypeof(B) == SM || error("ktypeof(B) must be equal to $SM")
 
     # Set up workspace.
-    allocate_if(!MisI  , solver, :Q , SM, solver.n, solver.p)
-    allocate_if(!NisI  , solver, :P , SM, solver.n, solver.p)
-    allocate_if(restart, solver, :ΔX, SM, solver.n, solver.p)
-    ΔX, X, W, V, Z = solver.ΔX, solver.X, solver.W, solver.V, solver.Z
-    C, D, R, H, τ, stats = solver.C, solver.D, solver.R, solver.H, solver.τ, solver.stats
+    allocate_if(!MisI  , solver, :Q , SM, workspace.n, workspace.p)
+    allocate_if(!NisI  , solver, :P , SM, workspace.n, workspace.p)
+    allocate_if(restart, solver, :ΔX, SM, workspace.n, workspace.p)
+    ΔX, X, W, V, Z = workspace.ΔX, workspace.X, workspace.W, workspace.V, workspace.Z
+    C, D, R, H, τ, stats = workspace.C, workspace.D, workspace.R, workspace.H, workspace.τ, workspace.stats
     Ψtmp = C
-    warm_start = solver.warm_start
+    warm_start = workspace.warm_start
     RNorms = stats.residuals
     reset!(stats)
-    Q  = MisI ? W : solver.Q
-    R₀ = MisI ? W : solver.Q
+    Q  = MisI ? W : workspace.Q
+    R₀ = MisI ? W : workspace.Q
     Xr = restart ? ΔX : X
 
     # Define the blocks D1 and D2
@@ -222,7 +222,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         end
 
         # Continue the block-Arnoldi process.
-        P = NisI ? V[inner_iter] : solver.P
+        P = NisI ? V[inner_iter] : workspace.P
         NisI || mulorldiv!(P, N, V[inner_iter], ldiv)  # P ← NVₖ
         mul!(W, A, P)                                  # W ← ANVₖ
         MisI || mulorldiv!(Q, M, W, ldiv)              # Q ← MANVₖ
@@ -308,8 +308,8 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         mul!(Xr, V[i], Y[i], γ, β)
       end
       if !NisI
-        copyto!(solver.P, Xr)
-        mulorldiv!(Xr, N, solver.P, ldiv)
+        copyto!(workspace.P, Xr)
+        mulorldiv!(Xr, N, workspace.P, ldiv)
       end
       restart && (X .+= Xr)
 
@@ -330,7 +330,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
 
     # Update Xₖ
     warm_start && !restart && (X .+= ΔX)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter

@@ -116,7 +116,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "MINRES-QLP: system of size %d\n", n)
@@ -129,13 +129,13 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :vₖ, S, solver.x)  # The length of vₖ is n
-    wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ
-    Δx, x, p, stats = solver.Δx, solver.x, solver.p, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, solver, :vₖ, S, workspace.x)  # The length of vₖ is n
+    wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = workspace.wₖ₋₁, workspace.wₖ, workspace.M⁻¹vₖ₋₁, workspace.M⁻¹vₖ
+    Δx, x, p, stats = workspace.Δx, workspace.x, workspace.p, workspace.stats
+    warm_start = workspace.warm_start
     rNorms, ArNorms, Aconds = stats.residuals, stats.Aresiduals, stats.Acond
     reset!(stats)
-    vₖ = MisI ? M⁻¹vₖ : solver.vₖ
+    vₖ = MisI ? M⁻¹vₖ : workspace.vₖ
     vₖ₊₁ = MisI ? p : M⁻¹vₖ₋₁
 
     # Initial solution x₀
@@ -171,7 +171,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
+      workspace.warm_start = false
       return solver
     end
 
@@ -467,7 +467,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
    # Update stats
     stats.niter = iter

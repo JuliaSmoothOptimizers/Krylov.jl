@@ -63,7 +63,7 @@ function newton(∇f, ∇²f, x₀; itmax = 200, tol = 1e-8)
     iter = 0
     S = typeof(x)
     solver = CgWorkspace(n, n, S)
-    Δx = solver.x
+    Δx = workspace.x
 
     solved = false
     tired = false
@@ -98,7 +98,7 @@ function gauss_newton(F, JF, x₀; itmax = 200, tol = 1e-8)
     iter = 0
     S = typeof(x)
     solver = LsmrWorkspace(m, n, S)
-    Δx = solver.x
+    Δx = workspace.x
 
     solved = false
     tired = false

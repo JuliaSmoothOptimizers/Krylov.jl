@@ -115,7 +115,7 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CRLS: system of %d equations in %d variables\n", m, n)
 
@@ -130,14 +130,14 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :Ms, S, solver.r)  # The length of Ms is m
-    x, p, Ar, q = solver.x, solver.p, solver.Ar, solver.q
-    r, Ap, s, stats = solver.r, solver.Ap, solver.s, solver.stats
+    allocate_if(!MisI, solver, :Ms, S, workspace.r)  # The length of Ms is m
+    x, p, Ar, q = workspace.x, workspace.p, workspace.Ar, workspace.q
+    r, Ap, s, stats = workspace.r, workspace.Ap, workspace.s, workspace.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
-    Ms  = MisI ? s  : solver.Ms
-    Mr  = MisI ? r  : solver.Ms
-    MAp = MisI ? Ap : solver.Ms
+    Ms  = MisI ? s  : workspace.Ms
+    Mr  = MisI ? r  : workspace.Ms
+    MAp = MisI ? Ap : workspace.Ms
 
     kfill!(x, zero(FC))
     kcopy!(m, r, b)      # r ← b

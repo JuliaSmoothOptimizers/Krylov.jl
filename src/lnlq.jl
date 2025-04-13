@@ -163,7 +163,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "LNLQ: system of %d equations in %d variables\n", m, n)
 
@@ -183,15 +183,15 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :u, S, solver.y)  # The length of u is m
-    allocate_if(!NisI, solver, :v, S, solver.x)  # The length of v is n
-    allocate_if(λ > 0, solver, :q, S, solver.x)  # The length of q is n
-    x, Nv, Aᴴu, y, w̄ = solver.x, solver.Nv, solver.Aᴴu, solver.y, solver.w̄
-    Mu, Av, q, stats = solver.Mu, solver.Av, solver.q, solver.stats
+    allocate_if(!MisI, solver, :u, S, workspace.y)  # The length of u is m
+    allocate_if(!NisI, solver, :v, S, workspace.x)  # The length of v is n
+    allocate_if(λ > 0, solver, :q, S, workspace.x)  # The length of q is n
+    x, Nv, Aᴴu, y, w̄ = workspace.x, workspace.Nv, workspace.Aᴴu, workspace.y, workspace.w̄
+    Mu, Av, q, stats = workspace.Mu, workspace.Av, workspace.q, workspace.stats
     rNorms, xNorms, yNorms = stats.residuals, stats.error_bnd_x, stats.error_bnd_y
     reset!(stats)
-    u = MisI ? Mu : solver.u
-    v = NisI ? Nv : solver.v
+    u = MisI ? Mu : workspace.u
+    v = NisI ? Nv : workspace.v
 
     # Set up parameter σₑₛₜ for the error estimate on x and y
     σₑₛₜ = √(σ^2 + λ^2)

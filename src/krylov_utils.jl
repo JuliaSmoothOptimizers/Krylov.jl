@@ -296,9 +296,9 @@ Create a vector of storage type `S` of length `n` only composed of one.
 """
 kones(S, n) = fill!(S(undef, n), one(eltype(S)))
 
-allocate_if(bool, solver, v, S, u) = bool && isempty(solver.:($v)::S) && (solver.:($v)::S = similar(u))
-# allocate_if(bool, solver, v, S, n::Int) = bool && isempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, n))
-allocate_if(bool, solver, v, S, m::Int, n::Int) = bool && isempty(solver.:($v)::S) && (solver.:($v)::S = S(undef, m, n))
+allocate_if(bool, solver, v, S, u) = bool && isempty(workspace.:($v)::S) && (workspace.:($v)::S = similar(u))
+# allocate_if(bool, solver, v, S, n::Int) = bool && isempty(workspace.:($v)::S) && (workspace.:($v)::S = S(undef, n))
+allocate_if(bool, solver, v, S, m::Int, n::Int) = bool && isempty(workspace.:($v)::S) && (workspace.:($v)::S = S(undef, m, n))
 
 kdisplay(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
 

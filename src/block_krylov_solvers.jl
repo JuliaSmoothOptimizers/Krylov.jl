@@ -136,27 +136,27 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:BlockGmresWorkspace , :block_gmres! , 1, 1, 0, true)
 ]
   @eval begin
-    size(solver :: $KS) = solver.m, solver.n
-    nrhs(solver :: $KS) = solver.p
-    statistics(solver :: $KS) = solver.stats
-    niterations(solver :: $KS) = solver.stats.niter
-    Aprod(solver :: $KS) = $nA * solver.stats.niter
-    Atprod(solver :: $KS) = $nAt * solver.stats.niter
+    size(solver :: $KS) = workspace.m, workspace.n
+    nrhs(solver :: $KS) = workspace.p
+    statistics(solver :: $KS) = workspace.stats
+    niterations(solver :: $KS) = workspace.stats.niter
+    Aprod(solver :: $KS) = $nA * workspace.stats.niter
+    Atprod(solver :: $KS) = $nAt * workspace.stats.niter
     nsolution(solver :: $KS) = $nsol
     if $nsol == 1
-      solution(solver :: $KS) = solver.X
+      solution(solver :: $KS) = workspace.X
       solution(solver :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
-      results(solver :: $KS) = (solver.X, solver.stats)
+      results(solver :: $KS) = (workspace.X, workspace.stats)
     end
-    issolved(solver :: $KS) = solver.stats.solved
+    issolved(solver :: $KS) = workspace.stats.solved
     if $warm_start
       function warm_start!(solver :: $KS, X0)
         n2, p2 = size(X0)
-        SM = typeof(solver.X)
-        (solver.n == n2 && solver.p == p2) || error("X0 should have size ($n, $p)")
-        allocate_if(true, solver, :ΔX, SM, solver.n, solver.p)
-        copyto!(solver.ΔX, X0)
-        solver.warm_start = true
+        SM = typeof(workspace.X)
+        (workspace.n == n2 && workspace.p == p2) || error("X0 should have size ($n, $p)")
+        allocate_if(true, solver, :ΔX, SM, workspace.n, workspace.p)
+        copyto!(workspace.ΔX, X0)
+        workspace.warm_start = true
         return solver
       end
     end
@@ -194,19 +194,19 @@ Statistics of `solver` are displayed if `show_stats` is set to true.
 function show(io :: IO, solver :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   workspace = typeof(solver)
   name_solver = string(workspace.name.name)
-  name_stats = string(typeof(solver.stats).name.name)
+  name_stats = string(typeof(workspace.stats).name.name)
   nbytes = sizeof(solver)
   storage = format_bytes(nbytes)
   architecture = S <: Vector ? "CPU" : "GPU"
   l1 = max(length(name_solver), length(string(FC)) + 11)  # length("Precision: ") = 11
   nchar = workspace <: Union{CgLanczosShiftWorkspace, FomWorkspace, DiomWorkspace, DqgmresWorkspace, GmresWorkspace, FgmresWorkspace, GpmrWorkspace, BlockGmresWorkspace} ? 8 : 0  # length("Vector{}") = 8
-  l2 = max(ndigits(solver.m) + 7, length(architecture) + 14, length(string(S)) + nchar)  # length("nrows: ") = 7 and length("Architecture: ") = 14
+  l2 = max(ndigits(workspace.m) + 7, length(architecture) + 14, length(string(S)) + nchar)  # length("nrows: ") = 7 and length("Architecture: ") = 14
   l2 = max(l2, length(name_stats) + 2 + length(string(T)))  # length("{}") = 2
-  l3 = max(ndigits(solver.n) + 7, length(storage) + 9)  # length("Storage: ") = 9 and length("cols: ") = 7
+  l3 = max(ndigits(workspace.n) + 7, length(storage) + 9)  # length("Storage: ") = 9 and length("cols: ") = 7
   format = Printf.Format("│%$(l1)s│%$(l2)s│%$(l3)s│\n")
   format2 = Printf.Format("│%$(l1+1)s│%$(l2)s│%$(l3)s│\n")
   @printf(io, "┌%s┬%s┬%s┐\n", "─"^l1, "─"^l2, "─"^l3)
-  Printf.format(io, format, "$(name_solver)", "nrows: $(solver.m)", "ncols: $(solver.n)")
+  Printf.format(io, format, "$(name_solver)", "nrows: $(workspace.m)", "ncols: $(workspace.n)")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
   Printf.format(io, format, "Precision: $FC", "Architecture: $architecture","Storage: $storage")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
@@ -222,7 +222,7 @@ function show(io :: IO, solver :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovWork
   @printf(io, "└%s┴%s┴%s┘\n","─"^l1,"─"^l2,"─"^l3)
   if show_stats
     @printf(io, "\n")
-    show(io, solver.stats)
+    show(io, workspace.stats)
   end
   return nothing
 end

@@ -157,7 +157,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
 
     m, n = size(A)
     s, t = size(B)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == t         || error("Inconsistent problem size")
     s == n         || error("Inconsistent problem size")
     length(b) == m || error("Inconsistent problem size")
@@ -179,24 +179,24 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     # Determine λ and μ associated to generalized saddle point systems.
     gsp && (λ = one(FC) ; μ = zero(FC))
 
-    warm_start = solver.warm_start
+    warm_start = workspace.warm_start
     warm_start && (λ ≠ 0) && !EisI && error("Warm-start with right preconditioners is not supported.")
     warm_start && (μ ≠ 0) && !FisI && error("Warm-start with right preconditioners is not supported.")
 
     # Set up workspace.
-    allocate_if(!CisI, solver, :q , S, solver.x)  # The length of q is m
-    allocate_if(!DisI, solver, :p , S, solver.y)  # The length of p is n
-    allocate_if(!EisI, solver, :wB, S, solver.x)  # The length of wB is m
-    allocate_if(!FisI, solver, :wA, S, solver.y)  # The length of wA is n
-    wA, wB, dA, dB, Δx, Δy = solver.wA, solver.wB, solver.dA, solver.dB, solver.Δx, solver.Δy
-    x, y, V, U, gs, gc = solver.x, solver.y, solver.V, solver.U, solver.gs, solver.gc
-    zt, R, stats = solver.zt, solver.R, solver.stats
+    allocate_if(!CisI, solver, :q , S, workspace.x)  # The length of q is m
+    allocate_if(!DisI, solver, :p , S, workspace.y)  # The length of p is n
+    allocate_if(!EisI, solver, :wB, S, workspace.x)  # The length of wB is m
+    allocate_if(!FisI, solver, :wA, S, workspace.y)  # The length of wA is n
+    wA, wB, dA, dB, Δx, Δy = workspace.wA, workspace.wB, workspace.dA, workspace.dB, workspace.Δx, workspace.Δy
+    x, y, V, U, gs, gc = workspace.x, workspace.y, workspace.V, workspace.U, workspace.gs, workspace.gc
+    zt, R, stats = workspace.zt, workspace.R, workspace.stats
     rNorms = stats.residuals
     reset!(stats)
     b₀ = warm_start ? dA : b
     c₀ = warm_start ? dB : c
-    q  = CisI ? dA : solver.q
-    p  = DisI ? dB : solver.p
+    q  = CisI ? dA : workspace.q
+    p  = DisI ? dB : workspace.p
 
     # Initial solutions x₀ and y₀.
     kfill!(x, zero(FC))
@@ -302,8 +302,8 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
       # Continue the orthogonal Hessenberg reduction process.
       # CAFUₖ = VₖHₖ + hₖ₊₁.ₖ * vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Hₖ₊₁.ₖ
       # DBEVₖ = UₖFₖ + fₖ₊₁.ₖ * uₖ₊₁(eₖ)ᵀ = Uₖ₊₁Fₖ₊₁.ₖ
-      wA = FisI ? U[iter] : solver.wA
-      wB = EisI ? V[iter] : solver.wB
+      wA = FisI ? U[iter] : workspace.wA
+      wB = EisI ? V[iter] : workspace.wB
       FisI || mulorldiv!(wA, F, U[iter], ldiv)  # wA = Fuₖ
       EisI || mulorldiv!(wB, E, V[iter], ldiv)  # wB = Evₖ
       mul!(dA, A, wA)                           # dA = AFuₖ
@@ -460,8 +460,8 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
       # Compute vₖ₊₁ and uₖ₊₁
       if !(solved || tired || breakdown || user_requested_exit || overtimed)
         if iter ≥ mem
-          push!(V, similar(solver.x))
-          push!(U, similar(solver.y))
+          push!(V, similar(workspace.x))
+          push!(U, similar(workspace.y))
           push!(zt, zero(FC), zero(FC))
         end
 
@@ -518,7 +518,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     end
     warm_start && kaxpy!(m, one(FC), Δx, x)
     warm_start && kaxpy!(n, one(FC), Δy, y)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Termination status
     tired               && (status = "maximum number of iterations exceeded")

@@ -205,7 +205,7 @@ This example consists of solving the 1D Poisson equation on a periodic domain $[
 ```
 
 where $u(x)$ is the unknown solution, and $f(x)$ is the given source term.
-We solve this equation using [FFTW.jl](https://github.com/JuliaMath/FFTW.jl) to compute the matrix-free action of the Laplacian within the conjugate gradient solver.
+We solve this equation using [FFTW.jl](https://github.com/JuliaMath/FFTW.jl) to compute the matrix-free action of the Laplacian within the conjugate gradient workspace.
 
 Note that while a direct FFT-based approach can be used here due to the simplicity of the periodic boundary conditions,
 this example illustrates how a Krylov method can be employed to solve more challenging problems.

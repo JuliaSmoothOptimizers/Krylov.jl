@@ -121,7 +121,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CGS: system of size %d\n", n)
@@ -136,18 +136,18 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     ktypeof(c) == S || error("ktypeof(c) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :vw, S, solver.x)  # The length of vw is n
-    allocate_if(!NisI, solver, :yz, S, solver.x)  # The length of yz is n
-    Δx, x, r, u, p, q, ts, stats = solver.Δx, solver.x, solver.r, solver.u, solver.p, solver.q, solver.ts, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, solver, :vw, S, workspace.x)  # The length of vw is n
+    allocate_if(!NisI, solver, :yz, S, workspace.x)  # The length of yz is n
+    Δx, x, r, u, p, q, ts, stats = workspace.Δx, workspace.x, workspace.r, workspace.u, workspace.p, workspace.q, workspace.ts, workspace.stats
+    warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
-    t = s = solver.ts
-    v = MisI ? t : solver.vw
-    w = MisI ? s : solver.vw
-    y = NisI ? p : solver.yz
-    z = NisI ? u : solver.yz
-    r₀ = MisI ? r : solver.ts
+    t = s = workspace.ts
+    v = MisI ? t : workspace.vw
+    w = MisI ? s : workspace.vw
+    y = NisI ? p : workspace.yz
+    z = NisI ? u : workspace.yz
+    r₀ = MisI ? r : workspace.ts
 
     if warm_start
       mul!(r₀, A, Δx)
@@ -168,7 +168,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
+      workspace.warm_start = false
       return solver
     end
 
@@ -180,7 +180,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       stats.timer = start_time |> ktimer
       stats.status = "Breakdown bᴴc = 0"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start =false
+      workspace.warm_start =false
       return solver
     end
 
@@ -260,7 +260,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter

@@ -125,7 +125,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
         $(krylov!)(solver, $(args...); $(kwargs...))
-        solver.stats.timer += elapsed_time
+        workspace.stats.timer += elapsed_time
         return results(solver)
       end
 
@@ -139,7 +139,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
         $(krylov!)(solver, $(args...); $(kwargs...))
-        solver.stats.timer += elapsed_time
+        workspace.stats.timer += elapsed_time
         return results(solver)
       end
 
@@ -153,7 +153,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
           $(krylov!)(solver, $(args...); $(kwargs...))
-          solver.stats.timer += elapsed_time
+          workspace.stats.timer += elapsed_time
           return results(solver)
         end
 
@@ -168,7 +168,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
         $(krylov!)(solver, $(args...); $(kwargs...))
-        solver.stats.timer += elapsed_time
+        workspace.stats.timer += elapsed_time
         return results(solver)
       end
 
@@ -182,7 +182,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
           $(krylov!)(solver, $(args...); $(kwargs...))
-          solver.stats.timer += elapsed_time
+          workspace.stats.timer += elapsed_time
           return results(solver)
         end
 
@@ -197,7 +197,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
         $(krylov!)(solver, $(args...); $(kwargs...))
-        solver.stats.timer += elapsed_time
+        workspace.stats.timer += elapsed_time
         return results(solver)
       end
 
@@ -211,7 +211,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
           $(krylov!)(solver, $(args...); $(kwargs...))
-          solver.stats.timer += elapsed_time
+          workspace.stats.timer += elapsed_time
           return results(solver)
         end
 
@@ -232,7 +232,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
           $(krylov!)(solver, $(args...); $(kwargs...))
-          solver.stats.timer += elapsed_time
+          workspace.stats.timer += elapsed_time
           return solver
         end
       end
@@ -266,7 +266,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         elapsed_time = ktimer(start_time)
         timemax -= elapsed_time
         $(krylov!)(solver, $(args...); $(kwargs...))
-        solver.stats.timer += elapsed_time
+        workspace.stats.timer += elapsed_time
         return results(solver)
       end
 
@@ -280,7 +280,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           elapsed_time = ktimer(start_time)
           timemax -= elapsed_time
           $(krylov!)(solver, $(args...); $(kwargs...))
-          solver.stats.timer += elapsed_time
+          workspace.stats.timer += elapsed_time
           return results(solver)
         end
 
@@ -295,7 +295,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         elapsed_time = ktimer(start_time)
         timemax -= elapsed_time
         $(krylov!)(solver, $(args...); $(kwargs...))
-        solver.stats.timer += elapsed_time
+        workspace.stats.timer += elapsed_time
         return results(solver)
       end
 
@@ -309,7 +309,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           elapsed_time = ktimer(start_time)
           timemax -= elapsed_time
           $(krylov!)(solver, $(args...); $(kwargs...))
-          solver.stats.timer += elapsed_time
+          workspace.stats.timer += elapsed_time
           return results(solver)
         end
 
@@ -330,7 +330,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
           $(krylov!)(solver, $(args...); $(kwargs...))
-          solver.stats.timer += elapsed_time
+          workspace.stats.timer += elapsed_time
           return solver
         end
       end

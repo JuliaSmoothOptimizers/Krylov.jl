@@ -73,7 +73,7 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `window`: number of iterations used to accumulate a lower bound on the error;
-* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `linesearch` is true and nonpositive curvature is detected, the solution depends on the iteration: at iteration k = 1, the right-hand side is returned with `solver.npc_dir` as the preconditioned initial residual; at iteration k > 1, the solution from iteration k-1 is returned with `solver.npc_dir` as the most recent residual. (Note that the MINRES solver starts at iteration 1, so the first iteration is k = 1);
+* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `linesearch` is true and nonpositive curvature is detected, the solution depends on the iteration: at iteration k = 1, the right-hand side is returned with `workspace.npc_dir` as the preconditioned initial residual; at iteration k > 1, the solution from iteration k-1 is returned with `workspace.npc_dir` as the most recent residual. (Note that the MINRES solver starts at iteration 1, so the first iteration is k = 1);
 
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
@@ -144,11 +144,11 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == n || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "MINRES: system of size %d\n", n)
-    (solver.warm_start && linesearch) && error("warm_start and linesearch cannot be used together")
+    (workspace.warm_start && linesearch) && error("warm_start and linesearch cannot be used together")
 
     # Tests M = Iₙ
     MisI = (M === I)
@@ -158,17 +158,17 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, solver.x)  # The length of v is n
-    allocate_if(linesearch, solver, :npc_dir , S, solver.x)  # The length of npc_dir  is n
-    Δx, x, r1, r2, w1, w2, y = solver.Δx, solver.x, solver.r1, solver.r2, solver.w1, solver.w2, solver.y
-    err_vec, stats = solver.err_vec, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, solver, :v, S, workspace.x)  # The length of v is n
+    allocate_if(linesearch, solver, :npc_dir , S, workspace.x)  # The length of npc_dir  is n
+    Δx, x, r1, r2, w1, w2, y = workspace.Δx, workspace.x, workspace.r1, workspace.r2, workspace.w1, workspace.w2, workspace.y
+    err_vec, stats = workspace.err_vec, workspace.stats
+    warm_start = workspace.warm_start
     rNorms, ArNorms, Aconds = stats.residuals, stats.Aresiduals, stats.Acond
     reset!(stats)
 
-    v = MisI ? r2 : solver.v
+    v = MisI ? r2 : workspace.v
     if linesearch
-      npc_dir = solver.npc_dir
+      npc_dir = workspace.npc_dir
     end
     ϵM = eps(T)
     ctol = conlim > 0 ? inv(conlim) : zero(T)
@@ -202,7 +202,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       history && push!(ArNorms, zero(T))
       history && push!(Aconds, zero(T))
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
+      workspace.warm_start = false
       return solver
     end
     β₁ = sqrt(β₁)
@@ -306,7 +306,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
           stats.timer = start_time |> ktimer
           stats.status = "nonpositive curvature"
           iter == 1 && kcopy!(n, x, b)
-          solver.warm_start = false
+          workspace.warm_start = false
           stats.indefinite = true
           return solver
         end
@@ -375,7 +375,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
         stats.timer = start_time |> ktimer
         stats.status = "x is a minimum least-squares solution"
         warm_start && kaxpy!(n, one(FC), Δx, x)
-        solver.warm_start = false
+        workspace.warm_start = false
         return solver
       end
 
@@ -417,7 +417,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter

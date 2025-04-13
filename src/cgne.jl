@@ -129,7 +129,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CGNE: system of %d equations in %d variables\n", m, n)
 
@@ -144,12 +144,12 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!NisI, solver, :z, S, solver.r)  # The length of z is m
-    allocate_if(λ > 0, solver, :s, S, solver.r)  # The length of s is m
-    x, p, Aᴴz, r, q, s, stats = solver.x, solver.p, solver.Aᴴz, solver.r, solver.q, solver.s, solver.stats
+    allocate_if(!NisI, solver, :z, S, workspace.r)  # The length of z is m
+    allocate_if(λ > 0, solver, :s, S, workspace.r)  # The length of s is m
+    x, p, Aᴴz, r, q, s, stats = workspace.x, workspace.p, workspace.Aᴴz, workspace.r, workspace.q, workspace.s, workspace.stats
     rNorms = stats.residuals
     reset!(stats)
-    z = NisI ? r : solver.z
+    z = NisI ? r : workspace.z
 
     kfill!(x, zero(FC))
     kcopy!(m, r, b)  # r ← b

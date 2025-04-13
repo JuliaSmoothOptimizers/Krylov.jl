@@ -140,7 +140,7 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     length(c) == n || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "TriCG: system of %d equations in %d variables\n", m+n, m+n)
@@ -164,7 +164,7 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     spd  && (τ =  one(T) ; ν =  one(T))
     snd  && (τ = -one(T) ; ν = -one(T))
 
-    warm_start = solver.warm_start
+    warm_start = workspace.warm_start
     warm_start && (τ ≠ 0) && !MisI && error("Warm-start with preconditioners is not supported.")
     warm_start && (ν ≠ 0) && !NisI && error("Warm-start with preconditioners is not supported.")
 
@@ -172,19 +172,19 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :vₖ, S, solver.x)  # The length of vₖ is m
-    allocate_if(!NisI, solver, :uₖ, S, solver.y)  # The length of uₖ is n
-    Δy, yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p = solver.Δy, solver.y, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.p
-    Δx, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = solver.Δx, solver.x, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.q
-    gy₂ₖ₋₁, gy₂ₖ, gx₂ₖ₋₁, gx₂ₖ = solver.gy₂ₖ₋₁, solver.gy₂ₖ, solver.gx₂ₖ₋₁, solver.gx₂ₖ
-    vₖ = MisI ? M⁻¹vₖ : solver.vₖ
-    uₖ = NisI ? N⁻¹uₖ : solver.uₖ
+    allocate_if(!MisI, solver, :vₖ, S, workspace.x)  # The length of vₖ is m
+    allocate_if(!NisI, solver, :uₖ, S, workspace.y)  # The length of uₖ is n
+    Δy, yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p = workspace.Δy, workspace.y, workspace.N⁻¹uₖ₋₁, workspace.N⁻¹uₖ, workspace.p
+    Δx, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = workspace.Δx, workspace.x, workspace.M⁻¹vₖ₋₁, workspace.M⁻¹vₖ, workspace.q
+    gy₂ₖ₋₁, gy₂ₖ, gx₂ₖ₋₁, gx₂ₖ = workspace.gy₂ₖ₋₁, workspace.gy₂ₖ, workspace.gx₂ₖ₋₁, workspace.gx₂ₖ
+    vₖ = MisI ? M⁻¹vₖ : workspace.vₖ
+    uₖ = NisI ? N⁻¹uₖ : workspace.uₖ
     vₖ₊₁ = MisI ? q : vₖ
     uₖ₊₁ = NisI ? p : uₖ
     b₀ = warm_start ? q : b
     c₀ = warm_start ? p : c
 
-    stats = solver.stats
+    stats = workspace.stats
     rNorms = stats.residuals
     reset!(stats)
 
@@ -459,7 +459,7 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     # Update x and y
     warm_start && kaxpy!(m, one(FC), Δx, xₖ)
     warm_start && kaxpy!(n, one(FC), Δy, yₖ)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter

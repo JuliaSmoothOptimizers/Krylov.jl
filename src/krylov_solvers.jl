@@ -2859,52 +2859,52 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:CglsLanczosShiftWorkspace, :cgls_lanczos_shift!, 1, 1, 1, false)
 ]
   @eval begin
-    size(solver :: $KS) = solver.m, solver.n
-    statistics(solver :: $KS) = solver.stats
-    niterations(solver :: $KS) = solver.stats.niter
-    Aprod(solver :: $KS) = $nA * solver.stats.niter
-    Atprod(solver :: $KS) = $nAt * solver.stats.niter
+    size(solver :: $KS) = workspace.m, workspace.n
+    statistics(solver :: $KS) = workspace.stats
+    niterations(solver :: $KS) = workspace.stats.niter
+    Aprod(solver :: $KS) = $nA * workspace.stats.niter
+    Atprod(solver :: $KS) = $nAt * workspace.stats.niter
     if $KS == GpmrWorkspace
-      Bprod(solver :: $KS) = solver.stats.niter
+      Bprod(solver :: $KS) = workspace.stats.niter
     end
     nsolution(solver :: $KS) = $nsol
     if $nsol == 1
-      solution(solver :: $KS) = solver.x
+      solution(solver :: $KS) = workspace.x
       solution(solver :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
-      results(solver :: $KS) = (solver.x, solver.stats)
+      results(solver :: $KS) = (workspace.x, workspace.stats)
     end
     if $nsol == 2
-      solution(solver :: $KS) = (solver.x, solver.y)
+      solution(solver :: $KS) = (workspace.x, workspace.y)
       solution(solver :: $KS, p :: Integer) = (1 ≤ p ≤ 2) ? solution(solver)[p] : error("solution(solver) has only two outputs.")
-      results(solver :: $KS) = (solver.x, solver.y, solver.stats)
+      results(solver :: $KS) = (workspace.x, workspace.y, workspace.stats)
     end
     if $KS ∈ (BilqrWorkspace, TrilqrWorkspace)
-      issolved_primal(solver :: $KS) = solver.stats.solved_primal
-      issolved_dual(solver :: $KS) = solver.stats.solved_dual
+      issolved_primal(solver :: $KS) = workspace.stats.solved_primal
+      issolved_dual(solver :: $KS) = workspace.stats.solved_dual
       issolved(solver :: $KS) = issolved_primal(solver) && issolved_dual(solver)
     else
-      issolved(solver :: $KS) = solver.stats.solved
+      issolved(solver :: $KS) = workspace.stats.solved
     end
     if $warm_start
       if $KS in (BilqrWorkspace, TrilqrWorkspace, TricgWorkspace, TrimrWorkspace, GpmrWorkspace)
         function warm_start!(solver :: $KS, x0, y0)
-          length(x0) == solver.n || error("x0 should have size $n")
-          length(y0) == solver.m || error("y0 should have size $m")
-          S = typeof(solver.x)
-          allocate_if(true, solver, :Δx, S, solver.x)  # The length of Δx is n
-          allocate_if(true, solver, :Δy, S, solver.y)  # The length of Δy is m
-          kcopy!(solver.n, solver.Δx, x0)
-          kcopy!(solver.m, solver.Δy, y0)
-          solver.warm_start = true
+          length(x0) == workspace.n || error("x0 should have size $n")
+          length(y0) == workspace.m || error("y0 should have size $m")
+          S = typeof(workspace.x)
+          allocate_if(true, solver, :Δx, S, workspace.x)  # The length of Δx is n
+          allocate_if(true, solver, :Δy, S, workspace.y)  # The length of Δy is m
+          kcopy!(workspace.n, workspace.Δx, x0)
+          kcopy!(workspace.m, workspace.Δy, y0)
+          workspace.warm_start = true
           return solver
         end
       else
         function warm_start!(solver :: $KS, x0)
-          S = typeof(solver.x)
-          length(x0) == solver.n || error("x0 should have size $n")
-          allocate_if(true, solver, :Δx, S, solver.x)  # The length of Δx is n
-          kcopy!(solver.n, solver.Δx, x0)
-          solver.warm_start = true
+          S = typeof(workspace.x)
+          length(x0) == workspace.n || error("x0 should have size $n")
+          allocate_if(true, solver, :Δx, S, workspace.x)  # The length of Δx is n
+          kcopy!(workspace.n, workspace.Δx, x0)
+          workspace.warm_start = true
           return solver
         end
       end

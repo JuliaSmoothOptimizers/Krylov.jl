@@ -13,7 +13,7 @@ If you need to write a callback that uses variables that are not in a `KrylovWor
 
 ```julia
 function custom_stopping_condition(workspace::KrylovWorkspace, A, b, r, tol)
-  mul!(r, A, solver.x)
+  mul!(r, A, workspace.x)
   r .-= b               # r := b - Ax
   bool = norm(r) ≤ tol  # tolerance based on the 2-norm of the residual
   return bool
@@ -34,7 +34,7 @@ mutable struct CallbackWorkspace{T}
 end
 
 function (workspace::CallbackWorkspace)(workspace::KrylovWorkspace)
-  mul!(workspace.r, workspace.A, solver.x)
+  mul!(workspace.r, workspace.A, workspace.x)
   workspace.r .-= workspace.b
   bool = norm(workspace.r) ≤ workspace.tol
   return bool
@@ -52,11 +52,11 @@ S = Krylov.ktypeof(b)
 global X = S[]  # Storage for GMRES iterates
 
 function gmres_callback(solver)
-  z = solver.z
-  k = solver.inner_iter
+  z = workspace.z
+  k = workspace.inner_iter
   nr = sum(1:k)
-  V = solver.V
-  R = solver.R
+  V = workspace.V
+  R = workspace.R
   y = copy(z)
 
   # Solve Rk * yk = zk

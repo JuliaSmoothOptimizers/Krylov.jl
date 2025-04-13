@@ -119,7 +119,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "QMR: system of size %d\n", n)
@@ -139,26 +139,26 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     Nᴴ = N'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :t, S, solver.x)  # The length of t is n
-    allocate_if(!NisI, solver, :s, S, solver.x)  # The length of s is n
-    uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ, solver.p
-    Δx, x, wₖ₋₂, wₖ₋₁, stats = solver.Δx, solver.x, solver.wₖ₋₂, solver.wₖ₋₁, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, solver, :t, S, workspace.x)  # The length of t is n
+    allocate_if(!NisI, solver, :s, S, workspace.x)  # The length of s is n
+    uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p = workspace.uₖ₋₁, workspace.uₖ, workspace.q, workspace.vₖ₋₁, workspace.vₖ, workspace.p
+    Δx, x, wₖ₋₂, wₖ₋₁, stats = workspace.Δx, workspace.x, workspace.wₖ₋₂, workspace.wₖ₋₁, workspace.stats
+    warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
     r₀ = warm_start ? q : b
-    Mᴴuₖ = MisI ? uₖ : solver.t
-    t = MisI ? q : solver.t
-    Nvₖ = NisI ? vₖ : solver.s
-    s = NisI ? p : solver.s
+    Mᴴuₖ = MisI ? uₖ : workspace.t
+    t = MisI ? q : workspace.t
+    Nvₖ = NisI ? vₖ : workspace.s
+    s = NisI ? p : workspace.s
 
     if warm_start
       mul!(r₀, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), r₀)
     end
     if !MisI
-      mulorldiv!(solver.t, M, r₀, ldiv)
-      r₀ = solver.t
+      mulorldiv!(workspace.t, M, r₀, ldiv)
+      r₀ = workspace.t
     end
 
     # Initial solution x₀ and residual norm ‖r₀‖.
@@ -173,7 +173,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
+      workspace.warm_start = false
       return solver
     end
 
@@ -189,7 +189,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       stats.timer = start_time |> ktimer
       stats.status = "Breakdown bᴴc = 0"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
+      workspace.warm_start = false
       return solver
     end
 
@@ -380,11 +380,11 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
 
     # Update x
     if !NisI
-      copyto!(solver.s, x)
-      mulorldiv!(x, N, solver.s, ldiv)
+      copyto!(workspace.s, x)
+      mulorldiv!(x, N, workspace.s, ldiv)
     end
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter

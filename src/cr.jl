@@ -119,7 +119,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == n || error("Inconsistent problem size")
     linesearch && (radius > 0) && error("'linesearch' set to 'true' but radius > 0")
@@ -133,12 +133,12 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace
-    allocate_if(!MisI, solver, :Mq, S, solver.x)  # The length of Mq is n
-    Δx, x, r, p, q, Ar, stats = solver.Δx, solver.x, solver.r, solver.p, solver.q, solver.Ar, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, solver, :Mq, S, workspace.x)  # The length of Mq is n
+    Δx, x, r, p, q, Ar, stats = workspace.Δx, workspace.x, workspace.r, workspace.p, workspace.q, workspace.Ar, workspace.stats
+    warm_start = workspace.warm_start
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
-    Mq = MisI ? q : solver.Mq
+    Mq = MisI ? q : workspace.Mq
 
     # Initial state.
     kfill!(x, zero(FC))
@@ -161,7 +161,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       stats.status = "x is a zero-residual solution"
       history && push!(ArNorms, zero(T))
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
+      workspace.warm_start = false
       return solver
     end
 
@@ -174,7 +174,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       stats.timer = start_time |> ktimer
       stats.status = "b is a zero-curvature direction"
       history && push!(ArNorms, zero(T))
-      solver.warm_start = false
+      workspace.warm_start = false
       linesearch && kcopy!(n, x, b)  # x ← b
       return solver
     end
@@ -220,7 +220,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
           stats.timer = start_time |> ktimer
           stats.status = "nonpositive curvature"
           iter == 0 && kcopy!(n, x, b)  # x ← b
-          solver.warm_start = false
+          workspace.warm_start = false
           return solver
         end
       elseif pAp ≤ 0 && radius == 0
@@ -387,7 +387,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         stats.timer = start_time |> ktimer
         stats.status = "solver encountered numerical issues"
         warm_start && kaxpy!(n, one(FC), Δx, x)
-        solver.warm_start = false
+        workspace.warm_start = false
         return solver
       end
       pr = rNorm² + β * pr - β * α * pAp  # pᴴr
@@ -409,7 +409,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter

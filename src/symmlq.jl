@@ -120,7 +120,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "SYMMLQ: system of size %d\n", n)
@@ -133,15 +133,15 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, solver.x)  # The length of v is n
-    x, Mvold, Mv, Mv_next, w̅ = solver.x, solver.Mvold, solver.Mv, solver.Mv_next, solver.w̅
-    Δx, clist, zlist, sprod, stats = solver.Δx, solver.clist, solver.zlist, solver.sprod, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, solver, :v, S, workspace.x)  # The length of v is n
+    x, Mvold, Mv, Mv_next, w̅ = workspace.x, workspace.Mvold, workspace.Mv, workspace.Mv_next, workspace.w̅
+    Δx, clist, zlist, sprod, stats = workspace.Δx, workspace.clist, workspace.zlist, workspace.sprod, workspace.stats
+    warm_start = workspace.warm_start
     rNorms, rcgNorms = stats.residuals, stats.residualscg
     errors, errorscg = stats.errors, stats.errorscg
     reset!(stats)
-    v = MisI ? Mv : solver.v
-    vold = MisI ? Mvold : solver.v
+    v = MisI ? Mv : workspace.v
+    vold = MisI ? Mvold : workspace.v
 
     ϵM = eps(T)
     ctol = conlim > 0 ? inv(conlim) : zero(T)
@@ -171,7 +171,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
+      workspace.warm_start = false
       return solver
     end
     β₁ = sqrt(β₁)
@@ -435,7 +435,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter

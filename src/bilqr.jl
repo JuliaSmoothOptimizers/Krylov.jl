@@ -111,7 +111,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("Systems must be square")
     length(b) == m || error("Inconsistent problem size")
     length(c) == n || error("Inconsistent problem size")
@@ -126,10 +126,10 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     Aᴴ = A'
 
     # Set up workspace.
-    uₖ₋₁, uₖ, q, vₖ₋₁, vₖ = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ
-    p, Δx, Δy, x, t = solver.p, solver.Δx, solver.Δy, solver.x, solver.y
-    d̅, wₖ₋₃, wₖ₋₂, stats = solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂, solver.stats
-    warm_start = solver.warm_start
+    uₖ₋₁, uₖ, q, vₖ₋₁, vₖ = workspace.uₖ₋₁, workspace.uₖ, workspace.q, workspace.vₖ₋₁, workspace.vₖ
+    p, Δx, Δy, x, t = workspace.p, workspace.Δx, workspace.Δy, workspace.x, workspace.y
+    d̅, wₖ₋₃, wₖ₋₂, stats = workspace.d̅, workspace.wₖ₋₃, workspace.wₖ₋₂, workspace.stats
+    warm_start = workspace.warm_start
     rNorms, sNorms = stats.residuals_primal, stats.residuals_dual
     reset!(stats)
     r₀ = warm_start ? q : b
@@ -170,7 +170,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       stats.status = "Breakdown bᴴc = 0"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       warm_start && kaxpy!(n, one(FC), Δy, t)
-      solver.warm_start = false
+      workspace.warm_start = false
       return solver
     end
 
@@ -464,7 +464,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     # Update x and y
     warm_start && kaxpy!(n, one(FC), Δx, x)
     warm_start && kaxpy!(n, one(FC), Δy, t)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter

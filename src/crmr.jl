@@ -127,7 +127,7 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CRMR: system of %d equations in %d variables\n", m, n)
 
@@ -142,13 +142,13 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!NisI, solver, :Nq, S, solver.r)  # The length of Nq is m
-    allocate_if(λ > 0, solver, :s , S, solver.r)  # The length of s is m
-    x, p, Aᴴr, r = solver.x, solver.p, solver.Aᴴr, solver.r
-    q, s, stats = solver.q, solver.s, solver.stats
+    allocate_if(!NisI, solver, :Nq, S, workspace.r)  # The length of Nq is m
+    allocate_if(λ > 0, solver, :s , S, workspace.r)  # The length of s is m
+    x, p, Aᴴr, r = workspace.x, workspace.p, workspace.Aᴴr, workspace.r
+    q, s, stats = workspace.q, workspace.s, workspace.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
-    Nq = NisI ? q : solver.Nq
+    Nq = NisI ? q : workspace.Nq
 
     kfill!(x, zero(FC))        # initial estimation x = 0
     mulorldiv!(r, N, b, ldiv)  # initial residual r = N * (b - Ax) = N * b
