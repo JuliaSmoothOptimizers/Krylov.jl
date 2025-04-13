@@ -34,7 +34,7 @@ b = randn(n)
 
 # Out-of-place interface
 for method in (:cg, :cr, :car)
-    x, stats = krylov_solve(Val{method}(), A, b)
+    x, stats = krylov_solve(Val(method), A, b)
     r = b - A * x
     println("Residual norm for $(method): ", norm(r))
 end

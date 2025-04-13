@@ -27,16 +27,16 @@
 export krylov_workspace, krylov_solve, krylov_solve!
 
 """
-    krylov_workspace(Val{method}(), args...; kwargs...)
+    krylov_workspace(Val(method), args...; kwargs...)
 
 Generic function that dispatches to the appropriate workspace constructor for each subtype of [`KrylovWorkspace`](@ref) and [`BlockKrylovWorkspace`](@ref).
-The first argument `Val{method}()`, where `method` is a symbol (such as `:cg`, `:gmres` or `:block_minres`), specifies the (block) Krylov method for which a workspace is desired.
+The first argument `Val(method)`, where `method` is a symbol (such as `:cg`, `:gmres` or `:block_minres`), specifies the (block) Krylov method for which a workspace is desired.
 The returned workspace can later be used by [`krylov_solve!`](@ref) to execute the (block) Krylov method in-place.
 """
 function krylov_workspace end
 
 """
-    krylov_solve(Val{method}(), args...; kwargs...)
+    krylov_solve(Val(method), args...; kwargs...)
 
 Generic function that dispatches to the appropriate out-of-place (block) Krylov method specified by symbol `method` (such as `:cg`, `:gmres` or `:block_minres`).
 """
