@@ -10,7 +10,7 @@ krylov_solve!
 krylov_solve
 ```
 
-In-place solvers update the workspace `workspace`, from which solutions and statistics can be retrieved.
+In-place solvers update the workspace, from which solutions and statistics can be retrieved.
 The following functions are available for post-solve analysis:
 
 ```@docs
