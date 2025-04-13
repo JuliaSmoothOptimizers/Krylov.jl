@@ -91,7 +91,7 @@
 
       # test callback function
       A, b, c = adjoint_pde(FC=FC)
-      solver = TrilqrWorkspace(A, b)
+      workspace = TrilqrWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2Adjoint(A, b, c, tol = tol)
       trilqr!(workspace, A, b, c, atol = 0.0, rtol = 0.0, callback = cb_n2)

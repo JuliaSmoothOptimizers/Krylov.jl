@@ -101,8 +101,8 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 function minres end
 
 """
-    solver = minres!(workspace::MinresWorkspace, A, b; kwargs...)
-    solver = minres!(workspace::MinresWorkspace, A, b, x0; kwargs...)
+    workspace = minres!(workspace::MinresWorkspace, A, b; kwargs...)
+    workspace = minres!(workspace::MinresWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`minres`](@ref).
 

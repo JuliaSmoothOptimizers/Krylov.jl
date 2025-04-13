@@ -91,7 +91,7 @@
       @test(stats.solved)
 
       # test callback function
-      solver = DiomWorkspace(A, b)
+      workspace = DiomWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2(A, b, tol = tol)
       diom!(workspace, A, b, callback = cb_n2)

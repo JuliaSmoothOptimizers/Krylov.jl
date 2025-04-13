@@ -225,7 +225,7 @@
         # test callback function
         A, b, D = saddle_point(FC=FC)
         c = -b
-        solver = TrimrWorkspace(A, b)
+        workspace = TrimrWorkspace(A, b)
         tol = 1.0e-1
         cb_n2 = TestCallbackN2SaddlePts(A, b, c, tol = tol)
         trimr!(workspace, A, b, c, callback = cb_n2)

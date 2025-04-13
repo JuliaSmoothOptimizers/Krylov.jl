@@ -8,8 +8,8 @@ Type for storing the vectors required by the in-place version of BLOCK-MINRES.
 
 The outer constructors
 
-    solver = BlockMinresWorkspace(m, n, p, SV, SM)
-    solver = BlockMinresWorkspace(A, B)
+    workspace = BlockMinresWorkspace(m, n, p, SV, SM)
+    workspace = BlockMinresWorkspace(A, B)
 
 may be used in order to create these vectors.
 """
@@ -57,7 +57,7 @@ function BlockMinresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::
   SV = isconcretetype(SV) ? SV : typeof(τₖ₋₁)
   SM = isconcretetype(SM) ? SM : typeof(X)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = BlockMinresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, false, stats)
+  workspace = BlockMinresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, false, stats)
   return workspace
 end
 
@@ -74,8 +74,8 @@ Type for storing the vectors required by the in-place version of BLOCK-GMRES.
 
 The outer constructors
 
-    solver = BlockGmresWorkspace(m, n, p, SV, SM; memory = 5)
-    solver = BlockGmresWorkspace(A, B; memory = 5)
+    workspace = BlockGmresWorkspace(m, n, p, SV, SM; memory = 5)
+    workspace = BlockGmresWorkspace(A, B; memory = 5)
 
 may be used in order to create these vectors.
 `memory` is set to `div(n,p)` if the value given is larger than `div(n,p)`.
@@ -119,7 +119,7 @@ function BlockGmresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::T
   SV = isconcretetype(SV) ? SV : typeof(τ)
   SM = isconcretetype(SM) ? SM : typeof(X)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = BlockGmresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, false, stats)
+  workspace = BlockGmresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, false, stats)
   return workspace
 end
 
@@ -193,7 +193,7 @@ Statistics of `solver` are displayed if `show_stats` is set to true.
 """
 function show(io :: IO, solver :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   workspace = typeof(solver)
-  name_solver = string(workspace.name.name)
+  name_workspace = string(workspace.name.name)
   name_stats = string(typeof(workspace.stats).name.name)
   nbytes = sizeof(solver)
   storage = format_bytes(nbytes)

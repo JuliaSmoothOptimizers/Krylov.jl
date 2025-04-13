@@ -140,7 +140,7 @@ end
 
       # test callback function
       A, b = over_consistent(FC=FC)
-      solver = CraigWorkspace(A, b)
+      workspace = CraigWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2LN(A, b, real(zero(eltype(b))), tol = tol)
       craig!(workspace, A, b, callback = cb_n2)

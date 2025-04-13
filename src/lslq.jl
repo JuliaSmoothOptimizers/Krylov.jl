@@ -145,7 +145,7 @@ The iterations stop as soon as one of the following conditions holds true:
 function lslq end
 
 """
-    solver = lslq!(workspace::LslqWorkspace, A, b; kwargs...)
+    workspace = lslq!(workspace::LslqWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`lslq`](@ref).
 

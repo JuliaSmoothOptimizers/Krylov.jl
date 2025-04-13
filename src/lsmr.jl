@@ -123,7 +123,7 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 function lsmr end
 
 """
-    solver = lsmr!(workspace::LsmrWorkspace, A, b; kwargs...)
+    workspace = lsmr!(workspace::LsmrWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`lsmr`](@ref).
 

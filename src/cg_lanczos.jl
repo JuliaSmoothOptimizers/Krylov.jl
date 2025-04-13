@@ -68,8 +68,8 @@ The method does _not_ abort if A is not definite.
 function cg_lanczos end
 
 """
-    solver = cg_lanczos!(workspace::CgLanczosWorkspace, A, b; kwargs...)
-    solver = cg_lanczos!(workspace::CgLanczosWorkspace, A, b, x0; kwargs...)
+    workspace = cg_lanczos!(workspace::CgLanczosWorkspace, A, b; kwargs...)
+    workspace = cg_lanczos!(workspace::CgLanczosWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`cg_lanczos`](@ref).
 

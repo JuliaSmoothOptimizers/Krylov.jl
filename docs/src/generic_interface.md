@@ -51,7 +51,7 @@ b = rand(n)
 # In-place interface
 for method in (:bicgstab, :gmres)
     # Create a workspace for the Krylov method
-    solver = krylov_workspace(Val(method), A, b)
+    workspace = krylov_workspace(Val(method), A, b)
 
     # Solve the system in-place
     krylov_solve!(workspace, A, b)

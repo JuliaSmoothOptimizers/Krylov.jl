@@ -79,7 +79,7 @@
 
       # test callback function
       A, b = cartesian_poisson(FC=FC)
-      solver = CgWorkspace(A, b)
+      workspace = CgWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2(A, b, tol = tol)
       cg!(workspace, A, b, callback = cb_n2)

@@ -97,7 +97,7 @@
       
       # test callback function
       A, b = polar_poisson(FC=FC)
-      solver = BilqWorkspace(A, b)
+      workspace = BilqWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2(A, b, tol = tol)
       bilq!(workspace, A, b, callback = cb_n2)

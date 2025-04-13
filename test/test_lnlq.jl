@@ -139,7 +139,7 @@ end
 
         # test callback function
         A, b = over_consistent(FC=FC)
-        solver = LnlqWorkspace(A, b)
+        workspace = LnlqWorkspace(A, b)
         tol = 1.0e-1
         cb_n2 = TestCallbackN2LN(A, b, real(zero(eltype(b))), tol = tol)
         lnlq!(workspace, A, b, callback = cb_n2)

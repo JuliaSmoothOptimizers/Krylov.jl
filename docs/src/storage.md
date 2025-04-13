@@ -115,7 +115,7 @@ m = 5000
 n = 12000
 A = rand(Float64, m, n)
 b = rand(Float64, m)
-solver = LsmrWorkspace(A, b)
+workspace = LsmrWorkspace(A, b)
 show(stdout, workspace, show_stats=false)
 ```
 

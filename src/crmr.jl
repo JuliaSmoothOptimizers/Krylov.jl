@@ -91,7 +91,7 @@ but simpler to implement. Only the x-part of the solution is returned.
 function crmr end
 
 """
-    solver = crmr!(workspace::CrmrWorkspace, A, b; kwargs...)
+    workspace = crmr!(workspace::CrmrWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`crmr`](@ref).
 

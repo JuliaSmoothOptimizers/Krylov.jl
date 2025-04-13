@@ -130,7 +130,7 @@
 
       # test callback function
       A, b = sparse_laplacian(FC=FC)
-      solver = GmresWorkspace(A, b)
+      workspace = GmresWorkspace(A, b)
       tol = 1.0e-1
       N = Diagonal(1 ./ diag(A))
       stor = StorageGetxRestartedGmres(workspace, N = N)

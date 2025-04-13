@@ -87,7 +87,7 @@ but simpler to implement.
 function cgls end
 
 """
-    solver = cgls!(workspace::CglsWorkspace, A, b; kwargs...)
+    workspace = cgls!(workspace::CglsWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`cgls`](@ref).
 

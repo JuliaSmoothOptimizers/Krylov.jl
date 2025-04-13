@@ -305,7 +305,7 @@
       # Not testing with an interesting callback because workspace.x and workspace.y are not updated 
       # until the end of the algorithm (TODO: be able to evaluate workspace.x and workspace.y ?)
       A, b, c = square_adjoint(FC=FC)
-      solver = GpmrWorkspace(A, b; memory = 20)
+      workspace = GpmrWorkspace(A, b; memory = 20)
       gpmr!(workspace, A, A', b, c, callback = solver -> true)
       @test workspace.stats.status == "user-requested exit"
 

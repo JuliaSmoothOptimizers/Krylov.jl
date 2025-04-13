@@ -31,16 +31,16 @@ For example, use `S = Vector{Float64}` if you want to solve linear systems in do
 The workspace is always the first argument of the in-place methods:
 
 ```@solvers
-minres_solver = MinresWorkspace(m, n, Vector{Float64})
+minres_workspace = MinresWorkspace(m, n, Vector{Float64})
 minres!(minres_workspace, A1, b1)
 
-bicgstab_solver = BicgstabWorkspace(m, n, Vector{ComplexF64})
+bicgstab_workspace = BicgstabWorkspace(m, n, Vector{ComplexF64})
 bicgstab!(bicgstab_workspace, A2, b2)
 
-gmres_solver = GmresWorkspace(m, n, Vector{BigFloat})
+gmres_workspace = GmresWorkspace(m, n, Vector{BigFloat})
 gmres!(gmres_workspace, A3, b3)
 
-lsqr_solver = LsqrWorkspace(m, n, CuVector{Float32})
+lsqr_workspace = LsqrWorkspace(m, n, CuVector{Float32})
 lsqr!(lsqr_workspace, A4, b4)
 ```
 
@@ -62,7 +62,7 @@ function newton(∇f, ∇²f, x₀; itmax = 200, tol = 1e-8)
     
     iter = 0
     S = typeof(x)
-    solver = CgWorkspace(n, n, S)
+    workspace = CgWorkspace(n, n, S)
     Δx = workspace.x
 
     solved = false
@@ -97,7 +97,7 @@ function gauss_newton(F, JF, x₀; itmax = 200, tol = 1e-8)
     
     iter = 0
     S = typeof(x)
-    solver = LsmrWorkspace(m, n, S)
+    workspace = LsmrWorkspace(m, n, S)
     Δx = workspace.x
 
     solved = false

@@ -76,8 +76,8 @@ SYMMLQ produces monotonic errors ‖x* - x‖₂.
 function symmlq end
 
 """
-    solver = symmlq!(workspace::SymmlqWorkspace, A, b; kwargs...)
-    solver = symmlq!(workspace::SymmlqWorkspace, A, b, x0; kwargs...)
+    workspace = symmlq!(workspace::SymmlqWorkspace, A, b; kwargs...)
+    workspace = symmlq!(workspace::SymmlqWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`symmlq`](@ref).
 

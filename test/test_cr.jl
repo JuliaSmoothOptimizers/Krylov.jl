@@ -92,7 +92,7 @@
  
       # test callback function
       A, b = symmetric_definite(FC=FC)
-      solver = CrWorkspace(A, b)
+      workspace = CrWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2(A, b, tol = tol)
       cr!(workspace, A, b, callback = cb_n2)

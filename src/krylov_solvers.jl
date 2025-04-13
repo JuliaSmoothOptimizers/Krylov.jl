@@ -60,9 +60,9 @@ Type for storing the vectors required by the in-place version of MINRES.
 
 The outer constructors
 
-    solver = MinresWorkspace(m, n, S; window = 5)
-    solver = MinresWorkspace(A, b; window = 5)
-    solver = MinresWorkspace(kc::KrylovConstructor; window = 5)
+    workspace = MinresWorkspace(m, n, S; window = 5)
+    workspace = MinresWorkspace(A, b; window = 5)
+    workspace = MinresWorkspace(kc::KrylovConstructor; window = 5)
 
 may be used in order to create these vectors.
 """
@@ -100,7 +100,7 @@ function MinresWorkspace(kc::KrylovConstructor; window::Integer = 5)
   v  = similar(kc.vn_empty)
   err_vec = zeros(T, window)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = MinresWorkspace{T,FC,S}(m, n, Δx, x, r1, r2, npc_dir, w1, w2, y, v, err_vec, false, stats)
+  workspace = MinresWorkspace{T,FC,S}(m, n, Δx, x, r1, r2, npc_dir, w1, w2, y, v, err_vec, false, stats)
   return workspace
 end
 
@@ -119,7 +119,7 @@ function MinresWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   err_vec = zeros(T, window)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = MinresWorkspace{T,FC,S}(m, n, Δx, x, r1, r2, npc_dir, w1, w2, y, v, err_vec, false, stats)
+  workspace = MinresWorkspace{T,FC,S}(m, n, Δx, x, r1, r2, npc_dir, w1, w2, y, v, err_vec, false, stats)
   return workspace
 end
 
@@ -134,9 +134,9 @@ Type for storing the vectors required by the in-place version of MINARES.
 
 The outer constructors
 
-    solver = MinaresWorkspace(m, n, S)
-    solver = MinaresWorkspace(A, b)
-    solver = MinaresWorkspace(kc::KrylovConstructor)
+    workspace = MinaresWorkspace(m, n, S)
+    workspace = MinaresWorkspace(A, b)
+    workspace = MinaresWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -172,7 +172,7 @@ function MinaresWorkspace(kc::KrylovConstructor)
   dₖ₋₁ = similar(kc.vn)
   q    = similar(kc.vn)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
+  workspace = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
   return workspace
 end
 
@@ -190,7 +190,7 @@ function MinaresWorkspace(m::Integer, n::Integer, S::Type)
   q    = S(undef, n)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
+  workspace = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
   return workspace
 end
 
@@ -205,9 +205,9 @@ Type for storing the vectors required by the in-place version of CG.
 
 The outer constructors
 
-    solver = CgWorkspace(m, n, S)
-    solver = CgWorkspace(A, b)
-    solver = CgWorkspace(kc::KrylovConstructor)
+    workspace = CgWorkspace(m, n, S)
+    workspace = CgWorkspace(A, b)
+    workspace = CgWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -237,7 +237,7 @@ function CgWorkspace(kc::KrylovConstructor)
   Ap = similar(kc.vn)
   z  = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CgWorkspace{T,FC,S}(m, n, Δx, x, r, p, Ap, z, false, stats)
+  workspace = CgWorkspace{T,FC,S}(m, n, Δx, x, r, p, Ap, z, false, stats)
   return workspace
 end
 
@@ -252,7 +252,7 @@ function CgWorkspace(m::Integer, n::Integer, S::Type)
   z  = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CgWorkspace{T,FC,S}(m, n, Δx, x, r, p, Ap, z, false, stats)
+  workspace = CgWorkspace{T,FC,S}(m, n, Δx, x, r, p, Ap, z, false, stats)
   return workspace
 end
 
@@ -267,9 +267,9 @@ Type for storing the vectors required by the in-place version of CR.
 
 The outer constructors
 
-    solver = CrWorkspace(m, n, S)
-    solver = CrWorkspace(A, b)
-    solver = CrWorkspace(kc::KrylovConstructor)
+    workspace = CrWorkspace(m, n, S)
+    workspace = CrWorkspace(A, b)
+    workspace = CrWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -301,7 +301,7 @@ function CrWorkspace(kc::KrylovConstructor)
   Ar = similar(kc.vn)
   Mq = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CrWorkspace{T,FC,S}(m, n, Δx, x, r, p, q, Ar, Mq, false, stats)
+  workspace = CrWorkspace{T,FC,S}(m, n, Δx, x, r, p, q, Ar, Mq, false, stats)
   return workspace
 end
 
@@ -317,7 +317,7 @@ function CrWorkspace(m::Integer, n::Integer, S::Type)
   Mq = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CrWorkspace{T,FC,S}(m, n, Δx, x, r, p, q, Ar, Mq, false, stats)
+  workspace = CrWorkspace{T,FC,S}(m, n, Δx, x, r, p, q, Ar, Mq, false, stats)
   return workspace
 end
 
@@ -332,9 +332,9 @@ Type for storing the vectors required by the in-place version of CAR.
 
 The outer constructors
 
-    solver = CarWorkspace(m, n, S)
-    solver = CarWorkspace(A, b)
-    solver = CarWorkspace(kc::KrylovConstructor)
+    workspace = CarWorkspace(m, n, S)
+    workspace = CarWorkspace(A, b)
+    workspace = CarWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -370,7 +370,7 @@ function CarWorkspace(kc::KrylovConstructor)
   u  = similar(kc.vn)
   Mu = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CarWorkspace{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
+  workspace = CarWorkspace{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
   return workspace
 end
 
@@ -388,7 +388,7 @@ function CarWorkspace(m::Integer, n::Integer, S::Type)
   Mu = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CarWorkspace{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
+  workspace = CarWorkspace{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
   return workspace
 end
 
@@ -403,9 +403,9 @@ Type for storing the vectors required by the in-place version of SYMMLQ.
 
 The outer constructors
 
-    solver = SymmlqWorkspace(m, n, S)
-    solver = SymmlqWorkspace(A, b)
-    solver = SymmlqWorkspace(kc::KrylovConstructor)
+    workspace = SymmlqWorkspace(m, n, S)
+    workspace = SymmlqWorkspace(A, b)
+    workspace = SymmlqWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -443,7 +443,7 @@ function SymmlqWorkspace(kc::KrylovConstructor; window::Integer = 5)
   zlist   = zeros(T, window)
   sprod   = ones(T, window)
   stats = SymmlqStats(0, false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), 0.0, "unknown")
-  solver = SymmlqWorkspace{T,FC,S}(m, n, Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, false, stats)
+  workspace = SymmlqWorkspace{T,FC,S}(m, n, Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, false, stats)
   return workspace
 end
 
@@ -462,7 +462,7 @@ function SymmlqWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   sprod   = ones(T, window)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SymmlqStats(0, false, T[], Union{T, Missing}[], T[], Union{T, Missing}[], T(NaN), T(NaN), 0.0, "unknown")
-  solver = SymmlqWorkspace{T,FC,S}(m, n, Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, false, stats)
+  workspace = SymmlqWorkspace{T,FC,S}(m, n, Δx, x, Mvold, Mv, Mv_next, w̅, v, clist, zlist, sprod, false, stats)
   return workspace
 end
 
@@ -477,9 +477,9 @@ Type for storing the vectors required by the in-place version of CG-LANCZOS.
 
 The outer constructors
 
-    solver = CgLanczosWorkspace(m, n, S)
-    solver = CgLanczosWorkspace(A, b)
-    solver = CgLanczosWorkspace(kc::KrylovConstructor)
+    workspace = CgLanczosWorkspace(m, n, S)
+    workspace = CgLanczosWorkspace(A, b)
+    workspace = CgLanczosWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -511,7 +511,7 @@ function CgLanczosWorkspace(kc::KrylovConstructor)
   Mv_next = similar(kc.vn)
   v       = similar(kc.vn_empty)
   stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), 0.0, "unknown")
-  solver = CgLanczosWorkspace{T,FC,S}(m, n, Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
+  workspace = CgLanczosWorkspace{T,FC,S}(m, n, Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
   return workspace
 end
 
@@ -527,7 +527,7 @@ function CgLanczosWorkspace(m::Integer, n::Integer, S::Type)
   v       = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = LanczosStats(0, false, T[], false, T(NaN), T(NaN), 0.0, "unknown")
-  solver = CgLanczosWorkspace{T,FC,S}(m, n, Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
+  workspace = CgLanczosWorkspace{T,FC,S}(m, n, Δx, x, Mv, Mv_prev, p, Mv_next, v, false, stats)
   return workspace
 end
 
@@ -542,9 +542,9 @@ Type for storing the vectors required by the in-place version of CG-LANCZOS-SHIF
 
 The outer constructors
 
-    solver = CgLanczosShiftWorkspace(m, n, nshifts, S)
-    solver = CgLanczosShiftWorkspace(A, b, nshifts)
-    solver = CgLanczosShiftWorkspace(kc::KrylovConstructor, nshifts)
+    workspace = CgLanczosShiftWorkspace(m, n, nshifts, S)
+    workspace = CgLanczosShiftWorkspace(A, b, nshifts)
+    workspace = CgLanczosShiftWorkspace(kc::KrylovConstructor, nshifts)
 
 may be used in order to create these vectors.
 """
@@ -589,7 +589,7 @@ function CgLanczosShiftWorkspace(kc::KrylovConstructor, nshifts::Integer)
   converged  = BitVector(undef, nshifts)
   not_cv     = BitVector(undef, nshifts)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
-  solver = CgLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  workspace = CgLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return workspace
 end
 
@@ -612,7 +612,7 @@ function CgLanczosShiftWorkspace(m::Integer, n::Integer, nshifts::Integer, S::Ty
   not_cv     = BitVector(undef, nshifts)
   S = isconcretetype(S) ? S : typeof(x)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
-  solver = CgLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  workspace = CgLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, Mv_prev, Mv_next, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return workspace
 end
 
@@ -627,9 +627,9 @@ Type for storing the vectors required by the in-place version of MINRES-QLP.
 
 The outer constructors
 
-    solver = MinresQlpWorkspace(m, n, S)
-    solver = MinresQlpWorkspace(A, b)
-    solver = MinresQlpWorkspace(kc::KrylovConstructor)
+    workspace = MinresQlpWorkspace(m, n, S)
+    workspace = MinresQlpWorkspace(A, b)
+    workspace = MinresQlpWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -663,7 +663,7 @@ function MinresQlpWorkspace(kc::KrylovConstructor)
   p       = similar(kc.vn)
   vₖ      = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = MinresQlpWorkspace{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
+  workspace = MinresQlpWorkspace{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
   return workspace
 end
 
@@ -680,7 +680,7 @@ function MinresQlpWorkspace(m::Integer, n::Integer, S::Type)
   vₖ      = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = MinresQlpWorkspace{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
+  workspace = MinresQlpWorkspace{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
   return workspace
 end
 
@@ -695,9 +695,9 @@ Type for storing the vectors required by the in-place version of DQGMRES.
 
 The outer constructors
 
-    solver = DqgmresWorkspace(m, n, S; memory = 20)
-    solver = DqgmresWorkspace(A, b; memory = 20)
-    solver = DqgmresWorkspace(kc::KrylovConstructor; memory = 20)
+    workspace = DqgmresWorkspace(m, n, S; memory = 20)
+    workspace = DqgmresWorkspace(A, b; memory = 20)
+    workspace = DqgmresWorkspace(kc::KrylovConstructor; memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
@@ -737,7 +737,7 @@ function DqgmresWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   s      = Vector{FC}(undef, memory)
   H      = Vector{FC}(undef, memory+1)
   stats  = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = DqgmresWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
+  workspace = DqgmresWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
   return workspace
 end
 
@@ -757,7 +757,7 @@ function DqgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   H  = Vector{FC}(undef, memory+1)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = DqgmresWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
+  workspace = DqgmresWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
   return workspace
 end
 
@@ -772,9 +772,9 @@ Type for storing the vectors required by the in-place version of DIOM.
 
 The outer constructors
 
-    solver = DiomWorkspace(m, n, S; memory = 20)
-    solver = DiomWorkspace(A, b; memory = 20)
-    solver = DiomWorkspace(kc::KrylovConstructor; memory = 20)
+    workspace = DiomWorkspace(m, n, S; memory = 20)
+    workspace = DiomWorkspace(A, b; memory = 20)
+    workspace = DiomWorkspace(kc::KrylovConstructor; memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
@@ -812,7 +812,7 @@ function DiomWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   L      = Vector{FC}(undef, memory-1)
   H      = Vector{FC}(undef, memory)
   stats  = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = DiomWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
+  workspace = DiomWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
   return workspace
 end
 
@@ -831,7 +831,7 @@ function DiomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   H  = Vector{FC}(undef, memory)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = DiomWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
+  workspace = DiomWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
   return workspace
 end
 
@@ -846,9 +846,9 @@ Type for storing the vectors required by the in-place version of USYMLQ.
 
 The outer constructors
 
-    solver = UsymlqWorkspace(m, n, S)
-    solver = UsymlqWorkspace(A, b)
-    solver = UsymlqWorkspace(kc::KrylovConstructor)
+    workspace = UsymlqWorkspace(m, n, S)
+    workspace = UsymlqWorkspace(A, b)
+    workspace = UsymlqWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -884,7 +884,7 @@ function UsymlqWorkspace(kc::KrylovConstructor)
   vₖ   = similar(kc.vm)
   q    = similar(kc.vm)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = UsymlqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
+  workspace = UsymlqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
   return workspace
 end
 
@@ -902,7 +902,7 @@ function UsymlqWorkspace(m::Integer, n::Integer, S::Type)
   q    = S(undef, m)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = UsymlqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
+  workspace = UsymlqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
   return workspace
 end
 
@@ -917,9 +917,9 @@ Type for storing the vectors required by the in-place version of USYMQR.
 
 The outer constructors
 
-    solver = UsymqrWorkspace(m, n, S)
-    solver = UsymqrWorkspace(A, b)
-    solver = UsymqrWorkspace(kc::KrylovConstructor)
+    workspace = UsymqrWorkspace(m, n, S)
+    workspace = UsymqrWorkspace(A, b)
+    workspace = UsymqrWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -957,7 +957,7 @@ function UsymqrWorkspace(kc::KrylovConstructor)
   uₖ   = similar(kc.vn)
   p    = similar(kc.vn)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = UsymqrWorkspace{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
+  workspace = UsymqrWorkspace{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
   return workspace
 end
 
@@ -976,7 +976,7 @@ function UsymqrWorkspace(m::Integer, n::Integer, S::Type)
   p    = S(undef, n)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = UsymqrWorkspace{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
+  workspace = UsymqrWorkspace{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
   return workspace
 end
 
@@ -991,9 +991,9 @@ Type for storing the vectors required by the in-place version of TRICG.
 
 The outer constructors
 
-    solver = TricgWorkspace(m, n, S)
-    solver = TricgWorkspace(A, b)
-    solver = TricgWorkspace(kc::KrylovConstructor)
+    workspace = TricgWorkspace(m, n, S)
+    workspace = TricgWorkspace(A, b)
+    workspace = TricgWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1043,7 +1043,7 @@ function TricgWorkspace(kc::KrylovConstructor)
   uₖ      = similar(kc.vn_empty)
   vₖ      = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = TricgWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  workspace = TricgWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
 end
 
@@ -1068,7 +1068,7 @@ function TricgWorkspace(m::Integer, n::Integer, S::Type)
   vₖ      = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = TricgWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  workspace = TricgWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
 end
 
@@ -1083,9 +1083,9 @@ Type for storing the vectors required by the in-place version of TRIMR.
 
 The outer constructors
 
-    solver = TrimrWorkspace(m, n, S)
-    solver = TrimrWorkspace(A, b)
-    solver = TrimrWorkspace(kc::KrylovConstructor)
+    workspace = TrimrWorkspace(m, n, S)
+    workspace = TrimrWorkspace(A, b)
+    workspace = TrimrWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1143,7 +1143,7 @@ function TrimrWorkspace(kc::KrylovConstructor)
   uₖ      = similar(kc.vn_empty)
   vₖ      = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = TrimrWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  workspace = TrimrWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
 end
 
@@ -1172,7 +1172,7 @@ function TrimrWorkspace(m::Integer, n::Integer, S::Type)
   vₖ      = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = TrimrWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  workspace = TrimrWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
 end
 
@@ -1187,9 +1187,9 @@ Type for storing the vectors required by the in-place version of TRILQR.
 
 The outer constructors
 
-    solver = TrilqrWorkspace(m, n, S)
-    solver = TrilqrWorkspace(A, b)
-    solver = TrilqrWorkspace(kc::KrylovConstructor)
+    workspace = TrilqrWorkspace(m, n, S)
+    workspace = TrilqrWorkspace(A, b)
+    workspace = TrilqrWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1233,7 +1233,7 @@ function TrilqrWorkspace(kc::KrylovConstructor)
   wₖ₋₃ = similar(kc.vm)
   wₖ₋₂ = similar(kc.vm)
   stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
-  solver = TrilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
+  workspace = TrilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
   return workspace
 end
 
@@ -1255,7 +1255,7 @@ function TrilqrWorkspace(m::Integer, n::Integer, S::Type)
   wₖ₋₂ = S(undef, m)
   S = isconcretetype(S) ? S : typeof(x)
   stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
-  solver = TrilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
+  workspace = TrilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
   return workspace
 end
 
@@ -1270,9 +1270,9 @@ Type for storing the vectors required by the in-place version of CGS.
 
 The outer constructorss
 
-    solver = CgsWorkspace(m, n, S)
-    solver = CgsWorkspace(A, b)
-    solver = CgsWorkspace(kc::KrylovConstructor)
+    workspace = CgsWorkspace(m, n, S)
+    workspace = CgsWorkspace(A, b)
+    workspace = CgsWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1308,7 +1308,7 @@ function CgsWorkspace(kc::KrylovConstructor)
   yz = similar(kc.vn_empty)
   vw = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CgsWorkspace{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
+  workspace = CgsWorkspace{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
   return workspace
 end
 
@@ -1326,7 +1326,7 @@ function CgsWorkspace(m::Integer, n::Integer, S::Type)
   vw = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CgsWorkspace{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
+  workspace = CgsWorkspace{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
   return workspace
 end
 
@@ -1341,9 +1341,9 @@ Type for storing the vectors required by the in-place version of BICGSTAB.
 
 The outer constructors
 
-    solver = BicgstabWorkspace(m, n, S)
-    solver = BicgstabWorkspace(A, b)
-    solver = BicgstabWorkspace(kc::KrylovConstructor)
+    workspace = BicgstabWorkspace(m, n, S)
+    workspace = BicgstabWorkspace(A, b)
+    workspace = BicgstabWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1379,7 +1379,7 @@ function BicgstabWorkspace(kc::KrylovConstructor)
   yz = similar(kc.vn_empty)
   t  = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = BicgstabWorkspace{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
+  workspace = BicgstabWorkspace{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
   return workspace
 end
 
@@ -1397,7 +1397,7 @@ function BicgstabWorkspace(m::Integer, n::Integer, S::Type)
   t  = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = BicgstabWorkspace{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
+  workspace = BicgstabWorkspace{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
   return workspace
 end
 
@@ -1412,9 +1412,9 @@ Type for storing the vectors required by the in-place version of BILQ.
 
 The outer constructors
 
-    solver = BilqWorkspace(m, n, S)
-    solver = BilqWorkspace(A, b)
-    solver = BilqWorkspace(kc::KrylovConstructor)
+    workspace = BilqWorkspace(m, n, S)
+    workspace = BilqWorkspace(A, b)
+    workspace = BilqWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1454,7 +1454,7 @@ function BilqWorkspace(kc::KrylovConstructor)
   t    = similar(kc.vn_empty)
   s    = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = BilqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
+  workspace = BilqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
   return workspace
 end
 
@@ -1474,7 +1474,7 @@ function BilqWorkspace(m::Integer, n::Integer, S::Type)
   s    = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = BilqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
+  workspace = BilqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
   return workspace
 end
 
@@ -1489,9 +1489,9 @@ Type for storing the vectors required by the in-place version of QMR.
 
 The outer constructors
 
-    solver = QmrWorkspace(m, n, S)
-    solver = QmrWorkspace(A, b)
-    solver = QmrWorkspace(kc::KrylovConstructor)
+    workspace = QmrWorkspace(m, n, S)
+    workspace = QmrWorkspace(A, b)
+    workspace = QmrWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1533,7 +1533,7 @@ function QmrWorkspace(kc::KrylovConstructor)
   t    = similar(kc.vn_empty)
   s    = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = QmrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
+  workspace = QmrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
   return workspace
 end
 
@@ -1554,7 +1554,7 @@ function QmrWorkspace(m::Integer, n::Integer, S::Type)
   s    = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = QmrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
+  workspace = QmrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
   return workspace
 end
 
@@ -1569,9 +1569,9 @@ Type for storing the vectors required by the in-place version of BILQR.
 
 The outer constructors
 
-    solver = BilqrWorkspace(m, n, S)
-    solver = BilqrWorkspace(A, b)
-    solver = BilqrWorkspace(kc::KrylovConstructor)
+    workspace = BilqrWorkspace(m, n, S)
+    workspace = BilqrWorkspace(A, b)
+    workspace = BilqrWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1615,7 +1615,7 @@ function BilqrWorkspace(kc::KrylovConstructor)
   wₖ₋₃ = similar(kc.vn)
   wₖ₋₂ = similar(kc.vn)
   stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
-  solver = BilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, false, stats)
+  workspace = BilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, false, stats)
   return workspace
 end
 
@@ -1637,7 +1637,7 @@ function BilqrWorkspace(m::Integer, n::Integer, S::Type)
   wₖ₋₂ = S(undef, n)
   S = isconcretetype(S) ? S : typeof(x)
   stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
-  solver = BilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, false, stats)
+  workspace = BilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, Δy, y, d̅, wₖ₋₃, wₖ₋₂, false, stats)
   return workspace
 end
 
@@ -1652,9 +1652,9 @@ Type for storing the vectors required by the in-place version of CGLS.
 
 The outer constructors
 
-    solver = CglsWorkspace(m, n, S)
-    solver = CglsWorkspace(A, b)
-    solver = CglsWorkspace(kc::KrylovConstructor)
+    workspace = CglsWorkspace(m, n, S)
+    workspace = CglsWorkspace(A, b)
+    workspace = CglsWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1683,7 +1683,7 @@ function CglsWorkspace(kc::KrylovConstructor)
   q  = similar(kc.vm)
   Mr = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CglsWorkspace{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
+  workspace = CglsWorkspace{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
   return workspace
 end
 
@@ -1698,7 +1698,7 @@ function CglsWorkspace(m::Integer, n::Integer, S::Type)
   Mr = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CglsWorkspace{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
+  workspace = CglsWorkspace{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
   return workspace
 end
 
@@ -1713,9 +1713,9 @@ Workspace for the in-place version of CGLS-LANCZOS-SHIFT.
 
 The outer constructors:
 
-    solver = CglsLanczosShiftWorkspace(m, n, nshifts, S)
-    solver = CglsLanczosShiftWorkspace(A, b, nshifts)
-    solver = CglsLanczosShiftWorkspace(kc::KrylovConstructor, nshifts)
+    workspace = CglsLanczosShiftWorkspace(m, n, nshifts, S)
+    workspace = CglsLanczosShiftWorkspace(A, b, nshifts)
+    workspace = CglsLanczosShiftWorkspace(kc::KrylovConstructor, nshifts)
 
 can be used to initialize this workspace.
 """
@@ -1762,7 +1762,7 @@ function CglsLanczosShiftWorkspace(kc::KrylovConstructor, nshifts::Integer)
   converged  = BitVector(undef, nshifts)
   not_cv     = BitVector(undef, nshifts)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
-  solver = CglsLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, u_prev, u_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  workspace = CglsLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, u_prev, u_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return workspace
 end
 
@@ -1786,7 +1786,7 @@ function CglsLanczosShiftWorkspace(m::Integer, n::Integer, nshifts::Integer, S::
   not_cv     = BitVector(undef, nshifts)
   S = isconcretetype(S) ? S : typeof(x)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
-  solver = CglsLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, u_prev, u_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  workspace = CglsLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, u_prev, u_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return workspace
 end
 
@@ -1801,9 +1801,9 @@ Type for storing the vectors required by the in-place version of CRLS.
 
 The outer constructors
 
-    solver = CrlsWorkspace(m, n, S)
-    solver = CrlsWorkspace(A, b)
-    solver = CrlsWorkspace(kc::KrylovConstructor)
+    workspace = CrlsWorkspace(m, n, S)
+    workspace = CrlsWorkspace(A, b)
+    workspace = CrlsWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1836,7 +1836,7 @@ function CrlsWorkspace(kc::KrylovConstructor)
   s  = similar(kc.vm)
   Ms = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CrlsWorkspace{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
+  workspace = CrlsWorkspace{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
   return workspace
 end
 
@@ -1853,7 +1853,7 @@ function CrlsWorkspace(m::Integer, n::Integer, S::Type)
   Ms = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CrlsWorkspace{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
+  workspace = CrlsWorkspace{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
   return workspace
 end
 
@@ -1868,9 +1868,9 @@ Type for storing the vectors required by the in-place version of CGNE.
 
 The outer constructors
 
-    solver = CgneWorkspace(m, n, S)
-    solver = CgneWorkspace(A, b)
-    solver = CgneWorkspace(kc::KrylovConstructor)
+    workspace = CgneWorkspace(m, n, S)
+    workspace = CgneWorkspace(A, b)
+    workspace = CgneWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1901,7 +1901,7 @@ function CgneWorkspace(kc::KrylovConstructor)
   s   = similar(kc.vm_empty)
   z   = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CgneWorkspace{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
+  workspace = CgneWorkspace{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
   return workspace
 end
 
@@ -1917,7 +1917,7 @@ function CgneWorkspace(m::Integer, n::Integer, S::Type)
   z   = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CgneWorkspace{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
+  workspace = CgneWorkspace{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
   return workspace
 end
 
@@ -1932,9 +1932,9 @@ Type for storing the vectors required by the in-place version of CRMR.
 
 The outer constructors
 
-    solver = CrmrWorkspace(m, n, S)
-    solver = CrmrWorkspace(A, b)
-    solver = CrmrWorkspace(kc::KrylovConstructor)
+    workspace = CrmrWorkspace(m, n, S)
+    workspace = CrmrWorkspace(A, b)
+    workspace = CrmrWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -1965,7 +1965,7 @@ function CrmrWorkspace(kc::KrylovConstructor)
   Nq  = similar(kc.vm_empty)
   s   = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CrmrWorkspace{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
+  workspace = CrmrWorkspace{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
   return workspace
 end
 
@@ -1981,7 +1981,7 @@ function CrmrWorkspace(m::Integer, n::Integer, S::Type)
   s   = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CrmrWorkspace{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
+  workspace = CrmrWorkspace{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
   return workspace
 end
 
@@ -1996,9 +1996,9 @@ Type for storing the vectors required by the in-place version of LSLQ.
 
 The outer constructors
 
-    solver = LslqWorkspace(m, n, S)
-    solver = LslqWorkspace(A, b)
-    solver = LslqWorkspace(kc::KrylovConstructor)
+    workspace = LslqWorkspace(m, n, S)
+    workspace = LslqWorkspace(A, b)
+    workspace = LslqWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -2033,7 +2033,7 @@ function LslqWorkspace(kc::KrylovConstructor; window::Integer = 5)
   v   = similar(kc.vn_empty)
   err_vec = zeros(T, window)
   stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], 0.0, "unknown")
-  solver = LslqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
+  workspace = LslqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
   return workspace
 end
 
@@ -2051,7 +2051,7 @@ function LslqWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   err_vec = zeros(T, window)
   S = isconcretetype(S) ? S : typeof(x)
   stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], 0.0, "unknown")
-  solver = LslqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
+  workspace = LslqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
   return workspace
 end
 
@@ -2066,9 +2066,9 @@ Type for storing the vectors required by the in-place version of LSQR.
 
 The outer constructors
 
-    solver = LsqrWorkspace(m, n, S)
-    solver = LsqrWorkspace(A, b)
-    solver = LsqrWorkspace(kc::KrylovConstructor)
+    workspace = LsqrWorkspace(m, n, S)
+    workspace = LsqrWorkspace(A, b)
+    workspace = LsqrWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -2103,7 +2103,7 @@ function LsqrWorkspace(kc::KrylovConstructor; window::Integer = 5)
   v   = similar(kc.vn_empty)
   err_vec = zeros(T, window)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = LsqrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
+  workspace = LsqrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
   return workspace
 end
 
@@ -2121,7 +2121,7 @@ function LsqrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   err_vec = zeros(T, window)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = LsqrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
+  workspace = LsqrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
   return workspace
 end
 
@@ -2136,9 +2136,9 @@ Type for storing the vectors required by the in-place version of LSMR.
 
 The outer constructors
 
-    solver = LsmrWorkspace(m, n, S)
-    solver = LsmrWorkspace(A, b)
-    solver = LsmrWorkspace(kc::KrylovConstructor)
+    workspace = LsmrWorkspace(m, n, S)
+    workspace = LsmrWorkspace(A, b)
+    workspace = LsmrWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -2175,7 +2175,7 @@ function LsmrWorkspace(kc::KrylovConstructor; window::Integer = 5)
   v    = similar(kc.vn_empty)
   err_vec = zeros(T, window)
   stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), 0.0, "unknown")
-  solver = LsmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
+  workspace = LsmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
   return workspace
 end
 
@@ -2194,7 +2194,7 @@ function LsmrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   err_vec = zeros(T, window)
   S = isconcretetype(S) ? S : typeof(x)
   stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), 0.0, "unknown")
-  solver = LsmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
+  workspace = LsmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
   return workspace
 end
 
@@ -2209,9 +2209,9 @@ Type for storing the vectors required by the in-place version of LNLQ.
 
 The outer constructors
 
-    solver = LnlqWorkspace(m, n, S)
-    solver = LnlqWorkspace(A, b)
-    solver = LnlqWorkspace(kc::KrylovConstructor)
+    workspace = LnlqWorkspace(m, n, S)
+    workspace = LnlqWorkspace(A, b)
+    workspace = LnlqWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -2248,7 +2248,7 @@ function LnlqWorkspace(kc::KrylovConstructor)
   v   = similar(kc.vn_empty)
   q   = similar(kc.vn_empty)
   stats = LNLQStats(0, false, T[], false, T[], T[], 0.0, "unknown")
-  solver = LnlqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
+  workspace = LnlqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
   return workspace
 end
 
@@ -2267,7 +2267,7 @@ function LnlqWorkspace(m::Integer, n::Integer, S::Type)
   q   = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = LNLQStats(0, false, T[], false, T[], T[], 0.0, "unknown")
-  solver = LnlqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
+  workspace = LnlqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
   return workspace
 end
 
@@ -2282,9 +2282,9 @@ Type for storing the vectors required by the in-place version of CRAIG.
 
 The outer constructors
 
-    solver = CraigWorkspace(m, n, S)
-    solver = CraigWorkspace(A, b)
-    solver = CraigWorkspace(kc::KrylovConstructor)
+    workspace = CraigWorkspace(m, n, S)
+    workspace = CraigWorkspace(A, b)
+    workspace = CraigWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -2321,7 +2321,7 @@ function CraigWorkspace(kc::KrylovConstructor)
   v   = similar(kc.vn_empty)
   w2  = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CraigWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
+  workspace = CraigWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
   return workspace
 end
 
@@ -2340,7 +2340,7 @@ function CraigWorkspace(m::Integer, n::Integer, S::Type)
   w2  = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CraigWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
+  workspace = CraigWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
   return workspace
 end
 
@@ -2355,9 +2355,9 @@ Type for storing the vectors required by the in-place version of CRAIGMR.
 
 The outer constructors
 
-    solver = CraigmrWorkspace(m, n, S)
-    solver = CraigmrWorkspace(A, b)
-    solver = CraigmrWorkspace(kc::KrylovConstructor)
+    workspace = CraigmrWorkspace(m, n, S)
+    workspace = CraigmrWorkspace(A, b)
+    workspace = CraigmrWorkspace(kc::KrylovConstructor)
 
 may be used in order to create these vectors.
 """
@@ -2398,7 +2398,7 @@ function CraigmrWorkspace(kc::KrylovConstructor)
   v    = similar(kc.vn_empty)
   q    = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CraigmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
+  workspace = CraigmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
   return workspace
 end
 
@@ -2419,7 +2419,7 @@ function CraigmrWorkspace(m::Integer, n::Integer, S::Type)
   q    = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = CraigmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
+  workspace = CraigmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
   return workspace
 end
 
@@ -2434,9 +2434,9 @@ Type for storing the vectors required by the in-place version of GMRES.
 
 The outer constructors
 
-    solver = GmresWorkspace(m, n, S; memory = 20)
-    solver = GmresWorkspace(A, b; memory = 20)
-    solver = GmresWorkspace(kc::KrylovConstructor; memory = 20)
+    workspace = GmresWorkspace(m, n, S; memory = 20)
+    workspace = GmresWorkspace(A, b; memory = 20)
+    workspace = GmresWorkspace(kc::KrylovConstructor; memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
@@ -2477,7 +2477,7 @@ function GmresWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = GmresWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
+  workspace = GmresWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
   return workspace
 end
 
@@ -2497,7 +2497,7 @@ function GmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = GmresWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
+  workspace = GmresWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
   return workspace
 end
 
@@ -2512,9 +2512,9 @@ Type for storing the vectors required by the in-place version of FGMRES.
 
 The outer constructors
 
-    solver = FgmresWorkspace(m, n, S; memory = 20)
-    solver = FgmresWorkspace(A, b; memory = 20)
-    solver = FgmresWorkspace(kc::KrylovConstructor; memory = 20)
+    workspace = FgmresWorkspace(m, n, S; memory = 20)
+    workspace = FgmresWorkspace(A, b; memory = 20)
+    workspace = FgmresWorkspace(kc::KrylovConstructor; memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
@@ -2555,7 +2555,7 @@ function FgmresWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = FgmresWorkspace{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
+  workspace = FgmresWorkspace{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
   return workspace
 end
 
@@ -2575,7 +2575,7 @@ function FgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = FgmresWorkspace{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
+  workspace = FgmresWorkspace{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
   return workspace
 end
 
@@ -2590,9 +2590,9 @@ Type for storing the vectors required by the in-place version of FOM.
 
 The outer constructors
 
-    solver = FomWorkspace(m, n, S; memory = 20)
-    solver = FomWorkspace(A, b; memory = 20)
-    solver = FomWorkspace(kc::KrylovConstructor; memory = 20)
+    workspace = FomWorkspace(m, n, S; memory = 20)
+    workspace = FomWorkspace(A, b; memory = 20)
+    workspace = FomWorkspace(kc::KrylovConstructor; memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
@@ -2630,7 +2630,7 @@ function FomWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   z  = Vector{FC}(undef, memory)
   U  = Vector{FC}(undef, div(memory * (memory+1), 2))
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = FomWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
+  workspace = FomWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
   return workspace
 end
 
@@ -2649,7 +2649,7 @@ function FomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   U  = Vector{FC}(undef, div(memory * (memory+1), 2))
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = FomWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
+  workspace = FomWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
   return workspace
 end
 
@@ -2664,9 +2664,9 @@ Type for storing the vectors required by the in-place version of GPMR.
 
 The outer constructors
 
-    solver = GpmrWorkspace(m, n, S; memory = 20)
-    solver = GpmrWorkspace(A, b; memory = 20)
-    solver = GpmrWorkspace(kc::KrylovConstructor; memory = 20)
+    workspace = GpmrWorkspace(m, n, S; memory = 20)
+    workspace = GpmrWorkspace(A, b; memory = 20)
+    workspace = GpmrWorkspace(kc::KrylovConstructor; memory = 20)
 
 may be used in order to create these vectors.
 `memory` is set to `n + m` if the value given is larger than `n + m`.
@@ -2718,7 +2718,7 @@ function GpmrWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   zt = Vector{FC}(undef, 2 * memory)
   R  = Vector{FC}(undef, memory * (2 * memory + 1))
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = GpmrWorkspace{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
+  workspace = GpmrWorkspace{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
   return workspace
 end
 
@@ -2744,7 +2744,7 @@ function GpmrWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   R  = Vector{FC}(undef, memory * (2 * memory + 1))
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = GpmrWorkspace{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
+  workspace = GpmrWorkspace{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
   return workspace
 end
 
@@ -2813,7 +2813,7 @@ Allows retrieving the output arguments of an out-of-place method from the in-pla
 
 For example, instead of `x, stats = cg(A, b)`, you can use:
 ```julia
-solver = CgWorkspace(A, b)
+workspace = CgWorkspace(A, b)
 cg!(workspace, A, b)
 x, stats = results(solver)
 ```

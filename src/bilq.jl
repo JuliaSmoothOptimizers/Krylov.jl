@@ -71,8 +71,8 @@ BiLQ requires support for `adjoint(M)` and `adjoint(N)` if preconditioners are p
 function bilq end
 
 """
-    solver = bilq!(workspace::BilqWorkspace, A, b; kwargs...)
-    solver = bilq!(workspace::BilqWorkspace, A, b, x0; kwargs...)
+    workspace = bilq!(workspace::BilqWorkspace, A, b; kwargs...)
+    workspace = bilq!(workspace::BilqWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`bilq`](@ref).
 

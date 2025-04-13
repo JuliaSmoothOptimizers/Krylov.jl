@@ -93,8 +93,8 @@ TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 function tricg end
 
 """
-    solver = tricg!(workspace::TricgWorkspace, A, b, c; kwargs...)
-    solver = tricg!(workspace::TricgWorkspace, A, b, c, x0, y0; kwargs...)
+    workspace = tricg!(workspace::TricgWorkspace, A, b, c; kwargs...)
+    workspace = tricg!(workspace::TricgWorkspace, A, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`tricg`](@ref).
 

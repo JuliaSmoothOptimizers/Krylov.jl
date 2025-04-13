@@ -326,7 +326,7 @@ b = HaloVector(data)
 
 # Allocate the workspace
 kc = KrylovConstructor(b)
-solver = CgWorkspace(kc)
+workspace = CgWorkspace(kc)
 
 # Solve the system with CG
 Krylov.cg!(workspace, A, b, atol=1e-12, rtol=0.0, verbose=1)
@@ -439,7 +439,7 @@ We now solve the system $Ax = b$ using `minres` with our preconditioner:
 using Krylov
 
 kc = KrylovConstructor(b)
-solver = MinresWorkspace(kc)
+workspace = MinresWorkspace(kc)
 minres!(workspace, A, b; M=P)
 
 x = solution(solver)

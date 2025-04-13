@@ -79,8 +79,8 @@ BICGSTAB stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol 
 function bicgstab end
 
 """
-    solver = bicgstab!(workspace::BicgstabWorkspace, A, b; kwargs...)
-    solver = bicgstab!(workspace::BicgstabWorkspace, A, b, x0; kwargs...)
+    workspace = bicgstab!(workspace::BicgstabWorkspace, A, b; kwargs...)
+    workspace = bicgstab!(workspace::BicgstabWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`bicgstab`](@ref).
 

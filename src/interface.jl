@@ -121,7 +121,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
       function $(krylov)($(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
         nshifts = length(shifts)
-        solver = $workspace(A, b, nshifts)
+        workspace = $workspace(A, b, nshifts)
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -135,7 +135,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
     @eval begin
       function $(krylov)($(def_args...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
-        solver = $workspace(A, b; memory)
+        workspace = $workspace(A, b; memory)
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -148,7 +148,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
       if !isempty($optargs)
         function $(krylov)($(def_args...), $(def_optargs...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
-          solver = $workspace(A, b; memory)
+          workspace = $workspace(A, b; memory)
           warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
@@ -164,7 +164,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
     @eval begin
       function $(krylov)($(def_args...); window::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
-        solver = $workspace(A, b; window)
+        workspace = $workspace(A, b; window)
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -177,7 +177,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
       if !isempty($optargs)
         function $(krylov)($(def_args...), $(def_optargs...); window::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
-          solver = $workspace(A, b; window)
+          workspace = $workspace(A, b; window)
           warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
@@ -193,7 +193,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
     @eval begin
       function $(krylov)($(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
-        solver = $workspace(A, b)
+        workspace = $workspace(A, b)
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -206,7 +206,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
       if !isempty($optargs)
         function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
-          solver = $workspace(A, b)
+          workspace = $workspace(A, b)
           warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
@@ -262,7 +262,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
     @eval begin
       function $(krylov)($(def_args...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
-        solver = $workspace(A, B; memory)
+        workspace = $workspace(A, B; memory)
         elapsed_time = ktimer(start_time)
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -275,7 +275,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
       if !isempty($optargs)
         function $(krylov)($(def_args...), $(def_optargs...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
-          solver = $workspace(A, B; memory)
+          workspace = $workspace(A, B; memory)
           warm_start!(workspace, $(optargs...))
           elapsed_time = ktimer(start_time)
           timemax -= elapsed_time
@@ -291,7 +291,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
     @eval begin
       function $(krylov)($(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
-        solver = $workspace(A, B)
+        workspace = $workspace(A, B)
         elapsed_time = ktimer(start_time)
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -304,7 +304,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
       if !isempty($optargs)
         function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
-          solver = $workspace(A, B)
+          workspace = $workspace(A, B)
           warm_start!(workspace, $(optargs...))
           elapsed_time = ktimer(start_time)
           timemax -= elapsed_time

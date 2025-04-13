@@ -67,8 +67,8 @@ GMRES algorithm is based on the Arnoldi process and computes a sequence of appro
 function gmres end
 
 """
-    solver = gmres!(workspace::GmresWorkspace, A, b; kwargs...)
-    solver = gmres!(workspace::GmresWorkspace, A, b, x0; kwargs...)
+    workspace = gmres!(workspace::GmresWorkspace, A, b; kwargs...)
+    workspace = gmres!(workspace::GmresWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`gmres`](@ref).
 

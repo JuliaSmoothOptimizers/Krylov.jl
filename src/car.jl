@@ -64,8 +64,8 @@ The estimates computed every iteration are ‖Mrₖ‖₂ and ‖AMrₖ‖_M.
 function car end
 
 """
-    solver = car!(workspace::CarWorkspace, A, b; kwargs...)
-    solver = car!(workspace::CarWorkspace, A, b, x0; kwargs...)
+    workspace = car!(workspace::CarWorkspace, A, b; kwargs...)
+    workspace = car!(workspace::CarWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`car`](@ref).
 

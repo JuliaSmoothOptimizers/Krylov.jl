@@ -74,8 +74,8 @@ Thus, GMRES is recommended if the right preconditioner N is constant.
 function fgmres end
 
 """
-    solver = fgmres!(workspace::FgmresWorkspace, A, b; kwargs...)
-    solver = fgmres!(workspace::FgmresWorkspace, A, b, x0; kwargs...)
+    workspace = fgmres!(workspace::FgmresWorkspace, A, b; kwargs...)
+    workspace = fgmres!(workspace::FgmresWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`fgmres`](@ref).
 

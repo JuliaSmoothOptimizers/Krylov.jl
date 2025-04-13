@@ -72,8 +72,8 @@ Otherwise, DQGMRES interpolates between MINRES and GMRES and is similar to MINRE
 function dqgmres end
 
 """
-    solver = dqgmres!(workspace::DqgmresWorkspace, A, b; kwargs...)
-    solver = dqgmres!(workspace::DqgmresWorkspace, A, b, x0; kwargs...)
+    workspace = dqgmres!(workspace::DqgmresWorkspace, A, b; kwargs...)
+    workspace = dqgmres!(workspace::DqgmresWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`dqgmres`](@ref).
 

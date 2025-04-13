@@ -70,8 +70,8 @@ USYMQR is used for solving dual system `Aᴴy = c` of size n × m.
 function trilqr end
 
 """
-    solver = trilqr!(workspace::TrilqrWorkspace, A, b, c; kwargs...)
-    solver = trilqr!(workspace::TrilqrWorkspace, A, b, c, x0, y0; kwargs...)
+    workspace = trilqr!(workspace::TrilqrWorkspace, A, b, c; kwargs...)
+    workspace = trilqr!(workspace::TrilqrWorkspace, A, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`trilqr`](@ref).
 

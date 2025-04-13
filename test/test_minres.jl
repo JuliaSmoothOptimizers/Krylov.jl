@@ -62,7 +62,7 @@
 
       # in-place minres (minres!) with Jacobi (or diagonal) preconditioner
       A, b, M = square_preconditioned(FC=FC)
-      solver = MinresWorkspace(A, b)
+      workspace = MinresWorkspace(A, b)
       minres!(workspace, A, b, M=M)
       r = b - A * workspace.x
       resid = norm(r) / norm(b)
@@ -72,7 +72,7 @@
 
       # Test linesearch
       A, b = symmetric_indefinite(FC=FC)
-      solver = MinresWorkspace(A, b)
+      workspace = MinresWorkspace(A, b)
       minres!(workspace, A, b, linesearch=true)
       x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
       @test stats.status == "nonpositive curvature"
@@ -84,7 +84,7 @@
 
       # Test Linesearch which would stop on the first call since A is negative definite
       A, b = symmetric_indefinite(FC=FC; shift = 5)
-      solver = MinresWorkspace(A, b)
+      workspace = MinresWorkspace(A, b)
       minres!(workspace, A, b, linesearch=true)
       x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
       @test stats.status == "nonpositive curvature"
@@ -97,7 +97,7 @@
 
       # Test when b^TAb=0 and linesearch is true
       A, b = system_zero_quad(FC=FC)
-      solver = MinresWorkspace(A, b)
+      workspace = MinresWorkspace(A, b)
       minres!(workspace, A, b, linesearch=true)
       x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
       @test stats.status == "nonpositive curvature"
@@ -111,7 +111,7 @@
       @test_throws MethodError minres(A, b, warm_start = true, linesearch = true)          
 
       # test callback function
-      solver = MinresWorkspace(A, b)
+      workspace = MinresWorkspace(A, b)
       storage_vec = similar(b, size(A, 1))
       tol = 1.0e-1
       cb_n2 = TestCallbackN2(A, b, tol = tol)

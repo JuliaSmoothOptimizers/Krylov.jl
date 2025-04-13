@@ -70,7 +70,7 @@
       @test(stats.solved)
 
       # test callback function
-      solver = SymmlqWorkspace(A, b)
+      workspace = SymmlqWorkspace(A, b)
       tol = 1.0
       cb_n2 = TestCallbackN2(A, b, tol = tol)
       symmlq!(workspace, A, b, atol = 0.0, rtol = 0.0, callback = cb_n2)

@@ -28,7 +28,7 @@
         actual_symmlq_bytes = @allocated symmlq(A, b)
         @test expected_symmlq_bytes ≤ actual_symmlq_bytes ≤ 1.02 * expected_symmlq_bytes
 
-        solver = SymmlqWorkspace(A, b)
+        workspace = SymmlqWorkspace(A, b)
         symmlq!(workspace, A, b)  # warmup
         inplace_symmlq_bytes = @allocated symmlq!(workspace, A, b)
         @test inplace_symmlq_bytes == 0
@@ -44,7 +44,7 @@
         actual_cg_bytes = @allocated cg(A, b)
         @test expected_cg_bytes ≤ actual_cg_bytes ≤ 1.02 * expected_cg_bytes
 
-        solver = CgWorkspace(A, b)
+        workspace = CgWorkspace(A, b)
         cg!(workspace, A, b)  # warmup
         inplace_cg_bytes = @allocated cg!(workspace, A, b)
         @test inplace_cg_bytes == 0
@@ -60,7 +60,7 @@
         actual_cg_lanczos_bytes = @allocated cg_lanczos(A, b)
         @test expected_cg_lanczos_bytes ≤ actual_cg_lanczos_bytes ≤ 1.02 * expected_cg_lanczos_bytes
 
-        solver = CgLanczosWorkspace(A, b)
+        workspace = CgLanczosWorkspace(A, b)
         cg_lanczos!(workspace, A, b)  # warmup
         inplace_cg_lanczos_bytes = @allocated cg_lanczos!(workspace, A, b)
         @test inplace_cg_lanczos_bytes == 0
@@ -78,7 +78,7 @@
         actual_cg_lanczos_shift_bytes = @allocated cg_lanczos_shift(A, b, shifts)
         @test expected_cg_lanczos_shift_bytes ≤ actual_cg_lanczos_shift_bytes ≤ 1.02 * expected_cg_lanczos_shift_bytes
 
-        solver = CgLanczosShiftWorkspace(A, b, nshifts)
+        workspace = CgLanczosShiftWorkspace(A, b, nshifts)
         cg_lanczos_shift!(workspace, A, b, shifts)  # warmup
         inplace_cg_lanczos_shift_bytes = @allocated cg_lanczos_shift!(workspace, A, b, shifts)
         @test inplace_cg_lanczos_shift_bytes == 0
@@ -94,7 +94,7 @@
         actual_cr_bytes = @allocated cr(A, b)
         @test expected_cr_bytes ≤ actual_cr_bytes ≤ 1.02 * expected_cr_bytes
 
-        solver = CrWorkspace(A, b)
+        workspace = CrWorkspace(A, b)
         cr!(workspace, A, b)  # warmup
         inplace_cr_bytes = @allocated cr!(workspace, A, b)
         @test inplace_cr_bytes == 0
@@ -110,7 +110,7 @@
         actual_car_bytes = @allocated car(A, b)
         @test expected_car_bytes ≤ actual_car_bytes ≤ 1.02 * expected_car_bytes
 
-        solver = CarWorkspace(A, b)
+        workspace = CarWorkspace(A, b)
         car!(workspace, A, b)  # warmup
         inplace_car_bytes = @allocated car!(workspace, A, b)
         @test inplace_car_bytes == 0
@@ -126,7 +126,7 @@
         actual_minres_bytes = @allocated minres(A, b)
         @test expected_minres_bytes ≤ actual_minres_bytes ≤ 1.02 * expected_minres_bytes
 
-        solver = MinresWorkspace(A, b)
+        workspace = MinresWorkspace(A, b)
         minres!(workspace, A, b)  # warmup
         inplace_minres_bytes = @allocated minres!(workspace, A, b)
         @test inplace_minres_bytes == 0
@@ -142,7 +142,7 @@
         actual_minres_qlp_bytes = @allocated minres_qlp(A, b)
         @test expected_minres_qlp_bytes ≤ actual_minres_qlp_bytes ≤ 1.02 * expected_minres_qlp_bytes
 
-        solver = MinresQlpWorkspace(A, b)
+        workspace = MinresQlpWorkspace(A, b)
         minres_qlp!(workspace, A, b)  # warmup
         inplace_minres_qlp_bytes = @allocated minres_qlp!(workspace, A, b)
         @test inplace_minres_qlp_bytes == 0
@@ -158,7 +158,7 @@
         actual_minares_bytes = @allocated minares(A, b)
         @test expected_minares_bytes ≤ actual_minares_bytes ≤ 1.02 * expected_minares_bytes
 
-        solver = MinaresWorkspace(A, b)
+        workspace = MinaresWorkspace(A, b)
         minares!(workspace, A, b)  # warmup
         inplace_minares_bytes = @allocated minares!(workspace, A, b)
         @test inplace_minares_bytes == 0
@@ -178,7 +178,7 @@
         actual_diom_bytes = @allocated diom(A, b; memory=mem)
         @test expected_diom_bytes ≤ actual_diom_bytes ≤ 1.02 * expected_diom_bytes
 
-        solver = DiomWorkspace(A, b; memory=mem)
+        workspace = DiomWorkspace(A, b; memory=mem)
         diom!(workspace, A, b)  # warmup
         inplace_diom_bytes = @allocated diom!(workspace, A, b)
         @test inplace_diom_bytes == 0
@@ -197,7 +197,7 @@
         actual_fom_bytes = @allocated fom(A, b; memory=mem)
         @test expected_fom_bytes ≤ actual_fom_bytes ≤ 1.02 * expected_fom_bytes
 
-        solver = FomWorkspace(A, b; memory=mem)
+        workspace = FomWorkspace(A, b; memory=mem)
         fom!(workspace, A, b)  # warmup
         inplace_fom_bytes = @allocated fom!(workspace, A, b)
         @test inplace_fom_bytes == 0
@@ -216,7 +216,7 @@
         actual_dqgmres_bytes = @allocated dqgmres(A, b; memory=mem)
         @test expected_dqgmres_bytes ≤ actual_dqgmres_bytes ≤ 1.02 * expected_dqgmres_bytes
 
-        solver = DqgmresWorkspace(A, b; memory=mem)
+        workspace = DqgmresWorkspace(A, b; memory=mem)
         dqgmres!(workspace, A, b)  # warmup
         inplace_dqgmres_bytes = @allocated dqgmres!(workspace, A, b)
         @test inplace_dqgmres_bytes == 0
@@ -235,7 +235,7 @@
         actual_gmres_bytes = @allocated gmres(A, b; memory=mem)
         @test expected_gmres_bytes ≤ actual_gmres_bytes ≤ 1.02 * expected_gmres_bytes
 
-        solver = GmresWorkspace(A, b; memory=mem)
+        workspace = GmresWorkspace(A, b; memory=mem)
         gmres!(workspace, A, b)  # warmup
         inplace_gmres_bytes = @allocated gmres!(workspace, A, b)
         @test inplace_gmres_bytes == 0
@@ -254,7 +254,7 @@
         actual_fgmres_bytes = @allocated fgmres(A, b; memory=mem)
         @test expected_fgmres_bytes ≤ actual_fgmres_bytes ≤ 1.02 * expected_fgmres_bytes
 
-        solver = FgmresWorkspace(A, b; memory=mem)
+        workspace = FgmresWorkspace(A, b; memory=mem)
         fgmres!(workspace, A, b)  # warmup
         inplace_fgmres_bytes = @allocated fgmres!(workspace, A, b)
         @test inplace_fgmres_bytes == 0
@@ -270,7 +270,7 @@
         actual_cgs_bytes = @allocated cgs(A, b)
         @test expected_cgs_bytes ≤ actual_cgs_bytes ≤ 1.02 * expected_cgs_bytes
 
-        solver = CgsWorkspace(A, b)
+        workspace = CgsWorkspace(A, b)
         cgs!(workspace, A, b)  # warmup
         inplace_cgs_bytes = @allocated cgs!(workspace, A, b)
         @test inplace_cgs_bytes == 0
@@ -286,7 +286,7 @@
         actual_bicgstab_bytes = @allocated bicgstab(A, b)
         @test expected_bicgstab_bytes ≤ actual_bicgstab_bytes ≤ 1.02 * expected_bicgstab_bytes
 
-        solver = BicgstabWorkspace(A, b)
+        workspace = BicgstabWorkspace(A, b)
         bicgstab!(workspace, A, b)  # warmup
         inplace_bicgstab_bytes = @allocated bicgstab!(workspace, A, b)
         @test inplace_bicgstab_bytes == 0
@@ -303,7 +303,7 @@
         actual_cgne_bytes = @allocated cgne(Au, c)
         @test expected_cgne_bytes ≤ actual_cgne_bytes ≤ 1.02 * expected_cgne_bytes
 
-        solver = CgneWorkspace(Au, c)
+        workspace = CgneWorkspace(Au, c)
         cgne!(workspace, Au, c)  # warmup
         inplace_cgne_bytes = @allocated cgne!(workspace, Au, c)
         @test inplace_cgne_bytes == 0
@@ -320,7 +320,7 @@
         actual_crmr_bytes = @allocated crmr(Au, c)
         @test expected_crmr_bytes ≤ actual_crmr_bytes ≤ 1.02 * expected_crmr_bytes
 
-        solver = CrmrWorkspace(Au, c)
+        workspace = CrmrWorkspace(Au, c)
         crmr!(workspace, Au, c)  # warmup
         inplace_crmr_bytes = @allocated crmr!(workspace, Au, c)
         @test inplace_crmr_bytes == 0
@@ -337,7 +337,7 @@
         actual_lnlq_bytes = @allocated lnlq(Au, c)
         @test expected_lnlq_bytes ≤ actual_lnlq_bytes ≤ 1.02 * expected_lnlq_bytes
 
-        solver = LnlqWorkspace(Au, c)
+        workspace = LnlqWorkspace(Au, c)
         lnlq!(workspace, Au, c)  # warmup
         inplace_lnlq_bytes = @allocated lnlq!(workspace, Au, c)
         @test inplace_lnlq_bytes == 0
@@ -354,7 +354,7 @@
         actual_craig_bytes = @allocated craig(Au, c)
         @test expected_craig_bytes ≤ actual_craig_bytes ≤ 1.02 * expected_craig_bytes
 
-        solver = CraigWorkspace(Au, c)
+        workspace = CraigWorkspace(Au, c)
         craig!(workspace, Au, c)  # warmup
         inplace_craig_bytes = @allocated craig!(workspace, Au, c)
         @test inplace_craig_bytes == 0
@@ -371,7 +371,7 @@
         actual_craigmr_bytes = @allocated craigmr(Au, c)
         @test expected_craigmr_bytes ≤ actual_craigmr_bytes ≤ 1.02 * expected_craigmr_bytes
 
-        solver = CraigmrWorkspace(Au, c)
+        workspace = CraigmrWorkspace(Au, c)
         craigmr!(workspace, Au, c)  # warmup
         inplace_craigmr_bytes = @allocated craigmr!(workspace, Au, c)
         @test inplace_craigmr_bytes == 0
@@ -388,7 +388,7 @@
         actual_cgls_bytes = @allocated cgls(Ao, b)
         @test expected_cgls_bytes ≤ actual_cgls_bytes ≤ 1.02 * expected_cgls_bytes
 
-        solver = CglsWorkspace(Ao, b)
+        workspace = CglsWorkspace(Ao, b)
         cgls!(workspace, Ao, b)  # warmup
         inplace_cgls_bytes = @allocated cgls!(workspace, Ao, b)
         @test inplace_cgls_bytes == 0
@@ -408,7 +408,7 @@
         actual_cgls_lanczos_shift_bytes = @allocated cgls_lanczos_shift(Ao, b, shifts)
         @test expected_cgls_lanczos_shift_bytes ≤ actual_cgls_lanczos_shift_bytes ≤ 1.03 * expected_cgls_lanczos_shift_bytes
 
-        solver = CglsLanczosShiftWorkspace(Ao, b, nshifts)
+        workspace = CglsLanczosShiftWorkspace(Ao, b, nshifts)
         cgls_lanczos_shift!(workspace, Ao, b, shifts)  # warmup
         inplace_cgls_lanczos_shift_bytes = @allocated cgls_lanczos_shift!(workspace, Ao, b, shifts)
         @test inplace_cgls_lanczos_shift_bytes == 0
@@ -425,7 +425,7 @@
         actual_lslq_bytes = @allocated lslq(Ao, b)
         @test expected_lslq_bytes ≤ actual_lslq_bytes ≤ 1.025 * expected_lslq_bytes
 
-        solver = LslqWorkspace(Ao, b)
+        workspace = LslqWorkspace(Ao, b)
         lslq!(workspace, Ao, b)  # warmup
         inplace_lslq_bytes = @allocated lslq!(workspace, Ao, b)
         @test inplace_lslq_bytes == 0
@@ -442,7 +442,7 @@
         actual_crls_bytes = @allocated crls(Ao, b)
         @test expected_crls_bytes ≤ actual_crls_bytes ≤ 1.02 * expected_crls_bytes
 
-        solver = CrlsWorkspace(Ao, b)
+        workspace = CrlsWorkspace(Ao, b)
         crls!(workspace, Ao, b)  # warmup
         inplace_crls_bytes = @allocated crls!(workspace, Ao, b)
         @test inplace_crls_bytes == 0
@@ -459,7 +459,7 @@
         actual_lsqr_bytes = @allocated lsqr(Ao, b)
         @test expected_lsqr_bytes ≤ actual_lsqr_bytes ≤ 1.02 * expected_lsqr_bytes
 
-        solver = LsqrWorkspace(Ao, b)
+        workspace = LsqrWorkspace(Ao, b)
         lsqr!(workspace, Ao, b)  # warmup
         inplace_lsqr_bytes = @allocated lsqr!(workspace, Ao, b)
         @test inplace_lsqr_bytes == 0
@@ -476,7 +476,7 @@
         actual_lsmr_bytes = @allocated lsmr(Ao, b)
         @test expected_lsmr_bytes ≤ actual_lsmr_bytes ≤ 1.02 * expected_lsmr_bytes
 
-        solver = LsmrWorkspace(Ao, b)
+        workspace = LsmrWorkspace(Ao, b)
         lsmr!(workspace, Ao, b)  # warmup
         inplace_lsmr_bytes = @allocated lsmr!(workspace, Ao, b)
         @test inplace_lsmr_bytes == 0
@@ -492,7 +492,7 @@
         actual_bilq_bytes = @allocated bilq(A, b)
         @test expected_bilq_bytes ≤ actual_bilq_bytes ≤ 1.02 * expected_bilq_bytes
 
-        solver = BilqWorkspace(A, b)
+        workspace = BilqWorkspace(A, b)
         bilq!(workspace, A, b)  # warmup
         inplace_bilq_bytes = @allocated bilq!(workspace, A, b)
         @test inplace_bilq_bytes == 0
@@ -508,7 +508,7 @@
         actual_qmr_bytes = @allocated qmr(A, b)
         @test expected_qmr_bytes ≤ actual_qmr_bytes ≤ 1.02 * expected_qmr_bytes
 
-        solver = QmrWorkspace(A, b)
+        workspace = QmrWorkspace(A, b)
         qmr!(workspace, A, b)  # warmup
         inplace_qmr_bytes = @allocated qmr!(workspace, A, b)
         @test inplace_qmr_bytes == 0
@@ -524,7 +524,7 @@
         actual_bilqr_bytes = @allocated bilqr(A, b, b)
         @test expected_bilqr_bytes ≤ actual_bilqr_bytes ≤ 1.02 * expected_bilqr_bytes
 
-        solver = BilqrWorkspace(A, b)
+        workspace = BilqrWorkspace(A, b)
         bilqr!(workspace, A, b, b)  # warmup
         inplace_bilqr_bytes = @allocated bilqr!(workspace, A, b, b)
         @test inplace_bilqr_bytes == 0
@@ -541,7 +541,7 @@
         actual_usymlq_bytes = @allocated usymlq(Au, c, b)
         @test expected_usymlq_bytes ≤ actual_usymlq_bytes ≤ 1.02 * expected_usymlq_bytes
 
-        solver = UsymlqWorkspace(Au, c)
+        workspace = UsymlqWorkspace(Au, c)
         usymlq!(workspace, Au, c, b)  # warmup
         inplace_usymlq_bytes = @allocated usymlq!(workspace, Au, c, b)
         @test inplace_usymlq_bytes == 0
@@ -558,7 +558,7 @@
         actual_usymqr_bytes = @allocated usymqr(Ao, b, c)
         @test expected_usymqr_bytes ≤ actual_usymqr_bytes ≤ 1.02 * expected_usymqr_bytes
 
-        solver = UsymqrWorkspace(Ao, b)
+        workspace = UsymqrWorkspace(Ao, b)
         usymqr!(workspace, Ao, b, c)  # warmup
         inplace_usymqr_bytes = @allocated usymqr!(workspace, Ao, b, c)
         @test inplace_usymqr_bytes == 0
@@ -575,7 +575,7 @@
         actual_trilqr_bytes = @allocated trilqr(A, b, b)
         @test expected_trilqr_bytes ≤ actual_trilqr_bytes ≤ 1.02 * expected_trilqr_bytes
 
-        solver = TrilqrWorkspace(A, b)
+        workspace = TrilqrWorkspace(A, b)
         trilqr!(workspace, A, b, b)  # warmup
         inplace_trilqr_bytes = @allocated trilqr!(workspace, A, b, b)
         @test inplace_trilqr_bytes == 0
@@ -592,7 +592,7 @@
         actual_tricg_bytes = @allocated tricg(Au, c, b)
         @test expected_tricg_bytes ≤ actual_tricg_bytes ≤ 1.02 * expected_tricg_bytes
 
-        solver = TricgWorkspace(Au, c)
+        workspace = TricgWorkspace(Au, c)
         tricg!(workspace, Au, c, b)  # warmup
         inplace_tricg_bytes = @allocated tricg!(workspace, Au, c, b)
         @test inplace_tricg_bytes == 0
@@ -609,7 +609,7 @@
         actual_trimr_bytes = @allocated trimr(Au, c, b)
         @test expected_trimr_bytes ≤ actual_trimr_bytes ≤ 1.02 * expected_trimr_bytes
 
-        solver = TrimrWorkspace(Au, c)
+        workspace = TrimrWorkspace(Au, c)
         trimr!(workspace, Au, c, b)  # warmup
         inplace_trimr_bytes = @allocated trimr!(workspace, Au, c, b)
         @test inplace_trimr_bytes == 0
@@ -631,7 +631,7 @@
         actual_gpmr_bytes = @allocated gpmr(Ao, Au, b, c, memory=mem, itmax=mem)
         @test expected_gpmr_bytes ≤ actual_gpmr_bytes ≤ 1.02 * expected_gpmr_bytes
 
-        solver = GpmrWorkspace(Ao, b; memory=mem)
+        workspace = GpmrWorkspace(Ao, b; memory=mem)
         gpmr!(workspace, Ao, Au, b, c)  # warmup
         inplace_gpmr_bytes = @allocated gpmr!(workspace, Ao, Au, b, c)
         @test inplace_gpmr_bytes == 0

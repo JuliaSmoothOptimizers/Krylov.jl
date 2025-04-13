@@ -71,8 +71,8 @@ M also indicates the weighted norm in which residuals are measured.
 function cg end
 
 """
-    solver = cg!(workspace::CgWorkspace, A, b; kwargs...)
-    solver = cg!(workspace::CgWorkspace, A, b, x0; kwargs...)
+    workspace = cg!(workspace::CgWorkspace, A, b; kwargs...)
+    workspace = cg!(workspace::CgWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`cg`](@ref).
 
