@@ -93,12 +93,12 @@ TriMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 function trimr end
 
 """
-    solver = trimr!(solver::TrimrSolver, A, b, c; kwargs...)
-    solver = trimr!(solver::TrimrSolver, A, b, c, x0, y0; kwargs...)
+    solver = trimr!(solver::TrimrWorkspace, A, b, c; kwargs...)
+    solver = trimr!(solver::TrimrWorkspace, A, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`trimr`](@ref).
 
-See [`TrimrSolver`](@ref) for more details about the `solver`.
+See [`TrimrWorkspace`](@ref) for more details about the `solver`.
 """
 function trimr! end
 
@@ -134,7 +134,7 @@ optargs_trimr = (:x0, :y0)
 kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function trimr!(solver :: TrimrSolver{T,FC,S}, $(def_args_trimr...); $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function trimr!(solver :: TrimrWorkspace{T,FC,S}, $(def_args_trimr...); $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

@@ -68,12 +68,12 @@ The method does _not_ abort if A is not definite.
 function cg_lanczos end
 
 """
-    solver = cg_lanczos!(solver::CgLanczosSolver, A, b; kwargs...)
-    solver = cg_lanczos!(solver::CgLanczosSolver, A, b, x0; kwargs...)
+    solver = cg_lanczos!(solver::CgLanczosWorkspace, A, b; kwargs...)
+    solver = cg_lanczos!(solver::CgLanczosWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`cg_lanczos`](@ref).
 
-See [`CgLanczosSolver`](@ref) for more details about the `solver`.
+See [`CgLanczosWorkspace`](@ref) for more details about the `solver`.
 """
 function cg_lanczos! end
 
@@ -101,7 +101,7 @@ optargs_cg_lanczos = (:x0,)
 kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, $(def_args_cg_lanczos...); $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cg_lanczos!(solver :: CgLanczosWorkspace{T,FC,S}, $(def_args_cg_lanczos...); $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

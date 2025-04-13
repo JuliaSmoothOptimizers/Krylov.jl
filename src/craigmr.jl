@@ -118,11 +118,11 @@ returned.
 function craigmr end
 
 """
-    solver = craigmr!(solver::CraigmrSolver, A, b; kwargs...)
+    solver = craigmr!(solver::CraigmrWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`craigmr`](@ref).
 
-See [`CraigmrSolver`](@ref) for more details about the `solver`.
+See [`CraigmrWorkspace`](@ref) for more details about the `solver`.
 """
 function craigmr! end
 
@@ -149,7 +149,7 @@ args_craigmr = (:A, :b)
 kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function craigmr!(solver :: CraigmrSolver{T,FC,S}, $(def_args_craigmr...); $(def_kwargs_craigmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function craigmr!(solver :: CraigmrWorkspace{T,FC,S}, $(def_args_craigmr...); $(def_kwargs_craigmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

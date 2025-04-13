@@ -1,23 +1,23 @@
 ## [In-place methods](@id in-place)
 
 All solvers in Krylov.jl have an in-place variant implemented in a method whose name ends with `!`.
-A workspace (`KrylovSolver`), which contains the storage needed by a Krylov method, can be used to solve multiple linear systems with the same dimensions and the same floating-point precision.
+A workspace (`KrylovWorkspace`), which contains the storage needed by a Krylov method, can be used to solve multiple linear systems with the same dimensions and the same floating-point precision.
 The section [storage requirements](@ref storage-requirements) specifies the memory needed for each Krylov method.
 
-Each `KrylovSolver` has three constructors with consistent argument patterns:
+Each `KrylovWorkspace` has three constructors with consistent argument patterns:
 
 ```@constructors
-XyzSolver(A, b)
-XyzSolver(m, n, S)
-XyzSolver(kc::KrylovConstructor)
+XyzWorkspace(A, b)
+XyzWorkspace(m, n, S)
+XyzWorkspace(kc::KrylovConstructor)
 ```
-The only exceptions are `CgLanczosShiftSolver` and `CglsLanczosShiftSolver`, which require an additional argument `nshifts`.
+The only exceptions are `CgLanczosShiftWorkspace` and `CglsLanczosShiftWorkspace`, which require an additional argument `nshifts`.
 Additionally, some constructors accept keyword arguments.
 
 `Xyz` represents the name of the Krylov method, written in lowercase except for its first letter (such as `Cg`, `Minres`, `Lsmr` or `Bicgstab`).
-If the name of the Krylov method contains an underscore (e.g., `minres_qlp` or `cgls_lanczos_shift`), the workspace constructor transforms it by capitalizing each word and removing underscores, resulting in names like `MinresQlpSolver` or `CglsLanczosShiftSolver`.
+If the name of the Krylov method contains an underscore (e.g., `minres_qlp` or `cgls_lanczos_shift`), the workspace constructor transforms it by capitalizing each word and removing underscores, resulting in names like `MinresQlpWorkspace` or `CglsLanczosShiftWorkspace`.
 
-Given an operator `A` and a right-hand side `b`, you can create a `KrylovSolver` based on the size of `A` and the type of `b`, or explicitly provide the dimensions `(m, n)` and the storage type `S`.
+Given an operator `A` and a right-hand side `b`, you can create a `KrylovWorkspace` based on the size of `A` and the type of `b`, or explicitly provide the dimensions `(m, n)` and the storage type `S`.
 
 We assume that `S(undef, 0)`, `S(undef, n)`, and `S(undef, m)` are well-defined for the storage type `S`.
 For more advanced vector types, workspaces can also be created with the help of a `KrylovConstructor`.
@@ -31,16 +31,16 @@ For example, use `S = Vector{Float64}` if you want to solve linear systems in do
 The workspace is always the first argument of the in-place methods:
 
 ```@solvers
-minres_solver = MinresSolver(m, n, Vector{Float64})
+minres_solver = MinresWorkspace(m, n, Vector{Float64})
 minres!(minres_solver, A1, b1)
 
-bicgstab_solver = BicgstabSolver(m, n, Vector{ComplexF64})
+bicgstab_solver = BicgstabWorkspace(m, n, Vector{ComplexF64})
 bicgstab!(bicgstab_solver, A2, b2)
 
-gmres_solver = GmresSolver(m, n, Vector{BigFloat})
+gmres_solver = GmresWorkspace(m, n, Vector{BigFloat})
 gmres!(gmres_solver, A3, b3)
 
-lsqr_solver = LsqrSolver(m, n, CuVector{Float32})
+lsqr_solver = LsqrWorkspace(m, n, CuVector{Float32})
 lsqr!(lsqr_solver, A4, b4)
 ```
 
@@ -62,7 +62,7 @@ function newton(∇f, ∇²f, x₀; itmax = 200, tol = 1e-8)
     
     iter = 0
     S = typeof(x)
-    solver = CgSolver(n, n, S)
+    solver = CgWorkspace(n, n, S)
     Δx = solver.x
 
     solved = false
@@ -97,7 +97,7 @@ function gauss_newton(F, JF, x₀; itmax = 200, tol = 1e-8)
     
     iter = 0
     S = typeof(x)
-    solver = LsmrSolver(m, n, S)
+    solver = LsmrWorkspace(m, n, S)
     Δx = solver.x
 
     solved = false

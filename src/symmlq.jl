@@ -76,12 +76,12 @@ SYMMLQ produces monotonic errors ‖x* - x‖₂.
 function symmlq end
 
 """
-    solver = symmlq!(solver::SymmlqSolver, A, b; kwargs...)
-    solver = symmlq!(solver::SymmlqSolver, A, b, x0; kwargs...)
+    solver = symmlq!(solver::SymmlqWorkspace, A, b; kwargs...)
+    solver = symmlq!(solver::SymmlqWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`symmlq`](@ref).
 
-See [`SymmlqSolver`](@ref) for more details about the `solver`.
+See [`SymmlqWorkspace`](@ref) for more details about the `solver`.
 """
 function symmlq! end
 
@@ -113,7 +113,7 @@ optargs_symmlq = (:x0,)
 kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function symmlq!(solver :: SymmlqSolver{T,FC,S}, $(def_args_symmlq...); $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function symmlq!(solver :: SymmlqWorkspace{T,FC,S}, $(def_args_symmlq...); $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

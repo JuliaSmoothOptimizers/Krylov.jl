@@ -67,12 +67,12 @@ The estimates computed every iteration are ‖Mrₖ‖₂ and ‖AMrₖ‖_M.
 function minares end
 
 """
-    solver = minares!(solver::MinaresSolver, A, b; kwargs...)
-    solver = minares!(solver::MinaresSolver, A, b, x0; kwargs...)
+    solver = minares!(solver::MinaresWorkspace, A, b; kwargs...)
+    solver = minares!(solver::MinaresWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`minares`](@ref).
 
-See [`MinaresSolver`](@ref) for more details about the `solver`.
+See [`MinaresWorkspace`](@ref) for more details about the `solver`.
 """
 function minares! end
 
@@ -101,7 +101,7 @@ optargs_minares = (:x0,)
 kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function minares!(solver :: MinaresSolver{T,FC,S}, $(def_args_minares...); $(def_kwargs_minares...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function minares!(solver :: MinaresWorkspace{T,FC,S}, $(def_args_minares...); $(def_kwargs_minares...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

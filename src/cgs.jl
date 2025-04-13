@@ -80,12 +80,12 @@ TFQMR and BICGSTAB were developed to remedy this difficulty.»
 function cgs end
 
 """
-    solver = cgs!(solver::CgsSolver, A, b; kwargs...)
-    solver = cgs!(solver::CgsSolver, A, b, x0; kwargs...)
+    solver = cgs!(solver::CgsWorkspace, A, b; kwargs...)
+    solver = cgs!(solver::CgsWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`cgs`](@ref).
 
-See [`CgsSolver`](@ref) for more details about the `solver`.
+See [`CgsWorkspace`](@ref) for more details about the `solver`.
 """
 function cgs! end
 
@@ -114,7 +114,7 @@ optargs_cgs = (:x0,)
 kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgs!(solver :: CgsSolver{T,FC,S}, $(def_args_cgs...); $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cgs!(solver :: CgsWorkspace{T,FC,S}, $(def_args_cgs...); $(def_kwargs_cgs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

@@ -78,11 +78,11 @@ but simpler to implement.
 function crls end
 
 """
-    solver = crls!(solver::CrlsSolver, A, b; kwargs...)
+    solver = crls!(solver::CrlsWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`crls`](@ref).
 
-See [`CrlsSolver`](@ref) for more details about the `solver`.
+See [`CrlsWorkspace`](@ref) for more details about the `solver`.
 """
 function crls! end
 
@@ -108,7 +108,7 @@ args_crls = (:A, :b)
 kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function crls!(solver :: CrlsSolver{T,FC,S}, $(def_args_crls...); $(def_kwargs_crls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function crls!(solver :: CrlsWorkspace{T,FC,S}, $(def_args_crls...); $(def_kwargs_crls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

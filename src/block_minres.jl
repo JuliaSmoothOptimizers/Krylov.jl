@@ -51,12 +51,12 @@ Solve the Hermitian linear system AX = B of size n with p right-hand sides using
 function block_minres end
 
 """
-    solver = block_minres!(solver::BlockMinresSolver, B; kwargs...)
-    solver = block_minres!(solver::BlockMinresSolver, B, X0; kwargs...)
+    solver = block_minres!(solver::BlockMinresWorkspace, B; kwargs...)
+    solver = block_minres!(solver::BlockMinresWorkspace, B, X0; kwargs...)
 
 where `kwargs` are keyword arguments of [`block_minres`](@ref).
 
-See [`BlockMinresSolver`](@ref) for more details about the `solver`.
+See [`BlockMinresWorkspace`](@ref) for more details about the `solver`.
 """
 function block_minres! end
 
@@ -83,7 +83,7 @@ optargs_block_minres = (:X0,)
 kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function block_minres!(solver :: BlockMinresSolver{T,FC,SV,SM}, $(def_args_block_minres...); $(def_kwargs_block_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
+  function block_minres!(solver :: BlockMinresWorkspace{T,FC,SV,SM}, $(def_args_block_minres...); $(def_kwargs_block_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
 
     # Timer
     start_time = time_ns()

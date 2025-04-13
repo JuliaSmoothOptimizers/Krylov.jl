@@ -71,12 +71,12 @@ M also indicates the weighted norm in which residuals are measured.
 function cg end
 
 """
-    solver = cg!(solver::CgSolver, A, b; kwargs...)
-    solver = cg!(solver::CgSolver, A, b, x0; kwargs...)
+    solver = cg!(solver::CgWorkspace, A, b; kwargs...)
+    solver = cg!(solver::CgWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`cg`](@ref).
 
-See [`CgSolver`](@ref) for more details about the `solver`.
+See [`CgWorkspace`](@ref) for more details about the `solver`.
 """
 function cg! end
 
@@ -105,7 +105,7 @@ optargs_cg = (:x0,)
 kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cg!(solver :: CgSolver{T,FC,S}, $(def_args_cg...); $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cg!(solver :: CgWorkspace{T,FC,S}, $(def_args_cg...); $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

@@ -121,11 +121,11 @@ For instance σ:=(1-1e-7)σₘᵢₙ .
 function lnlq end
 
 """
-    solver = lnlq!(solver::LnlqSolver, A, b; kwargs...)
+    solver = lnlq!(solver::LnlqWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`lnlq`](@ref).
 
-See [`LnlqSolver`](@ref) for more details about the `solver`.
+See [`LnlqWorkspace`](@ref) for more details about the `solver`.
 """
 function lnlq! end
 
@@ -156,7 +156,7 @@ args_lnlq = (:A, :b)
 kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function lnlq!(solver :: LnlqSolver{T,FC,S}, $(def_args_lnlq...); $(def_kwargs_lnlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function lnlq!(solver :: LnlqWorkspace{T,FC,S}, $(def_args_lnlq...); $(def_kwargs_lnlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

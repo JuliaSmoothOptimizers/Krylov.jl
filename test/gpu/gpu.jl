@@ -60,7 +60,7 @@ function test_solver(S, M)
   memory = 5
   A = M(undef, n, n)
   b = S(undef, n)
-  solver = GmresSolver(n, n, S; memory)
+  solver = GmresWorkspace(n, n, S; memory)
   krylov_solve!(solver, A, b)  # Test that we don't have errors
 end
 

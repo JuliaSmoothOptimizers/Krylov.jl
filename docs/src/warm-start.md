@@ -4,7 +4,7 @@ Most Krylov methods in this module accept a starting point as argument.
 The starting point is used as initial approximation to a solution.
 
 ```julia
-solver = CgSolver(A, b)
+solver = CgWorkspace(A, b)
 cg!(solver, A, b, itmax=100)
 if !issolved(solver)
   cg!(solver, A, b, solver.x, itmax=100) # cg! uses the approximate solution `solver.x` as starting point
@@ -29,7 +29,7 @@ If a Krylov method doesn't have the option to warm start, it can still be done e
 We provide an example with `cg_lanczos!`.
 
 ```julia
-solver = CgLanczosSolver(A, b)
+solver = CgLanczosWorkspace(A, b)
 cg_lanczos!(solver, A, b)
 x₀ = solver.x           # Ax₀ ≈ b
 r = b - A * x₀          # r = b - Ax₀
@@ -64,7 +64,7 @@ y = y₀ + Δy
 #
 # ```julia
 # k = 50
-# solver = GmresSolver(A, b, k)  # FomSolver(A, b, k)
+# solver = GmresWorkspace(A, b, k)  # FomWorkspace(A, b, k)
 # solver.x .= 0                  # solver.x .= x₀ 
 # nrestart = 0
 # while !issolved(solver) || nrestart ≤ 10

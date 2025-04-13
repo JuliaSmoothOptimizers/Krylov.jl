@@ -87,11 +87,11 @@ but simpler to implement.
 function cgls end
 
 """
-    solver = cgls!(solver::CglsSolver, A, b; kwargs...)
+    solver = cgls!(solver::CglsWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`cgls`](@ref).
 
-See [`CglsSolver`](@ref) for more details about the `solver`.
+See [`CglsWorkspace`](@ref) for more details about the `solver`.
 """
 function cgls! end
 
@@ -117,7 +117,7 @@ args_cgls = (:A, :b)
 kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgls!(solver :: CglsSolver{T,FC,S}, $(def_args_cgls...); $(def_kwargs_cgls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cgls!(solver :: CglsWorkspace{T,FC,S}, $(def_args_cgls...); $(def_kwargs_cgls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

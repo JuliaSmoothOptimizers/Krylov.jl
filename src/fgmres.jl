@@ -74,16 +74,16 @@ Thus, GMRES is recommended if the right preconditioner N is constant.
 function fgmres end
 
 """
-    solver = fgmres!(solver::FgmresSolver, A, b; kwargs...)
-    solver = fgmres!(solver::FgmresSolver, A, b, x0; kwargs...)
+    solver = fgmres!(solver::FgmresWorkspace, A, b; kwargs...)
+    solver = fgmres!(solver::FgmresWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`fgmres`](@ref).
 
 The keyword argument `memory` is the only exception.
-It is only supported by [`fgmres`](@ref) and is required to create a `FgmresSolver`.
+It is only supported by [`fgmres`](@ref) and is required to create a `FgmresWorkspace`.
 It cannot be changed later.
 
-See [`FgmresSolver`](@ref) for more details about the `solver`.
+See [`FgmresWorkspace`](@ref) for more details about the `solver`.
 """
 function fgmres! end
 
@@ -113,7 +113,7 @@ optargs_fgmres = (:x0,)
 kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function fgmres!(solver :: FgmresSolver{T,FC,S}, $(def_args_fgmres...); $(def_kwargs_fgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function fgmres!(solver :: FgmresWorkspace{T,FC,S}, $(def_args_fgmres...); $(def_kwargs_fgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

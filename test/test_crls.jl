@@ -64,7 +64,7 @@
       # test callback function
       A, b, M = saddle_point(FC=FC)
       M⁻¹ = inv(M)
-      solver = CrlsSolver(A, b)
+      solver = CrlsWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2LS(A, b, zero(eltype(b)), tol = tol)
       crls!(solver, A, b, M=M⁻¹, callback = cb_n2)

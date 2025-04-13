@@ -3,16 +3,16 @@
 Each Krylov method is able to call a callback function as `callback(solver)` at each iteration.
 The callback should return `true` if the main loop should terminate, and `false` otherwise.
 If the method terminated because of the callback, the output status will be `"user-requested exit"`.
-For example, if the user defines `minres_callback(solver::MinresSolver)`, it can be passed to the solver using
+For example, if the user defines `minres_callback(solver::MinresWorkspace)`, it can be passed to the solver using
 
 ```julia
 (x, stats) = minres(A, b, callback = minres_callback)
 ```
 
-If you need to write a callback that uses variables that are not in a `KrylovSolver`, use a closure:
+If you need to write a callback that uses variables that are not in a `KrylovWorkspace`, use a closure:
 
 ```julia
-function custom_stopping_condition(solver::KrylovSolver, A, b, r, tol)
+function custom_stopping_condition(solver::KrylovWorkspace, A, b, r, tol)
   mul!(r, A, solver.x)
   r .-= b               # r := b - Ax
   bool = norm(r) ≤ tol  # tolerance based on the 2-norm of the residual
@@ -33,7 +33,7 @@ mutable struct CallbackWorkspace{T}
   tol::T
 end
 
-function (workspace::CallbackWorkspace)(solver::KrylovSolver)
+function (workspace::CallbackWorkspace)(solver::KrylovWorkspace)
   mul!(workspace.r, workspace.A, solver.x)
   workspace.r .-= workspace.b
   bool = norm(workspace.r) ≤ workspace.tol

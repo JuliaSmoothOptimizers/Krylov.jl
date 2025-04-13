@@ -103,16 +103,16 @@ GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 function gpmr end
 
 """
-    solver = gpmr!(solver::GpmrSolver, A, B, b, c; kwargs...)
-    solver = gpmr!(solver::GpmrSolver, A, B, b, c, x0, y0; kwargs...)
+    solver = gpmr!(solver::GpmrWorkspace, A, B, b, c; kwargs...)
+    solver = gpmr!(solver::GpmrWorkspace, A, B, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`gpmr`](@ref).
 
 The keyword argument `memory` is the only exception.
-It is only supported by [`gpmr`](@ref) and is required to create a `GpmrSolver`.
+It is only supported by [`gpmr`](@ref) and is required to create a `GpmrWorkspace`.
 It cannot be changed later.
 
-See [`GpmrSolver`](@ref) for more details about the `solver`.
+See [`GpmrWorkspace`](@ref) for more details about the `solver`.
 """
 function gpmr! end
 
@@ -149,7 +149,7 @@ optargs_gpmr = (:x0, :y0)
 kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function gpmr!(solver :: GpmrSolver{T,FC,S}, $(def_args_gpmr...); $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function gpmr!(solver :: GpmrWorkspace{T,FC,S}, $(def_args_gpmr...); $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

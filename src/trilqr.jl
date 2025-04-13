@@ -70,12 +70,12 @@ USYMQR is used for solving dual system `Aᴴy = c` of size n × m.
 function trilqr end
 
 """
-    solver = trilqr!(solver::TrilqrSolver, A, b, c; kwargs...)
-    solver = trilqr!(solver::TrilqrSolver, A, b, c, x0, y0; kwargs...)
+    solver = trilqr!(solver::TrilqrWorkspace, A, b, c; kwargs...)
+    solver = trilqr!(solver::TrilqrWorkspace, A, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`trilqr`](@ref).
 
-See [`TrilqrSolver`](@ref) for more details about the `solver`.
+See [`TrilqrWorkspace`](@ref) for more details about the `solver`.
 """
 function trilqr! end
 
@@ -103,7 +103,7 @@ optargs_trilqr = (:x0, :y0)
 kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function trilqr!(solver :: TrilqrSolver{T,FC,S}, $(def_args_trilqr...); $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function trilqr!(solver :: TrilqrWorkspace{T,FC,S}, $(def_args_trilqr...); $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

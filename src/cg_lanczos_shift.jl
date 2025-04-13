@@ -64,11 +64,11 @@ of size n. The method does _not_ abort if A + αI is not definite.
 function cg_lanczos_shift end
 
 """
-    solver = cg_lanczos_shift!(solver::CgLanczosShiftSolver, A, b, shifts; kwargs...)
+    solver = cg_lanczos_shift!(solver::CgLanczosShiftWorkspace, A, b, shifts; kwargs...)
 
 where `kwargs` are keyword arguments of [`cg_lanczos_shift`](@ref).
 
-See [`CgLanczosShiftSolver`](@ref) for more details about the `solver`.
+See [`CgLanczosShiftWorkspace`](@ref) for more details about the `solver`.
 """
 function cg_lanczos_shift! end
 
@@ -94,7 +94,7 @@ args_cg_lanczos_shift = (:A, :b, :shifts)
 kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, $(def_args_cg_lanczos_shift...); $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cg_lanczos_shift!(solver :: CgLanczosShiftWorkspace{T,FC,S}, $(def_args_cg_lanczos_shift...); $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

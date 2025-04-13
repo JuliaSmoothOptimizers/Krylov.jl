@@ -66,11 +66,11 @@ but simpler to implement.
 function cgls_lanczos_shift end
 
 """
-    solver = cgls_lanczos_shift!(solver::CglsLanczosShiftSolver, A, b, shifts; kwargs...)
+    solver = cgls_lanczos_shift!(solver::CglsLanczosShiftWorkspace, A, b, shifts; kwargs...)
 
 where `kwargs` are keyword arguments of [`cgls_lanczos_shift`](@ref).
 
-See [`CglsLanczosShiftSolver`](@ref) for more details about the `solver`.
+See [`CglsLanczosShiftWorkspace`](@ref) for more details about the `solver`.
 """
 function cgls_lanczos_shift! end
 
@@ -95,7 +95,7 @@ args_cgls_lanczos_shift = (:A, :b, :shifts)
 kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgls_lanczos_shift!(solver :: CglsLanczosShiftSolver{T,FC,S}, $(def_args_cgls_lanczos_shift...); $(def_kwargs_cgls_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cgls_lanczos_shift!(solver :: CglsLanczosShiftWorkspace{T,FC,S}, $(def_args_cgls_lanczos_shift...); $(def_kwargs_cgls_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

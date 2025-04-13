@@ -72,16 +72,16 @@ Otherwise, DQGMRES interpolates between MINRES and GMRES and is similar to MINRE
 function dqgmres end
 
 """
-    solver = dqgmres!(solver::DqgmresSolver, A, b; kwargs...)
-    solver = dqgmres!(solver::DqgmresSolver, A, b, x0; kwargs...)
+    solver = dqgmres!(solver::DqgmresWorkspace, A, b; kwargs...)
+    solver = dqgmres!(solver::DqgmresWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`dqgmres`](@ref).
 
 The keyword argument `memory` is the only exception.
-It is only supported by [`dqgmres`](@ref) and is required to create a `DqgmresSolver`.
+It is only supported by [`dqgmres`](@ref) and is required to create a `DqgmresWorkspace`.
 It cannot be changed later.
 
-See [`DqgmresSolver`](@ref) for more details about the `solver`.
+See [`DqgmresWorkspace`](@ref) for more details about the `solver`.
 """
 function dqgmres! end
 
@@ -110,7 +110,7 @@ optargs_dqgmres = (:x0,)
 kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function dqgmres!(solver :: DqgmresSolver{T,FC,S}, $(def_args_dqgmres...); $(def_kwargs_dqgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function dqgmres!(solver :: DqgmresWorkspace{T,FC,S}, $(def_args_dqgmres...); $(def_kwargs_dqgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

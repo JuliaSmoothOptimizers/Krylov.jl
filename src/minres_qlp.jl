@@ -75,12 +75,12 @@ M also indicates the weighted norm in which residuals are measured.
 function minres_qlp end
 
 """
-    solver = minres_qlp!(solver::MinresQlpSolver, A, b; kwargs...)
-    solver = minres_qlp!(solver::MinresQlpSolver, A, b, x0; kwargs...)
+    solver = minres_qlp!(solver::MinresQlpWorkspace, A, b; kwargs...)
+    solver = minres_qlp!(solver::MinresQlpWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`minres_qlp`](@ref).
 
-See [`MinresQlpSolver`](@ref) for more details about the `solver`.
+See [`MinresQlpWorkspace`](@ref) for more details about the `solver`.
 """
 function minres_qlp! end
 
@@ -109,7 +109,7 @@ optargs_minres_qlp = (:x0,)
 kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, $(def_args_minres_qlp...); $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function minres_qlp!(solver :: MinresQlpWorkspace{T,FC,S}, $(def_args_minres_qlp...); $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

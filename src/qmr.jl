@@ -78,12 +78,12 @@ QMR requires support for `adjoint(M)` and `adjoint(N)` if preconditioners are pr
 function qmr end
 
 """
-    solver = qmr!(solver::QmrSolver, A, b; kwargs...)
-    solver = qmr!(solver::QmrSolver, A, b, x0; kwargs...)
+    solver = qmr!(solver::QmrWorkspace, A, b; kwargs...)
+    solver = qmr!(solver::QmrWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`qmr`](@ref).
 
-See [`QmrSolver`](@ref) for more details about the `solver`.
+See [`QmrWorkspace`](@ref) for more details about the `solver`.
 """
 function qmr! end
 
@@ -112,7 +112,7 @@ optargs_qmr = (:x0,)
 kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function qmr!(solver :: QmrSolver{T,FC,S}, $(def_args_qmr...); $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function qmr!(solver :: QmrWorkspace{T,FC,S}, $(def_args_qmr...); $(def_kwargs_qmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

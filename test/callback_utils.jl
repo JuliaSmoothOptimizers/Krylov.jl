@@ -3,10 +3,10 @@ mutable struct StorageGetxRestartedGmres{S}
   y::S
   p::S
 end
-StorageGetxRestartedGmres(solver::GmresSolver; N = I) = 
+StorageGetxRestartedGmres(solver::GmresWorkspace; N = I) =
   StorageGetxRestartedGmres(similar(solver.x), similar(solver.z), (N === I) ? similar(solver.p) : similar(solver.x))
 
-function get_x_restarted_gmres!(solver::GmresSolver{T,FC,S}, A, 
+function get_x_restarted_gmres!(solver::GmresWorkspace{T,FC,S}, A,
                                 stor::StorageGetxRestartedGmres{S}, N) where {T,FC,S}
   NisI = (N === I)
   x2, y2, p2 = stor.x, stor.y, stor.p
@@ -143,7 +143,7 @@ function (cb_n2::TestCallbackN2SaddlePts)(solver)
   return (norm(cb_n2.storage_vec1) ≤ cb_n2.tol && norm(cb_n2.storage_vec2) ≤ cb_n2.tol)
 end
 
-function restarted_gmres_callback_n2(solver::GmresSolver, A, b, stor, N, storage_vec, tol)
+function restarted_gmres_callback_n2(solver::GmresWorkspace, A, b, stor, N, storage_vec, tol)
   get_x_restarted_gmres!(solver, A, stor, N)
   x = stor.x
   mul!(storage_vec, A, x)

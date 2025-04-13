@@ -71,12 +71,12 @@ QMR is used for solving dual system `Aᴴy = c` of size n.
 function bilqr end
 
 """
-    solver = bilqr!(solver::BilqrSolver, A, b, c; kwargs...)
-    solver = bilqr!(solver::BilqrSolver, A, b, c, x0, y0; kwargs...)
+    solver = bilqr!(solver::BilqrWorkspace, A, b, c; kwargs...)
+    solver = bilqr!(solver::BilqrWorkspace, A, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`bilqr`](@ref).
 
-See [`BilqrSolver`](@ref) for more details about the `solver`.
+See [`BilqrWorkspace`](@ref) for more details about the `solver`.
 """
 function bilqr! end
 
@@ -104,7 +104,7 @@ optargs_bilqr = (:x0, :y0)
 kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function bilqr!(solver :: BilqrSolver{T,FC,S}, $(def_args_bilqr...); $(def_kwargs_bilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function bilqr!(solver :: BilqrWorkspace{T,FC,S}, $(def_args_bilqr...); $(def_kwargs_bilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

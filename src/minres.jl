@@ -101,12 +101,12 @@ MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr
 function minres end
 
 """
-    solver = minres!(solver::MinresSolver, A, b; kwargs...)
-    solver = minres!(solver::MinresSolver, A, b, x0; kwargs...)
+    solver = minres!(solver::MinresWorkspace, A, b; kwargs...)
+    solver = minres!(solver::MinresWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`minres`](@ref).
 
-See [`MinresSolver`](@ref) for more details about the `solver`.
+See [`MinresWorkspace`](@ref) for more details about the `solver`.
 """
 function minres! end
 
@@ -137,7 +137,7 @@ optargs_minres = (:x0,)
 kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function minres!(solver :: MinresSolver{T,FC,S}, $(def_args_minres...); $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function minres!(solver :: MinresWorkspace{T,FC,S}, $(def_args_minres...); $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

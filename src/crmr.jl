@@ -91,11 +91,11 @@ but simpler to implement. Only the x-part of the solution is returned.
 function crmr end
 
 """
-    solver = crmr!(solver::CrmrSolver, A, b; kwargs...)
+    solver = crmr!(solver::CrmrWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`crmr`](@ref).
 
-See [`CrmrSolver`](@ref) for more details about the `solver`.
+See [`CrmrWorkspace`](@ref) for more details about the `solver`.
 """
 function crmr! end
 
@@ -120,7 +120,7 @@ args_crmr = (:A, :b)
 kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function crmr!(solver :: CrmrSolver{T,FC,S}, $(def_args_crmr...); $(def_kwargs_crmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function crmr!(solver :: CrmrWorkspace{T,FC,S}, $(def_args_crmr...); $(def_kwargs_crmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

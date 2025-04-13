@@ -84,12 +84,12 @@ USYMQR finds the minimum-norm solution if problems are inconsistent.
 function usymqr end
 
 """
-    solver = usymqr!(solver::UsymqrSolver, A, b, c; kwargs...)
-    solver = usymqr!(solver::UsymqrSolver, A, b, c, x0; kwargs...)
+    solver = usymqr!(solver::UsymqrWorkspace, A, b, c; kwargs...)
+    solver = usymqr!(solver::UsymqrWorkspace, A, b, c, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`usymqr`](@ref).
 
-See [`UsymqrSolver`](@ref) for more details about the `solver`.
+See [`UsymqrWorkspace`](@ref) for more details about the `solver`.
 """
 function usymqr! end
 
@@ -115,7 +115,7 @@ optargs_usymqr = (:x0,)
 kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function usymqr!(solver :: UsymqrSolver{T,FC,S}, $(def_args_usymqr...); $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function usymqr!(solver :: UsymqrWorkspace{T,FC,S}, $(def_args_usymqr...); $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

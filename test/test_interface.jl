@@ -11,7 +11,7 @@ function test_krylov_solvers(FC; krylov_constructor::Bool=false)
   nshifts = 5
   T = real(FC)
   S = Vector{FC}
-  solvers = Dict{Symbol, KrylovSolver}()
+  solvers = Dict{Symbol, KrylovWorkspace}()
 
   if krylov_constructor
     kc_nn = KrylovConstructor(b)
@@ -92,7 +92,7 @@ function test_krylov_solvers(FC; krylov_constructor::Bool=false)
     solvers[:cgls_lanczos_shift] = @inferred krylov_workspace(Val{:cgls_lanczos_shift}(), n, m, nshifts, S)
   end
 
-  @testset "Check compatibility between KrylovSolvers and the dimension of the linear problems" begin
+  @testset "Check compatibility between each KrylovWorkspace and the dimension of the linear problem" begin
     A2  = FC.(get_div_grad(2, 2, 2))
     n2  = size(A2, 1)
     m2  = div(n2, 2)
@@ -251,7 +251,7 @@ function test_block_krylov_solvers(FC)
   T = real(FC)
   SV = Vector{FC}
   SM = Matrix{FC}
-  solvers = Dict{Symbol, BlockKrylovSolver}()
+  solvers = Dict{Symbol, BlockKrylovWorkspace}()
   solvers[:block_minres] = @inferred krylov_workspace(Val{:block_minres}(), m, n, p, SV, SM)
   solvers[:block_gmres] = @inferred krylov_workspace(Val{:block_gmres}(), m, n, p, SV, SM; memory=mem)
 

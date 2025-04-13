@@ -128,11 +128,11 @@ In this implementation, both the x and y-parts of the solution are returned.
 function craig end
 
 """
-    solver = craig!(solver::CraigSolver, A, b; kwargs...)
+    solver = craig!(solver::CraigWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`craig`](@ref).
 
-See [`CraigSolver`](@ref) for more details about the `solver`.
+See [`CraigWorkspace`](@ref) for more details about the `solver`.
 """
 function craig! end
 
@@ -162,7 +162,7 @@ args_craig = (:A, :b)
 kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function craig!(solver :: CraigSolver{T,FC,S}, $(def_args_craig...); $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function craig!(solver :: CraigWorkspace{T,FC,S}, $(def_args_craig...); $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

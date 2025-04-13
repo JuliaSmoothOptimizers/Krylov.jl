@@ -80,12 +80,12 @@ In all cases, problems must be consistent.
 function usymlq end
 
 """
-    solver = usymlq!(solver::UsymlqSolver, A, b, c; kwargs...)
-    solver = usymlq!(solver::UsymlqSolver, A, b, c, x0; kwargs...)
+    solver = usymlq!(solver::UsymlqWorkspace, A, b, c; kwargs...)
+    solver = usymlq!(solver::UsymlqWorkspace, A, b, c, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`usymlq`](@ref).
 
-See [`UsymlqSolver`](@ref) for more details about the `solver`.
+See [`UsymlqWorkspace`](@ref) for more details about the `solver`.
 """
 function usymlq! end
 
@@ -112,7 +112,7 @@ optargs_usymlq = (:x0,)
 kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function usymlq!(solver :: UsymlqSolver{T,FC,S}, $(def_args_usymlq...); $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function usymlq!(solver :: UsymlqWorkspace{T,FC,S}, $(def_args_usymlq...); $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

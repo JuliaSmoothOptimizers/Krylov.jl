@@ -3,7 +3,7 @@
 # This method is described in
 #
 # A. Montoison, D. Orban and M. A. Saunders
-# MinAres: An Iterative Method for Symmetric Linear Systems
+# MinAres: An Iterative Solver for Symmetric Linear Systems
 # SIAM Journal on Matrix Analysis and Applications, 46(1), pp. 509--529, 2025.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
@@ -64,12 +64,12 @@ The estimates computed every iteration are ‖Mrₖ‖₂ and ‖AMrₖ‖_M.
 function car end
 
 """
-    solver = car!(solver::CarSolver, A, b; kwargs...)
-    solver = car!(solver::CarSolver, A, b, x0; kwargs...)
+    solver = car!(solver::CarWorkspace, A, b; kwargs...)
+    solver = car!(solver::CarWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`car`](@ref).
 
-See [`CarSolver`](@ref) for more details about the `solver`.
+See [`CarWorkspace`](@ref) for more details about the `solver`.
 """
 function car! end
 
@@ -96,7 +96,7 @@ optargs_car = (:x0,)
 kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function car!(solver :: CarSolver{T,FC,S}, $(def_args_car...); $(def_kwargs_car...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function car!(solver :: CarWorkspace{T,FC,S}, $(def_args_car...); $(def_kwargs_car...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

@@ -67,16 +67,16 @@ GMRES algorithm is based on the Arnoldi process and computes a sequence of appro
 function gmres end
 
 """
-    solver = gmres!(solver::GmresSolver, A, b; kwargs...)
-    solver = gmres!(solver::GmresSolver, A, b, x0; kwargs...)
+    solver = gmres!(solver::GmresWorkspace, A, b; kwargs...)
+    solver = gmres!(solver::GmresWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`gmres`](@ref).
 
 The keyword argument `memory` is the only exception.
-It is only supported by [`gmres`](@ref) and is required to create a `GmresSolver`.
+It is only supported by [`gmres`](@ref) and is required to create a `GmresWorkspace`.
 It cannot be changed later.
 
-See [`GmresSolver`](@ref) for more details about the `solver`.
+See [`GmresWorkspace`](@ref) for more details about the `solver`.
 """
 function gmres! end
 
@@ -106,7 +106,7 @@ optargs_gmres = (:x0,)
 kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function gmres!(solver :: GmresSolver{T,FC,S}, $(def_args_gmres...); $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function gmres!(solver :: GmresWorkspace{T,FC,S}, $(def_args_gmres...); $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

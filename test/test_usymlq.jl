@@ -100,7 +100,7 @@
       # test callback function
       A, b = sparse_laplacian(FC=FC)
       c = copy(b)
-      solver = UsymlqSolver(A, b)
+      solver = UsymlqWorkspace(A, b)
       tol = 1.0
       cb_n2 = TestCallbackN2(A, b, tol = tol)
       usymlq!(solver, A, b, c, atol = 0.0, rtol = 0.0, callback = cb_n2)

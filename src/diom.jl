@@ -72,16 +72,16 @@ and indefinite systems of linear equations can be handled by this single algorit
 function diom end
 
 """
-    solver = diom!(solver::DiomSolver, A, b; kwargs...)
-    solver = diom!(solver::DiomSolver, A, b, x0; kwargs...)
+    solver = diom!(solver::DiomWorkspace, A, b; kwargs...)
+    solver = diom!(solver::DiomWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`diom`](@ref).
 
 The keyword argument `memory` is the only exception.
-It is only supported by `diom` and is required to create a `DiomSolver`.
+It is only supported by `diom` and is required to create a `DiomWorkspace`.
 It cannot be changed later.
 
-See [`DiomSolver`](@ref) for more details about the `solver`.
+See [`DiomWorkspace`](@ref) for more details about the `solver`.
 """
 function diom! end
 
@@ -110,7 +110,7 @@ optargs_diom = (:x0,)
 kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function diom!(solver :: DiomSolver{T,FC,S}, $(def_args_diom...); $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function diom!(solver :: DiomWorkspace{T,FC,S}, $(def_args_diom...); $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

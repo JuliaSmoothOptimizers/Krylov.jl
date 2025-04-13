@@ -77,12 +77,12 @@ M also indicates the weighted norm in which residuals are measured.
 function cr end
 
 """
-    solver = cr!(solver::CrSolver, A, b; kwargs...)
-    solver = cr!(solver::CrSolver, A, b, x0; kwargs...)
+    solver = cr!(solver::CrWorkspace, A, b; kwargs...)
+    solver = cr!(solver::CrWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`cr`](@ref).
 
-See [`CrSolver`](@ref) for more details about the `solver`.
+See [`CrWorkspace`](@ref) for more details about the `solver`.
 """
 function cr! end
 
@@ -112,7 +112,7 @@ optargs_cr = (:x0,)
 kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cr!(solver :: CrSolver{T,FC,S}, $(def_args_cr...); $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cr!(solver :: CrWorkspace{T,FC,S}, $(def_args_cr...); $(def_kwargs_cr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

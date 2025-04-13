@@ -67,16 +67,16 @@ FOM algorithm is based on the Arnoldi process and a Galerkin condition.
 function fom end
 
 """
-    solver = fom!(solver::FomSolver, A, b; kwargs...)
-    solver = fom!(solver::FomSolver, A, b, x0; kwargs...)
+    solver = fom!(solver::FomWorkspace, A, b; kwargs...)
+    solver = fom!(solver::FomWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`fom`](@ref).
 
 The keyword argument `memory` is the only exception.
-It is only supported by [`fom`](@ref) and is required to create a `FomSolver`.
+It is only supported by [`fom`](@ref) and is required to create a `FomWorkspace`.
 It cannot be changed later.
 
-See [`FomSolver`](@ref) for more details about the `solver`.
+See [`FomWorkspace`](@ref) for more details about the `solver`.
 """
 function fom! end
 
@@ -106,7 +106,7 @@ optargs_fom = (:x0,)
 kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function fom!(solver :: FomSolver{T,FC,S}, $(def_args_fom...); $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function fom!(solver :: FomWorkspace{T,FC,S}, $(def_args_fom...); $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

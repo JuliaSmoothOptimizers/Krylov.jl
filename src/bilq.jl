@@ -71,12 +71,12 @@ BiLQ requires support for `adjoint(M)` and `adjoint(N)` if preconditioners are p
 function bilq end
 
 """
-    solver = bilq!(solver::BilqSolver, A, b; kwargs...)
-    solver = bilq!(solver::BilqSolver, A, b, x0; kwargs...)
+    solver = bilq!(solver::BilqWorkspace, A, b; kwargs...)
+    solver = bilq!(solver::BilqWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`bilq`](@ref).
 
-See [`BilqSolver`](@ref) for more details about the `solver`.
+See [`BilqWorkspace`](@ref) for more details about the `solver`.
 """
 function bilq! end
 
@@ -106,7 +106,7 @@ optargs_bilq = (:x0,)
 kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function bilq!(solver :: BilqSolver{T,FC,S}, $(def_args_bilq...); $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function bilq!(solver :: BilqWorkspace{T,FC,S}, $(def_args_bilq...); $(def_kwargs_bilq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

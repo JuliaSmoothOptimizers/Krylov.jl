@@ -56,16 +56,16 @@ Solve the linear system AX = B of size n with p right-hand sides using block-GMR
 function block_gmres end
 
 """
-    solver = block_gmres!(solver::BlockGmresSolver, B; kwargs...)
-    solver = block_gmres!(solver::BlockGmresSolver, B, X0; kwargs...)
+    solver = block_gmres!(solver::BlockGmresWorkspace, B; kwargs...)
+    solver = block_gmres!(solver::BlockGmresWorkspace, B, X0; kwargs...)
 
 where `kwargs` are keyword arguments of [`block_gmres`](@ref).
 
 The keyword argument `memory` is the only exception.
-It is only supported by `block_gmres` and is required to create a `BlockGmresSolver`.
+It is only supported by `block_gmres` and is required to create a `BlockGmresWorkspace`.
 It cannot be changed later.
 
-See [`BlockGmresSolver`](@ref) for more details about the `solver`.
+See [`BlockGmresWorkspace`](@ref) for more details about the `solver`.
 """
 function block_gmres! end
 
@@ -95,7 +95,7 @@ optargs_block_gmres = (:X0,)
 kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function block_gmres!(solver :: BlockGmresSolver{T,FC,SV,SM}, $(def_args_block_gmres...); $(def_kwargs_block_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
+  function block_gmres!(solver :: BlockGmresWorkspace{T,FC,SV,SM}, $(def_args_block_gmres...); $(def_kwargs_block_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
 
     # Timer
     start_time = time_ns()

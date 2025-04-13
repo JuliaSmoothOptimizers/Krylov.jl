@@ -123,11 +123,11 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 function lsmr end
 
 """
-    solver = lsmr!(solver::LsmrSolver, A, b; kwargs...)
+    solver = lsmr!(solver::LsmrWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`lsmr`](@ref).
 
-See [`LsmrSolver`](@ref) for more details about the `solver`.
+See [`LsmrWorkspace`](@ref) for more details about the `solver`.
 """
 function lsmr! end
 
@@ -159,7 +159,7 @@ args_lsmr = (:A, :b)
 kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function lsmr!(solver :: LsmrSolver{T,FC,S}, $(def_args_lsmr...); $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function lsmr!(solver :: LsmrWorkspace{T,FC,S}, $(def_args_lsmr...); $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()

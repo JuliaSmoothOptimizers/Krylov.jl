@@ -88,7 +88,7 @@
       @test stats.status == "Breakdown bᴴc = 0"
 
       # test callback function
-      solver = BicgstabSolver(A, b)
+      solver = BicgstabWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2(A, b, tol = tol)
       bicgstab!(solver, A, b, callback = cb_n2)

@@ -79,12 +79,12 @@ BICGSTAB stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol 
 function bicgstab end
 
 """
-    solver = bicgstab!(solver::BicgstabSolver, A, b; kwargs...)
-    solver = bicgstab!(solver::BicgstabSolver, A, b, x0; kwargs...)
+    solver = bicgstab!(solver::BicgstabWorkspace, A, b; kwargs...)
+    solver = bicgstab!(solver::BicgstabWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`bicgstab`](@ref).
 
-See [`BicgstabSolver`](@ref) for more details about the `solver`.
+See [`BicgstabWorkspace`](@ref) for more details about the `solver`.
 """
 function bicgstab! end
 
@@ -113,7 +113,7 @@ optargs_bicgstab = (:x0,)
 kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function bicgstab!(solver :: BicgstabSolver{T,FC,S}, $(def_args_bicgstab...); $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function bicgstab!(solver :: BicgstabWorkspace{T,FC,S}, $(def_args_bicgstab...); $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
