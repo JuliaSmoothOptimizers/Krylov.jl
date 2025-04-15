@@ -143,6 +143,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     MisI || mulorldiv!(z, M, r, ldiv)
     kcopy!(n, p, z)  # p ← z
     γ = kdotr(n, r, z)
+    γ ≥ 0 || error("The preconditioner `M` is not symmetric positive definite.")
     rNorm = sqrt(γ)
     history && push!(rNorms, rNorm)
     if γ == 0
@@ -214,6 +215,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       kaxpy!(n, -α, Ap, r)
       MisI || mulorldiv!(z, M, r, ldiv)
       γ_next = kdotr(n, r, z)
+      γ_next ≥ 0 || error("The preconditioner `M` is not symmetric positive definite.")
       rNorm = sqrt(γ_next)
       history && push!(rNorms, rNorm)
 
