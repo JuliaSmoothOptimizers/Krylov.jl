@@ -4,14 +4,12 @@ export BlockKrylovWorkspace, BlockMinresWorkspace, BlockGmresWorkspace
 abstract type BlockKrylovWorkspace{T,FC,SV,SM} end
 
 """
-Type for storing the vectors required by the in-place version of BLOCK-MINRES.
+Workspace for the in-place method [`block_minres!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = BlockMinresWorkspace(m, n, p, SV, SM)
     workspace = BlockMinresWorkspace(A, B)
-
-may be used in order to create these vectors.
 """
 mutable struct BlockMinresWorkspace{T,FC,SV,SM} <: BlockKrylovWorkspace{T,FC,SV,SM}
   m          :: Int
@@ -70,14 +68,13 @@ function BlockMinresWorkspace(A, B)
 end
 
 """
-Type for storing the vectors required by the in-place version of BLOCK-GMRES.
+Workspace for the in-place method [`block_gmres!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = BlockGmresWorkspace(m, n, p, SV, SM; memory = 5)
     workspace = BlockGmresWorkspace(A, B; memory = 5)
 
-may be used in order to create these vectors.
 `memory` is set to `div(n,p)` if the value given is larger than `div(n,p)`.
 """
 mutable struct BlockGmresWorkspace{T,FC,SV,SM} <: BlockKrylovWorkspace{T,FC,SV,SM}

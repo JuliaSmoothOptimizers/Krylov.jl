@@ -56,15 +56,13 @@ end
 abstract type KrylovWorkspace{T,FC,S} end
 
 """
-Type for storing the vectors required by the in-place version of MINRES.
+Workspace for the in-place method [`minres!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = MinresWorkspace(m, n, S; window = 5)
     workspace = MinresWorkspace(A, b; window = 5)
     workspace = MinresWorkspace(kc::KrylovConstructor; window = 5)
-
-may be used in order to create these vectors.
 """
 mutable struct MinresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -130,15 +128,13 @@ function MinresWorkspace(A, b; window::Integer = 5)
 end
 
 """
-Type for storing the vectors required by the in-place version of MINARES.
+Workspace for the in-place method [`minares!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = MinaresWorkspace(m, n, S)
     workspace = MinaresWorkspace(A, b)
     workspace = MinaresWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct MinaresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -201,15 +197,13 @@ function MinaresWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of CG.
+Workspace for the in-place method [`cg!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = CgWorkspace(m, n, S)
     workspace = CgWorkspace(A, b)
     workspace = CgWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct CgWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -263,15 +257,13 @@ function CgWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of CR.
+Workspace for the in-place method [`cr!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = CrWorkspace(m, n, S)
     workspace = CrWorkspace(A, b)
     workspace = CrWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct CrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -328,15 +320,13 @@ function CrWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of CAR.
+Workspace for the in-place method [`car!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = CarWorkspace(m, n, S)
     workspace = CarWorkspace(A, b)
     workspace = CarWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct CarWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -399,15 +389,13 @@ function CarWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of SYMMLQ.
+Workspace for the in-place method [`symmlq!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = SymmlqWorkspace(m, n, S)
     workspace = SymmlqWorkspace(A, b)
     workspace = SymmlqWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct SymmlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -473,15 +461,13 @@ function SymmlqWorkspace(A, b; window::Integer = 5)
 end
 
 """
-Type for storing the vectors required by the in-place version of CG-LANCZOS.
+Workspace for the in-place method [`cg_lanczos!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = CgLanczosWorkspace(m, n, S)
     workspace = CgLanczosWorkspace(A, b)
     workspace = CgLanczosWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct CgLanczosWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -538,15 +524,13 @@ function CgLanczosWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of CG-LANCZOS-SHIFT.
+Workspace for the in-place method [`cg_lanczos_shift!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = CgLanczosShiftWorkspace(m, n, nshifts, S)
     workspace = CgLanczosShiftWorkspace(A, b, nshifts)
     workspace = CgLanczosShiftWorkspace(kc::KrylovConstructor, nshifts)
-
-may be used in order to create these vectors.
 """
 mutable struct CgLanczosShiftWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -623,15 +607,13 @@ function CgLanczosShiftWorkspace(A, b, nshifts::Integer)
 end
 
 """
-Type for storing the vectors required by the in-place version of MINRES-QLP.
+Workspace for the in-place method [`minres_qlp!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = MinresQlpWorkspace(m, n, S)
     workspace = MinresQlpWorkspace(A, b)
     workspace = MinresQlpWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct MinresQlpWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -691,15 +673,14 @@ function MinresQlpWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of DQGMRES.
+Workspace for the in-place method [`dqgmres!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = DqgmresWorkspace(m, n, S; memory = 20)
     workspace = DqgmresWorkspace(A, b; memory = 20)
     workspace = DqgmresWorkspace(kc::KrylovConstructor; memory = 20)
 
-may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct DqgmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
@@ -768,15 +749,14 @@ function DqgmresWorkspace(A, b; memory::Integer = 20)
 end
 
 """
-Type for storing the vectors required by the in-place version of DIOM.
+Workspace for the in-place method [`diom!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = DiomWorkspace(m, n, S; memory = 20)
     workspace = DiomWorkspace(A, b; memory = 20)
     workspace = DiomWorkspace(kc::KrylovConstructor; memory = 20)
 
-may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct DiomWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
@@ -842,15 +822,13 @@ function DiomWorkspace(A, b; memory::Integer = 20)
 end
 
 """
-Type for storing the vectors required by the in-place version of USYMLQ.
+Workspace for the in-place method [`usymlq!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = UsymlqWorkspace(m, n, S)
     workspace = UsymlqWorkspace(A, b)
     workspace = UsymlqWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct UsymlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -913,15 +891,13 @@ function UsymlqWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of USYMQR.
+Workspace for the in-place method [`usymqr!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = UsymqrWorkspace(m, n, S)
     workspace = UsymqrWorkspace(A, b)
     workspace = UsymqrWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct UsymqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -987,15 +963,13 @@ function UsymqrWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of TRICG.
+Workspace for the in-place method [`tricg!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = TricgWorkspace(m, n, S)
     workspace = TricgWorkspace(A, b)
     workspace = TricgWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct TricgWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -1079,15 +1053,13 @@ function TricgWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of TRIMR.
+Workspace for the in-place method [`trimr!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = TrimrWorkspace(m, n, S)
     workspace = TrimrWorkspace(A, b)
     workspace = TrimrWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct TrimrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -1183,15 +1155,13 @@ function TrimrWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of TRILQR.
+Workspace for the in-place method [`trilqr!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = TrilqrWorkspace(m, n, S)
     workspace = TrilqrWorkspace(A, b)
     workspace = TrilqrWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct TrilqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -1266,15 +1236,13 @@ function TrilqrWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of CGS.
+Workspace for the in-place method [`cgs!`](@ref).
 
-The outer constructorss
+The following outer constructors can be used to initialize this workspace:s
 
     workspace = CgsWorkspace(m, n, S)
     workspace = CgsWorkspace(A, b)
     workspace = CgsWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct CgsWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -1337,15 +1305,13 @@ function CgsWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of BICGSTAB.
+Workspace for the in-place method [`bicgstab!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = BicgstabWorkspace(m, n, S)
     workspace = BicgstabWorkspace(A, b)
     workspace = BicgstabWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct BicgstabWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -1408,15 +1374,13 @@ function BicgstabWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of BILQ.
+Workspace for the in-place method [`bilq!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = BilqWorkspace(m, n, S)
     workspace = BilqWorkspace(A, b)
     workspace = BilqWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct BilqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -1485,15 +1449,13 @@ function BilqWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of QMR.
+Workspace for the in-place method [`qmr!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = QmrWorkspace(m, n, S)
     workspace = QmrWorkspace(A, b)
     workspace = QmrWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct QmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -1565,15 +1527,13 @@ function QmrWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of BILQR.
+Workspace for the in-place method [`bilqr!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = BilqrWorkspace(m, n, S)
     workspace = BilqrWorkspace(A, b)
     workspace = BilqrWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct BilqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m          :: Int
@@ -1648,15 +1608,13 @@ function BilqrWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of CGLS.
+Workspace for the in-place method [`cgls!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = CglsWorkspace(m, n, S)
     workspace = CglsWorkspace(A, b)
     workspace = CglsWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct CglsWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m     :: Int
@@ -1709,15 +1667,13 @@ function CglsWorkspace(A, b)
 end
 
 """
-Workspace for the in-place version of CGLS-LANCZOS-SHIFT.
+Workspace for the in-place method [`cgls_lanczos_shift!`](@ref).
 
-The outer constructors:
+The following outer constructors can be used to initialize this workspace::
 
     workspace = CglsLanczosShiftWorkspace(m, n, nshifts, S)
     workspace = CglsLanczosShiftWorkspace(A, b, nshifts)
     workspace = CglsLanczosShiftWorkspace(kc::KrylovConstructor, nshifts)
-
-can be used to initialize this workspace.
 """
 mutable struct CglsLanczosShiftWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m         :: Int
@@ -1797,15 +1753,13 @@ function CglsLanczosShiftWorkspace(A, b, nshifts::Integer)
 end
 
 """
-Type for storing the vectors required by the in-place version of CRLS.
+Workspace for the in-place method [`crls!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = CrlsWorkspace(m, n, S)
     workspace = CrlsWorkspace(A, b)
     workspace = CrlsWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct CrlsWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m     :: Int
@@ -1864,15 +1818,13 @@ function CrlsWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of CGNE.
+Workspace for the in-place method [`cgne!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = CgneWorkspace(m, n, S)
     workspace = CgneWorkspace(A, b)
     workspace = CgneWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct CgneWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m     :: Int
@@ -1928,15 +1880,13 @@ function CgneWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of CRMR.
+Workspace for the in-place method [`crmr!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = CrmrWorkspace(m, n, S)
     workspace = CrmrWorkspace(A, b)
     workspace = CrmrWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct CrmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m     :: Int
@@ -1992,15 +1942,13 @@ function CrmrWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of LSLQ.
+Workspace for the in-place method [`lslq!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = LslqWorkspace(m, n, S)
     workspace = LslqWorkspace(A, b)
     workspace = LslqWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct LslqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m       :: Int
@@ -2062,15 +2010,13 @@ function LslqWorkspace(A, b; window::Integer = 5)
 end
 
 """
-Type for storing the vectors required by the in-place version of LSQR.
+Workspace for the in-place method [`lsqr!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = LsqrWorkspace(m, n, S)
     workspace = LsqrWorkspace(A, b)
     workspace = LsqrWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct LsqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m       :: Int
@@ -2132,15 +2078,13 @@ function LsqrWorkspace(A, b; window::Integer = 5)
 end
 
 """
-Type for storing the vectors required by the in-place version of LSMR.
+Workspace for the in-place method [`lsmr!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = LsmrWorkspace(m, n, S)
     workspace = LsmrWorkspace(A, b)
     workspace = LsmrWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct LsmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m       :: Int
@@ -2205,15 +2149,13 @@ function LsmrWorkspace(A, b; window::Integer = 5)
 end
 
 """
-Type for storing the vectors required by the in-place version of LNLQ.
+Workspace for the in-place method [`lnlq!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = LnlqWorkspace(m, n, S)
     workspace = LnlqWorkspace(A, b)
     workspace = LnlqWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct LnlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m     :: Int
@@ -2278,15 +2220,13 @@ function LnlqWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of CRAIG.
+Workspace for the in-place method [`craig!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = CraigWorkspace(m, n, S)
     workspace = CraigWorkspace(A, b)
     workspace = CraigWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct CraigWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m     :: Int
@@ -2351,15 +2291,13 @@ function CraigWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of CRAIGMR.
+Workspace for the in-place method [`craigmr!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = CraigmrWorkspace(m, n, S)
     workspace = CraigmrWorkspace(A, b)
     workspace = CraigmrWorkspace(kc::KrylovConstructor)
-
-may be used in order to create these vectors.
 """
 mutable struct CraigmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   m     :: Int
@@ -2430,15 +2368,14 @@ function CraigmrWorkspace(A, b)
 end
 
 """
-Type for storing the vectors required by the in-place version of GMRES.
+Workspace for the in-place method [`gmres!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = GmresWorkspace(m, n, S; memory = 20)
     workspace = GmresWorkspace(A, b; memory = 20)
     workspace = GmresWorkspace(kc::KrylovConstructor; memory = 20)
 
-may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct GmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
@@ -2508,15 +2445,14 @@ function GmresWorkspace(A, b; memory::Integer = 20)
 end
 
 """
-Type for storing the vectors required by the in-place version of FGMRES.
+Workspace for the in-place method [`fgmres!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = FgmresWorkspace(m, n, S; memory = 20)
     workspace = FgmresWorkspace(A, b; memory = 20)
     workspace = FgmresWorkspace(kc::KrylovConstructor; memory = 20)
 
-may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct FgmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
@@ -2586,15 +2522,14 @@ function FgmresWorkspace(A, b; memory::Integer = 20)
 end
 
 """
-Type for storing the vectors required by the in-place version of FOM.
+Workspace for the in-place method [`fom!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = FomWorkspace(m, n, S; memory = 20)
     workspace = FomWorkspace(A, b; memory = 20)
     workspace = FomWorkspace(kc::KrylovConstructor; memory = 20)
 
-may be used in order to create these vectors.
 `memory` is set to `n` if the value given is larger than `n`.
 """
 mutable struct FomWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
@@ -2660,15 +2595,14 @@ function FomWorkspace(A, b; memory::Integer = 20)
 end
 
 """
-Type for storing the vectors required by the in-place version of GPMR.
+Workspace for the in-place method [`gpmr!`](@ref).
 
-The outer constructors
+The following outer constructors can be used to initialize this workspace:
 
     workspace = GpmrWorkspace(m, n, S; memory = 20)
     workspace = GpmrWorkspace(A, b; memory = 20)
     workspace = GpmrWorkspace(kc::KrylovConstructor; memory = 20)
 
-may be used in order to create these vectors.
 `memory` is set to `n + m` if the value given is larger than `n + m`.
 """
 mutable struct GpmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
