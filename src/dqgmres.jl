@@ -35,6 +35,12 @@ If MINRES is well defined on `Ax = b` and `memory = 2`, DQGMRES is theoretically
 If `k ≤ memory` where `k` is the number of iterations, DQGMRES is theoretically equivalent to GMRES.
 Otherwise, DQGMRES interpolates between MINRES and GMRES and is similar to MINRES with partial reorthogonalization.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :dqgmres`.
+
+For an in-place variant that reuses memory across solves, see [`dqgmres!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;
@@ -75,13 +81,15 @@ function dqgmres end
     workspace = dqgmres!(workspace::DqgmresWorkspace, A, b; kwargs...)
     workspace = dqgmres!(workspace::DqgmresWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`dqgmres`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`dqgmres`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by [`dqgmres`](@ref) and is required to create a `DqgmresWorkspace`.
 It cannot be changed later.
 
-See [`DqgmresWorkspace`](@ref) for more details about the `workspace`.
+See [`DqgmresWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function dqgmres! end
 

@@ -44,6 +44,12 @@ USYMLQ is considered as a generalization of SYMMLQ.
 It can also be applied to under-determined and over-determined problems.
 In all cases, problems must be consistent.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :usymlq`.
+
+For an in-place variant that reuses memory across solves, see [`usymlq!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
@@ -83,9 +89,12 @@ function usymlq end
     workspace = usymlq!(workspace::UsymlqWorkspace, A, b, c; kwargs...)
     workspace = usymlq!(workspace::UsymlqWorkspace, A, b, c, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`usymlq`](@ref).
+In these calls, `kwargs` are keyword arguments of [`usymlq`](@ref).
 
-See [`UsymlqWorkspace`](@ref) for more details about the `workspace`.
+See [`UsymlqWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function usymlq! end
 

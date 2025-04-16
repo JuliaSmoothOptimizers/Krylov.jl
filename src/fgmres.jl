@@ -36,6 +36,12 @@ a Chebyshev iteration or another Krylov subspace method is used as a preconditio
 Compared to GMRES, there is no additional cost incurred in the arithmetic but the memory requirement almost doubles.
 Thus, GMRES is recommended if the right preconditioner N is constant.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :fgmres`.
+
+For an in-place variant that reuses memory across solves, see [`fgmres!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;
@@ -77,13 +83,15 @@ function fgmres end
     workspace = fgmres!(workspace::FgmresWorkspace, A, b; kwargs...)
     workspace = fgmres!(workspace::FgmresWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`fgmres`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`fgmres`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by [`fgmres`](@ref) and is required to create a `FgmresWorkspace`.
 It cannot be changed later.
 
-See [`FgmresWorkspace`](@ref) for more details about the `workspace`.
+See [`FgmresWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function fgmres! end
 

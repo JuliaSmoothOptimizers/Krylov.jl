@@ -59,6 +59,12 @@ CRMR produces monotonic residuals ‖r‖₂.
 It is formally equivalent to CRAIG-MR, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :crmr`.
+
+For an in-place variant that reuses memory across solves, see [`crmr!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
@@ -93,9 +99,12 @@ function crmr end
 """
     workspace = crmr!(workspace::CrmrWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`crmr`](@ref).
+In this call, `kwargs` are keyword arguments of [`crmr`](@ref).
 
-See [`CrmrWorkspace`](@ref) for more details about the `workspace`.
+See [`CrmrWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function crmr! end
 

@@ -42,6 +42,12 @@ If BICGSTAB stagnates, we recommend DQGMRES and BiLQ as alternative methods for 
 
 BICGSTAB stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖b‖ * rtol`.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :bicgstab`.
+
+For an in-place variant that reuses memory across solves, see [`bicgstab!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;
@@ -82,9 +88,12 @@ function bicgstab end
     workspace = bicgstab!(workspace::BicgstabWorkspace, A, b; kwargs...)
     workspace = bicgstab!(workspace::BicgstabWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`bicgstab`](@ref).
+In these calls, `kwargs` are keyword arguments of [`bicgstab`](@ref).
 
-See [`BicgstabWorkspace`](@ref) for more details about the `workspace`.
+See [`BicgstabWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function bicgstab! end
 

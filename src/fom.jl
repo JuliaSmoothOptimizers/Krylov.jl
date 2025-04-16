@@ -29,6 +29,12 @@ Solve the linear system Ax = b of size n using FOM.
 
 FOM algorithm is based on the Arnoldi process and a Galerkin condition.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :fom`.
+
+For an in-place variant that reuses memory across solves, see [`fom!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;
@@ -70,13 +76,15 @@ function fom end
     workspace = fom!(workspace::FomWorkspace, A, b; kwargs...)
     workspace = fom!(workspace::FomWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`fom`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`fom`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by [`fom`](@ref) and is required to create a `FomWorkspace`.
 It cannot be changed later.
 
-See [`FomWorkspace`](@ref) for more details about the `workspace`.
+See [`FomWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function fom! end
 

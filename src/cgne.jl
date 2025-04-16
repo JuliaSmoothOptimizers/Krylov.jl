@@ -61,6 +61,12 @@ CGNE produces monotonic errors ‖x-x*‖₂ but not residuals ‖r‖₂.
 It is formally equivalent to CRAIG, though can be slightly less accurate,
 but simpler to implement. Only the x-part of the solution is returned.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :cgne`.
+
+For an in-place variant that reuses memory across solves, see [`cgne!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
@@ -95,9 +101,12 @@ function cgne end
 """
     workspace = cgne!(workspace::CgneWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`cgne`](@ref).
+In this call, `kwargs` are keyword arguments of [`cgne`](@ref).
 
-See [`CgneWorkspace`](@ref) for more details about the `workspace`.
+See [`CgneWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function cgne! end
 

@@ -29,6 +29,12 @@ Solve the linear system Ax = b of size n using GMRES.
 
 GMRES algorithm is based on the Arnoldi process and computes a sequence of approximate solutions with the minimum residual.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :gmres`.
+
+For an in-place variant that reuses memory across solves, see [`gmres!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;
@@ -70,13 +76,15 @@ function gmres end
     workspace = gmres!(workspace::GmresWorkspace, A, b; kwargs...)
     workspace = gmres!(workspace::GmresWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`gmres`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`gmres`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by [`gmres`](@ref) and is required to create a `GmresWorkspace`.
 It cannot be changed later.
 
-See [`GmresWorkspace`](@ref) for more details about the `workspace`.
+See [`GmresWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function gmres! end
 

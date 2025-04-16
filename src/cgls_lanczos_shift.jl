@@ -12,10 +12,11 @@ export cgls_lanczos_shift, cgls_lanczos_shift!
 
 
 """
-    (x, stats) = cgls_lanczos_shift(A, b::AbstractVector{FC};
-                      M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                      radius::T=zero(T), itmax::Int=0, verbose::Int=0, history::Bool=false,
-                      callback=workspace->false)
+    (x, stats) = cgls_lanczos_shift(A, b::AbstractVector{FC}, shifts::AbstractVector{T};
+                                    M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
+                                    radius::T=zero(T), itmax::Int=0, verbose::Int=0,
+                                    history::Bool=false, callback=workspace->false,
+                                    iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -34,6 +35,12 @@ but is more stable.
 CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖Aᴴr‖₂.
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
+
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :cgls_lanczos_shift`.
+
+For an in-place variant that reuses memory across solves, see [`cgls_lanczos_shift!`](@ref).
 
 #### Input arguments
 
@@ -68,9 +75,12 @@ function cgls_lanczos_shift end
 """
     workspace = cgls_lanczos_shift!(workspace::CglsLanczosShiftWorkspace, A, b, shifts; kwargs...)
 
-where `kwargs` are keyword arguments of [`cgls_lanczos_shift`](@ref).
+In this call, `kwargs` are keyword arguments of [`cgls_lanczos_shift`](@ref).
 
-See [`CglsLanczosShiftWorkspace`](@ref) for more details about the `workspace`.
+See [`CglsLanczosShiftWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function cgls_lanczos_shift! end
 

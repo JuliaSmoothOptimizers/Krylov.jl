@@ -27,7 +27,7 @@
 export krylov_workspace, krylov_solve, krylov_solve!
 
 """
-    krylov_workspace(Val(method), args...; kwargs...)
+    workspace = krylov_workspace(Val(method), args...; kwargs...)
 
 Generic function that dispatches to the appropriate workspace constructor for each subtype of [`KrylovWorkspace`](@ref) and [`BlockKrylovWorkspace`](@ref).
 The first argument `Val(method)`, where `method` is a symbol (such as `:cg`, `:gmres` or `:block_minres`), specifies the (block) Krylov method for which a workspace is desired.

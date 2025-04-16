@@ -22,6 +22,12 @@ Block-GMRES can be warm-started from an initial guess `X0` where `kwargs` are th
 
 Solve the linear system AX = B of size n with p right-hand sides using block-GMRES.
 
+#### Interface
+
+To easily switch between block Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :block_gmres`.
+
+For an in-place variant that reuses memory across solves, see [`block_gmres!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;
@@ -59,13 +65,15 @@ function block_gmres end
     workspace = block_gmres!(workspace::BlockGmresWorkspace, B; kwargs...)
     workspace = block_gmres!(workspace::BlockGmresWorkspace, B, X0; kwargs...)
 
-where `kwargs` are keyword arguments of [`block_gmres`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`block_gmres`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by `block_gmres` and is required to create a `BlockGmresWorkspace`.
 It cannot be changed later.
 
-See [`BlockGmresWorkspace`](@ref) for more details about the `workspace`.
+See [`BlockGmresWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the block Krylov method in-place.
 """
 function block_gmres! end
 

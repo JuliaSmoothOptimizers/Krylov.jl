@@ -44,6 +44,12 @@ to become inaccurate.
 
 TFQMR and BICGSTAB were developed to remedy this difficulty.»
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :cgs`.
+
+For an in-place variant that reuses memory across solves, see [`cgs!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;
@@ -83,9 +89,12 @@ function cgs end
     workspace = cgs!(workspace::CgsWorkspace, A, b; kwargs...)
     workspace = cgs!(workspace::CgsWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`cgs`](@ref).
+In these calls, `kwargs` are keyword arguments of [`cgs`](@ref).
 
-See [`CgsWorkspace`](@ref) for more details about the `workspace`.
+See [`CgsWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function cgs! end
 

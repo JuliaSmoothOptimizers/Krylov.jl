@@ -35,6 +35,12 @@ The conjugate gradient method to solve the Hermitian linear system Ax = b of siz
 The method does _not_ abort if A is not definite.
 M also indicates the weighted norm in which residuals are measured.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :cg`.
+
+For an in-place variant that reuses memory across solves, see [`cg!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian positive definite matrix of dimension `n`;
@@ -74,9 +80,12 @@ function cg end
     workspace = cg!(workspace::CgWorkspace, A, b; kwargs...)
     workspace = cg!(workspace::CgWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`cg`](@ref).
+In these calls, `kwargs` are keyword arguments of [`cg`](@ref).
 
-See [`CgWorkspace`](@ref) for more details about the `workspace`.
+See [`CgWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function cg! end
 

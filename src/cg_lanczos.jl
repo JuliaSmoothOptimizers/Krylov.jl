@@ -32,6 +32,12 @@ Hermitian linear system Ax = b of size n.
 
 The method does _not_ abort if A is not definite.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :cg_lanczos`.
+
+For an in-place variant that reuses memory across solves, see [`cg_lanczos!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian matrix of dimension `n`;
@@ -71,9 +77,12 @@ function cg_lanczos end
     workspace = cg_lanczos!(workspace::CgLanczosWorkspace, A, b; kwargs...)
     workspace = cg_lanczos!(workspace::CgLanczosWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`cg_lanczos`](@ref).
+In these calls, `kwargs` are keyword arguments of [`cg_lanczos`](@ref).
 
-See [`CgLanczosWorkspace`](@ref) for more details about the `workspace`.
+See [`CgLanczosWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function cg_lanczos! end
 

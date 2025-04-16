@@ -54,6 +54,12 @@ CGLS produces monotonic residuals ‖r‖₂ but not optimality residuals ‖A�
 It is formally equivalent to LSQR, though can be slightly less accurate,
 but simpler to implement.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :cgls`.
+
+For an in-place variant that reuses memory across solves, see [`cgls!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
@@ -89,9 +95,12 @@ function cgls end
 """
     workspace = cgls!(workspace::CglsWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`cgls`](@ref).
+In this call, `kwargs` are keyword arguments of [`cgls`](@ref).
 
-See [`CglsWorkspace`](@ref) for more details about the `workspace`.
+See [`CglsWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function cgls! end
 

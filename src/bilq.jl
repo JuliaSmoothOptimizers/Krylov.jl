@@ -33,6 +33,12 @@ The relation `bᴴc ≠ 0` must be satisfied and by default `c = b`.
 When `A` is Hermitian and `b = c`, BiLQ is equivalent to SYMMLQ.
 BiLQ requires support for `adjoint(M)` and `adjoint(N)` if preconditioners are provided.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :bilq`.
+
+For an in-place variant that reuses memory across solves, see [`bilq!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;
@@ -74,9 +80,12 @@ function bilq end
     workspace = bilq!(workspace::BilqWorkspace, A, b; kwargs...)
     workspace = bilq!(workspace::BilqWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`bilq`](@ref).
+In these calls, `kwargs` are keyword arguments of [`bilq`](@ref).
 
-See [`BilqWorkspace`](@ref) for more details about the `workspace`.
+See [`BilqWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function bilq! end
 

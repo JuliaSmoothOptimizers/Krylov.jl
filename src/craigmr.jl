@@ -83,6 +83,12 @@ It is formally equivalent to CRMR, though can be slightly more accurate,
 and intricate to implement. Both the x- and y-parts of the solution are
 returned.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :craigmr`.
+
+For an in-place variant that reuses memory across solves, see [`craigmr!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
@@ -120,9 +126,12 @@ function craigmr end
 """
     workspace = craigmr!(workspace::CraigmrWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`craigmr`](@ref).
+In this call, `kwargs` are keyword arguments of [`craigmr`](@ref).
 
-See [`CraigmrWorkspace`](@ref) for more details about the `workspace`.
+See [`CraigmrWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function craigmr! end
 

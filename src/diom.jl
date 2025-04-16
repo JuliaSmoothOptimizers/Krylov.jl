@@ -35,6 +35,12 @@ Otherwise, DIOM interpolates between CG and FOM and is similar to CG with partia
 An advantage of DIOM is that non-Hermitian or Hermitian indefinite or both non-Hermitian
 and indefinite systems of linear equations can be handled by this single algorithm.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :diom`.
+
+For an in-place variant that reuses memory across solves, see [`diom!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;
@@ -75,13 +81,15 @@ function diom end
     workspace = diom!(workspace::DiomWorkspace, A, b; kwargs...)
     workspace = diom!(workspace::DiomWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`diom`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`diom`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by `diom` and is required to create a `DiomWorkspace`.
 It cannot be changed later.
 
-See [`DiomWorkspace`](@ref) for more details about the `workspace`.
+See [`DiomWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function diom! end
 

@@ -30,6 +30,12 @@ CAR solves the Hermitian and positive definite linear system Ax = b of size n.
 CAR minimizes ‖Arₖ‖₂ when M = Iₙ and ‖AMrₖ‖_M otherwise.
 The estimates computed every iteration are ‖Mrₖ‖₂ and ‖AMrₖ‖_M.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :car`.
+
+For an in-place variant that reuses memory across solves, see [`car!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian positive definite matrix of dimension `n`;
@@ -67,9 +73,12 @@ function car end
     workspace = car!(workspace::CarWorkspace, A, b; kwargs...)
     workspace = car!(workspace::CarWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`car`](@ref).
+In these calls, `kwargs` are keyword arguments of [`car`](@ref).
 
-See [`CarWorkspace`](@ref) for more details about the `workspace`.
+See [`CarWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function car! end
 

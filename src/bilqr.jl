@@ -35,6 +35,12 @@ The relation `bᴴc ≠ 0` must be satisfied.
 BiLQ is used for solving primal system `Ax = b` of size n.
 QMR is used for solving dual system `Aᴴy = c` of size n.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :bilqr`.
+
+For an in-place variant that reuses memory across solves, see [`bilqr!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;
@@ -74,9 +80,12 @@ function bilqr end
     workspace = bilqr!(workspace::BilqrWorkspace, A, b, c; kwargs...)
     workspace = bilqr!(workspace::BilqrWorkspace, A, b, c, x0, y0; kwargs...)
 
-where `kwargs` are keyword arguments of [`bilqr`](@ref).
+In these calls, `kwargs` are keyword arguments of [`bilqr`](@ref).
 
-See [`BilqrWorkspace`](@ref) for more details about the `workspace`.
+See [`BilqrWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function bilqr! end
 

@@ -18,8 +18,9 @@ export cg_lanczos_shift, cg_lanczos_shift!
                                   M=I, ldiv::Bool=false,
                                   check_curvature::Bool=false, atol::T=√eps(T),
                                   rtol::T=√eps(T), itmax::Int=0,
-                                  timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                                  callback=workspace->false, iostream::IO=kstdout)
+                                  timemax::Float64=Inf, verbose::Int=0,
+                                  history::Bool=false, callback=workspace->false,
+                                  iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -30,6 +31,12 @@ of shifted systems
     (A + αI) x = b  (α = α₁, ..., αₚ)
 
 of size n. The method does _not_ abort if A + αI is not definite.
+
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :cg_lanczos_shift`.
+
+For an in-place variant that reuses memory across solves, see [`cg_lanczos_shift!`](@ref).
 
 #### Input arguments
 
@@ -66,9 +73,12 @@ function cg_lanczos_shift end
 """
     workspace = cg_lanczos_shift!(workspace::CgLanczosShiftWorkspace, A, b, shifts; kwargs...)
 
-where `kwargs` are keyword arguments of [`cg_lanczos_shift`](@ref).
+In this call, `kwargs` are keyword arguments of [`cg_lanczos_shift`](@ref).
 
-See [`CgLanczosShiftWorkspace`](@ref) for more details about the `workspace`.
+See [`CgLanczosShiftWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function cg_lanczos_shift! end
 

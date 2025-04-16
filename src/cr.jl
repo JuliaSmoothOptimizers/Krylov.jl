@@ -37,6 +37,12 @@ of size n or the least-squares problem min ‖b - Ax‖ if A is singular.
 The matrix A must be Hermitian semi-definite.
 M also indicates the weighted norm in which residuals are measured.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :cr`.
+
+For an in-place variant that reuses memory across solves, see [`cr!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian positive definite matrix of dimension `n`;
@@ -80,9 +86,12 @@ function cr end
     workspace = cr!(workspace::CrWorkspace, A, b; kwargs...)
     workspace = cr!(workspace::CrWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`cr`](@ref).
+In these calls, `kwargs` are keyword arguments of [`cr`](@ref).
 
-See [`CrWorkspace`](@ref) for more details about the `workspace`.
+See [`CrWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function cr! end
 

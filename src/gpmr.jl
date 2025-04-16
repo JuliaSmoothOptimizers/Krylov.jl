@@ -58,6 +58,12 @@ The residual norm ‖rₖ‖ is monotonically decreasing in GPMR.
 GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :gpmr`.
+
+For an in-place variant that reuses memory across solves, see [`gpmr!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
@@ -106,13 +112,15 @@ function gpmr end
     workspace = gpmr!(workspace::GpmrWorkspace, A, B, b, c; kwargs...)
     workspace = gpmr!(workspace::GpmrWorkspace, A, B, b, c, x0, y0; kwargs...)
 
-where `kwargs` are keyword arguments of [`gpmr`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`gpmr`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by [`gpmr`](@ref) and is required to create a `GpmrWorkspace`.
 It cannot be changed later.
 
-See [`GpmrWorkspace`](@ref) for more details about the `workspace`.
+See [`GpmrWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function gpmr! end
 

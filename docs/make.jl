@@ -21,7 +21,7 @@ makedocs(
                                 "Adjoint systems" => "solvers/as.md",
                                 "Saddle-point and Hermitian quasi-definite systems" => "solvers/sp_sqd.md",
                                 "Generalized saddle-point and non-Hermitian partitioned systems" => "solvers/gsp.md"],
-           "Block-Krylov methods" => "block_krylov.md",
+           "Block Krylov methods" => "block_krylov.md",
            "In-place methods" => "inplace.md",
            "Generic interface" => "generic_interface.md",
            "Storage requirements" => "storage.md",

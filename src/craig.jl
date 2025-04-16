@@ -89,6 +89,12 @@ In this case, `M` can still be specified and indicates the weighted norm in whic
 
 In this implementation, both the x and y-parts of the solution are returned.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :craig`.
+
+For an in-place variant that reuses memory across solves, see [`craig!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
@@ -130,9 +136,12 @@ function craig end
 """
     workspace = craig!(workspace::CraigWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`craig`](@ref).
+In this call, `kwargs` are keyword arguments of [`craig`](@ref).
 
-See [`CraigWorkspace`](@ref) for more details about the `workspace`.
+See [`CraigWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function craig! end
 

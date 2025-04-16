@@ -84,6 +84,12 @@ The system above represents the optimality conditions of
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᴴr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :lsmr`.
+
+For an in-place variant that reuses memory across solves, see [`lsmr!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
@@ -125,9 +131,12 @@ function lsmr end
 """
     workspace = lsmr!(workspace::LsmrWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`lsmr`](@ref).
+In this call, `kwargs` are keyword arguments of [`lsmr`](@ref).
 
-See [`LsmrWorkspace`](@ref) for more details about the `workspace`.
+See [`LsmrWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function lsmr! end
 

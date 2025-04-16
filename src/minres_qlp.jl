@@ -37,6 +37,12 @@ It is significantly more complex but can be more reliable than MINRES when A is 
 
 M also indicates the weighted norm in which residuals are measured.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :minres_qlp`.
+
+For an in-place variant that reuses memory across solves, see [`minres_qlp!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian matrix of dimension `n`;
@@ -78,9 +84,12 @@ function minres_qlp end
     workspace = minres_qlp!(workspace::MinresQlpWorkspace, A, b; kwargs...)
     workspace = minres_qlp!(workspace::MinresQlpWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`minres_qlp`](@ref).
+In these calls, `kwargs` are keyword arguments of [`minres_qlp`](@ref).
 
-See [`MinresQlpWorkspace`](@ref) for more details about the `workspace`.
+See [`MinresQlpWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function minres_qlp! end
 

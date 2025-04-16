@@ -48,6 +48,12 @@ USYMQR is considered as a generalization of MINRES.
 It can also be applied to under-determined and over-determined problems.
 USYMQR finds the minimum-norm solution if problems are inconsistent.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :usymqr`.
+
+For an in-place variant that reuses memory across solves, see [`usymqr!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
@@ -87,9 +93,12 @@ function usymqr end
     workspace = usymqr!(workspace::UsymqrWorkspace, A, b, c; kwargs...)
     workspace = usymqr!(workspace::UsymqrWorkspace, A, b, c, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`usymqr`](@ref).
+In these calls, `kwargs` are keyword arguments of [`usymqr`](@ref).
 
-See [`UsymqrWorkspace`](@ref) for more details about the `workspace`.
+See [`UsymqrWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function usymqr! end
 

@@ -83,6 +83,12 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 * it is possible to transition cheaply from the LSLQ iterate to the LSQR iterate if there is an advantage (there always is in terms of error)
 * if `A` is rank deficient, identify the minimum least-squares solution
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :lslq`.
+
+For an in-place variant that reuses memory across solves, see [`lslq!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
@@ -147,9 +153,12 @@ function lslq end
 """
     workspace = lslq!(workspace::LslqWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`lslq`](@ref).
+In this call, `kwargs` are keyword arguments of [`lslq`](@ref).
 
-See [`LslqWorkspace`](@ref) for more details about the `workspace`.
+See [`LslqWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function lslq! end
 

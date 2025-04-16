@@ -51,6 +51,12 @@ It's the Euclidean norm when `M` and `N` are identity operators.
 TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :tricg`.
+
+For an in-place variant that reuses memory across solves, see [`tricg!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
@@ -96,9 +102,12 @@ function tricg end
     workspace = tricg!(workspace::TricgWorkspace, A, b, c; kwargs...)
     workspace = tricg!(workspace::TricgWorkspace, A, b, c, x0, y0; kwargs...)
 
-where `kwargs` are keyword arguments of [`tricg`](@ref).
+In these calls, `kwargs` are keyword arguments of [`tricg`](@ref).
 
-See [`TricgWorkspace`](@ref) for more details about the `workspace`.
+See [`TricgWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function tricg! end
 
