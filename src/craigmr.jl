@@ -120,7 +120,7 @@ function craigmr end
 """
     workspace = craigmr!(workspace::CraigmrWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`craigmr`](@ref).
+In this call, `kwargs` are keyword arguments of [`craigmr`](@ref).
 
 See [`CraigmrWorkspace`](@ref) for instructions on how to create the `workspace`.
 

@@ -67,7 +67,7 @@ function cg_lanczos_shift end
 """
     workspace = cg_lanczos_shift!(workspace::CgLanczosShiftWorkspace, A, b, shifts; kwargs...)
 
-where `kwargs` are keyword arguments of [`cg_lanczos_shift`](@ref).
+In this call, `kwargs` are keyword arguments of [`cg_lanczos_shift`](@ref).
 
 See [`CgLanczosShiftWorkspace`](@ref) for instructions on how to create the `workspace`.
 

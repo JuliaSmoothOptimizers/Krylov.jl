@@ -70,7 +70,7 @@ function minares end
     workspace = minares!(workspace::MinaresWorkspace, A, b; kwargs...)
     workspace = minares!(workspace::MinaresWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`minares`](@ref).
+In these calls, `kwargs` are keyword arguments of [`minares`](@ref).
 
 See [`MinaresWorkspace`](@ref) for instructions on how to create the `workspace`.
 

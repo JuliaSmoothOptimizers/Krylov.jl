@@ -81,7 +81,7 @@ function qmr end
     workspace = qmr!(workspace::QmrWorkspace, A, b; kwargs...)
     workspace = qmr!(workspace::QmrWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`qmr`](@ref).
+In these calls, `kwargs` are keyword arguments of [`qmr`](@ref).
 
 See [`QmrWorkspace`](@ref) for instructions on how to create the `workspace`.
 

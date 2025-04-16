@@ -79,7 +79,7 @@ function symmlq end
     workspace = symmlq!(workspace::SymmlqWorkspace, A, b; kwargs...)
     workspace = symmlq!(workspace::SymmlqWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`symmlq`](@ref).
+In these calls, `kwargs` are keyword arguments of [`symmlq`](@ref).
 
 See [`SymmlqWorkspace`](@ref) for instructions on how to create the `workspace`.
 

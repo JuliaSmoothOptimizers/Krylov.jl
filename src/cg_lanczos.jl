@@ -71,7 +71,7 @@ function cg_lanczos end
     workspace = cg_lanczos!(workspace::CgLanczosWorkspace, A, b; kwargs...)
     workspace = cg_lanczos!(workspace::CgLanczosWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`cg_lanczos`](@ref).
+In these calls, `kwargs` are keyword arguments of [`cg_lanczos`](@ref).
 
 See [`CgLanczosWorkspace`](@ref) for instructions on how to create the `workspace`.
 

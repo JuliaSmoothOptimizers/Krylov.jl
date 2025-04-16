@@ -147,7 +147,7 @@ function lslq end
 """
     workspace = lslq!(workspace::LslqWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`lslq`](@ref).
+In this call, `kwargs` are keyword arguments of [`lslq`](@ref).
 
 See [`LslqWorkspace`](@ref) for instructions on how to create the `workspace`.
 

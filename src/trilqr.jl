@@ -73,7 +73,7 @@ function trilqr end
     workspace = trilqr!(workspace::TrilqrWorkspace, A, b, c; kwargs...)
     workspace = trilqr!(workspace::TrilqrWorkspace, A, b, c, x0, y0; kwargs...)
 
-where `kwargs` are keyword arguments of [`trilqr`](@ref).
+In these calls, `kwargs` are keyword arguments of [`trilqr`](@ref).
 
 See [`TrilqrWorkspace`](@ref) for instructions on how to create the `workspace`.
 

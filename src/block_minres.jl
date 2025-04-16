@@ -54,7 +54,7 @@ function block_minres end
     workspace = block_minres!(workspace::BlockMinresWorkspace, B; kwargs...)
     workspace = block_minres!(workspace::BlockMinresWorkspace, B, X0; kwargs...)
 
-where `kwargs` are keyword arguments of [`block_minres`](@ref).
+In these calls, `kwargs` are keyword arguments of [`block_minres`](@ref).
 
 See [`BlockMinresWorkspace`](@ref) for instructions on how to create the `workspace`.
 

@@ -75,8 +75,7 @@ function diom end
     workspace = diom!(workspace::DiomWorkspace, A, b; kwargs...)
     workspace = diom!(workspace::DiomWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`diom`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`diom`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by `diom` and is required to create a `DiomWorkspace`.
 It cannot be changed later.

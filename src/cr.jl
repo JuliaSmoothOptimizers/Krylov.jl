@@ -80,7 +80,7 @@ function cr end
     workspace = cr!(workspace::CrWorkspace, A, b; kwargs...)
     workspace = cr!(workspace::CrWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`cr`](@ref).
+In these calls, `kwargs` are keyword arguments of [`cr`](@ref).
 
 See [`CrWorkspace`](@ref) for instructions on how to create the `workspace`.
 

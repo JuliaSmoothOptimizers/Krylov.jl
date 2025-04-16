@@ -70,8 +70,7 @@ function gmres end
     workspace = gmres!(workspace::GmresWorkspace, A, b; kwargs...)
     workspace = gmres!(workspace::GmresWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`gmres`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`gmres`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by [`gmres`](@ref) and is required to create a `GmresWorkspace`.
 It cannot be changed later.

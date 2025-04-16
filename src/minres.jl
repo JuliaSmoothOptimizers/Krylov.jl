@@ -104,7 +104,7 @@ function minres end
     workspace = minres!(workspace::MinresWorkspace, A, b; kwargs...)
     workspace = minres!(workspace::MinresWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`minres`](@ref).
+In these calls, `kwargs` are keyword arguments of [`minres`](@ref).
 
 See [`MinresWorkspace`](@ref) for instructions on how to create the `workspace`.
 

@@ -74,7 +74,7 @@ function bilq end
     workspace = bilq!(workspace::BilqWorkspace, A, b; kwargs...)
     workspace = bilq!(workspace::BilqWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`bilq`](@ref).
+In these calls, `kwargs` are keyword arguments of [`bilq`](@ref).
 
 See [`BilqWorkspace`](@ref) for instructions on how to create the `workspace`.
 

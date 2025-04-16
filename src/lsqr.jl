@@ -121,7 +121,7 @@ function lsqr end
 """
     workspace = lsqr!(workspace::LsqrWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`lsqr`](@ref).
+In this call, `kwargs` are keyword arguments of [`lsqr`](@ref).
 
 See [`LsqrWorkspace`](@ref) for instructions on how to create the `workspace`.
 

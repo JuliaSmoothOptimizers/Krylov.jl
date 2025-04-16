@@ -87,7 +87,7 @@ function usymqr end
     workspace = usymqr!(workspace::UsymqrWorkspace, A, b, c; kwargs...)
     workspace = usymqr!(workspace::UsymqrWorkspace, A, b, c, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`usymqr`](@ref).
+In these calls, `kwargs` are keyword arguments of [`usymqr`](@ref).
 
 See [`UsymqrWorkspace`](@ref) for instructions on how to create the `workspace`.
 

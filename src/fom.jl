@@ -70,8 +70,7 @@ function fom end
     workspace = fom!(workspace::FomWorkspace, A, b; kwargs...)
     workspace = fom!(workspace::FomWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`fom`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`fom`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by [`fom`](@ref) and is required to create a `FomWorkspace`.
 It cannot be changed later.

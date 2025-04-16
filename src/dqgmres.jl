@@ -75,8 +75,7 @@ function dqgmres end
     workspace = dqgmres!(workspace::DqgmresWorkspace, A, b; kwargs...)
     workspace = dqgmres!(workspace::DqgmresWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`dqgmres`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`dqgmres`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by [`dqgmres`](@ref) and is required to create a `DqgmresWorkspace`.
 It cannot be changed later.

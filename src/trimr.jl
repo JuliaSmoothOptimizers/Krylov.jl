@@ -96,7 +96,7 @@ function trimr end
     workspace = trimr!(workspace::TrimrWorkspace, A, b, c; kwargs...)
     workspace = trimr!(workspace::TrimrWorkspace, A, b, c, x0, y0; kwargs...)
 
-where `kwargs` are keyword arguments of [`trimr`](@ref).
+In these calls, `kwargs` are keyword arguments of [`trimr`](@ref).
 
 See [`TrimrWorkspace`](@ref) for instructions on how to create the `workspace`.
 

@@ -80,7 +80,7 @@ function crls end
 """
     workspace = crls!(workspace::CrlsWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`crls`](@ref).
+In this call, `kwargs` are keyword arguments of [`crls`](@ref).
 
 See [`CrlsWorkspace`](@ref) for instructions on how to create the `workspace`.
 

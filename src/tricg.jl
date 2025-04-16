@@ -96,7 +96,7 @@ function tricg end
     workspace = tricg!(workspace::TricgWorkspace, A, b, c; kwargs...)
     workspace = tricg!(workspace::TricgWorkspace, A, b, c, x0, y0; kwargs...)
 
-where `kwargs` are keyword arguments of [`tricg`](@ref).
+In these calls, `kwargs` are keyword arguments of [`tricg`](@ref).
 
 See [`TricgWorkspace`](@ref) for instructions on how to create the `workspace`.
 

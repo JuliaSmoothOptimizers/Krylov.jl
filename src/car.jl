@@ -67,7 +67,7 @@ function car end
     workspace = car!(workspace::CarWorkspace, A, b; kwargs...)
     workspace = car!(workspace::CarWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`car`](@ref).
+In these calls, `kwargs` are keyword arguments of [`car`](@ref).
 
 See [`CarWorkspace`](@ref) for instructions on how to create the `workspace`.
 

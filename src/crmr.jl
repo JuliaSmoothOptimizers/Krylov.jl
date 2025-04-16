@@ -93,7 +93,7 @@ function crmr end
 """
     workspace = crmr!(workspace::CrmrWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`crmr`](@ref).
+In this call, `kwargs` are keyword arguments of [`crmr`](@ref).
 
 See [`CrmrWorkspace`](@ref) for instructions on how to create the `workspace`.
 

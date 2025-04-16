@@ -106,8 +106,7 @@ function gpmr end
     workspace = gpmr!(workspace::GpmrWorkspace, A, B, b, c; kwargs...)
     workspace = gpmr!(workspace::GpmrWorkspace, A, B, b, c, x0, y0; kwargs...)
 
-where `kwargs` are keyword arguments of [`gpmr`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`gpmr`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by [`gpmr`](@ref) and is required to create a `GpmrWorkspace`.
 It cannot be changed later.

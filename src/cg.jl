@@ -74,7 +74,7 @@ function cg end
     workspace = cg!(workspace::CgWorkspace, A, b; kwargs...)
     workspace = cg!(workspace::CgWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`cg`](@ref).
+In these calls, `kwargs` are keyword arguments of [`cg`](@ref).
 
 See [`CgWorkspace`](@ref) for instructions on how to create the `workspace`.
 

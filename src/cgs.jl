@@ -83,7 +83,7 @@ function cgs end
     workspace = cgs!(workspace::CgsWorkspace, A, b; kwargs...)
     workspace = cgs!(workspace::CgsWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`cgs`](@ref).
+In these calls, `kwargs` are keyword arguments of [`cgs`](@ref).
 
 See [`CgsWorkspace`](@ref) for instructions on how to create the `workspace`.
 

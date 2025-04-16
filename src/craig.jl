@@ -130,7 +130,7 @@ function craig end
 """
     workspace = craig!(workspace::CraigWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`craig`](@ref).
+In this call, `kwargs` are keyword arguments of [`craig`](@ref).
 
 See [`CraigWorkspace`](@ref) for instructions on how to create the `workspace`.
 

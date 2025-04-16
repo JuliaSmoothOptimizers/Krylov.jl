@@ -59,8 +59,7 @@ function block_gmres end
     workspace = block_gmres!(workspace::BlockGmresWorkspace, B; kwargs...)
     workspace = block_gmres!(workspace::BlockGmresWorkspace, B, X0; kwargs...)
 
-where `kwargs` are keyword arguments of [`block_gmres`](@ref).
-
+In these calls, `kwargs` are keyword arguments of [`block_gmres`](@ref).
 The keyword argument `memory` is the only exception.
 It is only supported by `block_gmres` and is required to create a `BlockGmresWorkspace`.
 It cannot be changed later.

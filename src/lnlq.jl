@@ -123,7 +123,7 @@ function lnlq end
 """
     workspace = lnlq!(workspace::LnlqWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`lnlq`](@ref).
+In this call, `kwargs` are keyword arguments of [`lnlq`](@ref).
 
 See [`LnlqWorkspace`](@ref) for instructions on how to create the `workspace`.
 

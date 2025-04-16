@@ -83,7 +83,7 @@ function usymlq end
     workspace = usymlq!(workspace::UsymlqWorkspace, A, b, c; kwargs...)
     workspace = usymlq!(workspace::UsymlqWorkspace, A, b, c, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`usymlq`](@ref).
+In these calls, `kwargs` are keyword arguments of [`usymlq`](@ref).
 
 See [`UsymlqWorkspace`](@ref) for instructions on how to create the `workspace`.
 

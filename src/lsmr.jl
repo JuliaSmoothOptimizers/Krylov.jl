@@ -125,7 +125,7 @@ function lsmr end
 """
     workspace = lsmr!(workspace::LsmrWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`lsmr`](@ref).
+In this call, `kwargs` are keyword arguments of [`lsmr`](@ref).
 
 See [`LsmrWorkspace`](@ref) for instructions on how to create the `workspace`.
 

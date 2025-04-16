@@ -95,7 +95,7 @@ function cgne end
 """
     workspace = cgne!(workspace::CgneWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`cgne`](@ref).
+In this call, `kwargs` are keyword arguments of [`cgne`](@ref).
 
 See [`CgneWorkspace`](@ref) for instructions on how to create the `workspace`.
 

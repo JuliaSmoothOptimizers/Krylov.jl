@@ -82,7 +82,7 @@ function bicgstab end
     workspace = bicgstab!(workspace::BicgstabWorkspace, A, b; kwargs...)
     workspace = bicgstab!(workspace::BicgstabWorkspace, A, b, x0; kwargs...)
 
-where `kwargs` are keyword arguments of [`bicgstab`](@ref).
+In these calls, `kwargs` are keyword arguments of [`bicgstab`](@ref).
 
 See [`BicgstabWorkspace`](@ref) for instructions on how to create the `workspace`.
 

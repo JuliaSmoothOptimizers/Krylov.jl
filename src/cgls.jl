@@ -89,7 +89,7 @@ function cgls end
 """
     workspace = cgls!(workspace::CglsWorkspace, A, b; kwargs...)
 
-where `kwargs` are keyword arguments of [`cgls`](@ref).
+In this call, `kwargs` are keyword arguments of [`cgls`](@ref).
 
 See [`CglsWorkspace`](@ref) for instructions on how to create the `workspace`.
 
