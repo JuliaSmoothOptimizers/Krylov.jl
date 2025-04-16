@@ -163,8 +163,8 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ldiv, :atol, :rtol, :itmax, :tim
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, workspace, :uₖ, S, m)
-    allocate_if(!NisI, workspace, :vₖ, S, n)
+    allocate_if(!NisI, workspace, :vₖ, S, workspace.x)  # The length of vₖ is n
+    allocate_if(!MisI, workspace, :uₖ, S, workspace.y)  # The length of uₖ is m
     Δxz, Δry = workspace.Δx, workspace.Δy
     M⁻¹uₖ₋₁, M⁻¹uₖ, N⁻¹vₖ₋₁, N⁻¹vₖ = workspace.M⁻¹uₖ₋₁, workspace.M⁻¹uₖ, workspace.N⁻¹vₖ₋₁, workspace.N⁻¹vₖ
     rₖ, xₖ, yₖ, zₖ, p, q = workspace.r, workspace.x, workspace.y, workspace.z, workspace.p, workspace.q
