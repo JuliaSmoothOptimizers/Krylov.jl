@@ -33,6 +33,12 @@ The relation `bᴴc ≠ 0` must be satisfied and by default `c = b`.
 When `A` is Hermitian and `b = c`, BiLQ is equivalent to SYMMLQ.
 BiLQ requires support for `adjoint(M)` and `adjoint(N)` if preconditioners are provided.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :bilq`.
+
+For an in-place variant that reuses memory across solves, see [`bilq!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;

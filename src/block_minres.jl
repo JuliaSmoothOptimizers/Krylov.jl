@@ -21,6 +21,12 @@ Block-MINRES can be warm-started from an initial guess `X0` where `kwargs` are t
 
 Solve the Hermitian linear system AX = B of size n with p right-hand sides using block-MINRES.
 
+#### Interface
+
+To easily switch between block Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :block_minres`.
+
+For an in-place variant that reuses memory across solves, see [`block_minres!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian matrix of dimension `n`;

@@ -44,6 +44,12 @@ to become inaccurate.
 
 TFQMR and BICGSTAB were developed to remedy this difficulty.»
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :cgs`.
+
+For an in-place variant that reuses memory across solves, see [`cgs!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;

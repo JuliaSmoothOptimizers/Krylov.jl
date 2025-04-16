@@ -58,6 +58,12 @@ The residual norm ‖rₖ‖ is monotonically decreasing in GPMR.
 GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :gpmr`.
+
+For an in-place variant that reuses memory across solves, see [`gpmr!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;

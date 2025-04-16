@@ -29,6 +29,12 @@ Solve the linear system Ax = b of size n using GMRES.
 
 GMRES algorithm is based on the Arnoldi process and computes a sequence of approximate solutions with the minimum residual.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :gmres`.
+
+For an in-place variant that reuses memory across solves, see [`gmres!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;

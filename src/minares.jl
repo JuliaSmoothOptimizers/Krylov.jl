@@ -31,6 +31,12 @@ MINARES solves the Hermitian linear system Ax = b of size n.
 MINARES minimizes ‖Arₖ‖₂ when M = Iₙ and ‖AMrₖ‖_M otherwise.
 The estimates computed every iteration are ‖Mrₖ‖₂ and ‖AMrₖ‖_M.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :minares`.
+
+For an in-place variant that reuses memory across solves, see [`minares!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian positive definite matrix of dimension `n`;

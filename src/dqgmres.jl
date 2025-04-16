@@ -35,6 +35,12 @@ If MINRES is well defined on `Ax = b` and `memory = 2`, DQGMRES is theoretically
 If `k ≤ memory` where `k` is the number of iterations, DQGMRES is theoretically equivalent to GMRES.
 Otherwise, DQGMRES interpolates between MINRES and GMRES and is similar to MINRES with partial reorthogonalization.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :dqgmres`.
+
+For an in-place variant that reuses memory across solves, see [`dqgmres!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;

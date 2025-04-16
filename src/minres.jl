@@ -59,6 +59,12 @@ A is indefinite.
 
 MINRES produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr‖₂.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :minres`.
+
+For an in-place variant that reuses memory across solves, see [`minres!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian matrix of dimension `n`;

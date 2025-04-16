@@ -35,6 +35,12 @@ The conjugate gradient method to solve the Hermitian linear system Ax = b of siz
 The method does _not_ abort if A is not definite.
 M also indicates the weighted norm in which residuals are measured.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :cg`.
+
+For an in-place variant that reuses memory across solves, see [`cg!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian positive definite matrix of dimension `n`;

@@ -36,6 +36,12 @@ of size n using the SYMMLQ method, where λ is a shift parameter, and A is Hermi
 
 SYMMLQ produces monotonic errors ‖x* - x‖₂.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :symmlq`.
+
+For an in-place variant that reuses memory across solves, see [`symmlq!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian matrix of dimension `n`;

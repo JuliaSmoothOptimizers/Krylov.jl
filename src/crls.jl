@@ -46,6 +46,12 @@ CRLS produces monotonic residuals ‖r‖₂ and optimality residuals ‖Aᴴr�
 It is formally equivalent to LSMR, though can be substantially less accurate,
 but simpler to implement.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :crls`.
+
+For an in-place variant that reuses memory across solves, see [`crls!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;

@@ -32,6 +32,12 @@ Hermitian linear system Ax = b of size n.
 
 The method does _not_ abort if A is not definite.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :cg_lanczos`.
+
+For an in-place variant that reuses memory across solves, see [`cg_lanczos!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian matrix of dimension `n`;

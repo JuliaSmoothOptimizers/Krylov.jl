@@ -83,6 +83,12 @@ In this implementation, both the x and y-parts of the solution are returned.
 The bound is valid if λ>0 or σ>0 where σ should be strictly smaller than the smallest positive singular value.
 For instance σ:=(1-1e-7)σₘᵢₙ .
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :lnlq`.
+
+For an in-place variant that reuses memory across solves, see [`lnlq!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;

@@ -48,6 +48,12 @@ USYMQR is considered as a generalization of MINRES.
 It can also be applied to under-determined and over-determined problems.
 USYMQR finds the minimum-norm solution if problems are inconsistent.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :usymqr`.
+
+For an in-place variant that reuses memory across solves, see [`usymqr!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;

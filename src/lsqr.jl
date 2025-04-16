@@ -80,6 +80,12 @@ The system above represents the optimality conditions of
 In this case, `N` can still be specified and indicates the weighted norm in which `x` and `Aᴴr` should be measured.
 `r` can be recovered by computing `E⁻¹(b - Ax)`.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :lsqr`.
+
+For an in-place variant that reuses memory across solves, see [`lsqr!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;

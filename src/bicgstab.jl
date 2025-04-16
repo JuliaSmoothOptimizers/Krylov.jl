@@ -42,6 +42,12 @@ If BICGSTAB stagnates, we recommend DQGMRES and BiLQ as alternative methods for 
 
 BICGSTAB stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖b‖ * rtol`.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :bicgstab`.
+
+For an in-place variant that reuses memory across solves, see [`bicgstab!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;

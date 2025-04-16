@@ -34,6 +34,12 @@ Combine USYMLQ and USYMQR to solve adjoint systems.
 USYMLQ is used for solving primal system `Ax = b` of size m × n.
 USYMQR is used for solving dual system `Aᴴy = c` of size n × m.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :trilqr`.
+
+For an in-place variant that reuses memory across solves, see [trilqr!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;

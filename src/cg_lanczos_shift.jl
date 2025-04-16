@@ -32,6 +32,12 @@ of shifted systems
 
 of size n. The method does _not_ abort if A + αI is not definite.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :cg_lanczos_shift`.
+
+For an in-place variant that reuses memory across solves, see [`cg_lanczos_shift!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a Hermitian matrix of dimension `n`;

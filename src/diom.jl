@@ -35,6 +35,12 @@ Otherwise, DIOM interpolates between CG and FOM and is similar to CG with partia
 An advantage of DIOM is that non-Hermitian or Hermitian indefinite or both non-Hermitian
 and indefinite systems of linear equations can be handled by this single algorithm.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :diom`.
+
+For an in-place variant that reuses memory across solves, see [`diom!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;

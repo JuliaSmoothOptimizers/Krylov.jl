@@ -36,6 +36,12 @@ a Chebyshev iteration or another Krylov subspace method is used as a preconditio
 Compared to GMRES, there is no additional cost incurred in the arithmetic but the memory requirement almost doubles.
 Thus, GMRES is recommended if the right preconditioner N is constant.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :fgmres`.
+
+For an in-place variant that reuses memory across solves, see [`fgmres!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;

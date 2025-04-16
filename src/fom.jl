@@ -29,6 +29,12 @@ Solve the linear system Ax = b of size n using FOM.
 
 FOM algorithm is based on the Arnoldi process and a Galerkin condition.
 
+#### Interface
+
+To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :fom`.
+
+For an in-place variant that reuses memory across solves, see [`fom!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;

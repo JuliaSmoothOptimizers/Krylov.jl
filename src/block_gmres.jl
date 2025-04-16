@@ -22,6 +22,12 @@ Block-GMRES can be warm-started from an initial guess `X0` where `kwargs` are th
 
 Solve the linear system AX = B of size n with p right-hand sides using block-GMRES.
 
+#### Interface
+
+To easily switch between block Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :block_gmres`.
+
+For an in-place variant that reuses memory across solves, see [`block_gmres!`](@ref).
+
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `n`;
