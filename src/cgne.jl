@@ -34,7 +34,7 @@ export cgne, cgne!
                       λ::T=zero(T), atol::T=√eps(T),
                       rtol::T=√eps(T), itmax::Int=0,
                       timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                      callback=solver->false, iostream::IO=kstdout)
+                      callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -77,7 +77,7 @@ but simpler to implement. Only the x-part of the solution is returned.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -93,28 +93,28 @@ but simpler to implement. Only the x-part of the solution is returned.
 function cgne end
 
 """
-    solver = cgne!(solver::CgneSolver, A, b; kwargs...)
+    workspace = cgne!(workspace::CgneWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`cgne`](@ref).
 
-See [`CgneSolver`](@ref) for more details about the `solver`.
+See [`CgneWorkspace`](@ref) for more details about the `workspace`.
 """
 function cgne! end
 
 def_args_cgne = (:(A                    ),
                  :(b::AbstractVector{FC}))
 
-def_kwargs_cgne = (:(; N = I                     ),
-                   :(; ldiv::Bool = false        ),
-                   :(; λ::T = zero(T)            ),
-                   :(; atol::T = √eps(T)         ),
-                   :(; rtol::T = √eps(T)         ),
-                   :(; itmax::Int = 0            ),
-                   :(; timemax::Float64 = Inf    ),
-                   :(; verbose::Int = 0          ),
-                   :(; history::Bool = false     ),
-                   :(; callback = solver -> false),
-                   :(; iostream::IO = kstdout    ))
+def_kwargs_cgne = (:(; N = I                        ),
+                   :(; ldiv::Bool = false           ),
+                   :(; λ::T = zero(T)               ),
+                   :(; atol::T = √eps(T)            ),
+                   :(; rtol::T = √eps(T)            ),
+                   :(; itmax::Int = 0               ),
+                   :(; timemax::Float64 = Inf       ),
+                   :(; verbose::Int = 0             ),
+                   :(; history::Bool = false        ),
+                   :(; callback = workspace -> false),
+                   :(; iostream::IO = kstdout       ))
 
 def_kwargs_cgne = extract_parameters.(def_kwargs_cgne)
 
@@ -122,14 +122,14 @@ args_cgne = (:A, :b)
 kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgne!(solver :: CgneSolver{T,FC,S}, $(def_args_cgne...); $(def_kwargs_cgne...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cgne!(workspace :: CgneWorkspace{T,FC,S}, $(def_args_cgne...); $(def_kwargs_cgne...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CGNE: system of %d equations in %d variables\n", m, n)
 
@@ -144,12 +144,12 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!NisI, solver, :z, S, solver.r)  # The length of z is m
-    allocate_if(λ > 0, solver, :s, S, solver.r)  # The length of s is m
-    x, p, Aᴴz, r, q, s, stats = solver.x, solver.p, solver.Aᴴz, solver.r, solver.q, solver.s, solver.stats
+    allocate_if(!NisI, workspace, :z, S, workspace.r)  # The length of z is m
+    allocate_if(λ > 0, workspace, :s, S, workspace.r)  # The length of s is m
+    x, p, Aᴴz, r, q, s, stats = workspace.x, workspace.p, workspace.Aᴴz, workspace.r, workspace.q, workspace.s, workspace.stats
     rNorms = stats.residuals
     reset!(stats)
-    z = NisI ? r : solver.z
+    z = NisI ? r : workspace.z
 
     kfill!(x, zero(FC))
     kcopy!(m, r, b)  # r ← b
@@ -161,7 +161,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
-      return solver
+      return workspace
     end
     λ > 0 && kcopy!(m, s, r)  # s ← r
     mul!(p, Aᴴ, z)
@@ -216,7 +216,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       # This is to guard against tolerances that are unreasonably small.
       resid_decrease_mach = (rNorm + one(T) ≤ one(T))
 
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       resid_decrease_lim = rNorm ≤ ɛ_c
       solved = resid_decrease_lim || resid_decrease_mach
       inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
@@ -239,6 +239,6 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

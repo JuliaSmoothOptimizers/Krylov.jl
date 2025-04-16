@@ -62,9 +62,9 @@
 
       # in-place minres (minres!) with Jacobi (or diagonal) preconditioner
       A, b, M = square_preconditioned(FC=FC)
-      solver = MinresSolver(A, b)
-      minres!(solver, A, b, M=M)
-      r = b - A * solver.x
+      workspace = MinresWorkspace(A, b)
+      minres!(workspace, A, b, M=M)
+      r = b - A * workspace.x
       resid = norm(r) / norm(b)
       @test(resid ≤ minres_tol * norm(A) * norm(x))
       @test(stats.solved)
@@ -72,9 +72,9 @@
 
       # Test linesearch
       A, b = symmetric_indefinite(FC=FC)
-      solver = MinresSolver(A, b)
-      minres!(solver, A, b, linesearch=true)
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      workspace = MinresWorkspace(A, b)
+      minres!(workspace, A, b, linesearch=true)
+      x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
       @test stats.status == "nonpositive curvature"
       @test stats.indefinite == true
       # Verify that the returned direction indeed exhibits nonpositive curvature.
@@ -84,9 +84,9 @@
 
       # Test Linesearch which would stop on the first call since A is negative definite
       A, b = symmetric_indefinite(FC=FC; shift = 5)
-      solver = MinresSolver(A, b)
-      minres!(solver, A, b, linesearch=true)
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      workspace = MinresWorkspace(A, b)
+      minres!(workspace, A, b, linesearch=true)
+      x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
       @test stats.status == "nonpositive curvature"
       @test stats.niter == 1 # in Minres they add 1 to the number of iterations first step
       @test all(x .== b)
@@ -97,9 +97,9 @@
 
       # Test when b^TAb=0 and linesearch is true
       A, b = system_zero_quad(FC=FC)
-      solver = MinresSolver(A, b)
-      minres!(solver, A, b, linesearch=true)
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      workspace = MinresWorkspace(A, b)
+      minres!(workspace, A, b, linesearch=true)
+      x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
       @test stats.status == "nonpositive curvature"
       @test all(x .== b)
       @test stats.solved == true
@@ -111,16 +111,16 @@
       @test_throws MethodError minres(A, b, warm_start = true, linesearch = true)          
 
       # test callback function
-      solver = MinresSolver(A, b)
+      workspace = MinresWorkspace(A, b)
       storage_vec = similar(b, size(A, 1))
       tol = 1.0e-1
       cb_n2 = TestCallbackN2(A, b, tol = tol)
-      x, stats = minres(A, b, callback = solver -> cb_n2(solver)) # n = 10
-      minres!(solver, A, b, callback = cb_n2)
-      @test solver.stats.status == "user-requested exit"
-      @test cb_n2(solver)
+      x, stats = minres(A, b, callback = workspace -> cb_n2(workspace)) # n = 10
+      minres!(workspace, A, b, callback = cb_n2)
+      @test workspace.stats.status == "user-requested exit"
+      @test cb_n2(workspace)
 
-      @test_throws TypeError minres(A, b, callback = solver -> "string", history = true)
+      @test_throws TypeError minres(A, b, callback = workspace -> "string", history = true)
     end
   end
 end

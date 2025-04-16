@@ -19,7 +19,7 @@ export gpmr, gpmr!
                          reorthogonalization::Bool=false, atol::T=√eps(T),
                          rtol::T=√eps(T), itmax::Int=0,
                          timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                         callback=solver->false, iostream::IO=kstdout)
+                         callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -87,7 +87,7 @@ GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -103,16 +103,16 @@ GPMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 function gpmr end
 
 """
-    solver = gpmr!(solver::GpmrSolver, A, B, b, c; kwargs...)
-    solver = gpmr!(solver::GpmrSolver, A, B, b, c, x0, y0; kwargs...)
+    workspace = gpmr!(workspace::GpmrWorkspace, A, B, b, c; kwargs...)
+    workspace = gpmr!(workspace::GpmrWorkspace, A, B, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`gpmr`](@ref).
 
 The keyword argument `memory` is the only exception.
-It is only supported by [`gpmr`](@ref) and is required to create a `GpmrSolver`.
+It is only supported by [`gpmr`](@ref) and is required to create a `GpmrWorkspace`.
 It cannot be changed later.
 
-See [`GpmrSolver`](@ref) for more details about the `solver`.
+See [`GpmrWorkspace`](@ref) for more details about the `workspace`.
 """
 function gpmr! end
 
@@ -139,7 +139,7 @@ def_kwargs_gpmr = (:(; C = I                            ),
                    :(; timemax::Float64 = Inf           ),
                    :(; verbose::Int = 0                 ),
                    :(; history::Bool = false            ),
-                   :(; callback = solver -> false       ),
+                   :(; callback = workspace -> false    ),
                    :(; iostream::IO = kstdout           ))
 
 def_kwargs_gpmr = extract_parameters.(def_kwargs_gpmr)
@@ -149,7 +149,7 @@ optargs_gpmr = (:x0, :y0)
 kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function gpmr!(solver :: GpmrSolver{T,FC,S}, $(def_args_gpmr...); $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function gpmr!(workspace :: GpmrWorkspace{T,FC,S}, $(def_args_gpmr...); $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -157,7 +157,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
 
     m, n = size(A)
     s, t = size(B)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == t         || error("Inconsistent problem size")
     s == n         || error("Inconsistent problem size")
     length(b) == m || error("Inconsistent problem size")
@@ -179,24 +179,24 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     # Determine λ and μ associated to generalized saddle point systems.
     gsp && (λ = one(FC) ; μ = zero(FC))
 
-    warm_start = solver.warm_start
+    warm_start = workspace.warm_start
     warm_start && (λ ≠ 0) && !EisI && error("Warm-start with right preconditioners is not supported.")
     warm_start && (μ ≠ 0) && !FisI && error("Warm-start with right preconditioners is not supported.")
 
     # Set up workspace.
-    allocate_if(!CisI, solver, :q , S, solver.x)  # The length of q is m
-    allocate_if(!DisI, solver, :p , S, solver.y)  # The length of p is n
-    allocate_if(!EisI, solver, :wB, S, solver.x)  # The length of wB is m
-    allocate_if(!FisI, solver, :wA, S, solver.y)  # The length of wA is n
-    wA, wB, dA, dB, Δx, Δy = solver.wA, solver.wB, solver.dA, solver.dB, solver.Δx, solver.Δy
-    x, y, V, U, gs, gc = solver.x, solver.y, solver.V, solver.U, solver.gs, solver.gc
-    zt, R, stats = solver.zt, solver.R, solver.stats
+    allocate_if(!CisI, workspace, :q , S, workspace.x)  # The length of q is m
+    allocate_if(!DisI, workspace, :p , S, workspace.y)  # The length of p is n
+    allocate_if(!EisI, workspace, :wB, S, workspace.x)  # The length of wB is m
+    allocate_if(!FisI, workspace, :wA, S, workspace.y)  # The length of wA is n
+    wA, wB, dA, dB, Δx, Δy = workspace.wA, workspace.wB, workspace.dA, workspace.dB, workspace.Δx, workspace.Δy
+    x, y, V, U, gs, gc = workspace.x, workspace.y, workspace.V, workspace.U, workspace.gs, workspace.gc
+    zt, R, stats = workspace.zt, workspace.R, workspace.stats
     rNorms = stats.residuals
     reset!(stats)
     b₀ = warm_start ? dA : b
     c₀ = warm_start ? dB : c
-    q  = CisI ? dA : solver.q
-    p  = DisI ? dB : solver.p
+    q  = CisI ? dA : workspace.q
+    p  = DisI ? dB : workspace.p
 
     # Initial solutions x₀ and y₀.
     kfill!(x, zero(FC))
@@ -302,8 +302,8 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
       # Continue the orthogonal Hessenberg reduction process.
       # CAFUₖ = VₖHₖ + hₖ₊₁.ₖ * vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Hₖ₊₁.ₖ
       # DBEVₖ = UₖFₖ + fₖ₊₁.ₖ * uₖ₊₁(eₖ)ᵀ = Uₖ₊₁Fₖ₊₁.ₖ
-      wA = FisI ? U[iter] : solver.wA
-      wB = EisI ? V[iter] : solver.wB
+      wA = FisI ? U[iter] : workspace.wA
+      wB = EisI ? V[iter] : workspace.wB
       FisI || mulorldiv!(wA, F, U[iter], ldiv)  # wA = Fuₖ
       EisI || mulorldiv!(wB, E, V[iter], ldiv)  # wB = Evₖ
       mul!(dA, A, wA)                           # dA = AFuₖ
@@ -448,7 +448,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
       resid_decrease_mach = (rNorm + one(T) ≤ one(T))
 
       # Update stopping criterion.
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       resid_decrease_lim = rNorm ≤ ε
       breakdown = Faux ≤ btol && Haux ≤ btol
       solved = resid_decrease_lim || resid_decrease_mach
@@ -460,8 +460,8 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
       # Compute vₖ₊₁ and uₖ₊₁
       if !(solved || tired || breakdown || user_requested_exit || overtimed)
         if iter ≥ mem
-          push!(V, similar(solver.x))
-          push!(U, similar(solver.y))
+          push!(V, similar(workspace.x))
+          push!(U, similar(workspace.y))
           push!(zt, zero(FC), zero(FC))
         end
 
@@ -518,7 +518,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     end
     warm_start && kaxpy!(m, one(FC), Δx, x)
     warm_start && kaxpy!(n, one(FC), Δy, y)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Termination status
     tired               && (status = "maximum number of iterations exceeded")
@@ -533,6 +533,6 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

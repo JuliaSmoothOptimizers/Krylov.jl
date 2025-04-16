@@ -17,7 +17,7 @@ export bilqr, bilqr!
                           transfer_to_bicg::Bool=true, atol::T=√eps(T),
                           rtol::T=√eps(T), itmax::Int=0,
                           timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                          callback=solver->false, iostream::IO=kstdout)
+                          callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -55,7 +55,7 @@ QMR is used for solving dual system `Aᴴy = c` of size n.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -71,12 +71,12 @@ QMR is used for solving dual system `Aᴴy = c` of size n.
 function bilqr end
 
 """
-    solver = bilqr!(solver::BilqrSolver, A, b, c; kwargs...)
-    solver = bilqr!(solver::BilqrSolver, A, b, c, x0, y0; kwargs...)
+    workspace = bilqr!(workspace::BilqrWorkspace, A, b, c; kwargs...)
+    workspace = bilqr!(workspace::BilqrWorkspace, A, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`bilqr`](@ref).
 
-See [`BilqrSolver`](@ref) for more details about the `solver`.
+See [`BilqrWorkspace`](@ref) for more details about the `workspace`.
 """
 function bilqr! end
 
@@ -94,7 +94,7 @@ def_kwargs_bilqr = (:(; transfer_to_bicg::Bool = true),
                     :(; timemax::Float64 = Inf       ),
                     :(; verbose::Int = 0             ),
                     :(; history::Bool = false        ),
-                    :(; callback = solver -> false   ),
+                    :(; callback = workspace -> false),
                     :(; iostream::IO = kstdout       ))
 
 def_kwargs_bilqr = extract_parameters.(def_kwargs_bilqr)
@@ -104,14 +104,14 @@ optargs_bilqr = (:x0, :y0)
 kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function bilqr!(solver :: BilqrSolver{T,FC,S}, $(def_args_bilqr...); $(def_kwargs_bilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function bilqr!(workspace :: BilqrWorkspace{T,FC,S}, $(def_args_bilqr...); $(def_kwargs_bilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("Systems must be square")
     length(b) == m || error("Inconsistent problem size")
     length(c) == n || error("Inconsistent problem size")
@@ -126,10 +126,10 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     Aᴴ = A'
 
     # Set up workspace.
-    uₖ₋₁, uₖ, q, vₖ₋₁, vₖ = solver.uₖ₋₁, solver.uₖ, solver.q, solver.vₖ₋₁, solver.vₖ
-    p, Δx, Δy, x, t = solver.p, solver.Δx, solver.Δy, solver.x, solver.y
-    d̅, wₖ₋₃, wₖ₋₂, stats = solver.d̅, solver.wₖ₋₃, solver.wₖ₋₂, solver.stats
-    warm_start = solver.warm_start
+    uₖ₋₁, uₖ, q, vₖ₋₁, vₖ = workspace.uₖ₋₁, workspace.uₖ, workspace.q, workspace.vₖ₋₁, workspace.vₖ
+    p, Δx, Δy, x, t = workspace.p, workspace.Δx, workspace.Δy, workspace.x, workspace.y
+    d̅, wₖ₋₃, wₖ₋₂, stats = workspace.d̅, workspace.wₖ₋₃, workspace.wₖ₋₂, workspace.stats
+    warm_start = workspace.warm_start
     rNorms, sNorms = stats.residuals_primal, stats.residuals_dual
     reset!(stats)
     r₀ = warm_start ? q : b
@@ -170,8 +170,8 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       stats.status = "Breakdown bᴴc = 0"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       warm_start && kaxpy!(n, one(FC), Δy, t)
-      solver.warm_start = false
-      return solver
+      workspace.warm_start = false
+      return workspace
     end
 
     # Set up workspace.
@@ -423,7 +423,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       γₖ      = γₖ₊₁
       βₖ      = βₖ₊₁
 
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       tired = iter ≥ itmax
       breakdown = !solved_lq && !solved_cg && (pᴴq == 0)
       timer = time_ns() - start_time
@@ -464,7 +464,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     # Update x and y
     warm_start && kaxpy!(n, one(FC), Δx, x)
     warm_start && kaxpy!(n, one(FC), Δy, t)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter
@@ -472,6 +472,6 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     stats.solved_dual = solved_dual
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

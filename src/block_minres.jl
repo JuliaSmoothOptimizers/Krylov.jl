@@ -10,7 +10,7 @@ export block_minres, block_minres!
                               M=I, ldiv::Bool=false,
                               atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                               timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                              callback=solver->false, iostream::IO=kstdout)
+                              callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -40,7 +40,7 @@ Solve the Hermitian linear system AX = B of size n with p right-hand sides using
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the block-Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the block-Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -51,12 +51,12 @@ Solve the Hermitian linear system AX = B of size n with p right-hand sides using
 function block_minres end
 
 """
-    solver = block_minres!(solver::BlockMinresSolver, B; kwargs...)
-    solver = block_minres!(solver::BlockMinresSolver, B, X0; kwargs...)
+    workspace = block_minres!(workspace::BlockMinresWorkspace, B; kwargs...)
+    workspace = block_minres!(workspace::BlockMinresWorkspace, B, X0; kwargs...)
 
 where `kwargs` are keyword arguments of [`block_minres`](@ref).
 
-See [`BlockMinresSolver`](@ref) for more details about the `solver`.
+See [`BlockMinresWorkspace`](@ref) for more details about the `workspace`.
 """
 function block_minres! end
 
@@ -65,16 +65,16 @@ def_args_block_minres = (:(A                    ),
 
 def_optargs_block_minres = (:(X0::AbstractMatrix),)
 
-def_kwargs_block_minres = (:(; M = I                            ),
-                           :(; ldiv::Bool = false               ),
-                           :(; atol::T = √eps(T)                ),
-                           :(; rtol::T = √eps(T)                ),
-                           :(; itmax::Int = 0                   ),
-                           :(; timemax::Float64 = Inf           ),
-                           :(; verbose::Int = 0                 ),
-                           :(; history::Bool = false            ),
-                           :(; callback = solver -> false       ),
-                           :(; iostream::IO = kstdout           ))
+def_kwargs_block_minres = (:(; M = I                        ),
+                           :(; ldiv::Bool = false           ),
+                           :(; atol::T = √eps(T)            ),
+                           :(; rtol::T = √eps(T)            ),
+                           :(; itmax::Int = 0               ),
+                           :(; timemax::Float64 = Inf       ),
+                           :(; verbose::Int = 0             ),
+                           :(; history::Bool = false        ),
+                           :(; callback = workspace -> false),
+                           :(; iostream::IO = kstdout       ))
 
 def_kwargs_block_minres = mapreduce(extract_parameters, vcat, def_kwargs_block_minres)
 
@@ -83,7 +83,7 @@ optargs_block_minres = (:X0,)
 kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function block_minres!(solver :: BlockMinresSolver{T,FC,SV,SM}, $(def_args_block_minres...); $(def_kwargs_block_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
+  function block_minres!(workspace :: BlockMinresWorkspace{T,FC,SV,SM}, $(def_args_block_minres...); $(def_kwargs_block_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
 
     # Timer
     start_time = time_ns()
@@ -104,18 +104,18 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
     ktypeof(B) == SM || error("ktypeof(B) must be equal to $SM")
 
     # Set up workspace.
-    Vₖ₋₁, Vₖ = solver.Vₖ₋₁, solver.Vₖ
-    ΔX, X, Q, C = solver.ΔX, solver.X, solver.Q, solver.C
-    D, Φ, stats = solver.D, solver.Φ, solver.stats
-    wₖ₋₂, wₖ₋₁ = solver.wₖ₋₂, solver.wₖ₋₁
-    Hₖ₋₂, Hₖ₋₁ = solver.Hₖ₋₂, solver.Hₖ₋₁
-    τₖ₋₂, τₖ₋₁ = solver.τₖ₋₂, solver.τₖ₋₁
-    warm_start = solver.warm_start
+    Vₖ₋₁, Vₖ = workspace.Vₖ₋₁, workspace.Vₖ
+    ΔX, X, Q, C = workspace.ΔX, workspace.X, workspace.Q, workspace.C
+    D, Φ, stats = workspace.D, workspace.Φ, workspace.stats
+    wₖ₋₂, wₖ₋₁ = workspace.wₖ₋₂, workspace.wₖ₋₁
+    Hₖ₋₂, Hₖ₋₁ = workspace.Hₖ₋₂, workspace.Hₖ₋₁
+    τₖ₋₂, τₖ₋₁ = workspace.τₖ₋₂, workspace.τₖ₋₁
+    warm_start = workspace.warm_start
     RNorms = stats.residuals
     reset!(stats)
     R₀ = warm_start ? Q : B
 
-    # Temporary buffers -- should be stored in the solver
+    # Temporary buffers -- should be stored in the workspace
     Ψₖ = similar(B, p, p)
     Ωₖ = similar(B, p, p)
     Ψₖ₊₁ = similar(B, p, p)
@@ -281,7 +281,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
       copyto!(Ψₖ, Ψₖ₊₁)
 
       # Update stopping criterion.
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       solved = RNorm ≤ ε
       tired = iter ≥ itmax
       timer = time_ns() - start_time
@@ -298,13 +298,13 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
 
     # Update Xₖ
     warm_start && (X .+= ΔX)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter
     stats.solved = solved
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

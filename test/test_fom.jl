@@ -126,7 +126,7 @@
       end
       
       # test callback function
-      @test_throws TypeError fom(A, b, restart = true, callback = solver -> "string", history = true)
+      @test_throws TypeError fom(A, b, restart = true, callback = workspace -> "string", history = true)
     end
   end
 end

@@ -302,14 +302,14 @@
       end
 
       # test callback function
-      # Not testing with an interesting callback because solver.x and solver.y are not updated 
-      # until the end of the algorithm (TODO: be able to evaluate solver.x and solver.y ?)
+      # Not testing with an interesting callback because workspace.x and workspace.y are not updated 
+      # until the end of the algorithm (TODO: be able to evaluate workspace.x and workspace.y ?)
       A, b, c = square_adjoint(FC=FC)
-      solver = GpmrSolver(A, b; memory = 20)
-      gpmr!(solver, A, A', b, c, callback = solver -> true)
-      @test solver.stats.status == "user-requested exit"
+      workspace = GpmrWorkspace(A, b; memory = 20)
+      gpmr!(workspace, A, A', b, c, callback = workspace -> true)
+      @test workspace.stats.status == "user-requested exit"
 
-      @test_throws TypeError gpmr(A, A', b, c, callback = solver -> "string", history = true)
+      @test_throws TypeError gpmr(A, A', b, c, callback = workspace -> "string", history = true)
     end
   end
 end

@@ -26,7 +26,7 @@ export crls, crls!
                       λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
                       itmax::Int=0, timemax::Float64=Inf,
                       verbose::Int=0, history::Bool=false,
-                      callback=solver->false, iostream::IO=kstdout)
+                      callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -63,7 +63,7 @@ but simpler to implement.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -78,29 +78,29 @@ but simpler to implement.
 function crls end
 
 """
-    solver = crls!(solver::CrlsSolver, A, b; kwargs...)
+    workspace = crls!(workspace::CrlsWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`crls`](@ref).
 
-See [`CrlsSolver`](@ref) for more details about the `solver`.
+See [`CrlsWorkspace`](@ref) for more details about the `workspace`.
 """
 function crls! end
 
 def_args_crls = (:(A                    ),
                  :(b::AbstractVector{FC}))
 
-def_kwargs_crls = (:(; M = I                     ),
-                   :(; ldiv::Bool = false        ),
-                   :(; radius::T = zero(T)       ),
-                   :(; λ::T = zero(T)            ),
-                   :(; atol::T = √eps(T)         ),
-                   :(; rtol::T = √eps(T)         ),
-                   :(; itmax::Int = 0            ),
-                   :(; timemax::Float64 = Inf    ),
-                   :(; verbose::Int = 0          ),
-                   :(; history::Bool = false     ),
-                   :(; callback = solver -> false),
-                   :(; iostream::IO = kstdout    ))
+def_kwargs_crls = (:(; M = I                        ),
+                   :(; ldiv::Bool = false           ),
+                   :(; radius::T = zero(T)          ),
+                   :(; λ::T = zero(T)               ),
+                   :(; atol::T = √eps(T)            ),
+                   :(; rtol::T = √eps(T)            ),
+                   :(; itmax::Int = 0               ),
+                   :(; timemax::Float64 = Inf       ),
+                   :(; verbose::Int = 0             ),
+                   :(; history::Bool = false        ),
+                   :(; callback = workspace -> false),
+                   :(; iostream::IO = kstdout       ))
 
 def_kwargs_crls = extract_parameters.(def_kwargs_crls)
 
@@ -108,14 +108,14 @@ args_crls = (:A, :b)
 kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function crls!(solver :: CrlsSolver{T,FC,S}, $(def_args_crls...); $(def_kwargs_crls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function crls!(workspace :: CrlsWorkspace{T,FC,S}, $(def_args_crls...); $(def_kwargs_crls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CRLS: system of %d equations in %d variables\n", m, n)
 
@@ -130,14 +130,14 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :Ms, S, solver.r)  # The length of Ms is m
-    x, p, Ar, q = solver.x, solver.p, solver.Ar, solver.q
-    r, Ap, s, stats = solver.r, solver.Ap, solver.s, solver.stats
+    allocate_if(!MisI, workspace, :Ms, S, workspace.r)  # The length of Ms is m
+    x, p, Ar, q = workspace.x, workspace.p, workspace.Ar, workspace.q
+    r, Ap, s, stats = workspace.r, workspace.Ap, workspace.s, workspace.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
-    Ms  = MisI ? s  : solver.Ms
-    Mr  = MisI ? r  : solver.Ms
-    MAp = MisI ? Ap : solver.Ms
+    Ms  = MisI ? s  : workspace.Ms
+    Mr  = MisI ? r  : workspace.Ms
+    MAp = MisI ? Ap : workspace.Ms
 
     kfill!(x, zero(FC))
     kcopy!(m, r, b)      # r ← b
@@ -150,7 +150,7 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       history && push!(ArNorms, zero(T))
-      return solver
+      return workspace
     end
 
     MisI || mulorldiv!(Mr, M, r, ldiv)
@@ -233,7 +233,7 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
       history && push!(ArNorms, ArNorm)
       iter = iter + 1
       kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %.2fs\n", iter, ArNorm, rNorm, start_time |> ktimer)
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       solved = (ArNorm ≤ ε) || on_boundary
       tired = iter ≥ itmax
       timer = time_ns() - start_time
@@ -255,6 +255,6 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     stats.inconsistent = false
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

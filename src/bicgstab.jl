@@ -21,7 +21,7 @@ export bicgstab, bicgstab!
                           ldiv::Bool=false, atol::T=√eps(T),
                           rtol::T=√eps(T), itmax::Int=0,
                           timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                          callback=solver->false, iostream::IO=kstdout)
+                          callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -63,7 +63,7 @@ BICGSTAB stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol 
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -79,12 +79,12 @@ BICGSTAB stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol 
 function bicgstab end
 
 """
-    solver = bicgstab!(solver::BicgstabSolver, A, b; kwargs...)
-    solver = bicgstab!(solver::BicgstabSolver, A, b, x0; kwargs...)
+    workspace = bicgstab!(workspace::BicgstabWorkspace, A, b; kwargs...)
+    workspace = bicgstab!(workspace::BicgstabWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`bicgstab`](@ref).
 
-See [`BicgstabSolver`](@ref) for more details about the `solver`.
+See [`BicgstabWorkspace`](@ref) for more details about the `workspace`.
 """
 function bicgstab! end
 
@@ -93,18 +93,18 @@ def_args_bicgstab = (:(A                    ),
 
 def_optargs_bicgstab = (:(x0::AbstractVector),)
 
-def_kwargs_bicgstab = (:(; c::AbstractVector{FC} = b ),
-                       :(; M = I                     ),
-                       :(; N = I                     ),
-                       :(; ldiv::Bool = false        ),
-                       :(; atol::T = √eps(T)         ),
-                       :(; rtol::T = √eps(T)         ),
-                       :(; itmax::Int = 0            ),
-                       :(; timemax::Float64 = Inf    ),
-                       :(; verbose::Int = 0          ),
-                       :(; history::Bool = false     ),
-                       :(; callback = solver -> false),
-                       :(; iostream::IO = kstdout    ))
+def_kwargs_bicgstab = (:(; c::AbstractVector{FC} = b    ),
+                       :(; M = I                        ),
+                       :(; N = I                        ),
+                       :(; ldiv::Bool = false           ),
+                       :(; atol::T = √eps(T)            ),
+                       :(; rtol::T = √eps(T)            ),
+                       :(; itmax::Int = 0               ),
+                       :(; timemax::Float64 = Inf       ),
+                       :(; verbose::Int = 0             ),
+                       :(; history::Bool = false        ),
+                       :(; callback = workspace -> false),
+                       :(; iostream::IO = kstdout       ))
 
 def_kwargs_bicgstab = extract_parameters.(def_kwargs_bicgstab)
 
@@ -113,14 +113,14 @@ optargs_bicgstab = (:x0,)
 kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function bicgstab!(solver :: BicgstabSolver{T,FC,S}, $(def_args_bicgstab...); $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function bicgstab!(workspace :: BicgstabWorkspace{T,FC,S}, $(def_args_bicgstab...); $(def_kwargs_bicgstab...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "BICGSTAB: system of size %d\n", n)
@@ -135,17 +135,17 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     ktypeof(c) == S || error("ktypeof(c) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :t , S, solver.x)  # The length of t is n
-    allocate_if(!NisI, solver, :yz, S, solver.x)  # The length of yz is n
-    Δx, x, r, p, v, s, qd, stats = solver.Δx, solver.x, solver.r, solver.p, solver.v, solver.s, solver.qd, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, workspace, :t , S, workspace.x)  # The length of t is n
+    allocate_if(!NisI, workspace, :yz, S, workspace.x)  # The length of yz is n
+    Δx, x, r, p, v, s, qd, stats = workspace.Δx, workspace.x, workspace.r, workspace.p, workspace.v, workspace.s, workspace.qd, workspace.stats
+    warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
-    q = d = solver.qd
-    t = MisI ? d : solver.t
-    y = NisI ? p : solver.yz
-    z = NisI ? s : solver.yz
-    r₀ = MisI ? r : solver.qd
+    q = d = workspace.qd
+    t = MisI ? d : workspace.t
+    y = NisI ? p : workspace.yz
+    z = NisI ? s : workspace.yz
+    r₀ = MisI ? r : workspace.qd
 
     if warm_start
       mul!(r₀, A, Δx)
@@ -173,8 +173,8 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
-      return solver
+      workspace.warm_start = false
+      return workspace
     end
 
     iter = 0
@@ -191,8 +191,8 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       stats.timer = start_time |> ktimer
       stats.status = "Breakdown bᴴc = 0"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
-      return solver
+      workspace.warm_start = false
+      return workspace
     end
 
     # Stopping criterion.
@@ -236,7 +236,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       resid_decrease_mach = (rNorm + one(T) ≤ one(T))
 
       # Update stopping criterion.
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       resid_decrease_lim = rNorm ≤ ε
       solved = resid_decrease_lim || resid_decrease_mach
       tired = iter ≥ itmax
@@ -256,7 +256,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter
@@ -264,6 +264,6 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     stats.inconsistent = false
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

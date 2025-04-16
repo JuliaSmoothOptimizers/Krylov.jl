@@ -16,7 +16,7 @@ export gmres, gmres!
                        restart::Bool=false, reorthogonalization::Bool=false,
                        atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                        timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                       callback=solver->false, iostream::IO=kstdout)
+                       callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -52,7 +52,7 @@ GMRES algorithm is based on the Arnoldi process and computes a sequence of appro
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -67,16 +67,16 @@ GMRES algorithm is based on the Arnoldi process and computes a sequence of appro
 function gmres end
 
 """
-    solver = gmres!(solver::GmresSolver, A, b; kwargs...)
-    solver = gmres!(solver::GmresSolver, A, b, x0; kwargs...)
+    workspace = gmres!(workspace::GmresWorkspace, A, b; kwargs...)
+    workspace = gmres!(workspace::GmresWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`gmres`](@ref).
 
 The keyword argument `memory` is the only exception.
-It is only supported by [`gmres`](@ref) and is required to create a `GmresSolver`.
+It is only supported by [`gmres`](@ref) and is required to create a `GmresWorkspace`.
 It cannot be changed later.
 
-See [`GmresSolver`](@ref) for more details about the `solver`.
+See [`GmresWorkspace`](@ref) for more details about the `workspace`.
 """
 function gmres! end
 
@@ -96,7 +96,7 @@ def_kwargs_gmres = (:(; M = I                            ),
                     :(; timemax::Float64 = Inf           ),
                     :(; verbose::Int = 0                 ),
                     :(; history::Bool = false            ),
-                    :(; callback = solver -> false       ),
+                    :(; callback = workspace -> false    ),
                     :(; iostream::IO = kstdout           ))
 
 def_kwargs_gmres = extract_parameters.(def_kwargs_gmres)
@@ -106,14 +106,14 @@ optargs_gmres = (:x0,)
 kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function gmres!(solver :: GmresSolver{T,FC,S}, $(def_args_gmres...); $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function gmres!(workspace :: GmresWorkspace{T,FC,S}, $(def_args_gmres...); $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "GMRES: system of size %d\n", n)
@@ -127,16 +127,16 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI  , solver, :q , S, solver.x)  # The length of q is n
-    allocate_if(!NisI  , solver, :p , S, solver.x)  # The length of p is n
-    allocate_if(restart, solver, :Δx, S, solver.x)  # The length of Δx is n
-    Δx, x, w, V, z = solver.Δx, solver.x, solver.w, solver.V, solver.z
-    c, s, R, stats = solver.c, solver.s, solver.R, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI  , workspace, :q , S, workspace.x)  # The length of q is n
+    allocate_if(!NisI  , workspace, :p , S, workspace.x)  # The length of p is n
+    allocate_if(restart, workspace, :Δx, S, workspace.x)  # The length of Δx is n
+    Δx, x, w, V, z = workspace.Δx, workspace.x, workspace.w, workspace.V, workspace.z
+    c, s, R, stats = workspace.c, workspace.s, workspace.R, workspace.stats
+    warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
-    q  = MisI ? w : solver.q
-    r₀ = MisI ? w : solver.q
+    q  = MisI ? w : workspace.q
+    r₀ = MisI ? w : workspace.q
     xr = restart ? Δx : x
 
     # Initial solution x₀.
@@ -163,8 +163,8 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
-      return solver
+      workspace.warm_start = false
+      return workspace
     end
 
     mem = length(c)  # Memory
@@ -219,14 +219,14 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
       kdivcopy!(n, V[1], r₀, rNorm)  # v₁ = r₀ / ‖r₀‖
 
       npass = npass + 1
-      solver.inner_iter = 0
+      workspace.inner_iter = 0
       inner_tired = false
 
       while !(solved || inner_tired || breakdown || user_requested_exit || overtimed)
 
         # Update iteration index
-        solver.inner_iter = solver.inner_iter + 1
-        inner_iter = solver.inner_iter
+        workspace.inner_iter = workspace.inner_iter + 1
+        inner_iter = workspace.inner_iter
 
         # Update workspace if more storage is required and restart is set to false
         if !restart && (inner_iter > mem)
@@ -238,7 +238,7 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
         end
 
         # Continue the Arnoldi process.
-        p = NisI ? V[inner_iter] : solver.p
+        p = NisI ? V[inner_iter] : workspace.p
         NisI || mulorldiv!(p, N, V[inner_iter], ldiv)  # p ← Nvₖ
         mul!(w, A, p)                                  # w ← ANvₖ
         MisI || mulorldiv!(q, M, w, ldiv)              # q ← MANvₖ
@@ -291,7 +291,7 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
         resid_decrease_mach = (rNorm + one(T) ≤ one(T))
         
         # Update stopping criterion.
-        user_requested_exit = callback(solver) :: Bool
+        user_requested_exit = callback(workspace) :: Bool
         resid_decrease_lim = rNorm ≤ ε
         breakdown = Hbis ≤ btol
         solved = resid_decrease_lim || resid_decrease_mach
@@ -303,7 +303,7 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
         # Compute vₖ₊₁.
         if !(solved || inner_tired || breakdown || user_requested_exit || overtimed)
           if !restart && (inner_iter ≥ mem)
-            push!(V, similar(solver.x))
+            push!(V, similar(workspace.x))
             push!(z, zero(FC))
           end
           kdivcopy!(n, V[inner_iter+1], q, Hbis)  # vₖ₊₁ = q / hₖ₊₁.ₖ
@@ -333,8 +333,8 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
         kaxpy!(n, y[i], V[i], xr)
       end
       if !NisI
-        kcopy!(n, solver.p, xr)  # p ← xr
-        mulorldiv!(xr, N, solver.p, ldiv)
+        kcopy!(n, workspace.p, xr)  # p ← xr
+        mulorldiv!(xr, N, workspace.p, ldiv)
       end
       restart && kaxpy!(n, one(FC), xr, x)
 
@@ -356,7 +356,7 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
 
     # Update x
     warm_start && !restart && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter
@@ -364,6 +364,6 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

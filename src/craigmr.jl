@@ -32,7 +32,7 @@ export craigmr, craigmr!
                             sqd::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                             rtol::T=√eps(T), itmax::Int=0,
                             timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                            callback=solver->false, iostream::IO=kstdout)
+                            callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -101,7 +101,7 @@ returned.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -118,30 +118,30 @@ returned.
 function craigmr end
 
 """
-    solver = craigmr!(solver::CraigmrSolver, A, b; kwargs...)
+    workspace = craigmr!(workspace::CraigmrWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`craigmr`](@ref).
 
-See [`CraigmrSolver`](@ref) for more details about the `solver`.
+See [`CraigmrWorkspace`](@ref) for more details about the `workspace`.
 """
 function craigmr! end
 
 def_args_craigmr = (:(A                    ),
                     :(b::AbstractVector{FC}))
 
-def_kwargs_craigmr = (:(; M = I                     ),
-                      :(; N = I                     ),
-                      :(; ldiv::Bool = false        ),
-                      :(; sqd::Bool = false         ),
-                      :(; λ::T = zero(T)            ),
-                      :(; atol::T = √eps(T)         ),
-                      :(; rtol::T = √eps(T)         ),
-                      :(; itmax::Int = 0            ),
-                      :(; timemax::Float64 = Inf    ),
-                      :(; verbose::Int = 0          ),
-                      :(; history::Bool = false     ),
-                      :(; callback = solver -> false),
-                      :(; iostream::IO = kstdout    ))
+def_kwargs_craigmr = (:(; M = I                        ),
+                      :(; N = I                        ),
+                      :(; ldiv::Bool = false           ),
+                      :(; sqd::Bool = false            ),
+                      :(; λ::T = zero(T)               ),
+                      :(; atol::T = √eps(T)            ),
+                      :(; rtol::T = √eps(T)            ),
+                      :(; itmax::Int = 0               ),
+                      :(; timemax::Float64 = Inf       ),
+                      :(; verbose::Int = 0             ),
+                      :(; history::Bool = false        ),
+                      :(; callback = workspace -> false),
+                      :(; iostream::IO = kstdout       ))
 
 def_kwargs_craigmr = extract_parameters.(def_kwargs_craigmr)
 
@@ -149,14 +149,14 @@ args_craigmr = (:A, :b)
 kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function craigmr!(solver :: CraigmrSolver{T,FC,S}, $(def_args_craigmr...); $(def_kwargs_craigmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function craigmr!(workspace :: CraigmrWorkspace{T,FC,S}, $(def_args_craigmr...); $(def_kwargs_craigmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CRAIGMR: system of %d equations in %d variables\n", m, n)
 
@@ -176,15 +176,15 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :u, S, solver.y)  # The length of u is m
-    allocate_if(!NisI, solver, :v, S, solver.x)  # The length of v is n
-    allocate_if(λ > 0, solver, :q, S, solver.x)  # The length of q is n
-    x, Nv, Aᴴu, d, y, Mu = solver.x, solver.Nv, solver.Aᴴu, solver.d, solver.y, solver.Mu
-    w, wbar, Av, q, stats = solver.w, solver.wbar, solver.Av, solver.q, solver.stats
+    allocate_if(!MisI, workspace, :u, S, workspace.y)  # The length of u is m
+    allocate_if(!NisI, workspace, :v, S, workspace.x)  # The length of v is n
+    allocate_if(λ > 0, workspace, :q, S, workspace.x)  # The length of q is n
+    x, Nv, Aᴴu, d, y, Mu = workspace.x, workspace.Nv, workspace.Aᴴu, workspace.d, workspace.y, workspace.Mu
+    w, wbar, Av, q, stats = workspace.w, workspace.wbar, workspace.Av, workspace.q, workspace.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
-    u = MisI ? Mu : solver.u
-    v = NisI ? Nv : solver.v
+    u = MisI ? Mu : workspace.u
+    v = NisI ? Nv : workspace.v
 
     # Compute y such that AAᴴy = b. Then recover x = Aᴴy.
     kfill!(x, zero(FC))
@@ -199,7 +199,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       history && push!(ArNorms, zero(T))
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
-      return solver
+      return workspace
     end
 
     # Initialize Golub-Kahan process.
@@ -227,7 +227,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       history && push!(ArNorms, zero(T))
       stats.timer = start_time |> ktimer
       stats.status = "x is a minimum least-squares solution"
-      return solver
+      return workspace
     end
     kdiv!(n, v, α)
     NisI || kdiv!(n, Nv, α)
@@ -361,7 +361,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       θ    =  s * αhat
       ρbar = -c * αhat
 
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       solved = rNorm ≤ ɛ_c
       inconsistent = (rNorm > 100 * ɛ_c) & (ArNorm ≤ ɛ_i)
       tired = iter ≥ itmax
@@ -383,6 +383,6 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

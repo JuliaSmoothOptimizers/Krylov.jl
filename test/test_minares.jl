@@ -77,14 +77,14 @@
 
       # test callback function
       A, b = sparse_laplacian(FC=FC)
-      solver = MinaresSolver(A, b)
+      workspace = MinaresWorkspace(A, b)
       tol = 1.0
       cb_n2 = TestCallbackN2(A, b, tol = tol)
-      minares!(solver, A, b, atol = 0.0, rtol = 0.0, Artol = 0.0, callback = cb_n2)
-      @test solver.stats.status == "user-requested exit"
-      @test cb_n2(solver)
+      minares!(workspace, A, b, atol = 0.0, rtol = 0.0, Artol = 0.0, callback = cb_n2)
+      @test workspace.stats.status == "user-requested exit"
+      @test cb_n2(workspace)
 
-      @test_throws TypeError minares(A, b, callback = solver -> "string", history = true)
+      @test_throws TypeError minares(A, b, callback = workspace -> "string", history = true)
     end
   end
 end

@@ -79,14 +79,14 @@
 
       # test callback function
       A, b = cartesian_poisson(FC=FC)
-      solver = CgSolver(A, b)
+      workspace = CgWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2(A, b, tol = tol)
-      cg!(solver, A, b, callback = cb_n2)
-      @test solver.stats.status == "user-requested exit"
-      @test cb_n2(solver)
+      cg!(workspace, A, b, callback = cb_n2)
+      @test workspace.stats.status == "user-requested exit"
+      @test cb_n2(workspace)
 
-      @test_throws TypeError cg(A, b, callback = solver -> "string", history = true)
+      @test_throws TypeError cg(A, b, callback = workspace -> "string", history = true)
     end
   end
 end

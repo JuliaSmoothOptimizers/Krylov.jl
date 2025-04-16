@@ -19,7 +19,7 @@ export symmlq, symmlq!
                         conlim::T=1/√eps(T), atol::T=√eps(T),
                         rtol::T=√eps(T), itmax::Int=0,
                         timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                        callback=solver->false, iostream::IO=kstdout)
+                        callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -61,7 +61,7 @@ SYMMLQ produces monotonic errors ‖x* - x‖₂.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -76,12 +76,12 @@ SYMMLQ produces monotonic errors ‖x* - x‖₂.
 function symmlq end
 
 """
-    solver = symmlq!(solver::SymmlqSolver, A, b; kwargs...)
-    solver = symmlq!(solver::SymmlqSolver, A, b, x0; kwargs...)
+    workspace = symmlq!(workspace::SymmlqWorkspace, A, b; kwargs...)
+    workspace = symmlq!(workspace::SymmlqWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`symmlq`](@ref).
 
-See [`SymmlqSolver`](@ref) for more details about the `solver`.
+See [`SymmlqWorkspace`](@ref) for more details about the `workspace`.
 """
 function symmlq! end
 
@@ -90,21 +90,21 @@ def_args_symmlq = (:(A                    ),
 
 def_optargs_symmlq = (:(x0::AbstractVector),)
 
-def_kwargs_symmlq = (:(; M = I                      ),
-                     :(; ldiv::Bool = false         ),
-                     :(; transfer_to_cg::Bool = true),
-                     :(; λ::T = zero(T)             ),
-                     :(; λest::T = zero(T)          ),
-                     :(; atol::T = √eps(T)          ),
-                     :(; rtol::T = √eps(T)          ),
-                     :(; etol::T = √eps(T)          ),
-                     :(; conlim::T = 1/√eps(T)      ),
-                     :(; itmax::Int = 0             ),
-                     :(; timemax::Float64 = Inf     ),
-                     :(; verbose::Int = 0           ),
-                     :(; history::Bool = false      ),
-                     :(; callback = solver -> false ),
-                     :(; iostream::IO = kstdout     ))
+def_kwargs_symmlq = (:(; M = I                         ),
+                     :(; ldiv::Bool = false            ),
+                     :(; transfer_to_cg::Bool = true   ),
+                     :(; λ::T = zero(T)                ),
+                     :(; λest::T = zero(T)             ),
+                     :(; atol::T = √eps(T)             ),
+                     :(; rtol::T = √eps(T)             ),
+                     :(; etol::T = √eps(T)             ),
+                     :(; conlim::T = 1/√eps(T)         ),
+                     :(; itmax::Int = 0                ),
+                     :(; timemax::Float64 = Inf        ),
+                     :(; verbose::Int = 0              ),
+                     :(; history::Bool = false         ),
+                     :(; callback = workspace -> false ),
+                     :(; iostream::IO = kstdout        ))
 
 def_kwargs_symmlq = extract_parameters.(def_kwargs_symmlq)
 
@@ -113,14 +113,14 @@ optargs_symmlq = (:x0,)
 kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function symmlq!(solver :: SymmlqSolver{T,FC,S}, $(def_args_symmlq...); $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function symmlq!(workspace :: SymmlqWorkspace{T,FC,S}, $(def_args_symmlq...); $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "SYMMLQ: system of size %d\n", n)
@@ -133,15 +133,15 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, solver.x)  # The length of v is n
-    x, Mvold, Mv, Mv_next, w̅ = solver.x, solver.Mvold, solver.Mv, solver.Mv_next, solver.w̅
-    Δx, clist, zlist, sprod, stats = solver.Δx, solver.clist, solver.zlist, solver.sprod, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, workspace, :v, S, workspace.x)  # The length of v is n
+    x, Mvold, Mv, Mv_next, w̅ = workspace.x, workspace.Mvold, workspace.Mv, workspace.Mv_next, workspace.w̅
+    Δx, clist, zlist, sprod, stats = workspace.Δx, workspace.clist, workspace.zlist, workspace.sprod, workspace.stats
+    warm_start = workspace.warm_start
     rNorms, rcgNorms = stats.residuals, stats.residualscg
     errors, errorscg = stats.errors, stats.errorscg
     reset!(stats)
-    v = MisI ? Mv : solver.v
-    vold = MisI ? Mvold : solver.v
+    v = MisI ? Mv : workspace.v
+    vold = MisI ? Mvold : workspace.v
 
     ϵM = eps(T)
     ctol = conlim > 0 ? inv(conlim) : zero(T)
@@ -171,8 +171,8 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
-      return solver
+      workspace.warm_start = false
+      return workspace
     end
     β₁ = sqrt(β₁)
     β = β₁
@@ -408,7 +408,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
       solved_lq = rNorm ≤ tol
       solved_cg = transfer_to_cg && (γbar ≠ 0) && rcgNorm ≤ tol
       
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       zero_resid = solved_lq || solved_cg
       ill_cond = ill_cond_mach || ill_cond_lim
       solved = solved_mach || zero_resid || zero_resid_mach || zero_resid_lim || fwd_err || resid_decrease_mach
@@ -435,7 +435,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter
@@ -444,6 +444,6 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     stats.Acond = Acond
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

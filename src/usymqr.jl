@@ -27,7 +27,7 @@ export usymqr, usymqr!
     (x, stats) = usymqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
                         atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                         timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                        callback=solver->false, iostream::IO=kstdout)
+                        callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -66,7 +66,7 @@ USYMQR finds the minimum-norm solution if problems are inconsistent.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -84,12 +84,12 @@ USYMQR finds the minimum-norm solution if problems are inconsistent.
 function usymqr end
 
 """
-    solver = usymqr!(solver::UsymqrSolver, A, b, c; kwargs...)
-    solver = usymqr!(solver::UsymqrSolver, A, b, c, x0; kwargs...)
+    workspace = usymqr!(workspace::UsymqrWorkspace, A, b, c; kwargs...)
+    workspace = usymqr!(workspace::UsymqrWorkspace, A, b, c, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`usymqr`](@ref).
 
-See [`UsymqrSolver`](@ref) for more details about the `solver`.
+See [`UsymqrWorkspace`](@ref) for more details about the `workspace`.
 """
 function usymqr! end
 
@@ -99,14 +99,14 @@ def_args_usymqr = (:(A                    ),
 
 def_optargs_usymqr = (:(x0::AbstractVector),)
 
-def_kwargs_usymqr = (:(; atol::T = √eps(T)         ),
-                     :(; rtol::T = √eps(T)         ),
-                     :(; itmax::Int = 0            ),
-                     :(; timemax::Float64 = Inf    ),
-                     :(; verbose::Int = 0          ),
-                     :(; history::Bool = false     ),
-                     :(; callback = solver -> false),
-                     :(; iostream::IO = kstdout    ))
+def_kwargs_usymqr = (:(; atol::T = √eps(T)            ),
+                     :(; rtol::T = √eps(T)            ),
+                     :(; itmax::Int = 0               ),
+                     :(; timemax::Float64 = Inf       ),
+                     :(; verbose::Int = 0             ),
+                     :(; history::Bool = false        ),
+                     :(; callback = workspace -> false),
+                     :(; iostream::IO = kstdout       ))
 
 def_kwargs_usymqr = extract_parameters.(def_kwargs_usymqr)
 
@@ -115,14 +115,14 @@ optargs_usymqr = (:x0,)
 kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function usymqr!(solver :: UsymqrSolver{T,FC,S}, $(def_args_usymqr...); $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function usymqr!(workspace :: UsymqrWorkspace{T,FC,S}, $(def_args_usymqr...); $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     length(c) == n || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "USYMQR: system of %d equations in %d variables\n", m, n)
@@ -136,9 +136,9 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
     Aᴴ = A'
 
     # Set up workspace.
-    vₖ₋₁, vₖ, q, Δx, x, p = solver.vₖ₋₁, solver.vₖ, solver.q, solver.Δx, solver.x, solver.p
-    wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, stats = solver.wₖ₋₂, solver.wₖ₋₁, solver.uₖ₋₁, solver.uₖ, solver.stats
-    warm_start = solver.warm_start
+    vₖ₋₁, vₖ, q, Δx, x, p = workspace.vₖ₋₁, workspace.vₖ, workspace.q, workspace.Δx, workspace.x, workspace.p
+    wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, stats = workspace.wₖ₋₂, workspace.wₖ₋₁, workspace.uₖ₋₁, workspace.uₖ, workspace.stats
+    warm_start = workspace.warm_start
     rNorms, AᴴrNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
     r₀ = warm_start ? q : b
@@ -159,8 +159,8 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
-      return solver
+      workspace.warm_start = false
+      return workspace
     end
 
     iter = 0
@@ -322,7 +322,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
 
       # Update stopping criterion.
       iter == 1 && (κ = atol + rtol * AᴴrNorm)
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       solved = rNorm ≤ ε
       inconsistent = !solved && AᴴrNorm ≤ κ
       tired = iter ≥ itmax
@@ -340,7 +340,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter
@@ -348,6 +348,6 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

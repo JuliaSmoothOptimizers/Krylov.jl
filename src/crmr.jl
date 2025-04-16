@@ -32,7 +32,7 @@ export crmr, crmr!
                       λ::T=zero(T), atol::T=√eps(T),
                       rtol::T=√eps(T), itmax::Int=0,
                       timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                      callback=solver->false, iostream::IO=kstdout)
+                      callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -75,7 +75,7 @@ but simpler to implement. Only the x-part of the solution is returned.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -91,28 +91,28 @@ but simpler to implement. Only the x-part of the solution is returned.
 function crmr end
 
 """
-    solver = crmr!(solver::CrmrSolver, A, b; kwargs...)
+    workspace = crmr!(workspace::CrmrWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`crmr`](@ref).
 
-See [`CrmrSolver`](@ref) for more details about the `solver`.
+See [`CrmrWorkspace`](@ref) for more details about the `workspace`.
 """
 function crmr! end
 
 def_args_crmr = (:(A                    ),
                  :(b::AbstractVector{FC}))
 
-def_kwargs_crmr = (:(; N = I                     ),
-                   :(; ldiv::Bool = false        ),
-                   :(; λ::T = zero(T)            ),
-                   :(; atol::T = √eps(T)         ),
-                   :(; rtol::T = √eps(T)         ),
-                   :(; itmax::Int = 0            ),
-                   :(; timemax::Float64 = Inf    ),
-                   :(; verbose::Int = 0          ),
-                   :(; history::Bool = false     ),
-                   :(; callback = solver -> false),
-                   :(; iostream::IO = kstdout    ))
+def_kwargs_crmr = (:(; N = I                        ),
+                   :(; ldiv::Bool = false           ),
+                   :(; λ::T = zero(T)               ),
+                   :(; atol::T = √eps(T)            ),
+                   :(; rtol::T = √eps(T)            ),
+                   :(; itmax::Int = 0               ),
+                   :(; timemax::Float64 = Inf       ),
+                   :(; verbose::Int = 0             ),
+                   :(; history::Bool = false        ),
+                   :(; callback = workspace -> false),
+                   :(; iostream::IO = kstdout       ))
 
 def_kwargs_crmr = extract_parameters.(def_kwargs_crmr)
 
@@ -120,14 +120,14 @@ args_crmr = (:A, :b)
 kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function crmr!(solver :: CrmrSolver{T,FC,S}, $(def_args_crmr...); $(def_kwargs_crmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function crmr!(workspace :: CrmrWorkspace{T,FC,S}, $(def_args_crmr...); $(def_kwargs_crmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CRMR: system of %d equations in %d variables\n", m, n)
 
@@ -142,13 +142,13 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!NisI, solver, :Nq, S, solver.r)  # The length of Nq is m
-    allocate_if(λ > 0, solver, :s , S, solver.r)  # The length of s is m
-    x, p, Aᴴr, r = solver.x, solver.p, solver.Aᴴr, solver.r
-    q, s, stats = solver.q, solver.s, solver.stats
+    allocate_if(!NisI, workspace, :Nq, S, workspace.r)  # The length of Nq is m
+    allocate_if(λ > 0, workspace, :s , S, workspace.r)  # The length of s is m
+    x, p, Aᴴr, r = workspace.x, workspace.p, workspace.Aᴴr, workspace.r
+    q, s, stats = workspace.q, workspace.s, workspace.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
-    Nq = NisI ? q : solver.Nq
+    Nq = NisI ? q : workspace.Nq
 
     kfill!(x, zero(FC))        # initial estimation x = 0
     mulorldiv!(r, N, b, ldiv)  # initial residual r = N * (b - Ax) = N * b
@@ -161,7 +161,7 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       history && push!(ArNorms, zero(T))
-      return solver
+      return workspace
     end
     λ > 0 && kcopy!(m, s, r)  # s ← r
     mul!(Aᴴr, Aᴴ, r)          # - λ * x0 if x0 ≠ 0.
@@ -209,7 +209,7 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       history && push!(ArNorms, ArNorm)
       iter = iter + 1
       kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %8.2e  %.2fs\n", iter, ArNorm, rNorm, start_time |> ktimer)
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       solved = rNorm ≤ ɛ_c
       inconsistent = (rNorm > 100 * ɛ_c) && (ArNorm ≤ ɛ_i)
       tired = iter ≥ itmax
@@ -231,6 +231,6 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

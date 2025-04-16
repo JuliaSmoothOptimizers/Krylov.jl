@@ -19,7 +19,7 @@ export trimr, trimr!
                           τ::T=one(T), ν::T=-one(T), atol::T=√eps(T),
                           rtol::T=√eps(T), itmax::Int=0,
                           timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                          callback=solver->false, iostream::IO=kstdout)
+                          callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -77,7 +77,7 @@ TriMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -93,12 +93,12 @@ TriMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + �
 function trimr end
 
 """
-    solver = trimr!(solver::TrimrSolver, A, b, c; kwargs...)
-    solver = trimr!(solver::TrimrSolver, A, b, c, x0, y0; kwargs...)
+    workspace = trimr!(workspace::TrimrWorkspace, A, b, c; kwargs...)
+    workspace = trimr!(workspace::TrimrWorkspace, A, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`trimr`](@ref).
 
-See [`TrimrSolver`](@ref) for more details about the `solver`.
+See [`TrimrWorkspace`](@ref) for more details about the `workspace`.
 """
 function trimr! end
 
@@ -109,23 +109,23 @@ def_args_trimr = (:(A                    ),
 def_optargs_trimr = (:(x0::AbstractVector),
                      :(y0::AbstractVector))
 
-def_kwargs_trimr = (:(; M = I                     ),
-                    :(; N = I                     ),
-                    :(; ldiv::Bool = false        ),
-                    :(; spd::Bool = false         ),
-                    :(; snd::Bool = false         ),
-                    :(; flip::Bool = false        ),
-                    :(; sp::Bool = false          ),
-                    :(; τ::T = one(T)             ),
-                    :(; ν::T = -one(T)            ),
-                    :(; atol::T = √eps(T)         ),
-                    :(; rtol::T = √eps(T)         ),
-                    :(; itmax::Int = 0            ),
-                    :(; timemax::Float64 = Inf    ),
-                    :(; verbose::Int = 0          ),
-                    :(; history::Bool = false     ),
-                    :(; callback = solver -> false),
-                    :(; iostream::IO = kstdout    ))
+def_kwargs_trimr = (:(; M = I                        ),
+                    :(; N = I                        ),
+                    :(; ldiv::Bool = false           ),
+                    :(; spd::Bool = false            ),
+                    :(; snd::Bool = false            ),
+                    :(; flip::Bool = false           ),
+                    :(; sp::Bool = false             ),
+                    :(; τ::T = one(T)                ),
+                    :(; ν::T = -one(T)               ),
+                    :(; atol::T = √eps(T)            ),
+                    :(; rtol::T = √eps(T)            ),
+                    :(; itmax::Int = 0               ),
+                    :(; timemax::Float64 = Inf       ),
+                    :(; verbose::Int = 0             ),
+                    :(; history::Bool = false        ),
+                    :(; callback = workspace -> false),
+                    :(; iostream::IO = kstdout       ))
 
 def_kwargs_trimr = extract_parameters.(def_kwargs_trimr)
 
@@ -134,14 +134,14 @@ optargs_trimr = (:x0, :y0)
 kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function trimr!(solver :: TrimrSolver{T,FC,S}, $(def_args_trimr...); $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function trimr!(workspace :: TrimrWorkspace{T,FC,S}, $(def_args_trimr...); $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     length(c) == n || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "TriMR: system of %d equations in %d variables\n", m+n, m+n)
@@ -169,7 +169,7 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     snd  && (τ = -one(T) ; ν = -one(T))
     sp   && (τ =  one(T) ; ν = zero(T))
 
-    warm_start = solver.warm_start
+    warm_start = workspace.warm_start
     warm_start && (τ ≠ 0) && !MisI && error("Warm-start with preconditioners is not supported.")
     warm_start && (ν ≠ 0) && !NisI && error("Warm-start with preconditioners is not supported.")
 
@@ -177,20 +177,20 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :vₖ, S, solver.x)  # The length of vₖ is m
-    allocate_if(!NisI, solver, :uₖ, S, solver.y)  # The length of uₖ is n
-    Δy, yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p = solver.Δy, solver.y, solver.N⁻¹uₖ₋₁, solver.N⁻¹uₖ, solver.p
-    Δx, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = solver.Δx, solver.x, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ, solver.q
-    gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ = solver.gy₂ₖ₋₃, solver.gy₂ₖ₋₂, solver.gy₂ₖ₋₁, solver.gy₂ₖ
-    gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ = solver.gx₂ₖ₋₃, solver.gx₂ₖ₋₂, solver.gx₂ₖ₋₁, solver.gx₂ₖ
-    vₖ = MisI ? M⁻¹vₖ : solver.vₖ
-    uₖ = NisI ? N⁻¹uₖ : solver.uₖ
+    allocate_if(!MisI, workspace, :vₖ, S, workspace.x)  # The length of vₖ is m
+    allocate_if(!NisI, workspace, :uₖ, S, workspace.y)  # The length of uₖ is n
+    Δy, yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p = workspace.Δy, workspace.y, workspace.N⁻¹uₖ₋₁, workspace.N⁻¹uₖ, workspace.p
+    Δx, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = workspace.Δx, workspace.x, workspace.M⁻¹vₖ₋₁, workspace.M⁻¹vₖ, workspace.q
+    gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ = workspace.gy₂ₖ₋₃, workspace.gy₂ₖ₋₂, workspace.gy₂ₖ₋₁, workspace.gy₂ₖ
+    gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ = workspace.gx₂ₖ₋₃, workspace.gx₂ₖ₋₂, workspace.gx₂ₖ₋₁, workspace.gx₂ₖ
+    vₖ = MisI ? M⁻¹vₖ : workspace.vₖ
+    uₖ = NisI ? N⁻¹uₖ : workspace.uₖ
     vₖ₊₁ = MisI ? q : M⁻¹vₖ₋₁
     uₖ₊₁ = NisI ? p : N⁻¹uₖ₋₁
     b₀ = warm_start ? q : b
     c₀ = warm_start ? p : c
 
-    stats = solver.stats
+    stats = workspace.stats
     rNorms = stats.residuals
     reset!(stats)
 
@@ -531,7 +531,7 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
       resid_decrease_mach = (rNorm + one(T) ≤ one(T))
 
       # Update stopping criterion.
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       resid_decrease_lim = rNorm ≤ ε
       breakdown = βₖ₊₁ ≤ btol && γₖ₊₁ ≤ btol
       solved = resid_decrease_lim || resid_decrease_mach
@@ -552,7 +552,7 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     # Update x and y
     warm_start && kaxpy!(m, one(FC), Δx, xₖ)
     warm_start && kaxpy!(n, one(FC), Δy, yₖ)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter
@@ -560,6 +560,6 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     stats.inconsistent = !solved && breakdown
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

@@ -19,7 +19,7 @@ export cg_lanczos_shift, cg_lanczos_shift!
                                   check_curvature::Bool=false, atol::T=√eps(T),
                                   rtol::T=√eps(T), itmax::Int=0,
                                   timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                                  callback=solver->false, iostream::IO=kstdout)
+                                  callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -48,7 +48,7 @@ of size n. The method does _not_ abort if A + αI is not definite.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -64,11 +64,11 @@ of size n. The method does _not_ abort if A + αI is not definite.
 function cg_lanczos_shift end
 
 """
-    solver = cg_lanczos_shift!(solver::CgLanczosShiftSolver, A, b, shifts; kwargs...)
+    workspace = cg_lanczos_shift!(workspace::CgLanczosShiftWorkspace, A, b, shifts; kwargs...)
 
 where `kwargs` are keyword arguments of [`cg_lanczos_shift`](@ref).
 
-See [`CgLanczosShiftSolver`](@ref) for more details about the `solver`.
+See [`CgLanczosShiftWorkspace`](@ref) for more details about the `workspace`.
 """
 function cg_lanczos_shift! end
 
@@ -85,7 +85,7 @@ def_kwargs_cg_lanczos_shift = (:(; M = I                        ),
                                :(; timemax::Float64 = Inf       ),
                                :(; verbose::Int = 0             ),
                                :(; history::Bool = false        ),
-                               :(; callback = solver -> false   ),
+                               :(; callback = workspace -> false),
                                :(; iostream::IO = kstdout       ))
 
 def_kwargs_cg_lanczos_shift = extract_parameters.(def_kwargs_cg_lanczos_shift)
@@ -94,19 +94,19 @@ args_cg_lanczos_shift = (:A, :b, :shifts)
 kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cg_lanczos_shift!(solver :: CgLanczosShiftSolver{T,FC,S}, $(def_args_cg_lanczos_shift...); $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cg_lanczos_shift!(workspace :: CgLanczosShiftWorkspace{T,FC,S}, $(def_args_cg_lanczos_shift...); $(def_kwargs_cg_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == n || error("Inconsistent problem size")
 
     nshifts = length(shifts)
-    nshifts == solver.nshifts || error("solver.nshifts = $(solver.nshifts) is inconsistent with length(shifts) = $nshifts")
+    nshifts == workspace.nshifts || error("workspace.nshifts = $(workspace.nshifts) is inconsistent with length(shifts) = $nshifts")
     (verbose > 0) && @printf(iostream, "CG-LANCZOS-SHIFT: system of %d equations in %d variables with %d shifts\n", n, n, nshifts)
 
     # Tests M = Iₙ
@@ -117,14 +117,14 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, solver.Mv)  # The length of v is n
-    Mv, Mv_prev, Mv_next = solver.Mv, solver.Mv_prev, solver.Mv_next
-    x, p, σ, δhat = solver.x, solver.p, solver.σ, solver.δhat
-    ω, γ, rNorms, converged = solver.ω, solver.γ, solver.rNorms, solver.converged
-    not_cv, stats = solver.not_cv, solver.stats
+    allocate_if(!MisI, workspace, :v, S, workspace.Mv)  # The length of v is n
+    Mv, Mv_prev, Mv_next = workspace.Mv, workspace.Mv_prev, workspace.Mv_next
+    x, p, σ, δhat = workspace.x, workspace.p, workspace.σ, workspace.δhat
+    ω, γ, rNorms, converged = workspace.ω, workspace.γ, workspace.rNorms, workspace.converged
+    not_cv, stats = workspace.not_cv, workspace.stats
     rNorms_history, indefinite = stats.residuals, stats.indefinite
     reset!(stats)
-    v = MisI ? Mv : solver.v
+    v = MisI ? Mv : workspace.v
 
     # Initial state.
     ## Distribute x similarly to shifts.
@@ -150,7 +150,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
       stats.solved = true
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
-      return solver
+      return workspace
     end
 
     # Initialize each p to v.
@@ -250,7 +250,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
       iter = iter + 1
       kdisplay(iter, verbose) && Printf.format(iostream, fmt, iter, rNorms..., start_time |> ktimer)
 
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       solved = !reduce(|, not_cv)
       tired = iter ≥ itmax
       timer = time_ns() - start_time
@@ -269,6 +269,6 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     stats.solved = solved
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

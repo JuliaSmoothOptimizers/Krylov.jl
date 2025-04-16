@@ -16,7 +16,7 @@ export diom, diom!
                       reorthogonalization::Bool=false, atol::T=√eps(T),
                       rtol::T=√eps(T), itmax::Int=0,
                       timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                      callback=solver->false, iostream::IO=kstdout)
+                      callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -57,7 +57,7 @@ and indefinite systems of linear equations can be handled by this single algorit
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -72,16 +72,16 @@ and indefinite systems of linear equations can be handled by this single algorit
 function diom end
 
 """
-    solver = diom!(solver::DiomSolver, A, b; kwargs...)
-    solver = diom!(solver::DiomSolver, A, b, x0; kwargs...)
+    workspace = diom!(workspace::DiomWorkspace, A, b; kwargs...)
+    workspace = diom!(workspace::DiomWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`diom`](@ref).
 
 The keyword argument `memory` is the only exception.
-It is only supported by `diom` and is required to create a `DiomSolver`.
+It is only supported by `diom` and is required to create a `DiomWorkspace`.
 It cannot be changed later.
 
-See [`DiomSolver`](@ref) for more details about the `solver`.
+See [`DiomWorkspace`](@ref) for more details about the `workspace`.
 """
 function diom! end
 
@@ -100,7 +100,7 @@ def_kwargs_diom = (:(; M = I                            ),
                    :(; timemax::Float64 = Inf           ),
                    :(; verbose::Int = 0                 ),
                    :(; history::Bool = false            ),
-                   :(; callback = solver -> false       ),
+                   :(; callback = workspace -> false    ),
                    :(; iostream::IO = kstdout           ))
 
 def_kwargs_diom = extract_parameters.(def_kwargs_diom)
@@ -110,14 +110,14 @@ optargs_diom = (:x0,)
 kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function diom!(solver :: DiomSolver{T,FC,S}, $(def_args_diom...); $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function diom!(workspace :: DiomWorkspace{T,FC,S}, $(def_args_diom...); $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "DIOM: system of size %d\n", n)
@@ -131,15 +131,15 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :w, S, solver.x)  # The length of w is n
-    allocate_if(!NisI, solver, :z, S, solver.x)  # The length of z is n
-    Δx, x, t, P, V = solver.Δx, solver.x, solver.t, solver.P, solver.V
-    L, H, stats = solver.L, solver.H, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, workspace, :w, S, workspace.x)  # The length of w is n
+    allocate_if(!NisI, workspace, :z, S, workspace.x)  # The length of z is n
+    Δx, x, t, P, V = workspace.Δx, workspace.x, workspace.t, workspace.P, workspace.V
+    L, H, stats = workspace.L, workspace.H, workspace.stats
+    warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
-    w  = MisI ? t : solver.w
-    r₀ = MisI ? t : solver.w
+    w  = MisI ? t : workspace.w
+    r₀ = MisI ? t : workspace.w
 
     # Initial solution x₀ and residual r₀.
     kfill!(x, zero(FC))  # x₀
@@ -158,8 +158,8 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
-      return solver
+      workspace.warm_start = false
+      return workspace
     end
 
     iter = 0
@@ -204,7 +204,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       next_pos = mod(iter, mem) + 1  # Position corresponding to vₖ₊₁ in the circular stack V.
 
       # Incomplete Arnoldi procedure.
-      z = NisI ? V[pos] : solver.z
+      z = NisI ? V[pos] : workspace.z
       NisI || mulorldiv!(z, N, V[pos], ldiv)  # Nvₖ, forms pₖ
       mul!(t, A, z)                           # ANvₖ
       MisI || mulorldiv!(w, M, t, ldiv)       # MANvₖ, forms vₖ₊₁
@@ -289,7 +289,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       resid_decrease_mach = (rNorm + one(T) ≤ one(T))
 
       # Update stopping criterion.
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       resid_decrease_lim = rNorm ≤ ε
       solved = resid_decrease_lim || resid_decrease_mach
       tired = iter ≥ itmax
@@ -307,7 +307,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter
@@ -315,6 +315,6 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     stats.inconsistent = false
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

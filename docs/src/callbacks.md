@@ -1,25 +1,25 @@
 # [Callbacks](@id callbacks)
 
-Each Krylov method is able to call a callback function as `callback(solver)` at each iteration.
+Each Krylov method is able to call a callback function as `callback(workspace)` at each iteration.
 The callback should return `true` if the main loop should terminate, and `false` otherwise.
 If the method terminated because of the callback, the output status will be `"user-requested exit"`.
-For example, if the user defines `minres_callback(solver::MinresSolver)`, it can be passed to the solver using
+For example, if the user defines `minres_callback(workspace::MinresWorkspace)`, it can be passed to the solver using
 
 ```julia
 (x, stats) = minres(A, b, callback = minres_callback)
 ```
 
-If you need to write a callback that uses variables that are not in a `KrylovSolver`, use a closure:
+If you need to write a callback that uses variables that are not in a `KrylovWorkspace`, use a closure:
 
 ```julia
-function custom_stopping_condition(solver::KrylovSolver, A, b, r, tol)
-  mul!(r, A, solver.x)
+function custom_stopping_condition(workspace::KrylovWorkspace, A, b, r, tol)
+  mul!(r, A, workspace.x)
   r .-= b               # r := b - Ax
   bool = norm(r) ≤ tol  # tolerance based on the 2-norm of the residual
   return bool
 end
 
-cg_callback(solver) = custom_stopping_condition(solver, A, b, r, tol)
+cg_callback(workspace) = custom_stopping_condition(workspace, A, b, r, tol)
 (x, stats) = cg(A, b, callback = cg_callback)
 ```
 
@@ -33,10 +33,10 @@ mutable struct CallbackWorkspace{T}
   tol::T
 end
 
-function (workspace::CallbackWorkspace)(solver::KrylovSolver)
-  mul!(workspace.r, workspace.A, solver.x)
-  workspace.r .-= workspace.b
-  bool = norm(workspace.r) ≤ workspace.tol
+function (callback::CallbackWorkspace)(workspace::KrylovWorkspace)
+  mul!(callback.r, callback.A, workspace.x)
+  callback.r .-= callback.b
+  bool = norm(callback.r) ≤ callback.tol
   return bool
 end
 
@@ -51,12 +51,12 @@ We now illustrate how to store all iterates $x_k$ of the GMRES method.
 S = Krylov.ktypeof(b)
 global X = S[]  # Storage for GMRES iterates
 
-function gmres_callback(solver)
-  z = solver.z
-  k = solver.inner_iter
+function gmres_callback(workspace)
+  z = workspace.z
+  k = workspace.inner_iter
   nr = sum(1:k)
-  V = solver.V
-  R = solver.R
+  V = workspace.V
+  R = workspace.R
   y = copy(z)
 
   # Solve Rk * yk = zk

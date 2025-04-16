@@ -326,12 +326,12 @@ b = HaloVector(data)
 
 # Allocate the workspace
 kc = KrylovConstructor(b)
-solver = CgSolver(kc)
+workspace = CgWorkspace(kc)
 
 # Solve the system with CG
-Krylov.cg!(solver, A, b, atol=1e-12, rtol=0.0, verbose=1)
-u_sol = solution(solver)
-stats = statistics(solver)
+Krylov.cg!(workspace, A, b, atol=1e-12, rtol=0.0, verbose=1)
+u_sol = solution(workspace)
+stats = statistics(workspace)
 ```
 
 ```@example halo-regions
@@ -439,11 +439,11 @@ We now solve the system $Ax = b$ using `minres` with our preconditioner:
 using Krylov
 
 kc = KrylovConstructor(b)
-solver = MinresSolver(kc)
-minres!(solver, A, b; M=P)
+workspace = MinresWorkspace(kc)
+minres!(workspace, A, b; M=P)
 
-x = solution(solver)
-stats = statistics(solver)
+x = solution(workspace)
+stats = statistics(workspace)
 niter = stats.niter
 ```
 

@@ -11,7 +11,7 @@ export block_gmres, block_gmres!
                              restart::Bool=false, reorthogonalization::Bool=false,
                              atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                              timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                             callback=solver->false, iostream::IO=kstdout)
+                             callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -45,7 +45,7 @@ Solve the linear system AX = B of size n with p right-hand sides using block-GMR
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the block-Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the block-Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -56,16 +56,16 @@ Solve the linear system AX = B of size n with p right-hand sides using block-GMR
 function block_gmres end
 
 """
-    solver = block_gmres!(solver::BlockGmresSolver, B; kwargs...)
-    solver = block_gmres!(solver::BlockGmresSolver, B, X0; kwargs...)
+    workspace = block_gmres!(workspace::BlockGmresWorkspace, B; kwargs...)
+    workspace = block_gmres!(workspace::BlockGmresWorkspace, B, X0; kwargs...)
 
 where `kwargs` are keyword arguments of [`block_gmres`](@ref).
 
 The keyword argument `memory` is the only exception.
-It is only supported by `block_gmres` and is required to create a `BlockGmresSolver`.
+It is only supported by `block_gmres` and is required to create a `BlockGmresWorkspace`.
 It cannot be changed later.
 
-See [`BlockGmresSolver`](@ref) for more details about the `solver`.
+See [`BlockGmresWorkspace`](@ref) for more details about the `workspace`.
 """
 function block_gmres! end
 
@@ -85,7 +85,7 @@ def_kwargs_block_gmres = (:(; M = I                            ),
                           :(; timemax::Float64 = Inf           ),
                           :(; verbose::Int = 0                 ),
                           :(; history::Bool = false            ),
-                          :(; callback = solver -> false       ),
+                          :(; callback = workspace -> false    ),
                           :(; iostream::IO = kstdout           ))
 
 def_kwargs_block_gmres = extract_parameters.(def_kwargs_block_gmres)
@@ -95,7 +95,7 @@ optargs_block_gmres = (:X0,)
 kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function block_gmres!(solver :: BlockGmresSolver{T,FC,SV,SM}, $(def_args_block_gmres...); $(def_kwargs_block_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
+  function block_gmres!(workspace :: BlockGmresWorkspace{T,FC,SV,SM}, $(def_args_block_gmres...); $(def_kwargs_block_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
 
     # Timer
     start_time = time_ns()
@@ -116,17 +116,17 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
     ktypeof(B) == SM || error("ktypeof(B) must be equal to $SM")
 
     # Set up workspace.
-    allocate_if(!MisI  , solver, :Q , SM, solver.n, solver.p)
-    allocate_if(!NisI  , solver, :P , SM, solver.n, solver.p)
-    allocate_if(restart, solver, :ΔX, SM, solver.n, solver.p)
-    ΔX, X, W, V, Z = solver.ΔX, solver.X, solver.W, solver.V, solver.Z
-    C, D, R, H, τ, stats = solver.C, solver.D, solver.R, solver.H, solver.τ, solver.stats
+    allocate_if(!MisI  , workspace, :Q , SM, workspace.n, workspace.p)
+    allocate_if(!NisI  , workspace, :P , SM, workspace.n, workspace.p)
+    allocate_if(restart, workspace, :ΔX, SM, workspace.n, workspace.p)
+    ΔX, X, W, V, Z = workspace.ΔX, workspace.X, workspace.W, workspace.V, workspace.Z
+    C, D, R, H, τ, stats = workspace.C, workspace.D, workspace.R, workspace.H, workspace.τ, workspace.stats
     Ψtmp = C
-    warm_start = solver.warm_start
+    warm_start = workspace.warm_start
     RNorms = stats.residuals
     reset!(stats)
-    Q  = MisI ? W : solver.Q
-    R₀ = MisI ? W : solver.Q
+    Q  = MisI ? W : workspace.Q
+    R₀ = MisI ? W : workspace.Q
     Xr = restart ? ΔX : X
 
     # Define the blocks D1 and D2
@@ -222,7 +222,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         end
 
         # Continue the block-Arnoldi process.
-        P = NisI ? V[inner_iter] : solver.P
+        P = NisI ? V[inner_iter] : workspace.P
         NisI || mulorldiv!(P, N, V[inner_iter], ldiv)  # P ← NVₖ
         mul!(W, A, P)                                  # W ← ANVₖ
         MisI || mulorldiv!(Q, M, W, ldiv)              # Q ← MANVₖ
@@ -274,7 +274,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         nr = nr + inner_iter
 
         # Update stopping criterion.
-        user_requested_exit = callback(solver) :: Bool
+        user_requested_exit = callback(workspace) :: Bool
         solved = RNorm ≤ ε
         inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
         timer = time_ns() - start_time
@@ -308,8 +308,8 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         mul!(Xr, V[i], Y[i], γ, β)
       end
       if !NisI
-        copyto!(solver.P, Xr)
-        mulorldiv!(Xr, N, solver.P, ldiv)
+        copyto!(workspace.P, Xr)
+        mulorldiv!(Xr, N, workspace.P, ldiv)
       end
       restart && (X .+= Xr)
 
@@ -330,13 +330,13 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
 
     # Update Xₖ
     warm_start && !restart && (X .+= ΔX)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter
     stats.solved = solved
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

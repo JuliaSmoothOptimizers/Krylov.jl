@@ -22,7 +22,7 @@ export minres_qlp, minres_qlp!
                             λ::T=zero(T), atol::T=√eps(T),
                             rtol::T=√eps(T), itmax::Int=0,
                             timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                            callback=solver->false, iostream::IO=kstdout)
+                            callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -58,7 +58,7 @@ M also indicates the weighted norm in which residuals are measured.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -75,12 +75,12 @@ M also indicates the weighted norm in which residuals are measured.
 function minres_qlp end
 
 """
-    solver = minres_qlp!(solver::MinresQlpSolver, A, b; kwargs...)
-    solver = minres_qlp!(solver::MinresQlpSolver, A, b, x0; kwargs...)
+    workspace = minres_qlp!(workspace::MinresQlpWorkspace, A, b; kwargs...)
+    workspace = minres_qlp!(workspace::MinresQlpWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`minres_qlp`](@ref).
 
-See [`MinresQlpSolver`](@ref) for more details about the `solver`.
+See [`MinresQlpWorkspace`](@ref) for more details about the `workspace`.
 """
 function minres_qlp! end
 
@@ -89,18 +89,18 @@ def_args_minres_qlp = (:(A                    ),
 
 def_optargs_minres_qlp = (:(x0::AbstractVector),)
 
-def_kwargs_minres_qlp = (:(; M = I                     ),
-                         :(; ldiv::Bool = false        ),
-                         :(; λ::T = zero(T)            ),
-                         :(; atol::T = √eps(T)         ),
-                         :(; rtol::T = √eps(T)         ),
-                         :(; Artol::T = √eps(T)        ),
-                         :(; itmax::Int = 0            ),
-                         :(; timemax::Float64 = Inf    ),
-                         :(; verbose::Int = 0          ),
-                         :(; history::Bool = false     ),
-                         :(; callback = solver -> false),
-                         :(; iostream::IO = kstdout    ))
+def_kwargs_minres_qlp = (:(; M = I                        ),
+                         :(; ldiv::Bool = false           ),
+                         :(; λ::T = zero(T)               ),
+                         :(; atol::T = √eps(T)            ),
+                         :(; rtol::T = √eps(T)            ),
+                         :(; Artol::T = √eps(T)           ),
+                         :(; itmax::Int = 0               ),
+                         :(; timemax::Float64 = Inf       ),
+                         :(; verbose::Int = 0             ),
+                         :(; history::Bool = false        ),
+                         :(; callback = workspace -> false),
+                         :(; iostream::IO = kstdout       ))
 
 def_kwargs_minres_qlp = extract_parameters.(def_kwargs_minres_qlp)
 
@@ -109,14 +109,14 @@ optargs_minres_qlp = (:x0,)
 kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function minres_qlp!(solver :: MinresQlpSolver{T,FC,S}, $(def_args_minres_qlp...); $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function minres_qlp!(workspace :: MinresQlpWorkspace{T,FC,S}, $(def_args_minres_qlp...); $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "MINRES-QLP: system of size %d\n", n)
@@ -129,13 +129,13 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :vₖ, S, solver.x)  # The length of vₖ is n
-    wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = solver.wₖ₋₁, solver.wₖ, solver.M⁻¹vₖ₋₁, solver.M⁻¹vₖ
-    Δx, x, p, stats = solver.Δx, solver.x, solver.p, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, workspace, :vₖ, S, workspace.x)  # The length of vₖ is n
+    wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = workspace.wₖ₋₁, workspace.wₖ, workspace.M⁻¹vₖ₋₁, workspace.M⁻¹vₖ
+    Δx, x, p, stats = workspace.Δx, workspace.x, workspace.p, workspace.stats
+    warm_start = workspace.warm_start
     rNorms, ArNorms, Aconds = stats.residuals, stats.Aresiduals, stats.Acond
     reset!(stats)
-    vₖ = MisI ? M⁻¹vₖ : solver.vₖ
+    vₖ = MisI ? M⁻¹vₖ : workspace.vₖ
     vₖ₊₁ = MisI ? p : M⁻¹vₖ₋₁
 
     # Initial solution x₀
@@ -171,8 +171,8 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
-      return solver
+      workspace.warm_start = false
+      return workspace
     end
 
     iter = 0
@@ -423,7 +423,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       zero_resid_lim = MisI && (backward ≤ eps(T))
       breakdown = βₖ₊₁ ≤ btol
 
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       zero_resid = zero_resid_mach | zero_resid_lim
       resid_decrease = resid_decrease_mach | resid_decrease_lim
       solved = resid_decrease | zero_resid
@@ -467,7 +467,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
    # Update stats
     stats.niter = iter
@@ -475,6 +475,6 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

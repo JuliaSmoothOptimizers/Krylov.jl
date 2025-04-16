@@ -17,7 +17,7 @@ export trilqr, trilqr!
                            transfer_to_usymcg::Bool=true, atol::T=√eps(T),
                            rtol::T=√eps(T), itmax::Int=0,
                            timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                           callback=solver->false, iostream::IO=kstdout)
+                           callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -54,7 +54,7 @@ USYMQR is used for solving dual system `Aᴴy = c` of size n × m.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -70,12 +70,12 @@ USYMQR is used for solving dual system `Aᴴy = c` of size n × m.
 function trilqr end
 
 """
-    solver = trilqr!(solver::TrilqrSolver, A, b, c; kwargs...)
-    solver = trilqr!(solver::TrilqrSolver, A, b, c, x0, y0; kwargs...)
+    workspace = trilqr!(workspace::TrilqrWorkspace, A, b, c; kwargs...)
+    workspace = trilqr!(workspace::TrilqrWorkspace, A, b, c, x0, y0; kwargs...)
 
 where `kwargs` are keyword arguments of [`trilqr`](@ref).
 
-See [`TrilqrSolver`](@ref) for more details about the `solver`.
+See [`TrilqrWorkspace`](@ref) for more details about the `workspace`.
 """
 function trilqr! end
 
@@ -93,7 +93,7 @@ def_kwargs_trilqr = (:(; transfer_to_usymcg::Bool = true),
                      :(; timemax::Float64 = Inf         ),
                      :(; verbose::Int = 0               ),
                      :(; history::Bool = false          ),
-                     :(; callback = solver -> false     ),
+                     :(; callback = workspace -> false  ),
                      :(; iostream::IO = kstdout         ))
 
 def_kwargs_trilqr = extract_parameters.(def_kwargs_trilqr)
@@ -103,14 +103,14 @@ optargs_trilqr = (:x0, :y0)
 kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function trilqr!(solver :: TrilqrSolver{T,FC,S}, $(def_args_trilqr...); $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function trilqr!(workspace :: TrilqrWorkspace{T,FC,S}, $(def_args_trilqr...); $(def_kwargs_trilqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     length(c) == n || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "TRILQR: primal system of %d equations in %d variables\n", m, n)
@@ -125,9 +125,9 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     Aᴴ = A'
 
     # Set up workspace.
-    uₖ₋₁, uₖ, p, d̅, x, stats = solver.uₖ₋₁, solver.uₖ, solver.p, solver.d̅, solver.x, solver.stats
-    vₖ₋₁, vₖ, q, t, wₖ₋₃, wₖ₋₂ = solver.vₖ₋₁, solver.vₖ, solver.q, solver.y, solver.wₖ₋₃, solver.wₖ₋₂
-    Δx, Δy, warm_start = solver.Δx, solver.Δy, solver.warm_start
+    uₖ₋₁, uₖ, p, d̅, x, stats = workspace.uₖ₋₁, workspace.uₖ, workspace.p, workspace.d̅, workspace.x, workspace.stats
+    vₖ₋₁, vₖ, q, t, wₖ₋₃, wₖ₋₂ = workspace.vₖ₋₁, workspace.vₖ, workspace.q, workspace.y, workspace.wₖ₋₃, workspace.wₖ₋₂
+    Δx, Δy, warm_start = workspace.Δx, workspace.Δy, workspace.warm_start
     rNorms, sNorms = stats.residuals_primal, stats.residuals_dual
     reset!(stats)
     r₀ = warm_start ? q : b
@@ -400,7 +400,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       γₖ      = γₖ₊₁
       βₖ      = βₖ₊₁
 
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
@@ -439,7 +439,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     # Update x and y
     warm_start && kaxpy!(n, one(FC), Δx, x)
     warm_start && kaxpy!(m, one(FC), Δy, t)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter
@@ -447,6 +447,6 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     stats.solved_dual = solved_dual
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

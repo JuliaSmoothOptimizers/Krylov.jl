@@ -31,7 +31,7 @@ export lslq, lslq!
                       conlim::T=1/√eps(T), atol::T=√eps(T),
                       rtol::T=√eps(T), itmax::Int=0,
                       timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                      callback=solver->false, iostream::IO=kstdout)
+                      callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -108,7 +108,7 @@ In this case, `N` can still be specified and indicates the weighted norm in whic
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -145,11 +145,11 @@ The iterations stop as soon as one of the following conditions holds true:
 function lslq end
 
 """
-    solver = lslq!(solver::LslqSolver, A, b; kwargs...)
+    workspace = lslq!(workspace::LslqWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`lslq`](@ref).
 
-See [`LslqSolver`](@ref) for more details about the `solver`.
+See [`LslqWorkspace`](@ref) for more details about the `workspace`.
 """
 function lslq! end
 
@@ -173,7 +173,7 @@ def_kwargs_lslq = (:(; M = I                         ),
                    :(; timemax::Float64 = Inf        ),
                    :(; verbose::Int = 0              ),
                    :(; history::Bool = false         ),
-                   :(; callback = solver -> false    ),
+                   :(; callback = workspace -> false ),
                    :(; iostream::IO = kstdout        ))
 
 def_kwargs_lslq = extract_parameters.(def_kwargs_lslq)
@@ -182,14 +182,14 @@ args_lslq = (:A, :b)
 kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function lslq!(solver :: LslqSolver{T,FC,S}, $(def_args_lslq...); $(def_kwargs_lslq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function lslq!(workspace :: LslqWorkspace{T,FC,S}, $(def_args_lslq...); $(def_kwargs_lslq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "LSLQ: system of %d equations in %d variables\n", m, n)
 
@@ -209,15 +209,15 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :u, S, solver.Av)  # The length of u is m
-    allocate_if(!NisI, solver, :v, S, solver.x)   # The length of v is n
-    x, Nv, Aᴴu, w̄ = solver.x, solver.Nv, solver.Aᴴu, solver.w̄
-    Mu, Av, err_vec, stats = solver.Mu, solver.Av, solver.err_vec, solver.stats
+    allocate_if(!MisI, workspace, :u, S, workspace.Av)  # The length of u is m
+    allocate_if(!NisI, workspace, :v, S, workspace.x)   # The length of v is n
+    x, Nv, Aᴴu, w̄ = workspace.x, workspace.Nv, workspace.Aᴴu, workspace.w̄
+    Mu, Av, err_vec, stats = workspace.Mu, workspace.Av, workspace.err_vec, workspace.stats
     rNorms, ArNorms, err_lbnds = stats.residuals, stats.Aresiduals, stats.err_lbnds
     err_ubnds_lq, err_ubnds_cg = stats.err_ubnds_lq, stats.err_ubnds_cg
     reset!(stats)
-    u = MisI ? Mu : solver.u
-    v = NisI ? Nv : solver.v
+    u = MisI ? Mu : workspace.u
+    v = NisI ? Nv : workspace.v
 
     λ² = λ * λ
     ctol = conlim > 0 ? 1/conlim : zero(T)
@@ -237,7 +237,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       history && push!(ArNorms, zero(T))
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
-      return solver
+      return workspace
     end
     β = β₁
 
@@ -257,7 +257,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       history && push!(ArNorms, zero(T))
       stats.timer = start_time |> ktimer
       stats.status = "x is a minimum least-squares solution"
-      return solver
+      return workspace
     end
     kdiv!(n, v, α)
     NisI || kdiv!(n, Nv, α)
@@ -461,7 +461,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
       zero_resid_mach = (one(T) + t1 ≤ one(T))
 
       # Stopping conditions based on user-provided tolerances.
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       tired  = iter ≥ itmax
       ill_cond_lim = (test3 ≤ ctol)
       solved_lim = (test2 ≤ atol)
@@ -500,6 +500,6 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
     stats.error_with_bnd = complex_error_bnd
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

@@ -41,7 +41,7 @@ export craig, craig!
                           conlim::T=1/√eps(T), atol::T=√eps(T),
                           rtol::T=√eps(T), itmax::Int=0,
                           timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                          callback=solver->false, iostream::IO=kstdout)
+                          callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -110,7 +110,7 @@ In this implementation, both the x and y-parts of the solution are returned.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -128,11 +128,11 @@ In this implementation, both the x and y-parts of the solution are returned.
 function craig end
 
 """
-    solver = craig!(solver::CraigSolver, A, b; kwargs...)
+    workspace = craig!(workspace::CraigWorkspace, A, b; kwargs...)
 
 where `kwargs` are keyword arguments of [`craig`](@ref).
 
-See [`CraigSolver`](@ref) for more details about the `solver`.
+See [`CraigWorkspace`](@ref) for more details about the `workspace`.
 """
 function craig! end
 
@@ -153,7 +153,7 @@ def_kwargs_craig = (:(; M = I                         ),
                     :(; timemax::Float64 = Inf        ),
                     :(; verbose::Int = 0              ),
                     :(; history::Bool = false         ),
-                    :(; callback = solver -> false    ),
+                    :(; callback = workspace -> false ),
                     :(; iostream::IO = kstdout        ))
 
 def_kwargs_craig = extract_parameters.(def_kwargs_craig)
@@ -162,14 +162,14 @@ args_craig = (:A, :b)
 kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function craig!(solver :: CraigSolver{T,FC,S}, $(def_args_craig...); $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function craig!(workspace :: CraigWorkspace{T,FC,S}, $(def_args_craig...); $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CRAIG: system of %d equations in %d variables\n", m, n)
 
@@ -189,15 +189,15 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :u , S, solver.y)  # The length of u is m
-    allocate_if(!NisI, solver, :v , S, solver.x)  # The length of v is n
-    allocate_if(λ > 0, solver, :w2, S, solver.x)  # The length of w2 is n
-    x, Nv, Aᴴu, y, w = solver.x, solver.Nv, solver.Aᴴu, solver.y, solver.w
-    Mu, Av, w2, stats = solver.Mu, solver.Av, solver.w2, solver.stats
+    allocate_if(!MisI, workspace, :u , S, workspace.y)  # The length of u is m
+    allocate_if(!NisI, workspace, :v , S, workspace.x)  # The length of v is n
+    allocate_if(λ > 0, workspace, :w2, S, workspace.x)  # The length of w2 is n
+    x, Nv, Aᴴu, y, w = workspace.x, workspace.Nv, workspace.Aᴴu, workspace.y, workspace.w
+    Mu, Av, w2, stats = workspace.Mu, workspace.Av, workspace.w2, workspace.stats
     rNorms = stats.residuals
     reset!(stats)
-    u = MisI ? Mu : solver.u
-    v = NisI ? Nv : solver.v
+    u = MisI ? Mu : workspace.u
+    v = NisI ? Nv : workspace.v
 
     kfill!(x, zero(FC))
     kfill!(y, zero(FC))
@@ -212,7 +212,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
-      return solver
+      return workspace
     end
     β₁² = β₁^2
     β = β₁
@@ -362,7 +362,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
       ill_cond_lim = inv(Acond) ≤ ctol
       ill_cond = ill_cond_mach | ill_cond_lim
 
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       inconsistent = false
       tired = iter ≥ itmax
       timer = time_ns() - start_time
@@ -392,6 +392,6 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

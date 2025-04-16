@@ -34,7 +34,7 @@ b = randn(n)
 
 # Out-of-place interface
 for method in (:cg, :cr, :car)
-    x, stats = krylov_solve(Val{method}(), A, b)
+    x, stats = krylov_solve(Val(method), A, b)
     r = b - A * x
     println("Residual norm for $(method): ", norm(r))
 end
@@ -51,23 +51,23 @@ b = rand(n)
 # In-place interface
 for method in (:bicgstab, :gmres)
     # Create a workspace for the Krylov method
-    solver = krylov_workspace(Val(method), A, b)
+    workspace = krylov_workspace(Val(method), A, b)
 
     # Solve the system in-place
-    krylov_solve!(solver, A, b)
+    krylov_solve!(workspace, A, b)
 
     # Get the statistics
-    stats = statistics(solver)
+    stats = statistics(workspace)
 
     # Retrieve the solution
-    x = solution(solver)
+    x = solution(workspace)
 
     # Check if the solver converged
-    solved = issolved(solver)
+    solved = issolved(workspace)
     println("Converged $method: ", solved)
 
     # Display the number of iterations
-    niter = niterations(solver)
+    niter = niterations(workspace)
     println("Number of iterations for $method: ", niter)
 end
 ```

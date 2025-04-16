@@ -18,7 +18,7 @@ export cg_lanczos, cg_lanczos!
                             check_curvature::Bool=false, atol::T=√eps(T),
                             rtol::T=√eps(T), itmax::Int=0,
                             timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                            callback=solver->false, iostream::IO=kstdout)
+                            callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -52,7 +52,7 @@ The method does _not_ abort if A is not definite.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -68,12 +68,12 @@ The method does _not_ abort if A is not definite.
 function cg_lanczos end
 
 """
-    solver = cg_lanczos!(solver::CgLanczosSolver, A, b; kwargs...)
-    solver = cg_lanczos!(solver::CgLanczosSolver, A, b, x0; kwargs...)
+    workspace = cg_lanczos!(workspace::CgLanczosWorkspace, A, b; kwargs...)
+    workspace = cg_lanczos!(workspace::CgLanczosWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`cg_lanczos`](@ref).
 
-See [`CgLanczosSolver`](@ref) for more details about the `solver`.
+See [`CgLanczosWorkspace`](@ref) for more details about the `workspace`.
 """
 function cg_lanczos! end
 
@@ -91,7 +91,7 @@ def_kwargs_cg_lanczos = (:(; M = I                        ),
                          :(; timemax::Float64 = Inf       ),
                          :(; verbose::Int = 0             ),
                          :(; history::Bool = false        ),
-                         :(; callback = solver -> false   ),
+                         :(; callback = workspace -> false),
                          :(; iostream::IO = kstdout       ))
 
 def_kwargs_cg_lanczos = extract_parameters.(def_kwargs_cg_lanczos)
@@ -101,14 +101,14 @@ optargs_cg_lanczos = (:x0,)
 kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cg_lanczos!(solver :: CgLanczosSolver{T,FC,S}, $(def_args_cg_lanczos...); $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cg_lanczos!(workspace :: CgLanczosWorkspace{T,FC,S}, $(def_args_cg_lanczos...); $(def_kwargs_cg_lanczos...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == n || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "CG-LANCZOS: system of %d equations in %d variables\n", n, n)
@@ -121,13 +121,13 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :v, S, solver.x)  # The length of v is n
-    Δx, x, Mv, Mv_prev = solver.Δx, solver.x, solver.Mv, solver.Mv_prev
-    p, Mv_next, stats = solver.p, solver.Mv_next, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, workspace, :v, S, workspace.x)  # The length of v is n
+    Δx, x, Mv, Mv_prev = workspace.Δx, workspace.x, workspace.Mv, workspace.Mv_prev
+    p, Mv_next, stats = workspace.p, workspace.Mv_next, workspace.stats
+    warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
-    v = MisI ? Mv : solver.v
+    v = MisI ? Mv : workspace.v
 
     # Initial state.
     kfill!(x, zero(FC))
@@ -150,8 +150,8 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
-      return solver
+      workspace.warm_start = false
+      return workspace
     end
     kcopy!(n, p, v)  # p ← v
 
@@ -223,7 +223,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       # This is to guard against tolerances that are unreasonably small.
       resid_decrease_mach = (rNorm + one(T) ≤ one(T))
       
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       resid_decrease_lim = rNorm ≤ ε
       solved = resid_decrease_lim || resid_decrease_mach
       tired = iter ≥ itmax
@@ -241,7 +241,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats. TODO: Estimate Acond.
     stats.niter = iter
@@ -250,6 +250,6 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     stats.indefinite = indefinite
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

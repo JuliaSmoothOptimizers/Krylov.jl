@@ -140,14 +140,14 @@ end
 
       # test callback function
       A, b = over_consistent(FC=FC)
-      solver = CraigSolver(A, b)
+      workspace = CraigWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2LN(A, b, real(zero(eltype(b))), tol = tol)
-      craig!(solver, A, b, callback = cb_n2)
-      @test solver.stats.status == "user-requested exit"
-      @test cb_n2(solver)
+      craig!(workspace, A, b, callback = cb_n2)
+      @test workspace.stats.status == "user-requested exit"
+      @test cb_n2(workspace)
 
-      @test_throws TypeError craig(A, b, callback = solver -> "string", history = true)
+      @test_throws TypeError craig(A, b, callback = workspace -> "string", history = true)
     end
   end
 end

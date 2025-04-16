@@ -105,8 +105,8 @@ Each table summarizes the storage requirements of Krylov methods recommended to 
 
 ## Practical storage requirements
 
-Each method has its own `KrylovSolver` that contains all the storage needed by the method.
-In the REPL, the size in bytes of each attribute and the total amount of memory allocated by the solver are displayed when we show a `KrylovSolver`.
+Each method has its own `KrylovWorkspace` that contains all the storage needed by the method.
+In the REPL, the size in bytes of each attribute and the total amount of memory allocated by the solver are displayed when we show a `KrylovWorkspace`.
 
 ```@example storage
 using Krylov
@@ -115,14 +115,14 @@ m = 5000
 n = 12000
 A = rand(Float64, m, n)
 b = rand(Float64, m)
-solver = LsmrSolver(A, b)
-show(stdout, solver, show_stats=false)
+workspace = LsmrWorkspace(A, b)
+show(stdout, workspace, show_stats=false)
 ```
 
-If we want the total number of bytes used by the solver, we can call `nbytes = sizeof(solver)`.
+If we want the total number of bytes used by the workspace, we can call `nbytes = sizeof(workspace)`.
 
 ```@example storage
-nbytes = sizeof(solver)
+nbytes = sizeof(workspace)
 ```
 
 Thereafter, we can use `Base.format_bytes(nbytes)` to recover what is displayed in the REPL.
@@ -140,7 +140,7 @@ ncoefs_lsmr = 5*n + 2*m                 # number of coefficients
 nbytes_lsmr = sizeof(FC) * ncoefs_lsmr  # number of bytes
 ```
 
-Therefore, you can check that you have enough memory in RAM to allocate a `KrylovSolver`.
+Therefore, you can check that you have enough memory in RAM to allocate a `KrylovWorkspace`.
 
 ```@example storage
 free_nbytes = Sys.free_memory()

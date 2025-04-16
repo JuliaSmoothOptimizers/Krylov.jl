@@ -21,7 +21,7 @@ export cg, cg!
                     linesearch::Bool=false, atol::T=√eps(T),
                     rtol::T=√eps(T), itmax::Int=0,
                     timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                    callback=solver->false, iostream::IO=kstdout)
+                    callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -56,7 +56,7 @@ M also indicates the weighted norm in which residuals are measured.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -71,12 +71,12 @@ M also indicates the weighted norm in which residuals are measured.
 function cg end
 
 """
-    solver = cg!(solver::CgSolver, A, b; kwargs...)
-    solver = cg!(solver::CgSolver, A, b, x0; kwargs...)
+    workspace = cg!(workspace::CgWorkspace, A, b; kwargs...)
+    workspace = cg!(workspace::CgWorkspace, A, b, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`cg`](@ref).
 
-See [`CgSolver`](@ref) for more details about the `solver`.
+See [`CgWorkspace`](@ref) for more details about the `workspace`.
 """
 function cg! end
 
@@ -85,18 +85,18 @@ def_args_cg = (:(A                    ),
 
 def_optargs_cg = (:(x0::AbstractVector),)
 
-def_kwargs_cg = (:(; M = I                     ),
-                 :(; ldiv::Bool = false        ),
-                 :(; radius::T = zero(T)       ),
-                 :(; linesearch::Bool = false  ),
-                 :(; atol::T = √eps(T)         ),
-                 :(; rtol::T = √eps(T)         ),
-                 :(; itmax::Int = 0            ),
-                 :(; timemax::Float64 = Inf    ),
-                 :(; verbose::Int = 0          ),
-                 :(; history::Bool = false     ),
-                 :(; callback = solver -> false),
-                 :(; iostream::IO = kstdout    ))
+def_kwargs_cg = (:(; M = I                        ),
+                 :(; ldiv::Bool = false           ),
+                 :(; radius::T = zero(T)          ),
+                 :(; linesearch::Bool = false     ),
+                 :(; atol::T = √eps(T)            ),
+                 :(; rtol::T = √eps(T)            ),
+                 :(; itmax::Int = 0               ),
+                 :(; timemax::Float64 = Inf       ),
+                 :(; verbose::Int = 0             ),
+                 :(; history::Bool = false        ),
+                 :(; callback = workspace -> false),
+                 :(; iostream::IO = kstdout       ))
 
 def_kwargs_cg = extract_parameters.(def_kwargs_cg)
 
@@ -105,14 +105,14 @@ optargs_cg = (:x0,)
 kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cg!(solver :: CgSolver{T,FC,S}, $(def_args_cg...); $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cg!(workspace :: CgWorkspace{T,FC,S}, $(def_args_cg...); $(def_kwargs_cg...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     m == n || error("System must be square")
     length(b) == n || error("Inconsistent problem size")
     linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
@@ -126,12 +126,12 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, solver, :z, S, solver.x)  # The length of z is n
-    Δx, x, r, p, Ap, stats = solver.Δx, solver.x, solver.r, solver.p, solver.Ap, solver.stats
-    warm_start = solver.warm_start
+    allocate_if(!MisI, workspace, :z, S, workspace.x)  # The length of z is n
+    Δx, x, r, p, Ap, stats = workspace.Δx, workspace.x, workspace.r, workspace.p, workspace.Ap, workspace.stats
+    warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
-    z = MisI ? r : solver.z
+    z = MisI ? r : workspace.z
 
     kfill!(x, zero(FC))
     if warm_start
@@ -152,8 +152,8 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
-      return solver
+      workspace.warm_start = false
+      return workspace
     end
 
     iter = 0
@@ -236,7 +236,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
 
       iter = iter + 1
       tired = iter ≥ itmax
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
       kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e", iter, rNorm)
@@ -254,7 +254,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter
@@ -262,6 +262,6 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

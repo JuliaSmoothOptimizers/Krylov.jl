@@ -4,10 +4,11 @@ Most Krylov methods in this module accept a starting point as argument.
 The starting point is used as initial approximation to a solution.
 
 ```julia
-solver = CgSolver(A, b)
-cg!(solver, A, b, itmax=100)
-if !issolved(solver)
-  cg!(solver, A, b, solver.x, itmax=100) # cg! uses the approximate solution `solver.x` as starting point
+workspace = CgWorkspace(A, b)
+cg!(workspace, A, b, itmax=100)
+if !issolved(workspace)
+  # Use the approximate solution `workspace.x` as starting point
+  cg!(workspace, A, b, workspace.x, itmax=100)
 end
 ```
 
@@ -17,25 +18,27 @@ If the user has an initial guess `x0`, it can be provided directly.
 cg(A, b, x0)
 ```
 
-It is also possible to use the `warm_start!` function to feed the starting point into the solver.
+It is also possible to use the function `warm_start!` to feed the starting point into the workspace.
 
 ```julia
-warm_start!(solver, x0)
-cg!(solver, A, b)
-# the previous two lines are equivalent to cg!(solver, A, b, x0)
+warm_start!(workspace, x0)
+cg!(workspace, A, b)
+# the previous two lines are equivalent to cg!(workspace, A, b, x0)
 ```
 
 If a Krylov method doesn't have the option to warm start, it can still be done explicitly.
 We provide an example with `cg_lanczos!`.
 
 ```julia
-solver = CgLanczosSolver(A, b)
-cg_lanczos!(solver, A, b)
-x₀ = solver.x           # Ax₀ ≈ b
-r = b - A * x₀          # r = b - Ax₀
-cg_lanczos!(solver, A, r)
-Δx = solver.x           # AΔx = r
-x = x₀ + Δx             # Ax = b
+workspace = CgLanczosWorkspace(A, b)
+
+cg_lanczos!(workspace, A, b)
+x₀ = workspace.x  # Ax₀ ≈ b
+r = b - A * x₀    # r = b - Ax₀
+
+cg_lanczos!(workspace, A, r)
+Δx = workspace.x  # AΔx = r
+x = x₀ + Δx       # Ax = b
 ```
 
 Explicit restarts cannot be avoided in certain block methods, such as TriMR, due to the preconditioners.
@@ -64,11 +67,11 @@ y = y₀ + Δy
 #
 # ```julia
 # k = 50
-# solver = GmresSolver(A, b, k)  # FomSolver(A, b, k)
-# solver.x .= 0                  # solver.x .= x₀ 
+# workspace = GmresWorkspace(A, b, k)  # FomWorkspace(A, b, k)
+# workspace.x .= 0                     # workspace.x .= x₀
 # nrestart = 0
-# while !issolved(solver) || nrestart ≤ 10
-#   solve!(solver, A, b, solver.x, itmax=k)
+# while !issolved(workspace) || nrestart ≤ 10
+#   solve!(workspace, A, b, workspace.x, itmax=k)
 #   nrestart += 1
 # end
 # ```

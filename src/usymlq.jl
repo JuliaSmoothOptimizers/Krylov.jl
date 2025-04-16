@@ -24,7 +24,7 @@ export usymlq, usymlq!
                         transfer_to_usymcg::Bool=true, atol::T=√eps(T),
                         rtol::T=√eps(T), itmax::Int=0,
                         timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                        callback=solver->false, iostream::IO=kstdout)
+                        callback=workspace->false, iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -63,7 +63,7 @@ In all cases, problems must be consistent.
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(solver)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
 
 #### Output arguments
@@ -80,12 +80,12 @@ In all cases, problems must be consistent.
 function usymlq end
 
 """
-    solver = usymlq!(solver::UsymlqSolver, A, b, c; kwargs...)
-    solver = usymlq!(solver::UsymlqSolver, A, b, c, x0; kwargs...)
+    workspace = usymlq!(workspace::UsymlqWorkspace, A, b, c; kwargs...)
+    workspace = usymlq!(workspace::UsymlqWorkspace, A, b, c, x0; kwargs...)
 
 where `kwargs` are keyword arguments of [`usymlq`](@ref).
 
-See [`UsymlqSolver`](@ref) for more details about the `solver`.
+See [`UsymlqWorkspace`](@ref) for more details about the `workspace`.
 """
 function usymlq! end
 
@@ -102,7 +102,7 @@ def_kwargs_usymlq = (:(; transfer_to_usymcg::Bool = true),
                      :(; timemax::Float64 = Inf         ),
                      :(; verbose::Int = 0               ),
                      :(; history::Bool = false          ),
-                     :(; callback = solver -> false     ),
+                     :(; callback = workspace -> false  ),
                      :(; iostream::IO = kstdout         ))
 
 def_kwargs_usymlq = extract_parameters.(def_kwargs_usymlq)
@@ -112,14 +112,14 @@ optargs_usymlq = (:x0,)
 kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function usymlq!(solver :: UsymlqSolver{T,FC,S}, $(def_args_usymlq...); $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function usymlq!(workspace :: UsymlqWorkspace{T,FC,S}, $(def_args_usymlq...); $(def_kwargs_usymlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
 
     m, n = size(A)
-    (m == solver.m && n == solver.n) || error("(solver.m, solver.n) = ($(solver.m), $(solver.n)) is inconsistent with size(A) = ($m, $n)")
+    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
     length(b) == m || error("Inconsistent problem size")
     length(c) == n || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "USYMLQ: system of %d equations in %d variables\n", m, n)
@@ -133,9 +133,9 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     Aᴴ = A'
 
     # Set up workspace.
-    uₖ₋₁, uₖ, p, Δx, x = solver.uₖ₋₁, solver.uₖ, solver.p, solver.Δx, solver.x
-    vₖ₋₁, vₖ, q, d̅, stats = solver.vₖ₋₁, solver.vₖ, solver.q, solver.d̅, solver.stats
-    warm_start = solver.warm_start
+    uₖ₋₁, uₖ, p, Δx, x = workspace.uₖ₋₁, workspace.uₖ, workspace.p, workspace.Δx, workspace.x
+    vₖ₋₁, vₖ, q, d̅, stats = workspace.vₖ₋₁, workspace.vₖ, workspace.q, workspace.d̅, workspace.stats
+    warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
     r₀ = warm_start ? q : b
@@ -156,8 +156,8 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
-      solver.warm_start = false
-      return solver
+      workspace.warm_start = false
+      return workspace
     end
 
     iter = 0
@@ -320,7 +320,7 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       δbarₖ₋₁ = δbarₖ
 
       # Update stopping criterion.
-      user_requested_exit = callback(solver) :: Bool
+      user_requested_exit = callback(workspace) :: Bool
       solved_lq = rNorm_lq ≤ ε
       solved_cg = transfer_to_usymcg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ ε)
       tired = iter ≥ itmax
@@ -345,7 +345,7 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
 
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
-    solver.warm_start = false
+    workspace.warm_start = false
 
     # Update stats
     stats.niter = iter
@@ -353,6 +353,6 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     stats.inconsistent = false
     stats.timer = start_time |> ktimer
     stats.status = status
-    return solver
+    return workspace
   end
 end

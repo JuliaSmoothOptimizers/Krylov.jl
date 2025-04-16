@@ -1,19 +1,19 @@
-export BlockKrylovSolver, BlockMinresSolver, BlockGmresSolver
+export BlockKrylovWorkspace, BlockMinresWorkspace, BlockGmresWorkspace
 
 "Abstract type for using block Krylov solvers in-place."
-abstract type BlockKrylovSolver{T,FC,SV,SM} end
+abstract type BlockKrylovWorkspace{T,FC,SV,SM} end
 
 """
 Type for storing the vectors required by the in-place version of BLOCK-MINRES.
 
 The outer constructors
 
-    solver = BlockMinresSolver(m, n, p, SV, SM)
-    solver = BlockMinresSolver(A, B)
+    workspace = BlockMinresWorkspace(m, n, p, SV, SM)
+    workspace = BlockMinresWorkspace(A, B)
 
 may be used in order to create these vectors.
 """
-mutable struct BlockMinresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
+mutable struct BlockMinresWorkspace{T,FC,SV,SM} <: BlockKrylovWorkspace{T,FC,SV,SM}
   m          :: Int
   n          :: Int
   p          :: Int
@@ -36,7 +36,7 @@ mutable struct BlockMinresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
   stats      :: SimpleStats{T}
 end
 
-function BlockMinresSolver(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type)
+function BlockMinresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type)
   FC   = eltype(SV)
   T    = real(FC)
   ΔX   = SM(undef, 0, 0)
@@ -57,16 +57,16 @@ function BlockMinresSolver(m::Integer, n::Integer, p::Integer, SV::Type, SM::Typ
   SV = isconcretetype(SV) ? SV : typeof(τₖ₋₁)
   SM = isconcretetype(SM) ? SM : typeof(X)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = BlockMinresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, false, stats)
-  return solver
+  workspace = BlockMinresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, false, stats)
+  return workspace
 end
 
-function BlockMinresSolver(A, B)
+function BlockMinresWorkspace(A, B)
   m, n = size(A)
   s, p = size(B)
   SM = typeof(B)
   SV = matrix_to_vector(SM)
-  BlockMinresSolver(m, n, p, SV, SM)
+  BlockMinresWorkspace(m, n, p, SV, SM)
 end
 
 """
@@ -74,13 +74,13 @@ Type for storing the vectors required by the in-place version of BLOCK-GMRES.
 
 The outer constructors
 
-    solver = BlockGmresSolver(m, n, p, SV, SM; memory = 5)
-    solver = BlockGmresSolver(A, B; memory = 5)
+    workspace = BlockGmresWorkspace(m, n, p, SV, SM; memory = 5)
+    workspace = BlockGmresWorkspace(A, B; memory = 5)
 
 may be used in order to create these vectors.
 `memory` is set to `div(n,p)` if the value given is larger than `div(n,p)`.
 """
-mutable struct BlockGmresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
+mutable struct BlockGmresWorkspace{T,FC,SV,SM} <: BlockKrylovWorkspace{T,FC,SV,SM}
   m          :: Int
   n          :: Int
   p          :: Int
@@ -100,7 +100,7 @@ mutable struct BlockGmresSolver{T,FC,SV,SM} <: BlockKrylovSolver{T,FC,SV,SM}
   stats      :: SimpleStats{T}
 end
 
-function BlockGmresSolver(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type; memory::Integer = 5)
+function BlockGmresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type; memory::Integer = 5)
   memory = min(div(n,p), memory)
   FC = eltype(SV)
   T  = real(FC)
@@ -119,45 +119,45 @@ function BlockGmresSolver(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type
   SV = isconcretetype(SV) ? SV : typeof(τ)
   SM = isconcretetype(SM) ? SM : typeof(X)
   stats = SimpleStats(0, false, false, false, T[], T[], T[], 0.0, "unknown")
-  solver = BlockGmresSolver{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, false, stats)
-  return solver
+  workspace = BlockGmresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, false, stats)
+  return workspace
 end
 
-function BlockGmresSolver(A, B; memory::Integer = 5)
+function BlockGmresWorkspace(A, B; memory::Integer = 5)
   m, n = size(A)
   s, p = size(B)
   SM = typeof(B)
   SV = matrix_to_vector(SM)
-  BlockGmresSolver(m, n, p, SV, SM; memory)
+  BlockGmresWorkspace(m, n, p, SV, SM; memory)
 end
 
 for (KS, fun, nsol, nA, nAt, warm_start) in [
-  (:BlockMinresSolver, :block_minres!, 1, 1, 0, true)
-  (:BlockGmresSolver , :block_gmres! , 1, 1, 0, true)
+  (:BlockMinresWorkspace, :block_minres!, 1, 1, 0, true)
+  (:BlockGmresWorkspace , :block_gmres! , 1, 1, 0, true)
 ]
   @eval begin
-    size(solver :: $KS) = solver.m, solver.n
-    nrhs(solver :: $KS) = solver.p
-    statistics(solver :: $KS) = solver.stats
-    niterations(solver :: $KS) = solver.stats.niter
-    Aprod(solver :: $KS) = $nA * solver.stats.niter
-    Atprod(solver :: $KS) = $nAt * solver.stats.niter
-    nsolution(solver :: $KS) = $nsol
+    size(workspace :: $KS) = workspace.m, workspace.n
+    nrhs(workspace :: $KS) = workspace.p
+    statistics(workspace :: $KS) = workspace.stats
+    niterations(workspace :: $KS) = workspace.stats.niter
+    Aprod(workspace :: $KS) = $nA * workspace.stats.niter
+    Atprod(workspace :: $KS) = $nAt * workspace.stats.niter
+    nsolution(workspace :: $KS) = $nsol
     if $nsol == 1
-      solution(solver :: $KS) = solver.X
-      solution(solver :: $KS, p :: Integer) = (p == 1) ? solution(solver) : error("solution(solver) has only one output.")
-      results(solver :: $KS) = (solver.X, solver.stats)
+      solution(workspace :: $KS) = workspace.X
+      solution(workspace :: $KS, p :: Integer) = (p == 1) ? solution(workspace) : error("solution(workspace) has only one output.")
+      results(workspace :: $KS) = (workspace.X, workspace.stats)
     end
-    issolved(solver :: $KS) = solver.stats.solved
+    issolved(workspace :: $KS) = workspace.stats.solved
     if $warm_start
-      function warm_start!(solver :: $KS, X0)
+      function warm_start!(workspace :: $KS, X0)
         n2, p2 = size(X0)
-        SM = typeof(solver.X)
-        (solver.n == n2 && solver.p == p2) || error("X0 should have size ($n, $p)")
-        allocate_if(true, solver, :ΔX, SM, solver.n, solver.p)
-        copyto!(solver.ΔX, X0)
-        solver.warm_start = true
-        return solver
+        SM = typeof(workspace.X)
+        (workspace.n == n2 && workspace.p == p2) || error("X0 should have size ($n, $p)")
+        allocate_if(true, workspace, :ΔX, SM, workspace.n, workspace.p)
+        copyto!(workspace.ΔX, X0)
+        workspace.warm_start = true
+        return workspace
       end
     end
   end
@@ -174,12 +174,12 @@ function ksizeof(attribute)
   return size_attribute
 end
 
-function sizeof(stats_solver :: Union{KrylovStats, KrylovSolver, BlockKrylovSolver})
-  type = typeof(stats_solver)
+function sizeof(stats_workspace :: Union{KrylovStats, KrylovWorkspace, BlockKrylovWorkspace})
+  type = typeof(stats_workspace)
   nfields = fieldcount(type)
   storage = 0
   for i = 1:nfields
-    field_i = getfield(stats_solver, i)
+    field_i = getfield(stats_workspace, i)
     size_i = ksizeof(field_i)
     storage += size_i
   end
@@ -187,42 +187,42 @@ function sizeof(stats_solver :: Union{KrylovStats, KrylovSolver, BlockKrylovSolv
 end
 
 """
-    show(io, solver; show_stats=true)
+    show(io, workspace; show_stats=true)
 
-Statistics of `solver` are displayed if `show_stats` is set to true.
+Statistics of `workspace` are displayed if `show_stats` is set to true.
 """
-function show(io :: IO, solver :: Union{KrylovSolver{T,FC,S}, BlockKrylovSolver{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-  workspace = typeof(solver)
-  name_solver = string(workspace.name.name)
-  name_stats = string(typeof(solver.stats).name.name)
-  nbytes = sizeof(solver)
+function show(io :: IO, workspace :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  type_workspace = typeof(workspace)
+  name_workspace = string(type_workspace.name.name)
+  name_stats = string(typeof(workspace.stats).name.name)
+  nbytes = sizeof(workspace)
   storage = format_bytes(nbytes)
   architecture = S <: Vector ? "CPU" : "GPU"
-  l1 = max(length(name_solver), length(string(FC)) + 11)  # length("Precision: ") = 11
-  nchar = workspace <: Union{CgLanczosShiftSolver, FomSolver, DiomSolver, DqgmresSolver, GmresSolver, FgmresSolver, GpmrSolver, BlockGmresSolver} ? 8 : 0  # length("Vector{}") = 8
-  l2 = max(ndigits(solver.m) + 7, length(architecture) + 14, length(string(S)) + nchar)  # length("nrows: ") = 7 and length("Architecture: ") = 14
+  l1 = max(length(name_workspace), length(string(FC)) + 11)  # length("Precision: ") = 11
+  nchar = type_workspace <: Union{CgLanczosShiftWorkspace, FomWorkspace, DiomWorkspace, DqgmresWorkspace, GmresWorkspace, FgmresWorkspace, GpmrWorkspace, BlockGmresWorkspace} ? 8 : 0  # length("Vector{}") = 8
+  l2 = max(ndigits(workspace.m) + 7, length(architecture) + 14, length(string(S)) + nchar)  # length("nrows: ") = 7 and length("Architecture: ") = 14
   l2 = max(l2, length(name_stats) + 2 + length(string(T)))  # length("{}") = 2
-  l3 = max(ndigits(solver.n) + 7, length(storage) + 9)  # length("Storage: ") = 9 and length("cols: ") = 7
+  l3 = max(ndigits(workspace.n) + 7, length(storage) + 9)  # length("Storage: ") = 9 and length("cols: ") = 7
   format = Printf.Format("│%$(l1)s│%$(l2)s│%$(l3)s│\n")
   format2 = Printf.Format("│%$(l1+1)s│%$(l2)s│%$(l3)s│\n")
   @printf(io, "┌%s┬%s┬%s┐\n", "─"^l1, "─"^l2, "─"^l3)
-  Printf.format(io, format, "$(name_solver)", "nrows: $(solver.m)", "ncols: $(solver.n)")
+  Printf.format(io, format, "$(name_workspace)", "nrows: $(workspace.m)", "ncols: $(workspace.n)")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
   Printf.format(io, format, "Precision: $FC", "Architecture: $architecture","Storage: $storage")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
   Printf.format(io, format, "Attribute", "Type", "Size")
   @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
-  for i=1:fieldcount(workspace)
-    name_i = fieldname(workspace, i)
-    type_i = fieldtype(workspace, i)
-    field_i = getfield(solver, name_i)
+  for i=1:fieldcount(type_workspace)
+    name_i = fieldname(type_workspace, i)
+    type_i = fieldtype(type_workspace, i)
+    field_i = getfield(workspace, name_i)
     size_i = ksizeof(field_i)
     (size_i ≠ 0) && Printf.format(io, format, string(name_i), type_i, format_bytes(size_i))
   end
   @printf(io, "└%s┴%s┴%s┘\n","─"^l1,"─"^l2,"─"^l3)
   if show_stats
     @printf(io, "\n")
-    show(io, solver.stats)
+    show(io, workspace.stats)
   end
   return nothing
 end

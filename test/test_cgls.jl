@@ -50,14 +50,14 @@
       # test callback function
       A, b, M = saddle_point(FC=FC)
       M⁻¹ = inv(M)
-      solver = CglsSolver(A, b)
+      workspace = CglsWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2LS(A, b, zero(eltype(b)), tol = tol)
-      cgls!(solver, A, b, M=M⁻¹, callback = cb_n2)
-      @test solver.stats.status == "user-requested exit"
-      @test cb_n2(solver)
+      cgls!(workspace, A, b, M=M⁻¹, callback = cb_n2)
+      @test workspace.stats.status == "user-requested exit"
+      @test cb_n2(workspace)
 
-      @test_throws TypeError cgls(A, b, M=M⁻¹, callback = solver -> "string", history = true)
+      @test_throws TypeError cgls(A, b, M=M⁻¹, callback = workspace -> "string", history = true)
     end
   end
 end
