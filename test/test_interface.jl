@@ -1,4 +1,4 @@
-function test_krylov_solvers(FC; krylov_constructor::Bool=false)
+function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
   A   = FC.(get_div_grad(4, 4, 4))  # Dimension n x n
   n   = size(A, 1)
   m   = div(n, 2)
@@ -242,7 +242,7 @@ function test_krylov_solvers(FC; krylov_constructor::Bool=false)
   end
 end
 
-function test_block_krylov_solvers(FC)
+function test_block_krylov_workspaces(FC)
   A = FC.(get_div_grad(4, 4, 4))  # Dimension n x n
   m, n = size(A)
   p = 8
@@ -302,8 +302,8 @@ end
 @testset "Krylov solvers" begin
   for FC in (Float64, ComplexF64)
     @testset "Data Type: FC" begin
-      test_krylov_solvers(FC; krylov_constructor=false)
-      test_krylov_solvers(FC; krylov_constructor=true)
+      test_krylov_workspaces(FC; krylov_constructor=false)
+      test_krylov_workspaces(FC; krylov_constructor=true)
     end
   end
 end
@@ -311,7 +311,7 @@ end
 @testset "Block Krylov solvers" begin
   for FC in (Float64, ComplexF64)
     @testset "Data Type: FC" begin
-      test_block_krylov_solvers(FC)
+      test_block_krylov_workspaces(FC)
     end
   end
 end
