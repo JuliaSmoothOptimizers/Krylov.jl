@@ -18,7 +18,7 @@ If the user has an initial guess `x0`, it can be provided directly.
 cg(A, b, x0)
 ```
 
-It is also possible to use the `warm_start!` function to feed the starting point into the workspace.
+It is also possible to use the function `warm_start!` to feed the starting point into the workspace.
 
 ```julia
 warm_start!(workspace, x0)
