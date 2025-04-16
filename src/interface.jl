@@ -50,10 +50,6 @@ The argument `workspace` must be a subtype of [`KrylovWorkspace`](@ref) or [`Blo
 """
 function krylov_solve! end
 
-# Aliases to maintain partial backward compatibility (since v0.10).
-# `Krylov.solve!` will continue to work, but `krylov_solve!` is now the exported name.
-const solve! = krylov_solve!
-
 # Krylov methods
 for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
   (:LsmrWorkspace     , :lsmr      , args_lsmr      , def_args_lsmr      , ()                , ()                    , kwargs_lsmr      , def_kwargs_lsmr      )
