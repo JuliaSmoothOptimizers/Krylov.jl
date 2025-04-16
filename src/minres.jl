@@ -106,7 +106,10 @@ function minres end
 
 where `kwargs` are keyword arguments of [`minres`](@ref).
 
-See [`MinresWorkspace`](@ref) for more details about the `workspace`.
+See [`MinresWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function minres! end
 

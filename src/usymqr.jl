@@ -89,7 +89,10 @@ function usymqr end
 
 where `kwargs` are keyword arguments of [`usymqr`](@ref).
 
-See [`UsymqrWorkspace`](@ref) for more details about the `workspace`.
+See [`UsymqrWorkspace`](@ref) for instructions on how to create the `workspace`.
+
+For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function usymqr! end
 
