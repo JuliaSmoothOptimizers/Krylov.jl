@@ -190,7 +190,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     niterations(workspace :: $KS) = workspace.stats.niter
     Aprod(workspace :: $KS) = $nA * workspace.stats.niter
     Atprod(workspace :: $KS) = $nAt * workspace.stats.niter
-    nsolutions(workspace :: $KS) = $nsol
+    nsolution(workspace :: $KS) = $nsol
     if $nsol == 1
       solution(workspace :: $KS) = workspace.X
       solution(workspace :: $KS, p :: Integer) = (p == 1) ? solution(workspace) : error("solution(workspace) has only one output.")
