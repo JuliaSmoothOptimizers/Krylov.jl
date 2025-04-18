@@ -14,12 +14,16 @@ In-place solvers update the workspace, from which solutions and statistics can b
 The following functions are available for post-solve analysis:
 
 ```@docs
-Krylov.results
-Krylov.solution
-Krylov.statistics
-Krylov.nsolution
-Krylov.issolved
+krylov_results
+krylov_solution
+krylov_nsolution
+krylov_statistics
 krylov_elapsed_time
+krylov_niterations
+krylov_issolved
+krylov_Aprod
+krylov_Atprod
+krylov_Bprod
 ```
 
 ## Examples
@@ -58,17 +62,17 @@ for method in (:bicgstab, :gmres)
     krylov_solve!(workspace, A, b)
 
     # Get the statistics
-    stats = statistics(workspace)
+    stats = krylov_statistics(workspace)
 
     # Retrieve the solution
-    x = solution(workspace)
+    x = krylov_solution(workspace)
 
     # Check if the solver converged
-    solved = issolved(workspace)
+    solved = krylov_issolved(workspace)
     println("Convergence of $method: ", solved)
 
     # Display the number of iterations
-    niter = niterations(workspace)
+    niter = krylov_niterations(workspace)
     println("Number of iterations for $method: ", niter)
 
     # Display the elapsed timer
