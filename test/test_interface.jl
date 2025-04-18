@@ -196,8 +196,8 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
           @test solution(workspace, 1) === workspace.x
           @test solution(workspace, 2) === workspace.y
           @test nsolution(workspace) == 2
-          @test krylov_issolved_primal(workspace)
-          @test krylov_issolved_dual(workspace)
+          @test issolved_primal(workspace)
+          @test issolved_dual(workspace)
         end
 
         if method ∈ (:tricg, :trimr, :gpmr)
@@ -211,7 +211,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
           niter = niterations(workspace)
           @test Aprod(workspace) == niter
           method != :gpmr && (@test Atprod(workspace) == niter)
-          method == :gpmr && (@test krylov_Bprod(workspace) == niter)
+          method == :gpmr && (@test Bprod(workspace) == niter)
           @test solution(workspace, 1) === workspace.x
           @test solution(workspace, 2) === workspace.y
           @test nsolution(workspace) == 2
@@ -233,9 +233,9 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
         end
 
         @test niter > 0
-        @test krylov_statistics(workspace) === workspace.stats
-        @test krylov_issolved(workspace)
-        @test krylov_elapsed_time(workspace) > 0
+        @test statistics(workspace) === workspace.stats
+        @test issolved(workspace)
+        @test elapsed_time(workspace) > 0
       end
 
       test_show(workspace)
@@ -268,9 +268,9 @@ function test_block_krylov_workspaces(FC)
         @test solution(workspace) === workspace.X
         @test nsolution(workspace) == 1
         @test niter > 0
-        @test krylov_statistics(workspace) === workspace.stats
-        @test krylov_issolved(workspace)
-        @test krylov_elapsed_time(workspace) > 0
+        @test statistics(workspace) === workspace.stats
+        @test issolved(workspace)
+        @test elapsed_time(workspace) > 0
       end
 
       test_show(workspace)
