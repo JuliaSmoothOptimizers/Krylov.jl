@@ -19,6 +19,7 @@ Krylov.solution
 Krylov.statistics
 Krylov.nsolution
 Krylov.issolved
+krylov_elapsed_time
 ```
 
 ## Examples
@@ -64,10 +65,16 @@ for method in (:bicgstab, :gmres)
 
     # Check if the solver converged
     solved = issolved(workspace)
-    println("Converged $method: ", solved)
+    println("Convergence of $method: ", solved)
 
     # Display the number of iterations
     niter = niterations(workspace)
     println("Number of iterations for $method: ", niter)
+
+    # Display the elapsed timer
+    timer = krylov_elapsed_time(workspace)
+    println("Elapsed time for $method: ", timer, " seconds")
+
+    println()
 end
 ```

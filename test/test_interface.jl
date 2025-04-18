@@ -235,6 +235,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
         @test niter > 0
         @test statistics(workspace) === workspace.stats
         @test issolved(workspace)
+        @test krylov_elapsed_time(workspace) > 0
       end
 
       test_show(workspace)
@@ -269,6 +270,7 @@ function test_block_krylov_workspaces(FC)
         @test niter > 0
         @test statistics(workspace) === workspace.stats
         @test issolved(workspace)
+        @test krylov_elapsed_time(workspace) > 0
       end
 
       test_show(workspace)
