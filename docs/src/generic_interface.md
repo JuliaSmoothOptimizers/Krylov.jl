@@ -19,7 +19,7 @@ krylov_solution
 krylov_nsolution
 krylov_statistics
 krylov_elapsed_time
-krylov_niterations
+krylov_niteration
 krylov_issolved
 krylov_Aprod
 krylov_Atprod

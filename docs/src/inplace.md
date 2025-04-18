@@ -1,7 +1,8 @@
 ## [In-place methods](@id in-place)
 
 All solvers in Krylov.jl have an in-place variant implemented in a method whose name ends with `!`.
-A workspace (`KrylovWorkspace`), which contains the storage needed by a Krylov method, can be used to solve multiple linear systems with the same dimensions and the same floating-point precision.
+A workspace (`KrylovWorkspace` or `BlockKrylovWorkspace`), which contains the storage needed by a Krylov method, can be used to solve multiple linear systems with the same dimensions and the same floating-point precision.
+It should also be the same number of right-hand sides in block Krylov methods.
 The section [storage requirements](@ref storage-requirements) specifies the memory needed for each Krylov method.
 
 Each `KrylovWorkspace` has three constructors with consistent argument patterns:

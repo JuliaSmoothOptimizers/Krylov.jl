@@ -27,8 +27,8 @@
 export krylov_workspace, krylov_solve, krylov_solve!
 
 export krylov_solution, krylov_nsolution, krylov_statistics, krylov_issolved
-export krylov_niterations, krylov_Aprod, krylov_Atprod, krylov_Bprod
-export krylov_warm_start!, krylov_elapsed_time
+export krylov_niteration, krylov_Aprod, krylov_Atprod, krylov_Bprod
+export krylov_elapsed_time
 # export krylov_issolved_primal, krylov_issolved_dual
 
 """
@@ -136,8 +136,12 @@ x, stats = krylov_results(workspace)
 function krylov_result end
 
 """
+  warm_start!(workspace, x0)
+  warm_start!(workspace, x0, y0)
+
+Warm-start the Krylov method associated with `workspace` using a user-provided initial guess, instead of starting from zero.
 """
-function krylov_warm_start! end
+function warm_start! end
 
 # Krylov methods
 for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
@@ -234,7 +238,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         function $(krylov)($(def_args...), $(def_optargs...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           workspace = $workspace(A, b; memory)
-          krylov_warm_start!(workspace, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -263,7 +267,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         function $(krylov)($(def_args...), $(def_optargs...); window::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           workspace = $workspace(A, b; window)
-          krylov_warm_start!(workspace, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -292,7 +296,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           workspace = $workspace(A, b)
-          krylov_warm_start!(workspace, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -313,7 +317,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
       if !isempty($optargs)
         function $(krylov_ip)(workspace :: $workspace{T,FC,S}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
           start_time = time_ns()
-          krylov_warm_start!(workspace, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -325,7 +329,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
   end
 end
 
-# Block-Krylov methods
+# Block Krylov methods
 for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs) in [
   (:BlockMinresWorkspace, :block_minres, args_block_minres, def_args_block_minres, optargs_block_minres, def_optargs_block_minres, kwargs_block_minres, def_kwargs_block_minres)
   (:BlockGmresWorkspace , :block_gmres , args_block_gmres , def_args_block_gmres , optargs_block_gmres , def_optargs_block_gmres , kwargs_block_gmres , def_kwargs_block_gmres )
@@ -361,7 +365,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         function $(krylov)($(def_args...), $(def_optargs...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           workspace = $workspace(A, B; memory)
-          krylov_warm_start!(workspace, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = ktimer(start_time)
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -390,7 +394,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           workspace = $workspace(A, B)
-          krylov_warm_start!(workspace, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = ktimer(start_time)
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -411,7 +415,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
       if !isempty($optargs)
         function $(krylov_ip)(workspace :: $workspace{T,FC,SV,SM}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
           start_time = time_ns()
-          krylov_warm_start!(workspace, $(optargs...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -423,6 +427,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
   end
 end
 
+# Krylov methods
 for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:CarWorkspace      , :car!       , 1, 1, 0, true )
   (:LsmrWorkspace     , :lsmr!      , 1, 1, 1, false)
@@ -473,12 +478,12 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     krylov_nsolution(workspace :: $KS) = $nsol
     if $nsol == 1
       krylov_solution(workspace :: $KS) = workspace.x
-      krylov_solution(workspace :: $KS, p :: Integer) = (p == 1) ? solution(workspace) : error("solution(workspace) has only one output.")
+      krylov_solution(workspace :: $KS, p :: Integer) = (p == 1) ? krylov_solution(workspace) : error("solution(workspace) has only one output.")
       krylov_results(workspace :: $KS) = (workspace.x, workspace.stats)
     end
     if $nsol == 2
       krylov_solution(workspace :: $KS) = (workspace.x, workspace.y)
-      krylov_solution(workspace :: $KS, p :: Integer) = (1 ≤ p ≤ 2) ? solution(workspace)[p] : error("solution(workspace) has only two outputs.")
+      krylov_solution(workspace :: $KS, p :: Integer) = (1 ≤ p ≤ 2) ? krylov_solution(workspace)[p] : error("solution(workspace) has only two outputs.")
       krylov_results(workspace :: $KS) = (workspace.x, workspace.y, workspace.stats)
     end
     if $KS ∈ (BilqrWorkspace, TrilqrWorkspace)
@@ -490,7 +495,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     end
     if $warm_start
       if $KS in (BilqrWorkspace, TrilqrWorkspace, TricgWorkspace, TrimrWorkspace, GpmrWorkspace)
-        function krylov_warm_start!(workspace :: $KS, x0, y0)
+        function warm_start!(workspace :: $KS, x0, y0)
           length(x0) == workspace.n || error("x0 should have size $n")
           length(y0) == workspace.m || error("y0 should have size $m")
           S = typeof(workspace.x)
@@ -502,7 +507,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
           return workspace
         end
       else
-        function krylov_warm_start!(workspace :: $KS, x0)
+        function warm_start!(workspace :: $KS, x0)
           S = typeof(workspace.x)
           length(x0) == workspace.n || error("x0 should have size $n")
           allocate_if(true, workspace, :Δx, S, workspace.x)  # The length of Δx is n
@@ -515,6 +520,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   end
 end
 
+# Block Krylov methods
 for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:BlockMinresWorkspace, :block_minres!, 1, 1, 0, true)
   (:BlockGmresWorkspace , :block_gmres! , 1, 1, 0, true)
@@ -528,12 +534,12 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     krylov_nsolution(workspace :: $KS) = $nsol
     if $nsol == 1
       krylov_solution(workspace :: $KS) = workspace.X
-      krylov_solution(workspace :: $KS, p :: Integer) = (p == 1) ? solution(workspace) : error("solution(workspace) has only one output.")
+      krylov_solution(workspace :: $KS, p :: Integer) = (p == 1) ? krylov_solution(workspace) : error("solution(workspace) has only one output.")
       krylov_results(workspace :: $KS) = (workspace.X, workspace.stats)
     end
     krylov_issolved(workspace :: $KS) = workspace.stats.solved
     if $warm_start
-      function krylov_warm_start!(workspace :: $KS, X0)
+      function warm_start!(workspace :: $KS, X0)
         n2, p2 = size(X0)
         SM = typeof(workspace.X)
         (workspace.n == n2 && workspace.p == p2) || error("X0 should have size ($n, $p)")

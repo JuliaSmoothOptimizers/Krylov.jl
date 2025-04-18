@@ -154,7 +154,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
             @inferred krylov_solve(Val(method), A, b)
             @inferred krylov_solve!(workspace, A, b)
           end
-          niter = krylov_niterations(workspace)
+          niter = krylov_niteration(workspace)
           @test krylov_Aprod(workspace) == (method ∈ (:cgs, :bicgstab) ? 2 * niter : niter)
           @test krylov_Atprod(workspace) == (method ∈ (:bilq, :qmr) ? niter : 0)
           @test krylov_solution(workspace) === workspace.x
@@ -164,7 +164,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
         if method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr)
           @inferred krylov_solve(Val(method), Au, c)
           @inferred krylov_solve!(workspace, Au, c)
-          niter = krylov_niterations(workspace)
+          niter = krylov_niteration(workspace)
           @test krylov_Aprod(workspace) == niter
           @test krylov_Atprod(workspace) == niter
           @test krylov_solution(workspace, 1) === workspace.x
@@ -180,7 +180,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
             @inferred krylov_solve(Val(method), Ao, b)
             @inferred krylov_solve!(workspace, Ao, b)
           end
-          niter = krylov_niterations(workspace)
+          niter = krylov_niteration(workspace)
           @test krylov_Aprod(workspace) == niter
           @test krylov_Atprod(workspace) == niter
           @test krylov_solution(workspace) === workspace.x
@@ -190,7 +190,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
         if method ∈ (:bilqr, :trilqr)
           @inferred krylov_solve(Val(method), A, b, b)
           @inferred krylov_solve!(workspace, A, b, b)
-          niter = krylov_niterations(workspace)
+          niter = krylov_niteration(workspace)
           @test krylov_Aprod(workspace) == niter
           @test krylov_Atprod(workspace) == niter
           @test krylov_solution(workspace, 1) === workspace.x
@@ -208,7 +208,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
             @inferred krylov_solve(Val(method), Au, c, b)
             @inferred krylov_solve!(workspace, Au, c, b)
           end
-          niter = krylov_niterations(workspace)
+          niter = krylov_niteration(workspace)
           @test krylov_Aprod(workspace) == niter
           method != :gpmr && (@test krylov_Atprod(workspace) == niter)
           method == :gpmr && (@test krylov_Bprod(workspace) == niter)
@@ -225,7 +225,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
             @inferred krylov_solve(Val(method), Ao, b, c)
             @inferred krylov_solve!(workspace, Ao, b, c)
           end
-          niter = krylov_niterations(workspace)
+          niter = krylov_niteration(workspace)
           @test krylov_Aprod(workspace) == niter
           @test krylov_Atprod(workspace) == niter
           @test krylov_solution(workspace) === workspace.x
@@ -262,7 +262,7 @@ function test_block_krylov_workspaces(FC)
         B = 5 * B
         @inferred krylov_solve(Val(method), A, B)
         @inferred krylov_solve!(workspace, A, B)
-        niter = krylov_niterations(workspace)
+        niter = krylov_niteration(workspace)
         @test krylov_Aprod(workspace) == niter
         @test krylov_Atprod(workspace) == 0
         @test krylov_solution(workspace) === workspace.X
