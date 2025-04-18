@@ -26,10 +26,10 @@
 
 export krylov_workspace, krylov_solve, krylov_solve!
 
-export krylov_solution, krylov_nsolution, krylov_statistics, krylov_issolved
-export krylov_niteration, krylov_Aprod, krylov_Atprod, krylov_Bprod
-export krylov_elapsed_time
-# export krylov_issolved_primal, krylov_issolved_dual
+export krylov_solution, krylov_statistics, krylov_results
+export krylov_elapsed_time, krylov_nsolution, krylov_niteration
+export krylov_Aprod, krylov_Atprod, krylov_Bprod
+export krylov_issolved, krylov_issolved_primal, krylov_issolved_dual
 
 """
     workspace = krylov_workspace(Val(method), args...; kwargs...)
@@ -489,7 +489,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
     if $KS ∈ (BilqrWorkspace, TrilqrWorkspace)
       krylov_issolved_primal(workspace :: $KS) = workspace.stats.solved_primal
       krylov_issolved_dual(workspace :: $KS) = workspace.stats.solved_dual
-      krylov_issolved(workspace :: $KS) = issolved_primal(workspace) && issolved_dual(workspace)
+      krylov_issolved(workspace :: $KS) = krylov_issolved_primal(workspace) && krylov_issolved_dual(workspace)
     else
       krylov_issolved(workspace :: $KS) = workspace.stats.solved
     end

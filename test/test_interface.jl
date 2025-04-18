@@ -169,7 +169,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
           @test krylov_Atprod(workspace) == niter
           @test krylov_solution(workspace, 1) === workspace.x
           @test krylov_nsolution(workspace) == (method ∈ (:cgne, :crmr) ? 1 : 2)
-          (nsolution == 2) && (@test krylov_solution(workspace, 2) == workspace.y)
+          (krylov_nsolution(workspace) == 2) && (@test krylov_solution(workspace, 2) == workspace.y)
         end
 
         if method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr, :cgls_lanczos_shift)
