@@ -14,7 +14,7 @@ The section on [workspace accessors](@ref workspace-accessors) describes how to 
 
 ## Examples
 
-```@example ofp_interface
+```@example op_interface
 using Krylov, Random
 
 # Define a symmetric positive definite matrix A and a right-hand side vector b
