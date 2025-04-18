@@ -50,7 +50,7 @@ function elapsed_time end
 """
     solution_count(workspace)
 
-Return the number of solutions stored in `workspace`.
+Return the number of outputs of `solution(workspace)`.
 """
 function solution_count end
 
