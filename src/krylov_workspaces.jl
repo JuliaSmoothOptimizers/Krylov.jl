@@ -6,7 +6,7 @@ CrmrWorkspace, LslqWorkspace, LsqrWorkspace, LsmrWorkspace, LnlqWorkspace, Craig
 GmresWorkspace, FomWorkspace, GpmrWorkspace, FgmresWorkspace, CarWorkspace, MinaresWorkspace
 
 export solution, nsolution, statistics, issolved, issolved_primal, issolved_dual,
-niterations, Aprod, Atprod, Bprod, warm_start!
+niterations, Aprod, Atprod, Bprod, warm_start!, krylov_elapsed_time
 
 export KrylovConstructor
 
@@ -2740,6 +2740,13 @@ Return the number of operator-vector products with `A'` performed by the Krylov 
 function Atprod end
 
 """
+    krylov_elapsed_time(workspace)
+
+Return the time elapsed (in seconds) during the last call to the Krylov solver associated with `workspace`.
+"""
+function krylov_elapsed_time end
+
+"""
     results(workspace)
 
 Return a tuple containing the solution(s) and the statistics associated with the `workspace`.
@@ -2793,6 +2800,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:CglsLanczosShiftWorkspace, :cgls_lanczos_shift!, 1, 1, 1, false)
 ]
   @eval begin
+    krylov_elapsed_time(workspace :: $KS) = workspace.stats.timer
     size(workspace :: $KS) = workspace.m, workspace.n
     statistics(workspace :: $KS) = workspace.stats
     niterations(workspace :: $KS) = workspace.stats.niter

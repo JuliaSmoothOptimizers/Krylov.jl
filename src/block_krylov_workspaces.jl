@@ -133,6 +133,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:BlockGmresWorkspace , :block_gmres! , 1, 1, 0, true)
 ]
   @eval begin
+    krylov_elapsed_time(workspace :: $KS) = workspace.stats.timer
     size(workspace :: $KS) = workspace.m, workspace.n
     nrhs(workspace :: $KS) = workspace.p
     statistics(workspace :: $KS) = workspace.stats
