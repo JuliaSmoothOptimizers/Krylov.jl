@@ -154,22 +154,22 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
             @inferred krylov_solve(Val(method), A, b)
             @inferred krylov_solve!(workspace, A, b)
           end
-          niter = krylov_niteration(workspace)
-          @test krylov_Aprod(workspace) == (method ∈ (:cgs, :bicgstab) ? 2 * niter : niter)
-          @test krylov_Atprod(workspace) == (method ∈ (:bilq, :qmr) ? niter : 0)
-          @test krylov_solution(workspace) === workspace.x
-          @test krylov_nsolution(workspace) == 1
+          niter = niterations(workspace)
+          @test Aprod(workspace) == (method ∈ (:cgs, :bicgstab) ? 2 * niter : niter)
+          @test Atprod(workspace) == (method ∈ (:bilq, :qmr) ? niter : 0)
+          @test solution(workspace) === workspace.x
+          @test nsolution(workspace) == 1
         end
 
         if method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr)
           @inferred krylov_solve(Val(method), Au, c)
           @inferred krylov_solve!(workspace, Au, c)
-          niter = krylov_niteration(workspace)
-          @test krylov_Aprod(workspace) == niter
-          @test krylov_Atprod(workspace) == niter
-          @test krylov_solution(workspace, 1) === workspace.x
-          @test krylov_nsolution(workspace) == (method ∈ (:cgne, :crmr) ? 1 : 2)
-          (krylov_nsolution(workspace) == 2) && (@test krylov_solution(workspace, 2) == workspace.y)
+          niter = niterations(workspace)
+          @test Aprod(workspace) == niter
+          @test Atprod(workspace) == niter
+          @test solution(workspace, 1) === workspace.x
+          @test nsolution(workspace) == (method ∈ (:cgne, :crmr) ? 1 : 2)
+          (nsolution(workspace) == 2) && (@test solution(workspace, 2) == workspace.y)
         end
 
         if method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr, :cgls_lanczos_shift)
@@ -180,22 +180,22 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
             @inferred krylov_solve(Val(method), Ao, b)
             @inferred krylov_solve!(workspace, Ao, b)
           end
-          niter = krylov_niteration(workspace)
-          @test krylov_Aprod(workspace) == niter
-          @test krylov_Atprod(workspace) == niter
-          @test krylov_solution(workspace) === workspace.x
-          @test krylov_nsolution(workspace) == 1
+          niter = niterations(workspace)
+          @test Aprod(workspace) == niter
+          @test Atprod(workspace) == niter
+          @test solution(workspace) === workspace.x
+          @test nsolution(workspace) == 1
         end
 
         if method ∈ (:bilqr, :trilqr)
           @inferred krylov_solve(Val(method), A, b, b)
           @inferred krylov_solve!(workspace, A, b, b)
-          niter = krylov_niteration(workspace)
-          @test krylov_Aprod(workspace) == niter
-          @test krylov_Atprod(workspace) == niter
-          @test krylov_solution(workspace, 1) === workspace.x
-          @test krylov_solution(workspace, 2) === workspace.y
-          @test krylov_nsolution(workspace) == 2
+          niter = niterations(workspace)
+          @test Aprod(workspace) == niter
+          @test Atprod(workspace) == niter
+          @test solution(workspace, 1) === workspace.x
+          @test solution(workspace, 2) === workspace.y
+          @test nsolution(workspace) == 2
           @test krylov_issolved_primal(workspace)
           @test krylov_issolved_dual(workspace)
         end
@@ -208,13 +208,13 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
             @inferred krylov_solve(Val(method), Au, c, b)
             @inferred krylov_solve!(workspace, Au, c, b)
           end
-          niter = krylov_niteration(workspace)
-          @test krylov_Aprod(workspace) == niter
-          method != :gpmr && (@test krylov_Atprod(workspace) == niter)
+          niter = niterations(workspace)
+          @test Aprod(workspace) == niter
+          method != :gpmr && (@test Atprod(workspace) == niter)
           method == :gpmr && (@test krylov_Bprod(workspace) == niter)
-          @test krylov_solution(workspace, 1) === workspace.x
-          @test krylov_solution(workspace, 2) === workspace.y
-          @test krylov_nsolution(workspace) == 2
+          @test solution(workspace, 1) === workspace.x
+          @test solution(workspace, 2) === workspace.y
+          @test nsolution(workspace) == 2
         end
 
         if method ∈ (:usymlq, :usymqr)
@@ -225,11 +225,11 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
             @inferred krylov_solve(Val(method), Ao, b, c)
             @inferred krylov_solve!(workspace, Ao, b, c)
           end
-          niter = krylov_niteration(workspace)
-          @test krylov_Aprod(workspace) == niter
-          @test krylov_Atprod(workspace) == niter
-          @test krylov_solution(workspace) === workspace.x
-          @test krylov_nsolution(workspace) == 1
+          niter = niterations(workspace)
+          @test Aprod(workspace) == niter
+          @test Atprod(workspace) == niter
+          @test solution(workspace) === workspace.x
+          @test nsolution(workspace) == 1
         end
 
         @test niter > 0
@@ -262,11 +262,11 @@ function test_block_krylov_workspaces(FC)
         B = 5 * B
         @inferred krylov_solve(Val(method), A, B)
         @inferred krylov_solve!(workspace, A, B)
-        niter = krylov_niteration(workspace)
-        @test krylov_Aprod(workspace) == niter
-        @test krylov_Atprod(workspace) == 0
-        @test krylov_solution(workspace) === workspace.X
-        @test krylov_nsolution(workspace) == 1
+        niter = niterations(workspace)
+        @test Aprod(workspace) == niter
+        @test Atprod(workspace) == 0
+        @test solution(workspace) === workspace.X
+        @test nsolution(workspace) == 1
         @test niter > 0
         @test krylov_statistics(workspace) === workspace.stats
         @test krylov_issolved(workspace)

@@ -5,12 +5,14 @@ using LinearAlgebra, SparseArrays, Printf
 include("krylov_stats.jl")
 
 include("krylov_utils.jl")
-include("krylov_processes.jl")
-include("krylov_workspaces.jl")
-
 include("block_krylov_utils.jl")
+
+include("krylov_processes.jl")
 include("block_krylov_processes.jl")
+
+include("krylov_workspaces.jl")
 include("block_krylov_workspaces.jl")
+include("workspace_accessors.jl")
 
 include("krylov_show.jl")
 

@@ -10,22 +10,6 @@ krylov_solve!
 krylov_solve
 ```
 
-In-place solvers update the workspace, from which solutions and statistics can be retrieved.
-The following functions are available for post-solve analysis:
-
-```@docs
-krylov_results
-krylov_solution
-krylov_nsolution
-krylov_statistics
-krylov_elapsed_time
-krylov_niteration
-krylov_issolved
-krylov_Aprod
-krylov_Atprod
-krylov_Bprod
-```
-
 ## Examples
 
 ```julia

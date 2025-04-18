@@ -1,5 +1,9 @@
 using Krylov, LinearAlgebra, SparseArrays, Printf, Random, Test
 
+import Krylov: solution, statistics, results, elapsed_time,
+               nsolution, niterations, Aprod, Atprod, Bprod,
+               issolved, issolved_primal, issolved_dual
+
 Random.seed!(666)
 
 include("test_utils.jl")

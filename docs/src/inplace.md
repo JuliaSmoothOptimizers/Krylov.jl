@@ -45,6 +45,26 @@ lsqr_workspace = LsqrWorkspace(m, n, CuVector{Float32})
 lsqr!(lsqr_workspace, A4, b4)
 ```
 
+## Workspace accessors
+
+In-place solvers update the workspace, from which solutions and statistics can be retrieved.
+The following functions are available for post-solve analysis.
+
+These functions are not exported and must be accessed using the prefix `Krylov.`, e.g. `Krylov.solution(workspace)`.
+
+```@docs
+Krylov.results
+Krylov.solution
+Krylov.nsolution
+Krylov.statistics
+Krylov.elapsed_time
+Krylov.niterations
+Krylov.issolved
+Krylov.Aprod
+Krylov.Atprod
+Krylov.Bprod
+```
+
 ## Examples
 
 We illustrate the use of in-place Krylov solvers with two well-known optimization methods.
@@ -54,6 +74,7 @@ The details of the optimization methods are described in the section about [Fact
 
 ```@newton
 using Krylov
+import Krylov: solution
 
 function newton(∇f, ∇²f, x₀; itmax = 200, tol = 1e-8)
 
@@ -64,7 +85,6 @@ function newton(∇f, ∇²f, x₀; itmax = 200, tol = 1e-8)
     iter = 0
     S = typeof(x)
     workspace = CgWorkspace(n, n, S)
-    Δx = workspace.x
 
     solved = false
     tired = false
@@ -73,6 +93,7 @@ function newton(∇f, ∇²f, x₀; itmax = 200, tol = 1e-8)
  
         Hx = ∇²f(x)              # Compute ∇²f(xₖ)
         cg!(workspace, Hx, -gx)  # Solve ∇²f(xₖ)Δx = -∇f(xₖ)
+        Δx = solution(workspace) # Recover Δx from the workspace
         x = x + Δx               # Update xₖ₊₁ = xₖ + Δx
         gx = ∇f(x)               # ∇f(xₖ₊₁)
         
@@ -88,6 +109,7 @@ end
 
 ```@gauss_newton
 using Krylov
+import Krylov: solution
 
 function gauss_newton(F, JF, x₀; itmax = 200, tol = 1e-8)
 
@@ -99,7 +121,6 @@ function gauss_newton(F, JF, x₀; itmax = 200, tol = 1e-8)
     iter = 0
     S = typeof(x)
     workspace = LsmrWorkspace(m, n, S)
-    Δx = workspace.x
 
     solved = false
     tired = false
@@ -108,6 +129,7 @@ function gauss_newton(F, JF, x₀; itmax = 200, tol = 1e-8)
  
         Jx = JF(x)                 # Compute J(xₖ)
         lsmr!(workspace, Jx, -Fx)  # Minimize ‖J(xₖ)Δx + F(xₖ)‖
+        Δx = solution(workspace)   # Recover Δx from the workspace
         x = x + Δx                 # Update xₖ₊₁ = xₖ + Δx
         Fx_old = Fx                # F(xₖ)
         Fx = F(x)                  # F(xₖ₊₁)
