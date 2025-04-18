@@ -15,7 +15,7 @@ The section on [workspace accessors](@ref workspace-accessors) describes how to 
 ## Examples
 
 ```@example op_interface
-using Krylov, SparseArrays
+using Krylov, SparseArrays, LinearAlgebra
 
 # Define a symmetric positive definite matrix A and a right-hand side vector b
 n = 1000
@@ -32,7 +32,7 @@ end
 ```
 
 ```@example ip_interface
-using Krylov, SparseArrays
+using Krylov, SparseArrays, LinearAlgebra
 
 # Define a square nonsymmetric matrix A and a right-hand side vector b
 n = 100
