@@ -133,7 +133,7 @@ cg!(workspace, A, b)
 x, stats = krylov_results(workspace)
 ```
 """
-function krylov_result end
+function krylov_results end
 
 """
   warm_start!(workspace, x0)

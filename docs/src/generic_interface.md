@@ -14,7 +14,7 @@ In-place solvers update the workspace, from which solutions and statistics can b
 The following functions are available for post-solve analysis:
 
 ```@docs
-krylov_result
+krylov_results
 krylov_solution
 krylov_nsolution
 krylov_statistics

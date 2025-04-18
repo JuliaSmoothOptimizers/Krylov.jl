@@ -442,7 +442,7 @@ kc = KrylovConstructor(b)
 workspace = MinresWorkspace(kc)
 minres!(workspace, A, b; M=P)
 
-x = solution(workspace)
+x = krylov_solution(workspace)
 stats = krylov_statistics(workspace)
 niter = stats.niter
 ```
