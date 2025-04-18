@@ -46,21 +46,21 @@ for method in (:bicgstab, :gmres)
     krylov_solve!(workspace, A, b)
 
     # Get the statistics
-    stats = krylov_statistics(workspace)
+    stats = Krylov.statistics(workspace)
 
     # Retrieve the solution
-    x = krylov_solution(workspace)
+    x = Krylov.solution(workspace)
 
     # Check if the solver converged
-    solved = krylov_issolved(workspace)
+    solved = Krylov.issolved(workspace)
     println("Convergence of $method: ", solved)
 
     # Display the number of iterations
-    niter = krylov_niterations(workspace)
+    niter = Krylov.niterations(workspace)
     println("Number of iterations for $method: ", niter)
 
     # Display the elapsed timer
-    timer = krylov_elapsed_time(workspace)
+    timer = Krylov.elapsed_time(workspace)
     println("Elapsed time for $method: ", timer, " seconds")
 
     println()
