@@ -1,7 +1,7 @@
 using Krylov, LinearAlgebra, SparseArrays, Printf, Random, Test
 
 import Krylov: solution, statistics, results, elapsed_time,
-               nsolution, niterations, Aprod, Atprod, Bprod,
+               solution_count, iteration_count, Aprod_count, Atprod_count,
                issolved, issolved_primal, issolved_dual
 
 Random.seed!(666)
