@@ -330,8 +330,8 @@ workspace = CgWorkspace(kc)
 
 # Solve the system with CG
 Krylov.cg!(workspace, A, b, atol=1e-12, rtol=0.0, verbose=1)
-u_sol = solution(workspace)
-stats = statistics(workspace)
+u_sol = krylov_solution(workspace)
+stats = krylov_statistics(workspace)
 ```
 
 ```@example halo-regions
@@ -443,7 +443,7 @@ workspace = MinresWorkspace(kc)
 minres!(workspace, A, b; M=P)
 
 x = solution(workspace)
-stats = statistics(workspace)
+stats = krylov_statistics(workspace)
 niter = stats.niter
 ```
 
