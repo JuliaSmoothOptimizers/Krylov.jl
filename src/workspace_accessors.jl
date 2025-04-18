@@ -8,60 +8,11 @@ Optionally you can specify which solution you want to recover,
 function solution end
 
 """
-    nsolution(workspace)
-
-Return the number of outputs of `solution(workspace)`.
-"""
-function nsolution end
-
-"""
     statistics(workspace)
 
 Return the statistics stored in `workspace`.
 """
 function statistics end
-
-"""
-    issolved(workspace)
-
-Return a boolean indicating whether the Krylov method associated with `workspace` has succeeded.
-"""
-function issolved end
-
-"""
-    niterations(workspace)
-
-Return the number of iterations performed by the Krylov method associated with `workspace`.
-"""
-function niterations end
-
-"""
-    Aprod(workspace)
-
-Return the number of operator-vector products with `A` performed by the Krylov method associated with `workspace`.
-"""
-function Aprod end
-
-"""
-    Atprod(workspace)
-
-Return the number of operator-vector products with `A'` performed by the Krylov method associated with `workspace`.
-"""
-function Atprod end
-
-"""
-    Bprod(workspace)
-
-Return the number of operator-vector products with `B` performed by the Krylov method associated with `workspace`.
-"""
-function Bprod end
-
-"""
-    elapsed_time(workspace)
-
-Return the elapsed time (in seconds) during the last call to the Krylov method associated with `workspace`.
-"""
-function elapsed_time end
 
 """
     results(workspace)
@@ -77,6 +28,50 @@ x, stats = results(workspace)
 ```
 """
 function results end
+
+"""
+    issolved(workspace)
+
+Return a boolean indicating whether the Krylov method associated with `workspace` has succeeded.
+"""
+function issolved end
+
+"""
+    elapsed_time(workspace)
+
+Return the elapsed time (in seconds) during the last call to the Krylov method associated with `workspace`.
+"""
+function elapsed_time end
+
+"""
+    solution_count(workspace)
+
+Return the number of solutions stored in `workspace`.
+"""
+function solution_count end
+
+"""
+    iteration_count(workspace)
+
+Return the number of iterations performed by the Krylov method associated with `workspace`.
+"""
+function iteration_count end
+
+"""
+    Aprod_count(workspace)
+
+Return the number of operator-vector products with `A` performed by the Krylov method associated with `workspace`.
+
+This function can also be used to determine the number of operator-vector products with `B` in [`gpmr`](@ref), since it is the same as for `A`.
+"""
+function Aprod_count end
+
+"""
+    Atprod_count(workspace)
+
+Return the number of operator-vector products with `A'` performed by the Krylov method associated with `workspace`.
+"""
+function Atprod_count end
 
 """
   warm_start!(workspace, x0)

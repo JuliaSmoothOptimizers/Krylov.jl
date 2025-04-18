@@ -55,14 +55,13 @@ These functions are not exported and must be accessed using the prefix `Krylov.`
 ```@docs
 Krylov.results
 Krylov.solution
-Krylov.nsolution
 Krylov.statistics
 Krylov.elapsed_time
-Krylov.niterations
+Krylov.solution_count
+Krylov.iteration_count
+Krylov.Aprod_count
+Krylov.Atprod_count
 Krylov.issolved
-Krylov.Aprod
-Krylov.Atprod
-Krylov.Bprod
 ```
 
 ## Examples

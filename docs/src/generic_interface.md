@@ -56,7 +56,7 @@ for method in (:bicgstab, :gmres)
     println("Convergence of $method: ", solved)
 
     # Display the number of iterations
-    niter = Krylov.niterations(workspace)
+    niter = Krylov.iteration_count(workspace)
     println("Number of iterations for $method: ", niter)
 
     # Display the elapsed timer

@@ -438,14 +438,14 @@ We now solve the system $Ax = b$ using `minres` with our preconditioner:
 
 ```@example block-arrays
 using Krylov
-import Krylov: solution, niterations
+import Krylov: solution, iteration_count
 
 kc = KrylovConstructor(b)
 workspace = MinresWorkspace(kc)
 minres!(workspace, A, b; M=P)
 
 x = solution(workspace)
-niter = niterations(workspace)
+niter = iteration_count(workspace)
 ```
 
 This example demonstrates how `BlockArrays.jl` and `Krylov.jl` can be effectively combined to solve structured saddle point systems.
