@@ -169,7 +169,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
           @test Atprod(workspace) == niter
           @test solution(workspace, 1) === workspace.x
           @test nsolution(workspace) == (method ∈ (:cgne, :crmr) ? 1 : 2)
-          (nsolution == 2) && (@test solution(workspace, 2) == workspace.y)
+          (nsolution(workspace) == 2) && (@test solution(workspace, 2) == workspace.y)
         end
 
         if method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr, :cgls_lanczos_shift)
@@ -235,7 +235,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false)
         @test niter > 0
         @test statistics(workspace) === workspace.stats
         @test issolved(workspace)
-        @test krylov_elapsed_time(workspace) > 0
+        @test elapsed_time(workspace) > 0
       end
 
       test_show(workspace)
@@ -270,7 +270,7 @@ function test_block_krylov_workspaces(FC)
         @test niter > 0
         @test statistics(workspace) === workspace.stats
         @test issolved(workspace)
-        @test krylov_elapsed_time(workspace) > 0
+        @test elapsed_time(workspace) > 0
       end
 
       test_show(workspace)

@@ -298,6 +298,7 @@ Note that `Krylov.kref!` is only required for the function `minres_qlp`.
 
 ```@example halo-regions
 using Krylov, OffsetArrays
+import Krylov: solution, statistics
 
 # Parameters
 L = 1.0            # Length of the square domain
@@ -437,14 +438,14 @@ We now solve the system $Ax = b$ using `minres` with our preconditioner:
 
 ```@example block-arrays
 using Krylov
+import Krylov: solution, niterations
 
 kc = KrylovConstructor(b)
 workspace = MinresWorkspace(kc)
 minres!(workspace, A, b; M=P)
 
 x = solution(workspace)
-stats = statistics(workspace)
-niter = stats.niter
+niter = niterations(workspace)
 ```
 
 This example demonstrates how `BlockArrays.jl` and `Krylov.jl` can be effectively combined to solve structured saddle point systems.

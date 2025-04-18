@@ -5,11 +5,11 @@
 ```@index
 ```
 
+## Internals
+
 ```@docs
 Krylov.FloatOrComplex
-Krylov.niterations
-Krylov.Aprod
-Krylov.Atprod
+Krylov.warm_start!
 Krylov.kstdout
 Krylov.extract_parameters
 Base.show

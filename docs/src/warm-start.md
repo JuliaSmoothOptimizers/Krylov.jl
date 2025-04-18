@@ -1,7 +1,6 @@
 # [Warm-start](@id warm-start)
 
-Most Krylov methods in this module accept a starting point as argument.
-The starting point is used as initial approximation to a solution.
+Most Krylov methods accept a user-provided initial guess instead of starting from zero.
 
 ```julia
 workspace = CgWorkspace(A, b)
@@ -16,14 +15,6 @@ If the user has an initial guess `x0`, it can be provided directly.
 
 ```julia
 cg(A, b, x0)
-```
-
-It is also possible to use the function `warm_start!` to feed the starting point into the workspace.
-
-```julia
-warm_start!(workspace, x0)
-cg!(workspace, A, b)
-# the previous two lines are equivalent to cg!(workspace, A, b, x0)
 ```
 
 If a Krylov method doesn't have the option to warm start, it can still be done explicitly.
