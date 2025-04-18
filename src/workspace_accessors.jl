@@ -187,7 +187,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   @eval begin
     elapsed_time(workspace :: $KS) = workspace.stats.timer
     statistics(workspace :: $KS) = workspace.stats
-    niteration(workspace :: $KS) = workspace.stats.niter
+    niterations(workspace :: $KS) = workspace.stats.niter
     Aprod(workspace :: $KS) = $nA * workspace.stats.niter
     Atprod(workspace :: $KS) = $nAt * workspace.stats.niter
     nsolutions(workspace :: $KS) = $nsol
