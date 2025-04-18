@@ -10,6 +10,8 @@ krylov_solve!
 krylov_solve
 ```
 
+The section on [workspace accessors](@ref workspace-accessors) describes how to retrieve the solution, statistics, and other results from a workspace after calling `krylov_solve!`.
+
 ## Examples
 
 ```julia

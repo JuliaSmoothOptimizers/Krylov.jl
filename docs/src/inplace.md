@@ -45,7 +45,7 @@ lsqr_workspace = LsqrWorkspace(m, n, CuVector{Float32})
 lsqr!(lsqr_workspace, A4, b4)
 ```
 
-## Workspace accessors
+## [Workspace accessors](@id workspace-accessors)
 
 In-place solvers update the workspace, from which solutions and statistics can be retrieved.
 The following functions are available for post-solve analysis.

@@ -2,6 +2,7 @@
     solution(workspace)
 
 Return the solution(s) stored in the `workspace`.
+
 Optionally you can specify which solution you want to recover,
 `solution(workspace, 1)` returns `x` and `solution(workspace, 2)` returns `y`.
 """
@@ -33,6 +34,9 @@ function results end
     issolved(workspace)
 
 Return a boolean indicating whether the Krylov method associated with `workspace` has succeeded.
+
+For the Krylov methods [`bilqr`](@ref) and [`trilqr`](@ref), you can use `issolved_primal(workspace)`
+and `issolved_dual(workspace)` to separately check whether the solver has converged on the primal or dual system.
 """
 function issolved end
 
@@ -54,6 +58,10 @@ function solution_count end
     iteration_count(workspace)
 
 Return the number of iterations performed by the Krylov method associated with `workspace`.
+
+The number of iterations alone is not a reliable basis for comparing different Krylov methods,
+since the work performed in each iteration can vary significantly.
+For a fairer performance comparison, use the total number of operator-vector products with `A` and `A'` (see [Aprod_count](@ref) and [Atprod_count](@ref)).
 """
 function iteration_count end
 
@@ -123,13 +131,10 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   @eval begin
     elapsed_time(workspace :: $KS) = workspace.stats.timer
     statistics(workspace :: $KS) = workspace.stats
-    niterations(workspace :: $KS) = workspace.stats.niter
-    Aprod(workspace :: $KS) = $nA * workspace.stats.niter
-    Atprod(workspace :: $KS) = $nAt * workspace.stats.niter
-    if $KS == GpmrWorkspace
-      Bprod(workspace :: $KS) = workspace.stats.niter
-    end
-    nsolution(workspace :: $KS) = $nsol
+    solution_count(workspace :: $KS) = $nsol
+    iteration_count(workspace :: $KS) = workspace.stats.niter
+    Aprod_count(workspace :: $KS) = $nA * workspace.stats.niter
+    Atprod_count(workspace :: $KS) = $nAt * workspace.stats.niter
     if $nsol == 1
       solution(workspace :: $KS) = workspace.x
       solution(workspace :: $KS, p :: Integer) = (p == 1) ? solution(workspace) : error("solution(workspace) has only one output.")
@@ -182,10 +187,10 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   @eval begin
     elapsed_time(workspace :: $KS) = workspace.stats.timer
     statistics(workspace :: $KS) = workspace.stats
-    niterations(workspace :: $KS) = workspace.stats.niter
-    Aprod(workspace :: $KS) = $nA * workspace.stats.niter
-    Atprod(workspace :: $KS) = $nAt * workspace.stats.niter
-    nsolution(workspace :: $KS) = $nsol
+    solution_count(workspace :: $KS) = $nsol
+    iteration_count(workspace :: $KS) = workspace.stats.niter
+    Aprod_count(workspace :: $KS) = $nA * workspace.stats.niter
+    Atprod_count(workspace :: $KS) = $nAt * workspace.stats.niter
     if $nsol == 1
       solution(workspace :: $KS) = workspace.X
       solution(workspace :: $KS, p :: Integer) = (p == 1) ? solution(workspace) : error("solution(workspace) has only one output.")
