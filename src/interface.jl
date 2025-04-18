@@ -211,7 +211,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
         workspace.stats.timer += elapsed_time
-        return results(workspace)
+        return krylov_results(workspace)
       end
 
       krylov_solve(::Val{Symbol($krylov)}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); $(kwargs...))
@@ -225,7 +225,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
         workspace.stats.timer += elapsed_time
-        return results(workspace)
+        return krylov_results(workspace)
       end
 
       krylov_solve(::Val{Symbol($krylov)}, $(def_args...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); memory, $(kwargs...))
@@ -239,7 +239,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
           workspace.stats.timer += elapsed_time
-          return results(workspace)
+          return krylov_results(workspace)
         end
 
         krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); memory, $(kwargs...))
@@ -254,7 +254,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
         workspace.stats.timer += elapsed_time
-        return results(workspace)
+        return krylov_results(workspace)
       end
 
       krylov_solve(::Val{Symbol($krylov)}, $(def_args...); window::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); window, $(kwargs...))
@@ -268,7 +268,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
           workspace.stats.timer += elapsed_time
-          return results(workspace)
+          return krylov_results(workspace)
         end
 
         krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); window::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); window, $(kwargs...))
@@ -283,7 +283,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
         workspace.stats.timer += elapsed_time
-        return results(workspace)
+        return krylov_results(workspace)
       end
 
       krylov_solve(::Val{Symbol($krylov)}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); $(kwargs...))
@@ -297,7 +297,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
           workspace.stats.timer += elapsed_time
-          return results(workspace)
+          return krylov_results(workspace)
         end
 
         krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); $(kwargs...))
@@ -352,7 +352,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
         workspace.stats.timer += elapsed_time
-        return results(workspace)
+        return krylov_results(workspace)
       end
 
       krylov_solve(::Val{Symbol($krylov)}, $(def_args...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); memory, $(kwargs...))
@@ -366,7 +366,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
           workspace.stats.timer += elapsed_time
-          return results(workspace)
+          return krylov_results(workspace)
         end
 
         krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); memory::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); memory, $(kwargs...))
@@ -381,7 +381,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
         workspace.stats.timer += elapsed_time
-        return results(workspace)
+        return krylov_results(workspace)
       end
 
       krylov_solve(::Val{Symbol($krylov)}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); $(kwargs...))
@@ -395,7 +395,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
           workspace.stats.timer += elapsed_time
-          return results(workspace)
+          return krylov_results(workspace)
         end
 
         krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); $(kwargs...))
