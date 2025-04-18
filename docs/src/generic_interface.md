@@ -6,15 +6,15 @@ They allow to build Krylov workspaces and call both in-place and out-of-place va
 
 ```@docs
 krylov_workspace
-krylov_solve!
 krylov_solve
+krylov_solve!
 ```
 
 The section on [workspace accessors](@ref workspace-accessors) describes how to retrieve the solution, statistics, and other results from a workspace after calling `krylov_solve!`.
 
 ## Examples
 
-```julia
+```@example ofp_interface
 using Krylov, Random
 
 # Define a symmetric positive definite matrix A and a right-hand side vector b
@@ -31,7 +31,7 @@ for method in (:cg, :cr, :car)
 end
 ```
 
-```julia
+```@example ip_interface
 using Krylov, Random
 
 # Define a square nonsymmetric matrix A and a right-hand side vector b
@@ -40,7 +40,7 @@ A = sprand(n, n, 0.05) + I
 b = rand(n)
 
 # In-place interface
-for method in (:bicgstab, :gmres)
+for method in (:bicgstab, :gmres, :qmr)
     # Create a workspace for the Krylov method
     workspace = krylov_workspace(Val(method), A, b)
 
@@ -64,6 +64,11 @@ for method in (:bicgstab, :gmres)
     # Display the elapsed timer
     timer = Krylov.elapsed_time(workspace)
     println("Elapsed time for $method: ", timer, " seconds")
+
+    # Display the number of operator-vector products with A and A'
+    nAprod = Krylov.Aprod_count(workspace)
+    nAtprod = Krylov.Atprod_count(workspace)
+    println("Number of operator-vector products with A and A' for $method: ", (nAprod, nAtprod))
 
     println()
 end
