@@ -106,7 +106,7 @@ In these calls, `kwargs` are keyword arguments of [`tricg`](@ref).
 
 See [`TricgWorkspace`](@ref) for instructions on how to create the `workspace`.
 
-For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+For a more generic interface, you can use [`krylov_workspace`](@ref) with `method = :tricg` to allocate the workspace,
 and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function tricg! end
