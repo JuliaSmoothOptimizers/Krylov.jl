@@ -99,14 +99,14 @@ For an in-place variant that reuses memory across solves, see [`usymlqr!`](@ref)
 function usymlqr end
 
 """
-    workspace = trimr!(workspace::UsymlqrWorkspace, A, b, c; kwargs...)
-    workspace = trimr!(workspace::UsymlqrWorkspace, A, b, c, x0, y0; kwargs...)
+    workspace = usymlqr!(workspace::UsymlqrWorkspace, A, b, c; kwargs...)
+    workspace = usymlqr!(workspace::UsymlqrWorkspace, A, b, c, x0, y0; kwargs...)
 
 In these calls, `kwargs` are keyword arguments of [`usymlqr`](@ref).
 
 See [`UsymlqrWorkspace`](@ref) for instructions on how to create the `workspace`.
 
-For a more generic interface, you can use [`krylov_workspace`](@ref) to allocate the workspace,
+For a more generic interface, you can use [`krylov_workspace`](@ref) `method = :usymlqr` to allocate the workspace,
 and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 """
 function usymlqr! end
@@ -501,7 +501,7 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ldiv, :atol, :rtol, :itmax, :tim
     user_requested_exit && (status = "user-requested exit")
     overtimed           && (status = "time limit exceeded")
 
-    # Compute the solution the saddle point system
+    # Compute the solution of the saddle point system
     # xₖ ← xₖ + zₖ
     # yₖ ← yₖ + rₖ
     kaxpy!(n, one(FC), zₖ, xₖ)
