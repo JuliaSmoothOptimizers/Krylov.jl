@@ -225,17 +225,17 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ldiv, :atol, :rtol, :itmax, :tim
     end
 
     (verbose > 0) && @printf(iostream, "%4s %7s %7s %7s\n", "k", "αₖ", "βₖ", "γₖ")
-    kdisplay(iter, verbose) && @printf(iostream, "%4d %7.1e %7.1e %7.1e\n", iter, αₖ, βₖ, γₖ)
+    kdisplay(iter, verbose) && @printf(iostream, "%4d %7s %7.1e %7.1e\n", iter, "✗ ✗ ✗ ✗", βₖ, γₖ)
 
-    cₖ₋₂ = cₖ₋₁ = cₖ = one(T)    # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
-    sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
-    kfill!(wₖ₋₂, zero(FC))       # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
-    kfill!(wₖ₋₁, zero(FC))       # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
-    ϕbarₖ = βₖ                   # ϕbarₖ is the last component of f̄ₖ = (Qₖ)ᴴβ₁e₁
-    kfill!(d̅, zero(FC))          # Last column of D̅ₖ = UₖQₖ
-    ηₖ₋₁ = ηbarₖ = zero(FC)      # ηₖ₋₁ and ηbarₖ are the last components of h̄ₖ = (Rₖ)⁻ᵀγ₁e₁
-    ηₖ₋₂ = θₖ = zero(FC)         # ζₖ₋₂ and θₖ are used to update ηₖ₋₁ and ηbarₖ
-    δbarₖ₋₁ = δbarₖ = zero(FC)   # Coefficients of Rₖ₋₁ and Rₖ modified over the course of two iterations
+    cₖ₋₂ = cₖ₋₁ = cₖ = one(T)          # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
+    sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+    kfill!(wₖ₋₂, zero(FC))             # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
+    kfill!(wₖ₋₁, zero(FC))             # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
+    ϕbarₖ = βₖ                         # ϕbarₖ is the last component of f̄ₖ = (Qₖ)ᴴβ₁e₁
+    kfill!(d̅, zero(FC))                # Last column of D̅ₖ = UₖQₖ
+    ηₖ₋₁ = ηbarₖ = zero(FC)            # ηₖ₋₁ and ηbarₖ are the last components of h̄ₖ = (Rₖ)⁻ᵀγ₁e₁
+    ηₖ₋₂ = ωₖ = zero(FC)               # ηₖ₋₂ and ωₖ are used to update ηₖ₋₁ and ηbarₖ
+    δₖ₋₁ = δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Rₖ₋₁ and Rₖ modified over the course of two iterations
 
     # Stopping criterion.
     rNorm_LS = bNorm = βₖ
@@ -252,6 +252,7 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ldiv, :atol, :rtol, :itmax, :tim
     ill_cond = false
     user_requested_exit = false
     overtimed = false
+    solved_cg = solved_lq = false
 
     while !(solved || tired || ill_cond || inconsistent || user_requested_exit || overtimed)
       # Update iteration index.
@@ -278,8 +279,8 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ldiv, :atol, :rtol, :itmax, :tim
       MisI || mulorldiv!(M⁻¹uₖ, M, q, ldiv)  # βₖ₊₁uₖ₊₁ = MAvₖ  - γₖuₖ₋₁ - αₖuₖ
       NisI || mulorldiv!(N⁻¹vₖ, N, p, ldiv)  # γₖ₊₁vₖ₊₁ = NAᴴuₖ - βₖvₖ₋₁ - ᾱₖvₖ
 
-      βₖ₊₁ = knorm_elliptic(m, M⁻¹uₖ, q)  # βₖ₊₁ = ‖uₖ₊₁‖_E
-      γₖ₊₁ = knorm_elliptic(n, N⁻¹vₖ, p)  # γₖ₊₁ = ‖vₖ₊₁‖_F
+      βₖ₊₁ = MisI ? knorm(m, q) : knorm_elliptic(m, M⁻¹uₖ, q)  # βₖ₊₁ = ‖uₖ₊₁‖_E
+      γₖ₊₁ = NisI ? knorm(n, p) : knorm_elliptic(n, N⁻¹vₖ, p)  # γₖ₊₁ = ‖vₖ₊₁‖_F
 
       # Update M⁻¹uₖ₋₁ and N⁻¹vₖ₋₁
       kcopy!(m, M⁻¹uₖ₋₁, M⁻¹uₖ)
@@ -377,9 +378,9 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ldiv, :atol, :rtol, :itmax, :tim
       # [δ₁    0  ] [  η₁ ] = [γ₁]
       # [λ₁  δbar₂] [ηbar₂]   [0 ]
       if iter == 2
-        ωₖ₋₁ = ηₖ
-        ηₖ₋₁ = ηₖ₋₁ / δₖ₋₁
-        ωₖ   = -λₖ₋₁ * ζₖ₋₁
+        ωₖ₋₁ = ωₖ
+        ηₖ₋₁ = ωₖ₋₁ / δₖ₋₁
+        ωₖ   = -λₖ₋₁ * ηₖ₋₁
       end
       # [λₖ₋₂  δₖ₋₁    0  ] [ηₖ₋₂ ] = [0]
       # [ϵₖ₋₂  λₖ₋₁  δbarₖ] [ηₖ₋₁ ]   [0]
@@ -398,14 +399,14 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ldiv, :atol, :rtol, :itmax, :tim
       if iter ≥ 2
         # Compute solution yₖ.
         # (yᴸ)ₖ₋₁ ← (yᴸ)ₖ₋₂ + ηₖ₋₁ * dₖ₋₁
-        kaxpy!(n, ηₖ₋₁ * cₖ,  d̅, x)
-        kaxpy!(n, ηₖ₋₁ * sₖ, uₖ, x)
+        kaxpy!(n, ηₖ₋₁ * cₖ,  d̅, yₖ)
+        kaxpy!(n, ηₖ₋₁ * sₖ, uₖ, yₖ)
       end
 
       # Compute d̅ₖ.
       if iter == 1
         # d̅₁ = u₁
-        kcopy!(n, d̅, uₖ)  # d̅ ← vₖ
+        kcopy!(n, d̅, uₖ)  # d̅ ← uₖ
       else
         # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
         kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
@@ -431,12 +432,15 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ldiv, :atol, :rtol, :itmax, :tim
       end
 
       # Compute zₖ.
-      kaxpy!(n, -ηₖ, wₖ, zₖ)
+      if iter ≥ 2
+        kaxpy!(n, -ηₖ₋₁, wₖ₋₁, zₖ)
+      end
+
+      # Update N⁻¹vₖ and M⁻¹uₖ
+      kcopy!(m, N⁻¹vₖ₋₁, N⁻¹vₖ)  # N⁻¹vₖ ← N⁻¹vₖ
+      kcopy!(n, M⁻¹uₖ₋₁, M⁻¹uₖ)  # M⁻¹uₖ ← M⁻¹uₖ
 
       # Compute uₖ₊₁ and vₖ₊₁.
-      kcopy!(m, uₖ₋₁, uₖ)  # uₖ₋₁ ← uₖ
-      kcopy!(n, vₖ₋₁, vₖ)  # vₖ₋₁ ← vₖ
-
       if βₖ₊₁ ≠ zero(T)
         kdivcopy!(m, uₖ, q, βₖ₊₁)  # uₖ₊₁ = q / βₖ₊₁
       end
@@ -460,15 +464,16 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ldiv, :atol, :rtol, :itmax, :tim
       γₖ    = γₖ₊₁
       βₖ    = βₖ₊₁
 
-      # Update δbarₖ₋₁.
+      # Update δbarₖ₋₁ and δₖ₋₁.
       δbarₖ₋₁ = δbarₖ
+      δₖ₋₁ = δₖ
 
       # Update stopping criterion.
       iter == 1 && (κ = atol + rtol * AᴴrNorm)
       user_requested_exit = callback(workspace) :: Bool
       # ill_cond_lim = one(T) / Acond ≤ ctol
-      ill_cond_mach = one(T) + one(T) / Acond ≤ one(T)
-      ill_cond = ill_cond_mach || ill_cond_lim
+      # ill_cond_mach = one(T) + one(T) / Acond ≤ one(T)
+      # ill_cond = ill_cond_mach || ill_cond_lim
       solved = rNorm ≤ ε_LS
       solved_lq = rNorm_lq ≤ ε_LN
       solved_cg = transfer_to_usymcg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ ε_LN)
@@ -477,8 +482,10 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ldiv, :atol, :rtol, :itmax, :tim
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%7.1e\n", rNorm_lq)
-      kdisplay(iter, verbose) && @printf(iostream, "%4d %8.1e %7.1e %7.1e %7.1e %7.1e %7.1e ", iter, αₖ, βₖ, γₖ, Anorm, Acond, rNorm_qr)
+      Acond = Inf
+      Anorm = Inf
+      # kdisplay(iter, verbose) && @printf(iostream, "%7.1e\n", rNorm_lq)
+      kdisplay(iter, verbose) && @printf(iostream, "%4d %8.1e %7.1e %7.1e %7.1e %7.1e %7.1e ", iter, αₖ, βₖ, γₖ, Anorm, Acond, rNorm)
       kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %.2fs\n", iter, rNorm, AᴴrNorm, ktimer(start_time))
     end
     (verbose > 0) && @printf(iostream, "\n")
@@ -493,11 +500,11 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ldiv, :atol, :rtol, :itmax, :tim
 
     # Termination status
     tired               && (status = "maximum number of iterations exceeded")
-    # solved_lq           && (status = "solution xᴸ good enough given atol and rtol")
-    # solved_cg           && (status = "solution xᶜ good enough given atol and rtol")
+    solved_lq           && (status = "solution xᴸ good enough given atol and rtol")
+    solved_cg           && (status = "solution xᶜ good enough given atol and rtol")
     solved              && (status = "solution good enough given atol and rtol")
-    ill_cond_mach       && (status = "condition number seems too large for this machine")
-    ill_cond_lim        && (status = "condition number exceeds tolerance")
+    # ill_cond_mach       && (status = "condition number seems too large for this machine")
+    # ill_cond_lim        && (status = "condition number exceeds tolerance")
     user_requested_exit && (status = "user-requested exit")
     overtimed           && (status = "time limit exceeded")
 

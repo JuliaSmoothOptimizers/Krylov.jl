@@ -287,7 +287,7 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       # Compute d̅ₖ.
       if iter == 1
         # d̅₁ = u₁
-        kcopy!(n, d̅, uₖ)  # d̅ ← vₖ
+        kcopy!(n, d̅, uₖ)  # d̅ ← uₖ
       else
         # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
         kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)

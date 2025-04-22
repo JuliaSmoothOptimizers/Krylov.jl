@@ -119,6 +119,8 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 |:---------------:|:---------------------:|:--------------------:|:---------------------:|:--------------------:|
 | Arguments       | `M` with `ldiv=false` | `M` with `ldiv=true` | `N` with `ldiv=false` | `N` with `ldiv=true` |
 
+In the special case of [USYMLQR](@ref usymlqr), $\tau = 1$ and $\nu = 0$.
+
 !!! warning
     The preconditioners `M` and `N` must be hermitian and positive definite.
 
