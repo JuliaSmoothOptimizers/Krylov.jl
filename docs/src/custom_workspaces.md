@@ -352,7 +352,7 @@ This approach reduces branching, yielding faster execution, especially on large 
 `HaloVector`'s flexibility also makes it easy to extend to 3D grids or more complex stencils.
 
 !!! info
-    [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) uses a similar strategy with its `Field` type, efficiently solving large linear systems with Krylov.jl.
+    [Oceananigans.jl](https://github.com/CliMA/Oceananigans.jl) uses a similar strategy with its type `KrylovField`, efficiently solving large linear systems with Krylov.jl.
 
 ## Solving saddle point systems with BlockArrays.jl and Krylov.jl
 
@@ -449,3 +449,176 @@ niter = iteration_count(workspace)
 ```
 
 This example demonstrates how `BlockArrays.jl` and `Krylov.jl` can be effectively combined to solve structured saddle point systems.
+
+## Distributed Krylov solvers with MPI.jl
+
+Krylov.jl supports distributed-memory computations through [MPI.jl](https://github.com/JuliaParallel/MPI.jl), enabling Krylov solvers to scale across multiple processes and compute nodes.
+This makes them suitable for solving large-scale linear systems in high-performance computing (HPC) environments.
+
+To get started, you need to install the `mpiexecjl` binary using the function `MPI.install_mpiexecjl`.
+If you wish to change the underlying MPI implementation, you can use the package `MPIPreferences.jl` and its functions `MPIPreferences.use_binary_binary` and `MPIPreferences.use_jll_binary`.
+
+Next, define an `MPIVector` to be used as the storage type for Krylov workspaces, replacing the standard `Vector`.
+
+```julia
+using MPI
+
+struct MPIVector{T, V<:AbstractVector{T}} <: AbstractVector{T}
+    data::V
+    comm::MPI.Comm
+    global_len::Int
+    data_range::UnitRange{Int}
+end
+
+Base.similar(v::MPIVector) = MPIVector(similar(v.data), v.comm, v.global_len, v.data_range)
+Base.length(v::MPIVector) = v.global_len
+Base.eltype(v::MPIVector{T}) where T = T
+
+function MPIVector(global_vec::V, comm::MPI.Comm = MPI.COMM_WORLD) where V
+    T = eltype(V)
+    size, rank = MPI.Comm_size(comm), MPI.Comm_rank(comm)
+    n = length(global_vec)
+    chunk = div(n + size - 1, size)
+    istart = rank * chunk + 1
+    iend = min((rank + 1) * chunk, n)
+    data = global_vec[istart:iend]
+    return MPIVector{T, V}(data, comm, n, istart:iend)
+end
+
+function MPIVector(::Type{V}, global_len::Int, comm::MPI.Comm = MPI.COMM_WORLD) where V
+    size, rank = MPI.Comm_size(comm), MPI.Comm_rank(comm)
+    chunk = div(global_len + size - 1, size)
+    istart = rank * chunk + 1
+    iend = min((rank + 1) * chunk, global_len)
+    data = V(undef, iend-istart+1)
+    return MPIVector{T, V}(data, comm, global_len, istart:iend)
+end
+```
+
+To integrate `MPIVector` with Krylov.jl, you need to define the essential vector operations.
+These implementations enable Krylov.jl to operate with MPI-based vectors on both CPU and GPU.
+
+```julia
+using Krylov
+import Krylov.FloatOrComplex
+
+
+function Krylov.kdot(n::Integer, x::MPIVector{T}, y::MPIVector{T}) where T <: FloatOrComplex
+    data_dot = sum(x.data .* y.data)
+    res = MPI.Allreduce(data_dot, +, x.comm)
+    return res
+end
+
+function Krylov.knorm(n::Integer, x::MPIVector{T}) where T <: FloatOrComplex
+    res = Krylov.kdot(n, x, x)
+    return sqrt(res)
+end
+
+function Krylov.kscal!(n::Integer, s::T, x::MPIVector{T}) where T <: FloatOrComplex
+    x.data .*= s
+    return x
+end
+
+function Krylov.kdiv!(n::Integer, x::MPIVector{T}, s::T) where T <: FloatOrComplex
+    x.data ./= s
+    return x
+end
+
+function Krylov.kaxpy!(n::Integer, s::T, x::MPIVector{T}, y::MPIVector{T}) where T <: FloatOrComplex
+    y.data .+= s .* x.data
+    return y
+end
+
+function Krylov.kaxpby!(n::Integer, s::T, x::MPIVector{T}, t::T, y::MPIVector{T}) where T <: FloatOrComplex
+    y.data .= s .* x.data .+ t .* y.data
+    return y
+end
+
+function Krylov.kcopy!(n::Integer, y::MPIVector{T}, x::MPIVector{T}) where T <: FloatOrComplex
+    y.data .= x.data
+    return y
+end
+
+function Krylov.kscalcopy!(n::Integer, y::MPIVector{T}, s::T, x::MPIVector{T}) where T <: FloatOrComplex
+    y.data .= x.data .* s
+    return y
+end
+
+function Krylov.kdivcopy!(n::Integer, y::MPIVector{T}, x::MPIVector{T}, s::T) where T <: FloatOrComplex
+    y.data .= x.data ./ s
+    return y
+end
+
+function Krylov.kfill!(x::MPIVector{T}, val::T) where T <: FloatOrComplex
+    x.data .= val
+    return x
+end
+```
+
+The next step is to create a distributed linear operator.
+As a simple example, we define a diagonal operator with `1:n` on its diagonal by implementing an `MPIOperator`:
+
+```julia
+struct MPIOperator{T}
+    m::Int
+    n::Int
+end
+
+Base.size(A::MPIOperator) = (A.m, A.n)
+Base.eltype(A::MPIOperator{T}) where T = T
+
+function LinearAlgebra.mul!(y::MPIVector{Float64}, A::MPIOperator{Float64}, u::MPIVector{Float64})
+    y.data .= u.data_range .* u.data
+    return y
+end
+```
+
+With all the previous definitions in place, you can now assemble a script `mpi_krylov.jl` that includes them, along with a small driver code provided below.
+This script can be executed with multiple processes using the binary `mpiexecjl`.
+
+```julia
+MPI.Init()
+
+comm = MPI.COMM_WORLD
+rank = MPI.Comm_rank(comm)
+n = 10  # global_len in MPIVector
+T = Float64
+method = :cg
+
+# Version without MPI
+A_global = Diagonal(1:n) .|> T
+b_global = collect(n:-1:1) .|> T
+x_global, _ = krylov_solve(Val(method), A_global, b_global)
+
+# Version with MPI
+A_mpi = MPIOperator{T}(n, n)
+b_mpi = MPIVector(b_global)
+
+kc = KrylovConstructor(b_mpi)
+workspace = krylov_workspace(Val(method), kc)
+krylov_solve!(workspace, A_mpi, b_mpi)
+x_mpi = Krylov.solution(workspace)
+
+# Check the solution
+for i = 0:MPI.Comm_size(comm)-1
+    if i == rank
+        println("Local data: ", x_mpi.data)
+        println("Global data: ", x_global)
+    end
+    MPI.Barrier(comm)
+end
+
+MPI.Finalize()
+```
+
+To launch this script on four processes:
+```shell
+mpiexecjl -n 4 julia mpi_krylov.jl
+```
+
+The example above runs on CPU but also works on GPU.
+It can target supercomputers such as Frontier or Aurora with various GPU backends (NVIDIA, AMD, or Intel).
+See the section on [GPU support](@ref gpu) for details on the GPU-enabled vectors usable in an `MPIVector`.
+
+!!! note
+    Make sure to use an MPI implementation that is GPU-aware if you intend to run distributed Krylov solvers on GPUs.
