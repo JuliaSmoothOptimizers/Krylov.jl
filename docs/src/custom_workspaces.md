@@ -156,10 +156,10 @@ function Krylov.kdot(n::Integer, x::HaloVector{T}, y::HaloVector{T}) where T <: 
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    res = zero(T)
+    res = zero(real(T))
     for i = 1:mx-1
         for j = 1:nx-1
-            res += _x[i,j] * _y[i,j]
+            res += _x[i,j] * conj(_y[i,j])
         end
     end
     return res
@@ -168,10 +168,10 @@ end
 function Krylov.knorm(n::Integer, x::HaloVector{T}) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
-    res = zero(T)
+    res = zero(real(T))
     for i = 1:mx-1
         for j = 1:nx-1
-            res += _x[i,j]^2
+            res += abs2(_x[i,j])
         end
     end
     return sqrt(res)
