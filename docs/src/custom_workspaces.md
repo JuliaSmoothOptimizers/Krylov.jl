@@ -157,8 +157,8 @@ function Krylov.kdot(n::Integer, x::HaloVector{T}, y::HaloVector{T}) where T <: 
     _x = x.data
     _y = y.data
     res = zero(real(T))
-    for i = 1:mx-1
-        for j = 1:nx-1
+    for j = 1:nx-1
+        for i = 1:mx-1
             res += _x[i,j] * conj(_y[i,j])
         end
     end
@@ -169,8 +169,8 @@ function Krylov.knorm(n::Integer, x::HaloVector{T}) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
     res = zero(real(T))
-    for i = 1:mx-1
-        for j = 1:nx-1
+    for j = 1:nx-1
+        for i = 1:mx-1
             res += abs2(_x[i,j])
         end
     end
@@ -180,8 +180,8 @@ end
 function Krylov.kscal!(n::Integer, s::T, x::HaloVector{T}) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
-    for i = 1:mx-1
-        for j = 1:nx-1
+    for j = 1:nx-1
+        for i = 1:mx-1
             _x[i,j] = s * _x[i,j]
         end
     end
@@ -191,8 +191,8 @@ end
 function Krylov.kdiv!(n::Integer, x::HaloVector{T}, s::T) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
-    for i = 1:mx-1
-        for j = 1:nx-1
+    for j = 1:nx-1
+        for i = 1:mx-1
             _x[i,j] = _x[i,j] / s
         end
     end
@@ -203,8 +203,8 @@ function Krylov.kaxpy!(n::Integer, s::T, x::HaloVector{T}, y::HaloVector{T}) whe
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for i = 1:mx-1
-        for j = 1:nx-1
+    for j = 1:nx-1
+        for i = 1:mx-1
             _y[i,j] += s * _x[i,j]
         end
     end
@@ -215,8 +215,8 @@ function Krylov.kaxpby!(n::Integer, s::T, x::HaloVector{T}, t::T, y::HaloVector{
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for i = 1:mx-1
-        for j = 1:nx-1
+    for j = 1:nx-1
+        for i = 1:mx-1
             _y[i,j] = s * _x[i,j] + t * _y[i,j]
         end
     end
@@ -227,8 +227,8 @@ function Krylov.kcopy!(n::Integer, y::HaloVector{T}, x::HaloVector{T}) where T <
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for i = 1:mx-1
-        for j = 1:nx-1
+    for j = 1:nx-1
+        for i = 1:mx-1
             _y[i,j] = _x[i,j]
         end
     end
@@ -239,8 +239,8 @@ function Krylov.kscalcopy!(n::Integer, y::HaloVector{T}, s::T, x::HaloVector{T})
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for i = 1:mx-1
-        for j = 1:nx-1
+    for j = 1:nx-1
+        for i = 1:mx-1
             _y[i,j] = s * _x[i,j]
         end
     end
@@ -251,8 +251,8 @@ function Krylov.kdivcopy!(n::Integer, y::HaloVector{T}, x::HaloVector{T}, s::T) 
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for i = 1:mx-1
-        for j = 1:nx-1
+    for j = 1:nx-1
+        for i = 1:mx-1
             _y[i,j] = _x[i,j] / s
         end
     end
@@ -262,8 +262,8 @@ end
 function Krylov.kfill!(x::HaloVector{T}, val::T) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
-    for i = 1:mx-1
-        for j = 1:nx-1
+    for j = 1:nx-1
+        for i = 1:mx-1
             _x[i,j] = val
         end
     end
@@ -274,8 +274,8 @@ function Krylov.kref!(n::Integer, x::HaloVector{T}, y::HaloVector{T}, c::T, s::T
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for i = 1:mx-1
-        for j = 1:nx-1
+    for j = 1:nx-1
+        for i = 1:mx-1
             x_ij = _x[i,j]
             y_ij = _y[i,j]
             _x[i,j] = c       * x_ij + s * y_ij
@@ -316,8 +316,8 @@ A = LaplacianOperator(Nx, Ny, Δx, Δy)
 # Create the right-hand side
 rhs = zeros(Float64, Nx+2, Ny+2)
 data = OffsetArray(rhs, 0:Nx+1, 0:Ny+1)
-for i in 1:Nx
-    for j in 1:Ny
+for j in 1:Ny
+    for i in 1:Nx
         xi = i * Δx
         yj = j * Δy
         data[i,j] = f(xi, yj)
@@ -504,7 +504,7 @@ import Krylov.FloatOrComplex
 
 
 function Krylov.kdot(n::Integer, x::MPIVector{T}, y::MPIVector{T}) where T <: FloatOrComplex
-    data_dot = sum(x.data .* y.data)
+    data_dot = sum(x.data .* conj.(y.data))
     res = MPI.Allreduce(data_dot, +, x.comm)
     return res
 end
