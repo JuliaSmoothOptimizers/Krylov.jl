@@ -13,7 +13,6 @@
       @test(stats.solved)
       @test stats.indefinite == false
 
-
       # Code coverage
       (x, stats) = cr(Matrix(A), b)
 
