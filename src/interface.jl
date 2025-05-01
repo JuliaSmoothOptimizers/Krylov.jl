@@ -27,20 +27,31 @@
 export krylov_workspace, krylov_solve, krylov_solve!
 
 """
+    workspace = krylov_workspace(method, args...; kwargs...)
     workspace = krylov_workspace(Val(method), args...; kwargs...)
 
 Generic function that dispatches to the appropriate workspace constructor for each subtype of [`KrylovWorkspace`](@ref) and [`BlockKrylovWorkspace`](@ref).
-The first argument `Val(method)`, where `method` is a symbol (such as `:cg`, `:gmres` or `:block_minres`), specifies the (block) Krylov method for which a workspace is desired.
+In both calls, `method` is a symbol (such as `:cg`, `:gmres` or `:block_minres`) that specifies the (block) Krylov method for which a workspace is desired.
 The returned workspace can later be used by [`krylov_solve!`](@ref) to execute the (block) Krylov method in-place.
+
+Pass the plain symbol `method` for convenience, or wrap it in `Val(method)` to enable full compile-time specialization, improve type inference, and achieve maximum performance.
 """
 function krylov_workspace end
 
+krylov_workspace(method::Symbol, args...; kwargs...) = krylov_workspace(Val(method), args...; kwargs...)
+
 """
+    krylov_solve(method, args...; kwargs...)
     krylov_solve(Val(method), args...; kwargs...)
 
-Generic function that dispatches to the appropriate out-of-place (block) Krylov method specified by symbol `method` (such as `:cg`, `:gmres` or `:block_minres`).
+Generic function that dispatches to the appropriate out-of-place (block) Krylov method specified by `method`.
+In both calls, `method` is a symbol (such as `:cg`, `:gmres` or `:block_minres`).
+
+Pass the plain symbol `method` for convenience, or wrap it in `Val(method)` to enable full compile-time specialization, improve type inference, and achieve maximum performance.
 """
 function krylov_solve end
+
+krylov_solve(method::Symbol, args...; kwargs...) = krylov_solve(Val(method), args...; kwargs...)
 
 """
     krylov_solve!(workspace, args...; kwargs...)
