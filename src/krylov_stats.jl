@@ -13,6 +13,7 @@ The fields are as follows:
 - `solved`: Indicates whether the solver successfully reached convergence (`true` if solved, `false` otherwise);
 - `inconsistent`: Flags whether the system was detected as inconsistent (i.e., when `b` is not in the range of `A`);
 - `indefinite`: Flags whether the system was detected as indefinite (i.e., when `A` is not positive definite);
+- `num_neg_dir`: The number of negative curvature directions encountered during the solve;
 - `residuals`: A vector containing the residual norms at each iteration;
 - `Aresiduals`: A vector of `A'`-residual norms at each iteration;
 - `Acond`: An estimate of the condition number of matrix `A`.
@@ -24,6 +25,7 @@ mutable struct SimpleStats{T} <: KrylovStats{T}
   solved       :: Bool
   inconsistent :: Bool
   indefinite   :: Bool
+  num_neg_dir  :: Int
   residuals    :: Vector{T}
   Aresiduals   :: Vector{T}
   Acond        :: Vector{T}
@@ -42,6 +44,7 @@ function copyto!(dest :: SimpleStats, src :: SimpleStats)
   dest.solved       = src.solved
   dest.inconsistent = src.inconsistent
   dest.indefinite   = src.indefinite
+  dest.num_neg_dir  = src.num_neg_dir
   dest.residuals    = copy(src.residuals)
   dest.Aresiduals   = copy(src.Aresiduals)
   dest.Acond        = copy(src.Acond)

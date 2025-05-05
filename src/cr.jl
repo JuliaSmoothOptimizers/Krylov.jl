@@ -57,7 +57,9 @@ For an in-place variant that reuses memory across solves, see [`cr!`](@ref).
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization;
-* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `linesearch` is true and nonpositive curvature is detected, the solution depends on the iteration: at iteration k = 0, the right-hand side is returned with `solver.npc_dir` as the preconditioned initial residual; at iteration k > 0, the solution from iteration k-1 is returned with `solver.npc_dir` as the most recent residual;
+* `linesearch`: if `true` and nonpositive curvature is detected, behavior depends on the iteration.
+ – At k = 0, return the right-hand side with `solver.npc_dir` set to the preconditioned initial residual.
+ – At k > 0, return the solution from iteration k–1 with `solver.npc_dir` set to the detected nonpositive-curvature direction—either the previous search direction if the search-direction test fails, or the latest residual if the residual-curvature test fails. If both test fails, set `solver.npc_dir` to the current residual, update `solver.p` to the most recent search direction, and record the number of negative-curvature directions in `stats.num_neg_dir`;
 * `γ`: tolerance to determine that the curvature of the quadratic model is nonpositive;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
@@ -225,7 +227,6 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     overtimed = false
 
     while ! (solved || tired || user_requested_exit || overtimed)
-      linesearch && kcopy!(n, npc_dir , r) # npc_dir ← r; contain the last residual
       if linesearch
         if (pAp ≤ γ * pNorm²) || (ρ ≤ γ * rNorm²)
           npcurv = true
@@ -235,6 +236,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
           stats.inconsistent = false
           stats.timer = start_time |> ktimer
           stats.status = "nonpositive curvature"
+          kcopy!(n, npc_dir , r) # npc_dir ← r; contain the last residual
+          stats.num_neg_dir = 2
           iter == 0 && kcopy!(n, x, b)  # x ← b
           solver.warm_start = false
           stats.indefinite = true
@@ -271,6 +274,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
             else # case 2
               (verbose > 0) && @printf(iostream, "r is a direction of nonpositive curvature: %8.1e\n", ρ)
               α = tr
+              #TODO what to do in this case?
             end
           else
             # q_p = q(x + α_p * p) - q(x) = -α_p * rᴴp + ½ (α_p)² * pᴴAp
@@ -301,6 +305,10 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         elseif pAp > 0 && ρ < 0
           npcurv = true
           (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e > 0 and rᴴAr = %8.1e < 0\n", pAp, ρ)
+          if linesearch
+            kcopy!(n, npc_dir , r) # npc_dir ← r; contain the last residual
+            stats.num_neg_dir = 1
+          end
           # q_p is minimal for α_p = rᴴp / pᴴAp
           α = descent ?  min(t1, pr / pAp) : max(t2, pr / pAp)
           Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
@@ -317,6 +325,10 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         elseif pAp < 0 && ρ > 0
           npcurv = true
           (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e < 0 and rᴴAr = %8.1e > 0\n", pAp, ρ)
+          if linesearch
+            kcopy!(n, npc_dir , p) # npc_dir ← r; contain the last residual
+            stats.num_neg_dir = 1
+          end
           α = descent ? t1 : t2
           tr = min(tr, rNorm² / ρ)
           Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
@@ -332,6 +344,10 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
         elseif pAp < 0 && ρ < 0
           npcurv = true
+          if linesearch
+            kcopy!(n, npc_dir , r) # npc_dir ← r; contain the last residual
+            stats.num_neg_dir = 2
+          end
           (verbose > 0) && @printf(iostream, "negative curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
           α = descent ? t1 : t2
           Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
@@ -424,9 +440,6 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     npcurv              && (status = "nonpositive curvature")
     on_boundary         && (status = "on trust-region boundary")
 
-    if npcurv && linesearch
-       stats.indefinite = true
-    end
     # Update x
     warm_start && kaxpy!(n, one(FC), Δx, x)
     workspace.warm_start = false
