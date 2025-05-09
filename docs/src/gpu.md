@@ -138,8 +138,8 @@ if CUDA.functional()
 
   # Solve Py = x
   function ldiv_ilu0!(P::CuSparseMatrixCSR, x, y, z)
-    ldiv!(z, UnitLowerTriangular(P), x)  # Forward substitution with L
-    ldiv!(y, UpperTriangular(P), z)      # Backward substitution with U
+    ldiv!(z, LowerTriangular(P), x)  # Forward substitution with L
+    ldiv!(y, UnitUpperTriangular(P), z)      # Backward substitution with U
     return y
   end
 
