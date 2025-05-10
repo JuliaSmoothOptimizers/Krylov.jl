@@ -57,9 +57,12 @@ For an in-place variant that reuses memory across solves, see [`cr!`](@ref).
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization;
-* `linesearch`: if `true` and nonpositive curvature is detected, behavior depends on the iteration.
- – At k = 0, return the right-hand side with `solver.npc_dir` set to the preconditioned initial residual.
- – At k > 0, return the solution from iteration k–1 with `solver.npc_dir` set to the detected nonpositive-curvature direction—either the previous search direction if the search-direction test fails, or the latest residual if the residual-curvature test fails. If both test fails, set `solver.npc_dir` to the current residual, update `solver.p` to the most recent search direction, and record the number of negative-curvature directions in `stats.num_neg_dir`;
+* `linesearch`: if `true` and nonpositive curvature is detected, the behavior depends on the iteration:
+ – at iteration k = 0, return the preconditioned initial search direction in `solver.npc_dir`;
+ – at iteration k > 0,
+   - if the residual from iteration k-1 is a nonpositive curvature direction but `solver.p` is not, the residual is stored in `stats.npc_dir` and `stats.num_neg_dir` is set to 1;
+   - if `solver.p` is a nonpositive curvature direction but the residual is not, `solver.p` is copied into `stats.npc_dir` and `stats.num_neg_dir` is set to 1;
+   - if both are nonnegative curvature directions, the residual is stored in `stats.npc_dir` and `stats.num_neg_dir` is set to 2.
 * `γ`: tolerance to determine that the curvature of the quadratic model is nonpositive;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
