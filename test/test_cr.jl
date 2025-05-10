@@ -1,9 +1,9 @@
 @testset "cr" begin
   cr_tol = 1.0e-6
+  γ_test = sqrt(eps(Float64))
 
   for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
-
       # Symmetric and positive definite system.
       A, b = symmetric_definite(FC=FC)
       (x, stats) = cr(A, b)
@@ -64,8 +64,75 @@
       @test(stats.solved)
 
       # Test linesearch
+      # Iter=0: b^T A b = 0  → zero-curvature at k=0, with γ
+      A, b = system_zero_quad(FC=Float64)   # ensures bᵀ A b == 0
+      solver = CrWorkspace(A, b)
+      cr!(solver, A, b; linesearch=true, γ=γ_test)
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      @test stats.niter == 0
+      @test stats.status == "b is a zero-curvature direction"
+      @test real(dot(npc_dir, A * npc_dir)) ≈ 0
+      
+      # Test when b^TAb=0 and linesearch is true, without γ
+      A, b = system_zero_quad(FC=FC)
+      solver = CrWorkspace(A, b)
+      cr!(solver, A, b, linesearch=true)
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      @test stats.status == "b is a zero-curvature direction"
+      @test all(x .== b)
+      @test stats.solved == true
+      @test real(dot(npc_dir, A * npc_dir)) ≈ 0.0
+
+      # Test Linesearch which would stop on the first call since A is negative definite
+      A, b = symmetric_indefinite(FC=FC; shift = 5)
+      solver = CrWorkspace(A, b)
+      cr!(solver, A, b, linesearch=true)
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      @test stats.status == "nonpositive curvature"
+      @test stats.niter == 0
+      @test stats.solved == true
+      @test stats.indefinite == true
+      curvature = real(dot(npc_dir, A * npc_dir))
+      @test curvature <= 0
+
+      # Test when b^TAb=0 and linesearch is false
+      A, b = system_zero_quad(FC=FC)
+      x, stats = cr(A,b, linesearch=false)
+      @test stats.status == "b is a zero-curvature direction"
+      @test norm(x) == zero(FC)
+      @test stats.solved == true
+
+      # 2 negative curvature
+      A = FC[ 1.0     0.0;
+              0.0   0.0 ]      
+      b = ones(FC, 2)
+      solver = CrWorkspace(A, b)
+      cr!(solver, A, b; linesearch=true, γ=γ_test)
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      @test stats.npcCount == 2
+      @test real(dot(npc_dir, A*npc_dir)) ≤ γ_test*norm(npc_dir)^2 + cr_tol
+      p1 = solver.p
+      @test real(dot(p1, A*p1)) <  cr_tol   
+  
+      # Only -p negative curvature
+      A = FC(-1.0)*I(2)
+      b = ones(FC, 2)
+      solver = CrWorkspace(A, b)
+      cr!(solver, A, b; linesearch=true, γ=γ_test)
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      @test stats.status      == "nonpositive curvature"
+      @test stats.npcCount == 1
+      @test real(dot(npc_dir, A*npc_dir)) ≤ cr_tol
+      p1 = solver.p
+      @test real(dot(p1, A*p1)) < 0
+      
+      # Warm-start + linesearch must error
+      A, b = symmetric_indefinite(FC=Float64)
+      @test_throws MethodError cr(A, b; warm_start=true, linesearch=true)
+
+      # npc_dir is not a zero vector, however we don't have γ
       A, b = symmetric_indefinite(FC=FC)
-      solver = CrSolver(A, b)
+      solver = CrWorkspace(A, b)
       cr!(solver, A, b, linesearch=true)
       x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
       @test stats.status == "nonpositive curvature"
@@ -74,55 +141,23 @@
       # For both real and complex cases, ensure to take the real part.
       curvature = real(dot(npc_dir, A * npc_dir))
       @test curvature <= 0
-      
-      # Test Linesearch which would stop on the first call since A is negative definite
-      A, b = symmetric_indefinite(FC=FC; shift = 5)
-      solver = CrSolver(A, b)
-      cr!(solver, A, b, linesearch=true)
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
-      @test stats.status == "nonpositive curvature"
-      @test stats.niter == 0
-      @test all(x .== b)
-      @test stats.solved == true
-      @test stats.indefinite == true
-      curvature = real(dot(npc_dir, A * npc_dir))
-      @test curvature <= 0
+      @test stats.npcCount == 2
 
-      # Test when b^TAb=0 and linesearch is true
-      A, b = system_zero_quad(FC=FC)
-      solver = CrSolver(A, b)
-      cr!(solver, A, b, linesearch=true)
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
-      @test stats.status == "b is a zero-curvature direction"
-      @test all(x .== b)
-      @test stats.solved == true
-      @test real(dot(npc_dir, A * npc_dir)) ≈ 0.0
-
-      # Test if warm_start and linesearch are both true, it should throw an error
-      A, b = symmetric_indefinite(FC=FC)
-      @test_throws MethodError cr(A, b, warm_start = true, linesearch = true)     
-
-      # Test when b^TAb=0 and linesearch is false
-      A, b = system_zero_quad(FC=FC)
-      x, stats = cr(A,b, linesearch=false)
-      @test stats.status == "b is a zero-curvature direction"
-      @test norm(x) == zero(FC)
-      @test stats.solved == true
-      
+         
       # Test callback function
       A, b = symmetric_definite(FC=FC)
       workspace = CrWorkspace(A, b)
       tol = 1.0e-1
       cb_n2 = TestCallbackN2(A, b, tol = tol)
       cr!(solver, A, b, callback = cb_n2)
-      @test solver.stats.status == "user-requested exit"
+      @test stats.status == "user-requested exit"
       @test cb_n2(solver)
       @test_throws TypeError cr(A, b, callback = solver -> "string", history = true)
 
 
       # Test on trust-region boundary when radius > 0
       A, b = symmetric_indefinite(FC=FC, shift = 5)
-      solver = CrSolver(A, b)
+      solver = CrWorkspace(A, b)
       cr!(solver, A, b,  radius = one(Float64))
       x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
       @test stats.status == "on trust-region boundary"
