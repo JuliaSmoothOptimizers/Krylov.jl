@@ -266,6 +266,7 @@ mutable struct CrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   Δx         :: S
   x          :: S
   r          :: S
+  npc_dir    :: S
   p          :: S
   q          :: S
   Ar         :: S
@@ -283,6 +284,7 @@ function CrWorkspace(kc::KrylovConstructor)
   Δx = similar(kc.vn_empty)
   x  = similar(kc.vn)
   r  = similar(kc.vn)
+  npc_dir = similar(kc.vn_empty)
   p  = similar(kc.vn)
   q  = similar(kc.vn)
   Ar = similar(kc.vn)
@@ -298,6 +300,7 @@ function CrWorkspace(m::Integer, n::Integer, S::Type)
   Δx = S(undef, 0)
   x  = S(undef, n)
   r  = S(undef, n)
+  npc_dir = S(undef, 0)
   p  = S(undef, n)
   q  = S(undef, n)
   Ar = S(undef, n)
