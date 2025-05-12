@@ -44,7 +44,7 @@ function copyto!(dest :: SimpleStats, src :: SimpleStats)
   dest.solved       = src.solved
   dest.inconsistent = src.inconsistent
   dest.indefinite   = src.indefinite
-  dest.npcCount  = src.npcCount
+  dest.npcCount     = src.npcCount
   dest.residuals    = copy(src.residuals)
   dest.Aresiduals   = copy(src.Aresiduals)
   dest.Acond        = copy(src.Acond)
