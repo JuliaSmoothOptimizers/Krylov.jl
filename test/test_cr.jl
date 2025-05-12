@@ -64,7 +64,7 @@
       @test(stats.solved)
 
       # Test linesearch
-      # Iter=0: b^T A b = 0  → zero-curvature at k=0, with γ
+      # Iter=0: bᵀ Ab = 0 → zero-curvature at k=0
       A, b = system_zero_quad(FC=Float64)   # ensures bᵀ A b == 0
       solver = CrWorkspace(A, b)
       cr!(solver, A, b; linesearch=true, γ=γ_test)
