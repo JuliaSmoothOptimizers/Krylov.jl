@@ -168,7 +168,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       kcopy!(n, p, b)  # p ← b
     end
     MisI && kcopy!(n, r, p)  # r ← p
-    MisI || mulorldiv!(r, M, p, ldiv) 
+    MisI || mulorldiv!(r, M, p, ldiv)
     
     rNorm = knorm_elliptic(n, r, p)  # ‖r‖
     history && push!(rNorms, rNorm)  # Values of ‖r‖
