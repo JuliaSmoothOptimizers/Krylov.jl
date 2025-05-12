@@ -56,7 +56,7 @@ For an in-place variant that reuses memory across solves, see [`cr!`](@ref).
 
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
-* `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization;
+* `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization; If `radius > 0` and nonpositive curvature is detected, the behavior depends on the iteration and follow similar logic as linesearch;
 * `linesearch`: if `true` and nonpositive curvature is detected, the behavior depends on the iteration:
  – at iteration k = 0, return the preconditioned initial search direction in `workspace.npc_dir`;
  – at iteration k > 0,
@@ -150,12 +150,13 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     # Set up workspace
     allocate_if(!MisI, workspace, :Mq, S, workspace.x)  # The length of Mq is n
     allocate_if(linesearch, workspace, :npc_dir , S, workspace.x) # The length of npc_dir is n
+    allocate_if(radius>0, workspace, :npc_dir , S, workspace.x)
     Δx, x, r, p, q, Ar, stats = workspace.Δx, workspace.x, workspace.r, workspace.p, workspace.q, workspace.Ar, workspace.stats
     warm_start = workspace.warm_start
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
     Mq = MisI ? q : workspace.Mq
-    if linesearch
+    if linesearch || radius > 0
       npc_dir = workspace.npc_dir
     end
 
@@ -195,7 +196,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       history && push!(ArNorms, zero(T))
       workspace.warm_start = false
       if linesearch
-        kcopy!(n, x, b)  # x ← b
+        kcopy!(n, x, p)  # x ← M⁻¹ b
         kcopy!(n, npc_dir, r)
         stats.npcCount = 1
       end
@@ -234,9 +235,9 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
     while ! (solved || tired || user_requested_exit || overtimed)
       if linesearch
-        p_dir = (pAp ≤ γ * pNorm^2)
-        r_dir = (ρ   ≤ γ * rNorm^2)
-        if p_dir || r_dir
+        p_curv = (pAp ≤ γ * pNorm^2)
+        r_curv = (ρ   ≤ γ * rNorm^2)
+        if p_curv || r_curv
           npcurv = true
           (verbose > 0) && @printf(iostream, "nonpositive curvature detected: pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
           stats.solved = true
@@ -250,15 +251,13 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
             kcopy!(n, npc_dir, r)
             stats.npcCount = 1
           else
-            if r_dir && !p_dir
+            if r_curv
               kcopy!(n, npc_dir, r)
-              stats.npcCount = 1
-            elseif p_dir && !r_dir
-              kcopy!(n, npc_dir, p)
-              stats.npcCount = 1
-            else
-              kcopy!(n, npc_dir, r)
-              stats.npcCount = 2
+              stats.npcCount += 1
+            end
+            if p_curv
+              stats.npcCount += 1
+              r_curv || kcopy!(n, npc_dir, p)
             end
           end
           return workspace
@@ -280,6 +279,14 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
         if abspAp ≤ γ * pNorm * knorm(n, q)  # pᴴAp ≃ 0
           npcurv = true  # nonpositive curvature
+          stats.indefinite = true
+          if iter == 0
+            kcopy!(n, npc_dir, r)
+            stats.npcCount = 1
+          else
+            stats.npcCount = 1
+            kcopy!(n, npc_dir, p)
+          end
           (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e ≃ 0\n", pAp)
           if abspr ≤ γ * pNorm * rNorm  # pᴴr ≃ 0
             (verbose > 0) && @printf(iostream, "pᴴr = %8.1e ≃ 0, redefining p := r\n", pr)
@@ -294,7 +301,10 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
             else # case 2
               (verbose > 0) && @printf(iostream, "r is a direction of nonpositive curvature: %8.1e\n", ρ)
               α = tr
-              #TODO what to do in this case?
+              if iter > 0
+                stats.npcCount = 2
+                kcopy!(n, npc_dir, r)
+              end
             end
           else
             # q_p = q(x + α_p * p) - q(x) = -α_p * rᴴp + ½ (α_p)² * pᴴAp
@@ -324,6 +334,14 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
         elseif pAp > 0 && ρ < 0
           npcurv = true
+          stats.indefinite = true
+          if iter == 0
+            kcopy!(n, npc_dir, r)
+            stats.npcCount = 1
+          else
+            stats.npcCount = 1
+            kcopy!(n, npc_dir, r)
+          end
           (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e > 0 and rᴴAr = %8.1e < 0\n", pAp, ρ)
           # q_p is minimal for α_p = rᴴp / pᴴAp
           α = descent ?  min(t1, pr / pAp) : max(t2, pr / pAp)
@@ -340,6 +358,14 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
         elseif pAp < 0 && ρ > 0
           npcurv = true
+          stats.indefinite = true
+          if iter == 0
+            kcopy!(n, npc_dir, r)
+            stats.npcCount = 1
+          else
+            stats.npcCount = 1
+            kcopy!(n, npc_dir, p)
+          end
           (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e < 0 and rᴴAr = %8.1e > 0\n", pAp, ρ)
           α = descent ? t1 : t2
           tr = min(tr, rNorm² / ρ)
@@ -356,6 +382,14 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
         elseif pAp < 0 && ρ < 0
           npcurv = true
+          stats.indefinite = true
+          if iter == 0
+            kcopy!(n, npc_dir, r)
+            stats.npcCount = 1
+          else
+            stats.npcCount = 2
+            kcopy!(n, npc_dir, r)
+          end
           (verbose > 0) && @printf(iostream, "negative curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
           α = descent ? t1 : t2
           Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
