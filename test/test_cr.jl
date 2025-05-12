@@ -154,7 +154,6 @@
       @test cb_n2(solver)
       @test_throws TypeError cr(A, b, callback = solver -> "string", history = true)
 
-
       # Test on trust-region boundary when radius > 0
       A, b = symmetric_indefinite(FC=FC, shift = 5)
       solver = CrWorkspace(A, b)
