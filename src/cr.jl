@@ -62,7 +62,7 @@ For an in-place variant that reuses memory across solves, see [`cr!`](@ref).
  – at iteration k > 0,
    - if the residual from iteration k-1 is a nonpositive curvature direction but `workspace.p` is not, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
    - if `workspace.p` is a nonpositive curvature direction but the residual is not, `workspace.p` is copied into `stats.npc_dir` and `stats.npcCount` is set to 1;
-   - if both are nonnegative curvature directions, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 2.
+   - if both are nonpositive curvature directions, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 2.
 * `γ`: tolerance to determine that the curvature of the quadratic model is nonpositive;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
@@ -280,11 +280,10 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         if abspAp ≤ γ * pNorm * knorm(n, q)  # pᴴAp ≃ 0
           npcurv = true  # nonpositive curvature
           stats.indefinite = true
-          if iter == 0
+          stats.npcCount = 1
+          if iter > 0
             kcopy!(n, npc_dir, r)
-            stats.npcCount = 1
           else
-            stats.npcCount = 1
             kcopy!(n, npc_dir, p)
           end
           (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e ≃ 0\n", pAp)
@@ -335,13 +334,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         elseif pAp > 0 && ρ < 0
           npcurv = true
           stats.indefinite = true
-          if iter == 0
-            kcopy!(n, npc_dir, r)
-            stats.npcCount = 1
-          else
-            stats.npcCount = 1
-            kcopy!(n, npc_dir, r)
-          end
+          stats.npcCount = 1
+          kcopy!(n, npc_dir, r)
           (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e > 0 and rᴴAr = %8.1e < 0\n", pAp, ρ)
           # q_p is minimal for α_p = rᴴp / pᴴAp
           α = descent ?  min(t1, pr / pAp) : max(t2, pr / pAp)
@@ -359,13 +353,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         elseif pAp < 0 && ρ > 0
           npcurv = true
           stats.indefinite = true
-          if iter == 0
-            kcopy!(n, npc_dir, r)
-            stats.npcCount = 1
-          else
-            stats.npcCount = 1
-            kcopy!(n, npc_dir, p)
-          end
+          stats.npcCount = 1
+          kcopy!(n, npc_dir, p)
           (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e < 0 and rᴴAr = %8.1e > 0\n", pAp, ρ)
           α = descent ? t1 : t2
           tr = min(tr, rNorm² / ρ)
@@ -383,13 +372,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         elseif pAp < 0 && ρ < 0
           npcurv = true
           stats.indefinite = true
-          if iter == 0
-            kcopy!(n, npc_dir, r)
-            stats.npcCount = 1
-          else
-            stats.npcCount = 2
-            kcopy!(n, npc_dir, r)
-          end
+          stats.npcCount = 2
+          kcopy!(n, npc_dir, r)
           (verbose > 0) && @printf(iostream, "negative curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
           α = descent ? t1 : t2
           Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2

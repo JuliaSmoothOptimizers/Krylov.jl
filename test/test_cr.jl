@@ -146,6 +146,33 @@
       @test stats.npcCount == 2
 
       # radius > 0
+      # bᵀ Ab ≈  0 at first iteration
+      A = FC[1.0      1e-10; 1e-10    1e-10]
+      b = FC[0.0, 0.99]
+      solver = CrWorkspace(A, b)
+      cr!(solver, A, b; radius = 10 * one(Float64),  γ = 10.0)
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      
+      @test stats.npcCount == 1
+      @test stats.status == "on trust-region boundary"
+      @test stats.indefinite == true
+      curvature = real(dot(npc_dir, A * npc_dir))
+      @test curvature <= 0.01 # almost zero curvature
+      @test stats.solved == true
+
+      # pᵀ Ap ≈  0 after first iteration
+      A = FC[1.0      1e-10; 1e-10    1e-10]
+      b = FC[0.002, 1.0]
+      solver = CrWorkspace(A, b)
+      cr!(solver, A, b; radius = 10 * one(Float64), γ = 10.0)
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      @test stats.npcCount == 1
+      @test stats.solved == true
+      @test stats.status == "on trust-region boundary"
+      @test stats.indefinite == true
+      curvature = real(dot(npc_dir, A * npc_dir))
+      @test curvature <=  0.01
+      
       # Iter=0: bᵀ Ab = 0 → zero-curvature at k=0
       A, b = system_zero_quad(FC=Float64)   # ensures bᵀ A b == 0
       solver = CrWorkspace(A, b)
@@ -184,7 +211,7 @@
       cr!(solver, A, b; radius = 10 * one(Float64))
       x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
       @test stats.status  == "on trust-region boundary"
-      @test stats.npcCount == 1
+      @test stats.npcCount == 2
       @test real(dot(npc_dir, A*npc_dir)) ≤ cr_tol
       p1 = solver.p
       @test real(dot(p1, A*p1)) < 0
