@@ -60,7 +60,7 @@ For an in-place variant that reuses memory across solves, see [`cr!`](@ref).
 * `linesearch`: if `true` and nonpositive curvature is detected, the behavior depends on the iteration:
  – at iteration k = 0, return the preconditioned initial search direction in `workspace.npc_dir`;
  – at iteration k > 0,
-   - if the residual from iteration k-1 is a nonpositive curvature direction but `workspace.p` is not, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
+   - if the residual from iteration k-1 is a nonpositive curvature direction but `workspace.p`, the search direction at iteration k, is not, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
    - if `workspace.p` is a nonpositive curvature direction but the residual is not, `workspace.p` is copied into `stats.npc_dir` and `stats.npcCount` is set to 1;
    - if both are nonpositive curvature directions, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 2.
 * `γ`: tolerance to determine that the curvature of the quadratic model is nonpositive;
