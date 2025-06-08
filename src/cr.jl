@@ -155,7 +155,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
     Mq = MisI ? q : workspace.Mq
-    if linesearch || radius > 0
+    if linesearch || (radius > 0)
       npc_dir = workspace.npc_dir
     end
 
