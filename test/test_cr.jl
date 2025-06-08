@@ -159,7 +159,7 @@
       @test real(dot(npc_dir, A * npc_dir)) <= 0.01  # almost zero curvature
       @test stats.solved == true
 
-      # pᵀ Ap ≈  0 after first iteration
+      # pᵀ Ap ≈ 0 after first iteration
       A = FC[1.0      1e-10; 1e-10    1e-10]
       b = FC[0.002, 1.0]
       solver = CrWorkspace(A, b)
