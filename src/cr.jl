@@ -150,7 +150,6 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     # Set up workspace
     allocate_if(!MisI, workspace, :Mq, S, workspace.x)  # The length of Mq is n
     allocate_if(linesearch || (radius > 0), workspace, :npc_dir , S, workspace.x)  # The length of npc_dir is n
-    allocate_if(radius > 0, workspace, :npc_dir , S, workspace.x)
     Δx, x, r, p, q, Ar, stats = workspace.Δx, workspace.x, workspace.r, workspace.p, workspace.q, workspace.Ar, workspace.stats
     warm_start = workspace.warm_start
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
