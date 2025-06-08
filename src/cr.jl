@@ -194,7 +194,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       stats.status = "b is a zero-curvature direction"
       history && push!(ArNorms, zero(T))
       workspace.warm_start = false
-      if linesearch || radius > 0
+      if linesearch || (radius > 0)
         kcopy!(n, x, p)  # x ← M⁻¹ b
         kcopy!(n, npc_dir, r)
         stats.npcCount = 1
