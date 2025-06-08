@@ -156,8 +156,7 @@
       @test stats.npcCount == 1
       @test stats.status == "on trust-region boundary"
       @test stats.indefinite == true
-      curvature = real(dot(npc_dir, A * npc_dir))
-      @test curvature <= 0.01 # almost zero curvature
+      @test real(dot(npc_dir, A * npc_dir)) <= 0.01  # almost zero curvature
       @test stats.solved == true
 
       # pᵀ Ap ≈  0 after first iteration
