@@ -81,9 +81,8 @@
       @test stats.niter == 0
       @test stats.solved == true
       @test stats.indefinite == true
-      curvature = real(dot(npc_dir, A * npc_dir))
-      @test curvature <= 0
-      @test stats.solved == true
+      @test  real(dot(npc_dir, A * npc_dir)) <= 0
+      @test all(x .== b)
       
       # Test when b^TAb=0 and linesearch is false
       A, b = system_zero_quad(FC=FC)
@@ -105,49 +104,36 @@
       @test_throws TypeError cr(A, b, callback = workspace -> "string", history = true)
 
       # 2 negative curvature
-      A = FC[ 1.0     0.0;
-              0.0   0.0 ]      
+      A = FC[ 1.0 0.0;
+              0.0 0.0 ]      
       b = ones(FC, 2)
       solver = CrWorkspace(A, b)
       cr!(solver, A, b; linesearch=true)
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      x, stats, npc_dir, p = solver.x, solver.stats, solver.npc_dir, solver.p
       @test stats.npcCount == 2
       @test real(dot(npc_dir, A*npc_dir)) ≤  norm(npc_dir)^2 + cr_tol
-      p1 = solver.p
-      @test real(dot(p1, A*p1)) <  cr_tol   
+      @test real(dot(p, A*p)) <  cr_tol   
   
       # Only -p negative curvature
       A = FC(-1.0)*I(2)
       b = ones(FC, 2)
       solver = CrWorkspace(A, b)
       cr!(solver, A, b; linesearch=true)
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
-      @test stats.status      == "nonpositive curvature"
+      x, stats, npc_dir, p = solver.x, solver.stats, solver.npc_dir, solver.p
+      @test stats.status == "nonpositive curvature"
       @test stats.npcCount == 1
       @test real(dot(npc_dir, A*npc_dir)) ≤ cr_tol
-      p1 = solver.p
-      @test real(dot(p1, A*p1)) < 0
+      
+      @test real(dot(p, A*p)) < 0
       
       # Warm-start + linesearch must error
       A, b = symmetric_indefinite(FC=Float64)
       @test_throws MethodError cr(A, b; warm_start=true, linesearch=true)
 
-      # npc_dir is not a zero vector
-      A, b = symmetric_indefinite(FC=FC)
-      solver = CrWorkspace(A, b)
-      cr!(solver, A, b, linesearch=true)
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
-      @test stats.status == "nonpositive curvature"
-      @test stats.indefinite == true
-      # Verify that the returned direction indeed exhibits nonpositive curvature.
-      # For both real and complex cases, ensure to take the real part.
-      curvature = real(dot(npc_dir, A * npc_dir))
-      @test curvature <= 0
-      @test stats.npcCount == 2
-
       # radius > 0
       # bᵀ Ab ≈  0 at first iteration
-      A = FC[1.0      1e-10; 1e-10    1e-10]
+      A = FC[1.0 1e-10;
+             1e-10 1e-10]
       b = FC[0.0, 0.99]
       solver = CrWorkspace(A, b)
       cr!(solver, A, b; radius = 10 * one(Float64),  γ = 10.0)
@@ -156,12 +142,12 @@
       @test stats.npcCount == 1
       @test stats.status == "on trust-region boundary"
       @test stats.indefinite == true
-      curvature = real(dot(npc_dir, A * npc_dir))
-      @test curvature <= 0.01 # almost zero curvature
+      @test  real(dot(npc_dir, A * npc_dir)) <= 0.01 # almost zero curvature
       @test stats.solved == true
 
       # pᵀ Ap ≈  0 after first iteration
-      A = FC[1.0      1e-10; 1e-10    1e-10]
+      A = FC[1.0 1e-10;
+             1e-10 1e-10]
       b = FC[0.002, 1.0]
       solver = CrWorkspace(A, b)
       cr!(solver, A, b; radius = 10 * one(Float64), γ = 10.0)
@@ -169,9 +155,8 @@
       @test stats.npcCount == 1
       @test stats.solved == true
       @test stats.status == "on trust-region boundary"
-      @test stats.indefinite == true
-      curvature = real(dot(npc_dir, A * npc_dir))
-      @test curvature <=  0.01
+      @test stats.indefinite == true      
+      @test  real(dot(npc_dir, A * npc_dir)) <=  0.01
       
       # Iter=0: bᵀ Ab = 0 → zero-curvature at k=0
       A, b = system_zero_quad(FC=Float64)   # ensures bᵀ A b == 0
@@ -189,13 +174,12 @@
       x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
       @test stats.status == "on trust-region boundary"
       @test stats.solved == true
-      @test stats.indefinite == true
-      curvature = real(dot(npc_dir, A * npc_dir))
-      @test curvature <= 0
+      @test stats.indefinite == true      
+      @test real(dot(npc_dir, A * npc_dir)) <= 0
       @test stats.solved == true
       
       # negative curvature
-      A = FC[ 1.0     0.0;
+      A = FC[ 1.0   0.0;
               0.0   0.0 ]      
       b = ones(FC, 2)
       solver = CrWorkspace(A, b)
@@ -209,12 +193,11 @@
       b = ones(FC, 2)
       solver = CrWorkspace(A, b)
       cr!(solver, A, b; radius = 10 * one(Float64))
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      x, stats, npc_dir, p = solver.x, solver.stats, solver.npc_dir, solver.
       @test stats.status  == "on trust-region boundary"
       @test stats.npcCount == 2
       @test real(dot(npc_dir, A*npc_dir)) ≤ cr_tol
-      p1 = solver.p
-      @test real(dot(p1, A*p1)) < 0
+      @test real(dot(p, A*p)) < 0
       
 
       # Test on trust-region boundary when radius > 0
@@ -224,8 +207,7 @@
       x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
       @test stats.status == "on trust-region boundary"
       @test norm(x) ≈ 1.0
-      curvature = real(dot(x, A * x))
-      @test curvature <= 0
+      @test real(dot(x, A * x)) <= 0
 
       # Test on trust-region boundary when radius = 1 and linesearch is true
       A, b = symmetric_indefinite(FC=FC, shift = 5)

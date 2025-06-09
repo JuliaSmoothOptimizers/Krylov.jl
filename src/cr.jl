@@ -197,8 +197,9 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       workspace.warm_start = false
       if linesearch || radius > 0
         kcopy!(n, x, p)  # x ← M⁻¹ b
-        kcopy!(n, npc_dir, r)
+        kcopy!(n, npc_dir, p)
         stats.npcCount = 1
+        stats.indefinite = tru
       end
       return workspace
     end
@@ -235,8 +236,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
     while ! (solved || tired || user_requested_exit || overtimed)
       if linesearch
-        p_curv = (pAp ≤ γ * pNorm^2)
-        r_curv = (ρ   ≤ γ * rNorm^2)
+        p_curv = pAp ≤ γ * pNorm^2
+        r_curv = ρ   ≤ γ * rNorm^2
         if p_curv || r_curv
           npcurv = true
           (verbose > 0) && @printf(iostream, "nonpositive curvature detected: pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
@@ -248,7 +249,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
           workspace.warm_start = false
           stats.indefinite = true
           if iter == 0
-            kcopy!(n, npc_dir, r)
+            kcopy!(n, npc_dir, p)
             stats.npcCount = 1
           else
             if r_curv
@@ -281,11 +282,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
           npcurv = true  # nonpositive curvature
           stats.indefinite = true
           stats.npcCount = 1
-          if iter > 0
-            kcopy!(n, npc_dir, r)
-          else
-            kcopy!(n, npc_dir, p)
-          end
+          kcopy!(n, npc_dir, p)
           (verbose > 0) && @printf(iostream, "pᴴAp = %8.1e ≃ 0\n", pAp)
           if abspr ≤ γ * pNorm * rNorm  # pᴴr ≃ 0
             (verbose > 0) && @printf(iostream, "pᴴr = %8.1e ≃ 0, redefining p := r\n", pr)
@@ -324,7 +321,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
           end
 
         elseif pAp > 0 && ρ > 0  # no negative curvature
-          (verbose > 0) && @printf(iostream, "positive curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
+          (verbose > 0) && @printf(iostream, "positive curvature along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
           α = ρ / kdotr(n, q, Mq)
           if α ≥ t1
             α = t1
@@ -374,7 +371,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
           stats.indefinite = true
           stats.npcCount = 2
           kcopy!(n, npc_dir, r)
-          (verbose > 0) && @printf(iostream, "negative curvatures along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
+          (verbose > 0) && @printf(iostream, "negative curvature along p and r. pᴴAp = %8.1e and rᴴAr = %8.1e\n", pAp, ρ)
           α = descent ? t1 : t2
           Δ = -α * pr + tr * rNorm² + (α^2 * pAp - (tr)^2 * ρ) / 2
           if Δ > 0
