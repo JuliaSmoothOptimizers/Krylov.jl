@@ -198,7 +198,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         kcopy!(n, x, p)  # x ← M⁻¹ b
         kcopy!(n, npc_dir, p)
         stats.npcCount = 1
-        stats.indefinite = tru
+        stats.indefinite = true
       end
       return workspace
     end
@@ -249,6 +249,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
           stats.indefinite = true
           if iter == 0
             kcopy!(n, npc_dir, p)
+            kcopy!(n, x, p)  # x ← M⁻¹ b
             stats.npcCount = 1
           else
             if r_curv
