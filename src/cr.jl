@@ -60,7 +60,7 @@ For an in-place variant that reuses memory across solves, see [`cr!`](@ref).
 * `linesearch`: if `true` and nonpositive curvature is detected, the behavior depends on the iteration:
  – at iteration k = 0, return the preconditioned initial search direction in `workspace.npc_dir`;
  – at iteration k > 0,
-   - if the residual from iteration k-1 is a nonpositive curvature direction but `workspace.p` is not, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
+   - if the residual from iteration k-1 is a nonpositive curvature direction but `workspace.p`, the search direction at iteration k, is not, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
    - if `workspace.p` is a nonpositive curvature direction but the residual is not, `workspace.p` is copied into `stats.npc_dir` and `stats.npcCount` is set to 1;
    - if both are nonpositive curvature directions, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 2.
 * `γ`: tolerance to determine that the curvature of the quadratic model is nonpositive;
@@ -149,14 +149,13 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
 
     # Set up workspace
     allocate_if(!MisI, workspace, :Mq, S, workspace.x)  # The length of Mq is n
-    allocate_if(linesearch, workspace, :npc_dir , S, workspace.x) # The length of npc_dir is n
-    allocate_if(radius > 0, workspace, :npc_dir , S, workspace.x)
+    allocate_if(linesearch || (radius > 0), workspace, :npc_dir , S, workspace.x)  # The length of npc_dir is n
     Δx, x, r, p, q, Ar, stats = workspace.Δx, workspace.x, workspace.r, workspace.p, workspace.q, workspace.Ar, workspace.stats
     warm_start = workspace.warm_start
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
     Mq = MisI ? q : workspace.Mq
-    if linesearch || radius > 0
+    if linesearch || (radius > 0)
       npc_dir = workspace.npc_dir
     end
 
@@ -195,7 +194,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       stats.status = "b is a zero-curvature direction"
       history && push!(ArNorms, zero(T))
       workspace.warm_start = false
-      if linesearch || radius > 0
+      if linesearch || (radius > 0)
         kcopy!(n, x, p)  # x ← M⁻¹ b
         kcopy!(n, npc_dir, p)
         stats.npcCount = 1
