@@ -25,7 +25,7 @@ mutable struct SimpleStats{T} <: KrylovStats{T}
   solved       :: Bool
   inconsistent :: Bool
   indefinite   :: Bool
-  npcCount  :: Int
+  npcCount     :: Int
   residuals    :: Vector{T}
   Aresiduals   :: Vector{T}
   Acond        :: Vector{T}
