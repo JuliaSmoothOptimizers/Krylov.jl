@@ -56,8 +56,9 @@ For an in-place variant that reuses memory across solves, see [`cg!`](@ref).
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization
   - If 'radius' > 0, and negative curvature is detected, we set the step size to the maximum step size that keeps us on the trust-region boundary, and the search direction is stored in `stats.npc_dir` and `stats.npcCount` is set to 1.
+  - If negative curvature occurs right away at k = 0, the solver instead takes the right-hand side (i.e., the negative gradient) as the current solution. The corresponding preconditioned search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1.;
 * `linesearch`: when `true`, the solver is used within an inexact Newton method with line search.
-	-  If negative curvature is detected at iteration k > 0, the method rolls back to the solution from iteration k – 1. The search direction computed at iteration k is stored in `stats.npc_dir`, and `stats.npcCount` is set to 1.
+	- If negative curvature is detected at iteration k > 0, the method rolls back to the solution from iteration k – 1. The search direction computed at iteration k is stored in `stats.npc_dir`, and `stats.npcCount` is set to 1.
 	-	If negative curvature occurs right away at k = 0, the solver instead takes the right-hand side (i.e., the negative gradient) as the current solution. The corresponding preconditioned search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1.;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
