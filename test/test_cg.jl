@@ -48,11 +48,67 @@
       @test(resid ≤ cg_tol)
       @test(stats.solved)
 
-      # Test linesearch
-      A, b = symmetric_indefinite(FC=FC)
-      x, stats = cg(A, b, linesearch=true)
+      # Test linesearch which would stop on the first call since A is indefinite
+      A, b = symmetric_indefinite(FC = FC; shift = 10)
+      solver = CgWorkspace(A, b)
+      cg!(solver,A, b, linesearch=true)
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
       @test stats.status == "nonpositive curvature detected"
       @test !stats.inconsistent
+      @test stats.niter == 0
+      @test stats.indefinite == true
+      @test stats.npcCount == 1
+      @test real(dot(npc_dir, A * npc_dir)) <= 0
+
+      # Test when b^TAb=0 and linesearch is true
+      A, b = zero_rhs(FC=FC)
+      solver = CgWorkspace(A, b)
+      cg!(solver, A, b, linesearch=true)
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      @test stats.status == "x is a zero-residual solution"
+      @test norm(x) == zero(FC)
+      @test stats.niter == 0
+      @test stats.indefinite == true
+      @test stats.npcCount == 1
+      @test real(dot(npc_dir, A * npc_dir)) ≈ 0
+
+      # Test Linesearch with negative curvature
+      A = FC(-1.0)*I(2)
+      b = ones(FC, 2)
+      solver = CgWorkspace(A, b)
+      cg!(solver, A, b; linesearch = true)
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir 
+      @test stats.status == "nonpositive curvature detected"
+      @test stats.npcCount == 1
+      @test real(dot(npc_dir, A*npc_dir)) ≤ cg_tol
+
+      # Test radius > 0  and b^TAb=0
+      A, b = zero_rhs(FC=FC)
+      solver = CgWorkspace(A, b)
+      cg!(solver, A, b,radius = 10 * real(one(FC)))
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      @test stats.status == "x is a zero-residual solution"
+      @test norm(x) == zero(FC)
+      @test stats.niter == 0
+      @test stats.indefinite == true
+      @test stats.npcCount == 1
+      @test real(dot(npc_dir, A * npc_dir)) ≈ 0
+
+      # Test radius > 0 and pᵀAp < 0
+      A = FC[
+        10.0 0.0 0.0 0.0;
+        0.0 8.0 0.0 0.0;
+        0.0 0.0 5.0 0.0;
+        0.0 0.0 0.0 -1.0
+      ]
+      b = FC[1.0, 1.0, 1.0, 0.1]
+      solver = CgWorkspace(A, b)
+      cg!(solver, A, b; radius = 10 * real(one(FC)))
+      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+      @test stats.npcCount == 1
+      @test stats.status == "on trust-region boundary and indefinite"
+      @test stats.indefinite == true
+      @test real(dot(npc_dir, A * npc_dir)) <= 0.01 
 
       # Test singular and consistent system
       A, b = singular_consistent(FC=FC)
@@ -87,6 +143,10 @@
       @test cb_n2(workspace)
 
       @test_throws TypeError cg(A, b, callback = workspace -> "string", history = true)
+      
+      # Test on trust-region boundary when radius = 1 and linesearch is true
+      A, b = symmetric_indefinite(FC = FC, shift = 5)
+      @test_throws ErrorException cg(A, b, radius = real(one(FC)), linesearch = true)
     end
   end
 end
