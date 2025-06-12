@@ -59,7 +59,7 @@ For an in-place variant that reuses memory across solves, see [`cg!`](@ref).
   - If negative curvature occurs at k = 0, the solver instead takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1.;
 * `linesearch`: when `true`, assume that CG is used within an inexact Newton method with line search.
 	- If negative curvature is detected at iteration k > 0, the method rolls back to the solution from iteration k – 1. The search direction computed at iteration k is stored in `stats.npc_dir`, and `stats.npcCount` is set to 1.
-	-	If negative curvature occurs right away at k = 0, the solver instead takes the right-hand side (i.e., the negative gradient) as the current solution. The corresponding preconditioned search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1.;
+	-	If negative curvature occurs at k = 0, the solver instead takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1.;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
