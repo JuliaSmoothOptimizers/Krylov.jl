@@ -106,15 +106,19 @@
       @test real(dot(npc_dir, A * npc_dir)) ≈ 0.0
 
       # negative curvature
-      A = FC(-1.0)*I(2)
-      b = ones(FC, 2)
+      A = FC[
+        10.0 0.0 0.0 0.0;
+        0.0 8.0 0.0 0.0;
+        0.0 0.0 5.0 0.0;
+        0.0 0.0 0.0 -1.0
+      ]
+      b = FC[1.0, 1.0, 1.0, 0.1]
       solver = MinresWorkspace(A, b)
       minres!(solver, A, b; linesearch = true)
       x, stats, npc_dir, w1 = solver.x, solver.stats, solver.npc_dir, solver.w1
-      @test stats.npcCount == 1
+      @test stats.npcCount == 2
       @test real(dot(npc_dir, A*npc_dir)) ≤ norm(npc_dir)^2 + minres_tol
       @test real(dot(w1, A*w1)) < minres_tol
-
 
       # Test if warm_start and linesearch are both true, it should throw an error
       A, b = symmetric_indefinite(FC=FC)
