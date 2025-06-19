@@ -68,9 +68,6 @@
       @test stats.status == "x is a zero-residual solution"
       @test norm(x) == zero(FC)
       @test stats.niter == 0
-      @test stats.indefinite == true
-      @test stats.npcCount == 1
-      @test real(dot(npc_dir, A * npc_dir)) ≈ 0
 
       # Test Linesearch with negative curvature
       A = FC(-1.0)*I(2)
@@ -90,9 +87,6 @@
       @test stats.status == "x is a zero-residual solution"
       @test norm(x) == zero(FC)
       @test stats.niter == 0
-      @test stats.indefinite == true
-      @test stats.npcCount == 1
-      @test real(dot(npc_dir, A * npc_dir)) ≈ 0
 
       # Test radius > 0 and pᵀAp < 0
       A = FC[
@@ -106,7 +100,7 @@
       cg!(solver, A, b; radius = 10 * real(one(FC)))
       x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
       @test stats.npcCount == 1
-      @test stats.status == "on trust-region boundary and indefinite"
+      @test stats.status == "nonpositive curvature detected"
       @test stats.indefinite == true
       @test real(dot(npc_dir, A * npc_dir)) <= 0.01 
 

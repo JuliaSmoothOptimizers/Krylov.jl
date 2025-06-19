@@ -170,11 +170,6 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
-      if linesearch || (radius > 0)
-        kcopy!(n, npc_dir, p) # npc_dir ← p
-        stats.npcCount = 1
-        stats.indefinite = true
-      end
       return workspace
     end
 
@@ -275,8 +270,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
 
     # Termination status
     solved && on_boundary             && (status = "on trust-region boundary")
-    solved && on_boundary && stats.indefinite      && (status = "on trust-region boundary and indefinite")
-    solved && linesearch && (pAp ≤ 0) && (status = "nonpositive curvature detected")
+    solved && stats.indefinite        && (status = "nonpositive curvature detected")
     solved && (status == "unknown")   && (status = "solution good enough given atol and rtol")
     zero_curvature                    && (status = "zero curvature detected")
     tired                             && (status = "maximum number of iterations exceeded")
