@@ -57,8 +57,8 @@ For an in-place variant that reuses memory across solves, see [`cg!`](@ref).
 * `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization.
   - If 'radius' > 0, and nonpositive curvature is detected along the current search direction, we take the step to the trust-region boundary, the search direction is stored in `stats.npc_dir`, and `stats.npcCount` is set to 1.
 * `linesearch`: when `true`, assume that CG is used within an inexact Newton method with line search.
-	- If nonpositive curvature is detected at iteration k > 0, the method rolls back to the solution from iteration k – 1. The search direction computed at iteration k is stored in `stats.npc_dir`, and `stats.npcCount` is set to 1.
-	-	If nonpositive curvature occurs at k = 0, the solver instead takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1.;
+  -  If nonpositive curvature occurs at k = 0, the solver instead takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1.;
+  - If nonpositive curvature is detected at iteration k > 0, the method rolls back to the solution from iteration k – 1. The search direction computed at iteration k is stored in `stats.npc_dir`, and `stats.npcCount` is set to 1.
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
