@@ -54,8 +54,11 @@ For an in-place variant that reuses memory across solves, see [`cg!`](@ref).
 
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
-* `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization;
-* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If negative curvature is detected at iteration k > 0, the solution of iteration k-1 is returned. If negative curvature is detected at iteration 0, the right-hand side is returned (i.e., the negative gradient);
+* `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization.
+  - If 'radius' > 0, and nonpositive curvature is detected along the current search direction, we take the step to the trust-region boundary, the search direction is stored in `stats.npc_dir`, and `stats.npcCount` is set to 1.
+* `linesearch`: when `true`, assume that CG is used within an inexact Newton method with line search.
+  -  If nonpositive curvature occurs at k = 0, the solver instead takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1.;
+  - If nonpositive curvature is detected at iteration k > 0, the method rolls back to the solution from iteration k – 1. The search direction computed at iteration k is stored in `stats.npc_dir`, and `stats.npcCount` is set to 1.
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
@@ -125,6 +128,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     m == n || error("System must be square")
     length(b) == n || error("Inconsistent problem size")
     linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
+    (workspace.warm_start && linesearch) && error("warm_start and linesearch cannot be used together")
     (verbose > 0) && @printf(iostream, "CG: system of %d equations in %d variables\n", n, n)
 
     # Tests M = Iₙ
@@ -136,11 +140,15 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
 
     # Set up workspace.
     allocate_if(!MisI, workspace, :z, S, workspace.x)  # The length of z is n
+    allocate_if(linesearch || (radius > 0), workspace, :npc_dir , S, workspace.x)  # The length of npc_dir is n
     Δx, x, r, p, Ap, stats = workspace.Δx, workspace.x, workspace.r, workspace.p, workspace.Ap, workspace.stats
     warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
     z = MisI ? r : workspace.z
+    if linesearch || (radius > 0)
+      npc_dir = workspace.npc_dir
+    end
 
     kfill!(x, zero(FC))
     if warm_start
@@ -193,7 +201,10 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
           inconsistent = !linesearch
         end
         if linesearch
-          iter == 0 && kcopy!(n, x, b)  # x ← b
+          iter == 0 && kcopy!(n, x, p)  # x ← p
+          kcopy!(n, npc_dir, p)  # npc_dir ← p
+          stats.npcCount = 1
+          stats.indefinite = true
           solved = true
         end
       end
@@ -217,6 +228,11 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       # we have nonpositive curvature.
       if (radius > 0) && ((pAp ≤ 0) || (α > σ))
         α = σ
+        if pAp ≤ 0
+          kcopy!(n, npc_dir, p)  # npc_dir ← p
+          stats.npcCount = 1
+          stats.indefinite = true
+        end
         on_boundary = true
       end
 
@@ -254,7 +270,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
 
     # Termination status
     solved && on_boundary             && (status = "on trust-region boundary")
-    solved && linesearch && (pAp ≤ 0) && (status = "nonpositive curvature detected")
+    solved && stats.indefinite        && (status = "nonpositive curvature detected")
     solved && (status == "unknown")   && (status = "solution good enough given atol and rtol")
     zero_curvature                    && (status = "zero curvature detected")
     tired                             && (status = "maximum number of iterations exceeded")
