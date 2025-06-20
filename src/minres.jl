@@ -83,7 +83,6 @@ For an in-place variant that reuses memory across solves, see [`minres!`](@ref).
  – at iteration k = 0, return the preconditioned initial search direction in `workspace.npc_dir`;
  – at iteration k > 0,
    - if the residual from iteration k-1 is a nonpositive curvature direction but `workspace.w1`, the search direction at iteration k, is not, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
-   - if `workspace.w1` is a nonpositive curvature direction but the residual is not, `workspace.w1` is copied into `stats.npc_dir` and `stats.npcCount` is set to 1;
    - if both are nonpositive curvature directions, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 2. (Note that the MINRES solver starts at iteration 1, so the first iteration is k = 1);
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
@@ -268,8 +267,8 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     #initialize the constant to calculate the negative curvature of search directions
     δ_w = zero(T)
     β_w = zero(T)
-    ξ_w = zero(T)
-    ξ_w_2 = zero(T)
+    ζ_w = zero(T)
+    ζ_w_2 = zero(T)
 
     while !(solved || tired || ill_cond || user_requested_exit || overtimed)
       iter = iter + 1
@@ -324,23 +323,22 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       # Check for nonpositive curvature
       if linesearch
         cγ = cs * γbar
-        ξ_w_2 = ξ_w
-        ξ_w = -cγ * rNorm^2   # ξ_w ← r'Ar
-        β_w = (ξ_w_2 != 0) ? ξ_w/ξ_w_2 : ξ_w  # β_w ← ξ_w / ξ_w_2
-        δ_w = ξ_w + β_w^2* δ_w  # δ_w ← w'Aw 
+        ζ_w_2 = ζ_w
+        ζ_w = -cγ * rNorm^2   # ζ_w ← r'Ar
+        β_w = (ζ_w_2 != 0) ? ζ_w/ζ_w_2 : ζ_w  # β_w ← ζ_w / ζ_w_2
+        δ_w = ζ_w + β_w^2* δ_w  # δ_w ← w'Aw 
 
         if cγ ≥ 0
           (verbose > 0) && @printf(iostream, "nonpositive curvature detected:  cs * γbar = %e\n", cγ)
           stats.solved = true
           stats.npcCount = 1
+          w1 = w
           if iter == 1
             kcopy!(n, x, b)
-            w1 = w2
           else
             # check w direction
             if δ_w < 0
-              # w is also a nonpositive curvature direction #TODO confirm, since I moved around the calculation of w
-              w1 = w
+              # w is also a nonpositive curvature direction
               stats.npcCount = 2
             end
           end
