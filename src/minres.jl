@@ -19,6 +19,9 @@
 # Liu, Yang, and Roosta, MINRES: from negative curvature detection to monotonicity properties,
 # SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
 #
+# M-A. Dahito and D. Orban, The Conjugate Residual Method in Linesearch and Trust-Region Methods.
+# SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
+#
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Brussels, Belgium, June 2015.
 # Montréal, August 2015.
@@ -79,8 +82,11 @@ For an in-place variant that reuses memory across solves, see [`minres!`](@ref).
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `window`: number of iterations used to accumulate a lower bound on the error;
-* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `linesearch` is true and nonpositive curvature is detected, the solution depends on the iteration: at iteration k = 1, the right-hand side is returned with `workspace.npc_dir` as the preconditioned initial residual; at iteration k > 1, the solution from iteration k-1 is returned with `workspace.npc_dir` as the most recent residual. (Note that the MINRES solver starts at iteration 1, so the first iteration is k = 1);
-
+* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `true` and nonpositive curvature is detected, the behavior depends on the iteration:
+ – at iteration k = 1, the solver takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1;
+ – at iteration k > 1, the solver returns the solution from iteration k – 1,
+   - if the residual from iteration k is a nonpositive curvature direction but the search direction at iteration k, is not, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
+   - if both are nonpositive curvature directions, the residual is stored in `stats.npc_dir`, the search direction is stored in `workspace.w1`, and `stats.npcCount` is set to 2. (Note that the MINRES solver starts at iteration 1, so the first iteration is k = 1);
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
@@ -103,6 +109,8 @@ For an in-place variant that reuses memory across solves, see [`minres!`](@ref).
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 
 * Y. Liu and F. Roosta, [*MINRES: From Negative Curvature Detection to Monotonicity Properties*](https://doi.org/10.1137/21M143666X), SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
+
+* M-A. Dahito and D. Orban, [*The Conjugate Residual Method in Linesearch and Trust-Region Methods*](https://doi.org/10.1137/18M1204255), SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
 """
 function minres end
 
@@ -168,7 +176,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
 
     # Set up workspace.
     allocate_if(!MisI, workspace, :v, S, workspace.x)  # The length of v is n
-    allocate_if(linesearch, workspace, :npc_dir , S, workspace.x)  # The length of npc_dir  is n
+    allocate_if(linesearch, workspace, :npc_dir , S, workspace.x)  # The length of npc_dir is n
     Δx, x, r1, r2, w1, w2, y = workspace.Δx, workspace.x, workspace.r1, workspace.r2, workspace.w1, workspace.w2, workspace.y
     err_vec, stats = workspace.err_vec, workspace.stats
     warm_start = workspace.warm_start
@@ -203,7 +211,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     β₁ = kdotr(m, r1, v)
     β₁ < 0 && error("Preconditioner is not positive definite")
     if β₁ == 0
-      stats.niter = 0
+      stats.niter = 1
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
@@ -261,6 +269,12 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     overtimed = false
     stats.indefinite = false
 
+    # initialize recurrences to calculate the curvature along search directions
+    δ_w = zero(T)
+    β_w = zero(T)
+    ζ_k = zero(T)
+    ζ_km1 = zero(T)
+
     while !(solved || tired || ill_cond || user_requested_exit || overtimed)
       iter = iter + 1
 
@@ -304,26 +318,54 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       ArNorm = ϕbar * root  # = ‖Aᴴrₖ₋₁‖
       history && push!(ArNorms, ArNorm)
 
+      # Compute the next plane rotation (part 1).
+      γ = sqrt(γbar * γbar + β * β)
+      γ = max(γ, ϵM)
+      
+      # Final update of w.
+      kdiv!(n, w, γ)
+
       # Check for nonpositive curvature
       if linesearch
         cγ = cs * γbar
+        if iter > 1
+          # Compute ζ_k (≡ r_k^T * A * r_k), which is the term adapted from M-A. Dahito and D. Orban's paper.
+          # This uses the recurrence relation: δ_k = ζ_k + β_k^2 * δ_(k-1),
+          # where ζ_k = r_k^T * A * r_k and β_k = ζ_k / ζ_(k-1). (See Roosta's paper.)
+          # ζ_km1 is ζ_(k-1) from the previous iteration.
+          ζ_km1 = ζ_k
+          ζ_k = -cγ * rNorm^2   # ζ_k ← r_k^T * A * r_k
+          β_w = (ζ_km1 != 0) ? ζ_k/ζ_km1 : ζ_k  # β_w ← ζ_k / ζ_(k-1)
+          δ_w = ζ_k + β_w^2* δ_w  # δ_w ← δ_k = ζ_k + β_k^2 * δ_(k-1)
+        end
+
         if cγ ≥ 0
+          # Nonpositive curvature detected.
           (verbose > 0) && @printf(iostream, "nonpositive curvature detected:  cs * γbar = %e\n", cγ)
           stats.solved = true
+          stats.npcCount = 1
+          w1 = w
+
+          if iter == 1
+            kcopy!(n, x, b)
+          else
+            # Check the w direction to see if it's also a nonpositive curvature direction.
+            if δ_w < 0
+              # w is also a nonpositive curvature direction, increment npcCount to 2
+              stats.npcCount = 2
+            end
+          end
           stats.niter = iter
           stats.inconsistent = false
           stats.timer = start_time |> ktimer
           stats.status = "nonpositive curvature"
-          iter == 1 && kcopy!(n, x, b)
           workspace.warm_start = false
           stats.indefinite = true
           return workspace
         end
       end
 
-      # Compute the next plane rotation.
-      γ = sqrt(γbar * γbar + β * β)
-      γ = max(γ, ϵM)
+      # Compute the next plane rotation (part 2).
       cs = γbar / γ
       sn = β / γ
       ϕ = cs * ϕbar
@@ -334,9 +376,6 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
         kscal!(n, sn * sn, npc_dir)  # npc_dir  = sn * sn * npc_dir 
         kaxpy!(n, -ϕbar * cs, v, npc_dir)  # npc_dir  = npc_dir  - ϕbar * cs * v
       end
-      
-      # Final update of w.
-      kdiv!(n, w, γ)
 
       # Update x.
       kaxpy!(n, ϕ, w, x)  # x = x + ϕ * w

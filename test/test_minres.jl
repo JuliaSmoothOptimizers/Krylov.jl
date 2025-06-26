@@ -79,8 +79,7 @@
       @test stats.indefinite == true
       # Verify that the returned direction indeed exhibits nonpositive curvature.
       # For both real and complex cases, ensure to take the real part.
-      curvature = real(dot(npc_dir, A * npc_dir))
-      @test curvature <= 0
+      @test real(dot(npc_dir, A * npc_dir)) <= 0
 
       # Test Linesearch which would stop on the first call since A is negative definite
       A, b = symmetric_indefinite(FC=FC; shift = 5)
@@ -92,8 +91,8 @@
       @test all(x .== b)
       @test stats.solved == true
       @test stats.indefinite == true
-      curvature = real(dot(npc_dir, A * npc_dir))
-      @test curvature <= 0
+      @test stats.npcCount == 1
+      @test real(dot(npc_dir, A * npc_dir)) <= 0
 
       # Test when b^TAb=0 and linesearch is true
       A, b = system_zero_quad(FC=FC)
@@ -105,6 +104,21 @@
       @test stats.solved == true
       @test stats.indefinite == true
       @test real(dot(npc_dir, A * npc_dir)) ≈ 0.0
+
+      # negative curvature
+      A = FC[
+        10.0 0.0 0.0 0.0;
+        0.0 8.0 0.0 0.0;
+        0.0 0.0 5.0 0.0;
+        0.0 0.0 0.0 -1.0
+      ]
+      b = FC[1.0, 1.0, 1.0, 0.1]
+      solver = MinresWorkspace(A, b)
+      minres!(solver, A, b; linesearch = true)
+      x, stats, npc_dir, w1 = solver.x, solver.stats, solver.npc_dir, solver.w1
+      @test stats.npcCount == 2
+      @test real(dot(npc_dir, A*npc_dir)) ≤ norm(npc_dir)^2 + minres_tol
+      @test real(dot(w1, A*w1)) < minres_tol
 
       # Test if warm_start and linesearch are both true, it should throw an error
       A, b = symmetric_indefinite(FC=FC)
