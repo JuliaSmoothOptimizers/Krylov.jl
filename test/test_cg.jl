@@ -48,7 +48,7 @@
       @test(resid ≤ cg_tol)
       @test(stats.solved)
 
-      # Test linesearch which would stop on the first call since A is indefinite
+      # Test line search with A indefinite; in this example, CG should stop at the first iteration
       A, b = symmetric_indefinite(FC = FC; shift = 10)
       solver = CgWorkspace(A, b)
       cg!(solver,A, b, linesearch=true)
