@@ -129,7 +129,7 @@
 
       @test_throws TypeError cg(A, b, callback = workspace -> "string", history = true)
       
-      # Test on the cg workspace would throw an error when radius = 1 and linesearch is true
+      # Test that the cg workspace throws an error when radius > 0 and linesearch is true
       A, b = symmetric_indefinite(FC = FC, shift = 5)
       @test_throws ErrorException cg(A, b, radius = real(one(FC)), linesearch = true)
     end
