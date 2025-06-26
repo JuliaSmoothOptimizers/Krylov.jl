@@ -59,6 +59,7 @@
       @test stats.indefinite == true
       @test stats.npcCount == 1
       @test real(dot(npc_dir, A * npc_dir)) <= 0
+      @test all(npc_dir .== b)
 
       # Test when b^TAb=0 and linesearch is true
       A, b = zero_rhs(FC=FC)
@@ -68,16 +69,6 @@
       @test stats.status == "x is a zero-residual solution"
       @test norm(x) == zero(FC)
       @test stats.niter == 0
-
-      # Test Linesearch with negative curvature
-      A = FC(-1.0)*I(2)
-      b = ones(FC, 2)
-      solver = CgWorkspace(A, b)
-      cg!(solver, A, b; linesearch = true)
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir 
-      @test stats.status == "nonpositive curvature detected"
-      @test stats.npcCount == 1
-      @test real(dot(npc_dir, A*npc_dir)) ≤ cg_tol
 
       # Test radius > 0  and b^TAb=0
       A, b = zero_rhs(FC=FC)
@@ -138,7 +129,7 @@
 
       @test_throws TypeError cg(A, b, callback = workspace -> "string", history = true)
       
-      # Test on trust-region boundary when radius = 1 and linesearch is true
+      # Test on the cg workspace would throw an error when radius = 1 and linesearch is true
       A, b = symmetric_indefinite(FC = FC, shift = 5)
       @test_throws ErrorException cg(A, b, radius = real(one(FC)), linesearch = true)
     end
