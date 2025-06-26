@@ -83,8 +83,8 @@ For an in-place variant that reuses memory across solves, see [`minres!`](@ref).
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `window`: number of iterations used to accumulate a lower bound on the error;
 * `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `true` and nonpositive curvature is detected, the behavior depends on the iteration:
- – at iteration k = 0, the solver takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1;
- – at iteration k > 0, the solver returns the solution from iteration k – 1,
+ – at iteration k = 1, the solver takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1;
+ – at iteration k > 1, the solver returns the solution from iteration k – 1,
    - if the residual from iteration k is a nonpositive curvature direction but the search direction at iteration k, is not, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
    - if both are nonpositive curvature directions, the residual is stored in `stats.npc_dir`, the search direction is stored in `workspace.w1`, and `stats.npcCount` is set to 2. (Note that the MINRES solver starts at iteration 1, so the first iteration is k = 1);
 * `λ`: regularization parameter;
@@ -211,7 +211,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     β₁ = kdotr(m, r1, v)
     β₁ < 0 && error("Preconditioner is not positive definite")
     if β₁ == 0
-      stats.niter = 0
+      stats.niter = 1
       stats.solved, stats.inconsistent = true, false
       stats.timer = start_time |> ktimer
       stats.status = "x is a zero-residual solution"
@@ -272,8 +272,8 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     # initialize recurrences to calculate the curvature along search directions
     δ_w = zero(T)
     β_w = zero(T)
-    ζ_w = zero(T)
-    ζ_w_2 = zero(T)
+    ζ_k = zero(T)
+    ζ_km1 = zero(T)
 
     while !(solved || tired || ill_cond || user_requested_exit || overtimed)
       iter = iter + 1
@@ -329,14 +329,14 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       if linesearch
         cγ = cs * γbar
         if iter > 1
-          # Compute ζ_w (≡ r_k^T * A * r_k), which is the term adapted from the M-A. Dahito and D. Orban's paper.
+          # Compute ζ_k (≡ r_k^T * A * r_k), which is the term adapted from the M-A. Dahito and D. Orban's paper.
           # This uses the recurrence relation: δ_k = ζ_k + β_k^2 * δ_(k-1),
           # where ζ_k = r_k^T * A * r_k and β_k = ζ_k / ζ_(k-1). (See Roosta's paper.)
-          # ζ_w_2 is ζ_(k-1) from the previous iteration.
-          ζ_w_2 = ζ_w
-          ζ_w = -cγ * rNorm^2   # ζ_w ← r_k^T * A * r_k
-          β_w = (ζ_w_2 != 0) ? ζ_w/ζ_w_2 : ζ_w  # β_w ← ζ_w / ζ_(k-1)
-          δ_w = ζ_w + β_w^2* δ_w  # δ_w ← δ_k = ζ_k + β_k^2 * δ_(k-1)
+          # ζ_km1 is ζ_(k-1) from the previous iteration.
+          ζ_km1 = ζ_k
+          ζ_k = -cγ * rNorm^2   # ζ_k ← r_k^T * A * r_k
+          β_w = (ζ_km1 != 0) ? ζ_k/ζ_km1 : ζ_k  # β_w ← ζ_k / ζ_(k-1)
+          δ_w = ζ_k + β_w^2* δ_w  # δ_w ← δ_k = ζ_k + β_k^2 * δ_(k-1)
         end
 
         if cγ ≥ 0
