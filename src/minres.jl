@@ -264,7 +264,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     overtimed = false
     stats.indefinite = false
 
-    #initialize the constant to calculate the negative curvature of search directions
+    # initialize recurrences to calculate the curvature along search directions
     δ_w = zero(T)
     β_w = zero(T)
     ζ_w = zero(T)
