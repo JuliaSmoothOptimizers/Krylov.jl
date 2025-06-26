@@ -329,7 +329,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       if linesearch
         cγ = cs * γbar
         if iter > 1
-          # Compute ζ_k (≡ r_k^T * A * r_k), which is the term adapted from the M-A. Dahito and D. Orban's paper.
+          # Compute ζ_k (≡ r_k^T * A * r_k), which is the term adapted from M-A. Dahito and D. Orban's paper.
           # This uses the recurrence relation: δ_k = ζ_k + β_k^2 * δ_(k-1),
           # where ζ_k = r_k^T * A * r_k and β_k = ζ_k / ζ_(k-1). (See Roosta's paper.)
           # ζ_km1 is ζ_(k-1) from the previous iteration.
