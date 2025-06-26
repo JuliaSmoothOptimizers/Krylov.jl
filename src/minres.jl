@@ -19,6 +19,9 @@
 # Liu, Yang, and Roosta, MINRES: from negative curvature detection to monotonicity properties,
 # SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
 #
+# M-A. Dahito and D. Orban, The Conjugate Residual Method in Linesearch and Trust-Region Methods.
+# SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
+#
 # Dominique Orban, <dominique.orban@gerad.ca>
 # Brussels, Belgium, June 2015.
 # Montréal, August 2015.
@@ -80,10 +83,10 @@ For an in-place variant that reuses memory across solves, see [`minres!`](@ref).
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `window`: number of iterations used to accumulate a lower bound on the error;
 * `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `true` and nonpositive curvature is detected, the behavior depends on the iteration:
- – at iteration k = 0, return the preconditioned initial search direction in `workspace.npc_dir`;
- – at iteration k > 0,
-   - if the residual from iteration k-1 is a nonpositive curvature direction but the search direction at iteration k, is not, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
-   - if both are nonpositive curvature directions, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 2. (Note that the MINRES solver starts at iteration 1, so the first iteration is k = 1);
+ – at iteration k = 0, the solver takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1;
+ – at iteration k > 0, the solver returns the solution from iteration k – 1,
+   - if the residual from iteration k is a nonpositive curvature direction but the search direction at iteration k, is not, the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
+   - if both are nonpositive curvature directions, the residual is stored in `stats.npc_dir`, the search direction is stored in `workspace.w1`, and `stats.npcCount` is set to 2. (Note that the MINRES solver starts at iteration 1, so the first iteration is k = 1);
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
@@ -106,6 +109,8 @@ For an in-place variant that reuses memory across solves, see [`minres!`](@ref).
 * C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 
 * Y. Liu and F. Roosta, [*MINRES: From Negative Curvature Detection to Monotonicity Properties*](https://doi.org/10.1137/21M143666X), SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
+
+* M-A. Dahito and D. Orban, [*The Conjugate Residual Method in Linesearch and Trust-Region Methods*](https://doi.org/10.1137/18M1204255), SIAM Journal on Optimization, 29(3), pp. 1988--2025, 2019.
 """
 function minres end
 
@@ -323,22 +328,30 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       # Check for nonpositive curvature
       if linesearch
         cγ = cs * γbar
-        ζ_w_2 = ζ_w
-        ζ_w = -cγ * rNorm^2   # ζ_w ← r'Ar
-        β_w = (ζ_w_2 != 0) ? ζ_w/ζ_w_2 : ζ_w  # β_w ← ζ_w / ζ_w_2
-        δ_w = ζ_w + β_w^2* δ_w  # δ_w ← w'Aw 
+        if iter > 1
+          # Compute ζ_w (≡ r_k^T * A * r_k), which is the term adapted from the M-A. Dahito and D. Orban's paper.
+          # This uses the recurrence relation: δ_k = ζ_k + β_k^2 * δ_(k-1),
+          # where ζ_k = r_k^T * A * r_k and β_k = ζ_k / ζ_(k-1). (See Roosta's paper.)
+          # ζ_w_2 is ζ_(k-1) from the previous iteration.
+          ζ_w_2 = ζ_w
+          ζ_w = -cγ * rNorm^2   # ζ_w ← r_k^T * A * r_k
+          β_w = (ζ_w_2 != 0) ? ζ_w/ζ_w_2 : ζ_w  # β_w ← ζ_w / ζ_(k-1)
+          δ_w = ζ_w + β_w^2* δ_w  # δ_w ← δ_k = ζ_k + β_k^2 * δ_(k-1)
+        end
 
         if cγ ≥ 0
+          # Nonpositive curvature detected.
           (verbose > 0) && @printf(iostream, "nonpositive curvature detected:  cs * γbar = %e\n", cγ)
           stats.solved = true
           stats.npcCount = 1
           w1 = w
+
           if iter == 1
             kcopy!(n, x, b)
           else
-            # check w direction
+            # Check the w direction to see if it's also a nonpositive curvature direction.
             if δ_w < 0
-              # w is also a nonpositive curvature direction
+              # w is also a nonpositive curvature direction, increment npcCount to 2
               stats.npcCount = 2
             end
           end
