@@ -206,6 +206,7 @@ mutable struct CgWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   Δx         :: S
   x          :: S
   r          :: S
+  npc_dir    :: S
   p          :: S
   Ap         :: S
   z          :: S
@@ -222,11 +223,12 @@ function CgWorkspace(kc::KrylovConstructor)
   Δx = similar(kc.vn_empty)
   x  = similar(kc.vn)
   r  = similar(kc.vn)
+  npc_dir = similar(kc.vn_empty)
   p  = similar(kc.vn)
   Ap = similar(kc.vn)
   z  = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CgWorkspace{T,FC,S}(m, n, Δx, x, r, p, Ap, z, false, stats)
+  workspace = CgWorkspace{T,FC,S}(m, n, Δx, x, r, npc_dir, p, Ap, z, false, stats)
   return workspace
 end
 
@@ -236,12 +238,13 @@ function CgWorkspace(m::Integer, n::Integer, S::Type)
   Δx = S(undef, 0)
   x  = S(undef, n)
   r  = S(undef, n)
+  npc_dir = S(undef, 0)
   p  = S(undef, n)
   Ap = S(undef, n)
   z  = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CgWorkspace{T,FC,S}(m, n, Δx, x, r, p, Ap, z, false, stats)
+  workspace = CgWorkspace{T,FC,S}(m, n, Δx, x, r, npc_dir, p, Ap, z, false, stats)
   return workspace
 end
 
