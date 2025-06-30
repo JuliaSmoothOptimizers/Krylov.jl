@@ -11,6 +11,8 @@
       @test(resid ≤ cr_tol)
       @test(stats.solved)
       @test stats.indefinite == false
+      @test real(stats.dAd) > 0
+      @test real(stats.rAr) > 0
 
       # Code coverage
       (x, stats) = cr(Matrix(A), b)
@@ -115,8 +117,10 @@
       @test stats.npcCount == 2
       @test real(dot(npc_dir, A*npc_dir)) ≤ norm(npc_dir)^2 + cr_tol
       @test real(dot(p, A*p)) < cr_tol
+      @test real(dot(npc_dir, A*npc_dir)) == real(stats.rAr)
+      @test real(dot(p, A*p)) == real(stats.dAd)
 
-      # Only -p negative curvature
+      # Only -p negative curvature because iteration is 0
       A = FC(-1.0)*I(2)
       b = ones(FC, 2)
       solver = CrWorkspace(A, b)
@@ -125,8 +129,9 @@
       @test stats.status == "nonpositive curvature"
       @test stats.npcCount == 1
       @test real(dot(npc_dir, A*npc_dir)) ≤ cr_tol
-
       @test real(dot(p, A*p)) < 0
+      @test real(stats.rAr) >= 0
+      @test real(dot(p, A*p)) == real(stats.dAd)
 
       # Warm-start + linesearch must error
       A, b = symmetric_indefinite(FC = Float64)
@@ -166,6 +171,8 @@
       @test stats.solved == true
       @test real(dot(npc_dir, A * npc_dir)) <= 0.01 # almost zero curvature
       @test real(dot(p, A * p)) < 0 # negative curvature
+      @test real(stats.rAr) < 0 # rᵀAr < 0
+      @test real(stats.dAd) ≈ real(dot(p, A * p)) # pᵀAp < 0
 
       # pᵀAp < 0 and rᵀAr > 0 after the second iteration
       A = FC[
@@ -240,6 +247,8 @@
       @test stats.npcCount == 2
       @test real(dot(npc_dir, A*npc_dir)) ≤ cr_tol
       @test real(dot(p, A*p)) < 0
+      @test real(stats.rAr) == real(dot(npc_dir, A*npc_dir))
+      @test real(stats.dAd) == real(dot(p, A*p))
 
       # Test on trust-region boundary when radius > 0
       A, b = symmetric_indefinite(FC = FC, shift = 5)

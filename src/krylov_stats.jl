@@ -14,6 +14,8 @@ The fields are as follows:
 - `inconsistent`: Flags whether the system was detected as inconsistent (i.e., when `b` is not in the range of `A`);
 - `indefinite`: Flags whether the system was detected as indefinite (i.e., when `A` is not positive definite);
 - `npcCount`: The number of nonpositive curvature directions encountered during the solve;
+- `dAd`: The dot product of the direction with the matrix `A` times the direction;
+- `rAr`: The dot product of the residual with the matrix `A` times the residual;
 - `residuals`: A vector containing the residual norms at each iteration;
 - `Aresiduals`: A vector of `A'`-residual norms at each iteration;
 - `Acond`: An estimate of the condition number of matrix `A`.
@@ -26,6 +28,8 @@ mutable struct SimpleStats{T} <: KrylovStats{T}
   inconsistent :: Bool
   indefinite   :: Bool
   npcCount     :: Int
+  dAd          :: T
+  rAr          :: T
   residuals    :: Vector{T}
   Aresiduals   :: Vector{T}
   Acond        :: Vector{T}
@@ -37,6 +41,8 @@ function reset!(stats :: SimpleStats)
   empty!(stats.residuals)
   empty!(stats.Aresiduals)
   empty!(stats.Acond)
+  stats.dAd = zero(typeof(stats.dAd))
+  stats.rAr = zero(typeof(stats.rAr))
 end
 
 function copyto!(dest :: SimpleStats, src :: SimpleStats)
@@ -45,6 +51,8 @@ function copyto!(dest :: SimpleStats, src :: SimpleStats)
   dest.inconsistent = src.inconsistent
   dest.indefinite   = src.indefinite
   dest.npcCount     = src.npcCount
+  dest.dAd          = src.dAd
+  dest.rAr          = src.rAr
   dest.residuals    = copy(src.residuals)
   dest.Aresiduals   = copy(src.Aresiduals)
   dest.Acond        = copy(src.Acond)

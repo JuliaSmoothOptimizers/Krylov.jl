@@ -11,6 +11,8 @@
       resid = norm(r) / norm(b)
       @test(resid ≤ minres_tol * norm(A) * norm(x))
       @test(stats.solved)
+      @test real(stats.dAd) >= 0
+      @test real(stats.rAr) >= 0
 
       # Symmetric indefinite variant.
       A, b = symmetric_indefinite(FC=FC)
@@ -119,6 +121,8 @@
       @test stats.npcCount == 2
       @test real(dot(npc_dir, A*npc_dir)) ≤ norm(npc_dir)^2 + minres_tol
       @test real(dot(w1, A*w1)) < minres_tol
+      @test real(dot(npc_dir, A*npc_dir)) == real(stats.rAr)
+      @test real(dot(w1, A*w1)) == real(stats.dAd)
 
       # Test if warm_start and linesearch are both true, it should throw an error
       A, b = symmetric_indefinite(FC=FC)

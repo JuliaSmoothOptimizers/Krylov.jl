@@ -92,7 +92,7 @@ function MinresWorkspace(kc::KrylovConstructor; window::Integer = 5)
   y  = similar(kc.vn)
   v  = similar(kc.vn_empty)
   err_vec = zeros(T, window)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = MinresWorkspace{T,FC,S}(m, n, Δx, x, r1, r2, npc_dir, w1, w2, y, v, err_vec, false, stats)
   return workspace
 end
@@ -111,7 +111,7 @@ function MinresWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   v  = S(undef, 0)
   err_vec = zeros(T, window)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = MinresWorkspace{T,FC,S}(m, n, Δx, x, r1, r2, npc_dir, w1, w2, y, v, err_vec, false, stats)
   return workspace
 end
@@ -162,7 +162,7 @@ function MinaresWorkspace(kc::KrylovConstructor)
   dₖ₋₂ = similar(kc.vn)
   dₖ₋₁ = similar(kc.vn)
   q    = similar(kc.vn)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
   return workspace
 end
@@ -180,7 +180,7 @@ function MinaresWorkspace(m::Integer, n::Integer, S::Type)
   dₖ₋₁ = S(undef, n)
   q    = S(undef, n)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
   return workspace
 end
@@ -227,7 +227,7 @@ function CgWorkspace(kc::KrylovConstructor)
   p  = similar(kc.vn)
   Ap = similar(kc.vn)
   z  = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CgWorkspace{T,FC,S}(m, n, Δx, x, r, npc_dir, p, Ap, z, false, stats)
   return workspace
 end
@@ -243,7 +243,7 @@ function CgWorkspace(m::Integer, n::Integer, S::Type)
   Ap = S(undef, n)
   z  = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CgWorkspace{T,FC,S}(m, n, Δx, x, r, npc_dir, p, Ap, z, false, stats)
   return workspace
 end
@@ -292,7 +292,7 @@ function CrWorkspace(kc::KrylovConstructor)
   q  = similar(kc.vn)
   Ar = similar(kc.vn)
   Mq = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CrWorkspace{T,FC,S}(m, n, Δx, x, r, npc_dir, p, q, Ar, Mq, false, stats)
   return workspace
 end
@@ -309,7 +309,7 @@ function CrWorkspace(m::Integer, n::Integer, S::Type)
   Ar = S(undef, n)
   Mq = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CrWorkspace{T,FC,S}(m, n, Δx, x, r, npc_dir, p, q, Ar, Mq, false, stats)
   return workspace
 end
@@ -360,7 +360,7 @@ function CarWorkspace(kc::KrylovConstructor)
   t  = similar(kc.vn)
   u  = similar(kc.vn)
   Mu = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CarWorkspace{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
   return workspace
 end
@@ -378,7 +378,7 @@ function CarWorkspace(m::Integer, n::Integer, S::Type)
   u  = S(undef, n)
   Mu = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CarWorkspace{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
   return workspace
 end
@@ -645,7 +645,7 @@ function MinresQlpWorkspace(kc::KrylovConstructor)
   x       = similar(kc.vn)
   p       = similar(kc.vn)
   vₖ      = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = MinresQlpWorkspace{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
   return workspace
 end
@@ -662,7 +662,7 @@ function MinresQlpWorkspace(m::Integer, n::Integer, S::Type)
   p       = S(undef, n)
   vₖ      = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = MinresQlpWorkspace{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, x, p, vₖ, false, stats)
   return workspace
 end
@@ -738,7 +738,7 @@ function DqgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   s  = Vector{FC}(undef, memory)
   H  = Vector{FC}(undef, memory+1)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = DqgmresWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
   return workspace
 end
@@ -811,7 +811,7 @@ function DiomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   L  = Vector{FC}(undef, memory-1)
   H  = Vector{FC}(undef, memory)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = DiomWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
   return workspace
 end
@@ -862,7 +862,7 @@ function UsymlqWorkspace(kc::KrylovConstructor)
   vₖ₋₁ = similar(kc.vm)
   vₖ   = similar(kc.vm)
   q    = similar(kc.vm)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = UsymlqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
   return workspace
 end
@@ -880,7 +880,7 @@ function UsymlqWorkspace(m::Integer, n::Integer, S::Type)
   vₖ   = S(undef, m)
   q    = S(undef, m)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = UsymlqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
   return workspace
 end
@@ -933,7 +933,7 @@ function UsymqrWorkspace(kc::KrylovConstructor)
   uₖ₋₁ = similar(kc.vn)
   uₖ   = similar(kc.vn)
   p    = similar(kc.vn)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = UsymqrWorkspace{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
   return workspace
 end
@@ -952,7 +952,7 @@ function UsymqrWorkspace(m::Integer, n::Integer, S::Type)
   uₖ   = S(undef, n)
   p    = S(undef, n)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = UsymqrWorkspace{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
   return workspace
 end
@@ -1017,7 +1017,7 @@ function TricgWorkspace(kc::KrylovConstructor)
   Δy      = similar(kc.vn_empty)
   uₖ      = similar(kc.vn_empty)
   vₖ      = similar(kc.vm_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = TricgWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
 end
@@ -1042,7 +1042,7 @@ function TricgWorkspace(m::Integer, n::Integer, S::Type)
   uₖ      = S(undef, 0)
   vₖ      = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = TricgWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
 end
@@ -1115,7 +1115,7 @@ function TrimrWorkspace(kc::KrylovConstructor)
   Δy      = similar(kc.vn_empty)
   uₖ      = similar(kc.vn_empty)
   vₖ      = similar(kc.vm_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = TrimrWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
 end
@@ -1144,7 +1144,7 @@ function TrimrWorkspace(m::Integer, n::Integer, S::Type)
   uₖ      = S(undef, 0)
   vₖ      = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = TrimrWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
 end
@@ -1276,7 +1276,7 @@ function CgsWorkspace(kc::KrylovConstructor)
   ts = similar(kc.vn)
   yz = similar(kc.vn_empty)
   vw = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CgsWorkspace{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
   return workspace
 end
@@ -1294,7 +1294,7 @@ function CgsWorkspace(m::Integer, n::Integer, S::Type)
   yz = S(undef, 0)
   vw = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CgsWorkspace{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
   return workspace
 end
@@ -1345,7 +1345,7 @@ function BicgstabWorkspace(kc::KrylovConstructor)
   qd = similar(kc.vn)
   yz = similar(kc.vn_empty)
   t  = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = BicgstabWorkspace{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
   return workspace
 end
@@ -1363,7 +1363,7 @@ function BicgstabWorkspace(m::Integer, n::Integer, S::Type)
   yz = S(undef, 0)
   t  = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = BicgstabWorkspace{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
   return workspace
 end
@@ -1418,7 +1418,7 @@ function BilqWorkspace(kc::KrylovConstructor)
   d̅    = similar(kc.vn)
   t    = similar(kc.vn_empty)
   s    = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = BilqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
   return workspace
 end
@@ -1438,7 +1438,7 @@ function BilqWorkspace(m::Integer, n::Integer, S::Type)
   t    = S(undef, 0)
   s    = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = BilqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
   return workspace
 end
@@ -1495,7 +1495,7 @@ function QmrWorkspace(kc::KrylovConstructor)
   wₖ₋₁ = similar(kc.vn)
   t    = similar(kc.vn_empty)
   s    = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = QmrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
   return workspace
 end
@@ -1516,7 +1516,7 @@ function QmrWorkspace(m::Integer, n::Integer, S::Type)
   t    = S(undef, 0)
   s    = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = QmrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
   return workspace
 end
@@ -1641,7 +1641,7 @@ function CglsWorkspace(kc::KrylovConstructor)
   r  = similar(kc.vm)
   q  = similar(kc.vm)
   Mr = similar(kc.vm_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CglsWorkspace{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
   return workspace
 end
@@ -1656,7 +1656,7 @@ function CglsWorkspace(m::Integer, n::Integer, S::Type)
   q  = S(undef, m)
   Mr = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CglsWorkspace{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
   return workspace
 end
@@ -1790,7 +1790,7 @@ function CrlsWorkspace(kc::KrylovConstructor)
   Ap = similar(kc.vm)
   s  = similar(kc.vm)
   Ms = similar(kc.vm_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CrlsWorkspace{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
   return workspace
 end
@@ -1807,7 +1807,7 @@ function CrlsWorkspace(m::Integer, n::Integer, S::Type)
   s  = S(undef, m)
   Ms = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CrlsWorkspace{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
   return workspace
 end
@@ -1853,7 +1853,7 @@ function CgneWorkspace(kc::KrylovConstructor)
   q   = similar(kc.vm)
   s   = similar(kc.vm_empty)
   z   = similar(kc.vm_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CgneWorkspace{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
   return workspace
 end
@@ -1869,7 +1869,7 @@ function CgneWorkspace(m::Integer, n::Integer, S::Type)
   s   = S(undef, 0)
   z   = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CgneWorkspace{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
   return workspace
 end
@@ -1915,7 +1915,7 @@ function CrmrWorkspace(kc::KrylovConstructor)
   q   = similar(kc.vm)
   Nq  = similar(kc.vm_empty)
   s   = similar(kc.vm_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CrmrWorkspace{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
   return workspace
 end
@@ -1931,7 +1931,7 @@ function CrmrWorkspace(m::Integer, n::Integer, S::Type)
   Nq  = S(undef, 0)
   s   = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CrmrWorkspace{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
   return workspace
 end
@@ -2049,7 +2049,7 @@ function LsqrWorkspace(kc::KrylovConstructor; window::Integer = 5)
   u   = similar(kc.vm_empty)
   v   = similar(kc.vn_empty)
   err_vec = zeros(T, window)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = LsqrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
   return workspace
 end
@@ -2067,7 +2067,7 @@ function LsqrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   v   = S(undef, 0)
   err_vec = zeros(T, window)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = LsqrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
   return workspace
 end
@@ -2261,7 +2261,7 @@ function CraigWorkspace(kc::KrylovConstructor)
   u   = similar(kc.vm_empty)
   v   = similar(kc.vn_empty)
   w2  = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CraigWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
   return workspace
 end
@@ -2280,7 +2280,7 @@ function CraigWorkspace(m::Integer, n::Integer, S::Type)
   v   = S(undef, 0)
   w2  = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CraigWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
   return workspace
 end
@@ -2336,7 +2336,7 @@ function CraigmrWorkspace(kc::KrylovConstructor)
   u    = similar(kc.vm_empty)
   v    = similar(kc.vn_empty)
   q    = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CraigmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
   return workspace
 end
@@ -2357,7 +2357,7 @@ function CraigmrWorkspace(m::Integer, n::Integer, S::Type)
   v    = S(undef, 0)
   q    = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = CraigmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
   return workspace
 end
@@ -2414,7 +2414,7 @@ function GmresWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   s  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = GmresWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
   return workspace
 end
@@ -2434,7 +2434,7 @@ function GmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = GmresWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
   return workspace
 end
@@ -2491,7 +2491,7 @@ function FgmresWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   s  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = FgmresWorkspace{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
   return workspace
 end
@@ -2511,7 +2511,7 @@ function FgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = FgmresWorkspace{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
   return workspace
 end
@@ -2565,7 +2565,7 @@ function FomWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   l  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   U  = Vector{FC}(undef, div(memory * (memory+1), 2))
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = FomWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
   return workspace
 end
@@ -2584,7 +2584,7 @@ function FomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   z  = Vector{FC}(undef, memory)
   U  = Vector{FC}(undef, div(memory * (memory+1), 2))
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = FomWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
   return workspace
 end
@@ -2652,7 +2652,7 @@ function GpmrWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   gc = Vector{T}(undef, 4 * memory)
   zt = Vector{FC}(undef, 2 * memory)
   R  = Vector{FC}(undef, memory * (2 * memory + 1))
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = GpmrWorkspace{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
   return workspace
 end
@@ -2678,7 +2678,7 @@ function GpmrWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   zt = Vector{FC}(undef, 2 * memory)
   R  = Vector{FC}(undef, memory * (2 * memory + 1))
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = GpmrWorkspace{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
   return workspace
 end

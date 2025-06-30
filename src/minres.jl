@@ -220,6 +220,8 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       history && push!(Aconds, zero(T))
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
+      stats.dAd = zero(T)
+      stats.rAr = zero(T)
       return workspace
     end
     β₁ = sqrt(β₁)
@@ -274,6 +276,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     β_w = zero(T)
     ζ_k = zero(T)
     ζ_km1 = zero(T)
+    cγ = zero(T)
 
     while !(solved || tired || ill_cond || user_requested_exit || overtimed)
       iter = iter + 1
@@ -361,6 +364,10 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
           stats.status = "nonpositive curvature"
           workspace.warm_start = false
           stats.indefinite = true
+          mul!(r2, A, r1) # r2 = A * r1
+          mul!(w2, A, w1)  # w2 = A * w1
+          stats.dAd = kdotr(n, w1, w2)  # stats.dAd = w1^T * A * w1
+          stats.rAr = ζ_k # stats.rAr = r1^T * A * r1
           return workspace
         end
       end
@@ -424,6 +431,8 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
         stats.status = "x is a minimum least-squares solution"
         warm_start && kaxpy!(n, one(FC), Δx, x)
         workspace.warm_start = false
+        stats.dAd = zero(T)
+        stats.rAr = zero(T)
         return workspace
       end
 
@@ -473,6 +482,10 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     stats.inconsistent = !zero_resid
     stats.timer = start_time |> ktimer
     stats.status = status
+    mul!(r2, A, r1) # r2 = A * r1
+    mul!(w2, A, w1)  # w2 = A * w1
+    stats.dAd = kdotr(n, w1, w2)  # stats.dAd = w1^T * A * w1
+    stats.rAr = kdotr(n, r1, r2) # stats.rAr = r1^T * A * r1
     return workspace
   end
 end
