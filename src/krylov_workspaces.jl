@@ -718,7 +718,7 @@ function DqgmresWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   c      = Vector{T}(undef, memory)
   s      = Vector{FC}(undef, memory)
   H      = Vector{FC}(undef, memory+1)
-  stats  = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats  = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = DqgmresWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
   return workspace
 end
@@ -792,7 +792,7 @@ function DiomWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   V      = S[similar(kc.vn) for i = 1 : memory]
   L      = Vector{FC}(undef, memory-1)
   H      = Vector{FC}(undef, memory)
-  stats  = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats  = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = DiomWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
   return workspace
 end
