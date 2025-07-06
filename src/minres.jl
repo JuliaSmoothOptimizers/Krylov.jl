@@ -364,10 +364,10 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
           stats.status = "nonpositive curvature"
           workspace.warm_start = false
           stats.indefinite = true
-          mul!(r2, A, r1) # r2 = A * r1
+          mul!(r2, A, npc_dir) # r2 = A * npc_dir
           mul!(w2, A, w1)  # w2 = A * w1
           stats.dAd = kdotr(n, w1, w2)  # stats.dAd = w1^T * A * w1
-          stats.rAr = ζ_k # stats.rAr = r1^T * A * r1
+          stats.rAr = kdotr(n, npc_dir, r2)  # stats.rAr = npc_dir^T * A * npc_dir
           return workspace
         end
       end
