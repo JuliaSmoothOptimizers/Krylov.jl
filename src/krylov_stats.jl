@@ -14,7 +14,7 @@ The fields are as follows:
 - `inconsistent`: Flags whether the system was detected as inconsistent (i.e., when `b` is not in the range of `A`);
 - `indefinite`: Flags whether the system was detected as indefinite (i.e., when `A` is not positive definite);
 - `npcCount`: The number of nonpositive curvature directions encountered during the solve;
-- `dAd`: The dot product of the direction with the matrix `A` times the direction;
+- `dAd`: The dot product of the direction with the matrix `A` times the search direction;
 - `rAr`: The dot product of the residual with the matrix `A` times the residual;
 - `residuals`: A vector containing the residual norms at each iteration;
 - `Aresiduals`: A vector of `A'`-residual norms at each iteration;
