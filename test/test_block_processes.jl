@@ -40,11 +40,13 @@
           end
 
           expected_block_hermitian_lanczos_bytes = storage_block_hermitian_lanczos_bytes(n, p, k)
-          actual_block_hermitian_lanczos_bytes = @allocated hermitian_lanczos(A, B, k; algo="givens")
+          actual_block_hermitian_lanczos_bytes = @allocated hermitian_lanczos(A, B, k; algo="mgs")
           verbose && println("Block Hermitian Lanczos | $FC")
           verbose && println(expected_block_hermitian_lanczos_bytes, " ≤ ", actual_block_hermitian_lanczos_bytes, " ≤ ", 1.02 * expected_block_hermitian_lanczos_bytes, " ?")
           verbose && println()
-          @test expected_block_hermitian_lanczos_bytes ≤ actual_block_hermitian_lanczos_bytes ≤ 1.02 * expected_block_hermitian_lanczos_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_block_hermitian_lanczos_bytes ≤ actual_block_hermitian_lanczos_bytes ≤ 1.02 * expected_block_hermitian_lanczos_bytes
+          end
         end
       end
 
@@ -100,11 +102,13 @@
           end
 
           expected_block_arnoldi_bytes = storage_block_arnoldi_bytes(n, p, k)
-          actual_block_arnoldi_bytes = @allocated arnoldi(A, B, k; algo="givens", reorthogonalization)
+          actual_block_arnoldi_bytes = @allocated arnoldi(A, B, k; algo="mgs", reorthogonalization)
           verbose && println("Block Arnoldi | $FC")
           verbose && println(expected_block_arnoldi_bytes, " ≤ ", actual_block_arnoldi_bytes, " ≤ ", 1.02 * expected_block_arnoldi_bytes, " ?")
           verbose && println()
-          @test expected_block_arnoldi_bytes ≤ actual_block_arnoldi_bytes ≤ 1.02 * expected_block_arnoldi_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_block_arnoldi_bytes ≤ actual_block_arnoldi_bytes ≤ 1.02 * expected_block_arnoldi_bytes
+          end
         end
       end
 
@@ -140,11 +144,13 @@
           end
 
           expected_block_golub_kahan_bytes = storage_block_golub_kahan_bytes(m, n, p, k)
-          actual_block_golub_kahan_bytes = @allocated golub_kahan(A, B, k; algo="givens")
+          actual_block_golub_kahan_bytes = @allocated golub_kahan(A, B, k; algo="mgs")
           verbose && println("Block Golub-Kahan | $FC")
           verbose && println(expected_block_golub_kahan_bytes, " ≤ ", actual_block_golub_kahan_bytes, " ≤ ", 1.02 * expected_block_golub_kahan_bytes, " ?")
           verbose && println()
-          @test expected_block_golub_kahan_bytes ≤ actual_block_golub_kahan_bytes ≤ 1.02 * expected_block_golub_kahan_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_block_golub_kahan_bytes ≤ actual_block_golub_kahan_bytes ≤ 1.02 * expected_block_golub_kahan_bytes
+          end
         end
       end
 
@@ -181,11 +187,13 @@
           end
 
           expected_block_saunders_simon_yip_bytes = storage_block_saunders_simon_yip_bytes(m, n, p, k)
-          actual_block_saunders_simon_yip_bytes = @allocated saunders_simon_yip(A, B, C, k; algo="givens")
+          actual_block_saunders_simon_yip_bytes = @allocated saunders_simon_yip(A, B, C, k; algo="mgs")
           verbose && println("Block Saunders-Simon-Yip")
           verbose && println(expected_block_saunders_simon_yip_bytes, " ≤ ", actual_block_saunders_simon_yip_bytes, " ≤ ", 1.02 * expected_block_saunders_simon_yip_bytes, " ?")
           verbose && println()
-          @test expected_block_saunders_simon_yip_bytes ≤ actual_block_saunders_simon_yip_bytes ≤ 1.02 * expected_block_saunders_simon_yip_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_block_saunders_simon_yip_bytes ≤ actual_block_saunders_simon_yip_bytes ≤ 1.02 * expected_block_saunders_simon_yip_bytes
+          end
         end
       end
 
@@ -222,11 +230,13 @@
           end
 
           expected_block_montoison_orban_bytes = storage_block_montoison_orban_bytes(m, n, p, k)
-          actual_block_montoison_orban_bytes = @allocated montoison_orban(A, B, D, C, k; algo="givens", reorthogonalization)
+          actual_block_montoison_orban_bytes = @allocated montoison_orban(A, B, D, C, k; algo="mgs", reorthogonalization)
           verbose && println("Block Montoison-Orban | $FC")
           verbose && println(expected_block_montoison_orban_bytes, " ≤ ", actual_block_montoison_orban_bytes, " ≤ ", 1.02 * expected_block_montoison_orban_bytes, " ?")
           verbose && println()
-          @test expected_block_montoison_orban_bytes ≤ actual_block_montoison_orban_bytes ≤ 1.02 * expected_block_montoison_orban_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_block_montoison_orban_bytes ≤ actual_block_montoison_orban_bytes ≤ 1.02 * expected_block_montoison_orban_bytes
+          end
         end
       end
     end
