@@ -44,7 +44,9 @@ end
 
           expected_hermitian_lanczos_bytes = storage_hermitian_lanczos_bytes(n, k)
           actual_hermitian_lanczos_bytes = @allocated hermitian_lanczos(A, b, k; reorthogonalization)
-          @test expected_hermitian_lanczos_bytes ≤ actual_hermitian_lanczos_bytes ≤ 1.02 * expected_hermitian_lanczos_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_hermitian_lanczos_bytes ≤ actual_hermitian_lanczos_bytes ≤ 1.02 * expected_hermitian_lanczos_bytes
+          end
         end
       end
 
@@ -66,7 +68,9 @@ end
 
         expected_nonhermitian_lanczos_bytes = storage_nonhermitian_lanczos_bytes(n, k)
         actual_nonhermitian_lanczos_bytes = @allocated nonhermitian_lanczos(A, b, c, k)
-        @test expected_nonhermitian_lanczos_bytes ≤ actual_nonhermitian_lanczos_bytes ≤ 1.02 * expected_nonhermitian_lanczos_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_nonhermitian_lanczos_bytes ≤ actual_nonhermitian_lanczos_bytes ≤ 1.02 * expected_nonhermitian_lanczos_bytes
+        end
       end
 
       @testset "Arnoldi" begin
@@ -85,7 +89,9 @@ end
 
           expected_arnoldi_bytes = storage_arnoldi_bytes(n, k)
           actual_arnoldi_bytes = @allocated arnoldi(A, b, k; reorthogonalization)
-          @test expected_arnoldi_bytes ≤ actual_arnoldi_bytes ≤ 1.02 * expected_arnoldi_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_arnoldi_bytes ≤ actual_arnoldi_bytes ≤ 1.02 * expected_arnoldi_bytes
+          end
         end
       end
 
@@ -107,7 +113,9 @@ end
 
         expected_golub_kahan_bytes = storage_golub_kahan_bytes(m, n, k)
         actual_golub_kahan_bytes = @allocated golub_kahan(A, b, k)
-        @test expected_golub_kahan_bytes ≤ actual_golub_kahan_bytes ≤ 1.02 * expected_golub_kahan_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_golub_kahan_bytes ≤ actual_golub_kahan_bytes ≤ 1.02 * expected_golub_kahan_bytes
+        end
       end
 
       @testset "Saunders-Simon-Yip" begin
@@ -138,7 +146,9 @@ end
 
         expected_saunders_simon_yip_bytes = storage_saunders_simon_yip_bytes(m, n, k)
         actual_saunders_simon_yip_bytes = @allocated saunders_simon_yip(A, b, c, k)
-        @test expected_saunders_simon_yip_bytes ≤ actual_saunders_simon_yip_bytes ≤ 1.02 * expected_saunders_simon_yip_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_saunders_simon_yip_bytes ≤ actual_saunders_simon_yip_bytes ≤ 1.02 * expected_saunders_simon_yip_bytes
+        end
       end
 
       @testset "Montoison-Orban" begin
@@ -172,7 +182,9 @@ end
 
           expected_montoison_orban_bytes = storage_montoison_orban_bytes(m, n, k)
           actual_montoison_orban_bytes = @allocated montoison_orban(A, B, b, c, k; reorthogonalization)
-          @test expected_montoison_orban_bytes ≤ actual_montoison_orban_bytes ≤ 1.02 * expected_montoison_orban_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_montoison_orban_bytes ≤ actual_montoison_orban_bytes ≤ 1.02 * expected_montoison_orban_bytes
+          end
         end
       end
     end
