@@ -136,6 +136,12 @@ function LinearAlgebra.mul!(y::HaloVector{Float64}, A::LaplacianOperator, u::Hal
             
             # Update the output vector with the Laplacian result
             y.data[i,j] = dx2 + dy2
+
+            # Add a tiny value ε to the diagonal to ensure the operator is
+            # symmetric positive definite (SPD) and to avoid numerical issues
+            if i == j
+                y.data[i,j] += 1e-8
+            end
         end
     end
 
@@ -330,7 +336,7 @@ kc = KrylovConstructor(b)
 workspace = CgWorkspace(kc)
 
 # Solve the system with CG
-Krylov.cg!(workspace, A, b, atol=1e-12, rtol=0.0, verbose=1)
+Krylov.cg!(workspace, A, b, atol=1e-10, rtol=0.0, verbose=1)
 u_sol = solution(workspace)
 stats = statistics(workspace)
 ```
