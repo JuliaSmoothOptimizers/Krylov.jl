@@ -140,7 +140,7 @@ function LinearAlgebra.mul!(y::HaloVector{Float64}, A::LaplacianOperator, u::Hal
             # Add a tiny value ε to the diagonal to ensure the operator is
             # symmetric positive definite (SPD) and to avoid numerical issues
             if i == j
-                y.data[i,j] += 1e-8
+                y.data[i,j] += 1e-12 * u.data[i,j]
             end
         end
     end
