@@ -80,7 +80,7 @@ For an in-place variant that reuses memory across solves, see [`bicgstab!`](@ref
 #### References
 
 * H. A. van der Vorst, [*Bi-CGSTAB: A fast and smoothly converging variant of Bi-CG for the solution of nonsymmetric linear systems*](https://doi.org/10.1137/0913035), SIAM Journal on Scientific and Statistical Computing, 13(2), pp. 631--644, 1992.
-* G. L.G. Sleijpen and D. R. Fokkema, [*BiCGstab(ℓ) for linear equations involving unsymmetric matrices with complex spectrum*](https://etna.math.kent.edu/volumes/1993-2000/vol1/abstract.php?vol=1&pages=11-32), Electronic Transactions on Numerical Analysis, 1, pp. 11--32, 1993.
+* G. L.G. Sleijpen and D. R. Fokkema, [*BiCGstab(ℓ) for linear equations involving unsymmetric matrices with complex spectrum*](https://www.emis.de/journals/ETNA/volumes/1993-2000/vol1/abstract_vol1_pp11-32.html), Electronic Transactions on Numerical Analysis, 1, pp. 11--32, 1993.
 """
 function bicgstab end
 
