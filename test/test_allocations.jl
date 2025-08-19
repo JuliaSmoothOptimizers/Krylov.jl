@@ -450,7 +450,9 @@
         expected_cgls_lanczos_shift_bytes = storage_cgls_lanczos_shift_bytes(m, k, nshifts)
         (x, stats) = cgls_lanczos_shift(Ao, b, shifts)  # warmup
         actual_cgls_lanczos_shift_bytes = @allocated cgls_lanczos_shift(Ao, b, shifts)
-        @test expected_cgls_lanczos_shift_bytes ≤ actual_cgls_lanczos_shift_bytes ≤ 1.03 * expected_cgls_lanczos_shift_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_cgls_lanczos_shift_bytes ≤ actual_cgls_lanczos_shift_bytes ≤ 1.02 * expected_cgls_lanczos_shift_bytes
+        end
 
         workspace = CglsLanczosShiftWorkspace(Ao, b, nshifts)
         cgls_lanczos_shift!(workspace, Ao, b, shifts)  # warmup
