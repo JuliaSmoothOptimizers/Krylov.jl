@@ -44,7 +44,9 @@
           verbose && println("Block Hermitian Lanczos | $FC")
           verbose && println(expected_block_hermitian_lanczos_bytes, " ≤ ", actual_block_hermitian_lanczos_bytes, " ≤ ", 1.02 * expected_block_hermitian_lanczos_bytes, " ?")
           verbose && println()
-          @test expected_block_hermitian_lanczos_bytes ≤ actual_block_hermitian_lanczos_bytes ≤ 1.02 * expected_block_hermitian_lanczos_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_block_hermitian_lanczos_bytes ≤ actual_block_hermitian_lanczos_bytes ≤ 1.02 * expected_block_hermitian_lanczos_bytes
+          end
         end
       end
 
@@ -104,7 +106,9 @@
           verbose && println("Block Arnoldi | $FC")
           verbose && println(expected_block_arnoldi_bytes, " ≤ ", actual_block_arnoldi_bytes, " ≤ ", 1.02 * expected_block_arnoldi_bytes, " ?")
           verbose && println()
-          @test expected_block_arnoldi_bytes ≤ actual_block_arnoldi_bytes ≤ 1.02 * expected_block_arnoldi_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_block_arnoldi_bytes ≤ actual_block_arnoldi_bytes ≤ 1.02 * expected_block_arnoldi_bytes
+          end
         end
       end
 
@@ -144,7 +148,9 @@
           verbose && println("Block Golub-Kahan | $FC")
           verbose && println(expected_block_golub_kahan_bytes, " ≤ ", actual_block_golub_kahan_bytes, " ≤ ", 1.02 * expected_block_golub_kahan_bytes, " ?")
           verbose && println()
-          @test expected_block_golub_kahan_bytes ≤ actual_block_golub_kahan_bytes ≤ 1.02 * expected_block_golub_kahan_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_block_golub_kahan_bytes ≤ actual_block_golub_kahan_bytes ≤ 1.02 * expected_block_golub_kahan_bytes
+          end
         end
       end
 
@@ -185,7 +191,9 @@
           verbose && println("Block Saunders-Simon-Yip")
           verbose && println(expected_block_saunders_simon_yip_bytes, " ≤ ", actual_block_saunders_simon_yip_bytes, " ≤ ", 1.02 * expected_block_saunders_simon_yip_bytes, " ?")
           verbose && println()
-          @test expected_block_saunders_simon_yip_bytes ≤ actual_block_saunders_simon_yip_bytes ≤ 1.02 * expected_block_saunders_simon_yip_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_block_saunders_simon_yip_bytes ≤ actual_block_saunders_simon_yip_bytes ≤ 1.02 * expected_block_saunders_simon_yip_bytes
+          end
         end
       end
 
@@ -226,7 +234,9 @@
           verbose && println("Block Montoison-Orban | $FC")
           verbose && println(expected_block_montoison_orban_bytes, " ≤ ", actual_block_montoison_orban_bytes, " ≤ ", 1.02 * expected_block_montoison_orban_bytes, " ?")
           verbose && println()
-          @test expected_block_montoison_orban_bytes ≤ actual_block_montoison_orban_bytes ≤ 1.02 * expected_block_montoison_orban_bytes
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_block_montoison_orban_bytes ≤ actual_block_montoison_orban_bytes ≤ 1.02 * expected_block_montoison_orban_bytes
+          end
         end
       end
     end

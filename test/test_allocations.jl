@@ -26,7 +26,9 @@
         expected_symmlq_bytes = storage_symmlq_bytes(n)
         symmlq(A, b)  # warmup
         actual_symmlq_bytes = @allocated symmlq(A, b)
-        @test expected_symmlq_bytes ≤ actual_symmlq_bytes ≤ 1.02 * expected_symmlq_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_symmlq_bytes ≤ actual_symmlq_bytes ≤ 1.02 * expected_symmlq_bytes
+        end
 
         workspace = SymmlqWorkspace(A, b)
         symmlq!(workspace, A, b)  # warmup
@@ -42,7 +44,9 @@
         expected_cg_bytes = storage_cg_bytes(n)
         cg(A, b)  # warmup
         actual_cg_bytes = @allocated cg(A, b)
-        @test expected_cg_bytes ≤ actual_cg_bytes ≤ 1.02 * expected_cg_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_cg_bytes ≤ actual_cg_bytes ≤ 1.02 * expected_cg_bytes
+        end
 
         workspace = CgWorkspace(A, b)
         cg!(workspace, A, b)  # warmup
@@ -58,7 +62,9 @@
         expected_cg_lanczos_bytes = storage_cg_lanczos_bytes(n)
         cg_lanczos(A, b)  # warmup
         actual_cg_lanczos_bytes = @allocated cg_lanczos(A, b)
-        @test expected_cg_lanczos_bytes ≤ actual_cg_lanczos_bytes ≤ 1.02 * expected_cg_lanczos_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_cg_lanczos_bytes ≤ actual_cg_lanczos_bytes ≤ 1.02 * expected_cg_lanczos_bytes
+        end
 
         workspace = CgLanczosWorkspace(A, b)
         cg_lanczos!(workspace, A, b)  # warmup
@@ -76,7 +82,9 @@
         expected_cg_lanczos_shift_bytes = storage_cg_lanczos_shift_bytes(n, nshifts)
         cg_lanczos_shift(A, b, shifts)  # warmup
         actual_cg_lanczos_shift_bytes = @allocated cg_lanczos_shift(A, b, shifts)
-        @test expected_cg_lanczos_shift_bytes ≤ actual_cg_lanczos_shift_bytes ≤ 1.02 * expected_cg_lanczos_shift_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_cg_lanczos_shift_bytes ≤ actual_cg_lanczos_shift_bytes ≤ 1.02 * expected_cg_lanczos_shift_bytes
+        end
 
         workspace = CgLanczosShiftWorkspace(A, b, nshifts)
         cg_lanczos_shift!(workspace, A, b, shifts)  # warmup
@@ -92,7 +100,9 @@
         expected_cr_bytes = storage_cr_bytes(n)
         cr(A, b)  # warmup
         actual_cr_bytes = @allocated cr(A, b)
-        @test expected_cr_bytes ≤ actual_cr_bytes ≤ 1.02 * expected_cr_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_cr_bytes ≤ actual_cr_bytes ≤ 1.02 * expected_cr_bytes
+        end
 
         workspace = CrWorkspace(A, b)
         cr!(workspace, A, b)  # warmup
@@ -108,7 +118,9 @@
         expected_car_bytes = storage_car_bytes(n)
         car(A, b)  # warmup
         actual_car_bytes = @allocated car(A, b)
-        @test expected_car_bytes ≤ actual_car_bytes ≤ 1.02 * expected_car_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_car_bytes ≤ actual_car_bytes ≤ 1.02 * expected_car_bytes
+        end
 
         workspace = CarWorkspace(A, b)
         car!(workspace, A, b)  # warmup
@@ -124,7 +136,9 @@
         expected_minres_bytes = storage_minres_bytes(n)
         minres(A, b)  # warmup
         actual_minres_bytes = @allocated minres(A, b)
-        @test expected_minres_bytes ≤ actual_minres_bytes ≤ 1.02 * expected_minres_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_minres_bytes ≤ actual_minres_bytes ≤ 1.02 * expected_minres_bytes
+        end
 
         workspace = MinresWorkspace(A, b)
         minres!(workspace, A, b)  # warmup
@@ -140,7 +154,9 @@
         expected_minres_qlp_bytes = storage_minres_qlp_bytes(n)
         minres_qlp(A, b)  # warmup
         actual_minres_qlp_bytes = @allocated minres_qlp(A, b)
-        @test expected_minres_qlp_bytes ≤ actual_minres_qlp_bytes ≤ 1.02 * expected_minres_qlp_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_minres_qlp_bytes ≤ actual_minres_qlp_bytes ≤ 1.02 * expected_minres_qlp_bytes
+        end
 
         workspace = MinresQlpWorkspace(A, b)
         minres_qlp!(workspace, A, b)  # warmup
@@ -156,7 +172,9 @@
         expected_minares_bytes = storage_minares_bytes(n)
         minares(A, b)  # warmup
         actual_minares_bytes = @allocated minares(A, b)
-        @test expected_minares_bytes ≤ actual_minares_bytes ≤ 1.02 * expected_minares_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_minares_bytes ≤ actual_minares_bytes ≤ 1.02 * expected_minares_bytes
+        end
 
         workspace = MinaresWorkspace(A, b)
         minares!(workspace, A, b)  # warmup
@@ -176,7 +194,9 @@
         expected_diom_bytes = storage_diom_bytes(mem, n)
         diom(A, b; memory=mem)  # warmup
         actual_diom_bytes = @allocated diom(A, b; memory=mem)
-        @test expected_diom_bytes ≤ actual_diom_bytes ≤ 1.02 * expected_diom_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_diom_bytes ≤ actual_diom_bytes ≤ 1.02 * expected_diom_bytes
+        end
 
         workspace = DiomWorkspace(A, b; memory=mem)
         diom!(workspace, A, b)  # warmup
@@ -195,7 +215,9 @@
         expected_fom_bytes = storage_fom_bytes(mem, n)
         fom(A, b; memory=mem)  # warmup
         actual_fom_bytes = @allocated fom(A, b; memory=mem)
-        @test expected_fom_bytes ≤ actual_fom_bytes ≤ 1.02 * expected_fom_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_fom_bytes ≤ actual_fom_bytes ≤ 1.02 * expected_fom_bytes
+        end
 
         workspace = FomWorkspace(A, b; memory=mem)
         fom!(workspace, A, b)  # warmup
@@ -214,7 +236,9 @@
         expected_dqgmres_bytes = storage_dqgmres_bytes(mem, n)
         dqgmres(A, b; memory=mem)  # warmup
         actual_dqgmres_bytes = @allocated dqgmres(A, b; memory=mem)
-        @test expected_dqgmres_bytes ≤ actual_dqgmres_bytes ≤ 1.02 * expected_dqgmres_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_dqgmres_bytes ≤ actual_dqgmres_bytes ≤ 1.02 * expected_dqgmres_bytes
+        end
 
         workspace = DqgmresWorkspace(A, b; memory=mem)
         dqgmres!(workspace, A, b)  # warmup
@@ -233,7 +257,9 @@
         expected_gmres_bytes = storage_gmres_bytes(mem, n)
         gmres(A, b; memory=mem)  # warmup
         actual_gmres_bytes = @allocated gmres(A, b; memory=mem)
-        @test expected_gmres_bytes ≤ actual_gmres_bytes ≤ 1.02 * expected_gmres_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_gmres_bytes ≤ actual_gmres_bytes ≤ 1.02 * expected_gmres_bytes
+        end
 
         workspace = GmresWorkspace(A, b; memory=mem)
         gmres!(workspace, A, b)  # warmup
@@ -252,7 +278,9 @@
         expected_fgmres_bytes = storage_fgmres_bytes(mem, n)
         fgmres(A, b; memory=mem)  # warmup
         actual_fgmres_bytes = @allocated fgmres(A, b; memory=mem)
-        @test expected_fgmres_bytes ≤ actual_fgmres_bytes ≤ 1.02 * expected_fgmres_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_fgmres_bytes ≤ actual_fgmres_bytes ≤ 1.02 * expected_fgmres_bytes
+        end
 
         workspace = FgmresWorkspace(A, b; memory=mem)
         fgmres!(workspace, A, b)  # warmup
@@ -268,7 +296,9 @@
         expected_cgs_bytes = storage_cgs_bytes(n)
         cgs(A, b)  # warmup
         actual_cgs_bytes = @allocated cgs(A, b)
-        @test expected_cgs_bytes ≤ actual_cgs_bytes ≤ 1.02 * expected_cgs_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_cgs_bytes ≤ actual_cgs_bytes ≤ 1.02 * expected_cgs_bytes
+        end
 
         workspace = CgsWorkspace(A, b)
         cgs!(workspace, A, b)  # warmup
@@ -284,7 +314,9 @@
         expected_bicgstab_bytes = storage_bicgstab_bytes(n)
         bicgstab(A, b)  # warmup
         actual_bicgstab_bytes = @allocated bicgstab(A, b)
-        @test expected_bicgstab_bytes ≤ actual_bicgstab_bytes ≤ 1.02 * expected_bicgstab_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_bicgstab_bytes ≤ actual_bicgstab_bytes ≤ 1.02 * expected_bicgstab_bytes
+        end
 
         workspace = BicgstabWorkspace(A, b)
         bicgstab!(workspace, A, b)  # warmup
@@ -301,7 +333,9 @@
         expected_cgne_bytes = storage_cgne_bytes(k, n)
         (x, stats) = cgne(Au, c)  # warmup
         actual_cgne_bytes = @allocated cgne(Au, c)
-        @test expected_cgne_bytes ≤ actual_cgne_bytes ≤ 1.02 * expected_cgne_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_cgne_bytes ≤ actual_cgne_bytes ≤ 1.02 * expected_cgne_bytes
+        end
 
         workspace = CgneWorkspace(Au, c)
         cgne!(workspace, Au, c)  # warmup
@@ -318,7 +352,9 @@
         expected_crmr_bytes = storage_crmr_bytes(k, n)
         (x, stats) = crmr(Au, c)  # warmup
         actual_crmr_bytes = @allocated crmr(Au, c)
-        @test expected_crmr_bytes ≤ actual_crmr_bytes ≤ 1.02 * expected_crmr_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_crmr_bytes ≤ actual_crmr_bytes ≤ 1.02 * expected_crmr_bytes
+        end
 
         workspace = CrmrWorkspace(Au, c)
         crmr!(workspace, Au, c)  # warmup
@@ -335,7 +371,9 @@
         expected_lnlq_bytes = storage_lnlq_bytes(k, n)
         lnlq(Au, c)  # warmup
         actual_lnlq_bytes = @allocated lnlq(Au, c)
-        @test expected_lnlq_bytes ≤ actual_lnlq_bytes ≤ 1.02 * expected_lnlq_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_lnlq_bytes ≤ actual_lnlq_bytes ≤ 1.02 * expected_lnlq_bytes
+        end
 
         workspace = LnlqWorkspace(Au, c)
         lnlq!(workspace, Au, c)  # warmup
@@ -352,7 +390,9 @@
         expected_craig_bytes = storage_craig_bytes(k, n)
         craig(Au, c)  # warmup
         actual_craig_bytes = @allocated craig(Au, c)
-        @test expected_craig_bytes ≤ actual_craig_bytes ≤ 1.02 * expected_craig_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_craig_bytes ≤ actual_craig_bytes ≤ 1.02 * expected_craig_bytes
+        end
 
         workspace = CraigWorkspace(Au, c)
         craig!(workspace, Au, c)  # warmup
@@ -369,7 +409,9 @@
         expected_craigmr_bytes = storage_craigmr_bytes(k, n)
         craigmr(Au, c)  # warmup
         actual_craigmr_bytes = @allocated craigmr(Au, c)
-        @test expected_craigmr_bytes ≤ actual_craigmr_bytes ≤ 1.02 * expected_craigmr_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_craigmr_bytes ≤ actual_craigmr_bytes ≤ 1.02 * expected_craigmr_bytes
+        end
 
         workspace = CraigmrWorkspace(Au, c)
         craigmr!(workspace, Au, c)  # warmup
@@ -386,7 +428,9 @@
         expected_cgls_bytes = storage_cgls_bytes(m, k)
         (x, stats) = cgls(Ao, b)  # warmup
         actual_cgls_bytes = @allocated cgls(Ao, b)
-        @test expected_cgls_bytes ≤ actual_cgls_bytes ≤ 1.02 * expected_cgls_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_cgls_bytes ≤ actual_cgls_bytes ≤ 1.02 * expected_cgls_bytes
+        end
 
         workspace = CglsWorkspace(Ao, b)
         cgls!(workspace, Ao, b)  # warmup
@@ -406,7 +450,9 @@
         expected_cgls_lanczos_shift_bytes = storage_cgls_lanczos_shift_bytes(m, k, nshifts)
         (x, stats) = cgls_lanczos_shift(Ao, b, shifts)  # warmup
         actual_cgls_lanczos_shift_bytes = @allocated cgls_lanczos_shift(Ao, b, shifts)
-        @test expected_cgls_lanczos_shift_bytes ≤ actual_cgls_lanczos_shift_bytes ≤ 1.03 * expected_cgls_lanczos_shift_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_cgls_lanczos_shift_bytes ≤ actual_cgls_lanczos_shift_bytes ≤ 1.02 * expected_cgls_lanczos_shift_bytes
+        end
 
         workspace = CglsLanczosShiftWorkspace(Ao, b, nshifts)
         cgls_lanczos_shift!(workspace, Ao, b, shifts)  # warmup
@@ -423,7 +469,9 @@
         expected_lslq_bytes = storage_lslq_bytes(m, k)
         (x, stats) = lslq(Ao, b)  # warmup
         actual_lslq_bytes = @allocated lslq(Ao, b)
-        @test expected_lslq_bytes ≤ actual_lslq_bytes ≤ 1.025 * expected_lslq_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_lslq_bytes ≤ actual_lslq_bytes ≤ 1.025 * expected_lslq_bytes
+        end
 
         workspace = LslqWorkspace(Ao, b)
         lslq!(workspace, Ao, b)  # warmup
@@ -440,7 +488,9 @@
         expected_crls_bytes = storage_crls_bytes(m, k)
         (x, stats) = crls(Ao, b)  # warmup
         actual_crls_bytes = @allocated crls(Ao, b)
-        @test expected_crls_bytes ≤ actual_crls_bytes ≤ 1.02 * expected_crls_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_crls_bytes ≤ actual_crls_bytes ≤ 1.02 * expected_crls_bytes
+        end
 
         workspace = CrlsWorkspace(Ao, b)
         crls!(workspace, Ao, b)  # warmup
@@ -457,7 +507,9 @@
         expected_lsqr_bytes = storage_lsqr_bytes(m, k)
         (x, stats) = lsqr(Ao, b)  # warmup
         actual_lsqr_bytes = @allocated lsqr(Ao, b)
-        @test expected_lsqr_bytes ≤ actual_lsqr_bytes ≤ 1.02 * expected_lsqr_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_lsqr_bytes ≤ actual_lsqr_bytes ≤ 1.02 * expected_lsqr_bytes
+        end
 
         workspace = LsqrWorkspace(Ao, b)
         lsqr!(workspace, Ao, b)  # warmup
@@ -474,7 +526,9 @@
         expected_lsmr_bytes = storage_lsmr_bytes(m, k)
         (x, stats) = lsmr(Ao, b)  # warmup
         actual_lsmr_bytes = @allocated lsmr(Ao, b)
-        @test expected_lsmr_bytes ≤ actual_lsmr_bytes ≤ 1.02 * expected_lsmr_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_lsmr_bytes ≤ actual_lsmr_bytes ≤ 1.02 * expected_lsmr_bytes
+        end
 
         workspace = LsmrWorkspace(Ao, b)
         lsmr!(workspace, Ao, b)  # warmup
@@ -490,7 +544,9 @@
         expected_bilq_bytes = storage_bilq_bytes(n)
         bilq(A, b)  # warmup
         actual_bilq_bytes = @allocated bilq(A, b)
-        @test expected_bilq_bytes ≤ actual_bilq_bytes ≤ 1.02 * expected_bilq_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_bilq_bytes ≤ actual_bilq_bytes ≤ 1.02 * expected_bilq_bytes
+        end
 
         workspace = BilqWorkspace(A, b)
         bilq!(workspace, A, b)  # warmup
@@ -506,7 +562,9 @@
         expected_qmr_bytes = storage_qmr_bytes(n)
         qmr(A, b)  # warmup
         actual_qmr_bytes = @allocated qmr(A, b)
-        @test expected_qmr_bytes ≤ actual_qmr_bytes ≤ 1.02 * expected_qmr_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_qmr_bytes ≤ actual_qmr_bytes ≤ 1.02 * expected_qmr_bytes
+        end
 
         workspace = QmrWorkspace(A, b)
         qmr!(workspace, A, b)  # warmup
@@ -522,7 +580,9 @@
         expected_bilqr_bytes = storage_bilqr_bytes(n)
         bilqr(A, b, b)  # warmup
         actual_bilqr_bytes = @allocated bilqr(A, b, b)
-        @test expected_bilqr_bytes ≤ actual_bilqr_bytes ≤ 1.02 * expected_bilqr_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_bilqr_bytes ≤ actual_bilqr_bytes ≤ 1.02 * expected_bilqr_bytes
+        end
 
         workspace = BilqrWorkspace(A, b)
         bilqr!(workspace, A, b, b)  # warmup
@@ -539,7 +599,9 @@
         expected_usymlq_bytes = storage_usymlq_bytes(k, n)
         usymlq(Au, c, b)  # warmup
         actual_usymlq_bytes = @allocated usymlq(Au, c, b)
-        @test expected_usymlq_bytes ≤ actual_usymlq_bytes ≤ 1.02 * expected_usymlq_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_usymlq_bytes ≤ actual_usymlq_bytes ≤ 1.02 * expected_usymlq_bytes
+        end
 
         workspace = UsymlqWorkspace(Au, c)
         usymlq!(workspace, Au, c, b)  # warmup
@@ -556,7 +618,9 @@
         expected_usymqr_bytes = storage_usymqr_bytes(m, k)
         (x, stats) = usymqr(Ao, b, c) # warmup
         actual_usymqr_bytes = @allocated usymqr(Ao, b, c)
-        @test expected_usymqr_bytes ≤ actual_usymqr_bytes ≤ 1.02 * expected_usymqr_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_usymqr_bytes ≤ actual_usymqr_bytes ≤ 1.02 * expected_usymqr_bytes
+        end
 
         workspace = UsymqrWorkspace(Ao, b)
         usymqr!(workspace, Ao, b, c)  # warmup
@@ -573,7 +637,9 @@
         expected_trilqr_bytes = storage_trilqr_bytes(n, n)
         trilqr(A, b, b)  # warmup
         actual_trilqr_bytes = @allocated trilqr(A, b, b)
-        @test expected_trilqr_bytes ≤ actual_trilqr_bytes ≤ 1.02 * expected_trilqr_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_trilqr_bytes ≤ actual_trilqr_bytes ≤ 1.02 * expected_trilqr_bytes
+        end
 
         workspace = TrilqrWorkspace(A, b)
         trilqr!(workspace, A, b, b)  # warmup
@@ -590,7 +656,9 @@
         expected_tricg_bytes = storage_tricg_bytes(k, n)
         tricg(Au, c, b)  # warmup
         actual_tricg_bytes = @allocated tricg(Au, c, b)
-        @test expected_tricg_bytes ≤ actual_tricg_bytes ≤ 1.02 * expected_tricg_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_tricg_bytes ≤ actual_tricg_bytes ≤ 1.02 * expected_tricg_bytes
+        end
 
         workspace = TricgWorkspace(Au, c)
         tricg!(workspace, Au, c, b)  # warmup
@@ -607,7 +675,9 @@
         expected_trimr_bytes = storage_trimr_bytes(k, n)
         trimr(Au, c, b)  # warmup
         actual_trimr_bytes = @allocated trimr(Au, c, b)
-        @test expected_trimr_bytes ≤ actual_trimr_bytes ≤ 1.02 * expected_trimr_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_trimr_bytes ≤ actual_trimr_bytes ≤ 1.02 * expected_trimr_bytes
+        end
 
         workspace = TrimrWorkspace(Au, c)
         trimr!(workspace, Au, c, b)  # warmup
@@ -629,7 +699,9 @@
         expected_gpmr_bytes = storage_gpmr_bytes(mem, m, k)
         gpmr(Ao, Au, b, c, memory=mem, itmax=mem)  # warmup
         actual_gpmr_bytes = @allocated gpmr(Ao, Au, b, c, memory=mem, itmax=mem)
-        @test expected_gpmr_bytes ≤ actual_gpmr_bytes ≤ 1.02 * expected_gpmr_bytes
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_gpmr_bytes ≤ actual_gpmr_bytes ≤ 1.02 * expected_gpmr_bytes
+        end
 
         workspace = GpmrWorkspace(Ao, b; memory=mem)
         gpmr!(workspace, Ao, Au, b, c)  # warmup

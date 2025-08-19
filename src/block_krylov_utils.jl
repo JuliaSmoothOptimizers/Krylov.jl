@@ -61,7 +61,7 @@ function mgs!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}) where FC <: FloatOrC
   for i = 1:k
     qᵢ = view(Q,:,i)
     R[i,i] = knorm(n, qᵢ)  # rᵢᵢ = ‖qᵢ‖
-    qᵢ ./= R[i,i]           # qᵢ = qᵢ / rᵢᵢ
+    qᵢ ./= R[i,i]          # qᵢ = qᵢ / rᵢᵢ
     for j = i+1:k
       qⱼ = view(Q,:,j)
       R[i,j] = kdot(n, qᵢ, qⱼ)    # rᵢⱼ = ⟨qᵢ , qⱼ⟩
