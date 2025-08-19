@@ -170,6 +170,8 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       stats.status = "x is a zero-residual solution"
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
+      stats.dAd = zero(T)
+      stats.rAr = γ
       return workspace
     end
 
@@ -287,6 +289,8 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
+    stats.dAd = pAp
+    stats.rAr = γ
     return workspace
   end
 end

@@ -11,6 +11,8 @@
       resid = norm(r) / norm(b)
       @test(resid ≤ cg_tol)
       @test(stats.solved)
+      @test real(stats.dAd) >= 0
+      @test real(stats.rAr) >= 0
 
       if FC == Float64
         radius = 0.75 * norm(x)
@@ -94,6 +96,7 @@
       @test stats.status == "nonpositive curvature detected"
       @test stats.indefinite == true
       @test real(dot(npc_dir, A * npc_dir)) <= 0.01 
+      @test real(stats.dAd) ≈ real(dot(npc_dir, A * npc_dir))
 
       # Test singular and consistent system
       A, b = singular_consistent(FC=FC)

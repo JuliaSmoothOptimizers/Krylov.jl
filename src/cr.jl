@@ -181,6 +181,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       history && push!(ArNorms, zero(T))
       warm_start && kaxpy!(n, one(FC), Δx, x)
       workspace.warm_start = false
+      stats.dAd = zero(T)
+      stats.rAr = zero(T)
       return workspace
     end
 
@@ -200,6 +202,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         stats.npcCount = 1
         stats.indefinite = true
       end
+      stats.dAd = zero(T)
+      stats.rAr = zero(T)
       return workspace
     end
 
@@ -251,6 +255,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
             kcopy!(n, npc_dir, p)
             kcopy!(n, x, p)  # x ← M⁻¹ b
             stats.npcCount = 1
+            stats.dAd = pAp
           else
             if r_curv
               kcopy!(n, npc_dir, r)
@@ -260,7 +265,10 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
               stats.npcCount += 1
               r_curv || kcopy!(n, npc_dir, p)
             end
+            stats.dAd = pAp
+            stats.rAr = ρ
           end
+          
           return workspace
         end
       elseif pAp ≤ 0 && radius == 0
@@ -444,6 +452,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         stats.status = "solver encountered numerical issues"
         warm_start && kaxpy!(n, one(FC), Δx, x)
         workspace.warm_start = false
+        stats.dAd = pAp
+        stats.rAr = ρ
         return workspace
       end
       pr = rNorm² + β * pr - β * α * pAp  # pᴴr
@@ -473,6 +483,8 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     stats.inconsistent = false
     stats.timer = start_time |> ktimer
     stats.status = status
+    stats.dAd = pAp
+    stats.rAr = ρ
     return workspace
   end
 end

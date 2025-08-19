@@ -54,7 +54,7 @@ function BlockMinresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::
   τₖ₋₁ = SV(undef, p)
   SV = isconcretetype(SV) ? SV : typeof(τₖ₋₁)
   SM = isconcretetype(SM) ? SM : typeof(X)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = BlockMinresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, false, stats)
   return workspace
 end
@@ -115,7 +115,7 @@ function BlockGmresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::T
   τ  = SV[SV(undef, p) for i = 1 : memory]
   SV = isconcretetype(SV) ? SV : typeof(τ)
   SM = isconcretetype(SM) ? SM : typeof(X)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, zero(T), zero(T), T[], T[], T[], 0.0, "unknown")
   workspace = BlockGmresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, false, stats)
   return workspace
 end
