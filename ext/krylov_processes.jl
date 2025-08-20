@@ -1,28 +1,3 @@
-"""
-    V, β, T = hermitian_lanczos(A, b, k; allow_breakdown=false, reorthogonalization=false)
-
-#### Input arguments
-
-* `A`: a linear operator that models a Hermitian matrix of dimension `n`;
-* `b`: a vector of length `n`;
-* `k`: the number of iterations of the Hermitian Lanczos process.
-
-#### Keyword arguments
-
-* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs;
-* `reorthogonalization`: reorthogonalize each newly added vector of the Krylov basis against only the two previous vectors (local reorthogonalization).
-
-#### Output arguments
-
-* `V`: a dense `n × (k+1)` matrix;
-* `β`: a coefficient such that `βv₁ = b`;
-* `T`: a sparse `(k+1) × k` tridiagonal matrix.
-
-#### References
-
-* C. Lanczos, [*An Iteration Method for the Solution of the Eigenvalue Problem of Linear Differential and Integral Operators*](https://doi.org/10.6028/jres.045.026), Journal of Research of the National Bureau of Standards, 45(4), pp. 225--280, 1950.
-* H. D. Simon, [*The Lanczos algorithm with partial reorthogonalization*](https://doi.org/10.1090/S0025-5718-1984-0725988-X), Mathematics of computation, 42(165), pp. 115--142, 1984.
-"""
 function Krylov.hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
                                   allow_breakdown::Bool=false, reorthogonalization::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
@@ -100,34 +75,6 @@ function Krylov.hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
   return V, β₁, T
 end
 
-"""
-    V, β, T, U, γᴴ, Tᴴ = nonhermitian_lanczos(A, b, c, k; allow_breakdown=false)
-
-#### Input arguments
-
-* `A`: a linear operator that models a square matrix of dimension `n`;
-* `b`: a vector of length `n`;
-* `c`: a vector of length `n`;
-* `k`: the number of iterations of the non-Hermitian Lanczos process.
-
-#### Keyword argument
-
-* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs.
-
-#### Output arguments
-
-* `V`: a dense `n × (k+1)` matrix;
-* `β`: a coefficient such that `βv₁ = b`;
-* `T`: a sparse `(k+1) × k` tridiagonal matrix;
-* `U`: a dense `n × (k+1)` matrix;
-* `γᴴ`: a coefficient such that `γᴴu₁ = c`;
-* `Tᴴ`: a sparse `(k+1) × k` tridiagonal matrix.
-
-#### References
-
-* C. Lanczos, [*An Iteration Method for the Solution of the Eigenvalue Problem of Linear Differential and Integral Operators*](https://doi.org/10.6028/jres.045.026), Journal of Research of the National Bureau of Standards, 45(4), pp. 225--280, 1950.
-* H. I. van der Veen and K. Vuik, [*Bi-Lanczos with partial orthogonalization*](https://doi.org/10.1016/0045-7949(94)00565-K), Computers & structures, 56(4), pp. 605--613, 1995.
-"""
 function Krylov.nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int;
                                      allow_breakdown::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
@@ -222,31 +169,6 @@ function Krylov.nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector
 end
 
 
-"""
-    V, U, β, L = golub_kahan(A, b, k; allow_breakdown=false)
-
-#### Input arguments
-
-* `A`: a linear operator that models a matrix of dimension `m × n`;
-* `b`: a vector of length `m`;
-* `k`: the number of iterations of the Golub-Kahan process.
-
-#### Keyword argument
-
-* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs.
-
-#### Output arguments
-
-* `V`: a dense `n × (k+1)` matrix;
-* `U`: a dense `m × (k+1)` matrix;
-* `β`: a coefficient such that `βu₁ = b`;
-* `L`: a sparse `(k+1) × (k+1)` lower bidiagonal matrix.
-
-#### References
-
-* G. H. Golub and W. Kahan, [*Calculating the Singular Values and Pseudo-Inverse of a Matrix*](https://doi.org/10.1137/0702016), SIAM Journal on Numerical Analysis, 2(2), pp. 225--224, 1965.
-* C. C. Paige, [*Bidiagonalization of Matrices and Solution of Linear Equations*](https://doi.org/10.1137/0711019), SIAM Journal on Numerical Analysis, 11(1), pp. 197--209, 1974.
-"""
 function Krylov.golub_kahan(A, b::AbstractVector{FC}, k::Int;
                             allow_breakdown::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
@@ -328,33 +250,6 @@ function Krylov.golub_kahan(A, b::AbstractVector{FC}, k::Int;
   return V, U, β₁, L
 end
 
-"""
-    V, β, T, U, γᴴ, Tᴴ = saunders_simon_yip(A, b, c, k; allow_breakdown=false)
-
-#### Input arguments
-
-* `A`: a linear operator that models a matrix of dimension `m × n`;
-* `b`: a vector of length `m`;
-* `c`: a vector of length `n`;
-* `k`: the number of iterations of the Saunders-Simon-Yip process.
-
-#### Keyword argument
-
-* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs.
-
-#### Output arguments
-
-* `V`: a dense `m × (k+1)` matrix;
-* `β`: a coefficient such that `βv₁ = b`;
-* `T`: a sparse `(k+1) × k` tridiagonal matrix;
-* `U`: a dense `n × (k+1)` matrix;
-* `γᴴ`: a coefficient such that `γᴴu₁ = c`;
-* `Tᴴ`: a sparse `(k+1) × k` tridiagonal matrix.
-
-#### Reference
-
-* M. A. Saunders, H. D. Simon, and E. L. Yip, [*Two Conjugate-Gradient-Type Methods for Unsymmetric Linear Equations*](https://doi.org/10.1137/0725052), SIAM Journal on Numerical Analysis, 25(4), pp. 927--940, 1988.
-"""
 function Krylov.saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::Int;
                                    allow_breakdown::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
