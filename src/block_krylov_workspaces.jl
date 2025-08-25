@@ -30,6 +30,7 @@ mutable struct BlockMinresWorkspace{T,FC,SV,SM} <: BlockKrylovWorkspace{T,FC,SV,
   Hₖ₋₁       :: SM
   τₖ₋₂       :: SV
   τₖ₋₁       :: SV
+  buffer     :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
@@ -55,7 +56,11 @@ function BlockMinresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::
   SV = isconcretetype(SV) ? SV : typeof(τₖ₋₁)
   SM = isconcretetype(SM) ? SM : typeof(X)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = BlockMinresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, false, stats)
+  size_buffer = C isa Matrix ? max(kgeqrf_buffer!(Vₖ, τₖ₋₁), kgeqrf_buffer!(Hₖ₋₁, τₖ₋₁),
+                                   korgqr_buffer!(Vₖ, τₖ₋₁), korgqr_buffer!(Hₖ₋₁, τₖ₋₁),
+                                   kormqr_buffer!('L', FC <: AbstractFloat ? 'T' : 'C', Hₖ₋₁, τₖ₋₁, D)) : 0
+  buffer = SV(undef, size_buffer)
+  workspace = BlockMinresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, buffer, false, stats)
   return workspace
 end
 
@@ -93,6 +98,7 @@ mutable struct BlockGmresWorkspace{T,FC,SV,SM} <: BlockKrylovWorkspace{T,FC,SV,S
   R          :: Vector{SM}
   H          :: Vector{SM}
   τ          :: Vector{SV}
+  buffer     :: Vector{FC}
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
@@ -115,8 +121,12 @@ function BlockGmresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::T
   τ  = SV[SV(undef, p) for i = 1 : memory]
   SV = isconcretetype(SV) ? SV : typeof(τ)
   SM = isconcretetype(SM) ? SM : typeof(X)
+  size_buffer = C isa Matrix ? max(kgeqrf_buffer!(V[1], τ[1]), kgeqrf_buffer!(H[1], τ[1]),
+                                   korgqr_buffer!(V[1], τ[1]), korgqr_buffer!(H[1], τ[1]),
+                                   kormqr_buffer!('L', FC <: AbstractFloat ? 'T' : 'C', H[1], τ[1], D)) : 0
+  buffer = SV(undef, size_buffer)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = BlockGmresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, false, stats)
+  workspace = BlockGmresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, buffer, false, stats)
   return workspace
 end
 

@@ -348,10 +348,6 @@ kfill!(x :: AbstractArray{T}, val :: T) where T <: FloatOrComplex = fill!(x, val
 
 kref!(n, x, y, c, s) = reflect!(x, y, c, s)
 
-kgeqrf!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.geqrf!(A, tau)
-korgqr!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.orgqr!(A, tau)
-kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVector{T}, C :: AbstractMatrix{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)
-
 macro kswap!(x, y)
   quote
     local tmp = $(esc(x))
