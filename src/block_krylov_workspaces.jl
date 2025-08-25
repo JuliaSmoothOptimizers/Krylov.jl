@@ -22,10 +22,19 @@ mutable struct BlockMinresWorkspace{T,FC,SV,SM} <: BlockKrylovWorkspace{T,FC,SV,
   C          :: SM
   D          :: SM
   Φ          :: SM
+  Ψₖ         :: SM
+  Ωₖ         :: SM
+  Ψₖ₊₁       :: SM
+  Πₖ₋₂       :: SM
+  Γbarₖ₋₁    :: SM
+  Γₖ₋₁       :: SM
+  Λbarₖ      :: SM
+  Λₖ         :: SM
   Vₖ₋₁       :: SM
   Vₖ         :: SM
   wₖ₋₂       :: SM
   wₖ₋₁       :: SM
+  wₖ         :: SM
   Hₖ₋₂       :: SM
   Hₖ₋₁       :: SM
   τₖ₋₂       :: SV
@@ -45,10 +54,19 @@ function BlockMinresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::
   C    = SM(undef, p, p)
   D    = SM(undef, 2p, p)
   Φ    = SM(undef, p, p)
+  Ψₖ   = SM(undef, p, p)
+  Ωₖ   = SM(undef, p, p)
+  Ψₖ₊₁ = SM(undef, p, p)
+  Πₖ₋₂ = SM(undef, p, p)
+  Γbarₖ₋₁ = SM(undef, p, p)
+  Γₖ₋₁ = SM(undef, p, p)
+  Λbarₖ = SM(undef, p, p)
+  Λₖ   = SM(undef, p, p)
   Vₖ₋₁ = SM(undef, n, p)
   Vₖ   = SM(undef, n, p)
   wₖ₋₂ = SM(undef, n, p)
   wₖ₋₁ = SM(undef, n, p)
+  wₖ   = SM(undef, n, p)
   Hₖ₋₂ = SM(undef, 2p, p)
   Hₖ₋₁ = SM(undef, 2p, p)
   τₖ₋₂ = SV(undef, p)
@@ -60,7 +78,8 @@ function BlockMinresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::
                                    korgqr_buffer!(Vₖ, τₖ₋₁), korgqr_buffer!(Hₖ₋₁, τₖ₋₁),
                                    kormqr_buffer!('L', FC <: AbstractFloat ? 'T' : 'C', Hₖ₋₁, τₖ₋₁, D)) : 0
   buffer = SV(undef, size_buffer)
-  workspace = BlockMinresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, buffer, false, stats)
+  workspace = BlockMinresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Ψₖ, Ωₖ, Ψₖ₊₁, Πₖ₋₂, Γbarₖ₋₁, Γₖ₋₁, Λbarₖ, Λₖ,
+                                               Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, wₖ, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, buffer, false, stats)
   return workspace
 end
 

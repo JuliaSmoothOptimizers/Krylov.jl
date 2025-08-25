@@ -116,7 +116,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
     Vₖ₋₁, Vₖ = workspace.Vₖ₋₁, workspace.Vₖ
     ΔX, X, Q, C = workspace.ΔX, workspace.X, workspace.Q, workspace.C
     D, Φ, stats = workspace.D, workspace.Φ, workspace.stats
-    wₖ₋₂, wₖ₋₁ = workspace.wₖ₋₂, workspace.wₖ₋₁
+    wₖ₋₂, wₖ₋₁, wₖ = workspace.wₖ₋₂, workspace.wₖ₋₁, workspace.wₖ
     Hₖ₋₂, Hₖ₋₁ = workspace.Hₖ₋₂, workspace.Hₖ₋₁
     τₖ₋₂, τₖ₋₁ = workspace.τₖ₋₂, workspace.τₖ₋₁
     buffer = workspace.buffer
@@ -125,15 +125,15 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
     reset!(stats)
     R₀ = warm_start ? Q : B
 
-    # Temporary buffers -- should be stored in the workspace
-    Ψₖ = similar(B, p, p)
-    Ωₖ = similar(B, p, p)
-    Ψₖ₊₁ = similar(B, p, p)
-    Πₖ₋₂ = similar(B, p, p)
-    Γbarₖ₋₁ = similar(B, p, p)
-    Γₖ₋₁ = similar(B, p, p)
-    Λbarₖ = similar(B, p, p)
-    Λₖ = similar(B, p, p)
+    # Matrices in the workspace (some of them could be removed in the future)
+    Ψₖ = workspace.Ψₖ
+    Ωₖ = workspace.Ωₖ
+    Ψₖ₊₁ = workspace.Ψₖ₊₁
+    Πₖ₋₂ = workspace.Πₖ₋₂
+    Γbarₖ₋₁ = workspace.Γbarₖ₋₁
+    Γₖ₋₁ = workspace.Γₖ₋₁
+    Λbarₖ = workspace.Λbarₖ
+    Λₖ = workspace.Λₖ
 
     # Define the blocks D1 and D2
     D1 = view(D, 1:p, :)
@@ -242,29 +242,28 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
       # Compute the directions Wₖ, the last columns of Wₖ = Vₖ(Rₖ)⁻¹ ⟷ (Rₖ)ᵀ(Wₖ)ᵀ = (Vₖ)ᵀ
       # w₁Λ₁ = v₁
       if iter == 1
-        wₖ = wₖ₋₁
         wₖ .= Vₖ
         rdiv!(wₖ, UpperTriangular(Λₖ))
       end
       # w₂Λ₂ = v₂ - w₁Γ₁
       if iter == 2
-        wₖ = wₖ₋₂
-        wₖ .= (-wₖ₋₁ * Γₖ₋₁)
-        wₖ .+= Vₖ
+        @kswap!(wₖ₋₁, wₖ)
+        wₖ .= Vₖ
+        mul!(wₖ, wₖ₋₁, Γₖ₋₁, α, β)
         rdiv!(wₖ, UpperTriangular(Λₖ))
       end
       # wₖΛₖ = vₖ - wₖ₋₁Γₖ₋₁ - wₖ₋₂Πₖ₋₂
       if iter ≥ 3
-        wₖ = wₖ₋₂
-        wₖ .= (-wₖ₋₂ * Πₖ₋₂)
-        wₖ .= (wₖ - wₖ₋₁ * Γₖ₋₁)
-        wₖ .+= Vₖ
+        @kswap!(wₖ₋₂, wₖ₋₁)
+        @kswap!(wₖ₋₁, wₖ)
+        wₖ .= Vₖ
+        mul!(wₖ, wₖ₋₂, Πₖ₋₂, α, β)
+        mul!(wₖ, wₖ₋₁, Γₖ₋₁, α, β)
         rdiv!(wₖ, UpperTriangular(Λₖ))
       end
 
       # Update Xₖ = VₖYₖ = WₖZₖ
       # Xₖ = Xₖ₋₁ + wₖ * Φₖ
-      R = B - A * X
       mul!(X, wₖ, Φₖ, γ, β)
 
       # Update residual norm estimate.
@@ -277,13 +276,11 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
       copyto!(Vₖ₋₁, Vₖ)  # vₖ₋₁ ← vₖ
       copyto!(Vₖ, Q)     # vₖ ← vₖ₊₁
 
-      # Update directions for X and other variables...
+      # Swap the pointers for Hᵢ and τᵢ
       if iter ≥ 2
-        @kswap!(wₖ₋₂, wₖ₋₁)
         @kswap!(Hₖ₋₂, Hₖ₋₁)
         @kswap!(τₖ₋₂, τₖ₋₁)
       end
-
       if iter == 1
         copyto!(Hₖ₋₁, Hₖ)
         copyto!(τₖ₋₁, τₖ)

@@ -763,10 +763,10 @@
         #   @test expected_block_minres_bytes ≤ actual_block_minres_bytes ≤ 1.08 * expected_block_minres_bytes
         # end
 
-        # Workspace = BlockMinresWorkspace(A, B)
-        # block_minres!(Workspace, A, B)  # warmup
-        # inplace_block_minres_bytes = @allocated block_minres!(Workspace, A, B)
-        # @test inplace_block_minres_bytes == 0
+        Workspace = BlockMinresWorkspace(A, B)
+        block_minres!(Workspace, A, B)  # warmup
+        inplace_block_minres_bytes = @allocated block_minres!(Workspace, A, B)
+        @test inplace_block_minres_bytes == 0
       end
     end
   end
