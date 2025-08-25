@@ -130,6 +130,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
     ΔX, X, W, V, Z = workspace.ΔX, workspace.X, workspace.W, workspace.V, workspace.Z
     C, D, R, H, τ, stats = workspace.C, workspace.D, workspace.R, workspace.H, workspace.τ, workspace.stats
     Ψtmp = C
+    buffer = workspace.buffer
     warm_start = workspace.warm_start
     RNorms = stats.residuals
     reset!(stats)
@@ -209,7 +210,7 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
 
       # Initial Γ and V₁
       copyto!(V[1], R₀)
-      householder!(V[1], Z[1], τ[1])
+      householder!(V[1], Z[1], τ[1], buffer)
 
       npass = npass + 1
       inner_iter = 0
@@ -249,14 +250,14 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         end
 
         # Vₖ₊₁ and Ψₖ₊₁.ₖ are stored in Q and C.
-        householder!(Q, C, τ[inner_iter])
+        householder!(Q, C, τ[inner_iter], buffer)
 
         # Update the QR factorization of Hₖ₊₁.ₖ.
         # Apply previous Householder reflections Ωᵢ.
         for i = 1 : inner_iter-1
           D1 .= R[nr+i]
           D2 .= R[nr+i+1]
-          kormqr!('L', trans, H[i], τ[i], D)
+          kormqr!('L', trans, H[i], τ[i], D, buffer)
           R[nr+i] .= D1
           R[nr+i+1] .= D2
         end
@@ -264,12 +265,12 @@ kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rto
         # Compute and apply current Householder reflection Ωₖ.
         H[inner_iter][1:p,:] .= R[nr+inner_iter]
         H[inner_iter][p+1:2p,:] .= C
-        householder!(H[inner_iter], R[nr+inner_iter], τ[inner_iter], compact=true)
+        householder!(H[inner_iter], R[nr+inner_iter], τ[inner_iter], buffer, compact=true)
 
         # Update Zₖ = (Qₖ)ᴴΓE₁ = (Λ₁, ..., Λₖ, Λbarₖ₊₁)
         D1 .= Z[inner_iter]
         D2 .= zero(FC)
-        kormqr!('L', trans, H[inner_iter], τ[inner_iter], D)
+        kormqr!('L', trans, H[inner_iter], τ[inner_iter], D, buffer)
         Z[inner_iter] .= D1
 
         # Update residual norm estimate.

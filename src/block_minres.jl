@@ -119,6 +119,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
     wₖ₋₂, wₖ₋₁ = workspace.wₖ₋₂, workspace.wₖ₋₁
     Hₖ₋₂, Hₖ₋₁ = workspace.Hₖ₋₂, workspace.Hₖ₋₁
     τₖ₋₂, τₖ₋₁ = workspace.τₖ₋₂, workspace.τₖ₋₁
+    buffer = workspace.buffer
     warm_start = workspace.warm_start
     RNorms = stats.residuals
     reset!(stats)
@@ -173,7 +174,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
     # Initial Ψ₁ and V₁
     τ = τₖ₋₂
     copyto!(Vₖ, R₀)
-    householder!(Vₖ, Φbarₖ, τ)
+    householder!(Vₖ, Φbarₖ, τ, buffer)
 
     while !(solved || tired || user_requested_exit || overtimed)
       # Update iteration index.
@@ -205,7 +206,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
       if iter ≥ 3
         D1 .= zero(T)
         D2 .= Ψₖ'
-        kormqr!('L', trans, Hₖ₋₂, τₖ₋₂, D)
+        kormqr!('L', trans, Hₖ₋₂, τₖ₋₂, D, buffer)
         Πₖ₋₂ .= D1
         Γbarₖ₋₁ .= D2
       end
@@ -215,14 +216,14 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
         (iter == 2) && (Γbarₖ₋₁ .= Ψₖ')
         D1 .= Γbarₖ₋₁
         D2 .= Ωₖ
-        kormqr!('L', trans, Hₖ₋₁, τₖ₋₁, D)
+        kormqr!('L', trans, Hₖ₋₁, τₖ₋₁, D, buffer)
         Γₖ₋₁ .= D1
         Λbarₖ .= D2
       end
 
       # Vₖ₊₁ and Ψₖ₊₁ are stored in Q and Ψₖ₊₁.
       τ = τₖ₋₂
-      householder!(Q, Ψₖ₊₁, τ)
+      householder!(Q, Ψₖ₊₁, τ, buffer)
 
       # Compute and apply current Householder reflection θₖ.
       Hₖ = Hₖ₋₂
@@ -230,12 +231,12 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
       (iter == 1) && (Λbarₖ .= Ωₖ)
       Hₖ[1:p,:] .= Λbarₖ
       Hₖ[p+1:2p,:] .= Ψₖ₊₁
-      householder!(Hₖ, Λₖ, τₖ, compact=true)
+      householder!(Hₖ, Λₖ, τₖ, buffer, compact=true)
 
       # Update Zₖ = (Qₖ)ᴴΨ₁E₁ = (Φ₁, ..., Φₖ, Φbarₖ₊₁)
       D1 .= Φbarₖ
       D2 .= zero(FC)
-      kormqr!('L', trans, Hₖ, τₖ, D)
+      kormqr!('L', trans, Hₖ, τₖ, D, buffer)
       Φₖ .= D1
 
       # Compute the directions Wₖ, the last columns of Wₖ = Vₖ(Rₖ)⁻¹ ⟷ (Rₖ)ᵀ(Wₖ)ᵀ = (Vₖ)ᵀ
