@@ -181,7 +181,7 @@ end
 # Output :
 # Q an n-by-k orthonormal matrix: QᴴQ = Iₖ
 # R an k-by-k upper triangular matrix: QR = A
-function householder(A::AbstractMatrix{FC}; compact::Bool=false) where FC <: FloatOrComplex
+function householder(A::Matrix{FC}; compact::Bool=false) where FC <: FloatOrComplex
   n, k = size(A)
   Q = copy(A)
   τ = zeros(FC, k)
@@ -197,3 +197,105 @@ function householder!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, τ::Abstract
   !compact && korgqr!(Q, τ)
   return Q, R
 end
+
+function householder!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, τ::AbstractVector{FC}, buffer::AbstractVector{FC}; compact::Bool=false) where FC <: FloatOrComplex
+  n, k = size(Q)
+  kfill!(R, zero(FC))
+  kgeqrf!(Q, τ, buffer)
+  copy_triangle(Q, R, k)
+  !compact && korgqr!(Q, τ, buffer)
+  return Q, R
+end
+
+for (Xgeqrf, Xorgqr, Xormqr, T) in ((:sgeqrf_, :sorgqr_, :sormqr_, :Float32   ),
+                                    (:dgeqrf_, :dorgqr_, :dormqr_, :Float64   ),
+                                    (:cgeqrf_, :cungqr_, :cunmqr_, :ComplexF32),
+                                    (:zgeqrf_, :zungqr_, :zunmqr_, :ComplexF64))
+    @eval begin
+        function $Xgeqrf(m, n, a, lda, tau, work, lwork, info)
+          return ccall((@blasfunc($Xgeqrf), libblastrampoline), Cvoid,
+                       (Ref{BlasInt}, Ref{BlasInt}, Ptr{$T}, Ref{BlasInt},
+                        Ptr{$T}, Ptr{$T}, Ref{BlasInt}, Ref{BlasInt}),
+                        m, n, a, lda, tau, work, lwork, info)
+        end
+
+        function kgeqrf_buffer!(A::Matrix{$T}, tau::Vector{$T})
+            m, n = size(A)
+            work = Ref{$T}(0)
+            lda = max(1, stride(A, 2))
+            $Xgeqrf(m, n, A, lda, tau, work, -1, 0)
+            return work[] |> BlasInt
+        end
+
+        function kgeqrf!(A::Matrix{$T}, tau::Vector{$T}, work::Vector{$T})
+            m, n = size(A)
+            lwork = length(work)
+            lda = max(1, stride(A, 2))
+            $Xgeqrf(m, n, A, lda, tau, work, lwork, 0)
+            return nothing
+        end
+
+        function $Xorgqr(m, n, k, a, lda, tau, work, lwork, info)
+            return ccall((@blasfunc($Xorgqr), libblastrampoline), Cvoid,
+                         (Ref{BlasInt}, Ref{BlasInt}, Ref{BlasInt}, Ptr{$T},
+                          Ref{BlasInt}, Ptr{$T}, Ptr{$T}, Ref{BlasInt}, Ref{BlasInt}),
+                          m, n, k, a, lda, tau, work, lwork, info)
+        end
+
+        function korgqr_buffer!(A::Matrix{$T}, tau::Vector{$T})
+            m, n = size(A)
+            k = length(tau)
+            work = Ref{$T}(0)
+            lda = max(1, stride(A, 2))
+            $Xorgqr(m, n, k, A, lda, tau, work, -1, 0)
+            return work[] |> BlasInt
+        end
+
+        function korgqr!(A::Matrix{$T}, tau::Vector{$T}, work::Vector{$T})
+            symb = @blasfunc($Xorgqr)
+            m, n = size(A)
+            k = length(tau)
+            lwork = length(work)
+            lda = max(1, stride(A, 2))
+            $Xorgqr(m, n, k, A, lda, tau, work, lwork, 0)
+            return nothing
+        end
+
+        function $Xormqr(side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork, info)
+            return ccall((@blasfunc($Xormqr), libblastrampoline), Cvoid,
+                         (Ref{UInt8}, Ref{UInt8}, Ref{BlasInt}, Ref{BlasInt}, Ref{BlasInt}, Ptr{$T},
+                          Ref{BlasInt}, Ptr{$T}, Ptr{$T}, Ref{BlasInt}, Ptr{$T}, Ref{BlasInt},
+                          Ref{BlasInt}, Clong, Clong),
+                          side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork, info, 1, 1)
+        end
+
+        function kormqr_buffer!(side::Char, trans::Char, A::Matrix{$T}, tau::Vector{$T}, C::Matrix{$T})
+            m, n = size(A)
+            k = length(tau)
+            work = Ref{$T}(0)
+            lda = max(1, stride(A, 2))
+            ldc = max(1, stride(C, 2))
+            $Xormqr(side, trans, m, n, k, A, lda, tau, C, ldc, work, -1, 0)
+            return work[] |> BlasInt
+        end
+
+        function kormqr!(side::Char, trans::Char, A::Matrix{$T}, tau::Vector{$T}, C::Matrix{$T}, work::Vector{$T})
+            m, n = size(A)
+            k = length(tau)
+            lwork = length(work)
+            lda = max(1, stride(A, 2))
+            ldc = max(1, stride(C, 2))
+            $Xormqr(side, trans, m, n, k, A, lda, tau, C, ldc, work, lwork, 0)
+            return nothing
+        end
+    end
+end
+
+kgeqrf!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.geqrf!(A, tau)
+kgeqrf!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}, buffer:: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.geqrf!(A, tau)
+
+korgqr!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.orgqr!(A, tau)
+korgqr!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}, buffer:: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.orgqr!(A, tau)
+
+kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVector{T}, C :: AbstractMatrix{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)
+kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVector{T}, C :: AbstractMatrix{T}, buffer:: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)

@@ -5,11 +5,13 @@
 
       A   = FC.(get_div_grad(18, 18, 18))  # Dimension m x n
       m,n = size(A)
+      p   = 5
       k   = div(n, 2)
       Au  = A[1:k,:]          # Dimension k x n
       Ao  = A[:,1:k]          # Dimension m x k
       b   = Ao * ones(FC, k)  # Dimension m
       c   = Au * ones(FC, n)  # Dimension k
+      B   = A * Matrix{FC}(I, m, p)  # Dimension m × p
       mem = 200
 
       T = real(FC)
@@ -697,8 +699,8 @@
         storage_gpmr_bytes(mem, m, n) = nbits_FC * ((mem + 2) * (n + m) + mem * (2 * mem + 7)) + nbits_T * 4 * mem
 
         expected_gpmr_bytes = storage_gpmr_bytes(mem, m, k)
-        gpmr(Ao, Au, b, c, memory=mem, itmax=mem)  # warmup
-        actual_gpmr_bytes = @allocated gpmr(Ao, Au, b, c, memory=mem, itmax=mem)
+        gpmr(Ao, Au, b, c; memory=mem, itmax=mem)  # warmup
+        actual_gpmr_bytes = @allocated gpmr(Ao, Au, b, c; memory=mem, itmax=mem)
         if VERSION < v"1.11.5" || !Sys.isapple()
           @test expected_gpmr_bytes ≤ actual_gpmr_bytes ≤ 1.02 * expected_gpmr_bytes
         end
@@ -707,6 +709,64 @@
         gpmr!(workspace, Ao, Au, b, c)  # warmup
         inplace_gpmr_bytes = @allocated gpmr!(workspace, Ao, Au, b, c)
         @test inplace_gpmr_bytes == 0
+      end
+
+      @testset "BLOCK-GMRES" begin
+        # BLOCK-GMRES needs:
+        # - 2 (n*p)-matrices: X, W
+        # - 1 (p*p)-matrix: C
+        # - 1 (2p*p)-matrix: D
+        # - mem p-vectors: τ
+        # - mem (n*p)-matrices: V
+        # - mem (p*p)-matrices: Z
+        # - mem*(mem+1)/2 (p*p)-matrices: R
+        # - mem (2p*p)-matrices: H
+        # - lwork-vector: buffer
+        function storage_block_gmres_bytes(mem, n, p)
+          res = (2*n*p + p*p + 2p*p + mem*p + mem*n*p + mem*p*p + mem*(mem+1)*p*p/2 + mem*2p*p)
+          return nbits_FC * res
+        end
+
+        expected_block_gmres_bytes = storage_block_gmres_bytes(mem, n, p)
+        block_gmres(A, B; memory=mem, itmax=mem)  # warmup
+        actual_block_gmres_bytes = @allocated block_gmres(A, B; memory=mem, itmax=mem)
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_block_gmres_bytes ≤ actual_block_gmres_bytes ≤ 1.08 * expected_block_gmres_bytes
+        end
+
+        workspace = BlockGmresWorkspace(A, B; memory=mem)
+        block_gmres!(workspace, A, B)  # warmup
+        inplace_block_gmres_bytes = @allocated block_gmres!(workspace, A, B)
+        @test inplace_block_gmres_bytes == 0
+      end
+
+      @testset "BLOCK-MINRES" begin
+        # BLOCK-MINRES needs:
+        # - 2 (n*p)-matrices: X, W
+        # - 1 (p*p)-matrix: C
+        # - 1 (2p*p)-matrix: D
+        # - mem p-vectors: τ
+        # - mem (n*p)-matrices: V
+        # - mem (p*p)-matrices: Z
+        # - mem*(mem+1)/2 (p*p)-matrices: R
+        # - mem (2p*p)-matrices: H
+        # - lwork-vector: buffer
+        function storage_block_minres_bytes(mem, n, p)
+          res = (2*n*p + p*p + 2p*p + mem*p + mem*n*p + mem*p*p + mem*(mem+1)*p*p/2 + mem*2p*p)
+          return nbits_FC * res
+        end
+
+        expected_block_minres_bytes = storage_block_minres_bytes(mem, n, p)
+        block_minres(A, B)  # warmup
+        # actual_block_minres_bytes = @allocated block_minres(A, B)
+        # if VERSION < v"1.11.5" || !Sys.isapple()
+        #   @test expected_block_minres_bytes ≤ actual_block_minres_bytes ≤ 1.08 * expected_block_minres_bytes
+        # end
+
+        # Workspace = BlockMinresWorkspace(A, B)
+        # block_minres!(Workspace, A, B)  # warmup
+        # inplace_block_minres_bytes = @allocated block_minres!(Workspace, A, B)
+        # @test inplace_block_minres_bytes == 0
       end
     end
   end
