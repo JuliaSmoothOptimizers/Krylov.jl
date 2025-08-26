@@ -31,6 +31,7 @@ DqgmresWorkspace
 GmresWorkspace
 UsymlqWorkspace
 UsymqrWorkspace
+UsymlqrWorkspace
 TricgWorkspace
 TrimrWorkspace
 TrilqrWorkspace
