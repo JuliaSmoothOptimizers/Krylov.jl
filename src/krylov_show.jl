@@ -1,9 +1,9 @@
 import Base.show, Base.sizeof, Base.format_bytes
 
 function ksizeof(attribute)
-  if isa(attribute, Vector{<:AbstractVector}) && !isempty(attribute)
-    # A vector of vectors is a vector of pointers in Julia.
-    # All vectors inside a vector have the same size in Krylov.jl
+  if isa(attribute, Vector{<:AbstractArray}) && !isempty(attribute)
+    # A vector of arrays is a vector of pointers in Julia.
+    # All arrays inside a vector have the same size in Krylov.jl
     size_attribute = sizeof(attribute) + length(attribute) * ksizeof(attribute[1])
   else
     size_attribute = sizeof(attribute)

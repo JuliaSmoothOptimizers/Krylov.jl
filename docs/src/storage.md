@@ -149,4 +149,4 @@ Base.format_bytes(free_nbytes)  # Total free memory in RAM in bytes.
 
 !!! note
     - Beyond having faster operations, using low precisions, such as simple precision, allows to store more coefficients in RAM and solve larger linear problems.
-    - In the file [test_allocations.jl](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/test/test_allocations.jl), we use the macro `@allocated` to test that we match the expected storage requirement of each method with a tolerance of 2%.
+    - In the file [test_allocations.jl](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/test/test_allocations.jl), we use the macro `@allocated` to verify that the storage requirements of each Krylov solver match the expected values, within a tolerance of 2% (and 5% for block Krylov solvers). These tests are performed across the four main precisions: `Float32`, `Float64`, `ComplexF32`, and `ComplexF64`.
