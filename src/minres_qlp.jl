@@ -10,16 +10,21 @@
 #
 # S.-C. T. Choi and M. A. Saunders, Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems.
 # ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014.
+# 
+# Negative curvature detection follows
+# Liu, Yang, and Roosta, MINRES: from negative curvature detection to monotonicity properties,
+# SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, September 2019.
+#
 
 export minres_qlp, minres_qlp!
 
 """
     (x, stats) = minres_qlp(A, b::AbstractVector{FC};
                             M=I, ldiv::Bool=false, Artol::T=√eps(T),
-                            λ::T=zero(T), atol::T=√eps(T),
+                            linesearch::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                             rtol::T=√eps(T), itmax::Int=0,
                             timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                             callback=workspace->false, iostream::IO=kstdout)
@@ -60,6 +65,10 @@ For an in-place variant that reuses memory across solves, see [`minres_qlp!`](@r
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `Artol`: relative stopping tolerance based on the Aᴴ-residual norm;
+* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `true` and nonpositive curvature is detected, the behavior depends on the iteration:
+ – at iteration k = 1, the solver takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1;
+ – at iteration k > 1, the solver returns the solution from iteration k – 1, the residual from iteration k is a nonpositive curvature direction the residual is stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
+* `λ`: regularization parameter;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
@@ -77,6 +86,8 @@ For an in-place variant that reuses memory across solves, see [`minres_qlp!`](@r
 * S.-C. T. Choi, *Iterative methods for singular linear equations and least-squares problems*, Ph.D. thesis, ICME, Stanford University, 2006.
 * S.-C. T. Choi, C. C. Paige and M. A. Saunders, [*MINRES-QLP: A Krylov subspace method for indefinite or singular symmetric systems*](https://doi.org/10.1137/100787921), SIAM Journal on Scientific Computing, Vol. 33(4), pp. 1810--1836, 2011.
 * S.-C. T. Choi and M. A. Saunders, [*Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems*](https://doi.org/10.1145/2527267), ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014.
+* Y. Liu and F. Roosta, [*MINRES: From Negative Curvature Detection to Monotonicity Properties*](https://doi.org/10.1137/21M143666X), SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
+
 """
 function minres_qlp end
 
@@ -100,6 +111,7 @@ def_optargs_minres_qlp = (:(x0::AbstractVector),)
 
 def_kwargs_minres_qlp = (:(; M = I                        ),
                          :(; ldiv::Bool = false           ),
+                         :(; linesearch::Bool = false     ),
                          :(; λ::T = zero(T)               ),
                          :(; atol::T = √eps(T)            ),
                          :(; rtol::T = √eps(T)            ),
@@ -115,7 +127,7 @@ def_kwargs_minres_qlp = extract_parameters.(def_kwargs_minres_qlp)
 
 args_minres_qlp = (:A, :b)
 optargs_minres_qlp = (:x0,)
-kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
   function minres_qlp!(workspace :: MinresQlpWorkspace{T,FC,S}, $(def_args_minres_qlp...); $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
@@ -129,6 +141,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "MINRES-QLP: system of size %d\n", n)
+    (workspace.warm_start && linesearch) && error("warm_start and linesearch cannot be used together")
 
     # Tests M = Iₙ
     MisI = (M === I)
@@ -139,6 +152,10 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
 
     # Set up workspace.
     allocate_if(!MisI, workspace, :vₖ, S, workspace.x)  # The length of vₖ is n
+    allocate_if(linesearch, workspace, :npc_dir , S, workspace.x)  # The length of npc_dir is n
+    if linesearch
+      npc_dir = workspace.npc_dir
+    end
     wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ = workspace.wₖ₋₁, workspace.wₖ, workspace.M⁻¹vₖ₋₁, workspace.M⁻¹vₖ
     Δx, x, p, stats = workspace.Δx, workspace.x, workspace.p, workspace.stats
     warm_start = workspace.warm_start
@@ -161,6 +178,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     # β₁v₁ = Mb
     MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
     βₖ = knorm_elliptic(n, vₖ, M⁻¹vₖ)
+    linesearch && kcopy!(n, npc_dir , vₖ)  # npc_dir  ← v; contain the preconditioned initial residual
     if βₖ ≠ 0
       kdiv!(n, M⁻¹vₖ, βₖ)
       MisI || kdiv!(n, vₖ, βₖ)
@@ -217,6 +235,7 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
     status = "unknown"
     user_requested_exit = false
     overtimed = false
+    stats.indefinite = false
 
     while !(solved || tired || inconsistent || ill_cond_mach || breakdown || user_requested_exit || overtimed)
       # Update iteration index.
@@ -284,6 +303,27 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       end
       iter == 1 && (λbarₖ = αₖ)
 
+      
+      # # Check for nonpositive curvature
+      # if linesearch
+      #   cγ = cₖ₋₁ * λbarₖ
+      #   kcopy!(n, npc_dir, vₖ) 
+      #   if cγ ≥ 0
+      #     # Nonpositive curvature detected.
+      #     (verbose > 0) && @printf(iostream, "nonpositive curvature detected:  cₖ * λbarₖ = %e\n", cγ)
+      #     stats.solved = true
+      #     stats.npcCount = 1
+      #     stats.niter = iter
+      #     stats.inconsistent = false
+      #     stats.timer = start_time |> ktimer
+      #     stats.status = "nonpositive curvature"
+      #     workspace.warm_start = false
+      #     stats.indefinite = true
+      #     return workspace
+      #   end
+      # end
+
+
       # Compute and apply current Givens reflection Qₖ.ₖ₊₁
       # [cₖ  sₖ] [λbarₖ] = [λₖ]
       # [sₖ -cₖ] [βₖ₊₁ ]   [0 ]
@@ -297,6 +337,35 @@ kwargs_minres_qlp = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ve
       ζₖ      = cₖ * ζbarₖ
       ζbarₖ₊₁ = sₖ * ζbarₖ
 
+      # check for nonpositive curvature
+      if linesearch
+        # inspired by https://github.com/yangliu-op/Newton-MR/blob/main/MinresQLP.py
+        if iter > 2
+          
+          cγ = -ζbarₖ^2 * cₖ₋₁ * λbarₖ
+          # compute the residual vector and store it in npc_dir
+          norm_npc_dir = norm(npc_dir)
+          kscal!(n, sₖ * sₖ, npc_dir)  # npc_dir  = sₖ * sₖ * npc_dir
+          kaxpy!(n, -ζbarₖ * cₖ, vₖ, npc_dir)  # npc_dir  = npc_dir  - ζbarₖ * cₖ * vₖ, this is rₖ
+
+          if cγ/norm_npc_dir^2 < -λ/2
+            # Nonpositive curvature detected.
+            (verbose > 0) && @printf(iostream, "nonpositive curvature detected:  cₖ * λbarₖ = %e\n", cγ)
+            stats.solved = true
+            stats.npcCount = 1
+            stats.niter = iter
+            stats.inconsistent = false
+            stats.timer = start_time |> ktimer
+            stats.status = "nonpositive curvature"
+            workspace.warm_start = false
+            stats.indefinite = true
+            return workspace
+          end
+        end
+
+
+      end
+      
       # Update the LQ factorization of Rₖ = LₖPₖ.
       # [ λ₁ γ₁ ϵ₁ 0  •  •  0  ]   [ μ₁   0    •    •     •      •      0  ]
       # [ 0  λ₂ γ₂ •  •     •  ]   [ ψ₁   μ₂   •                        •  ]
