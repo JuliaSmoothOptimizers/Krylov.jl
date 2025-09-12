@@ -67,7 +67,6 @@ For an in-place variant that reuses memory across solves, see [`minres_qlp!`](@r
 * `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `true` and nonpositive curvature is detected, the behavior depends on the iteration:
  – at iteration k = 1, the solver takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1;
  – at iteration k > 1, the solver returns the solution from iteration k – 1, the residual from iteration k is a nonpositive curvature direction stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
-* `λ`: regularization parameter;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
 * `timemax`: the time limit in seconds;
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
