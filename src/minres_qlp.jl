@@ -328,7 +328,6 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
         end
       end
 
-
       # Compute and apply current Givens reflection Qₖ.ₖ₊₁
       # [cₖ  sₖ] [λbarₖ] = [λₖ]
       # [sₖ -cₖ] [βₖ₊₁ ]   [0 ]
