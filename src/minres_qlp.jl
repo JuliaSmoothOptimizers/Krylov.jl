@@ -302,7 +302,6 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
       end
       iter == 1 && (λbarₖ = αₖ)
 
-      
       # Check for nonpositive curvature
       if linesearch
         # if the first iteration, we need to check c₁ * λbar₁ = -α₁
