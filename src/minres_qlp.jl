@@ -17,7 +17,6 @@
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montreal, September 2019.
-#
 
 export minres_qlp, minres_qlp!
 
