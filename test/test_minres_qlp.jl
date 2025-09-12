@@ -86,47 +86,38 @@
 
       # Test linesearch
       A, b = symmetric_indefinite(FC=FC)
-      # A = FC[
-      #   10.0 0.0 0.0 0.0;
-      #   0.0 8.0 0.0 0.0;
-      #   0.0 0.0 5.0 0.0;
-      #   0.0 0.0 0.0 -1.0
-      # ]
-      # b = FC[1.0, 1.0, 1.0, 0.1]
       workspace = MinresQlpWorkspace(A, b)
       minres_qlp!(workspace, A, b, linesearch=true)
       x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
-      print(stats.niter, " ", stats.status, "\n")
       @test stats.status == "nonpositive curvature"
       @test stats.indefinite == true
       # Verify that the returned direction indeed exhibits nonpositive curvature.
       # For both real and complex cases, ensure to take the real part.
       @test real(dot(npc_dir, A * npc_dir)) <= 0
+    
+      # Test Linesearch which would stop on the first call since A is negative definite
+      A, b = symmetric_indefinite(FC=FC; shift = 5)
+      workspace = MinresQlpWorkspace(A, b)
+      minres_qlp!(workspace, A, b, linesearch=true)
+      x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
+      @test stats.status == "nonpositive curvature"
+      @test stats.niter == 1 
+      @test all(x .== b)
+      @test stats.solved == true
+      @test stats.indefinite == true
+      @test stats.npcCount == 1
+      @test real(dot(npc_dir, A * npc_dir)) <= 0      
 
-      # # Test Linesearch which would stop on the first call since A is negative definite
-      # A, b = symmetric_indefinite(FC=FC; shift = 5)
-      # workspace = MinresQlpWorkspace(A, b)
-      # minres_qlp!(workspace, A, b, linesearch=true)
-      # x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
-      # @test stats.status == "nonpositive curvature"
-      # @test stats.niter == 0
-      # @test all(x .== b)
-      # @test stats.solved == true
-      # @test stats.indefinite == true
-      # @test stats.npcCount == 1
-      # @test real(dot(npc_dir, A * npc_dir)) <= 0
-      
-
-      # # Test when b^TAb=0 and linesearch is true
-      # A, b = system_zero_quad(FC=FC)
-      # workspace = MinresQlpWorkspace(A, b)
-      # minres_qlp!(workspace, A, b, linesearch=true)
-      # x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
-      # @test stats.status == "nonpositive curvature"
-      # @test all(x .== b)
-      # @test stats.solved == true
-      # @test stats.indefinite == true
-      # @test real(dot(npc_dir, A * npc_dir)) ≈ 0.0
+      # Test when b^TAb=0 and linesearch is true
+      A, b = system_zero_quad(FC=FC)
+      workspace = MinresQlpWorkspace(A, b)
+      minres_qlp!(workspace, A, b, linesearch=true)
+      x, stats, npc_dir = workspace.x, workspace.stats, workspace.npc_dir
+      @test stats.status == "nonpositive curvature"
+      @test all(x .== b)
+      @test stats.solved == true
+      @test stats.indefinite == true
+      @test real(dot(npc_dir, A * npc_dir)) ≈ 0.0
 
       # Test if warm_start and linesearch are both true, it should throw an error
       A, b = symmetric_indefinite(FC=FC)

@@ -304,24 +304,31 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
       iter == 1 && (λbarₖ = αₖ)
 
       
-      # # Check for nonpositive curvature
-      # if linesearch
-      #   cγ = cₖ₋₁ * λbarₖ
-      #   kcopy!(n, npc_dir, vₖ) 
-      #   if cγ ≥ 0
-      #     # Nonpositive curvature detected.
-      #     (verbose > 0) && @printf(iostream, "nonpositive curvature detected:  cₖ * λbarₖ = %e\n", cγ)
-      #     stats.solved = true
-      #     stats.npcCount = 1
-      #     stats.niter = iter
-      #     stats.inconsistent = false
-      #     stats.timer = start_time |> ktimer
-      #     stats.status = "nonpositive curvature"
-      #     workspace.warm_start = false
-      #     stats.indefinite = true
-      #     return workspace
-      #   end
-      # end
+      # Check for nonpositive curvature
+      if linesearch
+        # if the first iteration, we need to check c₁ * λbar₁ = -α₁
+        if iter == 1
+          cγ = -αₖ
+        else
+          cγ = cₖ₋₁ * λbarₖ
+        end
+        if cγ ≥ 0
+          if iter == 1
+            kcopy!(n, x, b)
+          end
+          # Nonpositive curvature detected.
+          (verbose > 0) && @printf(iostream, "nonpositive curvature detected:  cₖ * λbarₖ = %e\n", cγ)
+          stats.solved = true
+          stats.npcCount = 1
+          stats.niter = iter
+          stats.inconsistent = false
+          stats.timer = start_time |> ktimer
+          stats.status = "nonpositive curvature"
+          workspace.warm_start = false
+          stats.indefinite = true
+          return workspace
+        end
+      end
 
 
       # Compute and apply current Givens reflection Qₖ.ₖ₊₁
@@ -339,31 +346,8 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
 
       # check for nonpositive curvature
       if linesearch
-        # inspired by https://github.com/yangliu-op/Newton-MR/blob/main/MinresQLP.py
-        if iter > 2
-          
-          cγ = -ζbarₖ^2 * cₖ₋₁ * λbarₖ
-          # compute the residual vector and store it in npc_dir
-          norm_npc_dir = norm(npc_dir)
-          kscal!(n, sₖ * sₖ, npc_dir)  # npc_dir  = sₖ * sₖ * npc_dir
-          kaxpy!(n, -ζbarₖ * cₖ, vₖ, npc_dir)  # npc_dir  = npc_dir  - ζbarₖ * cₖ * vₖ, this is rₖ
-
-          if cγ/norm_npc_dir^2 < -λ/2
-            # Nonpositive curvature detected.
-            (verbose > 0) && @printf(iostream, "nonpositive curvature detected:  cₖ * λbarₖ = %e\n", cγ)
-            stats.solved = true
-            stats.npcCount = 1
-            stats.niter = iter
-            stats.inconsistent = false
-            stats.timer = start_time |> ktimer
-            stats.status = "nonpositive curvature"
-            workspace.warm_start = false
-            stats.indefinite = true
-            return workspace
-          end
-        end
-
-
+        kscal!(n, sₖ * sₖ, npc_dir)  # npc_dir  = sₖ * sₖ * npc_dir
+        kaxpy!(n, -ζbarₖ₊₁ * cₖ , vₖ₊₁, npc_dir)  # npc_dir  = npc_dir  - ζbarₖ * cₖ * vₖ, this is rₖ
       end
       
       # Update the LQ factorization of Rₖ = LₖPₖ.
