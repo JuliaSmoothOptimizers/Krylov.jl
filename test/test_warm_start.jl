@@ -111,6 +111,26 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
   end
 
+  # USYMLQR
+  @testset "usymlqr" begin
+    x, y, stats = usymlqr(A, b, b, x0, y0)
+    r = [b - x - A * y; b - A' * x]
+    resid = norm(r) / norm([b; b])
+    @test(resid ≤ tol)
+
+    workspace = UsymlqrWorkspace(A, b)
+    krylov_solve!(workspace, A, b, b, x0, y0)
+    r = [b - workspace.x - A * workspace.y; b - A' * workspace.x]
+    resid = norm(r) / norm([b; b])
+    @test(resid ≤ tol)
+
+    # TODO: (z0, z0) should be a solution
+    krylov_solve!(workspace, J, d, d, z0, z0)
+    r = [d - workspace.x - J * workspace.y; d - J' * workspace.x]
+    resid = norm(r) / norm([d; d])
+    @test(resid ≤ tol)
+  end
+
   # GPMR
   @testset "gpmr" begin
     x, y, stats = gpmr(A, A', b, b, x0, y0)
