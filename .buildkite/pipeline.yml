@@ -2,7 +2,7 @@ steps:
   - label: "Nvidia GPUs -- CUDA.jl"
     plugins:
       - JuliaCI/julia#v1:
-          version: "1.11"
+          version: "1.12"
     agents:
       queue: "juliagpu"
       cuda: "*"
@@ -14,7 +14,7 @@ steps:
         Pkg.add("KernelAbstractions")
         Pkg.instantiate()
         using CUDA
-        # CUDA.set_runtime_version!(v"11.8")'
+        # CUDA.set_runtime_version!(v"12.9")'
 
       julia --color=yes --project -e '
         include("test/gpu/nvidia.jl")'
@@ -23,7 +23,7 @@ steps:
   - label: "AMD GPUs -- AMDGPU.jl"
     plugins:
       - JuliaCI/julia#v1:
-          version: "1.11"
+          version: "1.12"
     agents:
       queue: "juliagpu"
       rocm: "*"
@@ -42,27 +42,27 @@ steps:
         include("test/gpu/amd.jl")'
     timeout_in_minutes: 30
 
-  # - label: "Intel GPUs -- oneAPI.jl"
-  #   plugins:
-  #     - JuliaCI/julia#v1:
-  #         version: "1.11"
-  #   agents:
-  #     queue: "juliagpu"
-  #     intel: "*"
-  #   command: |
-  #     julia --color=yes --project -e '
-  #       using Pkg
-  #       Pkg.add(url="https://github.com/JuliaGPU/oneAPI.jl", rev="master")
-  #       # Pkg.add("oneAPI")
-  #       Pkg.add("KernelAbstractions")
-  #       Pkg.instantiate()
-  #       include("test/gpu/intel.jl")'
-  #   timeout_in_minutes: 30
+  - label: "Intel GPUs -- oneAPI.jl"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1.12"
+    agents:
+      queue: "juliagpu"
+      intel: "*"
+    command: |
+      julia --color=yes --project -e '
+        using Pkg
+        # Pkg.add(url="https://github.com/JuliaGPU/oneAPI.jl", rev="master")
+        Pkg.add("oneAPI")
+        Pkg.add("KernelAbstractions")
+        Pkg.instantiate()
+        include("test/gpu/intel.jl")'
+    timeout_in_minutes: 30
 
   - label: "Apple M1 GPUs -- Metal.jl"
     plugins:
       - JuliaCI/julia#v1:
-          version: "1.11"
+          version: "1.12"
     agents:
       queue: "juliaecosystem"
       os: "macos"
