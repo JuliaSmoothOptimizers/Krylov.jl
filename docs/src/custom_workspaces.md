@@ -110,9 +110,11 @@ The functions `size` and `getindex` support REPL display, aiding interaction, th
 
 Using `HaloVector` with `OffsetArray`, we can apply the discrete Laplacian operator in a matrix-free approach with a 5-point stencil, managing halo regions effectively.
 This layout allows **clean and efficient Laplacian computation** without boundary checks within the core loop.
+For the multiplication between the Laplacian operator and vectors, `Krylov.jl` dispatches to `LinearAlgebra.mul!` by default.
+If you prefer to use a custom implementation only within `Krylov.jl`, or if you have a specialized routine that benefits repeated products, you can overload `Krylov.kmul!` instead.
 
 ```@example halo-regions; continued = true
-using LinearAlgebra
+using Krylov
 
 # Define a matrix-free Laplacian operator
 struct LaplacianOperator
@@ -126,7 +128,7 @@ end
 Base.size(A::LaplacianOperator) = (A.Nx * A.Ny, A.Nx * A.Ny)
 Base.eltype(A::LaplacianOperator) = Float64
 
-function LinearAlgebra.mul!(y::HaloVector{Float64}, A::LaplacianOperator, u::HaloVector{Float64})
+function Krylov.kmul!(y::HaloVector{Float64}, A::LaplacianOperator, u::HaloVector{Float64})
     # Apply the discrete Laplacian in 2D
     for i in 1:A.Nx
         for j in 1:A.Ny
@@ -423,12 +425,15 @@ However, this preconditioner is expensive, as it requires $K^{-1}$ and the inver
 One common approach is to replace $K^{-1}$ with $\mathrm{diag}(K)^{-1}$, creating a cheaper preconditioner.
 
 ```@example block-arrays; continued = true
+using Krylov
+using LinearAlgebra
+
 struct IdealPreconditioner{T1, T2}
     BD1::T1
     BD2::T2
 end
 
-function LinearAlgebra.mul!(y::BlockVector, P::IdealPreconditioner, x::BlockVector)
+function Krylov.kmul!(y::BlockVector, P::IdealPreconditioner, x::BlockVector)
     mul!(y.blocks[1], P.BD1, x.blocks[1])
     mul!(y.blocks[2], P.BD2, x.blocks[2])
     return y
@@ -565,6 +570,8 @@ The next step is to create a distributed linear operator.
 As a simple example, we define a diagonal operator with `1:n` on its diagonal by implementing an `MPIOperator`:
 
 ```julia
+using Krylov
+
 struct MPIOperator{T}
     m::Int
     n::Int
@@ -573,7 +580,7 @@ end
 Base.size(A::MPIOperator) = (A.m, A.n)
 Base.eltype(A::MPIOperator{T}) where T = T
 
-function LinearAlgebra.mul!(y::MPIVector{Float64}, A::MPIOperator{Float64}, u::MPIVector{Float64})
+function Krylov.kmul!(y::MPIVector{Float64}, A::MPIOperator{Float64}, u::MPIVector{Float64})
     y.data .= u.data_range .* u.data
     return y
 end
