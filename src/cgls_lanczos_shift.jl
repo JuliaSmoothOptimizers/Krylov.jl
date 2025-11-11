@@ -147,7 +147,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
 
     kcopy!(m, u, b)              # u ← b
     kfill!(u_prev, zero(FC))
-    mul!(v, Aᴴ, u)               # v₁ ← Aᴴ * b
+    kmul!(v, Aᴴ, u)              # v₁ ← Aᴴ * b
     β = knorm_elliptic(n, v, v)  # β₁ = v₁ᵀ M v₁
     kfill!(rNorms, β)
     if history
@@ -206,11 +206,11 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     while ! (solved || tired || user_requested_exit || overtimed)
 
       # Form next Lanczos vector.
-      mul!(u_next, A, v)            # u_nextₖ ← Avₖ
+      kmul!(u_next, A, v)           # u_nextₖ ← Avₖ
       δ = kdotr(m, u_next, u_next)  # δₖ = vₖᵀAᴴAvₖ
       kaxpy!(m, -δ, u, u_next)      # uₖ₊₁ = u_nextₖ - δₖuₖ - βₖuₖ₋₁
       kaxpy!(m, -β, u_prev, u_next)
-      mul!(v, Aᴴ, u_next)           # vₖ₊₁ = Aᴴuₖ₊₁
+      kmul!(v, Aᴴ, u_next)          # vₖ₊₁ = Aᴴuₖ₊₁
       β = knorm_elliptic(n, v, v)   # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
       kdiv!(n, v, β)                # vₖ₊₁ = vₖ₊₁ / βₖ₊₁
       kdiv!(m, u_next, β)           # uₖ₊₁ = uₖ₊₁ / βₖ₊₁

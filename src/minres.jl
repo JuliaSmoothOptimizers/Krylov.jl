@@ -194,7 +194,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
     kfill!(x, zero(FC))
 
     if warm_start
-      mul!(r1, A, Δx)
+      kmul!(r1, A, Δx)
       (λ ≠ 0) && kaxpy!(n, λ, Δx, r1)
       kaxpby!(n, one(FC), b, -one(FC), r1)
     else
@@ -279,7 +279,7 @@ kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itm
       iter = iter + 1
 
       # Generate next Lanczos vector.
-      mul!(y, A, v)
+      kmul!(y, A, v)
       λ ≠ 0 && kaxpy!(n, λ, v, y)              # (y = y + λ * v)
       kdiv!(n, y, β)                           # (y = y / β)
       iter ≥ 2 && kaxpy!(n, -β / oldβ, r1, y)  # (y = y - β / oldβ * r1)

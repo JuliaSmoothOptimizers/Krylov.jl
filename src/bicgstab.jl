@@ -157,7 +157,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
     r₀ = MisI ? r : workspace.qd
 
     if warm_start
-      mul!(r₀, A, Δx)
+      kmul!(r₀, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), r₀)
     else
       kcopy!(n, r₀, b)  # r₀ ← b
@@ -218,14 +218,14 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       ρ = next_ρ
 
       NisI || mulorldiv!(y, N, p, ldiv)  # yₖ = N⁻¹pₖ
-      mul!(q, A, y)                      # qₖ = Ayₖ
+      kmul!(q, A, y)                     # qₖ = Ayₖ
       mulorldiv!(v, M, q, ldiv)          # vₖ = M⁻¹qₖ
       α = ρ / kdot(n, c, v)              # αₖ = ⟨r̅₀,rₖ₋₁⟩ / ⟨r̅₀,vₖ⟩
       kcopy!(n, s, r)                    # sₖ = rₖ₋₁
       kaxpy!(n, -α, v, s)                # sₖ = sₖ - αₖvₖ
       kaxpy!(n, α, y, x)                 # xₐᵤₓ = xₖ₋₁ + αₖyₖ
       NisI || mulorldiv!(z, N, s, ldiv)  # zₖ = N⁻¹sₖ
-      mul!(d, A, z)                      # dₖ = Azₖ
+      kmul!(d, A, z)                     # dₖ = Azₖ
       MisI || mulorldiv!(t, M, d, ldiv)  # tₖ = M⁻¹dₖ
       ω = kdot(n, t, s) / kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
       kaxpy!(n, ω, z, x)                 # xₖ = xₐᵤₓ + ωₖzₖ

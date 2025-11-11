@@ -206,7 +206,7 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
     while ! (solved || tired || user_requested_exit || overtimed)
       # Form next Lanczos vector.
       # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-      mul!(Mv_next, A, v)                 # Mvₖ₊₁ ← Avₖ
+      kmul!(Mv_next, A, v)                # Mvₖ₊₁ ← Avₖ
       δ = kdotr(n, v, Mv_next)            # δₖ = vₖᴴ A vₖ
       kaxpy!(n, -δ, Mv, Mv_next)          # Mvₖ₊₁ ← Mvₖ₊₁ - δₖMvₖ
       if iter > 0

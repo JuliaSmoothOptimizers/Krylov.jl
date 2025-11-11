@@ -152,7 +152,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
 
     kfill!(x, zero(FC))
     if warm_start
-      mul!(r, A, Δx)
+      kmul!(r, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), r)
     else
       kcopy!(n, r, b)  # r ← b
@@ -193,7 +193,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     status = "unknown"
 
     while !(solved || tired || zero_curvature || user_requested_exit || overtimed)
-      mul!(Ap, A, p)
+      kmul!(Ap, A, p)
       pAp = kdotr(n, p, Ap)
       if (pAp ≤ eps(T) * pNorm²) && (radius == 0)
         if abs(pAp) ≤ eps(T) * pNorm²

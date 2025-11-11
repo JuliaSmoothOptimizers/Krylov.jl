@@ -163,13 +163,13 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
     end
 
     MisI || mulorldiv!(Mr, M, r, ldiv)
-    mul!(Ar, Aᴴ, Mr)  # - λ * x0 if x0 ≠ 0.
-    mul!(s, A, Ar)
+    kmul!(Ar, Aᴴ, Mr)  # - λ * x0 if x0 ≠ 0.
+    kmul!(s, A, Ar)
     MisI || mulorldiv!(Ms, M, s, ldiv)
 
     kcopy!(n, p, Ar)  # p ← Ar
     kcopy!(m, Ap, s)  # Ap ← s
-    mul!(q, Aᴴ, Ms)   # Ap
+    kmul!(q, Aᴴ, Ms)  # Ap
     λ > 0 && kaxpy!(n, λ, p, q)  # q = q + λ * p
     γ  = kdotr(m, s, Ms)  # Faster than γ = dot(s, Ms)
     iter = 0
@@ -202,7 +202,7 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
           psd = true # det(AᴴA) = 0
           p = Ar # p = Aᴴr
           pNorm² = ArNorm * ArNorm
-          mul!(q, Aᴴ, s)
+          kmul!(q, Aᴴ, s)
           α = min(ArNorm^2 / γ, maximum(to_boundary(n, x, p, Ms, radius, flip = false, dNorm2 = pNorm²))) # the quadratic is minimal in the direction Aᴴr for α = ‖Ar‖²/γ
         else
           pNorm² = pNorm * pNorm
@@ -220,7 +220,7 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
       solved = psd || on_boundary
       solved && continue
       kaxpy!(m, -α, Ap,  r)  # Faster than  r =  r - α * Ap
-      mul!(s, A, Ar)
+      kmul!(s, A, Ar)
       MisI || mulorldiv!(Ms, M, s, ldiv)
       γ_next = kdotr(m, s, Ms)  # Faster than γ_next = dot(s, s)
       λ > 0 && (γ_next += λ * ArNorm * ArNorm)
@@ -229,7 +229,7 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
       kaxpby!(n, one(FC), Ar, β, p)  # Faster than  p = Ar + β *  p
       kaxpby!(m, one(FC), s, β, Ap)  # Faster than Ap =  s + β * Ap
       MisI || mulorldiv!(MAp, M, Ap, ldiv)
-      mul!(q, Aᴴ, MAp)
+      kmul!(q, Aᴴ, MAp)
       λ > 0 && kaxpy!(n, λ, p, q)  # q = q + λ * p
 
       γ = γ_next

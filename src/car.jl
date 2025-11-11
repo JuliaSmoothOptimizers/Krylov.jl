@@ -134,7 +134,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
 
     kfill!(x, zero(FC))
     if warm_start
-      mul!(r, A, Δx)
+      kmul!(r, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), r)
     else
       kcopy!(n, r, b)  # r ← b
@@ -148,7 +148,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       kcopy!(n, r, p)  # r ← p
     end
 
-    mul!(s, A, r)  # s₀ = Ar₀
+    kmul!(s, A, r)  # s₀ = Ar₀
 
     # q₀ = MAp₀ and s₀ = MAr₀
     if MisI
@@ -158,7 +158,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       kcopy!(n, s, q)  # s ← q
     end
 
-    mul!(t, A, s)       # t₀ = As₀
+    kmul!(t, A, s)      # t₀ = As₀
     kcopy!(n, u, t)     # u₀ = Aq₀
     ρ = kdotr(n, t, s)  # ρ₀ = ⟨t₀ , s₀⟩
 
@@ -212,7 +212,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       solved = resid_decrease_lim || resid_decrease_mach
 
       if !solved
-        mul!(t, A, s)                 # tₖ₊₁ = A * sₖ₊₁
+        kmul!(t, A, s)                # tₖ₊₁ = A * sₖ₊₁
         ρ_next = kdotr(n, t, s)       # ρₖ₊₁ = ⟨tₖ₊₁ , sₖ₊₁⟩
         β = ρ_next / ρ                # βₖ = ρₖ₊₁ / ρₖ
         ρ = ρ_next

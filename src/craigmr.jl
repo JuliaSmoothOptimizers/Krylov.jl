@@ -216,7 +216,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
     kdiv!(m, u, β)
     MisI || kdiv!(m, Mu, β)
     # α₁Nv₁ = Aᴴu₁.
-    mul!(Aᴴu, Aᴴ, u)
+    kmul!(Aᴴu, Aᴴ, u)
     kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
     α = knorm_elliptic(n, v, Nv)
@@ -282,7 +282,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
 
       # Generate next Golub-Kahan vectors.
       # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-      mul!(Av, A, v)
+      kmul!(Av, A, v)
       kaxpby!(m, one(FC), Av, -α, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)
       β = knorm_elliptic(m, u, Mu)
@@ -344,7 +344,7 @@ kwargs_craigmr = (:M, :N, :ldiv, :sqd, :λ, :atol, :rtol, :itmax, :timemax, :ver
       kaxpy!(n, ζ, d, x)
 
       # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
-      mul!(Aᴴu, Aᴴ, u)
+      kmul!(Aᴴu, Aᴴ, u)
       kaxpby!(n, one(FC), Aᴴu, -β, Nv)
       NisI || mulorldiv!(v, N, Nv, ldiv)
       α = knorm_elliptic(n, v, Nv)

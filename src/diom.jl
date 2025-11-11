@@ -152,7 +152,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     # Initial solution x₀ and residual r₀.
     kfill!(x, zero(FC))  # x₀
     if warm_start
-      mul!(t, A, Δx)
+      kmul!(t, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), t)
     else
       kcopy!(n, t, b)  # t ← b
@@ -214,7 +214,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       # Incomplete Arnoldi procedure.
       z = NisI ? V[pos] : workspace.z
       NisI || mulorldiv!(z, N, V[pos], ldiv)  # Nvₖ, forms pₖ
-      mul!(t, A, z)                           # ANvₖ
+      kmul!(t, A, z)                          # ANvₖ
       MisI || mulorldiv!(w, M, t, ldiv)       # MANvₖ, forms vₖ₊₁
       for i = max(1, iter-mem+1) : iter
         ipos = mod(i-1, mem) + 1  # Position corresponding to vᵢ in the circular stack V.

@@ -67,7 +67,7 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
         kdivcopy!(n, vᵢ, b, β₁)
       end
     end
-    mul!(q, A, vᵢ)
+    kmul!(q, A, vᵢ)
     if i ≥ 2
       vᵢ₋₁ = view(V,:,i-1)
       βᵢ = nzval[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
@@ -184,8 +184,8 @@ function nonhermitian_lanczos(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k
         kdivcopy!(n, uᵢ, c, γ₁ᴴ)
       end
     end
-    mul!(q, A , vᵢ)
-    mul!(p, Aᴴ, uᵢ)
+    kmul!(q, A , vᵢ)
+    kmul!(p, Aᴴ, uᵢ)
     if i ≥ 2
       vᵢ₋₁ = view(V,:,i-1)
       uᵢ₋₁ = view(U,:,i-1)
@@ -270,7 +270,7 @@ function arnoldi(A, b::AbstractVector{FC}, k::Int;
         kdivcopy!(n, vⱼ, b, β)
       end
     end
-    mul!(q, A, vⱼ)
+    kmul!(q, A, vⱼ)
     for i = 1:j
       vᵢ = view(V,:,i)
       H[i,j] = kdot(n, vᵢ, q)
@@ -365,7 +365,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int;
       else
         kdivcopy!(m, uᵢ, b, β₁)
       end
-      mul!(wᵢ, Aᴴ, uᵢ)
+      kmul!(wᵢ, Aᴴ, uᵢ)
       αᵢ = knorm(n, wᵢ)
       if αᵢ == 0
         !allow_breakdown && error("Exact breakdown α₁ == 0.")
@@ -375,7 +375,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int;
       end
       nzval[pαᵢ] = αᵢ  # Lᵢ.ᵢ = αᵢ
     end
-    mul!(q, A, vᵢ)
+    kmul!(q, A, vᵢ)
     αᵢ = nzval[pαᵢ]  # αᵢ = Lᵢ.ᵢ
     kaxpy!(m, -αᵢ, uᵢ, q)
     βᵢ₊₁ = knorm(m, q)
@@ -385,7 +385,7 @@ function golub_kahan(A, b::AbstractVector{FC}, k::Int;
     else
       kdivcopy!(m, uᵢ₊₁, q, βᵢ₊₁)
     end
-    mul!(p, Aᴴ, uᵢ₊₁)
+    kmul!(p, Aᴴ, uᵢ₊₁)
     kaxpy!(n, -βᵢ₊₁, vᵢ, p)
     αᵢ₊₁ = knorm(n, p)
     if αᵢ₊₁ == 0
@@ -483,8 +483,8 @@ function saunders_simon_yip(A, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
         kdivcopy!(n, uᵢ, c, γ₁ᴴ)
       end
     end
-    mul!(q, A , uᵢ)
-    mul!(p, Aᴴ, vᵢ)
+    kmul!(q, A , uᵢ)
+    kmul!(p, Aᴴ, vᵢ)
     if i ≥ 2
       vᵢ₋₁ = view(V,:,i-1)
       uᵢ₋₁ = view(U,:,i-1)
@@ -586,8 +586,8 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
         kdivcopy!(n, uⱼ, c, γ)
       end
     end
-    mul!(q, A, uⱼ)
-    mul!(p, B, vⱼ)
+    kmul!(q, A, uⱼ)
+    kmul!(p, B, vⱼ)
     for i = 1:j
       vᵢ = view(V,:,i)
       uᵢ = view(U,:,i)

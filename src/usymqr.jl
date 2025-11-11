@@ -153,7 +153,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
     r₀ = warm_start ? q : b
 
     if warm_start
-      mul!(r₀, A, Δx)
+      kmul!(r₀, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), r₀)
     end
 
@@ -208,8 +208,8 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
       # AᴴVₖ = Uₖ(Tₖ)ᴴ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
-      mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
-      mul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
+      kmul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
+      kmul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
 
       kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
       kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁

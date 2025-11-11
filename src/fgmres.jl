@@ -157,7 +157,7 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
 
     # Initial residual r₀.
     if warm_start
-      mul!(w, A, Δx)
+      kmul!(w, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), w)
       restart && kaxpy!(n, one(FC), Δx, x)
     else
@@ -221,7 +221,7 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
       if restart
         kfill!(xr, zero(FC))  # xr === Δx when restart is set to true
         if npass ≥ 1
-          mul!(w, A, x)
+          kmul!(w, A, x)
           kaxpby!(n, one(FC), b, -one(FC), w)
           MisI || mulorldiv!(r₀, M, w, ldiv)
         end
@@ -255,7 +255,7 @@ kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :i
         # Continue the process.
         # MAZₖ = Vₖ₊₁Hₖ₊₁.ₖ
         mulorldiv!(Z[inner_iter], N, V[inner_iter], ldiv)  # zₖ ← Nₖvₖ
-        mul!(w, A, Z[inner_iter])                          # w  ← Azₖ
+        kmul!(w, A, Z[inner_iter])                         # w  ← Azₖ
         MisI || mulorldiv!(q, M, w, ldiv)                  # q  ← MAzₖ
         for i = 1 : inner_iter
           R[nr+i] = kdot(n, V[i], q)      # hᵢₖ = (vᵢ)ᴴq

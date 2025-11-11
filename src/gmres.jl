@@ -152,7 +152,7 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
 
     # Initial residual r₀.
     if warm_start
-      mul!(w, A, Δx)
+      kmul!(w, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), w)
       restart && kaxpy!(n, one(FC), Δx, x)
     else
@@ -215,7 +215,7 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
       if restart
         kfill!(xr, zero(FC))  # xr === Δx when restart is set to true
         if npass ≥ 1
-          mul!(w, A, x)
+          kmul!(w, A, x)
           kaxpby!(n, one(FC), b, -one(FC), w)
           MisI || mulorldiv!(r₀, M, w, ldiv)
         end
@@ -248,7 +248,7 @@ kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :it
         # Continue the Arnoldi process.
         p = NisI ? V[inner_iter] : workspace.p
         NisI || mulorldiv!(p, N, V[inner_iter], ldiv)  # p ← Nvₖ
-        mul!(w, A, p)                                  # w ← ANvₖ
+        kmul!(w, A, p)                                 # w ← ANvₖ
         MisI || mulorldiv!(q, M, w, ldiv)              # q ← MANvₖ
         for i = 1 : inner_iter
           R[nr+i] = kdot(n, V[i], q)    # hᵢₖ = (vᵢ)ᴴq

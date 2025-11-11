@@ -166,7 +166,7 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
     kfill!(x, zero(FC))
 
     if warm_start
-      mul!(M⁻¹vₖ, A, Δx)
+      kmul!(M⁻¹vₖ, A, Δx)
       (λ ≠ 0) && kaxpy!(n, λ, Δx, M⁻¹vₖ)
       kaxpby!(n, one(FC), b, -one(FC), M⁻¹vₖ)
     else
@@ -243,7 +243,7 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
       # M(A + λI)Vₖ = Vₖ₊₁Tₖ₊₁.ₖ
       # βₖ₊₁vₖ₊₁ = M(A + λI)vₖ - αₖvₖ - βₖvₖ₋₁
 
-      mul!(p, A, vₖ)         # p ← Avₖ
+      kmul!(p, A, vₖ)        # p ← Avₖ
       if λ ≠ 0
         kaxpy!(n, λ, vₖ, p)  # p ← p + λvₖ
       end

@@ -244,7 +244,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     end
 
     # α₁Nv₁ = Aᴴu₁.
-    mul!(Aᴴu, Aᴴ, u)
+    kmul!(Aᴴu, Aᴴ, u)
     kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)  # v₁ = N⁻¹ * Nv₁
     αₖ = knorm_elliptic(n, v, Nv)       # α₁ = ‖v₁‖_N
@@ -352,7 +352,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       #      [ βₖ₊₁(eₖ)ᵀ ]
 
       # βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-      mul!(Av, A, v)
+      kmul!(Av, A, v)
       kaxpby!(m, one(FC), Av, -αₖ, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)  # uₖ₊₁ = M⁻¹ * Muₖ₊₁
       βₖ₊₁ = knorm_elliptic(m, u, Mu)     # βₖ₊₁ = ‖uₖ₊₁‖_M
@@ -362,7 +362,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       end
 
       # αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
-      mul!(Aᴴu, Aᴴ, u)
+      kmul!(Aᴴu, Aᴴ, u)
       kaxpby!(n, one(FC), Aᴴu, -βₖ₊₁, Nv)
       NisI || mulorldiv!(v, N, Nv, ldiv)  # vₖ₊₁ = N⁻¹ * Nvₖ₊₁
       αₖ₊₁ = knorm_elliptic(n, v, Nv)     # αₖ₊₁ = ‖vₖ₊₁‖_N

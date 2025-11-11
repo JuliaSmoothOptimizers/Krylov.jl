@@ -230,7 +230,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     # If λ ≠ 0, Cb₀ = Cb - CAΔy - λΔx because CM = Iₘ and E = Iₘ
     # E ≠ Iₘ is only allowed when λ = 0 because E⁻¹Δx can't be computed to use CME = Iₘ
     # Compute C(b - AΔy) - λΔx
-    warm_start && mul!(b₀, A, Δy)
+    warm_start && kmul!(b₀, A, Δy)
     warm_start && kaxpby!(m, one(FC), b, -one(FC), b₀)
     !CisI && mulorldiv!(q, C, b₀, ldiv)
     !CisI && (b₀ = q)
@@ -239,7 +239,7 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
     # If μ ≠ 0, Dc₀ = Dc - DBΔx - μΔy because DN = Iₙ and F = Iₙ
     # F ≠ Iₙ is only allowed when μ = 0 because F⁻¹Δy can't be computed to use DNF = Iₘ
     # Compute D(c - BΔx) - μΔy
-    warm_start && mul!(c₀, B, Δx)
+    warm_start && kmul!(c₀, B, Δx)
     warm_start && kaxpby!(n, one(FC), c, -one(FC), c₀)
     !DisI && mulorldiv!(p, D, c₀, ldiv)
     !DisI && (c₀ = p)
@@ -314,8 +314,8 @@ kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :ato
       wB = EisI ? V[iter] : workspace.wB
       FisI || mulorldiv!(wA, F, U[iter], ldiv)  # wA = Fuₖ
       EisI || mulorldiv!(wB, E, V[iter], ldiv)  # wB = Evₖ
-      mul!(dA, A, wA)                           # dA = AFuₖ
-      mul!(dB, B, wB)                           # dB = BEvₖ
+      kmul!(dA, A, wA)                          # dA = AFuₖ
+      kmul!(dB, B, wB)                          # dB = BEvₖ
       CisI || mulorldiv!(q, C, dA, ldiv)        # q  = CAFuₖ
       DisI || mulorldiv!(p, D, dB, ldiv)        # p  = DBEvₖ
 

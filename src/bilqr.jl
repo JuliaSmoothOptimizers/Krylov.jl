@@ -145,9 +145,9 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     s₀ = warm_start ? p : c
 
     if warm_start
-      mul!(r₀, A, Δx)
+      kmul!(r₀, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), r₀)
-      mul!(s₀, Aᴴ, Δy)
+      kmul!(s₀, Aᴴ, Δy)
       kaxpby!(n, one(FC), c, -one(FC), s₀)
     end
 
@@ -224,8 +224,8 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       # AVₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
       # AᴴUₖ = Uₖ(Tₖ)ᴴ + γ̄ₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
-      mul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
-      mul!(p, Aᴴ, uₖ)  # Forms uₖ₊₁ : p ← Aᴴuₖ
+      kmul!(q, A , vₖ)  # Forms vₖ₊₁ : q ← Avₖ
+      kmul!(p, Aᴴ, uₖ)  # Forms uₖ₊₁ : p ← Aᴴuₖ
 
       kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
       kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - β̄ₖ * uₖ₋₁
