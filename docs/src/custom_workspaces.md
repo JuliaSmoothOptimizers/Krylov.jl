@@ -344,6 +344,8 @@ stats = statistics(workspace)
 ```
 
 ```@example halo-regions
+using LinearAlgebra
+
 # The exact solution is u(x,y) = sin(πx) * sin(πy)
 u_star = [sin(π * i * Δx) * sin(π * j * Δy) for i=1:Nx, j=1:Ny]
 norm(u_sol.data[1:Nx, 1:Ny] - u_star, Inf)
