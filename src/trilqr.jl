@@ -143,9 +143,9 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     s₀ = warm_start ? p : c
 
     if warm_start
-      mul!(r₀, A, Δx)
+      kmul!(r₀, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), r₀)
-      mul!(s₀, Aᴴ, Δy)
+      kmul!(s₀, Aᴴ, Δy)
       kaxpby!(n, one(FC), c, -one(FC), s₀)
     end
 
@@ -207,8 +207,8 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
       # AᴴVₖ = Uₖ(Tₖ)ᴴ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
-      mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
-      mul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
+      kmul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
+      kmul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
 
       kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
       kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁

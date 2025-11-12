@@ -159,7 +159,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     r₀ = MisI ? r : workspace.ts
 
     if warm_start
-      mul!(r₀, A, Δx)
+      kmul!(r₀, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), r₀)
     else
       kcopy!(n, r₀, b)  # r₀ ← b
@@ -215,7 +215,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     while !(solved || tired || breakdown || user_requested_exit || overtimed)
 
       NisI || mulorldiv!(y, N, p, ldiv)  # yₖ = N⁻¹pₖ
-      mul!(t, A, y)                      # tₖ = Ayₖ
+      kmul!(t, A, y)                     # tₖ = Ayₖ
       MisI || mulorldiv!(v, M, t, ldiv)  # vₖ = M⁻¹tₖ
       σ = kdot(n, c, v)                  # σₖ = ⟨ r̅₀,M⁻¹AN⁻¹pₖ ⟩
       α = ρ / σ                          # αₖ = ρₖ / σₖ
@@ -224,7 +224,7 @@ kwargs_cgs = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
       kaxpy!(n, one(FC), q, u)           # uₖ₊½ = uₖ + qₖ
       NisI || mulorldiv!(z, N, u, ldiv)  # zₖ = N⁻¹uₖ₊½
       kaxpy!(n, α, z, x)                 # xₖ₊₁ = xₖ + αₖ * N⁻¹(uₖ + qₖ)
-      mul!(s, A, z)                      # sₖ = Azₖ
+      kmul!(s, A, z)                     # sₖ = Azₖ
       MisI || mulorldiv!(w, M, s, ldiv)  # wₖ = M⁻¹sₖ
       kaxpy!(n, -α, w, r)                # rₖ₊₁ = rₖ - αₖ * M⁻¹AN⁻¹(uₖ + qₖ)
       ρ_next = kdot(n, c, r)             # ρₖ₊₁ = ⟨ r̅₀,rₖ₊₁ ⟩

@@ -173,7 +173,7 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       return workspace
     end
     λ > 0 && kcopy!(m, s, r)  # s ← r
-    mul!(Aᴴr, Aᴴ, r)          # - λ * x0 if x0 ≠ 0.
+    kmul!(Aᴴr, Aᴴ, r)         # - λ * x0 if x0 ≠ 0.
     kcopy!(n, p, Aᴴr)         # p ← Aᴴr
     γ = kdotr(n, Aᴴr, Aᴴr)    # Faster than γ = dot(Aᴴr, Aᴴr)
     λ > 0 && (γ += λ * rNorm * rNorm)
@@ -195,14 +195,14 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     overtimed = false
 
     while ! (solved || inconsistent || tired || user_requested_exit || overtimed)
-      mul!(q, A, p)
+      kmul!(q, A, p)
       λ > 0 && kaxpy!(m, λ, s, q)  # q = q + λ * s
       NisI || mulorldiv!(Nq, N, q, ldiv)
       α = γ / kdotr(m, q, Nq)  # Compute qᴴ * N * q
       kaxpy!(n,  α, p, x)      # Faster than  x =  x + α *  p
       kaxpy!(m, -α, Nq, r)     # Faster than  r =  r - α * Nq
       rNorm = knorm(m, r)      # norm(r)
-      mul!(Aᴴr, Aᴴ, r)
+      kmul!(Aᴴr, Aᴴ, r)
       γ_next = kdotr(n, Aᴴr, Aᴴr)  # Faster than γ_next = dot(Aᴴr, Aᴴr)
       λ > 0 && (γ_next += λ * rNorm * rNorm)
       β = γ_next / γ

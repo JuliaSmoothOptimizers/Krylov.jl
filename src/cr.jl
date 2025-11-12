@@ -162,7 +162,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
     # Initial state.
     kfill!(x, zero(FC))
     if warm_start
-      mul!(p, A, Δx)
+      kmul!(p, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), p)
     else
       kcopy!(n, p, b)  # p ← b
@@ -184,7 +184,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
       return workspace
     end
 
-    mul!(Ar, A, r)
+    kmul!(Ar, A, r)
     ρ = kdotr(n, r, Ar)
     
     if ρ == 0
@@ -402,7 +402,7 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         rNorm² = rNorm * rNorm  # rNorm² = rNorm² - α * ρ
       end
       history && push!(rNorms, rNorm)
-      mul!(Ar, A, r)
+      kmul!(Ar, A, r)
       ArNorm = knorm(n, Ar)
       history && push!(ArNorms, ArNorm)
 

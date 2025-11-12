@@ -217,10 +217,10 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
     # [  Aᴴ  νI ] [ yₖ ]   [ c - AᴴΔx - νΔy ]   [ c₀ ]
     if warm_start
-      mul!(b₀, A, Δy)
+      kmul!(b₀, A, Δy)
       (τ ≠ 0) && kaxpy!(m, τ, Δx, b₀)
       kaxpby!(m, one(FC), b, -one(FC), b₀)
-      mul!(c₀, Aᴴ, Δx)
+      kmul!(c₀, Aᴴ, Δx)
       (ν ≠ 0) && kaxpy!(n, ν, Δy, c₀)
       kaxpby!(n, one(FC), c, -one(FC), c₀)
     end
@@ -297,8 +297,8 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
       # AUₖ  = EVₖTₖ    + βₖ₊₁Evₖ₊₁(eₖ)ᵀ = EVₖ₊₁Tₖ₊₁.ₖ
       # AᴴVₖ = FUₖ(Tₖ)ᴴ + γₖ₊₁Fuₖ₊₁(eₖ)ᵀ = FUₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
-      mul!(q, A , uₖ)  # Forms Evₖ₊₁ : q ← Auₖ
-      mul!(p, Aᴴ, vₖ)  # Forms Fuₖ₊₁ : p ← Aᴴvₖ
+      kmul!(q, A , uₖ)  # Forms Evₖ₊₁ : q ← Auₖ
+      kmul!(p, Aᴴ, vₖ)  # Forms Fuₖ₊₁ : p ← Aᴴvₖ
 
       if iter ≥ 2
         kaxpy!(m, -γₖ, M⁻¹vₖ₋₁, q)  # q ← q - γₖ * M⁻¹vₖ₋₁

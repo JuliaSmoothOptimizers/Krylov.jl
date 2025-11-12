@@ -141,7 +141,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     # Initial state.
     kfill!(x, zero(FC))
     if warm_start
-      mul!(Mv, A, Δx)
+      kmul!(Mv, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), Mv)
     else
       kcopy!(n, Mv, b)  # Mv ← b
@@ -195,7 +195,7 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
     while ! (solved || tired || (check_curvature & indefinite) || user_requested_exit || overtimed)
       # Form next Lanczos vector.
       # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
-      mul!(Mv_next, A, v)       # Mvₖ₊₁ ← Avₖ
+      kmul!(Mv_next, A, v)      # Mvₖ₊₁ ← Avₖ
       δ = kdotr(n, v, Mv_next)  # δₖ = vₖᴴ A vₖ
 
       # Check curvature. Exit fast if requested.

@@ -276,7 +276,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
     while ! (solved || inconsistent || ill_cond || tired || user_requested_exit || overtimed)
       # Generate the next Golub-Kahan vectors
       # 1. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
-      mul!(Aᴴu, Aᴴ, u)
+      kmul!(Aᴴu, Aᴴ, u)
       kaxpby!(n, one(FC), Aᴴu, -β, Nv)
       NisI || mulorldiv!(v, N, Nv, ldiv)
       α = knorm_elliptic(n, v, Nv)
@@ -319,7 +319,7 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
       Dnorm² += knorm(m, w)
 
       # 2. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-      mul!(Av, A, v)
+      kmul!(Av, A, v)
       kaxpby!(m, one(FC), Av, -α, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)
       β = knorm_elliptic(m, u, Mu)

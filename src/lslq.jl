@@ -252,7 +252,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
 
     kdiv!(m, u, β₁)
     MisI || kdiv!(m, Mu, β₁)
-    mul!(Aᴴu, Aᴴ, u)
+    kmul!(Aᴴu, Aᴴ, u)
     kcopy!(n, Nv, Aᴴu)  # Nv ← Aᴴu
     NisI || mulorldiv!(v, N, Nv, ldiv)
     α = knorm_elliptic(n, v, Nv)  # = α₁
@@ -332,7 +332,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
 
       # Generate next Golub-Kahan vectors.
       # 1. βₖ₊₁Muₖ₊₁ = Avₖ - αₖMuₖ
-      mul!(Av, A, v)
+      kmul!(Av, A, v)
       kaxpby!(m, one(FC), Av, -α, Mu)
       MisI || mulorldiv!(u, M, Mu, ldiv)
       β = knorm_elliptic(m, u, Mu)
@@ -341,7 +341,7 @@ kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :
         MisI || kdiv!(m, Mu, β)
 
         # 2. αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
-        mul!(Aᴴu, Aᴴ, u)
+        kmul!(Aᴴu, Aᴴ, u)
         kaxpby!(n, one(FC), Aᴴu, -β, Nv)
         NisI || mulorldiv!(v, N, Nv, ldiv)
         α = knorm_elliptic(n, v, Nv)

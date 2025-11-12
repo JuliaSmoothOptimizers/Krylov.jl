@@ -304,7 +304,9 @@ kdisplay(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
 
 ktimer(start_time::UInt64) = (time_ns() - start_time) / 1e9
 
-mulorldiv!(y, P, x, ldiv::Bool) = ldiv ? ldiv!(y, P, x) : mul!(y, P, x)
+kmul!(y, P, x) = mul!(y, P, x)
+kldiv!(y, P, x) = ldiv!(y, P, x)
+mulorldiv!(y, P, x, ldiv::Bool) = ldiv ? kldiv!(y, P, x) : kmul!(y, P, x)
 
 kdot(n :: Integer, x :: Vector{T}, y :: Vector{T}) where T <: BLAS.BlasReal = BLAS.dot(n, x, 1, y, 1)
 kdot(n :: Integer, x :: Vector{T}, y :: Vector{T}) where T <: BLAS.BlasComplex = BLAS.dotc(n, x, 1, y, 1)

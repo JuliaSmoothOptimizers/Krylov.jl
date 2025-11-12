@@ -159,7 +159,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
     kfill!(x, zero(FC))
 
     if warm_start
-      mul!(Mvold, A, Δx)
+      kmul!(Mvold, A, Δx)
       (λ ≠ 0) && kaxpy!(n, λ, Δx, Mvold)
       kaxpby!(n, one(FC), b, -one(FC), Mvold)
     else
@@ -190,7 +190,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
 
     kcopy!(n, w̅, vold)  # w̅ ← vold
 
-    mul!(Mv, A, vold)
+    kmul!(Mv, A, vold)
     α = kdotr(m, vold, Mv) + λ
     kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
     MisI || mulorldiv!(v, M, Mv, ldiv)
@@ -289,7 +289,7 @@ kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :
 
       # Generate next Lanczos vector
       oldβ = β
-      mul!(Mv_next, A, v)
+      kmul!(Mv_next, A, v)
       α = kdotr(m, v, Mv_next) + λ
       kaxpy!(m, -oldβ, Mvold, Mv_next)
       kcopy!(m, Mvold, Mv)  # Mvold ← Mv

@@ -173,7 +173,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       return workspace
     end
     λ > 0 && kcopy!(m, s, r)  # s ← r
-    mul!(p, Aᴴ, z)
+    kmul!(p, Aᴴ, z)
 
     # Use ‖p‖ to detect inconsistent system.
     # An inconsistent system will necessarily have AAᴴ singular.
@@ -199,7 +199,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
     overtimed = false
 
     while ! (solved || inconsistent || tired || user_requested_exit || overtimed)
-      mul!(q, A, p)
+      kmul!(q, A, p)
       λ > 0 && kaxpy!(m, λ, s, q)
       δ = kdotr(n, p, p)   # Faster than dot(p, p)
       λ > 0 && (δ += λ * kdotr(m, s, s))
@@ -209,7 +209,7 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       NisI || mulorldiv!(z, N, r, ldiv)
       γ_next = kdotr(m, r, z)  # Faster than γ_next = dot(r, z)
       β = γ_next / γ
-      mul!(Aᴴz, Aᴴ, z)
+      kmul!(Aᴴz, Aᴴ, z)
       kaxpby!(n, one(FC), Aᴴz, β, p)  # Faster than p = Aᴴz + β * p
       pNorm = knorm(n, p)
       if λ > 0

@@ -162,7 +162,7 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
     s = NisI ? p : workspace.s
 
     if warm_start
-      mul!(r₀, A, Δx)
+      kmul!(r₀, A, Δx)
       kaxpby!(n, one(FC), b, -one(FC), r₀)
     end
     if !MisI
@@ -237,12 +237,12 @@ kwargs_qmr = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hist
 
       # Forms vₖ₊₁ : q ← MANvₖ
       NisI || mulorldiv!(Nvₖ, N, vₖ, ldiv)
-      mul!(t, A, Nvₖ)
+      kmul!(t, A, Nvₖ)
       MisI || mulorldiv!(q, M, t, ldiv)
 
       # Forms uₖ₊₁ : p ← NᴴAᴴMᴴuₖ
       MisI || mulorldiv!(Mᴴuₖ, Mᴴ, uₖ, ldiv)
-      mul!(s, Aᴴ, Mᴴuₖ)
+      kmul!(s, Aᴴ, Mᴴuₖ)
       NisI || mulorldiv!(p, Nᴴ, s, ldiv)
 
       kaxpy!(n, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁

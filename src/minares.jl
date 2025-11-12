@@ -146,7 +146,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     # Initialize the Lanczos process.
     # β₁v₁ = r₀
     if warm_start
-      mul!(vₖ, A, Δx)  # r₀ = b - Ax₀
+      kmul!(vₖ, A, Δx)  # r₀ = b - Ax₀
       (λ ≠ 0) && kaxpy!(n, λ, Δx, vₖ)
       kaxpby!(n, one(FC), b, -one(FC), vₖ)
     else
@@ -159,7 +159,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     β₁ = βₖ
 
     # β₂v₂ = (A + λI)v₁ - α₁v₁
-    mul!(vₖ₊₁, A, vₖ)
+    kmul!(vₖ₊₁, A, vₖ)
     if λ ≠ 0
       kaxpy!(n, λ, vₖ, vₖ₊₁)
     end
@@ -274,7 +274,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       # M(A + λI)Vₖ₊₁ = Vₖ₊₂Tₖ₊₂.ₖ₊₁
       # βₖ₊₂vₖ₊₂ = M(A + λI)vₖ₊₁ - αₖ₊₁vₖ₊₁ - βₖ₊₁vₖ
       if iter ≤ ℓ-1
-        mul!(q, A, vₖ₊₁)  # q ← Avₖ
+        kmul!(q, A, vₖ₊₁)  # q ← Avₖ
         kaxpby!(n, one(T), q, -βₖ₊₁, vₖ)  # Forms vₖ₊₂ : vₖ ← Avₖ₊₁ - βₖ₊₁vₖ
         if λ ≠ 0
           kaxpy!(n, λ, vₖ₊₁, vₖ)          # vₖ ← vₖ + λvₖ₊₁
