@@ -228,12 +228,12 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
   end
 
   ## In-place
-  @eval krylov_solve!(workspace :: $workspace{T,FC,S}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}} = $(krylov!)(workspace, $(args...); $(kwargs...))
+  @eval krylov_solve!(workspace :: $workspace{T,FC,S}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractArray{FC}} = $(krylov!)(workspace, $(args...); $(kwargs...))
 
   for krylov_ip in (:krylov_solve!, krylov!)
     @eval begin
       if !isempty($optargs)
-        function $(krylov_ip)(workspace :: $workspace{T,FC,S}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+        function $(krylov_ip)(workspace :: $workspace{T,FC,S}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractArray{FC}}
           start_time = time_ns()
           warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
