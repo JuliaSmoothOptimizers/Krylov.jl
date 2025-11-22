@@ -37,6 +37,15 @@ struct KrylovConstructor{Sm, Sn}
   vn::Sn
   vm_empty::Sm
   vn_empty::Sn
+
+  function KrylovConstructor{Sm, Sn}(vm, vn, vm_empty, vn_empty) where {Sm, Sn}
+    eltype(Sm) === eltype(Sn) || throw(ArgumentError("KrylovConstructor requires that eltype(Sm) == eltype(Sn), got $(eltype(Sm)) and $(eltype(Sn))"))
+    return new{Sm, Sn}(vm, vn, vm_empty, vn_empty)
+  end
+end
+
+function KrylovConstructor(vm::Sm, vn::Sn, vm_empty, vn_empty) where {Sm, Sn}
+  return KrylovConstructor{Sm, Sn}(vm, vn, vm_empty, vn_empty)
 end
 
 function KrylovConstructor(vm; vm_empty=vm)
@@ -1633,7 +1642,7 @@ mutable struct CglsWorkspace{T,FC,Sm,Sn} <: KrylovWorkspace{T,FC,Sm,Sn}
 end
 
 function CglsWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
-  FC = promote_type(eltype(Sm), eltype(Sn))
+  FC = eltype(Sm)   # Sn has the same eltype
   T  = real(FC)
   m  = length(kc.vm)
   n  = length(kc.vn)
