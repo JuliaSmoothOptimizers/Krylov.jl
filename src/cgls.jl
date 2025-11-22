@@ -126,7 +126,7 @@ args_cgls = (:A, :b)
 kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgls!(workspace :: CglsWorkspace{T,FC,S}, $(def_args_cgls...); $(def_kwargs_cgls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cgls!(workspace :: CglsWorkspace{T,FC,Sm,Sn}, $(def_args_cgls...); $(def_kwargs_cgls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -142,13 +142,13 @@ kwargs_cgls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
+    ktypeof(b) == Sm || error("ktypeof(b) must be equal to $Sm")
 
     # Compute the adjoint of A
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, workspace, :Mr, S, workspace.r)  # The length of Mr is m
+    allocate_if(!MisI, workspace, :Mr, Sm, workspace.r)  # The length of Mr is m
     x, p, s, r, q, stats = workspace.x, workspace.p, workspace.s, workspace.r, workspace.q, workspace.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals
     reset!(stats)

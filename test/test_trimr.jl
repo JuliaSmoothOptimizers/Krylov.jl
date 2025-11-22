@@ -206,6 +206,18 @@
         @test sqrt(dot(r, inv(H) * r)) / sqrt(dot([b; c], inv(H) * [b; c])) ≤ trimr_tol
       end
 
+      # Test different types for b and c
+      A, b, _ = saddle_point(FC=FC)
+      (x, y, stats) = trimr(A, b, -b)
+      c = TestVector(-b)
+      workspace = TrimrWorkspace(KrylovConstructor(b, c))
+      @test typeof(workspace.x) === typeof(b)
+      @test typeof(workspace.y) === typeof(c)
+      trimr!(workspace, A, b, c)
+      xt, yt = workspace.x, workspace.y
+      @test typeof(xt) === typeof(b)
+      @test typeof(yt) === typeof(c)
+
       for transpose ∈ (false, true)
         A, b, c = ssy_mo_breakdown(transpose)
 
