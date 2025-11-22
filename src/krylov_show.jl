@@ -63,13 +63,13 @@ end
 
 Statistics of `workspace` are displayed if `show_stats` is set to true.
 """
-function show(io :: IO, workspace :: Union{KrylovWorkspace{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+function show(io :: IO, workspace :: Union{KrylovWorkspaceNext{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   type_workspace = typeof(workspace)
   name_workspace = string(type_workspace.name.name)
   name_stats = string(typeof(workspace.stats).name.name)
   nbytes = sizeof(workspace)
   storage = format_bytes(nbytes)
-  architecture = S <: Vector ? "CPU" : "GPU"
+  architecture = S <: Vector ? "CPU" : "GPU"   # FIXME cannot assume that all non-Vector types are GPU types
   l1 = max(length(name_workspace), length(string(FC)) + 11)  # length("Precision: ") = 11
   nchar = type_workspace <: Union{CgLanczosShiftWorkspace, FomWorkspace, DiomWorkspace, DqgmresWorkspace, GmresWorkspace, FgmresWorkspace, GpmrWorkspace, BlockGmresWorkspace} ? 8 : 0  # length("Vector{}") = 8
   l2 = max(ndigits(workspace.m) + 7, length(architecture) + 14, length(string(S)) + nchar)  # length("nrows: ") = 7 and length("Architecture: ") = 14

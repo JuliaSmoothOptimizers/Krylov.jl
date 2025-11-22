@@ -32,11 +32,20 @@ For rectangular problems (`m ≠ n`), use the second constructor with `vm` and `
 Empty vectors `vm_empty` and `vn_empty` reduce storage requirements when features such as warm-start or preconditioners are unused.
 These empty vectors will be replaced within a [`KrylovWorkspace`](@ref) only if required, such as when preconditioners are provided.
 """
-struct KrylovConstructor{S}
-  vm::S
-  vn::S
-  vm_empty::S
-  vn_empty::S
+struct KrylovConstructor{Sm, Sn}
+  vm::Sm
+  vn::Sn
+  vm_empty::Sm
+  vn_empty::Sn
+
+  function KrylovConstructor{Sm, Sn}(vm, vn, vm_empty, vn_empty) where {Sm, Sn}
+    eltype(Sm) === eltype(Sn) || throw(ArgumentError("KrylovConstructor requires that eltype(Sm) == eltype(Sn), got $(eltype(Sm)) and $(eltype(Sn))"))
+    return new{Sm, Sn}(vm, vn, vm_empty, vn_empty)
+  end
+end
+
+function KrylovConstructor(vm::Sm, vn::Sn, vm_empty, vn_empty) where {Sm, Sn}
+  return KrylovConstructor{Sm, Sn}(vm, vn, vm_empty, vn_empty)
 end
 
 function KrylovConstructor(vm; vm_empty=vm)
@@ -47,8 +56,12 @@ function KrylovConstructor(vm, vn; vm_empty=vm, vn_empty=vn)
   return KrylovConstructor(vm, vn, vm_empty, vn_empty)
 end
 
+# TODO: in the next breaking release, change to KrylovWorkspace{T,FC,Sm,Sn}
+# and delete the alias below
+abstract type KrylovWorkspaceNext{T,FC,Sm,Sn} end
+
 "Abstract type for using Krylov solvers in-place."
-abstract type KrylovWorkspace{T,FC,S} end
+const KrylovWorkspace{T,FC,S} = KrylovWorkspaceNext{T,FC,S,S}
 
 """
 Workspace for the in-place method [`minres!`](@ref).
@@ -975,32 +988,31 @@ The following outer constructors can be used to initialize this workspace:
     workspace = TricgWorkspace(A, b)
     workspace = TricgWorkspace(kc::KrylovConstructor)
 """
-mutable struct TricgWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct TricgWorkspace{T,FC,Sm,Sn} <: KrylovWorkspaceNext{T,FC,Sm,Sn}
   m          :: Int
   n          :: Int
-  y          :: S
-  N⁻¹uₖ₋₁    :: S
-  N⁻¹uₖ      :: S
-  p          :: S
-  gy₂ₖ₋₁     :: S
-  gy₂ₖ       :: S
-  x          :: S
-  M⁻¹vₖ₋₁    :: S
-  M⁻¹vₖ      :: S
-  q          :: S
-  gx₂ₖ₋₁     :: S
-  gx₂ₖ       :: S
-  Δx         :: S
-  Δy         :: S
-  uₖ         :: S
-  vₖ         :: S
+  y          :: Sn
+  N⁻¹uₖ₋₁    :: Sn
+  N⁻¹uₖ      :: Sn
+  p          :: Sn
+  gy₂ₖ₋₁     :: Sn
+  gy₂ₖ       :: Sn
+  x          :: Sm
+  M⁻¹vₖ₋₁    :: Sm
+  M⁻¹vₖ      :: Sm
+  q          :: Sm
+  gx₂ₖ₋₁     :: Sm
+  gx₂ₖ       :: Sm
+  Δx         :: Sm
+  Δy         :: Sn
+  uₖ         :: Sn
+  vₖ         :: Sm
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
 
-function TricgWorkspace(kc::KrylovConstructor)
-  S       = typeof(kc.vm)
-  FC      = eltype(S)
+function TricgWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC      = eltype(Sm)
   T       = real(FC)
   m       = length(kc.vm)
   n       = length(kc.vn)
@@ -1021,7 +1033,7 @@ function TricgWorkspace(kc::KrylovConstructor)
   uₖ      = similar(kc.vn_empty)
   vₖ      = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = TricgWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  workspace = TricgWorkspace{T,FC,Sm,Sn}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
 end
 
@@ -1046,7 +1058,7 @@ function TricgWorkspace(m::Integer, n::Integer, S::Type)
   vₖ      = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = TricgWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  workspace = TricgWorkspace{T,FC,S,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
 end
 
@@ -1065,36 +1077,35 @@ The following outer constructors can be used to initialize this workspace:
     workspace = TrimrWorkspace(A, b)
     workspace = TrimrWorkspace(kc::KrylovConstructor)
 """
-mutable struct TrimrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct TrimrWorkspace{T,FC,Sm,Sn} <: KrylovWorkspaceNext{T,FC,Sm,Sn}
   m          :: Int
   n          :: Int
-  y          :: S
-  N⁻¹uₖ₋₁    :: S
-  N⁻¹uₖ      :: S
-  p          :: S
-  gy₂ₖ₋₃     :: S
-  gy₂ₖ₋₂     :: S
-  gy₂ₖ₋₁     :: S
-  gy₂ₖ       :: S
-  x          :: S
-  M⁻¹vₖ₋₁    :: S
-  M⁻¹vₖ      :: S
-  q          :: S
-  gx₂ₖ₋₃     :: S
-  gx₂ₖ₋₂     :: S
-  gx₂ₖ₋₁     :: S
-  gx₂ₖ       :: S
-  Δx         :: S
-  Δy         :: S
-  uₖ         :: S
-  vₖ         :: S
+  y          :: Sn
+  N⁻¹uₖ₋₁    :: Sn
+  N⁻¹uₖ      :: Sn
+  p          :: Sn
+  gy₂ₖ₋₃     :: Sn
+  gy₂ₖ₋₂     :: Sn
+  gy₂ₖ₋₁     :: Sn
+  gy₂ₖ       :: Sn
+  x          :: Sm
+  M⁻¹vₖ₋₁    :: Sm
+  M⁻¹vₖ      :: Sm
+  q          :: Sm
+  gx₂ₖ₋₃     :: Sm
+  gx₂ₖ₋₂     :: Sm
+  gx₂ₖ₋₁     :: Sm
+  gx₂ₖ       :: Sm
+  Δx         :: Sm
+  Δy         :: Sn
+  uₖ         :: Sn
+  vₖ         :: Sm
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
 
-function TrimrWorkspace(kc::KrylovConstructor)
-  S       = typeof(kc.vm)
-  FC      = eltype(S)
+function TrimrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC      = eltype(Sm)
   T       = real(FC)
   m       = length(kc.vm)
   n       = length(kc.vn)
@@ -1119,7 +1130,7 @@ function TrimrWorkspace(kc::KrylovConstructor)
   uₖ      = similar(kc.vn_empty)
   vₖ      = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = TrimrWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  workspace = TrimrWorkspace{T,FC,Sm,Sn}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
 end
 
@@ -1148,7 +1159,7 @@ function TrimrWorkspace(m::Integer, n::Integer, S::Type)
   vₖ      = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = TrimrWorkspace{T,FC,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  workspace = TrimrWorkspace{T,FC,S,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
 end
 
@@ -1620,21 +1631,20 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CglsWorkspace(A, b)
     workspace = CglsWorkspace(kc::KrylovConstructor)
 """
-mutable struct CglsWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CglsWorkspace{T,FC,Sm,Sn} <: KrylovWorkspaceNext{T,FC,Sm,Sn}
   m     :: Int
   n     :: Int
-  x     :: S
-  p     :: S
-  s     :: S
-  r     :: S
-  q     :: S
-  Mr    :: S
+  x     :: Sn
+  p     :: Sn
+  s     :: Sn
+  r     :: Sm
+  q     :: Sm
+  Mr    :: Sm
   stats :: SimpleStats{T}
 end
 
-function CglsWorkspace(kc::KrylovConstructor)
-  S  = typeof(kc.vm)
-  FC = eltype(S)
+function CglsWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC = eltype(Sm)   # Sn has the same eltype
   T  = real(FC)
   m  = length(kc.vm)
   n  = length(kc.vn)
@@ -1645,7 +1655,7 @@ function CglsWorkspace(kc::KrylovConstructor)
   q  = similar(kc.vm)
   Mr = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CglsWorkspace{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
+  workspace = CglsWorkspace{T,FC,Sm,Sn}(m, n, x, p, s, r, q, Mr, stats)
   return workspace
 end
 
@@ -1660,7 +1670,7 @@ function CglsWorkspace(m::Integer, n::Integer, S::Type)
   Mr = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CglsWorkspace{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
+  workspace = CglsWorkspace{T,FC,S,S}(m, n, x, p, s, r, q, Mr, stats)
   return workspace
 end
 
@@ -2022,24 +2032,23 @@ The following outer constructors can be used to initialize this workspace:
     workspace = LsqrWorkspace(A, b)
     workspace = LsqrWorkspace(kc::KrylovConstructor)
 """
-mutable struct LsqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct LsqrWorkspace{T,FC,Sm,Sn} <: KrylovWorkspaceNext{T,FC,Sm,Sn}
   m       :: Int
   n       :: Int
-  x       :: S
-  Nv      :: S
-  Aᴴu     :: S
-  w       :: S
-  Mu      :: S
-  Av      :: S
-  u       :: S
-  v       :: S
+  x       :: Sn
+  Nv      :: Sn
+  Aᴴu     :: Sn
+  w       :: Sn
+  Mu      :: Sm
+  Av      :: Sm
+  u       :: Sm
+  v       :: Sn
   err_vec :: Vector{T}
   stats   :: SimpleStats{T}
 end
 
-function LsqrWorkspace(kc::KrylovConstructor; window::Integer = 5)
-  S   = typeof(kc.vm)
-  FC  = eltype(S)
+function LsqrWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Integer = 5) where {Sm,Sn}
+  FC  = eltype(Sm)
   T   = real(FC)
   m   = length(kc.vm)
   n   = length(kc.vn)
@@ -2053,7 +2062,7 @@ function LsqrWorkspace(kc::KrylovConstructor; window::Integer = 5)
   v   = similar(kc.vn_empty)
   err_vec = zeros(T, window)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = LsqrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
+  workspace = LsqrWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
   return workspace
 end
 
@@ -2071,7 +2080,7 @@ function LsqrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   err_vec = zeros(T, window)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = LsqrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
+  workspace = LsqrWorkspace{T,FC,S,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
   return workspace
 end
 
@@ -2609,21 +2618,21 @@ The following outer constructors can be used to initialize this workspace:
 
 `memory` is set to `n + m` if the value given is larger than `n + m`.
 """
-mutable struct GpmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct GpmrWorkspace{T,FC,Sm,Sn} <: KrylovWorkspaceNext{T,FC,Sm,Sn}
   m          :: Int
   n          :: Int
-  wA         :: S
-  wB         :: S
-  dA         :: S
-  dB         :: S
-  Δx         :: S
-  Δy         :: S
-  x          :: S
-  y          :: S
-  q          :: S
-  p          :: S
-  V          :: Vector{S}
-  U          :: Vector{S}
+  wA         :: Sn
+  wB         :: Sm
+  dA         :: Sm
+  dB         :: Sn
+  Δx         :: Sm
+  Δy         :: Sn
+  x          :: Sm
+  y          :: Sn
+  q          :: Sm
+  p          :: Sn
+  V          :: Vector{Sm}
+  U          :: Vector{Sn}
   gs         :: Vector{FC}
   gc         :: Vector{T}
   zt         :: Vector{FC}
@@ -2632,9 +2641,8 @@ mutable struct GpmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function GpmrWorkspace(kc::KrylovConstructor; memory::Integer = 20)
-  S  = typeof(kc.vm)
-  FC = eltype(S)
+function GpmrWorkspace(kc::KrylovConstructor{Sm,Sn}; memory::Integer = 20) where {Sm,Sn}
+  FC = eltype(Sm)
   T  = real(FC)
   m  = length(kc.vm)
   n  = length(kc.vn)
@@ -2649,14 +2657,14 @@ function GpmrWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   y  = similar(kc.vn)
   q  = similar(kc.vm_empty)
   p  = similar(kc.vn_empty)
-  V  = S[similar(kc.vm) for i = 1 : memory]
-  U  = S[similar(kc.vn) for i = 1 : memory]
+  V  = Sm[similar(kc.vm) for i = 1 : memory]
+  U  = Sn[similar(kc.vn) for i = 1 : memory]
   gs = Vector{FC}(undef, 4 * memory)
   gc = Vector{T}(undef, 4 * memory)
   zt = Vector{FC}(undef, 2 * memory)
   R  = Vector{FC}(undef, memory * (2 * memory + 1))
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = GpmrWorkspace{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
+  workspace = GpmrWorkspace{T,FC,Sm,Sn}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
   return workspace
 end
 
@@ -2682,7 +2690,7 @@ function GpmrWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   R  = Vector{FC}(undef, memory * (2 * memory + 1))
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = GpmrWorkspace{T,FC,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
+  workspace = GpmrWorkspace{T,FC,S,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
   return workspace
 end
 

@@ -301,8 +301,20 @@
         (x, y, stats) = gpmr(A, A', b, c, C=M⁻¹, D=N⁻¹)
       end
 
+      # Test different types for b and c
+      A, b, _ = saddle_point(FC=FC)
+      (x, y, stats) = gpmr(A, A', b, -b)
+      c = TestVector(-b)
+      workspace = GpmrWorkspace(KrylovConstructor(b, c))
+      @test typeof(workspace.x) === typeof(b)
+      @test typeof(workspace.y) === typeof(c)
+      gpmr!(workspace, A, A', b, c)
+      xt, yt = workspace.x, workspace.y
+      @test typeof(xt) === typeof(b)
+      @test typeof(yt) === typeof(c)
+
       # test callback function
-      # Not testing with an interesting callback because workspace.x and workspace.y are not updated 
+      # Not testing with an interesting callback because workspace.x and workspace.y are not updated
       # until the end of the algorithm (TODO: be able to evaluate workspace.x and workspace.y ?)
       A, b, c = square_adjoint(FC=FC)
       workspace = GpmrWorkspace(A, b; memory = 20)
