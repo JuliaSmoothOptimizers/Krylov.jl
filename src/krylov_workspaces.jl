@@ -32,11 +32,11 @@ For rectangular problems (`m ≠ n`), use the second constructor with `vm` and `
 Empty vectors `vm_empty` and `vn_empty` reduce storage requirements when features such as warm-start or preconditioners are unused.
 These empty vectors will be replaced within a [`KrylovWorkspace`](@ref) only if required, such as when preconditioners are provided.
 """
-struct KrylovConstructor{S}
-  vm::S
-  vn::S
-  vm_empty::S
-  vn_empty::S
+struct KrylovConstructor{Sm, Sn}
+  vm::Sm
+  vn::Sn
+  vm_empty::Sm
+  vn_empty::Sn
 end
 
 function KrylovConstructor(vm; vm_empty=vm)
@@ -48,7 +48,7 @@ function KrylovConstructor(vm, vn; vm_empty=vm, vn_empty=vn)
 end
 
 "Abstract type for using Krylov solvers in-place."
-abstract type KrylovWorkspace{T,FC,S} end
+abstract type KrylovWorkspace{T,FC,Sm,Sn} end
 
 """
 Workspace for the in-place method [`minres!`](@ref).
@@ -59,7 +59,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = MinresWorkspace(A, b; window = 5)
     workspace = MinresWorkspace(kc::KrylovConstructor; window = 5)
 """
-mutable struct MinresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct MinresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -131,7 +131,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = MinaresWorkspace(A, b)
     workspace = MinaresWorkspace(kc::KrylovConstructor)
 """
-mutable struct MinaresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct MinaresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -200,7 +200,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CgWorkspace(A, b)
     workspace = CgWorkspace(kc::KrylovConstructor)
 """
-mutable struct CgWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CgWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -263,7 +263,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CrWorkspace(A, b)
     workspace = CrWorkspace(kc::KrylovConstructor)
 """
-mutable struct CrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -329,7 +329,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CarWorkspace(A, b)
     workspace = CarWorkspace(kc::KrylovConstructor)
 """
-mutable struct CarWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CarWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -398,7 +398,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = SymmlqWorkspace(A, b)
     workspace = SymmlqWorkspace(kc::KrylovConstructor)
 """
-mutable struct SymmlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct SymmlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -470,7 +470,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CgLanczosWorkspace(A, b)
     workspace = CgLanczosWorkspace(kc::KrylovConstructor)
 """
-mutable struct CgLanczosWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CgLanczosWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -533,7 +533,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CgLanczosShiftWorkspace(A, b, nshifts)
     workspace = CgLanczosShiftWorkspace(kc::KrylovConstructor, nshifts)
 """
-mutable struct CgLanczosShiftWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CgLanczosShiftWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   nshifts    :: Int
@@ -616,7 +616,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = MinresQlpWorkspace(A, b)
     workspace = MinresQlpWorkspace(kc::KrylovConstructor)
 """
-mutable struct MinresQlpWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct MinresQlpWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -687,7 +687,7 @@ The following outer constructors can be used to initialize this workspace:
 
 `memory` is set to `n` if the value given is larger than `n`.
 """
-mutable struct DqgmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct DqgmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -763,7 +763,7 @@ The following outer constructors can be used to initialize this workspace:
 
 `memory` is set to `n` if the value given is larger than `n`.
 """
-mutable struct DiomWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct DiomWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -834,7 +834,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = UsymlqWorkspace(A, b)
     workspace = UsymlqWorkspace(kc::KrylovConstructor)
 """
-mutable struct UsymlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct UsymlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   uₖ₋₁       :: S
@@ -903,7 +903,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = UsymqrWorkspace(A, b)
     workspace = UsymqrWorkspace(kc::KrylovConstructor)
 """
-mutable struct UsymqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct UsymqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   vₖ₋₁       :: S
@@ -975,7 +975,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = TricgWorkspace(A, b)
     workspace = TricgWorkspace(kc::KrylovConstructor)
 """
-mutable struct TricgWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct TricgWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   y          :: S
@@ -1065,7 +1065,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = TrimrWorkspace(A, b)
     workspace = TrimrWorkspace(kc::KrylovConstructor)
 """
-mutable struct TrimrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct TrimrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   y          :: S
@@ -1167,7 +1167,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = TrilqrWorkspace(A, b)
     workspace = TrilqrWorkspace(kc::KrylovConstructor)
 """
-mutable struct TrilqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct TrilqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   uₖ₋₁       :: S
@@ -1248,7 +1248,7 @@ The following outer constructors can be used to initialize this workspace:s
     workspace = CgsWorkspace(A, b)
     workspace = CgsWorkspace(kc::KrylovConstructor)
 """
-mutable struct CgsWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CgsWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -1317,7 +1317,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = BicgstabWorkspace(A, b)
     workspace = BicgstabWorkspace(kc::KrylovConstructor)
 """
-mutable struct BicgstabWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct BicgstabWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -1386,7 +1386,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = BilqWorkspace(A, b)
     workspace = BilqWorkspace(kc::KrylovConstructor)
 """
-mutable struct BilqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct BilqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   uₖ₋₁       :: S
@@ -1461,7 +1461,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = QmrWorkspace(A, b)
     workspace = QmrWorkspace(kc::KrylovConstructor)
 """
-mutable struct QmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct QmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   uₖ₋₁       :: S
@@ -1539,7 +1539,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = BilqrWorkspace(A, b)
     workspace = BilqrWorkspace(kc::KrylovConstructor)
 """
-mutable struct BilqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct BilqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   uₖ₋₁       :: S
@@ -1620,21 +1620,20 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CglsWorkspace(A, b)
     workspace = CglsWorkspace(kc::KrylovConstructor)
 """
-mutable struct CglsWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CglsWorkspace{T,FC,Sm,Sn} <: KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
   n     :: Int
-  x     :: S
-  p     :: S
-  s     :: S
-  r     :: S
-  q     :: S
-  Mr    :: S
+  x     :: Sn
+  p     :: Sn
+  s     :: Sn
+  r     :: Sm
+  q     :: Sm
+  Mr    :: Sm
   stats :: SimpleStats{T}
 end
 
-function CglsWorkspace(kc::KrylovConstructor)
-  S  = typeof(kc.vm)
-  FC = eltype(S)
+function CglsWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC = promote_type(eltype(Sm), eltype(Sn))
   T  = real(FC)
   m  = length(kc.vm)
   n  = length(kc.vn)
@@ -1645,7 +1644,7 @@ function CglsWorkspace(kc::KrylovConstructor)
   q  = similar(kc.vm)
   Mr = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CglsWorkspace{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
+  workspace = CglsWorkspace{T,FC,Sm,Sn}(m, n, x, p, s, r, q, Mr, stats)
   return workspace
 end
 
@@ -1660,7 +1659,7 @@ function CglsWorkspace(m::Integer, n::Integer, S::Type)
   Mr = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CglsWorkspace{T,FC,S}(m, n, x, p, s, r, q, Mr, stats)
+  workspace = CglsWorkspace{T,FC,S,S}(m, n, x, p, s, r, q, Mr, stats)
   return workspace
 end
 
@@ -1679,7 +1678,7 @@ The following outer constructors can be used to initialize this workspace::
     workspace = CglsLanczosShiftWorkspace(A, b, nshifts)
     workspace = CglsLanczosShiftWorkspace(kc::KrylovConstructor, nshifts)
 """
-mutable struct CglsLanczosShiftWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CglsLanczosShiftWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m         :: Int
   n         :: Int
   nshifts   :: Int
@@ -1765,7 +1764,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CrlsWorkspace(A, b)
     workspace = CrlsWorkspace(kc::KrylovConstructor)
 """
-mutable struct CrlsWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CrlsWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m     :: Int
   n     :: Int
   x     :: S
@@ -1830,7 +1829,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CgneWorkspace(A, b)
     workspace = CgneWorkspace(kc::KrylovConstructor)
 """
-mutable struct CgneWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CgneWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m     :: Int
   n     :: Int
   x     :: S
@@ -1892,7 +1891,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CrmrWorkspace(A, b)
     workspace = CrmrWorkspace(kc::KrylovConstructor)
 """
-mutable struct CrmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CrmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m     :: Int
   n     :: Int
   x     :: S
@@ -1954,7 +1953,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = LslqWorkspace(A, b)
     workspace = LslqWorkspace(kc::KrylovConstructor)
 """
-mutable struct LslqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct LslqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m       :: Int
   n       :: Int
   x       :: S
@@ -2022,7 +2021,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = LsqrWorkspace(A, b)
     workspace = LsqrWorkspace(kc::KrylovConstructor)
 """
-mutable struct LsqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct LsqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m       :: Int
   n       :: Int
   x       :: S
@@ -2090,7 +2089,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = LsmrWorkspace(A, b)
     workspace = LsmrWorkspace(kc::KrylovConstructor)
 """
-mutable struct LsmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct LsmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m       :: Int
   n       :: Int
   x       :: S
@@ -2161,7 +2160,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = LnlqWorkspace(A, b)
     workspace = LnlqWorkspace(kc::KrylovConstructor)
 """
-mutable struct LnlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct LnlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m     :: Int
   n     :: Int
   x     :: S
@@ -2232,7 +2231,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CraigWorkspace(A, b)
     workspace = CraigWorkspace(kc::KrylovConstructor)
 """
-mutable struct CraigWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CraigWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m     :: Int
   n     :: Int
   x     :: S
@@ -2303,7 +2302,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CraigmrWorkspace(A, b)
     workspace = CraigmrWorkspace(kc::KrylovConstructor)
 """
-mutable struct CraigmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CraigmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m     :: Int
   n     :: Int
   x     :: S
@@ -2382,7 +2381,7 @@ The following outer constructors can be used to initialize this workspace:
 
 `memory` is set to `n` if the value given is larger than `n`.
 """
-mutable struct GmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct GmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -2459,7 +2458,7 @@ The following outer constructors can be used to initialize this workspace:
 
 `memory` is set to `n` if the value given is larger than `n`.
 """
-mutable struct FgmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct FgmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -2536,7 +2535,7 @@ The following outer constructors can be used to initialize this workspace:
 
 `memory` is set to `n` if the value given is larger than `n`.
 """
-mutable struct FomWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct FomWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -2609,7 +2608,7 @@ The following outer constructors can be used to initialize this workspace:
 
 `memory` is set to `n + m` if the value given is larger than `n + m`.
 """
-mutable struct GpmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct GpmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   wA         :: S
