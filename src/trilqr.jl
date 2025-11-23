@@ -38,7 +38,7 @@ USYMQR is used for solving dual system `Aᴴy = c` of size n × m.
 
 To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :trilqr`.
 
-For an in-place variant that reuses memory across solves, see [trilqr!`](@ref).
+For an in-place variant that reuses memory across solves, see [`trilqr!`](@ref).
 
 #### Input arguments
 
