@@ -160,6 +160,10 @@
         M⁻¹ = inv(M)
         N⁻¹ = inv(N)
         (x, y, stats) = tricg(A, b, c, M=M⁻¹, N=N⁻¹)
+        K = [M A; A' -N]
+        r = [b; c] - K * [x; y]
+        H = [M zeros(size(M, 1), size(N, 2)); zeros(size(N, 1), size(M, 2)) N]
+        @test sqrt(dot(r, inv(H) * r)) / sqrt(dot([b; c], inv(H) * [b; c])) ≤ tricg_tol
       end
 
       for transpose ∈ (false, true)
