@@ -33,18 +33,20 @@ Given a matrix `A` of dimension m × n, TriMR solves the symmetric linear system
     [ τE    A ] [ x ] = [ b ]
     [  Aᴴ  νF ] [ y ]   [ c ],
 
-of size (n+m) × (n+m) where τ and ν are real numbers, E = M⁻¹ ≻ 0, F = N⁻¹ ≻ 0.
+of size (n+m) × (n+m) where `τ` and `ν` are real numbers, `E` = `M⁻¹` ≻ 0, `F` = `N⁻¹` ≻ 0.
 TriMR handles saddle-point systems (`τ = 0` or `ν = 0`) and adjoint systems (`τ = 0` and `ν = 0`) without any risk of breakdown.
 
-By default, TriMR solves symmetric and quasi-definite linear systems with τ = 1 and ν = -1.
+By default, TriMR solves symmetric and quasi-definite linear systems with `τ` = 1 and `ν` = -1.
 
 TriMR is based on the preconditioned orthogonal tridiagonalization process
 and its relation with the preconditioned block-Lanczos process.
 
+The matrix
+
     [ M   0 ]
     [ 0   N ]
 
-indicates the weighted norm in which residuals are measured.
+indicates the weighted norm in which residuals are measured, here denoted `‖·‖`.
 It's the Euclidean norm when `M` and `N` are identity operators.
 
 TriMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
@@ -66,6 +68,8 @@ For an in-place variant that reuses memory across solves, see [`trimr!`](@ref).
 
 * `x0`: a vector of length `m` that represents an initial guess of the solution `x`;
 * `y0`: a vector of length `n` that represents an initial guess of the solution `y`.
+
+Warm-starting is supported only when `M` and `N` are either `I` or the corresponding coefficient (`τ` or `ν`) is zero.
 
 #### Keyword arguments
 
