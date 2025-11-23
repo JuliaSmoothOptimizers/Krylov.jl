@@ -13,6 +13,9 @@ function test_warm_start(FC)
   z0 = -2 * ones(FC, n)
   d = -10 * ones(FC, n)
 
+  # For relevant bipartite methods, it's also important to test asymmetric sizes
+  A3x2, b3, c2, M3x3, N2x2 = small_sqd(false; FC)
+
   # BILQR
   @testset "bilqr" begin
     x, y, stats = bilqr(A, b, c, x0, y0)
@@ -51,6 +54,14 @@ function test_warm_start(FC)
     resid = norm(s) / norm(c)
     @test(resid ≤ tol)
 
+    x30, y20, _ = trilqr(A3x2, b3, c2)
+    x3, y2, stats = trilqr(A3x2, b3, c2, x30, y20)
+    @test_broken x3 ≈ x30 atol=1e-12
+    @test y2 ≈ y20 atol=1e-12
+    @test_broken stats.niter <= 1
+    @test_throws "x0 should have size $(length(x30))" trilqr(A3x2, b3, c2, [1.0], y20)
+    @test_throws "y0 should have size $(length(y20))" trilqr(A3x2, b3, c2, x30, [1.0])
+
     workspace = TrilqrWorkspace(A, b)
     krylov_solve!(workspace, A, b, c, x0, y0)
     r = b - A * workspace.x
@@ -76,6 +87,13 @@ function test_warm_start(FC)
     resid = norm(r) / norm([b; b])
     @test(resid ≤ tol)
 
+    x30, y20, _ = tricg(A3x2, b3, c2)
+    x3, y2, stats = tricg(A3x2, b3, c2, x30, y20)
+    @test x3 ≈ x30 atol=1e-12
+    @test y2 ≈ y20 atol=1e-12
+    @test stats.niter <= 1
+    @test_throws "x0 should have size $(length(x30))" tricg(A3x2, b3, c2, [1.0], y20)
+    @test_throws "y0 should have size $(length(y20))" tricg(A3x2, b3, c2, x30, [1.0])
     workspace = TricgWorkspace(A, b)
     krylov_solve!(workspace, A, b, b, x0, y0)
     r = [b - workspace.x - A * workspace.y; b - A' * workspace.x + workspace.y]
@@ -97,6 +115,13 @@ function test_warm_start(FC)
     resid = norm(r) / norm([b; b])
     @test(resid ≤ tol)
 
+    x30, y20, _ = trimr(A3x2, b3, c2)
+    x3, y2, stats = trimr(A3x2, b3, c2, x30, y20)
+    @test x3 ≈ x30 atol=1e-12
+    @test y2 ≈ y20 atol=1e-12
+    @test stats.niter <= 1
+    @test_throws "x0 should have size $(length(x30))" trimr(A3x2, b3, c2, [1.0], y20)
+    @test_throws "y0 should have size $(length(y20))" trimr(A3x2, b3, c2, x30, [1.0])
     workspace = TrimrWorkspace(A, b)
     krylov_solve!(workspace, A, b, b, x0, y0)
     r = [b - workspace.x - A * workspace.y; b - A' * workspace.x + workspace.y]
@@ -118,6 +143,11 @@ function test_warm_start(FC)
     resid = norm(r) / norm([b; b])
     @test(resid ≤ tol)
 
+    x30, y20, _ = gpmr(A3x2, A3x2', b3, c2)
+    x3, y2, stats = gpmr(A3x2, A3x2', b3, c2, x30, y20)
+    @test stats.niter <= 1
+    @test_throws "x0 should have size $(length(x30))" gpmr(A3x2, A3x2', b3, c2, [1.0], y20)
+    @test_throws "y0 should have size $(length(y20))" gpmr(A3x2, A3x2', b3, c2, x30, [1.0])
     workspace = GpmrWorkspace(A, b)
     krylov_solve!(workspace, A, A', b, b, x0, y0)
     r = [b - workspace.x - A * workspace.y; b - A' * workspace.x - workspace.y]
