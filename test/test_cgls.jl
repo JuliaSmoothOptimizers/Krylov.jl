@@ -47,6 +47,15 @@
         (x, stats) = cgls(A, b, M=D⁻¹, λ=1.0)
       end
 
+      # Test different types for input and output
+      A, b, c, D = small_sp(false, FC=FC)
+      workspace = CglsWorkspace(KrylovConstructor(TestVector(b), c))
+      cgls!(workspace, A, TestVector(b), M=inv(D), λ=1.0)
+      @test typeof(workspace.x) === typeof(c)
+      workspace = CglsWorkspace(KrylovConstructor(b, TestVector(c)))
+      cgls!(workspace, A, b, M=inv(D), λ=1.0)
+      @test typeof(workspace.x) === typeof(TestVector(c))
+
       # test callback function
       A, b, M = saddle_point(FC=FC)
       M⁻¹ = inv(M)

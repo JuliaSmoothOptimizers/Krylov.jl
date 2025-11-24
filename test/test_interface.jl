@@ -296,6 +296,14 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false, use_val::Boo
           @test solution(workspace, 1) === workspace.x
           @test solution(workspace, 2) === workspace.y
           @test solution_count(workspace) == 2
+
+          if method == :gpmr
+            x, y, stats = use_val ? @inferred(krylov_solve(Val(method), Ao, Au, TestVector(b), c)) : krylov_solve(method, Ao, Au, TestVector(b), c)
+            @test typeof(x) === typeof(TestVector(b))
+          else
+            x, y, stats = use_val ? @inferred(krylov_solve(Val(method), Au, TestVector(c), b)) : krylov_solve(method, Au, TestVector(c), b)
+            @test typeof(x) === typeof(TestVector(c))
+          end
         end
 
         if method ∈ (:usymlq, :usymqr)
