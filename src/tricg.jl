@@ -33,22 +33,24 @@ Given a matrix `A` of dimension m × n, TriCG solves the Hermitian linear system
     [ τE    A ] [ x ] = [ b ]
     [  Aᴴ  νF ] [ y ]   [ c ],
 
-of size (n+m) × (n+m) where `τ` and `ν` are real numbers, `E` = `M⁻¹` ≻ 0 and `F` = `N⁻¹` ≻ 0.
-TriCG could breakdown if `τ = 0` or `ν = 0`.
-It's recommended to use TriMR in these cases.
+of size (n+m) × (n+m) where `τ` and `ν` are real numbers, `E` ≻ 0 and `F` ≻ 0.
+`E` and `F` are related to the preconditioners `M` and `N` as `E = M⁻¹` and `F =
+N⁻¹` when `ldiv = false` (the default), and `E = M` and `F = N` when `ldiv =
+true`.
 
 By default, TriCG solves Hermitian and quasi-definite linear systems with `τ = 1` and `ν = -1`.
+TriCG could breakdown if `τ = 0` or `ν = 0`. It's recommended to use TriMR in these cases.
 
 TriCG is based on the preconditioned orthogonal tridiagonalization process
 and its relation with the preconditioned block-Lanczos process.
 
 The matrix
 
-    [ M   0 ]
-    [ 0   N ]
+    [ E⁻¹   0 ]
+    [ 0   F⁻¹ ]
 
 indicates the weighted norm in which residuals are measured, here denoted `‖·‖`.
-It's the Euclidean norm when `M` and `N` are identity operators.
+When `M` and `N` are identity operators and `τ` and `ν` are ±1, it's the Euclidean norm.
 
 TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
@@ -70,7 +72,9 @@ For an in-place variant that reuses memory across solves, see [`tricg!`](@ref).
 * `x0`: a vector of length `m` that represents an initial guess of the solution `x`;
 * `y0`: a vector of length `n` that represents an initial guess of the solution `y`.
 
-Warm-starting is supported only when `M` and `N` are either `I` or the corresponding coefficient (`τ` or `ν`) is zero.
+Warm-starting is supported only when:
+* ldiv = true; or
+* `M` and `N` are either `I` or the corresponding coefficient (`τ` or `ν`) is zero.
 
 #### Keyword arguments
 
@@ -178,8 +182,10 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     snd  && (τ = -one(T) ; ν = -one(T))
 
     warm_start = workspace.warm_start
-    warm_start && (τ ≠ 0) && !MisI && error("Warm-start with preconditioners is not supported.")
-    warm_start && (ν ≠ 0) && !NisI && error("Warm-start with preconditioners is not supported.")
+    if !ldiv
+      warm_start && (τ ≠ 0) && !MisI && error("Warm-start with preconditioners is not supported.")
+      warm_start && (ν ≠ 0) && !NisI && error("Warm-start with preconditioners is not supported.")
+    end
 
     # Compute the adjoint of A
     Aᴴ = A'
@@ -212,15 +218,27 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     kfill!(M⁻¹vₖ₋₁, zero(FC))  # v₀ = 0
     kfill!(N⁻¹uₖ₋₁, zero(FC))  # u₀ = 0
 
-    # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
-    # [  Aᴴ  νI ] [ yₖ ]   [ c - AᴴΔx - νΔy ]   [ c₀ ]
     if warm_start
-      kmul!(b₀, A, Δy)
-      (τ ≠ 0) && kaxpy!(m, τ, Δx, b₀)
-      kaxpby!(m, one(FC), b, -one(FC), b₀)
-      kmul!(c₀, Aᴴ, Δx)
-      (ν ≠ 0) && kaxpy!(n, ν, Δy, c₀)
-      kaxpby!(n, one(FC), c, -one(FC), c₀)
+      if ldiv
+        # [ τM    A ] [ xₖ ] = [ b -  τMΔx - AΔy ] = [ b₀ ]
+        # [  Aᴴ  νN ] [ yₖ ]   [ c - AᴴΔx - νNΔy ]   [ c₀ ]
+        kmul!(b₀, A, Δy)
+        (τ ≠ 0) && mul!(b₀, M, Δx, τ, one(FC))  # b₀ ← τMΔx + AΔy
+        kaxpby!(m, one(FC), b, -one(FC), b₀)
+        kmul!(c₀, Aᴴ, Δx)
+        (ν ≠ 0) && mul!(c₀, N, Δy, ν, one(FC))  # c₀ ← νNΔy + AᴴΔx
+        kaxpby!(n, one(FC), c, -one(FC), c₀)
+      else
+        # Only supported for M = I or τ = 0, and N = I or ν = 0
+        # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
+        # [  Aᴴ  νI ] [ yₖ ]   [ c - AᴴΔx - νΔy ]   [ c₀ ]
+        kmul!(b₀, A, Δy)
+        (τ ≠ 0) && kaxpy!(m, τ, Δx, b₀)
+        kaxpby!(m, one(FC), b, -one(FC), b₀)
+        kmul!(c₀, Aᴴ, Δx)
+        (ν ≠ 0) && kaxpy!(n, ν, Δy, c₀)
+        kaxpby!(n, one(FC), c, -one(FC), c₀)
+      end
     end
 
     # β₁Ev₁ = b ↔ β₁v₁ = Mb
