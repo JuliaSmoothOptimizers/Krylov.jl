@@ -24,29 +24,25 @@ function sym_givens(a :: T, b :: T) where T <: AbstractFloat
   # http://www.stanford.edu/group/SOL/dissertations/sou-cheng-choi-thesis.pdf
   # D. Orban, Montreal, May 2015.
 
-  if b == 0
-    if a == 0
-      c = one(T)
-    else
-      c = sign(a)  # In Julia, sign(0) = 0.
-    end
+  if iszero(b)
+    c = T(sign(a) + iszero(a)) # In Julia, sign(0) = 0.
     s = zero(T)
     ρ = abs(a)
 
-  elseif a == 0
+  elseif iszero(a)
     c = zero(T)
-    s = sign(b)
+    s = T(sign(b))
     ρ = abs(b)
 
   elseif abs(b) > abs(a)
     t = a / b
-    s = sign(b) / sqrt(one(T) + t * t)
+    s = T(sign(b)) / sqrt(oneunit(T) + t * t)
     c = s * t
     ρ = b / s  # Computationally better than ρ = a / c since |c| ≤ |s|.
 
   else
     t = b / a
-    c = sign(a) / sqrt(one(T) + t * t)
+    c = T(sign(a)) / sqrt(oneunit(T) + t * t)
     s = c * t
     ρ = a / c  # Computationally better than ρ = b / s since |s| ≤ |c|
   end
@@ -387,12 +383,12 @@ function to_boundary(n :: Int, x :: AbstractVector{FC}, d :: AbstractVector{FC},
     mulorldiv!(z, M, x, ldiv)
     rxd = kdot(n, z, d)
     xNorm2 = kdotr(n, z, x)
-    mulorldiv!(z, M, d, ldiv) 
+    mulorldiv!(z, M, d, ldiv)
     dNorm2 = kdotr(n, z, d)
-  end 
+  end
   dNorm2 == zero(T) && error("zero direction")
   flip && (rxd = -rxd)
-  
+
   radius2 = radius * radius
   (xNorm2 ≤ radius2) || error(@sprintf("outside of the trust region: ‖x‖²=%7.1e, Δ²=%7.1e", xNorm2, radius2))
 
