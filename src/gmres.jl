@@ -89,9 +89,9 @@ and [`krylov_solve!`](@ref) to run the Krylov method in-place.
 function gmres! end
 
 def_args_gmres = (:(A                    ),
-                  :(b::AbstractVector{FC}))
+                  :(b::AbstractArray{FC}))
 
-def_optargs_gmres = (:(x0::AbstractVector),)
+def_optargs_gmres = (:(x0::AbstractArray{FC}),)
 
 def_kwargs_gmres = (:(; M = I                            ),
                     :(; N = I                            ),
@@ -114,7 +114,7 @@ optargs_gmres = (:x0,)
 kwargs_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function gmres!(workspace :: GmresWorkspace{T,FC,S}, $(def_args_gmres...); $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function gmres!(workspace :: GmresWorkspace{T,FC,S}, $(def_args_gmres...); $(def_kwargs_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractArray{FC}}
 
     # Timer
     start_time = time_ns()
