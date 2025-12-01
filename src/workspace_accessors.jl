@@ -125,6 +125,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:FgmresWorkspace   , :fgmres!    , 1, 1, 0, true )
   (:FomWorkspace      , :fom!       , 1, 1, 0, true )
   (:GpmrWorkspace     , :gpmr!      , 2, 1, 0, true )
+  (:UsymlqrWorkspace  , :usymlqr!   , 2, 1, 1, true )
   (:CgLanczosShiftWorkspace  , :cg_lanczos_shift!  , 1, 1, 0, false)
   (:CglsLanczosShiftWorkspace, :cgls_lanczos_shift!, 1, 1, 1, false)
 ]

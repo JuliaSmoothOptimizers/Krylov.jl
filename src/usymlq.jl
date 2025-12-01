@@ -213,8 +213,10 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
 
       αₖ = kdot(m, vₖ, q)      # αₖ = ⟨vₖ,q⟩
 
-      kaxpy!(m, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
-      kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
+      if iter ≥ 2
+        kaxpy!(m, -     αₖ , vₖ, q)    # q ← q - αₖ * vₖ
+        kaxpy!(n, -conj(αₖ), uₖ, p)    # p ← p - ᾱₖ * uₖ
+      end
 
       βₖ₊₁ = knorm(m, q)       # βₖ₊₁ = ‖q‖
       γₖ₊₁ = knorm(n, p)       # γₖ₊₁ = ‖p‖
@@ -285,7 +287,7 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       # Compute d̅ₖ.
       if iter == 1
         # d̅₁ = u₁
-        kcopy!(n, d̅, uₖ)  # d̅ ← vₖ
+        kcopy!(n, d̅, uₖ)  # d̅ ← uₖ
       else
         # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
         kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
