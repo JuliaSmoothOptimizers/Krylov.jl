@@ -36,7 +36,7 @@ BLAS.get_config()  # BLAS.vendor() for Julia 1.6
 ## Multi-threaded sparse matrix-vector products
 
 For sparse matrices, the Julia implementation of `mul!` of [SparseArrays](https://docs.julialang.org/en/v1/stdlib/SparseArrays/) library is not parallelized.
-A significant speed-up can be observed with the multhreaded `mul!` of [MKLSparse.jl](https://github.com/JuliaSparse/MKLSparse.jl) or [ThreadedSparseCSR.jl](https://github.com/BacAmorim/ThreadedSparseCSR.jl).
+A significant speed-up can be observed with the multithreaded `mul!` of [MKLSparse.jl](https://github.com/JuliaSparse/MKLSparse.jl) or [ThreadedSparseCSR.jl](https://github.com/BacAmorim/ThreadedSparseCSR.jl).
 
 It's also possible to implement a generic multithreaded julia version.
 For instance, the following function can be used for symmetric matrices

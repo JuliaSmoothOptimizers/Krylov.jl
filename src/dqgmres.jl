@@ -188,7 +188,7 @@ kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :ti
     kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ.
     # Each column has at most mem + 1 nonzero elements.
     # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
-    # k-i+1 represents the indice of the diagonal where hᵢ.ₖ is located.
+    # k-i+1 represents the index of the diagonal where hᵢ.ₖ is located.
     # In addition of that, the last column of Rₖ is also stored in H.
 
     # Initial γ₁ and v₁.

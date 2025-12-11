@@ -4,7 +4,7 @@
   for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
 
-      # Test specific brekdowns
+      # Test specific breakdowns
       A, b, c = ssy_mo_breakdown2(FC)
       K = [I A; A' I]
       d = [b; c]

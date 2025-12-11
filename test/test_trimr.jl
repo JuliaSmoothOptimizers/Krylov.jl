@@ -177,7 +177,7 @@
       resid = norm(r) / norm(rhs)
       @test(resid ≤ trimr_tol)
 
-      # Test specific brekdowns
+      # Test specific breakdowns
       A, b, c = ssy_mo_breakdown2(FC)
       K = [I A; A' -I]
       d = [b; c]
