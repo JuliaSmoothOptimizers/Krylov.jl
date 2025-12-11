@@ -148,6 +148,14 @@ end
       @test cb_n2(workspace)
 
       @test_throws TypeError craig(A, b, callback = workspace -> "string", history = true)
+
+      # Test small least-norm problem
+      A, b = small_ln(FC=FC)
+      x, y, stats = craig(A, b)
+      r = b - A * x
+      resid = norm(r) / norm(b)
+      @test resid ≤ craig_tol
+      @test norm(x - A' * y) ≤ craig_tol * norm(x)
     end
   end
 end

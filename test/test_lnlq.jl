@@ -147,6 +147,14 @@ end
         @test cb_n2(workspace)
 
         @test_throws TypeError lnlq(A, b, callback = workspace -> "string", history = true)
+
+        # Test small least-norm problem
+        A, b = small_ln(FC=FC)
+        x, y, stats = lnlq(A, b)
+        r = b - A * x
+        resid = norm(r) / norm(b)
+        @test resid ≤ lnlq_tol
+        @test norm(x - A' * y) ≤ lnlq_tol * norm(x)
       end
     end
   end

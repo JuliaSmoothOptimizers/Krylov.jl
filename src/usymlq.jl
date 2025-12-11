@@ -176,18 +176,18 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, bNorm, start_time |> ktimer)
 
-    βₖ = knorm(m, r₀)           # β₁ = ‖v₁‖ = ‖r₀‖
-    γₖ = knorm(n, c)            # γ₁ = ‖u₁‖ = ‖c‖
-    kfill!(vₖ₋₁, zero(FC))      # v₀ = 0
-    kfill!(uₖ₋₁, zero(FC))      # u₀ = 0
-    kdivcopy!(m, vₖ, r₀, βₖ)    # v₁ = (b - Ax₀) / β₁
-    kdivcopy!(n, uₖ, c, γₖ)     # u₁ = c / γ₁
-    cₖ₋₁ = cₖ = -one(T)         # Givens cosines used for the LQ factorization of Tₖ
-    sₖ₋₁ = sₖ = zero(FC)        # Givens sines used for the LQ factorization of Tₖ
-    kfill!(d̅, zero(FC))         # Last column of D̅ₖ = Uₖ(Qₖ)ᴴ
-    ζₖ₋₁ = ζbarₖ = zero(FC)     # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
-    ζₖ₋₂ = ηₖ = zero(FC)        # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
-    δbarₖ₋₁ = δbarₖ = zero(FC)  # Coefficients of Lₖ₋₁ and Lₖ modified over the course of two iterations
+    βₖ = knorm(m, r₀)            # β₁ = ‖v₁‖ = ‖r₀‖
+    γₖ = knorm(n, c)             # γ₁ = ‖u₁‖ = ‖c‖
+    kfill!(vₖ₋₁, zero(FC))       # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))       # u₀ = 0
+    kdivcopy!(m, vₖ, r₀, βₖ)     # v₁ = (b - Ax₀) / β₁
+    kdivcopy!(n, uₖ, c, γₖ)      # u₁ = c / γ₁
+    cₖ₋₁ = cₖ = -one(T)          # Givens cosines used for the LQ factorization of Tₖ
+    sₖ₋₁ = sₖ = zero(FC)         # Givens sines used for the LQ factorization of Tₖ
+    kfill!(d̅, zero(FC))          # Last column of D̅ₖ = Uₖ(Qₖ)ᴴ
+    ζₖ₋₁ = ζbarₖ = zero(FC)      # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
+    ηₖ₋₁ = ηₖ = ζₖ₋₂ = zero(FC)  # ηₖ₋₁, ηₖ and ζₖ₋₂ are used to update ζₖ₋₁ and ζbarₖ
+    δbarₖ₋₁ = δbarₖ = zero(FC)   # Coefficients of Lₖ₋₁ and Lₖ modified over the course of two iterations
 
     # Stopping criterion.
     solved_lq = bNorm ≤ ε
@@ -258,7 +258,6 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       # [δ₁    0  ] [  ζ₁ ] = [β₁]
       # [λ₁  δbar₂] [ζbar₂]   [0 ]
       if iter == 2
-        ηₖ₋₁ = ηₖ
         ζₖ₋₁ = ηₖ₋₁ / δₖ₋₁
         ηₖ   = -λₖ₋₁ * ζₖ₋₁
       end
@@ -267,7 +266,6 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       #                     [ζbarₖ]
       if iter ≥ 3
         ζₖ₋₂ = ζₖ₋₁
-        ηₖ₋₁ = ηₖ
         ζₖ₋₁ = ηₖ₋₁ / δₖ₋₁
         ηₖ   = -ϵₖ₋₂ * ζₖ₋₂ - λₖ₋₁ * ζₖ₋₁
       end
@@ -321,9 +319,10 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
         rNorm_cg = abs(ρₖ)
       end
 
-      # Update sₖ₋₁, cₖ₋₁, γₖ, βₖ and δbarₖ₋₁.
+      # Update sₖ₋₁, cₖ₋₁, ηₖ₋₁, γₖ, βₖ and δbarₖ₋₁.
       sₖ₋₁    = sₖ
       cₖ₋₁    = cₖ
+      ηₖ₋₁    = ηₖ
       γₖ      = γₖ₊₁
       βₖ      = βₖ₊₁
       δbarₖ₋₁ = δbarₖ
