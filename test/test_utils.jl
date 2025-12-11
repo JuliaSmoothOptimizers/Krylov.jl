@@ -410,6 +410,12 @@ function ssy_mo_breakdown3(FC=Float64)
   return A, b, c
 end
 
+function small_ln(; FC=Float64)
+  A = FC[0 1]
+  b = FC[1]
+  return A, b
+end
+
 # Check that a KrylovStats is reset.
 function check_reset(stats :: KS) where KS <: Krylov.KrylovStats
   for field in fieldnames(KS)

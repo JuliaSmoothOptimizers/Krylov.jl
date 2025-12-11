@@ -210,7 +210,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
     sₖ₋₁ = sₖ = zero(FC)           # Givens sines used for the LQ factorization of Tₖ
     kfill!(d̅, zero(FC))            # Last column of D̅ₖ = Vₖ(Qₖ)ᴴ
     ζₖ₋₁ = ζbarₖ = zero(FC)        # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ = (L̅ₖ)⁻¹β₁e₁
-    ζₖ₋₂ = ηₖ = zero(FC)           # ζₖ₋₂ and ηₖ are used to update ζₖ₋₁ and ζbarₖ
+    ηₖ₋₁ = ηₖ = ζₖ₋₂ = zero(FC)    # ηₖ₋₁, ηₖ and ζₖ₋₂ are used to update ζₖ₋₁ and ζbarₖ
     δbarₖ₋₁ = δbarₖ = zero(FC)     # Coefficients of Lₖ₋₁ and L̅ₖ modified over the course of two iterations
     norm_vₖ = bNorm / βₖ           # ‖vₖ‖ is used for residual norm estimates
 
@@ -292,7 +292,6 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       # [δ₁    0  ] [  ζ₁ ] = [β₁]
       # [λ₁  δbar₂] [ζbar₂]   [0 ]
       if iter == 2
-        ηₖ₋₁ = ηₖ
         ζₖ₋₁ = ηₖ₋₁ / δₖ₋₁
         ηₖ   = -λₖ₋₁ * ζₖ₋₁
       end
@@ -301,7 +300,6 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       #                     [ζbarₖ]
       if iter ≥ 3
         ζₖ₋₂ = ζₖ₋₁
-        ηₖ₋₁ = ηₖ
         ζₖ₋₁ = ηₖ₋₁ / δₖ₋₁
         ηₖ   = -ϵₖ₋₂ * ζₖ₋₂ - λₖ₋₁ * ζₖ₋₁
       end
@@ -358,9 +356,10 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
         rNorm_cg = abs(ρₖ) * norm_vₖ₊₁
       end
 
-      # Update sₖ₋₁, cₖ₋₁, γₖ, βₖ, δbarₖ₋₁ and norm_vₖ.
+      # Update sₖ₋₁, cₖ₋₁, ηₖ₋₁, γₖ, βₖ, δbarₖ₋₁ and norm_vₖ.
       sₖ₋₁    = sₖ
       cₖ₋₁    = cₖ
+      ηₖ₋₁    = ηₖ
       γₖ      = γₖ₊₁
       βₖ      = βₖ₊₁
       δbarₖ₋₁ = δbarₖ

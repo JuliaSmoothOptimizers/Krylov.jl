@@ -230,7 +230,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     (verbose > 0) && @printf(iostream, "%5s  %7s  %5s\n", "k", "‖rₖ‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, bNorm, start_time |> ktimer)
 
-    # Update iteration index
+    # Update iteration index.
     iter = iter + 1
 
     # Initialize generalized Golub-Kahan bidiagonalization.
@@ -253,11 +253,12 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       NisI || kdiv!(n, Nv, αₖ)
     end
 
-    kcopy!(m, w̄, u)  # Direction w̄₁
-    cₖ = zero(T)     # Givens cosines used for the LQ factorization of (Lₖ)ᴴ
-    sₖ = zero(FC)    # Givens sines used for the LQ factorization of (Lₖ)ᴴ
-    ζₖ₋₁ = zero(FC)  # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
-    ηₖ = zero(FC)    # Coefficient of M̅ₖ
+    kcopy!(m, w̄, u)       # Direction w̄₁
+    cₖ = zero(T)          # Givens cosines used for the LQ factorization of (Lₖ)ᴴ
+    sₖ = zero(FC)         # Givens sines used for the LQ factorization of (Lₖ)ᴴ
+    ζₖ₋₁ = zero(FC)       # ζₖ₋₁ and ζbarₖ are the last components of z̅ₖ
+    θₖ = θₖ₊₁ = zero(FC)  # θₖ and θₖ₊₁ are used to update ζₖ and ζbarₖ₊₁
+    ηₖ = zero(FC)         # Coefficient of M̅ₖ
 
     # Variable used for the regularization.
     λₖ  = λ              # λ₁ = λ
@@ -298,9 +299,11 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
 
     τₖ    = βₖ / αhatₖ  # τ₁ = β₁ / αhat₁
     ζbarₖ = τₖ / ϵbarₖ  # ζbar₁ = τ₁ / ϵbar₁
+    θₖ    = τₖ
 
     # Stopping criterion.
-    solved_lq = solved_cg = false
+    solved_lq = false
+    solved_cg = false
     tired = false
     status = "unknown"
     user_requested_exit = false
@@ -321,7 +324,6 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     end
 
     while !(solved_lq || solved_cg || tired || user_requested_exit || overtimed)
-
       # Update of (xᵃᵘˣ)ₖ = Vₖtₖ
       if λ > 0
         # (xᵃᵘˣ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖ * (cpₖvₖ + spₖqₖ₋₁)
@@ -418,19 +420,26 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
         ρbar = ssig * μbar + csig * σₑₛₜ
       end
 
+      # Update the solution of Lₖ₊₁tₖ₊₁ = β₁e₁.
+      # [βhatₖ₊₁  αhatₖ₊₁] [τₖ  ] = [0]
+      #                    [τₖ₊₁]
+      τₖ₊₁ = - βhatₖ₊₁ * τₖ / αhatₖ₊₁
+
       # Continue the LQ factorization of (Lₖ₊₁)ᴴ.
-      # [ηₖ ϵbarₖ βₖ₊₁] [1     0     0 ] = [ηₖ  ϵₖ     0    ]
-      # [0    0   αₖ₊₁] [0   cₖ₊₁  sₖ₊₁]   [0  ηₖ₊₁  ϵbarₖ₊₁]
-      #                 [0   sₖ₊₁ -cₖ₊₁]
-
+      # [ηₖ  ϵbarₖ  βₖ₊₁] [1     0     0 ] = [ηₖ  ϵₖ     0    ]
+      # [0     0    αₖ₊₁] [0   cₖ₊₁  sₖ₊₁]   [0  ηₖ₊₁  ϵbarₖ₊₁]
+      #                   [0   sₖ₊₁ -cₖ₊₁]
       (cₖ₊₁, sₖ₊₁, ϵₖ) = sym_givens(ϵbarₖ, βhatₖ₊₁)
-      ηₖ₊₁    =   αhatₖ₊₁ * sₖ₊₁
-      ϵbarₖ₊₁ = - αhatₖ₊₁ * cₖ₊₁
+      ηₖ₊₁    =  αhatₖ₊₁ * sₖ₊₁
+      ϵbarₖ₊₁ = -αhatₖ₊₁ * cₖ₊₁
 
-      # Update solutions of Lₖ₊₁tₖ₊₁ = β₁e₁ and M̅ₖ₊₁z̅ₖ₊₁ = tₖ₊₁.
-      τₖ₊₁    = - βhatₖ₊₁ * τₖ / αhatₖ₊₁
-      ζₖ      = cₖ₊₁ * ζbarₖ
-      ζbarₖ₊₁ = (τₖ₊₁ - ηₖ₊₁ * ζₖ) / ϵbarₖ₊₁
+      # Update the solution of M̅ₖ₊₁z̅ₖ₊₁ = tₖ₊₁.
+      # [ηₖ  ϵₖ       0   ] [ζₖ₋₁   ] = [τₖ  ]
+      # [0   ηₖ₊₁  ϵbarₖ₊₁] [ζₖ     ]   [τₖ₊₁]
+      #                     [ζbarₖ₊₁]
+      ζₖ      = θₖ / ϵₖ
+      θₖ₊₁    = τₖ₊₁ - ηₖ₊₁ * ζₖ
+      ζbarₖ₊₁ = θₖ₊₁ / ϵbarₖ₊₁
 
       # Relations for the directions wₖ and w̄ₖ₊₁
       # [w̄ₖ uₖ₊₁] [cₖ₊₁  sₖ₊₁] = [wₖ w̄ₖ₊₁] → wₖ   = cₖ₊₁ * w̄ₖ + sₖ₊₁ * uₖ₊₁
@@ -479,13 +488,27 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
         rNorm_cg = abs(βhatₖ₊₁ * τₖ)
       end
 
-      # Update sₖ, cₖ, αₖ, βₖ, ηₖ, ϵbarₖ, τₖ, ζₖ₋₁ and ζbarₖ.
+      # Update stopping criterion.
+      user_requested_exit = callback(workspace) :: Bool
+      tired = iter ≥ itmax
+      solved_lq = rNorm_lq ≤ ε
+      solved_cg = transfer_to_craig && (abs(ζbarₖ) > eps(T)) && (rNorm_cg ≤ ε)
+      if σₑₛₜ > 0
+        solved_lq = solved_lq || err_x ≤ utolx || err_y ≤ utoly
+        solved_cg = transfer_to_craig && (solved_cg || err_x ≤ utolx || err_y ≤ utoly)
+      end
+      timer = time_ns() - start_time
+      overtimed = timer > timemax_ns
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm_lq, start_time |> ktimer)
+
+      # Update sₖ, cₖ, αₖ, βₖ, ηₖ, θₖ, ϵbarₖ, τₖ, ζₖ₋₁ and ζbarₖ.
       cₖ    = cₖ₊₁
       sₖ    = sₖ₊₁
       αₖ    = αₖ₊₁
       αhatₖ = αhatₖ₊₁
       βₖ    = βₖ₊₁
       ηₖ    = ηₖ₊₁
+      θₖ    = θₖ₊₁
       ϵbarₖ = ϵbarₖ₊₁
       τₖ    = τₖ₊₁
       ζₖ₋₁  = ζₖ
@@ -497,25 +520,12 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
         spₖ = spₖ₊₁
       end
 
-      # Update stopping criterion.
-      user_requested_exit = callback(workspace) :: Bool
-      tired = iter ≥ itmax
-      solved_lq = rNorm_lq ≤ ε
-      solved_cg = transfer_to_craig && rNorm_cg ≤ ε
-      if σₑₛₜ > 0
-        solved_lq = solved_lq || err_x ≤ utolx || err_y ≤ utoly
-        solved_cg = transfer_to_craig && (solved_cg || err_x ≤ utolx || err_y ≤ utoly)
-      end
-      timer = time_ns() - start_time
-      overtimed = timer > timemax_ns
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm_lq, start_time |> ktimer)
-
       # Update iteration index.
       iter = iter + 1
     end
     (verbose > 0) && @printf(iostream, "\n")
 
-    if solved_cg
+    if solved_cg && (ζbarₖ > eps(T))
       if λ > 0
         # (xᶜ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖ * (cpₖvₖ + spₖqₖ₋₁)
         kaxpy!(n, τₖ * cpₖ, v, x)
