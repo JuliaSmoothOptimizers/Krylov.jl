@@ -187,7 +187,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ = LₖUₖ.
     # Each column has at most mem + 1 nonzero elements.
     # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
-    # k-i+1 represents the indice of the diagonal where hᵢ.ₖ is located.
+    # k-i+1 represents the index of the diagonal where hᵢ.ₖ is located.
     # In addition of that, the last column of Uₖ is stored in H.
     kfill!(L, zero(FC))  # Last mem-1 pivots of Lₖ.
 
