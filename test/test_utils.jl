@@ -5,6 +5,15 @@ include("gen_lsq.jl")
 include("check_min_norm.jl")
 include("callback_utils.jl")
 
+struct TestVector{T} <: AbstractVector{T}
+    data::Vector{T}
+end
+TestVector{T}(::UndefInitializer, n::Integer) where {T} = TestVector{T}(Vector{T}(undef, n))
+Base.size(v::TestVector) = size(v.data)
+Base.getindex(v::TestVector, i::Int) = v.data[i]
+Base.setindex!(v::TestVector, val, i::Int) = (v.data[i] = val)
+Base.similar(v::TestVector, ::Type{S}, dims::Dims) where {S} = TestVector{S}(similar(v.data, S, dims))
+
 # Symmetric and positive definite systems.
 function symmetric_definite(n :: Int=10; FC=Float64)
   α = FC <: Complex ? FC(im) : one(FC)

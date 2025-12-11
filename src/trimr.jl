@@ -147,7 +147,7 @@ optargs_trimr = (:x0, :y0)
 kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function trimr!(workspace :: TrimrWorkspace{T,FC,S}, $(def_args_trimr...); $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function trimr!(workspace :: TrimrWorkspace{T,FC,Sm,Sn}, $(def_args_trimr...); $(def_kwargs_trimr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -173,8 +173,8 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
-    ktypeof(c) == S || error("ktypeof(c) must be equal to $S")
+    ktypeof(b) == Sm || error("ktypeof(b) must be equal to $Sm")
+    ktypeof(c) == Sn || error("ktypeof(c) must be equal to $Sn")
 
     # Determine τ and ν associated to SQD, SPD or SND systems.
     flip && (τ = -one(T) ; ν =  one(T))
@@ -190,8 +190,8 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, workspace, :vₖ, S, workspace.x)  # The length of vₖ is m
-    allocate_if(!NisI, workspace, :uₖ, S, workspace.y)  # The length of uₖ is n
+    allocate_if(!MisI, workspace, :vₖ, Sm, workspace.x)  # The length of vₖ is m
+    allocate_if(!NisI, workspace, :uₖ, Sn, workspace.y)  # The length of uₖ is n
     Δy, yₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p = workspace.Δy, workspace.y, workspace.N⁻¹uₖ₋₁, workspace.N⁻¹uₖ, workspace.p
     Δx, xₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, q = workspace.Δx, workspace.x, workspace.M⁻¹vₖ₋₁, workspace.M⁻¹vₖ, workspace.q
     gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ = workspace.gy₂ₖ₋₃, workspace.gy₂ₖ₋₂, workspace.gy₂ₖ₋₁, workspace.gy₂ₖ
