@@ -129,7 +129,7 @@ args_crmr = (:A, :b)
 kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function crmr!(workspace :: CrmrWorkspace{T,FC,S}, $(def_args_crmr...); $(def_kwargs_crmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function crmr!(workspace :: CrmrWorkspace{T,FC,Sm,Sn}, $(def_args_crmr...); $(def_kwargs_crmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -145,14 +145,14 @@ kwargs_crmr = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
+    ktypeof(b) == Sm || error("ktypeof(b) must be equal to $Sm")
 
     # Compute the adjoint of A
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!NisI, workspace, :Nq, S, workspace.r)  # The length of Nq is m
-    allocate_if(λ > 0, workspace, :s , S, workspace.r)  # The length of s is m
+    allocate_if(!NisI, workspace, :Nq, Sm, workspace.r)  # The length of Nq is m
+    allocate_if(λ > 0, workspace, :s , Sm, workspace.r)  # The length of s is m
     x, p, Aᴴr, r = workspace.x, workspace.p, workspace.Aᴴr, workspace.r
     q, s, stats = workspace.q, workspace.s, workspace.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals

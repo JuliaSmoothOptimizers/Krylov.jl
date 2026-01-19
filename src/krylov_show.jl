@@ -63,7 +63,7 @@ end
 
 Statistics of `workspace` are displayed if `show_stats` is set to true.
 """
-function show(io :: IO, workspace :: Union{KrylovWorkspaceNext{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+function show(io :: IO, workspace :: Union{_KrylovWorkspace{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
   type_workspace = typeof(workspace)
   name_workspace = string(type_workspace.name.name)
   name_stats = string(typeof(workspace.stats).name.name)

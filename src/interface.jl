@@ -104,6 +104,18 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
   krylov! = Symbol(krylov, :!)
 
   ## Generic constructors for each subtype of KrylovWorkspace
+  if krylov in (:cgne, :crmr, :cgls, :cgls_lanczos_shift, :crls, :lnlq, :craig, :craigmr,  :lslq, :lsqr, :lsmr, :usymlq, :usymqr, :tricg, :trimr, :trilqr, :gpmr)
+    if krylov == :cgls_lanczos_shift
+      @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, nshifts::Integer, Sm::Type, Sn::Type) = $workspace(m, n, nshifts, Sm, Sn)
+    elseif krylov == :gpmr
+      @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, Sm::Type, Sn::Type; memory::Integer = 20) = $workspace(m, n, Sm, Sn; memory)
+    elseif krylov in (:lslq, :lsmr, :lsqr)
+      @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, Sm::Type, Sn::Type; window::Integer = 5) = $workspace(m, n, Sm, Sn; window)
+    else
+      @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, Sm::Type, Sn::Type) = $workspace(m, n, Sm, Sn)
+    end
+  end
+
   if krylov in (:cg_lanczos_shift, :cgls_lanczos_shift)
     @eval krylov_workspace(::Val{Symbol($krylov)}, kc::KrylovConstructor, nshifts::Integer) = $workspace(kc, nshifts)
     @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, nshifts::Integer, S::Type) = $workspace(m, n, nshifts, S)
@@ -138,7 +150,7 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
 
       krylov_solve(::Val{Symbol($krylov)}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); $(kwargs...))
     end
-  elseif krylov in (:diom, :dqgmres, :fom, :gmres, :fgmres)
+  elseif krylov in (:diom, :dqgmres, :fom, :gmres, :fgmres, :gpmr)
     @eval begin
       function $(krylov)($(def_args...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
@@ -156,35 +168,6 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         function $(krylov)($(def_args...), $(def_optargs...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           workspace = $workspace(A, b; memory)
-          warm_start!(workspace, $(optargs...))
-          elapsed_time = start_time |> ktimer
-          timemax -= elapsed_time
-          $(krylov!)(workspace, $(args...); $(kwargs...))
-          workspace.stats.timer += elapsed_time
-          return results(workspace)
-        end
-
-        krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); memory, $(kwargs...))
-      end
-    end
-  elseif krylov == :gpmr
-    @eval begin
-      function $(krylov)($(def_args...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-        start_time = time_ns()
-        workspace = $workspace(KrylovConstructor(b, c, similar(b, 0), similar(c, 0)); memory)
-        elapsed_time = start_time |> ktimer
-        timemax -= elapsed_time
-        $(krylov!)(workspace, $(args...); $(kwargs...))
-        workspace.stats.timer += elapsed_time
-        return results(workspace)
-      end
-
-      krylov_solve(::Val{Symbol($krylov)}, $(def_args...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); memory, $(kwargs...))
-
-      if !isempty($optargs)
-        function $(krylov)($(def_args...), $(def_optargs...); memory::Int = 20, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-          start_time = time_ns()
-          workspace = $workspace(KrylovConstructor(b, c, similar(b, 0), similar(c, 0)); memory)
           warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
@@ -223,35 +206,6 @@ for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs
         end
 
         krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); window::Int = 5, $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); window, $(kwargs...))
-      end
-    end
-  elseif krylov in (:tricg, :trimr)
-    @eval begin
-      function $(krylov)($(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-        start_time = time_ns()
-        workspace = $workspace(KrylovConstructor(b, c, similar(b, 0), similar(c, 0)))
-        elapsed_time = start_time |> ktimer
-        timemax -= elapsed_time
-        $(krylov!)(workspace, $(args...); $(kwargs...))
-        workspace.stats.timer += elapsed_time
-        return results(workspace)
-      end
-
-      krylov_solve(::Val{Symbol($krylov)}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); $(kwargs...))
-
-      if !isempty($optargs)
-        function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-          start_time = time_ns()
-          workspace = $workspace(KrylovConstructor(b, c, similar(b, 0), similar(c, 0)))
-          warm_start!(workspace, $(optargs...))
-          elapsed_time = start_time |> ktimer
-          timemax -= elapsed_time
-          $(krylov!)(workspace, $(args...); $(kwargs...))
-          workspace.stats.timer += elapsed_time
-          return results(workspace)
-        end
-
-        krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); $(kwargs...))
       end
     end
   else

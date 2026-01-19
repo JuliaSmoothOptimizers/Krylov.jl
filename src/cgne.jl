@@ -131,7 +131,7 @@ args_cgne = (:A, :b)
 kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgne!(workspace :: CgneWorkspace{T,FC,S}, $(def_args_cgne...); $(def_kwargs_cgne...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cgne!(workspace :: CgneWorkspace{T,FC,Sm,Sn}, $(def_args_cgne...); $(def_kwargs_cgne...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -147,14 +147,14 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
+    ktypeof(b) == Sm || error("ktypeof(b) must be equal to $Sm")
 
     # Compute the adjoint of A
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!NisI, workspace, :z, S, workspace.r)  # The length of z is m
-    allocate_if(λ > 0, workspace, :s, S, workspace.r)  # The length of s is m
+    allocate_if(!NisI, workspace, :z, Sm, workspace.r)  # The length of z is m
+    allocate_if(λ > 0, workspace, :s, Sm, workspace.r)  # The length of s is m
     x, p, Aᴴz, r, q, s, stats = workspace.x, workspace.p, workspace.Aᴴz, workspace.r, workspace.q, workspace.s, workspace.stats
     rNorms = stats.residuals
     reset!(stats)

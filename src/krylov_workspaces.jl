@@ -15,7 +15,7 @@ Krylov methods require a workspace containing vectors of length `m` and `n` to s
 The `KrylovConstructor` facilitates the allocation of these vectors using `similar`.
 
 For square problems (`m == n`), use the first constructor with a single vector `vm`.
-For rectangular problems (`m ≠ n`), use the second constructor with `vm` and `vn`.
+For rectangular problems (`m != n`), use the second constructor with `vm` and `vn`.
 
 #### Input arguments
 
@@ -27,52 +27,51 @@ For rectangular problems (`m ≠ n`), use the second constructor with `vm` and `
 - `vm_empty`: an empty vector that may be replaced with a vector of length `m`;
 - `vn_empty`: an empty vector that may be replaced with a vector of length `n`.
 
-#### Note
+#### Notes
 
+Each pair of vectors (`vm`, `vm_empty`) and (`vn`, `vn_empty`) must have the same type.
 Empty vectors `vm_empty` and `vn_empty` reduce storage requirements when features such as warm-start or preconditioners are unused.
 These empty vectors will be replaced within a [`KrylovWorkspace`](@ref) only if required, such as when preconditioners are provided.
 """
-struct KrylovConstructor{Sm, Sn}
+struct KrylovConstructor{Sm,Sn}
   vm::Sm
   vn::Sn
   vm_empty::Sm
   vn_empty::Sn
 
-  function KrylovConstructor{Sm, Sn}(vm, vn, vm_empty, vn_empty) where {Sm, Sn}
+  function KrylovConstructor{Sm,Sn}(vm, vn, vm_empty, vn_empty) where {Sm,Sn}
     eltype(Sm) === eltype(Sn) || throw(ArgumentError("KrylovConstructor requires that eltype(Sm) == eltype(Sn), got $(eltype(Sm)) and $(eltype(Sn))"))
-    return new{Sm, Sn}(vm, vn, vm_empty, vn_empty)
+    return new{Sm,Sn}(vm, vn, vm_empty, vn_empty)
   end
 end
 
-function KrylovConstructor(vm::Sm, vn::Sn, vm_empty, vn_empty) where {Sm, Sn}
-  return KrylovConstructor{Sm, Sn}(vm, vn, vm_empty, vn_empty)
+function KrylovConstructor(vm::Sm, vn::Sn; vm_empty::Sm=vm, vn_empty::Sn=vn) where {Sm,Sn}
+  return KrylovConstructor{Sm,Sn}(vm, vn, vm_empty, vn_empty)
 end
 
-function KrylovConstructor(vm; vm_empty=vm)
-  return KrylovConstructor(vm, vm, vm_empty, vm_empty)
+function KrylovConstructor(vm::S; vm_empty::S=vm) where S
+  return KrylovConstructor{S,S}(vm, vm, vm_empty, vm_empty)
 end
 
-function KrylovConstructor(vm, vn; vm_empty=vm, vn_empty=vn)
-  return KrylovConstructor(vm, vn, vm_empty, vn_empty)
-end
-
-# TODO: in the next breaking release, change to KrylovWorkspace{T,FC,Sm,Sn}
-# and delete the alias below
-abstract type KrylovWorkspaceNext{T,FC,Sm,Sn} end
+# Krylov.jl v11.x -> Change to KrylovWorkspace{T,FC,Sm,Sn} and delete the alias below
+abstract type _KrylovWorkspace{T,FC,Sm,Sn} end
 
 "Abstract type for using Krylov solvers in-place."
-const KrylovWorkspace{T,FC,S} = KrylovWorkspaceNext{T,FC,S,S}
+const KrylovWorkspace{T,FC,S} = _KrylovWorkspace{T,FC,S,S}
 
 """
-Workspace for the in-place method [`minres!`](@ref).
+Workspace for the in-place methods [`minres!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = MinresWorkspace(m, n, S; window = 5)
     workspace = MinresWorkspace(A, b; window = 5)
-    workspace = MinresWorkspace(kc::KrylovConstructor; window = 5)
+    workspace = MinresWorkspace(kc::KrylovConstructor{S,S}; window = 5)
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct MinresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct MinresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -89,8 +88,7 @@ mutable struct MinresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function MinresWorkspace(kc::KrylovConstructor; window::Integer = 5)
-  S  = typeof(kc.vm)
+function MinresWorkspace(kc::KrylovConstructor{S,S}; window::Integer = 5) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -136,15 +134,18 @@ function MinresWorkspace(A, b; window::Integer = 5)
 end
 
 """
-Workspace for the in-place method [`minares!`](@ref).
+Workspace for the in-place methods [`minares!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = MinaresWorkspace(m, n, S)
     workspace = MinaresWorkspace(A, b)
-    workspace = MinaresWorkspace(kc::KrylovConstructor)
+    workspace = MinaresWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct MinaresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct MinaresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -160,8 +161,7 @@ mutable struct MinaresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function MinaresWorkspace(kc::KrylovConstructor)
-  S    = typeof(kc.vm)
+function MinaresWorkspace(kc::KrylovConstructor{S,S}) where S
   FC   = eltype(S)
   T    = real(FC)
   m    = length(kc.vm)
@@ -205,15 +205,18 @@ function MinaresWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`cg!`](@ref).
+Workspace for the in-place methods [`cg!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = CgWorkspace(m, n, S)
     workspace = CgWorkspace(A, b)
-    workspace = CgWorkspace(kc::KrylovConstructor)
+    workspace = CgWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct CgWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CgWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -227,8 +230,7 @@ mutable struct CgWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function CgWorkspace(kc::KrylovConstructor)
-  S  = typeof(kc.vm)
+function CgWorkspace(kc::KrylovConstructor{S,S}) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -268,15 +270,18 @@ function CgWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`cr!`](@ref).
+Workspace for the in-place methods [`cr!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = CrWorkspace(m, n, S)
     workspace = CrWorkspace(A, b)
-    workspace = CrWorkspace(kc::KrylovConstructor)
+    workspace = CrWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct CrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CrWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -291,8 +296,7 @@ mutable struct CrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function CrWorkspace(kc::KrylovConstructor)
-  S  = typeof(kc.vm)
+function CrWorkspace(kc::KrylovConstructor{S,S}) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -334,15 +338,18 @@ function CrWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`car!`](@ref).
+Workspace for the in-place methods [`car!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = CarWorkspace(m, n, S)
     workspace = CarWorkspace(A, b)
-    workspace = CarWorkspace(kc::KrylovConstructor)
+    workspace = CarWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct CarWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CarWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -358,8 +365,7 @@ mutable struct CarWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function CarWorkspace(kc::KrylovConstructor)
-  S  = typeof(kc.vm)
+function CarWorkspace(kc::KrylovConstructor{S,S}) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -403,15 +409,18 @@ function CarWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`symmlq!`](@ref).
+Workspace for the in-place methods [`symmlq!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = SymmlqWorkspace(m, n, S)
     workspace = SymmlqWorkspace(A, b)
-    workspace = SymmlqWorkspace(kc::KrylovConstructor)
+    workspace = SymmlqWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct SymmlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct SymmlqWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -428,8 +437,7 @@ mutable struct SymmlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SymmlqStats{T}
 end
 
-function SymmlqWorkspace(kc::KrylovConstructor; window::Integer = 5)
-  S       = typeof(kc.vm)
+function SymmlqWorkspace(kc::KrylovConstructor{S,S}; window::Integer = 5) where S
   FC      = eltype(S)
   T       = real(FC)
   m       = length(kc.vm)
@@ -475,15 +483,18 @@ function SymmlqWorkspace(A, b; window::Integer = 5)
 end
 
 """
-Workspace for the in-place method [`cg_lanczos!`](@ref).
+Workspace for the in-place methods [`cg_lanczos!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = CgLanczosWorkspace(m, n, S)
     workspace = CgLanczosWorkspace(A, b)
-    workspace = CgLanczosWorkspace(kc::KrylovConstructor)
+    workspace = CgLanczosWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct CgLanczosWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CgLanczosWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -497,8 +508,7 @@ mutable struct CgLanczosWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: LanczosStats{T}
 end
 
-function CgLanczosWorkspace(kc::KrylovConstructor)
-  S       = typeof(kc.vm)
+function CgLanczosWorkspace(kc::KrylovConstructor{S,S}) where S
   FC      = eltype(S)
   T       = real(FC)
   m       = length(kc.vm)
@@ -538,15 +548,19 @@ function CgLanczosWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`cg_lanczos_shift!`](@ref).
+Workspace for the in-place methods [`cg_lanczos_shift!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = CgLanczosShiftWorkspace(m, n, nshifts, S)
     workspace = CgLanczosShiftWorkspace(A, b, nshifts)
-    workspace = CgLanczosShiftWorkspace(kc::KrylovConstructor, nshifts)
+    workspace = CgLanczosShiftWorkspace(kc::KrylovConstructor{S,S}, nshifts)
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`nshifts` denotes the length of the vector `shifts` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct CgLanczosShiftWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CgLanczosShiftWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   nshifts    :: Int
@@ -566,8 +580,7 @@ mutable struct CgLanczosShiftWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: LanczosShiftStats{T}
 end
 
-function CgLanczosShiftWorkspace(kc::KrylovConstructor, nshifts::Integer)
-  S          = typeof(kc.vm)
+function CgLanczosShiftWorkspace(kc::KrylovConstructor{S,S}, nshifts::Integer) where S
   FC         = eltype(S)
   T          = real(FC)
   m          = length(kc.vm)
@@ -621,15 +634,18 @@ function CgLanczosShiftWorkspace(A, b, nshifts::Integer)
 end
 
 """
-Workspace for the in-place method [`minres_qlp!`](@ref).
+Workspace for the in-place methods [`minres_qlp!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = MinresQlpWorkspace(m, n, S)
     workspace = MinresQlpWorkspace(A, b)
-    workspace = MinresQlpWorkspace(kc::KrylovConstructor)
+    workspace = MinresQlpWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct MinresQlpWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct MinresQlpWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -645,8 +661,7 @@ mutable struct MinresQlpWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function MinresQlpWorkspace(kc::KrylovConstructor)
-  S       = typeof(kc.vm)
+function MinresQlpWorkspace(kc::KrylovConstructor{S,S}) where S
   FC      = eltype(S)
   T       = real(FC)
   m       = length(kc.vm)
@@ -690,17 +705,19 @@ function MinresQlpWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`dqgmres!`](@ref).
+Workspace for the in-place methods [`dqgmres!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = DqgmresWorkspace(m, n, S; memory = 20)
     workspace = DqgmresWorkspace(A, b; memory = 20)
-    workspace = DqgmresWorkspace(kc::KrylovConstructor; memory = 20)
+    workspace = DqgmresWorkspace(kc::KrylovConstructor{S,S}; memory = 20)
 
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 `memory` is set to `n` if the value given is larger than `n`.
 """
-mutable struct DqgmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct DqgmresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -717,8 +734,7 @@ mutable struct DqgmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function DqgmresWorkspace(kc::KrylovConstructor; memory::Integer = 20)
-  S      = typeof(kc.vm)
+function DqgmresWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where S
   FC     = eltype(S)
   T      = real(FC)
   m      = length(kc.vm)
@@ -766,17 +782,19 @@ function DqgmresWorkspace(A, b; memory::Integer = 20)
 end
 
 """
-Workspace for the in-place method [`diom!`](@ref).
+Workspace for the in-place methods [`diom!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = DiomWorkspace(m, n, S; memory = 20)
     workspace = DiomWorkspace(A, b; memory = 20)
-    workspace = DiomWorkspace(kc::KrylovConstructor; memory = 20)
+    workspace = DiomWorkspace(kc::KrylovConstructor{S,S}; memory = 20)
 
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 `memory` is set to `n` if the value given is larger than `n`.
 """
-mutable struct DiomWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct DiomWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -792,8 +810,7 @@ mutable struct DiomWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function DiomWorkspace(kc::KrylovConstructor; memory::Integer = 20)
-  S      = typeof(kc.vm)
+function DiomWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where S
   FC     = eltype(S)
   T      = real(FC)
   m      = length(kc.vm)
@@ -839,33 +856,38 @@ function DiomWorkspace(A, b; memory::Integer = 20)
 end
 
 """
-Workspace for the in-place method [`usymlq!`](@ref).
+Workspace for the in-place methods [`usymlq!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = UsymlqWorkspace(m, n, Sm, Sn)
     workspace = UsymlqWorkspace(m, n, S)
     workspace = UsymlqWorkspace(A, b)
-    workspace = UsymlqWorkspace(kc::KrylovConstructor)
+    workspace = UsymlqWorkspace(A, b, c)
+    workspace = UsymlqWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct UsymlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct UsymlqWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m          :: Int
   n          :: Int
-  uₖ₋₁       :: S
-  uₖ         :: S
-  p          :: S
-  Δx         :: S
-  x          :: S
-  d̅          :: S
-  vₖ₋₁       :: S
-  vₖ         :: S
-  q          :: S
+  uₖ₋₁       :: Sn
+  uₖ         :: Sn
+  p          :: Sn
+  Δx         :: Sn
+  x          :: Sn
+  d̅          :: Sn
+  vₖ₋₁       :: Sm
+  vₖ         :: Sm
+  q          :: Sm
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
 
-function UsymlqWorkspace(kc::KrylovConstructor)
-  S    = typeof(kc.vm)
-  FC   = eltype(S)
+function UsymlqWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC   = eltype(Sm)
   T    = real(FC)
   m    = length(kc.vm)
   n    = length(kc.vn)
@@ -879,26 +901,31 @@ function UsymlqWorkspace(kc::KrylovConstructor)
   vₖ   = similar(kc.vm)
   q    = similar(kc.vm)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = UsymlqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
+  workspace = UsymlqWorkspace{T,FC,Sm,Sn}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
+  return workspace
+end
+
+function UsymlqWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC   = eltype(Sm)
+  T    = real(FC)
+  uₖ₋₁ = Sn(undef, n)
+  uₖ   = Sn(undef, n)
+  p    = Sn(undef, n)
+  Δx   = Sn(undef, 0)
+  x    = Sn(undef, n)
+  d̅    = Sn(undef, n)
+  vₖ₋₁ = Sm(undef, m)
+  vₖ   = Sm(undef, m)
+  q    = Sm(undef, m)
+  Sm = isconcretetype(Sm) ? Sm : typeof(q)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  workspace = UsymlqWorkspace{T,FC,Sm,Sn}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
   return workspace
 end
 
 function UsymlqWorkspace(m::Integer, n::Integer, S::Type)
-  FC   = eltype(S)
-  T    = real(FC)
-  uₖ₋₁ = S(undef, n)
-  uₖ   = S(undef, n)
-  p    = S(undef, n)
-  Δx   = S(undef, 0)
-  x    = S(undef, n)
-  d̅    = S(undef, n)
-  vₖ₋₁ = S(undef, m)
-  vₖ   = S(undef, m)
-  q    = S(undef, m)
-  S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = UsymlqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
-  return workspace
+  UsymlqWorkspace(m, n, S, S)
 end
 
 function UsymlqWorkspace(A, b)
@@ -907,35 +934,47 @@ function UsymlqWorkspace(A, b)
   UsymlqWorkspace(m, n, S)
 end
 
+function UsymlqWorkspace(A, b, c)
+  m, n = size(A)
+  Sm = ktypeof(b)
+  Sn = ktypeof(c)
+  UsymlqWorkspace(m, n, Sm, Sn)
+end
+
 """
-Workspace for the in-place method [`usymqr!`](@ref).
+Workspace for the in-place methods [`usymqr!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = UsymqrWorkspace(m, n, Sm, Sn)
     workspace = UsymqrWorkspace(m, n, S)
     workspace = UsymqrWorkspace(A, b)
-    workspace = UsymqrWorkspace(kc::KrylovConstructor)
+    workspace = UsymqrWorkspace(A, b, c)
+    workspace = UsymqrWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct UsymqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct UsymqrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m          :: Int
   n          :: Int
-  vₖ₋₁       :: S
-  vₖ         :: S
-  q          :: S
-  Δx         :: S
-  x          :: S
-  wₖ₋₂       :: S
-  wₖ₋₁       :: S
-  uₖ₋₁       :: S
-  uₖ         :: S
-  p          :: S
+  vₖ₋₁       :: Sm
+  vₖ         :: Sm
+  q          :: Sm
+  Δx         :: Sn
+  x          :: Sn
+  wₖ₋₂       :: Sn
+  wₖ₋₁       :: Sn
+  uₖ₋₁       :: Sn
+  uₖ         :: Sn
+  p          :: Sn
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
 
-function UsymqrWorkspace(kc::KrylovConstructor)
-  S    = typeof(kc.vm)
-  FC   = eltype(S)
+function UsymqrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC   = eltype(Sm)
   T    = real(FC)
   m    = length(kc.vm)
   n    = length(kc.vn)
@@ -950,27 +989,32 @@ function UsymqrWorkspace(kc::KrylovConstructor)
   uₖ   = similar(kc.vn)
   p    = similar(kc.vn)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = UsymqrWorkspace{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
+  workspace = UsymqrWorkspace{T,FC,Sm,Sn}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
+  return workspace
+end
+
+function UsymqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC   = eltype(Sm)
+  T    = real(FC)
+  vₖ₋₁ = Sm(undef, m)
+  vₖ   = Sm(undef, m)
+  q    = Sm(undef, m)
+  Δx   = Sn(undef, 0)
+  x    = Sn(undef, n)
+  wₖ₋₂ = Sn(undef, n)
+  wₖ₋₁ = Sn(undef, n)
+  uₖ₋₁ = Sn(undef, n)
+  uₖ   = Sn(undef, n)
+  p    = Sn(undef, n)
+  Sm = isconcretetype(Sm) ? Sm : typeof(q)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  workspace = UsymqrWorkspace{T,FC,Sm,Sn}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
   return workspace
 end
 
 function UsymqrWorkspace(m::Integer, n::Integer, S::Type)
-  FC   = eltype(S)
-  T    = real(FC)
-  vₖ₋₁ = S(undef, m)
-  vₖ   = S(undef, m)
-  q    = S(undef, m)
-  Δx   = S(undef, 0)
-  x    = S(undef, n)
-  wₖ₋₂ = S(undef, n)
-  wₖ₋₁ = S(undef, n)
-  uₖ₋₁ = S(undef, n)
-  uₖ   = S(undef, n)
-  p    = S(undef, n)
-  S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = UsymqrWorkspace{T,FC,S}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
-  return workspace
+  UsymqrWorkspace(m, n, S, S)
 end
 
 function UsymqrWorkspace(A, b)
@@ -979,16 +1023,29 @@ function UsymqrWorkspace(A, b)
   UsymqrWorkspace(m, n, S)
 end
 
+function UsymqrWorkspace(A, b, c)
+  m, n = size(A)
+  Sm = ktypeof(b)
+  Sn = ktypeof(c)
+  UsymqrWorkspace(m, n, Sm, Sn)
+end
+
 """
-Workspace for the in-place method [`tricg!`](@ref).
+Workspace for the in-place methods [`tricg!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = TricgWorkspace(m, n, Sm, Sn)
     workspace = TricgWorkspace(m, n, S)
     workspace = TricgWorkspace(A, b)
-    workspace = TricgWorkspace(kc::KrylovConstructor)
+    workspace = TricgWorkspace(A, b, c)
+    workspace = TricgWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct TricgWorkspace{T,FC,Sm,Sn} <: KrylovWorkspaceNext{T,FC,Sm,Sn}
+mutable struct TricgWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m          :: Int
   n          :: Int
   y          :: Sn
@@ -1037,29 +1094,34 @@ function TricgWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   return workspace
 end
 
-function TricgWorkspace(m::Integer, n::Integer, S::Type)
-  FC      = eltype(S)
+function TricgWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC      = eltype(Sm)
   T       = real(FC)
-  y       = S(undef, n)
-  N⁻¹uₖ₋₁ = S(undef, n)
-  N⁻¹uₖ   = S(undef, n)
-  p       = S(undef, n)
-  gy₂ₖ₋₁  = S(undef, n)
-  gy₂ₖ    = S(undef, n)
-  x       = S(undef, m)
-  M⁻¹vₖ₋₁ = S(undef, m)
-  M⁻¹vₖ   = S(undef, m)
-  q       = S(undef, m)
-  gx₂ₖ₋₁  = S(undef, m)
-  gx₂ₖ    = S(undef, m)
-  Δx      = S(undef, 0)
-  Δy      = S(undef, 0)
-  uₖ      = S(undef, 0)
-  vₖ      = S(undef, 0)
-  S = isconcretetype(S) ? S : typeof(x)
+  y       = Sn(undef, n)
+  N⁻¹uₖ₋₁ = Sn(undef, n)
+  N⁻¹uₖ   = Sn(undef, n)
+  p       = Sn(undef, n)
+  gy₂ₖ₋₁  = Sn(undef, n)
+  gy₂ₖ    = Sn(undef, n)
+  x       = Sm(undef, m)
+  M⁻¹vₖ₋₁ = Sm(undef, m)
+  M⁻¹vₖ   = Sm(undef, m)
+  q       = Sm(undef, m)
+  gx₂ₖ₋₁  = Sm(undef, m)
+  gx₂ₖ    = Sm(undef, m)
+  Δx      = Sm(undef, 0)
+  Δy      = Sn(undef, 0)
+  uₖ      = Sn(undef, 0)
+  vₖ      = Sm(undef, 0)
+  Sm = isconcretetype(Sm) ? Sm : typeof(x)
+  Sn = isconcretetype(Sn) ? Sn : typeof(y)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = TricgWorkspace{T,FC,S,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  workspace = TricgWorkspace{T,FC,Sm,Sn}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
+end
+
+function TricgWorkspace(m::Integer, n::Integer, S::Type)
+  TricgWorkspace(m, n, S, S)
 end
 
 function TricgWorkspace(A, b)
@@ -1068,16 +1130,29 @@ function TricgWorkspace(A, b)
   TricgWorkspace(m, n, S)
 end
 
+function TricgWorkspace(A, b, c)
+  m, n = size(A)
+  Sm = ktypeof(b)
+  Sn = ktypeof(c)
+  TricgWorkspace(m, n, Sm, Sn)
+end
+
 """
-Workspace for the in-place method [`trimr!`](@ref).
+Workspace for the in-place methods [`trimr!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = TrimrWorkspace(m, n, Sm, Sn)
     workspace = TrimrWorkspace(m, n, S)
     workspace = TrimrWorkspace(A, b)
-    workspace = TrimrWorkspace(kc::KrylovConstructor)
+    workspace = TrimrWorkspace(A, b, c)
+    workspace = TrimrWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct TrimrWorkspace{T,FC,Sm,Sn} <: KrylovWorkspaceNext{T,FC,Sm,Sn}
+mutable struct TrimrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m          :: Int
   n          :: Int
   y          :: Sn
@@ -1134,33 +1209,38 @@ function TrimrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   return workspace
 end
 
-function TrimrWorkspace(m::Integer, n::Integer, S::Type)
-  FC      = eltype(S)
+function TrimrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC      = eltype(Sm)
   T       = real(FC)
-  y       = S(undef, n)
-  N⁻¹uₖ₋₁ = S(undef, n)
-  N⁻¹uₖ   = S(undef, n)
-  p       = S(undef, n)
-  gy₂ₖ₋₃  = S(undef, n)
-  gy₂ₖ₋₂  = S(undef, n)
-  gy₂ₖ₋₁  = S(undef, n)
-  gy₂ₖ    = S(undef, n)
-  x       = S(undef, m)
-  M⁻¹vₖ₋₁ = S(undef, m)
-  M⁻¹vₖ   = S(undef, m)
-  q       = S(undef, m)
-  gx₂ₖ₋₃  = S(undef, m)
-  gx₂ₖ₋₂  = S(undef, m)
-  gx₂ₖ₋₁  = S(undef, m)
-  gx₂ₖ    = S(undef, m)
-  Δx      = S(undef, 0)
-  Δy      = S(undef, 0)
-  uₖ      = S(undef, 0)
-  vₖ      = S(undef, 0)
-  S = isconcretetype(S) ? S : typeof(x)
+  y       = Sn(undef, n)
+  N⁻¹uₖ₋₁ = Sn(undef, n)
+  N⁻¹uₖ   = Sn(undef, n)
+  p       = Sn(undef, n)
+  gy₂ₖ₋₃  = Sn(undef, n)
+  gy₂ₖ₋₂  = Sn(undef, n)
+  gy₂ₖ₋₁  = Sn(undef, n)
+  gy₂ₖ    = Sn(undef, n)
+  x       = Sm(undef, m)
+  M⁻¹vₖ₋₁ = Sm(undef, m)
+  M⁻¹vₖ   = Sm(undef, m)
+  q       = Sm(undef, m)
+  gx₂ₖ₋₃  = Sm(undef, m)
+  gx₂ₖ₋₂  = Sm(undef, m)
+  gx₂ₖ₋₁  = Sm(undef, m)
+  gx₂ₖ    = Sm(undef, m)
+  Δx      = Sm(undef, 0)
+  Δy      = Sn(undef, 0)
+  uₖ      = Sn(undef, 0)
+  vₖ      = Sm(undef, 0)
+  Sm = isconcretetype(Sm) ? Sm : typeof(x)
+  Sn = isconcretetype(Sn) ? Sn : typeof(y)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = TrimrWorkspace{T,FC,S,S}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
+  workspace = TrimrWorkspace{T,FC,Sm,Sn}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   return workspace
+end
+
+function TrimrWorkspace(m::Integer, n::Integer, S::Type)
+  TrimrWorkspace(m, n, S, S)
 end
 
 function TrimrWorkspace(A, b)
@@ -1169,38 +1249,50 @@ function TrimrWorkspace(A, b)
   TrimrWorkspace(m, n, S)
 end
 
+function TrimrWorkspace(A, b, c)
+  m, n = size(A)
+  Sm = ktypeof(b)
+  Sn = ktypeof(c)
+  TrimrWorkspace(m, n, Sm, Sn)
+end
+
 """
-Workspace for the in-place method [`trilqr!`](@ref).
+Workspace for the in-place methods [`trilqr!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = TrilqrWorkspace(m, n, Sm, Sn)
     workspace = TrilqrWorkspace(m, n, S)
     workspace = TrilqrWorkspace(A, b)
-    workspace = TrilqrWorkspace(kc::KrylovConstructor)
+    workspace = TrilqrWorkspace(A, b, c)
+    workspace = TrilqrWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct TrilqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct TrilqrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m          :: Int
   n          :: Int
-  uₖ₋₁       :: S
-  uₖ         :: S
-  p          :: S
-  d̅          :: S
-  Δx         :: S
-  x          :: S
-  vₖ₋₁       :: S
-  vₖ         :: S
-  q          :: S
-  Δy         :: S
-  y          :: S
-  wₖ₋₃       :: S
-  wₖ₋₂       :: S
+  uₖ₋₁       :: Sn
+  uₖ         :: Sn
+  p          :: Sn
+  d̅          :: Sn
+  Δx         :: Sn
+  x          :: Sn
+  vₖ₋₁       :: Sm
+  vₖ         :: Sm
+  q          :: Sm
+  Δy         :: Sm
+  y          :: Sm
+  wₖ₋₃       :: Sm
+  wₖ₋₂       :: Sm
   warm_start :: Bool
   stats      :: AdjointStats{T}
 end
 
-function TrilqrWorkspace(kc::KrylovConstructor)
-  S    = typeof(kc.vm)
-  FC   = eltype(S)
+function TrilqrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC   = eltype(Sm)
   T    = real(FC)
   m    = length(kc.vm)
   n    = length(kc.vn)
@@ -1218,30 +1310,35 @@ function TrilqrWorkspace(kc::KrylovConstructor)
   wₖ₋₃ = similar(kc.vm)
   wₖ₋₂ = similar(kc.vm)
   stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
-  workspace = TrilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
+  workspace = TrilqrWorkspace{T,FC,Sm,Sn}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
+  return workspace
+end
+
+function TrilqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC   = eltype(Sm)
+  T    = real(FC)
+  uₖ₋₁ = Sn(undef, n)
+  uₖ   = Sn(undef, n)
+  p    = Sn(undef, n)
+  d̅    = Sn(undef, n)
+  Δx   = Sn(undef, 0)
+  x    = Sn(undef, n)
+  vₖ₋₁ = Sm(undef, m)
+  vₖ   = Sm(undef, m)
+  q    = Sm(undef, m)
+  Δy   = Sm(undef, 0)
+  y    = Sm(undef, m)
+  wₖ₋₃ = Sm(undef, m)
+  wₖ₋₂ = Sm(undef, m)
+  Sm = isconcretetype(Sm) ? Sm : typeof(y)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
+  stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
+  workspace = TrilqrWorkspace{T,FC,Sm,Sn}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
   return workspace
 end
 
 function TrilqrWorkspace(m::Integer, n::Integer, S::Type)
-  FC   = eltype(S)
-  T    = real(FC)
-  uₖ₋₁ = S(undef, n)
-  uₖ   = S(undef, n)
-  p    = S(undef, n)
-  d̅    = S(undef, n)
-  Δx   = S(undef, 0)
-  x    = S(undef, n)
-  vₖ₋₁ = S(undef, m)
-  vₖ   = S(undef, m)
-  q    = S(undef, m)
-  Δy   = S(undef, 0)
-  y    = S(undef, m)
-  wₖ₋₃ = S(undef, m)
-  wₖ₋₂ = S(undef, m)
-  S = isconcretetype(S) ? S : typeof(x)
-  stats = AdjointStats(0, false, false, T[], T[], 0.0, "unknown")
-  workspace = TrilqrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, p, d̅, Δx, x, vₖ₋₁, vₖ, q, Δy, y, wₖ₋₃, wₖ₋₂, false, stats)
-  return workspace
+  TrilqrWorkspace(m, n, S, S)
 end
 
 function TrilqrWorkspace(A, b)
@@ -1250,16 +1347,26 @@ function TrilqrWorkspace(A, b)
   TrilqrWorkspace(m, n, S)
 end
 
+function TrilqrWorkspace(A, b, c)
+  m, n = size(A)
+  Sm = ktypeof(b)
+  Sn = ktypeof(c)
+  TrilqrWorkspace(m, n, Sm, Sn)
+end
+
 """
-Workspace for the in-place method [`cgs!`](@ref).
+Workspace for the in-place methods [`cgs!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:s
 
     workspace = CgsWorkspace(m, n, S)
     workspace = CgsWorkspace(A, b)
-    workspace = CgsWorkspace(kc::KrylovConstructor)
+    workspace = CgsWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct CgsWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CgsWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -1275,8 +1382,7 @@ mutable struct CgsWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function CgsWorkspace(kc::KrylovConstructor)
-  S  = typeof(kc.vm)
+function CgsWorkspace(kc::KrylovConstructor{S,S}) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -1320,15 +1426,18 @@ function CgsWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`bicgstab!`](@ref).
+Workspace for the in-place methods [`bicgstab!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = BicgstabWorkspace(m, n, S)
     workspace = BicgstabWorkspace(A, b)
-    workspace = BicgstabWorkspace(kc::KrylovConstructor)
+    workspace = BicgstabWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct BicgstabWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct BicgstabWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -1344,8 +1453,7 @@ mutable struct BicgstabWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function BicgstabWorkspace(kc::KrylovConstructor)
-  S  = typeof(kc.vm)
+function BicgstabWorkspace(kc::KrylovConstructor{S,S}) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -1389,15 +1497,18 @@ function BicgstabWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`bilq!`](@ref).
+Workspace for the in-place methods [`bilq!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = BilqWorkspace(m, n, S)
     workspace = BilqWorkspace(A, b)
-    workspace = BilqWorkspace(kc::KrylovConstructor)
+    workspace = BilqWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct BilqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct BilqWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   uₖ₋₁       :: S
@@ -1415,8 +1526,7 @@ mutable struct BilqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function BilqWorkspace(kc::KrylovConstructor)
-  S    = typeof(kc.vm)
+function BilqWorkspace(kc::KrylovConstructor{S,S}) where S
   FC   = eltype(S)
   T    = real(FC)
   m    = length(kc.vm)
@@ -1464,15 +1574,18 @@ function BilqWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`qmr!`](@ref).
+Workspace for the in-place methods [`qmr!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = QmrWorkspace(m, n, S)
     workspace = QmrWorkspace(A, b)
-    workspace = QmrWorkspace(kc::KrylovConstructor)
+    workspace = QmrWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct QmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct QmrWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   uₖ₋₁       :: S
@@ -1491,8 +1604,7 @@ mutable struct QmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function QmrWorkspace(kc::KrylovConstructor)
-  S    = typeof(kc.vm)
+function QmrWorkspace(kc::KrylovConstructor{S,S}) where S
   FC   = eltype(S)
   T    = real(FC)
   m    = length(kc.vm)
@@ -1542,15 +1654,18 @@ function QmrWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`bilqr!`](@ref).
+Workspace for the in-place methods [`bilqr!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = BilqrWorkspace(m, n, S)
     workspace = BilqrWorkspace(A, b)
-    workspace = BilqrWorkspace(kc::KrylovConstructor)
+    workspace = BilqrWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 """
-mutable struct BilqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct BilqrWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   uₖ₋₁       :: S
@@ -1570,8 +1685,7 @@ mutable struct BilqrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: AdjointStats{T}
 end
 
-function BilqrWorkspace(kc::KrylovConstructor)
-  S    = typeof(kc.vm)
+function BilqrWorkspace(kc::KrylovConstructor{S,S}) where S
   FC   = eltype(S)
   T    = real(FC)
   m    = length(kc.vm)
@@ -1623,15 +1737,20 @@ function BilqrWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`cgls!`](@ref).
+Workspace for the in-place methods [`cgls!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = CglsWorkspace(m, n, Sm, Sn)
     workspace = CglsWorkspace(m, n, S)
     workspace = CglsWorkspace(A, b)
-    workspace = CglsWorkspace(kc::KrylovConstructor)
+    workspace = CglsWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct CglsWorkspace{T,FC,Sm,Sn} <: KrylovWorkspaceNext{T,FC,Sm,Sn}
+mutable struct CglsWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
   n     :: Int
   x     :: Sn
@@ -1644,7 +1763,7 @@ mutable struct CglsWorkspace{T,FC,Sm,Sn} <: KrylovWorkspaceNext{T,FC,Sm,Sn}
 end
 
 function CglsWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
-  FC = eltype(Sm)   # Sn has the same eltype
+  FC = eltype(Sm)
   T  = real(FC)
   m  = length(kc.vm)
   n  = length(kc.vn)
@@ -1659,19 +1778,24 @@ function CglsWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   return workspace
 end
 
-function CglsWorkspace(m::Integer, n::Integer, S::Type)
-  FC = eltype(S)
+function CglsWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC = eltype(Sm)
   T  = real(FC)
-  x  = S(undef, n)
-  p  = S(undef, n)
-  s  = S(undef, n)
-  r  = S(undef, m)
-  q  = S(undef, m)
-  Mr = S(undef, 0)
-  S = isconcretetype(S) ? S : typeof(x)
+  x  = Sn(undef, n)
+  p  = Sn(undef, n)
+  s  = Sn(undef, n)
+  r  = Sm(undef, m)
+  q  = Sm(undef, m)
+  Mr = Sm(undef, 0)
+  Sm = isconcretetype(Sm) ? Sm : typeof(r)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CglsWorkspace{T,FC,S,S}(m, n, x, p, s, r, q, Mr, stats)
+  workspace = CglsWorkspace{T,FC,Sm,Sn}(m, n, x, p, s, r, q, Mr, stats)
   return workspace
+end
+
+function CglsWorkspace(m::Integer, n::Integer, S::Type)
+  CglsWorkspace(m, n, S, S)
 end
 
 function CglsWorkspace(A, b)
@@ -1681,25 +1805,31 @@ function CglsWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`cgls_lanczos_shift!`](@ref).
+Workspace for the in-place methods [`cgls_lanczos_shift!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace::
 
+    workspace = CglsLanczosShiftWorkspace(m, n, nshifts, Sm, Sn)
     workspace = CglsLanczosShiftWorkspace(m, n, nshifts, S)
     workspace = CglsLanczosShiftWorkspace(A, b, nshifts)
-    workspace = CglsLanczosShiftWorkspace(kc::KrylovConstructor, nshifts)
+    workspace = CglsLanczosShiftWorkspace(kc::KrylovConstructor{Sm,Sn}, nshifts)
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`nshifts` denotes the length of the vector `shifts` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct CglsLanczosShiftWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CglsLanczosShiftWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m         :: Int
   n         :: Int
   nshifts   :: Int
-  Mv        :: S
-  u_prev    :: S
-  u_next    :: S
-  u         :: S
-  v         :: S
-  x         :: Vector{S}
-  p         :: Vector{S}
+  Mv        :: Sn
+  u_prev    :: Sm
+  u_next    :: Sm
+  u         :: Sm
+  v         :: Sn
+  x         :: Vector{Sn}
+  p         :: Vector{Sn}
   σ         :: Vector{T}
   δhat      :: Vector{T}
   ω         :: Vector{T}
@@ -1710,9 +1840,8 @@ mutable struct CglsLanczosShiftWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats     :: LanczosShiftStats{T}
 end
 
-function CglsLanczosShiftWorkspace(kc::KrylovConstructor, nshifts::Integer)
-  S          = typeof(kc.vm)
-  FC         = eltype(S)
+function CglsLanczosShiftWorkspace(kc::KrylovConstructor{Sm,Sn}, nshifts::Integer) where {Sm,Sn}
+  FC         = eltype(Sm)
   T          = real(FC)
   m          = length(kc.vm)
   n          = length(kc.vn)
@@ -1721,8 +1850,8 @@ function CglsLanczosShiftWorkspace(kc::KrylovConstructor, nshifts::Integer)
   u_next     = similar(kc.vm)
   u          = similar(kc.vm)
   v          = similar(kc.vn_empty)
-  x          = S[similar(kc.vn) for i = 1 : nshifts]
-  p          = S[similar(kc.vn) for i = 1 : nshifts]
+  x          = Sn[similar(kc.vn) for i = 1 : nshifts]
+  p          = Sn[similar(kc.vn) for i = 1 : nshifts]
   σ          = Vector{T}(undef, nshifts)
   δhat       = Vector{T}(undef, nshifts)
   ω          = Vector{T}(undef, nshifts)
@@ -1732,32 +1861,37 @@ function CglsLanczosShiftWorkspace(kc::KrylovConstructor, nshifts::Integer)
   converged  = BitVector(undef, nshifts)
   not_cv     = BitVector(undef, nshifts)
   stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
-  workspace = CglsLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, u_prev, u_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  workspace = CglsLanczosShiftWorkspace{T,FC,Sm,Sn}(m, n, nshifts, Mv, u_prev, u_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
+  return workspace
+end
+
+function CglsLanczosShiftWorkspace(m::Integer, n::Integer, nshifts::Integer, Sm::Type, Sn::Type)
+  FC         = eltype(Sm)
+  T          = real(FC)
+  Mv         = Sn(undef, n)
+  u_prev     = Sm(undef, m)
+  u_next     = Sm(undef, m)
+  u          = Sm(undef, m)
+  v          = Sn(undef, 0)
+  x          = Sn[Sn(undef, n) for i = 1 : nshifts]
+  p          = Sn[Sn(undef, n) for i = 1 : nshifts]
+  σ          = Vector{T}(undef, nshifts)
+  δhat       = Vector{T}(undef, nshifts)
+  ω          = Vector{T}(undef, nshifts)
+  γ          = Vector{T}(undef, nshifts)
+  rNorms     = Vector{T}(undef, nshifts)
+  indefinite = BitVector(undef, nshifts)
+  converged  = BitVector(undef, nshifts)
+  not_cv     = BitVector(undef, nshifts)
+  Sm = isconcretetype(Sm) ? Sm : typeof(u)
+  Sn = isconcretetype(Sn) ? Sn : typeof(Mv)
+  stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
+  workspace = CglsLanczosShiftWorkspace{T,FC,Sm,Sn}(m, n, nshifts, Mv, u_prev, u_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
   return workspace
 end
 
 function CglsLanczosShiftWorkspace(m::Integer, n::Integer, nshifts::Integer, S::Type)
-  FC         = eltype(S)
-  T          = real(FC)
-  Mv         = S(undef, n)
-  u_prev     = S(undef, m)
-  u_next     = S(undef, m)
-  u          = S(undef, m)
-  v          = S(undef, 0)
-  x          = S[S(undef, n) for i = 1 : nshifts]
-  p          = S[S(undef, n) for i = 1 : nshifts]
-  σ          = Vector{T}(undef, nshifts)
-  δhat       = Vector{T}(undef, nshifts)
-  ω          = Vector{T}(undef, nshifts)
-  γ          = Vector{T}(undef, nshifts)
-  rNorms     = Vector{T}(undef, nshifts)
-  indefinite = BitVector(undef, nshifts)
-  converged  = BitVector(undef, nshifts)
-  not_cv     = BitVector(undef, nshifts)
-  S = isconcretetype(S) ? S : typeof(x)
-  stats = LanczosShiftStats(0, false, Vector{T}[T[] for i = 1 : nshifts], indefinite, T(NaN), T(NaN), 0.0, "unknown")
-  workspace = CglsLanczosShiftWorkspace{T,FC,S}(m, n, nshifts, Mv, u_prev, u_next, u, v, x, p, σ, δhat, ω, γ, rNorms, converged, not_cv, stats)
-  return workspace
+  CglsLanczosShiftWorkspace(m, n, nshifts, S, S)
 end
 
 function CglsLanczosShiftWorkspace(A, b, nshifts::Integer)
@@ -1767,31 +1901,35 @@ function CglsLanczosShiftWorkspace(A, b, nshifts::Integer)
 end
 
 """
-Workspace for the in-place method [`crls!`](@ref).
+Workspace for the in-place methods [`crls!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = CrlsWorkspace(m, n, Sm, Sn)
     workspace = CrlsWorkspace(m, n, S)
     workspace = CrlsWorkspace(A, b)
-    workspace = CrlsWorkspace(kc::KrylovConstructor)
+    workspace = CrlsWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct CrlsWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CrlsWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
   n     :: Int
-  x     :: S
-  p     :: S
-  Ar    :: S
-  q     :: S
-  r     :: S
-  Ap    :: S
-  s     :: S
-  Ms    :: S
+  x     :: Sn
+  p     :: Sn
+  Ar    :: Sn
+  q     :: Sn
+  r     :: Sm
+  Ap    :: Sm
+  s     :: Sm
+  Ms    :: Sm
   stats :: SimpleStats{T}
 end
 
-function CrlsWorkspace(kc::KrylovConstructor)
-  S  = typeof(kc.vm)
-  FC = eltype(S)
+function CrlsWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC = eltype(Sm)
   T  = real(FC)
   m  = length(kc.vm)
   n  = length(kc.vn)
@@ -1804,25 +1942,30 @@ function CrlsWorkspace(kc::KrylovConstructor)
   s  = similar(kc.vm)
   Ms = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CrlsWorkspace{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
+  workspace = CrlsWorkspace{T,FC,Sm,Sn}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
+  return workspace
+end
+
+function CrlsWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC = eltype(Sm)
+  T  = real(FC)
+  x  = Sn(undef, n)
+  p  = Sn(undef, n)
+  Ar = Sn(undef, n)
+  q  = Sn(undef, n)
+  r  = Sm(undef, m)
+  Ap = Sm(undef, m)
+  s  = Sm(undef, m)
+  Ms = Sm(undef, 0)
+  Sm = isconcretetype(Sm) ? Sm : typeof(r)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  workspace = CrlsWorkspace{T,FC,Sm,Sn}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
   return workspace
 end
 
 function CrlsWorkspace(m::Integer, n::Integer, S::Type)
-  FC = eltype(S)
-  T  = real(FC)
-  x  = S(undef, n)
-  p  = S(undef, n)
-  Ar = S(undef, n)
-  q  = S(undef, n)
-  r  = S(undef, m)
-  Ap = S(undef, m)
-  s  = S(undef, m)
-  Ms = S(undef, 0)
-  S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CrlsWorkspace{T,FC,S}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
-  return workspace
+  CrlsWorkspace(m, n, S, S)
 end
 
 function CrlsWorkspace(A, b)
@@ -1832,30 +1975,34 @@ function CrlsWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`cgne!`](@ref).
+Workspace for the in-place methods [`cgne!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = CgneWorkspace(m, n, Sm, Sn)
     workspace = CgneWorkspace(m, n, S)
     workspace = CgneWorkspace(A, b)
-    workspace = CgneWorkspace(kc::KrylovConstructor)
+    workspace = CgneWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct CgneWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CgneWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
   n     :: Int
-  x     :: S
-  p     :: S
-  Aᴴz   :: S
-  r     :: S
-  q     :: S
-  s     :: S
-  z     :: S
+  x     :: Sn
+  p     :: Sn
+  Aᴴz   :: Sn
+  r     :: Sm
+  q     :: Sm
+  s     :: Sm
+  z     :: Sm
   stats :: SimpleStats{T}
 end
 
-function CgneWorkspace(kc::KrylovConstructor)
-  S   = typeof(kc.vm)
-  FC  = eltype(S)
+function CgneWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC  = eltype(Sm)
   T   = real(FC)
   m   = length(kc.vm)
   n   = length(kc.vn)
@@ -1871,20 +2018,25 @@ function CgneWorkspace(kc::KrylovConstructor)
   return workspace
 end
 
-function CgneWorkspace(m::Integer, n::Integer, S::Type)
-  FC  = eltype(S)
+function CgneWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC  = eltype(Sm)
   T   = real(FC)
-  x   = S(undef, n)
-  p   = S(undef, n)
-  Aᴴz = S(undef, n)
-  r   = S(undef, m)
-  q   = S(undef, m)
-  s   = S(undef, 0)
-  z   = S(undef, 0)
-  S = isconcretetype(S) ? S : typeof(x)
+  x   = Sn(undef, n)
+  p   = Sn(undef, n)
+  Aᴴz = Sn(undef, n)
+  r   = Sm(undef, m)
+  q   = Sm(undef, m)
+  s   = Sm(undef, 0)
+  z   = Sm(undef, 0)
+  Sm = isconcretetype(Sm) ? Sm : typeof(r)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CgneWorkspace{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
+  workspace = CgneWorkspace{T,FC,Sm,Sn}(m, n, x, p, Aᴴz, r, q, s, z, stats)
   return workspace
+end
+
+function CgneWorkspace(m::Integer, n::Integer, S::Type)
+  CgneWorkspace(m, n, S, S)
 end
 
 function CgneWorkspace(A, b)
@@ -1894,29 +2046,33 @@ function CgneWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`crmr!`](@ref).
+Workspace for the in-place methods [`crmr!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = CrmrWorkspace(m, n, Sm, Sn)
     workspace = CrmrWorkspace(m, n, S)
     workspace = CrmrWorkspace(A, b)
-    workspace = CrmrWorkspace(kc::KrylovConstructor)
+    workspace = CrmrWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct CrmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CrmrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
   n     :: Int
-  x     :: S
-  p     :: S
-  Aᴴr   :: S
-  r     :: S
-  q     :: S
-  Nq    :: S
-  s     :: S
+  x     :: Sn
+  p     :: Sn
+  Aᴴr   :: Sn
+  r     :: Sm
+  q     :: Sm
+  Nq    :: Sm
+  s     :: Sm
   stats :: SimpleStats{T}
 end
 
-function CrmrWorkspace(kc::KrylovConstructor)
-  S   = typeof(kc.vm)
+function CrmrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   FC  = eltype(S)
   T   = real(FC)
   m   = length(kc.vm)
@@ -1929,26 +2085,31 @@ function CrmrWorkspace(kc::KrylovConstructor)
   Nq  = similar(kc.vm_empty)
   s   = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CrmrWorkspace{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
+  workspace = CrmrWorkspace{T,FC,Sm,Sn}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
+  return workspace
+end
+
+function CrmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC  = eltype(Sm)
+  T   = real(FC)
+  x   = Sn(undef, n)
+  p   = Sn(undef, n)
+  Aᴴr = Sn(undef, n)
+  r   = Sm(undef, m)
+  q   = Sm(undef, m)
+  Nq  = Sm(undef, 0)
+  s   = Sm(undef, 0)
+  Sm = isconcretetype(Sm) ? Sm : typeof(r)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  workspace = CrmrWorkspace{T,FC,Sm,Sn}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
   return workspace
 end
 
 function CrmrWorkspace(m::Integer, n::Integer, S::Type)
-  FC  = eltype(S)
-  T   = real(FC)
-  x   = S(undef, n)
-  p   = S(undef, n)
-  Aᴴr = S(undef, n)
-  r   = S(undef, m)
-  q   = S(undef, m)
-  Nq  = S(undef, 0)
-  s   = S(undef, 0)
-  S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CrmrWorkspace{T,FC,S}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
-  return workspace
+  CrmrWorkspace(m, n, S, S)
 end
-
+ 
 function CrmrWorkspace(A, b)
   m, n = size(A)
   S = ktypeof(b)
@@ -1956,32 +2117,36 @@ function CrmrWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`lslq!`](@ref).
+Workspace for the in-place methods [`lslq!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = LslqWorkspace(m, n, Sm, Sn)
     workspace = LslqWorkspace(m, n, S)
     workspace = LslqWorkspace(A, b)
-    workspace = LslqWorkspace(kc::KrylovConstructor)
+    workspace = LslqWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct LslqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct LslqWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m       :: Int
   n       :: Int
-  x       :: S
-  Nv      :: S
-  Aᴴu     :: S
-  w̄       :: S
-  Mu      :: S
-  Av      :: S
-  u       :: S
-  v       :: S
+  x       :: Sn
+  Nv      :: Sn
+  Aᴴu     :: Sn
+  w̄       :: Sn
+  Mu      :: Sm
+  Av      :: Sm
+  u       :: Sm
+  v       :: Sm
   err_vec :: Vector{T}
   stats   :: LSLQStats{T}
 end
 
-function LslqWorkspace(kc::KrylovConstructor; window::Integer = 5)
-  S   = typeof(kc.vm)
-  FC  = eltype(S)
+function LslqWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Integer = 5) where {Sm,Sn}
+  FC  = eltype(Sm)
   T   = real(FC)
   m   = length(kc.vm)
   n   = length(kc.vn)
@@ -1995,26 +2160,31 @@ function LslqWorkspace(kc::KrylovConstructor; window::Integer = 5)
   v   = similar(kc.vn_empty)
   err_vec = zeros(T, window)
   stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], 0.0, "unknown")
-  workspace = LslqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
+  workspace = LslqWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
+  return workspace
+end
+
+function LslqWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Integer = 5)
+  FC  = eltype(Sm)
+  T   = real(FC)
+  x   = Sn(undef, n)
+  Nv  = Sn(undef, n)
+  Aᴴu = Sn(undef, n)
+  w̄   = Sn(undef, n)
+  Mu  = Sm(undef, m)
+  Av  = Sm(undef, m)
+  u   = Sm(undef, 0)
+  v   = Sn(undef, 0)
+  err_vec = zeros(T, window)
+  Sm = isconcretetype(Sm) ? Sm : typeof(Av)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
+  stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], 0.0, "unknown")
+  workspace = LslqWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
   return workspace
 end
 
 function LslqWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
-  FC  = eltype(S)
-  T   = real(FC)
-  x   = S(undef, n)
-  Nv  = S(undef, n)
-  Aᴴu = S(undef, n)
-  w̄   = S(undef, n)
-  Mu  = S(undef, m)
-  Av  = S(undef, m)
-  u   = S(undef, 0)
-  v   = S(undef, 0)
-  err_vec = zeros(T, window)
-  S = isconcretetype(S) ? S : typeof(x)
-  stats = LSLQStats(0, false, false, T[], T[], T[], false, T[], T[], 0.0, "unknown")
-  workspace = LslqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, w̄, Mu, Av, u, v, err_vec, stats)
-  return workspace
+  LslqWorkspace(m, n, S, S; window)
 end
 
 function LslqWorkspace(A, b; window::Integer = 5)
@@ -2024,15 +2194,20 @@ function LslqWorkspace(A, b; window::Integer = 5)
 end
 
 """
-Workspace for the in-place method [`lsqr!`](@ref).
+Workspace for the in-place methods [`lsqr!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = LsqrWorkspace(m, n, Sm, Sn)
     workspace = LsqrWorkspace(m, n, S)
     workspace = LsqrWorkspace(A, b)
-    workspace = LsqrWorkspace(kc::KrylovConstructor)
+    workspace = LsqrWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct LsqrWorkspace{T,FC,Sm,Sn} <: KrylovWorkspaceNext{T,FC,Sm,Sn}
+mutable struct LsqrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m       :: Int
   n       :: Int
   x       :: Sn
@@ -2066,22 +2241,27 @@ function LsqrWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Integer = 5) where 
   return workspace
 end
 
-function LsqrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
+function LsqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Integer = 5)
   FC  = eltype(S)
   T   = real(FC)
-  x   = S(undef, n)
-  Nv  = S(undef, n)
-  Aᴴu = S(undef, n)
-  w   = S(undef, n)
-  Mu  = S(undef, m)
-  Av  = S(undef, m)
-  u   = S(undef, 0)
-  v   = S(undef, 0)
+  x   = Sn(undef, n)
+  Nv  = Sn(undef, n)
+  Aᴴu = Sn(undef, n)
+  w   = Sn(undef, n)
+  Mu  = Sm(undef, m)
+  Av  = Sm(undef, m)
+  u   = Sm(undef, 0)
+  v   = Sn(undef, 0)
   err_vec = zeros(T, window)
-  S = isconcretetype(S) ? S : typeof(x)
+  Sm = isconcretetype(Sm) ? Sm : typeof(Av)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = LsqrWorkspace{T,FC,S,S}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
+  workspace = LsqrWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
   return workspace
+end
+
+function LsqrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
+  LsqrWorkspace(m, n, S, S; window)
 end
 
 function LsqrWorkspace(A, b; window::Integer = 5)
@@ -2091,33 +2271,37 @@ function LsqrWorkspace(A, b; window::Integer = 5)
 end
 
 """
-Workspace for the in-place method [`lsmr!`](@ref).
+Workspace for the in-place methods [`lsmr!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = LsmrWorkspace(m, n, Sm, Sn)
     workspace = LsmrWorkspace(m, n, S)
     workspace = LsmrWorkspace(A, b)
-    workspace = LsmrWorkspace(kc::KrylovConstructor)
+    workspace = LsmrWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct LsmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct LsmrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m       :: Int
   n       :: Int
-  x       :: S
-  Nv      :: S
-  Aᴴu     :: S
-  h       :: S
-  hbar    :: S
-  Mu      :: S
-  Av      :: S
-  u       :: S
-  v       :: S
+  x       :: Sn
+  Nv      :: Sn
+  Aᴴu     :: Sn
+  h       :: Sn
+  hbar    :: Sn
+  Mu      :: Sm
+  Av      :: Sm
+  u       :: Sm
+  v       :: Sn
   err_vec :: Vector{T}
   stats   :: LsmrStats{T}
 end
 
-function LsmrWorkspace(kc::KrylovConstructor; window::Integer = 5)
-  S    = typeof(kc.vm)
-  FC   = eltype(S)
+function LsmrWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Integer = 5) where {Sm,Sn}
+  FC   = eltype(Sm)
   T    = real(FC)
   m    = length(kc.vm)
   n    = length(kc.vn)
@@ -2132,27 +2316,32 @@ function LsmrWorkspace(kc::KrylovConstructor; window::Integer = 5)
   v    = similar(kc.vn_empty)
   err_vec = zeros(T, window)
   stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), 0.0, "unknown")
-  workspace = LsmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
+  workspace = LsmrWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
+  return workspace
+end
+
+function LsmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Integer = 5)
+  FC   = eltype(S)
+  T    = real(FC)
+  x    = Sn(undef, n)
+  Nv   = Sn(undef, n)
+  Aᴴu  = Sn(undef, n)
+  h    = Sn(undef, n)
+  hbar = Sn(undef, n)
+  Mu   = Sm(undef, m)
+  Av   = Sm(undef, m)
+  u    = Sm(undef, 0)
+  v    = Sn(undef, 0)
+  err_vec = zeros(T, window)
+  Sm = isconcretetype(Sm) ? Sm : typeof(Av)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
+  stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), 0.0, "unknown")
+  workspace = LsmrWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
   return workspace
 end
 
 function LsmrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
-  FC   = eltype(S)
-  T    = real(FC)
-  x    = S(undef, n)
-  Nv   = S(undef, n)
-  Aᴴu  = S(undef, n)
-  h    = S(undef, n)
-  hbar = S(undef, n)
-  Mu   = S(undef, m)
-  Av   = S(undef, m)
-  u    = S(undef, 0)
-  v    = S(undef, 0)
-  err_vec = zeros(T, window)
-  S = isconcretetype(S) ? S : typeof(x)
-  stats = LsmrStats(0, false, false, T[], T[], zero(T), zero(T), zero(T), zero(T), zero(T), 0.0, "unknown")
-  workspace = LsmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, h, hbar, Mu, Av, u, v, err_vec, stats)
-  return workspace
+  LsmrWorkspace(m, n, S, S; window)
 end
 
 function LsmrWorkspace(A, b; window::Integer = 5)
@@ -2162,33 +2351,37 @@ function LsmrWorkspace(A, b; window::Integer = 5)
 end
 
 """
-Workspace for the in-place method [`lnlq!`](@ref).
+Workspace for the in-place methods [`lnlq!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = LnlqWorkspace(m, n, Sm, Sn)
     workspace = LnlqWorkspace(m, n, S)
     workspace = LnlqWorkspace(A, b)
-    workspace = LnlqWorkspace(kc::KrylovConstructor)
+    workspace = LnlqWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct LnlqWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct LnlqWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
   n     :: Int
-  x     :: S
-  Nv    :: S
-  Aᴴu   :: S
-  y     :: S
-  w̄     :: S
-  Mu    :: S
-  Av    :: S
-  u     :: S
-  v     :: S
-  q     :: S
+  x     :: Sn
+  Nv    :: Sn
+  Aᴴu   :: Sn
+  y     :: Sm
+  w̄     :: Sm
+  Mu    :: Sm
+  Av    :: Sm
+  u     :: Sm
+  v     :: Sn
+  q     :: Sn
   stats :: LNLQStats{T}
 end
 
-function LnlqWorkspace(kc::KrylovConstructor)
-  S   = typeof(kc.vm)
-  FC  = eltype(S)
+function LnlqWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC  = eltype(Sm)
   T   = real(FC)
   m   = length(kc.vm)
   n   = length(kc.vn)
@@ -2203,27 +2396,32 @@ function LnlqWorkspace(kc::KrylovConstructor)
   v   = similar(kc.vn_empty)
   q   = similar(kc.vn_empty)
   stats = LNLQStats(0, false, T[], false, T[], T[], 0.0, "unknown")
-  workspace = LnlqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
+  workspace = LnlqWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
+  return workspace
+end
+
+function LnlqWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC  = eltype(Sm)
+  T   = real(FC)
+  x   = Sn(undef, n)
+  Nv  = Sn(undef, n)
+  Aᴴu = Sn(undef, n)
+  y   = Sm(undef, m)
+  w̄   = Sm(undef, m)
+  Mu  = Sm(undef, m)
+  Av  = Sm(undef, m)
+  u   = Sm(undef, 0)
+  v   = Sn(undef, 0)
+  q   = Sn(undef, 0)
+  Sm = isconcretetype(Sm) ? Sm : typeof(y)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
+  stats = LNLQStats(0, false, T[], false, T[], T[], 0.0, "unknown")
+  workspace = LnlqWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
   return workspace
 end
 
 function LnlqWorkspace(m::Integer, n::Integer, S::Type)
-  FC  = eltype(S)
-  T   = real(FC)
-  x   = S(undef, n)
-  Nv  = S(undef, n)
-  Aᴴu = S(undef, n)
-  y   = S(undef, m)
-  w̄   = S(undef, m)
-  Mu  = S(undef, m)
-  Av  = S(undef, m)
-  u   = S(undef, 0)
-  v   = S(undef, 0)
-  q   = S(undef, 0)
-  S = isconcretetype(S) ? S : typeof(x)
-  stats = LNLQStats(0, false, T[], false, T[], T[], 0.0, "unknown")
-  workspace = LnlqWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w̄, Mu, Av, u, v, q, stats)
-  return workspace
+  LnlqWorkspace(m, n, S, S)
 end
 
 function LnlqWorkspace(A, b)
@@ -2233,33 +2431,37 @@ function LnlqWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`craig!`](@ref).
+Workspace for the in-place methods [`craig!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = CraigWorkspace(m, n, Sm, Sn)
     workspace = CraigWorkspace(m, n, S)
     workspace = CraigWorkspace(A, b)
-    workspace = CraigWorkspace(kc::KrylovConstructor)
+    workspace = CraigWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct CraigWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CraigWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
   n     :: Int
-  x     :: S
-  Nv    :: S
-  Aᴴu   :: S
-  y     :: S
-  w     :: S
-  Mu    :: S
-  Av    :: S
-  u     :: S
-  v     :: S
-  w2    :: S
+  x     :: Sn
+  Nv    :: Sn
+  Aᴴu   :: Sn
+  y     :: Sm
+  w     :: Sm
+  Mu    :: Sm
+  Av    :: Sm
+  u     :: Sm
+  v     :: Sn
+  w2    :: Sn
   stats :: SimpleStats{T}
 end
 
-function CraigWorkspace(kc::KrylovConstructor)
-  S   = typeof(kc.vm)
-  FC  = eltype(S)
+function CraigWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC  = eltype(Sm)
   T   = real(FC)
   m   = length(kc.vm)
   n   = length(kc.vn)
@@ -2274,27 +2476,32 @@ function CraigWorkspace(kc::KrylovConstructor)
   v   = similar(kc.vn_empty)
   w2  = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CraigWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
+  workspace = CraigWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
+  return workspace
+end
+
+function CraigWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC  = eltype(Sm)
+  T   = real(FC)
+  x   = Sn(undef, n)
+  Nv  = Sn(undef, n)
+  Aᴴu = Sn(undef, n)
+  y   = Sm(undef, m)
+  w   = Sm(undef, m)
+  Mu  = Sm(undef, m)
+  Av  = Sm(undef, m)
+  u   = Sm(undef, 0)
+  v   = Sn(undef, 0)
+  w2  = Sn(undef, 0)
+  Sm = isconcretetype(Sm) ? Sm : typeof(y)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  workspace = CraigWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
   return workspace
 end
 
 function CraigWorkspace(m::Integer, n::Integer, S::Type)
-  FC  = eltype(S)
-  T   = real(FC)
-  x   = S(undef, n)
-  Nv  = S(undef, n)
-  Aᴴu = S(undef, n)
-  y   = S(undef, m)
-  w   = S(undef, m)
-  Mu  = S(undef, m)
-  Av  = S(undef, m)
-  u   = S(undef, 0)
-  v   = S(undef, 0)
-  w2  = S(undef, 0)
-  S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CraigWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
-  return workspace
+  CraigWorkspace(m, n, S, S)
 end
 
 function CraigWorkspace(A, b)
@@ -2304,35 +2511,38 @@ function CraigWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`craigmr!`](@ref).
+Workspace for the in-place methods [`craigmr!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = CraigmrWorkspace(m, n, S)
     workspace = CraigmrWorkspace(A, b)
-    workspace = CraigmrWorkspace(kc::KrylovConstructor)
+    workspace = CraigmrWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 """
-mutable struct CraigmrWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct CraigmrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
   n     :: Int
-  x     :: S
-  Nv    :: S
-  Aᴴu   :: S
-  d     :: S
-  y     :: S
-  Mu    :: S
-  w     :: S
-  wbar  :: S
-  Av    :: S
-  u     :: S
-  v     :: S
-  q     :: S
+  x     :: Sn
+  Nv    :: Sn
+  Aᴴu   :: Sn
+  d     :: Sm
+  y     :: Sm
+  Mu    :: Sm
+  w     :: Sm
+  wbar  :: Sm
+  Av    :: Sm
+  u     :: Sm
+  v     :: Sn
+  q     :: Sn
   stats :: SimpleStats{T}
 end
 
-function CraigmrWorkspace(kc::KrylovConstructor)
-  S    = typeof(kc.vm)
-  FC   = eltype(S)
+function CraigmrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC   = eltype(Sm)
   T    = real(FC)
   m    = length(kc.vm)
   n    = length(kc.vn)
@@ -2349,29 +2559,34 @@ function CraigmrWorkspace(kc::KrylovConstructor)
   v    = similar(kc.vn_empty)
   q    = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CraigmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
+  workspace = CraigmrWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
+  return workspace
+end
+
+function CraigmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC   = eltype(Sm)
+  T    = real(FC)
+  x    = Sn(undef, n)
+  Nv   = Sn(undef, n)
+  Aᴴu  = Sn(undef, n)
+  d    = Sn(undef, n)
+  y    = Sm(undef, m)
+  Mu   = Sm(undef, m)
+  w    = Sm(undef, m)
+  wbar = Sm(undef, m)
+  Av   = Sm(undef, m)
+  u    = Sm(undef, 0)
+  v    = Sn(undef, 0)
+  q    = Sn(undef, 0)
+  Sm = isconcretetype(Sm) ? Sm : typeof(y)
+  Sn = isconcretetype(Sn) ? Sn : typeof(x)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  workspace = CraigmrWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
   return workspace
 end
 
 function CraigmrWorkspace(m::Integer, n::Integer, S::Type)
-  FC   = eltype(S)
-  T    = real(FC)
-  x    = S(undef, n)
-  Nv   = S(undef, n)
-  Aᴴu  = S(undef, n)
-  d    = S(undef, n)
-  y    = S(undef, m)
-  Mu   = S(undef, m)
-  w    = S(undef, m)
-  wbar = S(undef, m)
-  Av   = S(undef, m)
-  u    = S(undef, 0)
-  v    = S(undef, 0)
-  q    = S(undef, 0)
-  S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CraigmrWorkspace{T,FC,S}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
-  return workspace
+  CraigmrWorkspace(m, n, S, S)
 end
 
 function CraigmrWorkspace(A, b)
@@ -2381,17 +2596,19 @@ function CraigmrWorkspace(A, b)
 end
 
 """
-Workspace for the in-place method [`gmres!`](@ref).
+Workspace for the in-place methods [`gmres!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = GmresWorkspace(m, n, S; memory = 20)
     workspace = GmresWorkspace(A, b; memory = 20)
-    workspace = GmresWorkspace(kc::KrylovConstructor; memory = 20)
+    workspace = GmresWorkspace(kc::KrylovConstructor{S,S}; memory = 20)
 
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 `memory` is set to `n` if the value given is larger than `n`.
 """
-mutable struct GmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct GmresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -2409,8 +2626,7 @@ mutable struct GmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function GmresWorkspace(kc::KrylovConstructor; memory::Integer = 20)
-  S  = typeof(kc.vm)
+function GmresWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -2458,17 +2674,19 @@ function GmresWorkspace(A, b; memory::Integer = 20)
 end
 
 """
-Workspace for the in-place method [`fgmres!`](@ref).
+Workspace for the in-place methods [`fgmres!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = FgmresWorkspace(m, n, S; memory = 20)
     workspace = FgmresWorkspace(A, b; memory = 20)
-    workspace = FgmresWorkspace(kc::KrylovConstructor; memory = 20)
+    workspace = FgmresWorkspace(kc::KrylovConstructor{S,S}; memory = 20)
 
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 `memory` is set to `n` if the value given is larger than `n`.
 """
-mutable struct FgmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct FgmresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -2486,8 +2704,7 @@ mutable struct FgmresWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function FgmresWorkspace(kc::KrylovConstructor; memory::Integer = 20)
-  S  = typeof(kc.vm)
+function FgmresWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -2535,17 +2752,19 @@ function FgmresWorkspace(A, b; memory::Integer = 20)
 end
 
 """
-Workspace for the in-place method [`fom!`](@ref).
+Workspace for the in-place methods [`fom!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = FomWorkspace(m, n, S; memory = 20)
     workspace = FomWorkspace(A, b; memory = 20)
-    workspace = FomWorkspace(kc::KrylovConstructor; memory = 20)
+    workspace = FomWorkspace(kc::KrylovConstructor{S,S}; memory = 20)
 
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 `memory` is set to `n` if the value given is larger than `n`.
 """
-mutable struct FomWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
+mutable struct FomWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
   Δx         :: S
@@ -2561,8 +2780,7 @@ mutable struct FomWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   stats      :: SimpleStats{T}
 end
 
-function FomWorkspace(kc::KrylovConstructor; memory::Integer = 20)
-  S  = typeof(kc.vm)
+function FomWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -2608,17 +2826,22 @@ function FomWorkspace(A, b; memory::Integer = 20)
 end
 
 """
-Workspace for the in-place method [`gpmr!`](@ref).
+Workspace for the in-place methods [`gpmr!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
+    workspace = GpmrWorkspace(m, n, Sm, Sn; memory = 20)
     workspace = GpmrWorkspace(m, n, S; memory = 20)
     workspace = GpmrWorkspace(A, b; memory = 20)
-    workspace = GpmrWorkspace(kc::KrylovConstructor; memory = 20)
+    workspace = GpmrWorkspace(A, b, c; memory = 20)
+    workspace = GpmrWorkspace(kc::KrylovConstructor{Sm,Sn}; memory = 20)
 
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 `memory` is set to `n + m` if the value given is larger than `n + m`.
 """
-mutable struct GpmrWorkspace{T,FC,Sm,Sn} <: KrylovWorkspaceNext{T,FC,Sm,Sn}
+mutable struct GpmrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m          :: Int
   n          :: Int
   wA         :: Sn
@@ -2668,34 +2891,46 @@ function GpmrWorkspace(kc::KrylovConstructor{Sm,Sn}; memory::Integer = 20) where
   return workspace
 end
 
-function GpmrWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
+function GpmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; memory::Integer = 20)
   memory = min(n + m, memory)
-  FC = eltype(S)
+  FC = eltype(Sm)
   T  = real(FC)
-  wA = S(undef, 0)
-  wB = S(undef, 0)
-  dA = S(undef, m)
-  dB = S(undef, n)
-  Δx = S(undef, 0)
-  Δy = S(undef, 0)
-  x  = S(undef, m)
-  y  = S(undef, n)
-  q  = S(undef, 0)
-  p  = S(undef, 0)
-  V  = S[S(undef, m) for i = 1 : memory]
-  U  = S[S(undef, n) for i = 1 : memory]
+  wA = Sn(undef, 0)
+  wB = Sm(undef, 0)
+  dA = Sm(undef, m)
+  dB = Sn(undef, n)
+  Δx = Sm(undef, 0)
+  Δy = Sn(undef, 0)
+  x  = Sm(undef, m)
+  y  = Sn(undef, n)
+  q  = Sm(undef, 0)
+  p  = Sn(undef, 0)
+  V  = Sm[Sm(undef, m) for i = 1 : memory]
+  U  = Sn[Sn(undef, n) for i = 1 : memory]
   gs = Vector{FC}(undef, 4 * memory)
   gc = Vector{T}(undef, 4 * memory)
   zt = Vector{FC}(undef, 2 * memory)
   R  = Vector{FC}(undef, memory * (2 * memory + 1))
-  S = isconcretetype(S) ? S : typeof(x)
+  Sm = isconcretetype(Sm) ? Sm : typeof(x)
+  Sn = isconcretetype(Sn) ? Sn : typeof(y)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = GpmrWorkspace{T,FC,S,S}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
+  workspace = GpmrWorkspace{T,FC,Sm,Sn}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
   return workspace
+end
+
+function GpmrWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
+  GpmrWorkspace(m, n, S, S; memory)
 end
 
 function GpmrWorkspace(A, b; memory::Integer = 20)
   m, n = size(A)
   S = ktypeof(b)
   GpmrWorkspace(m, n, S; memory)
+end
+
+function GpmrWorkspace(A, b, c; memory::Integer = 20)
+  m, n = size(A)
+  Sm = ktypeof(b)
+  Sn = ktypeof(c)
+  GpmrWorkspace(m, n, Sm, Sn; memory)
 end

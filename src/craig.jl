@@ -171,7 +171,7 @@ args_craig = (:A, :b)
 kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function craig!(workspace :: CraigWorkspace{T,FC,S}, $(def_args_craig...); $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function craig!(workspace :: CraigWorkspace{T,FC,Sm,Sn}, $(def_args_craig...); $(def_kwargs_craig...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -192,15 +192,15 @@ kwargs_craig = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :btol, :conlim, :at
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
+    ktypeof(b) == Sm || error("ktypeof(b) must be equal to $Sm")
 
     # Compute the adjoint of A
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, workspace, :u , S, workspace.y)  # The length of u is m
-    allocate_if(!NisI, workspace, :v , S, workspace.x)  # The length of v is n
-    allocate_if(λ > 0, workspace, :w2, S, workspace.x)  # The length of w2 is n
+    allocate_if(!MisI, workspace, :u , Sm, workspace.y)  # The length of u is m
+    allocate_if(!NisI, workspace, :v , Sn, workspace.x)  # The length of v is n
+    allocate_if(λ > 0, workspace, :w2, Sn, workspace.x)  # The length of w2 is n
     x, Nv, Aᴴu, y, w = workspace.x, workspace.Nv, workspace.Aᴴu, workspace.y, workspace.w
     Mu, Av, w2, stats = workspace.Mu, workspace.Av, workspace.w2, workspace.stats
     rNorms = stats.residuals

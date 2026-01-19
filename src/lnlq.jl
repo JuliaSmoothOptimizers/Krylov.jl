@@ -165,7 +165,7 @@ args_lnlq = (:A, :b)
 kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function lnlq!(workspace :: LnlqWorkspace{T,FC,S}, $(def_args_lnlq...); $(def_kwargs_lnlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function lnlq!(workspace :: LnlqWorkspace{T,FC,Sm,Sn}, $(def_args_lnlq...); $(def_kwargs_lnlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -186,15 +186,15 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
+    ktypeof(b) == Sm || error("ktypeof(b) must be equal to $Sm")
 
     # Compute the adjoint of A
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, workspace, :u, S, workspace.y)  # The length of u is m
-    allocate_if(!NisI, workspace, :v, S, workspace.x)  # The length of v is n
-    allocate_if(λ > 0, workspace, :q, S, workspace.x)  # The length of q is n
+    allocate_if(!MisI, workspace, :u, Sm, workspace.y)  # The length of u is m
+    allocate_if(!NisI, workspace, :v, Sn, workspace.x)  # The length of v is n
+    allocate_if(λ > 0, workspace, :q, Sn, workspace.x)  # The length of q is n
     x, Nv, Aᴴu, y, w̄ = workspace.x, workspace.Nv, workspace.Aᴴu, workspace.y, workspace.w̄
     Mu, Av, q, stats = workspace.Mu, workspace.Av, workspace.q, workspace.stats
     rNorms, xNorms, yNorms = stats.residuals, stats.error_bnd_x, stats.error_bnd_y
