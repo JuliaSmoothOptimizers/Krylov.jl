@@ -86,6 +86,9 @@ function symmlq end
     workspace = symmlq!(workspace::SymmlqWorkspace, A, b, x0; kwargs...)
 
 In these calls, `kwargs` are keyword arguments of [`symmlq`](@ref).
+The keyword argument `window` is the only exception.
+It is only supported by [`symmlq`](@ref) and is required to create a `SymmlqWorkspace`.
+It cannot be changed later.
 
 See [`SymmlqWorkspace`](@ref) for instructions on how to create the `workspace`.
 

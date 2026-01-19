@@ -119,6 +119,9 @@ function minres end
     workspace = minres!(workspace::MinresWorkspace, A, b, x0; kwargs...)
 
 In these calls, `kwargs` are keyword arguments of [`minres`](@ref).
+The keyword argument `window` is the only exception.
+It is only supported by [`minres`](@ref) and is required to create a `MinresWorkspace`.
+It cannot be changed later.
 
 See [`MinresWorkspace`](@ref) for instructions on how to create the `workspace`.
 

@@ -132,6 +132,9 @@ function lsmr end
     workspace = lsmr!(workspace::LsmrWorkspace, A, b; kwargs...)
 
 In this call, `kwargs` are keyword arguments of [`lsmr`](@ref).
+The keyword argument `window` is the only exception.
+It is only supported by [`lsmr`](@ref) and is required to create a `LsmrWorkspace`.
+It cannot be changed later.
 
 See [`LsmrWorkspace`](@ref) for instructions on how to create the `workspace`.
 

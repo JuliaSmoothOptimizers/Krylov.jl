@@ -154,6 +154,9 @@ function lslq end
     workspace = lslq!(workspace::LslqWorkspace, A, b; kwargs...)
 
 In this call, `kwargs` are keyword arguments of [`lslq`](@ref).
+The keyword argument `window` is the only exception.
+It is only supported by [`lslq`](@ref) and is required to create a `LslqWorkspace`.
+It cannot be changed later.
 
 See [`LslqWorkspace`](@ref) for instructions on how to create the `workspace`.
 

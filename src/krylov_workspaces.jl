@@ -2014,7 +2014,7 @@ function CgneWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   s   = similar(kc.vm_empty)
   z   = similar(kc.vm_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
-  workspace = CgneWorkspace{T,FC,S}(m, n, x, p, Aᴴz, r, q, s, z, stats)
+  workspace = CgneWorkspace{T,FC,Sm,Sn}(m, n, x, p, Aᴴz, r, q, s, z, stats)
   return workspace
 end
 
@@ -2073,7 +2073,7 @@ mutable struct CrmrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
 end
 
 function CrmrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
-  FC  = eltype(S)
+  FC  = eltype(Sm)
   T   = real(FC)
   m   = length(kc.vm)
   n   = length(kc.vn)
@@ -2242,7 +2242,7 @@ function LsqrWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Integer = 5) where 
 end
 
 function LsqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Integer = 5)
-  FC  = eltype(S)
+  FC  = eltype(Sm)
   T   = real(FC)
   x   = Sn(undef, n)
   Nv  = Sn(undef, n)
@@ -2321,7 +2321,7 @@ function LsmrWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Integer = 5) where 
 end
 
 function LsmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Integer = 5)
-  FC   = eltype(S)
+  FC   = eltype(Sm)
   T    = real(FC)
   x    = Sn(undef, n)
   Nv   = Sn(undef, n)
