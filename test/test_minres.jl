@@ -70,6 +70,43 @@
       @test(stats.solved)
       @test stats.indefinite == false
 
+      # Test: Ensure stats are reset when reusing workspace
+      # (pᵀAp < 0)
+      A = FC[
+        10.0 0.0 0.0 0.0;
+        0.0 8.0 0.0 0.0;
+        0.0 0.0 5.0 0.0;
+        0.0 0.0 0.0 -1.0
+      ]
+      b = FC[1.0, 1.0, 1.0, 0.1]
+      
+      # Initialize workspace and solve
+      solver = MinresWorkspace(A, b)
+      minres!(solver, A, b; linesearch=true)
+      
+      # Verify the "npc" state was recorded
+      @test solver.stats.npcCount == 2
+      @test solver.stats.indefinite == true
+      @test solver.stats.status == "nonpositive curvature"
+
+      # Reuse the SAME solver on a Positive Definite System
+
+      A = FC[
+        10.0 0.0 0.0 0.0;
+        0.0 8.0 0.0 0.0;
+        0.0 0.0 5.0 0.0;
+        0.0 0.0 0.0 1.0
+      ]
+      b = FC[1.0, 1.0, 1.0, 1.0]
+
+      # Run the solver again on the same workspace
+      minres!(solver, A, b; linesearch=true)
+
+      # Verify the RESET works
+      @test solver.stats.npcCount == 0
+      @test solver.stats.indefinite == false
+      @test solver.stats.solved == true
+
       # Test linesearch
       A, b = symmetric_indefinite(FC=FC)
       workspace = MinresWorkspace(A, b)
