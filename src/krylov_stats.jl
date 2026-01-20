@@ -37,6 +37,8 @@ function reset!(stats :: SimpleStats)
   empty!(stats.residuals)
   empty!(stats.Aresiduals)
   empty!(stats.Acond)
+  stats.indefinite = false
+  stats.npcCount = 0
 end
 
 function copyto!(dest :: SimpleStats, src :: SimpleStats)

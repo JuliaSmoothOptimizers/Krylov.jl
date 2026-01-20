@@ -270,7 +270,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
 
     # Termination status
     solved && on_boundary             && (status = "on trust-region boundary")
-    solved && stats.indefinite        && (status = "nonpositive curvature detected")
+    solved && stats.indefinite        && (status = "nonpositive curvature")
     solved && (status == "unknown")   && (status = "solution good enough given atol and rtol")
     zero_curvature                    && (status = "zero curvature detected")
     tired                             && (status = "maximum number of iterations exceeded")

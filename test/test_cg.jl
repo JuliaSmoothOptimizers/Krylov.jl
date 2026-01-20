@@ -53,7 +53,7 @@
       solver = CgWorkspace(A, b)
       cg!(solver,A, b, linesearch=true)
       x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
-      @test stats.status == "nonpositive curvature detected"
+      @test stats.status == "nonpositive curvature"
       @test !stats.inconsistent
       @test stats.niter == 0
       @test stats.indefinite == true
@@ -91,7 +91,7 @@
       cg!(solver, A, b; radius = 10 * real(one(FC)))
       x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
       @test stats.npcCount == 1
-      @test stats.status == "nonpositive curvature detected"
+      @test stats.status == "nonpositive curvature"
       @test stats.indefinite == true
       @test real(dot(npc_dir, A * npc_dir)) <= 0.01 
 
@@ -132,6 +132,43 @@
       # Test that the cg workspace throws an error when radius > 0 and linesearch is true
       A, b = symmetric_indefinite(FC = FC, shift = 5)
       @test_throws ErrorException cg(A, b, radius = real(one(FC)), linesearch = true)
+      
+      # Test: Ensure stats are reset when reusing workspace
+      # (pᵀAp < 0)
+      A = FC[
+        10.0 0.0 0.0 0.0;
+        0.0 8.0 0.0 0.0;
+        0.0 0.0 5.0 0.0;
+        0.0 0.0 0.0 -1.0
+      ]
+      b = FC[1.0, 1.0, 1.0, 0.1]
+      
+      # Initialize workspace and solve
+      solver = CgWorkspace(A, b)
+      cg!(solver, A, b; linesearch=true)
+      
+      # Verify the "npc" state was recorded
+      @test solver.stats.npcCount == 1
+      @test solver.stats.indefinite == true
+      @test solver.stats.status == "nonpositive curvature"
+
+      # Reuse the SAME solver on a Positive Definite System
+
+      A = FC[
+        10.0 0.0 0.0 0.0;
+        0.0 8.0 0.0 0.0;
+        0.0 0.0 5.0 0.0;
+        0.0 0.0 0.0 1.0
+      ]
+      b = FC[1.0, 1.0, 1.0, 1.0]
+
+      # Run the solver again on the same workspace
+      cg!(solver, A, b; linesearch=true)
+      # Verify the RESET works
+      @test solver.stats.npcCount == 0
+      @test solver.stats.indefinite == false
+      @test solver.stats.solved == true
+      
     end
   end
 end
