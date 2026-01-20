@@ -63,17 +63,71 @@ end
 
 Statistics of `workspace` are displayed if `show_stats` is set to true.
 """
-function show(io :: IO, workspace :: Union{KrylovWorkspaceNext{T,FC,S}, BlockKrylovWorkspace{T,FC,S}}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+function show(io :: IO, workspace :: _KrylovWorkspace{T,FC,Sm,Sn}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
   type_workspace = typeof(workspace)
   name_workspace = string(type_workspace.name.name)
   name_stats = string(typeof(workspace.stats).name.name)
   nbytes = sizeof(workspace)
   storage = format_bytes(nbytes)
-  architecture = S <: Vector ? "CPU" : "GPU"   # FIXME cannot assume that all non-Vector types are GPU types
+  lS = max(string(Sm) |> length, string(Sn) |> length)
+  lT = string(T) |> length
+  lFC = string(FC) |> length
+  if Sm <: Vector && Sn <: Vector
+    architecture = "CPU"
+  elseif Sm.name.name in (:CuArray, :ROCArray, :oneArray, :MtlArray) && Sn.name.name in (:CuArray, :ROCArray, :oneArray, :MtlArray)
+    architecture = "GPU"
+  else
+    architecture = "CPU / GPU"
+  end
+  l1 = max(length(name_workspace), lFC + 11)  # length("Precision: ") = 11
+  nchar = type_workspace <: Union{CgLanczosShiftWorkspace, CglsLanczosShiftWorkspace, FomWorkspace, DiomWorkspace, DqgmresWorkspace, GmresWorkspace, FgmresWorkspace, GpmrWorkspace, BlockGmresWorkspace} ? 8 : 0  # length("Vector{}") = 8
+  l2 = max(ndigits(workspace.m) + 7, length(architecture) + 14, lS + nchar)  # length("nrows: ") = 7 and length("Architecture: ") = 14
+  l2 = max(l2, length(name_stats) + 2 + lT)  # length("{}") = 2
+  l3 = max(ndigits(workspace.n) + 7, length(storage) + 9)  # length("Storage: ") = 9 and length("cols: ") = 7
+  format = Printf.Format("│%$(l1)s│%$(l2)s│%$(l3)s│\n")
+  format2 = Printf.Format("│%$(l1+1)s│%$(l2)s│%$(l3)s│\n")
+  @printf(io, "┌%s┬%s┬%s┐\n", "─"^l1, "─"^l2, "─"^l3)
+  Printf.format(io, format, "$(name_workspace)", "nrows: $(workspace.m)", "ncols: $(workspace.n)")
+  @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
+  Printf.format(io, format, "Precision: $FC", "Architecture: $architecture","Storage: $storage")
+  @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
+  Printf.format(io, format, "Attribute", "Type", "Size")
+  @printf(io, "├%s┼%s┼%s┤\n", "─"^l1, "─"^l2, "─"^l3)
+  for i=1:fieldcount(type_workspace)
+    name_i = fieldname(type_workspace, i)
+    type_i = fieldtype(type_workspace, i)
+    field_i = getfield(workspace, name_i)
+    size_i = ksizeof(field_i)
+    (size_i ≠ 0) && Printf.format(io, format, string(name_i), type_i, format_bytes(size_i))
+  end
+  @printf(io, "└%s┴%s┴%s┘\n","─"^l1,"─"^l2,"─"^l3)
+  if show_stats
+    @printf(io, "\n")
+    show(io, workspace.stats)
+  end
+  return nothing
+end
+
+function show(io :: IO, workspace :: BlockKrylovWorkspace{T,FC,SV,SM}; show_stats :: Bool=true) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}
+  type_workspace = typeof(workspace)
+  name_workspace = string(type_workspace.name.name)
+  name_stats = string(typeof(workspace.stats).name.name)
+  nbytes = sizeof(workspace)
+  storage = format_bytes(nbytes)
+  lS = max(string(SV) |> length, string(SM) |> length)
+  lT = string(T) |> length
+  lFC = string(FC) |> length
+  if SV <: Vector && SM <: Matrix
+    architecture = "CPU"
+  elseif SV.name.name in (:CuArray, :ROCArray, :oneArray, :MtlArray) && SM.name.name in (:CuArray, :ROCArray, :oneArray, :MtlArray)
+    architecture = "GPU"
+  else
+    architecture = "CPU / GPU"
+  end
   l1 = max(length(name_workspace), length(string(FC)) + 11)  # length("Precision: ") = 11
-  nchar = type_workspace <: Union{CgLanczosShiftWorkspace, FomWorkspace, DiomWorkspace, DqgmresWorkspace, GmresWorkspace, FgmresWorkspace, GpmrWorkspace, BlockGmresWorkspace} ? 8 : 0  # length("Vector{}") = 8
-  l2 = max(ndigits(workspace.m) + 7, length(architecture) + 14, length(string(S)) + nchar)  # length("nrows: ") = 7 and length("Architecture: ") = 14
-  l2 = max(l2, length(name_stats) + 2 + length(string(T)))  # length("{}") = 2
+  nchar = type_workspace <: BlockGmresWorkspace ? 8 : 0  # length("Vector{}") = 8
+  l2 = max(ndigits(workspace.m) + 7, length(architecture) + 14, lS + nchar)  # length("nrows: ") = 7 and length("Architecture: ") = 14
+  l2 = max(l2, length(name_stats) + 2 + lT)  # length("{}") = 2
   l3 = max(ndigits(workspace.n) + 7, length(storage) + 9)  # length("Storage: ") = 9 and length("cols: ") = 7
   format = Printf.Format("│%$(l1)s│%$(l2)s│%$(l3)s│\n")
   format2 = Printf.Format("│%$(l1+1)s│%$(l2)s│%$(l3)s│\n")

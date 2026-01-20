@@ -61,6 +61,15 @@
         (x, stats) = crls(A, b, M=D⁻¹, λ=1.0)
       end
 
+      # Test different types for input and output
+      A, b, c, D = small_sp(false, FC=FC)
+      workspace = CrlsWorkspace(KrylovConstructor(TestVector(b), c))
+      crls!(workspace, A, TestVector(b), M=inv(D), λ=1.0)
+      @test typeof(workspace.x) === typeof(c)
+      workspace = CrlsWorkspace(KrylovConstructor(b, TestVector(c)))
+      crls!(workspace, A, b, M=inv(D), λ=1.0)
+      @test typeof(workspace.x) === typeof(TestVector(c))
+
       # test callback function
       A, b, M = saddle_point(FC=FC)
       M⁻¹ = inv(M)

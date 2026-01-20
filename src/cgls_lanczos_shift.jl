@@ -105,7 +105,7 @@ args_cgls_lanczos_shift = (:A, :b, :shifts)
 kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function cgls_lanczos_shift!(workspace :: CglsLanczosShiftWorkspace{T,FC,S}, $(def_args_cgls_lanczos_shift...); $(def_kwargs_cgls_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function cgls_lanczos_shift!(workspace :: CglsLanczosShiftWorkspace{T,FC,Sm,Sn}, $(def_args_cgls_lanczos_shift...); $(def_kwargs_cgls_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -125,13 +125,13 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
+    ktypeof(b) == Sm || error("ktypeof(b) must be equal to $Sm")
 
     # Compute the adjoint of A
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, workspace, :v, S, workspace.Mv)  # The length of v is n
+    allocate_if(!MisI, workspace, :v, Sn, workspace.Mv)  # The length of v is n
     v, u_prev, u, u_next = workspace.Mv, workspace.u_prev, workspace.u, workspace.u_next
     x, p, σ, δhat = workspace.x, workspace.p, workspace.σ, workspace.δhat
     ω, γ, rNorms, converged = workspace.ω, workspace.γ, workspace.rNorms, workspace.converged

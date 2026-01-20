@@ -93,6 +93,16 @@
           N⁻¹ = inv(N)
           (x_lq, stats) = lslq(A, b, M=M⁻¹, N=N⁻¹, sqd=true, transfer_to_lsqr=transfer_to_lsqr)
         end
+
+        # Test different types for input and output
+        A, b, c, D = small_sp(false, FC=FC)
+        workspace = LslqWorkspace(KrylovConstructor(TestVector(b), c))
+        lslq!(workspace, A, TestVector(b), M=inv(D), λ=1.0)
+        @test typeof(workspace.x) === typeof(c)
+        workspace = LslqWorkspace(KrylovConstructor(b, TestVector(c)))
+        lslq!(workspace, A, b, M=inv(D), λ=1.0)
+        @test typeof(workspace.x) === typeof(TestVector(c))
+
         # test callback function
         A, b, M = saddle_point(FC=FC)
         M⁻¹ = inv(M)

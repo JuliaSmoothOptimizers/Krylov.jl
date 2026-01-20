@@ -97,6 +97,14 @@
       @test(resid ≤ usymlq_tol)
       @test(stats.solved)
 
+      # Test different types for input and output
+      A, b = square_consistent(FC=FC)
+      c = TestVector(b)
+      workspace = UsymlqWorkspace(KrylovConstructor(b, c))
+      usymlq!(workspace, A, b, c)
+      @test typeof(workspace.x) === typeof(c)
+      @test workspace.stats.solved
+
       # test callback function
       A, b = sparse_laplacian(FC=FC)
       c = copy(b)

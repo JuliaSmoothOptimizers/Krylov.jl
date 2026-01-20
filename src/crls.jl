@@ -117,7 +117,7 @@ args_crls = (:A, :b)
 kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function crls!(workspace :: CrlsWorkspace{T,FC,S}, $(def_args_crls...); $(def_kwargs_crls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function crls!(workspace :: CrlsWorkspace{T,FC,Sm,Sn}, $(def_args_crls...); $(def_kwargs_crls...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -133,13 +133,13 @@ kwargs_crls = (:M, :ldiv, :radius, :λ, :atol, :rtol, :itmax, :timemax, :verbose
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
+    ktypeof(b) == Sm || error("ktypeof(b) must be equal to $Sm")
 
     # Compute the adjoint of A
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, workspace, :Ms, S, workspace.r)  # The length of Ms is m
+    allocate_if(!MisI, workspace, :Ms, Sm, workspace.r)  # The length of Ms is m
     x, p, Ar, q = workspace.x, workspace.p, workspace.Ar, workspace.q
     r, Ap, s, stats = workspace.r, workspace.Ap, workspace.s, workspace.stats
     rNorms, ArNorms = stats.residuals, stats.Aresiduals

@@ -38,6 +38,22 @@ end
       # @test(all(resids .≤ cgls_lanczos_shift_tol))
       # @test(stats.solved)
 
+      # Test different types for input and output
+      A, b = symmetric_definite(FC=FC)
+      shifts = [1.0; 2.0; 3.0; 4.0; 5.0; 6.0]
+      workspace = CglsLanczosShiftWorkspace(KrylovConstructor(b, TestVector(b)), length(shifts))
+      cgls_lanczos_shift!(workspace, A, b, shifts)
+      @test workspace.stats.solved
+      @test typeof(workspace.x) === Vector{TestVector{FC}}
+
+      A, b, c, D = small_sp(false, FC=FC)
+      workspace = CglsWorkspace(KrylovConstructor(TestVector(b), c))
+      cgls!(workspace, A, TestVector(b), M=inv(D), λ=1.0)
+      @test typeof(workspace.x) === typeof(c)
+      workspace = CglsWorkspace(KrylovConstructor(b, TestVector(c)))
+      cgls!(workspace, A, b, M=inv(D), λ=1.0)
+      @test typeof(workspace.x) === typeof(TestVector(c))
+
       # test callback function
       A, b = symmetric_definite(FC=FC)
       shifts = [1.0; 2.0; 3.0; 4.0; 5.0; 6.0]

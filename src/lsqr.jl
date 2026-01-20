@@ -128,6 +128,9 @@ function lsqr end
     workspace = lsqr!(workspace::LsqrWorkspace, A, b; kwargs...)
 
 In this call, `kwargs` are keyword arguments of [`lsqr`](@ref).
+The keyword argument `window` is the only exception.
+It is only supported by [`lsqr`](@ref) and is required to create a `LsqrWorkspace`.
+It cannot be changed later.
 
 See [`LsqrWorkspace`](@ref) for instructions on how to create the `workspace`.
 

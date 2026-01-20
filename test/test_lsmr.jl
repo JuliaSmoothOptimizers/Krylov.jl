@@ -88,6 +88,15 @@
         (x, stats) = lsmr(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
       end
 
+      # Test different types for input and output
+      A, b, c, D = small_sp(false, FC=FC)
+      workspace = LsmrWorkspace(KrylovConstructor(TestVector(b), c))
+      lsmr!(workspace, A, TestVector(b), M=inv(D), λ=1.0)
+      @test typeof(workspace.x) === typeof(c)
+      workspace = LsmrWorkspace(KrylovConstructor(b, TestVector(c)))
+      lsmr!(workspace, A, b, M=inv(D), λ=1.0)
+      @test typeof(workspace.x) === typeof(TestVector(c))
+
       # test callback function
       A, b, M = saddle_point(FC=FC)
       M⁻¹ = inv(M)

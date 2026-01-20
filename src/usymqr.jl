@@ -124,7 +124,7 @@ optargs_usymqr = (:x0,)
 kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
-  function usymqr!(workspace :: UsymqrWorkspace{T,FC,S}, $(def_args_usymqr...); $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+  function usymqr!(workspace :: UsymqrWorkspace{T,FC,Sm,Sn}, $(def_args_usymqr...); $(def_kwargs_usymqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -138,8 +138,8 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
-    ktypeof(c) == S || error("ktypeof(c) must be equal to $S")
+    ktypeof(b) == Sm || error("ktypeof(b) must be equal to $Sm")
+    ktypeof(c) == Sn || error("ktypeof(c) must be equal to $Sn")
 
     # Compute the adjoint of A
     Aᴴ = A'

@@ -5,14 +5,22 @@ A workspace (`KrylovWorkspace` or `BlockKrylovWorkspace`), which contains the st
 It should also be the same number of right-hand sides in block Krylov methods.
 The section [storage requirements](@ref storage-requirements) specifies the memory needed for each Krylov method.
 
-Each `KrylovWorkspace` has three constructors with consistent argument patterns:
+Each `KrylovWorkspace` has at least three constructors with consistent argument patterns:
 
 ```@constructors
 XyzWorkspace(A, b)
 XyzWorkspace(m, n, S)
 XyzWorkspace(kc::KrylovConstructor)
 ```
-The only exceptions are `CgLanczosShiftWorkspace` and `CglsLanczosShiftWorkspace`, which require an additional argument `nshifts`.
+The only exceptions are [`CgLanczosShiftWorkspace`](@ref) and [`CglsLanczosShiftWorkspace`](@ref), which require an additional argument `nshifts`.
+
+Depending on the method, some workspaces may also be constructed as:
+
+```@constructors_extended
+XyzWorkspace(A, b, c)
+XyzWorkspace(m, n, Sm, Sn)
+```
+
 Additionally, some constructors accept keyword arguments.
 
 `Xyz` represents the name of the Krylov method, written in lowercase except for its first letter (such as `Cg`, `Minres`, `Lsmr` or `Bicgstab`).

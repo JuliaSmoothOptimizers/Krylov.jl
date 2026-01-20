@@ -138,6 +138,15 @@ end
         (x, y, stats) = craig(A, b, M=M⁻¹, N=N⁻¹, sqd=true)
       end
 
+      # Test different types for input and output
+      A, b = small_ln(FC=FC)
+      m, n = size(A)
+      workspace = CraigWorkspace(KrylovConstructor(b, TestVector(similar(b, n))))
+      craig!(workspace, A, b)
+      @test workspace.stats.solved
+      @test typeof(workspace.x) === TestVector{FC}
+      @test typeof(workspace.y) === Vector{FC}
+
       # test callback function
       A, b = over_consistent(FC=FC)
       workspace = CraigWorkspace(A, b)

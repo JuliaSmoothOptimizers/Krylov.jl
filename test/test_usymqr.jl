@@ -98,6 +98,14 @@
       (x, stats) = usymqr(A, b, c)
       @test stats.inconsistent
 
+      # Test different types for input and output
+      A, b = square_consistent(FC=FC)
+      c = TestVector(b)
+      workspace = UsymqrWorkspace(KrylovConstructor(b, c))
+      usymqr!(workspace, A, b, c)
+      @test typeof(workspace.x) === typeof(c)
+      @test workspace.stats.solved
+
       # test callback function
       A, b = sparse_laplacian(FC=FC)
       c = copy(b)

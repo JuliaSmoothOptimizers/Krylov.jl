@@ -4,12 +4,17 @@ export BlockKrylovWorkspace, BlockMinresWorkspace, BlockGmresWorkspace
 abstract type BlockKrylovWorkspace{T,FC,SV,SM} end
 
 """
-Workspace for the in-place method [`block_minres!`](@ref).
+Workspace for the in-place methods [`block_minres!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = BlockMinresWorkspace(m, n, p, SV, SM)
     workspace = BlockMinresWorkspace(A, B)
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`p` denotes the number of columns of the right-hand side `B` passed to the in-place methods.
+`SV` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+`SM` is the storage type of the matrices in the workspace, such as `Matrix{Float64}`.
 """
 mutable struct BlockMinresWorkspace{T,FC,SV,SM} <: BlockKrylovWorkspace{T,FC,SV,SM}
   m          :: Int
@@ -92,13 +97,17 @@ function BlockMinresWorkspace(A, B)
 end
 
 """
-Workspace for the in-place method [`block_gmres!`](@ref).
+Workspace for the in-place methods [`block_gmres!`](@ref) and [`krylov_solve!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
     workspace = BlockGmresWorkspace(m, n, p, SV, SM; memory = 5)
     workspace = BlockGmresWorkspace(A, B; memory = 5)
 
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+`p` denotes the number of columns of the right-hand side `B` passed to the in-place methods.
+`SV` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+`SM` is the storage type of the matrices in the workspace, such as `Matrix{Float64}`.
 `memory` is set to `div(n,p)` if the value given is larger than `div(n,p)`.
 """
 mutable struct BlockGmresWorkspace{T,FC,SV,SM} <: BlockKrylovWorkspace{T,FC,SV,SM}
