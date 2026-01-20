@@ -89,6 +89,16 @@
       @test(Aresid_dual ≤ trilqr_tol)
       @test(stats.solved_dual)
 
+      # Test different types for input and output
+      A, b, c = adjoint_ode(FC=FC)
+      c = TestVector(c)
+      workspace = TrilqrWorkspace(KrylovConstructor(b, c))
+      trilqr!(workspace, A, b, c)
+      @test typeof(workspace.x) === typeof(c)
+      @test typeof(workspace.y) === typeof(b)
+      @test workspace.stats.solved_primal
+      @test workspace.stats.solved_dual
+
       # test callback function
       A, b, c = adjoint_pde(FC=FC)
       workspace = TrilqrWorkspace(A, b)

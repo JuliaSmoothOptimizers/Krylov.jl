@@ -95,6 +95,14 @@ end
         (x, stats) = cgne(A, b, N=D⁻¹, λ=1.0)
       end
 
+      # Test different types for input and output
+      A, b = over_consistent(FC=FC)
+      m, n = size(A)
+      workspace = CgneWorkspace(KrylovConstructor(b, TestVector(similar(b, n))))
+      cgne!(workspace, A, b)
+      @test workspace.stats.solved
+      @test typeof(workspace.x) === TestVector{FC}
+
       # test callback function
       A, b = over_consistent(FC=FC)
       workspace = CgneWorkspace(A, b)

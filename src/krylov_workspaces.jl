@@ -2140,7 +2140,7 @@ mutable struct LslqWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   Mu      :: Sm
   Av      :: Sm
   u       :: Sm
-  v       :: Sm
+  v       :: Sn
   err_vec :: Vector{T}
   stats   :: LSLQStats{T}
 end
