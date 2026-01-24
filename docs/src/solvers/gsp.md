@@ -7,4 +7,5 @@
 ```@docs
 gpmr
 gpmr!
+GpmrWorkspace
 ```

@@ -7,6 +7,7 @@
 ```@docs
 bilq
 bilq!
+BilqWorkspace
 ```
 
 ## QMR
@@ -14,6 +15,7 @@ bilq!
 ```@docs
 qmr
 qmr!
+QmrWorkspace
 ```
 
 ## CGS
@@ -21,6 +23,7 @@ qmr!
 ```@docs
 cgs
 cgs!
+CgsWorkspace
 ```
 
 ## BiCGSTAB
@@ -28,6 +31,7 @@ cgs!
 ```@docs
 bicgstab
 bicgstab!
+BicgstabWorkspace
 ```
 
 ## DIOM
@@ -35,6 +39,7 @@ bicgstab!
 ```@docs
 diom
 diom!
+DiomWorkspace
 ```
 
 ## FOM
@@ -42,6 +47,7 @@ diom!
 ```@docs
 fom
 fom!
+FomWorkspace
 ```
 
 ## DQGMRES
@@ -49,6 +55,7 @@ fom!
 ```@docs
 dqgmres
 dqgmres!
+DqgmresWorkspace
 ```
 
 ## GMRES
@@ -56,6 +63,7 @@ dqgmres!
 ```@docs
 gmres
 gmres!
+GmresWorkspace
 ```
 
 ## FGMRES
@@ -63,4 +71,5 @@ gmres!
 ```@docs
 fgmres
 fgmres!
+FgmresWorkspace
 ```

@@ -7,6 +7,7 @@
 ```@docs
 cgls
 cgls!
+CglsWorkspace
 ```
 
 ## CGLS-LANCZOS-SHIFT
@@ -14,6 +15,7 @@ cgls!
 ```@docs
 cgls_lanczos_shift
 cgls_lanczos_shift!
+CglsLanczosShiftWorkspace
 ```
 
 ## CRLS
@@ -21,6 +23,7 @@ cgls_lanczos_shift!
 ```@docs
 crls
 crls!
+CrlsWorkspace
 ```
 
 ## LSLQ
@@ -28,6 +31,7 @@ crls!
 ```@docs
 lslq
 lslq!
+LslqWorkspace
 ```
 
 ## LSQR
@@ -35,6 +39,7 @@ lslq!
 ```@docs
 lsqr
 lsqr!
+LsqrWorkspace
 ```
 
 ## LSMR
@@ -42,6 +47,7 @@ lsqr!
 ```@docs
 lsmr
 lsmr!
+LsmrWorkspace
 ```
 
 ## USYMQR
@@ -49,4 +55,5 @@ lsmr!
 ```@docs
 usymqr
 usymqr!
+UsymqrWorkspace
 ```
