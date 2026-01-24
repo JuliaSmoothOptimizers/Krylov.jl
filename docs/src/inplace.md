@@ -31,7 +31,7 @@ Given an operator `A` and a right-hand side `b`, you can create a `KrylovWorkspa
 We assume that `S(undef, 0)`, `S(undef, n)`, and `S(undef, m)` are well-defined for the storage type `S`.
 For more advanced vector types, workspaces can also be created with the help of a `KrylovConstructor`.
 ```@docs
-Krylov.KrylovConstructor
+KrylovConstructor
 ```
 See the section [custom workspaces](@ref custom_workspaces) for an example where this constructor is the only applicable option.
 
