@@ -7,6 +7,7 @@
 ```@docs
 symmlq
 symmlq!
+SymmlqWorkspace
 ```
 
 ## MINRES
@@ -14,6 +15,7 @@ symmlq!
 ```@docs
 minres
 minres!
+MinresWorkspace
 ```
 
 ## MINRES-QLP
@@ -21,6 +23,7 @@ minres!
 ```@docs
 minres_qlp
 minres_qlp!
+MinresQlpWorkspace
 ```
 
 ## MINARES
@@ -28,4 +31,5 @@ minres_qlp!
 ```@docs
 minares
 minares!
+MinaresWorkspace
 ```

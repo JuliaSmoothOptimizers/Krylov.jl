@@ -7,6 +7,7 @@
 ```@docs
 bilqr
 bilqr!
+BilqrWorkspace
 ```
 
 ## TriLQR
@@ -14,4 +15,5 @@ bilqr!
 ```@docs
 trilqr
 trilqr!
+TrilqrWorkspace
 ```

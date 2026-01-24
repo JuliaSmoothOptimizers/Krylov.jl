@@ -7,6 +7,7 @@
 ```@docs
 cgne
 cgne!
+CgneWorkspace
 ```
 
 ## CRMR
@@ -14,6 +15,7 @@ cgne!
 ```@docs
 crmr
 crmr!
+CrmrWorkspace
 ```
 
 ## LNLQ
@@ -21,6 +23,7 @@ crmr!
 ```@docs
 lnlq
 lnlq!
+LnlqWorkspace
 ```
 
 ## CRAIG
@@ -28,6 +31,7 @@ lnlq!
 ```@docs
 craig
 craig!
+CraigWorkspace
 ```
 
 ## CRAIGMR
@@ -35,6 +39,7 @@ craig!
 ```@docs
 craigmr
 craigmr!
+CraigmrWorkspace
 ```
 
 ## USYMLQ
@@ -42,4 +47,5 @@ craigmr!
 ```@docs
 usymlq
 usymlq!
+UsymlqWorkspace
 ```

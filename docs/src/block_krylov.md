@@ -25,6 +25,7 @@ end
 ```@docs
 block_minres
 block_minres!
+BlockMinresWorkspace
 ```
 
 ## Block-GMRES
@@ -32,4 +33,5 @@ block_minres!
 ```@docs
 block_gmres
 block_gmres!
+BlockGmresWorkspace
 ```

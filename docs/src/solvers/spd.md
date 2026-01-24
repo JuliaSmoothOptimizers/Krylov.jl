@@ -7,6 +7,7 @@
 ```@docs
 cg
 cg!
+CgWorkspace
 ```
 
 ## CR
@@ -14,6 +15,7 @@ cg!
 ```@docs
 cr
 cr!
+CrWorkspace
 ```
 
 ## CAR
@@ -21,6 +23,7 @@ cr!
 ```@docs
 car
 car!
+CarWorkspace
 ```
 
 ## CG-LANCZOS
@@ -28,6 +31,7 @@ car!
 ```@docs
 cg_lanczos
 cg_lanczos!
+CgLanczosWorkspace
 ```
 
 ## CG-LANCZOS-SHIFT
@@ -35,4 +39,5 @@ cg_lanczos!
 ```@docs
 cg_lanczos_shift
 cg_lanczos_shift!
+CgLanczosShiftWorkspace
 ```

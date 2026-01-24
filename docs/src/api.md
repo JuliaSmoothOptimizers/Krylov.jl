@@ -1,4 +1,4 @@
-## Stats Types
+## Statistics
 
 ```@docs
 Krylov.KrylovStats
@@ -12,54 +12,11 @@ Krylov.LSLQStats
 Krylov.LsmrStats
 ```
 
-## Workspace of Krylov methods
+## Workspaces
 
 ```@docs
 KrylovWorkspace
-MinresWorkspace
-MinaresWorkspace
-CgWorkspace
-CrWorkspace
-CarWorkspace
-SymmlqWorkspace
-CgLanczosWorkspace
-CgLanczosShiftWorkspace
-MinresQlpWorkspace
-DiomWorkspace
-FomWorkspace
-DqgmresWorkspace
-GmresWorkspace
-UsymlqWorkspace
-UsymqrWorkspace
-TricgWorkspace
-TrimrWorkspace
-TrilqrWorkspace
-CgsWorkspace
-BicgstabWorkspace
-BilqWorkspace
-QmrWorkspace
-BilqrWorkspace
-CglsWorkspace
-CglsLanczosShiftWorkspace
-CrlsWorkspace
-CgneWorkspace
-CrmrWorkspace
-LslqWorkspace
-LsqrWorkspace
-LsmrWorkspace
-LnlqWorkspace
-CraigWorkspace
-CraigmrWorkspace
-GpmrWorkspace
-FgmresWorkspace
-```
-
-## Workspace of block-Krylov methods
-
-```@docs
 BlockKrylovWorkspace
-BlockMinresWorkspace
-BlockGmresWorkspace
 ```
 
 ## Utilities
