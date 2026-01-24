@@ -69,7 +69,10 @@ The following outer constructors can be used to initialize this workspace:
     workspace = MinresWorkspace(kc::KrylovConstructor{S,S}; window = 5)
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`minres`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct MinresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -143,7 +146,10 @@ The following outer constructors can be used to initialize this workspace:
     workspace = MinaresWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`minares`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct MinaresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -214,7 +220,10 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CgWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`cg`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct CgWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -279,7 +288,10 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CrWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`cr`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct CrWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -347,7 +359,10 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CarWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`car`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct CarWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -418,7 +433,10 @@ The following outer constructors can be used to initialize this workspace:
     workspace = SymmlqWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`symmlq`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct SymmlqWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -492,7 +510,10 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CgLanczosWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`cg_lanczos`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct CgLanczosWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -558,7 +579,10 @@ The following outer constructors can be used to initialize this workspace:
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
 `nshifts` denotes the length of the vector `shifts` passed to the in-place methods.
+Since [`cg_lanczos_shift`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct CgLanczosShiftWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -643,7 +667,10 @@ The following outer constructors can be used to initialize this workspace:
     workspace = MinresQlpWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`minres_qlp`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct MinresQlpWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -714,8 +741,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = DqgmresWorkspace(kc::KrylovConstructor{S,S}; memory = 20)
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`dqgmres`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 `memory` is set to `n` if the value given is larger than `n`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct DqgmresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -791,8 +821,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = DiomWorkspace(kc::KrylovConstructor{S,S}; memory = 20)
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`diom`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 `memory` is set to `n` if the value given is larger than `n`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct DiomWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -867,8 +900,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = UsymlqWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`usymlq`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct UsymlqWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m          :: Int
@@ -953,8 +989,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = UsymqrWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`usymqr`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct UsymqrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m          :: Int
@@ -1042,8 +1081,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = TricgWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`tricg`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct TricgWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m          :: Int
@@ -1149,8 +1191,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = TrimrWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`trimr`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct TrimrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m          :: Int
@@ -1268,8 +1313,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = TrilqrWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`trilqr`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct TrilqrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m          :: Int
@@ -1364,7 +1412,10 @@ The following outer constructors can be used to initialize this workspace:s
     workspace = CgsWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`cgs`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct CgsWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -1435,7 +1486,10 @@ The following outer constructors can be used to initialize this workspace:
     workspace = BicgstabWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`bicgstab`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct BicgstabWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -1506,7 +1560,10 @@ The following outer constructors can be used to initialize this workspace:
     workspace = BilqWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`bilq`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct BilqWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -1583,7 +1640,10 @@ The following outer constructors can be used to initialize this workspace:
     workspace = QmrWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`qmr`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct QmrWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -1663,7 +1723,10 @@ The following outer constructors can be used to initialize this workspace:
     workspace = BilqrWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`bilqr`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct BilqrWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -1747,8 +1810,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CglsWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`cgls`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct CglsWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
@@ -1807,7 +1873,7 @@ end
 """
 Workspace for the in-place methods [`cgls_lanczos_shift!`](@ref) and [`krylov_solve!`](@ref).
 
-The following outer constructors can be used to initialize this workspace::
+The following outer constructors can be used to initialize this workspace:
 
     workspace = CglsLanczosShiftWorkspace(m, n, nshifts, Sm, Sn)
     workspace = CglsLanczosShiftWorkspace(m, n, nshifts, S)
@@ -1816,8 +1882,11 @@ The following outer constructors can be used to initialize this workspace::
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
 `nshifts` denotes the length of the vector `shifts` passed to the in-place methods.
+Since [`cgls_lanczos_shift`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct CglsLanczosShiftWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m         :: Int
@@ -1911,8 +1980,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CrlsWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`crls`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct CrlsWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
@@ -1985,8 +2057,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CgneWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`cgne`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct CgneWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
@@ -2056,8 +2131,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CrmrWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`crmr`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct CrmrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
@@ -2127,8 +2205,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = LslqWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`lslq`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct LslqWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m       :: Int
@@ -2204,8 +2285,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = LsqrWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`lsqr`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct LsqrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m       :: Int
@@ -2281,8 +2365,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = LsmrWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`lsmr`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct LsmrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m       :: Int
@@ -2361,8 +2448,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = LnlqWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`lnlq`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct LnlqWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
@@ -2441,8 +2531,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CraigWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`craig`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct CraigWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
@@ -2520,8 +2613,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CraigmrWorkspace(kc::KrylovConstructor{Sm,Sn})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`craigmr`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct CraigmrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m     :: Int
@@ -2605,8 +2701,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = GmresWorkspace(kc::KrylovConstructor{S,S}; memory = 20)
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`gmres`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 `memory` is set to `n` if the value given is larger than `n`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct GmresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -2683,8 +2782,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = FgmresWorkspace(kc::KrylovConstructor{S,S}; memory = 20)
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`fgmres`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 `memory` is set to `n` if the value given is larger than `n`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct FgmresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -2761,8 +2863,11 @@ The following outer constructors can be used to initialize this workspace:
     workspace = FomWorkspace(kc::KrylovConstructor{S,S}; memory = 20)
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`fom`](@ref) only supports square linear operators, `m` and `n` must be equal.
 `S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
 `memory` is set to `n` if the value given is larger than `n`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
 """
 mutable struct FomWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
@@ -2837,9 +2942,12 @@ The following outer constructors can be used to initialize this workspace:
     workspace = GpmrWorkspace(kc::KrylovConstructor{Sm,Sn}; memory = 20)
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`gpmr`](@ref) supports rectangular linear operators, `m` and `n` can differ.
 `Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
 If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
 `memory` is set to `n + m` if the value given is larger than `n + m`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
 """
 mutable struct GpmrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   m          :: Int
