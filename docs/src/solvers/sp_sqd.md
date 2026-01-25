@@ -17,3 +17,11 @@ trimr
 trimr!
 TrimrWorkspace
 ```
+
+## USYMLQR
+
+```@docs
+usymlqr
+usymlqr!
+UsymlqrWorkspace
+```

@@ -210,8 +210,10 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       kmul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
       kmul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
 
-      kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
-      kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
+      if iter ≥ 2
+        kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
+        kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
+      end
 
       αₖ = kdot(m, vₖ, q)  # αₖ = ⟨vₖ,q⟩
 
@@ -253,7 +255,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
       end
 
       if !solved_primal
-        # Compute ζₖ₋₁ and ζbarₖ, last components of the solution of L̅ₖz̅ₖ = β₁e₁
+        # Compute ζₖ₋₁ and ζbarₖ, the last components of the solution of L̅ₖz̅ₖ = β₁e₁
         # [δbar₁] [ζbar₁] = [β₁]
         if iter == 1
           ηₖ = βₖ
@@ -278,18 +280,16 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
         # Relations for the directions dₖ₋₁ and d̅ₖ, the last two columns of D̅ₖ = Uₖ(Qₖ)ᴴ.
         # [d̅ₖ₋₁ uₖ] [cₖ  s̄ₖ] = [dₖ₋₁ d̅ₖ] ⟷ dₖ₋₁ = cₖ * d̅ₖ₋₁ + sₖ * uₖ
         #           [sₖ -cₖ]             ⟷ d̅ₖ   = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
-        if iter ≥ 2
-          # Compute solution xₖ.
-          # (xᴸ)ₖ ← (xᴸ)ₖ₋₁ + ζₖ₋₁ * dₖ₋₁
-          kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
-          kaxpy!(n, ζₖ₋₁ * sₖ, uₖ, x)
-        end
-
-        # Compute d̅ₖ.
         if iter == 1
           # d̅₁ = u₁
           kcopy!(n, d̅, uₖ)  # d̅ ← uₖ
         else
+          # Compute solution xₖ.
+          # (xᴸ)ₖ ← (xᴸ)ₖ₋₁ + ζₖ₋₁ * dₖ₋₁
+          kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
+          kaxpy!(n, ζₖ₋₁ * sₖ, uₖ, x)
+
+          # Compute d̅ₖ.
           # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * uₖ
           kaxpby!(n, -cₖ, uₖ, conj(sₖ), d̅)
         end
@@ -421,7 +421,7 @@ kwargs_trilqr = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
     (verbose > 0) && @printf(iostream, "\n")
 
     # Compute USYMCG point
-    # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ
+    # (xᶜ)ₖ ← (xᴸ)ₖ + ζbarₖ * d̅ₖ
     if solved_cg
       kaxpy!(n, ζbarₖ, d̅, x)
     end

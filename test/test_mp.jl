@@ -4,7 +4,7 @@ function test_mp(FC)
   for method in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos, :dqgmres, :diom, :cr, :gpmr,
                  :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab, :craigmr, :crls, :symmlq, :minres,
                  :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr, :gmres, :fom,
-                 :car, :minares, :fgmres, :cg_lanczos_shift, :cgls_lanczos_shift)
+                 :car, :minares, :fgmres, :usymlqr, :cg_lanczos_shift, :cgls_lanczos_shift)
 
     @testset "$method" begin
       A = spdiagm(-1 => -ones(FC,n-1), 0 => 3*ones(FC,n), 1 => -ones(FC,n-1))
@@ -16,7 +16,7 @@ function test_mp(FC)
         x, _ = krylov_solve(Val{method}(), A, b, c)
       elseif method in (:trilqr, :bilqr)
         x, t, _ = krylov_solve(Val{method}(), A, b, c)
-      elseif method in (:tricg, :trimr)
+      elseif method in (:tricg, :trimr, :usymlqr)
         x, y, _ = krylov_solve(Val{method}(), A, b, c)
       elseif method == :gpmr
         x, y, _ = krylov_solve(Val{method}(), A, B, b, c)
@@ -33,6 +33,10 @@ function test_mp(FC)
       if method in (:tricg, :trimr)
         @test norm(x + A * y - b) ≤ Κ * (atol + norm([b; c]) * rtol)
         @test norm(A' * x - y - c) ≤ Κ * (atol + norm([b; c]) * rtol)
+        @test eltype(y) == FC
+      elseif method == :usymlqr
+        @test norm(x + A * y - b) ≤ Κ * (atol + norm([b; c]) * rtol)
+        @test norm(A' * x - c) ≤ Κ * (atol + norm([b; c]) * rtol)
         @test eltype(y) == FC
       elseif method == :gpmr
         @test norm(x + A * y - b) ≤ Κ * (atol + norm([b; c]) * rtol)
