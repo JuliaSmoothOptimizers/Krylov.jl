@@ -278,23 +278,24 @@ function matrix_to_vector(::Type{M}) where M <: DenseMatrix
   return S
 end
 
-"""
-    v = kzeros(S, n)
+function allocate_if(bool, workspace, v, S, u)
+  start_allocation_time = time_ns()
+  if bool && isempty(workspace.:($v)::S)
+    workspace.:($v)::S = similar(u)
+  end
+  workspace.stats.allocation_timer += start_allocation_time |> ktimer
+  return nothing
+end
 
-Create a vector of storage type `S` of length `n` only composed of zero.
-"""
-kzeros(S, n) = fill!(S(undef, n), zero(eltype(S)))
-
-"""
-    v = kones(S, n)
-
-Create a vector of storage type `S` of length `n` only composed of one.
-"""
-kones(S, n) = fill!(S(undef, n), one(eltype(S)))
-
-allocate_if(bool, workspace, v, S, u) = bool && isempty(workspace.:($v)::S) && (workspace.:($v)::S = similar(u))
 # allocate_if(bool, workspace, v, S, n::Int) = bool && isempty(workspace.:($v)::S) && (workspace.:($v)::S = S(undef, n))
-allocate_if(bool, workspace, v, S, m::Int, n::Int) = bool && isempty(workspace.:($v)::S) && (workspace.:($v)::S = S(undef, m, n))
+function allocate_if(bool, workspace, v, S, m::Int, n::Int)
+  start_allocation_time = time_ns()
+  if bool && isempty(workspace.:($v)::S)
+    workspace.:($v)::S = S(undef, m, n)
+  end
+  workspace.stats.allocation_timer += start_allocation_time |> ktimer
+  return nothing
+end
 
 kdisplay(iter, verbose) = (verbose > 0) && (mod(iter, verbose) == 0)
 

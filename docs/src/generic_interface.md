@@ -61,9 +61,13 @@ for method in (:bicgstab, :gmres, :qmr)
     niter = Krylov.iteration_count(workspace)
     println("Number of iterations for $method: ", niter)
 
-    # Display the elapsed timer
-    timer = Krylov.elapsed_time(workspace)
-    println("Elapsed time for $method: ", timer, " seconds")
+    # Display the allocation timer
+    allocation_timer = Krylov.elapsed_allocation_time(workspace)
+    println("Elapsed time for $method: ", allocation_timer, " seconds")
+
+    # Display the computation timer
+    computation_timer = Krylov.elapsed_time(workspace)
+    println("Elapsed time for $method: ", computation_timer, " seconds")
 
     # Display the number of operator-vector products with A and A'
     nAprod = Krylov.Aprod_count(workspace)

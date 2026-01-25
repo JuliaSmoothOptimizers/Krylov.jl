@@ -41,6 +41,14 @@ and `issolved_dual(workspace)` to separately check whether the solver has conver
 function issolved end
 
 """
+    elapsed_allocation_time(workspace)
+
+Return the total time (in seconds) spent on allocations in the `workspace`.
+This timer is cumulative and is not reset between calls.
+"""
+function elapsed_allocation_time end
+
+"""
     elapsed_time(workspace)
 
 Return the elapsed time (in seconds) during the last call to the Krylov method associated with `workspace`.
@@ -131,6 +139,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
 ]
   @eval begin
     elapsed_time(workspace :: $KS) = workspace.stats.timer
+    elapsed_allocation_time(workspace :: $KS) = workspace.stats.allocation_timer
     statistics(workspace :: $KS) = workspace.stats
     solution_count(workspace :: $KS) = $nsol
     iteration_count(workspace :: $KS) = workspace.stats.niter
@@ -201,6 +210,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
 ]
   @eval begin
     elapsed_time(workspace :: $KS) = workspace.stats.timer
+    elapsed_allocation_time(workspace :: $KS) = workspace.stats.allocation_timer
     statistics(workspace :: $KS) = workspace.stats
     solution_count(workspace :: $KS) = $nsol
     iteration_count(workspace :: $KS) = workspace.stats.niter

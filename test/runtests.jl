@@ -1,6 +1,6 @@
 using Krylov, LinearAlgebra, SparseArrays, Printf, Random, Test
 
-import Krylov: solution, statistics, results, elapsed_time,
+import Krylov: solution, statistics, results, elapsed_time, elapsed_allocation_time,
                solution_count, iteration_count, Aprod_count, Atprod_count,
                issolved, issolved_primal, issolved_dual
 

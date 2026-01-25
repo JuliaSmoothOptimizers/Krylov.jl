@@ -47,7 +47,7 @@ function show(io :: IO, stats :: KrylovStats)
     statfield = getfield(stats, field)
     if isa(statfield, AbstractVector) && eltype(statfield) <: Union{Missing, AbstractFloat}
       s *= @sprintf " %s\n" vec2str(statfield)
-    elseif field_name == "timer"
+    elseif field_name == "allocation timer" || field_name == "timer"
       (statfield < 1e-3) && (s *= @sprintf " %.2fμs\n" 1e6*statfield)
       (1e-3 ≤ statfield < 1.00) && (s *= @sprintf " %.2fms\n" 1e3*statfield)
       (statfield ≥ 1.00) && (s *= @sprintf " %.2fs\n" statfield)
