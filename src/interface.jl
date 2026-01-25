@@ -119,7 +119,7 @@ for (workspace, krylov, is_extended_workspace, args, def_args, optargs, def_opta
       if is_extended_workspace
         @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, Sm::Type, Sn::Type) = $workspace(m, n, Sm, Sn)
       end
-      if krylov in (:usymlq, :usymqr, :tricg, :trimr, :trilqr)
+      if krylov in (:usymlq, :usymqr, :tricg, :trimr, :bilqr, :trilqr)
         @eval krylov_workspace(::Val{Symbol($krylov)}, A, b, c) = $workspace(A, b, c)
       end
     else

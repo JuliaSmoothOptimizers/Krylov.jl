@@ -1720,6 +1720,7 @@ The following outer constructors can be used to initialize this workspace:
 
     workspace = BilqrWorkspace(m, n, S)
     workspace = BilqrWorkspace(A, b)
+    workspace = BilqrWorkspace(A, b, c)
     workspace = BilqrWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
@@ -1794,6 +1795,12 @@ function BilqrWorkspace(m::Integer, n::Integer, S::Type)
 end
 
 function BilqrWorkspace(A, b)
+  m, n = size(A)
+  S = ktypeof(b)
+  BilqrWorkspace(m, n, S)
+end
+
+function BilqrWorkspace(A, b, c)
   m, n = size(A)
   S = ktypeof(b)
   BilqrWorkspace(m, n, S)
