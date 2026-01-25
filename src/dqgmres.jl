@@ -111,11 +111,15 @@ def_kwargs_dqgmres = (:(; M = I                            ),
                       :(; callback = workspace -> false    ),
                       :(; iostream::IO = kstdout           ))
 
+def_kwargs_workspace_dqgmres = (:(; memory::Int = 20),)
+
 def_kwargs_dqgmres = extract_parameters.(def_kwargs_dqgmres)
+def_kwargs_workspace_dqgmres = extract_parameters.(def_kwargs_workspace_dqgmres)
 
 args_dqgmres = (:A, :b)
 optargs_dqgmres = (:x0,)
 kwargs_dqgmres = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_workspace_dqgmres = (:memory,)
 
 @eval begin
   function dqgmres!(workspace :: DqgmresWorkspace{T,FC,S}, $(def_args_dqgmres...); $(def_kwargs_dqgmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}

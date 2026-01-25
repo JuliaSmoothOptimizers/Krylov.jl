@@ -111,11 +111,15 @@ def_kwargs_diom = (:(; M = I                            ),
                    :(; callback = workspace -> false    ),
                    :(; iostream::IO = kstdout           ))
 
+def_kwargs_workspace_diom = (:(; memory::Int = 20),)
+
 def_kwargs_diom = extract_parameters.(def_kwargs_diom)
+def_kwargs_workspace_diom = extract_parameters.(def_kwargs_workspace_diom)
 
 args_diom = (:A, :b)
 optargs_diom = (:x0,)
 kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_workspace_diom = (:memory,)
 
 @eval begin
   function diom!(workspace :: DiomWorkspace{T,FC,S}, $(def_args_diom...); $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}

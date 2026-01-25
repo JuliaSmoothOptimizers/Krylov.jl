@@ -165,10 +165,14 @@ def_kwargs_lsmr = (:(; M = I                        ),
                    :(; callback = workspace -> false),
                    :(; iostream::IO = kstdout       ))
 
+def_kwargs_workspace_lsmr = (:(; window::Int = 5),)
+
 def_kwargs_lsmr = extract_parameters.(def_kwargs_lsmr)
+def_kwargs_workspace_lsmr = extract_parameters.(def_kwargs_workspace_lsmr)
 
 args_lsmr = (:A, :b)
 kwargs_lsmr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_workspace_lsmr = (:window,)
 
 @eval begin
   function lsmr!(workspace :: LsmrWorkspace{T,FC,Sm,Sn}, $(def_args_lsmr...); $(def_kwargs_lsmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}

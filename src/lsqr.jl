@@ -161,10 +161,14 @@ def_kwargs_lsqr = (:(; M = I                        ),
                    :(; callback = workspace -> false),
                    :(; iostream::IO = kstdout       ))
 
+def_kwargs_workspace_lsqr = (:(; window::Int = 5),)
+
 def_kwargs_lsqr = extract_parameters.(def_kwargs_lsqr)
+def_kwargs_workspace_lsqr = extract_parameters.(def_kwargs_workspace_lsqr)
 
 args_lsqr = (:A, :b)
 kwargs_lsqr = (:M, :N, :ldiv, :sqd, :λ, :radius, :etol, :axtol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_workspace_lsqr = (:window,)
 
 @eval begin
   function lsqr!(workspace :: LsqrWorkspace{T,FC,Sm,Sn}, $(def_args_lsqr...); $(def_kwargs_lsqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}

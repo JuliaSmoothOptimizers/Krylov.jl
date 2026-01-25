@@ -96,11 +96,15 @@ def_kwargs_block_gmres = (:(; M = I                            ),
                           :(; callback = workspace -> false    ),
                           :(; iostream::IO = kstdout           ))
 
+def_kwargs_workspace_block_gmres = (:(; memory::Int = 5),)
+
 def_kwargs_block_gmres = extract_parameters.(def_kwargs_block_gmres)
+def_kwargs_workspace_block_gmres = extract_parameters.(def_kwargs_workspace_block_gmres)
 
 args_block_gmres = (:A, :B)
 optargs_block_gmres = (:X0,)
 kwargs_block_gmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_workspace_block_gmres = (:memory,)
 
 @eval begin
   function block_gmres!(workspace :: BlockGmresWorkspace{T,FC,SV,SM}, $(def_args_block_gmres...); $(def_kwargs_block_gmres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, SV <: AbstractVector{FC}, SM <: AbstractMatrix{FC}}

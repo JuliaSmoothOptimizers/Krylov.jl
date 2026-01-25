@@ -2939,6 +2939,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = GpmrWorkspace(m, n, S; memory = 20)
     workspace = GpmrWorkspace(A, b; memory = 20)
     workspace = GpmrWorkspace(A, b, c; memory = 20)
+    workspace = GpmrWorkspace(A, B, b, c; memory = 20)
     workspace = GpmrWorkspace(kc::KrylovConstructor{Sm,Sn}; memory = 20)
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
@@ -3037,6 +3038,13 @@ function GpmrWorkspace(A, b; memory::Integer = 20)
 end
 
 function GpmrWorkspace(A, b, c; memory::Integer = 20)
+  m, n = size(A)
+  Sm = ktypeof(b)
+  Sn = ktypeof(c)
+  GpmrWorkspace(m, n, Sm, Sn; memory)
+end
+
+function GpmrWorkspace(A, B, b, c; memory::Integer = 20)
   m, n = size(A)
   Sm = ktypeof(b)
   Sn = ktypeof(c)
