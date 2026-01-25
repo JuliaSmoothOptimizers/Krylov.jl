@@ -15,13 +15,13 @@ function test_verbose(FC)
   for method in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos, :dqgmres, :diom, :cr, :gpmr,
                  :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab, :craigmr, :crls, :symmlq, :minres,
                  :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr, :gmres, :fom,
-                 :car, :minares, :fgmres, :cg_lanczos_shift, :cgls_lanczos_shift)
+                 :car, :minares, :fgmres, :usymlqr, :cg_lanczos_shift, :cgls_lanczos_shift)
 
     @testset "$method" begin
       io = IOBuffer()
       if method in (:trilqr, :bilqr)
         krylov_solve(Val{method}(), A, b, b, verbose=1, iostream=io)
-      elseif method in (:tricg, :trimr)
+      elseif method in (:tricg, :trimr, :usymlqr)
         krylov_solve(Val{method}(), Au, c, b, verbose=1, iostream=io)
       elseif method in (:lnlq, :craig, :craigmr, :cgne, :crmr)
         krylov_solve(Val{method}(), Au, c, verbose=1, iostream=io)

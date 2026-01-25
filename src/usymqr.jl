@@ -211,8 +211,10 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       kmul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
       kmul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
 
-      kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
-      kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
+      if iter ≥ 2
+        kaxpy!(m, -γₖ, vₖ₋₁, q) # q ← q - γₖ * vₖ₋₁
+        kaxpy!(n, -βₖ, uₖ₋₁, p) # p ← p - βₖ * uₖ₋₁
+      end
 
       αₖ = kdot(m, vₖ, q)  # αₖ = ⟨vₖ,q⟩
 
@@ -224,6 +226,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
 
       # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
       #                                            [ Oᵀ ]
+      #
       # [ α₁ γ₂ 0  •  •  •   0  ]      [ δ₁ λ₁ ϵ₁ 0  •  •  0  ]
       # [ β₂ α₂ γ₃ •         •  ]      [ 0  δ₂ λ₂ •  •     •  ]
       # [ 0  •  •  •  •      •  ]      [ •  •  δ₃ •  •  •  •  ]

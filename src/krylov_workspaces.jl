@@ -3,7 +3,7 @@ CgLanczosShiftWorkspace, MinresQlpWorkspace, DqgmresWorkspace, DiomWorkspace, Us
 UsymqrWorkspace, TricgWorkspace, TrimrWorkspace, TrilqrWorkspace, CgsWorkspace, BicgstabWorkspace,
 BilqWorkspace, QmrWorkspace, BilqrWorkspace, CglsWorkspace, CglsLanczosShiftWorkspace, CrlsWorkspace, CgneWorkspace,
 CrmrWorkspace, LslqWorkspace, LsqrWorkspace, LsmrWorkspace, LnlqWorkspace, CraigWorkspace, CraigmrWorkspace,
-GmresWorkspace, FomWorkspace, GpmrWorkspace, FgmresWorkspace, CarWorkspace, MinaresWorkspace
+GmresWorkspace, FomWorkspace, GpmrWorkspace, UsymlqrWorkspace, FgmresWorkspace, CarWorkspace, MinaresWorkspace
 
 export KrylovConstructor
 
@@ -575,6 +575,7 @@ The following outer constructors can be used to initialize this workspace:
 
     workspace = CgLanczosShiftWorkspace(m, n, nshifts, S)
     workspace = CgLanczosShiftWorkspace(A, b, nshifts)
+    workspace = CgLanczosShiftWorkspace(A, b, shifts)
     workspace = CgLanczosShiftWorkspace(kc::KrylovConstructor{S,S}, nshifts)
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
@@ -655,6 +656,11 @@ function CgLanczosShiftWorkspace(A, b, nshifts::Integer)
   m, n = size(A)
   S = ktypeof(b)
   CgLanczosShiftWorkspace(m, n, nshifts, S)
+end
+
+function CgLanczosShiftWorkspace(A, b, shifts::AbstractVector)
+  nshifts = length(shifts)
+  CgLanczosShiftWorkspace(A, b, nshifts)
 end
 
 """
@@ -1885,6 +1891,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = CglsLanczosShiftWorkspace(m, n, nshifts, Sm, Sn)
     workspace = CglsLanczosShiftWorkspace(m, n, nshifts, S)
     workspace = CglsLanczosShiftWorkspace(A, b, nshifts)
+    workspace = CglsLanczosShiftWorkspace(A, b, shifts)
     workspace = CglsLanczosShiftWorkspace(kc::KrylovConstructor{Sm,Sn}, nshifts)
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
@@ -1974,6 +1981,11 @@ function CglsLanczosShiftWorkspace(A, b, nshifts::Integer)
   m, n = size(A)
   S = ktypeof(b)
   CglsLanczosShiftWorkspace(m, n, nshifts, S)
+end
+
+function CglsLanczosShiftWorkspace(A, b, shifts::AbstractVector)
+  nshifts = length(shifts)
+  CglsLanczosShiftWorkspace(A, b, nshifts)
 end
 
 """
@@ -3056,4 +3068,117 @@ function GpmrWorkspace(A, B, b, c; memory::Int = 20)
   Sm = ktypeof(b)
   Sn = ktypeof(c)
   GpmrWorkspace(m, n, Sm, Sn; memory)
+end
+
+"""
+Workspace for the in-place methods [`usymlqr!`](@ref) and [`krylov_solve!`](@ref).
+
+The following outer constructors can be used to initialize this workspace:
+
+    workspace = UsymlqrWorkspace(m, n, Sm, Sn)
+    workspace = UsymlqrWorkspace(m, n, S)
+    workspace = UsymlqrWorkspace(A, b)
+    workspace = UsymlqrWorkspace(A, b, c)
+    workspace = UsymlqrWorkspace(kc::KrylovConstructor{Sm,Sn})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`usymlqr`](@ref) supports rectangular linear operators, `m` and `n` can differ.
+`Sm` and `Sn` are the storage types of the workspace vectors of length `m` and `n`, respectively.
+If the same storage type can be used for both, a single type `S` may be provided, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `Sm(undef, m)` and `Sn(undef, n)` are not available.
+"""
+mutable struct UsymlqrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
+  m          :: Int
+  n          :: Int
+  r          :: Sm
+  x          :: Sm
+  y          :: Sn
+  z          :: Sn
+  M⁻¹vₖ₋₁    :: Sm
+  M⁻¹vₖ      :: Sm
+  N⁻¹uₖ₋₁    :: Sn
+  N⁻¹uₖ      :: Sn
+  p          :: Sn
+  q          :: Sm
+  d̅          :: Sm
+  wₖ₋₂       :: Sn
+  wₖ₋₁       :: Sn
+  Δx         :: Sm
+  Δy         :: Sn
+  vₖ         :: Sm
+  uₖ         :: Sn
+  warm_start :: Bool
+  stats      :: SimpleStats{T}
+end
+
+function UsymlqrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
+  FC = eltype(Sm)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  r       = similar(kc.vm)
+  x       = similar(kc.vm)
+  y       = similar(kc.vn)
+  z       = similar(kc.vn)
+  M⁻¹vₖ₋₁ = similar(kc.vm)
+  M⁻¹vₖ   = similar(kc.vm)
+  N⁻¹uₖ₋₁ = similar(kc.vn)
+  N⁻¹uₖ   = similar(kc.vn)
+  p       = similar(kc.vn)
+  q       = similar(kc.vm)
+  d̅       = similar(kc.vm)
+  wₖ₋₂    = similar(kc.vn)
+  wₖ₋₁    = similar(kc.vn)
+  Δx      = similar(kc.vm_empty)
+  Δy      = similar(kc.vn_empty)
+  vₖ      = similar(kc.vm_empty)
+  uₖ      = similar(kc.vn_empty)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  workspace = UsymlqrWorkspace{T,FC,Sm,Sn}(m, n, r, x, y, z, M⁻¹vₖ₋₁, M⁻¹vₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, q, d̅, wₖ₋₂, wₖ₋₁, Δx, Δy, vₖ, uₖ, false, stats)
+  return workspace
+end
+
+function UsymlqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
+  FC      = eltype(Sm)
+  T       = real(FC)
+  r       = Sm(undef, m)
+  x       = Sm(undef, m)
+  y       = Sn(undef, n)
+  z       = Sn(undef, n)
+  M⁻¹vₖ₋₁ = Sm(undef, m)
+  M⁻¹vₖ   = Sm(undef, m)
+  N⁻¹uₖ₋₁ = Sn(undef, n)
+  N⁻¹uₖ   = Sn(undef, n)
+  p       = Sn(undef, n)
+  q       = Sm(undef, m)
+  d̅       = Sm(undef, m)
+  wₖ₋₂    = Sn(undef, n)
+  wₖ₋₁    = Sn(undef, n)
+  Δx      = Sm(undef, 0)
+  Δy      = Sn(undef, 0)
+  vₖ      = Sm(undef, 0)
+  uₖ      = Sn(undef, 0)
+  Sm = isconcretetype(Sm) ? Sm : typeof(x)
+  Sn = isconcretetype(Sn) ? Sn : typeof(y)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  workspace = UsymlqrWorkspace{T,FC,Sm,Sn}(m, n, r, x, y, z, M⁻¹vₖ₋₁, M⁻¹vₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, q, d̅, wₖ₋₂, wₖ₋₁, Δx, Δy, vₖ, uₖ, false, stats)
+  return workspace
+end
+
+function UsymlqrWorkspace(m::Integer, n::Integer, S::Type)
+  UsymlqrWorkspace(m, n, S, S)
+end
+
+function UsymlqrWorkspace(A, b)
+  m, n = size(A)
+  S = ktypeof(b)
+  UsymlqrWorkspace(m, n, S)
+end
+
+function UsymlqrWorkspace(A, b, c)
+  m, n = size(A)
+  Sm = ktypeof(b)
+  Sn = ktypeof(c)
+  UsymlqrWorkspace(m, n, Sm, Sn)
 end

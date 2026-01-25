@@ -125,6 +125,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:FgmresWorkspace   , :fgmres!    , 1, 1, 0, true )
   (:FomWorkspace      , :fom!       , 1, 1, 0, true )
   (:GpmrWorkspace     , :gpmr!      , 2, 1, 0, true )
+  (:UsymlqrWorkspace  , :usymlqr!   , 2, 1, 1, true )
   (:CgLanczosShiftWorkspace  , :cg_lanczos_shift!  , 1, 1, 0, false)
   (:CglsLanczosShiftWorkspace, :cgls_lanczos_shift!, 1, 1, 1, false)
 ]
@@ -166,7 +167,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
           workspace.warm_start = true
           return workspace
         end
-      elseif $KS in (TricgWorkspace, TrimrWorkspace, GpmrWorkspace)
+      elseif $KS in (UsymlqrWorkspace, TricgWorkspace, TrimrWorkspace, GpmrWorkspace)
         function warm_start!(workspace :: $KS, x0, y0)
           length(x0) == workspace.m || error("x0 should have size $(workspace.m)")
           length(y0) == workspace.n || error("y0 should have size $(workspace.n)")

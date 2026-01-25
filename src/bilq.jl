@@ -307,18 +307,16 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       # Relations for the directions dₖ₋₁ and d̅ₖ, the last two columns of D̅ₖ = Vₖ(Qₖ)ᴴ.
       # [d̅ₖ₋₁ vₖ] [cₖ  s̄ₖ] = [dₖ₋₁ d̅ₖ] ⟷ dₖ₋₁ = cₖ * d̅ₖ₋₁ + sₖ * vₖ
       #           [sₖ -cₖ]             ⟷ d̅ₖ   = s̄ₖ * d̅ₖ₋₁ - cₖ * vₖ
-      if iter ≥ 2
-        # Compute solution xₖ.
-        # (xᴸ)ₖ₋₁ ← (xᴸ)ₖ₋₂ + ζₖ₋₁ * dₖ₋₁
-        kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
-        kaxpy!(n, ζₖ₋₁ * sₖ, vₖ, x)
-      end
-
-      # Compute d̅ₖ.
       if iter == 1
         # d̅₁ = v₁
         kcopy!(n, d̅, vₖ)  # d̅ ← vₖ
       else
+        # Compute solution xₖ.
+        # (xᴸ)ₖ ← (xᴸ)ₖ₋₁ + ζₖ₋₁ * dₖ₋₁
+        kaxpy!(n, ζₖ₋₁ * cₖ,  d̅, x)
+        kaxpy!(n, ζₖ₋₁ * sₖ, vₖ, x)
+
+        # Compute d̅ₖ.
         # d̅ₖ = s̄ₖ * d̅ₖ₋₁ - cₖ * vₖ
         kaxpby!(n, -cₖ, vₖ, conj(sₖ), d̅)
       end
@@ -378,7 +376,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
     (verbose > 0) && @printf(iostream, "\n")
 
     # Compute BICG point
-    # (xᶜ)ₖ ← (xᴸ)ₖ₋₁ + ζbarₖ * d̅ₖ
+    # (xᶜ)ₖ ← (xᴸ)ₖ + ζbarₖ * d̅ₖ
     if solved_cg
       kaxpy!(n, ζbarₖ, d̅, x)
     end

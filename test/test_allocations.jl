@@ -687,6 +687,26 @@
         @test inplace_trimr_bytes == 0
       end
 
+      @testset "USYMLQR" begin
+        # USYMLQR needs:
+        # - 7 n-vectors: y, z, N⁻¹uₖ₋₁, N⁻¹uₖ, p, wₖ₋₂, wₖ₋₁
+        # - 6 m-vectors: x, r, M⁻¹vₖ₋₁, M⁻¹vₖ, q, d̅
+        storage_usymlqr(m, n) = 7 * n + 6 * m
+        storage_usymlqr_bytes(m, n) = nbits_FC * storage_usymlqr(m, n)
+
+        expected_usymlqr_bytes = storage_usymlqr_bytes(k, n)
+        usymlqr(Au, c, b)  # warmup
+        actual_usymlqr_bytes = @allocated usymlqr(Au, c, b)
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_usymlqr_bytes ≤ actual_usymlqr_bytes ≤ 1.02 * expected_usymlqr_bytes
+        end
+
+        workspace = UsymlqrWorkspace(Au, c)
+        usymlqr!(workspace, Au, c, b)  # warmup
+        inplace_usymlqr_bytes = @allocated usymlqr!(workspace, Au, c, b)
+        @test inplace_usymlqr_bytes == 0
+      end
+
       @testset "GPMR" begin
         # GPMR needs:
         # - 2 m-vectors: x, q

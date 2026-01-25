@@ -35,6 +35,8 @@ In both calls, `method` is a symbol (such as `:cg`, `:gmres` or `:block_minres`)
 The returned workspace can later be used by [`krylov_solve!`](@ref) to execute the (block) Krylov method in-place.
 
 Pass the plain symbol `method` for convenience, or wrap it in `Val(method)` to enable full compile-time specialization, improve type inference, and achieve maximum performance.
+
+Note that for each (block) Krylov method, you can use a workspace constructor that accepts exactly the same arguments as the corresponding solver and [`krylov_solve`](@ref), for convenience and consistency.
 """
 function krylov_workspace end
 
@@ -97,6 +99,7 @@ for (workspace, krylov, is_extended_workspace, args, def_args, optargs, def_opta
   (:FgmresWorkspace   , :fgmres    , false, args_fgmres    , def_args_fgmres    , optargs_fgmres    , def_optargs_fgmres    , kwargs_fgmres    , def_kwargs_fgmres    , kwargs_workspace_fgmres , def_kwargs_workspace_fgmres )
   (:FomWorkspace      , :fom       , false, args_fom       , def_args_fom       , optargs_fom       , def_optargs_fom       , kwargs_fom       , def_kwargs_fom       , kwargs_workspace_fom    , def_kwargs_workspace_fom    )
   (:GpmrWorkspace     , :gpmr      , true , args_gpmr      , def_args_gpmr      , optargs_gpmr      , def_optargs_gpmr      , kwargs_gpmr      , def_kwargs_gpmr      , kwargs_workspace_gpmr   , def_kwargs_workspace_gpmr   )
+  (:UsymlqrWorkspace  , :usymlqr   , true , args_usymlqr   , def_args_usymlqr   , optargs_usymlqr   , def_optargs_usymlqr   , kwargs_usymlqr   , def_kwargs_usymlqr   , ()                      , ()                          )
   (:CgLanczosShiftWorkspace  , :cg_lanczos_shift  , false, args_cg_lanczos_shift  , def_args_cg_lanczos_shift  , (), (), kwargs_cg_lanczos_shift  , def_kwargs_cg_lanczos_shift  , (), ())
   (:CglsLanczosShiftWorkspace, :cgls_lanczos_shift, true , args_cgls_lanczos_shift, def_args_cgls_lanczos_shift, (), (), kwargs_cgls_lanczos_shift, def_kwargs_cgls_lanczos_shift, (), ())
 ]
@@ -108,6 +111,7 @@ for (workspace, krylov, is_extended_workspace, args, def_args, optargs, def_opta
     @eval krylov_workspace(::Val{Symbol($krylov)}, kc::KrylovConstructor, nshifts::Integer) = $workspace(kc, nshifts)
     @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, nshifts::Integer, S::Type) = $workspace(m, n, nshifts, S)
     @eval krylov_workspace(::Val{Symbol($krylov)}, A, b, nshifts::Integer) = $workspace(A, b, nshifts)
+    @eval krylov_workspace(::Val{Symbol($krylov)}, A, b, shifts::AbstractVector) = $workspace(A, b, shifts)
     if is_extended_workspace
       @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, nshifts::Integer, Sm::Type, Sn::Type) = $workspace(m, n, nshifts, Sm, Sn)
     end
@@ -119,7 +123,7 @@ for (workspace, krylov, is_extended_workspace, args, def_args, optargs, def_opta
       if is_extended_workspace
         @eval krylov_workspace(::Val{Symbol($krylov)}, m::Integer, n::Integer, Sm::Type, Sn::Type) = $workspace(m, n, Sm, Sn)
       end
-      if krylov in (:usymlq, :usymqr, :tricg, :trimr, :bilqr, :trilqr)
+      if krylov in (:usymlq, :usymqr, :usymlqr, :tricg, :trimr, :bilqr, :trilqr)
         @eval krylov_workspace(::Val{Symbol($krylov)}, A, b, c) = $workspace(A, b, c)
       end
     else
@@ -137,12 +141,11 @@ for (workspace, krylov, is_extended_workspace, args, def_args, optargs, def_opta
   end
 
   ## Out-of-place
-  if krylov in (:cg_lanczos_shift, :cgls_lanczos_shift)
+  if isempty(kwargs_workspace)
     @eval begin
       function $(krylov)($(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
         start_time = time_ns()
-        nshifts = length(shifts)
-        workspace = $workspace(A, b, nshifts)
+        workspace = $workspace($(args...))
         elapsed_time = start_time |> ktimer
         timemax -= elapsed_time
         $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -152,12 +155,13 @@ for (workspace, krylov, is_extended_workspace, args, def_args, optargs, def_opta
 
       krylov_solve(::Val{Symbol($krylov)}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); $(kwargs...))
     end
-  else
-    if isempty(kwargs_workspace)
+
+    if !isempty(optargs)
       @eval begin
-        function $(krylov)($(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+        function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           workspace = $workspace($(args...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -165,30 +169,30 @@ for (workspace, krylov, is_extended_workspace, args, def_args, optargs, def_opta
           return results(workspace)
         end
 
-        krylov_solve(::Val{Symbol($krylov)}, $(def_args...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); $(kwargs...))
+        krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); $(kwargs...))
+      end
+    end
+  else  # --> !isempty(kwargs_workspace)
+    @eval begin
+      function $(krylov)($(def_args...); $(def_kwargs_workspace...), $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+        start_time = time_ns()
+        workspace = $workspace($(args...); $(kwargs_workspace...))
+        elapsed_time = start_time |> ktimer
+        timemax -= elapsed_time
+        $(krylov!)(workspace, $(args...); $(kwargs...))
+        workspace.stats.timer += elapsed_time
+        return results(workspace)
       end
 
-      if !isempty(optargs)
-        @eval begin
-          function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-            start_time = time_ns()
-            workspace = $workspace($(args...))
-            warm_start!(workspace, $(optargs...))
-            elapsed_time = start_time |> ktimer
-            timemax -= elapsed_time
-            $(krylov!)(workspace, $(args...); $(kwargs...))
-            workspace.stats.timer += elapsed_time
-            return results(workspace)
-          end
+      krylov_solve(::Val{Symbol($krylov)}, $(def_args...); $(def_kwargs_workspace...), $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); $(kwargs_workspace...), $(kwargs...))
+    end
 
-          krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); $(kwargs...))
-        end
-      end
-    else  # --> !isempty(kwargs_workspace)
+    if !isempty(optargs)
       @eval begin
-        function $(krylov)($(def_args...); $(def_kwargs_workspace...), $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
+        function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs_workspace...), $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
           start_time = time_ns()
           workspace = $workspace($(args...); $(kwargs_workspace...))
+          warm_start!(workspace, $(optargs...))
           elapsed_time = start_time |> ktimer
           timemax -= elapsed_time
           $(krylov!)(workspace, $(args...); $(kwargs...))
@@ -196,24 +200,7 @@ for (workspace, krylov, is_extended_workspace, args, def_args, optargs, def_opta
           return results(workspace)
         end
 
-        krylov_solve(::Val{Symbol($krylov)}, $(def_args...); $(def_kwargs_workspace...), $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...); $(kwargs_workspace...), $(kwargs...))
-      end
-
-      if !isempty(optargs)
-        @eval begin
-          function $(krylov)($(def_args...), $(def_optargs...); $(def_kwargs_workspace...), $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-            start_time = time_ns()
-            workspace = $workspace($(args...); $(kwargs_workspace...))
-            warm_start!(workspace, $(optargs...))
-            elapsed_time = start_time |> ktimer
-            timemax -= elapsed_time
-            $(krylov!)(workspace, $(args...); $(kwargs...))
-            workspace.stats.timer += elapsed_time
-            return results(workspace)
-          end
-
-          krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); $(def_kwargs_workspace...), $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); $(kwargs_workspace...), $(kwargs...))
-        end
+        krylov_solve(::Val{Symbol($krylov)}, $(def_args...), $(def_optargs...); $(def_kwargs_workspace...), $(def_kwargs...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} = $(krylov)($(args...), $(optargs...); $(kwargs_workspace...), $(kwargs...))
       end
     end
   end
@@ -259,9 +246,9 @@ for (workspace, krylov, is_extended_workspace, args, def_args, optargs, def_opta
 end
 
 # Block Krylov methods
-for (workspace, krylov, is_extended_workspace, args, def_args, optargs, def_optargs, kwargs, def_kwargs, kwargs_workspace, def_kwargs_workspace) in [
-  (:BlockMinresWorkspace, :block_minres, false, args_block_minres, def_args_block_minres, optargs_block_minres, def_optargs_block_minres, kwargs_block_minres, def_kwargs_block_minres, ()                          , ()                              )
-  (:BlockGmresWorkspace , :block_gmres , false, args_block_gmres , def_args_block_gmres , optargs_block_gmres , def_optargs_block_gmres , kwargs_block_gmres , def_kwargs_block_gmres , kwargs_workspace_block_gmres, def_kwargs_workspace_block_gmres)
+for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs, kwargs_workspace, def_kwargs_workspace) in [
+  (:BlockMinresWorkspace, :block_minres, args_block_minres, def_args_block_minres, optargs_block_minres, def_optargs_block_minres, kwargs_block_minres, def_kwargs_block_minres, ()                          , ()                              )
+  (:BlockGmresWorkspace , :block_gmres , args_block_gmres , def_args_block_gmres , optargs_block_gmres , def_optargs_block_gmres , kwargs_block_gmres , def_kwargs_block_gmres , kwargs_workspace_block_gmres, def_kwargs_workspace_block_gmres)
 ]
   # Create the symbol for the in-place method
   krylov! = Symbol(krylov, :!)
