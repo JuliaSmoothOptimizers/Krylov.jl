@@ -17,20 +17,22 @@ The fields are as follows:
 - `residuals`: A vector containing the residual norms at each iteration;
 - `Aresiduals`: A vector of `A'`-residual norms at each iteration;
 - `Acond`: An estimate of the condition number of matrix `A`.
+- `allocation_timer`: The elapsed time (in seconds) spent on allocations;
 - `timer`: The elapsed time (in seconds) taken by the solver to complete all iterations;
 - `status`: A string indicating the outcome of the solve, providing additional details beyond `solved`.
 """
 mutable struct SimpleStats{T} <: KrylovStats{T}
-  niter        :: Int
-  solved       :: Bool
-  inconsistent :: Bool
-  indefinite   :: Bool
-  npcCount     :: Int
-  residuals    :: Vector{T}
-  Aresiduals   :: Vector{T}
-  Acond        :: Vector{T}
-  timer        :: Float64
-  status       :: String
+  niter            :: Int
+  solved           :: Bool
+  inconsistent     :: Bool
+  indefinite       :: Bool
+  npcCount         :: Int
+  residuals        :: Vector{T}
+  Aresiduals       :: Vector{T}
+  Acond            :: Vector{T}
+  allocation_timer :: Float64
+  timer            :: Float64
+  status           :: String
 end
 
 function reset!(stats :: SimpleStats)
@@ -42,16 +44,17 @@ function reset!(stats :: SimpleStats)
 end
 
 function copyto!(dest :: SimpleStats, src :: SimpleStats)
-  dest.niter        = src.niter
-  dest.solved       = src.solved
-  dest.inconsistent = src.inconsistent
-  dest.indefinite   = src.indefinite
-  dest.npcCount     = src.npcCount
-  dest.residuals    = copy(src.residuals)
-  dest.Aresiduals   = copy(src.Aresiduals)
-  dest.Acond        = copy(src.Acond)
-  dest.timer        = src.timer
-  dest.status       = src.status
+  dest.niter            = src.niter
+  dest.solved           = src.solved
+  dest.inconsistent     = src.inconsistent
+  dest.indefinite       = src.indefinite
+  dest.npcCount         = src.npcCount
+  dest.residuals        = copy(src.residuals)
+  dest.Aresiduals       = copy(src.Aresiduals)
+  dest.Acond            = copy(src.Acond)
+  dest.allocation_timer = src.allocation_timer
+  dest.timer            = src.timer
+  dest.status           = src.status
   return dest
 end
 
@@ -66,22 +69,24 @@ The fields are as follows:
 - Acond
 - Anorm
 - xNorm
+- allocation_timer
 - timer
 - status
 """
 mutable struct LsmrStats{T} <: KrylovStats{T}
-  niter        :: Int
-  solved       :: Bool
-  inconsistent :: Bool
-  residuals    :: Vector{T}
-  Aresiduals   :: Vector{T}
-  residual     :: T
-  Aresidual    :: T
-  Acond        :: T
-  Anorm        :: T
-  xNorm        :: T
-  timer        :: Float64
-  status       :: String
+  niter            :: Int
+  solved           :: Bool
+  inconsistent     :: Bool
+  residuals        :: Vector{T}
+  Aresiduals       :: Vector{T}
+  residual         :: T
+  Aresidual        :: T
+  Acond            :: T
+  Anorm            :: T
+  xNorm            :: T
+  allocation_timer :: Float64
+  timer            :: Float64
+  status           :: String
 end
 
 function reset!(stats :: LsmrStats)
@@ -90,18 +95,19 @@ function reset!(stats :: LsmrStats)
 end
 
 function copyto!(dest :: LsmrStats, src :: LsmrStats)
-  dest.niter        = src.niter
-  dest.solved       = src.solved
-  dest.inconsistent = src.inconsistent
-  dest.residuals    = copy(src.residuals)
-  dest.Aresiduals   = copy(src.Aresiduals)
-  dest.residual     = src.residual
-  dest.Aresidual    = src.Aresidual
-  dest.Acond        = src.Acond
-  dest.Anorm        = src.Anorm
-  dest.xNorm        = src.xNorm
-  dest.timer        = src.timer
-  dest.status       = src.status
+  dest.niter            = src.niter
+  dest.solved           = src.solved
+  dest.inconsistent     = src.inconsistent
+  dest.residuals        = copy(src.residuals)
+  dest.Aresiduals       = copy(src.Aresiduals)
+  dest.residual         = src.residual
+  dest.Aresidual        = src.Aresidual
+  dest.Acond            = src.Acond
+  dest.Anorm            = src.Anorm
+  dest.xNorm            = src.xNorm
+  dest.allocation_timer = src.allocation_timer
+  dest.timer            = src.timer
+  dest.status           = src.status
   return dest
 end
 
@@ -114,18 +120,20 @@ The fields are as follows:
 - indefinite
 - Anorm
 - Acond
+- allocation_timer
 - timer
 - status
 """
 mutable struct LanczosStats{T} <: KrylovStats{T}
-  niter      :: Int
-  solved     :: Bool
-  residuals  :: Vector{T}
-  indefinite :: Bool
-  Anorm      :: T
-  Acond      :: T
-  timer      :: Float64
-  status     :: String
+  niter            :: Int
+  solved           :: Bool
+  residuals        :: Vector{T}
+  indefinite       :: Bool
+  Anorm            :: T
+  Acond            :: T
+  allocation_timer :: Float64
+  timer            :: Float64
+  status           :: String
 end
 
 function reset!(stats :: LanczosStats)
@@ -133,14 +141,15 @@ function reset!(stats :: LanczosStats)
 end
 
 function copyto!(dest :: LanczosStats, src :: LanczosStats)
-  dest.niter      = src.niter
-  dest.solved     = src.solved
-  dest.residuals  = copy(src.residuals)
-  dest.indefinite = src.indefinite
-  dest.Anorm      = src.Anorm
-  dest.Acond      = src.Acond
-  dest.timer      = src.timer
-  dest.status     = src.status
+  dest.niter            = src.niter
+  dest.solved           = src.solved
+  dest.residuals        = copy(src.residuals)
+  dest.indefinite       = src.indefinite
+  dest.Anorm            = src.Anorm
+  dest.Acond            = src.Acond
+  dest.allocation_timer = src.allocation_timer
+  dest.timer            = src.timer
+  dest.status           = src.status
   return dest
 end
 
@@ -153,18 +162,20 @@ The fields are as follows:
 - indefinite
 - Anorm
 - Acond
+- allocation_timer
 - timer
 - status
 """
 mutable struct LanczosShiftStats{T} <: KrylovStats{T}
-  niter      :: Int
-  solved     :: Bool
-  residuals  :: Vector{Vector{T}}
-  indefinite :: BitVector
-  Anorm      :: T
-  Acond      :: T
-  timer      :: Float64
-  status     :: String
+  niter            :: Int
+  solved           :: Bool
+  residuals        :: Vector{Vector{T}}
+  indefinite       :: BitVector
+  Anorm            :: T
+  Acond            :: T
+  allocation_timer :: Float64
+  timer            :: Float64
+  status           :: String
 end
 
 function reset!(stats :: LanczosShiftStats)
@@ -174,14 +185,15 @@ function reset!(stats :: LanczosShiftStats)
 end
 
 function copyto!(dest :: LanczosShiftStats, src :: LanczosShiftStats)
-  dest.niter      = src.niter
-  dest.solved     = src.solved
-  dest.residuals  = deepcopy(src.residuals)
-  dest.indefinite = src.indefinite
-  dest.Anorm      = src.Anorm
-  dest.Acond      = src.Acond
-  dest.timer      = src.timer
-  dest.status     = src.status
+  dest.niter            = src.niter
+  dest.solved           = src.solved
+  dest.residuals        = deepcopy(src.residuals)
+  dest.indefinite       = src.indefinite
+  dest.Anorm            = src.Anorm
+  dest.Acond            = src.Acond
+  dest.allocation_timer = src.allocation_timer
+  dest.timer            = src.timer
+  dest.status           = src.status
   return dest
 end
 
@@ -196,20 +208,22 @@ The fields are as follows:
 - errorscg
 - Anorm
 - Acond
+- allocation_timer
 - timer
 - status
 """
 mutable struct SymmlqStats{T} <: KrylovStats{T}
-  niter       :: Int
-  solved      :: Bool
-  residuals   :: Vector{T}
-  residualscg :: Vector{Union{T, Missing}}
-  errors      :: Vector{T}
-  errorscg    :: Vector{Union{T, Missing}}
-  Anorm       :: T
-  Acond       :: T
-  timer       :: Float64
-  status      :: String
+  niter            :: Int
+  solved           :: Bool
+  residuals        :: Vector{T}
+  residualscg      :: Vector{Union{T, Missing}}
+  errors           :: Vector{T}
+  errorscg         :: Vector{Union{T, Missing}}
+  Anorm            :: T
+  Acond            :: T
+  allocation_timer :: Float64
+  timer            :: Float64
+  status           :: String
 end
 
 function reset!(stats :: SymmlqStats)
@@ -220,16 +234,17 @@ function reset!(stats :: SymmlqStats)
 end
 
 function copyto!(dest :: SymmlqStats, src :: SymmlqStats)
-  dest.niter       = src.niter
-  dest.solved      = src.solved
-  dest.residuals   = copy(src.residuals)
-  dest.residualscg = copy(src.residualscg)
-  dest.errors      = copy(src.errors)
-  dest.errorscg    = copy(src.errorscg)
-  dest.Anorm       = src.Anorm
-  dest.Acond       = src.Acond
-  dest.timer       = src.timer
-  dest.status      = src.status
+  dest.niter            = src.niter
+  dest.solved           = src.solved
+  dest.residuals        = copy(src.residuals)
+  dest.residualscg      = copy(src.residualscg)
+  dest.errors           = copy(src.errors)
+  dest.errorscg         = copy(src.errorscg)
+  dest.Anorm            = src.Anorm
+  dest.Acond            = src.Acond
+  dest.allocation_timer = src.allocation_timer
+  dest.timer            = src.timer
+  dest.status           = src.status
   return dest
 end
 
@@ -241,6 +256,7 @@ The fields are as follows:
 - solved_dual
 - residuals_primal
 - residuals_dual
+- allocation_timer
 - timer
 - status
 """
@@ -250,6 +266,7 @@ mutable struct AdjointStats{T} <: KrylovStats{T}
   solved_dual      :: Bool
   residuals_primal :: Vector{T}
   residuals_dual   :: Vector{T}
+  allocation_timer :: Float64
   timer            :: Float64
   status           :: String
 end
@@ -265,6 +282,7 @@ function copyto!(dest :: AdjointStats, src :: AdjointStats)
   dest.solved_dual      = src.solved_dual
   dest.residuals_primal = copy(src.residuals_primal)
   dest.residuals_dual   = copy(src.residuals_dual)
+  dest.allocation_timer = src.allocation_timer
   dest.timer            = src.timer
   dest.status           = src.status
   return dest
@@ -280,18 +298,20 @@ The fields are as follows:
 - error_with_bnd
 - error_bnd_x
 - error_bnd_y
+- allocation_timer
 - timer
 - status
 """
 mutable struct LNLQStats{T} <: KrylovStats{T}
-  niter          :: Int
-  solved         :: Bool
-  residuals      :: Vector{T}
-  error_with_bnd :: Bool
-  error_bnd_x    :: Vector{T}
-  error_bnd_y    :: Vector{T}
-  timer          :: Float64
-  status         :: String
+  niter            :: Int
+  solved           :: Bool
+  residuals        :: Vector{T}
+  error_with_bnd   :: Bool
+  error_bnd_x      :: Vector{T}
+  error_bnd_y      :: Vector{T}
+  allocation_timer :: Float64
+  timer            :: Float64
+  status           :: String
 end
 
 function reset!(stats :: LNLQStats)
@@ -301,14 +321,15 @@ function reset!(stats :: LNLQStats)
 end
 
 function copyto!(dest :: LNLQStats, src :: LNLQStats)
-  dest.niter          = src.niter
-  dest.solved         = src.solved
-  dest.residuals      = copy(src.residuals)
-  dest.error_with_bnd = src.error_with_bnd
-  dest.error_bnd_x    = copy(src.error_bnd_x)
-  dest.error_bnd_y    = copy(src.error_bnd_y)
-  dest.timer          = src.timer
-  dest.status         = src.status
+  dest.niter            = src.niter
+  dest.solved           = src.solved
+  dest.residuals        = copy(src.residuals)
+  dest.error_with_bnd   = src.error_with_bnd
+  dest.error_bnd_x      = copy(src.error_bnd_x)
+  dest.error_bnd_y      = copy(src.error_bnd_y)
+  dest.allocation_timer = src.allocation_timer
+  dest.timer            = src.timer
+  dest.status           = src.status
   return dest
 end
 
@@ -324,21 +345,23 @@ The fields are as follows:
 - error_with_bnd
 - err_ubnds_lq
 - err_ubnds_cg
+- allocation_timer
 - timer
 - status
 """
 mutable struct LSLQStats{T} <: KrylovStats{T}
-  niter          :: Int
-  solved         :: Bool
-  inconsistent   :: Bool
-  residuals      :: Vector{T}
-  Aresiduals     :: Vector{T}
-  err_lbnds      :: Vector{T}
-  error_with_bnd :: Bool
-  err_ubnds_lq   :: Vector{T}
-  err_ubnds_cg   :: Vector{T}
-  timer          :: Float64
-  status         :: String
+  niter            :: Int
+  solved           :: Bool
+  inconsistent     :: Bool
+  residuals        :: Vector{T}
+  Aresiduals       :: Vector{T}
+  err_lbnds        :: Vector{T}
+  error_with_bnd   :: Bool
+  err_ubnds_lq     :: Vector{T}
+  err_ubnds_cg     :: Vector{T}
+  allocation_timer :: Float64
+  timer            :: Float64
+  status           :: String
 end
 
 function reset!(stats :: LSLQStats)
@@ -350,16 +373,17 @@ function reset!(stats :: LSLQStats)
 end
 
 function copyto!(dest :: LSLQStats, src :: LSLQStats)
-  dest.niter          = src.niter
-  dest.solved         = src.solved
-  dest.inconsistent   = src.inconsistent
-  dest.residuals      = copy(src.residuals)
-  dest.Aresiduals     = copy(src.Aresiduals)
-  dest.err_lbnds      = copy(src.err_lbnds)
-  dest.error_with_bnd = src.error_with_bnd
-  dest.err_ubnds_lq   = copy(src.err_ubnds_lq)
-  dest.err_ubnds_cg   = copy(src.err_ubnds_cg)
-  dest.timer          = src.timer
-  dest.status         = src.status
+  dest.niter            = src.niter
+  dest.solved           = src.solved
+  dest.inconsistent     = src.inconsistent
+  dest.residuals        = copy(src.residuals)
+  dest.Aresiduals       = copy(src.Aresiduals)
+  dest.err_lbnds        = copy(src.err_lbnds)
+  dest.error_with_bnd   = src.error_with_bnd
+  dest.err_ubnds_lq     = copy(src.err_ubnds_lq)
+  dest.err_ubnds_cg     = copy(src.err_ubnds_cg)
+  dest.allocation_timer = src.allocation_timer
+  dest.timer            = src.timer
+  dest.status           = src.status
   return dest
 end

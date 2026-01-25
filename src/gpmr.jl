@@ -302,6 +302,7 @@ kwargs_workspace_gpmr = (:memory,)
 
       # Update workspace if more storage is required
       if iter > mem
+        start_allocation_time = time_ns()
         for i = 1 : 4k-1
           push!(R, zero(FC))
         end
@@ -309,6 +310,7 @@ kwargs_workspace_gpmr = (:memory,)
           push!(gs, zero(FC))
           push!(gc, zero(T))
         end
+        stats.allocation_timer += start_allocation_time |> ktimer
       end
 
       # Continue the orthogonal Hessenberg reduction process.
@@ -472,9 +474,11 @@ kwargs_workspace_gpmr = (:memory,)
       # Compute vₖ₊₁ and uₖ₊₁
       if !(solved || tired || breakdown || user_requested_exit || overtimed)
         if iter ≥ mem
+          start_allocation_time = time_ns()
           push!(V, similar(workspace.x))
           push!(U, similar(workspace.y))
           push!(zt, zero(FC), zero(FC))
+          stats.allocation_timer += start_allocation_time |> ktimer
         end
 
         # hₖ₊₁.ₖ ≠ 0

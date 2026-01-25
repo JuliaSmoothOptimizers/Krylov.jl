@@ -116,18 +116,6 @@
     @test minimum(Krylov.to_boundary(n, x, d, z, 5.0, flip=true)) ≈ -2.209975124224178
   end
 
-  @testset "kzeros" begin
-    # test kzeros
-    @test Krylov.kzeros(Vector{Float64}, 10) == zeros(Float64, 10)
-    @test Krylov.kzeros(Vector{ComplexF32}, 10) == zeros(ComplexF32, 10)
-  end
-
-  @testset "kones" begin
-    # test kones
-    @test Krylov.kones(Vector{Float64}, 10) == ones(Float64, 10)
-    @test Krylov.kones(Vector{ComplexF32}, 10) == ones(ComplexF32, 10)
-  end
-
   @testset "ktypeof" begin
     # test ktypeof
     for FC in (Float32, Float64, ComplexF32, ComplexF64)

@@ -242,11 +242,13 @@ kwargs_workspace_gmres = (:memory,)
 
         # Update workspace if more storage is required and restart is set to false
         if !restart && (inner_iter > mem)
+          start_allocation_time = time_ns()
           for i = 1 : inner_iter
             push!(R, zero(FC))
           end
           push!(s, zero(FC))
           push!(c, zero(T))
+          stats.allocation_timer += start_allocation_time |> ktimer
         end
 
         # Continue the Arnoldi process.
@@ -315,8 +317,10 @@ kwargs_workspace_gmres = (:memory,)
         # Compute vₖ₊₁.
         if !(solved || inner_tired || breakdown || user_requested_exit || overtimed)
           if !restart && (inner_iter ≥ mem)
+            start_allocation_time = time_ns()
             push!(V, similar(workspace.x))
             push!(z, zero(FC))
+            stats.allocation_timer += start_allocation_time |> ktimer
           end
           kdivcopy!(n, V[inner_iter+1], q, Hbis)  # vₖ₊₁ = q / hₖ₊₁.ₖ
           z[inner_iter+1] = ζₖ₊₁

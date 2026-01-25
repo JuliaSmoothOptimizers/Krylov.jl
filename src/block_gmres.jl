@@ -227,11 +227,13 @@ kwargs_workspace_block_gmres = (:memory,)
 
         # Update workspace if more storage is required and restart is set to false
         if !restart && (inner_iter > mem)
+          start_allocation_time = time_ns()
           for i = 1 : inner_iter
             push!(R, SM(undef, p, p))
           end
           push!(H, SM(undef, 2p, p))
           push!(τ, SV(undef, p))
+          stats.allocation_timer += start_allocation_time |> ktimer
         end
 
         # Continue the block-Arnoldi process.
@@ -297,8 +299,10 @@ kwargs_workspace_block_gmres = (:memory,)
         # Compute Vₖ₊₁.
         if !(solved || inner_tired || user_requested_exit || overtimed)
           if !restart && (inner_iter ≥ mem)
+            start_allocation_time = time_ns()
             push!(V, SM(undef, n, p))
             push!(Z, SM(undef, p, p))
+            stats.allocation_timer += start_allocation_time |> ktimer
           end
           copyto!(V[inner_iter+1], Q)
           Z[inner_iter+1] .= D2

@@ -65,6 +65,7 @@ Krylov.results
 Krylov.solution
 Krylov.statistics
 Krylov.elapsed_time
+Krylov.elapsed_allocation_time
 Krylov.issolved
 Krylov.solution_count
 Krylov.iteration_count

@@ -248,12 +248,14 @@ kwargs_workspace_fgmres = (:memory,)
 
         # Update workspace if more storage is required and restart is set to false
         if !restart && (inner_iter > mem)
+          start_allocation_time = time_ns()
           for i = 1 : inner_iter
             push!(R, zero(FC))
           end
           push!(s, zero(FC))
           push!(c, zero(T))
           push!(Z, similar(workspace.x))
+          stats.allocation_timer += start_allocation_time |> ktimer
         end
 
         # Continue the process.
@@ -322,8 +324,10 @@ kwargs_workspace_fgmres = (:memory,)
         # Compute vₖ₊₁
         if !(solved || inner_tired || breakdown || user_requested_exit || overtimed)
           if !restart && (inner_iter ≥ mem)
+            start_allocation_time = time_ns()
             push!(V, S(undef, n))
             push!(z, zero(FC))
+            stats.allocation_timer += start_allocation_time |> ktimer
           end
           kdivcopy!(n, V[inner_iter+1], q, Hbis)  # vₖ₊₁ = q / hₖ₊₁.ₖ
           z[inner_iter+1] = ζₖ₊₁

@@ -50,6 +50,7 @@ mutable struct BlockMinresWorkspace{T,FC,SV,SM} <: BlockKrylovWorkspace{T,FC,SV,
 end
 
 function BlockMinresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type)
+  start_allocation_time = time_ns()
   FC   = eltype(SV)
   T    = real(FC)
   ΔX   = SM(undef, 0, 0)
@@ -78,13 +79,14 @@ function BlockMinresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::
   τₖ₋₁ = SV(undef, p)
   SV = isconcretetype(SV) ? SV : typeof(τₖ₋₁)
   SM = isconcretetype(SM) ? SM : typeof(X)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
   size_buffer = C isa Matrix ? max(kgeqrf_buffer!(Vₖ, τₖ₋₁), kgeqrf_buffer!(Hₖ₋₁, τₖ₋₁),
                                    korgqr_buffer!(Vₖ, τₖ₋₁), korgqr_buffer!(Hₖ₋₁, τₖ₋₁),
                                    kormqr_buffer!('L', FC <: AbstractFloat ? 'T' : 'C', Hₖ₋₁, τₖ₋₁, D)) : 0
   buffer = SV(undef, size_buffer)
   workspace = BlockMinresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, P, Q, C, D, Φ, Ψₖ, Ωₖ, Ψₖ₊₁, Πₖ₋₂, Γbarₖ₋₁, Γₖ₋₁, Λbarₖ, Λₖ,
                                                Vₖ₋₁, Vₖ, wₖ₋₂, wₖ₋₁, wₖ, Hₖ₋₂, Hₖ₋₁, τₖ₋₂, τₖ₋₁, buffer, false, stats)
+  workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
 end
 
@@ -132,6 +134,7 @@ mutable struct BlockGmresWorkspace{T,FC,SV,SM} <: BlockKrylovWorkspace{T,FC,SV,S
 end
 
 function BlockGmresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type; memory::Int = 5)
+  start_allocation_time = time_ns()
   memory = min(div(n,p), memory)
   FC = eltype(SV)
   T  = real(FC)
@@ -153,8 +156,9 @@ function BlockGmresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::T
                                    korgqr_buffer!(V[1], τ[1]), korgqr_buffer!(H[1], τ[1]),
                                    kormqr_buffer!('L', FC <: AbstractFloat ? 'T' : 'C', H[1], τ[1], D)) : 0
   buffer = SV(undef, size_buffer)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = BlockGmresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, buffer, false, stats)
+  workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
 end
 
