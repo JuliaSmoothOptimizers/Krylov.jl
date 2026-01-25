@@ -63,7 +63,7 @@ for method in (:bicgstab, :gmres, :qmr)
 
     # Display the allocation timer
     allocation_timer = Krylov.elapsed_allocation_time(workspace)
-    println("Elapsed time for $method: ", allocation_timer, " seconds")
+    println("Elapsed allocation time for $method: ", allocation_timer, " seconds")
 
     # Display the computation timer
     computation_timer = Krylov.elapsed_time(workspace)
