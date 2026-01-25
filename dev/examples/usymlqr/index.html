@@ -13,12 +13,42 @@ D = diagm(0 =&gt; [2.0 * i for i = 1:n])
 m, n = size(A)
 c = -3*b
 
+# [I   A] [x] = [b]
+# [Aᴴ  0] [y]   [c]
+(x, y, stats) = usymlqr(A, b, c)
+K = [I A; A&#39; zeros(n,n)]
+d = [b; c]
+r = d - K * [x; y]
+resid = norm(r)
+@printf(&quot;USYMLQR: Relative residual: %8.1e\n&quot;, resid)
+
+# [I   A] [x] = [b]
+# [Aᴴ  0] [y]   [0]
+(x, y, stats) = usymlqr(A, b, c, ln=false)
+K = [I A; A&#39; zeros(n,n)]
+d = [b; 0*c]
+r = d - K * [x; y]
+resid = norm(r)
+@printf(&quot;USYMLQR: Relative residual: %8.1e\n&quot;, resid)
+
+# [I   A] [x] = [0]
+# [Aᴴ  0] [y]   [c]
+(x, y, stats) = usymlqr(A, b, c, ls=false)
+K = [I A; A&#39; zeros(n,n)]
+d = [0*b; c]
+r = d - K * [x; y]
+resid = norm(r)
+@printf(&quot;USYMLQR: Relative residual: %8.1e\n&quot;, resid)
+
 # [D   A] [x] = [b]
 # [Aᴴ  0] [y]   [c]
 opH = BlockDiagonalOperator(inv(D), eye(n))
 (x, y, stats) = usymlqr(A, b, c, M=inv(D))
 K = [D A; A&#39; zeros(n,n)]
-B = [b; c]
-r = B - K * [x; y]
+d = [b; c]
+r = d - K * [x; y]
 resid = sqrt(dot(r, opH * r))
-@printf(&quot;USYMLQR: Relative residual: %8.1e\n&quot;, resid)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">USYMLQR: Relative residual:  1.6e+00</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../trimr/">« TriMR</a><a class="docs-footer-nextpage" href="../bicgstab/">BICGSTAB »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Sunday 25 January 2026 19:28">Sunday 25 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+@printf(&quot;USYMLQR: Relative residual: %8.1e\n&quot;, resid)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">USYMLQR: Relative residual:  5.7e-08
+USYMLQR: Relative residual:  3.6e-08
+USYMLQR: Relative residual:  4.4e-08
+USYMLQR: Relative residual:  1.6e+00</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../trimr/">« TriMR</a><a class="docs-footer-nextpage" href="../bicgstab/">BICGSTAB »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Sunday 25 January 2026 23:04">Sunday 25 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
