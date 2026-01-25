@@ -147,6 +147,7 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
   function usymlqr!(workspace :: UsymlqrWorkspace{T,FC,Sm,Sn}, $(def_args_usymlqr...); $(def_kwargs_usymlqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
     # to be fixed...
     transfer_to_usymcg = false
+    transfer_to_usymcg && error("The option `transfer_to_usymcg=true` is not yet supported.")
 
     # Timer
     start_time = time_ns()
@@ -237,10 +238,10 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
       NisI || kfill!(uₖ, zero(FC))
     end
 
-    (verbose > 0) && @printf(iostream, "%5s  %8s  %7s  %7s  %7s  %7s  %5s\n", "k", "αₖ", "βₖ₊₁", "γₖ₊₁", "‖rₖ‖_LS", "‖rₖ‖_LN", "timer")
-    !ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %8s  %7.1e  %7.1e  %7s  %7.1e  %.2fs\n", iter, "✗ ✗ ✗ ✗", βₖ, γₖ, "✗ ✗ ✗ ✗", γₖ, start_time |> ktimer)
-     ls && !ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %8s  %7.1e  %7.1e  %7.1e  %7s  %.2fs\n", iter, "✗ ✗ ✗ ✗", βₖ, γₖ, βₖ, "✗ ✗ ✗ ✗", start_time |> ktimer)
-     ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %8s  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, "✗ ✗ ✗ ✗", βₖ, γₖ, βₖ, γₖ, start_time |> ktimer)
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %5s\n", "k", "βₖ₊₁", "γₖ₊₁", "‖rₖ‖_LS", "‖rₖ‖_LN", "timer")
+    !ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7s  %7.1e  %.2fs\n", iter, βₖ, γₖ, "✗ ✗ ✗ ✗", γₖ, start_time |> ktimer)
+     ls && !ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7s  %.2fs\n", iter, βₖ, γₖ, βₖ, "✗ ✗ ✗ ✗", start_time |> ktimer)
+     ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, βₖ, γₖ, βₖ, γₖ, start_time |> ktimer)
 
     cₖ₋₂ = cₖ₋₁ = cₖ = -one(T)      # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
     sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)     # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
@@ -248,7 +249,7 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
     kfill!(wₖ₋₁, zero(FC))          # Column k-1 of Wₖ = Uₖ(Rₖ)⁻¹
     kfill!(d̅, zero(FC))             # Last column of D̅ₖ = Vₖ(Qₖ₋₁)ᴴ
     ϕbarₖ = βₖ                      # ϕbarₖ is the last component of f̄ₖ = (Qₖ)ᴴβ₁e₁
-    ζₖ₋₂ = ζₖ₋₁ = ζbarₖ = zero(FC)  # ζₖ₋₂, ζₖ₋₁ and ζbarₖ are the last components of h̄ₖ = (Rₖ)⁻ᵀγ₁e₁
+    ζₖ₋₂ = ζₖ₋₁ = ζbarₖ = zero(FC)  # ζₖ₋₂, ζₖ₋₁ and ζbarₖ are the last components of h̄ₖ = (R̅ₖ)⁻ᴴγ₁e₁
     ηₖ₋₁ = zero(FC)                 # ηₖ₋₁ is used to update ζₖ₋₁ and ζbarₖ
     δₖ₋₁ = δbarₖ = zero(FC)         # Coefficients of Rₖ₋₁ and Rₖ modified over the course of two iterations
 
@@ -408,7 +409,7 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
       end
 
       if ln && !solved_ln
-        # Update the solution of (R̅ₖ)ᵀh̄ₖ = γ₁e₁.
+        # Update the solution of (R̅ₖ)ᴴh̄ₖ = γ₁e₁.
         #
         # [ δ₁  0   •   •   •   •   0  ] [ ζ₁ ]   [ γ₁ ]
         # [ λ₁  δ₂  •               •  ] [ ζ₂ ]   [ 0  ]
@@ -426,37 +427,37 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
         # [δ₁    0  ] [  ζ₁ ] = [γ₁]
         # [λ₁  δbar₂] [ζbar₂]   [0 ]
         if iter == 2
-          ζₖ₋₁ = ηₖ₋₁ / δₖ₋₁
-          ηₖ   = -λₖ₋₁ * ζₖ₋₁
+          ζₖ₋₁ = ηₖ₋₁ / conj(δₖ₋₁)
+          ηₖ   = -conj(λₖ₋₁) * ζₖ₋₁
         end
         # [λₖ₋₂  δₖ₋₁    0  ] [ζₖ₋₂ ] = [0]
         # [ϵₖ₋₂  λₖ₋₁  δbarₖ] [ζₖ₋₁ ]   [0]
         #                     [ζbarₖ]
         if iter ≥ 3
           ζₖ₋₂ = ζₖ₋₁
-          ζₖ₋₁ = ηₖ₋₁ / δₖ₋₁
-          ηₖ   = -ϵₖ₋₂ * ζₖ₋₂ - λₖ₋₁ * ζₖ₋₁
+          ζₖ₋₁ = ηₖ₋₁ / conj(δₖ₋₁)
+          ηₖ   = -conj(ϵₖ₋₂) * ζₖ₋₂ - conj(λₖ₋₁) * ζₖ₋₁
         end
 
         # Relations for the directions dₖ₋₁ and d̅ₖ, the last two columns of D̅ₖ = Vₖ(Qₖ₋₁)ᴴ.
         # Note: D̄ₖ represents the matrix P̄ₖ in the paper of USYMLQR.
-        # [d̅ₖ₋₁ vₖ] [cₖ₋₁  s̄ₖ₋₁] = [dₖ₋₁ d̅ₖ] ⟷ dₖ₋₁ = cₖ₋₁ * d̅ₖ₋₁ + sₖ₋₁ * vₖ
-        #           [sₖ₋₁ -cₖ₋₁]             ⟷ d̅ₖ   = s̄ₖ₋₁ * d̅ₖ₋₁ - cₖ₋₁ * vₖ
+        # [d̅ₖ₋₁ vₖ] [cₖ₋₁  sₖ₋₁] = [dₖ₋₁ d̅ₖ] ⟷ dₖ₋₁ = cₖ₋₁ * d̅ₖ₋₁ + s̄ₖ₋₁ * vₖ
+        #           [s̄ₖ₋₁ -cₖ₋₁]             ⟷ d̅ₖ   = sₖ₋₁ * d̅ₖ₋₁ - cₖ₋₁ * vₖ
         if iter == 1
           # d̅₁ = v₁
           kcopy!(m, d̅, vₖ)  # d̅ ← vₖ
         else
           # Compute solution xₖ.
           # (xᴸ)ₖ ← (xᴸ)ₖ₋₁ + ζₖ₋₁ * dₖ₋₁
-          kaxpy!(m, ζₖ₋₁ * cₖ₋₁,  d̅, xₖ)
-          kaxpy!(m, ζₖ₋₁ * sₖ₋₁, vₖ, xₖ)
+          kaxpy!(m, ζₖ₋₁ *      cₖ₋₁,  d̅ , xₖ)
+          kaxpy!(m, ζₖ₋₁ * conj(sₖ₋₁), vₖ, xₖ)
 
           # Compute solution zₖ.
           kaxpy!(n, -ζₖ₋₁, wₖ₋₁, zₖ)
 
           # Compute the direction d̅ₖ.
-          # d̅ₖ = s̄ₖ₋₁ * d̅ₖ₋₁ - cₖ₋₁ * vₖ
-          kaxpby!(m, -cₖ₋₁, vₖ, conj(sₖ₋₁), d̅)
+          # d̅ₖ = sₖ₋₁ * d̅ₖ₋₁ - cₖ₋₁ * vₖ
+          kaxpby!(m, -cₖ₋₁, vₖ, sₖ₋₁, d̅)
         end
 
         # Compute USYMLQ residual norm
@@ -464,8 +465,8 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
         if iter == 1
           rNorm_lq = cNorm
         else
-          μₖ = γₖ * (sₖ₋₂ * ζₖ₋₂ - cₖ₋₂ * cₖ₋₁ * ζₖ₋₁) + αₖ * sₖ₋₁ * ζₖ₋₁
-          ωₖ = γₖ₊₁ * sₖ₋₁ * ζₖ₋₁
+          μₖ = γₖ * (conj(sₖ₋₂) * ζₖ₋₂ - cₖ₋₂ * cₖ₋₁ * ζₖ₋₁) + conj(αₖ * sₖ₋₁) * ζₖ₋₁
+          ωₖ = γₖ₊₁ * conj(sₖ₋₁) * ζₖ₋₁
           rNorm_lq = sqrt(abs2(μₖ) + abs2(ωₖ))
         end
         history && push!(rNorms, rNorm_lq)
@@ -473,8 +474,8 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
         # Compute USYMCG residual norm
         # ‖rₖ‖ = |ρₖ|
         if transfer_to_usymcg && (abs(δbarₖ) > eps(T))
-          ζbarₖ = ηₖ / δbarₖ
-          ρₖ = γₖ₊₁ * (sₖ₋₁ * ζₖ₋₁ - cₖ₋₁ * ζbarₖ)
+          ζbarₖ = ηₖ / conj(δbarₖ)
+          ρₖ = γₖ₊₁ * (conj(sₖ₋₁) * ζₖ₋₁ - cₖ₋₁ * ζbarₖ)
           rNorm_cg = abs(ρₖ)
         end
 
@@ -550,9 +551,9 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      !ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %7.1e  %7s  %7.1e  %.2fs\n", iter, αₖ, βₖ₊₁, γₖ₊₁, "✗ ✗ ✗ ✗", rNorm_lq, start_time |> ktimer)
-       ls && !ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %7.1e  %7.1e  %7s  %.2fs\n", iter, αₖ, βₖ₊₁, γₖ₊₁, rNorm, "✗ ✗ ✗ ✗", start_time |> ktimer)
-       ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, αₖ, βₖ₊₁, γₖ₊₁, rNorm, rNorm_lq, start_time |> ktimer)
+      !ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7s  %7.1e  %.2fs\n", iter, βₖ₊₁, γₖ₊₁, "✗ ✗ ✗ ✗", rNorm_lq, start_time |> ktimer)
+       ls && !ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7s  %.2fs\n", iter, βₖ₊₁, γₖ₊₁, rNorm, "✗ ✗ ✗ ✗", start_time |> ktimer)
+       ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, βₖ₊₁, γₖ₊₁, rNorm, rNorm_lq, start_time |> ktimer)
     end
     (verbose > 0) && @printf(iostream, "\n")
 

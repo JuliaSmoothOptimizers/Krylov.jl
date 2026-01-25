@@ -1,6 +1,44 @@
 @testset "usymlqr" begin
   usymlqr_tol = 1.0e-6
 
+  @testset "Small complex SP" begin
+    m = 4
+    n = 4
+    A = rand(ComplexF64, m, n)
+    b = rand(ComplexF64, m)
+    c = rand(ComplexF64, n)
+
+    # [I   A] [x] = [b]
+    # [Aᴴ  0] [y]   [c]
+    (x, y, stats) = usymlqr(A, b, c)
+    K = [I A; A' zeros(n,n)]
+    d = [b; c]
+    r = d - K * [x; y]
+    resid = norm(r)
+    @test resid ≤ usymlqr_tol
+    @printf("USYMLQR: Relative residual: %8.1e\n", resid)
+
+    # [I   A] [x] = [b]
+    # [Aᴴ  0] [y]   [0]
+    (x, y, stats) = usymlqr(A, b, c, ln=false)
+    K = [I A; A' zeros(n,n)]
+    d = [b; 0*c]
+    r = d - K * [x; y]
+    resid = norm(r)
+    @test resid ≤ usymlqr_tol
+    @printf("USYMLQR: Relative residual: %8.1e\n", resid)
+
+    # [I   A] [x] = [0]
+    # [Aᴴ  0] [y]   [c]
+    (x, y, stats) = usymlqr(A, b, c, ls=false)
+    K = [I A; A' zeros(n,n)]
+    d = [0*b; c]
+    r = d - K * [x; y]
+    resid = norm(r)
+    @test resid ≤ usymlqr_tol
+    @printf("USYMLQR: Relative residual: %8.1e\n", resid)
+  end
+
   @testset "Data Type: $FC" for FC in (Float64, ComplexF64)
     # Test saddle-point systems
     A, b, D = saddle_point(FC=FC)

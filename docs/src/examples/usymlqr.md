@@ -13,13 +13,40 @@ D = diagm(0 => [2.0 * i for i = 1:n])
 m, n = size(A)
 c = -3*b
 
+# [I   A] [x] = [b]
+# [Aᴴ  0] [y]   [c]
+(x, y, stats) = usymlqr(A, b, c)
+K = [I A; A' zeros(n,n)]
+d = [b; c]
+r = d - K * [x; y]
+resid = norm(r)
+@printf("USYMLQR: Relative residual: %8.1e\n", resid)
+
+# [I   A] [x] = [b]
+# [Aᴴ  0] [y]   [0]
+(x, y, stats) = usymlqr(A, b, c, ln=false)
+K = [I A; A' zeros(n,n)]
+d = [b; 0*c]
+r = d - K * [x; y]
+resid = norm(r)
+@printf("USYMLQR: Relative residual: %8.1e\n", resid)
+
+# [I   A] [x] = [0]
+# [Aᴴ  0] [y]   [c]
+(x, y, stats) = usymlqr(A, b, c, ls=false)
+K = [I A; A' zeros(n,n)]
+d = [0*b; c]
+r = d - K * [x; y]
+resid = norm(r)
+@printf("USYMLQR: Relative residual: %8.1e\n", resid)
+
 # [D   A] [x] = [b]
 # [Aᴴ  0] [y]   [c]
 opH = BlockDiagonalOperator(inv(D), eye(n))
 (x, y, stats) = usymlqr(A, b, c, M=inv(D))
 K = [D A; A' zeros(n,n)]
-B = [b; c]
-r = B - K * [x; y]
+d = [b; c]
+r = d - K * [x; y]
 resid = sqrt(dot(r, opH * r))
 @printf("USYMLQR: Relative residual: %8.1e\n", resid)
 ```
