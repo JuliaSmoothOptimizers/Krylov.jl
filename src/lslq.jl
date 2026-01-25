@@ -188,10 +188,14 @@ def_kwargs_lslq = (:(; M = I                         ),
                    :(; callback = workspace -> false ),
                    :(; iostream::IO = kstdout        ))
 
+def_kwargs_workspace_lslq = (:(; window::Int = 5),)
+
 def_kwargs_lslq = extract_parameters.(def_kwargs_lslq)
+def_kwargs_workspace_lslq = extract_parameters.(def_kwargs_workspace_lslq)
 
 args_lslq = (:A, :b)
 kwargs_lslq = (:M, :N, :ldiv, :transfer_to_lsqr, :sqd, :λ, :σ, :etol, :utol, :btol, :conlim, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_workspace_lslq = (:window,)
 
 @eval begin
   function lslq!(workspace :: LslqWorkspace{T,FC,Sm,Sn}, $(def_args_lslq...); $(def_kwargs_lslq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}

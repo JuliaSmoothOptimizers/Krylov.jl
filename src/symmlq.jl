@@ -118,11 +118,15 @@ def_kwargs_symmlq = (:(; M = I                         ),
                      :(; callback = workspace -> false ),
                      :(; iostream::IO = kstdout        ))
 
+def_kwargs_workspace_symmlq = (:(; window::Int = 5),)
+
 def_kwargs_symmlq = extract_parameters.(def_kwargs_symmlq)
+def_kwargs_workspace_symmlq = extract_parameters.(def_kwargs_workspace_symmlq)
 
 args_symmlq = (:A, :b)
 optargs_symmlq = (:x0,)
 kwargs_symmlq = (:M, :ldiv, :transfer_to_cg, :λ, :λest, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_workspace_symmlq = (:window,)
 
 @eval begin
   function symmlq!(workspace :: SymmlqWorkspace{T,FC,S}, $(def_args_symmlq...); $(def_kwargs_symmlq...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}

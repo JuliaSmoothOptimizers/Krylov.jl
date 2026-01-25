@@ -131,7 +131,7 @@ mutable struct BlockGmresWorkspace{T,FC,SV,SM} <: BlockKrylovWorkspace{T,FC,SV,S
   stats      :: SimpleStats{T}
 end
 
-function BlockGmresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type; memory::Integer = 5)
+function BlockGmresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::Type; memory::Int = 5)
   memory = min(div(n,p), memory)
   FC = eltype(SV)
   T  = real(FC)
@@ -158,7 +158,7 @@ function BlockGmresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::T
   return workspace
 end
 
-function BlockGmresWorkspace(A, B; memory::Integer = 5)
+function BlockGmresWorkspace(A, B; memory::Int = 5)
   m, n = size(A)
   s, p = size(B)
   SM = typeof(B)

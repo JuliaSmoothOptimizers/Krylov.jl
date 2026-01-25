@@ -91,7 +91,7 @@ mutable struct MinresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   stats      :: SimpleStats{T}
 end
 
-function MinresWorkspace(kc::KrylovConstructor{S,S}; window::Integer = 5) where S
+function MinresWorkspace(kc::KrylovConstructor{S,S}; window::Int = 5) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -111,7 +111,7 @@ function MinresWorkspace(kc::KrylovConstructor{S,S}; window::Integer = 5) where 
   return workspace
 end
 
-function MinresWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
+function MinresWorkspace(m::Integer, n::Integer, S::Type; window::Int = 5)
   FC = eltype(S)
   T  = real(FC)
   Δx = S(undef, 0)
@@ -130,7 +130,7 @@ function MinresWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   return workspace
 end
 
-function MinresWorkspace(A, b; window::Integer = 5)
+function MinresWorkspace(A, b; window::Int = 5)
   m, n = size(A)
   S = ktypeof(b)
   MinresWorkspace(m, n, S; window)
@@ -455,7 +455,7 @@ mutable struct SymmlqWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   stats      :: SymmlqStats{T}
 end
 
-function SymmlqWorkspace(kc::KrylovConstructor{S,S}; window::Integer = 5) where S
+function SymmlqWorkspace(kc::KrylovConstructor{S,S}; window::Int = 5) where S
   FC      = eltype(S)
   T       = real(FC)
   m       = length(kc.vm)
@@ -475,7 +475,7 @@ function SymmlqWorkspace(kc::KrylovConstructor{S,S}; window::Integer = 5) where 
   return workspace
 end
 
-function SymmlqWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
+function SymmlqWorkspace(m::Integer, n::Integer, S::Type; window::Int = 5)
   FC      = eltype(S)
   T       = real(FC)
   Δx      = S(undef, 0)
@@ -494,7 +494,7 @@ function SymmlqWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
   return workspace
 end
 
-function SymmlqWorkspace(A, b; window::Integer = 5)
+function SymmlqWorkspace(A, b; window::Int = 5)
   m, n = size(A)
   S = ktypeof(b)
   SymmlqWorkspace(m, n, S; window)
@@ -764,7 +764,7 @@ mutable struct DqgmresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   stats      :: SimpleStats{T}
 end
 
-function DqgmresWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where S
+function DqgmresWorkspace(kc::KrylovConstructor{S,S}; memory::Int = 20) where S
   FC     = eltype(S)
   T      = real(FC)
   m      = length(kc.vm)
@@ -785,7 +785,7 @@ function DqgmresWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) wher
   return workspace
 end
 
-function DqgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
+function DqgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -805,7 +805,7 @@ function DqgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   return workspace
 end
 
-function DqgmresWorkspace(A, b; memory::Integer = 20)
+function DqgmresWorkspace(A, b; memory::Int = 20)
   m, n = size(A)
   S = ktypeof(b)
   DqgmresWorkspace(m, n, S; memory)
@@ -843,7 +843,7 @@ mutable struct DiomWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   stats      :: SimpleStats{T}
 end
 
-function DiomWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where S
+function DiomWorkspace(kc::KrylovConstructor{S,S}; memory::Int = 20) where S
   FC     = eltype(S)
   T      = real(FC)
   m      = length(kc.vm)
@@ -863,7 +863,7 @@ function DiomWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where S
   return workspace
 end
 
-function DiomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
+function DiomWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
   memory = min(m, memory)
   FC  = eltype(S)
   T   = real(FC)
@@ -882,7 +882,7 @@ function DiomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   return workspace
 end
 
-function DiomWorkspace(A, b; memory::Integer = 20)
+function DiomWorkspace(A, b; memory::Int = 20)
   m, n = size(A)
   S = ktypeof(b)
   DiomWorkspace(m, n, S; memory)
@@ -1720,6 +1720,7 @@ The following outer constructors can be used to initialize this workspace:
 
     workspace = BilqrWorkspace(m, n, S)
     workspace = BilqrWorkspace(A, b)
+    workspace = BilqrWorkspace(A, b, c)
     workspace = BilqrWorkspace(kc::KrylovConstructor{S,S})
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
@@ -1794,6 +1795,12 @@ function BilqrWorkspace(m::Integer, n::Integer, S::Type)
 end
 
 function BilqrWorkspace(A, b)
+  m, n = size(A)
+  S = ktypeof(b)
+  BilqrWorkspace(m, n, S)
+end
+
+function BilqrWorkspace(A, b, c)
   m, n = size(A)
   S = ktypeof(b)
   BilqrWorkspace(m, n, S)
@@ -2226,7 +2233,7 @@ mutable struct LslqWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   stats   :: LSLQStats{T}
 end
 
-function LslqWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Integer = 5) where {Sm,Sn}
+function LslqWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Int = 5) where {Sm,Sn}
   FC  = eltype(Sm)
   T   = real(FC)
   m   = length(kc.vm)
@@ -2245,7 +2252,7 @@ function LslqWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Integer = 5) where 
   return workspace
 end
 
-function LslqWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Integer = 5)
+function LslqWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Int = 5)
   FC  = eltype(Sm)
   T   = real(FC)
   x   = Sn(undef, n)
@@ -2264,11 +2271,11 @@ function LslqWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Integ
   return workspace
 end
 
-function LslqWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
+function LslqWorkspace(m::Integer, n::Integer, S::Type; window::Int = 5)
   LslqWorkspace(m, n, S, S; window)
 end
 
-function LslqWorkspace(A, b; window::Integer = 5)
+function LslqWorkspace(A, b; window::Int = 5)
   m, n = size(A)
   S = ktypeof(b)
   LslqWorkspace(m, n, S; window)
@@ -2306,7 +2313,7 @@ mutable struct LsqrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   stats   :: SimpleStats{T}
 end
 
-function LsqrWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Integer = 5) where {Sm,Sn}
+function LsqrWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Int = 5) where {Sm,Sn}
   FC  = eltype(Sm)
   T   = real(FC)
   m   = length(kc.vm)
@@ -2325,7 +2332,7 @@ function LsqrWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Integer = 5) where 
   return workspace
 end
 
-function LsqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Integer = 5)
+function LsqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Int = 5)
   FC  = eltype(Sm)
   T   = real(FC)
   x   = Sn(undef, n)
@@ -2344,11 +2351,11 @@ function LsqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Integ
   return workspace
 end
 
-function LsqrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
+function LsqrWorkspace(m::Integer, n::Integer, S::Type; window::Int = 5)
   LsqrWorkspace(m, n, S, S; window)
 end
 
-function LsqrWorkspace(A, b; window::Integer = 5)
+function LsqrWorkspace(A, b; window::Int = 5)
   m, n = size(A)
   S = ktypeof(b)
   LsqrWorkspace(m, n, S; window)
@@ -2387,7 +2394,7 @@ mutable struct LsmrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   stats   :: LsmrStats{T}
 end
 
-function LsmrWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Integer = 5) where {Sm,Sn}
+function LsmrWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Int = 5) where {Sm,Sn}
   FC   = eltype(Sm)
   T    = real(FC)
   m    = length(kc.vm)
@@ -2407,7 +2414,7 @@ function LsmrWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Integer = 5) where 
   return workspace
 end
 
-function LsmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Integer = 5)
+function LsmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Int = 5)
   FC   = eltype(Sm)
   T    = real(FC)
   x    = Sn(undef, n)
@@ -2427,11 +2434,11 @@ function LsmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Integ
   return workspace
 end
 
-function LsmrWorkspace(m::Integer, n::Integer, S::Type; window::Integer = 5)
+function LsmrWorkspace(m::Integer, n::Integer, S::Type; window::Int = 5)
   LsmrWorkspace(m, n, S, S; window)
 end
 
-function LsmrWorkspace(A, b; window::Integer = 5)
+function LsmrWorkspace(A, b; window::Int = 5)
   m, n = size(A)
   S = ktypeof(b)
   LsmrWorkspace(m, n, S; window)
@@ -2725,7 +2732,7 @@ mutable struct GmresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   stats      :: SimpleStats{T}
 end
 
-function GmresWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where S
+function GmresWorkspace(kc::KrylovConstructor{S,S}; memory::Int = 20) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -2746,7 +2753,7 @@ function GmresWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where 
   return workspace
 end
 
-function GmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
+function GmresWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -2766,7 +2773,7 @@ function GmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   return workspace
 end
 
-function GmresWorkspace(A, b; memory::Integer = 20)
+function GmresWorkspace(A, b; memory::Int = 20)
   m, n = size(A)
   S = ktypeof(b)
   GmresWorkspace(m, n, S; memory)
@@ -2806,7 +2813,7 @@ mutable struct FgmresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   stats      :: SimpleStats{T}
 end
 
-function FgmresWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where S
+function FgmresWorkspace(kc::KrylovConstructor{S,S}; memory::Int = 20) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -2827,7 +2834,7 @@ function FgmresWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where
   return workspace
 end
 
-function FgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
+function FgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -2847,7 +2854,7 @@ function FgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   return workspace
 end
 
-function FgmresWorkspace(A, b; memory::Integer = 20)
+function FgmresWorkspace(A, b; memory::Int = 20)
   m, n = size(A)
   S = ktypeof(b)
   FgmresWorkspace(m, n, S; memory)
@@ -2885,7 +2892,7 @@ mutable struct FomWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   stats      :: SimpleStats{T}
 end
 
-function FomWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where S
+function FomWorkspace(kc::KrylovConstructor{S,S}; memory::Int = 20) where S
   FC = eltype(S)
   T  = real(FC)
   m  = length(kc.vm)
@@ -2905,7 +2912,7 @@ function FomWorkspace(kc::KrylovConstructor{S,S}; memory::Integer = 20) where S
   return workspace
 end
 
-function FomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
+function FomWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
   memory = min(m, memory)
   FC = eltype(S)
   T  = real(FC)
@@ -2924,7 +2931,7 @@ function FomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   return workspace
 end
 
-function FomWorkspace(A, b; memory::Integer = 20)
+function FomWorkspace(A, b; memory::Int = 20)
   m, n = size(A)
   S = ktypeof(b)
   FomWorkspace(m, n, S; memory)
@@ -2939,6 +2946,7 @@ The following outer constructors can be used to initialize this workspace:
     workspace = GpmrWorkspace(m, n, S; memory = 20)
     workspace = GpmrWorkspace(A, b; memory = 20)
     workspace = GpmrWorkspace(A, b, c; memory = 20)
+    workspace = GpmrWorkspace(A, B, b, c; memory = 20)
     workspace = GpmrWorkspace(kc::KrylovConstructor{Sm,Sn}; memory = 20)
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
@@ -2972,7 +2980,7 @@ mutable struct GpmrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   stats      :: SimpleStats{T}
 end
 
-function GpmrWorkspace(kc::KrylovConstructor{Sm,Sn}; memory::Integer = 20) where {Sm,Sn}
+function GpmrWorkspace(kc::KrylovConstructor{Sm,Sn}; memory::Int = 20) where {Sm,Sn}
   FC = eltype(Sm)
   T  = real(FC)
   m  = length(kc.vm)
@@ -2999,7 +3007,7 @@ function GpmrWorkspace(kc::KrylovConstructor{Sm,Sn}; memory::Integer = 20) where
   return workspace
 end
 
-function GpmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; memory::Integer = 20)
+function GpmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; memory::Int = 20)
   memory = min(n + m, memory)
   FC = eltype(Sm)
   T  = real(FC)
@@ -3026,17 +3034,24 @@ function GpmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; memory::Integ
   return workspace
 end
 
-function GpmrWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
+function GpmrWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
   GpmrWorkspace(m, n, S, S; memory)
 end
 
-function GpmrWorkspace(A, b; memory::Integer = 20)
+function GpmrWorkspace(A, b; memory::Int = 20)
   m, n = size(A)
   S = ktypeof(b)
   GpmrWorkspace(m, n, S; memory)
 end
 
-function GpmrWorkspace(A, b, c; memory::Integer = 20)
+function GpmrWorkspace(A, b, c; memory::Int = 20)
+  m, n = size(A)
+  Sm = ktypeof(b)
+  Sn = ktypeof(c)
+  GpmrWorkspace(m, n, Sm, Sn; memory)
+end
+
+function GpmrWorkspace(A, B, b, c; memory::Int = 20)
   m, n = size(A)
   Sm = ktypeof(b)
   Sn = ktypeof(c)

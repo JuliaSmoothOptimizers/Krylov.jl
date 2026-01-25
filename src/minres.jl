@@ -150,11 +150,15 @@ def_kwargs_minres = (:(; M = I                        ),
                      :(; callback = workspace -> false),
                      :(; iostream::IO = kstdout       ))
 
+def_kwargs_workspace_minres = (:(; window::Int = 5),)
+
 def_kwargs_minres = extract_parameters.(def_kwargs_minres)
+def_kwargs_workspace_minres = extract_parameters.(def_kwargs_workspace_minres)
 
 args_minres = (:A, :b)
 optargs_minres = (:x0,)
 kwargs_minres = (:M, :ldiv, :linesearch ,:λ, :atol, :rtol, :etol, :conlim, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_workspace_minres = (:window,)
 
 @eval begin
   function minres!(workspace :: MinresWorkspace{T,FC,S}, $(def_args_minres...); $(def_kwargs_minres...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}

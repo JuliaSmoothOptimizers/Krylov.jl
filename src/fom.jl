@@ -107,11 +107,15 @@ def_kwargs_fom = (:(; M = I                            ),
                   :(; callback = workspace -> false    ),
                   :(; iostream::IO = kstdout           ))
 
+def_kwargs_workspace_fom = (:(; memory::Int = 20),)
+
 def_kwargs_fom = extract_parameters.(def_kwargs_fom)
+def_kwargs_workspace_fom = extract_parameters.(def_kwargs_workspace_fom)
 
 args_fom = (:A, :b)
 optargs_fom = (:x0,)
 kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_workspace_fom = (:memory,)
 
 @eval begin
   function fom!(workspace :: FomWorkspace{T,FC,S}, $(def_args_fom...); $(def_kwargs_fom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}

@@ -150,11 +150,15 @@ def_kwargs_gpmr = (:(; C = I                            ),
                    :(; callback = workspace -> false    ),
                    :(; iostream::IO = kstdout           ))
 
+def_kwargs_workspace_gpmr = (:(; memory::Int = 20),)
+
 def_kwargs_gpmr = extract_parameters.(def_kwargs_gpmr)
+def_kwargs_workspace_gpmr = extract_parameters.(def_kwargs_workspace_gpmr)
 
 args_gpmr = (:A, :B, :b, :c)
 optargs_gpmr = (:x0, :y0)
 kwargs_gpmr = (:C, :D, :E, :F, :ldiv, :gsp, :λ, :μ, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_workspace_gpmr = (:memory,)
 
 @eval begin
   function gpmr!(workspace :: GpmrWorkspace{T,FC,Sm,Sn}, $(def_args_gpmr...); $(def_kwargs_gpmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
