@@ -18,9 +18,9 @@ export usymlqr, usymlqr!
 
 """
    (x, y, stats) = usymlqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
-                           M=I, N=I, transfer_to_usymcg::Bool=true, ls::Bool=true,
-                           ln::Bool=true, ldiv::Bool=false, atol::T=√eps(T),
-                           rtol::T=√eps(T), itmax::Int=0, timemax::Float64=Inf,
+                           M=I, N=I, ls::Bool=true, ln::Bool=true,
+                           ldiv::Bool=false, atol::T=√eps(T), rtol::T=√eps(T),
+                           itmax::Int=0, timemax::Float64=Inf,
                            verbose::Int=0, history::Bool=false,
                            callback=workspace->false, iostream::IO=kstdout)
 
@@ -76,7 +76,6 @@ For an in-place variant that reuses memory across solves, see [`usymlqr!`](@ref)
 
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `m` used for centered preconditioning of the partitioned system;
 * `N`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning of the partitioned system;
-* `transfer_to_usymcg`: transfer from the USYMLQ point to the USYMCG point, when it exists. The transfer is based on the residual norm;
 * `ls`: define whether the least-squares problem is solved;
 * `ln`: define whether the least-norm problem is solved;
 * `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
@@ -122,33 +121,28 @@ def_args_usymlqr = (:(A                    ),
 def_optargs_usymlqr = (:(x0::AbstractVector),
                        :(y0::AbstractVector))
 
-def_kwargs_usymlqr = (:(; transfer_to_usymcg::Bool = true),
-                      :(; M = I                          ),
-                      :(; N = I                          ),
-                      :(; ls::Bool = true                ),
-                      :(; ln::Bool = true                ),
-                      :(; ldiv::Bool = false             ),
-                      :(; atol::T = √eps(T)              ),
-                      :(; rtol::T = √eps(T)              ),
-                      :(; itmax::Int = 0                 ),
-                      :(; timemax::Float64 = Inf         ),
-                      :(; verbose::Int = 0               ),
-                      :(; history::Bool = false          ),
-                      :(; callback = workspace -> false  ),
-                      :(; iostream::IO = kstdout         ))
+def_kwargs_usymlqr = (:(; M = I                        ),
+                      :(; N = I                        ),
+                      :(; ls::Bool = true              ),
+                      :(; ln::Bool = true              ),
+                      :(; ldiv::Bool = false           ),
+                      :(; atol::T = √eps(T)            ),
+                      :(; rtol::T = √eps(T)            ),
+                      :(; itmax::Int = 0               ),
+                      :(; timemax::Float64 = Inf       ),
+                      :(; verbose::Int = 0             ),
+                      :(; history::Bool = false        ),
+                      :(; callback = workspace -> false),
+                      :(; iostream::IO = kstdout       ))
 
 def_kwargs_usymlqr = extract_parameters.(def_kwargs_usymlqr)
 
 args_usymlqr = (:A, :b, :c)
 optargs_usymlqr = (:x0, :y0)
-kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_usymlqr = (:M, :N, :ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
   function usymlqr!(workspace :: UsymlqrWorkspace{T,FC,Sm,Sn}, $(def_args_usymlqr...); $(def_kwargs_usymlqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
-    # to be fixed...
-    transfer_to_usymcg = false
-    transfer_to_usymcg && error("The option `transfer_to_usymcg=true` is not yet supported.")
-
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
@@ -238,11 +232,6 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
       NisI || kfill!(uₖ, zero(FC))
     end
 
-    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %5s\n", "k", "βₖ₊₁", "γₖ₊₁", "‖rₖ‖_LS", "‖rₖ‖_LN", "timer")
-    !ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7s  %7.1e  %.2fs\n", iter, βₖ, γₖ, "✗ ✗ ✗ ✗", γₖ, start_time |> ktimer)
-     ls && !ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7s  %.2fs\n", iter, βₖ, γₖ, βₖ, "✗ ✗ ✗ ✗", start_time |> ktimer)
-     ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, βₖ, γₖ, βₖ, γₖ, start_time |> ktimer)
-
     cₖ₋₂ = cₖ₋₁ = cₖ = -one(T)      # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
     sₖ₋₂ = sₖ₋₁ = sₖ = zero(FC)     # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
     kfill!(wₖ₋₂, zero(FC))          # Column k-2 of Wₖ = Uₖ(Rₖ)⁻¹
@@ -254,12 +243,12 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
     δₖ₋₁ = δbarₖ = zero(FC)         # Coefficients of Rₖ₋₁ and Rₖ modified over the course of two iterations
 
     # Stopping criterion.
-    rNorm = rNorm_lq = rNorm_cg = AᴴrNorm = Inf
+    κ = zero(T)
+    AᴴrNorm = Inf
     rNorm_ls = bNorm = βₖ
     rNorm_ln = cNorm = γₖ
     ε_ls = atol + rtol * rNorm_ls
     ε_ln = atol + rtol * rNorm_ln
-    κ = zero(T)
     solved_ls = !ls || rNorm_ls ≤ ε_ls
     solved_ln = !ln || rNorm_ln ≤ ε_ln
     solved = solved_ls && solved_ln
@@ -269,7 +258,11 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
     ill_cond = false
     user_requested_exit = false
     overtimed = false
-    solved_cg = solved_lq = false
+
+    (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %7s  %5s\n", "k", "βₖ₊₁", "γₖ₊₁", "‖rₖ‖_LS", "‖rₖ‖_LN", "timer")
+    !ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7s  %7.1e  %.2fs\n", iter, βₖ, γₖ, "✗ ✗ ✗ ✗", rNorm_ln, start_time |> ktimer)
+     ls && !ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7s  %.2fs\n", iter, βₖ, γₖ, rNorm_ls, "✗ ✗ ✗ ✗", start_time |> ktimer)
+     ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, βₖ, γₖ, rNorm_ls, rNorm_ln, start_time |> ktimer)
 
     while !(solved || tired || ill_cond || inconsistent || user_requested_exit || overtimed)
       # Update iteration index.
@@ -342,7 +335,6 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
       # [s̄ₖ -cₖ] [βₖ₊₁ ]   [0 ]
       (cₖ, sₖ, δₖ) = sym_givens(δbarₖ, βₖ₊₁)
 
-
       # Compute the direction wₖ, the last column of Wₖ = Uₖ(Rₖ)⁻¹ ⟷ (Rₖ)ᵀ(Wₖ)ᵀ = (Uₖ)ᵀ.
       # w₁ = u₁ / δ₁
       if iter == 1
@@ -388,8 +380,8 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
         kaxpby!(m, -cₖ * ϕbarₖ₊₁ / βₖ₊₁, q, abs2(sₖ), rₖ)
 
         # Compute ‖rₖ‖ = ‖ b - Ayₖ‖ = |ϕbarₖ₊₁|.
-        rNorm = abs(ϕbarₖ₊₁)
-        history && push!(rNorms, rNorm)
+        rNorm_ls = abs(ϕbarₖ₊₁)
+        history && push!(rNorms, rNorm_ls)
 
         # Compute ‖Aᴴrₖ₋₁‖ = |ϕbarₖ| * √(|δbarₖ|² + |λbarₖ|²).
         AᴴrNorm = abs(ϕbarₖ) * √(abs2(δbarₖ) + abs2(cₖ₋₁ * γₖ₊₁))
@@ -403,7 +395,7 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
         # println("Exact ‖rₖ‖ = ", norm(rₖ))
         # println("Estimate ‖rₖ‖ = ", norm(rNorm))
 
-        solved_ls = rNorm ≤ ε_ls
+        solved_ls = rNorm_ls ≤ ε_ls
         iter == 1 && (κ = atol + rtol * AᴴrNorm)
         inconsistent = !solved_ls && AᴴrNorm ≤ κ
       end
@@ -453,6 +445,7 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
           kaxpy!(m, ζₖ₋₁ * conj(sₖ₋₁), vₖ, xₖ)
 
           # Compute solution zₖ.
+          # (zᴸ)ₖ ← (zᴸ)ₖ₋₁ - ζₖ₋₁ * wₖ₋₁
           kaxpy!(n, -ζₖ₋₁, wₖ₋₁, zₖ)
 
           # Compute the direction d̅ₖ.
@@ -463,21 +456,13 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
         # Compute USYMLQ residual norm
         # ‖rₖ‖ = √(|μₖ|² + |ωₖ|²)
         if iter == 1
-          rNorm_lq = cNorm
+          rNorm_ln = cNorm
         else
           μₖ = γₖ * (conj(sₖ₋₂) * ζₖ₋₂ - cₖ₋₂ * cₖ₋₁ * ζₖ₋₁) + conj(αₖ * sₖ₋₁) * ζₖ₋₁
           ωₖ = γₖ₊₁ * conj(sₖ₋₁) * ζₖ₋₁
-          rNorm_lq = sqrt(abs2(μₖ) + abs2(ωₖ))
+          rNorm_ln = sqrt(abs2(μₖ) + abs2(ωₖ))
         end
-        history && push!(rNorms, rNorm_lq)
-
-        # Compute USYMCG residual norm
-        # ‖rₖ‖ = |ρₖ|
-        if transfer_to_usymcg && (abs(δbarₖ) > eps(T))
-          ζbarₖ = ηₖ / conj(δbarₖ)
-          ρₖ = γₖ₊₁ * (conj(sₖ₋₁) * ζₖ₋₁ - cₖ₋₁ * ζbarₖ)
-          rNorm_cg = abs(ρₖ)
-        end
+        history && push!(rNorms, rNorm_ln)
 
         # LN -- Update ηₖ₋₁
         ηₖ₋₁ = ηₖ
@@ -488,24 +473,14 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
         # println("Exact ‖rₖ‖_LQ = ", norm(c + A' * A * zₖ))
         # println("Estimate ‖rₖ‖_LQ = ", norm(rNorm_lq))
 
-        # println("Exact ‖rₖ‖_CG = ", norm(c - A'     * (xₖ + ζbarₖ * d̅ )))
-        # println("Exact ‖rₖ‖_CG = ", norm(c + A' * A * (zₖ - ζbarₖ * wₖ)))
+        # println("Exact ‖rₖ‖_CG = ", norm(c - A'     * (xₖ + ζbarₖ * d̅)))
+        # println("Exact ‖rₖ‖_CG = ", norm(c + A' * A * (zₖ - (ζbarₖ * δₖ / δbarₖ) * wₖ)))
         # println("Estimate ‖rₖ‖_CG = ", norm(rNorm_cg))
 
         # println("Exact ‖xₖ + Azₖ‖_LQ = ", norm(xₖ + A * zₖ))
-        # println("Exact ‖xₖ + Azₖ‖_CG = ", norm(xₖ + ζbarₖ * d̅ + A * (zₖ - ζbarₖ * wₖ)))
+        # println("Exact ‖xₖ + Azₖ‖_CG = ", norm(xₖ + ζbarₖ * d̅ + A * (zₖ - (ζbarₖ * δₖ / δbarₖ) * wₖ)))
 
-        solved_lq = rNorm_lq ≤ ε_ln
-        solved_cg = transfer_to_usymcg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ ε_ln)
-        solved_ln = solved_lq || solved_cg
-
-        # Compute USYMCG point
-        # (xᶜ)ₖ ← (xᴸ)ₖ + ζbarₖ * d̅ₖ
-        # (zᶜ)ₖ ← (zᴸ)ₖ - ζbarₖ * w̄ₖ
-        if transfer_to_usymcg && solved_cg
-          kaxpy!(m,  ζbarₖ, d̅, xₖ)
-          kaxpy!(n, -ζbarₖ, wₖ, zₖ)
-        end
+        solved_ln = rNorm_ln ≤ ε_ln
       end
 
       # Compute uₖ₊₁ and vₖ₊₁.
@@ -551,17 +526,15 @@ kwargs_usymlqr = (:transfer_to_usymcg, :M, :N, :ls, :ln, :ldiv, :atol, :rtol, :i
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
-      !ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7s  %7.1e  %.2fs\n", iter, βₖ₊₁, γₖ₊₁, "✗ ✗ ✗ ✗", rNorm_lq, start_time |> ktimer)
-       ls && !ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7s  %.2fs\n", iter, βₖ₊₁, γₖ₊₁, rNorm, "✗ ✗ ✗ ✗", start_time |> ktimer)
-       ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, βₖ₊₁, γₖ₊₁, rNorm, rNorm_lq, start_time |> ktimer)
+      !ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7s  %7.1e  %.2fs\n", iter, βₖ₊₁, γₖ₊₁, "✗ ✗ ✗ ✗", rNorm_ln, start_time |> ktimer)
+       ls && !ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7s  %.2fs\n", iter, βₖ₊₁, γₖ₊₁, rNorm_ls, "✗ ✗ ✗ ✗", start_time |> ktimer)
+       ls &&  ln && kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, βₖ₊₁, γₖ₊₁, rNorm_ls, rNorm_ln, start_time |> ktimer)
     end
     (verbose > 0) && @printf(iostream, "\n")
 
     # Termination status
     tired               && (status = "maximum number of iterations exceeded")
-    solved_lq           && (status = "solution xᴸ good enough given atol and rtol")
-    solved_cg           && (status = "solution xᶜ good enough given atol and rtol")
-    solved_ls           && (status = "solution good enough given atol and rtol")
+    solved              && (status = "solution good enough given atol and rtol")
     user_requested_exit && (status = "user-requested exit")
     overtimed           && (status = "time limit exceeded")
 
