@@ -111,15 +111,13 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 
 ### Saddle-point and symmetric quasi-definite systems
 
-[`TriCG`](@ref tricg), [`TriMR`](@ref trimr) and [`USYMLQR`](@ref usymlqr) can take advantage of the structure of Hermitian systems $Kz = d$ with the 2x2 block structure
+[`TriCG`](@ref tricg) and [`TriMR`](@ref trimr) can take advantage of the structure of Hermitian systems $Kz = d$ with the 2x2 block structure
 ```math
   \begin{bmatrix} \tau E & \phantom{-}A \\ A^H & \nu F \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = \begin{bmatrix} b \\ c \end{bmatrix},
 ```
 | Preconditioners | $E^{-1}$              | $E$                  | $F^{-1}$              | $F$                  |
 |:---------------:|:---------------------:|:--------------------:|:---------------------:|:--------------------:|
 | Arguments       | `M` with `ldiv=false` | `M` with `ldiv=true` | `N` with `ldiv=false` | `N` with `ldiv=true` |
-
-In the special case of [USYMLQR](@ref usymlqr), $\tau = 1$ and $\nu = 0$.
 
 !!! warning
     The preconditioners `M` and `N` must be hermitian and positive definite.
@@ -135,7 +133,7 @@ In the special case of [USYMLQR](@ref usymlqr), $\tau = 1$ and $\nu = 0$.
 | Arguments       | `C` and `E` with `ldiv=false` | `C` and `E` with `ldiv=true` | `D` and `F` with `ldiv=false` | `D` and `F` with `ldiv=true` |
 
 !!! note
-    Our implementations of [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), [`USYMLQ`](@ref usymlq), [`USYMQR`](@ref usymqr) and [`TriLQR`](@ref trilqr) don't support preconditioning.
+    Our implementations of [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), [`USYMLQ`](@ref usymlq), [`USYMQR`](@ref usymqr), [`USYMLQR`](@ref usymlqr) and [`TriLQR`](@ref trilqr) don't support preconditioning.
 
 ## Packages that provide preconditioners
 

@@ -18,11 +18,11 @@ export usymlqr, usymlqr!
 
 """
    (x, y, stats) = usymlqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
-                           M=I, N=I, ls::Bool=true, ln::Bool=true,
-                           ldiv::Bool=false, atol::T=√eps(T), rtol::T=√eps(T),
-                           itmax::Int=0, timemax::Float64=Inf,
-                           verbose::Int=0, history::Bool=false,
-                           callback=workspace->false, iostream::IO=kstdout)
+                           ls::Bool=true, ln::Bool=true, ldiv::Bool=false,
+                           atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                           timemax::Float64=Inf, verbose::Int=0,
+                           history::Bool=false, callback=workspace->false,
+                           iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -33,27 +33,22 @@ USYMLQR can be warm-started from initial guesses `x0` and `y0` where `kwargs` ar
 
 Solve the symmetric saddle-point system
 
-    [ E   A ] [ x ] = [ b ]
+    [ I   A ] [ x ] = [ b ]
     [ Aᴴ    ] [ y ]   [ c ]
 
-where E = M⁻¹ ≻ 0 by way of the Saunders-Simon-Yip tridiagonalization using USYMLQ and USYMQR methods.
+by way of the Saunders-Simon-Yip tridiagonalization using USYMLQ and USYMQR methods.
+
 The method solves the least-squares problem when `ls = true`
 
-    [ E   A ] [ r ] = [ b ]
+    [ I   A ] [ r ] = [ b ]
     [ Aᴴ    ] [ s ]   [ 0 ]
 
 and the least-norm problem when `ln = true`
 
-    [ E   A ] [ w ] = [ 0 ]
+    [ I   A ] [ w ] = [ 0 ]
     [ Aᴴ    ] [ z ]   [ c ]
 
 and simply adds the solutions.
-
-    [ M   O ]
-    [ 0   N ]
-
-indicates the weighted norm in which residuals are measured.
-It's the Euclidean norm when `M` and `N` are identity operators.
 
 #### Interface
 
@@ -74,8 +69,6 @@ For an in-place variant that reuses memory across solves, see [`usymlqr!`](@ref)
 
 #### Keyword arguments
 
-* `M`: linear operator that models a Hermitian positive-definite matrix of size `m` used for centered preconditioning of the partitioned system;
-* `N`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning of the partitioned system;
 * `ls`: define whether the least-squares problem is solved;
 * `ln`: define whether the least-norm problem is solved;
 * `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
@@ -121,9 +114,7 @@ def_args_usymlqr = (:(A                    ),
 def_optargs_usymlqr = (:(x0::AbstractVector),
                        :(y0::AbstractVector))
 
-def_kwargs_usymlqr = (:(; M = I                        ),
-                      :(; N = I                        ),
-                      :(; ls::Bool = true              ),
+def_kwargs_usymlqr = (:(; ls::Bool = true              ),
                       :(; ln::Bool = true              ),
                       :(; ldiv::Bool = false           ),
                       :(; atol::T = √eps(T)            ),
@@ -139,7 +130,7 @@ def_kwargs_usymlqr = extract_parameters.(def_kwargs_usymlqr)
 
 args_usymlqr = (:A, :b, :c)
 optargs_usymlqr = (:x0, :y0)
-kwargs_usymlqr = (:M, :N, :ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_usymlqr = (:ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
   function usymlqr!(workspace :: UsymlqrWorkspace{T,FC,Sm,Sn}, $(def_args_usymlqr...); $(def_kwargs_usymlqr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
@@ -154,10 +145,6 @@ kwargs_usymlqr = (:M, :N, :ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verb
     (ls || ln) || error("The keyword arguments `ls` and `ln` can't be both `false`.")
     (verbose > 0) && @printf(iostream, "USYMLQR: system of %d equations in %d variables\n", m+n, m+n)
 
-    # Check M = Iₘ and N = Iₙ
-    MisI = (M === I)
-    NisI = (N === I)
-
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     ktypeof(b) == Sm || error("ktypeof(b) is not a subtype of $Sm")
@@ -167,14 +154,10 @@ kwargs_usymlqr = (:M, :N, :ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verb
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, workspace, :vₖ, Sm, workspace.x)  # The length of vₖ is m
-    allocate_if(!NisI, workspace, :uₖ, Sn, workspace.y)  # The length of uₖ is n
     Δx, Δy = workspace.Δx, workspace.Δy
-    M⁻¹vₖ₋₁, M⁻¹vₖ, q, xₖ, rₖ = workspace.M⁻¹vₖ₋₁, workspace.M⁻¹vₖ, workspace.q, workspace.x, workspace.r
-    N⁻¹uₖ₋₁, N⁻¹uₖ, p, yₖ, zₖ = workspace.N⁻¹uₖ₋₁, workspace.N⁻¹uₖ, workspace.p, workspace.y, workspace.z
+    vₖ₋₁, vₖ, q, xₖ, rₖ = workspace.vₖ₋₁, workspace.vₖ, workspace.q, workspace.x, workspace.r
+    uₖ₋₁, uₖ, p, yₖ, zₖ = workspace.uₖ₋₁, workspace.uₖ, workspace.p, workspace.y, workspace.z
     d̅, wₖ₋₂, wₖ₋₁ = workspace.d̅, workspace.wₖ₋₂, workspace.wₖ₋₁
-    vₖ = MisI ? M⁻¹vₖ : workspace.vₖ
-    uₖ = NisI ? N⁻¹uₖ : workspace.uₖ
     warm_start = workspace.warm_start
     b₀ = warm_start ? q : b
     c₀ = warm_start ? p : c
@@ -186,9 +169,9 @@ kwargs_usymlqr = (:M, :N, :ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verb
     iter = 0
     itmax == 0 && (itmax = n+m)
 
-    # Initialize preconditioned orthogonal tridiagonalization process.
-    kfill!(M⁻¹vₖ₋₁, zero(FC))  # v₀ = 0
-    kfill!(N⁻¹uₖ₋₁, zero(FC))  # u₀ = 0
+    # Initialize orthogonal tridiagonalization process.
+    kfill!(vₖ₋₁, zero(FC))  # v₀ = 0
+    kfill!(uₖ₋₁, zero(FC))  # u₀ = 0
 
     # [ I   A ] [ xₖ ] = [ b -   Δx - AΔy ] = [ b₀ ]
     # [ Aᴴ    ] [ yₖ ]   [ c - AᴴΔx       ]   [ c₀ ]
@@ -206,30 +189,24 @@ kwargs_usymlqr = (:M, :N, :ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verb
     kfill!(yₖ, zero(FC))
     kfill!(zₖ, zero(FC))
 
-    # β₁Ev₁ = b ↔ β₁v₁ = Mb
-    kcopy!(m, M⁻¹vₖ, b₀)
-    MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
-    βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
+    # β₁v₁ = b ↔ β₁v₁ = b
+    kcopy!(m, vₖ, b₀)
+    βₖ = knorm(m, vₖ)  # β₁ = ‖v₁‖
     if βₖ ≠ 0
-      kdiv!(m, M⁻¹vₖ, βₖ)
-      MisI || kdiv!(m, vₖ, βₖ)
+      kdiv!(m, vₖ, βₖ)
     else
       # v₁ = 0 such that v₁ ⊥ Span{v₁, ..., vₖ}
-      kfill!(M⁻¹vₖ, zero(FC))
-      MisI || kfill!(vₖ, zero(FC))
+      kfill!(vₖ, zero(FC))
     end
 
-    # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
-    kcopy!(n, N⁻¹uₖ, c₀)
-    NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
-    γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
+    # γ₁u₁ = c ↔ γ₁u₁ = c
+    kcopy!(n, uₖ, c₀)
+    γₖ = knorm(n, uₖ)  # γ₁ = ‖u₁‖
     if γₖ ≠ 0
-      kdiv!(n, N⁻¹uₖ, γₖ)
-      NisI || kdiv!(n, uₖ, γₖ)
+      kdiv!(n, uₖ, γₖ)
     else
       # u₁ = 0 such that u₁ ⊥ Span{u₁, ..., uₖ}
-      kfill!(N⁻¹uₖ, zero(FC))
-      NisI || kfill!(uₖ, zero(FC))
+      kfill!(uₖ, zero(FC))
     end
 
     cₖ₋₂ = cₖ₋₁ = cₖ = -one(T)      # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
@@ -269,32 +246,29 @@ kwargs_usymlqr = (:M, :N, :ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verb
       iter = iter + 1
 
       # Continue the orthogonal tridiagonalization process.
-      # AUₖ  = EVₖTₖ    + βₖ₊₁Evₖ₊₁(eₖ)ᵀ = EVₖ₊₁Tₖ₊₁.ₖ
-      # AᴴVₖ = FUₖ(Tₖ)ᴴ + γₖ₊₁Fuₖ₊₁(eₖ)ᵀ = FUₖ₊₁(Tₖ.ₖ₊₁)ᴴ
+      # AUₖ  = VₖTₖ    + βₖ₊₁vₖ₊₁(eₖ)ᵀ = Vₖ₊₁Tₖ₊₁.ₖ
+      # AᴴVₖ = Uₖ(Tₖ)ᴴ + γₖ₊₁uₖ₊₁(eₖ)ᵀ = Uₖ₊₁(Tₖ.ₖ₊₁)ᴴ
 
-      mul!(q, A , uₖ)  # Forms Evₖ₊₁ : q ← Auₖ
-      mul!(p, Aᴴ, vₖ)  # Forms Fuₖ₊₁ : p ← Aᴴvₖ
+      mul!(q, A , uₖ)  # Forms vₖ₊₁ : q ← Auₖ
+      mul!(p, Aᴴ, vₖ)  # Forms uₖ₊₁ : p ← Aᴴvₖ
 
       if iter ≥ 2
-        kaxpy!(m, -γₖ, M⁻¹vₖ₋₁, q) # q ← q - γₖ * M⁻¹vₖ₋₁
-        kaxpy!(n, -βₖ, N⁻¹uₖ₋₁, p) # p ← p - βₖ * N⁻¹uₖ₋₁
+        kaxpy!(m, -γₖ, vₖ₋₁, q)  # q ← q - γₖ * vₖ₋₁
+        kaxpy!(n, -βₖ, uₖ₋₁, p)  # p ← p - βₖ * uₖ₋₁
       end
 
       αₖ = kdot(m, vₖ, q)  # αₖ = ⟨uₖ,q⟩
 
-      kaxpy!(m, -     αₖ , M⁻¹vₖ, q)   # q ← q - αₖ * M⁻¹vₖ
-      kaxpy!(n, -conj(αₖ), N⁻¹uₖ, p)   # p ← p - ᾱₖ * N⁻¹uₖ
+      kaxpy!(m, -     αₖ , vₖ, q)  # q ← q - αₖ * vₖ
+      kaxpy!(n, -conj(αₖ), uₖ, p)  # p ← p - ᾱₖ * uₖ
 
-      # Update M⁻¹vₖ₋₁ and N⁻¹uₖ₋₁
-      kcopy!(m, M⁻¹vₖ₋₁, M⁻¹vₖ)
-      kcopy!(n, N⁻¹uₖ₋₁, N⁻¹uₖ)
+      # Update vₖ₋₁ and uₖ₋₁
+      kcopy!(m, vₖ₋₁, vₖ)
+      kcopy!(n, uₖ₋₁, uₖ)
 
-      # Compute M⁻¹vₖ and N⁻¹uₖ
-      MisI || mulorldiv!(M⁻¹vₖ, M, q, ldiv)  # βₖ₊₁vₖ₊₁ = MAuₖ  - γₖvₖ₋₁ - αₖvₖ
-      NisI || mulorldiv!(N⁻¹uₖ, N, p, ldiv)  # γₖ₊₁uₖ₊₁ = NAᴴvₖ - βₖuₖ₋₁ - ᾱₖuₖ
-
-      βₖ₊₁ = MisI ? knorm(m, q) : knorm_elliptic(m, M⁻¹vₖ, q)  # βₖ₊₁ = ‖vₖ₊₁‖_E
-      γₖ₊₁ = NisI ? knorm(n, p) : knorm_elliptic(n, N⁻¹uₖ, p)  # γₖ₊₁ = ‖uₖ₊₁‖_F
+      # Compute βₖ₊₁ and γₖ₊₁
+      βₖ₊₁ = knorm(m, q)  # βₖ₊₁ = ‖vₖ₊₁‖
+      γₖ₊₁ = knorm(n, p)  # γₖ₊₁ = ‖uₖ₊₁‖
 
       # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
       #                                            [ Oᵀ ]
@@ -366,10 +340,6 @@ kwargs_usymlqr = (:M, :N, :ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verb
         ϕₖ      =      cₖ  * ϕbarₖ
         ϕbarₖ₊₁ = conj(sₖ) * ϕbarₖ
 
-        # println("iter = $iter")
-        # println("Exact ‖Aᴴrₖ₋₁‖ = ", norm(A' * (b - A * yₖ)))
-        # println("Exact ‖Aᴴrₖ₋₁‖ = ", norm(A' * rₖ))
-
         # Update the solution yₖ = Wₖfₖ.
         # yₖ ← yₖ₋₁ + ϕₖ * wₖ
         kaxpy!(n, ϕₖ, wₖ, yₖ)
@@ -387,14 +357,10 @@ kwargs_usymlqr = (:M, :N, :ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verb
         AᴴrNorm = abs(ϕbarₖ) * √(abs2(δbarₖ) + abs2(cₖ₋₁ * γₖ₊₁))
         history && push!(AᴴrNorms, AᴴrNorm)
 
-        # LS -- Update ϕbarₖ₊₁
+        # Update ϕbarₖ₊₁
         ϕbarₖ = ϕbarₖ₊₁
 
-        # println("Estimate ‖Aᴴrₖ₋₁‖ = ", AᴴrNorm)
-        # println("Exact ‖rₖ‖ = ", norm(b - A * yₖ))
-        # println("Exact ‖rₖ‖ = ", norm(rₖ))
-        # println("Estimate ‖rₖ‖ = ", norm(rNorm))
-
+        # Update solved_ls
         solved_ls = rNorm_ls ≤ ε_ls
         iter == 1 && (κ = atol + rtol * AᴴrNorm)
         inconsistent = !solved_ls && AᴴrNorm ≤ κ
@@ -464,43 +430,27 @@ kwargs_usymlqr = (:M, :N, :ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verb
         end
         history && push!(rNorms, rNorm_ln)
 
-        # LN -- Update ηₖ₋₁
+        # Update ηₖ₋₁
         ηₖ₋₁ = ηₖ
 
-        # println("iter = $iter")
-
-        # println("Exact ‖rₖ‖_LQ = ", norm(c - A'     * xₖ))
-        # println("Exact ‖rₖ‖_LQ = ", norm(c + A' * A * zₖ))
-        # println("Estimate ‖rₖ‖_LQ = ", norm(rNorm_lq))
-
-        # println("Exact ‖rₖ‖_CG = ", norm(c - A'     * (xₖ + ζbarₖ * d̅)))
-        # println("Exact ‖rₖ‖_CG = ", norm(c + A' * A * (zₖ - (ζbarₖ * δₖ / δbarₖ) * wₖ)))
-        # println("Estimate ‖rₖ‖_CG = ", norm(rNorm_cg))
-
-        # println("Exact ‖xₖ + Azₖ‖_LQ = ", norm(xₖ + A * zₖ))
-        # println("Exact ‖xₖ + Azₖ‖_CG = ", norm(xₖ + ζbarₖ * d̅ + A * (zₖ - (ζbarₖ * δₖ / δbarₖ) * wₖ)))
-
+        # Update solved_ln
         solved_ln = rNorm_ln ≤ ε_ln
       end
 
-      # Compute uₖ₊₁ and vₖ₊₁.
+      # Compute vₖ₊₁ and uₖ₊₁.
       if βₖ₊₁ ≠ zero(T)
-        MisI || kdiv!(m, M⁻¹vₖ, βₖ₊₁)
         kdivcopy!(m, vₖ, q, βₖ₊₁)  # vₖ₊₁ = q / βₖ₊₁
       else
         # If βₖ₊₁ == 0 then vₖ₊₁ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}
         # We can keep vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
-        MisI || kfill!(M⁻¹vₖ, zero(FC))
         kfill!(vₖ, zero(FC))
       end
 
       if γₖ₊₁ ≠ zero(T)
-        NisI || kdiv!(n, N⁻¹uₖ, γₖ₊₁)
         kdivcopy!(n, uₖ, p, γₖ₊₁)  # uₖ₊₁ = p / γₖ₊₁
       else
         # If γₖ₊₁ == 0 then uₖ₊₁ = 0 and Aᴴvₖ ∈ Span{u₁, ..., uₖ}
         # We can keep uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
-        NisI || kfill!(N⁻¹uₖ, zero(FC))
         kfill!(uₖ, zero(FC))
       end
 
