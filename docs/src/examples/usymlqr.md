@@ -1,6 +1,6 @@
 ```@example usymlqr
 using LinearAlgebra, Printf, SparseArrays
-using Krylov
+using Krylov, LinearOperators
 
 # Identity matrix.
 eye(n::Int) = sparse(1.0 * I, n, n)
@@ -38,5 +38,15 @@ K = [I A; A' zeros(n,n)]
 d = [0*b; c]
 r = d - K * [x; y]
 resid = norm(r)
+@printf("USYMLQR: Relative residual: %8.1e\n", resid)
+
+# [D   A] [x] = [b]
+# [Aᴴ  0] [y]   [c]
+opH = BlockDiagonalOperator(inv(D), eye(n))
+(x, y, stats) = usymlqr(A, b, c, M=inv(D))
+K = [D A; A' zeros(n,n)]
+d = [b; c]
+r = d - K * [x; y]
+resid = sqrt(dot(r, opH * r))
 @printf("USYMLQR: Relative residual: %8.1e\n", resid)
 ```
