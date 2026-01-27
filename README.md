@@ -8,8 +8,8 @@
 [docs-stable-url]: https://JuliaSmoothOptimizers.github.io/Krylov.jl/stable
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-purple.svg
 [docs-dev-url]: https://JuliaSmoothOptimizers.github.io/Krylov.jl/dev
-[build-gh-img]: https://github.com/JuliaSmoothOptimizers/Krylov.jl/workflows/CI/badge.svg?branch=main
-[build-gh-url]: https://github.com/JuliaSmoothOptimizers/Krylov.jl/actions
+[build-gh-img]: https://github.com/JuliaSmoothOptimizers/Krylov.jl/actions/workflows/ci.yml/badge.svg
+[build-gh-url]: https://github.com/JuliaSmoothOptimizers/Krylov.jl/actions/workflows/ci.yml
 [build-cirrus-img]: https://img.shields.io/cirrus/github/JuliaSmoothOptimizers/Krylov.jl?logo=Cirrus%20CI
 [build-cirrus-url]: https://cirrus-ci.com/github/JuliaSmoothOptimizers/Krylov.jl
 [codecov-img]: https://codecov.io/gh/JuliaSmoothOptimizers/Krylov.jl/branch/main/graph/badge.svg
