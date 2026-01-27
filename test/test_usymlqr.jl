@@ -73,5 +73,29 @@
     @test typeof(workspace.x) === typeof(b)
     @test typeof(workspace.y) === typeof(d)
     @test workspace.stats.solved
+
+    (x, y, stats) = usymlqr(A, b, c, M=D⁻¹, ls=true, ln=false)
+    K = [D A; A' zeros(n, n)]
+    d = [b; zeros(FC, n)]
+    r =  d - K * [x; y]
+    resid = sqrt(dot(r, H⁻¹ * r) |> real) / sqrt(dot(d, H⁻¹ * d) |> real)
+    @printf("USYMLQR: Relative residual: %8.1e\n", resid)
+    @test(resid ≤ usymlqr_tol)
+
+    (x, y, stats) = usymlqr(A, b, c, M=D⁻¹, ls=false, ln=true)
+    K = [D A; A' zeros(n, n)]
+    d = [zeros(FC, m); c]
+    r =  d - K * [x; y]
+    resid = sqrt(dot(r, H⁻¹ * r) |> real) / sqrt(dot(d, H⁻¹ * d) |> real)
+    @printf("USYMLQR: Relative residual: %8.1e\n", resid)
+    @test(resid ≤ usymlqr_tol)
+
+    (x, y, stats) = usymlqr(A, b, c, M=D⁻¹)
+    K = [D A; A' zeros(n, n)]
+    d = [b; c]
+    r =  d - K * [x; y]
+    resid = sqrt(dot(r, H⁻¹ * r) |> real) / sqrt(dot(d, H⁻¹ * d) |> real)
+    @printf("USYMLQR: Relative residual: %8.1e\n", resid)
+    @test(resid ≤ usymlqr_tol)
   end
 end
