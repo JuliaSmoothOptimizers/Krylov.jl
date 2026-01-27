@@ -16,7 +16,6 @@
     r = d - K * [x; y]
     resid = norm(r)
     @test resid ≤ usymlqr_tol
-    @printf("USYMLQR: Relative residual: %8.1e\n", resid)
 
     # [I   A] [x] = [b]
     # [Aᴴ  0] [y]   [0]
@@ -26,7 +25,6 @@
     r = d - K * [x; y]
     resid = norm(r)
     @test resid ≤ usymlqr_tol
-    @printf("USYMLQR: Relative residual: %8.1e\n", resid)
 
     # [I   A] [x] = [0]
     # [Aᴴ  0] [y]   [c]
@@ -36,7 +34,6 @@
     r = d - K * [x; y]
     resid = norm(r)
     @test resid ≤ usymlqr_tol
-    @printf("USYMLQR: Relative residual: %8.1e\n", resid)
   end
 
   @testset "Data Type: $FC" for FC in (Float64, ComplexF64)
@@ -76,29 +73,5 @@
     @test typeof(workspace.x) === typeof(b)
     @test typeof(workspace.y) === typeof(d)
     @test workspace.stats.solved
-
-    # (x, y, stats) = usymlqr(A, b, c, M=D⁻¹, ls=true, ln=false)
-    # K = [D A; A' zeros(n, n)]
-    # d = [b; zeros(FC, n)]
-    # r =  d - K * [x; y]
-    # resid = sqrt(dot(r, H⁻¹ * r) |> real) / sqrt(dot(d, H⁻¹ * d) |> real)
-    # @printf("USYMLQR: Relative residual: %8.1e\n", resid)
-    # @test(resid ≤ usymlqr_tol)
-
-    # (x, y, stats) = usymlqr(A, b, c, M=D⁻¹, ls=false, ln=true)
-    # K = [D A; A' zeros(n, n)]
-    # d = [zeros(FC, m); c]
-    # r =  d - K * [x; y]
-    # resid = sqrt(dot(r, H⁻¹ * r) |> real) / sqrt(dot(d, H⁻¹ * d) |> real)
-    # @printf("USYMLQR: Relative residual: %8.1e\n", resid)
-    # @test(resid ≤ usymlqr_tol)
-
-    # (x, y, stats) = usymlqr(A, b, c, M=D⁻¹)
-    # K = [D A; A' zeros(n, n)]
-    # d = [b; c]
-    # r =  d - K * [x; y]
-    # resid = sqrt(dot(r, H⁻¹ * r) |> real) / sqrt(dot(d, H⁻¹ * d) |> real)
-    # @printf("USYMLQR: Relative residual: %8.1e\n", resid)
-    # @test(resid ≤ usymlqr_tol)
   end
 end

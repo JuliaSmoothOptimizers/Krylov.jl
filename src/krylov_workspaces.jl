@@ -3239,10 +3239,10 @@ mutable struct UsymlqrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   x          :: Sm
   y          :: Sn
   z          :: Sn
-  M⁻¹vₖ₋₁    :: Sm
-  M⁻¹vₖ      :: Sm
-  N⁻¹uₖ₋₁    :: Sn
-  N⁻¹uₖ      :: Sn
+  vₖ₋₁       :: Sm
+  vₖ         :: Sm
+  uₖ₋₁       :: Sn
+  uₖ         :: Sn
   p          :: Sn
   q          :: Sm
   d̅          :: Sm
@@ -3250,8 +3250,6 @@ mutable struct UsymlqrWorkspace{T,FC,Sm,Sn} <: _KrylovWorkspace{T,FC,Sm,Sn}
   wₖ₋₁       :: Sn
   Δx         :: Sm
   Δy         :: Sn
-  vₖ         :: Sm
-  uₖ         :: Sn
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
@@ -3266,10 +3264,10 @@ function UsymlqrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   x       = similar(kc.vm)
   y       = similar(kc.vn)
   z       = similar(kc.vn)
-  M⁻¹vₖ₋₁ = similar(kc.vm)
-  M⁻¹vₖ   = similar(kc.vm)
-  N⁻¹uₖ₋₁ = similar(kc.vn)
-  N⁻¹uₖ   = similar(kc.vn)
+  vₖ₋₁    = similar(kc.vm)
+  vₖ      = similar(kc.vm)
+  uₖ₋₁    = similar(kc.vn)
+  uₖ      = similar(kc.vn)
   p       = similar(kc.vn)
   q       = similar(kc.vm)
   d̅       = similar(kc.vm)
@@ -3277,10 +3275,8 @@ function UsymlqrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   wₖ₋₁    = similar(kc.vn)
   Δx      = similar(kc.vm_empty)
   Δy      = similar(kc.vn_empty)
-  vₖ      = similar(kc.vm_empty)
-  uₖ      = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
-  workspace = UsymlqrWorkspace{T,FC,Sm,Sn}(m, n, r, x, y, z, M⁻¹vₖ₋₁, M⁻¹vₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, q, d̅, wₖ₋₂, wₖ₋₁, Δx, Δy, vₖ, uₖ, false, stats)
+  workspace = UsymlqrWorkspace{T,FC,Sm,Sn}(m, n, r, x, y, z, vₖ₋₁, vₖ, uₖ₋₁, uₖ, p, q, d̅, wₖ₋₂, wₖ₋₁, Δx, Δy, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
 end
@@ -3293,10 +3289,10 @@ function UsymlqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   x       = Sm(undef, m)
   y       = Sn(undef, n)
   z       = Sn(undef, n)
-  M⁻¹vₖ₋₁ = Sm(undef, m)
-  M⁻¹vₖ   = Sm(undef, m)
-  N⁻¹uₖ₋₁ = Sn(undef, n)
-  N⁻¹uₖ   = Sn(undef, n)
+  vₖ₋₁    = Sm(undef, m)
+  vₖ      = Sm(undef, m)
+  uₖ₋₁    = Sn(undef, n)
+  uₖ      = Sn(undef, n)
   p       = Sn(undef, n)
   q       = Sm(undef, m)
   d̅       = Sm(undef, m)
@@ -3304,12 +3300,10 @@ function UsymlqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   wₖ₋₁    = Sn(undef, n)
   Δx      = Sm(undef, 0)
   Δy      = Sn(undef, 0)
-  vₖ      = Sm(undef, 0)
-  uₖ      = Sn(undef, 0)
   Sm = isconcretetype(Sm) ? Sm : typeof(x)
   Sn = isconcretetype(Sn) ? Sn : typeof(y)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
-  workspace = UsymlqrWorkspace{T,FC,Sm,Sn}(m, n, r, x, y, z, M⁻¹vₖ₋₁, M⁻¹vₖ, N⁻¹uₖ₋₁, N⁻¹uₖ, p, q, d̅, wₖ₋₂, wₖ₋₁, Δx, Δy, vₖ, uₖ, false, stats)
+  workspace = UsymlqrWorkspace{T,FC,Sm,Sn}(m, n, r, x, y, z, vₖ₋₁, vₖ, uₖ₋₁, uₖ, p, q, d̅, wₖ₋₂, wₖ₋₁, Δx, Δy, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
 end
