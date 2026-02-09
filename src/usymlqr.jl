@@ -17,12 +17,12 @@
 export usymlqr, usymlqr!
 
 """
-   (x, y, stats) = usymlqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
-                           ls::Bool=true, ln::Bool=true, ldiv::Bool=false,
-                           atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
-                           timemax::Float64=Inf, verbose::Int=0,
-                           history::Bool=false, callback=workspace->false,
-                           iostream::IO=kstdout)
+    (x, y, stats) = usymlqr(A, b::AbstractVector{FC}, c::AbstractVector{FC};
+                            ls::Bool=true, ln::Bool=true, ldiv::Bool=false,
+                            atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                            timemax::Float64=Inf, verbose::Int=0,
+                            history::Bool=false, callback=workspace->false,
+                            iostream::IO=kstdout)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
