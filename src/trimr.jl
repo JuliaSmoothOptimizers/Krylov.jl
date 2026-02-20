@@ -183,8 +183,10 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     sp   && (τ =  one(T) ; ν = zero(T))
 
     warm_start = workspace.warm_start
-    warm_start && (τ ≠ 0) && !MisI && error("Warm-start with preconditioners is not supported.")
-    warm_start && (ν ≠ 0) && !NisI && error("Warm-start with preconditioners is not supported.")
+    if !ldiv
+      warm_start && (τ ≠ 0) && !MisI && error("Warm-start with preconditioners is not supported.")
+      warm_start && (ν ≠ 0) && !NisI && error("Warm-start with preconditioners is not supported.")
+    end
 
     # Compute the adjoint of A
     Aᴴ = A'
@@ -221,12 +223,21 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
     # [  Aᴴ  νI ] [ yₖ ]   [ c - AᴴΔx - νΔy ]   [ c₀ ]
     if warm_start
-      kmul!(b₀, A, Δy)
-      (τ ≠ 0) && kaxpy!(m, τ, Δx, b₀)
-      kaxpby!(m, one(FC), b, -one(FC), b₀)
-      kmul!(c₀, Aᴴ, Δx)
-      (ν ≠ 0) && kaxpy!(n, ν, Δy, c₀)
-      kaxpby!(n, one(FC), c, -one(FC), c₀)
+      if ldiv
+        kmul!(b₀, A, Δy)
+        (τ ≠ 0) && mul!(b₀, M, Δx, τ, one(FC))  # b₀ ← τMΔx + AΔy
+        kaxpby!(m, one(FC), b, -one(FC), b₀)
+        kmul!(c₀, Aᴴ, Δx)
+        (ν ≠ 0) && mul!(c₀, N, Δy, ν, one(FC))  # c₀ ← νNΔy + AᴴΔx
+        kaxpby!(n, one(FC), c, -one(FC), c₀)
+      else
+        kmul!(b₀, A, Δy)
+        (τ ≠ 0) && kaxpy!(m, τ, Δx, b₀)
+        kaxpby!(m, one(FC), b, -one(FC), b₀)
+        kmul!(c₀, Aᴴ, Δx)
+        (ν ≠ 0) && kaxpy!(n, ν, Δy, c₀)
+        kaxpby!(n, one(FC), c, -one(FC), c₀)
+      end
     end
 
     # β₁Ev₁ = b ↔ β₁v₁ = Mb
