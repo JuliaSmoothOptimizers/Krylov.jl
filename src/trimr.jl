@@ -6,6 +6,12 @@
 # TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems.
 # SIAM Journal on Scientific Computing, 43(4), pp. 2502--2525, 2021.
 #
+# Improvements from
+#   Du, K., Fan, J.-J. and Zhang, Y.-L. (2025), Improved TriCG and TriMR Methods
+#   for Symmetric Quasi-Definite Linear Systems. Numer Linear Algebra Appl, 32:
+#   e70026. https://doi.org/10.1002/nla.70026
+# have been implemented.
+#
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Montréal, June 2020.
 
@@ -21,40 +27,50 @@ export trimr, trimr!
                           timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
                           callback=workspace->false, iostream::IO=kstdout)
 
-`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
-`FC` is `T` or `Complex{T}`.
-
     (x, y, stats) = trimr(A, b, c, x0::AbstractVector, y0::AbstractVector; kwargs...)
-
-TriMR can be warm-started from initial guesses `x0` and `y0` where `kwargs` are the same keyword arguments as above.
 
 Given a matrix `A` of dimension m × n, TriMR solves the symmetric linear system
 
     [ τE    A ] [ x ] = [ b ]
-    [  Aᴴ  νF ] [ y ]   [ c ],
+    [  Aᴴ  νF ] [ y ]   [ c ]
 
-of size (n+m) × (n+m) where `τ` and `ν` are real numbers, `E` = `M⁻¹` ≻ 0, `F` = `N⁻¹` ≻ 0.
-TriMR handles saddle-point systems (`τ = 0` or `ν = 0`) and adjoint systems (`τ = 0` and `ν = 0`) without any risk of breakdown.
+of size (m+n) × (m+n) where `τ` and `ν` are real numbers and `E` and `F` are
+Hermitian positive-definite. TriMR handles saddle-point systems (`τ = 0` or `ν =
+0`) and adjoint systems (`τ = 0` and `ν = 0`) without any risk of breakdown.
 
-By default, TriMR solves symmetric and quasi-definite linear systems with `τ` = 1 and `ν` = -1.
+By default, TriMR solves symmetric quasi-definite linear systems with `τ` = 1
+and `ν` = -1.
 
-TriMR is based on the preconditioned orthogonal tridiagonalization process
-and its relation with the preconditioned block-Lanczos process.
+`E` and `F` are specified by the user through keyword arguments `M`, `N`, and
+`ldiv` collectively defining the preconditioners:
+
+* If `ldiv=false` (the default), provide `M` as `E⁻¹` and `N` as `F⁻¹`. Updates
+  to `x` and `y` will be generated multiplicatively, i.e., from `M * r_x` and
+  `N * r_y` where `r_x` and `r_y` are related to current residuals.
+* If `ldiv=true`, provide `M` as `E` and `N` as `F`. Updates to `x` and `y` will
+  be generated in a left-division manner, i.e., from `M \\ r_x` and `N \\ r_y`.
+
+TriMR is based on the preconditioned orthogonal tridiagonalization process and
+its relation with the preconditioned block-Lanczos process.
 
 The matrix
 
-    [ M   0 ]
-    [ 0   N ]
+    [ E⁻¹   0 ]
+    [ 0   F⁻¹ ]
 
 indicates the weighted norm in which residuals are measured, here denoted `‖·‖`.
 It's the Euclidean norm when `M` and `N` are identity operators.
 
-TriMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
-`atol` is an absolute tolerance and `rtol` is a relative tolerance.
+TriMR stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ *
+rtol`. `atol` is an absolute tolerance and `rtol` is a relative tolerance.
+
+TriMR can be warm-started from initial guesses `x0` and `y0`, where `kwargs` are
+the same keyword arguments as used without warm-starting.
 
 #### Interface
 
-To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :trimr`.
+To easily switch between Krylov methods, use the generic interface
+[`krylov_solve`](@ref) with `method = :trimr`.
 
 For an in-place variant that reuses memory across solves, see [`trimr!`](@ref).
 
@@ -64,31 +80,54 @@ For an in-place variant that reuses memory across solves, see [`trimr!`](@ref).
 * `b`: a vector of length `m`;
 * `c`: a vector of length `n`.
 
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`. `FC` is
+`T` or `Complex{T}`.
+
 #### Optional arguments
 
-* `x0`: a vector of length `m` that represents an initial guess of the solution `x`;
-* `y0`: a vector of length `n` that represents an initial guess of the solution `y`.
+* `x0`: a vector of length `m` that represents an initial guess of the solution
+  `x`;
+* `y0`: a vector of length `n` that represents an initial guess of the solution
+  `y`.
 
-Warm-starting is supported only when `M` and `N` are either `I` or the corresponding coefficient (`τ` or `ν`) is zero.
+Warm-starting is supported only when `M` and `N` are either `I` or the
+corresponding coefficient (`τ` or `ν`) is zero.
 
 #### Keyword arguments
 
-* `M`: linear operator that models a Hermitian positive-definite matrix of size `m` used for centered preconditioning of the partitioned system;
-* `N`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning of the partitioned system;
-* `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
-* `spd`: if `true`, set `τ = 1` and `ν = 1` for Hermitian and positive-definite linear system;
-* `snd`: if `true`, set `τ = -1` and `ν = -1` for Hermitian and negative-definite linear systems;
-* `flip`: if `true`, set `τ = -1` and `ν = 1` for another known variant of Hermitian quasi-definite systems;
-* `sp`: if `true`, set `τ = 1` and `ν = 0` for saddle-point systems;
-* `τ` and `ν`: diagonal scaling factors of the partitioned Hermitian linear system;
+* `M`: specifies `E` for the upper-left block (size `m`). When `ldiv=false`,
+  provide `M` as an operator applying `E⁻¹` via `mul!`; when `ldiv=true`,
+  provide `M` as a factorization of `E` supporting `ldiv!`;
+* `N`: specifies `F` for the lower-right block (size `n`), playing the same role
+  as `M` for the `y`/`c` variables;
+* `ldiv`: if `false` (default), `M` and `N` are applied via `mul!`; if `true`,
+  via `ldiv!`;
+* `τ` and `ν`: diagonal scaling factors of the partitioned Hermitian linear
+  system;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
-* `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
+* `itmax`: the maximum number of iterations. If `itmax=0`, the default number of
+  iterations is set to `m+n`;
 * `timemax`: the time limit in seconds;
-* `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
-* `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
-* `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
+* `verbose`: additional details can be displayed if verbose mode is enabled
+  (verbose > 0). Information will be displayed every `verbose` iterations;
+* `history`: collect additional statistics on the run such as residual norms, or
+  Aᴴ-residual norms;
+* `callback`: function or functor called as `callback(workspace)` that returns
+  `true` if the Krylov method should terminate, and `false` otherwise;
 * `iostream`: stream to which output is logged.
+
+Several keyword arguments are provided as conveniences for particular `τ` and
+`ν` values:
+* `spd`: if `true`, set `τ = 1` and `ν = 1` for Hermitian and positive-definite
+  linear system;
+* `snd`: if `true`, set `τ = -1` and `ν = -1` for Hermitian and
+  negative-definite linear systems;
+* `flip`: if `true`, set `τ = -1` and `ν = 1` for another known variant of
+  Hermitian quasi-definite systems;
+* `sp`: if `true`, set `τ = 1` and `ν = 0` for saddle-point systems;
+
+Do not use these if you are setting `τ` and `ν` explicitly.
 
 #### Output arguments
 
@@ -98,7 +137,9 @@ Warm-starting is supported only when `M` and `N` are either `I` or the correspon
 
 #### Reference
 
-* A. Montoison and D. Orban, [*TriCG and TriMR: Two Iterative Methods for Symmetric Quasi-Definite Systems*](https://doi.org/10.1137/20M1363030), SIAM Journal on Scientific Computing, 43(4), pp. 2502--2525, 2021.
+* A. Montoison and D. Orban, [*TriCG and TriMR: Two Iterative Methods for
+  Symmetric Quasi-Definite Systems*](https://doi.org/10.1137/20M1363030), SIAM
+  Journal on Scientific Computing, 43(4), pp. 2502--2525, 2021.
 """
 function trimr end
 
