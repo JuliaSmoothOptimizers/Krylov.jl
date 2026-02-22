@@ -278,7 +278,7 @@ function matrix_to_vector(::Type{M}) where M <: DenseMatrix
   return S
 end
 
-function allocate_if(bool, workspace, v, S, u)
+function allocate_if(bool, workspace, v, ::Type{S}, u) where S
   start_allocation_time = time_ns()
   if bool && isempty(workspace.:($v)::S)
     workspace.:($v)::S = similar(u)
