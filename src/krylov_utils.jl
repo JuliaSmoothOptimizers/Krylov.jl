@@ -287,8 +287,9 @@ function allocate_if(bool, workspace, v, ::Type{S}, u) where S
   return nothing
 end
 
-# allocate_if(bool, workspace, v, S, n::Int) = bool && isempty(workspace.:($v)::S) && (workspace.:($v)::S = S(undef, n))
-function allocate_if(bool, workspace, v, S, m::Int, n::Int)
+# allocate_if(bool, workspace, v, ::Type{S}, n::Int) where S = bool && isempty(workspace.:($v)::S) && (workspace.:($v)::S = S(undef, n))
+
+function allocate_if(bool, workspace, v, ::Type{S}, m::Int, n::Int) where S
   start_allocation_time = time_ns()
   if bool && isempty(workspace.:($v)::S)
     workspace.:($v)::S = S(undef, m, n)
