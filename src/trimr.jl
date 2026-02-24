@@ -220,6 +220,21 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     kfill!(M⁻¹vₖ₋₁, zero(FC))  # v₀ = 0
     kfill!(N⁻¹uₖ₋₁, zero(FC))  # u₀ = 0
 
+    # Initialization, far enough to compute convergence tolerance
+    # Some of this may have to be repeated if we are warm-starting, but
+    # the convergence tolerance should be independent of whether we are warm-starting.
+    # β₁Ev₁ = b ↔ β₁v₁ = Mb
+    kcopy!(m, M⁻¹vₖ, b)  # M⁻¹vₖ ← b
+    MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
+    βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
+    # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
+    kcopy!(n, N⁻¹uₖ, c)  # N⁻¹uₖ ← c
+    NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
+    γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
+    # Convergence tolerance
+    rNorm = sqrt(γₖ^2 + βₖ^2)
+    ε = atol + rtol * rNorm
+
     # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
     # [  Aᴴ  νI ] [ yₖ ]   [ c - AᴴΔx - νΔy ]   [ c₀ ]
     if warm_start
@@ -238,12 +253,15 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
         (ν ≠ 0) && kaxpy!(n, ν, Δy, c₀)
         kaxpby!(n, one(FC), c, -one(FC), c₀)
       end
+      # Repeat the initialization with the updated right-hand side
+      kcopy!(m, M⁻¹vₖ, b₀)  # M⁻¹vₖ ← b₀
+      MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
+      βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
+      kcopy!(n, N⁻¹uₖ, c₀)  # N⁻¹uₖ ← c₀
+      NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
+      γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     end
 
-    # β₁Ev₁ = b ↔ β₁v₁ = Mb
-    kcopy!(m, M⁻¹vₖ, b₀)  # M⁻¹vₖ ← b₀
-    MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
-    βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
     if βₖ ≠ 0
       kdiv!(m, M⁻¹vₖ, βₖ)
       MisI || kdiv!(m, vₖ, βₖ)
@@ -253,10 +271,6 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
       MisI || kfill!(vₖ, zero(FC))
     end
 
-    # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
-    kcopy!(n, N⁻¹uₖ, c₀)  # N⁻¹uₖ ← c₀
-    NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
-    γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     if γₖ ≠ 0
       # u₁ = 0 such that u₁ ⊥ Span{u₁, ..., uₖ}
       kdiv!(n, N⁻¹uₖ, γₖ)
@@ -279,7 +293,6 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     # Compute ‖r₀‖² = (γ₁)² + (β₁)²
     rNorm = sqrt(γₖ^2 + βₖ^2)
     history && push!(rNorms, rNorm)
-    ε = atol + rtol * rNorm
 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %5s\n", "k", "‖rₖ‖", "βₖ₊₁", "γₖ₊₁", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, βₖ, γₖ, start_time |> ktimer)

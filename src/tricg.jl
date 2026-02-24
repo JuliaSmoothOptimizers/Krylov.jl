@@ -51,7 +51,7 @@ The matrix
     [ 0   F⁻¹ ]
 
 indicates the weighted norm in which residuals are measured, here denoted `‖·‖`.
-When `M` and `N` are identity operators and `τ` and `ν` are ±1, it's the Euclidean norm.
+When `M` and `N` are identity operators, it's the Euclidean norm.
 
 TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
@@ -212,6 +212,21 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     kfill!(xₖ, zero(FC))
     kfill!(yₖ, zero(FC))
 
+    # Initialization, far enough to compute convergence tolerance
+    # Some of this may have to be repeated if we are warm-starting, but
+    # the convergence tolerance should be independent of whether we are warm-starting.
+    # β₁Ev₁ = b ↔ β₁v₁ = Mb
+    kcopy!(m, M⁻¹vₖ, b)  # M⁻¹vₖ ← b
+    MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
+    βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
+    # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
+    kcopy!(n, N⁻¹uₖ, c)  # M⁻¹uₖ ← c
+    NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
+    γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
+    # Convergence tolerance
+    rNorm = sqrt(γₖ^2 + βₖ^2)
+    ε = atol + rtol * rNorm
+
     iter = 0
     itmax == 0 && (itmax = m+n)
 
@@ -240,12 +255,15 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
         (ν ≠ 0) && kaxpy!(n, ν, Δy, c₀)
         kaxpby!(n, one(FC), c, -one(FC), c₀)
       end
+      # Repeat the initialization with the updated right-hand side
+      kcopy!(m, M⁻¹vₖ, b₀)  # M⁻¹vₖ ← b₀
+      MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
+      βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
+      kcopy!(n, N⁻¹uₖ, c₀)  # M⁻¹uₖ ← c₀
+      NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
+      γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     end
 
-    # β₁Ev₁ = b ↔ β₁v₁ = Mb
-    kcopy!(m, M⁻¹vₖ, b₀)  # M⁻¹vₖ ← b₀
-    MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
-    βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
     if βₖ ≠ 0
       kdiv!(m, M⁻¹vₖ, βₖ)
       MisI || kdiv!(m, vₖ, βₖ)
@@ -255,10 +273,6 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
       MisI || kfill!(vₖ, zero(FC))
     end
 
-    # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
-    kcopy!(n, N⁻¹uₖ, c₀)  # M⁻¹uₖ ← c₀
-    NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
-    γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     if γₖ ≠ 0
       kdiv!(n, N⁻¹uₖ, γₖ)
       NisI || kdiv!(n, uₖ, γₖ)
