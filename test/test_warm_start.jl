@@ -130,6 +130,14 @@ function test_warm_start(FC)
     @test stats.niter <= 1
     @test_throws "x0 should have size $(length(x30))" trimr(A3x2, b3, c2, [1.0], y20)
     @test_throws "y0 should have size $(length(y20))" trimr(A3x2, b3, c2, x30, [1.0])
+
+    N = Diagonal([0.8, 1.2])
+    x30, y20, _ = trimr(A3x2, b3, c2; N, ldiv=true)
+    x3, y2, stats = trimr(A3x2, b3, c2, x30, y20; N, ldiv=true)
+    @test x3 ≈ x30 atol=1e-12
+    @test y2 ≈ y20 atol=1e-12
+    @test stats.niter <= 1
+
     workspace = TrimrWorkspace(A, b)
     krylov_solve!(workspace, A, b, b, x0, y0)
     r = [b - workspace.x - A * workspace.y; b - A' * workspace.x + workspace.y]

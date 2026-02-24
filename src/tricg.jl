@@ -75,7 +75,7 @@ For an in-place variant that reuses memory across solves, see [`tricg!`](@ref).
 * `y0`: a vector of length `n` that represents an initial guess of the solution `y`.
 
 Warm-starting is supported only when:
-* ldiv = true; or
+* `ldiv = true`, in which case `M` and `N` must support `mul!` as well as `ldiv!` (PDMats.jl may be helpful); or
 * `M` and `N` are either `I` or the corresponding coefficient (`τ` or `ν`) is zero.
 
 #### Keyword arguments
@@ -292,7 +292,6 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     # Compute ‖r₀‖² = (γ₁)² + (β₁)²
     rNorm = sqrt(γₖ^2 + βₖ^2)
     history && push!(rNorms, rNorm)
-    ε = atol + rtol * rNorm
 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %5s\n", "k", "‖rₖ‖", "βₖ₊₁", "γₖ₊₁", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, βₖ, γₖ, start_time |> ktimer)

@@ -69,7 +69,9 @@ For an in-place variant that reuses memory across solves, see [`trimr!`](@ref).
 * `x0`: a vector of length `m` that represents an initial guess of the solution `x`;
 * `y0`: a vector of length `n` that represents an initial guess of the solution `y`.
 
-Warm-starting is supported only when `M` and `N` are either `I` or the corresponding coefficient (`τ` or `ν`) is zero.
+Warm-starting is supported only when:
+* `ldiv = true`, in which case `M` and `N` must support `mul!` as well as `ldiv!` (PDMats.jl may be helpful); or
+* `M` and `N` are either `I` or the corresponding coefficient (`τ` or `ν`) is zero.
 
 #### Keyword arguments
 
