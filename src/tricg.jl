@@ -216,12 +216,12 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     # Initialization, far enough to compute convergence tolerance
     # Some of this may have to be repeated if we are warm-starting, but
     # the convergence tolerance should be independent of whether we are warm-starting.
-    # β₁Ev₁ = b ↔ β₁v₁ = Mb
+    # β₁Ev₁ = b
     kcopy!(m, M⁻¹vₖ, b)  # M⁻¹vₖ ← b
     MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
     βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
-    # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
-    kcopy!(n, N⁻¹uₖ, c)  # M⁻¹uₖ ← c
+    # γ₁Fu₁ = c
+    kcopy!(n, N⁻¹uₖ, c)  # N⁻¹uₖ ← c
     NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
     γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     # Convergence tolerance
@@ -260,7 +260,7 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
       kcopy!(m, M⁻¹vₖ, b₀)  # M⁻¹vₖ ← b₀
       MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
       βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
-      kcopy!(n, N⁻¹uₖ, c₀)  # M⁻¹uₖ ← c₀
+      kcopy!(n, N⁻¹uₖ, c₀)  # N⁻¹uₖ ← c₀
       NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
       γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     end

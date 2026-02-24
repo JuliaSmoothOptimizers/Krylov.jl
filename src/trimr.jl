@@ -223,11 +223,11 @@ kwargs_trimr = (:M, :N, :ldiv, :spd, :snd, :flip, :sp, :τ, :ν, :atol, :rtol, :
     # Initialization, far enough to compute convergence tolerance
     # Some of this may have to be repeated if we are warm-starting, but
     # the convergence tolerance should be independent of whether we are warm-starting.
-    # β₁Ev₁ = b ↔ β₁v₁ = Mb
+    # β₁Ev₁ = b
     kcopy!(m, M⁻¹vₖ, b)  # M⁻¹vₖ ← b
     MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
     βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
-    # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
+    # γ₁Fu₁ = c
     kcopy!(n, N⁻¹uₖ, c)  # N⁻¹uₖ ← c
     NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
     γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
