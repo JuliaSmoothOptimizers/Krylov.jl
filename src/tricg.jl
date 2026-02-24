@@ -40,7 +40,8 @@ true`. `tricg` is applicable when `E` and `F` are represented through their
 inverses or have an efficient `ldiv!` implementation.
 
 By default, TriCG solves Hermitian and quasi-definite linear systems with `τ = 1` and `ν = -1`.
-TriCG could breakdown if `τ = 0` or `ν = 0`. It's recommended to use TriMR in these cases.
+TriCG could breakdown if the choice of `(τ, ν)` leads to matrices that are not SQD. An example is
+saddle-point systems where`τ = 0` or `ν = 0`. It's recommended to use TriMR in these cases.
 
 TriCG is based on the preconditioned orthogonal tridiagonalization process
 and its relation with the preconditioned block-Lanczos process.
