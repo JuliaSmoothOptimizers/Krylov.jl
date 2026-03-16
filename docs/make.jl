@@ -27,6 +27,7 @@ makedocs(
            "Storage requirements" => "storage.md",
            "Preconditioners" => "preconditioners.md",
            "GPU support" => "gpu.md",
+           "Multi-GPU support" => "multi-gpu.md",
            "Warm-start" => "warm-start.md",
            "Matrix-free operators" => "matrix_free.md",
            "Callbacks" => "callbacks.md",
