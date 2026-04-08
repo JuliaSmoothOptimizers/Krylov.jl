@@ -225,7 +225,8 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
 
     # Stopping criterion.
     breakdown = false
-    solved = zero_resid = zero_resid_lim = false
+    solved = false
+    zero_resid = zero_resid_lim = rNorm ≤ ε
     zero_resid_mach = false
     inconsistent = false
     ill_cond_mach = false
