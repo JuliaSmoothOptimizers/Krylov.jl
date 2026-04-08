@@ -267,7 +267,7 @@ kwargs_workspace_minres = (:window,)
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %8.1e  %8.1e  %7.1e  %7.1e  %7s  %7s  %.2fs\n", iter, rNorm, ArNorm, β, cs, sn, ANorm, Acond, "✗ ✗ ✗ ✗", "✗ ✗ ✗ ✗", start_time |> ktimer)
 
     ε = atol + rtol * β₁
-    solved = solved_mach = solved_lim = (rNorm ≤ rtol)
+    solved = solved_mach = solved_lim = false
     tired  = iter ≥ itmax
     ill_cond = ill_cond_mach = ill_cond_lim = false
     zero_resid = zero_resid_mach = zero_resid_lim = (rNorm ≤ ε)
