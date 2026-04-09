@@ -33,22 +33,26 @@ Given a matrix `A` of dimension m × n, TriCG solves the Hermitian linear system
     [ τE    A ] [ x ] = [ b ]
     [  Aᴴ  νF ] [ y ]   [ c ],
 
-of size (n+m) × (n+m) where `τ` and `ν` are real numbers, `E` = `M⁻¹` ≻ 0 and `F` = `N⁻¹` ≻ 0.
-TriCG could breakdown if `τ = 0` or `ν = 0`.
-It's recommended to use TriMR in these cases.
+of size (n+m) × (n+m) where `τ` and `ν` are real numbers, `E` ≻ 0 and `F` ≻ 0.
+`E` and `F` are related to the preconditioners `M` and `N` as `E = M⁻¹` and `F =
+N⁻¹` when `ldiv = false` (the default), and `E = M` and `F = N` when `ldiv =
+true`. `tricg` is applicable when `E` and `F` are represented through their
+inverses or have an efficient `ldiv!` implementation.
 
 By default, TriCG solves Hermitian and quasi-definite linear systems with `τ = 1` and `ν = -1`.
+TriCG could breakdown if the choice of `(τ, ν)` leads to matrices that are not SQD. An example is
+saddle-point systems where`τ = 0` or `ν = 0`. It's recommended to use TriMR in these cases.
 
 TriCG is based on the preconditioned orthogonal tridiagonalization process
 and its relation with the preconditioned block-Lanczos process.
 
 The matrix
 
-    [ M   0 ]
-    [ 0   N ]
+    [ E⁻¹   0 ]
+    [ 0   F⁻¹ ]
 
 indicates the weighted norm in which residuals are measured, here denoted `‖·‖`.
-It's the Euclidean norm when `M` and `N` are identity operators.
+When `M` and `N` are identity operators, it's the Euclidean norm.
 
 TriCG stops when `itmax` iterations are reached or when `‖rₖ‖ ≤ atol + ‖r₀‖ * rtol`.
 `atol` is an absolute tolerance and `rtol` is a relative tolerance.
@@ -70,7 +74,9 @@ For an in-place variant that reuses memory across solves, see [`tricg!`](@ref).
 * `x0`: a vector of length `m` that represents an initial guess of the solution `x`;
 * `y0`: a vector of length `n` that represents an initial guess of the solution `y`.
 
-Warm-starting is supported only when `M` and `N` are either `I` or the corresponding coefficient (`τ` or `ν`) is zero.
+Warm-starting is supported only when:
+* `ldiv = true`, in which case `M` and `N` must support `mul!` as well as `ldiv!` (PDMats.jl may be helpful); or
+* `M` and `N` are either `I` or the corresponding coefficient (`τ` or `ν`) is zero.
 
 #### Keyword arguments
 
@@ -178,8 +184,10 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     snd  && (τ = -one(T) ; ν = -one(T))
 
     warm_start = workspace.warm_start
-    warm_start && (τ ≠ 0) && !MisI && error("Warm-start with preconditioners is not supported.")
-    warm_start && (ν ≠ 0) && !NisI && error("Warm-start with preconditioners is not supported.")
+    if !ldiv
+      warm_start && (τ ≠ 0) && !MisI && error("Warm-start with preconditioners is not supported.")
+      warm_start && (ν ≠ 0) && !NisI && error("Warm-start with preconditioners is not supported.")
+    end
 
     # Compute the adjoint of A
     Aᴴ = A'
@@ -205,6 +213,21 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     kfill!(xₖ, zero(FC))
     kfill!(yₖ, zero(FC))
 
+    # Initialization, far enough to compute convergence tolerance
+    # Some of this may have to be repeated if we are warm-starting, but
+    # the convergence tolerance should be independent of whether we are warm-starting.
+    # β₁Ev₁ = b
+    kcopy!(m, M⁻¹vₖ, b)  # M⁻¹vₖ ← b
+    MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
+    βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
+    # γ₁Fu₁ = c
+    kcopy!(n, N⁻¹uₖ, c)  # N⁻¹uₖ ← c
+    NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
+    γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
+    # Convergence tolerance
+    rNorm = sqrt(γₖ^2 + βₖ^2)
+    ε = atol + rtol * rNorm
+
     iter = 0
     itmax == 0 && (itmax = m+n)
 
@@ -212,21 +235,36 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     kfill!(M⁻¹vₖ₋₁, zero(FC))  # v₀ = 0
     kfill!(N⁻¹uₖ₋₁, zero(FC))  # u₀ = 0
 
-    # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
-    # [  Aᴴ  νI ] [ yₖ ]   [ c - AᴴΔx - νΔy ]   [ c₀ ]
     if warm_start
-      kmul!(b₀, A, Δy)
-      (τ ≠ 0) && kaxpy!(m, τ, Δx, b₀)
-      kaxpby!(m, one(FC), b, -one(FC), b₀)
-      kmul!(c₀, Aᴴ, Δx)
-      (ν ≠ 0) && kaxpy!(n, ν, Δy, c₀)
-      kaxpby!(n, one(FC), c, -one(FC), c₀)
+      if ldiv
+        # [ τM    A ] [ xₖ ] = [ b -  τMΔx - AΔy ] = [ b₀ ]
+        # [  Aᴴ  νN ] [ yₖ ]   [ c - AᴴΔx - νNΔy ]   [ c₀ ]
+        kmul!(b₀, A, Δy)
+        (τ ≠ 0) && mul!(b₀, M, Δx, τ, one(FC))  # b₀ ← τMΔx + AΔy
+        kaxpby!(m, one(FC), b, -one(FC), b₀)
+        kmul!(c₀, Aᴴ, Δx)
+        (ν ≠ 0) && mul!(c₀, N, Δy, ν, one(FC))  # c₀ ← νNΔy + AᴴΔx
+        kaxpby!(n, one(FC), c, -one(FC), c₀)
+      else
+        # Only supported for M = I or τ = 0, and N = I or ν = 0
+        # [ τI    A ] [ xₖ ] = [ b -  τΔx - AΔy ] = [ b₀ ]
+        # [  Aᴴ  νI ] [ yₖ ]   [ c - AᴴΔx - νΔy ]   [ c₀ ]
+        kmul!(b₀, A, Δy)
+        (τ ≠ 0) && kaxpy!(m, τ, Δx, b₀)
+        kaxpby!(m, one(FC), b, -one(FC), b₀)
+        kmul!(c₀, Aᴴ, Δx)
+        (ν ≠ 0) && kaxpy!(n, ν, Δy, c₀)
+        kaxpby!(n, one(FC), c, -one(FC), c₀)
+      end
+      # Repeat the initialization with the updated right-hand side
+      kcopy!(m, M⁻¹vₖ, b₀)  # M⁻¹vₖ ← b₀
+      MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
+      βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
+      kcopy!(n, N⁻¹uₖ, c₀)  # N⁻¹uₖ ← c₀
+      NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
+      γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     end
 
-    # β₁Ev₁ = b ↔ β₁v₁ = Mb
-    kcopy!(m, M⁻¹vₖ, b₀)  # M⁻¹vₖ ← b₀
-    MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
-    βₖ = knorm_elliptic(m, vₖ, M⁻¹vₖ)  # β₁ = ‖v₁‖_E
     if βₖ ≠ 0
       kdiv!(m, M⁻¹vₖ, βₖ)
       MisI || kdiv!(m, vₖ, βₖ)
@@ -236,10 +274,6 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
       MisI || kfill!(vₖ, zero(FC))
     end
 
-    # γ₁Fu₁ = c ↔ γ₁u₁ = Nc
-    kcopy!(n, N⁻¹uₖ, c₀)  # M⁻¹uₖ ← c₀
-    NisI || mulorldiv!(uₖ, N, N⁻¹uₖ, ldiv)
-    γₖ = knorm_elliptic(n, uₖ, N⁻¹uₖ)  # γ₁ = ‖u₁‖_F
     if γₖ ≠ 0
       kdiv!(n, N⁻¹uₖ, γₖ)
       NisI || kdiv!(n, uₖ, γₖ)
@@ -258,7 +292,6 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
     # Compute ‖r₀‖² = (γ₁)² + (β₁)²
     rNorm = sqrt(γₖ^2 + βₖ^2)
     history && push!(rNorms, rNorm)
-    ε = atol + rtol * rNorm
 
     (verbose > 0) && @printf(iostream, "%5s  %7s  %7s  %7s  %5s\n", "k", "‖rₖ‖", "βₖ₊₁", "γₖ₊₁", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %.2fs\n", iter, rNorm, βₖ, γₖ, start_time |> ktimer)
