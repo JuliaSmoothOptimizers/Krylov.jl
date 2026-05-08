@@ -446,7 +446,7 @@ kwargs_workspace_minres = (:window,)
       # Stopping conditions based on user-provided tolerances.
       tired = iter ≥ itmax
       ill_cond_lim = (inv(Acond) ≤ ctol)
-      solved_lim = (test2 ≤ ε)
+      solved_lim = (test2 ≤ rtol + atol)
       zero_resid_lim = MisI && (test1 ≤ eps(T))
       resid_decrease_lim = (rNorm ≤ ε)
       iter ≥ window && (fwd_err = err_lbnd ≤ etol * sqrt(xENorm²))
