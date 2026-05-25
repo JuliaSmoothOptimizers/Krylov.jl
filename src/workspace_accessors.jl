@@ -192,7 +192,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
       else
         function warm_start!(workspace :: $KS, x0)
           S = typeof(workspace.x)
-          length(x0) == workspace.n || error("x0 should have size $n")
+          length(x0) == workspace.n || error("x0 should have size $(workspace.n)")
           allocate_if(true, workspace, :Δx, S, workspace.x)  # The length of Δx is n
           kcopy!(workspace.n, workspace.Δx, x0)
           workspace.warm_start = true
@@ -226,7 +226,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
       function warm_start!(workspace :: $KS, X0)
         n2, p2 = size(X0)
         SM = typeof(workspace.X)
-        (workspace.n == n2 && workspace.p == p2) || error("X0 should have size ($n, $p)")
+        (workspace.n == n2 && workspace.p == p2) || error("X0 should have size ($(workspace.n), $(workspace.p))")
         allocate_if(true, workspace, :ΔX, SM, workspace.n, workspace.p)
         copyto!(workspace.ΔX, X0)
         workspace.warm_start = true
