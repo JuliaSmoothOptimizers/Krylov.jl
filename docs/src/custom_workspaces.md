@@ -81,6 +81,7 @@ end
 
 function Base.similar(v::HaloVector)
     data = similar(v.data)
+    fill!(data, zero(eltype(data)))
     return HaloVector(data)
 end
 
@@ -133,17 +134,13 @@ function Krylov.kmul!(y::HaloVector{Float64}, A::LaplacianOperator, u::HaloVecto
     for i in 1:A.Nx
         for j in 1:A.Ny
             # Calculate second derivatives using finite differences
-            dx2 = (u.data[i-1,j] - 2 * u.data[i,j] + u.data[i+1,j]) / (A.Δx)^2
-            dy2 = (u.data[i,j-1] - 2 * u.data[i,j] + u.data[i,j+1]) / (A.Δy)^2
+            # We use -Laplacian (SPD) so that CG can be applied
+            dx2 = -(u.data[i-1,j] - 2 * u.data[i,j] + u.data[i+1,j]) / (A.Δx)^2
+            dy2 = -(u.data[i,j-1] - 2 * u.data[i,j] + u.data[i,j+1]) / (A.Δy)^2
             
-            # Update the output vector with the Laplacian result
-            y.data[i,j] = dx2 + dy2
-
             # Add a tiny value ε to the diagonal to ensure the operator is
-            # symmetric positive definite (SPD) and to avoid numerical issues
-            if i == j
-                y.data[i,j] += 1e-12 * u.data[i,j]
-            end
+            # strictly symmetric positive definite (SPD) and to avoid numerical issues
+            y.data[i,j] = dx2 + dy2 + 1e-12 * u.data[i,j]
         end
     end
 
@@ -165,8 +162,8 @@ function Krylov.kdot(n::Integer, x::HaloVector{T}, y::HaloVector{T}) where T <: 
     _x = x.data
     _y = y.data
     res = zero(real(T))
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             res += _x[i,j] * conj(_y[i,j])
         end
     end
@@ -177,8 +174,8 @@ function Krylov.knorm(n::Integer, x::HaloVector{T}) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
     res = zero(real(T))
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             res += abs2(_x[i,j])
         end
     end
@@ -188,8 +185,8 @@ end
 function Krylov.kscal!(n::Integer, s::T, x::HaloVector{T}) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _x[i,j] = s * _x[i,j]
         end
     end
@@ -199,8 +196,8 @@ end
 function Krylov.kdiv!(n::Integer, x::HaloVector{T}, s::T) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _x[i,j] = _x[i,j] / s
         end
     end
@@ -211,8 +208,8 @@ function Krylov.kaxpy!(n::Integer, s::T, x::HaloVector{T}, y::HaloVector{T}) whe
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _y[i,j] += s * _x[i,j]
         end
     end
@@ -223,8 +220,8 @@ function Krylov.kaxpby!(n::Integer, s::T, x::HaloVector{T}, t::T, y::HaloVector{
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _y[i,j] = s * _x[i,j] + t * _y[i,j]
         end
     end
@@ -235,8 +232,8 @@ function Krylov.kcopy!(n::Integer, y::HaloVector{T}, x::HaloVector{T}) where T <
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _y[i,j] = _x[i,j]
         end
     end
@@ -247,8 +244,8 @@ function Krylov.kscalcopy!(n::Integer, y::HaloVector{T}, s::T, x::HaloVector{T})
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _y[i,j] = s * _x[i,j]
         end
     end
@@ -259,8 +256,8 @@ function Krylov.kdivcopy!(n::Integer, y::HaloVector{T}, x::HaloVector{T}, s::T) 
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _y[i,j] = _x[i,j] / s
         end
     end
@@ -270,8 +267,8 @@ end
 function Krylov.kfill!(x::HaloVector{T}, val::T) where T <: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _x[i,j] = val
         end
     end
@@ -282,8 +279,8 @@ function Krylov.kref!(n::Integer, x::HaloVector{T}, y::HaloVector{T}, c::T, s::T
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             x_ij = _x[i,j]
             y_ij = _y[i,j]
             _x[i,j] = c       * x_ij + s * y_ij
@@ -315,20 +312,21 @@ Ny = 200           # Number of interior grid points in y
 Δx = L / (Nx + 1)  # Grid spacing in x
 Δy = L / (Ny + 1)  # Grid spacing in y
 
-# Define the source term f(x,y)
+# Define the source term f(x,y) of the Poisson equation ∇²u = f
 f(x,y) = -2 * π * π * sin(π * x) * sin(π * y)
 
 # Create the matrix-free Laplacian operator
 A = LaplacianOperator(Nx, Ny, Δx, Δy)
 
 # Create the right-hand side
+# We solve (-∇²)u = -f since the operator is -Laplacian (SPD)
 rhs = zeros(Float64, Nx+2, Ny+2)
 data = OffsetArray(rhs, 0:Nx+1, 0:Ny+1)
 for j in 1:Ny
     for i in 1:Nx
         xi = i * Δx
         yj = j * Δy
-        data[i,j] = f(xi, yj)
+        data[i,j] = -f(xi, yj)
     end
 end
 b = HaloVector(data)
