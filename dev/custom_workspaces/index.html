@@ -12,6 +12,7 @@ end
 
 function Base.similar(v::HaloVector)
     data = similar(v.data)
+    fill!(data, zero(eltype(data)))
     return HaloVector(data)
 end
 
@@ -50,17 +51,13 @@ function Krylov.kmul!(y::HaloVector{Float64}, A::LaplacianOperator, u::HaloVecto
     for i in 1:A.Nx
         for j in 1:A.Ny
             # Calculate second derivatives using finite differences
-            dx2 = (u.data[i-1,j] - 2 * u.data[i,j] + u.data[i+1,j]) / (A.Δx)^2
-            dy2 = (u.data[i,j-1] - 2 * u.data[i,j] + u.data[i,j+1]) / (A.Δy)^2
-
-            # Update the output vector with the Laplacian result
-            y.data[i,j] = dx2 + dy2
+            # We use -Laplacian (SPD) so that CG can be applied
+            dx2 = -(u.data[i-1,j] - 2 * u.data[i,j] + u.data[i+1,j]) / (A.Δx)^2
+            dy2 = -(u.data[i,j-1] - 2 * u.data[i,j] + u.data[i,j+1]) / (A.Δy)^2
 
             # Add a tiny value ε to the diagonal to ensure the operator is
-            # symmetric positive definite (SPD) and to avoid numerical issues
-            if i == j
-                y.data[i,j] += 1e-12 * u.data[i,j]
-            end
+            # strictly symmetric positive definite (SPD) and to avoid numerical issues
+            y.data[i,j] = dx2 + dy2 + 1e-12 * u.data[i,j]
         end
     end
 
@@ -73,8 +70,8 @@ function Krylov.kdot(n::Integer, x::HaloVector{T}, y::HaloVector{T}) where T &lt
     _x = x.data
     _y = y.data
     res = zero(real(T))
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             res += _x[i,j] * conj(_y[i,j])
         end
     end
@@ -85,8 +82,8 @@ function Krylov.knorm(n::Integer, x::HaloVector{T}) where T &lt;: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
     res = zero(real(T))
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             res += abs2(_x[i,j])
         end
     end
@@ -96,8 +93,8 @@ end
 function Krylov.kscal!(n::Integer, s::T, x::HaloVector{T}) where T &lt;: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _x[i,j] = s * _x[i,j]
         end
     end
@@ -107,8 +104,8 @@ end
 function Krylov.kdiv!(n::Integer, x::HaloVector{T}, s::T) where T &lt;: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _x[i,j] = _x[i,j] / s
         end
     end
@@ -119,8 +116,8 @@ function Krylov.kaxpy!(n::Integer, s::T, x::HaloVector{T}, y::HaloVector{T}) whe
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _y[i,j] += s * _x[i,j]
         end
     end
@@ -131,8 +128,8 @@ function Krylov.kaxpby!(n::Integer, s::T, x::HaloVector{T}, t::T, y::HaloVector{
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _y[i,j] = s * _x[i,j] + t * _y[i,j]
         end
     end
@@ -143,8 +140,8 @@ function Krylov.kcopy!(n::Integer, y::HaloVector{T}, x::HaloVector{T}) where T &
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _y[i,j] = _x[i,j]
         end
     end
@@ -155,8 +152,8 @@ function Krylov.kscalcopy!(n::Integer, y::HaloVector{T}, s::T, x::HaloVector{T})
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _y[i,j] = s * _x[i,j]
         end
     end
@@ -167,8 +164,8 @@ function Krylov.kdivcopy!(n::Integer, y::HaloVector{T}, x::HaloVector{T}, s::T) 
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _y[i,j] = _x[i,j] / s
         end
     end
@@ -178,8 +175,8 @@ end
 function Krylov.kfill!(x::HaloVector{T}, val::T) where T &lt;: FloatOrComplex
     mx, nx = size(x.data)
     _x = x.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             _x[i,j] = val
         end
     end
@@ -190,8 +187,8 @@ function Krylov.kref!(n::Integer, x::HaloVector{T}, y::HaloVector{T}, c::T, s::T
     mx, nx = size(x.data)
     _x = x.data
     _y = y.data
-    for j = 1:nx-1
-        for i = 1:mx-1
+    for j = 1:nx-2
+        for i = 1:mx-2
             x_ij = _x[i,j]
             y_ij = _y[i,j]
             _x[i,j] = c       * x_ij + s * y_ij
@@ -209,20 +206,21 @@ Ny = 200           # Number of interior grid points in y
 Δx = L / (Nx + 1)  # Grid spacing in x
 Δy = L / (Ny + 1)  # Grid spacing in y
 
-# Define the source term f(x,y)
+# Define the source term f(x,y) of the Poisson equation ∇²u = f
 f(x,y) = -2 * π * π * sin(π * x) * sin(π * y)
 
 # Create the matrix-free Laplacian operator
 A = LaplacianOperator(Nx, Ny, Δx, Δy)
 
 # Create the right-hand side
+# We solve (-∇²)u = -f since the operator is -Laplacian (SPD)
 rhs = zeros(Float64, Nx+2, Ny+2)
 data = OffsetArray(rhs, 0:Nx+1, 0:Ny+1)
 for j in 1:Ny
     for i in 1:Nx
         xi = i * Δx
         yj = j * Δy
-        data[i,j] = f(xi, yj)
+        data[i,j] = -f(xi, yj)
     end
 end
 b = HaloVector(data)
@@ -243,14 +241,14 @@ stats = statistics(workspace)</code></pre><pre class="documenter-example-output"
  residuals: []
  Aresiduals: []
  κ₂(A): []
- allocation timer: 5.50μs
- timer: 2.21ms
+ allocation timer: 174.57μs
+ timer: 1.60ms
  status: solution good enough given atol and rtol
 </code></pre><pre><code class="language-julia hljs">using LinearAlgebra
 
 # The exact solution is u(x,y) = sin(πx) * sin(πy)
 u_star = [sin(π * i * Δx) * sin(π * j * Δy) for i=1:Nx, j=1:Ny]
-norm(u_sol.data[1:Nx, 1:Ny] - u_star, Inf)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2.0356596367787638e-5</code></pre><div class="admonition is-info" id="Note-cb9b654c534041df"><header class="admonition-header">Note<a class="admonition-anchor" href="#Note-cb9b654c534041df" title="Permalink"></a></header><div class="admonition-body"><p>Only the in-place version of the Krylov methods is supported for custom vector types.</p></div></div><h3 id="Conclusion"><a class="docs-heading-anchor" href="#Conclusion">Conclusion</a><a id="Conclusion-1"></a><a class="docs-heading-anchor-permalink" href="#Conclusion" title="Permalink"></a></h3><p>Implementing a 2D Poisson equation solver with <code>HaloVector</code> improves code clarity and efficiency. Custom indexing with <code>OffsetArray</code> streamlines halo region management, eliminating boundary checks within the core loop. This approach reduces branching, yielding faster execution, especially on large grids. <code>HaloVector</code>&#39;s flexibility also makes it easy to extend to 3D grids or more complex stencils.</p><div class="admonition is-info" id="Info-6edbb3c9ac978d5c"><header class="admonition-header">Info<a class="admonition-anchor" href="#Info-6edbb3c9ac978d5c" title="Permalink"></a></header><div class="admonition-body"><p><a href="https://github.com/CliMA/Oceananigans.jl">Oceananigans.jl</a> uses a similar strategy with its type <code>KrylovField</code>, efficiently solving large linear systems with Krylov.jl.</p></div></div><h2 id="Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl"><a class="docs-heading-anchor" href="#Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl">Solving saddle point systems with BlockArrays.jl and Krylov.jl</a><a id="Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl" title="Permalink"></a></h2><p><a href="https://github.com/JuliaArrays/BlockArrays.jl">BlockArrays.jl</a> simplifies working with structured matrices, making it an ideal tool for solving saddle point systems. In this example, we solve a structured linear system <span>$Ax = b$</span> of the form:</p><p class="math-container">\[\begin{bmatrix}
+norm(u_sol.data[1:Nx, 1:Ny] - u_star, Inf)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2.0356596315607156e-5</code></pre><div class="admonition is-info" id="Note-cb9b654c534041df"><header class="admonition-header">Note<a class="admonition-anchor" href="#Note-cb9b654c534041df" title="Permalink"></a></header><div class="admonition-body"><p>Only the in-place version of the Krylov methods is supported for custom vector types.</p></div></div><h3 id="Conclusion"><a class="docs-heading-anchor" href="#Conclusion">Conclusion</a><a id="Conclusion-1"></a><a class="docs-heading-anchor-permalink" href="#Conclusion" title="Permalink"></a></h3><p>Implementing a 2D Poisson equation solver with <code>HaloVector</code> improves code clarity and efficiency. Custom indexing with <code>OffsetArray</code> streamlines halo region management, eliminating boundary checks within the core loop. This approach reduces branching, yielding faster execution, especially on large grids. <code>HaloVector</code>&#39;s flexibility also makes it easy to extend to 3D grids or more complex stencils.</p><div class="admonition is-info" id="Info-6edbb3c9ac978d5c"><header class="admonition-header">Info<a class="admonition-anchor" href="#Info-6edbb3c9ac978d5c" title="Permalink"></a></header><div class="admonition-body"><p><a href="https://github.com/CliMA/Oceananigans.jl">Oceananigans.jl</a> uses a similar strategy with its type <code>KrylovField</code>, efficiently solving large linear systems with Krylov.jl.</p></div></div><h2 id="Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl"><a class="docs-heading-anchor" href="#Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl">Solving saddle point systems with BlockArrays.jl and Krylov.jl</a><a id="Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Solving-saddle-point-systems-with-BlockArrays.jl-and-Krylov.jl" title="Permalink"></a></h2><p><a href="https://github.com/JuliaArrays/BlockArrays.jl">BlockArrays.jl</a> simplifies working with structured matrices, making it an ideal tool for solving saddle point systems. In this example, we solve a structured linear system <span>$Ax = b$</span> of the form:</p><p class="math-container">\[\begin{bmatrix}
    K &amp; B^T \\
    B &amp; 0
 \end{bmatrix}
@@ -439,4 +437,4 @@ for i = 0:MPI.Comm_size(comm)-1
     MPI.Barrier(comm)
 end
 
-MPI.Finalize()</code></pre><p>To launch this script on four processes:</p><pre><code class="language-shell hljs">mpiexecjl -n 4 julia mpi_krylov.jl</code></pre><p>The example above runs on CPU but also works on GPU. It can target supercomputers such as Frontier or Aurora with various GPU backends (NVIDIA, AMD, or Intel). See the section on <a href="../gpu/#gpu">GPU support</a> for details on the GPU-enabled vectors usable in an <code>MPIVector</code>.</p><div class="admonition is-info" id="Note-f269ba7dc9e8ad36"><header class="admonition-header">Note<a class="admonition-anchor" href="#Note-f269ba7dc9e8ad36" title="Permalink"></a></header><div class="admonition-body"><p>Make sure to use an MPI implementation that is GPU-aware if you intend to run distributed Krylov solvers on GPUs.</p></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../callbacks/">« Callbacks</a><a class="docs-footer-nextpage" href="../tips/">Performance tips »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 25 May 2026 05:41">Monday 25 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+MPI.Finalize()</code></pre><p>To launch this script on four processes:</p><pre><code class="language-shell hljs">mpiexecjl -n 4 julia mpi_krylov.jl</code></pre><p>The example above runs on CPU but also works on GPU. It can target supercomputers such as Frontier or Aurora with various GPU backends (NVIDIA, AMD, or Intel). See the section on <a href="../gpu/#gpu">GPU support</a> for details on the GPU-enabled vectors usable in an <code>MPIVector</code>.</p><div class="admonition is-info" id="Note-f269ba7dc9e8ad36"><header class="admonition-header">Note<a class="admonition-anchor" href="#Note-f269ba7dc9e8ad36" title="Permalink"></a></header><div class="admonition-body"><p>Make sure to use an MPI implementation that is GPU-aware if you intend to run distributed Krylov solvers on GPUs.</p></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../callbacks/">« Callbacks</a><a class="docs-footer-nextpage" href="../tips/">Performance tips »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 25 May 2026 05:55">Monday 25 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
