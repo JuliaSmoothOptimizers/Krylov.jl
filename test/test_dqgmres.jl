@@ -60,7 +60,7 @@
 
       # Poisson equation in polar coordinates.
       A, b = polar_poisson(FC=FC)
-      (x, stats) = dqgmres(A, b, memory=100)
+      (x, stats) = dqgmres(A, b, memory=200)
       r = b - A * x
       resid = norm(r) / norm(b)
       @test(resid ≤ dqgmres_tol)
