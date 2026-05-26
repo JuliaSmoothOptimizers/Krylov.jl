@@ -1,5 +1,6 @@
 @testset "qmr" begin
   qmr_tol = 1.0e-6
+  # SQMR intentionally uses the same convergence threshold as QMR in these tests.
   sqmr_tol = qmr_tol
 
   for FC in (Float64, ComplexF64)
@@ -94,6 +95,26 @@
       (x, stats) = krylov_solve(Val(:sqmr), A, b, M=M)
       r = b - A * x
       resid = norm(M * r) / norm(M * b)
+      @test(resid ≤ sqmr_tol)
+      @test(stats.solved)
+
+      # SQMR warm start.
+      x0 = fill!(similar(b), FC(0.1))
+      (x, stats) = sqmr(A, b, x0, M=M)
+      r = b - A * x
+      resid = norm(M * r) / norm(M * b)
+      @test(resid ≤ sqmr_tol)
+      @test(stats.solved)
+
+      # SQMR workspace API.
+      workspace = QmrWorkspace(A, b)
+      sqmr!(workspace, A, b, M=M)
+      @test(workspace.stats.solved)
+
+      # SQMR with left-division preconditioning.
+      (x, stats) = sqmr(A, b, M=M, ldiv=true)
+      r = b - A * x
+      resid = norm(M \ r) / norm(M \ b)
       @test(resid ≤ sqmr_tol)
       @test(stats.solved)
 
