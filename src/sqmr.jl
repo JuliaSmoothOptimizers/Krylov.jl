@@ -1,8 +1,10 @@
-# An implementation of SQMR for the solution of symmetric square linear systems Ax = b.
+# An implementation of SQMR for the solution of Hermitian (self-adjoint)
+# square linear systems Ax = b. For real-valued problems this reduces to
+# symmetric systems (Aᵀ == A).
 #
-# SQMR is implemented here as a symmetric wrapper around QMR with centered
-# preconditioning. This lets the method accept symmetric indefinite
-# preconditioners while reusing the existing QMR machinery.
+# SQMR is implemented here as a centered wrapper around QMR with centered
+# preconditioning. This lets the method accept Hermitian (self-adjoint)
+# indefinite preconditioners while reusing the existing QMR machinery.
 
 export sqmr, sqmr!
 
@@ -20,11 +22,15 @@ export sqmr, sqmr!
 
 SQMR can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
 
-Solve the square symmetric linear system `Ax = b` of size `n` using SQMR.
+Solve the square Hermitian (self-adjoint) linear system `Ax = b` of size `n`
+using SQMR. For real-valued problems this is equivalent to a symmetric
+system (Aᵀ == A), while for complex-valued problems the Hermitian property
+(A' == A) is required.
 
-SQMR is a centered variant of QMR specialized to symmetric systems. It supports
-symmetric preconditioners that are not necessarily positive definite.
-The method requires support for `adjoint(M)` when a preconditioner is provided.
+SQMR is a centered variant of QMR specialized to Hermitian (self-adjoint)
+systems. It supports Hermitian (self-adjoint) preconditioners that are not
+necessarily positive definite. The method requires support for `adjoint(M)`
+when a preconditioner is provided.
 
 #### Interface
 
@@ -43,7 +49,7 @@ For an in-place variant that reuses memory across solves, see [`sqmr!`](@ref).
 
 #### Keyword arguments
 
-* `M`: linear operator that models a symmetric nonsingular matrix of size `n` used for centered preconditioning;
+* `M`: linear operator that models a Hermitian (self-adjoint) nonsingular matrix of size `n` used for centered preconditioning; for real-valued problems this corresponds to a symmetric preconditioner.
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
