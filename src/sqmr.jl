@@ -291,12 +291,11 @@ kwargs_sqmr  = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :
         kcopy!(n, w2, r2)                     # w2 ← v₁  (no previous directions; normalise by γ below)
       elseif iter == 2
         # w₂ = (v₂ − ε₁ w₀ − γbar₁ w₁) / γ₂;  w₀ = 0, so just:
-        # w₂ = (v₂ − γbar₁ w₁) / γ₂
-        kscal!(n, -γbar, w1)                  # w1 currently holds w₁ (from iter 1 after swap);
-                                              # temporarily: w1 ← −γbar₁ w₁
+        # w₂ = (v₂ − γbar₁ w₁) / γ₂.
+        # w2 still holds w₁ from iter 1, so preserve it in w1 before overwriting w2.
+        kcopy!(n, w1, w2)                     # w1 ← w₁
         kcopy!(n, w2, r2)                     # w2 ← v₂
-        kaxpy!(n, one(FC), w1, w2)            # w2 ← v₂ − γbar₁ w₁  (unnorm. w₂)
-        # restore w1 (needed for ε in iter≥3); divide by γ after computing it below
+        kaxpy!(n, -γbar, w1, w2)              # w2 ← v₂ − γbar₁ w₁  (unnorm. w₂)
       else
         # wₖ = (vₖ − ε wₖ₋₂ − γbar wₖ₋₁) / γ
         # After the @kswap! below, w1 = wₖ₋₂ and w2 = wₖ₋₁.
