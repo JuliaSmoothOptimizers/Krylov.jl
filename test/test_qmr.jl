@@ -1,5 +1,6 @@
 @testset "qmr" begin
   qmr_tol = 1.0e-6
+  sqmr_tol = qmr_tol
 
   for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
@@ -80,6 +81,20 @@
       r = b - A * x
       resid = norm(M * r) / norm(M * b)
       @test(resid ≤ qmr_tol)
+      @test(stats.solved)
+
+      # SQMR with symmetric indefinite preconditioning.
+      A, b, M = square_preconditioned(FC=FC)
+      (x, stats) = sqmr(A, b, M=M)
+      r = b - A * x
+      resid = norm(M * r) / norm(M * b)
+      @test(resid ≤ sqmr_tol)
+      @test(stats.solved)
+
+      (x, stats) = krylov_solve(Val(:sqmr), A, b, M=M)
+      r = b - A * x
+      resid = norm(M * r) / norm(M * b)
+      @test(resid ≤ sqmr_tol)
       @test(stats.solved)
 
       # Test bᴴc == 0
