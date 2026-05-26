@@ -163,7 +163,7 @@ kwargs_usymlqr = (:ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     c₀ = warm_start ? p : c
 
     stats = workspace.stats
-    rNorms = stats.residuals
+    rNorms, AᴴrNorms = stats.residuals, stats.Aresiduals
     reset!(stats)
 
     iter = 0
