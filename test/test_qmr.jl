@@ -1,7 +1,5 @@
 @testset "qmr" begin
   qmr_tol = 1.0e-6
-  # SQMR intentionally uses the same convergence threshold as QMR in these tests.
-  sqmr_tol = qmr_tol
 
   for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
@@ -107,7 +105,7 @@
       @test(stats.solved)
 
       # SQMR workspace API.
-      workspace = QmrWorkspace(A, b)
+      workspace = SqmrWorkspace(A, b)
       sqmr!(workspace, A, b, M=M)
       @test(workspace.stats.solved)
 

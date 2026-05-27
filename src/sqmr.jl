@@ -288,11 +288,7 @@ kwargs_sqmr  = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :
       # where γ is determined by the *new* rotation below.
       # Build the unnormalised direction in w2 first, then divide by γ after.
       if iter == 1
-        kcopy!(n, w2, r2)                     # w2 ← v₁  (no previous directions)
-        kdiv!(n, w2, γbar)                    # w2 ← v₁ / γbar₁  (= w₁, but γbar₁ = α₁ here
-                                              #   before the new rotation; we divide by γ below)
-        # Undo the divide; we redo it properly after computing γ.
-        kscal!(n, γbar, w2)                   # w2 ← v₁  (restored)
+        kcopy!(n, w2, r2)                     # w2 ← v₁  (no previous directions; normalise by γ below)
       elseif iter == 2
         # w₂ = (v₂ − ε₁ w₀ − γbar₁ w₁) / γ₂;  w₀ = 0, so just:
         # w₂ = (v₂ − γbar₁ w₁) / γ₂
