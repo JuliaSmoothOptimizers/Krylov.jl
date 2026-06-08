@@ -6,6 +6,57 @@ import Base.copyto!
 abstract type KrylovStats{T} end
 
 """
+Type for storing statistics returned by diom.
+
+The fields are as follows:
+- `niter`: The total number of iterations completed by the solver;
+- `solved`: Indicates whether the solver successfully reached convergence (`true` if solved, `false` otherwise);
+- `inconsistent`: Flags whether the system was detected as inconsistent (i.e., when `b` is not in the range of `A`);
+- `indefinite`: Flags whether the system was detected as indefinite (i.e., when `A` is not positive definite);
+- `npcCount`: The number of nonpositive curvature directions encountered during the solve;
+- `residuals`: A vector containing the residual norms at each iteration;
+- `Aresiduals`: A vector of `A'`-residual norms at each iteration;
+- `qvals`: A vector of quadratic model values at each iteration;
+- `Acond`: An estimate of the condition number of matrix `A`.
+- `timer`: The elapsed time (in seconds) taken by the solver to complete all iterations;
+- `status`: A string indicating the outcome of the solve, providing additional details beyond `solved`.
+"""
+mutable struct DiomCgStats{T} <: KrylovStats{T}
+  niter        :: Int
+  solved       :: Bool
+  inconsistent :: Bool
+  indefinite   :: Bool
+  npcCount     :: Int
+  residuals    :: Vector{T}
+  Aresiduals   :: Vector{T}
+  qvals       :: Vector{T}   
+  Acond        :: Vector{T}
+  timer        :: Float64
+  status       :: String
+end
+
+function reset!(stats :: DiomCgStats)
+  empty!(stats.residuals)
+  empty!(stats.Aresiduals)
+  empty!(stats.qvals)
+  empty!(stats.Acond)
+end
+
+function copyto!(dest :: DiomCgStats, src :: DiomCgStats)
+  dest.niter        = src.niter
+  dest.solved       = src.solved
+  dest.inconsistent = src.inconsistent
+  dest.indefinite   = src.indefinite
+  dest.npcCount     = src.npcCount
+  dest.residuals    = copy(src.residuals)
+  dest.Aresiduals   = copy(src.Aresiduals)
+  dest.qvals       = copy(src.qvals)
+  dest.Acond        = copy(src.Acond)
+  dest.timer        = src.timer
+  dest.status       = src.status
+  return dest
+end
+"""
 Type for storing statistics returned by the majority of (block) Krylov solvers.
 
 The fields are as follows:

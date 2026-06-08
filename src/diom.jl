@@ -55,7 +55,13 @@ For an in-place variant that reuses memory across solves, see [`diom!`](@ref).
 * `memory`: the number of most recent vectors of the Krylov basis against which to orthogonalize a new vector;
 * `M`: linear operator that models a nonsingular matrix of size `n` used for left preconditioning;
 * `N`: linear operator that models a nonsingular matrix of size `n` used for right preconditioning;
+
+  **Note on preconditioners:**  
+  - When `radius > 0`, we assumes that `A = A*`. In this case, following CG implementation, `N` should be Hermitian and `M = N``.  
+
 * `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
+* `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Only useful for computing a step in a trust-region optimization method when A is Hermitian.
+  If 'radius' > 0, and nonpositive curvature is detected along the current search direction, we take the step to the trust-region boundary,
 * `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against the `memory` most recent vectors;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
@@ -69,7 +75,7 @@ For an in-place variant that reuses memory across solves, see [`diom!`](@ref).
 #### Output arguments
 
 * `x`: a dense vector of length `n`;
-* `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
+* `stats`: statistics collected on the run in a [`DiomCgStats`](@ref) structure.
 
 #### Reference
 
@@ -101,6 +107,7 @@ def_optargs_diom = (:(x0::AbstractVector),)
 def_kwargs_diom = (:(; M = I                            ),
                    :(; N = I                            ),
                    :(; ldiv::Bool = false               ),
+                   :(; radius::T = zero(T)              ),
                    :(; reorthogonalization::Bool = false),
                    :(; atol::T = √eps(T)                ),
                    :(; rtol::T = √eps(T)                ),
@@ -115,7 +122,7 @@ def_kwargs_diom = extract_parameters.(def_kwargs_diom)
 
 args_diom = (:A, :b)
 optargs_diom = (:x0,)
-kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_diom = (:M, :N, :ldiv, :radius, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
   function diom!(workspace :: DiomWorkspace{T,FC,S}, $(def_args_diom...); $(def_kwargs_diom...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
@@ -133,7 +140,8 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     # Check M = Iₙ and N = Iₙ
     MisI = (M === I)
     NisI = (N === I)
-
+    # Check M = N
+    MisN = (M === N)
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
@@ -141,25 +149,34 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     # Set up workspace.
     allocate_if(!MisI, workspace, :w, S, workspace.x)  # The length of w is n
     allocate_if(!NisI, workspace, :z, S, workspace.x)  # The length of z is n
+    
     Δx, x, t, P, V = workspace.Δx, workspace.x, workspace.t, workspace.P, workspace.V
     L, H, stats = workspace.L, workspace.H, workspace.stats
     warm_start = workspace.warm_start
     rNorms = stats.residuals
+    qxs = stats.qvals
     reset!(stats)
     w  = MisI ? t : workspace.w
     r₀ = MisI ? t : workspace.w
+    
 
-    # Initial solution x₀ and residual r₀.
-    kfill!(x, zero(FC))  # x₀
+    # Initial solution x₀, residual r₀ and q(x₀).
+    kfill!(x, zero(FC))  # x₀ ← 0
     if warm_start
-      mul!(t, A, Δx)
+      mul!(t, A, Δx) 
+      (radius > 0) &&  (qx = kdot(n, Δx, t) / 2 - kdot(n, b, Δx))    # q(x₀) = ½ΔxᵀAΔx - bᵀΔx
       kaxpby!(n, one(FC), b, -one(FC), t)
     else
       kcopy!(n, t, b)  # t ← b
+      (radius > 0) && (qx = zero(T))  # Quadratic model value at x₀ = 0
     end
     MisI || mulorldiv!(r₀, M, t, ldiv)  # M(b - Ax₀)
     rNorm = knorm(n, r₀)                # β = ‖r₀‖₂
-    history && push!(rNorms, rNorm)
+    ukk = zero(FC)                      # uₖ.ₖ is used if we hit the trust-region boundary
+    if history
+      push!(rNorms, rNorm)
+      (radius > 0) && push!(qxs, qx)
+    end
     if rNorm == 0
       stats.niter = 0
       stats.solved, stats.inconsistent = true, false
@@ -184,6 +201,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     for i = 1 : mem-1
       kfill!(P[i], zero(FC))  # Directions Pₖ = NVₖ(Uₖ)⁻¹.
     end
+    
     kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ = LₖUₖ.
     # Each column has at most mem + 1 nonzero elements.
     # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
@@ -197,12 +215,13 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
 
     # Stopping criterion.
     solved = rNorm ≤ ε
+    on_boundary = false
     tired = iter ≥ itmax
     status = "unknown"
     user_requested_exit = false
     overtimed = false
 
-    while !(solved || tired || user_requested_exit || overtimed)
+    while !(solved || tired || user_requested_exit || overtimed || on_boundary)
 
       # Update iteration index.
       iter = iter + 1
@@ -280,6 +299,35 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       end
       # pₐᵤₓ ← pₐᵤₓ + Nvₖ
       kaxpy!(n, one(FC), z, P[ppos])
+
+      # Compute step size to boundary if applicable.
+      if radius == 0
+         σ = 1/H[1]  
+      elseif NisI && MisI
+         # pcg =  ξₖ * pₐᵤₓ
+         kscal!(n, ξ, P[ppos])
+         σ = maximum(to_boundary(n, x,  P[ppos], z, radius))
+      elseif MisN
+         σ = maximum(to_boundary(n, x,  P[ppos], z, radius, M=M, ldiv=!ldiv)) 
+      else
+         error("Must use split preconditioning with M = N when radius > 0")
+      end
+
+      # Move along p from x to the boundary if either
+      # the next step leads outside the trust region or
+      # we have nonpositive curvature.
+      if radius > 0
+        indefinite = real(H[1]) ≤ 0
+        stats.indefinite = indefinite
+        σinv = 1 / σ
+        on_boundary = indefinite || (real(H[1]) < σinv)
+        if on_boundary
+          ukk = H[1]
+          H[1] = σinv
+        end
+        # pₐᵤₓ = pcg / ξₖ
+        kdiv!(n, P[ppos], ξ)
+      end
       # pₖ = pₐᵤₓ / uₖ.ₖ
       kdiv!(n, P[ppos], H[1])
 
@@ -288,9 +336,17 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
       kaxpy!(n, ξ, P[ppos], x)
 
       # Compute residual norm.
-      # ‖ M(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ξₖ / uₖ.ₖ|
-      rNorm = Haux * abs(ξ / H[1])
-      history && push!(rNorms, rNorm)
+      if !on_boundary
+        rNorm = Haux * abs(ξ / H[1]) # ‖ M(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ξₖ / uₖ.ₖ| 
+        (radius > 0) &&  (qx -= abs(ξ)^2 / abs(H[1]) / 2)   # q(xₖ) = q(xₖ₋₁) -0.5*ξₖ²/uₖ.ₖ         
+      else 
+        rNorm = sqrt(abs(rNorm - abs(ξ) * ukk * σ)^2 + abs(Haux * ξ * σ)^2) # ‖ M(b - Axₖ) ‖₂ if we hit the boundary
+        qx += (real(σ)^2 / 2) * real(ξ)^2 * real(ukk) - σ * real(ξ)^2   # q(xₖ) if we hit the boundary
+      end
+      if history
+        push!(rNorms, rNorm)
+        (radius > 0) && push!(qxs, qx)
+      end
 
       # Stopping conditions that do not depend on user input.
       # This is to guard against tolerances that are unreasonably small.
@@ -308,6 +364,7 @@ kwargs_diom = (:M, :N, :ldiv, :reorthogonalization, :atol, :rtol, :itmax, :timem
     (verbose > 0) && @printf(iostream, "\n")
 
     # Termination status
+    on_boundary         && (status = "on trust-region boundary")
     tired               && (status = "maximum number of iterations exceeded")
     solved              && (status = "solution good enough given atol and rtol")
     user_requested_exit && (status = "user-requested exit")

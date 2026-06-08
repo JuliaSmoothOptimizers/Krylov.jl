@@ -1,6 +1,5 @@
 @testset "diom" begin
   diom_tol = 1.0e-6
-
   for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
 
@@ -98,6 +97,95 @@
       @test workspace.stats.status == "user-requested exit"
       @test cb_n2(workspace)
 
+      # trust region tests, same as in test_cg
+      # Test radius > 0  and b^TAb=0
+      A, b = zero_rhs(FC=FC)
+      solver = DiomWorkspace(A, b)
+      diom!(solver, A, b,radius = 10 * real(one(FC)))
+      x, stats = solver.x, solver.stats
+      @test stats.status == "x is a zero-residual solution"
+      @test norm(x) == zero(FC)
+      @test stats.niter == 0
+
+      # Test radius > 0 and pᵀAp < 0
+      A = FC[
+        10.0 0.0 0.0 0.0;
+        0.0 8.0 0.0 0.0;
+        0.0 0.0 5.0 0.0;
+        0.0 0.0 0.0 -1.0
+      ]
+      b = FC[1.0, 1.0, 1.0, 0.1]
+      solver = DiomWorkspace(A, b)
+      diom!(solver, A, b; radius = 10 * real(one(FC)))
+      x, stats, = solver.x, solver.stats
+      @test stats.indefinite == true
+      
+      # Test residual of the solution with trust region
+      A = FC[
+        10.0 0.0 0.0 0.0;
+        0.0 8.0 0.0 0.0;
+        0.0 0.0 5.0 0.0;
+        0.0 0.0 0.0 -1.0
+      ]
+      b = FC[1.0, 1.0, 1.0, 0.1]
+      solver = DiomWorkspace(A, b)
+      diom!(solver, A, b; radius = 0.5 * real(one(FC)), history = true)
+      x, stats, = solver.x, solver.stats
+      r = b - A * x
+      normr = norm(r)
+      @test isapprox(normr, stats.residuals[end], atol=1.0e-8)
+      @test stats.status == "on trust-region boundary"
+
+      # test quadratic function values are computed correctly
+      A = FC[10.0 0.0 0.0 0.0;
+        0.0 8.0 0.0 0.0;
+        0.0 0.0 5.0 0.0;
+        0.0 0.0 0.0 1.0
+      ]
+      b = FC[1.0, 1.0, 1.0, 0.1]
+      solver = DiomWorkspace(A, b)
+      diom!(solver, A, b; radius = 10 * real(one(FC)), history = true)
+      x, stats, = solver.x, solver.stats
+      qxs = stats.qvals
+      q = -dot(b, x) + dot(x, A * x)/2
+      @test length(qxs) == stats.niter + 1
+      @test abs(qxs[end] - q) ≤ 1.0e-10
+      @test abs(qxs[1]) ≤ 1.0e-10  # q(0) = 0
+      # test that q is decreasing
+      @test all(diff(qxs) .<= 1.0e-10)
+
+      # test quadratic function with trust-region
+      A = FC[
+        10.0 0.0 0.0 0.0;
+        0.0 8.0 0.0 0.0;
+        0.0 0.0 5.0 0.0;
+        0.0 0.0 0.0 -1.0
+      ]
+      b = FC[1.0, 1.0, 1.0, 0.1]
+      solver = DiomWorkspace(A, b)
+      diom!(solver, A, b; radius = 0.5 * real(one(FC)), history = true)
+      x, stats, = solver.x, solver.stats
+      q = -dot(b, x) + dot(x, A * x)/2
+      qxs = stats.qvals
+      @test abs(q - qxs[end]) ≤ 1.0e-10
+      @test stats.status == "on trust-region boundary"
+
+      # test quadratic function with warm start
+      A = FC[
+        10.0 0.0 0.0 0.0;
+        0.0 8.0 0.0 0.0;
+        0.0 0.0 5.0 0.0;
+        0.0 0.0 0.0 -1.0
+      ]
+      b = FC[1.0, 1.0, 1.0, 0.1]
+      x0 = FC[0.5, 0.5, 0.5, 0.05]
+      solver = DiomWorkspace(A, b)
+      diom!(solver, A, b, x0; radius = 10 * real(one(FC)), history = true)
+      x, stats, = solver.x, solver.stats
+      q = -dot(b, x0) + dot(x0, A * x0)/2
+      qxs = stats.qvals
+      @test abs(q - qxs[1]) ≤ 1.0e-10
+    
       @test_throws TypeError diom(A, b, callback = workspace -> "string", history = true)
     end
   end

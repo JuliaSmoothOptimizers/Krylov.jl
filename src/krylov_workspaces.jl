@@ -211,7 +211,7 @@ mutable struct CgWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   Ap         :: S
   z          :: S
   warm_start :: Bool
-  stats      :: SimpleStats{T}
+  stats      :: DiomCgStats{T}
 end
 
 function CgWorkspace(kc::KrylovConstructor)
@@ -227,7 +227,7 @@ function CgWorkspace(kc::KrylovConstructor)
   p  = similar(kc.vn)
   Ap = similar(kc.vn)
   z  = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = DiomCgStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, "unknown")
   workspace = CgWorkspace{T,FC,S}(m, n, Δx, x, r, npc_dir, p, Ap, z, false, stats)
   return workspace
 end
@@ -243,7 +243,7 @@ function CgWorkspace(m::Integer, n::Integer, S::Type)
   Ap = S(undef, n)
   z  = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = DiomCgStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, "unknown")
   workspace = CgWorkspace{T,FC,S}(m, n, Δx, x, r, npc_dir, p, Ap, z, false, stats)
   return workspace
 end
@@ -776,7 +776,7 @@ mutable struct DiomWorkspace{T,FC,S} <: KrylovWorkspace{T,FC,S}
   L          :: Vector{FC}
   H          :: Vector{FC}
   warm_start :: Bool
-  stats      :: SimpleStats{T}
+  stats      :: DiomCgStats{T}
 end
 
 function DiomWorkspace(kc::KrylovConstructor; memory::Integer = 20)
@@ -795,7 +795,7 @@ function DiomWorkspace(kc::KrylovConstructor; memory::Integer = 20)
   V      = S[similar(kc.vn) for i = 1 : memory]
   L      = Vector{FC}(undef, memory-1)
   H      = Vector{FC}(undef, memory)
-  stats  = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats  = DiomCgStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, "unknown")
   workspace = DiomWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
   return workspace
 end
@@ -814,7 +814,7 @@ function DiomWorkspace(m::Integer, n::Integer, S::Type; memory::Integer = 20)
   L  = Vector{FC}(undef, memory-1)
   H  = Vector{FC}(undef, memory)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, "unknown")
+  stats = DiomCgStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, "unknown")
   workspace = DiomWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
   return workspace
 end
