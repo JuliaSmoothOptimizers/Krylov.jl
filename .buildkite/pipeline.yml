@@ -55,3 +55,18 @@ steps:
         Pkg.instantiate()
         include("test/gpu/intel.jl")'
     timeout_in_minutes: 30
+
+  - label: "Apple M1 GPUs -- Metal.jl"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1.12"
+    agents:
+      queue: "metal"
+    command: |
+      julia --color=yes --project -e '
+        using Pkg
+        Pkg.add("Metal")
+        Pkg.add("KernelAbstractions")
+        Pkg.instantiate()
+        include("test/gpu/metal.jl")'
+    timeout_in_minutes: 30
