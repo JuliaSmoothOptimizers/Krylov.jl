@@ -39,7 +39,7 @@ For an in-place variant that reuses memory across solves, see [`minares!`](@ref)
 
 #### Input arguments
 
-* `A`: a linear operator that models a Hermitian positive definite matrix of dimension `n`;
+* `A`: a linear operator that models a Hermitian (possibly singular) matrix of dimension `n`;
 * `b`: a vector of length `n`.
 
 #### Optional argument
