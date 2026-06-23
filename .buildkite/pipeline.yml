@@ -4,8 +4,7 @@ steps:
       - JuliaCI/julia#v1:
           version: "1.12"
     agents:
-      queue: "juliagpu"
-      cuda: "*"
+      queue: "cuda"
     command: |
       julia --color=yes --project -e '
         using Pkg
@@ -25,8 +24,7 @@ steps:
       - JuliaCI/julia#v1:
           version: "1.12"
     agents:
-      queue: "juliagpu"
-      rocm: "*"
+      queue: "rocm"
       rocmgpu: "*"
     env:
       JULIA_NUM_THREADS: 4
@@ -47,8 +45,7 @@ steps:
       - JuliaCI/julia#v1:
           version: "1.12"
     agents:
-      queue: "juliagpu"
-      intel: "*"
+      queue: "oneapi"
     command: |
       julia --color=yes --project -e '
         using Pkg
@@ -64,9 +61,7 @@ steps:
       - JuliaCI/julia#v1:
           version: "1.12"
     agents:
-      queue: "juliaecosystem"
-      os: "macos"
-      arch: "aarch64"
+      queue: "metal"
     command: |
       julia --color=yes --project -e '
         using Pkg
@@ -74,52 +69,4 @@ steps:
         Pkg.add("KernelAbstractions")
         Pkg.instantiate()
         include("test/gpu/metal.jl")'
-    timeout_in_minutes: 30
-
-  - label: "CPUs -- StaticArrays.jl"
-    plugins:
-      - JuliaCI/julia#v1:
-          version: "1.10"
-    agents:
-      queue: "juliaecosystem"
-      os: "linux"
-      arch: "x86_64"
-    command: |
-      julia --color=yes --project -e '
-        using Pkg
-        Pkg.add("StaticArrays")
-        Pkg.instantiate()
-        include("test/cpu/static_arrays.jl")'
-    timeout_in_minutes: 30
-
-  - label: "CPUs -- ComponentArrays.jl"
-    plugins:
-      - JuliaCI/julia#v1:
-          version: "1.10"
-    agents:
-      queue: "juliaecosystem"
-      os: "linux"
-      arch: "x86_64"
-    command: |
-      julia --color=yes --project -e '
-        using Pkg
-        Pkg.add("ComponentArrays")
-        Pkg.instantiate()
-        include("test/cpu/component_arrays.jl")'
-    timeout_in_minutes: 30
-
-  - label: "CPUs -- LinearOperators.jl"
-    plugins:
-      - JuliaCI/julia#v1:
-          version: "1.10"
-    agents:
-      queue: "juliaecosystem"
-      os: "linux"
-      arch: "x86_64"
-    command: |
-      julia --color=yes --project -e '
-        using Pkg
-        Pkg.add("LinearOperators")
-        Pkg.instantiate()
-        include("test/cpu/linear_operators.jl")'
     timeout_in_minutes: 30

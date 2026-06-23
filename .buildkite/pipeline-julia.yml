@@ -1,0 +1,48 @@
+asteps:
+  - label: "CPUs -- StaticArrays.jl"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1.10"
+    agents:
+      queue: "juliaecosystem"
+      os: "linux"
+      arch: "x86_64"
+    command: |
+      julia --color=yes --project -e '
+        using Pkg
+        Pkg.add("StaticArrays")
+        Pkg.instantiate()
+        include("test/cpu/static_arrays.jl")'
+    timeout_in_minutes: 30
+
+  - label: "CPUs -- ComponentArrays.jl"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1.10"
+    agents:
+      queue: "juliaecosystem"
+      os: "linux"
+      arch: "x86_64"
+    command: |
+      julia --color=yes --project -e '
+        using Pkg
+        Pkg.add("ComponentArrays")
+        Pkg.instantiate()
+        include("test/cpu/component_arrays.jl")'
+    timeout_in_minutes: 30
+
+  - label: "CPUs -- LinearOperators.jl"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1.10"
+    agents:
+      queue: "juliaecosystem"
+      os: "linux"
+      arch: "x86_64"
+    command: |
+      julia --color=yes --project -e '
+        using Pkg
+        Pkg.add("LinearOperators")
+        Pkg.instantiate()
+        include("test/cpu/linear_operators.jl")'
+    timeout_in_minutes: 30
