@@ -127,6 +127,9 @@ Iterative methods are recommended in either of the following situations:
 
 All solvers in Krylov.jl have in-place version, are compatible with **GPU** and work in any floating-point data type.
 
+Krylov.jl also provides **C and Fortran interfaces** and a shared library (`libkrylov`).
+Pre-built artifacts are available on the [Releases](https://github.com/JuliaSmoothOptimizers/Krylov.jl/releases) page.
+
 ## How to Install
 
 Krylov can be installed and tested through the Julia package manager:

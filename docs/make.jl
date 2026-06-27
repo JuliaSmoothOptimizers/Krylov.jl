@@ -11,6 +11,7 @@ makedocs(
                            collapselevel = 1),
   sitename = "Krylov.jl",
   pages = ["Home" => "index.md",
+           "C and Fortran interfaces" => "c_fortran.md",
            "Krylov processes" => "processes.md",
            "Block Krylov processes" => "block_processes.md",
            "Krylov methods" => ["Hermitian positive definite linear systems" => "solvers/spd.md",

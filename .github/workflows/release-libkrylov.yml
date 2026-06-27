@@ -1,0 +1,190 @@
+name: Release libkrylov binaries
+
+# Triggered by TagBot when it publishes a release.
+# Builds a self-contained libkrylov bundle (library + Julia runtime) for all
+# supported platforms and uploads the archives to the existing GitHub Release.
+#
+# workflow_dispatch lets you re-run or test against any existing tag.
+
+on:
+  release:
+    types: [published]
+
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to upload (like vX.Y.Z)'
+        required: true
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - label: linux-x86_64
+            runner: ubuntu-22.04
+            container: ""
+            juliac: juliac
+            lib: libkrylov.so
+            libdir: lib
+            archive: libkrylov-linux-x86_64.tar.gz
+            cpu_target: x86-64
+            deployment_target: ""
+
+          - label: linux-aarch64
+            runner: ubuntu-22.04-arm
+            container: ""
+            juliac: juliac
+            lib: libkrylov.so
+            libdir: lib
+            archive: libkrylov-linux-aarch64.tar.gz
+            cpu_target: generic
+            deployment_target: ""
+
+          - label: macos-arm64
+            runner: macos-latest
+            container: ""
+            juliac: juliac
+            lib: libkrylov.dylib
+            libdir: lib
+            archive: libkrylov-macos-arm64.tar.gz
+            cpu_target: generic
+            deployment_target: "11.0"
+
+          - label: macos-x86_64
+            runner: macos-15-intel
+            container: ""
+            juliac: juliac
+            lib: libkrylov.dylib
+            libdir: lib
+            archive: libkrylov-macos-x86_64.tar.gz
+            cpu_target: x86-64
+            deployment_target: "10.13"
+
+          - label: windows-x86_64
+            runner: windows-latest
+            container: ""
+            juliac: juliac.bat
+            lib: libkrylov.dll
+            libdir: bin
+            archive: libkrylov-windows-x86_64.zip
+            cpu_target: x86-64
+            deployment_target: ""
+
+    env:
+      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
+      JULIA_CPU_TARGET: ${{ matrix.cpu_target }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+
+      # -----------------------------------------------------------------------
+      # Install JuliaC.jl as a Julia app (provides the juliac CLI)
+      # -----------------------------------------------------------------------
+      - name: Install JuliaC.jl
+        shell: bash
+        run: |
+          julia --startup-file=no -e "
+            import Pkg
+            Pkg.Registry.add(\"General\")
+            Pkg.Apps.add(\"JuliaC\")
+          "
+
+      - name: Add juliac to PATH
+        shell: bash
+        run: |
+          JULIAC_BIN=$(julia --startup-file=no -e "print(joinpath(DEPOT_PATH[1], \"bin\"))")
+          echo "$JULIAC_BIN" >> "$GITHUB_PATH"
+
+      # -----------------------------------------------------------------------
+      # Show CPU information used for compilation
+      # -----------------------------------------------------------------------
+      - name: Show CPU target
+        shell: bash
+        run: |
+          julia --startup-file=no -e '
+            println("Sys.CPU_NAME = ", Sys.CPU_NAME)
+            println("JULIA_CPU_TARGET = ", get(ENV, "JULIA_CPU_TARGET", "<unset>"))
+          '
+
+      # -----------------------------------------------------------------------
+      # Instantiate the Krylov.jl project
+      # -----------------------------------------------------------------------
+      - name: Instantiate Julia project
+        shell: bash
+        run: |
+          julia --startup-file=no --project=. -e "
+            import Pkg
+            Pkg.instantiate()
+          "
+
+      # -----------------------------------------------------------------------
+      # Build libkrylov
+      # -----------------------------------------------------------------------
+      - name: Build libkrylov
+        shell: bash
+        run: |
+          OUTLIB="interfaces/build/${{ matrix.libdir }}/${{ matrix.lib }}"
+          mkdir -p "$(dirname "$OUTLIB")"
+
+          ${{ matrix.juliac }} \
+            --project . \
+            --compile-ccallable \
+            --trim=safe \
+            --bundle interfaces/build \
+            --output-lib "$OUTLIB" \
+            interfaces/src/LibKrylov.jl
+
+      # -----------------------------------------------------------------------
+      # Generate krylov.h
+      # -----------------------------------------------------------------------
+      - name: Generate krylov.h
+        shell: bash
+        run: |
+          julia --startup-file=no --project=. \
+            interfaces/scripts/generate_header.jl
+
+      - name: Copy headers into bundle
+        shell: bash
+        run: |
+          mkdir -p interfaces/build/include
+          cp interfaces/include/krylov.h interfaces/build/include/
+          cp interfaces/include/krylov.f90 interfaces/build/include/
+
+      # -----------------------------------------------------------------------
+      # Package bundle
+      # -----------------------------------------------------------------------
+      - name: Package bundle (Unix — tar.gz)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          tar -czf "${{ matrix.archive }}" -C interfaces/build .
+
+      - name: Package bundle (Windows — zip)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path interfaces/build/* `
+            -DestinationPath "${{ matrix.archive }}"
+
+      # -----------------------------------------------------------------------
+      # Upload release asset
+      # -----------------------------------------------------------------------
+      - name: Upload release asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=${{ github.event.release.tag_name || inputs.tag }}
+          gh release upload "$TAG" "${{ matrix.archive }}" --clobber
