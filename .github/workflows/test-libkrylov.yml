@@ -89,6 +89,18 @@ jobs:
           echo "$JULIAC_BIN" >> "$GITHUB_PATH"
 
       # -----------------------------------------------------------------------
+      # Trim SparseArrays from the build, exactly like the release workflow, so
+      # the library exercised by the tests matches the one we ship. The C
+      # interface only exposes solvers, never the Krylov processes, so this drops
+      # SparseArrays (and therefore SuiteSparse) as dead weight.
+      # -----------------------------------------------------------------------
+      - name: Strip SparseArrays from the build
+        shell: bash
+        run: |
+          julia --startup-file=no interfaces/scripts/trim_sparsearrays.jl
+          git diff --stat
+
+      # -----------------------------------------------------------------------
       # Instantiate the Krylov.jl project
       # -----------------------------------------------------------------------
       - name: Instantiate Julia project
@@ -119,24 +131,6 @@ jobs:
       - name: Generate krylov.h
         shell: bash
         run: julia --startup-file=no --project=. interfaces/scripts/generate_header.jl
-
-      # -----------------------------------------------------------------------
-      # Bundle the SuiteSparse libraries.
-      # juliac --bundle does not trace libraries that Julia dlopen's at startup
-      # (SparseArrays -> SuiteSparse_jll: libbtf, libcholmod, libumfpack, ...).
-      # They must be copied next to the embedded runtime so the bundle runs on a
-      # machine without Julia.
-      # -----------------------------------------------------------------------
-      - name: Bundle SuiteSparse libraries
-        shell: bash
-        run: |
-          JBIN="$(julia --startup-file=no -e 'print(Sys.BINDIR)')"
-          if [ "$RUNNER_OS" = "Windows" ]; then JLIB="$JBIN"; else JLIB="$JBIN/../lib/julia"; fi
-          DEST="$(dirname "$(find interfaces/build -name 'libjulia-internal*' | head -1)")"
-          echo "Copying SuiteSparse libraries from $JLIB to $DEST"
-          for name in amd btf camd ccolamd cholmod colamd klu ldl rbio spqr suitesparseconfig umfpack; do
-            cp -a "$JLIB"/lib"$name".* "$DEST"/ 2>/dev/null || true
-          done
 
       # -----------------------------------------------------------------------
       # Verify the bundle is self-contained: run an example with ONLY the bundle
