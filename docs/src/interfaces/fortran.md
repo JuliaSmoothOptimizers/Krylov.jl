@@ -1,11 +1,12 @@
-# Fortran interface
+# [Fortran interface](@id fortran-interface)
 
-Add `use iso_c_binding` and `include 'krylov.f90'` after `implicit none`, then link against `libkrylov` (see [Building libkrylov](building.md)). The concepts (callbacks, data types, options, return codes, block solvers) are described in the [Overview](overview.md); this page collects runnable Fortran programs.
+Add `use iso_c_binding` and `include 'krylov.f90'` after `implicit none`, then link against `libkrylov` (see [Building libkrylov](@ref building-libkrylov)).
+The concepts (callbacks, data types, options, return codes, block solvers) are described in the interfaces [overview](@ref overview-interfaces).
+This page collects runnable Fortran programs.
 
 ## Example
 
-The same 5×5 tridiagonal SPD system as the [C example](c.md), now in Fortran
-([`examples/Fortran/basic_cg.f90`](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/interfaces/examples/Fortran/basic_cg.f90)):
+The same 5×5 tridiagonal SPD system as the [C example](@ref c-interface), now in Fortran ([`examples/Fortran/basic_cg.f90`](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/interfaces/examples/Fortran/basic_cg.f90)):
 
 ```fortran
 program basic_cg

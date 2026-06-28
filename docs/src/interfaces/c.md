@@ -1,6 +1,8 @@
-# C interface
+# [C interface](@id c-interface)
 
-Include `krylov.h` and link against `libkrylov` (see [Building libkrylov](building.md)). The concepts (callbacks, data types, options, return codes, block solvers) are described in the [Overview](overview.md); this page collects runnable C programs.
+Include `krylov.h` and link against `libkrylov` (see [Building libkrylov](@ref building-libkrylov)).
+The concepts (callbacks, data types, options, return codes, block solvers) are described in the interfaces [overview](@ref overview-interfaces).
+This page collects runnable C programs.
 
 ## Example
 
@@ -57,7 +59,7 @@ int main(void)
 
 ## Block example
 
-Solve `A X = B` with several right-hand sides using block GMRES. The block `B` is `n×p`, column-major, and must have full column rank (see [Block Krylov solvers](overview.md#Block-Krylov-solvers)):
+Solve `A X = B` with several right-hand sides using block GMRES. The block `B` is `n×p`, column-major, and must have full column rank (see [Block Krylov solvers](@ref block-krylov-methods):
 
 ```c
 // Y = A * X for a block of p columns (column-major)

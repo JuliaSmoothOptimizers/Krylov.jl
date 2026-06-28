@@ -1,15 +1,19 @@
-# C and Fortran interfaces
+# [C and Fortran interfaces](@id overview-interfaces)
 
 !!! warning "Prototype"
     This interface is still in early development. Not all Krylov.jl features are exposed yet (for example shifts and GPU devices). The API may change in future releases.
 
-Krylov.jl ships `libkrylov`, a native shared library that exposes its solvers to C, Fortran, Python, R, or any other language that can call C code.
+Krylov.jl ships `libkrylov`, a native shared library that exposes its solvers to languages that can call C code.
 
-Pre-built artifacts for Linux (x86-64, aarch64), macOS (arm64, x86-64) and Windows (x86-64) are available on the [Releases](https://github.com/JuliaSmoothOptimizers/Krylov.jl/releases) page. To build the library yourself, see [Building libkrylov](building.md). For runnable programs, see the [C interface](c.md) and [Fortran interface](fortran.md) pages.
+Pre-built artifacts for Linux (x86-64, aarch64), macOS (arm64, x86-64) and Windows (x86-64) are available on the [Releases](https://github.com/JuliaSmoothOptimizers/Krylov.jl/releases) page.
+To build the library yourself, see [Building libkrylov](@ref building-libkrylov).
+For runnable programs, see the [C interface](@ref c-interface) and [Fortran interface](@ref fortran-interface) pages.
 
 ## How it works
 
-`libkrylov` is the whole of Krylov.jl compiled ahead of time into a shared library, with the Julia runtime embedded in the bundle. From the caller's point of view it is an ordinary C library: there is no Julia process to start and no `.jl` file to ship, only `libkrylov.so` (or `.dylib` / `.dll`) and the two headers `krylov.h` / `krylov.f90`.
+`libkrylov` is the whole of Krylov.jl compiled ahead of time into a shared library, with the Julia runtime embedded in the bundle.
+From the caller's point of view it is an ordinary C library.
+There is no Julia process to start and no `.jl` file to ship, only `libkrylov.so` (or `.dylib` / `.dll`) and the two headers `krylov.h` / `krylov.f90`.
 
 The design rests on three ideas:
 
@@ -82,7 +86,7 @@ The three slots play different roles, and their vector lengths follow the operat
 | Slot        | Computes      | `x` length | `y` length | When to pass |
 |-------------|---------------|:----------:|:----------:|--------------|
 | `matvec_A`  | `y = A * x`   | `n`        | `m`        | always (required) |
-| `matvec_At` | `y = Aᴴ * x`  | `m`        | `n`        | solvers that use the adjoint (see [Choosing a solver](@ref)) |
+| `matvec_At` | `y = Aᴴ * x`  | `m`        | `n`        | solvers that use the adjoint |
 | `matvec_M`  | `y = M⁻¹ * x` | `n`        | `n`        | only if preconditioning |
 
 For square systems `m == n`, so all three lengths coincide, which is the common case (like CG and GMRES). The distinction matters for least-squares and least-norm solvers where `A` is rectangular.
@@ -216,4 +220,5 @@ Key differences from the single-vector API:
 - **`B` must have full column rank.** Block methods orthonormalize the right-hand side, so linearly dependent columns (for example a duplicated RHS) lead to a breakdown. Give each column a distinct RHS.
 - `memory` (in `KrylovWorkspaceOptions`) applies to `block_gmres` only. The solve-time tolerances (`atol`, `rtol`, `itmax`, `verbose`) come from `KrylovOptions` as usual.
 
-Runnable block programs are shown on the [C interface](c.md) and [Fortran interface](fortran.md) pages. See [Block Krylov methods](../block_krylov.md) for the underlying algorithms.
+Runnable block programs are shown on the [C interface](@ref c-interface) and [Fortran interface](@ref fortran-interface) pages.
+See [Block Krylov methods](@ref block-krylov-methods) for the underlying algorithms.

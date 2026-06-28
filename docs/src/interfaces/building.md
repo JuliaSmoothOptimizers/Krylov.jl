@@ -1,13 +1,14 @@
-# Building libkrylov
+# [Building libkrylov](@id building-libkrylov)
 
-Pre-built, self-contained bundles for Linux (x86-64, aarch64), macOS (arm64, x86-64) and Windows (x86-64) are attached to every [release](https://github.com/JuliaSmoothOptimizers/Krylov.jl/releases). This page describes how to build the library from source and how to compile and link a C or Fortran program against it.
+Pre-built, self-contained bundles for Linux (x86-64, aarch64), macOS (arm64, x86-64) and Windows (x86-64) are attached to every [release](https://github.com/JuliaSmoothOptimizers/Krylov.jl/releases) starting `v0.10.7`.
+This page describes how to build the library from source and how to compile and link a C or Fortran program against it.
 
 ## Requirements
 
 | Tool | Version |
 |------|---------|
 | Julia | ≥ 1.12 |
-| [JuliaC.jl](https://github.com/JuliaLang/JuliaC.jl) | latest |
+| JuliaC.jl | ≥ 0.3.8 |
 | C / Fortran compiler | gcc / clang, gfortran |
 
 [JuliaC.jl](https://github.com/JuliaLang/JuliaC.jl) wraps Julia's `juliac` compiler and adds `--bundle`, which produces a self-contained library that embeds the Julia runtime, so no separate Julia installation is required at run time.
@@ -18,7 +19,7 @@ All commands run from the root of the Krylov.jl repository.
 
 ```bash
 # Install JuliaC.jl once (it installs juliac into ~/.julia/bin)
-julia -e 'import Pkg; Pkg.Apps.add(url="https://github.com/JuliaLang/JuliaC.jl", rev="v0.3.2")'
+julia -e 'import Pkg; Pkg.Apps.add(url="https://github.com/JuliaLang/JuliaC.jl", rev="v0.3.8")'
 export PATH="$HOME/.julia/bin:$PATH"   # add to ~/.bashrc to make it permanent
 
 # Build the bundle (library + embedded Julia runtime)
@@ -104,10 +105,10 @@ The `include 'krylov.f90'` line resolves relative to the source file, so either 
 # x = [ 1.00 1.00 1.00 1.00 1.00 ]
 ```
 
-If the loader cannot find `libkrylov` or the embedded runtime at run time, add the bundle directories to the library search path, for example on Linux:
+If the loader cannot find `libkrylov` or the embedded Julia runtime at run time, add the bundle directories to the library search path, for example on Linux:
 
 ```bash
 export LD_LIBRARY_PATH="$PWD/interfaces/build/lib:$PWD/interfaces/build/lib/julia:$LD_LIBRARY_PATH"
 ```
 
-(use `DYLD_LIBRARY_PATH` on macOS).
+(use `DYLD_LIBRARY_PATH` on macOS and `PATH` on Windows).
