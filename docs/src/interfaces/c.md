@@ -59,24 +59,70 @@ int main(void)
 
 ## Block example
 
-Solve `A X = B` with several right-hand sides using block GMRES. The block `B` is `n×p`, column-major, and must have full column rank (see [Block Krylov solvers](@ref block-krylov-methods)):
+Solve `A X = B` with several right-hand sides at once using block GMRES. The block `B` is `n×p`, column-major, and must have full column rank (see [Block Krylov solvers](@ref block-krylov-methods)). Switch `KRYLOV_BLOCK_GMRES` to `KRYLOV_BLOCK_MINRES` for block MINRES
+([`examples/C/block_gmres.c`](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/interfaces/examples/C/block_gmres.c)):
 
 ```c
-// Y = A * X for a block of p columns (column-major)
-void block_A(const void *Xv, void *Yv, int p, void *userdata) { /* fill Y = A*X */ }
+#include <math.h>
+#include <stdio.h>
+#include <stddef.h>
+#include "krylov.h"
 
-int n = 100, p = 3;
-double *B = /* n*p, column-major */, *X = malloc(sizeof(double) * n * p);
+#define N 16    /* operator dimension */
+#define P 3     /* number of right-hand sides (block width) */
 
-void *ws = NULL;
-krylov_block_workspace_create(KRYLOV_BLOCK_GMRES, n, n, p,
-                              KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
+/* Block matvec:  Y = A * X  for a block of p columns (column-major). */
+static void block_A(const void *Xv, void *Yv, int p, void *userdata)
+{
+  const double *X = (const double *)Xv;
+  double       *Y = (double *)Yv;
+  int n = *(const int *)userdata;
+  for (int j = 0; j < p; j++) {
+    const double *x = X + (size_t)j * n;
+    double       *y = Y + (size_t)j * n;
+    for (int i = 0; i < n; i++) {
+      y[i] = 8.0 * x[i];
+      if (i > 0)     y[i] -= x[i-1];
+      if (i < n - 1) y[i] -= x[i+1];
+    }
+  }
+}
 
-KrylovOptions opts = krylov_default_options();
-opts.atol = 1e-10; opts.rtol = 1e-10;
-krylov_block_solve(ws, block_A, NULL, B, userdata, &opts);
-krylov_block_get_X(ws, X, n, p);
-krylov_block_workspace_free(ws);
+int main(void)
+{
+  int n = N, p = P;
+
+  /* X_true with independent columns, then B = A * X_true (column-major). */
+  double Xtrue[N*P], B[N*P], X[N*P];
+  for (int j = 0; j < p; j++)
+    for (int i = 0; i < n; i++) {
+      double t = (double)(i + 1) / n;
+      Xtrue[i + (size_t)j*n] = (j == 0) ? 1.0 : (j == 1 ? t : t*t);
+    }
+  block_A(Xtrue, B, p, &n);
+
+  void *ws = NULL;
+  krylov_block_workspace_create(KRYLOV_BLOCK_GMRES, n, n, p,
+                                KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
+
+  KrylovOptions opts = krylov_default_options();
+  opts.atol = 1e-10;
+  opts.rtol = 1e-10;
+  krylov_block_solve(ws, block_A, NULL, B, &n, &opts);
+  krylov_block_get_X(ws, X, n, p);
+
+  double err = 0.0;
+  for (int k = 0; k < n*p; k++) {
+    double d = fabs(X[k] - Xtrue[k]);
+    if (d > err) err = d;
+  }
+  printf("Block solved: %s   niter: %d   max error: %.1e\n",
+         krylov_block_is_solved(ws) ? "yes" : "no",
+         krylov_block_niter(ws), err);
+
+  krylov_block_workspace_free(ws);
+  return 0;
+}
 ```
 
 ## More examples

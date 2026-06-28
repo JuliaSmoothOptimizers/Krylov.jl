@@ -192,6 +192,28 @@ jobs:
           echo "$actual" | grep -q "x = \[ 1.00 1.00 1.00 1.00 1.00 \]"
 
       # -----------------------------------------------------------------------
+      # Build and run the C block example (block_gmres)
+      # -----------------------------------------------------------------------
+      - name: Build C example (block)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gcc -o interfaces/build/block_gmres interfaces/examples/C/block_gmres.c \
+              -I interfaces/include \
+              "$LIBPATH/${{ matrix.lib }}" -lm
+
+      - name: Run C example (block)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          actual=$(interfaces/build/block_gmres)
+          echo "$actual"
+          echo "$actual" | grep -q "Block solved: yes"
+
+      # -----------------------------------------------------------------------
       # Build and run the C full test (all solvers)
       # -----------------------------------------------------------------------
       - name: Build C test (all solvers)
@@ -281,6 +303,28 @@ jobs:
           echo "$actual"
           echo "$actual" | grep -q "Solved: T"
           echo "$actual" | grep -q "1.00"
+
+      # -----------------------------------------------------------------------
+      # Build and run the Fortran block example (block_gmres)
+      # -----------------------------------------------------------------------
+      - name: Build Fortran example (block)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gfortran -o interfaces/build/block_gmres_fortran \
+              interfaces/examples/Fortran/block_gmres.f90 \
+              "$LIBPATH/${{ matrix.lib }}"
+
+      - name: Run Fortran example (block)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          actual=$(interfaces/build/block_gmres_fortran)
+          echo "$actual"
+          echo "$actual" | grep -q "Block solved: T"
 
       # -----------------------------------------------------------------------
       # Build and run the Fortran full test (all solvers)

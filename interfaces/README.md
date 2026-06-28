@@ -83,8 +83,8 @@ interfaces/
 │   ├── krylov.h              # generated C header — do not edit by hand
 │   └── krylov.f90            # Fortran bindings (hand-maintained)
 ├── examples/
-│   ├── C/basic_cg.c
-│   └── Fortran/basic_cg.f90
+│   ├── C/{basic_cg,block_gmres}.c
+│   └── Fortran/{basic_cg,block_gmres}.f90
 ├── test/
 │   ├── test_libkrylov.jl     # Julia unit tests (no dlopen)
 │   ├── C/
