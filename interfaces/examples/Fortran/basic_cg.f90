@@ -57,7 +57,8 @@ program basic_cg
     ret = krylov_solve(ws,                  &
                        c_funloc(matvec_A),  &  ! y = A*x
                        c_null_funptr,       &  ! y = A'*x  (CG doesn't need it)
-                       c_null_funptr,       &  ! no preconditioner
+                       c_null_funptr,       &  ! no left preconditioner
+                       c_null_funptr,       &  ! no right preconditioner
                        c_loc(b),            &  ! right-hand side b (size m)
                        c_null_ptr,          &  ! c = NULL  (CG only needs one RHS)
                        c_loc(diag),         &  ! userdata: diagonal array

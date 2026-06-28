@@ -78,12 +78,13 @@ interfaces/
 ├── scripts/
 │   ├── generate_header.jl    # generates include/krylov.h
 │   ├── generate_stores.jl    # regenerates src/c_stores.jl (run when adding solvers)
-│   └── solver_table.jl       # single source of truth for the solver list
+│   ├── solver_table.jl       # single source of truth for the solver list
+│   └── trim_sparsearrays.jl  # CI only — strips SparseArrays from the shipped bundle
 ├── include/
 │   ├── krylov.h              # generated C header — do not edit by hand
 │   └── krylov.f90            # Fortran bindings (hand-maintained)
 ├── examples/
-│   ├── C/{basic_cg,block_gmres}.c
+│   ├── C/{basic_cg,preconditioning,least_squares,block_gmres}.c
 │   └── Fortran/{basic_cg,block_gmres}.f90
 ├── test/
 │   ├── test_libkrylov.jl     # Julia unit tests (no dlopen)

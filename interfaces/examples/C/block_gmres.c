@@ -61,7 +61,7 @@ int main(void)
   KrylovOptions opts = krylov_default_options();
   opts.atol = 1e-10;
   opts.rtol = 1e-10;
-  krylov_block_solve(ws, block_A, NULL, B, &n, &opts);
+  krylov_block_solve(ws, block_A, NULL, NULL, B, &n, &opts);
   krylov_block_get_X(ws, X, n, p);
 
   double err = 0.0;

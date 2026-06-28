@@ -68,7 +68,7 @@ program test_block
     opts = krylov_default_options()
     opts%atol = 1.0d-10 ; opts%rtol = 1.0d-10 ; opts%itmax = 200_c_int
 
-    ret = krylov_block_solve(ws, c_funloc(cb_block_A), c_null_funptr, &
+    ret = krylov_block_solve(ws, c_funloc(cb_block_A), c_null_funptr, c_null_funptr, &
                              c_loc(B), c_null_ptr, c_loc(opts))
     call check(ret == 0,                          "block solve returns 0")
     call check(krylov_block_is_solved(ws) == 1,   "block solve converged")
@@ -90,11 +90,26 @@ program test_block
                                       int(P,c_int), KRYLOV_FLOAT64, KRYLOV_CPU, c_null_ptr, ws)
   opts = krylov_default_options()
   opts%atol = 1.0d-10 ; opts%rtol = 1.0d-10 ; opts%itmax = 200_c_int
-  ret = krylov_block_solve(ws, c_funloc(cb_block_A), c_funloc(cb_block_M), &
+  ret = krylov_block_solve(ws, c_funloc(cb_block_A), c_funloc(cb_block_M), c_null_funptr, &
                            c_loc(B), c_null_ptr, c_loc(opts))
   call check(krylov_block_is_solved(ws) == 1, "preconditioned block solve converged")
   ret = krylov_block_get_X(ws, c_loc(X), int(N,c_int), int(P,c_int))
   call check(maxval(abs(X - Xt)) < 1.0d-6, "preconditioned block solution is correct")
+  ret = krylov_block_workspace_free(ws)
+
+  ! -------------------------------------------------------------------------
+  ! Right preconditioner (block_gmres accepts matvec_N).
+  ! -------------------------------------------------------------------------
+  write(*,'(A)') "block_gmres + right Jacobi preconditioner ..."
+  ret = krylov_block_workspace_create(KRYLOV_BLOCK_GMRES, int(N,c_int), int(N,c_int), &
+                                      int(P,c_int), KRYLOV_FLOAT64, KRYLOV_CPU, c_null_ptr, ws)
+  opts = krylov_default_options()
+  opts%atol = 1.0d-10 ; opts%rtol = 1.0d-10 ; opts%itmax = 200_c_int
+  ret = krylov_block_solve(ws, c_funloc(cb_block_A), c_null_funptr, c_funloc(cb_block_M), &
+                           c_loc(B), c_null_ptr, c_loc(opts))
+  call check(krylov_block_is_solved(ws) == 1, "right-preconditioned block solve converged")
+  ret = krylov_block_get_X(ws, c_loc(X), int(N,c_int), int(P,c_int))
+  call check(maxval(abs(X - Xt)) < 1.0d-6, "right-preconditioned block solution is correct")
   ret = krylov_block_workspace_free(ws)
 
   ! -------------------------------------------------------------------------
@@ -105,7 +120,7 @@ program test_block
                                       int(P,c_int), KRYLOV_FLOAT64, KRYLOV_CPU, c_null_ptr, ws)
   opts = krylov_default_options()
   opts%atol = 1.0d-10 ; opts%rtol = 1.0d-10 ; opts%itmax = 200_c_int
-  ret = krylov_block_solve(ws, c_funloc(cb_block_A), c_null_funptr, &
+  ret = krylov_block_solve(ws, c_funloc(cb_block_A), c_null_funptr, c_null_funptr, &
                            c_loc(B), c_null_ptr, c_loc(opts))
   niter_cold = krylov_block_niter(ws)
   ret = krylov_block_workspace_free(ws)
@@ -114,7 +129,7 @@ program test_block
                                       int(P,c_int), KRYLOV_FLOAT64, KRYLOV_CPU, c_null_ptr, ws)
   ret = krylov_block_warm_start(ws, c_loc(Xt), int(N,c_int), int(P,c_int))
   call check(ret == 0, "block warm_start accepted")
-  ret = krylov_block_solve(ws, c_funloc(cb_block_A), c_null_funptr, &
+  ret = krylov_block_solve(ws, c_funloc(cb_block_A), c_null_funptr, c_null_funptr, &
                            c_loc(B), c_null_ptr, c_loc(opts))
   call check(krylov_block_is_solved(ws) == 1,         "warm-started block solve converged")
   call check(krylov_block_niter(ws) < niter_cold,     "warm start reduces iterations")

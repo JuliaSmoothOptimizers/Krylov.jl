@@ -17,6 +17,11 @@
 ! for the block solvers) and be passed via c_funloc(my_sub).  Pass c_null_funptr
 ! for unused callbacks.
 
+  ! Version
+  integer(c_int), parameter :: KRYLOV_VERSION_MAJOR = 0
+  integer(c_int), parameter :: KRYLOV_VERSION_MINOR = 10
+  integer(c_int), parameter :: KRYLOV_VERSION_PATCH = 7
+
   ! -------------------------------------------------------------------------
   ! Enumerators  (must match krylov.h)
   ! -------------------------------------------------------------------------
@@ -92,9 +97,14 @@
     real(c_double) :: rtol     ! NaN → sqrt(eps(T)) per precision
     integer(c_int) :: itmax    ! 0   → solver default
     integer(c_int) :: verbose  ! 0   = silent
-    real(c_double) :: lambda   ! 0.0 = no regularisation (LSQR / LSMR / CGLS / …)
+    real(c_double) :: lambda   ! 0.0 = no regularisation/shift (LSQR / LSMR / CGLS / MINRES / …)
     real(c_double) :: tau      ! NaN → solver default (TriCG / TriMR : 1.0)
     real(c_double) :: nu       ! NaN → solver default (TriCG / TriMR : -1.0)
+    real(c_double) :: timemax  ! NaN → Inf (no time limit), seconds ; every solver
+    real(c_double) :: radius   ! 0.0 = no trust region (CG / CR / CGLS / CRLS / LSQR / LSMR)
+    integer(c_int) :: restart              ! 0/1 restart GMRES(k) / FGMRES / FOM / block_gmres
+    integer(c_int) :: reorthogonalization  ! 0/1 reorthogonalize basis (GMRES family, GPMR, block_gmres)
+    integer(c_int) :: linesearch           ! 0/1 detect negative curvature (CG / CR / MINRES / MINRES-QLP)
   end type KrylovOptions
 
   ! -------------------------------------------------------------------------
@@ -161,6 +171,16 @@
     end function krylov_default_options
 
     ! -----------------------------------------------------------------------
+    ! krylov_get_version — write the library's Krylov.jl version into
+    ! major / minor / patch (same values as the KRYLOV_VERSION_* parameters).
+    ! -----------------------------------------------------------------------
+    subroutine krylov_get_version(major, minor, patch) &
+        bind(c, name='krylov_get_version')
+      use iso_c_binding
+      integer(c_int), intent(out) :: major, minor, patch
+    end subroutine krylov_get_version
+
+    ! -----------------------------------------------------------------------
     ! krylov_workspace_create
     !
     ! Creates a workspace for the given solver.
@@ -189,8 +209,12 @@
     !   ws         : workspace handle
     !   matvec_A   : callback  y = A*x          (required)
     !   matvec_At  : callback  y = A'*x         (c_null_funptr for CG/GMRES/...)
-    !   matvec_M   : preconditioner; must compute y = M\x (solve M y = x)
-    !                (c_null_funptr = no preconditioner)
+    !   matvec_M   : left preconditioner; must compute y = M\x (solve M y = x)
+    !                (c_null_funptr = no left preconditioner)
+    !   matvec_N   : right preconditioner; must compute y = N\x (solve N y = x).
+    !                Used only by solvers accepting both sides (GMRES, FGMRES, FOM,
+    !                DIOM, DQGMRES, BiCGSTAB, CGS, BiLQ, QMR); ignored otherwise.
+    !                (c_null_funptr = no right preconditioner)
     !   b          : first right-hand side pointer (c_loc of your array, size m)
     !   c          : second right-hand side pointer (c_loc of your array, size n)
     !                  c_null_ptr for solvers that only need one RHS
@@ -199,14 +223,15 @@
     !
     ! Returns 0 on success, nonzero on error.
     ! -----------------------------------------------------------------------
-    function krylov_solve(ws, matvec_A, matvec_At, matvec_M, &
+    function krylov_solve(ws, matvec_A, matvec_At, matvec_M, matvec_N, &
                           b, c, userdata, opts) &
         bind(c, name='krylov_solve') result(ret)
       use iso_c_binding
       type(c_ptr),    value :: ws
       type(c_funptr), value :: matvec_A    ! y = A*x
       type(c_funptr), value :: matvec_At   ! y = A'*x  or  c_null_funptr
-      type(c_funptr), value :: matvec_M    ! y = M\x   or  c_null_funptr
+      type(c_funptr), value :: matvec_M    ! y = M\x  (centered/left precond.) or c_null_funptr
+      type(c_funptr), value :: matvec_N    ! y = N\x  (right precond.)         or c_null_funptr
       type(c_ptr),    value :: b           ! c_loc(b_array), size m
       type(c_ptr),    value :: c           ! c_loc(c_array), size n  or  c_null_ptr
       type(c_ptr),    value :: userdata    ! c_loc(data)  or  c_null_ptr
@@ -234,7 +259,9 @@
     ! -----------------------------------------------------------------------
     ! krylov_get_y
     !
-    ! Copies the dual solution y (for solvers with two outputs: TriCG, GPMR, ...).
+    ! Copies the second (dual) solution y, for the two-solution solvers (TriCG,
+    ! TriMR, USYMLQR, GPMR, BiLQR, TriLQR, CRAIG, CRAIGMR, LNLQ). Its length is
+    ! the dual-solution size: n for TriCG/TriMR/USYMLQR, m otherwise.
     ! Returns -2 if the solver has only one solution.
     ! -----------------------------------------------------------------------
     function krylov_get_y(ws, y, m) &
@@ -300,6 +327,26 @@
     end function krylov_warm_start
 
     ! -----------------------------------------------------------------------
+    ! krylov_warm_start2
+    !
+    ! Sets BOTH initial guesses for the next krylov_solve, for the two-solution
+    ! solvers (TriCG, TriMR, GPMR, BiLQR, TriLQR, USYMLQR).
+    !   x0 : primal guess, length nx (same size as krylov_get_x)
+    !   y0 : dual guess,   length ny (same size as krylov_get_y)
+    !
+    ! Returns 0, -1 on error, or -2 if the solver has a single solution.
+    ! -----------------------------------------------------------------------
+    function krylov_warm_start2(ws, x0, y0, nx, ny) &
+        bind(c, name='krylov_warm_start2') result(ret)
+      use iso_c_binding
+      type(c_ptr),    value :: ws
+      type(c_ptr),    value :: x0   ! c_loc(x0_array), size nx
+      type(c_ptr),    value :: y0   ! c_loc(y0_array), size ny
+      integer(c_int), value :: nx, ny
+      integer(c_int)        :: ret
+    end function krylov_warm_start2
+
+    ! -----------------------------------------------------------------------
     ! krylov_workspace_free
     !
     ! Releases the workspace.  The handle must not be used after this call.
@@ -334,16 +381,20 @@
 
     ! krylov_block_solve
     !   matvec_A : block matvec  Y = A*X        (required)
-    !   matvec_M : preconditioner; must compute Y = M\X (solve M Y = X)
-    !              (c_null_funptr = no preconditioner)
+    !   matvec_M : left preconditioner; must compute Y = M\X (solve M Y = X)
+    !              (c_null_funptr = no left preconditioner)
+    !   matvec_N : right preconditioner; must compute Y = N\X (solve N Y = X).
+    !              Used only by block_gmres; ignored by block_minres.
+    !              (c_null_funptr = no right preconditioner)
     !   B        : c_loc(B), m×p column-major
     !   opts     : c_loc(KrylovOptions) or c_null_ptr
-    function krylov_block_solve(ws, matvec_A, matvec_M, b, userdata, opts) &
+    function krylov_block_solve(ws, matvec_A, matvec_M, matvec_N, b, userdata, opts) &
         bind(c, name='krylov_block_solve') result(ret)
       use iso_c_binding
       type(c_ptr),    value :: ws
       type(c_funptr), value :: matvec_A
       type(c_funptr), value :: matvec_M
+      type(c_funptr), value :: matvec_N
       type(c_ptr),    value :: b
       type(c_ptr),    value :: userdata
       type(c_ptr),    value :: opts

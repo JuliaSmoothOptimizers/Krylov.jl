@@ -90,7 +90,8 @@ int main(void)
   ret = krylov_solve(ws,
                      matvec_A,   /* y = A*x */
                      NULL,       /* y = A'*x  (CG doesn't need it) */
-                     NULL,       /* no preconditioner */
+                     NULL,       /* no left preconditioner */
+                     NULL,       /* no right preconditioner */
                      b,          /* right-hand side b (size m) */
                      NULL,       /* c = NULL  (CG only needs one RHS) */
                      &A,         /* userdata forwarded to matvec_A */

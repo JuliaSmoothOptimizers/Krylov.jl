@@ -11,7 +11,7 @@ This page describes how to build the library from source and how to compile and 
 | JuliaC.jl | ≥ 0.3.8 |
 | C / Fortran compiler | gcc / clang, gfortran |
 
-[JuliaC.jl](https://github.com/JuliaLang/JuliaC.jl) wraps Julia's `juliac` compiler and adds `--bundle`, which produces a self-contained library that embeds the Julia runtime, so no separate Julia installation is required at run time.
+[JuliaC.jl](https://github.com/JuliaLang/JuliaC.jl) wraps Julia's `juliac` compiler and adds `--bundle`. This produces a self-contained library that embeds the Julia runtime, so no separate Julia installation is required at run time.
 
 ## Build from source
 
@@ -48,7 +48,7 @@ done
     SuiteSparse stack (`libbtf`, `libcholmod`, `libumfpack`, ...) is loaded
     dynamically by Julia at startup (`SparseArrays` is a dependency of Krylov),
     so `juliac` does not see it. Without the copy step above, the bundle runs
-    fine on a machine that has Julia installed but fails on a clean machine with
+    fine on a machine that has Julia installed. On a clean machine it fails with
     `could not load library "libbtf.so.2"`. On Windows the libraries live in
     `Sys.BINDIR` (the `bin/` folder) instead of `lib/julia`.
 
@@ -95,7 +95,7 @@ gfortran -O2 -o basic_cg interfaces/examples/Fortran/basic_cg.f90 \
     interfaces/build/lib/libkrylov.so
 ```
 
-The `include 'krylov.f90'` line resolves relative to the source file, so either keep `krylov.f90` next to your program or pass `-I interfaces/build/include` and adjust the `include` path accordingly.
+The `include 'krylov.f90'` line resolves relative to the source file. So either keep `krylov.f90` next to your program, or pass `-I interfaces/build/include` and adjust the `include` path accordingly.
 
 ## Running
 
