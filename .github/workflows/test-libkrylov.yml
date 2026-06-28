@@ -320,14 +320,4 @@ jobs:
           export PATH="$LIBPATH:$PATH"
           export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
           export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            # ===== TEMPORARY: capture the REAL exit code (delayed expansion) and
-            # the program output (redirected to a file so a crash does not lose it)
-            MSYS2_ARG_CONV_EXCL='*' cmd /v:on /c 'interfaces\build\test_block_fortran.exe > out.txt 2>&1 & echo !errorlevel! > rc.txt'
-            RC=$(tr -dc '0-9-' < rc.txt)
-            echo "REAL_EXIT=$RC"
-            echo "--- program output ---"; cat out.txt 2>/dev/null || true; echo "--- end output ---"
-            [ "$RC" = "0" ]
-          else
-            interfaces/build/test_block_fortran
-          fi
+          interfaces/build/test_block_fortran
