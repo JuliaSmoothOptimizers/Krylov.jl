@@ -321,13 +321,26 @@ jobs:
           export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
           export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
           # ===== TEMPORARY diagnostics for the Windows exit-127 launch failure =====
-          echo "--- fortran binaries in build dir ---"
-          ls -la interfaces/build/ | grep -iE "fortran" || true
-          echo "--- ldd: block (the one that fails) ---"
-          ldd interfaces/build/test_block_fortran.exe 2>&1 || ldd interfaces/build/test_block_fortran 2>&1 || true
-          echo "--- ldd: all_solvers (this one runs fine, for comparison) ---"
-          ldd interfaces/build/test_all_solvers_fortran.exe 2>&1 | grep -i "not found" || echo "(all_solvers: no missing DLLs)"
-          echo "--- running ---"
+          # exe exists + ldd clean -> suspect an unresolved *symbol* import.
+          # Compare the libgfortran symbols imported by the block exe vs the
+          # all-solvers exe, and check them against the bundled libgfortran.
+          if command -v objdump >/dev/null 2>&1; then
+            BIN=interfaces/build
+            imp() { objdump -p "$1" 2>/dev/null \
+                    | awk '/DLL Name: libgfortran/{f=1;next} /DLL Name:/{f=0} f && NF {print $NF}' \
+                    | grep -oE '_gfortran_[A-Za-z0-9_]+' | sort -u; }
+            imp "$BIN/test_block_fortran.exe"       > /tmp/blk.txt || true
+            imp "$BIN/test_all_solvers_fortran.exe" > /tmp/all.txt || true
+            objdump -p "$BIN/bin/libgfortran-5.dll" 2>/dev/null \
+                    | grep -oE '_gfortran_[A-Za-z0-9_]+' | sort -u > /tmp/exp.txt || true
+            echo "--- libgfortran symbols imported by BLOCK but not by ALL-SOLVERS ---"
+            comm -23 /tmp/blk.txt /tmp/all.txt || true
+            echo "--- BLOCK libgfortran imports MISSING from the bundled libgfortran-5.dll ---"
+            comm -23 /tmp/blk.txt /tmp/exp.txt || true
+            echo "--- (end) ---"
+          else
+            echo "objdump not available"
+          fi
           # =======================================================================
           EXE=interfaces/build/test_block_fortran
           [ -f "$EXE" ] || EXE="$EXE.exe"
