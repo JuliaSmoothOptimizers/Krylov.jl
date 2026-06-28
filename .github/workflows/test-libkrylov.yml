@@ -121,6 +121,42 @@ jobs:
         run: julia --startup-file=no --project=. interfaces/scripts/generate_header.jl
 
       # -----------------------------------------------------------------------
+      # Bundle the SuiteSparse libraries.
+      # juliac --bundle does not trace libraries that Julia dlopen's at startup
+      # (SparseArrays -> SuiteSparse_jll: libbtf, libcholmod, libumfpack, ...).
+      # They must be copied next to the embedded runtime so the bundle runs on a
+      # machine without Julia.
+      # -----------------------------------------------------------------------
+      - name: Bundle SuiteSparse libraries
+        shell: bash
+        run: |
+          JBIN="$(julia --startup-file=no -e 'print(Sys.BINDIR)')"
+          if [ "$RUNNER_OS" = "Windows" ]; then JLIB="$JBIN"; else JLIB="$JBIN/../lib/julia"; fi
+          DEST="$(dirname "$(find interfaces/build -name 'libjulia-internal*' | head -1)")"
+          echo "Copying SuiteSparse libraries from $JLIB to $DEST"
+          for name in amd btf camd ccolamd cholmod colamd klu ldl rbio spqr suitesparseconfig umfpack; do
+            cp -a "$JLIB"/lib"$name".* "$DEST"/ 2>/dev/null || true
+          done
+
+      # -----------------------------------------------------------------------
+      # Verify the bundle is self-contained: run an example with ONLY the bundle
+      # on the library path (no system Julia), so a missing dlopen'd dependency
+      # makes this fail. Linux only (avoids macOS/Windows env-var differences).
+      # -----------------------------------------------------------------------
+      - name: Verify bundle is self-contained (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gcc -O2 -o interfaces/build/selfcheck interfaces/examples/C/basic_cg.c \
+              -I interfaces/include "$LIBPATH/${{ matrix.lib }}"
+          unset LD_LIBRARY_PATH
+          export LD_LIBRARY_PATH="$LIBPATH:$LIBPATH/julia"
+          out="$(interfaces/build/selfcheck)"
+          echo "$out"
+          echo "$out" | grep -q "Solved: yes"
+
+      # -----------------------------------------------------------------------
       # Run the Julia test suite (all solvers × 4 precisions)
       # Loads LibKrylov.jl as a plain Julia module — no dlopen of libkrylov.so.
       # Loading a juliac-compiled lib from within Julia would trigger a second
@@ -284,7 +320,15 @@ jobs:
           export PATH="$LIBPATH:$PATH"
           export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
           export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
-          # On Windows the binary is test_block_fortran.exe; resolve either name.
+          # ===== TEMPORARY diagnostics for the Windows exit-127 launch failure =====
+          echo "--- fortran binaries in build dir ---"
+          ls -la interfaces/build/ | grep -iE "fortran" || true
+          echo "--- ldd: block (the one that fails) ---"
+          ldd interfaces/build/test_block_fortran.exe 2>&1 || ldd interfaces/build/test_block_fortran 2>&1 || true
+          echo "--- ldd: all_solvers (this one runs fine, for comparison) ---"
+          ldd interfaces/build/test_all_solvers_fortran.exe 2>&1 | grep -i "not found" || echo "(all_solvers: no missing DLLs)"
+          echo "--- running ---"
+          # =======================================================================
           EXE=interfaces/build/test_block_fortran
           [ -f "$EXE" ] || EXE="$EXE.exe"
           "$EXE"

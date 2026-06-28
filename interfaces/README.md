@@ -37,6 +37,15 @@ julia --startup-file=no --project=. interfaces/scripts/generate_header.jl
 cp interfaces/include/krylov.h   interfaces/build/include/
 cp interfaces/include/krylov.f90 interfaces/build/include/
 
+# Copy the SuiteSparse libraries into the bundle.
+# juliac --bundle does not trace libraries that Julia dlopen's at startup
+# (SparseArrays -> SuiteSparse_jll). Without this the bundle runs only on a
+# machine that already has Julia. On Windows the libs are in Sys.BINDIR (bin/).
+JLIB="$(julia --startup-file=no -e 'print(joinpath(Sys.BINDIR, "..", "lib", "julia"))')"
+for name in amd btf camd ccolamd cholmod colamd klu ldl rbio spqr suitesparseconfig umfpack; do
+    cp -a "$JLIB"/lib"$name".* interfaces/build/lib/julia/
+done
+
 # Compile a C example
 gcc -o basic_cg interfaces/examples/C/basic_cg.c \
     -I interfaces/build/include \

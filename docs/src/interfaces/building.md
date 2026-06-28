@@ -34,7 +34,22 @@ juliac \
 julia --startup-file=no --project=. interfaces/scripts/generate_header.jl
 cp interfaces/include/krylov.h   interfaces/build/include/
 cp interfaces/include/krylov.f90 interfaces/build/include/
+
+# Copy the SuiteSparse libraries into the bundle (see the note below)
+JLIB="$(julia --startup-file=no -e 'print(joinpath(Sys.BINDIR, "..", "lib", "julia"))')"
+for name in amd btf camd ccolamd cholmod colamd klu ldl rbio spqr suitesparseconfig umfpack; do
+  cp -a "$JLIB"/lib"$name".* interfaces/build/lib/julia/
+done
 ```
+
+!!! warning "SuiteSparse must be copied manually"
+    `juliac --bundle` only copies the libraries it can trace statically. The
+    SuiteSparse stack (`libbtf`, `libcholmod`, `libumfpack`, ...) is loaded
+    dynamically by Julia at startup (`SparseArrays` is a dependency of Krylov),
+    so `juliac` does not see it. Without the copy step above, the bundle runs
+    fine on a machine that has Julia installed but fails on a clean machine with
+    `could not load library "libbtf.so.2"`. On Windows the libraries live in
+    `Sys.BINDIR` (the `bin/` folder) instead of `lib/julia`.
 
 The `--bundle` flag produces a relocatable directory:
 
