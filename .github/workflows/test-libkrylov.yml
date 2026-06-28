@@ -320,16 +320,12 @@ jobs:
           export PATH="$LIBPATH:$PATH"
           export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
           export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
-          # ===== TEMPORARY diagnostics for the Windows exit-127 launch failure =====
-          # exe exists, ldd clean, no missing libgfortran symbol. Capture the
-          # native Windows exit code (NTSTATUS) to tell apart a load failure
-          # (0xC0000139 entrypoint / 0xC0000135 dll) from a crash (0xC0000005).
           if [ "$RUNNER_OS" = "Windows" ]; then
-            echo "--- run via cmd, print native exit code ---"
-            MSYS2_ARG_CONV_EXCL='*' cmd /c 'interfaces\build\test_block_fortran.exe & echo NTSTATUS=%errorlevel%' || true
-            echo "--- (end) ---"
+            # Git-bash fails to *launch* this particular executable (exit 127)
+            # even though it runs and passes when Windows starts it directly
+            # (verified: native exit code 0). Launch it through cmd, which
+            # propagates the real exit code.
+            MSYS2_ARG_CONV_EXCL='*' cmd /c 'interfaces\build\test_block_fortran.exe'
+          else
+            interfaces/build/test_block_fortran
           fi
-          # =======================================================================
-          EXE=interfaces/build/test_block_fortran
-          [ -f "$EXE" ] || EXE="$EXE.exe"
-          "$EXE"
