@@ -20,7 +20,7 @@
   ! Version
   integer(c_int), parameter :: KRYLOV_VERSION_MAJOR = 0
   integer(c_int), parameter :: KRYLOV_VERSION_MINOR = 10
-  integer(c_int), parameter :: KRYLOV_VERSION_PATCH = 7
+  integer(c_int), parameter :: KRYLOV_VERSION_PATCH = 8
 
   ! -------------------------------------------------------------------------
   ! Enumerators  (must match krylov.h)

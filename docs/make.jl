@@ -3,7 +3,7 @@ using Documenter, Krylov
 makedocs(
   modules = [Krylov],
   doctest = true,
-  linkcheck = false,
+  linkcheck = true,
   linkcheck_ignore = [r"https://www.emis.de/.*"],
   format = Documenter.HTML(assets = ["assets/style.css"],
                            ansicolor = true,
