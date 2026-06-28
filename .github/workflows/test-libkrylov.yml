@@ -321,25 +321,13 @@ jobs:
           export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
           export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
           # ===== TEMPORARY diagnostics for the Windows exit-127 launch failure =====
-          # exe exists + ldd clean -> suspect an unresolved *symbol* import.
-          # Compare the libgfortran symbols imported by the block exe vs the
-          # all-solvers exe, and check them against the bundled libgfortran.
-          if command -v objdump >/dev/null 2>&1; then
-            BIN=interfaces/build
-            imp() { objdump -p "$1" 2>/dev/null \
-                    | awk '/DLL Name: libgfortran/{f=1;next} /DLL Name:/{f=0} f && NF {print $NF}' \
-                    | grep -oE '_gfortran_[A-Za-z0-9_]+' | sort -u; }
-            imp "$BIN/test_block_fortran.exe"       > /tmp/blk.txt || true
-            imp "$BIN/test_all_solvers_fortran.exe" > /tmp/all.txt || true
-            objdump -p "$BIN/bin/libgfortran-5.dll" 2>/dev/null \
-                    | grep -oE '_gfortran_[A-Za-z0-9_]+' | sort -u > /tmp/exp.txt || true
-            echo "--- libgfortran symbols imported by BLOCK but not by ALL-SOLVERS ---"
-            comm -23 /tmp/blk.txt /tmp/all.txt || true
-            echo "--- BLOCK libgfortran imports MISSING from the bundled libgfortran-5.dll ---"
-            comm -23 /tmp/blk.txt /tmp/exp.txt || true
+          # exe exists, ldd clean, no missing libgfortran symbol. Capture the
+          # native Windows exit code (NTSTATUS) to tell apart a load failure
+          # (0xC0000139 entrypoint / 0xC0000135 dll) from a crash (0xC0000005).
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            echo "--- run via cmd, print native exit code ---"
+            MSYS2_ARG_CONV_EXCL='*' cmd /c 'interfaces\build\test_block_fortran.exe & echo NTSTATUS=%errorlevel%' || true
             echo "--- (end) ---"
-          else
-            echo "objdump not available"
           fi
           # =======================================================================
           EXE=interfaces/build/test_block_fortran
