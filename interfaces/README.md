@@ -221,6 +221,7 @@ interfaces/
 │   │   ├── test_api.c          # options, preconditioner, warm start, error codes
 │   │   └── test_block.c        # block_gmres / block_minres
 │   └── Fortran/
-│       └── test_all_solvers.f90
+│       ├── test_all_solvers.f90
+│       └── test_block.f90      # block_gmres / block_minres
 └── README.md
 ```

@@ -437,6 +437,10 @@ krylov_block_get_X(ws, X, n, p);
 krylov_block_workspace_free(ws);
 ```
 
+Complete block programs:
+[`test/C/test_block.c`](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/interfaces/test/C/test_block.c)
+and
+[`test/Fortran/test_block.f90`](https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/interfaces/test/Fortran/test_block.f90).
 See [Block Krylov methods](block_krylov.md) for the underlying algorithms.
 
 ## Building and linking

@@ -265,3 +265,23 @@ jobs:
           export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
           export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
           interfaces/build/test_all_solvers_fortran
+
+      # -----------------------------------------------------------------------
+      # Build and run the Fortran block test (block_gmres / block_minres)
+      # -----------------------------------------------------------------------
+      - name: Build Fortran test (block solvers)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gfortran -O2 -o interfaces/build/test_block_fortran \
+              interfaces/test/Fortran/test_block.f90 \
+              "$LIBPATH/${{ matrix.lib }}"
+
+      - name: Run Fortran test (block solvers)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          interfaces/build/test_block_fortran
