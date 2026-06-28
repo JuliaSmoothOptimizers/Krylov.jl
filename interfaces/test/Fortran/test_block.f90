@@ -59,7 +59,7 @@ program test_block
   ! Solve A X = B with each block solver and check the solution.
   ! -------------------------------------------------------------------------
   do k = 1, 2
-    write(*,'(A)') trim(names(k))//" ..."
+    write(*,'(2A)') names(k), " ..."
     ret = krylov_block_workspace_create(solvers(k), int(N,c_int), int(N,c_int), &
                                         int(P,c_int), KRYLOV_FLOAT64, KRYLOV_CPU, &
                                         c_null_ptr, ws)
