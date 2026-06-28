@@ -22,7 +22,7 @@ extern "C" {
  *
  * Vectors (b, c, x, x0, and the callback buffers) are plain C arrays of the
  * element type selected by KrylovDataType: float, double, float _Complex or
- * double _Complex.  Full guide: https://jso.dev/Krylov.jl/dev/c_fortran/
+ * double _Complex.  Full guide: https://jso.dev/Krylov.jl/dev/interfaces/overview/
  * ------------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------------

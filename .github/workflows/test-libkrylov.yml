@@ -284,4 +284,7 @@ jobs:
           export PATH="$LIBPATH:$PATH"
           export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
           export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
-          interfaces/build/test_block_fortran
+          # On Windows the binary is test_block_fortran.exe; resolve either name.
+          EXE=interfaces/build/test_block_fortran
+          [ -f "$EXE" ] || EXE="$EXE.exe"
+          "$EXE"

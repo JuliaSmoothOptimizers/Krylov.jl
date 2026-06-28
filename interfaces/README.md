@@ -191,7 +191,7 @@ int krylov_block_get_X(void *ws, void *X, int n, int p);
 ```
 
 Blocks are column-major and `B` must have full column rank. See the
-[documentation](https://jso.dev/Krylov.jl/dev/c_fortran/) for details.
+[documentation](https://jso.dev/Krylov.jl/dev/interfaces/overview/) for details.
 
 ## Directory structure
 
