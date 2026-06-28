@@ -1,0 +1,367 @@
+name: Test LibKrylov interfaces
+
+# Run on every push/PR that touches the C interface or this workflow.
+on:
+  push:
+    paths:
+      - 'interfaces/**'
+      - 'src/**'
+      - 'Project.toml'
+      - '.github/workflows/test-libkrylov.yml'
+  pull_request:
+    paths:
+      - 'interfaces/**'
+      - 'src/**'
+      - 'Project.toml'
+      - '.github/workflows/test-libkrylov.yml'
+
+jobs:
+  test:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label:   linux-x86_64
+            runner:  ubuntu-latest
+            juliac:  juliac
+            lib:     libkrylov.so
+            libdir:  lib
+
+          - label:   linux-aarch64
+            runner:  ubuntu-24.04-arm
+            juliac:  juliac
+            lib:     libkrylov.so
+            libdir:  lib
+
+          - label:   macos-arm64
+            runner:  macos-latest
+            juliac:  juliac
+            lib:     libkrylov.dylib
+            libdir:  lib
+
+          - label:   macos-x86_64
+            runner:  macos-15-intel
+            juliac:  juliac
+            lib:     libkrylov.dylib
+            libdir:  lib
+
+          - label:   windows-x86_64
+            runner:  windows-latest
+            juliac:  juliac.bat
+            lib:     libkrylov.dll
+            libdir:  bin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+
+      # -----------------------------------------------------------------------
+      # Install gfortran on macOS (not pre-installed on GitHub runners)
+      # -----------------------------------------------------------------------
+      - name: Install gfortran (macOS)
+        if: runner.os == 'macOS'
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: 'gcc'
+          version: '14'
+
+      # -----------------------------------------------------------------------
+      # Install JuliaC.jl (provides the juliac CLI)
+      # -----------------------------------------------------------------------
+      - name: Install JuliaC.jl
+        shell: bash
+        run: |
+          julia --startup-file=no -e "
+            import Pkg
+            Pkg.Registry.add(\"General\")
+            Pkg.Apps.add(url=\"https://github.com/JuliaLang/JuliaC.jl\", rev=\"v0.3.8\")
+          "
+
+      - name: Add juliac to PATH
+        shell: bash
+        run: |
+          JULIAC_BIN=$(julia --startup-file=no -e "print(joinpath(DEPOT_PATH[1], \"bin\"))")
+          echo "$JULIAC_BIN" >> "$GITHUB_PATH"
+
+      # -----------------------------------------------------------------------
+      # Instantiate the Krylov.jl project
+      # -----------------------------------------------------------------------
+      - name: Instantiate Julia project
+        shell: bash
+        run: julia --startup-file=no --project=. -e "import Pkg; Pkg.instantiate()"
+
+      # -----------------------------------------------------------------------
+      # Compile libkrylov with --bundle so the library is fully self-contained
+      # (Julia runtime bundled alongside) and dlopen works without any system
+      # Julia in PATH on all platforms.
+      # -----------------------------------------------------------------------
+      - name: Build libkrylov
+        shell: bash
+        run: |
+          OUTLIB="interfaces/build/${{ matrix.libdir }}/${{ matrix.lib }}"
+          mkdir -p "$(dirname "$OUTLIB")"
+          ${{ matrix.juliac }} \
+            --project . \
+            --compile-ccallable \
+            --trim=safe \
+            --bundle interfaces/build \
+            --output-lib "$OUTLIB" \
+            interfaces/src/LibKrylov.jl
+
+      # -----------------------------------------------------------------------
+      # Generate the C header
+      # -----------------------------------------------------------------------
+      - name: Generate krylov.h
+        shell: bash
+        run: julia --startup-file=no --project=. interfaces/scripts/generate_header.jl
+
+      # -----------------------------------------------------------------------
+      # Bundle the SuiteSparse libraries.
+      # juliac --bundle does not trace libraries that Julia dlopen's at startup
+      # (SparseArrays -> SuiteSparse_jll: libbtf, libcholmod, libumfpack, ...).
+      # They must be copied next to the embedded runtime so the bundle runs on a
+      # machine without Julia.
+      # -----------------------------------------------------------------------
+      - name: Bundle SuiteSparse libraries
+        shell: bash
+        run: |
+          JBIN="$(julia --startup-file=no -e 'print(Sys.BINDIR)')"
+          if [ "$RUNNER_OS" = "Windows" ]; then JLIB="$JBIN"; else JLIB="$JBIN/../lib/julia"; fi
+          DEST="$(dirname "$(find interfaces/build -name 'libjulia-internal*' | head -1)")"
+          echo "Copying SuiteSparse libraries from $JLIB to $DEST"
+          for name in amd btf camd ccolamd cholmod colamd klu ldl rbio spqr suitesparseconfig umfpack; do
+            cp -a "$JLIB"/lib"$name".* "$DEST"/ 2>/dev/null || true
+          done
+
+      # -----------------------------------------------------------------------
+      # Verify the bundle is self-contained: run an example with ONLY the bundle
+      # on the library path (no system Julia), so a missing dlopen'd dependency
+      # makes this fail. Linux only (avoids macOS/Windows env-var differences).
+      # -----------------------------------------------------------------------
+      - name: Verify bundle is self-contained (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gcc -O2 -o interfaces/build/selfcheck interfaces/examples/C/basic_cg.c \
+              -I interfaces/include "$LIBPATH/${{ matrix.lib }}"
+          unset LD_LIBRARY_PATH
+          export LD_LIBRARY_PATH="$LIBPATH:$LIBPATH/julia"
+          out="$(interfaces/build/selfcheck)"
+          echo "$out"
+          echo "$out" | grep -q "Solved: yes"
+
+      # -----------------------------------------------------------------------
+      # Run the Julia test suite (all solvers × 4 precisions)
+      # Loads LibKrylov.jl as a plain Julia module — no dlopen of libkrylov.so.
+      # Loading a juliac-compiled lib from within Julia would trigger a second
+      # runtime via ijl_adopt_thread and crash; the C/Fortran tests cover the
+      # compiled library from native processes.
+      # -----------------------------------------------------------------------
+      - name: Run Julia tests
+        shell: bash
+        run: |
+          julia --startup-file=no --project=. interfaces/test/test_libkrylov.jl
+
+      # -----------------------------------------------------------------------
+      # Build and run the C smoke test (basic_cg example)
+      # -----------------------------------------------------------------------
+      - name: Build C example
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gcc -o interfaces/build/basic_cg interfaces/examples/C/basic_cg.c \
+              -I interfaces/include \
+              "$LIBPATH/${{ matrix.lib }}"
+
+      - name: Run C example
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          actual=$(interfaces/build/basic_cg)
+          echo "$actual"
+          echo "$actual" | grep -q "Solved: yes"
+          echo "$actual" | grep -q "x = \[ 1.00 1.00 1.00 1.00 1.00 \]"
+
+      # -----------------------------------------------------------------------
+      # Build and run the C block example (block_gmres)
+      # -----------------------------------------------------------------------
+      - name: Build C example (block)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gcc -o interfaces/build/block_gmres interfaces/examples/C/block_gmres.c \
+              -I interfaces/include \
+              "$LIBPATH/${{ matrix.lib }}" -lm
+
+      - name: Run C example (block)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          actual=$(interfaces/build/block_gmres)
+          echo "$actual"
+          echo "$actual" | grep -q "Block solved: yes"
+
+      # -----------------------------------------------------------------------
+      # Build and run the C full test (all solvers)
+      # -----------------------------------------------------------------------
+      - name: Build C test (all solvers)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          # -lm is implicit on Windows (CRT), harmless flag on Linux/macOS
+          gcc -O2 -o interfaces/build/test_all_solvers_c \
+              interfaces/test/C/test_all_solvers.c \
+              -I interfaces/include \
+              "$LIBPATH/${{ matrix.lib }}" \
+              -lm
+
+      - name: Run C test (all solvers)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          interfaces/build/test_all_solvers_c
+
+      # -----------------------------------------------------------------------
+      # Build and run the C behavioural test (options, preconditioner,
+      # warm start, error codes, reuse, Float32)
+      # -----------------------------------------------------------------------
+      - name: Build C test (API behaviour)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gcc -O2 -o interfaces/build/test_api_c \
+              interfaces/test/C/test_api.c \
+              -I interfaces/include \
+              "$LIBPATH/${{ matrix.lib }}" \
+              -lm
+
+      - name: Run C test (API behaviour)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          interfaces/build/test_api_c
+
+      # -----------------------------------------------------------------------
+      # Build and run the C block test (block_gmres / block_minres)
+      # -----------------------------------------------------------------------
+      - name: Build C test (block solvers)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gcc -O2 -o interfaces/build/test_block_c \
+              interfaces/test/C/test_block.c \
+              -I interfaces/include \
+              "$LIBPATH/${{ matrix.lib }}" \
+              -lm
+
+      - name: Run C test (block solvers)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          interfaces/build/test_block_c
+
+      # -----------------------------------------------------------------------
+      # Build and run the Fortran smoke test (basic_cg example)
+      # -----------------------------------------------------------------------
+      - name: Build Fortran example
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gfortran -o interfaces/build/basic_cg_fortran \
+              interfaces/examples/Fortran/basic_cg.f90 \
+              "$LIBPATH/${{ matrix.lib }}"
+
+      - name: Run Fortran example
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          actual=$(interfaces/build/basic_cg_fortran)
+          echo "$actual"
+          echo "$actual" | grep -q "Solved: T"
+          echo "$actual" | grep -q "1.00"
+
+      # -----------------------------------------------------------------------
+      # Build and run the Fortran block example (block_gmres)
+      # -----------------------------------------------------------------------
+      - name: Build Fortran example (block)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gfortran -o interfaces/build/block_gmres_fortran \
+              interfaces/examples/Fortran/block_gmres.f90 \
+              "$LIBPATH/${{ matrix.lib }}"
+
+      - name: Run Fortran example (block)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          actual=$(interfaces/build/block_gmres_fortran)
+          echo "$actual"
+          echo "$actual" | grep -q "Block solved: T"
+
+      # -----------------------------------------------------------------------
+      # Build and run the Fortran full test (all solvers)
+      # -----------------------------------------------------------------------
+      - name: Build Fortran test (all solvers)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gfortran -O2 -o interfaces/build/test_all_solvers_fortran \
+              interfaces/test/Fortran/test_all_solvers.f90 \
+              "$LIBPATH/${{ matrix.lib }}"
+
+      - name: Run Fortran test (all solvers)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          interfaces/build/test_all_solvers_fortran
+
+      # -----------------------------------------------------------------------
+      # Build and run the Fortran block test (block_gmres / block_minres)
+      # -----------------------------------------------------------------------
+      - name: Build Fortran test (block solvers)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gfortran -O2 -o interfaces/build/test_block_fortran \
+              interfaces/test/Fortran/test_block.f90 \
+              "$LIBPATH/${{ matrix.lib }}"
+
+      - name: Run Fortran test (block solvers)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          interfaces/build/test_block_fortran
