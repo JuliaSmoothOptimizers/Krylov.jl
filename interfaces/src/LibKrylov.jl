@@ -3,6 +3,10 @@ module LibKrylov
 using LinearAlgebra
 using Krylov
 
+# Krylov.jl version compiled into this library (matches the KRYLOV_VERSION_*
+# macros in krylov.h; queryable at run time via krylov_get_version).
+const _KRYLOV_VERSION = pkgversion(Krylov)
+
 include("c_enums.jl")
 include("c_operator.jl")
 include("c_stores.jl")   # 136 typed stores + dispatch helpers (generated)
@@ -75,7 +79,25 @@ end
 @export_sig krylov_default_options "KrylovOptions"
 
 Base.@ccallable function krylov_default_options() :: KrylovOptionsC
-    KrylovOptionsC(NaN, NaN, Cint(0), Cint(0), 0.0, NaN, NaN)
+    KrylovOptionsC(NaN, NaN, Cint(0), Cint(0), 0.0, NaN, NaN,
+                   NaN, 0.0, Cint(0), Cint(0), Cint(0))
+end
+
+# ---------------------------------------------------------------------------
+# krylov_get_version — write the Krylov.jl version of this library into
+# *major, *minor, *patch (the same values as the KRYLOV_VERSION_* macros).
+# ---------------------------------------------------------------------------
+@export_sig krylov_get_version "void" (major, "int*") (minor, "int*") (patch, "int*")
+
+Base.@ccallable function krylov_get_version(
+    major :: Ptr{Cint},
+    minor :: Ptr{Cint},
+    patch :: Ptr{Cint},
+) :: Cvoid
+  unsafe_store!(major, Cint(_KRYLOV_VERSION.major))
+  unsafe_store!(minor, Cint(_KRYLOV_VERSION.minor))
+  unsafe_store!(patch, Cint(_KRYLOV_VERSION.patch))
+  nothing
 end
 
 # ---------------------------------------------------------------------------
@@ -86,7 +108,11 @@ end
 #              computes y = A*x
 #   matvec_At: C callback for y = A'*x, or NULL for CG/GMRES/MINRES/...
 #              (required for LSQR, LSMR, CGLS, CRAIG, ...)
-#   matvec_M : preconditioner callback (same signature), or NULL
+#   matvec_M : left preconditioner callback (y = M⁻¹x), or NULL
+#   matvec_N : right preconditioner callback (y = N⁻¹x), or NULL
+#              (only used by the non-symmetric solvers that accept both:
+#               GMRES, FGMRES, FOM, DIOM, DQGMRES, BiCGSTAB, CGS, BiLQ, QMR;
+#               ignored by the others)
 #   b        : right-hand side array of length m
 #   c        : second right-hand side (NULL if not needed)
 #   userdata : opaque pointer forwarded to every callback
@@ -94,20 +120,21 @@ end
 #
 # Returns 0 on success, nonzero on error.
 # ---------------------------------------------------------------------------
-@export_sig krylov_solve "int" (ws, "void*") (matvec_A, "KrylovMatvec") (matvec_At, "KrylovMatvec") (matvec_M, "KrylovMatvec") (b, "const void*") (c, "const void*") (userdata, "void*") (opts, "const KrylovOptions*")
+@export_sig krylov_solve "int" (ws, "void*") (matvec_A, "KrylovMatvec") (matvec_At, "KrylovMatvec") (matvec_M, "KrylovMatvec") (matvec_N, "KrylovMatvec") (b, "const void*") (c, "const void*") (userdata, "void*") (opts, "const KrylovOptions*")
 
 Base.@ccallable function krylov_solve(
     ws_ptr   :: Ptr{Cvoid},
     fptr_A   :: Ptr{Cvoid},
     fptr_At  :: Ptr{Cvoid},
     fptr_M   :: Ptr{Cvoid},
+    fptr_N   :: Ptr{Cvoid},
     b_ptr    :: Ptr{Cvoid},
     c_ptr    :: Ptr{Cvoid},
     userdata :: Ptr{Cvoid},
     opts_ptr :: Ptr{Cvoid},
 ) :: Cint
   try
-    _do_solve!(ws_ptr, fptr_A, fptr_At, fptr_M, b_ptr, c_ptr, userdata, opts_ptr)
+    _do_solve!(ws_ptr, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts_ptr)
   catch e
     @error "krylov_solve" exception=e
     Cint(-1)
@@ -189,6 +216,30 @@ Base.@ccallable function krylov_warm_start(
 end
 
 # ---------------------------------------------------------------------------
+# krylov_warm_start2 — sets BOTH initial guesses for the next krylov_solve call,
+# for the two-solution solvers (TriCG, TriMR, GPMR, BiLQR, TriLQR, USYMLQR).
+#   x0 : primal guess, length nx (same size as krylov_get_x)
+#   y0 : dual guess,   length ny (same size as krylov_get_y)
+# Returns 0 on success, -1 on error, -2 if the solver has a single solution.
+# ---------------------------------------------------------------------------
+@export_sig krylov_warm_start2 "int" (ws, "void*") (x0, "const void*") (y0, "const void*") (nx, "int") (ny, "int")
+
+Base.@ccallable function krylov_warm_start2(
+    ws_ptr :: Ptr{Cvoid},
+    x0_ptr :: Ptr{Cvoid},
+    y0_ptr :: Ptr{Cvoid},
+    nx     :: Cint,
+    ny     :: Cint,
+) :: Cint
+  try
+    _do_warm_start2!(ws_ptr, x0_ptr, y0_ptr, nx, ny)
+  catch e
+    @error "krylov_warm_start2" exception=e
+    Cint(-1)
+  end
+end
+
+# ---------------------------------------------------------------------------
 # krylov_workspace_free — releases the workspace (handle invalid after this)
 # Returns 0 on success, 1 if handle was not found.
 # ---------------------------------------------------------------------------
@@ -246,23 +297,26 @@ end
 #
 #   ws       : block workspace handle
 #   matvec_A : KrylovBlockMatvec computing Y = A*X for a block of p columns
-#   matvec_M : preconditioner block matvec (Y = M⁻¹X), or NULL
+#   matvec_M : left preconditioner block matvec (Y = M⁻¹X), or NULL
+#   matvec_N : right preconditioner block matvec (Y = N⁻¹X), or NULL
+#              (only used by block_gmres; ignored by block_minres)
 #   B        : right-hand side block, m×p column-major
 #   userdata : forwarded to every callback
 #   opts     : KrylovOptions (atol/rtol/itmax/verbose used), or NULL
 # ---------------------------------------------------------------------------
-@export_sig krylov_block_solve "int" (ws, "void*") (matvec_A, "KrylovBlockMatvec") (matvec_M, "KrylovBlockMatvec") (B, "const void*") (userdata, "void*") (opts, "const KrylovOptions*")
+@export_sig krylov_block_solve "int" (ws, "void*") (matvec_A, "KrylovBlockMatvec") (matvec_M, "KrylovBlockMatvec") (matvec_N, "KrylovBlockMatvec") (B, "const void*") (userdata, "void*") (opts, "const KrylovOptions*")
 
 Base.@ccallable function krylov_block_solve(
     ws_ptr   :: Ptr{Cvoid},
     fptr_A   :: Ptr{Cvoid},
     fptr_M   :: Ptr{Cvoid},
+    fptr_N   :: Ptr{Cvoid},
     B_ptr    :: Ptr{Cvoid},
     userdata :: Ptr{Cvoid},
     opts_ptr :: Ptr{Cvoid},
 ) :: Cint
   try
-    _do_block_solve!(ws_ptr, fptr_A, fptr_M, B_ptr, userdata, opts_ptr)
+    _do_block_solve!(ws_ptr, fptr_A, fptr_M, fptr_N, B_ptr, userdata, opts_ptr)
   catch e
     @error "krylov_block_solve" exception=e
     Cint(-1)

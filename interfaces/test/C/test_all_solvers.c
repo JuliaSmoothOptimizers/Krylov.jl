@@ -208,7 +208,8 @@ static int run_test(const SolverInfo *info,
     ret = krylov_solve(ws,
                        cb_A,
                        info->need_At ? cb_At : NULL,
-                       NULL,
+                       NULL,   /* matvec_M (left preconditioner) */
+                       NULL,   /* matvec_N (right preconditioner) */
                        b,
                        info->need_c ? c : NULL,
                        data,

@@ -167,7 +167,8 @@ contains
                          c_funloc(cb_matvec_A),               &
                          merge(c_funloc(cb_matvec_At),        &
                                c_null_funptr, need_At),        &
-                         c_null_funptr,                       &
+                         c_null_funptr,                       &  ! no left preconditioner
+                         c_null_funptr,                       &  ! no right preconditioner
                          c_loc(b_vec),                        &
                          merge(c_loc(c_vec), c_null_ptr, need_c), &
                          c_null_ptr,                          &

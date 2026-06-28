@@ -49,7 +49,7 @@ program block_gmres
   opts = krylov_default_options()
   opts%atol = 1.0d-10 ; opts%rtol = 1.0d-10
   ret = krylov_block_solve(ws, c_funloc(cb_block_A), c_null_funptr,       &
-                           c_loc(B), c_null_ptr, c_loc(opts))
+                           c_null_funptr, c_loc(B), c_null_ptr, c_loc(opts))
   ret = krylov_block_get_X(ws, c_loc(X), int(n, c_int), int(p, c_int))
 
   write(*,'(A,L1,A,I0,A,ES8.1)')                                          &

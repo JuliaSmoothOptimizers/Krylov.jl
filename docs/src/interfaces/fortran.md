@@ -1,7 +1,7 @@
 # [Fortran interface](@id fortran-interface)
 
 Add `use iso_c_binding` and `include 'krylov.f90'` after `implicit none`, then link against `libkrylov` (see [Building libkrylov](@ref building-libkrylov)).
-The concepts (callbacks, data types, options, return codes, block solvers) are described in the interfaces [overview](@ref overview-interfaces).
+The concepts (callbacks, data types, options, return codes, block solvers) are described in the [reference](@ref reference-interfaces).
 This page collects runnable Fortran programs.
 
 ## Example
@@ -29,7 +29,7 @@ program basic_cg
   opts = krylov_default_options()
   opts%atol = 1d-10 ; opts%rtol = 1d-10
   ret = krylov_solve(ws, c_funloc(matvec_A), c_null_funptr, c_null_funptr, &
-                     c_loc(b), c_null_ptr, c_loc(diag), c_loc(opts))
+                     c_null_funptr, c_loc(b), c_null_ptr, c_loc(diag), c_loc(opts))
   ret = krylov_get_x(ws, c_loc(x), int(n, c_int))
 
   write(*,*) "Solved:", krylov_is_solved(ws) == 1, "  niter:", krylov_niter(ws)
@@ -96,7 +96,7 @@ program block_gmres
   opts = krylov_default_options()
   opts%atol = 1.0d-10 ; opts%rtol = 1.0d-10
   ret = krylov_block_solve(ws, c_funloc(cb_block_A), c_null_funptr,       &
-                           c_loc(B), c_null_ptr, c_loc(opts))
+                           c_null_funptr, c_loc(B), c_null_ptr, c_loc(opts))
   ret = krylov_block_get_X(ws, c_loc(X), int(n, c_int), int(p, c_int))
 
   write(*,'(A,L1,A,I0,A,ES8.1)')                                          &
@@ -143,7 +143,7 @@ A few rules make the binding work:
 - `include 'krylov.f90'` goes after `implicit none`. It declares the enum parameters, the `KrylovOptions` and `KrylovWorkspaceOptions` derived types (both `bind(c)`), and the `interface` blocks for every function.
 - Anything whose address you take with `c_loc` must have the `target` attribute, including the option structs (`type(KrylovOptions), target :: opts`).
 - Vectors and structs are passed as `c_loc(array)` and `c_loc(opts)`; pass `c_null_ptr` for an absent `b`, `c`, `opts` or `wopts`.
-- Callbacks are passed as `c_funloc(my_sub)` and must be `bind(c)` subroutines with three `type(c_ptr), value` arguments (the block callback takes an extra `integer(c_int), value :: p`); pass `c_null_funptr` for an unused slot. Inside, recover Fortran arrays with `c_f_pointer`.
+- Callbacks are passed as `c_funloc(my_sub)` and must be `bind(c)` subroutines with three `type(c_ptr), value` arguments (the block callback takes an extra `integer(c_int), value :: p`). Pass `c_null_funptr` for an unused slot. Inside, recover Fortran arrays with `c_f_pointer`.
 - Block right-hand sides and solutions are natural Fortran 2D arrays (column-major), passed with `c_loc`.
 
 ## More examples

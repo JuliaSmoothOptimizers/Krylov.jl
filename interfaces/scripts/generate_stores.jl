@@ -31,8 +31,41 @@ const TWO_RHS_SOLVERS = Set(["tricg", "trimr", "bilqr", "trilqr", "usymlq", "usy
 const GPMR_SOLVER = "gpmr"
 
 # Solver categories for extra KrylovOptions fields (solve-time)
-const LAMBDA_SOLVERS = Set(["lsqr", "lsmr", "cgls", "crls", "lnlq", "lslq", "craig", "craigmr"])
 const TAU_NU_SOLVERS = Set(["tricg", "trimr"])
+
+# Least-squares / least-norm solvers and their preconditioners.  Krylov's
+# convention is M = E⁻¹ (acts on the m-dimensional data space) and N = F⁻¹ (the
+# n-dimensional solution space), so for these solvers the matvec_M callback sees
+# length-m vectors and matvec_N length-n.  The normal-equations methods are the
+# exception: CGLS/CRLS take a single preconditioner on the n-space (passed as
+# matvec_M), and CGNE/CRMR a single one on the n-space (passed as matvec_N).
+const LS_MN_RADIUS_SOLVERS = Set(["lsqr", "lsmr"])                     # M(m) + N(n) + λ + radius
+const LS_MN_SOLVERS        = Set(["lslq", "craig", "craigmr", "lnlq"]) # M(m) + N(n) + λ
+const LS_M_RADIUS_SOLVERS  = Set(["cgls", "crls"])                    # M(n) + λ + radius
+const LS_N_SOLVERS         = Set(["cgne", "crmr"])                    # N(n) + λ
+
+# Square (non-symmetric) solvers that accept BOTH a left (M) and a right (N)
+# preconditioner — the only family where the C interface exposes matvec_N.
+# Mirrors the Krylov.jl solvers whose keyword list contains both :M and :N for
+# a square operator.  Symmetric solvers (cg, cr, minres, ...) take M only;
+# least-squares / least-norm and gpmr families are handled by their own helpers.
+const MN_SOLVERS = Set(["gmres", "fgmres", "fom", "diom", "dqgmres", "bicgstab", "cgs", "bilq", "qmr"])
+
+# ---------------------------------------------------------------------------
+# Optional scalar solve-time options, gated per solver (mirrors the Krylov.jl
+# keyword lists).  These determine which generated helper a solver routes to,
+# so an option is only ever forwarded to a solver that actually accepts it.
+# ---------------------------------------------------------------------------
+# M + N + restart + reorthogonalization
+const GMRES_FAMILY    = Set(["gmres", "fgmres", "fom"])
+# M + N + reorthogonalization (limited-memory Arnoldi, no restart)
+const DIOM_FAMILY     = Set(["diom", "dqgmres"])
+# M + radius + linesearch
+const CG_FAMILY       = Set(["cg", "cr"])
+# M + linesearch + λ (shift)
+const MINRES_FAMILY   = Set(["minres", "minres_qlp"])
+# M + λ (shift) — symmetric, no linesearch
+const SYM_LAMBDA_SOLVERS = Set(["symmlq", "minares"])
 
 # Solver categories for KrylovWorkspaceOptions fields (construction-time).
 # These mirror exactly the Krylov.jl workspace constructors that accept the
@@ -51,6 +84,7 @@ const WINDOW_DEFAULT = 5
 # matrix-based API (m×p block RHS).  Workspaces use SV=Vector{FC}, SM=Matrix{FC}.
 # ---------------------------------------------------------------------------
 const BLOCK_MEMORY_SOLVERS = Set(["block_gmres"])  # only block_gmres takes `memory`
+const BLOCK_MN_SOLVERS = Set(["block_gmres"])      # only block_gmres takes a right preconditioner N
 const BLOCK_MEMORY_DEFAULT = 5
 block_combo_key(si, di) = UInt8(si * 4 + di)
 block_store_name(sname, suffix) = "store_$(sname)_$(suffix)"
@@ -147,24 +181,50 @@ function _typed_warm_start!(ws::Krylov.KrylovWorkspace{T, FC, S}, x0_ptr, n) whe
   Cint(0)
 end
 
+# Two-solution warm start (BiLQR, TriLQR, USYMLQR, TriCG, TriMR, GPMR): seeds
+# both the primal guess x0 (size of solution(ws, 1)) and the dual guess y0 (size
+# of solution(ws, 2)).  Inlined for the same trim-safety reason as above.
+# nx / ny are the buffer lengths the caller passed; they must match ws.x / ws.y.
+function _typed_warm_start2!(ws::Krylov.KrylovWorkspace{T, FC, S}, x0_ptr, y0_ptr, nx, ny) where {T, FC, S}
+  hasfield(typeof(ws), :Δy) || return Cint(-2)   # not a two-solution solver
+  (Int(nx) == length(ws.x) && Int(ny) == length(ws.y)) || return Cint(-1)
+  x0 = unsafe_wrap(Vector{FC}, Ptr{FC}(x0_ptr), Int(nx))
+  y0 = unsafe_wrap(Vector{FC}, Ptr{FC}(y0_ptr), Int(ny))
+  isempty(ws.Δx) && (ws.Δx = similar(ws.x))
+  isempty(ws.Δy) && (ws.Δy = similar(ws.y))
+  copyto!(ws.Δx, x0)
+  copyto!(ws.Δy, y0)
+  ws.warm_start = true
+  Cint(0)
+end
+
 # ---------------------------------------------------------------------------
 # _opts_kw — build base keyword arguments from a KrylovOptionsC struct.
-# NaN sentinels fall back to the Julia solver default (√eps(T)).
+# NaN sentinels fall back to the Julia solver default (√eps(T); timemax → Inf).
 # itmax=0 is always passed explicitly; Krylov.jl interprets 0 as "use default".
+# atol/rtol/itmax/verbose/timemax are accepted by EVERY solver, so they live here.
 # The NamedTuple type is always the same concrete type — compatible with --trim=safe.
 # ---------------------------------------------------------------------------
 function _opts_kw(opts::KrylovOptionsC, ::Type{T}) where T
   atol_v = isnan(opts.atol) ? sqrt(eps(T)) : T(opts.atol)
   rtol_v = isnan(opts.rtol) ? sqrt(eps(T)) : T(opts.rtol)
-  (atol=atol_v, rtol=rtol_v, itmax=Int(opts.itmax), verbose=Int(opts.verbose))
+  tmax_v = isnan(opts.timemax) ? Inf : Float64(opts.timemax)
+  (atol=atol_v, rtol=rtol_v, itmax=Int(opts.itmax), verbose=Int(opts.verbose), timemax=tmax_v)
 end
 
 # ---------------------------------------------------------------------------
 # _typed_solve! variants — one per option family
 # ---------------------------------------------------------------------------
 
-# Basic one-RHS solvers (no extra options beyond atol/rtol/itmax/verbose)
-function _typed_solve!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+# Every one/two-RHS _typed_solve* helper shares the same argument list (fptr_M is
+# the left preconditioner, fptr_N the right one) so _do_solve! calls any of them
+# uniformly.  There is one helper per *option set* (which scalar kwargs a solver
+# accepts), so an option is only ever forwarded to a solver that supports it.
+# Each call site lists its kwargs as literals → a statically-known concrete
+# NamedTuple, required by --trim=safe.
+
+# M only — CAR, CGNE, CRMR (and the catch-all).  fptr_N ignored.
+function _typed_solve!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
   A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
   b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
   kw = _opts_kw(opts, T)
@@ -177,20 +237,196 @@ function _typed_solve!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fp
   Cint(0)
 end
 
-# Least-squares solvers: adds λ (regularisation).
-# λ=0.0 is the Julia default, so always passing it is safe and avoids
-# a conditional merge that would produce a dynamically-typed NamedTuple.
-function _typed_solve_lambda!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+# M + radius + linesearch — CG, CR.
+function _typed_solve_cg!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
   A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
   b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
   kw = _opts_kw(opts, T)
-  Krylov.krylov_solve!(ws, A, b; λ=T(opts.lambda), kw...)
+  rad = T(opts.radius); ls = opts.linesearch != 0
+  if fptr_M != C_NULL
+    M = CPreconditioner{FC}(ws.n, fptr_M, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, radius=rad, linesearch=ls, kw...)
+  else
+    Krylov.krylov_solve!(ws, A, b; radius=rad, linesearch=ls, kw...)
+  end
+  Cint(0)
+end
+
+# M + linesearch + λ-shift — MINRES, MINRES-QLP.
+function _typed_solve_minres!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+  A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
+  b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
+  kw = _opts_kw(opts, T)
+  λ = T(opts.lambda); ls = opts.linesearch != 0
+  if fptr_M != C_NULL
+    M = CPreconditioner{FC}(ws.n, fptr_M, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, λ=λ, linesearch=ls, kw...)
+  else
+    Krylov.krylov_solve!(ws, A, b; λ=λ, linesearch=ls, kw...)
+  end
+  Cint(0)
+end
+
+# M + λ-shift — SYMMLQ, MINARES (symmetric, no linesearch).
+function _typed_solve_sym_lambda!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+  A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
+  b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
+  kw = _opts_kw(opts, T)
+  λ = T(opts.lambda)
+  if fptr_M != C_NULL
+    M = CPreconditioner{FC}(ws.n, fptr_M, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, λ=λ, kw...)
+  else
+    Krylov.krylov_solve!(ws, A, b; λ=λ, kw...)
+  end
+  Cint(0)
+end
+
+# M + N — BiCGSTAB, CGS, BiLQ, QMR.  The four NULL/non-NULL combinations are
+# spelled out so each krylov_solve! call site is concretely typed (--trim=safe).
+function _typed_solve_mn!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+  A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
+  b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
+  kw = _opts_kw(opts, T)
+  if fptr_M != C_NULL && fptr_N != C_NULL
+    M = CPreconditioner{FC}(ws.m, fptr_M, userdata)
+    N = CPreconditioner{FC}(ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, N=N, kw...)
+  elseif fptr_M != C_NULL
+    M = CPreconditioner{FC}(ws.m, fptr_M, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, kw...)
+  elseif fptr_N != C_NULL
+    N = CPreconditioner{FC}(ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, b; N=N, kw...)
+  else
+    Krylov.krylov_solve!(ws, A, b; kw...)
+  end
+  Cint(0)
+end
+
+# M + N + reorthogonalization — DIOM, DQGMRES (limited-memory, no restart).
+function _typed_solve_mn_reorth!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+  A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
+  b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
+  kw = _opts_kw(opts, T)
+  ro = opts.reorthogonalization != 0
+  if fptr_M != C_NULL && fptr_N != C_NULL
+    M = CPreconditioner{FC}(ws.m, fptr_M, userdata)
+    N = CPreconditioner{FC}(ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, N=N, reorthogonalization=ro, kw...)
+  elseif fptr_M != C_NULL
+    M = CPreconditioner{FC}(ws.m, fptr_M, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, reorthogonalization=ro, kw...)
+  elseif fptr_N != C_NULL
+    N = CPreconditioner{FC}(ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, b; N=N, reorthogonalization=ro, kw...)
+  else
+    Krylov.krylov_solve!(ws, A, b; reorthogonalization=ro, kw...)
+  end
+  Cint(0)
+end
+
+# M + N + restart + reorthogonalization — GMRES, FGMRES, FOM.
+function _typed_solve_gmres!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+  A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
+  b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
+  kw = _opts_kw(opts, T)
+  rs = opts.restart != 0; ro = opts.reorthogonalization != 0
+  if fptr_M != C_NULL && fptr_N != C_NULL
+    M = CPreconditioner{FC}(ws.m, fptr_M, userdata)
+    N = CPreconditioner{FC}(ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, N=N, restart=rs, reorthogonalization=ro, kw...)
+  elseif fptr_M != C_NULL
+    M = CPreconditioner{FC}(ws.m, fptr_M, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, restart=rs, reorthogonalization=ro, kw...)
+  elseif fptr_N != C_NULL
+    N = CPreconditioner{FC}(ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, b; N=N, restart=rs, reorthogonalization=ro, kw...)
+  else
+    Krylov.krylov_solve!(ws, A, b; restart=rs, reorthogonalization=ro, kw...)
+  end
+  Cint(0)
+end
+
+# Least-squares / least-norm preconditioning follows Krylov's convention:
+# M = E⁻¹ acts on the m-dimensional data space, N = F⁻¹ on the n-dimensional
+# solution space (so M is sized with ws.m, N with ws.n).  λ is always passed
+# (0.0 = none).  M/N combinations are spelled out for --trim=safe.
+
+# λ + radius + M(m) + N(n) — LSQR, LSMR.
+function _typed_solve_ls_mn_radius!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+  A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
+  b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
+  kw = _opts_kw(opts, T); λ = T(opts.lambda); rad = T(opts.radius)
+  if fptr_M != C_NULL && fptr_N != C_NULL
+    M = CPreconditioner{FC}(ws.m, fptr_M, userdata)
+    N = CPreconditioner{FC}(ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, N=N, λ=λ, radius=rad, kw...)
+  elseif fptr_M != C_NULL
+    M = CPreconditioner{FC}(ws.m, fptr_M, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, λ=λ, radius=rad, kw...)
+  elseif fptr_N != C_NULL
+    N = CPreconditioner{FC}(ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, b; N=N, λ=λ, radius=rad, kw...)
+  else
+    Krylov.krylov_solve!(ws, A, b; λ=λ, radius=rad, kw...)
+  end
+  Cint(0)
+end
+
+# λ + M(m) + N(n) — LSLQ, CRAIG, CRAIGMR, LNLQ (no radius).
+function _typed_solve_ls_mn!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+  A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
+  b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
+  kw = _opts_kw(opts, T); λ = T(opts.lambda)
+  if fptr_M != C_NULL && fptr_N != C_NULL
+    M = CPreconditioner{FC}(ws.m, fptr_M, userdata)
+    N = CPreconditioner{FC}(ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, N=N, λ=λ, kw...)
+  elseif fptr_M != C_NULL
+    M = CPreconditioner{FC}(ws.m, fptr_M, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, λ=λ, kw...)
+  elseif fptr_N != C_NULL
+    N = CPreconditioner{FC}(ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, b; N=N, λ=λ, kw...)
+  else
+    Krylov.krylov_solve!(ws, A, b; λ=λ, kw...)
+  end
+  Cint(0)
+end
+
+# λ + radius + M(n) — CGLS, CRLS (CG/CR on the normal equations; single
+# preconditioner on the n-space, passed via matvec_M).
+function _typed_solve_ls_m_radius!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+  A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
+  b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
+  kw = _opts_kw(opts, T); λ = T(opts.lambda); rad = T(opts.radius)
+  if fptr_M != C_NULL
+    M = CPreconditioner{FC}(ws.n, fptr_M, userdata)
+    Krylov.krylov_solve!(ws, A, b; M=M, λ=λ, radius=rad, kw...)
+  else
+    Krylov.krylov_solve!(ws, A, b; λ=λ, radius=rad, kw...)
+  end
+  Cint(0)
+end
+
+# λ + N(n) — CGNE, CRMR (single preconditioner on the n-space, via matvec_N).
+function _typed_solve_ls_n!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+  A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
+  b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
+  kw = _opts_kw(opts, T); λ = T(opts.lambda)
+  if fptr_N != C_NULL
+    N = CPreconditioner{FC}(ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, b; N=N, λ=λ, kw...)
+  else
+    Krylov.krylov_solve!(ws, A, b; λ=λ, kw...)
+  end
   Cint(0)
 end
 
 # TriCG / TriMR: two-RHS + τ and ν (quasi-definite diagonal parameters).
-# NaN sentinel → use Krylov.jl defaults (τ=1.0, ν=-1.0).
-function _typed_solve_tau_nu!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+# NaN sentinel → use Krylov.jl defaults (τ=1.0, ν=-1.0).  M/N ignored.
+function _typed_solve_tau_nu!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
   A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
   b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
   c  = unsafe_wrap(Vector{FC}, Ptr{FC}(c_ptr), ws.n)
@@ -201,8 +437,8 @@ function _typed_solve_tau_nu!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr
   Cint(0)
 end
 
-# Basic two-RHS solvers (BiLQR / TriLQR / USYMLQ / USYMQR / USYMLQR)
-function _typed_solve_two_rhs!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+# Basic two-RHS solvers (BiLQR / TriLQR / USYMLQ / USYMQR / USYMLQR).  M/N ignored.
+function _typed_solve_two_rhs!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
   A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
   b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
   c  = unsafe_wrap(Vector{FC}, Ptr{FC}(c_ptr), ws.n)
@@ -211,14 +447,16 @@ function _typed_solve_two_rhs!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fpt
   Cint(0)
 end
 
-# GPMR — fptr_At slot is repurposed as B (n×m), distinct from A (m×n)
-function _typed_solve_gpmr!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_B, fptr_M, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
+# GPMR — fptr_At slot is repurposed as B (n×m), distinct from A (m×n).
+# GPMR has its own preconditioner family (C, D, E, F), not exposed: M/N ignored.
+# It does accept reorthogonalization.
+function _typed_solve_gpmr!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_B, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
   A  = COperator{FC}(ws.m, ws.n, fptr_A, C_NULL, userdata)
   B  = COperator{FC}(ws.n, ws.m, fptr_B, C_NULL, userdata)
   b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
   c  = unsafe_wrap(Vector{FC}, Ptr{FC}(c_ptr), ws.n)
   kw = _opts_kw(opts, T)
-  Krylov.krylov_solve!(ws, A, B, b, c; kw...)
+  Krylov.krylov_solve!(ws, A, B, b, c; reorthogonalization=(opts.reorthogonalization != 0), kw...)
   Cint(0)
 end
 """)
@@ -283,27 +521,41 @@ end
     sref -> "_typed_warm_start!($(sref), x0_ptr, n)",
     "Cint(-1)")
 
+  emit_dispatch(io, "_do_warm_start2!", "ws_ptr :: Ptr{Cvoid}, x0_ptr :: Ptr{Cvoid}, y0_ptr :: Ptr{Cvoid}, nx :: Cint, ny :: Cint",
+    "haskey(ws_key_store, ws_ptr)",
+    sref -> "_typed_warm_start2!($(sref), x0_ptr, y0_ptr, nx, ny)",
+    "Cint(-1)")
+
   # _do_solve! — dispatches to the right helper per solver type
   let sig = join(["ws_ptr :: Ptr{Cvoid}", "fptr_A :: Ptr{Cvoid}", "fptr_At :: Ptr{Cvoid}",
-                  "fptr_M :: Ptr{Cvoid}", "b_ptr :: Ptr{Cvoid}", "c_ptr :: Ptr{Cvoid}",
+                  "fptr_M :: Ptr{Cvoid}", "fptr_N :: Ptr{Cvoid}", "b_ptr :: Ptr{Cvoid}", "c_ptr :: Ptr{Cvoid}",
                   "userdata :: Ptr{Cvoid}", "opts_ptr :: Ptr{Cvoid}"], ", ")
     println(io, "function _do_solve!($(sig))")
     println(io, "  haskey(ws_key_store, ws_ptr) || return Cint(-1)")
-    println(io, "  opts = opts_ptr == C_NULL ? KrylovOptionsC(NaN, NaN, Cint(0), Cint(0), 0.0, NaN, NaN) : unsafe_load(Ptr{KrylovOptionsC}(opts_ptr))")
+    println(io, "  opts = opts_ptr == C_NULL ? KrylovOptionsC(NaN, NaN, Cint(0), Cint(0), 0.0, NaN, NaN, NaN, 0.0, Cint(0), Cint(0), Cint(0)) : unsafe_load(Ptr{KrylovOptionsC}(opts_ptr))")
     println(io, "  k = ws_key_store[ws_ptr]")
     first = true
     for (si, (sname, _, _)) in enumerate(SOLVERS)
-      fn = if sname == GPMR_SOLVER;         "_typed_solve_gpmr!"
-           elseif sname in TAU_NU_SOLVERS;  "_typed_solve_tau_nu!"
-           elseif sname in LAMBDA_SOLVERS;  "_typed_solve_lambda!"
-           elseif sname in TWO_RHS_SOLVERS; "_typed_solve_two_rhs!"
-           else                             "_typed_solve!"
+      fn = if sname == GPMR_SOLVER;              "_typed_solve_gpmr!"
+           elseif sname in TAU_NU_SOLVERS;       "_typed_solve_tau_nu!"
+           elseif sname in TWO_RHS_SOLVERS;      "_typed_solve_two_rhs!"
+           elseif sname in GMRES_FAMILY;         "_typed_solve_gmres!"
+           elseif sname in DIOM_FAMILY;          "_typed_solve_mn_reorth!"
+           elseif sname in MN_SOLVERS;           "_typed_solve_mn!"
+           elseif sname in CG_FAMILY;            "_typed_solve_cg!"
+           elseif sname in MINRES_FAMILY;        "_typed_solve_minres!"
+           elseif sname in SYM_LAMBDA_SOLVERS;   "_typed_solve_sym_lambda!"
+           elseif sname in LS_MN_RADIUS_SOLVERS; "_typed_solve_ls_mn_radius!"
+           elseif sname in LS_MN_SOLVERS;        "_typed_solve_ls_mn!"
+           elseif sname in LS_M_RADIUS_SOLVERS;  "_typed_solve_ls_m_radius!"
+           elseif sname in LS_N_SOLVERS;         "_typed_solve_ls_n!"
+           else                                  "_typed_solve!"
            end
       for (di, (_, suffix, _, _, _)) in enumerate(DTYPES)
         key  = combo_key(si-1, di-1)
         sref = "$(store_name(sname, suffix))[ws_ptr]"
         kw   = first ? "if" : "elseif"
-        println(io, "  $(kw) k == 0x$(string(key, base=16, pad=2)); $(fn)($(sref), fptr_A, fptr_At, fptr_M, b_ptr, c_ptr, userdata, opts)")
+        println(io, "  $(kw) k == 0x$(string(key, base=16, pad=2)); $(fn)($(sref), fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts)")
         first = false
       end
     end
@@ -422,8 +674,9 @@ end
 # what makes the call trim-safe: it forwards every keyword with its default
 # (restart=false, ldiv=false, …) as a literal, so allocate_if(restart, …) is
 # constant-folded away — a direct block_gmres! call is NOT trim-safe.
-# Supports an optional preconditioner M (applied as Y = M⁻¹X).
-function _typed_block_solve!(ws::Krylov.BlockKrylovWorkspace{T, FC, SV, SM}, fptr_A, fptr_M, B_ptr, userdata, opts) where {T, FC, SV, SM}
+# Supports an optional left preconditioner M (applied as Y = M⁻¹X).
+# fptr_N is part of the shared signature but ignored: block_minres takes M only.
+function _typed_block_solve!(ws::Krylov.BlockKrylovWorkspace{T, FC, SV, SM}, fptr_A, fptr_M, fptr_N, B_ptr, userdata, opts) where {T, FC, SV, SM}
   A  = CBlockOperator{FC}(ws.m, ws.n, fptr_A, userdata)
   B  = unsafe_wrap(Matrix{FC}, Ptr{FC}(B_ptr), (ws.m, ws.p))
   kw = _opts_kw(opts, T)
@@ -432,6 +685,30 @@ function _typed_block_solve!(ws::Krylov.BlockKrylovWorkspace{T, FC, SV, SM}, fpt
     Krylov.krylov_solve!(ws, A, B; M=M, kw...)
   else
     Krylov.krylov_solve!(ws, A, B; kw...)
+  end
+  Cint(0)
+end
+
+# block_gmres accepts BOTH a left (M) and right (N) preconditioner.  As for the
+# single-vector _typed_solve_mn!, the four combinations are spelled out to keep
+# each krylov_solve! call site concretely typed for --trim=safe.
+function _typed_block_solve_mn!(ws::Krylov.BlockKrylovWorkspace{T, FC, SV, SM}, fptr_A, fptr_M, fptr_N, B_ptr, userdata, opts) where {T, FC, SV, SM}
+  A  = CBlockOperator{FC}(ws.m, ws.n, fptr_A, userdata)
+  B  = unsafe_wrap(Matrix{FC}, Ptr{FC}(B_ptr), (ws.m, ws.p))
+  kw = _opts_kw(opts, T)
+  rs = opts.restart != 0; ro = opts.reorthogonalization != 0
+  if fptr_M != C_NULL && fptr_N != C_NULL
+    M = CBlockOperator{FC}(ws.m, ws.m, fptr_M, userdata)
+    N = CBlockOperator{FC}(ws.n, ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, B; M=M, N=N, restart=rs, reorthogonalization=ro, kw...)
+  elseif fptr_M != C_NULL
+    M = CBlockOperator{FC}(ws.m, ws.m, fptr_M, userdata)
+    Krylov.krylov_solve!(ws, A, B; M=M, restart=rs, reorthogonalization=ro, kw...)
+  elseif fptr_N != C_NULL
+    N = CBlockOperator{FC}(ws.n, ws.n, fptr_N, userdata)
+    Krylov.krylov_solve!(ws, A, B; N=N, restart=rs, reorthogonalization=ro, kw...)
+  else
+    Krylov.krylov_solve!(ws, A, B; restart=rs, reorthogonalization=ro, kw...)
   end
   Cint(0)
 end
@@ -469,19 +746,20 @@ end
     sref -> "_typed_block_warm_start!($(sref), X0_ptr, n, p)", "Cint(-1)")
 
   # _do_block_solve! — pick block_gmres! / block_minres! per solver
-  let sig = join(["ws_ptr :: Ptr{Cvoid}", "fptr_A :: Ptr{Cvoid}", "fptr_M :: Ptr{Cvoid}",
+  let sig = join(["ws_ptr :: Ptr{Cvoid}", "fptr_A :: Ptr{Cvoid}", "fptr_M :: Ptr{Cvoid}", "fptr_N :: Ptr{Cvoid}",
                   "B_ptr :: Ptr{Cvoid}", "userdata :: Ptr{Cvoid}", "opts_ptr :: Ptr{Cvoid}"], ", ")
     println(io, "function _do_block_solve!($(sig))")
     println(io, "  haskey(block_ws_key_store, ws_ptr) || return Cint(-1)")
-    println(io, "  opts = opts_ptr == C_NULL ? KrylovOptionsC(NaN, NaN, Cint(0), Cint(0), 0.0, NaN, NaN) : unsafe_load(Ptr{KrylovOptionsC}(opts_ptr))")
+    println(io, "  opts = opts_ptr == C_NULL ? KrylovOptionsC(NaN, NaN, Cint(0), Cint(0), 0.0, NaN, NaN, NaN, 0.0, Cint(0), Cint(0), Cint(0)) : unsafe_load(Ptr{KrylovOptionsC}(opts_ptr))")
     println(io, "  k = block_ws_key_store[ws_ptr]")
     first = true
     for (si, (sname, _, _)) in enumerate(BLOCK_SOLVERS)
+      fn = sname in BLOCK_MN_SOLVERS ? "_typed_block_solve_mn!" : "_typed_block_solve!"
       for (di, (_, suffix, _, _, _)) in enumerate(DTYPES)
         key  = block_combo_key(si-1, di-1)
         sref = "$(block_store_name(sname, suffix))[ws_ptr]"
         kw   = first ? "if" : "elseif"
-        println(io, "  $(kw) k == 0x$(string(key, base=16, pad=2)); _typed_block_solve!($(sref), fptr_A, fptr_M, B_ptr, userdata, opts)")
+        println(io, "  $(kw) k == 0x$(string(key, base=16, pad=2)); $(fn)($(sref), fptr_A, fptr_M, fptr_N, B_ptr, userdata, opts)")
         first = false
       end
     end

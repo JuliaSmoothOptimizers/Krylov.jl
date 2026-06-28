@@ -37,16 +37,26 @@ end
 #
 # These are *solve-time* parameters, consumed by krylov_solve.
 # Sentinel values mean "use solver default":
-#   NaN  for double fields  (atol, rtol, tau, nu)
-#   0    for int fields     (itmax)
-#   0.0  for lambda         (0 = no regularisation, which IS the default)
+#   NaN  for double fields  (atol, rtol, tau, nu, timemax)
+#   0    for int fields     (itmax, restart, reorthogonalization, linesearch)
+#   0.0  for lambda/radius  (0 = off, which IS the default)
+#
+# Fields after `nu` were added later; they sit at the end so the struct stays
+# source-compatible (initialise with krylov_default_options and override).
+# Each field is honoured only by the solvers that accept it (gated in
+# c_stores.jl) and silently ignored by the rest.
 # ---------------------------------------------------------------------------
 struct KrylovOptionsC
-    atol    :: Cdouble   # NaN  → √eps(T) per precision
-    rtol    :: Cdouble   # NaN  → √eps(T) per precision
-    itmax   :: Cint      # 0    → solver default
-    verbose :: Cint      # 0    = silent
-    lambda  :: Cdouble   # 0.0  = no regularisation (LSQR / LSMR / CGLS / …)
-    tau     :: Cdouble   # NaN  → solver default (TriCG / TriMR : 1.0)
-    nu      :: Cdouble   # NaN  → solver default (TriCG / TriMR : −1.0)
+    atol               :: Cdouble   # NaN  → √eps(T) per precision
+    rtol               :: Cdouble   # NaN  → √eps(T) per precision
+    itmax              :: Cint      # 0    → solver default
+    verbose            :: Cint      # 0    = silent
+    lambda             :: Cdouble   # 0.0  = no regularisation (LSQR / LSMR / CGLS / …)
+    tau                :: Cdouble   # NaN  → solver default (TriCG / TriMR : 1.0)
+    nu                 :: Cdouble   # NaN  → solver default (TriCG / TriMR : −1.0)
+    timemax            :: Cdouble   # NaN  → Inf (no time limit), in seconds; every solver
+    radius             :: Cdouble   # 0.0  = no trust-region constraint (CG / CR / CGLS / CRLS / LSQR / LSMR)
+    restart            :: Cint      # 0/1  restart GMRES(k) / FGMRES / FOM / block_gmres (uses `memory`)
+    reorthogonalization :: Cint     # 0/1  reorthogonalize the Krylov basis (GMRES family, GPMR, block_gmres)
+    linesearch         :: Cint      # 0/1  detect negative curvature (CG / CR / MINRES / MINRES-QLP)
 end

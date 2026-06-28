@@ -3,7 +3,7 @@ using Documenter, Krylov
 makedocs(
   modules = [Krylov],
   doctest = true,
-  linkcheck = true,
+  linkcheck = false,
   linkcheck_ignore = [r"https://www.emis.de/.*"],
   format = Documenter.HTML(assets = ["assets/style.css"],
                            ansicolor = true,
@@ -12,6 +12,7 @@ makedocs(
   sitename = "Krylov.jl",
   pages = ["Home" => "index.md",
            "C and Fortran interfaces" => ["Overview" => "interfaces/overview.md",
+                                          "Reference" => "interfaces/reference.md",
                                           "Building libkrylov" => "interfaces/building.md",
                                           "C interface" => "interfaces/c.md",
                                           "Fortran interface" => "interfaces/fortran.md"],

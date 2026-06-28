@@ -117,6 +117,17 @@ static void test_default_options(void)
     CHECK(w.window == 0, "default window is 0 sentinel");
 }
 
+static void test_version(void)
+{
+    printf("version ...\n");
+    int major = -1, minor = -1, patch = -1;
+    krylov_get_version(&major, &minor, &patch);
+    CHECK(major == KRYLOV_VERSION_MAJOR &&
+          minor == KRYLOV_VERSION_MINOR &&
+          patch == KRYLOV_VERSION_PATCH,
+          "krylov_get_version matches the KRYLOV_VERSION_* macros");
+}
+
 static void test_unknown_solver(void)
 {
     printf("unknown solver ...\n");
@@ -137,7 +148,7 @@ static void test_null_options(void)
 
     void *ws = NULL;
     krylov_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
-    int ret = krylov_solve(ws, matvec_A, NULL, NULL, b, NULL, &A, NULL);
+    int ret = krylov_solve(ws, matvec_A, NULL, NULL, NULL, b, NULL, &A, NULL);
     CHECK(ret == 0,            "solve with NULL opts succeeds");
     CHECK(krylov_is_solved(ws),"solve with NULL opts converges");
     krylov_get_x(ws, x, n);
@@ -155,7 +166,7 @@ static void test_get_y_single_solution(void)
 
     void *ws = NULL;
     krylov_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
-    krylov_solve(ws, matvec_A, NULL, NULL, b, NULL, &A, NULL);
+    krylov_solve(ws, matvec_A, NULL, NULL, NULL, b, NULL, &A, NULL);
     int ret = krylov_get_y(ws, y, n);
     CHECK(ret == -2, "get_y returns -2 when there is no dual solution");
     krylov_workspace_free(ws);
@@ -182,11 +193,42 @@ static void test_preconditioner(void)
     krylov_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
     KrylovOptions o = krylov_default_options();
     o.atol = 1e-10; o.rtol = 1e-10;
-    int ret = krylov_solve(ws, matvec_A, NULL, precond_M, b, NULL, &A, &o);
+    int ret = krylov_solve(ws, matvec_A, NULL, precond_M, NULL, b, NULL, &A, &o);
     CHECK(ret == 0,             "preconditioned solve succeeds");
     CHECK(krylov_is_solved(ws), "preconditioned solve converges");
     krylov_get_x(ws, x, n);
     CHECK(rel_err_ones(x, n) < 1e-6, "preconditioned solution is correct");
+    krylov_workspace_free(ws);
+}
+
+static void test_right_preconditioner(void)
+{
+    printf("right / split preconditioner (GMRES) ...\n");
+    const int n = 32;
+    Tri A = { n, 2.0, -1.0 };
+    double b[32], x[32];
+    rhs_from_ones(&A, b);
+
+    KrylovOptions o = krylov_default_options();
+    o.atol = 1e-10; o.rtol = 1e-10;
+
+    /* Right preconditioner only: GMRES accepts matvec_N. */
+    void *ws = NULL;
+    krylov_workspace_create(KRYLOV_GMRES, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
+    int ret = krylov_solve(ws, matvec_A, NULL, NULL, precond_M, b, NULL, &A, &o);
+    CHECK(ret == 0,             "right-preconditioned solve succeeds");
+    CHECK(krylov_is_solved(ws), "right-preconditioned solve converges");
+    krylov_get_x(ws, x, n);
+    CHECK(rel_err_ones(x, n) < 1e-6, "right-preconditioned solution is correct");
+    krylov_workspace_free(ws);
+
+    /* Split preconditioner: same Jacobi factor on both sides. */
+    krylov_workspace_create(KRYLOV_GMRES, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
+    ret = krylov_solve(ws, matvec_A, NULL, precond_M, precond_M, b, NULL, &A, &o);
+    CHECK(ret == 0,             "split-preconditioned solve succeeds");
+    CHECK(krylov_is_solved(ws), "split-preconditioned solve converges");
+    krylov_get_x(ws, x, n);
+    CHECK(rel_err_ones(x, n) < 1e-6, "split-preconditioned solution is correct");
     krylov_workspace_free(ws);
 }
 
@@ -202,11 +244,11 @@ static void test_reuse_workspace(void)
     void *ws = NULL;
     krylov_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
 
-    krylov_solve(ws, matvec_A, NULL, NULL, b1, NULL, &A, NULL);
+    krylov_solve(ws, matvec_A, NULL, NULL, NULL, b1, NULL, &A, NULL);
     krylov_get_x(ws, x, n);
     CHECK(krylov_is_solved(ws) && rel_err_ones(x, n) < 1e-6, "first solve correct");
 
-    krylov_solve(ws, matvec_A, NULL, NULL, b2, NULL, &A, NULL);
+    krylov_solve(ws, matvec_A, NULL, NULL, NULL, b2, NULL, &A, NULL);
     krylov_get_x(ws, x, n);
     double e = 0.0;
     for (int i = 0; i < n; i++) e += (x[i] - 2.0) * (x[i] - 2.0);
@@ -225,7 +267,7 @@ static void test_warm_start(void)
     /* Cold solve from zero. */
     void *ws = NULL;
     krylov_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
-    krylov_solve(ws, matvec_A, NULL, NULL, b, NULL, &A, NULL);
+    krylov_solve(ws, matvec_A, NULL, NULL, NULL, b, NULL, &A, NULL);
     int niter_cold = krylov_niter(ws);
     krylov_get_x(ws, x_star, n);
     krylov_workspace_free(ws);
@@ -234,7 +276,7 @@ static void test_warm_start(void)
     krylov_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
     int wret = krylov_warm_start(ws, x_star, n);
     CHECK(wret == 0, "warm_start accepted by CG");
-    krylov_solve(ws, matvec_A, NULL, NULL, b, NULL, &A, NULL);
+    krylov_solve(ws, matvec_A, NULL, NULL, NULL, b, NULL, &A, NULL);
     int niter_warm = krylov_niter(ws);
     CHECK(krylov_is_solved(ws),        "warm-started solve converges");
     CHECK(niter_warm < niter_cold,     "warm start reduces iteration count");
@@ -259,7 +301,7 @@ static void test_workspace_memory(void)
     wsmall.memory = 4;
     void *ws = NULL;
     krylov_workspace_create(KRYLOV_DQGMRES, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, &wsmall, &ws);
-    krylov_solve(ws, matvec_A, NULL, NULL, b, NULL, &A, &o);
+    krylov_solve(ws, matvec_A, NULL, NULL, NULL, b, NULL, &A, &o);
     krylov_get_x(ws, x, n);
     CHECK(krylov_is_solved(ws) && rel_err_ones(x, n) < 1e-6,
           "DQGMRES with memory=4 converges");
@@ -270,7 +312,7 @@ static void test_workspace_memory(void)
     KrylovWorkspaceOptions whint = krylov_default_workspace_options();
     whint.memory = 5;
     krylov_workspace_create(KRYLOV_GMRES, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, &whint, &ws);
-    krylov_solve(ws, matvec_A, NULL, NULL, b, NULL, &A, &o);
+    krylov_solve(ws, matvec_A, NULL, NULL, NULL, b, NULL, &A, &o);
     krylov_get_x(ws, x, n);
     CHECK(krylov_is_solved(ws) && rel_err_ones(x, n) < 1e-6,
           "GMRES with memory=5 hint converges");
@@ -293,9 +335,69 @@ static void test_workspace_window(void)
     w.window = 1;
     void *ws = NULL;
     krylov_workspace_create(KRYLOV_MINRES, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, &w, &ws);
-    krylov_solve(ws, matvec_A, NULL, NULL, b, NULL, &A, &o);
+    krylov_solve(ws, matvec_A, NULL, NULL, NULL, b, NULL, &A, &o);
     krylov_get_x(ws, x, n);
     CHECK(krylov_is_solved(ws) && rel_err_ones(x, n) < 1e-6, "MINRES with window=1 converges");
+    krylov_workspace_free(ws);
+}
+
+static void test_extra_options(void)
+{
+    printf("extra options (timemax, restart, reorthogonalization, radius, linesearch, shift) ...\n");
+    const int n = 32;
+    Tri A = { n, 2.0, -1.0 };
+    double b[32], x[32];
+    rhs_from_ones(&A, b);
+
+    /* GMRES restarted (GMRES(k)) with reorthogonalization, small memory.
+       Restarted GMRES(k) with a small k stagnates on the ill-conditioned
+       tridiag(-1, 2, -1); use a strongly diagonally dominant operator so the
+       restart genuinely cycles (~4 restarts here) yet still converges. */
+    Tri Add = { n, 4.0, -1.0 };
+    double bdd[32];
+    rhs_from_ones(&Add, bdd);
+    KrylovWorkspaceOptions w = krylov_default_workspace_options();
+    w.memory = 5;
+    void *ws = NULL;
+    krylov_workspace_create(KRYLOV_GMRES, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, &w, &ws);
+    KrylovOptions o = krylov_default_options();
+    o.atol = 1e-10; o.rtol = 1e-10; o.itmax = 500;
+    o.restart = 1; o.reorthogonalization = 1; o.timemax = 3600.0;
+    CHECK(krylov_solve(ws, matvec_A, NULL, NULL, NULL, bdd, NULL, &Add, &o) == 0, "restarted GMRES solves");
+    krylov_get_x(ws, x, n);
+    CHECK(krylov_is_solved(ws) && rel_err_ones(x, n) < 1e-6, "restarted GMRES correct");
+    krylov_workspace_free(ws);
+
+    /* CG with linesearch (SPD ⇒ positive curvature ⇒ full solve). */
+    krylov_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
+    o = krylov_default_options();
+    o.atol = 1e-10; o.rtol = 1e-10; o.linesearch = 1;
+    krylov_solve(ws, matvec_A, NULL, NULL, NULL, b, NULL, &A, &o);
+    krylov_get_x(ws, x, n);
+    CHECK(rel_err_ones(x, n) < 1e-6, "CG with linesearch correct");
+    krylov_workspace_free(ws);
+
+    /* CG with a trust-region radius: the step stops on the boundary ‖x‖ = radius. */
+    krylov_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
+    o = krylov_default_options();
+    o.atol = 1e-10; o.rtol = 1e-10;
+    o.radius = 0.5 * sqrt((double)n);          /* ‖ones‖ = sqrt(n) */
+    krylov_solve(ws, matvec_A, NULL, NULL, NULL, b, NULL, &A, &o);
+    krylov_get_x(ws, x, n);
+    double nx = 0.0; for (int i = 0; i < n; i++) nx += x[i]*x[i]; nx = sqrt(nx);
+    CHECK(nx <= o.radius * (1.0 + 1e-6) && fabs(nx - o.radius) < 1e-3 * o.radius,
+          "CG trust-region step lands on the boundary");
+    krylov_workspace_free(ws);
+
+    /* MINRES with a shift λ: solves (A + λI) x = b. */
+    double lambda = 0.5, bshift[32];
+    for (int i = 0; i < n; i++) bshift[i] = b[i] + lambda; /* (A + λI)*ones = A*ones + λ */
+    krylov_workspace_create(KRYLOV_MINRES, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
+    o = krylov_default_options();
+    o.atol = 1e-10; o.rtol = 1e-10; o.lambda = lambda;
+    krylov_solve(ws, matvec_A, NULL, NULL, NULL, bshift, NULL, &A, &o);
+    krylov_get_x(ws, x, n);
+    CHECK(krylov_is_solved(ws) && rel_err_ones(x, n) < 1e-6, "MINRES shift (A+λI) correct");
     krylov_workspace_free(ws);
 }
 
@@ -311,7 +413,7 @@ static void test_float32(void)
     void *ws = NULL;
     int ret = krylov_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT32, KRYLOV_CPU, NULL, &ws);
     CHECK(ret == 0, "Float32 workspace created");
-    ret = krylov_solve(ws, matvec_A_f32, NULL, NULL, b, NULL, &A, NULL);
+    ret = krylov_solve(ws, matvec_A_f32, NULL, NULL, NULL, b, NULL, &A, NULL);
     CHECK(ret == 0 && krylov_is_solved(ws), "Float32 CG converges");
     krylov_get_x(ws, x, n);
     float e = 0.0f;
@@ -323,15 +425,18 @@ static void test_float32(void)
 int main(void)
 {
     test_default_options();
+    test_version();
     test_unknown_solver();
     test_null_options();
     test_get_y_single_solution();
     test_double_free();
     test_preconditioner();
+    test_right_preconditioner();
     test_reuse_workspace();
     test_warm_start();
     test_workspace_memory();
     test_workspace_window();
+    test_extra_options();
     test_float32();
 
     printf("\n%d checks passed, %d failed\n", n_pass, n_fail);

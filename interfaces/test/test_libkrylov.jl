@@ -38,6 +38,8 @@ const krylov_solve             = LibKrylov.krylov_solve
 const krylov_get_x             = LibKrylov.krylov_get_x
 const krylov_get_y             = LibKrylov.krylov_get_y
 const krylov_warm_start        = LibKrylov.krylov_warm_start
+const krylov_warm_start2       = LibKrylov.krylov_warm_start2
+const krylov_get_version       = LibKrylov.krylov_get_version
 const krylov_is_solved         = LibKrylov.krylov_is_solved
 const krylov_niter             = LibKrylov.krylov_niter
 
@@ -98,17 +100,17 @@ function c_solve(ws::Ptr{Cvoid}, cb_A::Ptr{Cvoid}, cb_At::Ptr{Cvoid},
                  b::Vector; c::Union{Vector,Nothing}=nothing,
                  atol=1e-8, rtol=1e-8, itmax=0, verbose=0)
     opts = Ref(LibKrylov.KrylovOptionsC(atol, rtol, Cint(itmax), Cint(verbose),
-                                        0.0, NaN, NaN))
+                                        0.0, NaN, NaN, NaN, 0.0, Cint(0), Cint(0), Cint(0)))
     GC.@preserve b opts begin
         b_ptr    = Base.unsafe_convert(Ptr{Cvoid}, pointer(b))
         opts_ptr = Base.unsafe_convert(Ptr{Cvoid}, opts)
         if c !== nothing
             GC.@preserve c begin
                 c_ptr = Base.unsafe_convert(Ptr{Cvoid}, pointer(c))
-                ret = krylov_solve(ws, cb_A, cb_At, C_NULL, b_ptr, c_ptr, C_NULL, opts_ptr)
+                ret = krylov_solve(ws, cb_A, cb_At, C_NULL, C_NULL, b_ptr, c_ptr, C_NULL, opts_ptr)
             end
         else
-            ret = krylov_solve(ws, cb_A, cb_At, C_NULL, b_ptr, C_NULL, C_NULL, opts_ptr)
+            ret = krylov_solve(ws, cb_A, cb_At, C_NULL, C_NULL, b_ptr, C_NULL, C_NULL, opts_ptr)
         end
     end
     ret == 0 || error("krylov_solve returned $ret")
@@ -136,6 +138,41 @@ function c_warm_start(ws::Ptr{Cvoid}, x0::Vector)
     GC.@preserve x0 begin
         ret = krylov_warm_start(ws, Base.unsafe_convert(Ptr{Cvoid}, pointer(x0)), Cint(length(x0)))
         ret == 0 || error("warm_start returned $ret")
+    end
+end
+
+function c_warm_start2(ws::Ptr{Cvoid}, x0::Vector, y0::Vector)
+    GC.@preserve x0 y0 begin
+        krylov_warm_start2(ws,
+            Base.unsafe_convert(Ptr{Cvoid}, pointer(x0)),
+            Base.unsafe_convert(Ptr{Cvoid}, pointer(y0)),
+            Cint(length(x0)), Cint(length(y0)))
+    end
+end
+
+# Solve with explicit left (M) and/or right (N) preconditioner callbacks.
+function c_solve_mn(ws::Ptr{Cvoid}, cb_A::Ptr{Cvoid}, cb_M::Ptr{Cvoid}, cb_N::Ptr{Cvoid},
+                    b::Vector; atol=1e-8, rtol=1e-8)
+    opts = Ref(LibKrylov.KrylovOptionsC(atol, rtol, Cint(0), Cint(0), 0.0, NaN, NaN, NaN, 0.0, Cint(0), Cint(0), Cint(0)))
+    GC.@preserve b opts begin
+        b_ptr    = Base.unsafe_convert(Ptr{Cvoid}, pointer(b))
+        opts_ptr = Base.unsafe_convert(Ptr{Cvoid}, opts)
+        ret = krylov_solve(ws, cb_A, C_NULL, cb_M, cb_N, b_ptr, C_NULL, C_NULL, opts_ptr)
+    end
+    ret == 0 || error("krylov_solve (M/N) returned $ret")
+end
+
+# Solve with arbitrary KrylovOptions fields (covers the optional scalar options).
+function solve_with(ws::Ptr{Cvoid}, cb_A::Ptr{Cvoid}, b::Vector;
+                    cb_At::Ptr{Cvoid}=C_NULL, cb_M::Ptr{Cvoid}=C_NULL, cb_N::Ptr{Cvoid}=C_NULL,
+                    atol=1e-10, rtol=1e-10, itmax=0, lambda=0.0, radius=0.0,
+                    timemax=NaN, restart=0, reorth=0, linesearch=0)
+    opts = Ref(LibKrylov.KrylovOptionsC(atol, rtol, Cint(itmax), Cint(0), lambda, NaN, NaN,
+                                        timemax, radius, Cint(restart), Cint(reorth), Cint(linesearch)))
+    GC.@preserve b opts begin
+        krylov_solve(ws, cb_A, cb_At, cb_M, cb_N,
+                     Base.unsafe_convert(Ptr{Cvoid}, pointer(b)), C_NULL, C_NULL,
+                     Base.unsafe_convert(Ptr{Cvoid}, opts))
     end
 end
 
@@ -203,6 +240,29 @@ function _block_mv_f64(Xp::Ptr{Cvoid}, Yp::Ptr{Cvoid}, p::Cint, ud::Ptr{Cvoid})
     nothing
 end
 const BCB_A_F64 = @cfunction(_block_mv_f64, Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}, Cint, Ptr{Cvoid}))
+
+# Diagonal (Jacobi) preconditioner callback (Float64): y = M⁻¹ x = x ./ diag.
+const _Minv_f64 = Ref{Vector{Float64}}()
+function _precond_f64(xp::Ptr{Cvoid}, yp::Ptr{Cvoid}, ud::Ptr{Cvoid})
+    d = _Minv_f64[]
+    x = unsafe_wrap(Vector{Float64}, Ptr{Float64}(xp), length(d))
+    y = unsafe_wrap(Vector{Float64}, Ptr{Float64}(yp), length(d))
+    @. y = x / d
+    nothing
+end
+const CB_M_F64 = @cfunction(_precond_f64, Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}))
+
+# Second diagonal preconditioner callback (independent buffer) so a solve can use
+# a left (M) and a right (N) preconditioner of different sizes at once.
+const _Ninv_f64 = Ref{Vector{Float64}}()
+function _precond_n_f64(xp::Ptr{Cvoid}, yp::Ptr{Cvoid}, ud::Ptr{Cvoid})
+    d = _Ninv_f64[]
+    x = unsafe_wrap(Vector{Float64}, Ptr{Float64}(xp), length(d))
+    y = unsafe_wrap(Vector{Float64}, Ptr{Float64}(yp), length(d))
+    @. y = x / d
+    nothing
+end
+const CB_N_F64 = @cfunction(_precond_n_f64, Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}))
 
 # ============================================================================
 # Test problems
@@ -394,6 +454,199 @@ function test_warm_start()
 end
 
 # ============================================================================
+# krylov_get_version — runtime version matches Project.toml
+# ============================================================================
+
+function test_version()
+    maj = Ref{Cint}(-1); mn = Ref{Cint}(-1); pt = Ref{Cint}(-1)
+    GC.@preserve maj mn pt begin
+        krylov_get_version(Base.unsafe_convert(Ptr{Cint}, maj),
+                           Base.unsafe_convert(Ptr{Cint}, mn),
+                           Base.unsafe_convert(Ptr{Cint}, pt))
+    end
+    v = pkgversion(Krylov)
+    @test Int(maj[]) == v.major
+    @test Int(mn[])  == v.minor
+    @test Int(pt[])  == v.patch
+end
+
+# ============================================================================
+# warm_start2 — two-solution warm start (x0, y0)
+# ============================================================================
+
+function test_warm_start2()
+    n = 12
+
+    # A single-solution solver must reject warm_start2 with -2.
+    ws = c_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT64)
+    try
+        @test c_warm_start2(ws, ones(n), ones(n)) == -2
+    finally
+        c_workspace_free(ws)
+    end
+
+    # BiLQR has two solutions (primal x of size n, dual y of size m).  Seed both
+    # with the exact solution: warm_start2 must be accepted and the solve succeed.
+    A, b, x_true = nonsym_problem(Float64, n)
+    m, _ = size(A)
+    At = Matrix(A')
+    set_matrices!(Float64, A, At)
+    cb_A, cb_At = get_callbacks(Float64)
+    c_rhs = At * ones(Float64, m)          # dual solution is ones(m)
+
+    ws = c_workspace_create(solver_enum("bilqr"), m, n, KRYLOV_FLOAT64)
+    try
+        # Seeding with the exact (x, y) makes the solve converge immediately,
+        # which is exactly what proves both guesses were consumed.
+        @test c_warm_start2(ws, x_true, ones(Float64, m)) == 0
+        c_solve(ws, cb_A, cb_At, b; c=c_rhs, atol=1e-8, rtol=1e-8)
+        x = c_get_x(ws, Float64, n)
+        @test norm(x - x_true) / norm(x_true) < 1e-6
+    finally
+        c_workspace_free(ws)
+    end
+end
+
+# ============================================================================
+# Right / split preconditioning — exercises the _typed_solve_mn! branches
+# ============================================================================
+
+function test_mn_preconditioner()
+    n = 20
+    A, b, x_true = nonsym_problem(Float64, n)
+    set_matrices!(Float64, A, Matrix(A'))
+    cb_A, _ = get_callbacks(Float64)
+    _Minv_f64[] = [A[i, i] for i in 1:n]   # Jacobi: M = N = diag(A)
+    tol = 1e-6
+
+    # left only, right only, and split (M and N) — all on GMRES.
+    for (cb_M, cb_N, label) in ((CB_M_F64, C_NULL,   "left"),
+                                (C_NULL,   CB_M_F64, "right"),
+                                (CB_M_F64, CB_M_F64, "split"))
+        ws = c_workspace_create(KRYLOV_GMRES, n, n, KRYLOV_FLOAT64)
+        try
+            c_solve_mn(ws, cb_A, cb_M, cb_N, b; atol=1e-10, rtol=1e-10)
+            @test c_is_solved(ws)
+            x = c_get_x(ws, Float64, n)
+            @test norm(x - x_true) / norm(x_true) < tol
+        finally
+            c_workspace_free(ws)
+        end
+    end
+end
+
+# ============================================================================
+# Least-squares / least-norm preconditioning (M on the m-space, N on the n-space;
+# normal-equations methods take a single n-space preconditioner)
+# ============================================================================
+
+function test_ls_preconditioner()
+    A, b, x_true = ls_problem(Float64)        # m=30 > n=20, consistent (b = A*ones)
+    m, n = size(A)
+    set_matrices!(Float64, A, Matrix(A'))
+    cb_A, cb_At = get_callbacks(Float64)
+    tol = 1e-5
+
+    # LSQR: M = E⁻¹ on the m-space, N = F⁻¹ on the n-space. Non-trivial positive
+    # diagonals; the consistent full-rank solution is x_true regardless of M/N.
+    _Minv_f64[] = fill(2.0, m)
+    _Ninv_f64[] = fill(3.0, n)
+    ws = c_workspace_create(solver_enum("lsqr"), m, n, KRYLOV_FLOAT64)
+    try
+        @test solve_with(ws, cb_A, b; cb_At=cb_At, cb_M=CB_M_F64, cb_N=CB_N_F64) == 0
+        @test c_is_solved(ws)
+        @test norm(c_get_x(ws, Float64, n) - x_true) / norm(x_true) < tol
+    finally
+        c_workspace_free(ws)
+    end
+
+    # CGLS: single preconditioner on the n-space (normal equations), via matvec_M.
+    _Minv_f64[] = fill(2.0, n)
+    ws = c_workspace_create(solver_enum("cgls"), m, n, KRYLOV_FLOAT64)
+    try
+        @test solve_with(ws, cb_A, b; cb_At=cb_At, cb_M=CB_M_F64) == 0
+        @test norm(c_get_x(ws, Float64, n) - x_true) / norm(x_true) < tol
+    finally
+        c_workspace_free(ws)
+    end
+
+    # CGNE: single preconditioner on the n-space, via matvec_N.
+    _Ninv_f64[] = fill(2.0, n)
+    ws = c_workspace_create(solver_enum("cgne"), m, n, KRYLOV_FLOAT64)
+    try
+        @test solve_with(ws, cb_A, b; cb_At=cb_At, cb_N=CB_N_F64) == 0
+        @test norm(c_get_x(ws, Float64, n) - x_true) / norm(x_true) < tol
+    finally
+        c_workspace_free(ws)
+    end
+end
+
+# ============================================================================
+# Optional solve-time options: timemax, restart, reorthogonalization,
+# radius (trust region), linesearch, λ-shift for symmetric solvers
+# ============================================================================
+
+function test_extra_options()
+    n = 24
+    A, b, x_true = spd_problem(Float64, n)
+    set_matrices!(Float64, A, Matrix(A'))
+    cb_A, _ = get_callbacks(Float64)
+    tol = 1e-6
+
+    # GMRES with restart + reorthogonalization (small memory forces restarts).
+    ws = create_with_wopts(KRYLOV_GMRES, n; memory=5)
+    try
+        @test solve_with(ws, cb_A, b; restart=1, reorth=1, itmax=500) == 0
+        @test c_is_solved(ws)
+        @test norm(c_get_x(ws, Float64, n) - x_true) / norm(x_true) < tol
+    finally
+        c_workspace_free(ws)
+    end
+
+    # DIOM with reorthogonalization.
+    ws = c_workspace_create(KRYLOV_DIOM, n, n, KRYLOV_FLOAT64)
+    try
+        @test solve_with(ws, cb_A, b; reorth=1) == 0
+        @test norm(c_get_x(ws, Float64, n) - x_true) / norm(x_true) < tol
+    finally
+        c_workspace_free(ws)
+    end
+
+    # CG with linesearch (SPD ⇒ positive curvature, full solve) and timemax set.
+    ws = c_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT64)
+    try
+        @test solve_with(ws, cb_A, b; linesearch=1, timemax=3600.0) == 0
+        @test norm(c_get_x(ws, Float64, n) - x_true) / norm(x_true) < tol
+    finally
+        c_workspace_free(ws)
+    end
+
+    # CG with a trust-region radius: the step must stop on the boundary ‖x‖ = radius.
+    ws = c_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT64)
+    try
+        r = 0.5 * norm(x_true)
+        @test solve_with(ws, cb_A, b; radius=r) == 0
+        x = c_get_x(ws, Float64, n)
+        @test norm(x) ≤ r * (1 + 1e-6)
+        @test isapprox(norm(x), r; rtol=1e-3)
+    finally
+        c_workspace_free(ws)
+    end
+
+    # MINRES with a shift λ: solves (A + λI) x = b.
+    λ = 0.5
+    bshift = (A + λ*I) * x_true
+    ws = c_workspace_create(KRYLOV_MINRES, n, n, KRYLOV_FLOAT64)
+    try
+        @test solve_with(ws, cb_A, bshift; lambda=λ) == 0
+        @test c_is_solved(ws)
+        @test norm(c_get_x(ws, Float64, n) - x_true) / norm(x_true) < tol
+    finally
+        c_workspace_free(ws)
+    end
+end
+
+# ============================================================================
 # Workspace options (memory / window) — white-box: confirm the value passed
 # through KrylovWorkspaceOptions actually reaches the workspace constructor.
 # ============================================================================
@@ -480,9 +733,9 @@ function test_block_solve()
         ret, ws = block_create(solver, n, p, KRYLOV_FLOAT64)
         @test ret == 0
         try
-            opts = Ref(LibKrylov.KrylovOptionsC(1e-10, 1e-10, Cint(200), Cint(0), 0.0, NaN, NaN))
+            opts = Ref(LibKrylov.KrylovOptionsC(1e-10, 1e-10, Cint(200), Cint(0), 0.0, NaN, NaN, NaN, 0.0, Cint(0), Cint(0), Cint(0)))
             r = GC.@preserve B opts begin
-                LibKrylov.krylov_block_solve(ws, BCB_A_F64, C_NULL,
+                LibKrylov.krylov_block_solve(ws, BCB_A_F64, C_NULL, C_NULL,
                     Base.unsafe_convert(Ptr{Cvoid}, pointer(B)), C_NULL,
                     Base.unsafe_convert(Ptr{Cvoid}, opts))
             end
@@ -535,8 +788,28 @@ end
         end
     end
 
+    @testset "version" begin
+        test_version()
+    end
+
     @testset "warm_start" begin
         test_warm_start()
+    end
+
+    @testset "warm_start2" begin
+        test_warm_start2()
+    end
+
+    @testset "preconditioning (M/N)" begin
+        test_mn_preconditioner()
+    end
+
+    @testset "preconditioning (least-squares)" begin
+        test_ls_preconditioner()
+    end
+
+    @testset "extra options" begin
+        test_extra_options()
     end
 
     @testset "workspace_options" begin

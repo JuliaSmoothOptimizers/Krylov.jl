@@ -1,6 +1,11 @@
 #ifndef KRYLOV_H
 #define KRYLOV_H
 
+/* Version */
+#define KRYLOV_VERSION_MAJOR 0
+#define KRYLOV_VERSION_MINOR 10
+#define KRYLOV_VERSION_PATCH 7
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -15,7 +20,7 @@ extern "C" {
  *
  *   KrylovOptions opts = krylov_default_options();
  *   opts.atol = 1e-10; opts.rtol = 1e-10;
- *   krylov_solve(ws, matvec_A, NULL, NULL, b, NULL, userdata, &opts);
+ *   krylov_solve(ws, matvec_A, NULL, NULL, NULL, b, NULL, userdata, &opts);
  *
  *   krylov_get_x(ws, x, n);
  *   krylov_workspace_free(ws);
@@ -126,21 +131,26 @@ typedef struct {
  *
  * Passed to krylov_solve.  Initialise with krylov_default_options() before
  * overriding individual fields.  Sentinel values mean "use solver default":
- *   NaN  for double fields  (atol, rtol, tau, nu)
- *   0    for int fields     (itmax)
- *   0.0  for lambda         (no regularisation, which is the default)
+ *   NaN  for double fields  (atol, rtol, tau, nu, timemax)
+ *   0    for int fields     (itmax, restart, reorthogonalization, linesearch)
+ *   0.0  for lambda/radius  (off, which is the default)
  *
  * Fields ignored by a given solver are silently disregarded.
  * ------------------------------------------------------------------------- */
 
 typedef struct {
-  double atol;    /* NaN  → sqrt(eps(T)) per precision                        */
-  double rtol;    /* NaN  → sqrt(eps(T)) per precision                        */
-  int    itmax;   /* 0    → solver default                                     */
-  int    verbose; /* 0    = silent                                             */
-  double lambda;  /* 0.0  = no regularisation (LSQR / LSMR / CGLS / ...)     */
-  double tau;     /* NaN  → solver default (TriCG / TriMR : 1.0)              */
-  double nu;      /* NaN  → solver default (TriCG / TriMR : -1.0)             */
+  double atol;                /* NaN → sqrt(eps(T)) per precision                              */
+  double rtol;                /* NaN → sqrt(eps(T)) per precision                              */
+  int    itmax;               /* 0   → solver default                                          */
+  int    verbose;             /* 0   = silent                                                  */
+  double lambda;              /* 0.0 = no regularisation/shift (LSQR/LSMR/CGLS/MINRES/...)     */
+  double tau;                 /* NaN → solver default (TriCG / TriMR : 1.0)                    */
+  double nu;                  /* NaN → solver default (TriCG / TriMR : -1.0)                   */
+  double timemax;             /* NaN → Inf (no time limit), seconds; every solver             */
+  double radius;              /* 0.0 = no trust region (CG/CR/CGLS/CRLS/LSQR/LSMR)             */
+  int    restart;             /* 0/1 restart GMRES(k)/FGMRES/FOM/block_gmres (uses memory)     */
+  int    reorthogonalization; /* 0/1 reorthogonalize basis (GMRES family, GPMR, block_gmres)   */
+  int    linesearch;          /* 0/1 detect negative curvature (CG/CR/MINRES/MINRES-QLP)       */
 } KrylovOptions;
 
 /*
@@ -158,26 +168,37 @@ KrylovWorkspaceOptions krylov_default_workspace_options(void);
 KrylovOptions krylov_default_options(void);
 
 /*
+ * Write the Krylov.jl version of this library into *major, *minor, *patch
+ * (the same values as the KRYLOV_VERSION_* macros).
+ */
+void krylov_get_version(int* major, int* minor, int* patch);
+
+/*
  * Solve the linear system with the workspace's solver.
  *   matvec_A  : computes y = A*x        (required)
  *   matvec_At : computes y = A^H x      (NULL unless the solver uses the adjoint,
  *                                        e.g. BiLQ, QMR, LSQR, LSMR, CGLS, CRAIG)
- *   matvec_M  : preconditioner; must compute y = M^-1 x, i.e. solve M y = x
- *               (NULL = no preconditioner)
+ *   matvec_M  : preconditioner (centered for symmetric solvers, left otherwise);
+ *               must compute y = M^-1 x, i.e. solve M y = x  (NULL = none)
+ *   matvec_N  : right preconditioner; must compute y = N^-1 x (solve N y = x).
+ *               Used only by solvers that accept both sides (GMRES, FGMRES, FOM,
+ *               DIOM, DQGMRES, BiCGSTAB, CGS, BiLQ, QMR); ignored otherwise.
+ *               (NULL = no right preconditioner)
  *   b         : right-hand side, length m
  *   c         : second right-hand side, length n (NULL if not needed)
  *   userdata  : forwarded unchanged to every callback
  *   opts      : solve-time options, or NULL for the defaults
  * Returns 0 on success, -1 on error.
  */
-int krylov_solve(void* ws, KrylovMatvec matvec_A, KrylovMatvec matvec_At, KrylovMatvec matvec_M, const void* b, const void* c, void* userdata, const KrylovOptions* opts);
+int krylov_solve(void* ws, KrylovMatvec matvec_A, KrylovMatvec matvec_At, KrylovMatvec matvec_M, KrylovMatvec matvec_N, const void* b, const void* c, void* userdata, const KrylovOptions* opts);
 
 /* Copy the primal solution (length n) into `x`.  Returns 0, or -1 on error. */
 int krylov_get_x(void* ws, void* x, int n);
 
 /*
- * Copy the dual solution (length m) into `y`, for two-solution solvers
- * (TriCG, TriMR, GPMR, BiLQR, TriLQR).
+ * Copy the second (dual) solution into `y`, for the two-solution solvers
+ * (TriCG, TriMR, USYMLQR, GPMR, BiLQR, TriLQR, CRAIG, CRAIGMR, LNLQ).
+ * Its length is the dual-solution size: n for TriCG/TriMR/USYMLQR, m otherwise.
  * Returns 0, -1 on error, or -2 if the solver has a single solution.
  */
 int krylov_get_y(void* ws, void* y, int m);
@@ -196,6 +217,15 @@ double krylov_elapsed_time(void* ws);
  * Returns 0, -1 on error, or -2 if the solver does not support warm starting.
  */
 int krylov_warm_start(void* ws, const void* x0, int n);
+
+/*
+ * Set both initial guesses for the next krylov_solve, for the two-solution
+ * solvers (TriCG, TriMR, GPMR, BiLQR, TriLQR, USYMLQR).
+ *   x0 : primal guess, length nx (same size as krylov_get_x)
+ *   y0 : dual guess,   length ny (same size as krylov_get_y)
+ * Returns 0, -1 on error, or -2 if the solver has a single solution.
+ */
+int krylov_warm_start2(void* ws, const void* x0, const void* y0, int nx, int ny);
 
 /*
  * Release the workspace; the handle must not be used afterwards.
@@ -222,13 +252,16 @@ int krylov_block_workspace_create(KrylovBlockSolverType solver, int m, int n, in
 /*
  * Solve A X = B for the m-by-p block B.
  *   matvec_A : computes Y = A*X for a block of p columns (required)
- *   matvec_M : preconditioner; must compute Y = M^-1 X (solve M Y = X)
- *              (NULL = no preconditioner)
+ *   matvec_M : preconditioner; must compute Y = M^-1 X (solve M Y = X).
+ *              Left for block_gmres, centered for block_minres  (NULL = none)
+ *   matvec_N : right preconditioner; must compute Y = N^-1 X (solve N Y = X).
+ *              Used only by block_gmres; ignored by block_minres.
+ *              (NULL = no right preconditioner)
  *   B        : right-hand side block, m*p, column-major
  *   opts     : solve-time options, or NULL for the defaults
  * Returns 0 on success, -1 on error.
  */
-int krylov_block_solve(void* ws, KrylovBlockMatvec matvec_A, KrylovBlockMatvec matvec_M, const void* B, void* userdata, const KrylovOptions* opts);
+int krylov_block_solve(void* ws, KrylovBlockMatvec matvec_A, KrylovBlockMatvec matvec_M, KrylovBlockMatvec matvec_N, const void* B, void* userdata, const KrylovOptions* opts);
 
 /* Copy the n-by-p solution block (column-major) into `X`.  Returns 0, or -1 on error. */
 int krylov_block_get_X(void* ws, void* X, int n, int p);

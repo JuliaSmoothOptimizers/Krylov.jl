@@ -100,7 +100,7 @@ static void test_block_solver(KrylovBlockSolverType solver, const char *name)
 
     KrylovOptions o = krylov_default_options();
     o.atol = 1e-10; o.rtol = 1e-10; o.itmax = 200;
-    ret = krylov_block_solve(ws, block_A, NULL, B, &n, &o);
+    ret = krylov_block_solve(ws, block_A, NULL, NULL, B, &n, &o);
     CHECK(ret == 0,                   "block solve returns 0");
     CHECK(krylov_block_is_solved(ws), "block solve converged");
     CHECK(krylov_block_niter(ws) > 0, "block niter is positive");
@@ -126,10 +126,20 @@ static void test_block_preconditioner(void)
                                   KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
     KrylovOptions o = krylov_default_options();
     o.atol = 1e-10; o.rtol = 1e-10; o.itmax = 200;
-    int ret = krylov_block_solve(ws, block_A, block_M, B, &n, &o);
+    int ret = krylov_block_solve(ws, block_A, block_M, NULL, B, &n, &o);
     CHECK(ret == 0 && krylov_block_is_solved(ws), "preconditioned block solve converges");
     krylov_block_get_X(ws, X, n, p);
     CHECK(block_err(X, Xtrue, n, p) < 1e-6, "preconditioned block solution is correct");
+    krylov_block_workspace_free(ws);
+
+    /* Right preconditioner: block_gmres accepts matvec_N. */
+    printf("block_gmres + right Jacobi preconditioner ...\n");
+    krylov_block_workspace_create(KRYLOV_BLOCK_GMRES, n, n, p,
+                                  KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
+    ret = krylov_block_solve(ws, block_A, NULL, block_M, B, &n, &o);
+    CHECK(ret == 0 && krylov_block_is_solved(ws), "right-preconditioned block solve converges");
+    krylov_block_get_X(ws, X, n, p);
+    CHECK(block_err(X, Xtrue, n, p) < 1e-6, "right-preconditioned block solution is correct");
     krylov_block_workspace_free(ws);
 }
 
@@ -147,7 +157,7 @@ static void test_block_warm_start(void)
     KrylovOptions o = krylov_default_options();
     o.atol = 1e-10; o.rtol = 1e-10; o.itmax = 200;
 
-    krylov_block_solve(ws, block_A, NULL, B, &n, &o);
+    krylov_block_solve(ws, block_A, NULL, NULL, B, &n, &o);
     int niter_cold = krylov_block_niter(ws);
     krylov_block_workspace_free(ws);
 
@@ -155,7 +165,7 @@ static void test_block_warm_start(void)
                                   KRYLOV_FLOAT64, KRYLOV_CPU, NULL, &ws);
     int wret = krylov_block_warm_start(ws, Xtrue, n, p);
     CHECK(wret == 0, "block warm_start accepted");
-    krylov_block_solve(ws, block_A, NULL, B, &n, &o);
+    krylov_block_solve(ws, block_A, NULL, NULL, B, &n, &o);
     CHECK(krylov_block_is_solved(ws), "warm-started block solve converges");
     CHECK(krylov_block_niter(ws) < niter_cold, "block warm start reduces iterations");
     krylov_block_workspace_free(ws);
@@ -176,7 +186,7 @@ static void test_block_memory(void)
                                   KRYLOV_FLOAT64, KRYLOV_CPU, &w, &ws);
     KrylovOptions o = krylov_default_options();
     o.atol = 1e-10; o.rtol = 1e-10; o.itmax = 200;
-    krylov_block_solve(ws, block_A, NULL, B, &n, &o);
+    krylov_block_solve(ws, block_A, NULL, NULL, B, &n, &o);
     krylov_block_get_X(ws, X, n, p);
     CHECK(krylov_block_is_solved(ws) && block_err(X, Xtrue, n, p) < 1e-6,
           "block_gmres with memory=4 converges");

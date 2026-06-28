@@ -56,6 +56,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # -----------------------------------------------------------------------
+      # The C (krylov.h) and Fortran (krylov.f90) headers each expose the
+      # Krylov.jl version as three integers (MAJOR/MINOR/PATCH). Verify the
+      # committed headers match Project.toml so a version bump can never ship with
+      # a stale header. Runs before any build step so it validates exactly what is
+      # committed.
+      # -----------------------------------------------------------------------
+      - name: Check header versions match Project.toml
+        shell: bash
+        run: |
+          ver=$(grep -E '^version\s*=' Project.toml | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+          IFS=. read -r major minor patch <<< "$ver"
+          echo "Project.toml version: $ver  (major=$major minor=$minor patch=$patch)"
+          fail=0
+          check() {  # check <file> <line-must-contain>
+            grep -Fq "$2" "$1" || { echo "::error file=$1::expected '$2' (Project.toml is $ver)"; fail=1; }
+          }
+          check interfaces/include/krylov.h   "#define KRYLOV_VERSION_MAJOR $major"
+          check interfaces/include/krylov.h   "#define KRYLOV_VERSION_MINOR $minor"
+          check interfaces/include/krylov.h   "#define KRYLOV_VERSION_PATCH $patch"
+          check interfaces/include/krylov.f90 "KRYLOV_VERSION_MAJOR = $major"
+          check interfaces/include/krylov.f90 "KRYLOV_VERSION_MINOR = $minor"
+          check interfaces/include/krylov.f90 "KRYLOV_VERSION_PATCH = $patch"
+          [ "$fail" -eq 0 ] && echo "Header versions match Project.toml ($ver)."
+          exit $fail
+
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1.12'
@@ -274,6 +300,52 @@ jobs:
           actual=$(interfaces/build/block_gmres)
           echo "$actual"
           echo "$actual" | grep -q "Block solved: yes"
+
+      # -----------------------------------------------------------------------
+      # Build and run the C preconditioning example (Jacobi-preconditioned CG)
+      # -----------------------------------------------------------------------
+      - name: Build C example (preconditioning)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gcc -o interfaces/build/preconditioning interfaces/examples/C/preconditioning.c \
+              -I interfaces/include \
+              "$LIBPATH/${{ matrix.lib }}"
+
+      - name: Run C example (preconditioning)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          actual=$(interfaces/build/preconditioning)
+          echo "$actual"
+          echo "$actual" | grep -q "Solved: yes"
+          echo "$actual" | grep -q "x = \[ 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 \]"
+
+      # -----------------------------------------------------------------------
+      # Build and run the C least-squares example (rectangular LSQR with adjoint)
+      # -----------------------------------------------------------------------
+      - name: Build C example (least-squares)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          gcc -o interfaces/build/least_squares interfaces/examples/C/least_squares.c \
+              -I interfaces/include \
+              "$LIBPATH/${{ matrix.lib }}"
+
+      - name: Run C example (least-squares)
+        shell: bash
+        run: |
+          LIBPATH="$(pwd)/interfaces/build/${{ matrix.libdir }}"
+          export PATH="$LIBPATH:$PATH"
+          export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
+          export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
+          actual=$(interfaces/build/least_squares)
+          echo "$actual"
+          echo "$actual" | grep -q "Solved: yes"
+          echo "$actual" | grep -q "x = \[ 1.00 2.00 3.00 \]"
 
       # -----------------------------------------------------------------------
       # Build and run the C full test (all solvers)
