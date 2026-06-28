@@ -133,9 +133,12 @@ jobs:
         run: julia --startup-file=no --project=. interfaces/scripts/generate_header.jl
 
       # -----------------------------------------------------------------------
-      # Verify the bundle is self-contained: run an example with ONLY the bundle
-      # on the library path (no system Julia), so a missing dlopen'd dependency
-      # makes this fail. Linux only (avoids macOS/Windows env-var differences).
+      # Verify the bundle is self-contained.
+      # Linux uses a dynamic check: run an example with ONLY the bundle on the
+      # library path (no system Julia), so a missing dlopen'd dependency makes it
+      # fail. macOS/Windows can't isolate reliably via env vars (SIP strips
+      # DYLD_*, Windows always searches system dirs), so they use a STATIC check
+      # that inspects the shipped binaries directly — see the steps below.
       # -----------------------------------------------------------------------
       - name: Verify bundle is self-contained (Linux)
         if: runner.os == 'Linux'
@@ -149,6 +152,69 @@ jobs:
           out="$(interfaces/build/selfcheck)"
           echo "$out"
           echo "$out" | grep -q "Solved: yes"
+
+      # macOS: every dependency (otool -L) and rpath (otool -l) of the library
+      # and of each bundled dylib must be loader-relative (@rpath/@loader_path/
+      # @executable_path) or a genuine system lib (/usr/lib, /System). An
+      # absolute path elsewhere (Homebrew, the runner's Julia depot) is a leak.
+      - name: Verify bundle is self-contained (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -uo pipefail
+          BUNDLE="interfaces/build"
+          : > leaks.txt
+          { find "$BUNDLE" -name '*.dylib'
+            echo "$BUNDLE/${{ matrix.libdir }}/${{ matrix.lib }}"; } | while IFS= read -r lib; do
+            [ -f "$lib" ] || continue
+            # Linked dependencies (skip the first line: the file itself).
+            otool -L "$lib" | tail -n +2 | awk '{print $1}' | while IFS= read -r dep; do
+              case "$dep" in
+                @rpath/*|@loader_path/*|@executable_path/*|/usr/lib/*|/System/*|"") ;;
+                *) echo "LEAK dep:  $(basename "$lib") -> $dep" | tee -a leaks.txt ;;
+              esac
+            done
+            # rpath entries must be loader-relative, never absolute external paths.
+            otool -l "$lib" | awk '/LC_RPATH/{f=1} f&&/ path /{print $2; f=0}' | while IFS= read -r rp; do
+              case "$rp" in
+                @loader_path*|@executable_path*|@rpath*|"") ;;
+                *) echo "LEAK rpath: $(basename "$lib") -> $rp" | tee -a leaks.txt ;;
+              esac
+            done
+          done
+          if [ -s leaks.txt ]; then
+            echo "::error::macOS bundle is NOT self-contained"; sort -u leaks.txt; exit 1
+          fi
+          echo "macOS bundle is self-contained"
+
+      # Windows: every import (objdump -p) of every bundled DLL must resolve to
+      # another bundled DLL, a Windows API set (api-ms-win-*/ext-ms-*), or a real
+      # system DLL in System32. Anything else would be picked up from the runner's
+      # Julia install and is a leaked external dependency.
+      - name: Verify bundle is self-contained (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -uo pipefail
+          BUNDLE="interfaces/build"
+          SYS="/c/Windows/System32"
+          : > leaks.txt
+          find "$BUNDLE" -iname '*.dll' -printf '%f\n' | tr '[:upper:]' '[:lower:]' | sort -u > bundled.txt
+          find "$BUNDLE" -iname '*.dll' | while IFS= read -r dll; do
+            objdump -p "$dll" 2>/dev/null | grep 'DLL Name:' | sed 's/.*DLL Name: *//' | tr -d '\r' | while IFS= read -r dep; do
+              depl="$(echo "$dep" | tr '[:upper:]' '[:lower:]')"
+              case "$depl" in
+                api-ms-win-*|ext-ms-*) continue ;;
+              esac
+              grep -qx "$depl" bundled.txt && continue
+              { [ -f "$SYS/$dep" ] || [ -f "$SYS/$depl" ]; } && continue
+              echo "LEAK: $(basename "$dll") -> $dep" | tee -a leaks.txt
+            done
+          done
+          if [ -s leaks.txt ]; then
+            echo "::error::Windows bundle is NOT self-contained"; sort -u leaks.txt; exit 1
+          fi
+          echo "Windows bundle is self-contained"
 
       # -----------------------------------------------------------------------
       # Run the Julia test suite (all solvers × 4 precisions)
