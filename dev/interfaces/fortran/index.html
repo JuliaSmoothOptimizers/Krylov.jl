@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Fortran interface · Krylov.jl</title><meta name="title" content="Fortran interface · Krylov.jl"/><meta property="og:title" content="Fortran interface · Krylov.jl"/><meta property="twitter:title" content="Fortran interface · Krylov.jl"/><meta name="description" content="Documentation for Krylov.jl."/><meta property="og:description" content="Documentation for Krylov.jl."/><meta property="twitter:description" content="Documentation for Krylov.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/style.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Krylov.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Krylov.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><input class="collapse-toggle" id="menuitem-2" type="checkbox" checked/><label class="tocitem" for="menuitem-2"><span class="docs-label">C and Fortran interfaces</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../overview/">Overview</a></li><li><a class="tocitem" href="../building/">Building libkrylov</a></li><li><a class="tocitem" href="../c/">C interface</a></li><li class="is-active"><a class="tocitem" href>Fortran interface</a><ul class="internal"><li><a class="tocitem" href="#Example"><span>Example</span></a></li><li><a class="tocitem" href="#Block-example"><span>Block example</span></a></li><li><a class="tocitem" href="#Fortran-specifics"><span>Fortran specifics</span></a></li><li><a class="tocitem" href="#More-examples"><span>More examples</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../../processes/">Krylov processes</a></li><li><a class="tocitem" href="../../block_processes/">Block Krylov processes</a></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Krylov methods</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../solvers/spd/">Hermitian positive definite linear systems</a></li><li><a class="tocitem" href="../../solvers/sid/">Hermitian indefinite linear systems</a></li><li><a class="tocitem" href="../../solvers/unsymmetric/">Non-Hermitian square linear systems</a></li><li><a class="tocitem" href="../../solvers/ln/">Least-norm problems</a></li><li><a class="tocitem" href="../../solvers/ls/">Least-squares problems</a></li><li><a class="tocitem" href="../../solvers/as/">Adjoint systems</a></li><li><a class="tocitem" href="../../solvers/sp_sqd/">Saddle-point and Hermitian quasi-definite systems</a></li><li><a class="tocitem" href="../../solvers/gsp/">Generalized saddle-point and non-Hermitian partitioned systems</a></li></ul></li><li><a class="tocitem" href="../../block_krylov/">Block Krylov methods</a></li><li><a class="tocitem" href="../../inplace/">In-place methods</a></li><li><a class="tocitem" href="../../generic_interface/">Generic interface</a></li><li><a class="tocitem" href="../../storage/">Storage requirements</a></li><li><a class="tocitem" href="../../preconditioners/">Preconditioners</a></li><li><a class="tocitem" href="../../gpu/">GPU support</a></li><li><a class="tocitem" href="../../warm-start/">Warm-start</a></li><li><a class="tocitem" href="../../matrix_free/">Matrix-free operators</a></li><li><a class="tocitem" href="../../callbacks/">Callbacks</a></li><li><a class="tocitem" href="../../custom_workspaces/">Custom workspaces</a></li><li><a class="tocitem" href="../../tips/">Performance tips</a></li><li><input class="collapse-toggle" id="menuitem-17" type="checkbox"/><label class="tocitem" for="menuitem-17"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../examples/cg/">CG</a></li><li><a class="tocitem" href="../../examples/car/">CAR</a></li><li><a class="tocitem" href="../../examples/cg_lanczos_shift/">CG-LANCZOS-SHIFT</a></li><li><a class="tocitem" href="../../examples/symmlq/">SYMMLQ</a></li><li><a class="tocitem" href="../../examples/minres_qlp/">MINRES-QLP</a></li><li><a class="tocitem" href="../../examples/minares/">MINARES</a></li><li><a class="tocitem" href="../../examples/tricg/">TriCG</a></li><li><a class="tocitem" href="../../examples/trimr/">TriMR</a></li><li><a class="tocitem" href="../../examples/usymlqr/">USYMLQR</a></li><li><a class="tocitem" href="../../examples/bicgstab/">BICGSTAB</a></li><li><a class="tocitem" href="../../examples/dqgmres/">DQGMRES</a></li><li><a class="tocitem" href="../../examples/block_gmres/">BLOCK-GMRES</a></li><li><a class="tocitem" href="../../examples/cgne/">CGNE</a></li><li><a class="tocitem" href="../../examples/crmr/">CRMR</a></li><li><a class="tocitem" href="../../examples/craig/">CRAIG</a></li><li><a class="tocitem" href="../../examples/craigmr/">CRAIGMR</a></li><li><a class="tocitem" href="../../examples/cgls/">CGLS</a></li><li><a class="tocitem" href="../../examples/cgls_lanczos_shift/">CGLS-LANCZOS-SHIFT</a></li><li><a class="tocitem" href="../../examples/crls/">CRLS</a></li><li><a class="tocitem" href="../../examples/lsqr/">LSQR</a></li><li><a class="tocitem" href="../../examples/lsmr/">LSMR</a></li></ul></li><li><a class="tocitem" href="../../api/">API</a></li><li><a class="tocitem" href="../../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">C and Fortran interfaces</a></li><li class="is-active"><a href>Fortran interface</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Fortran interface</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaSmoothOptimizers/Krylov.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/docs/src/interfaces/fortran.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="fortran-interface"><a class="docs-heading-anchor" href="#fortran-interface">Fortran interface</a><a id="fortran-interface-1"></a><a class="docs-heading-anchor-permalink" href="#fortran-interface" title="Permalink"></a></h1><p>Add <code>use iso_c_binding</code> and <code>include &#39;krylov.f90&#39;</code> after <code>implicit none</code>, then link against <code>libkrylov</code> (see <a href="../building/#building-libkrylov">Building libkrylov</a>). The concepts (callbacks, data types, options, return codes, block solvers) are described in the interfaces <a href="../overview/#overview-interfaces">overview</a>. This page collects runnable Fortran programs.</p><h2 id="Example"><a class="docs-heading-anchor" href="#Example">Example</a><a id="Example-1"></a><a class="docs-heading-anchor-permalink" href="#Example" title="Permalink"></a></h2><p>The same 5×5 tridiagonal SPD system as the <a href="../c/#c-interface">C example</a>, now in Fortran (<a href="https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/interfaces/examples/Fortran/basic_cg.f90"><code>examples/Fortran/basic_cg.f90</code></a>):</p><pre><code class="language-fortran hljs">program basic_cg
+  use iso_c_binding
+  implicit none
+  include &#39;krylov.f90&#39;
+
+  integer, parameter    :: n = 5
+  real(c_double), target :: diag(n), off(n-1), b(n), x(n)
+  type(KrylovOptions), target :: opts
+  type(c_ptr)           :: ws
+  integer(c_int)        :: ret
+
+  diag = 2.0_c_double ; off = -1.0_c_double
+  b = 0.0_c_double ; b(1) = 1.0_c_double ; b(n) = 1.0_c_double
+
+  ret = krylov_workspace_create(KRYLOV_CG, n, n, KRYLOV_FLOAT64, KRYLOV_CPU, &amp;
+                                c_null_ptr, ws)
+
+  opts = krylov_default_options()
+  opts%atol = 1d-10 ; opts%rtol = 1d-10
+  ret = krylov_solve(ws, c_funloc(matvec_A), c_null_funptr, c_null_funptr, &amp;
+                     c_loc(b), c_null_ptr, c_loc(diag), c_loc(opts))
+  ret = krylov_get_x(ws, c_loc(x), int(n, c_int))
+
+  write(*,*) &quot;Solved:&quot;, krylov_is_solved(ws) == 1, &quot;  niter:&quot;, krylov_niter(ws)
+  write(*,&#39;(5F6.2)&#39;) x
+
+  ret = krylov_workspace_free(ws)
+
+contains
+  subroutine matvec_A(x_ptr, y_ptr, userdata) bind(c)
+    type(c_ptr), value :: x_ptr, y_ptr, userdata
+    real(c_double), pointer :: xv(:), yv(:), dg(:)
+    integer :: i
+    call c_f_pointer(x_ptr, xv, [n]) ; call c_f_pointer(y_ptr, yv, [n])
+    call c_f_pointer(userdata, dg, [n])
+    do i = 1, n
+      yv(i) = dg(i)*xv(i)
+      if (i &gt; 1) yv(i) = yv(i) - xv(i-1)
+      if (i &lt; n) yv(i) = yv(i) - xv(i+1)
+    end do
+  end subroutine
+end program</code></pre><h2 id="Block-example"><a class="docs-heading-anchor" href="#Block-example">Block example</a><a id="Block-example-1"></a><a class="docs-heading-anchor-permalink" href="#Block-example" title="Permalink"></a></h2><p>Solve <code>A X = B</code> with several right-hand sides at once using block GMRES. Blocks are natural Fortran 2D arrays (column-major); <code>B</code> must have full column rank (see <a href="../../block_krylov/#block-krylov-methods">Block Krylov solvers</a>). Switch <code>KRYLOV_BLOCK_GMRES</code> to <code>KRYLOV_BLOCK_MINRES</code> for block MINRES (<a href="https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/interfaces/examples/Fortran/block_gmres.f90"><code>examples/Fortran/block_gmres.f90</code></a>):</p><pre><code class="language-fortran hljs">program block_gmres
+  use iso_c_binding
+  implicit none
+  include &#39;krylov.f90&#39;
+
+  integer, parameter :: n = 16    ! operator dimension
+  integer, parameter :: p = 3     ! number of right-hand sides (block width)
+
+  real(c_double), target :: Xtrue(n,p), B(n,p), X(n,p)
+  type(KrylovOptions), target :: opts
+  type(c_ptr)    :: ws
+  integer(c_int) :: ret
+  integer        :: i, j
+  real(c_double) :: t
+
+  ! X_true with independent columns, then B = A * X_true.
+  do j = 1, p
+    do i = 1, n
+      t = real(i, c_double) / n
+      if (j == 1) then
+        Xtrue(i,j) = 1.0_c_double
+      else if (j == 2) then
+        Xtrue(i,j) = t
+      else
+        Xtrue(i,j) = t*t
+      end if
+    end do
+  end do
+  call apply_A(Xtrue, B, p)
+
+  ret = krylov_block_workspace_create(KRYLOV_BLOCK_GMRES, n, n, p,        &amp;
+                                      KRYLOV_FLOAT64, KRYLOV_CPU,          &amp;
+                                      c_null_ptr, ws)
+
+  opts = krylov_default_options()
+  opts%atol = 1.0d-10 ; opts%rtol = 1.0d-10
+  ret = krylov_block_solve(ws, c_funloc(cb_block_A), c_null_funptr,       &amp;
+                           c_loc(B), c_null_ptr, c_loc(opts))
+  ret = krylov_block_get_X(ws, c_loc(X), int(n, c_int), int(p, c_int))
+
+  write(*,&#39;(A,L1,A,I0,A,ES8.1)&#39;)                                          &amp;
+    &quot;Block solved: &quot;, (krylov_block_is_solved(ws) == 1),                  &amp;
+    &quot;   niter: &quot;, krylov_block_niter(ws),                                 &amp;
+    &quot;   max error: &quot;, maxval(abs(X - Xtrue))
+
+  ret = krylov_block_workspace_free(ws)
+
+contains
+
+  ! Y = A * X for a p-column block, A = tridiag(-1, 8, -1).
+  subroutine apply_A(Xin, Yout, pp)
+    integer, intent(in)         :: pp
+    real(c_double), intent(in)  :: Xin(:,:)
+    real(c_double), intent(out) :: Yout(:,:)
+    integer :: ii, jj
+    do jj = 1, pp
+      do ii = 1, n
+        Yout(ii,jj) = 8.0_c_double * Xin(ii,jj)
+        if (ii &gt; 1) Yout(ii,jj) = Yout(ii,jj) - Xin(ii-1,jj)
+        if (ii &lt; n) Yout(ii,jj) = Yout(ii,jj) - Xin(ii+1,jj)
+      end do
+    end do
+  end subroutine apply_A
+
+  ! Block matvec callback: Y = A*X for a block of p columns.
+  subroutine cb_block_A(x_ptr, y_ptr, pblk, userdata) bind(c)
+    type(c_ptr),    value :: x_ptr, y_ptr, userdata
+    integer(c_int), value :: pblk
+    real(c_double), pointer :: xx(:,:), yy(:,:)
+    call c_f_pointer(x_ptr, xx, [n, int(pblk)])
+    call c_f_pointer(y_ptr, yy, [n, int(pblk)])
+    call apply_A(xx, yy, int(pblk))
+  end subroutine cb_block_A
+
+end program block_gmres</code></pre><h2 id="Fortran-specifics"><a class="docs-heading-anchor" href="#Fortran-specifics">Fortran specifics</a><a id="Fortran-specifics-1"></a><a class="docs-heading-anchor-permalink" href="#Fortran-specifics" title="Permalink"></a></h2><p>A few rules make the binding work:</p><ul><li><code>include &#39;krylov.f90&#39;</code> goes after <code>implicit none</code>. It declares the enum parameters, the <code>KrylovOptions</code> and <code>KrylovWorkspaceOptions</code> derived types (both <code>bind(c)</code>), and the <code>interface</code> blocks for every function.</li><li>Anything whose address you take with <code>c_loc</code> must have the <code>target</code> attribute, including the option structs (<code>type(KrylovOptions), target :: opts</code>).</li><li>Vectors and structs are passed as <code>c_loc(array)</code> and <code>c_loc(opts)</code>; pass <code>c_null_ptr</code> for an absent <code>b</code>, <code>c</code>, <code>opts</code> or <code>wopts</code>.</li><li>Callbacks are passed as <code>c_funloc(my_sub)</code> and must be <code>bind(c)</code> subroutines with three <code>type(c_ptr), value</code> arguments (the block callback takes an extra <code>integer(c_int), value :: p</code>); pass <code>c_null_funptr</code> for an unused slot. Inside, recover Fortran arrays with <code>c_f_pointer</code>.</li><li>Block right-hand sides and solutions are natural Fortran 2D arrays (column-major), passed with <code>c_loc</code>.</li></ul><h2 id="More-examples"><a class="docs-heading-anchor" href="#More-examples">More examples</a><a id="More-examples-1"></a><a class="docs-heading-anchor-permalink" href="#More-examples" title="Permalink"></a></h2><p>The repository keeps complete Fortran programs, compiled and run in CI:</p><ul><li><a href="https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/interfaces/test/Fortran/test_all_solvers.f90"><code>test/Fortran/test_all_solvers.f90</code></a>, every solver.</li><li><a href="https://github.com/JuliaSmoothOptimizers/Krylov.jl/blob/main/interfaces/test/Fortran/test_block.f90"><code>test/Fortran/test_block.f90</code></a>, <code>block_gmres</code> and <code>block_minres</code>.</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../c/">« C interface</a><a class="docs-footer-nextpage" href="../../processes/">Krylov processes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Sunday 28 June 2026 03:11">Sunday 28 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
