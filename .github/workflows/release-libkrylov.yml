@@ -125,6 +125,20 @@ jobs:
           '
 
       # -----------------------------------------------------------------------
+      # Trim SparseArrays from the build.
+      # The C interface only exposes solvers, never the Krylov processes, so the
+      # only thing pulling SparseArrays (and therefore SuiteSparse) is dead code
+      # for this bundle. This patch drops the dependency, disables the two
+      # *_processes.jl files and the SparseVector ktypeof methods, so the build
+      # no longer dlopen's SuiteSparse and the bundle stays small.
+      # -----------------------------------------------------------------------
+      - name: Strip SparseArrays from the build
+        shell: bash
+        run: |
+          julia --startup-file=no interfaces/scripts/trim_sparsearrays.jl
+          git diff --stat
+
+      # -----------------------------------------------------------------------
       # Instantiate the Krylov.jl project
       # -----------------------------------------------------------------------
       - name: Instantiate Julia project
@@ -167,24 +181,6 @@ jobs:
           mkdir -p interfaces/build/include
           cp interfaces/include/krylov.h interfaces/build/include/
           cp interfaces/include/krylov.f90 interfaces/build/include/
-
-      # -----------------------------------------------------------------------
-      # Bundle the SuiteSparse libraries.
-      # juliac --bundle does not trace libraries that Julia dlopen's at startup
-      # (SparseArrays -> SuiteSparse_jll: libbtf, libcholmod, libumfpack, ...).
-      # They must be copied next to the embedded runtime so the published bundle
-      # is genuinely self-contained on machines without Julia.
-      # -----------------------------------------------------------------------
-      - name: Bundle SuiteSparse libraries
-        shell: bash
-        run: |
-          JBIN="$(julia --startup-file=no -e 'print(Sys.BINDIR)')"
-          if [ "$RUNNER_OS" = "Windows" ]; then JLIB="$JBIN"; else JLIB="$JBIN/../lib/julia"; fi
-          DEST="$(dirname "$(find interfaces/build -name 'libjulia-internal*' | head -1)")"
-          echo "Copying SuiteSparse libraries from $JLIB to $DEST"
-          for name in amd btf camd ccolamd cholmod colamd klu ldl rbio spqr suitesparseconfig umfpack; do
-            cp -a "$JLIB"/lib"$name".* "$DEST"/ 2>/dev/null || true
-          done
 
       # -----------------------------------------------------------------------
       # Package bundle
