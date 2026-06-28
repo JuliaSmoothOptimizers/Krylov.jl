@@ -97,7 +97,7 @@ jobs:
           julia --startup-file=no -e "
             import Pkg
             Pkg.Registry.add(\"General\")
-            Pkg.Apps.add(\"JuliaC\")
+            Pkg.Apps.add(url=\"https://github.com/JuliaLang/JuliaC.jl\", rev=\"v0.3.8\")
           "
 
       - name: Add juliac to PATH

@@ -79,7 +79,7 @@ jobs:
           julia --startup-file=no -e "
             import Pkg
             Pkg.Registry.add(\"General\")
-            Pkg.Apps.add(\"JuliaC\")
+            Pkg.Apps.add(url=\"https://github.com/JuliaLang/JuliaC.jl\", rev=\"v0.3.8\")
           "
 
       - name: Add juliac to PATH
@@ -321,11 +321,13 @@ jobs:
           export LD_LIBRARY_PATH="$LIBPATH:${LD_LIBRARY_PATH:-}"
           export DYLD_LIBRARY_PATH="$LIBPATH:${DYLD_LIBRARY_PATH:-}"
           if [ "$RUNNER_OS" = "Windows" ]; then
-            # Git-bash fails to *launch* this particular executable (exit 127)
-            # even though it runs and passes when Windows starts it directly
-            # (verified: native exit code 0). Launch it through cmd, which
-            # propagates the real exit code.
-            MSYS2_ARG_CONV_EXCL='*' cmd /c 'interfaces\build\test_block_fortran.exe'
+            # ===== TEMPORARY: capture the REAL exit code (delayed expansion) and
+            # the program output (redirected to a file so a crash does not lose it)
+            MSYS2_ARG_CONV_EXCL='*' cmd /v:on /c 'interfaces\build\test_block_fortran.exe > out.txt 2>&1 & echo !errorlevel! > rc.txt'
+            RC=$(tr -dc '0-9-' < rc.txt)
+            echo "REAL_EXIT=$RC"
+            echo "--- program output ---"; cat out.txt 2>/dev/null || true; echo "--- end output ---"
+            [ "$RC" = "0" ]
           else
             interfaces/build/test_block_fortran
           fi

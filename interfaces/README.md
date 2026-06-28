@@ -11,7 +11,7 @@ Pre-built, self-contained bundles for Linux, macOS and Windows are attached to e
 | Tool | Version |
 |------|---------|
 | Julia | ≥ 1.12 |
-| [JuliaC.jl](https://github.com/JuliaLang/JuliaC.jl) | latest |
+| [JuliaC.jl](https://github.com/JuliaLang/JuliaC.jl) | ≥ 0.3.8 |
 | C / Fortran compiler | gcc / clang, gfortran |
 
 [JuliaC.jl](https://github.com/JuliaLang/JuliaC.jl) wraps Julia's `juliac` compiler and adds `--bundle`, which produces a self-contained library that embeds the Julia runtime (no separate Julia installation required at run time).
@@ -22,7 +22,7 @@ All commands run from the **root of the Krylov.jl repository**.
 
 ```bash
 # Install JuliaC.jl once (installs juliac into ~/.julia/bin)
-julia -e 'import Pkg; Pkg.Apps.add(url="https://github.com/JuliaLang/JuliaC.jl", rev="v0.3.2")'
+julia -e 'import Pkg; Pkg.Apps.add(url="https://github.com/JuliaLang/JuliaC.jl", rev="v0.3.8")'
 export PATH="$HOME/.julia/bin:$PATH"
 
 # Build the bundle (library + embedded Julia runtime)

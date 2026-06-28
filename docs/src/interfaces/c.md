@@ -59,7 +59,7 @@ int main(void)
 
 ## Block example
 
-Solve `A X = B` with several right-hand sides using block GMRES. The block `B` is `n×p`, column-major, and must have full column rank (see [Block Krylov solvers](@ref block-krylov-methods):
+Solve `A X = B` with several right-hand sides using block GMRES. The block `B` is `n×p`, column-major, and must have full column rank (see [Block Krylov solvers](@ref block-krylov-methods)):
 
 ```c
 // Y = A * X for a block of p columns (column-major)

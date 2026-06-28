@@ -1,6 +1,6 @@
 # [Building libkrylov](@id building-libkrylov)
 
-Pre-built, self-contained bundles for Linux (x86-64, aarch64), macOS (arm64, x86-64) and Windows (x86-64) are attached to every [release](https://github.com/JuliaSmoothOptimizers/Krylov.jl/releases) starting `v0.10.7`.
+Pre-built, self-contained bundles for Linux (x86-64, aarch64), macOS (arm64, x86-64) and Windows (x86-64) are attached to every [release](https://github.com/JuliaSmoothOptimizers/Krylov.jl/releases) starting from `v0.10.7`.
 This page describes how to build the library from source and how to compile and link a C or Fortran program against it.
 
 ## Requirements
