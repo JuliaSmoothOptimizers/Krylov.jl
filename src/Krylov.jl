@@ -50,6 +50,7 @@ include("bicgstab.jl")
 
 include("bilq.jl")
 include("qmr.jl")
+include("sqmr.jl")
 include("bilqr.jl")
 
 include("cgls.jl")

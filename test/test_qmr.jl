@@ -82,6 +82,40 @@
       @test(resid ≤ qmr_tol)
       @test(stats.solved)
 
+      # SQMR with symmetric indefinite preconditioning.
+      A, b, M = square_preconditioned(FC=FC)
+      (x, stats) = sqmr(A, b, M=M)
+      r = b - A * x
+      resid = norm(M * r) / norm(M * b)
+      @test(resid ≤ sqmr_tol)
+      @test(stats.solved)
+
+      (x, stats) = krylov_solve(Val(:sqmr), A, b, M=M)
+      r = b - A * x
+      resid = norm(M * r) / norm(M * b)
+      @test(resid ≤ sqmr_tol)
+      @test(stats.solved)
+
+      # SQMR warm start.
+      x0 = fill!(similar(b), FC(0.1))
+      (x, stats) = sqmr(A, b, x0, M=M)
+      r = b - A * x
+      resid = norm(M * r) / norm(M * b)
+      @test(resid ≤ sqmr_tol)
+      @test(stats.solved)
+
+      # SQMR workspace API.
+      workspace = SqmrWorkspace(A, b)
+      sqmr!(workspace, A, b, M=M)
+      @test(workspace.stats.solved)
+
+      # SQMR with left-division preconditioning.
+      (x, stats) = sqmr(A, b, M=M, ldiv=true)
+      r = b - A * x
+      resid = norm(M \ r) / norm(M \ b)
+      @test(resid ≤ sqmr_tol)
+      @test(stats.solved)
+
       # Test bᴴc == 0
       A, b, c = bc_breakdown(FC=FC)
       (x, stats) = qmr(A, b, c=c)
