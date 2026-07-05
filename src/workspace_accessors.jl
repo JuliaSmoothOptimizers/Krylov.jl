@@ -129,6 +129,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:BilqWorkspace     , :bilq!      , 1, 1, 1, true )
   (:MinresQlpWorkspace, :minres_qlp!, 1, 1, 0, true )
   (:QmrWorkspace      , :qmr!       , 1, 1, 1, true )
+  (:SqmrWorkspace     , :sqmr!      , 1, 1, 0, true )
   (:GmresWorkspace    , :gmres!     , 1, 1, 0, true )
   (:FgmresWorkspace   , :fgmres!    , 1, 1, 0, true )
   (:FomWorkspace      , :fom!       , 1, 1, 0, true )

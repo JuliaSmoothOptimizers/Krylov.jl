@@ -1,34 +1,30 @@
 # An implementation of SQMR for the solution of Hermitian (self-adjoint)
 # square linear systems Ax = b.
 #
-# SQMR is based on the *symmetric* (one-sided) Lanczos process.
+# SQMR is based on the symmetric (one-sided) Lanczos process.
 # Unlike QMR, which solves unsymmetric systems via the two-sided biorthogonal
 # Lanczos process (requiring products with both A and Aᴴ), SQMR exploits the
 # symmetry A = Aᴴ: the left and right Lanczos vectors collapse to one sequence,
 # halving storage and eliminating all Aᴴ products.
 #
 # The key structural consequence is that the projected matrix Tₖ is
-# *symmetric tridiagonal* (not the general banded matrix in QMR), and the
+# symmetric tridiagonal (not the general banded matrix in QMR), and the
 # QMR quasi-minimisation step reduces to a simple two-rotation Givens update
 # on this tridiagonal — identical in form to MINRES.
 # Without preconditioning, SQMR and MINRES are mathematically equivalent.
 # The advantage of SQMR over MINRES is that it accommodates symmetric
 # *indefinite* preconditioners, for which MINRES breaks down.
 #
-# The preconditioned variant uses split (centred) preconditioning: given a
+# The preconditioned variant uses centred preconditioning: given a
 # symmetric preconditioner M (not necessarily positive definite), the Lanczos
 # inner products are taken with respect to the M-inner product
-#   ⟨u, v⟩_M  =  uᵀ (M⁻¹ v),
-# so we maintain alongside each Lanczos vector vₖ its M-image zₖ = M⁻¹ vₖ.
+#   ⟨u, v⟩_M  =  uᵀ M v,
+# and we maintain alongside each normalized Lanczos vector vₖ its M-image
+# zₖ = M⁻¹ vₖ.
 # Breakdowns (⟨v̂, M⁻¹v̂⟩ = 0) are detected exactly; the sign of this inner
 # product is allowed to be negative.
 #
-# This implementation follows Algorithm 7.9 in:
-#
-#   Y. Saad, Iterative Methods for Sparse Linear Systems, 2nd ed.,
-#   SIAM, Philadelphia, 2003.
-#
-# and the original reference:
+# This implementation follows the SQMR description in:
 #
 #   R. W. Freund and N. M. Nachtigal,
 #   A new Krylov-subspace method for symmetric indefinite linear systems.
@@ -100,7 +96,7 @@ For an in-place variant that reuses memory across solves, see [`sqmr!`](@ref).
 #### References
 
 * R. W. Freund and N. M. Nachtigal, [*A new Krylov-subspace method for symmetric indefinite linear systems*](https://www.osti.gov/biblio/36034), Proc. 14th IMACS World Congress, pp. 1253--1256, 1994.
-* Y. Saad, *Iterative Methods for Sparse Linear Systems*, 2nd ed., SIAM, 2003.
+* C. C. Paige and M. A. Saunders, [*Solution of Sparse Indefinite Systems of Linear Equations*](https://doi.org/10.1137/0712047), SIAM Journal on Numerical Analysis, 12(4), pp. 617--629, 1975.
 """
 function sqmr end
 
@@ -141,6 +137,7 @@ kwargs_sqmr  = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :
 
 @eval begin
   function sqmr!(workspace :: SqmrWorkspace{T,FC,S}, $(def_args_sqmr...); $(def_kwargs_sqmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+
     # Timer
     start_time = time_ns()
     timemax_ns = 1e9 * timemax
@@ -159,15 +156,14 @@ kwargs_sqmr  = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    # z = M⁻¹vₖ is only needed when M ≠ I; when M = I it aliases r2.
-    allocate_if(!MisI, workspace, :z, S, workspace.x)
+    allocate_if(true, workspace, :z, S, workspace.x)
 
-    Δx, x, r1, r2, w1, w2, stats = workspace.Δx, workspace.x, workspace.r1, workspace.r2, workspace.w1, workspace.w2, workspace.stats
+    Δx, x, r1, r2, w1, w2, y, stats = workspace.Δx, workspace.x, workspace.r1, workspace.r2, workspace.w1, workspace.w2, workspace.y, workspace.stats
     warm_start = workspace.warm_start
     rNorms = stats.residuals
     reset!(stats)
 
-    z = MisI ? r2 : workspace.z
+    z = workspace.z
 
     # Initial solution x₀ and residual r₀ = b - Ax₀.
     kfill!(x, zero(FC))
@@ -177,15 +173,19 @@ kwargs_sqmr  = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :
     else
       kcopy!(n, r1, b)                        # r1 ← b
     end
+    kcopy!(n, r2, r1)                         # r2 ← r1  (copy of initial residual)
 
     # Initialize the symmetric Lanczos process.
-    # β₁ M v₁ = b  ⟹  v₁ = b / β₁,  β₁ = √|⟨b, M⁻¹b⟩|
-    kcopy!(n, r2, r1)                         # r2 ← r1  (holds v₁, unnormalised)
-    MisI || mulorldiv!(z, M, r1, ldiv)        # z ← M⁻¹ r1  (= M⁻¹ v₁ unnorm.)
+    # Solve M z₁ = v̂₁, where v̂₁ = r₀ is the unnormalized initial Lanczos vector.
+    if MisI
+        kcopy!(n, z, r1)                      # z = r₁ (M⁻¹ = I)
+    else
+        mulorldiv!(z, M, r1, ldiv)            # z ← M⁻¹ r₁ = ẑ₁
+    end
 
-    β₁ = kdotr(n, r1, z)                      # β₁² = ⟨v₁, M⁻¹v₁⟩  (can be < 0 for indef. M)
+    δ₁ = kdotr(n, r1, z)                      # δ₁ = ⟨v̂₁, M⁻¹v̂₁⟩
 
-    if β₁ == 0
+    if δ₁ == 0
       stats.niter        = 0
       stats.solved       = true
       stats.inconsistent = false
@@ -197,33 +197,29 @@ kwargs_sqmr  = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :
       return workspace
     end
 
-    β₁  = sqrt(abs(β₁))
-    β   = β₁
-    oldβ = zero(T)
+    η   = sqrt(abs(δ₁))                       # η₁ = √|δ₁|
+    σ   = δ₁ >= 0 ? one(T) : -one(T)          # σ₁ = sign(δ₁) (sign(0)=1)
 
-    rNorm = β₁
+    rNorm = η
     history && push!(rNorms, rNorm)
 
-    # Scalars for the QMR update on the symmetric tridiagonal Tₖ.
-    # We maintain the running QR factorisation via two successive Givens rotations,
-    # exactly as in MINRES.  The notation follows Saad §6.7 + §7.4.
-    #
-    #   δbar   — pending (unfinalised) diagonal entry before the new rotation
-    #   ε      — fill-in from the rotation applied two steps ago
-    #   ϕbar   — residual factor; ‖rₖ‖ ≈ |ϕbar| in exact arithmetic
-    #
+    # Normalize the initial Lanczos and preconditioned vectors.
+    kdiv!(n, r2, η)                           # r₂ = v₁ = v̂₁ / η₁
+    kdiv!(n, z, η)                            # z  = z₁ = M⁻¹ v₁
+
+    # Scalars for the Givens-based QR factorization of the symmetric tridiagonal Tₖ.
     δbar = zero(T)
-    ε    = zero(T)
-    ϕbar = β₁
-    cs   = -one(T)     # cosine of the previous Givens rotation
-    sn   = zero(T)     # sine  of the previous Givens rotation
+    ϵ    = zero(T)
+    ϕbar = η
+    cs   = -one(T)
+    sn   = zero(T)
 
     kfill!(w1, zero(FC))
     kfill!(w2, zero(FC))
 
     iter   = 0
     itmax == 0 && (itmax = 2*n)
-    ε_tol  = atol + rtol * β₁
+    ε_tol  = atol + rtol * η
 
     (verbose > 0) && @printf(iostream, "%5s  %8s  %7s  %5s\n", "k", "αₖ", "‖rₖ‖", "timer")
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %.2fs\n", iter, zero(T), rNorm, start_time |> ktimer)
@@ -239,112 +235,105 @@ kwargs_sqmr  = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :
       # Update iteration index.
       iter = iter + 1
 
-      # Symmetric Lanczos step.
-      # Three-term recurrence:
-      #   y ← A zₖ                          (matvec; zₖ = M⁻¹vₖ stored in z)
-      #   y ← y / βₖ
-      #   y ← y − (βₖ/βₖ₋₁) vₖ₋₁           (deflate previous direction)
-      #   αₖ = ⟨vₖ, y⟩ / βₖ                 (Ritz value; real by Hermitian symmetry)
-      #   y ← y − (αₖ/βₖ) vₖ               (deflate current direction → v̂ₖ₊₁)
-      #   zₖ₊₁ ← M⁻¹ v̂ₖ₊₁
-      #   βₖ₊₁ = √|⟨v̂ₖ₊₁, zₖ₊₁⟩|
+      # Symmetric Lanczos step (Freund & Nachtigal 1994).
+      # The Lanczos vectors vₖ are normalized in the M⁻¹-inner product:
+      #   ⟨vᵢ, M⁻¹vⱼ⟩ = δᵢⱼ
+      # The recurrence for the unnormalized next vector v̂ₖ₊₁:
+      #   v̂ₖ₊₁ = A vₖ - αₖ vₖ - σₖ ηₖ vₖ₋₁
+      # where αₖ = vₖᵀ A vₖ and the off-diagonal entries of the
+      # symmetric tridiagonal Tₖ are σₖ ηₖ.
+      #
+      # r₁ = vₖ₋₁, r₂ = vₖ, z = zₖ = M⁻¹ vₖ.
 
-      kmul!(w1, A, z)                         # w1 ← A zₖ  (scratch; safe to overwrite w1 here)
-      kdiv!(n, w1, β)                         # w1 ← w1 / βₖ
-      iter ≥ 2 && kaxpy!(n, -β / oldβ, r1, w1)  # w1 ← w1 − (βₖ/βₖ₋₁) vₖ₋₁
+      kmul!(y, A, r2)                         # y ← A vₖ
+      α = kdotr(n, z, y)                      # αₖ = ⟨vₖ, A vₖ⟩ = vₖᵀ M⁻¹ A vₖ
 
-      αₖ = real(kdot(n, r2, w1)) / β         # αₖ = Re⟨vₖ, w1⟩ / βₖ  (real for Hermitian A)
+      # Direction update for the solution x.
+      # The update follows the MINRES pattern, using the Lanczos
+      # vectors vₖ (stored in r₂).  The direction vectors are the
+      # columns of Wₖ = Vₖ Rₖ⁻¹, which satisfy
+      #   w₁  = v₁ / γ₁
+      #   w₂  = (v₂ - δ₂ w₁) / γ₂
+      #   wₖ  = (vₖ - δₖ wₖ₋₁ - ϵₖ wₖ₋₂) / γₖ   for k ≥ 3
+      δ = cs * δbar + sn * α
+      if iter == 1
+        w = w2
+        kcopy!(n, w, r2)                       # w₁ = v₁
+      else
+        w = w1
+        iter ≥ 3 && kscal!(n, -ϵ, w)          # w ← -ϵ * wₖ₋₂
+        kaxpy!(n, -δ, w2, w)                  # w ← w - δ * wₖ₋₁
+        kaxpy!(n, one(FC), r2, w)              # w ← w + vₖ
+      end
 
-      kaxpy!(n, -αₖ / β, r2, w1)             # w1 ← w1 − (αₖ/βₖ) vₖ  →  v̂ₖ₊₁ in w1
+      # Advance the Lanczos recurrence.
+      # v̂ₖ₊₁ = A vₖ - αₖ vₖ - σₖ ηₖ vₖ₋₁
+      kaxpy!(n, -α, r2, y)                    # y ← y - αₖ vₖ = A vₖ - αₖ vₖ
+      iter ≥ 2 && kaxpy!(n, -σ * η, r1, y)    # y ← y - σₖ ηₖ vₖ₋₁
 
-      # Apply M to v̂ₖ₊₁ to get M-image for the next β.
-      MisI || mulorldiv!(z, M, w1, ldiv)      # z ← M⁻¹ v̂ₖ₊₁
+      # Compute the next preconditioned vector: ẑₖ₊₁ = M⁻¹ v̂ₖ₊₁.
+      if MisI
+        kcopy!(n, z, y)                       # z ← v̂ₖ₊₁  (M⁻¹ = I)
+      else
+        mulorldiv!(z, M, y, ldiv)             # z ← M⁻¹ v̂ₖ₊₁ = ẑₖ₊₁
+      end
 
-      pq = kdotr(n, w1, MisI ? w1 : z)       # ⟨v̂ₖ₊₁, M⁻¹v̂ₖ₊₁⟩  (real for Hermitian M)
-
-      if pq == 0
-        breakdown = !solved
+      δ_next = kdotr(n, y, z)                 # δₖ₊₁ = ⟨v̂ₖ₊₁, M⁻¹v̂ₖ₊₁⟩
+      if δ_next == 0
+        breakdown = true
         break
       end
 
-      β_next = sqrt(abs(pq))                  # βₖ₊₁
+      η_next = sqrt(abs(δ_next))              # ηₖ₊₁ = √|δₖ₊₁|
+      σ_next = δ_next >= 0 ? one(T) : -one(T) # σₖ₊₁ = sign(δₖ₊₁)
 
-      # QMR update on the symmetric tridiagonal Tₖ₊₁,ₖ.
-      #
-      # Apply the previous Givens rotation Qₖ₋₁ to the new column [0; αₖ; βₖ₊₁]:
-      #   [  cs   sn ] [ δbar ] = [  γbar ]
-      #   [ -sn   cs ] [  αₖ  ] = [  ...  ]
-      # (the second row gives the new pending diagonal δbar for the next step)
-      #
-      #    [ γbar ]   [ cs    sn ] [ δbar ]
-      #    [ δbar']   [-sn    cs ] [  αₖ  ]
-      #
-      γbar  =  cs * δbar + sn * αₖ            # partial diagonal after previous rotation
-      δbar  = -sn * δbar + cs * αₖ            # new pending diagonal
-      ε_new =  sn * β_next                    # fill-in from this rotation
-      δbar2 = -cs * β_next                    # δbar updated once more for next iter
+      # Normalize the new Lanczos and preconditioned vectors.
+      kdiv!(n, y, η_next)                     # y ← vₖ₊₁ = v̂ₖ₊₁ / ηₖ₊₁
+      kdiv!(n, z, η_next)                     # z ← zₖ₊₁ = ẑₖ₊₁ / ηₖ₊₁
 
-      # Compute the direction vector wₖ = (vₖ − ε wₖ₋₂ − γbar wₖ₋₁) / γ
-      # where γ is determined by the *new* rotation below.
-      # Build the unnormalised direction in w2 first, then divide by γ after.
-      if iter == 1
-        kcopy!(n, w2, r2)                     # w2 ← v₁  (no previous directions; normalise by γ below)
-      elseif iter == 2
-        # w₂ = (v₂ − ε₁ w₀ − γbar₁ w₁) / γ₂;  w₀ = 0, so just:
-        # w₂ = (v₂ − γbar₁ w₁) / γ₂.
-        # w2 still holds w₁ from iter 1, so preserve it in w1 before overwriting w2.
-        kcopy!(n, w1, w2)                     # w1 ← w₁
-        kcopy!(n, w2, r2)                     # w2 ← v₂
-        kaxpy!(n, -γbar, w1, w2)              # w2 ← v₂ − γbar₁ w₁  (unnorm. w₂)
-      else
-        # wₖ = (vₖ − ε wₖ₋₂ − γbar wₖ₋₁) / γ
-        # After the @kswap! below, w1 = wₖ₋₂ and w2 = wₖ₋₁.
-        kscal!(n, -ε, w1)                     # w1 ← −ε wₖ₋₂
-        kaxpy!(n, -γbar, w2, w1)              # w1 ← −ε wₖ₋₂ − γbar wₖ₋₁
-        kaxpy!(n, one(FC), r2, w1)            # w1 ← vₖ − ε wₖ₋₂ − γbar wₖ₋₁  (unnorm. wₖ)
-        kcopy!(n, w2, w1)                     # w2 ← unnorm. wₖ  (will be normalised by γ)
-      end
+      # Apply the previous Givens rotation to the current column.
+      # Convention (as in MINRES):
+      #   [cs  sn] [δbar  0      ] = [γbar    ϵₖ₊₁    ]
+      #   [sn -cs] [α     σₖ₊₁ηₖ₊₁]   [δₖ₊₁  δbarₖ₊₁]
+      offdiag = σ_next * η_next               # signed off-diagonal entry of Tₖ
+      γbar = sn * δbar - cs * α
+      ϵ    = sn * offdiag
+      δbar = -cs * offdiag
 
-      # New Givens rotation to annihilate βₖ₊₁:
-      #   [ cs'  sn' ] [ γbar    ] = [ γ ]
-      #   [-sn'  cs' ] [ βₖ₊₁   ]   [ 0 ]
-      (cs, sn, γ) = sym_givens(γbar, β_next)
-      γ = max(γ, eps(T))                      # guard against exact zero
+      # New Givens rotation to annihilate the subdiagonal element.
+      γ = sqrt(γbar * γbar + offdiag * offdiag)
+      γ = max(γ, eps(T))
 
-      # Normalise the direction vector.
-      kdiv!(n, w2, γ)                         # w2 ← wₖ = (unnorm. wₖ) / γ
+      kdiv!(n, w, γ)                          # wₖ ← wₖ / γₖ
 
-      # Update the right-hand side of the QMR least-squares system:
-      #   ϕₖ    = cs * ϕbar
-      #   ϕbar  = sn * ϕbar
-      ϕₖ    = cs * ϕbar
-      ϕbar  = sn * ϕbar
+      cs = γbar / γ
+      sn = offdiag / γ                        # signed Givens sine
+
+      # Update the right-hand side of the projected least-squares system.
+      ϕ    = cs * ϕbar
+      ϕbar = sn * ϕbar
 
       # Update solution: xₖ ← xₖ₋₁ + ϕₖ wₖ
-      kaxpy!(n, FC(ϕₖ), w2, x)
+      kaxpy!(n, ϕ, w, x)
 
-      # Residual norm estimate: ‖rₖ‖ ≈ |ϕbar|  (exact in exact arithmetic)
+      # Residual norm estimate: ‖rₖ‖ = |ϕbar|
       rNorm = abs(ϕbar)
       history && push!(rNorms, rNorm)
 
-      # Advance Lanczos vectors.
-      kcopy!(n, r1, r2)                       # r1 ← vₖ  (becomes vₖ₋₁)
-      kcopy!(n, r2, w1)                       # r2 ← v̂ₖ₊₁ (unnormalised; stored in w1)
+      # Swap direction vectors for the next iteration.
+      if iter ≥ 2
+        @kswap!(w1, w2)
+      end
 
-      # Normalise vₖ₊₁ and its M-image.
-      kdiv!(n, r2, β_next)                    # r2 ← vₖ₊₁ = v̂ₖ₊₁ / βₖ₊₁
-      MisI || kdiv!(n, z, β_next)             # z  ← M⁻¹vₖ₊₁ = M⁻¹v̂ₖ₊₁ / βₖ₊₁
+      # Shift Lanczos vectors for the next iteration.
+      kcopy!(n, r1, r2)                       # r₁ ← vₖ
+      kcopy!(n, r2, y)                        # r₂ ← vₖ₊₁
 
-      # Swap direction vectors for next iteration.
-      iter ≥ 2 && @kswap!(w1, w2)
+      # Update σ and η for the next iteration.
+      σ = σ_next
+      η = η_next
 
-      # Advance scalars.
-      oldβ = β
-      β    = β_next
-      ε    = ε_new
-      δbar = δbar2
-
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %.2fs\n", iter, αₖ, rNorm, start_time |> ktimer)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %.2fs\n", iter, α, rNorm, start_time |> ktimer)
 
       # Stopping conditions.
       resid_decrease_mach = (rNorm + one(T) ≤ one(T))
@@ -377,24 +366,4 @@ kwargs_sqmr  = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :
 
     return workspace
   end
-
-  function sqmr($(def_args_sqmr...); $(def_kwargs_sqmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    workspace  = SqmrWorkspace(A, b)
-    workspace.stats.timer = start_time |> ktimer
-    return sqmr!(workspace, $(args_sqmr...); $(kwargs_sqmr...))
-  end
-
-  function sqmr($(def_args_sqmr...), $(def_optargs_sqmr...); $(def_kwargs_sqmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}}
-    start_time = time_ns()
-    workspace  = SqmrWorkspace(A, b)
-    workspace.stats.timer = start_time |> ktimer
-    return sqmr!(workspace, $(args_sqmr...), $(optargs_sqmr...); $(kwargs_sqmr...))
-  end
-
-  krylov_solve(::Val{:sqmr}, $(def_args_sqmr...); $(def_kwargs_sqmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} =
-    sqmr($(args_sqmr...); $(kwargs_sqmr...))
-
-  krylov_solve(::Val{:sqmr}, $(def_args_sqmr...), $(def_optargs_sqmr...); $(def_kwargs_sqmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}} =
-    sqmr($(args_sqmr...), $(optargs_sqmr...); $(kwargs_sqmr...))
 end
