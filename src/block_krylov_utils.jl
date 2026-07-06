@@ -299,3 +299,155 @@ korgqr!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}, buffer:: AbstractVecto
 
 kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVector{T}, C :: AbstractMatrix{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)
 kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVector{T}, C :: AbstractMatrix{T}, buffer:: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)
+
+# """
+#     β, τ = larfg!(α, x)
+#
+# Generate an elementary Householder reflector `H = I - τ vvᴴ` such that
+# `Hᴴ * [α; x] = [β; 0]` (LAPACK convention; `H` is not hermitian in the complex
+# case), where `v = [1; y]` and `β` is the (signed) Euclidean norm of `[α; x]`.
+# On output `x` is overwritten by the tail `y` of `v`.
+# """
+function larfg!(α::FC, x::AbstractVector{FC}) where FC <: FloatOrComplex
+  T = real(FC)
+  n = length(x)
+  xnorm = knorm(n, x)
+  if xnorm == zero(T) && imag(α) == zero(T)
+    return real(α), zero(FC)
+  end
+  β = -copysign(hypot(abs(α), xnorm), real(α))
+  τ = (β - α) / β
+  kdiv!(n, x, α - β)
+  return β, τ
+end
+
+# """
+#     A = geqrf!(A, tau)
+#
+# Reduced QR factorization via Householder reflections.
+# On output the upper triangle of `A` holds `R`, and the reflectors are stored
+# below the diagonal together with the scalars `τ`.
+# """
+function geqrf!(A::AbstractMatrix{FC}, tau::AbstractVector{FC}) where FC <: FloatOrComplex
+  m, n = size(A)
+  k = min(m, n)
+  for i = 1:k
+    x = view(A, i+1:m, i)
+    βi, τi = larfg!(A[i,i], x)
+    tau[i] = τi
+    if i < n && τi != zero(FC)
+      A[i,i] = one(FC)
+      v = view(A, i:m, i)
+      p = m - i + 1
+      for j = i+1:n
+        c = view(A, i:m, j)
+        s = kdot(p, v, c)
+        kaxpy!(p, -conj(τi) * s, v, c)
+      end
+    end
+    A[i,i] = βi
+  end
+  return A
+end
+
+# """
+#     A = orgqr!(A, tau)
+#
+# Form the orthonormal factor `Q` from the reflectors produced by [`geqrf!`](@ref), overwriting `A`.
+# """
+function orgqr!(A::AbstractMatrix{FC}, tau::AbstractVector{FC}) where FC <: FloatOrComplex
+  m, n = size(A)
+  k = length(tau)
+  for j = k+1:n
+    for l = 1:m
+      A[l,j] = zero(FC)
+    end
+    A[j,j] = one(FC)
+  end
+  for i = k:-1:1
+    τi = tau[i]
+    if i < n && τi != zero(FC)
+      A[i,i] = one(FC)
+      v = view(A, i:m, i)
+      p = m - i + 1
+      for j = i+1:n
+        c = view(A, i:m, j)
+        s = kdot(p, v, c)
+        kaxpy!(p, -τi * s, v, c)
+      end
+    end
+    for l = i+1:m
+      A[l,i] = -τi * A[l,i]
+    end
+    A[i,i] = one(FC) - τi
+    for l = 1:i-1
+      A[l,i] = zero(FC)
+    end
+  end
+  return A
+end
+
+# """
+#     C = ormqr!(side, trans, A, tau, C)
+#
+# Apply Q or Qᴴ (stored as reflectors in `A` with scalars `τ`) to the matrix `C`
+# from the left ('L') or the right ('R'), using the reflectors computed by [`geqrf!`](@ref).
+# """
+function ormqr!(side::Char, trans::Char, A::AbstractMatrix{FC}, tau::AbstractVector{FC}, C::AbstractMatrix{FC}) where FC <: FloatOrComplex
+  m, n = size(C)
+  k = length(tau)
+  notran = (trans == 'N')
+  if side == 'L'
+    rng = notran ? (k:-1:1) : (1:k)
+    for i in rng
+      τi = notran ? tau[i] : conj(tau[i])
+      τi == zero(FC) && continue
+      Aii = A[i,i]
+      A[i,i] = one(FC)
+      v = view(A, i:m, i)
+      p = m - i + 1
+      for j = 1:n
+        c = view(C, i:m, j)
+        s = kdot(p, v, c)
+        kaxpy!(p, -τi * s, v, c)
+      end
+      A[i,i] = Aii
+    end
+  else  # side == 'R'
+    rng = notran ? (1:k) : (k:-1:1)
+    for i in rng
+      τi = notran ? tau[i] : conj(tau[i])
+      τi == zero(FC) && continue
+      Aii = A[i,i]
+      A[i,i] = one(FC)
+      v = view(A, i:n, i)
+      q = n - i + 1
+      for a = 1:m
+        r = view(C, a, i:n)
+        s = zero(FC)
+        for t = 1:q
+          s += r[t] * v[t]
+        end
+        d = τi * s
+        for t = 1:q
+          r[t] -= d * conj(v[t])
+        end
+      end
+      A[i,i] = Aii
+    end
+  end
+  return C
+end
+
+kgeqrf!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}) where FC <: FloatOrComplex = geqrf!(A, tau)
+kgeqrf!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, buffer :: AbstractVector{FC}) where FC <: FloatOrComplex = geqrf!(A, tau)
+
+korgqr!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}) where FC <: FloatOrComplex = orgqr!(A, tau)
+korgqr!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, buffer :: AbstractVector{FC}) where FC <: FloatOrComplex = orgqr!(A, tau)
+
+kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, C :: AbstractMatrix{FC}) where FC <: FloatOrComplex = ormqr!(side, trans, A, tau, C)
+kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, C :: AbstractMatrix{FC}, buffer :: AbstractVector{FC}) where FC <: FloatOrComplex = ormqr!(side, trans, A, tau, C)
+
+kgeqrf_buffer!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}) where FC <: FloatOrComplex = 0
+korgqr_buffer!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}) where FC <: FloatOrComplex = 0
+kormqr_buffer!(side :: Char, trans :: Char, A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, C :: AbstractMatrix{FC}) where FC <: FloatOrComplex = 0
