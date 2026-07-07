@@ -82,8 +82,6 @@
       @test(resid ≤ qmr_tol)
       @test(stats.solved)
 
-
-
       # Test bᴴc == 0
       A, b, c = bc_breakdown(FC=FC)
       (x, stats) = qmr(A, b, c=c)
