@@ -49,6 +49,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false, use_val::Boo
       workspaces[:bilqr] = @inferred krylov_workspace(Val(:bilqr), kc_nn)
       workspaces[:minres_qlp] = @inferred krylov_workspace(Val(:minres_qlp), kc_nn)
       workspaces[:qmr] = @inferred krylov_workspace(Val(:qmr), kc_nn)
+      workspaces[:sqmr] = @inferred krylov_workspace(Val(:sqmr), kc_nn)
       workspaces[:usymlq] = @inferred krylov_workspace(Val(:usymlq), kc_mn)
       workspaces[:tricg] = @inferred krylov_workspace(Val(:tricg), kc_mn)
       workspaces[:trimr] = @inferred krylov_workspace(Val(:trimr), kc_mn)
@@ -87,6 +88,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false, use_val::Boo
       workspaces[:bilqr] = @inferred krylov_workspace(Val(:bilqr), n, n, S)
       workspaces[:minres_qlp] = @inferred krylov_workspace(Val(:minres_qlp), n, n, S)
       workspaces[:qmr] = @inferred krylov_workspace(Val(:qmr), n, n, S)
+      workspaces[:sqmr] = @inferred krylov_workspace(Val(:sqmr), n, n, S)
       workspaces[:usymlq] = @inferred krylov_workspace(Val(:usymlq), m, n, S)
       workspaces[:tricg] = @inferred krylov_workspace(Val(:tricg), m, n, S)
       workspaces[:trimr] = @inferred krylov_workspace(Val(:trimr), m, n, S)
@@ -130,6 +132,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false, use_val::Boo
       workspaces[:bilqr] = krylov_workspace(:bilqr, kc_nn)
       workspaces[:minres_qlp] = krylov_workspace(:minres_qlp, kc_nn)
       workspaces[:qmr] = krylov_workspace(:qmr, kc_nn)
+      workspaces[:sqmr] = krylov_workspace(:sqmr, kc_nn)
       workspaces[:usymlq] = krylov_workspace(:usymlq, kc_mn)
       workspaces[:tricg] = krylov_workspace(:tricg, kc_mn)
       workspaces[:trimr] = krylov_workspace(:trimr, kc_mn)
@@ -168,6 +171,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false, use_val::Boo
       workspaces[:bilqr] = krylov_workspace(:bilqr, n, n, S)
       workspaces[:minres_qlp] = krylov_workspace(:minres_qlp, n, n, S)
       workspaces[:qmr] = krylov_workspace(:qmr, n, n, S)
+      workspaces[:sqmr] = krylov_workspace(:sqmr, n, n, S)
       workspaces[:usymlq] = krylov_workspace(:usymlq, m, n, S)
       workspaces[:tricg] = krylov_workspace(:tricg, m, n, S)
       workspaces[:trimr] = krylov_workspace(:trimr, m, n, S)
@@ -202,7 +206,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false, use_val::Boo
     c2  = Au2 * ones(FC, n2)
     shifts2 = [1.0; 2.0; 3.0; 4.0; 5.0; 6.0]
     for (method, workspace) in workspaces
-      if method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr)
+      if method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr, :sqmr)
         @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $n2)") krylov_solve!(workspace, A2, b2)
       end
       method == :cg_lanczos_shift && @test_throws ErrorException("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($n2, $n2)") krylov_solve!(workspace, A2, b2, shifts2)
@@ -222,7 +226,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false, use_val::Boo
   @testset "Test the keyword argument timemax" begin
     timemax = 0.0
     for (method, workspace) in workspaces
-      method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr) && krylov_solve!(workspace, A, b, timemax=timemax)
+      method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom, :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr, :sqmr) && krylov_solve!(workspace, A, b, timemax=timemax)
       method == :cg_lanczos_shift && krylov_solve!(workspace, A, b, shifts, timemax=timemax)
       method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr) && krylov_solve!(workspace, Au, c, timemax=timemax)
       method ∈ (:cgls, :crls, :lslq, :lsqr, :lsmr) && krylov_solve!(workspace, Ao, b, timemax=timemax)
@@ -246,7 +250,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false, use_val::Boo
         c  = 3 * c
 
         if method ∈ (:cg, :cr, :car, :symmlq, :minares, :minres, :minres_qlp, :cg_lanczos, :diom, :fom,
-                     :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr, :cg_lanczos_shift)
+                     :dqgmres, :gmres, :fgmres, :cgs, :bicgstab, :bilq, :qmr, :sqmr, :cg_lanczos_shift)
           if method == :cg_lanczos_shift
             use_val ? @inferred(krylov_solve(Val(method), A, b, shifts)) : krylov_solve(method, A, b, shifts)
             @inferred krylov_solve!(workspace, A, b, shifts)
