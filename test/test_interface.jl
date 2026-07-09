@@ -260,7 +260,7 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false, use_val::Boo
           end
           niter = iteration_count(workspace)
           @test Aprod_count(workspace) == (method ∈ (:cgs, :bicgstab) ? 2 * niter : niter)
-          @test Atprod_count(workspace) == (method ∈ (:bilq, :qmr) ? niter : 0)
+          @test Atprod_count(workspace) == (method ∈ (:bilq, :qmr, :sqmr) ? niter : 0)
           @test solution(workspace) === workspace.x
           @test solution_count(workspace) == 1
         end

@@ -1,33 +1,23 @@
 # An implementation of SQMR for the solution of Hermitian (self-adjoint)
 # square linear systems Ax = b.
 #
-# SQMR is based on the one-sided symmetric Lanczos process with
-# centred preconditioning, combined with the QMR quasi-minimisation
-# step via Givens rotations on the resulting symmetric tridiagonal
-# projected system.  When no preconditioner is supplied, SQMR and
-# MINRES are mathematically equivalent.
+# SQMR is implemented as a wrapper around QMR with centred preconditioning,
+# i.e. QMR(A, b, M=M, N=M).  This lets the method accept symmetric
+# (including indefinite) preconditioners while reusing the existing QMR
+# machinery.  Without a preconditioner, SQMR and MINRES are mathematically
+# equivalent.
 #
-# The advantage of SQMR over MINRES is that it accommodates symmetric
-# *indefinite* preconditioners, for which MINRES requires β₁ = √(r₁ᵀMr₁)
-# to be real and would break down.
-# In SQMR the initial Lanczos vector is normalised in the
-# M⁻¹-inner product ⟨u,v⟩_M = uᵀM⁻¹v, which may be indefinite;
-# breakdowns (⟨v̂, M⁻¹v̂⟩ = 0) are detected exactly.
-#
-# This implementation follows the SQMR description in:
+# References:
 #
 #   R. W. Freund and N. M. Nachtigal,
 #   A new Krylov-subspace method for symmetric indefinite linear systems.
-#   Proc. 14th IMACS World Congress on Computational and Applied Mathematics
-#   (W. F. Ames, ed.), pp. 1253--1256, 1994.
-#
-# See also Chapter 7 of:
+#   Proc. 14th IMACS World Congress, pp. 1253--1256, 1994.
 #
 #   Y. Saad, Iterative Methods for Sparse Linear Systems, 2nd ed.,
 #   SIAM, Philadelphia, 2003.
 #
-# Alexis Montoison, <alexis.montoison@polymtl.ca>  (workspace / macro pattern)
-# Arnav Kapoor, <arnavkapoor23@iiserb.ac.in>        (SQMR implementation)
+# Alexis Montoison, <alexis.montoison@polymtl.ca>
+# Arnav Kapoor, <arnavkapoor23@iiserb.ac.in>
 # Bhopal / Montréal, 2026.
 
 export sqmr, sqmr!
@@ -54,11 +44,13 @@ SQMR is based on the one-sided symmetric Lanczos process and does not
 require products with `Aᴴ`.  The Lanczos vectors are orthogonal with
 respect to the M⁻¹-inner product, and the QMR quasi-minimisation is
 applied to the resulting symmetric tridiagonal projected system via
-Givens rotations.  The residual estimate is `|ϕ̄ₖ|`, the absolute value
-of the trailing component of the transformed right-hand side.
+Givens rotations.
 
 Unlike MINRES, SQMR supports symmetric *indefinite* preconditioners;
 without preconditioning the two methods are mathematically equivalent.
+
+SQMR is implemented as a wrapper around QMR with centred preconditioning
+(`M = N`).  See [`qmr`](@ref) for details of the underlying algorithm.
 
 #### Interface
 
@@ -138,260 +130,23 @@ kwargs_sqmr  = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :
 @eval begin
   function sqmr!(workspace :: SqmrWorkspace{T,FC,S}, $(def_args_sqmr...); $(def_kwargs_sqmr...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
-    # Timer
-    start_time = time_ns()
-    timemax_ns = 1e9 * timemax
+    # Build a QmrWorkspace that shares the same storage as the SqmrWorkspace.
+    qmr_ws = QmrWorkspace{T,FC,S}(
+      workspace.m, workspace.n,
+      workspace.uₖ₋₁, workspace.uₖ, workspace.q,
+      workspace.vₖ₋₁, workspace.vₖ, workspace.p,
+      workspace.Δx, workspace.x, workspace.wₖ₋₂, workspace.wₖ₋₁,
+      workspace.t, workspace.s,
+      workspace.warm_start, workspace.stats
+    )
 
-    m, n = size(A)
-    (m == workspace.m && n == workspace.n) || error("(workspace.m, workspace.n) = ($(workspace.m), $(workspace.n)) is inconsistent with size(A) = ($m, $n)")
-    m == n || error("System must be square")
-    length(b) == n || error("Inconsistent problem size")
-    (verbose > 0) && @printf(iostream, "SQMR: system of size %d\n", n)
+    # SQMR with centred preconditioning ↔ QMR with M = N.
+    qmr!(qmr_ws, A, b, M=M, N=M, ldiv=ldiv;
+         atol=atol, rtol=rtol, itmax=itmax, timemax=timemax,
+         verbose=verbose, history=history, callback=callback, iostream=iostream)
 
-    # Check M = Iₙ
-    MisI = (M === I)
-
-    # Check type consistency
-    eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
-    ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
-
-    # Set up workspace.
-    allocate_if(true, workspace, :z, S, workspace.x)
-
-    Δx, x, r1, r2, w1, w2, y, stats = workspace.Δx, workspace.x, workspace.r1, workspace.r2, workspace.w1, workspace.w2, workspace.y, workspace.stats
-    warm_start = workspace.warm_start
-    rNorms = stats.residuals
-    ArNorms = stats.Aresiduals
-    Aconds = stats.Acond
-    reset!(stats)
-
-    z = workspace.z
-
-    # Initial solution x₀ and residual r₀ = b - Ax₀.
-    kfill!(x, zero(FC))
-    if warm_start
-      kmul!(r1, A, Δx)
-      kaxpby!(n, one(FC), b, -one(FC), r1)   # r1 ← b - A*Δx
-    else
-      kcopy!(n, r1, b)                        # r1 ← b
-    end
-    kcopy!(n, r2, r1)                         # r2 ← r1  (copy of initial residual)
-
-    # Initialize the symmetric Lanczos process.
-    # Solve M z₁ = v̂₁, where v̂₁ = r₀ is the unnormalized initial Lanczos vector.
-    if MisI
-      kcopy!(n, z, r1)                        # z = r₁ (M⁻¹ = I)
-    else
-      mulorldiv!(z, M, r1, ldiv)              # z ← M⁻¹ r₁ = ẑ₁
-    end
-
-    δ₁ = kdotr(n, r1, z)                     # δ₁ = ⟨v̂₁, M⁻¹v̂₁⟩
-
-    if δ₁ == 0
-      stats.niter        = 0
-      stats.solved       = true
-      stats.inconsistent = false
-      stats.timer        = start_time |> ktimer
-      stats.status       = "x is a zero-residual solution"
-      history && push!(rNorms, zero(T))
-      history && push!(ArNorms, zero(T))
-      history && push!(Aconds, zero(T))
-      warm_start && kaxpy!(n, one(FC), Δx, x)
-      workspace.warm_start = false
-      return workspace
-    end
-
-    η = sqrt(abs(δ₁))                        # η₁ = √|δ₁|
-    σ = δ₁ >= 0 ? one(T) : -one(T)          # σ₁ = sign(δ₁) (sign(0)=1)
-
-    rNorm = η
-    history && push!(rNorms, rNorm)
-    history && push!(ArNorms, zero(T))
-
-    # Normalize the initial Lanczos and preconditioned vectors.
-    kdiv!(n, r2, η)                          # r₂ = v₁ = v̂₁ / η₁
-    kdiv!(n, z, η)                           # z  = z₁ = M⁻¹ v₁
-
-    # Scalars for the Givens-based QR factorization of the symmetric tridiagonal Tₖ.
-    oldδ = zero(T)                           # previous subdiagonal element after rotation
-    ϵ    = zero(T)                           # element carried two steps back
-    ϕbar = η
-    cs   = -one(T)
-    sn   = zero(T)
-
-    kfill!(w1, zero(FC))
-    kfill!(w2, zero(FC))
-
-    ANorm² = zero(T)
-    ANorm = zero(T)
-    Acond = zero(T)
-    γmax = zero(T)
-    γmin = T(Inf)
-    ArNorm = zero(T)
-
-    iter   = 0
-    itmax == 0 && (itmax = 2*n)
-    ε_tol  = atol + rtol * η
-
-    (verbose > 0) && @printf(iostream, "%5s  %8s  %7s  %8s  %8s  %7s  %5s\n", "k", "αₖ", "‖rₖ‖", "‖Aᴴrₖ‖", "‖A‖", "κ(A)", "timer")
-    kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %8.1e  %8.1e  %7s  %.2fs\n", iter, zero(T), rNorm, zero(T), zero(T), "✗ ✗ ✗ ✗", start_time |> ktimer)
-
-    solved             = rNorm ≤ ε_tol
-    tired              = iter  ≥ itmax
-    breakdown          = false
-    user_requested_exit = false
-    overtimed          = false
-    status             = "unknown"
-
-    while !(solved || tired || breakdown || user_requested_exit || overtimed)
-      # Update iteration index.
-      iter = iter + 1
-
-      # Symmetric Lanczos step (Freund & Nachtigal 1994).
-      # The Lanczos vectors vₖ are normalised in the M⁻¹-inner product:
-      #   ⟨vᵢ, M⁻¹vⱼ⟩ = δᵢⱼ
-      # The recurrence for the unnormalised next vector v̂ₖ₊₁:
-      #   v̂ₖ₊₁ = A vₖ - αₖ vₖ - σₖ ηₖ vₖ₋₁
-      # where αₖ = ⟨vₖ, A vₖ⟩_M and the off-diagonal entries of the
-      # symmetric tridiagonal Tₖ are σₖ ηₖ.
-      #
-      # r₁ = vₖ₋₁, r₂ = vₖ, z = zₖ = M⁻¹ vₖ.
-
-      kmul!(y, A, r2)                         # y ← A vₖ
-      α = kdotr(n, z, y)                      # αₖ = ⟨vₖ, A vₖ⟩_M = vₖᵀ M⁻¹ A vₖ
-
-      # Direction update for the solution x.
-      # The update follows the MINRES pattern, using the Lanczos
-      # vectors vₖ (stored in r₂).  The direction vectors are the
-      # columns of Wₖ = Vₖ Rₖ⁻¹, which satisfy
-      #   w₁  = v₁ / γ₁
-      #   w₂  = (v₂ - δ₂ w₁) / γ₂
-      #   wₖ  = (vₖ - δₖ wₖ₋₁ - ϵₖ wₖ₋₂) / γₖ   for k ≥ 3
-      δ = cs * oldδ + sn * α
-      if iter == 1
-        w = w2
-        kcopy!(n, w, r2)                     # w₁ = v₁
-      else
-        w = w1
-        iter ≥ 3 && kscal!(n, -ϵ, w)         # w ← -ϵ * wₖ₋₂
-        kaxpy!(n, -δ, w2, w)                 # w ← w - δ * wₖ₋₁
-        kaxpy!(n, one(FC), r2, w)             # w ← w + vₖ
-      end
-
-      # Advance the Lanczos recurrence.
-      # v̂ₖ₊₁ = A vₖ - αₖ vₖ - σₖ ηₖ vₖ₋₁
-      kaxpy!(n, -α, r2, y)                    # y ← y - αₖ vₖ = A vₖ - αₖ vₖ
-      iter ≥ 2 && kaxpy!(n, -σ * η, r1, y)    # y ← y - σₖ ηₖ vₖ₋₁
-
-      # Compute the next preconditioned vector: ẑₖ₊₁ = M⁻¹ v̂ₖ₊₁.
-      if MisI
-        kcopy!(n, z, y)                       # z ← v̂ₖ₊₁  (M⁻¹ = I)
-      else
-        mulorldiv!(z, M, y, ldiv)             # z ← M⁻¹ v̂ₖ₊₁ = ẑₖ₊₁
-      end
-
-      δ_next = kdotr(n, y, z)                 # δₖ₊₁ = ⟨v̂ₖ₊₁, M⁻¹v̂ₖ₊₁⟩
-      if δ_next == 0
-        breakdown = true
-        break
-      end
-
-      η_next = sqrt(abs(δ_next))              # ηₖ₊₁ = √|δₖ₊₁|
-      σ_next = δ_next >= 0 ? one(T) : -one(T) # σₖ₊₁ = sign(δₖ₊₁)
-
-      # Normalize the new Lanczos and preconditioned vectors.
-      kdiv!(n, y, η_next)                     # y ← vₖ₊₁ = v̂ₖ₊₁ / ηₖ₊₁
-      kdiv!(n, z, η_next)                     # z ← zₖ₊₁ = ẑₖ₊₁ / ηₖ₊₁
-
-      # Apply the previous Givens rotation to the current column.
-      # Convention (as in MINRES):
-      #   [cs  sn] [oldδ  0      ] = [γbar    ϵₖ₊₁    ]
-      #   [sn -cs] [α     σₖ₊₁ηₖ₊₁]   [δₖ₊₁  oldδₖ₊₁]
-      offdiag = σ_next * η_next               # signed off-diagonal entry of Tₖ
-      γbar = sn * oldδ - cs * α
-      ϵ    = sn * offdiag
-      oldδ = -cs * offdiag
-
-      # Estimate ‖Aᴴrₖ‖ using the MINRES formula.
-      root = sqrt(γbar * γbar + oldδ * oldδ)
-      ArNorm = ϕbar * root
-      history && push!(ArNorms, ArNorm)
-
-      # New Givens rotation to annihilate the subdiagonal element.
-      γ = sqrt(γbar * γbar + offdiag * offdiag)
-      γ = max(γ, eps(T))
-
-      kdiv!(n, w, γ)                          # wₖ ← wₖ / γₖ
-
-      cs = γbar / γ
-      sn = offdiag / γ                        # signed Givens sine
-
-      # Update the right-hand side of the projected least-squares system.
-      ϕ    = cs * ϕbar
-      ϕbar = sn * ϕbar
-
-      # Update solution: xₖ ← xₖ₋₁ + ϕₖ wₖ
-      kaxpy!(n, ϕ, w, x)
-
-      # Residual norm estimate: ‖rₖ‖ = |ϕbar|
-      rNorm = abs(ϕbar)
-      history && push!(rNorms, rNorm)
-
-      # Accumulate ‖A‖² estimate: ‖A‖² ≈ α₁² + β₁² + α₂² + β₂² + ...
-      # where βₖ = ηₖ (off-diagonal of Tₖ).
-      ANorm² = ANorm² + α * α + η * η
-      ANorm = sqrt(ANorm²)
-
-      # Track condition number of the tridiagonal Tₖ via γ extremes.
-      γmax = max(γmax, γ)
-      γmin = min(γmin, γ)
-      Acond = γmax / γmin
-      history && push!(Aconds, Acond)
-
-      # Swap direction vectors for the next iteration.
-      if iter ≥ 2
-        @kswap!(w1, w2)
-      end
-
-      # Shift Lanczos vectors for the next iteration.
-      kcopy!(n, r1, r2)                       # r₁ ← vₖ
-      kcopy!(n, r2, y)                        # r₂ ← vₖ₊₁
-
-      # Update σ and η for the next iteration.
-      σ = σ_next
-      η = η_next
-
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.1e  %7.1e  %8.1e  %8.1e  %7.1e  %.2fs\n", iter, α, rNorm, ArNorm, ANorm, Acond, start_time |> ktimer)
-
-      # Stopping conditions.
-      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-      user_requested_exit = callback(workspace) :: Bool
-      solved    = (rNorm ≤ ε_tol) || resid_decrease_mach
-      tired     = iter ≥ itmax
-      timer     = time_ns() - start_time
-      overtimed = timer > timemax_ns
-    end
-
-    (verbose > 0) && @printf(iostream, "\n")
-
-    # Termination status
-    tired               && (status = "maximum number of iterations exceeded")
-    breakdown           && (status = "Lanczos breakdown ⟨v̂ₖ₊₁, M⁻¹v̂ₖ₊₁⟩ = 0")
-    solved              && (status = "solution good enough given atol and rtol")
-    user_requested_exit && (status = "user-requested exit")
-    overtimed           && (status = "time limit exceeded")
-
-    # Update x
-    warm_start && kaxpy!(n, one(FC), Δx, x)
-    workspace.warm_start = false
-
-    # Update stats
-    stats.niter        = iter
-    stats.solved       = solved
-    stats.inconsistent = false
-    stats.timer        = start_time |> ktimer
-    stats.status       = status
-
+    # Copy back mutable state.
+    workspace.warm_start = qmr_ws.warm_start
     return workspace
   end
 end

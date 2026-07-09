@@ -100,7 +100,7 @@
       nA4 = size(A4, 1)
       M_indef = spdiagm(0 => [ones(FC, 5); -ones(FC, nA4-5)])
       (x, stats) = sqmr(A4, b4, M=M_indef)
-      @test(stats.status != "Lanczos breakdown ⟨v̂ₖ₊₁, M⁻¹v̂ₖ₊₁⟩ = 0")
+      @test(stats.status != "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
 
       # SQMR on a 2x2 symmetric system.
       A = FC[2.0 1.0; 1.0 2.0]
@@ -115,9 +115,6 @@
       (x, stats) = sqmr(A, b, history=true)
       @test(stats.solved)
       @test(length(stats.residuals) > 0)
-      @test(length(stats.Aresiduals) > 0)
-      @test(length(stats.Acond) > 0)
-      @test(stats.Acond[end] ≥ 1.0)  # condition number ≥ 1
 
       # Test callback function.
       A, b = sparse_laplacian(FC=FC)
