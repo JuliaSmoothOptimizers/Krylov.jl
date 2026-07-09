@@ -110,7 +110,16 @@
       resid = norm(r) / norm(b)
       @test(resid ≤ sqmr_tol)
 
-      # test callback function
+      # Test that stats tracking works (history mode).
+      A, b = sparse_laplacian(FC=FC)
+      (x, stats) = sqmr(A, b, history=true)
+      @test(stats.solved)
+      @test(length(stats.residuals) > 0)
+      @test(length(stats.Aresiduals) > 0)
+      @test(length(stats.Acond) > 0)
+      @test(stats.Acond[end] ≥ 1.0)  # condition number ≥ 1
+
+      # Test callback function.
       A, b = sparse_laplacian(FC=FC)
       workspace = SqmrWorkspace(A, b)
       tol = 1.0e-1
