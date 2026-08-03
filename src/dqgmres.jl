@@ -267,6 +267,11 @@ kwargs_workspace_dqgmres = (:memory,)
       γₖ   =      c[pos]  * γₖ
 
       # Compute the direction pₖ, the last column of Pₖ = NVₖ(Rₖ)⁻¹.
+      if iter ≤ mem
+        # pₐᵤₓ ← Nvₖ
+        # The copy overwrites P[pos], so the workspace does not need to be zero-initialized.
+        kcopy!(n, P[pos], z)
+      end
       for i = max(1,iter-mem) : iter-1
         ipos = mod(i-1, mem) + 1  # Position corresponding to pᵢ in the circular stack P.
         diag = iter - i + 1
@@ -278,8 +283,10 @@ kwargs_workspace_dqgmres = (:memory,)
           kaxpy!(n, -H[diag], P[ipos], P[pos])
         end
       end
-      # pₐᵤₓ ← pₐᵤₓ + Nvₖ
-      kaxpy!(n, one(FC), z, P[pos])
+      if iter > mem
+        # pₐᵤₓ ← pₐᵤₓ + Nvₖ
+        kaxpy!(n, one(FC), z, P[pos])
+      end
       # pₖ = pₐᵤₓ / hₖ.ₖ
       kdiv!(n, P[pos], H[1])
 

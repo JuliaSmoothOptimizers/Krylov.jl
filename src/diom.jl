@@ -266,6 +266,11 @@ kwargs_workspace_diom = (:memory,)
       # Compute the direction pₖ, the last column of Pₖ = NVₖ(Uₖ)⁻¹.
       # u₁.ₖp₁ + ... + uₖ.ₖpₖ = Nvₖ             if k ≤ mem
       # uₖ₋ₘₑₘ₊₁.ₖpₖ₋ₘₑₘ₊₁ + ... + uₖ.ₖpₖ = Nvₖ if k ≥ mem + 1
+      if iter < mem
+        # pₐᵤₓ ← Nvₖ
+        # The copy overwrites P[ppos], so the workspace does not need to be zero-initialized.
+        kcopy!(n, P[ppos], z)
+      end
       for i = max(1,iter-mem+1) : iter-1
         ipos = mod(i-1, mem-1) + 1  # Position corresponding to pᵢ in the circular stack P.
         diag = iter - i + 1
@@ -277,8 +282,10 @@ kwargs_workspace_diom = (:memory,)
           kaxpy!(n, -H[diag], P[ipos], P[ppos])
         end
       end
-      # pₐᵤₓ ← pₐᵤₓ + Nvₖ
-      kaxpy!(n, one(FC), z, P[ppos])
+      if iter ≥ mem
+        # pₐᵤₓ ← pₐᵤₓ + Nvₖ
+        kaxpy!(n, one(FC), z, P[ppos])
+      end
       # pₖ = pₐᵤₓ / uₖ.ₖ
       kdiv!(n, P[ppos], H[1])
 
