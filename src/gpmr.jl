@@ -221,10 +221,6 @@ kwargs_workspace_gpmr = (:memory,)
     nr = 0           # Number of coefficients stored in Rₖ
     mem = length(V)  # Memory
     ωₖ = zero(FC)    # Auxiliary variable to store fₖₖ
-    for i = 1 : mem
-      kfill!(V[i], zero(FC))
-      kfill!(U[i], zero(FC))
-    end
     kfill!(gs, zero(FC))  # Givens sines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
     kfill!(gc, zero(T))   # Givens cosines used for the factorization QₖRₖ = Sₖ₊₁.ₖ.
     kfill!(R , zero(FC))  # Upper triangular matrix Rₖ.
