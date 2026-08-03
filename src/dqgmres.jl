@@ -182,6 +182,7 @@ kwargs_workspace_dqgmres = (:memory,)
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, start_time |> ktimer)
 
     # Set up workspace.
+    mem = length(V)  # Memory.
     kfill!(c, zero(T))   # Last mem Givens cosines used for the factorization QₖRₖ = Hₖ.
     kfill!(s, zero(FC))  # Last mem Givens sines used for the factorization QₖRₖ = Hₖ.
     kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ.

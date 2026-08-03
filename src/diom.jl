@@ -182,6 +182,7 @@ kwargs_workspace_diom = (:memory,)
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, rNorm, start_time |> ktimer)
 
     # Set up workspace.
+    mem = length(V)  # Memory
     kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ = LₖUₖ.
     # Each column has at most mem + 1 nonzero elements.
     # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
