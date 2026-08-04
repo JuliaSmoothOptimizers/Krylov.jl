@@ -229,7 +229,7 @@ kwargs_workspace_fom = (:memory,)
       inner_iter = 0
       inner_tired = false
 
-      while !(solved || inner_tired || breakdown)
+      while !(solved || inner_tired || breakdown || user_requested_exit || overtimed)
 
         # Update iteration index
         inner_iter = inner_iter + 1
