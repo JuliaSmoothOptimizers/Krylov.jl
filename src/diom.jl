@@ -184,7 +184,7 @@ kwargs_workspace_diom = (:memory,)
     # Set up workspace.
     mem = length(V)  # Memory
     kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ = LₖUₖ.
-    # Each column has at most mem + 1 nonzero elements.
+    # Each column of Hₖ has at most mem + 1 nonzero elements.
     # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
     # k-i+1 represents the index of the diagonal where hᵢ.ₖ is located.
     # In addition of that, the last column of Uₖ is stored in H.
@@ -240,6 +240,17 @@ kwargs_workspace_diom = (:memory,)
       end
 
       # Update the LU factorization of Hₖ.
+      #
+      # [ h₁.₁  •    •  h₁.ₘₑₘ 0    •    •    0        ]   [  1                          ] [ u₁.₁  •    •  u₁.ₘₑₘ 0    •    •    0        ]
+      # [ h₂.₁  •    •    •    •    0         •        ]   [ l₂.₁ •                      ] [  0    •    •    •    •    0         •        ]
+      # [  0    •    •    •    •    •    0    •        ]   [      •  •                   ] [  •    0    •    •    •    •    0    •        ]
+      # [  •    0    •    •    •    •    •    0        ]   [         •  •                ] [  •         0    •    •    •    •    0        ]
+      # [  •         0    •    •    •    •  hₖ₋ₘₑₘ₊₁.ₖ ] = [            •  •             ] [  •              0    •    •    •  uₖ₋ₘₑₘ₊₁.ₖ ]
+      # [  •              0    •    •    •    •        ]   [               •  •          ] [  •                   0    •    •    •        ]
+      # [  •                   0    •    •    •        ]   [                  •  •       ] [  •                        0    •    •        ]
+      # [  •                        0    •  hₖ.ₖ       ]   [                     •  1    ] [  •                             0  uₖ.ₖ       ]
+      # [  0    •    •    •    •    •    0  hₖ₊₁.ₖ     ]   [                      lₖ₊₁.ₖ ] [  0    •    •    •    •    •    •    0        ]
+
       # Compute the last column of Uₖ.
       if iter ≥ 2
         # u₁.ₖ ← h₁.ₖ             if iter ≤ mem
@@ -264,8 +275,8 @@ kwargs_workspace_diom = (:memory,)
       ppos = mod(iter-1, mem-1) + 1 # Position corresponding to pₖ in the circular stack P.
 
       # Compute the direction pₖ, the last column of Pₖ = NVₖ(Uₖ)⁻¹.
-      # u₁.ₖp₁ + ... + uₖ.ₖpₖ = Nvₖ             if k ≤ mem
-      # uₖ₋ₘₑₘ₊₁.ₖpₖ₋ₘₑₘ₊₁ + ... + uₖ.ₖpₖ = Nvₖ if k ≥ mem + 1
+      # u₁.ₖp₁ + ... + uₖ.ₖpₖ = Nvₖ             if k ≤ mem - 1
+      # uₖ₋ₘₑₘ₊₁.ₖpₖ₋ₘₑₘ₊₁ + ... + uₖ.ₖpₖ = Nvₖ if k ≥ mem
       if iter < mem
         # pₐᵤₓ ← Nvₖ
         # The copy overwrites P[ppos], so the workspace does not need to be zero-initialized.

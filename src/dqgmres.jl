@@ -186,7 +186,7 @@ kwargs_workspace_dqgmres = (:memory,)
     kfill!(c, zero(T))   # Last mem Givens cosines used for the factorization QₖRₖ = Hₖ.
     kfill!(s, zero(FC))  # Last mem Givens sines used for the factorization QₖRₖ = Hₖ.
     kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ.
-    # Each column has at most mem + 1 nonzero elements.
+    # Each column of Hₖ has at most mem + 1 nonzero elements.
     # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
     # k-i+1 represents the index of the diagonal where hᵢ.ₖ is located.
     # In addition of that, the last column of Rₖ is also stored in H.
@@ -249,6 +249,17 @@ kwargs_workspace_dqgmres = (:memory,)
       end
 
       # Update the QR factorization of Hₖ.
+      #
+      # [ h₁.₁  •    •  h₁.ₘₑₘ 0    •    •    0        ]      [ r₁.₁   •     • r₁.ₘₑₘ r₁.ₘₑₘ₊₁ 0     •     0         ]
+      # [ h₂.₁  •    •    •    •    0         •        ]      [  0     •     •     •     •     •     0     •         ]
+      # [  0    •    •    •    •    •    0    •        ]      [  •     0     •     •     •     •     •     0         ]
+      # [  •    0    •    •    •    •    •    0        ]      [  •           0     •     •     •     •    rₖ₋ₘₑₘ.ₖ   ]
+      # [  •         0    •    •    •    •  hₖ₋ₘₑₘ₊₁.ₖ ] = Qₖ [  •                 0     •     •     •    rₖ₋ₘₑₘ₊₁.ₖ ]
+      # [  •              0    •    •    •    •        ]      [  •                       0     •     •     •         ]
+      # [  •                   0    •    •    •        ]      [  •                             0     •     •         ]
+      # [  •                        0    •  hₖ.ₖ       ]      [  •                                   0    rₖ.ₖ       ]
+      # [  0    •    •    •    •    •    0  hₖ₊₁.ₖ     ]      [  0     •     •     •     •     •     •     0         ]
+
       # Apply mem previous Givens reflections Ωᵢ.
       for i = max(1,iter-mem) : iter-1
         irot_pos = mod(i-1, mem) + 1  # Position corresponding to cᵢ and sᵢ in circular stacks c and s.
@@ -267,6 +278,8 @@ kwargs_workspace_dqgmres = (:memory,)
       γₖ   =      c[pos]  * γₖ
 
       # Compute the direction pₖ, the last column of Pₖ = NVₖ(Rₖ)⁻¹.
+      # r₁.ₖp₁ + ... + rₖ.ₖpₖ = Nvₖ         if k ≤ mem
+      # rₖ₋ₘₑₘ.ₖpₖ₋ₘₑₘ + ... + rₖ.ₖpₖ = Nvₖ if k ≥ mem + 1
       if iter ≤ mem
         # pₐᵤₓ ← Nvₖ
         # The copy overwrites P[pos], so the workspace does not need to be zero-initialized.
@@ -276,10 +289,10 @@ kwargs_workspace_dqgmres = (:memory,)
         ipos = mod(i-1, mem) + 1  # Position corresponding to pᵢ in the circular stack P.
         diag = iter - i + 1
         if ipos == pos
-          # pₐᵤₓ ← -hₖ₋ₘₑₘ.ₖ * pₖ₋ₘₑₘ
+          # pₐᵤₓ ← -rₖ₋ₘₑₘ.ₖ * pₖ₋ₘₑₘ
           kscal!(n, -H[diag], P[pos])
         else
-          # pₐᵤₓ ← pₐᵤₓ - hᵢ.ₖ * pᵢ
+          # pₐᵤₓ ← pₐᵤₓ - rᵢ.ₖ * pᵢ
           kaxpy!(n, -H[diag], P[ipos], P[pos])
         end
       end
@@ -287,7 +300,7 @@ kwargs_workspace_dqgmres = (:memory,)
         # pₐᵤₓ ← pₐᵤₓ + Nvₖ
         kaxpy!(n, one(FC), z, P[pos])
       end
-      # pₖ = pₐᵤₓ / hₖ.ₖ
+      # pₖ = pₐᵤₓ / rₖ.ₖ
       kdiv!(n, P[pos], H[1])
 
       # Compute solution xₖ.
