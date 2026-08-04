@@ -206,7 +206,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
       if iter ≥ 3
         D1 .= zero(T)
         D2 .= Ψₖ'
-        kormqr!('L', trans, Hₖ₋₂, τₖ₋₂, D, buffer)
+        kunmqr!('L', trans, Hₖ₋₂, τₖ₋₂, D, buffer)
         Πₖ₋₂ .= D1
         Γbarₖ₋₁ .= D2
       end
@@ -216,7 +216,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
         (iter == 2) && (Γbarₖ₋₁ .= Ψₖ')
         D1 .= Γbarₖ₋₁
         D2 .= Ωₖ
-        kormqr!('L', trans, Hₖ₋₁, τₖ₋₁, D, buffer)
+        kunmqr!('L', trans, Hₖ₋₁, τₖ₋₁, D, buffer)
         Γₖ₋₁ .= D1
         Λbarₖ .= D2
       end
@@ -236,7 +236,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
       # Update Zₖ = (Qₖ)ᴴΨ₁E₁ = (Φ₁, ..., Φₖ, Φbarₖ₊₁)
       D1 .= Φbarₖ
       D2 .= zero(FC)
-      kormqr!('L', trans, Hₖ, τₖ, D, buffer)
+      kunmqr!('L', trans, Hₖ, τₖ, D, buffer)
       Φₖ .= D1
 
       # Compute the directions Wₖ, the last columns of Wₖ = Vₖ(Rₖ)⁻¹ ⟷ (Rₖ)ᵀ(Wₖ)ᵀ = (Vₖ)ᵀ

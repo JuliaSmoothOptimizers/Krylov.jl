@@ -193,9 +193,9 @@
   end
 
   @testset "reduced QR (larfg! / geqrf! / orgqr! / ormqr!)" begin
-    @testset "accuracy $FC" for FC in (Float32, Float64, ComplexF32, ComplexF64, BigFloat, Complex{BigFloat})
+    @testset "accuracy $FC" for FC in (Float32, Float64, ComplexF32, ComplexF64, Complex{BigFloat}, BigFloat)
       T = real(FC)
-      tol = sqrt(eps(T))
+      tol = 100 * eps(T)
       for (m, k) in ((10, 4), (6, 6))
         A = rand(FC, m, k)
 
@@ -214,27 +214,27 @@
         # geqrf! + orgqr!: reduced QR factorization
         QR = copy(A)
         tau = zeros(FC, k)
-        Krylov.geqrf!(QR, tau)
+        Krylov.geqr2!(QR, tau)
         R = triu(QR[1:k, 1:k])
-        Krylov.orgqr!(QR, tau)
+        Krylov.ung2r!(QR, tau)
         Q = QR[:, 1:k]
         @test istriu(R)
         @test norm(Q' * Q - I) ≤ tol
-        @test norm(Q * R - A) ≤ tol
+        @test norm(Q * R - A) ≤ tol * norm(A)
 
         Aref = copy(A)
         tauref = zeros(FC, k)
-        Krylov.geqrf!(Aref, tauref)
+        Krylov.geqr2!(Aref, tauref)
         Qfull = zeros(FC, m, m)
         Qfull[:, 1:k] .= Aref
-        Krylov.orgqr!(Qfull, tauref)
+        Krylov.ung2r!(Qfull, tauref)
         nc = 5
         for trans in (FC <: Complex ? ('N', 'C') : ('N', 'T', 'C'))
           op = trans == 'N' ? Qfull : Qfull'
           C = rand(FC, m, nc)
-          @test norm(Krylov.ormqr!('L', trans, copy(Aref), tauref, copy(C)) - op * C) ≤ tol
+          @test norm(Krylov.unm2r!('L', trans, copy(Aref), tauref, copy(C)) - op * C) ≤ tol
           D = rand(FC, nc, m)
-          @test norm(Krylov.ormqr!('R', trans, copy(Aref), tauref, copy(D)) - D * op) ≤ tol
+          @test norm(Krylov.unm2r!('R', trans, copy(Aref), tauref, copy(D)) - D * op) ≤ tol
         end
       end
     end
@@ -242,8 +242,8 @@
     @testset "matches LAPACK $FC" for FC in (Float32, Float64, ComplexF32, ComplexF64)
       m, k = 9, 4
       A = rand(FC, m, k)
-      Qg = copy(A); tg = zeros(FC, k); Krylov.geqrf!(Qg, tg);  Krylov.orgqr!(Qg, tg)   # pure Julia
-      Ql = copy(A); tl = zeros(FC, k); Krylov.kgeqrf!(Ql, tl); Krylov.korgqr!(Ql, tl)  # LAPACK
+      Qg = copy(A); tg = zeros(FC, k); Krylov.geqr2!(Qg, tg);  Krylov.ung2r!(Qg, tg)   # pure Julia
+      Ql = copy(A); tl = zeros(FC, k); Krylov.kgeqrf!(Ql, tl); Krylov.kungqr!(Ql, tl)  # LAPACK
       # Q is defined up to a phase, so compare the (phase-invariant) projectors
       @test Qg[:, 1:k] * Qg[:, 1:k]' ≈ Ql[:, 1:k] * Ql[:, 1:k]'
     end
@@ -252,26 +252,26 @@
       m, k, nc = 12, 4, 5
 
       A = rand(FC, m, k); tau = zeros(FC, k)
-      Krylov.geqrf!(copy(A), copy(tau))
+      Krylov.geqr2!(copy(A), copy(tau))
       Ag = copy(A)
       taug = copy(tau)
-      @test (@allocated Krylov.geqrf!(Ag, taug)) == 0
+      @test (@allocated Krylov.geqr2!(Ag, taug)) == 0
 
       Af = copy(A)
       tf = zeros(FC, k)
-      Krylov.geqrf!(Af, tf)
-      Krylov.orgqr!(copy(Af), tf)
+      Krylov.geqr2!(Af, tf)
+      Krylov.ung2r!(copy(Af), tf)
       Ao = copy(Af)
-      @test (@allocated Krylov.orgqr!(Ao, tf)) == 0
+      @test (@allocated Krylov.ung2r!(Ao, tf)) == 0
 
-      CL = rand(FC, m, nc)   # left  operand
+      CL = rand(FC, m, nc)   # left operand
       CR = rand(FC, nc, m)   # right operand
-      Krylov.ormqr!('L', 'N', Af, tf, copy(CL))
+      Krylov.unm2r!('L', 'N', Af, tf, copy(CL))
       for trans in (FC <: Complex ? ('N', 'C') : ('N', 'T', 'C'))
         DL = copy(CL)
-        @test (@allocated Krylov.ormqr!('L', trans, Af, tf, DL)) == 0
+        @test (@allocated Krylov.unm2r!('L', trans, Af, tf, DL)) == 0
         DR = copy(CR)
-        @test (@allocated Krylov.ormqr!('R', trans, Af, tf, DR)) == 0
+        @test (@allocated Krylov.unm2r!('R', trans, Af, tf, DR)) == 0
       end
 
       if VERSION ≥ v"1.12"

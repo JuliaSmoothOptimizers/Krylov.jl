@@ -194,7 +194,7 @@ function householder!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, τ::Abstract
   kfill!(R, zero(FC))
   kgeqrf!(Q, τ)
   copy_triangle(Q, R, k)
-  !compact && korgqr!(Q, τ)
+  !compact && kungqr!(Q, τ)
   return Q, R
 end
 
@@ -203,11 +203,11 @@ function householder!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, τ::Abstract
   kfill!(R, zero(FC))
   kgeqrf!(Q, τ, buffer)
   copy_triangle(Q, R, k)
-  !compact && korgqr!(Q, τ, buffer)
+  !compact && kungqr!(Q, τ, buffer)
   return Q, R
 end
 
-for (Xgeqrf, Xorgqr, Xormqr, T) in ((:sgeqrf_, :sorgqr_, :sormqr_, :Float32   ),
+for (Xgeqrf, Xungqr, Xunmqr, T) in ((:sgeqrf_, :sorgqr_, :sormqr_, :Float32   ),
                                     (:dgeqrf_, :dorgqr_, :dormqr_, :Float64   ),
                                     (:cgeqrf_, :cungqr_, :cunmqr_, :ComplexF32),
                                     (:zgeqrf_, :zungqr_, :zunmqr_, :ComplexF64))
@@ -235,57 +235,57 @@ for (Xgeqrf, Xorgqr, Xormqr, T) in ((:sgeqrf_, :sorgqr_, :sormqr_, :Float32   ),
             return nothing
         end
 
-        function $Xorgqr(m, n, k, a, lda, tau, work, lwork, info)
-            return ccall((@blasfunc($Xorgqr), libblastrampoline), Cvoid,
+        function $Xungqr(m, n, k, a, lda, tau, work, lwork, info)
+            return ccall((@blasfunc($Xungqr), libblastrampoline), Cvoid,
                          (Ref{BlasInt}, Ref{BlasInt}, Ref{BlasInt}, Ptr{$T},
                           Ref{BlasInt}, Ptr{$T}, Ptr{$T}, Ref{BlasInt}, Ref{BlasInt}),
                           m, n, k, a, lda, tau, work, lwork, info)
         end
 
-        function korgqr_buffer!(A::Matrix{$T}, tau::Vector{$T})
+        function kungqr_buffer!(A::Matrix{$T}, tau::Vector{$T})
             m, n = size(A)
             k = length(tau)
             work = Ref{$T}(0)
             lda = max(1, stride(A, 2))
-            $Xorgqr(m, n, k, A, lda, tau, work, -1, 0)
+            $Xungqr(m, n, k, A, lda, tau, work, -1, 0)
             return work[] |> BlasInt
         end
 
-        function korgqr!(A::Matrix{$T}, tau::Vector{$T}, work::Vector{$T})
-            symb = @blasfunc($Xorgqr)
+        function kungqr!(A::Matrix{$T}, tau::Vector{$T}, work::Vector{$T})
+            symb = @blasfunc($Xungqr)
             m, n = size(A)
             k = length(tau)
             lwork = length(work)
             lda = max(1, stride(A, 2))
-            $Xorgqr(m, n, k, A, lda, tau, work, lwork, 0)
+            $Xungqr(m, n, k, A, lda, tau, work, lwork, 0)
             return nothing
         end
 
-        function $Xormqr(side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork, info)
-            return ccall((@blasfunc($Xormqr), libblastrampoline), Cvoid,
+        function $Xunmqr(side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork, info)
+            return ccall((@blasfunc($Xunmqr), libblastrampoline), Cvoid,
                          (Ref{UInt8}, Ref{UInt8}, Ref{BlasInt}, Ref{BlasInt}, Ref{BlasInt}, Ptr{$T},
                           Ref{BlasInt}, Ptr{$T}, Ptr{$T}, Ref{BlasInt}, Ptr{$T}, Ref{BlasInt},
                           Ref{BlasInt}, Clong, Clong),
                           side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork, info, 1, 1)
         end
 
-        function kormqr_buffer!(side::Char, trans::Char, A::Matrix{$T}, tau::Vector{$T}, C::Matrix{$T})
+        function kunmqr_buffer!(side::Char, trans::Char, A::Matrix{$T}, tau::Vector{$T}, C::Matrix{$T})
             m, n = size(A)
             k = length(tau)
             work = Ref{$T}(0)
             lda = max(1, stride(A, 2))
             ldc = max(1, stride(C, 2))
-            $Xormqr(side, trans, m, n, k, A, lda, tau, C, ldc, work, -1, 0)
+            $Xunmqr(side, trans, m, n, k, A, lda, tau, C, ldc, work, -1, 0)
             return work[] |> BlasInt
         end
 
-        function kormqr!(side::Char, trans::Char, A::Matrix{$T}, tau::Vector{$T}, C::Matrix{$T}, work::Vector{$T})
+        function kunmqr!(side::Char, trans::Char, A::Matrix{$T}, tau::Vector{$T}, C::Matrix{$T}, work::Vector{$T})
             m, n = size(A)
             k = length(tau)
             lwork = length(work)
             lda = max(1, stride(A, 2))
             ldc = max(1, stride(C, 2))
-            $Xormqr(side, trans, m, n, k, A, lda, tau, C, ldc, work, lwork, 0)
+            $Xunmqr(side, trans, m, n, k, A, lda, tau, C, ldc, work, lwork, 0)
             return nothing
         end
     end
@@ -294,11 +294,11 @@ end
 kgeqrf!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.geqrf!(A, tau)
 kgeqrf!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}, buffer:: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.geqrf!(A, tau)
 
-korgqr!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.orgqr!(A, tau)
-korgqr!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}, buffer:: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.orgqr!(A, tau)
+kungqr!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.orgqr!(A, tau)
+kungqr!(A :: AbstractMatrix{T}, tau :: AbstractVector{T}, buffer:: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.orgqr!(A, tau)
 
-kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVector{T}, C :: AbstractMatrix{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)
-kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVector{T}, C :: AbstractMatrix{T}, buffer:: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)
+kunmqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVector{T}, C :: AbstractMatrix{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)
+kunmqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVector{T}, C :: AbstractMatrix{T}, buffer:: AbstractVector{T}) where T <: BLAS.BlasFloat = LAPACK.ormqr!(side, trans, A, tau, C)
 
 # """
 #     β, τ = larfg!(α, x)
@@ -322,13 +322,13 @@ function larfg!(α::FC, x::AbstractVector{FC}) where FC <: FloatOrComplex
 end
 
 # """
-#     A = geqrf!(A, tau)
+#     A = geqr2!(A, tau)
 #
 # Reduced QR factorization via Householder reflections.
 # On output the upper triangle of `A` holds `R`, and the reflectors are stored
 # below the diagonal together with the scalars `τ`.
 # """
-function geqrf!(A::AbstractMatrix{FC}, tau::AbstractVector{FC}) where FC <: FloatOrComplex
+function geqr2!(A::AbstractMatrix{FC}, tau::AbstractVector{FC}) where FC <: FloatOrComplex
   m, n = size(A)
   k = min(m, n)
   for i = 1:k
@@ -351,13 +351,14 @@ function geqrf!(A::AbstractMatrix{FC}, tau::AbstractVector{FC}) where FC <: Floa
 end
 
 # """
-#     A = orgqr!(A, tau)
+#     A = ung2r!(A, tau)
 #
 # Form the orthonormal factor `Q` from the reflectors produced by [`geqrf!`](@ref), overwriting `A`.
 # """
-function orgqr!(A::AbstractMatrix{FC}, tau::AbstractVector{FC}) where FC <: FloatOrComplex
+function ung2r!(A::AbstractMatrix{FC}, tau::AbstractVector{FC}) where FC <: FloatOrComplex
   m, n = size(A)
   k = length(tau)
+  k ≤ min(m,n) || error("The dimension of A (($m,$n)) and the length of tau ($k) are inconsistent.")
   for j = k+1:n
     for l = 1:m
       A[l,j] = zero(FC)
@@ -388,12 +389,12 @@ function orgqr!(A::AbstractMatrix{FC}, tau::AbstractVector{FC}) where FC <: Floa
 end
 
 # """
-#     C = ormqr!(side, trans, A, tau, C)
+#     C = unm2r!(side, trans, A, tau, C)
 #
 # Apply Q or Qᴴ (stored as reflectors in `A` with scalars `τ`) to the matrix `C`
 # from the left ('L') or the right ('R'), using the reflectors computed by [`geqrf!`](@ref).
 # """
-function ormqr!(side::Char, trans::Char, A::AbstractMatrix{FC}, tau::AbstractVector{FC}, C::AbstractMatrix{FC}) where FC <: FloatOrComplex
+function unm2r!(side::Char, trans::Char, A::AbstractMatrix{FC}, tau::AbstractVector{FC}, C::AbstractMatrix{FC}) where FC <: FloatOrComplex
   m, n = size(C)
   k = length(tau)
   notran = (trans == 'N')
@@ -439,15 +440,16 @@ function ormqr!(side::Char, trans::Char, A::AbstractMatrix{FC}, tau::AbstractVec
   return C
 end
 
-kgeqrf!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}) where FC <: FloatOrComplex = geqrf!(A, tau)
-kgeqrf!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, buffer :: AbstractVector{FC}) where FC <: FloatOrComplex = geqrf!(A, tau)
+kgeqrf!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}) where FC <: FloatOrComplex = geqr2!(A, tau)
+kungqr!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}) where FC <: FloatOrComplex = ung2r!(A, tau)
+kunmqr!(side :: Char, trans :: Char, A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, C :: AbstractMatrix{FC}) where FC <: FloatOrComplex = unm2r!(side, trans, A, tau, C)
 
-korgqr!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}) where FC <: FloatOrComplex = orgqr!(A, tau)
-korgqr!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, buffer :: AbstractVector{FC}) where FC <: FloatOrComplex = orgqr!(A, tau)
-
-kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, C :: AbstractMatrix{FC}) where FC <: FloatOrComplex = ormqr!(side, trans, A, tau, C)
-kormqr!(side :: Char, trans :: Char, A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, C :: AbstractMatrix{FC}, buffer :: AbstractVector{FC}) where FC <: FloatOrComplex = ormqr!(side, trans, A, tau, C)
+# Fallback methods for the buffered API.
+# The extra `buffer` argument is currently ignored because only the unblocked algorithms (`geqr2!`, `ung2r!`, `unm2r!`) are implemented.
+kgeqrf!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, buffer :: AbstractVector{FC}) where FC <: FloatOrComplex = geqr2!(A, tau)
+kungqr!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, buffer :: AbstractVector{FC}) where FC <: FloatOrComplex = ung2r!(A, tau)
+kunmqr!(side :: Char, trans :: Char, A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, C :: AbstractMatrix{FC}, buffer :: AbstractVector{FC}) where FC <: FloatOrComplex = unm2r!(side, trans, A, tau, C)
 
 kgeqrf_buffer!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}) where FC <: FloatOrComplex = 0
-korgqr_buffer!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}) where FC <: FloatOrComplex = 0
-kormqr_buffer!(side :: Char, trans :: Char, A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, C :: AbstractMatrix{FC}) where FC <: FloatOrComplex = 0
+kungqr_buffer!(A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}) where FC <: FloatOrComplex = 0
+kunmqr_buffer!(side :: Char, trans :: Char, A :: AbstractMatrix{FC}, tau :: AbstractVector{FC}, C :: AbstractMatrix{FC}) where FC <: FloatOrComplex = 0

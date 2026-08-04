@@ -263,7 +263,7 @@ kwargs_workspace_block_gmres = (:memory,)
         for i = 1 : inner_iter-1
           D1 .= R[nr+i]
           D2 .= R[nr+i+1]
-          kormqr!('L', trans, H[i], τ[i], D, buffer)
+          kunmqr!('L', trans, H[i], τ[i], D, buffer)
           R[nr+i] .= D1
           R[nr+i+1] .= D2
         end
@@ -276,7 +276,7 @@ kwargs_workspace_block_gmres = (:memory,)
         # Update Zₖ = (Qₖ)ᴴΓE₁ = (Λ₁, ..., Λₖ, Λbarₖ₊₁)
         D1 .= Z[inner_iter]
         D2 .= zero(FC)
-        kormqr!('L', trans, H[inner_iter], τ[inner_iter], D, buffer)
+        kunmqr!('L', trans, H[inner_iter], τ[inner_iter], D, buffer)
         Z[inner_iter] .= D1
 
         # Update residual norm estimate.
