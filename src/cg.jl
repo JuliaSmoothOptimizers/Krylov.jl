@@ -71,7 +71,7 @@ For an in-place variant that reuses memory across solves, see [`cg!`](@ref).
 #### Output arguments
 
 * `x`: a dense vector of length `n`;
-* `stats`: statistics collected on the run in a [`DiomCgStats`](@ref) structure.
+* `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### Reference
 
@@ -130,6 +130,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
     linesearch && (radius > 0) && error("`linesearch` set to `true` but trust-region radius > 0")
     (workspace.warm_start && linesearch) && error("warm_start and linesearch cannot be used together")
     (verbose > 0) && @printf(iostream, "CG: system of %d equations in %d variables\n", n, n)
+    (FC <: Complex && radius > 0) && error("trust-region constraint is not supported with complex numbers")
 
     # Tests M = Iₙ
     MisI = (M === I)
@@ -153,12 +154,12 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
 
     kfill!(x, zero(FC))
     if warm_start
-      mul!(r, A, Δx)
-      (radius > 0) && (qx = kdot(n, Δx, r) / 2 - kdot(n, b, Δx))    # q(x₀) = ½ΔxᵀAΔx - bᵀΔx
+      kmul!(r, A, Δx)
+      (radius > 0) && (qx = kdot(n, Δx, r) / 2 - kdot(n, b, Δx))  # q(x₀) = ½ΔxᵀAΔx - bᵀΔx
       kaxpby!(n, one(FC), b, -one(FC), r)
     else
       kcopy!(n, r, b)  # r ← b
-      (radius > 0) && (qx = zero(T))                 # q(0) = 0
+      (radius > 0) && (qx = zero(T))  # q(0) = 0
     end
     MisI || mulorldiv!(z, M, r, ldiv)
     kcopy!(n, p, z)  # p ← z
@@ -248,7 +249,7 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       γ_next = kdotr(n, r, z)
       γ_next ≥ 0 || error("The linear operator `A` or the preconditioner `M` is not symmetric positive definite.")
       rNorm = sqrt(γ_next)
-      (radius > 0) && (qx +=  α^2 * pAp / 2 - α * γ)   # q(x) = q(x) + α²pᵀAp/2 - αbᵀp = q(x) + α²pᵀAp/2 - αγ
+      (radius > 0) && (qx += α^2 * pAp / 2 - α * γ)  # q(x) = q(x) + α²pᵀAp/2 - αbᵀp = q(x) + α²pᵀAp/2 - αγ
 
       if history
         push!(rNorms, rNorm)

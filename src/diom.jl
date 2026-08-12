@@ -55,13 +55,10 @@ For an in-place variant that reuses memory across solves, see [`diom!`](@ref).
 * `memory`: the number of most recent vectors of the Krylov basis against which to orthogonalize a new vector;
 * `M`: linear operator that models a nonsingular matrix of size `n` used for left preconditioning;
 * `N`: linear operator that models a nonsingular matrix of size `n` used for right preconditioning;
-
-  **Note on preconditioners:**  
-  - When `radius > 0`, we assumes that `A = A*`. In this case, following CG implementation, `N` should be Hermitian and `M = N``.  
-
 * `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
-* `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Only useful for computing a step in a trust-region optimization method when A is Hermitian.
-  If 'radius' > 0, and nonpositive curvature is detected along the current search direction, we take the step to the trust-region boundary,
+* `radius`: add the trust-region constraint `‖x‖ ≤ radius` if `radius > 0`. Only useful for computing a step in a trust-region optimization method when A is Hermitian.
+  If `radius > 0`, and nonpositive curvature is detected along the current search direction, we take the step to the trust-region boundary.
+  When `radius > 0`, we assumes that `A = A*`. In this case, the preconditioners `M` and `N` must be the identity operator;
 * `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against the `memory` most recent vectors;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
@@ -75,7 +72,7 @@ For an in-place variant that reuses memory across solves, see [`diom!`](@ref).
 #### Output arguments
 
 * `x`: a dense vector of length `n`;
-* `stats`: statistics collected on the run in a [`DiomCgStats`](@ref) structure.
+* `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
 #### Reference
 
@@ -140,12 +137,12 @@ kwargs_workspace_diom = (:memory,)
     m == n || error("System must be square")
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "DIOM: system of size %d\n", n)
+    (FC <: Complex && radius > 0) && error("trust-region constraint is not supported with complex numbers")
 
     # Check M = Iₙ and N = Iₙ
     MisI = (M === I)
     NisI = (N === I)
-    # Check M = N
-    MisN = (M === N)
+
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
@@ -153,7 +150,6 @@ kwargs_workspace_diom = (:memory,)
     # Set up workspace.
     allocate_if(!MisI, workspace, :w, S, workspace.x)  # The length of w is n
     allocate_if(!NisI, workspace, :z, S, workspace.x)  # The length of z is n
-    
     Δx, x, t, P, V = workspace.Δx, workspace.x, workspace.t, workspace.P, workspace.V
     L, H, stats = workspace.L, workspace.H, workspace.stats
     warm_start = workspace.warm_start
@@ -167,7 +163,7 @@ kwargs_workspace_diom = (:memory,)
     # Initial solution x₀, residual r₀ and q(x₀).
     kfill!(x, zero(FC))  # x₀ ← 0
     if warm_start
-      mul!(t, A, Δx) 
+      kmul!(t, A, Δx)
       (radius > 0) &&  (qx = kdot(n, Δx, t) / 2 - kdot(n, b, Δx))    # q(x₀) = ½ΔxᵀAΔx - bᵀΔx
       kaxpby!(n, one(FC), b, -one(FC), t)
     else
@@ -176,7 +172,6 @@ kwargs_workspace_diom = (:memory,)
     end
     MisI || mulorldiv!(r₀, M, t, ldiv)  # M(b - Ax₀)
     rNorm = knorm(n, r₀)                # β = ‖r₀‖₂
-    ukk = zero(FC)                      # uₖ.ₖ is used if we hit the trust-region boundary
     if history
       push!(rNorms, rNorm)
       (radius > 0) && push!(qxs, qx)
@@ -200,13 +195,6 @@ kwargs_workspace_diom = (:memory,)
 
     # Set up workspace.
     mem = length(V)  # Memory
-    for i = 1 : mem
-      kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
-    end
-    for i = 1 : mem-1
-      kfill!(P[i], zero(FC))  # Directions Pₖ = NVₖ(Uₖ)⁻¹.
-    end
-    
     kfill!(H, zero(FC))  # Last column of the band hessenberg matrix Hₖ = LₖUₖ.
     # Each column of Hₖ has at most mem + 1 nonzero elements.
     # hᵢ.ₖ is stored as H[k-i+1], i ≤ k. hₖ₊₁.ₖ is not stored in H.
@@ -321,37 +309,38 @@ kwargs_workspace_diom = (:memory,)
       if iter ≥ mem
         # pₐᵤₓ ← pₐᵤₓ + Nvₖ
         kaxpy!(n, one(FC), z, P[ppos])
+      end
+      # pcg = ξₖ * pₐᵤₓ
+      if radius > 0
+        kscal!(n, ξ, P[ppos])
+      end
 
       # Compute step size to boundary if applicable.
-      if radius == 0
-         σ = 1/H[1]  
-      elseif NisI && MisI
-         # pcg =  ξₖ * pₐᵤₓ
-         kscal!(n, ξ, P[ppos])
-         σ = maximum(to_boundary(n, x,  P[ppos], z, radius))
-      elseif MisN
-         σ = maximum(to_boundary(n, x,  P[ppos], z, radius, M=M, ldiv=!ldiv)) 
-      else
-         error("Must use split preconditioning with M = N when radius > 0")
+      if radius > 0
+        if NisI && MisI
+          σ = maximum(to_boundary(n, x,  P[ppos], z, radius)) 
+        else
+          error("trust-region constraint is not supported with a preconditioner")
+        end
       end
 
       # Move along p from x to the boundary if either
       # the next step leads outside the trust region or
       # we have nonpositive curvature.
       if radius > 0
-        indefinite = real(H[1]) ≤ 0
-        stats.indefinite = indefinite
-        σinv = 1 / σ
-        on_boundary = indefinite || (real(H[1]) < σinv)
-        if on_boundary
-          ukk = H[1]
-          H[1] = σinv
-        end
-        # pₐᵤₓ = pcg / ξₖ
-        kdiv!(n, P[ppos], ξ)
+          indefinite = H[1] ≤ 0
+          stats.indefinite = indefinite
+          on_boundary = indefinite || (H[1] * σ < one(T))
       end
-      # pₖ = pₐᵤₓ / uₖ.ₖ
-      kdiv!(n, P[ppos], H[1])
+      
+      if radius == 0
+        kdiv!(n, P[ppos], H[1])  # pₖ = pₐᵤₓ / uₖ.ₖ
+      elseif on_boundary
+          kscal!(n, σ / ξ, P[ppos])  # pₖ = σ * pcg / ξ
+      else
+          kdiv!(n, P[ppos], ξ * H[1])  # pₖ = pcg / (ξ * uₖ.ₖ)
+      end
+
 
       # Update solution xₖ.
       # xₖ = xₖ₋₁ + ξₖ * pₖ
@@ -359,11 +348,11 @@ kwargs_workspace_diom = (:memory,)
 
       # Compute residual norm.
       if !on_boundary
-        rNorm = Haux * abs(ξ / H[1]) # ‖ M(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ξₖ / uₖ.ₖ| 
-        (radius > 0) &&  (qx -= abs(ξ)^2 / abs(H[1]) / 2)   # q(xₖ) = q(xₖ₋₁) -0.5*ξₖ²/uₖ.ₖ         
+        rNorm = Haux * abs(ξ / H[1])  # ‖ M(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ξₖ / uₖ.ₖ| 
+        (radius > 0) && (qx -= abs(ξ)^2 / abs(H[1]) / 2)  # q(xₖ) = q(xₖ₋₁) -0.5*ξₖ²/uₖ.ₖ
       else 
-        rNorm = sqrt(abs(rNorm - abs(ξ) * ukk * σ)^2 + abs(Haux * ξ * σ)^2) # ‖ M(b - Axₖ) ‖₂ if we hit the boundary
-        qx += (real(σ)^2 / 2) * real(ξ)^2 * real(ukk) - σ * real(ξ)^2   # q(xₖ) if we hit the boundary
+        rNorm = sqrt(abs(rNorm - abs(ξ) * H[1] * σ)^2 + abs(Haux * ξ * σ)^2)  # ‖ M(b - Axₖ) ‖₂ if we hit the boundary
+        qx += (σ^2 / 2) * ξ^2 * H[1] - σ * ξ^2  # q(xₖ) if we hit the boundary
       end
       if history
         push!(rNorms, rNorm)

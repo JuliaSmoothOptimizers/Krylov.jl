@@ -1,5 +1,6 @@
 @testset "cg" begin
   cg_tol = 1.0e-6
+
   for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
 
@@ -68,79 +69,96 @@
       @test stats.status == "x is a zero-residual solution"
       @test norm(x) == zero(FC)
       @test stats.niter == 0
+      
+      if FC == Float64
+        # Test radius > 0  and b^TAb=0
+        A, b = zero_rhs(FC=FC)
+        solver = CgWorkspace(A, b)
+        cg!(solver, A, b,radius = 10 * real(one(FC)))
+        x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+        @test stats.status == "x is a zero-residual solution"
+        @test norm(x) == zero(FC)
+        @test stats.niter == 0
 
-      # Test radius > 0  and b^TAb=0
-      A, b = zero_rhs(FC=FC)
-      solver = CgWorkspace(A, b)
-      cg!(solver, A, b,radius = 10 * real(one(FC)))
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
-      @test stats.status == "x is a zero-residual solution"
-      @test norm(x) == zero(FC)
-      @test stats.niter == 0
+        # Test radius > 0 and pᵀAp < 0
+        A = FC[
+          10.0 0.0 0.0 0.0;
+          0.0 8.0 0.0 0.0;
+          0.0 0.0 5.0 0.0;
+          0.0 0.0 0.0 -1.0
+        ]
+        b = FC[1.0, 1.0, 1.0, 0.1]
+        solver = CgWorkspace(A, b)
+        cg!(solver, A, b; radius = 10 * real(one(FC)))
+        x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
+        @test stats.npcCount == 1
+        @test stats.status == "nonpositive curvature"
+        @test stats.indefinite == true
+        @test real(dot(npc_dir, A * npc_dir)) <= 0.01 
 
-      # Test radius > 0 and pᵀAp < 0
-      A = FC[
-        10.0 0.0 0.0 0.0;
-        0.0 8.0 0.0 0.0;
-        0.0 0.0 5.0 0.0;
-        0.0 0.0 0.0 -1.0
-      ]
-      b = FC[1.0, 1.0, 1.0, 0.1]
-      solver = CgWorkspace(A, b)
-      cg!(solver, A, b; radius = 10 * real(one(FC)))
-      x, stats, npc_dir = solver.x, solver.stats, solver.npc_dir
-      @test stats.npcCount == 1
-      @test stats.status == "nonpositive curvature"
-      @test stats.indefinite == true
-      @test real(dot(npc_dir, A * npc_dir)) <= 0.01 
+        # test quadratic function values are computed correctly
+        A = FC[10.0 0.0 0.0 0.0;
+          0.0 8.0 0.0 0.0;
+          0.0 0.0 5.0 0.0;
+          0.0 0.0 0.0 1.0
+        ]
+        b = FC[1.0, 1.0, 1.0, 0.1]
+        solver = CgWorkspace(A, b)
+        cg!(solver, A, b; radius = 10 * real(one(FC)), history = true)
+        x, stats, qxs = solver.x, solver.stats, solver.stats.qvals
+        @test length(qxs) == stats.niter + 1
+        @test abs(qxs[end] - (-dot(b, x) + dot(x, A * x) / 2)) ≤ 1.0e-10
+        @test abs(qxs[1]) ≤ 1.0e-10  # q(0) = 0
+        # test that q is decreasing
+        @test all(diff(qxs) .<= 1.0e-10)
 
-      # test quadratic function values are computed correctly
-      A = FC[10.0 0.0 0.0 0.0;
-        0.0 8.0 0.0 0.0;
-        0.0 0.0 5.0 0.0;
-        0.0 0.0 0.0 1.0
-      ]
-      b = FC[1.0, 1.0, 1.0, 0.1]
-      solver = CgWorkspace(A, b)
-      cg!(solver, A, b; radius = 10 * real(one(FC)), history = true)
-      x, stats, qxs = solver.x, solver.stats, solver.stats.qvals
-      @test length(qxs) == stats.niter + 1
-      @test abs(qxs[end] - (-dot(b, x) + dot(x, A * x)/2)) ≤ 1.0e-10
-      @test abs(qxs[1]) ≤ 1.0e-10  # q(0) = 0
-      # test that q is decreasing
-      @test all(diff(qxs) .<= 1.0e-10)
+        # test quadratic function with trust-region
+        A = FC[
+          10.0 0.0 0.0 0.0;
+          0.0 8.0 0.0 0.0;
+          0.0 0.0 5.0 0.0;
+          0.0 0.0 0.0 -1.0
+        ]
+        b = FC[1.0, 1.0, 1.0, 0.1]
+        solver = CgWorkspace(A, b)
+        cg!(solver, A, b; radius = 0.5 * real(one(FC)), history = true)
+        x, stats, = solver.x, solver.stats
+        q = -dot(b, x) + dot(x, A * x) / 2
+        qxs = stats.qvals
+        @test abs(q - qxs[end]) ≤ 1.0e-10
 
-      # test quadratic function with trust-region
-      A = FC[
-        10.0 0.0 0.0 0.0;
-        0.0 8.0 0.0 0.0;
-        0.0 0.0 5.0 0.0;
-        0.0 0.0 0.0 -1.0
-      ]
-      b = FC[1.0, 1.0, 1.0, 0.1]
-      solver = CgWorkspace(A, b)
-      cg!(solver, A, b; radius = 0.5 * real(one(FC)), history = true)
-      x, stats, = solver.x, solver.stats
-      q = -dot(b, x) + dot(x, A * x)/2
-      qxs = stats.qvals
-      @test abs(q - qxs[end]) ≤ 1.0e-10
+        # test trust region with warm start
+        A = FC[
+          10.0 0.0 0.0 0.0;
+          0.0 8.0 0.0 0.0;
+          0.0 0.0 5.0 0.0;
+          0.0 0.0 0.0 -1.0
+        ]
+        b = FC[1.0, 1.0, 1.0, 0.1]
+        x0 = FC[0.5, 0.5, 0.5, 0.05]
+        solver = CgWorkspace(A, b)
+        cg!(solver, A, b, x0; radius = 10 * real(one(FC)), history = true)
+        x, stats, = solver.x, solver.stats
+        q = -dot(b, x0) + dot(x0, A * x0) / 2
+        qxs = stats.qvals
+        @test abs(q - qxs[1]) ≤ 1.0e-10
+        r = b - A * x
+        normr = norm(r)
+        @test isapprox(normr, stats.residuals[end], atol=1.0e-10)
 
-      # test quadratic function with warm start
-      A = FC[
-        10.0 0.0 0.0 0.0;
-        0.0 8.0 0.0 0.0;
-        0.0 0.0 5.0 0.0;
-        0.0 0.0 0.0 -1.0
-      ]
-      b = FC[1.0, 1.0, 1.0, 0.1]
-      x0 = FC[0.5, 0.5, 0.5, 0.05]
-      solver = CgWorkspace(A, b)
-      cg!(solver, A, b, x0; radius = 10 * real(one(FC)), history = true)
-      x, stats, = solver.x, solver.stats
-      q = -dot(b, x0) + dot(x0, A * x0)/2
-      qxs = stats.qvals
-      @test abs(q - qxs[1]) ≤ 1.0e-10
-
+        # test preconditioning with trust-region
+        A, b, M = square_preconditioned(FC=FC)
+        M = Diagonal(diag(M))
+        (x, stats) = cg(A, b, M=M, radius= 0.1 * real(one(FC)), history=true)
+        r = b - A * x
+        normr = sqrt(real(dot(r, M * r)))
+        @test isapprox(normr, stats.residuals[end], atol=1.0e-8)
+        @test stats.status == "on trust-region boundary"
+        q = -dot(b, x) + dot(x, A * x) / 2
+        qxs = stats.qvals
+        @test abs(q - qxs[end]) ≤ 1.0e-10
+      end
+    
       # Test singular and consistent system
       A, b = singular_consistent(FC=FC)
       x, stats = cg(A, b)
