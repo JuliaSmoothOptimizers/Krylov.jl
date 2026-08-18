@@ -1,3 +1,5 @@
+# [Block Krylov methods](@id block-krylov-methods)
+
 !!! note
     `block_minres` and `block_gmres` work on GPUs with Julia 1.11. Version 11.2.0 or later of `GPUArrays.jl` is also required.
 

@@ -208,9 +208,6 @@ kwargs_workspace_gmres = (:memory,)
 
       # Initialize workspace.
       nr = 0  # Number of coefficients stored in Rₖ.
-      for i = 1 : mem
-        kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
-      end
       kfill!(s, zero(FC))  # Givens sines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
       kfill!(c, zero(T))   # Givens cosines used for the factorization QₖRₖ = Hₖ₊₁.ₖ.
       kfill!(R, zero(FC))  # Upper triangular matrix Rₖ.
@@ -222,11 +219,11 @@ kwargs_workspace_gmres = (:memory,)
           kmul!(w, A, x)
           kaxpby!(n, one(FC), b, -one(FC), w)
           MisI || mulorldiv!(r₀, M, w, ldiv)
+          β = knorm(n, r₀)
         end
       end
 
       # Initial ζ₁ and v₁
-      β = knorm(n, r₀)
       z[1] = β
       kdivcopy!(n, V[1], r₀, rNorm)  # v₁ = r₀ / ‖r₀‖
 

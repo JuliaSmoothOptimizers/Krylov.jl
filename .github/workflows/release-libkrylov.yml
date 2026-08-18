@@ -1,0 +1,211 @@
+name: Release libkrylov binaries
+
+# Triggered by the version tag that TagBot pushes for each new release.
+# Builds a self-contained libkrylov bundle (library + Julia runtime) for all
+# supported platforms and uploads the archives to the matching GitHub Release.
+#
+# We trigger on the tag push rather than on `release: published` because TagBot
+# publishes the GitHub Release with the default GITHUB_TOKEN, and GitHub does not
+# start new workflow runs from events emitted by GITHUB_TOKEN (anti-recursion).
+# TagBot pushes the tag through the SSH DOCUMENTER_KEY instead, and deploy-key
+# pushes DO trigger workflows (this is how Documentation.yml runs on release).
+#
+# workflow_dispatch lets you re-run or test against any existing tag.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to upload (like vX.Y.Z)'
+        required: true
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - label: linux-x86_64
+            runner: ubuntu-22.04
+            container: ""
+            juliac: juliac
+            lib: libkrylov.so
+            libdir: lib
+            archive: libkrylov-linux-x86_64.tar.gz
+            cpu_target: x86-64
+            deployment_target: ""
+
+          - label: linux-aarch64
+            runner: ubuntu-22.04-arm
+            container: ""
+            juliac: juliac
+            lib: libkrylov.so
+            libdir: lib
+            archive: libkrylov-linux-aarch64.tar.gz
+            cpu_target: generic
+            deployment_target: ""
+
+          - label: macos-arm64
+            runner: macos-latest
+            container: ""
+            juliac: juliac
+            lib: libkrylov.dylib
+            libdir: lib
+            archive: libkrylov-macos-arm64.tar.gz
+            cpu_target: generic
+            deployment_target: "11.0"
+
+          - label: macos-x86_64
+            runner: macos-15-intel
+            container: ""
+            juliac: juliac
+            lib: libkrylov.dylib
+            libdir: lib
+            archive: libkrylov-macos-x86_64.tar.gz
+            cpu_target: x86-64
+            deployment_target: "10.13"
+
+          - label: windows-x86_64
+            runner: windows-latest
+            container: ""
+            juliac: juliac.bat
+            lib: libkrylov.dll
+            libdir: bin
+            archive: libkrylov-windows-x86_64.zip
+            cpu_target: x86-64
+            deployment_target: ""
+
+    env:
+      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
+      JULIA_CPU_TARGET: ${{ matrix.cpu_target }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+
+      # -----------------------------------------------------------------------
+      # Install JuliaC.jl as a Julia app (provides the juliac CLI)
+      # -----------------------------------------------------------------------
+      - name: Install JuliaC.jl
+        shell: bash
+        run: |
+          julia --startup-file=no -e "
+            import Pkg
+            Pkg.Registry.add(\"General\")
+            Pkg.Apps.add(url=\"https://github.com/JuliaLang/JuliaC.jl\", rev=\"v0.3.8\")
+          "
+
+      - name: Add juliac to PATH
+        shell: bash
+        run: |
+          JULIAC_BIN=$(julia --startup-file=no -e "print(joinpath(DEPOT_PATH[1], \"bin\"))")
+          echo "$JULIAC_BIN" >> "$GITHUB_PATH"
+
+      # -----------------------------------------------------------------------
+      # Show CPU information used for compilation
+      # -----------------------------------------------------------------------
+      - name: Show CPU target
+        shell: bash
+        run: |
+          julia --startup-file=no -e '
+            println("Sys.CPU_NAME = ", Sys.CPU_NAME)
+            println("JULIA_CPU_TARGET = ", get(ENV, "JULIA_CPU_TARGET", "<unset>"))
+          '
+
+      # -----------------------------------------------------------------------
+      # Trim SparseArrays from the build.
+      # The C interface only exposes solvers, never the Krylov processes, so the
+      # only thing pulling SparseArrays (and therefore SuiteSparse) is dead code
+      # for this bundle. This patch drops the dependency, disables the two
+      # *_processes.jl files and the SparseVector ktypeof methods, so the build
+      # no longer dlopen's SuiteSparse and the bundle stays small.
+      # -----------------------------------------------------------------------
+      - name: Strip SparseArrays from the build
+        shell: bash
+        run: |
+          julia --startup-file=no interfaces/scripts/trim_sparsearrays.jl
+          git diff --stat
+
+      # -----------------------------------------------------------------------
+      # Instantiate the Krylov.jl project
+      # -----------------------------------------------------------------------
+      - name: Instantiate Julia project
+        shell: bash
+        run: |
+          julia --startup-file=no --project=. -e "
+            import Pkg
+            Pkg.instantiate()
+          "
+
+      # -----------------------------------------------------------------------
+      # Build libkrylov
+      # -----------------------------------------------------------------------
+      - name: Build libkrylov
+        shell: bash
+        run: |
+          OUTLIB="interfaces/build/${{ matrix.libdir }}/${{ matrix.lib }}"
+          mkdir -p "$(dirname "$OUTLIB")"
+
+          ${{ matrix.juliac }} \
+            --project . \
+            --compile-ccallable \
+            --trim=safe \
+            --bundle interfaces/build \
+            --output-lib "$OUTLIB" \
+            interfaces/src/LibKrylov.jl
+
+      # -----------------------------------------------------------------------
+      # Generate krylov.h
+      # -----------------------------------------------------------------------
+      - name: Generate krylov.h
+        shell: bash
+        run: |
+          julia --startup-file=no --project=. \
+            interfaces/scripts/generate_header.jl
+
+      - name: Copy headers into bundle
+        shell: bash
+        run: |
+          mkdir -p interfaces/build/include
+          cp interfaces/include/krylov.h interfaces/build/include/
+          cp interfaces/include/krylov.f90 interfaces/build/include/
+
+      # -----------------------------------------------------------------------
+      # Package bundle
+      # -----------------------------------------------------------------------
+      - name: Package bundle (Unix — tar.gz)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          tar -czf "${{ matrix.archive }}" -C interfaces/build .
+
+      - name: Package bundle (Windows — zip)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path interfaces/build/* `
+            -DestinationPath "${{ matrix.archive }}"
+
+      # -----------------------------------------------------------------------
+      # Upload release asset
+      # -----------------------------------------------------------------------
+      - name: Upload release asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          gh release upload "$TAG" "${{ matrix.archive }}" --clobber

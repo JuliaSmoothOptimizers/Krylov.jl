@@ -207,9 +207,6 @@ kwargs_workspace_fom = (:memory,)
 
       # Initialize workspace.
       nr = 0  # Number of coefficients stored in Uₖ.
-      for i = 1 : mem
-        kfill!(V[i], zero(FC))  # Orthogonal basis of Kₖ(MAN, Mr₀).
-      end
       kfill!(l, zero(FC))  # Lower unit triangular matrix Lₖ.
       kfill!(U, zero(FC))  # Upper triangular matrix Uₖ.
       kfill!(z, zero(FC))  # Solution of Lₖzₖ = βe₁.
@@ -220,11 +217,11 @@ kwargs_workspace_fom = (:memory,)
           kmul!(w, A, x)
           kaxpby!(n, one(FC), b, -one(FC), w)
           MisI || mulorldiv!(r₀, M, w, ldiv)
+          β = knorm(n, r₀)
         end
       end
 
       # Initial ζ₁ and v₁
-      β = knorm(n, r₀)
       z[1] = β
       kdivcopy!(n, V[1], r₀, rNorm)  # v₁ = r₀ / ‖r₀‖
 
@@ -232,7 +229,7 @@ kwargs_workspace_fom = (:memory,)
       inner_iter = 0
       inner_tired = false
 
-      while !(solved || inner_tired || breakdown)
+      while !(solved || inner_tired || breakdown || user_requested_exit || overtimed)
 
         # Update iteration index
         inner_iter = inner_iter + 1

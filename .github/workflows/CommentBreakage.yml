@@ -1,0 +1,11 @@
+name: Comment Breakage
+
+on:
+  workflow_run:
+    workflows: ["Breakage"]
+    types:
+      - completed
+
+jobs:
+  comment_pr:
+    uses: JuliaSmoothOptimizers/.github/.github/workflows/CommentBreakage.yml@main
