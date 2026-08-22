@@ -100,7 +100,8 @@
       nA4 = size(A4, 1)
       M_indef = spdiagm(0 => [ones(FC, 5); -ones(FC, nA4-5)])
       (x, stats) = sqmr(A4, b4, M=M_indef)
-      @test(stats.status != "Breakdown ⟨uₖ₊₁,vₖ₊₁⟩ = 0")
+      @test !occursin("Breakdown", stats.status)
+      @test(stats.solved)
 
       # SQMR on a 2x2 symmetric system.
       A = FC[2.0 1.0; 1.0 2.0]

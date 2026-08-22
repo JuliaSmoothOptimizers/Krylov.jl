@@ -1818,18 +1818,13 @@ Since [`sqmr`](@ref) only supports square linear operators, `m` and `n` must be 
 mutable struct SqmrWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   m          :: Int
   n          :: Int
-  uₖ₋₁       :: S
-  uₖ         :: S
-  q          :: S
-  vₖ₋₁       :: S
-  vₖ         :: S
+  r          :: S
+  z          :: S
   p          :: S
+  w          :: S
+  d          :: S
   Δx         :: S
   x          :: S
-  wₖ₋₂       :: S
-  wₖ₋₁       :: S
-  t          :: S
-  s          :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
@@ -1840,20 +1835,15 @@ function SqmrWorkspace(kc::KrylovConstructor{S,S}) where S
   T    = real(FC)
   m    = length(kc.vm)
   n    = length(kc.vn)
-  uₖ₋₁ = similar(kc.vn)
-  uₖ   = similar(kc.vn)
-  q    = similar(kc.vn)
-  vₖ₋₁ = similar(kc.vn)
-  vₖ   = similar(kc.vn)
+  r    = similar(kc.vn)
+  z    = similar(kc.vn)
   p    = similar(kc.vn)
+  w    = similar(kc.vn)
+  d    = similar(kc.vn)
   Δx   = similar(kc.vn_empty)
   x    = similar(kc.vn)
-  wₖ₋₂ = similar(kc.vn)
-  wₖ₋₁ = similar(kc.vn)
-  t    = similar(kc.vn_empty)
-  s    = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
-  workspace = SqmrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
+  workspace = SqmrWorkspace{T,FC,S}(m, n, r, z, p, w, d, Δx, x, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
 end
@@ -1862,21 +1852,16 @@ function SqmrWorkspace(m::Integer, n::Integer, S::Type)
   start_allocation_time = time_ns()
   FC   = eltype(S)
   T    = real(FC)
-  uₖ₋₁ = S(undef, n)
-  uₖ   = S(undef, n)
-  q    = S(undef, n)
-  vₖ₋₁ = S(undef, n)
-  vₖ   = S(undef, n)
+  r    = S(undef, n)
+  z    = S(undef, n)
   p    = S(undef, n)
+  w    = S(undef, n)
+  d    = S(undef, n)
   Δx   = S(undef, 0)
   x    = S(undef, n)
-  wₖ₋₂ = S(undef, n)
-  wₖ₋₁ = S(undef, n)
-  t    = S(undef, 0)
-  s    = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
-  workspace = SqmrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
+  workspace = SqmrWorkspace{T,FC,S}(m, n, r, z, p, w, d, Δx, x, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
 end
