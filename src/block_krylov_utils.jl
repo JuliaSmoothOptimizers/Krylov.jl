@@ -207,11 +207,36 @@ function householder!(Q::AbstractMatrix{FC}, R::AbstractMatrix{FC}, τ::Abstract
   return Q, R
 end
 
-for (Xgeqrf, Xungqr, Xunmqr, T) in ((:sgeqrf_, :sorgqr_, :sormqr_, :Float32   ),
-                                    (:dgeqrf_, :dorgqr_, :dormqr_, :Float64   ),
-                                    (:cgeqrf_, :cungqr_, :cunmqr_, :ComplexF32),
-                                    (:zgeqrf_, :zungqr_, :zunmqr_, :ComplexF64))
+for (Xgemmtr, Xgeqrf, Xungqr, Xunmqr, T) in ((:sgemmtr_, :sgeqrf_, :sorgqr_, :sormqr_, :Float32   ),
+                                             (:dgemmtr_, :dgeqrf_, :dorgqr_, :dormqr_, :Float64   ),
+                                             (:cgemmtr_, :cgeqrf_, :cungqr_, :cunmqr_, :ComplexF32),
+                                             (:zgemmtr_, :zgeqrf_, :zungqr_, :zunmqr_, :ComplexF64))
     @eval begin
+        function $Xgemmtr(uplo, transA, transB, n, ka, alpha, A, lda, B, ldb, beta, C, ldc)
+          return ccall((@blasfunc($Xgemmtr), libblastrampoline), Cvoid,
+                       (Ref{UInt8}, Ref{UInt8}, Ref{UInt8}, Ref{BlasInt},
+                        Ref{BlasInt}, Ref{$T}, Ptr{$T}, Ref{BlasInt},
+                        Ptr{$T}, Ref{BlasInt}, Ref{$T}, Ptr{$T},
+                        Ref{BlasInt}, Clong, Clong, Clong),
+                        uplo, transA, transB, n, ka, alpha, A, lda,
+                        B, ldb, beta, C, ldc, 1, 1, 1)
+        end
+
+        function kgemmtr!(uplo::Char, transA::Char, transB::Char,
+                          alpha::$T, A::Union{Matrix{$T}, <:SubArray{$T, 2, Matrix{$T}}},
+                          B::Matrix{$T}, beta::$T, C::Matrix{$T})
+          lda = max(1,stride(A,2))
+          ldb = max(1,stride(B,2))
+          ldc = max(1,stride(C,2))
+          if transA == 'N'
+            n, ka = size(A)
+          else
+            ka, n = size(A)
+          end
+          $Xgemmtr(uplo, transA, transB, n, ka, alpha, A, lda, B, ldb, beta, C, ldc)
+          return C
+        end
+
         function $Xgeqrf(m, n, a, lda, tau, work, lwork, info)
           return ccall((@blasfunc($Xgeqrf), libblastrampoline), Cvoid,
                        (Ref{BlasInt}, Ref{BlasInt}, Ptr{$T}, Ref{BlasInt},
