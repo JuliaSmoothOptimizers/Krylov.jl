@@ -183,7 +183,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
 
       # Continue the block-Lanczos process.
       mul!(Q, A, Vₖ)                          # Q ← AVₖ
-      if SM <: Matrix && FC <: BLAS.BlasFloat
+      if VERSION ≥ v"1.12" && SM <: Matrix && FC <: BLAS.BlasFloat
         kgemmtr!('L', trans, 'N', γ, Vₖ, Q, ω, Ωₖ)
         for i = 1:p
           for j = i+1:p

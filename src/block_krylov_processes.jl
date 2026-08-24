@@ -70,7 +70,7 @@ function hermitian_lanczos(A, B::AbstractMatrix{FC}, k::Int; algo::String="house
       mul!(q, vᵢ₋₁, Ψᵢ', α, β)  # q = q - vᵢ₋₁ * Ψᵢᴴ
     end
 
-    if FC <: BLAS.BlasFloat
+    if VERSION ≥ v"1.12" && FC <: BLAS.BlasFloat
       kgemmtr!('L', trans, 'N', β, vᵢ, q, ω, Ωᵢ)
       for i = 1:p
         for j = i+1:p
