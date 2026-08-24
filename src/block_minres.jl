@@ -145,6 +145,7 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
     α = -one(FC)
     β = one(FC)
     γ = one(FC)
+    ω = zero(FC)
 
     # Initial solution X₀.
     fill!(X, zero(FC))
@@ -182,7 +183,21 @@ kwargs_block_minres = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :his
 
       # Continue the block-Lanczos process.
       mul!(Q, A, Vₖ)                          # Q ← AVₖ
-      mul!(Ωₖ, Vₖ', Q)                        # Ωₖ = Vₖᴴ * Q
+      if VERSION ≥ v"1.12" && SM <: Matrix && FC <: BLAS.BlasFloat
+        kgemmtr!('L', trans, 'N', γ, Vₖ, Q, ω, Ωₖ)
+        for i = 1:p
+          for j = i+1:p
+            Ωₖ[i,j] = conj(Ωₖ[j,i])
+          end
+        end
+      else
+        mul!(Ωₖ, Vₖ', Q)                      # Ωₖ = Vₖᴴ * Q
+      end
+      if SM <: Matrix && FC <: Complex
+        for i = 1:p
+          Ωₖ[i,i] = real(Ωₖ[i,i])
+        end
+      end
       (iter ≥ 2) && mul!(Q, Vₖ₋₁, Ψₖ', α, β)  # Q ← Q - Vₖ₋₁ * Ψₖᴴ
       mul!(Q, Vₖ, Ωₖ, α, β)                   # Q = Q - Vₖ * Ωₖ
 

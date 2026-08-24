@@ -41,6 +41,8 @@ function hermitian_lanczos(A, B::AbstractMatrix{FC}, k::Int; algo::String="house
 
   α = -one(FC)
   β = one(FC)
+  ω = zero(FC)
+  trans = FC <: AbstractFloat ? 'T' : 'C'
   q = zeros(FC, n, p)
   ψ₁ = zeros(FC, p, p)
   Ωᵢ = Ψᵢ = Ψᵢ₊₁ = zeros(FC, p, p)
@@ -68,7 +70,21 @@ function hermitian_lanczos(A, B::AbstractMatrix{FC}, k::Int; algo::String="house
       mul!(q, vᵢ₋₁, Ψᵢ', α, β)  # q = q - vᵢ₋₁ * Ψᵢᴴ
     end
 
-    mul!(Ωᵢ, vᵢ', q)       # Ωᵢ = vᵢᴴ * q
+    if VERSION ≥ v"1.12" && FC <: BLAS.BlasFloat
+      kgemmtr!('L', trans, 'N', β, vᵢ, q, ω, Ωᵢ)
+      for i = 1:p
+        for j = i+1:p
+          Ωᵢ[i,j] = conj(Ωᵢ[j,i])
+        end
+      end
+    else
+      mul!(Ωᵢ, vᵢ', q)     # Ωᵢ = vᵢᴴ * q
+    end
+    if FC <: Complex
+      for i = 1:p
+        Ωᵢ[i,i] = real(Ωᵢ[i,i])
+      end
+    end
     mul!(q, vᵢ, Ωᵢ, α, β)  # q = q - vᵢ * Ωᵢᴴ
 
     # Store the block Ωᵢ in Tₖ₊₁.ₖ
