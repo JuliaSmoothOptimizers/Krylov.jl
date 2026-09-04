@@ -205,10 +205,10 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
 
     # Stopping criterion.
     solved_lq = bNorm == 0
-    solved_lq_tol = solved_lq_mach = false
-    solved_cg = solved_cg_tol = solved_cg_mach = false
+    solved_lq_tol = false
+    solved_cg = solved_cg_tol = false
     solved_primal = solved_lq || solved_cg
-    solved_qr_tol = solved_qr_mach = false
+    solved_qr_tol = false
     solved_dual = cNorm == 0
     tired = iter ≥ itmax
     breakdown = false
@@ -339,11 +339,9 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
 
         # Update primal stopping criterion
         solved_lq_tol = rNorm_lq ≤ εL
-        solved_lq_mach = rNorm_lq + 1 ≤ 1
-        solved_lq = solved_lq_tol || solved_lq_mach
+        solved_lq = solved_lq_tol
         solved_cg_tol = transfer_to_bicg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ εL)
-        solved_cg_mach = transfer_to_bicg && (abs(δbarₖ) > eps(T)) && (rNorm_cg + 1 ≤ 1)
-        solved_cg = solved_cg_tol || solved_cg_mach
+        solved_cg = solved_cg_tol
         solved_primal = solved_lq || solved_cg
       end
 
@@ -403,8 +401,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
 
         # Update dual stopping criterion
         solved_qr_tol = sNorm ≤ εQ
-        solved_qr_mach = sNorm + 1 ≤ 1
-        solved_dual = solved_qr_tol || solved_qr_mach
+        solved_dual = solved_qr_tol
       end
 
       # Compute vₖ₊₁ and uₖ₊₁.
@@ -456,15 +453,6 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     !solved_primal && solved_qr_tol  && (status = "Only the dual solution t is good enough given atol and rtol")
     solved_lq_tol  && solved_qr_tol  && (status = "Both primal and dual solutions (xᴸ, t) are good enough given atol and rtol")
     solved_cg_tol  && solved_qr_tol  && (status = "Both primal and dual solutions (xᶜ, t) are good enough given atol and rtol")
-    solved_lq_mach && !solved_dual   && (status = "Only found approximate zero-residual primal solution xᴸ")
-    solved_cg_mach && !solved_dual   && (status = "Only found approximate zero-residual primal solution xᶜ")
-    !solved_primal && solved_qr_mach && (status = "Only found approximate zero-residual dual solution t")
-    solved_lq_mach && solved_qr_mach && (status = "Found approximate zero-residual primal and dual solutions (xᴸ, t)")
-    solved_cg_mach && solved_qr_mach && (status = "Found approximate zero-residual primal and dual solutions (xᶜ, t)")
-    solved_lq_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᴸ and a dual solution t good enough given atol and rtol")
-    solved_cg_mach && solved_qr_tol  && (status = "Found approximate zero-residual primal solutions xᶜ and a dual solution t good enough given atol and rtol")
-    solved_lq_tol  && solved_qr_mach && (status = "Found a primal solution xᴸ good enough given atol and rtol and an approximate zero-residual dual solutions t")
-    solved_cg_tol  && solved_qr_mach && (status = "Found a primal solution xᶜ good enough given atol and rtol and an approximate zero-residual dual solutions t")
     user_requested_exit              && (status = "user-requested exit")
     overtimed                        && (status = "time limit exceeded")
 

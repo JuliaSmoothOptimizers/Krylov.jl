@@ -205,11 +205,8 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       rNorm = knorm(n, r)
       history && push!(rNorms, rNorm)
 
-      # Stopping conditions that do not depend on user input.
-      # This is to guard against tolerances that are unreasonably small.
-      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
       resid_decrease_lim = rNorm ≤ ε
-      solved = resid_decrease_lim || resid_decrease_mach
+      solved = resid_decrease_lim
 
       if !solved
         kmul!(t, A, s)                # tₖ₊₁ = A * sₖ₊₁

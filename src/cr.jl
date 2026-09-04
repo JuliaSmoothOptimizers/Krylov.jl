@@ -412,13 +412,9 @@ kwargs_cr = (:M, :ldiv, :radius, :linesearch, :γ, :atol, :rtol, :itmax, :timema
         @printf(iostream, "%5d  %8.1e  %8.1e  %8.1e  %.2fs\n", iter, xNorm, rNorm, m, start_time |> ktimer)
       end
 
-      # Stopping conditions that do not depend on user input.
-      # This is to guard against tolerances that are unreasonably small.
-      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-
       user_requested_exit = callback(workspace) :: Bool
       resid_decrease_lim = rNorm ≤ ε
-      resid_decrease = resid_decrease_lim || resid_decrease_mach
+      resid_decrease = resid_decrease_lim
       solved = resid_decrease || npcurv || on_boundary
       tired = iter ≥ itmax
       timer = time_ns() - start_time

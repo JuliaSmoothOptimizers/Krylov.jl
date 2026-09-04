@@ -411,7 +411,6 @@ kwargs_workspace_symmlq = (:window,)
 
       # Stopping conditions that do not depend on user input.
       # This is to guard against tolerances that are unreasonably small.
-      resid_decrease_mach = (one(T) + rNorm ≤ one(T))
       ill_cond_mach = (one(T) + inv(Acond) ≤ one(T))
       zero_resid_mach = (one(T) + test1 ≤ one(T))
       # solved_mach = (ϵx ≥ β₁)
@@ -427,7 +426,7 @@ kwargs_workspace_symmlq = (:window,)
       user_requested_exit = callback(workspace) :: Bool
       zero_resid = solved_lq || solved_cg
       ill_cond = ill_cond_mach || ill_cond_lim
-      solved = solved_mach || zero_resid || zero_resid_mach || zero_resid_lim || fwd_err || resid_decrease_mach
+      solved = solved_mach || zero_resid || zero_resid_mach || zero_resid_lim || fwd_err
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
     end
