@@ -221,13 +221,9 @@ kwargs_cgne = (:N, :ldiv, :λ, :atol, :rtol, :itmax, :timemax, :verbose, :histor
       iter = iter + 1
       kdisplay(iter, verbose) && @printf(iostream, "%5d  %8.2e  %.2fs\n", iter, rNorm, start_time |> ktimer)
 
-      # Stopping conditions that do not depend on user input.
-      # This is to guard against tolerances that are unreasonably small.
-      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-
       user_requested_exit = callback(workspace) :: Bool
       resid_decrease_lim = rNorm ≤ ɛ_c
-      solved = resid_decrease_lim || resid_decrease_mach
+      solved = resid_decrease_lim
       inconsistent = (rNorm > 100 * ɛ_c) && (pNorm ≤ ɛ_i)
       tired = iter ≥ itmax
       timer = time_ns() - start_time

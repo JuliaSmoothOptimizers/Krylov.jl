@@ -244,12 +244,8 @@ kwargs_cg = (:M, :ldiv, :radius, :linesearch, :atol, :rtol, :itmax, :timemax, :v
       rNorm = sqrt(γ_next)
       history && push!(rNorms, rNorm)
 
-      # Stopping conditions that do not depend on user input.
-      # This is to guard against tolerances that are unreasonably small.
-      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-
       resid_decrease_lim = rNorm ≤ ε
-      resid_decrease = resid_decrease_lim || resid_decrease_mach
+      resid_decrease = resid_decrease_lim
       solved = resid_decrease || on_boundary
 
       if !solved

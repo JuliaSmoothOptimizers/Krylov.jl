@@ -446,15 +446,11 @@ kwargs_tricg = (:M, :N, :ldiv, :spd, :snd, :flip, :τ, :ν, :atol, :rtol, :itmax
       d₂ₖ₋₂ = d₂ₖ
       δₖ₋₁  = δₖ
 
-      # Stopping conditions that do not depend on user input.
-      # This is to guard against tolerances that are unreasonably small.
-      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-
       # Update stopping criterion.
       user_requested_exit = callback(workspace) :: Bool
       resid_decrease_lim = rNorm ≤ ε
       breakdown = βₖ₊₁ ≤ btol && γₖ₊₁ ≤ btol
-      solved = resid_decrease_lim || resid_decrease_mach
+      solved = resid_decrease_lim
       tired = iter ≥ itmax
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns

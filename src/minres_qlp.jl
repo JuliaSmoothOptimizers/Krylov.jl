@@ -472,7 +472,6 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
       # Stopping conditions that do not depend on user input.
       # This is to guard against tolerances that are unreasonably small.
       ill_cond_mach = (one(T) + inv(Acond) ≤ one(T))
-      resid_decrease_mach = (one(T) + rNorm ≤ one(T))
       zero_resid_mach = (one(T) + backward ≤ one(T))
 
       # Stopping conditions based on user-provided tolerances.
@@ -483,7 +482,7 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
 
       user_requested_exit = callback(workspace) :: Bool
       zero_resid = zero_resid_mach | zero_resid_lim
-      resid_decrease = resid_decrease_mach | resid_decrease_lim
+      resid_decrease = resid_decrease_lim
       solved = resid_decrease | zero_resid
       inconsistent = (ArNorm ≤ κ && abs(μbarₖ) ≤ Artol) || (breakdown && !solved)
       timer = time_ns() - start_time

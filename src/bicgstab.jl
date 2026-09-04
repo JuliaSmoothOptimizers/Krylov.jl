@@ -240,14 +240,10 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       rNorm = knorm(n, r)
       history && push!(rNorms, rNorm)
 
-      # Stopping conditions that do not depend on user input.
-      # This is to guard against tolerances that are unreasonably small.
-      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-
       # Update stopping criterion.
       user_requested_exit = callback(workspace) :: Bool
       resid_decrease_lim = rNorm ≤ ε
-      solved = resid_decrease_lim || resid_decrease_mach
+      solved = resid_decrease_lim
       tired = iter ≥ itmax
       breakdown = (α == 0 || isnan(α))
       timer = time_ns() - start_time

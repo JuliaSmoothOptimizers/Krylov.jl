@@ -440,7 +440,6 @@ kwargs_workspace_minres = (:window,)
       ill_cond_mach = (one(T) + inv(Acond) ≤ one(T))
       solved_mach = (one(T) + test2 ≤ one(T))
       zero_resid_mach = (one(T) + test1 ≤ one(T))
-      resid_decrease_mach = (rNorm + one(T) ≤ one(T))
       # solved_mach = (ϵx ≥ β₁)
 
       # Stopping conditions based on user-provided tolerances.
@@ -453,7 +452,7 @@ kwargs_workspace_minres = (:window,)
 
       user_requested_exit = callback(workspace) :: Bool
       zero_resid = zero_resid_mach || zero_resid_lim
-      resid_decrease = resid_decrease_mach || resid_decrease_lim
+      resid_decrease = resid_decrease_lim
       ill_cond = ill_cond_mach || ill_cond_lim
       solved = solved_mach || solved_lim || zero_resid || fwd_err || resid_decrease
       timer = time_ns() - start_time

@@ -287,15 +287,11 @@ kwargs_workspace_fom = (:memory,)
         # Update the number of coefficients in Uₖ
         nr = nr + inner_iter
 
-        # Stopping conditions that do not depend on user input.
-        # This is to guard against tolerances that are unreasonably small.
-        resid_decrease_mach = (rNorm + one(T) ≤ one(T))
-
         # Update stopping criterion.
         user_requested_exit = callback(workspace) :: Bool
         resid_decrease_lim = rNorm ≤ ε
         breakdown = Hbis ≤ btol
-        solved = resid_decrease_lim || resid_decrease_mach
+        solved = resid_decrease_lim
         inner_tired = restart ? inner_iter ≥ min(mem, inner_itmax) : inner_iter ≥ inner_itmax
         timer = time_ns() - start_time
         overtimed = timer > timemax_ns
