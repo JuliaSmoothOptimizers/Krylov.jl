@@ -1,4 +1,4 @@
-asteps:
+steps:
   - label: "CPUs -- StaticArrays.jl"
     plugins:
       - JuliaCI/julia#v1:
