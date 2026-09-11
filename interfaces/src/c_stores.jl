@@ -442,14 +442,15 @@ function _typed_solve_ls_mn!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_
   Cint(0)
 end
 
-# λ + radius + M(n) — CGLS, CRLS (CG/CR on the normal equations; single
-# preconditioner on the n-space, passed via matvec_M).
+# λ + radius + M(m) — CGLS, CRLS (CG/CR on the normal equations; single
+# preconditioner on the m-space, passed via matvec_M: M is applied to the
+# residual r = b - Ax and to q = A*p, which both have length m).
 function _typed_solve_ls_m_radius!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
   A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
   b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
   kw = _opts_kw(opts, T); λ = T(opts.lambda); rad = T(opts.radius)
   if fptr_M != C_NULL
-    M = CPreconditioner{FC}(ws.n, fptr_M, userdata)
+    M = CPreconditioner{FC}(ws.m, fptr_M, userdata)
     Krylov.krylov_solve!(ws, A, b; M=M, λ=λ, radius=rad, kw...)
   else
     Krylov.krylov_solve!(ws, A, b; λ=λ, radius=rad, kw...)
@@ -457,13 +458,13 @@ function _typed_solve_ls_m_radius!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A,
   Cint(0)
 end
 
-# λ + N(n) — CGNE, CRMR (single preconditioner on the n-space, via matvec_N).
+# λ + N(m) — CGNE, CRMR (single preconditioner on the m-space, via matvec_N).
 function _typed_solve_ls_n!(ws::Krylov.KrylovWorkspace{T, FC, S}, fptr_A, fptr_At, fptr_M, fptr_N, b_ptr, c_ptr, userdata, opts) where {T, FC, S}
   A  = COperator{FC}(ws.m, ws.n, fptr_A, fptr_At, userdata)
   b  = unsafe_wrap(Vector{FC}, Ptr{FC}(b_ptr), ws.m)
   kw = _opts_kw(opts, T); λ = T(opts.lambda)
   if fptr_N != C_NULL
-    N = CPreconditioner{FC}(ws.n, fptr_N, userdata)
+    N = CPreconditioner{FC}(ws.m, fptr_N, userdata)
     Krylov.krylov_solve!(ws, A, b; N=N, λ=λ, kw...)
   else
     Krylov.krylov_solve!(ws, A, b; λ=λ, kw...)
