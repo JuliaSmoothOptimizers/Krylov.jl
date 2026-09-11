@@ -98,7 +98,7 @@
       # SQMR with symmetric indefinite preconditioner (no breakdown).
       A4, b4 = symmetric_definite(FC=FC)
       nA4 = size(A4, 1)
-      M_indef = spdiagm(0 => [ones(FC, 5); -ones(FC, nA4-5)])
+      M_indef = spdiagm(0 => [ones(FC, 6); -ones(FC, nA4-6)])
       (x, stats) = sqmr(A4, b4, M=M_indef)
       @test !occursin("Breakdown", stats.status)
       @test(stats.solved)
