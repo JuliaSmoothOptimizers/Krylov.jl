@@ -69,7 +69,7 @@ Return the number of iterations performed by the Krylov method associated with `
 
 The number of iterations alone is not a reliable basis for comparing different Krylov methods,
 since the work performed in each iteration can vary significantly.
-For a fairer performance comparison, use the total number of operator-vector products with `A` and `A'` (see [Aprod_count](@ref) and [Atprod_count](@ref)).
+For a fairer performance comparison, use the total number of operator-vector products with `A` and `A'` (see [`Aprod_count`](@ref) and [`Atprod_count`](@ref)).
 """
 function iteration_count end
 

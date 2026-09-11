@@ -13,8 +13,8 @@ export cgls_lanczos_shift, cgls_lanczos_shift!
 
 """
     (x, stats) = cgls_lanczos_shift(A, b::AbstractVector{FC}, shifts::AbstractVector{T};
-                                    M=I, λ::T=zero(T), atol::T=√eps(T), rtol::T=√eps(T),
-                                    radius::T=zero(T), itmax::Int=0, verbose::Int=0,
+                                    atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
+                                    timemax::Float64=Inf, verbose::Int=0,
                                     history::Bool=false, callback=workspace->false,
                                     iostream::IO=kstdout)
 
@@ -50,8 +50,6 @@ For an in-place variant that reuses memory across solves, see [`cgls_lanczos_shi
 
 #### Keyword arguments
 
-* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for preconditioning;
-* `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `m+n`;
@@ -88,9 +86,7 @@ def_args_cgls_lanczos_shift = (:(A                        ),
                                :(b::AbstractVector{FC}    ),
                                :(shifts::AbstractVector{T}))
 
-def_kwargs_cgls_lanczos_shift = (:(; M = I                        ),
-                                 :(; ldiv::Bool = false           ),
-                                 :(; atol::T = √eps(T)            ),
+def_kwargs_cgls_lanczos_shift = (:(; atol::T = √eps(T)            ),
                                  :(; rtol::T = √eps(T)            ),
                                  :(; itmax::Int = 0               ),
                                  :(; timemax::Float64 = Inf       ),
@@ -102,7 +98,7 @@ def_kwargs_cgls_lanczos_shift = (:(; M = I                        ),
 def_kwargs_cgls_lanczos_shift = extract_parameters.(def_kwargs_cgls_lanczos_shift)
 
 args_cgls_lanczos_shift = (:A, :b, :shifts)
-kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_cgls_lanczos_shift = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 
 @eval begin
   function cgls_lanczos_shift!(workspace :: CglsLanczosShiftWorkspace{T,FC,Sm,Sn}, $(def_args_cgls_lanczos_shift...); $(def_kwargs_cgls_lanczos_shift...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, Sm <: AbstractVector{FC}, Sn <: AbstractVector{FC}}
@@ -119,10 +115,6 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     nshifts == workspace.nshifts || error("workspace.nshifts = $(workspace.nshifts) is inconsistent with length(shifts) = $nshifts")
     (verbose > 0) && @printf(iostream, "CGLS-LANCZOS-SHIFT: system of %d equations in %d variables with %d shifts\n", m, n, nshifts)
 
-    # Tests M = Iₙ
-    MisI = (M === I)
-    !MisI && error("Preconditioner `M` is not supported.")
-
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     ktypeof(b) == Sm || error("ktypeof(b) must be equal to $Sm")
@@ -131,7 +123,6 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     Aᴴ = A'
 
     # Set up workspace.
-    allocate_if(!MisI, workspace, :v, Sn, workspace.Mv)  # The length of v is n
     v, u_prev, u, u_next = workspace.Mv, workspace.u_prev, workspace.u, workspace.u_next
     x, p, σ, δhat = workspace.x, workspace.p, workspace.σ, workspace.δhat
     ω, γ, rNorms, converged = workspace.ω, workspace.γ, workspace.rNorms, workspace.converged
@@ -148,7 +139,7 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
     kcopy!(m, u, b)              # u ← b
     kfill!(u_prev, zero(FC))
     kmul!(v, Aᴴ, u)              # v₁ ← Aᴴ * b
-    β = knorm_elliptic(n, v, v)  # β₁ = v₁ᵀ M v₁
+    β = knorm_elliptic(n, v, v)  # β₁ = ‖v₁‖
     kfill!(rNorms, β)
     if history
       for i = 1 : nshifts
@@ -211,13 +202,12 @@ kwargs_cgls_lanczos_shift = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose
       kaxpy!(m, -δ, u, u_next)      # uₖ₊₁ = u_nextₖ - δₖuₖ - βₖuₖ₋₁
       kaxpy!(m, -β, u_prev, u_next)
       kmul!(v, Aᴴ, u_next)          # vₖ₊₁ = Aᴴuₖ₊₁
-      β = knorm_elliptic(n, v, v)   # βₖ₊₁ = vₖ₊₁ᵀ M vₖ₊₁
+      β = knorm_elliptic(n, v, v)   # βₖ₊₁ = ‖vₖ₊₁‖
       kdiv!(n, v, β)                # vₖ₊₁ = vₖ₊₁ / βₖ₊₁
       kdiv!(m, u_next, β)           # uₖ₊₁ = uₖ₊₁ / βₖ₊₁
       kcopy!(m, u_prev, u)          # u_prev ← u
       kcopy!(m, u, u_next)          # u ← u_next
 
-      MisI || (ρ = kdotr(n, v, v))
       for i = 1 : nshifts
         δhat[i] = δ + ρ * shifts[i]
         γ[i] = inv(δhat[i] - ω[i] / γ[i])
