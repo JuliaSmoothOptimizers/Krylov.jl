@@ -33,3 +33,11 @@ minares
 minares!
 MinaresWorkspace
 ```
+
+## SQMR
+
+```@docs
+sqmr
+sqmr!
+SqmrWorkspace
+```
