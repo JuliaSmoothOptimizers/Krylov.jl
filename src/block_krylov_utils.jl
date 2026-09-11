@@ -329,7 +329,7 @@ kunmqr!(side :: Char, trans :: Char, A :: AbstractMatrix{T}, tau :: AbstractVect
 #     β, τ = larfg!(α, x)
 #
 # Generate an elementary Householder reflector `H = I - τ vvᴴ` such that
-# `Hᴴ * [α; x] = [β; 0]` (LAPACK convention; `H` is not hermitian in the complex
+# `Hᴴ * [α; x] = [β; 0]` (LAPACK convention; `H` is not Hermitian in the complex
 # case), where `v = [1; y]` and `β` is the (signed) Euclidean norm of `[α; x]`.
 # On output `x` is overwritten by the tail `y` of `v`.
 # """

@@ -18,7 +18,7 @@ There exist three variants of preconditioning:
 where $P_{\ell}$ and $P_r$ are square and nonsingular.
 
 The left preconditioning preserves the error $x_k - x^{\star}$ whereas the right preconditioning keeps invariant the residual $b - A x_k$.
-Two-sided preconditioning is the only variant that allows to preserve the hermicity of a linear system.
+Two-sided preconditioning is the only variant that allows to preserve the Hermiticity of a linear system.
 
 !!! note
     Because det$(P^{-1}A - \lambda I)$ = det$(A - \lambda P)$ det$(P^{-1})$ = det$(AP^{-1} - \lambda I)$, the eigenvalues of $P^{-1}A$ and $AP^{-1}$ are identical. If $P = LL^{H}$, $L^{-1}AL^{-H}$ also has the same spectrum.
@@ -49,7 +49,7 @@ A Krylov method dedicated to non-Hermitian linear systems allows the three varia
 Methods concerned: [`SYMMLQ`](@ref symmlq), [`CG`](@ref cg), [`CG-LANCZOS`](@ref cg_lanczos), [`CG-LANCZOS-SHIFT`](@ref cg_lanczos_shift), [`CR`](@ref cr), [`CAR`](@ref car), [`MINRES`](@ref minres), [`BLOCK-MINRES`](@ref block_minres), [`MINRES-QLP`](@ref minres_qlp) and [`MINARES`](@ref minares).
 
 When $A$ is Hermitian, we can only use centered preconditioning $L^{-1}AL^{-H}y = L^{-1}b$ with $x = L^{-H}y$.
-Centered preconditioning is a special case of two-sided preconditioning with $P_{\ell} = L = P_r^H$ that maintains hermicity.
+Centered preconditioning is a special case of two-sided preconditioning with $P_{\ell} = L = P_r^H$ that maintains Hermiticity.
 However, there is no need to specify $L$ and one may specify $P_c = LL^H$ or its inverse directly.
 
 | Preconditioners | $P_c^{-1}$                | $P_c$                |
@@ -57,11 +57,11 @@ However, there is no need to specify $L$ and one may specify $P_c = LL^H$ or its
 | Arguments       | `M` with `ldiv=false`     | `M` with `ldiv=true` |
 
 !!! warning
-    The preconditioner `M` must be hermitian and positive definite.
+    The preconditioner `M` must be Hermitian and positive definite.
 
 ### Linear least-squares problems
 
-Methods concerned: [`CGLS`](@ref cgls), [`CGLS-LANCZOS-SHIFT`](@ref cgls_lanczos_shift), [`CRLS`](@ref crls), [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).
+Methods concerned: [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).
 
 | Formulation           | Without preconditioning              | With preconditioning                        |
 |:---------------------:|:------------------------------------:|:-------------------------------------------:|
@@ -82,11 +82,14 @@ Methods concerned: [`CGLS`](@ref cgls), [`CGLS-LANCZOS-SHIFT`](@ref cgls_lanczos
 | Arguments       | `M` with `ldiv=false`   | `M` with `ldiv=true` | `N` with `ldiv=false`   | `N` with `ldiv=true` |
 
 !!! warning
-    The preconditioners `M` and `N` must be hermitian and positive definite.
+    The preconditioners `M` and `N` must be Hermitian and positive definite.
+
+!!! note
+    [`CGLS`](@ref cgls) and [`CRLS`](@ref crls) only accept `M`; they do not support `N`.
 
 ### Linear least-norm problems
 
-Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq), [`CRAIG`](@ref craig) and [`CRAIGMR`](@ref craigmr).
+Methods concerned: [`LNLQ`](@ref lnlq), [`CRAIG`](@ref craig) and [`CRAIGMR`](@ref craigmr).
 
 | Formulation          | Without preconditioning                              | With preconditioning                                 |
 |:--------------------:|:----------------------------------------------------:|:----------------------------------------------------:|
@@ -107,7 +110,11 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 | Arguments       | `M` with `ldiv=false`   | `M` with `ldiv=true` | `N` with `ldiv=false`   | `N` with `ldiv=true` |
 
 !!! warning
-    The preconditioners `M` and `N` must be hermitian and positive definite.
+    The preconditioners `M` and `N` must be Hermitian and positive definite.
+
+!!! note
+    [`CGNE`](@ref cgne) and [`CRMR`](@ref crmr) only accept `N`, and it does not play the role of $F^{-1}$ above.
+    It preconditions the normal equations of the second kind $(AA^H + \lambda^2 I)y = b$, so it is $m \times m$ and leaves the minimized norm unchanged.
 
 ### Saddle-point and symmetric quasi-definite systems
 
@@ -120,7 +127,7 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 | Arguments       | `M` with `ldiv=false` | `M` with `ldiv=true` | `N` with `ldiv=false` | `N` with `ldiv=true` |
 
 !!! warning
-    The preconditioners `M` and `N` must be hermitian and positive definite.
+    The preconditioners `M` and `N` must be Hermitian and positive definite.
 
 ### Generalized saddle-point and unsymmetric partitioned systems
 
@@ -133,7 +140,7 @@ Methods concerned: [`CGNE`](@ref cgne), [`CRMR`](@ref crmr), [`LNLQ`](@ref lnlq)
 | Arguments       | `C` and `E` with `ldiv=false` | `C` and `E` with `ldiv=true` | `D` and `F` with `ldiv=false` | `D` and `F` with `ldiv=true` |
 
 !!! note
-    Our implementations of [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), [`USYMLQ`](@ref usymlq), [`USYMQR`](@ref usymqr), [`USYMLQR`](@ref usymlqr) and [`TriLQR`](@ref trilqr) don't support preconditioning.
+    Our implementations of [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), [`USYMLQ`](@ref usymlq), [`USYMQR`](@ref usymqr), [`USYMLQR`](@ref usymlqr), [`TriLQR`](@ref trilqr) and [`CGLS-LANCZOS-SHIFT`](@ref cgls_lanczos_shift) don't support preconditioning.
 
 ## Packages that provide preconditioners
 

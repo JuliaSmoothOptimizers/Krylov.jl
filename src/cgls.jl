@@ -67,7 +67,7 @@ For an in-place variant that reuses memory across solves, see [`cgls!`](@ref).
 
 #### Keyword arguments
 
-* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for preconditioning;
+* `M`: linear operator that models a Hermitian positive-definite matrix of size `m` used for preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `radius`: add the trust-region constraint ‖x‖ ≤ `radius` if `radius > 0`. Useful to compute a step in a trust-region method for optimization;
 * `λ`: regularization parameter;

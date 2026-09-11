@@ -1,4 +1,4 @@
-# An implementation of CAR for the solution of hermitian positive definite linear systems.
+# An implementation of CAR for the solution of Hermitian positive definite linear systems.
 #
 # This method is described in
 #

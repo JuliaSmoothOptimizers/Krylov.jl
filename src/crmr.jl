@@ -72,7 +72,7 @@ For an in-place variant that reuses memory across solves, see [`crmr!`](@ref).
 
 #### Keyword arguments
 
-* `N`: linear operator that models a Hermitian positive-definite matrix of size `n` used for preconditioning;
+* `N`: linear operator that models a Hermitian positive-definite matrix of size `m` used for preconditioning;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
