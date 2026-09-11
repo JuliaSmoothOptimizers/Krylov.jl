@@ -84,7 +84,7 @@ jobs:
 
       - uses: julia-actions/setup-julia@v2
         with:
-          version: '1.12'
+          version: '1.13'
 
       # -----------------------------------------------------------------------
       # Install gfortran on macOS (not pre-installed on GitHub runners)
@@ -105,7 +105,7 @@ jobs:
           julia --startup-file=no -e "
             import Pkg
             Pkg.Registry.add(\"General\")
-            Pkg.Apps.add(url=\"https://github.com/JuliaLang/JuliaC.jl\", rev=\"v0.3.8\")
+            Pkg.Apps.add(url=\"https://github.com/JuliaLang/JuliaC.jl\", rev=\"v0.3.10\")
           "
 
       - name: Add juliac to PATH

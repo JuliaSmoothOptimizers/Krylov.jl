@@ -10,8 +10,8 @@ Pre-built, self-contained bundles for Linux, macOS and Windows are attached to e
 
 | Tool | Version |
 |------|---------|
-| Julia | ≥ 1.12 |
-| [JuliaC.jl](https://github.com/JuliaLang/JuliaC.jl) | ≥ 0.3.8 |
+| Julia | ≥ 1.13 |
+| [JuliaC.jl](https://github.com/JuliaLang/JuliaC.jl) | ≥ 0.3.10 |
 | C / Fortran compiler | gcc / clang, gfortran |
 
 [JuliaC.jl](https://github.com/JuliaLang/JuliaC.jl) wraps Julia's `juliac` compiler and adds `--bundle`, which produces a self-contained library that embeds the Julia runtime (no separate Julia installation required at run time).
@@ -22,7 +22,7 @@ All commands run from the **root of the Krylov.jl repository**.
 
 ```bash
 # Install JuliaC.jl once (installs juliac into ~/.julia/bin)
-julia -e 'import Pkg; Pkg.Apps.add(url="https://github.com/JuliaLang/JuliaC.jl", rev="v0.3.8")'
+julia -e 'import Pkg; Pkg.Apps.add(url="https://github.com/JuliaLang/JuliaC.jl", rev="v0.3.10")'
 export PATH="$HOME/.julia/bin:$PATH"
 
 # Build the bundle (library + embedded Julia runtime)
@@ -36,17 +36,9 @@ juliac \
 
 # Generate the headers and copy them next to the library
 julia --startup-file=no --project=. interfaces/scripts/generate_header.jl
+mkdir -p interfaces/build/include
 cp interfaces/include/krylov.h   interfaces/build/include/
 cp interfaces/include/krylov.f90 interfaces/build/include/
-
-# Copy the SuiteSparse libraries into the bundle.
-# juliac --bundle does not trace libraries that Julia dlopen's at startup
-# (SparseArrays -> SuiteSparse_jll). Without this the bundle runs only on a
-# machine that already has Julia. On Windows the libs are in Sys.BINDIR (bin/).
-JLIB="$(julia --startup-file=no -e 'print(joinpath(Sys.BINDIR, "..", "lib", "julia"))')"
-for name in amd btf camd ccolamd cholmod colamd klu ldl rbio spqr suitesparseconfig umfpack; do
-    cp -a "$JLIB"/lib"$name".* interfaces/build/lib/julia/
-done
 ```
 
 The `--bundle` flag produces a relocatable directory:
@@ -61,7 +53,7 @@ interfaces/build/
     └── krylov.f90
 ```
 
-> **Windows:** use `--output-lib interfaces/build/bin/libkrylov.dll`; the bundle lands in `build/bin/`, and the SuiteSparse libraries are taken from `Sys.BINDIR` (`bin/`).
+> **Windows:** use `--output-lib interfaces/build/bin/libkrylov.dll`; the bundle lands in `build/bin/`.
 > **macOS:** replace `.so` with `.dylib`.
 
 Compiling and linking a C or Fortran program against the bundle is documented in the [building guide](https://jso.dev/Krylov.jl/dev/interfaces/building/).
