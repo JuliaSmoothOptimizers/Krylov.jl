@@ -560,8 +560,9 @@ function test_ls_preconditioner()
         c_workspace_free(ws)
     end
 
-    # CGLS: single preconditioner on the n-space (normal equations), via matvec_M.
-    _Minv_f64[] = fill(2.0, n)
+    # CGLS: single preconditioner on the m-space — M is applied to the residual
+    # r = b - Ax and to q = A*p, both of length m — via matvec_M.
+    _Minv_f64[] = fill(2.0, m)
     ws = c_workspace_create(solver_enum("cgls"), m, n, KRYLOV_FLOAT64)
     try
         @test solve_with(ws, cb_A, b; cb_At=cb_At, cb_M=CB_M_F64) == 0
@@ -570,8 +571,8 @@ function test_ls_preconditioner()
         c_workspace_free(ws)
     end
 
-    # CGNE: single preconditioner on the n-space, via matvec_N.
-    _Ninv_f64[] = fill(2.0, n)
+    # CGNE: single preconditioner on the m-space, via matvec_N.
+    _Ninv_f64[] = fill(2.0, m)
     ws = c_workspace_create(solver_enum("cgne"), m, n, KRYLOV_FLOAT64)
     try
         @test solve_with(ws, cb_A, b; cb_At=cb_At, cb_N=CB_N_F64) == 0
