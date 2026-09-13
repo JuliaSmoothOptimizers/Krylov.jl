@@ -16,6 +16,7 @@ The fields are as follows:
 - `npcCount`: The number of nonpositive curvature directions encountered during the solve;
 - `residuals`: A vector containing the residual norms at each iteration;
 - `Aresiduals`: A vector of `A'`-residual norms at each iteration;
+- `qvals`: A vector of quadratic model values at each iteration;
 - `Acond`: An estimate of the condition number of matrix `A`.
 - `allocation_timer`: The elapsed time (in seconds) spent on allocations;
 - `timer`: The elapsed time (in seconds) taken by the solver to complete all iterations;
@@ -29,6 +30,7 @@ mutable struct SimpleStats{T} <: KrylovStats{T}
   npcCount         :: Int
   residuals        :: Vector{T}
   Aresiduals       :: Vector{T}
+  qvals            :: Vector{T}
   Acond            :: Vector{T}
   allocation_timer :: Float64
   timer            :: Float64
@@ -38,6 +40,7 @@ end
 function reset!(stats :: SimpleStats)
   empty!(stats.residuals)
   empty!(stats.Aresiduals)
+  empty!(stats.qvals)
   empty!(stats.Acond)
   stats.indefinite = false
   stats.npcCount = 0
@@ -51,6 +54,7 @@ function copyto!(dest :: SimpleStats, src :: SimpleStats)
   dest.npcCount         = src.npcCount
   dest.residuals        = copy(src.residuals)
   dest.Aresiduals       = copy(src.Aresiduals)
+  dest.qvals            = copy(src.qvals)
   dest.Acond            = copy(src.Acond)
   dest.allocation_timer = src.allocation_timer
   dest.timer            = src.timer

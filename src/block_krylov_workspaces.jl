@@ -79,7 +79,7 @@ function BlockMinresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::
   τₖ₋₁ = SV(undef, p)
   SV = isconcretetype(SV) ? SV : typeof(τₖ₋₁)
   SM = isconcretetype(SM) ? SM : typeof(X)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0,"unknown")
   size_buffer = max(kgeqrf_buffer!(Vₖ, τₖ₋₁), kgeqrf_buffer!(Hₖ₋₁, τₖ₋₁),
                     kungqr_buffer!(Vₖ, τₖ₋₁), kungqr_buffer!(Hₖ₋₁, τₖ₋₁),
                     kunmqr_buffer!('L', FC <: AbstractFloat ? 'T' : 'C', Hₖ₋₁, τₖ₋₁, D))
@@ -156,7 +156,7 @@ function BlockGmresWorkspace(m::Integer, n::Integer, p::Integer, SV::Type, SM::T
                     kungqr_buffer!(V[1], τ[1]), kungqr_buffer!(H[1], τ[1]),
                     kunmqr_buffer!('L', FC <: AbstractFloat ? 'T' : 'C', H[1], τ[1], D))
   buffer = SV(undef, size_buffer)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = BlockGmresWorkspace{T,FC,SV,SM}(m, n, p, ΔX, X, W, P, Q, C, D, V, Z, R, H, τ, buffer, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace

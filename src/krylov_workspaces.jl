@@ -107,7 +107,7 @@ function MinresWorkspace(kc::KrylovConstructor{S,S}; window::Int = 5) where S
   y  = similar(kc.vn)
   v  = similar(kc.vn_empty)
   err_vec = zeros(T, window)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = MinresWorkspace{T,FC,S}(m, n, Δx, x, r1, r2, npc_dir, w1, w2, y, v, err_vec, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -128,7 +128,7 @@ function MinresWorkspace(m::Integer, n::Integer, S::Type; window::Int = 5)
   v  = S(undef, 0)
   err_vec = zeros(T, window)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = MinresWorkspace{T,FC,S}(m, n, Δx, x, r1, r2, npc_dir, w1, w2, y, v, err_vec, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -186,7 +186,7 @@ function MinaresWorkspace(kc::KrylovConstructor{S,S}) where S
   dₖ₋₂ = similar(kc.vn)
   dₖ₋₁ = similar(kc.vn)
   q    = similar(kc.vn)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -206,7 +206,7 @@ function MinaresWorkspace(m::Integer, n::Integer, S::Type)
   dₖ₋₁ = S(undef, n)
   q    = S(undef, n)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -260,7 +260,7 @@ function CgWorkspace(kc::KrylovConstructor{S,S}) where S
   p  = similar(kc.vn)
   Ap = similar(kc.vn)
   z  = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CgWorkspace{T,FC,S}(m, n, Δx, x, r, npc_dir, p, Ap, z, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -278,7 +278,7 @@ function CgWorkspace(m::Integer, n::Integer, S::Type)
   Ap = S(undef, n)
   z  = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CgWorkspace{T,FC,S}(m, n, Δx, x, r, npc_dir, p, Ap, z, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -334,7 +334,7 @@ function CrWorkspace(kc::KrylovConstructor{S,S}) where S
   q  = similar(kc.vn)
   Ar = similar(kc.vn)
   Mq = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CrWorkspace{T,FC,S}(m, n, Δx, x, r, npc_dir, p, q, Ar, Mq, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -353,7 +353,7 @@ function CrWorkspace(m::Integer, n::Integer, S::Type)
   Ar = S(undef, n)
   Mq = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CrWorkspace{T,FC,S}(m, n, Δx, x, r, npc_dir, p, q, Ar, Mq, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -411,7 +411,7 @@ function CarWorkspace(kc::KrylovConstructor{S,S}) where S
   t  = similar(kc.vn)
   u  = similar(kc.vn)
   Mu = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CarWorkspace{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -431,7 +431,7 @@ function CarWorkspace(m::Integer, n::Integer, S::Type)
   u  = S(undef, n)
   Mu = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CarWorkspace{T,FC,S}(m, n, Δx, x, r, p, s, q, t, u, Mu, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -741,7 +741,7 @@ function MinresQlpWorkspace(kc::KrylovConstructor{S,S}) where S
   x       = similar(kc.vn)
   p       = similar(kc.vn)
   vₖ      = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = MinresQlpWorkspace{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, npc_dir, x, p, vₖ, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -761,7 +761,7 @@ function MinresQlpWorkspace(m::Integer, n::Integer, S::Type)
   vₖ      = S(undef, 0)
   npc_dir  = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = MinresQlpWorkspace{T,FC,S}(m, n, Δx, wₖ₋₁, wₖ, M⁻¹vₖ₋₁, M⁻¹vₖ, npc_dir, x, p, vₖ, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -823,7 +823,7 @@ function DqgmresWorkspace(kc::KrylovConstructor{S,S}; memory::Int = 20) where S
   c      = Vector{T}(undef, memory)
   s      = Vector{FC}(undef, memory)
   H      = Vector{FC}(undef, memory+1)
-  stats  = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats  = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = DqgmresWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -845,7 +845,7 @@ function DqgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
   s  = Vector{FC}(undef, memory)
   H  = Vector{FC}(undef, memory+1)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = DqgmresWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, c, s, H, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -905,7 +905,7 @@ function DiomWorkspace(kc::KrylovConstructor{S,S}; memory::Int = 20) where S
   V      = S[similar(kc.vn) for i = 1 : memory]
   L      = Vector{FC}(undef, memory-1)
   H      = Vector{FC}(undef, memory)
-  stats  = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats  = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = DiomWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -926,7 +926,7 @@ function DiomWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
   L  = Vector{FC}(undef, memory-1)
   H  = Vector{FC}(undef, memory)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = DiomWorkspace{T,FC,S}(m, n, Δx, x, t, z, w, P, V, L, H, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -987,7 +987,7 @@ function UsymlqWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   vₖ₋₁ = similar(kc.vm)
   vₖ   = similar(kc.vm)
   q    = similar(kc.vm)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = UsymlqWorkspace{T,FC,Sm,Sn}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1008,7 +1008,7 @@ function UsymlqWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   q    = Sm(undef, m)
   Sm = isconcretetype(Sm) ? Sm : typeof(q)
   Sn = isconcretetype(Sn) ? Sn : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = UsymlqWorkspace{T,FC,Sm,Sn}(m, n, uₖ₋₁, uₖ, p, Δx, x, d̅, vₖ₋₁, vₖ, q, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1082,7 +1082,7 @@ function UsymqrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   uₖ₋₁ = similar(kc.vn)
   uₖ   = similar(kc.vn)
   p    = similar(kc.vn)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[],T[], 0.0, 0.0, "unknown")
   workspace = UsymqrWorkspace{T,FC,Sm,Sn}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1104,7 +1104,7 @@ function UsymqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   p    = Sn(undef, n)
   Sm = isconcretetype(Sm) ? Sm : typeof(q)
   Sn = isconcretetype(Sn) ? Sn : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = UsymqrWorkspace{T,FC,Sm,Sn}(m, n, vₖ₋₁, vₖ, q, Δx, x, wₖ₋₂, wₖ₋₁, uₖ₋₁, uₖ, p, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1190,7 +1190,7 @@ function TricgWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   Δy      = similar(kc.vn_empty)
   uₖ      = similar(kc.vn_empty)
   vₖ      = similar(kc.vm_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[],T[], 0.0, 0.0, "unknown")
   workspace = TricgWorkspace{T,FC,Sm,Sn}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1218,7 +1218,7 @@ function TricgWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   vₖ      = Sm(undef, 0)
   Sm = isconcretetype(Sm) ? Sm : typeof(x)
   Sn = isconcretetype(Sn) ? Sn : typeof(y)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = TricgWorkspace{T,FC,Sm,Sn}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1312,7 +1312,7 @@ function TrimrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   Δy      = similar(kc.vn_empty)
   uₖ      = similar(kc.vn_empty)
   vₖ      = similar(kc.vm_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = TrimrWorkspace{T,FC,Sm,Sn}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1344,7 +1344,7 @@ function TrimrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   vₖ      = Sm(undef, 0)
   Sm = isconcretetype(Sm) ? Sm : typeof(x)
   Sn = isconcretetype(Sn) ? Sn : typeof(y)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = TrimrWorkspace{T,FC,Sm,Sn}(m, n, y, N⁻¹uₖ₋₁, N⁻¹uₖ, p, gy₂ₖ₋₃, gy₂ₖ₋₂, gy₂ₖ₋₁, gy₂ₖ, x, M⁻¹vₖ₋₁, M⁻¹vₖ, q, gx₂ₖ₋₃, gx₂ₖ₋₂, gx₂ₖ₋₁, gx₂ₖ, Δx, Δy, uₖ, vₖ, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1518,7 +1518,7 @@ function CgsWorkspace(kc::KrylovConstructor{S,S}) where S
   ts = similar(kc.vn)
   yz = similar(kc.vn_empty)
   vw = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CgsWorkspace{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1538,7 +1538,7 @@ function CgsWorkspace(m::Integer, n::Integer, S::Type)
   yz = S(undef, 0)
   vw = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CgsWorkspace{T,FC,S}(m, n, Δx, x, r, u, p, q, ts, yz, vw, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1596,7 +1596,7 @@ function BicgstabWorkspace(kc::KrylovConstructor{S,S}) where S
   qd = similar(kc.vn)
   yz = similar(kc.vn_empty)
   t  = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = BicgstabWorkspace{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1616,7 +1616,7 @@ function BicgstabWorkspace(m::Integer, n::Integer, S::Type)
   yz = S(undef, 0)
   t  = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = BicgstabWorkspace{T,FC,S}(m, n, Δx, x, r, p, v, s, qd, yz, t, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1678,7 +1678,7 @@ function BilqWorkspace(kc::KrylovConstructor{S,S}) where S
   d̅    = similar(kc.vn)
   t    = similar(kc.vn_empty)
   s    = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = BilqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1700,7 +1700,7 @@ function BilqWorkspace(m::Integer, n::Integer, S::Type)
   t    = S(undef, 0)
   s    = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = BilqWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, d̅, t, s, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1764,7 +1764,7 @@ function QmrWorkspace(kc::KrylovConstructor{S,S}) where S
   wₖ₋₁ = similar(kc.vn)
   t    = similar(kc.vn_empty)
   s    = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = QmrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1787,7 +1787,7 @@ function QmrWorkspace(m::Integer, n::Integer, S::Type)
   t    = S(undef, 0)
   s    = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = QmrWorkspace{T,FC,S}(m, n, uₖ₋₁, uₖ, q, vₖ₋₁, vₖ, p, Δx, x, wₖ₋₂, wₖ₋₁, t, s, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1937,7 +1937,7 @@ function CglsWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   r  = similar(kc.vm)
   q  = similar(kc.vm)
   Mr = similar(kc.vm_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CglsWorkspace{T,FC,Sm,Sn}(m, n, x, p, s, r, q, Mr, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -1955,7 +1955,7 @@ function CglsWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   Mr = Sm(undef, 0)
   Sm = isconcretetype(Sm) ? Sm : typeof(r)
   Sn = isconcretetype(Sn) ? Sn : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CglsWorkspace{T,FC,Sm,Sn}(m, n, x, p, s, r, q, Mr, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2125,7 +2125,7 @@ function CrlsWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   Ap = similar(kc.vm)
   s  = similar(kc.vm)
   Ms = similar(kc.vm_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CrlsWorkspace{T,FC,Sm,Sn}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2145,7 +2145,7 @@ function CrlsWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   Ms = Sm(undef, 0)
   Sm = isconcretetype(Sm) ? Sm : typeof(r)
   Sn = isconcretetype(Sn) ? Sn : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CrlsWorkspace{T,FC,Sm,Sn}(m, n, x, p, Ar, q, r, Ap, s, Ms, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2204,7 +2204,7 @@ function CgneWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   q   = similar(kc.vm)
   s   = similar(kc.vm_empty)
   z   = similar(kc.vm_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CgneWorkspace{T,FC,Sm,Sn}(m, n, x, p, Aᴴz, r, q, s, z, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2223,7 +2223,7 @@ function CgneWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   z   = Sm(undef, 0)
   Sm = isconcretetype(Sm) ? Sm : typeof(r)
   Sn = isconcretetype(Sn) ? Sn : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CgneWorkspace{T,FC,Sm,Sn}(m, n, x, p, Aᴴz, r, q, s, z, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2282,7 +2282,7 @@ function CrmrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   q   = similar(kc.vm)
   Nq  = similar(kc.vm_empty)
   s   = similar(kc.vm_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CrmrWorkspace{T,FC,Sm,Sn}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2301,7 +2301,7 @@ function CrmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   s   = Sm(undef, 0)
   Sm = isconcretetype(Sm) ? Sm : typeof(r)
   Sn = isconcretetype(Sn) ? Sn : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CrmrWorkspace{T,FC,Sm,Sn}(m, n, x, p, Aᴴr, r, q, Nq, s, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2448,7 +2448,7 @@ function LsqrWorkspace(kc::KrylovConstructor{Sm,Sn}; window::Int = 5) where {Sm,
   u   = similar(kc.vm_empty)
   v   = similar(kc.vn_empty)
   err_vec = zeros(T, window)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = LsqrWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2469,7 +2469,7 @@ function LsqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; window::Int =
   err_vec = zeros(T, window)
   Sm = isconcretetype(Sm) ? Sm : typeof(Av)
   Sn = isconcretetype(Sn) ? Sn : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = LsqrWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, w, Mu, Av, u, v, err_vec, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2708,7 +2708,7 @@ function CraigWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   u   = similar(kc.vm_empty)
   v   = similar(kc.vn_empty)
   w2  = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CraigWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2730,7 +2730,7 @@ function CraigWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   w2  = Sn(undef, 0)
   Sm = isconcretetype(Sm) ? Sm : typeof(y)
   Sn = isconcretetype(Sn) ? Sn : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CraigWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, y, w, Mu, Av, u, v, w2, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2798,7 +2798,7 @@ function CraigmrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   u    = similar(kc.vm_empty)
   v    = similar(kc.vn_empty)
   q    = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CraigmrWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2822,7 +2822,7 @@ function CraigmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   q    = Sn(undef, 0)
   Sm = isconcretetype(Sm) ? Sm : typeof(y)
   Sn = isconcretetype(Sn) ? Sn : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = CraigmrWorkspace{T,FC,Sm,Sn}(m, n, x, Nv, Aᴴu, d, y, Mu, w, wbar, Av, u, v, q, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2889,7 +2889,7 @@ function GmresWorkspace(kc::KrylovConstructor{S,S}; memory::Int = 20) where S
   s  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = GmresWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2911,7 +2911,7 @@ function GmresWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = GmresWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, c, s, z, R, false, 0, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2974,7 +2974,7 @@ function FgmresWorkspace(kc::KrylovConstructor{S,S}; memory::Int = 20) where S
   s  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = FgmresWorkspace{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -2996,7 +2996,7 @@ function FgmresWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
   z  = Vector{FC}(undef, memory)
   R  = Vector{FC}(undef, div(memory * (memory+1), 2))
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = FgmresWorkspace{T,FC,S}(m, n, Δx, x, w, q, V, Z, c, s, z, R, false, 0, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -3056,7 +3056,7 @@ function FomWorkspace(kc::KrylovConstructor{S,S}; memory::Int = 20) where S
   l  = Vector{FC}(undef, memory)
   z  = Vector{FC}(undef, memory)
   U  = Vector{FC}(undef, div(memory * (memory+1), 2))
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = FomWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -3077,7 +3077,7 @@ function FomWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
   z  = Vector{FC}(undef, memory)
   U  = Vector{FC}(undef, div(memory * (memory+1), 2))
   S = isconcretetype(S) ? S : typeof(x)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = FomWorkspace{T,FC,S}(m, n, Δx, x, w, p, q, V, l, z, U, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -3155,7 +3155,7 @@ function GpmrWorkspace(kc::KrylovConstructor{Sm,Sn}; memory::Int = 20) where {Sm
   gc = Vector{T}(undef, 4 * memory)
   zt = Vector{FC}(undef, 2 * memory)
   R  = Vector{FC}(undef, memory * (2 * memory + 1))
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = GpmrWorkspace{T,FC,Sm,Sn}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -3184,7 +3184,7 @@ function GpmrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type; memory::Int =
   R  = Vector{FC}(undef, memory * (2 * memory + 1))
   Sm = isconcretetype(Sm) ? Sm : typeof(x)
   Sn = isconcretetype(Sn) ? Sn : typeof(y)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = GpmrWorkspace{T,FC,Sm,Sn}(m, n, wA, wB, dA, dB, Δx, Δy, x, y, q, p, V, U, gs, gc, zt, R, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -3275,7 +3275,7 @@ function UsymlqrWorkspace(kc::KrylovConstructor{Sm,Sn}) where {Sm,Sn}
   wₖ₋₁    = similar(kc.vn)
   Δx      = similar(kc.vm_empty)
   Δy      = similar(kc.vn_empty)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = UsymlqrWorkspace{T,FC,Sm,Sn}(m, n, r, x, y, z, vₖ₋₁, vₖ, uₖ₋₁, uₖ, p, q, d̅, wₖ₋₂, wₖ₋₁, Δx, Δy, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -3302,7 +3302,7 @@ function UsymlqrWorkspace(m::Integer, n::Integer, Sm::Type, Sn::Type)
   Δy      = Sn(undef, 0)
   Sm = isconcretetype(Sm) ? Sm : typeof(x)
   Sn = isconcretetype(Sn) ? Sn : typeof(y)
-  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
   workspace = UsymlqrWorkspace{T,FC,Sm,Sn}(m, n, r, x, y, z, vₖ₋₁, vₖ, uₖ₋₁, uₖ, p, q, d̅, wₖ₋₂, wₖ₋₁, Δx, Δy, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace

@@ -1,6 +1,6 @@
 @testset "stats" begin
-  stats = Krylov.SimpleStats(0, true, true, false, 0,Float64[1.0], Float64[2.0], Float64[], 0.542, 1.234, "unknown")
-  stats2 = Krylov.SimpleStats(1, true, true, false, 0,Float64[1.0], Float64[2.0], Float64[], 0.542, 1.234, "unknown")
+  stats = Krylov.SimpleStats(0, true, true, false, 0,Float64[1.0], Float64[2.0], Float64[], Float64[], 0.542, 1.234, "unknown")
+  stats2 = Krylov.SimpleStats(1, true, true, false, 0,Float64[1.0], Float64[2.0], Float64[], Float64[], 0.542, 1.234, "unknown")
   copyto!(stats2, stats)
   io = IOBuffer()
   show(io, stats)
@@ -14,6 +14,7 @@
   npcCount: 0
   residuals: [ 1.0e+00 ]
   Aresiduals: [ 2.0e+00 ]
+  qvals: []
   κ₂(A): []
   allocation timer: 542.00ms
   timer: 1.23s
