@@ -37,6 +37,8 @@ of size (n+m) × (n+m) where `τ` and `ν` are real numbers, `E` = `M⁻¹` ≻ 
 TriCG could breakdown if `τ = 0` or `ν = 0`.
 It's recommended to use TriMR in these cases.
 
+`b` and `c` must both be nonzero. If `c` is zero, use a least-squares solver ([`lslq`](@ref), [`lsqr`](@ref), [`lsmr`](@ref)); if `b` is zero, use a least-norm solver ([`lnlq`](@ref), [`craig`](@ref), [`craigmr`](@ref)).
+
 By default, TriCG solves Hermitian and quasi-definite linear systems with `τ = 1` and `ν = -1`.
 
 TriCG is based on the preconditioned orthogonal tridiagonalization process
@@ -62,8 +64,8 @@ For an in-place variant that reuses memory across solves, see [`tricg!`](@ref).
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
-* `b`: a vector of length `m`;
-* `c`: a vector of length `n`.
+* `b`: a vector of length `m`, which must be nonzero;
+* `c`: a vector of length `n`, which must be nonzero.
 
 #### Optional arguments
 
