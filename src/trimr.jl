@@ -36,7 +36,7 @@ Given a matrix `A` of dimension m × n, TriMR solves the symmetric linear system
 of size (n+m) × (n+m) where `τ` and `ν` are real numbers, `E` = `M⁻¹` ≻ 0, `F` = `N⁻¹` ≻ 0.
 TriMR handles saddle-point systems (`τ = 0` or `ν = 0`) and adjoint systems (`τ = 0` and `ν = 0`) without any risk of breakdown.
 
-`b` and `c` must both be nonzero. If `c` is zero, use a least-squares solver ([`lslq`](@ref), [`lsqr`](@ref), [`lsmr`](@ref)); if `b` is zero, use a least-norm solver ([`lnlq`](@ref), [`craig`](@ref), [`craigmr`](@ref)).
+With `τ = 0` or `ν = 0`, `b` and `c` must both be nonzero. A zero right-hand side breaks the orthogonal tridiagonalization down and the iterates are `NaN`. For those systems, use a least-squares solver ([`lslq`](@ref), [`lsqr`](@ref), [`lsmr`](@ref)) if `c` is zero, and a least-norm solver ([`lnlq`](@ref), [`craig`](@ref), [`craigmr`](@ref)) if `b` is zero.
 
 By default, TriMR solves symmetric and quasi-definite linear systems with `τ` = 1 and `ν` = -1.
 
@@ -63,8 +63,8 @@ For an in-place variant that reuses memory across solves, see [`trimr!`](@ref).
 #### Input arguments
 
 * `A`: a linear operator that models a matrix of dimension `m × n`;
-* `b`: a vector of length `m`, which must be nonzero;
-* `c`: a vector of length `n`, which must be nonzero.
+* `b`: a vector of length `m`, nonzero if `τ = 0` or `ν = 0`;
+* `c`: a vector of length `n`, nonzero if `τ = 0` or `ν = 0`.
 
 #### Optional arguments
 
