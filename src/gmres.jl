@@ -192,7 +192,7 @@ kwargs_workspace_gmres = (:memory,)
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %5d  %7.1e  %7s  %.2fs\n", npass, iter, rNorm, "✗ ✗ ✗ ✗", start_time |> ktimer)
 
     # Tolerance for breakdown detection.
-    btol = eps(T)^(3/4)
+    btol = eps(T)^(3//4)
 
     # Stopping criterion
     breakdown = false
