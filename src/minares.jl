@@ -214,7 +214,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %8s  %.2fs\n", iter, rNorm, ArNorm, β₁, " ✗ ✗ ✗ ✗", start_time |> ktimer)
 
     # Tolerance for breakdown detection.
-    btol = eps(T)^(3/4)
+    btol = eps(T)^(3//4)
 
     # Stopping criterion.
     solved = (rNorm ≤ ε) || (ArNorm ≤ κ)
