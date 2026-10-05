@@ -1,7 +1,7 @@
 # Rank-revealing complete orthogonal decomposition by stable Hermitian Givens
 # reflections (SymOrtho, due to Sou-Cheng T. Choi and Michael A. Saunders).
 # This is a full projected factorization, not an incremental short recurrence;
-# see recurrence.jl for the incremental CS-MinAres solver.
+# see csminares.jl for the incremental CS-MinAres solver.
 
 # Hermitian reflection [c s; conj(s) -c] * [a; b] = [r; 0], c real.
 function cs_symortho(a::T, b::T) where {T<:Number}

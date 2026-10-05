@@ -1,3 +1,14 @@
+# CS-MinAres: normal-residual minimization for complex symmetric linear
+# systems (transpose(A) == A), using the conjugate Saunders process.
+#
+# This method is described in
+#
+# S.-C. T. Choi and A. Montoison
+# CS-MinAres: Normal-Residual Minimization for Complex Symmetric Linear Systems
+# Manuscript in preparation.
+#
+# Sou-Cheng T. Choi
+# Alexis Montoison, <alexis.montoison@polymtl.ca>
 module SpecialSymmetric
 
 using LinearAlgebra
@@ -210,6 +221,6 @@ function minimum_norm_refinement(A, b, x; rtol=1e-8, atol=0)
 end
 
 include("givens.jl")
-include("recurrence.jl")
+include("csminares.jl")
 
 end
