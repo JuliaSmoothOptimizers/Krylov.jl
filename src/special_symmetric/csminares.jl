@@ -1,4 +1,13 @@
 # Short-recurrence CS-MinAres: an incremental counterpart of `projected_solve`.
+#
+# This method is described in
+#
+# S.-C. T. Choi and A. Montoison
+# CS-MinAres: Normal-Residual Minimization for Complex Symmetric Linear Systems
+# Manuscript in preparation.
+#
+# Sou-Cheng T. Choi
+# Alexis Montoison, <alexis.montoison@polymtl.ca>
 
 # Apply the Hermitian reflection [c s; conj(s) -c] to the pair (x, y).
 reflect(c, s, x, y) = (c*x + s*y, conj(s)*x - c*y)
