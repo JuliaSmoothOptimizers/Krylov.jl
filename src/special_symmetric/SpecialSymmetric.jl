@@ -14,7 +14,7 @@ module SpecialSymmetric
 using LinearAlgebra
 import ..Krylov
 
-export csminares, csminares_range, csminares_short, recurrence_solve,
+export csminares_oracle, csminares_range, csminares_short, recurrence_solve,
        projected_solve, minimum_norm_refinement
 
 realtype(::Type{T}) where {T} = typeof(real(zero(T)))
@@ -185,15 +185,78 @@ function projected_solve(A, b::AbstractVector; start=:rhs, completion=:invariant
         basis_products=ncolumns, diagnostic_products, orthogonality, factorization)
 end
 
-"CS-MinAres: minimizes norm(A'*(b-A*x)) for complex symmetric A (transpose(A) == A)."
-csminares(A, b; kwargs...) = projected_solve(A, b; kwargs...)
 """
-    csminares_range(A, b; completion=:stationary, kwargs...)
+    (x, stats) = csminares_oracle(A, b; start=:rhs, completion=:invariant,
+                           maxiter=length(b), atol=0, rtol=√eps,
+                           ranktol=n*eps, breakdown_tol=100eps,
+                           factorization=:givens, check=true)
 
-CS-MinAres with v₁ = conjugate(A'*b)/norm(A'*b). Every trial vector is
-in range(A'), so an exactly stationary iterate is already the pseudoinverse
-solution. This range-start variant uses a different Saunders subspace from
-`csminares`; its reduced right-hand side is norm(A'*b)*e1.
+CS-MinAres solves the complex symmetric linear system Ax = b of size n,
+where A satisfies `transpose(A) == A` (A may be singular and the system
+may be inconsistent). It minimizes the normal residual
+`‖A'*(b - A*x)‖₂ = ‖A*conj(b - A*x)‖₂` (since `A' = conj(A)` when
+`transpose(A) == A`) over the conjugate Saunders trial space generated
+from `b` — the normal-residual counterpart of MINARES for complex
+symmetric matrices.
+
+This is the full-basis reference implementation: it keeps the entire
+generated basis and re-solves a growing rank-revealing projected
+least-squares problem at every step. For a fixed-storage, incremental
+short recurrence over the same trial space, see `csminares_short`; the
+two are cross-validated against each other in the test suite.
+
+#### Input arguments
+
+* `A`: a linear operator that models a complex symmetric (possibly
+  singular) matrix of dimension `n`, satisfying `transpose(A) == A`;
+* `b`: a vector of length `n`.
+
+#### Keyword arguments
+
+* `start`: `:rhs` (default) generates the trial space from `b`; `:normal`
+  generates it from `conj(A'*b)` instead — see `csminares_range`;
+* `completion`: `:invariant` (default) continues to subspace closure, so
+  the final answer is the Moore-Penrose solution `A⁺b` in exact
+  arithmetic; `:stationary` allows earlier stopping once the residual or
+  normal-residual tolerance is met, and need not return `A⁺b`;
+* `maxiter`: the maximum number of iterations (default `n`);
+* `atol`, `rtol`: absolute and relative stopping tolerances on the
+  residual and normal-residual norms;
+* `ranktol`: relative rank threshold used by the projected solve;
+* `breakdown_tol`: relative breakdown tolerance for the Saunders process;
+* `factorization`: `:givens` (default) uses a rank-revealing complete
+  orthogonal decomposition, with no SVD; `:svd` is an independent oracle;
+* `check`: when `false`, skip the elementwise finiteness/symmetry checks
+  on `A`, for matrix-free operators; the caller must then guarantee the
+  complex-symmetric structure and finite outputs.
+
+#### Output arguments
+
+* `x`: a dense vector of length `n`;
+* `stats`: a `NamedTuple` with fields `niter`, `solved`, `status`,
+  `closed`, `residuals`, `aresiduals`, `projected_aresiduals`,
+  `iterates`, `basis_products`, `diagnostic_products`, `orthogonality`,
+  and `factorization`.
+
+#### Reference
+
+* S.-C. T. Choi and A. Montoison, *CS-MinAres: Normal-Residual
+  Minimization for Complex Symmetric Linear Systems*, manuscript in
+  preparation.
+"""
+csminares_oracle(A, b; kwargs...) = projected_solve(A, b; kwargs...)
+
+"""
+    (x, stats) = csminares_range(A, b; completion=:stationary, kwargs...)
+
+CS-MinAres started from `v₁ = conj(A'*b)/norm(A'*b)` instead of from `b`.
+Every trial vector then lies in `range(A')`, so an exactly stationary
+iterate is already the Moore-Penrose solution — unlike plain `csminares_oracle`,
+which can need `minimum_norm_refinement` to remove a nullspace component
+from an early stationary point. This range-start variant uses a
+different Saunders subspace from `csminares_oracle`; its reduced right-hand
+side is `norm(A'*b)*e1`. `kwargs` are the remaining keyword arguments of
+`csminares_oracle`.
 """
 csminares_range(A, b; completion=:stationary, kwargs...) =
     projected_solve(A, b; start=:normal, completion, kwargs...)

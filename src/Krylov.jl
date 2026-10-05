@@ -29,6 +29,7 @@ include("cg_lanczos.jl")
 include("minres.jl")
 include("minres_qlp.jl")
 include("minares.jl")
+include("csminares.jl")
 
 include("diom.jl")
 include("fom.jl")

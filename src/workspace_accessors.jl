@@ -109,6 +109,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:LsqrWorkspace     , :lsqr!      , 1, 1, 1, false)
   (:MinresWorkspace   , :minres!    , 1, 1, 0, true )
   (:MinaresWorkspace  , :minares!   , 1, 1, 0, true )
+  (:CsMinaresWorkspace, :csminares! , 1, 1, 0, true )
   (:CgneWorkspace     , :cgne!      , 1, 1, 1, false)
   (:DqgmresWorkspace  , :dqgmres!   , 1, 1, 0, true )
   (:SymmlqWorkspace   , :symmlq!    , 1, 1, 0, true )
