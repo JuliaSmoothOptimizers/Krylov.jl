@@ -3,7 +3,8 @@ CgLanczosShiftWorkspace, MinresQlpWorkspace, DqgmresWorkspace, DiomWorkspace, Us
 UsymqrWorkspace, TricgWorkspace, TrimrWorkspace, TrilqrWorkspace, CgsWorkspace, BicgstabWorkspace,
 BilqWorkspace, QmrWorkspace, BilqrWorkspace, CglsWorkspace, CglsLanczosShiftWorkspace, CrlsWorkspace, CgneWorkspace,
 CrmrWorkspace, LslqWorkspace, LsqrWorkspace, LsmrWorkspace, LnlqWorkspace, CraigWorkspace, CraigmrWorkspace,
-GmresWorkspace, FomWorkspace, GpmrWorkspace, UsymlqrWorkspace, FgmresWorkspace, CarWorkspace, MinaresWorkspace
+GmresWorkspace, FomWorkspace, GpmrWorkspace, UsymlqrWorkspace, FgmresWorkspace, CarWorkspace, MinaresWorkspace,
+CsMinaresWorkspace
 
 export KrylovConstructor
 
@@ -216,6 +217,102 @@ function MinaresWorkspace(A, b)
   m, n = size(A)
   S = ktypeof(b)
   MinaresWorkspace(m, n, S)
+end
+
+"""
+Workspace for the in-place methods [`csminares!`](@ref) and [`krylov_solve!`](@ref).
+
+The following outer constructors can be used to initialize this workspace:
+
+    workspace = CsMinaresWorkspace(m, n, S)
+    workspace = CsMinaresWorkspace(A, b)
+    workspace = CsMinaresWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`csminares`](@ref) only supports square linear operators, `m` and `n` must be equal.
+`S` is the storage type of the vectors in the workspace, such as `Vector{ComplexF64}`.
+CS-MinAres is for complex symmetric systems (`transpose(A) == A`), so `eltype(S)` must be a complex type.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
+"""
+mutable struct CsMinaresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
+  m          :: Int
+  n          :: Int
+  Δx         :: S
+  x          :: S
+  v1         :: S
+  v2         :: S
+  v3         :: S
+  v̄          :: S
+  q          :: S
+  u          :: S
+  Au         :: S
+  w1         :: S
+  w2         :: S
+  w3         :: S
+  w4         :: S
+  col        :: Vector{FC}
+  αbuf       :: Vector{FC}
+  βbuf       :: Vector{T}
+  c1buf      :: Vector{T}
+  s1buf      :: Vector{FC}
+  c2buf      :: Vector{T}
+  s2buf      :: Vector{FC}
+  warm_start :: Bool
+  stats      :: SimpleStats{T}
+end
+
+function CsMinaresWorkspace(kc::KrylovConstructor{S,S}) where S
+  start_allocation_time = time_ns()
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  Δx = similar(kc.vn_empty)
+  x  = similar(kc.vn)
+  v1 = similar(kc.vn); v2 = similar(kc.vn); v3 = similar(kc.vn)
+  v̄  = similar(kc.vn)
+  q  = similar(kc.vn)
+  u  = similar(kc.vn); Au = similar(kc.vn)
+  w1 = similar(kc.vn); w2 = similar(kc.vn); w3 = similar(kc.vn); w4 = similar(kc.vn)
+  col   = zeros(FC, 7)
+  αbuf  = zeros(FC, 4); βbuf  = zeros(T, 4)
+  c1buf = zeros(T, 4);  s1buf = zeros(FC, 4)
+  c2buf = zeros(T, 4);  s2buf = zeros(FC, 4)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
+  workspace = CsMinaresWorkspace{T,FC,S}(m, n, Δx, x, v1, v2, v3, v̄, q, u, Au, w1, w2, w3, w4,
+                                          col, αbuf, βbuf, c1buf, s1buf, c2buf, s2buf, false, stats)
+  workspace.stats.allocation_timer = start_allocation_time |> ktimer
+  return workspace
+end
+
+function CsMinaresWorkspace(m::Integer, n::Integer, S::Type)
+  start_allocation_time = time_ns()
+  FC = eltype(S)
+  T  = real(FC)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  v1 = S(undef, n); v2 = S(undef, n); v3 = S(undef, n)
+  v̄  = S(undef, n)
+  q  = S(undef, n)
+  u  = S(undef, n); Au = S(undef, n)
+  w1 = S(undef, n); w2 = S(undef, n); w3 = S(undef, n); w4 = S(undef, n)
+  col   = zeros(FC, 7)
+  αbuf  = zeros(FC, 4); βbuf  = zeros(T, 4)
+  c1buf = zeros(T, 4);  s1buf = zeros(FC, 4)
+  c2buf = zeros(T, 4);  s2buf = zeros(FC, 4)
+  S = isconcretetype(S) ? S : typeof(x)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
+  workspace = CsMinaresWorkspace{T,FC,S}(m, n, Δx, x, v1, v2, v3, v̄, q, u, Au, w1, w2, w3, w4,
+                                          col, αbuf, βbuf, c1buf, s1buf, c2buf, s2buf, false, stats)
+  workspace.stats.allocation_timer = start_allocation_time |> ktimer
+  return workspace
+end
+
+function CsMinaresWorkspace(A, b)
+  m, n = size(A)
+  S = ktypeof(b)
+  CsMinaresWorkspace(m, n, S)
 end
 
 """

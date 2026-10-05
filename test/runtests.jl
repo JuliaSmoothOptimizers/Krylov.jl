@@ -14,6 +14,7 @@ include("test_processes.jl")
 
 include("test_usymlqr.jl")
 include("test_minares.jl")
+include("test_csminares.jl")
 include("test_car.jl")
 include("test_fgmres.jl")
 include("test_gpmr.jl")

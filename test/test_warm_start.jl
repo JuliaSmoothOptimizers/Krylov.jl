@@ -333,6 +333,33 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
   end
 
+  # CS-MINARES (complex symmetric systems only)
+  if FC <: Complex
+    @testset "csminares" begin
+      Acs = FC[2+im 1-im 3im; 1-im -1+2im 2; 3im 2 1-im]
+      bcs = Acs * ones(FC, 3)
+      xcs0 = 1.2 * ones(FC, 3)
+      x, stats = csminares(Acs, bcs, xcs0)
+      r = bcs - Acs * x
+      resid = norm(r) / norm(bcs)
+      @test(resid ≤ tol)
+
+      workspace = CsMinaresWorkspace(Acs, bcs)
+      krylov_solve!(workspace, Acs, bcs, xcs0)
+      r = bcs - Acs * workspace.x
+      resid = norm(r) / norm(bcs)
+      @test(resid ≤ tol)
+
+      Jcs = 5 * Matrix{FC}(I, 3, 3)
+      dcs = -10 * ones(FC, 3)
+      zcs0 = -2 * ones(FC, 3)
+      krylov_solve!(workspace, Jcs, dcs, zcs0)
+      r = dcs - Jcs * workspace.x
+      resid = norm(r) / norm(dcs)
+      @test(resid ≤ tol)
+    end
+  end
+
   # DIOM
   @testset "diom" begin
     x, stats = diom(A, b, x0)

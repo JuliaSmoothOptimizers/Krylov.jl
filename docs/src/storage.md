@@ -59,6 +59,12 @@ Each table summarizes the storage requirements of Krylov methods recommended to 
 |:-------:|:-----------------------:|:-----------------------:|:-------------------------------:|:-------------------------:|
 | Storage | $5n$                    | $6n$                    | $6n$                            | $8n$                      |
 
+#### Complex symmetric linear systems
+
+| Methods | [`CS-MINARES`](@ref csminares) |
+|:-------:|:-------------------------------:|
+| Storage | $12n$                            |
+
 #### Non-Hermitian square linear systems
 
 | Methods | [`CGS`](@ref cgs) | [`BICGSTAB`](@ref bicgstab) | [`BiLQ`](@ref bilq) | [`QMR`](@ref qmr) |

@@ -42,6 +42,12 @@ Some methods only require `A * v` products, whereas other ones also require `A' 
 | DIOM, FOM, DQGMRES, GMRES, FGMRES, BLOCK-GMRES  | BiLQ, QMR, BiLQR, USYMLQ, USYMQR, TriLQR |
 | CGS, BICGSTAB                                   | TriCG, TriMR, USYMLQR                    |
 | CG-LANCZOS-SHIFT                                | CGLS-LANCZOS-SHIFT                       |
+| CS-MINARES                                      |                                           |
+
+!!! info
+    CS-MINARES only requires `A * v` products: since it is for complex
+    symmetric `A`, `A' * u` is computed as `conj(A * conj(u))`, with no
+    separate adjoint operator needed.
 
 !!! info
     GPMR is the only method that requires `A * v` and `B * w` products.

@@ -184,6 +184,27 @@
         @test inplace_minares_bytes == 0
       end
 
+      if FC <: Complex
+        @testset "CS-MINARES" begin
+          # CS-MINARES needs:
+          # 12 n-vectors: x, v1, v2, v3, v̄, q, u, Au, w1, w2, w3, w4
+          storage_csminares_bytes(n) = nbits_FC * 12 * n
+          Acs = A  # get_div_grad is real symmetric, hence trivially complex symmetric too
+
+          expected_csminares_bytes = storage_csminares_bytes(n)
+          csminares(Acs, b)  # warmup
+          actual_csminares_bytes = @allocated csminares(Acs, b)
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_csminares_bytes ≤ actual_csminares_bytes ≤ 1.02 * expected_csminares_bytes
+          end
+
+          workspace = CsMinaresWorkspace(Acs, b)
+          csminares!(workspace, Acs, b)  # warmup
+          inplace_csminares_bytes = @allocated csminares!(workspace, Acs, b)
+          @test inplace_csminares_bytes == 0
+        end
+      end
+
       @testset "DIOM" begin
         # DIOM needs:
         # - 2 n-vectors: x, t

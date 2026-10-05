@@ -43,6 +43,7 @@ makedocs(
                            "SYMMLQ" => "examples/symmlq.md",
                            "MINRES-QLP" => "examples/minres_qlp.md",
                            "MINARES" => "examples/minares.md",
+                           "CS-MINARES" => "examples/csminares.md",
                            "TriCG" => "examples/tricg.md",
                            "TriMR" => "examples/trimr.md",
                            "USYMLQR" => "examples/usymlqr.md",

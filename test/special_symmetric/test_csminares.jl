@@ -37,19 +37,19 @@ end
     b = ComplexF64[1, im]
     @test norm(A*b) == 0
     @test norm(A'*b) > 0
-    x, s = csminares(A, b)
+    x, s = csminares_oracle(A, b)
     @test x ≈ pinv(A)*b
     @test norm(b-A*x) < 1e-13
     @test s.niter == 1
     A = Diagonal([1., 0.])
     b = [1., 1.]
-    early, s = csminares(A, b; completion=:stationary)
+    early, s = csminares_oracle(A, b; completion=:stationary)
     @test norm(A'*(b-A*early)) < 1e-12
     @test norm(early - pinv(A)*b) > 0.5
     lifted, applied = minimum_norm_refinement(A, b, early)
     @test applied
     @test lifted ≈ pinv(A)*b atol=1e-12
-    full, s = csminares(A, b)
+    full, s = csminares_oracle(A, b)
     @test full ≈ pinv(A)*b atol=1e-12
     @test s.niter == 2
     @test_throws ArgumentError minimum_norm_refinement(A, b, zeros(2))
@@ -58,7 +58,7 @@ end
 @testset "Edges, scales, sparse matrices and validation" begin
     for A in (zeros(3, 3), zeros(ComplexF64, 3, 3))
         for b in (zeros(3), ones(3))
-            x, s = csminares(A, b)
+            x, s = csminares_oracle(A, b)
             @test x == zeros(3)
             @test s.solved && s.niter == 0
         end
@@ -66,29 +66,29 @@ end
     for scale in (1e-50, 1.0, 1e50)
         A = scale .* ComplexF64[2+im 1; 1 3-im]
         b = A * ComplexF64[1, -2im]
-        x, s = csminares(A, b; rtol=1e-11)
+        x, s = csminares_oracle(A, b; rtol=1e-11)
         @test s.solved
         @test x ≈ [1, -2im] rtol=1e-10
     end
     A = ComplexF32[2+im 1; 1 3-im]
-    x, s = csminares(A, A * ComplexF32[1, -2im])
+    x, s = csminares_oracle(A, A * ComplexF32[1, -2im])
     @test eltype(x) == ComplexF32
     @test x ≈ [1, -2im] rtol=1e-4
     A = im * spdiagm(-1=>fill(-1., 7), 0=>fill(3., 8), 1=>fill(-1., 7))
-    x, s = csminares(A, A * ones(8))
+    x, s = csminares_oracle(A, A * ones(8))
     @test x ≈ ones(8) atol=1e-10
-    x, s = csminares(reshape([2im], 1, 1), ComplexF64[3+im])
+    x, s = csminares_oracle(reshape([2im], 1, 1), ComplexF64[3+im])
     @test x ≈ [(3+im)/(2im)]
-    @test_throws DimensionMismatch csminares(ones(2, 3), ones(2))
-    @test_throws DimensionMismatch csminares(ones(2, 2), ones(3))
-    @test_throws ArgumentError csminares([1. 2; 0 1], ones(2))
-    @test_throws ArgumentError csminares(zeros(2, 2), [NaN, 1])
-    @test_throws ArgumentError csminares([Inf 0.; 0 1], ones(2))
-    @test_throws ArgumentError csminares(ones(2, 2), ones(2); rtol=-1)
-    @test_throws ArgumentError csminares(ones(2, 2), ones(2); maxiter=0)
-    @test_throws ArgumentError csminares(zeros(0, 0), zeros(0))
+    @test_throws DimensionMismatch csminares_oracle(ones(2, 3), ones(2))
+    @test_throws DimensionMismatch csminares_oracle(ones(2, 2), ones(3))
+    @test_throws ArgumentError csminares_oracle([1. 2; 0 1], ones(2))
+    @test_throws ArgumentError csminares_oracle(zeros(2, 2), [NaN, 1])
+    @test_throws ArgumentError csminares_oracle([Inf 0.; 0 1], ones(2))
+    @test_throws ArgumentError csminares_oracle(ones(2, 2), ones(2); rtol=-1)
+    @test_throws ArgumentError csminares_oracle(ones(2, 2), ones(2); maxiter=0)
+    @test_throws ArgumentError csminares_oracle(zeros(0, 0), zeros(0))
     A = cs_matrix(8)
-    _, s = csminares(A, ones(8); maxiter=1, rtol=0, atol=0)
+    _, s = csminares_oracle(A, ones(8); maxiter=1, rtol=0, atol=0)
     @test s.status == :iteration_limit
     @test s.niter == 1 && !s.closed
 end
@@ -108,7 +108,7 @@ end
         # At even k, the original Saunders trial space contains the LSMR
         # normal-equation Krylov space with half as many basis vectors.
         for j in 1:3
-            xcs, _ = csminares(A, b; maxiter=2j)
+            xcs, _ = csminares_oracle(A, b; maxiter=2j)
             G = reshape(A'*b, :, 1)
             for k in 2:j
                 G = hcat(G, A'*(A*G[:, end]))
@@ -132,7 +132,7 @@ end
     A = ComplexF64[2+im 1; 1 3-im]
     b = ComplexF64[1, 2im]
     op = ProductOnly(A)
-    for method in (csminares, csminares_range)
+    for method in (csminares_oracle, csminares_range)
         x, stats = method(op, b; check=false)
         @test stats.solved
         @test x ≈ A \ b rtol=1e-9
