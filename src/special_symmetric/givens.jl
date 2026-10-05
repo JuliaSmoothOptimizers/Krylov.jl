@@ -41,13 +41,11 @@ function reflect_rows!(R, k, i, firstcol, c, s)
     return R
 end
 
-"""
-Minimum-norm projected least-squares solve by column-pivoted Givens QR and
-a right orthogonal reduction (QLP/complete orthogonal decomposition).
-No SVD, normal matrix, or inverse is formed. Rank is selected by trailing
-column norms relative to the largest initial column norm; it need not agree
-with an SVD singular-value cutoff close to the numerical rank threshold.
-"""
+# Minimum-norm projected least-squares solve by column-pivoted Givens QR and
+# a right orthogonal reduction (QLP/complete orthogonal decomposition).
+# No SVD, normal matrix, or inverse is formed. Rank is selected by trailing
+# column norms relative to the largest initial column norm; it need not agree
+# with an SVD singular-value cutoff close to the numerical rank threshold.
 function givens_minnorm_ls(B::AbstractMatrix, f::AbstractVector, ranktol)
     m, n = size(B)
     length(f) == m || throw(DimensionMismatch("projected right-hand side"))
