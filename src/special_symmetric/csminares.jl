@@ -12,28 +12,26 @@
 # Apply the Hermitian reflection [c s; conj(s) -c] to the pair (x, y).
 reflect(c, s, x, y) = (c*x + s*y, conj(s)*x - c*y)
 
-"""
-    recurrence_solve(A, b; start=:rhs, completion=:invariant, maxiter=4length(b),
-                     atol=0, rtol=√eps, ranktol=n*eps, breakdown_tol=100eps,
-                     reorthogonalize=false, history=false, check=true)
-
-Short-recurrence CS-MinAres on the trial spaces of `projected_solve`: minimizes
-norm(A'*(b-A*x)) by an incremental Givens QR of the nested banded projected
-matrices B_k. R_k has upper bandwidth 4, so each solution direction uses the four
-previous ones, and storage is a fixed number of length-n vectors. In exact
-arithmetic B_k has full column rank before closure. When a pivot is below
-`sqrt(eps)*norm(B)`, one extra product (`null_products`) tests whether the
-would-be direction u satisfies `norm(A*u) <= sqrt(ranktol)*norm(A)*norm(u)`; such a
-nullspace direction is projected out of x to select minimum norm, and the
-iteration ends (`:rank_truncated` before detected closure). Without
-reorthogonalization it also stops (`:roundoff`) after two consecutive steps
-with the estimated normal residual below
-`ranktol*(norm(B)*norm(x) + norm(A'*b))`, since closure may then go undetected.
-`reorthogonalize=true` stores the basis for validation against
-`projected_solve`. `history=true` adds two products per iteration for
-explicit residuals and iterates; otherwise stopping uses the recurrence
-estimate `projected_aresiduals`.
-"""
+# recurrence_solve(A, b; start=:rhs, completion=:invariant, maxiter=4length(b),
+#                  atol=0, rtol=√eps, ranktol=n*eps, breakdown_tol=100eps,
+#                  reorthogonalize=false, history=false, check=true)
+#
+# Short-recurrence CS-MinAres on the trial spaces of projected_solve: minimizes
+# norm(A'*(b-A*x)) by an incremental Givens QR of the nested banded projected
+# matrices B_k. R_k has upper bandwidth 4, so each solution direction uses the four
+# previous ones, and storage is a fixed number of length-n vectors. In exact
+# arithmetic B_k has full column rank before closure. When a pivot is below
+# sqrt(eps)*norm(B), one extra product (null_products) tests whether the
+# would-be direction u satisfies norm(A*u) <= sqrt(ranktol)*norm(A)*norm(u); such a
+# nullspace direction is projected out of x to select minimum norm, and the
+# iteration ends (:rank_truncated before detected closure). Without
+# reorthogonalization it also stops (:roundoff) after two consecutive steps
+# with the estimated normal residual below
+# ranktol*(norm(B)*norm(x) + norm(A'*b)), since closure may then go undetected.
+# reorthogonalize=true stores the basis for validation against
+# projected_solve. history=true adds two products per iteration for
+# explicit residuals and iterates; otherwise stopping uses the recurrence
+# estimate projected_aresiduals.
 function recurrence_solve(A, b::AbstractVector; start=:rhs, completion=:invariant,
                           maxiter=4length(b), atol=0, rtol=nothing, ranktol=nothing,
                           breakdown_tol=nothing, reorthogonalize=false, history=false,
@@ -221,5 +219,5 @@ function recurrence_solve(A, b::AbstractVector; start=:rhs, completion=:invarian
         reorthogonalized=reorthogonalize, factorization=:short)
 end
 
-"Short-recurrence CS-MinAres; see `recurrence_solve`."
+# Short-recurrence CS-MinAres; see recurrence_solve.
 csminares_short(A, b; kwargs...) = recurrence_solve(A, b; kwargs...)
