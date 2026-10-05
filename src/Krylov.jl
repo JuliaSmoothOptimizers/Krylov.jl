@@ -70,4 +70,6 @@ include("cg_lanczos_shift.jl")
 include("cgls_lanczos_shift.jl")
 
 include("interface.jl")
+
+include("special_symmetric/SpecialSymmetric.jl")
 end
