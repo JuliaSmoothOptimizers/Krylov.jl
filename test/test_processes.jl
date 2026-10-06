@@ -151,6 +151,33 @@ end
         end
       end
 
+      @testset "Bunse-Gerstner-Stöver" begin
+        A = rand(FC, n, n)
+        A = A + transpose(A)
+        b = rand(FC, n)
+        V, β₁, T = bunse_gerstner_stover(A, b, k)
+
+        @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
+        @test β₁ * V[:,1] ≈ b
+        @test T[1:k,1:k] ≈ transpose(T[1:k,1:k])
+        @test A * conj(V[:,1:k]) ≈ V * T
+
+        # Equivalent to the Saunders-Simon-Yip process with c = b̄ in exact arithmetic.
+        V2, β₂, T2, U2, γ₂ᴴ, Tᴴ2 = saunders_simon_yip(A, b, conj(b), k)
+        @test V[:,1:s] ≈ V2[:,1:s]
+        @test conj(V[:,1:s]) ≈ U2[:,1:s]
+        @test β₁ ≈ β₂ ≈ γ₂ᴴ
+        @test T[1:s+1,1:s] ≈ T2[1:s+1,1:s]
+
+        storage_bunse_gerstner_stover_bytes(n, k) = 4k * nbits_I + (3k-1) * nbits_FC + n*(k+1) * nbits_FC
+
+        expected_bunse_gerstner_stover_bytes = storage_bunse_gerstner_stover_bytes(n, k)
+        actual_bunse_gerstner_stover_bytes = @allocated bunse_gerstner_stover(A, b, k)
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_bunse_gerstner_stover_bytes ≤ actual_bunse_gerstner_stover_bytes ≤ 1.02 * expected_bunse_gerstner_stover_bytes
+        end
+      end
+
       @testset "Montoison-Orban" begin
         A = rand(FC, m, n)
         B = rand(FC, n, m)
@@ -225,6 +252,13 @@ end
     @test_throws ErrorException("Exact breakdown βᵢ₊₁ == 0 at iteration i = 1.") saunders_simon_yip(A1, b1, c1, 1)
     @test_throws ErrorException("Exact breakdown βᵢ₊₁ == 0 at iteration i = 2.") saunders_simon_yip(A2, b2, c2, 2)
     @test_throws ErrorException("Exact breakdown γᵢ₊₁ == 0 at iteration i = 2.") saunders_simon_yip(A3, b3, c3, 2)
+  end
+
+  @testset "Bunse-Gerstner-Stöver" begin
+    @test_throws ErrorException("Exact breakdown β₁ == 0.") bunse_gerstner_stover(A0, b0, 2)
+    bunse_gerstner_stover(A0, b0, 2, allow_breakdown=true)
+    @test_throws ErrorException("Exact breakdown βᵢ₊₁ == 0 at iteration i = 1.") bunse_gerstner_stover(A0, Float64[1; 0], 1)
+    @test_throws ErrorException("Exact breakdown βᵢ₊₁ == 0 at iteration i = 2.") bunse_gerstner_stover(ComplexF64[0 1; 1 0], ComplexF64[1; 0], 2)
   end
 
   @testset "Montoison-Orban" begin
