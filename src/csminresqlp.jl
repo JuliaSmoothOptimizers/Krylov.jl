@@ -21,7 +21,7 @@ export csminresqlp, csminresqlp!
 
 """
     (x, stats) = csminresqlp(A, b::AbstractVector{FC};
-                             λ::T=zero(T), atol::T=√eps(T),
+                             λ::FC=zero(FC), atol::T=√eps(T),
                              rtol::T=√eps(T), itmax::Int=0,
                              reorthogonalize::Bool=false,
                              timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
@@ -115,7 +115,7 @@ def_args_csminresqlp = (:(A                    ),
 
 def_optargs_csminresqlp = (:(x0::AbstractVector),)
 
-def_kwargs_csminresqlp = (:(; λ::T = zero(T)               ),
+def_kwargs_csminresqlp = (:(; λ::FC = zero(FC)              ),
                           :(; atol::T = √eps(T)            ),
                           :(; rtol::T = √eps(T)            ),
                           :(; itmax::Int = 0               ),

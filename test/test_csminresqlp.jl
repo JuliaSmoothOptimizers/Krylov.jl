@@ -49,9 +49,20 @@ end
       # Shifted system: (A + λI)x = b, λ real.
       A = FC.(cs_matrix_qlp(rng, 8))
       b = randn(rng, FC, 8)
-      λ = T(0.3)
+      λ = FC(0.3)
       (x, stats) = csminresqlp(A, b; λ=λ, rtol=T(1e-6))
       r = b - (A + λ*I) * x
+      resid = norm(r) / norm(b)
+      @test(resid ≤ tol * norm(A) * norm(x))
+      @test(stats.solved)
+
+      # Shifted system with a genuinely complex λ: (A + λI) stays complex
+      # symmetric for any complex λ, not just real λ.
+      A = FC.(cs_matrix_qlp(rng, 8))
+      b = randn(rng, FC, 8)
+      λc = FC(0.3 + 0.1im)
+      (x, stats) = csminresqlp(A, b; λ=λc, rtol=T(1e-6))
+      r = b - (A + λc*I) * x
       resid = norm(r) / norm(b)
       @test(resid ≤ tol * norm(A) * norm(x))
       @test(stats.solved)

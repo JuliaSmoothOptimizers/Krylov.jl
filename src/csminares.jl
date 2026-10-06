@@ -40,7 +40,7 @@ CS-MinAres uses two incremental Givens QR factorizations of the nested,
 banded projected normal-residual matrices. Each triangular factor has upper
 bandwidth 2, so each staged solution direction depends on two previous ones,
 and storage is a fixed number of length-n vectors (no growing basis, unlike
-the full-basis research reference `Krylov.SpecialSymmetric.csminares`).
+the full-basis research reference `Krylov.SpecialSymmetric.csminares_oracle`).
 
 An exactly stationary iterate found before the trial space closes need not
 be the Moore-Penrose solution: for an inconsistent system, CS-MinAres stops
