@@ -139,6 +139,40 @@ end
     end
 end
 
+@testset "Staged bandwidth-two factorization" begin
+    k = 6
+    alphas = ComplexF64[2 + 0.2im, -1 + 0.4im, 3 - 0.7im, 0.5 + 0.3im,
+                        -2 - 0.1im, 1.5 + 0.8im, 0.7 - 0.6im]
+    betas = Float64[0, 0.8, 1.1, 0.6, 1.3, 0.9, 0.7, 1.2]
+    function projected_tridiagonal(ncols)
+        C = zeros(ComplexF64, ncols + 1, ncols)
+        for j in 1:ncols
+            C[j, j] = alphas[j]
+            C[j + 1, j] = betas[j + 1]
+            j < ncols && (C[j, j + 1] = betas[j + 1])
+        end
+        return C
+    end
+
+    Ck = projected_tridiagonal(k)
+    Ckp1 = projected_tridiagonal(k + 1)
+    F = qr(Ck)
+    Qk, Rk = Matrix(F.Q), Matrix(F.R)
+    Nk = conj.(Ckp1) * Qk
+    Bk = conj.(Ckp1) * Ck
+    Uk = Matrix(qr(Nk).R)
+
+    @test Bk ≈ Nk * Rk atol=2e-14
+    @test Nk[1:k, :] ≈ Rk' atol=2e-14
+    @test norm(triu(Rk, 3)) ≤ 2e-14 * norm(Rk)
+    @test norm(triu(Uk, 3)) ≤ 2e-14 * norm(Uk)
+    Noutside = copy(Nk)
+    for j in 1:k
+        Noutside[j:min(j + 2, k + 2), j] .= 0
+    end
+    @test norm(Noutside) ≤ 2e-14 * norm(Nk)
+end
+
 @testset "Short recurrence versus full projected iterates" begin
     rng = MersenneTwister(20261008)
     for n in (6, 9), rank in (n, n-1), compatible in (false, true)

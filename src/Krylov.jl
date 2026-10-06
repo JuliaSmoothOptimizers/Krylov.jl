@@ -30,6 +30,7 @@ include("minres.jl")
 include("minres_qlp.jl")
 include("minares.jl")
 include("csminares.jl")
+include("csminresqlp.jl")
 
 include("diom.jl")
 include("fom.jl")

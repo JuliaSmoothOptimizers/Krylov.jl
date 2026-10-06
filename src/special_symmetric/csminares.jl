@@ -17,12 +17,16 @@ reflect(c, s, x, y) = (c*x + s*y, conj(s)*x - c*y)
 #                  reorthogonalize=false, history=false, check=true)
 #
 # Short-recurrence CS-MinAres on the trial spaces of projected_solve: minimizes
-# norm(A'*(b-A*x)) by an incremental Givens QR of the nested banded projected
-# matrices B_k. R_k has upper bandwidth 4, so each solution direction uses the four
-# previous ones, and storage is a fixed number of length-n vectors. In exact
-# arithmetic B_k has full column rank before closure. When a pivot is below
-# sqrt(eps)*norm(B), one extra product (null_products) tests whether the
-# would-be direction u satisfies norm(A*u) <= sqrt(ranktol)*norm(A)*norm(u); such a
+# norm(A'*(b-A*x)) with two incremental Givens QR factorizations. The first
+# reduces the Saunders tridiagonal to an upper-triangular factor R_k of upper
+# bandwidth 2. The second reduces the lower-bandwidth-2 factor N_k in
+# conj(Tbar_{k+1})*Tbar_k = N_k*R_k to an upper-triangular factor U_k, also of
+# upper bandwidth 2. Thus each of the two staged solves uses two previous
+# directions and storage is a fixed number of length-n vectors. In exact
+# arithmetic the projected matrix has full column rank before closure. When a
+# nonzero pivot is below sqrt(eps)*norm(B), up to two extra products (counted
+# by null_products) test whether the staged would-be directions satisfy
+# norm(A*u) <= sqrt(ranktol)*norm(A)*norm(u); such a
 # nullspace direction is projected out of x to select minimum norm, and the
 # iteration ends (:rank_truncated before detected closure). Without
 # reorthogonalization it also stops (:roundoff) after two consecutive steps
@@ -105,11 +109,13 @@ function recurrence_solve(A, b::AbstractVector; start=:rhs, completion=:invarian
     Tsup(j) = β(j)
     Tsub(j) = β(j + 1)
 
-    rot = [(one(R), zero(T), one(R), zero(T)) for _ in 1:4]
-    W = [zeros(T, n) for _ in 1:4]
-    col = zeros(T, 7)                 # rows k-4:k+2 of column k
+    rot = [(one(R), zero(T), one(R), zero(T)) for _ in 1:2]
+    W = [zeros(T, n) for _ in 1:2]
+    D = [zeros(T, n) for _ in 1:2]
+    col = zeros(T, 5)                 # rows k-2:k+2 of column k of N_k
     rho1, rho2 = zero(T), zero(T)     # rotated right-hand side, rows k and k+1
     Bscale = zero(R)
+    lambdabar = gammabar = gammaprev = epsilonprev = epsilonprev2 = zero(T)
     status, niter, floor_hits = :iteration_limit, 0, 0
     limit = reorthogonalize ? min(n, maxiter) : maxiter
     for k in 1:limit
@@ -122,24 +128,39 @@ function recurrence_solve(A, b::AbstractVector; start=:rhs, completion=:invarian
         end
         final = closed && k == nsteps
 
+        # Tbar_k = Q_k[R_k; 0], where R_k has upper bandwidth 2.
+        k == 1 && (lambdabar = α(1); gammabar = β(2))
+        c, s, lambda = cs_symortho(lambdabar, T(β(k + 1)))
+        gammak = c * gammabar + s * α(k + 1)
+        lambdabarnext = conj(s) * gammabar - c * α(k + 1)
+        epsilon = s * β(k + 2)
+        gammabarnext = -c * β(k + 2)
+
+        bkm2 = Tsup(k) * conj(Tsup(k - 1))
+        bkm1 = Tsup(k) * conj(α(k - 1)) + α(k) * conj(Tsup(k))
+        bk = Tsup(k) * conj(Tsub(k - 1)) + α(k) * conj(α(k)) + Tsub(k) * conj(Tsup(k + 1))
+        bkp1 = α(k) * conj(Tsub(k)) + Tsub(k) * conj(α(k + 1))
+        bkp2 = Tsub(k) * conj(Tsub(k + 1))
+        Bscale = max(Bscale,
+                     sqrt(abs2(bkm2) + abs2(bkm1) + abs2(bk) + abs2(bkp1) + abs2(bkp2)))
+
+        # N_k = conj(Tbar_{k+1})Q_k[:,1:k] is lower banded. Its kth
+        # column is (conj(lambda_k), conj(gamma_k), conj(epsilon_k)).
         fill!(col, zero(T))
-        col[3] = Tsup(k) * conj(Tsup(k - 1))
-        col[4] = Tsup(k) * conj(α(k - 1)) + α(k) * conj(Tsup(k))
-        col[5] = Tsup(k) * conj(Tsub(k - 1)) + α(k) * conj(α(k)) + Tsub(k) * conj(Tsup(k + 1))
-        col[6] = α(k) * conj(Tsub(k)) + Tsub(k) * conj(α(k + 1))
-        col[7] = Tsub(k) * conj(Tsub(k + 1))
-        Bscale = max(Bscale, norm(col))
-        for j in max(1, k - 4):k-1
-            c2, s2, c1, s1 = rot[mod1(j, 4)]
-            i = j - k + 5
+        col[3] = conj(lambda)
+        col[4] = conj(gammak)
+        col[5] = conj(epsilon)
+        for j in max(1, k - 2):k-1
+            c2, s2, c1, s1 = rot[mod1(j, 2)]
+            i = j - k + 3
             col[i+1], col[i+2] = reflect(c2, s2, col[i+1], col[i+2])
             col[i], col[i+1] = reflect(c1, s1, col[i], col[i+1])
         end
-        c2, s2, r2 = cs_symortho(col[6], col[7])
-        col[6], col[7] = r2, zero(T)
-        c1, s1, r1 = cs_symortho(col[5], col[6])
-        col[5], col[6] = r1, zero(T)
-        rot[mod1(k, 4)] = (c2, s2, c1, s1)
+        c2, s2, r2 = cs_symortho(col[4], col[5])
+        col[4], col[5] = r2, zero(T)
+        c1, s1, mu = cs_symortho(col[3], col[4])
+        col[3], col[4] = mu, zero(T)
+        rot[mod1(k, 2)] = (c2, s2, c1, s1)
 
         rho2, rho3 = reflect(c2, s2, rho2, zero(T))
         zk, rho2 = reflect(c1, s1, rho1, rho2)
@@ -147,28 +168,47 @@ function recurrence_solve(A, b::AbstractVector; start=:rhs, completion=:invarian
         push!(projected, estimate)
         rho1, rho2 = rho2, rho3
 
-        pivot = col[5]
+        pivot = lambda * mu
         push!(pivots, abs(pivot))
         u = conj.(getv(k))
-        for i in 1:min(4, k - 1)
-            u -= col[5 - i] .* W[mod1(k - i, 4)]
-        end
+        k >= 2 && (u .-= gammaprev .* W[mod1(k - 1, 2)])
+        k >= 3 && (u .-= epsilonprev2 .* W[mod1(k - 2, 2)])
         # A small pivot of B = A'A-type products is ambiguous after squaring, so
         # test the would-be direction against A itself. A null u means every
         # least-squares solution is x + t*u; remove the u component.
         nu = norm(u)
-        truncated = iszero(pivot) || iszero(nu)
+        truncated = iszero(lambda) || iszero(nu)
         if !truncated && abs(pivot) <= sqrt(eps(R)) * Bscale
             null_products += 1
             # ranktol applies to B ~ A'A, i.e. sqrt(ranktol) to A, as in projected_solve.
             truncated = norm(A * u) <= sqrt(ranktol) * opscale * nu
         end
-        if truncated
-            nu > 0 && (x .-= u .* (dot(u, x) / nu^2))
-        else
-            W[mod1(k, 4)] .= u ./ pivot
-            x .+= zk .* W[mod1(k, 4)]
+        direction = u
+        if !truncated
+            wk = W[mod1(k, 2)]
+            wk .= u ./ lambda
+            direction = copy(wk)
+            k >= 2 && (direction .-= col[2] .* D[mod1(k - 1, 2)])
+            k >= 3 && (direction .-= col[1] .* D[mod1(k - 2, 2)])
+            nd = norm(direction)
+            truncated = iszero(mu) || iszero(nd)
+            if !truncated && abs(pivot) <= sqrt(eps(R)) * Bscale
+                null_products += 1
+                truncated = norm(A * direction) <= sqrt(ranktol) * opscale * nd
+            end
+            nu = nd
         end
+        if truncated
+            nu > 0 && (x .-= direction .* (dot(direction, x) / nu^2))
+        else
+            dk = D[mod1(k, 2)]
+            dk .= direction ./ mu
+            x .+= zk .* dk
+        end
+
+        lambdabar, gammabar = lambdabarnext, gammabarnext
+        gammaprev = gammak
+        epsilonprev2, epsilonprev = epsilonprev, epsilon
 
         niter = k
         if history

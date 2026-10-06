@@ -481,6 +481,57 @@ end
   end
 end
 
+@testset "CsMinresQlpWorkspace" begin
+  # CS-MINRES-QLP is for complex symmetric systems only, so it is tested
+  # separately from the shared real/complex loop in test_krylov_workspaces.
+  for FC in (ComplexF32, ComplexF64)
+    @testset "Data Type: $FC" begin
+      T = real(FC)
+      A = FC.(get_div_grad(2, 2, 2))  # real symmetric, trivially complex symmetric too
+      n = size(A, 1)
+      b = ones(FC, n)
+      S = Vector{FC}
+
+      kc = KrylovConstructor(b)
+      workspace1 = @inferred krylov_workspace(Val(:csminresqlp), kc)
+      workspace2 = @inferred krylov_workspace(Val(:csminresqlp), n, n, S)
+      workspace3 = @inferred krylov_workspace(Val(:csminresqlp), A, b)
+      for workspace in (workspace1, workspace2, workspace3)
+        @test workspace isa CsMinresQlpWorkspace{T,FC,S}
+        @test workspace.m == n && workspace.n == n
+      end
+
+      A2 = FC.(get_div_grad(4, 4, 4))
+      n2 = size(A2, 1)
+      b2 = ones(FC, n2)
+      @test_throws ErrorException("(workspace.m, workspace.n) = ($n, $n) is inconsistent with size(A) = ($n2, $n2)") krylov_solve!(workspace1, A2, b2)
+
+      workspace = CsMinresQlpWorkspace(A, b)
+      @inferred krylov_solve!(workspace, A, b)
+      niter = iteration_count(workspace)
+      @test Aprod_count(workspace) == niter
+      @test Atprod_count(workspace) == 0
+      @test solution(workspace) === workspace.x
+      @test solution(workspace, 1) === workspace.x
+      @test_throws ErrorException solution(workspace, 2)
+      @test issolved(workspace)
+      @test results(workspace) == (workspace.x, workspace.stats)
+      @test statistics(workspace) == workspace.stats
+      @test solution_count(workspace) == 1
+      @test niter > 0
+      @test elapsed_time(workspace) ≥ 0
+      @test elapsed_allocation_time(workspace) ≥ 0
+
+      test_show(workspace)
+
+      workspace2 = CsMinresQlpWorkspace(A, b)
+      timemax = 0.0
+      krylov_solve!(workspace2, A, b; timemax)
+      @test workspace2.stats.status == "time limit exceeded"
+    end
+  end
+end
+
 @testset "Block Krylov solvers" begin
   for FC in (Float64, ComplexF64)
     @testset "Data Type: $FC" begin
