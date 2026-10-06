@@ -53,6 +53,14 @@ end
     @test full ≈ pinv(A)*b atol=1e-12
     @test s.niter == 2
     @test_throws ArgumentError minimum_norm_refinement(A, b, zeros(2))
+
+    # A small ORDINARY residual does not by itself mean x is stationary
+    # (small NORMAL residual); the stationarity check must run regardless.
+    A = Diagonal([1e9, 1.0])
+    b = [1e-9, 1.0]
+    x = [0.0, 1.0]
+    @test norm(b - A*x) <= 1e-8 * norm(b)
+    @test_throws ArgumentError minimum_norm_refinement(A, b, x)
 end
 
 @testset "Edges, scales, sparse matrices and validation" begin

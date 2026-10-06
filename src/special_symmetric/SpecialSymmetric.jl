@@ -261,9 +261,9 @@ function minimum_norm_refinement(A, b, x; rtol=1e-8, atol=0)
     all(t -> isfinite(t) && t >= 0, (rtol, atol)) || throw(ArgumentError("invalid tolerance"))
     r = b - A * x
     nr = norm(r)
-    nr <= atol + rtol * norm(b) && return copy(x), false
     norm(normal_product(A, r)) <= atol + rtol * norm(normal_product(A, b)) ||
         throw(ArgumentError("minimum-norm refinement requires a stationary iterate"))
+    nr <= atol + rtol * norm(b) && return copy(x), false
     p = conj.(r) / nr
     return x - p * dot(p, x), true
 end
