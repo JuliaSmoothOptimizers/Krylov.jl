@@ -203,6 +203,25 @@
           inplace_csminares_bytes = @allocated csminares!(workspace, Acs, b)
           @test inplace_csminares_bytes == 0
         end
+
+        @testset "CS-MINRES-QLP" begin
+          # CS-MINRES-QLP needs:
+          # 8 n-vectors: x, p, vₖ, vₖ₋₁, vbar, wₖ, wₖ₋₁, wₖ₋₂
+          storage_csminresqlp_bytes(n) = nbits_FC * 8 * n
+          Acs = A  # get_div_grad is real symmetric, hence trivially complex symmetric too
+
+          expected_csminresqlp_bytes = storage_csminresqlp_bytes(n)
+          csminresqlp(Acs, b)  # warmup
+          actual_csminresqlp_bytes = @allocated csminresqlp(Acs, b)
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_csminresqlp_bytes ≤ actual_csminresqlp_bytes ≤ 1.02 * expected_csminresqlp_bytes
+          end
+
+          workspace = CsMinresQlpWorkspace(Acs, b)
+          csminresqlp!(workspace, Acs, b)  # warmup
+          inplace_csminresqlp_bytes = @allocated csminresqlp!(workspace, Acs, b)
+          @test inplace_csminresqlp_bytes == 0
+        end
       end
 
       @testset "DIOM" begin

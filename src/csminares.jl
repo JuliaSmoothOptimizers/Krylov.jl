@@ -36,11 +36,11 @@ space generated from `b` — the normal-residual counterpart of MINARES for
 complex symmetric matrices. The estimates computed every iteration are
 `‖rₖ‖₂` and `‖A'rₖ‖₂`.
 
-CS-MinAres uses an incremental Givens QR of the nested, banded projected
-normal-residual matrices; the triangular factor has upper bandwidth 4, so
-each solution direction depends on the four previous ones, and storage is a
-fixed number of length-n vectors (no growing basis, unlike the full-basis
-research reference `Krylov.SpecialSymmetric.csminares`).
+CS-MinAres uses two incremental Givens QR factorizations of the nested,
+banded projected normal-residual matrices. Each triangular factor has upper
+bandwidth 2, so each staged solution direction depends on two previous ones,
+and storage is a fixed number of length-n vectors (no growing basis, unlike
+the full-basis research reference `Krylov.SpecialSymmetric.csminares`).
 
 An exactly stationary iterate found before the trial space closes need not
 be the Moore-Penrose solution: for an inconsistent system, CS-MinAres stops
@@ -155,13 +155,14 @@ kwargs_csminares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ver
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace: the conjugate Saunders basis cycles through 3 slots
-    # (v_{j-1}, v_j are both needed to extend to v_{j+1}); the solution
-    # directions cycle through 4 slots (the projected triangular factor has
-    # upper bandwidth 4). α, β and the stored 2x2 reflections also cycle
-    # through small fixed buffers instead of growing with the iteration.
+    # (v_{j-1}, v_j are both needed to extend to v_{j+1}). The two staged
+    # triangular solves each cycle through 2 solution directions. α, β and
+    # the stored 2x2 reflections also cycle through small fixed buffers
+    # instead of growing with the iteration.
     Δx, x = workspace.Δx, workspace.x
     vbuf = (workspace.v1, workspace.v2, workspace.v3)
-    wbuf = (workspace.w1, workspace.w2, workspace.w3, workspace.w4)
+    wbuf = (workspace.w1, workspace.w2)
+    dbuf = (workspace.w3, workspace.w4)
     v̄, q, u, Au = workspace.v̄, workspace.q, workspace.u, workspace.Au
     col = workspace.col
     αbuf, βbuf = workspace.αbuf, workspace.βbuf
@@ -177,9 +178,12 @@ kwargs_csminares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ver
     kfill!(x, zero(FC))  # x₀
 
     getv(j) = vbuf[mod1(j, 3)]
-    getw(j) = wbuf[mod1(j, 4)]
+    getw(j) = wbuf[mod1(j, 2)]
+    getd(j) = dbuf[mod1(j, 2)]
     α(j) = (j ≥ 1) ? αbuf[mod1(j, 4)] : zero(FC)
-    β(j) = (j ≥ 1) ? βbuf[mod1(j, 4)] : zero(T)
+    # β₁ is the formal zero preceding the first projected off-diagonal;
+    # the residual norm β₁ is stored separately above.
+    β(j) = (j ≥ 2) ? βbuf[mod1(j, 4)] : zero(T)
     Tsup(j) = β(j)
     Tsub(j) = β(j + 1)
 
@@ -227,6 +231,7 @@ kwargs_csminares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ver
     opscale = zero(T)
     ρ1 = zero(FC); ρ2 = zero(FC)
     Bscale = zero(T)
+    λbar = γbar = γprev = ϵprev = ϵprev2 = zero(FC)
     k = 0
     status = "unknown"
     solved = false
@@ -241,7 +246,7 @@ kwargs_csminares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ver
 
       # Extend the conjugate Saunders basis until step k+1 is available: one
       # look-ahead step is needed to form column k of the projected
-      # normal-residual matrix B_k = conj(Tbar_{k+1})'Tbar_k.
+      # normal-residual matrix B_k = conj(Tbar_{k+1}) * Tbar_k.
       while !closed && nsteps < k + 1
         j = nsteps + 1
         vⱼ = getv(j)
@@ -269,27 +274,43 @@ kwargs_csminares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ver
         ρ2 = β₁ * conj(β(2))
       end
 
-      col[3] = Tsup(k) * conj(Tsup(k - 1))
-      col[4] = Tsup(k) * conj(α(k - 1)) + α(k) * conj(Tsup(k))
-      col[5] = Tsup(k) * conj(Tsub(k - 1)) + α(k) * conj(α(k)) + Tsub(k) * conj(Tsup(k + 1))
-      col[6] = α(k) * conj(Tsub(k)) + Tsub(k) * conj(α(k + 1))
-      col[7] = Tsub(k) * conj(Tsub(k + 1))
-      col[1] = zero(FC); col[2] = zero(FC)
-      Bscale = max(Bscale, sqrt(sum(abs2, col)))
+      # First stage: Tbar_k = Q_k[R_k; 0], where R_k has upper bandwidth 2.
+      k == 1 && (λbar = α(1); γbar = β(2))
+      c, s, λₖ = sym_givens(λbar, FC(β(k + 1)))
+      αnext = (k < nsteps) ? α(k + 1) : zero(FC)
+      βnext2 = (k < nsteps) ? β(k + 2) : zero(T)
+      γₖ = c * γbar + s * αnext
+      λbar_next = conj(s) * γbar - c * αnext
+      ϵₖ = s * βnext2
+      γbar_next = -c * βnext2
 
-      # Apply the (up to 4) preceding stored reflections to this column.
-      for j in max(1, k - 4):k-1
-        c2ⱼ, s2ⱼ, c1ⱼ, s1ⱼ = c2buf[mod1(j, 4)], s2buf[mod1(j, 4)], c1buf[mod1(j, 4)], s1buf[mod1(j, 4)]
-        i = j - k + 5
+      # Retain the direct projected-column norm for the existing small-pivot
+      # safeguard, without factorizing the bandwidth-4 product directly.
+      bkm2 = Tsup(k) * conj(Tsup(k - 1))
+      bkm1 = Tsup(k) * conj(α(k - 1)) + α(k) * conj(Tsup(k))
+      bk = Tsup(k) * conj(Tsub(k - 1)) + α(k) * conj(α(k)) + Tsub(k) * conj(Tsup(k + 1))
+      bkp1 = α(k) * conj(Tsub(k)) + Tsub(k) * conj(αnext)
+      bkp2 = Tsub(k) * conj(βnext2)
+      Bscale = max(Bscale, sqrt(abs2(bkm2) + abs2(bkm1) + abs2(bk) + abs2(bkp1) + abs2(bkp2)))
+
+      # Second stage: B_k = N_k R_k. N_k is lower banded and its kth
+      # column is (conj(λₖ), conj(γₖ), conj(ϵₖ)) in rows k:k+2.
+      col[1] = zero(FC); col[2] = zero(FC)
+      col[3] = conj(λₖ); col[4] = conj(γₖ); col[5] = conj(ϵₖ)
+      col[6] = zero(FC); col[7] = zero(FC)
+      # Apply the two preceding pairs of second-stage reflections.
+      for j in max(1, k - 2):k-1
+        c2ⱼ, s2ⱼ, c1ⱼ, s1ⱼ = c2buf[mod1(j, 2)], s2buf[mod1(j, 2)], c1buf[mod1(j, 2)], s1buf[mod1(j, 2)]
+        i = j - k + 3
         col[i+1], col[i+2] = cs_reflect(c2ⱼ, s2ⱼ, col[i+1], col[i+2])
         col[i], col[i+1] = cs_reflect(c1ⱼ, s1ⱼ, col[i], col[i+1])
       end
-      c2, s2, r2 = sym_givens(col[6], col[7])
-      col[6], col[7] = r2, zero(FC)
-      c1, s1, r1 = sym_givens(col[5], col[6])
-      col[5], col[6] = r1, zero(FC)
-      c2buf[mod1(k, 4)] = c2; s2buf[mod1(k, 4)] = s2
-      c1buf[mod1(k, 4)] = c1; s1buf[mod1(k, 4)] = s1
+      c2, s2, r2 = sym_givens(col[4], col[5])
+      col[4], col[5] = r2, zero(FC)
+      c1, s1, μₖ = sym_givens(col[3], col[4])
+      col[3], col[4] = μₖ, zero(FC)
+      c2buf[mod1(k, 2)] = c2; s2buf[mod1(k, 2)] = s2
+      c1buf[mod1(k, 2)] = c1; s1buf[mod1(k, 2)] = s1
 
       ρ2, ρ3 = cs_reflect(c2, s2, ρ2, zero(FC))
       ζₖ, ρ2 = cs_reflect(c1, s1, ρ1, ρ2)
@@ -297,17 +318,29 @@ kwargs_csminares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ver
       history && push!(ArNorms, ArNorm)
       ρ1, ρ2 = ρ2, ρ3
 
-      pivot = col[5]
+      pivot = λₖ * μₖ
       u .= conj.(getv(k))
-      for i in 1:min(4, k - 1)
-        kaxpy!(n, -col[5-i], getw(k - i), u)
-      end
+      (k ≥ 2) && kaxpy!(n, -γprev, getw(k - 1), u)
+      (k ≥ 3) && kaxpy!(n, -ϵprev2, getw(k - 2), u)
       nu = knorm(n, u)
-      truncated = iszero(pivot) || iszero(nu)
+      truncated = iszero(λₖ) || iszero(nu)
       if !truncated && abs(pivot) ≤ sqrt(eps(T)) * Bscale
         kmul!(Au, A, u)
         (λ ≠ 0) && kaxpy!(n, λ, u, Au)
         truncated = knorm(n, Au) ≤ sqrt(eps(T)) * opscale * nu
+      end
+      if !truncated
+        kdivcopy!(n, getw(k), u, λₖ)
+        kcopy!(n, u, getw(k))
+        (k ≥ 2) && kaxpy!(n, -col[2], getd(k - 1), u)
+        (k ≥ 3) && kaxpy!(n, -col[1], getd(k - 2), u)
+        nu = knorm(n, u)
+        truncated = iszero(μₖ) || iszero(nu)
+        if !truncated && abs(pivot) ≤ sqrt(eps(T)) * Bscale
+          kmul!(Au, A, u)
+          (λ ≠ 0) && kaxpy!(n, λ, u, Au)
+          truncated = knorm(n, Au) ≤ sqrt(eps(T)) * opscale * nu
+        end
       end
       if truncated
         if nu > 0
@@ -315,9 +348,13 @@ kwargs_csminares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :ver
           kaxpy!(n, -coeff, u, x)
         end
       else
-        kdivcopy!(n, getw(k), u, pivot)
-        kaxpy!(n, ζₖ, getw(k), x)
+        kdivcopy!(n, getd(k), u, μₖ)
+        kaxpy!(n, ζₖ, getd(k), x)
       end
+
+      λbar, γbar = λbar_next, γbar_next
+      γprev = γₖ
+      ϵprev2, ϵprev = ϵprev, ϵₖ
 
       iter = k
       breakdown = false

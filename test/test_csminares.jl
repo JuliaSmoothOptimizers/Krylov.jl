@@ -30,6 +30,15 @@ end
       @test(stats.solved)
       @test norm(x - target) ≤ tol * max(1, norm(target))
 
+      # At exact singular closure, a zero first-stage pivot exposes the
+      # remaining null direction. Force completion past the stationary
+      # tolerance so its projection selects the minimum-norm solution.
+      A = Diagonal(FC[1, 0])
+      b = FC[1, 1]
+      (x, stats) = csminares(A, b; atol=zero(T), rtol=zero(T), Artol=zero(T))
+      @test x ≈ FC[1, 0] atol=tol
+      @test stats.niter == 2
+
       # Test b == 0.
       A = FC.(cs_matrix(rng, 5))
       b = zeros(FC, 5)

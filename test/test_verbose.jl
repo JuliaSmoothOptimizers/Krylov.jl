@@ -62,6 +62,16 @@ function test_verbose(FC)
       len_header = length(str[1])
       @test mapreduce(x -> length(x) == len_header, &, str)
     end
+
+    @testset "csminresqlp" begin
+      io = IOBuffer()
+      krylov_solve(Val{:csminresqlp}(), A, b, verbose=1, iostream=io)
+      showed = String(take!(io))
+      str = split(showed, '\n', keepempty=false)
+      str = str[2:end]
+      len_header = length(str[1])
+      @test mapreduce(x -> length(x) == len_header, &, str)
+    end
   end
 end
 

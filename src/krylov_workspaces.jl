@@ -4,7 +4,7 @@ UsymqrWorkspace, TricgWorkspace, TrimrWorkspace, TrilqrWorkspace, CgsWorkspace, 
 BilqWorkspace, QmrWorkspace, BilqrWorkspace, CglsWorkspace, CglsLanczosShiftWorkspace, CrlsWorkspace, CgneWorkspace,
 CrmrWorkspace, LslqWorkspace, LsqrWorkspace, LsmrWorkspace, LnlqWorkspace, CraigWorkspace, CraigmrWorkspace,
 GmresWorkspace, FomWorkspace, GpmrWorkspace, UsymlqrWorkspace, FgmresWorkspace, CarWorkspace, MinaresWorkspace,
-CsMinaresWorkspace
+CsMinaresWorkspace, CsMinresQlpWorkspace
 
 export KrylovConstructor
 
@@ -313,6 +313,87 @@ function CsMinaresWorkspace(A, b)
   m, n = size(A)
   S = ktypeof(b)
   CsMinaresWorkspace(m, n, S)
+end
+
+"""
+Workspace for the in-place methods [`csminresqlp!`](@ref) and [`krylov_solve!`](@ref).
+
+The following outer constructors can be used to initialize this workspace:
+
+    workspace = CsMinresQlpWorkspace(m, n, S)
+    workspace = CsMinresQlpWorkspace(A, b)
+    workspace = CsMinresQlpWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`csminresqlp`](@ref) only supports square linear operators, `m` and `n` must be equal.
+`S` is the storage type of the vectors in the workspace, such as `Vector{ComplexF64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
+"""
+mutable struct CsMinresQlpWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
+  m          :: Int
+  n          :: Int
+  Δx         :: S
+  x          :: S
+  p          :: S
+  vₖ         :: S
+  vₖ₋₁       :: S
+  vbar       :: S
+  wₖ         :: S
+  wₖ₋₁       :: S
+  wₖ₋₂       :: S
+  V          :: Vector{S}
+  warm_start :: Bool
+  stats      :: SimpleStats{T}
+end
+
+function CsMinresQlpWorkspace(kc::KrylovConstructor{S,S}) where S
+  start_allocation_time = time_ns()
+  FC   = eltype(S)
+  T    = real(FC)
+  m    = length(kc.vm)
+  n    = length(kc.vn)
+  Δx   = similar(kc.vn_empty)
+  x    = similar(kc.vn)
+  p    = similar(kc.vn)
+  vₖ   = similar(kc.vn)
+  vₖ₋₁ = similar(kc.vn)
+  vbar = similar(kc.vn)
+  wₖ   = similar(kc.vn)
+  wₖ₋₁ = similar(kc.vn)
+  wₖ₋₂ = similar(kc.vn)
+  V = S[]
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
+  workspace = CsMinresQlpWorkspace{T,FC,S}(m, n, Δx, x, p, vₖ, vₖ₋₁, vbar, wₖ, wₖ₋₁, wₖ₋₂, V, false, stats)
+  workspace.stats.allocation_timer = start_allocation_time |> ktimer
+  return workspace
+end
+
+function CsMinresQlpWorkspace(m::Integer, n::Integer, S::Type)
+  start_allocation_time = time_ns()
+  FC   = eltype(S)
+  T    = real(FC)
+  Δx   = S(undef, 0)
+  x    = S(undef, n)
+  p    = S(undef, n)
+  vₖ   = S(undef, n)
+  vₖ₋₁ = S(undef, n)
+  vbar = S(undef, n)
+  wₖ   = S(undef, n)
+  wₖ₋₁ = S(undef, n)
+  wₖ₋₂ = S(undef, n)
+  S = isconcretetype(S) ? S : typeof(x)
+  V = S[]
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
+  workspace = CsMinresQlpWorkspace{T,FC,S}(m, n, Δx, x, p, vₖ, vₖ₋₁, vbar, wₖ, wₖ₋₁, wₖ₋₂, V, false, stats)
+  workspace.stats.allocation_timer = start_allocation_time |> ktimer
+  return workspace
+end
+
+function CsMinresQlpWorkspace(A, b)
+  m, n = size(A)
+  S = ktypeof(b)
+  CsMinresQlpWorkspace(m, n, S)
 end
 
 """
