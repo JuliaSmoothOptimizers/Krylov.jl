@@ -72,7 +72,12 @@ end
       A = FC.(cs_matrix_qlp(rng, 10))
       b = randn(rng, FC, 10)
       workspace = CsMinresQlpWorkspace(A, b)
-      tol_cb = T(1.0)
+      # A generous multiple of norm(b) fires the callback at the first
+      # iteration with overwhelming margin, so the test doesn't depend on
+      # exactly which iteration the residual happens to cross a tight
+      # tolerance (that crossing point is sensitive to platform/BLAS-level
+      # rounding and shouldn't be what this test is checking).
+      tol_cb = 2 * norm(b)
       cb_n2 = TestCallbackN2(A, b, tol=tol_cb)
       csminresqlp!(workspace, A, b, atol=T(0), rtol=T(0), callback=cb_n2)
       @test workspace.stats.status == "user-requested exit"
