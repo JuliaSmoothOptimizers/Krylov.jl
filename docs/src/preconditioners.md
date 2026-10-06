@@ -61,8 +61,10 @@ However, there is no need to specify $L$ and one may specify $P_c = LL^H$ or its
 
 ### Complex symmetric linear systems
 
-[`CS-MINARES`](@ref csminares) does not yet support preconditioning; the
-keyword argument `M` must be left at its default value `I`.
+[`CS-MINARES`](@ref csminares) and [`CS-MINRES-QLP`](@ref csminresqlp) do not
+yet support preconditioning; [`csminares`](@ref) accepts (but ignores, other
+than requiring) a keyword argument `M` left at its default value `I`, while
+[`csminresqlp`](@ref) does not expose an `M` keyword argument at all.
 
 ### Linear least-squares problems
 

@@ -47,3 +47,11 @@ csminares
 csminares!
 CsMinaresWorkspace
 ```
+
+### CS-MINRES-QLP
+
+```@docs
+csminresqlp
+csminresqlp!
+CsMinresQlpWorkspace
+```

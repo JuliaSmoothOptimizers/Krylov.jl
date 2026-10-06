@@ -92,7 +92,7 @@ For an in-place variant that reuses memory across solves, see [`csminresqlp!`](@
 #### References
 
 * S.-C. T. Choi, *Iterative methods for singular linear equations and least-squares problems*, Ph.D. thesis, ICME, Stanford University, 2006.
-* S.-C. T. Choi, C. C. Paige and M. A. Saunders, [*MINRES-QLP: A Krylov subspace method for indefinite or singular symmetric systems*](https://doi.org/10.1137/100787921), SIAM Journal on Scientific Computing, Vol. 33(4), pp. 1810--1836, 2011.
+* S.-C. T. Choi, C. C. Paige and M. A. Saunders, [*MINRES-QLP: A Krylov subspace method for indefinite or singular symmetric systems*](https://doi.org/10.1137/100787921), SIAM Journal on Scientific Computing, Vol. 33(4), pp. 1810--1836, 2011 (reference MATLAB implementation at the [SOL MINRES-QLP page](https://web.stanford.edu/group/SOL/software/minresqlp/minresqlp-matlab/)).
 * S.-C. T. Choi, [*CS-MINRES-QLP*](https://www.mathworks.com/matlabcentral/fileexchange/61151-cs-minres-qlp), MATLAB Central File Exchange 61151, version 1.1.0.0, 2017 (`csminresqlp.m` and `IsOpSym6.m`).
 """
 function csminresqlp end
@@ -240,7 +240,12 @@ kwargs_csminresqlp = (:λ, :atol, :rtol, :itmax, :reorthogonalize, :timemax, :ve
       end
       βₖ₊₁ = knorm(n, p)
       operator_scale = max(operator_scale, scale, abs(alfa), k > 1 ? βₖ : zero(T))
-      closed = (k == n) || βₖ₊₁ ≤ breakdown_tol * operator_scale
+      # Absolute test (tiny relative to the operator's own scale) plus a
+      # relative-drop test (βₖ₊₁ many orders of magnitude below its immediate
+      # predecessor βₖ): a genuine closure drops β by ~13 orders of magnitude
+      # in one step, which the relative test catches robustly even when the
+      # absolute test is a near-miss against accumulated rounding noise.
+      closed = βₖ₊₁ ≤ breakdown_tol * operator_scale || βₖ₊₁ ≤ eps(T)^(T(1) / 3) * βₖ
       closed && (βₖ₊₁ = zero(T))
 
       # Advance the basis now: vₖ ← vₖ₊₁, freeing p and vₖ₋₁ as scratch for
