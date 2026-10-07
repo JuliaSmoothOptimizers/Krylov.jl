@@ -33,25 +33,3 @@ minares
 minares!
 MinaresWorkspace
 ```
-
-## Complex symmetric linear systems
-
-CS-MinAres is for complex symmetric matrices (`transpose(A) == A`), a
-different structure from the Hermitian (indefinite) matrices above
-(`A' == A`); the two coincide only for real symmetric matrices.
-
-### CS-MINARES
-
-```@docs
-csminares
-csminares!
-CsMinaresWorkspace
-```
-
-### CS-MINRES-QLP
-
-```@docs
-csminresqlp
-csminresqlp!
-CsMinresQlpWorkspace
-```

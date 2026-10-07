@@ -73,39 +73,3 @@ end
     end
   end
 end
-
-# CS-MinAres is only defined for complex symmetric matrices (FC <: Complex),
-# so it is excluded from the shared real/complex loop above.
-@testset "mp csminares" begin
-  for FC in (Complex{Float16}, ComplexF32, ComplexF64, Complex{BigFloat})
-    @testset "Data Type: $FC" begin
-      T = real(FC)
-      n = 5
-      A = FC.(spdiagm(-1 => -ones(T,n-1), 0 => 3*ones(T,n), 1 => -ones(T,n-1)))
-      b = ones(FC, n)
-      x, _ = krylov_solve(Val{:csminares}(), A, b, history=true)
-      atol = √eps(T)
-      rtol = √eps(T)
-      Κ = (T == Float16 ? 10 : 1)
-      @test norm(A * x - b) ≤ Κ * (atol + norm(b) * rtol)
-      @test eltype(x) == FC
-    end
-  end
-end
-
-@testset "mp csminresqlp" begin
-  for FC in (Complex{Float16}, ComplexF32, ComplexF64, Complex{BigFloat})
-    @testset "Data Type: $FC" begin
-      T = real(FC)
-      n = 5
-      A = FC.(spdiagm(-1 => -ones(T,n-1), 0 => 3*ones(T,n), 1 => -ones(T,n-1)))
-      b = ones(FC, n)
-      x, _ = krylov_solve(Val{:csminresqlp}(), A, b, history=true)
-      atol = √eps(T)
-      rtol = √eps(T)
-      Κ = (T == Float16 ? 10 : 1)
-      @test norm(A * x - b) ≤ Κ * (atol + norm(b) * rtol)
-      @test eltype(x) == FC
-    end
-  end
-end

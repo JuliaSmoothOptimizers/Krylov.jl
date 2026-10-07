@@ -49,30 +49,6 @@ function test_verbose(FC)
       @test mapreduce(x -> length(x) == len_header, &, str)
     end
   end
-
-  # CS-MINARES is for complex symmetric systems only; `A` above (real,
-  # cast to FC) qualifies, but the loop above also runs with FC real.
-  if FC <: Complex
-    @testset "csminares" begin
-      io = IOBuffer()
-      krylov_solve(Val{:csminares}(), A, b, verbose=1, iostream=io)
-      showed = String(take!(io))
-      str = split(showed, '\n', keepempty=false)
-      str = str[2:end]
-      len_header = length(str[1])
-      @test mapreduce(x -> length(x) == len_header, &, str)
-    end
-
-    @testset "csminresqlp" begin
-      io = IOBuffer()
-      krylov_solve(Val{:csminresqlp}(), A, b, verbose=1, iostream=io)
-      showed = String(take!(io))
-      str = split(showed, '\n', keepempty=false)
-      str = str[2:end]
-      len_header = length(str[1])
-      @test mapreduce(x -> length(x) == len_header, &, str)
-    end
-  end
 end
 
 @testset "verbose" begin
