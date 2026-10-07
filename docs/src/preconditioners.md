@@ -59,13 +59,6 @@ However, there is no need to specify $L$ and one may specify $P_c = LL^H$ or its
 !!! warning
     The preconditioner `M` must be Hermitian and positive definite.
 
-### Complex symmetric linear systems
-
-[`CS-MINARES`](@ref csminares) and [`CS-MINRES-QLP`](@ref csminresqlp) do not
-yet support preconditioning; [`csminares`](@ref) accepts (but ignores, other
-than requiring) a keyword argument `M` left at its default value `I`, while
-[`csminresqlp`](@ref) does not expose an `M` keyword argument at all.
-
 ### Linear least-squares problems
 
 Methods concerned: [`CGLS`](@ref cgls), [`CRLS`](@ref crls), [`LSLQ`](@ref lslq), [`LSQR`](@ref lsqr) and [`LSMR`](@ref lsmr).

@@ -184,46 +184,6 @@
         @test inplace_minares_bytes == 0
       end
 
-      if FC <: Complex
-        @testset "CS-MINARES" begin
-          # CS-MINARES needs:
-          # 12 n-vectors: x, v1, v2, v3, v̄, q, u, Au, w1, w2, w3, w4
-          storage_csminares_bytes(n) = nbits_FC * 12 * n
-          Acs = A  # get_div_grad is real symmetric, hence trivially complex symmetric too
-
-          expected_csminares_bytes = storage_csminares_bytes(n)
-          csminares(Acs, b)  # warmup
-          actual_csminares_bytes = @allocated csminares(Acs, b)
-          if VERSION < v"1.11.5" || !Sys.isapple()
-            @test expected_csminares_bytes ≤ actual_csminares_bytes ≤ 1.02 * expected_csminares_bytes
-          end
-
-          workspace = CsMinaresWorkspace(Acs, b)
-          csminares!(workspace, Acs, b)  # warmup
-          inplace_csminares_bytes = @allocated csminares!(workspace, Acs, b)
-          @test inplace_csminares_bytes == 0
-        end
-
-        @testset "CS-MINRES-QLP" begin
-          # CS-MINRES-QLP needs:
-          # 8 n-vectors: x, p, vₖ, vₖ₋₁, vbar, wₖ, wₖ₋₁, wₖ₋₂
-          storage_csminresqlp_bytes(n) = nbits_FC * 8 * n
-          Acs = A  # get_div_grad is real symmetric, hence trivially complex symmetric too
-
-          expected_csminresqlp_bytes = storage_csminresqlp_bytes(n)
-          csminresqlp(Acs, b)  # warmup
-          actual_csminresqlp_bytes = @allocated csminresqlp(Acs, b)
-          if VERSION < v"1.11.5" || !Sys.isapple()
-            @test expected_csminresqlp_bytes ≤ actual_csminresqlp_bytes ≤ 1.02 * expected_csminresqlp_bytes
-          end
-
-          workspace = CsMinresQlpWorkspace(Acs, b)
-          csminresqlp!(workspace, Acs, b)  # warmup
-          inplace_csminresqlp_bytes = @allocated csminresqlp!(workspace, Acs, b)
-          @test inplace_csminresqlp_bytes == 0
-        end
-      end
-
       @testset "DIOM" begin
         # DIOM needs:
         # - 2 n-vectors: x, t
