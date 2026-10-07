@@ -101,6 +101,15 @@ function cs_minres_qlp_oracle(A, b, k)
   return Q * (pinv(A * Q) * b)
 end
 
+# Bytes allocated by a second in-place solve. On Julia 1.10, `@allocated ex`
+# evaluates `ex` inside the caller, so a call from a test loop over element
+# types also counts the cost of that loosely typed call site (160 bytes on
+# 1.10.12); newer versions wrap `ex` in a function call, as this helper does.
+function inplace_bytes(solver!, workspace, A, b; kwargs...)
+  solver!(workspace, A, b; kwargs...)
+  return @allocated solver!(workspace, A, b; kwargs...)
+end
+
 """
     system_zero_quad(n::Int=2; FC=Float64)
 
