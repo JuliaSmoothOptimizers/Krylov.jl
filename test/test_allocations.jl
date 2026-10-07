@@ -164,6 +164,12 @@
         minres_qlp!(workspace, A, b)  # warmup
         inplace_minres_qlp_bytes = @allocated minres_qlp!(workspace, A, b)
         @test inplace_minres_qlp_bytes == 0
+
+        # complex_symmetric = true uses the same storage as the Hermitian path.
+        if FC <: Complex
+          Acs, bcs = complex_symmetric_definite(n, FC=FC)
+          @test inplace_bytes(minres_qlp!, MinresQlpWorkspace(Acs, bcs), Acs, bcs; complex_symmetric=true) == 0
+        end
       end
 
       @testset "MINARES" begin
@@ -182,6 +188,12 @@
         minares!(workspace, A, b)  # warmup
         inplace_minares_bytes = @allocated minares!(workspace, A, b)
         @test inplace_minares_bytes == 0
+
+        # complex_symmetric = true uses the same storage as the Hermitian path.
+        if FC <: Complex
+          Acs, bcs = complex_symmetric_definite(n, FC=FC)
+          @test inplace_bytes(minares!, MinaresWorkspace(Acs, bcs), Acs, bcs; complex_symmetric=true) == 0
+        end
       end
 
       @testset "DIOM" begin

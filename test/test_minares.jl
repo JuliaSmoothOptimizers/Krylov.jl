@@ -127,13 +127,8 @@
       minares(A, b; complex_symmetric=true, verbose=1, iostream=io)
       @test occursin("MINARES: system of size", String(take!(io)))
 
-      # Allocation-free in-place path, in its own `let` block for the reason
-      # given in test_minres_qlp.jl.
-      nbytes = let ws = MinaresWorkspace(A, b)
-        minares!(ws, A, b; complex_symmetric=true)
-        @allocated minares!(ws, A, b; complex_symmetric=true)
-      end
-      @test nbytes == 0
+      # Allocation-free in-place path.
+      @test inplace_bytes(minares!, MinaresWorkspace(A, b), A, b; complex_symmetric=true) == 0
 
       # complex_symmetric=true requires a complex element type.
       Ar, br = symmetric_indefinite(FC=T)

@@ -205,16 +205,8 @@
       minres_qlp(A, b; complex_symmetric=true, verbose=1, iostream=io)
       @test occursin("MINRES-QLP: system of size", String(take!(io)))
 
-      # Allocation-free in-place path. Isolated in its own `let` block: `x`
-      # and `stats` above are reassigned from several different calls, which
-      # makes them type-unstable in this scope, and @allocated on an
-      # unrelated call right after can pick up GC bookkeeping for those
-      # boxed values otherwise.
-      nbytes = let ws = MinresQlpWorkspace(A, b)
-        minres_qlp!(ws, A, b; complex_symmetric=true)
-        @allocated minres_qlp!(ws, A, b; complex_symmetric=true)
-      end
-      @test nbytes == 0
+      # Allocation-free in-place path.
+      @test inplace_bytes(minres_qlp!, MinresQlpWorkspace(A, b), A, b; complex_symmetric=true) == 0
 
       # complex_symmetric=true requires a complex element type.
       Ar, br = symmetric_indefinite(FC=T)
