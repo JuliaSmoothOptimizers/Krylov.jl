@@ -49,6 +49,20 @@ function test_verbose(FC)
       @test mapreduce(x -> length(x) == len_header, &, str)
     end
   end
+
+  if FC <: Complex
+    Acs, bcs = complex_symmetric_definite(n, FC=FC)
+    for method in (:minres_qlp, :minares)
+      @testset "$method (complex_symmetric)" begin
+        io = IOBuffer()
+        krylov_solve(Val{method}(), Acs, bcs, complex_symmetric=true, verbose=1, iostream=io)
+        showed = String(take!(io))
+        str = split(showed, '\n', keepempty=false)[2:end]
+        len_header = length(str[1])
+        @test mapreduce(x -> length(x) == len_header, &, str)
+      end
+    end
+  end
 end
 
 @testset "verbose" begin

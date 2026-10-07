@@ -261,6 +261,17 @@ function test_krylov_workspaces(FC; krylov_constructor::Bool=false, use_val::Boo
           @test solution_count(workspace) == 1
         end
 
+        if method ∈ (:minares, :minres_qlp) && FC <: Complex
+          Acs, bcs = complex_symmetric_definite(n, FC=FC)
+          use_val ? @inferred(krylov_solve(Val(method), Acs, bcs; complex_symmetric=true)) : krylov_solve(method, Acs, bcs; complex_symmetric=true)
+          @inferred krylov_solve!(workspace, Acs, bcs; complex_symmetric=true)
+          niter = iteration_count(workspace)
+          @test Aprod_count(workspace) == niter
+          @test Atprod_count(workspace) == 0
+          @test solution(workspace) === workspace.x
+          @test solution_count(workspace) == 1
+        end
+
         if method ∈ (:cgne, :crmr, :lnlq, :craig, :craigmr)
           use_val ? @inferred(krylov_solve(Val(method), Au, c)) : krylov_solve(method, Au, c)
           @inferred krylov_solve!(workspace, Au, c)
