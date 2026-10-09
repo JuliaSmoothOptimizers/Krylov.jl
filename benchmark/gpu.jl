@@ -6,7 +6,7 @@ using LinearAlgebra
 using SparseArrays
 
 using CUDA
-using CUDA.CUSPARSE
+using CUDA.cuSPARSE
 
 using Krylov
 using LinearOperators
