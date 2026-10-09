@@ -251,8 +251,36 @@ if oneAPI.functional()
 end
 ```
 
+Sparse matrices have a specific storage on Intel GPUs (`oneSparseMatrixCSR` or `oneSparseMatrixCSC`):
+
+```julia
+using Krylov, oneAPI
+using oneAPI.oneMKL, SparseArrays
+
+if oneAPI.functional()
+  T = Float32  # oneAPI.jl also works with ComplexF32
+  m = 200
+  n = 100
+
+  # CPU Arrays
+  A_cpu = sprand(T, m, n, 0.3)
+  b_cpu = rand(T, m)
+
+  # GPU Arrays
+  A_csr_gpu = oneSparseMatrixCSR(A_cpu)
+  A_csc_gpu = oneSparseMatrixCSC(A_cpu)
+  b_gpu = oneVector(b_cpu)
+
+  # Solve a rectangular and sparse system on an Intel GPU
+  x_csr, stats_csr = lsqr(A_csr_gpu, b_gpu)
+  x_csc, stats_csc = lsmr(A_csc_gpu, b_gpu)
+end
+```
+
 !!! note
-    The library `oneMKL` is interfaced in oneAPI.jl and accelerates linear algebra operations on Intel GPUs. Only dense linear systems are supported for the time being because sparse linear algebra routines are not interfaced yet.
+    The library `oneMKL` is interfaced in oneAPI.jl and accelerates dense and sparse linear algebra operations on Intel GPUs.
+    Sparse matrix-vector products are only supported for the formats `oneSparseMatrixCSR` and `oneSparseMatrixCSC`; `oneSparseMatrixCSC` requires oneMKL 2025.3 or later.
+    A `oneSparseMatrixCOO` can be created but cannot be used with Krylov.jl because oneMKL does not provide products for this format.
 
 ## Apple M1 GPUs
 
