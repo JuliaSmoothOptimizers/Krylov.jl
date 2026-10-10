@@ -108,6 +108,19 @@
       @test Wnorm(b - A * x) ≤ gmres_tol * Wnorm(b)
       @test(stats.solved)
 
+      # After a restart, v₁ is normalized by the recomputed ‖r₀‖_W, not by the estimate
+      n = 40
+      A = FC.(I + 2 * [sin(i * j + 1) for i = 1:n, j = 1:n] / sqrt(n))
+      s = [10.0^((i % 9) - 4) for i = 1:n]
+      W = Diagonal(1 ./ s.^2)
+      b = FC.(s .* [cos(3i) for i = 1:n])
+      workspace = GmresWorkspace(A, b; memory=3)
+      deviation = Ref(0.0)
+      callback = workspace -> (workspace.inner_iter == 1 && (deviation[] = max(deviation[], abs(sqrt(real(dot(workspace.V[1], W * workspace.V[1]))) - 1))); false)
+      gmres!(workspace, A, b, W=W, restart=true, itmax=60, atol=0.0, rtol=1.0e-12, callback=callback)
+      @test workspace.stats.niter > 3
+      @test deviation[] ≤ 1.0e-12
+
       # Dense inner product with left preconditioning, warm start, restart and reorthogonalization
       A, b, M = square_preconditioned(FC=FC)
       n = length(b)

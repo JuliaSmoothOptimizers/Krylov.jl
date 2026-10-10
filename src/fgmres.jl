@@ -236,7 +236,7 @@ kwargs_workspace_fgmres = (:memory,)
 
       # Initial ζ₁ and v₁
       z[1] = β
-      kdivcopy!(n, V[1], r₀, rNorm)  # v₁ = r₀ / ‖r₀‖
+      kdivcopy!(n, V[1], r₀, β)  # v₁ = r₀ / ‖r₀‖, with ‖r₀‖ recomputed after a restart
 
       npass = npass + 1
       workspace.inner_iter = 0
