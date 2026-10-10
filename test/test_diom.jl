@@ -90,6 +90,39 @@
       @test(resid ≤ diom_tol)
       @test(stats.solved)
 
+      # Inner product ⟨x, y⟩_W = xᴴWy
+      A, b = nonsymmetric_indefinite(FC=FC)
+      n = length(b)
+      s = [10.0^((-1)^i * (i % 7)) for i = 1:n]
+      W = Diagonal(1 ./ s.^2)
+      Wnorm(r) = sqrt(real(dot(r, W * r)))
+      # (k ≤ memory: beyond, the incomplete orthogonalization amplifies rounding errors)
+      for k in (1, 3, 5)
+        (x, stats) = diom(A, b, W=W, itmax=k, memory=5, atol=0.0, rtol=0.0, history=true)
+        # The Krylov basis in the inner product of W = S⁻² is the one of S⁻¹AS y = S⁻¹b with x = Sy
+        (y, _) = diom(A, b, M=Diagonal(1 ./ s), N=Diagonal(s), itmax=k, memory=5, atol=0.0, rtol=0.0)
+        @test norm((x - y) ./ s) ≤ 1.0e-10 * norm(y ./ s)
+        @test stats.residuals[1] ≈ Wnorm(b)
+        @test stats.residuals[end] ≈ Wnorm(b - A * x) atol=1.0e-8 * Wnorm(b)
+      end
+
+      # Dense inner product with and without left preconditioning, warm start and reorthogonalization
+      A, b, M = square_preconditioned(FC=FC)
+      n = length(b)
+      B = FC[sin(i + 2j) for i = 1:n, j = 1:n]
+      W = B' * B + I
+      Wnorm_dense(r) = sqrt(real(dot(r, W * r)))
+      x0 = FC[cos(i) for i = 1:n]
+      for MM in (I, M), reorthogonalization in (false, true)
+        (x, stats) = diom(A, b, x0, M=MM, W=W, reorthogonalization=reorthogonalization, history=true)
+        @test stats.residuals[1] ≈ Wnorm_dense(MM * (b - A * x0))
+        @test Wnorm_dense(MM * (b - A * x)) ≤ diom_tol * Wnorm_dense(MM * b)
+        @test(stats.solved)
+      end
+      if FC == Float64
+        @test_throws ErrorException diom(A, b, W=W, radius=1.0)
+      end
+
       # test callback function
       workspace = DiomWorkspace(A, b)
       tol = 1.0e-1

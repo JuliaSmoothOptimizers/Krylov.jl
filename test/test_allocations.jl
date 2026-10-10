@@ -204,6 +204,11 @@
         diom!(workspace, A, b)  # warmup
         inplace_diom_bytes = @allocated diom!(workspace, A, b)
         @test inplace_diom_bytes == 0
+
+        W = Diagonal(ones(FC, n))
+        diom!(workspace, A, b; W)  # warmup
+        inplace_diom_bytes = @allocated diom!(workspace, A, b; W)
+        @test inplace_diom_bytes == 0
       end
 
       @testset "FOM" begin
@@ -225,6 +230,11 @@
         fom!(workspace, A, b)  # warmup
         inplace_fom_bytes = @allocated fom!(workspace, A, b)
         @test inplace_fom_bytes == 0
+
+        W = Diagonal(ones(FC, n))
+        fom!(workspace, A, b; W)  # warmup
+        inplace_fom_bytes = @allocated fom!(workspace, A, b; W)
+        @test inplace_fom_bytes == 0
       end
 
       @testset "DQGMRES" begin
@@ -245,6 +255,11 @@
         workspace = DqgmresWorkspace(A, b; memory=mem)
         dqgmres!(workspace, A, b)  # warmup
         inplace_dqgmres_bytes = @allocated dqgmres!(workspace, A, b)
+        @test inplace_dqgmres_bytes == 0
+
+        W = Diagonal(ones(FC, n))
+        dqgmres!(workspace, A, b; W)  # warmup
+        inplace_dqgmres_bytes = @allocated dqgmres!(workspace, A, b; W)
         @test inplace_dqgmres_bytes == 0
       end
 
