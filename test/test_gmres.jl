@@ -90,6 +90,38 @@
       @test(resid ≤ gmres_tol)
       @test(stats.solved)
 
+      # Inner product ⟨x, y⟩_W = xᴴWy
+      A, b = nonsymmetric_indefinite(FC=FC)
+      n = length(b)
+      s = [10.0^((-1)^i * (i % 7)) for i = 1:n]
+      W = Diagonal(1 ./ s.^2)
+      Wnorm(r) = sqrt(real(dot(r, W * r)))
+      for k in (1, 5, n)
+        (x, stats) = gmres(A, b, W=W, itmax=k, memory=k, atol=0.0, rtol=0.0, history=true)
+        # GMRES in the inner product of W = S⁻² is GMRES on S⁻¹AS y = S⁻¹b with x = Sy
+        (y, _) = gmres(A, b, M=Diagonal(1 ./ s), N=Diagonal(s), itmax=k, memory=k, atol=0.0, rtol=0.0)
+        @test norm((x - y) ./ s) ≤ 1.0e-10 * norm(y ./ s)
+        @test stats.residuals[1] ≈ Wnorm(b)
+        @test stats.residuals[end] ≈ Wnorm(b - A * x) atol=1.0e-8 * Wnorm(b)
+      end
+      (x, stats) = gmres(A, b, W=W)
+      @test Wnorm(b - A * x) ≤ gmres_tol * Wnorm(b)
+      @test(stats.solved)
+
+      # Dense inner product with left preconditioning, warm start, restart and reorthogonalization
+      A, b, M = square_preconditioned(FC=FC)
+      n = length(b)
+      B = FC[sin(i + 2j) for i = 1:n, j = 1:n]
+      W = B' * B + I
+      Wnorm_dense(r) = sqrt(real(dot(r, W * r)))
+      x0 = FC[cos(i) for i = 1:n]
+      for restart in (false, true), reorthogonalization in (false, true)
+        (x, stats) = gmres(A, b, x0, M=M, W=W, restart=restart, reorthogonalization=reorthogonalization, memory=5, history=true)
+        @test stats.residuals[1] ≈ Wnorm_dense(M * (b - A * x0))
+        @test Wnorm_dense(M * (b - A * x)) ≤ gmres_tol * Wnorm_dense(M * b)
+        @test(stats.solved)
+      end
+
       # Restart
       for restart ∈ (false, true)
         memory = 10

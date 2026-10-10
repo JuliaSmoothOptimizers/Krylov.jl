@@ -267,6 +267,12 @@
         gmres!(workspace, A, b)  # warmup
         inplace_gmres_bytes = @allocated gmres!(workspace, A, b)
         @test inplace_gmres_bytes == 0
+
+        # The inner product W only needs the vector p
+        W = Diagonal(ones(FC, n))
+        gmres!(workspace, A, b; W)  # warmup
+        inplace_gmres_bytes = @allocated gmres!(workspace, A, b; W)
+        @test inplace_gmres_bytes == 0
       end
 
       @testset "FGMRES" begin
