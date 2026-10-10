@@ -32,7 +32,7 @@ Sparse matrices have a specific storage on Nvidia GPUs (`CuSparseMatrixCSC`, `Cu
 
 ```julia
 using CUDA, Krylov
-using CUDA.CUSPARSE, SparseArrays
+using CUDA.cuSPARSE, SparseArrays
 
 if CUDA.functional()
   # CPU Arrays
@@ -55,7 +55,7 @@ end
 If you use a Krylov method that only requires `A * v` products (see [here](@ref matrix-free)), the most efficient format is `CuSparseMatrixCSR`.
 Optimized operator-vector and operator-matrix products that exploit GPU features can be also used by means of linear operators.
 
-For instance, when executing sparse matrix products on NVIDIA GPUs, the `mul!` function utilized by Krylov.jl internally calls three routines from CUSPARSE.
+For instance, when executing sparse matrix products on NVIDIA GPUs, the `mul!` function utilized by Krylov.jl internally calls three routines from cuSPARSE.
 The first one conducts an analysis of the sparse matrix's structure, the second one determines the size of the buffer that needs to be allocated, and the last one handles the product using the allocated buffer.
 To circumvent the need for repeated analysis computations and buffer allocation/deallocation with each product, we introduce a `KrylovOperator` in [KrylovPreconditioners.jl](https://github.com/JuliaSmoothOptimizers/KrylovPreconditioners.jl).
 This operator performs the analysis and allocates the buffer only once.
@@ -69,13 +69,13 @@ x_gpu, stats = gmres(opA_gpu, b_gpu)
 ```
 
 Preconditioners, especially incomplete Cholesky or incomplete LU factorizations that involve sparse triangular solves,
-can be applied directly on GPU thanks to efficient operators (like `TriangularOperator`) that take advantage of CUSPARSE routines.
+can be applied directly on GPU thanks to efficient operators (like `TriangularOperator`) that take advantage of cuSPARSE routines.
 
 ### Example with a symmetric positive-definite system
 
 ```julia
 using SparseArrays, Krylov, LinearOperators
-using CUDA, CUDA.CUSPARSE
+using CUDA, CUDA.cuSPARSE
 
 if CUDA.functional()
   # Transfer the linear system from the CPU to the GPU
@@ -116,7 +116,7 @@ end
 
 ```julia
 using SparseArrays, Krylov, LinearOperators
-using CUDA, CUDA.CUSPARSE, CUDA.CUSOLVER
+using CUDA, CUDA.cuSPARSE, CUDA.cuSOLVER
 
 if CUDA.functional()
   # Optional -- Compute a permutation vector p such that A[:,p] has no zero diagonal
