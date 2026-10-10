@@ -12,7 +12,7 @@ export diom, diom!
 
 """
     (x, stats) = diom(A, b::AbstractVector{FC};
-                      memory::Int=20, M=I, N=I, ldiv::Bool=false,
+                      memory::Int=20, M=I, N=I, W=I, ldiv::Bool=false,
                       reorthogonalization::Bool=false, atol::T=√eps(T),
                       rtol::T=√eps(T), itmax::Int=0,
                       timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
@@ -55,6 +55,7 @@ For an in-place variant that reuses memory across solves, see [`diom!`](@ref).
 * `memory`: the number of most recent vectors of the Krylov basis against which to orthogonalize a new vector;
 * `M`: linear operator that models a nonsingular matrix of size `n` used for left preconditioning;
 * `N`: linear operator that models a nonsingular matrix of size `n` used for right preconditioning;
+* `W`: linear operator that models a Hermitian positive definite matrix of size `n` defining the inner product ⟨x, y⟩_W = xᴴWy of the Krylov basis; the residual norms and the stopping tolerances refer to the norm ‖·‖_W. Not supported with a trust-region constraint. `W` is applied with `mul!`;
 * `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
 * `radius`: add the trust-region constraint `‖x‖ ≤ radius` if `radius > 0`. Only useful for computing a step in a trust-region optimization method when A is Hermitian.
   If `radius > 0`, and nonpositive curvature is detected along the current search direction, we take the step to the trust-region boundary.
@@ -103,6 +104,7 @@ def_optargs_diom = (:(x0::AbstractVector),)
 
 def_kwargs_diom = (:(; M = I                            ),
                    :(; N = I                            ),
+                   :(; W = I                            ),
                    :(; ldiv::Bool = false               ),
                    :(; radius::T = zero(T)              ),
                    :(; reorthogonalization::Bool = false),
@@ -122,7 +124,7 @@ def_kwargs_workspace_diom = extract_parameters.(def_kwargs_workspace_diom)
 
 args_diom = (:A, :b)
 optargs_diom = (:x0,)
-kwargs_diom = (:M, :N, :ldiv, :radius, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_diom = (:M, :N, :W, :ldiv, :radius, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 kwargs_workspace_diom = (:memory,)
 
 @eval begin
@@ -142,8 +144,10 @@ kwargs_workspace_diom = (:memory,)
     # Check M = Iₙ and N = Iₙ
     MisI = (M === I)
     NisI = (N === I)
+    WisI = (W === I)
     if radius > 0
       (NisI && MisI) || error("trust-region constraint is not supported with a preconditioner")
+      WisI || error("trust-region constraint is not supported with an inner product W")
     end
 
     # Check type consistency
@@ -151,7 +155,7 @@ kwargs_workspace_diom = (:memory,)
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, workspace, :w, S, workspace.x)  # The length of w is n
+    allocate_if(!MisI || !WisI, workspace, :w, S, workspace.x)  # The length of w is n
     allocate_if(!NisI, workspace, :z, S, workspace.x)  # The length of z is n
     Δx, x, t, P, V = workspace.Δx, workspace.x, workspace.t, workspace.P, workspace.V
     L, H, stats = workspace.L, workspace.H, workspace.stats
@@ -161,6 +165,7 @@ kwargs_workspace_diom = (:memory,)
     reset!(stats)
     w  = MisI ? t : workspace.w
     r₀ = MisI ? t : workspace.w
+    Ww = WisI ? w : (MisI ? workspace.w : t)  # Ww = W * w, t is free once w ← Mt
     
 
     # Initial solution x₀, residual r₀ and q(x₀).
@@ -174,7 +179,8 @@ kwargs_workspace_diom = (:memory,)
       (radius > 0) && (qx = zero(T))  # Quadratic model value at x₀ = 0
     end
     MisI || mulorldiv!(r₀, M, t, ldiv)  # M(b - Ax₀)
-    rNorm = knorm(n, r₀)                # β = ‖r₀‖₂
+    WisI || kmul!(Ww, W, r₀)
+    rNorm = knorm_elliptic(n, r₀, Ww)   # β = ‖r₀‖_W
     if history
       push!(rNorms, rNorm)
       (radius > 0) && push!(qxs, qx)
@@ -234,7 +240,8 @@ kwargs_workspace_diom = (:memory,)
       for i = max(1, iter-mem+1) : iter
         ipos = mod(i-1, mem) + 1  # Position corresponding to vᵢ in the circular stack V.
         diag = iter - i + 1
-        H[diag] = kdot(n, w, V[ipos])    # hᵢ.ₖ = ⟨MANvₖ, vᵢ⟩
+        WisI || kmul!(Ww, W, w)
+        H[diag] = kdot(n, Ww, V[ipos])   # hᵢ.ₖ = ⟨MANvₖ, vᵢ⟩_W
         kaxpy!(n, -H[diag], V[ipos], w)  # w ← w - hᵢ.ₖvᵢ
       end
 
@@ -243,14 +250,16 @@ kwargs_workspace_diom = (:memory,)
         for i = max(1, iter-mem+1) : iter
           ipos = mod(i-1, mem) + 1
           diag = iter - i + 1
-          Htmp = kdot(n, w, V[ipos])
+          WisI || kmul!(Ww, W, w)
+          Htmp = kdot(n, Ww, V[ipos])
           H[diag] += Htmp
           kaxpy!(n, -Htmp, V[ipos], w)
         end
       end
 
       # Compute hₖ₊₁.ₖ and vₖ₊₁.
-      Haux = knorm(n, w)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+      WisI || kmul!(Ww, W, w)
+      Haux = knorm_elliptic(n, w, Ww)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖_W
       if Haux ≠ 0   # hₖ₊₁.ₖ = 0 ⇒ "lucky breakdown"
         kdivcopy!(n, V[next_pos], w, Haux)  # vₖ₊₁ = w / hₖ₊₁.ₖ
       end
@@ -342,7 +351,7 @@ kwargs_workspace_diom = (:memory,)
 
       # Compute residual norm.
       if !on_boundary
-        rNorm = Haux * abs(ξ / H[1])  # ‖ M(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ξₖ / uₖ.ₖ| 
+        rNorm = Haux * abs(ξ / H[1])  # ‖ M(b - Axₖ) ‖_W = hₖ₊₁.ₖ * |ξₖ / uₖ.ₖ| 
         (radius > 0) && (qx -= abs(ξ)^2 / abs(H[1]) / 2)  # q(xₖ) = q(xₖ₋₁) -0.5*ξₖ²/uₖ.ₖ
       else 
         rNorm = sqrt(abs(rNorm - abs(ξ) * H[1] * σ)^2 + abs(Haux * ξ * σ)^2)  # ‖ M(b - Axₖ) ‖₂ if we hit the boundary

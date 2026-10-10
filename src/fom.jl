@@ -12,7 +12,7 @@ export fom, fom!
 
 """
     (x, stats) = fom(A, b::AbstractVector{FC};
-                     memory::Int=20, M=I, N=I, ldiv::Bool=false,
+                     memory::Int=20, M=I, N=I, W=I, ldiv::Bool=false,
                      restart::Bool=false, reorthogonalization::Bool=false,
                      atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                      timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
@@ -49,6 +49,7 @@ For an in-place variant that reuses memory across solves, see [`fom!`](@ref).
 * `memory`: if `restart = true`, the restarted version FOM(k) is used with `k = memory`. If `restart = false`, the parameter `memory` should be used as a hint of the number of iterations to limit dynamic memory allocations. Additional storage will be allocated if the number of iterations exceeds `memory`;
 * `M`: linear operator that models a nonsingular matrix of size `n` used for left preconditioning;
 * `N`: linear operator that models a nonsingular matrix of size `n` used for right preconditioning;
+* `W`: linear operator that models a Hermitian positive definite matrix of size `n` defining the inner product ⟨x, y⟩_W = xᴴWy of the Krylov basis; the residual norms and the stopping tolerances refer to the norm ‖·‖_W. `W` is applied with `mul!`;
 * `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
 * `restart`: restart the method after `memory` iterations;
 * `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against all previous vectors;
@@ -95,6 +96,7 @@ def_optargs_fom = (:(x0::AbstractVector),)
 
 def_kwargs_fom = (:(; M = I                            ),
                   :(; N = I                            ),
+                  :(; W = I                            ),
                   :(; ldiv::Bool = false               ),
                   :(; restart::Bool = false            ),
                   :(; reorthogonalization::Bool = false),
@@ -114,7 +116,7 @@ def_kwargs_workspace_fom = extract_parameters.(def_kwargs_workspace_fom)
 
 args_fom = (:A, :b)
 optargs_fom = (:x0,)
-kwargs_fom = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_fom = (:M, :N, :W, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 kwargs_workspace_fom = (:memory,)
 
 @eval begin
@@ -133,6 +135,7 @@ kwargs_workspace_fom = (:memory,)
     # Check M = Iₙ and N = Iₙ
     MisI = (M === I)
     NisI = (N === I)
+    WisI = (W === I)
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
@@ -140,7 +143,7 @@ kwargs_workspace_fom = (:memory,)
 
     # Set up workspace.
     allocate_if(!MisI  , workspace, :q , S, workspace.x)  # The length of q is n
-    allocate_if(!NisI  , workspace, :p , S, workspace.x)  # The length of p is n
+    allocate_if(!NisI || !WisI, workspace, :p , S, workspace.x)  # The length of p is n
     allocate_if(restart, workspace, :Δx, S, workspace.x)  # The length of Δx is n
     Δx, x, w, V, z = workspace.Δx, workspace.x, workspace.w, workspace.V, workspace.z
     l, U, stats = workspace.l, workspace.U, workspace.stats
@@ -150,6 +153,7 @@ kwargs_workspace_fom = (:memory,)
     q  = MisI ? w : workspace.q
     r₀ = MisI ? w : workspace.q
     xr = restart ? Δx : x
+    Wq = WisI ? q : workspace.p  # Wq = W * q, only used outside of the products with N
 
     # Initial solution x₀.
     kfill!(x, zero(FC))
@@ -163,7 +167,8 @@ kwargs_workspace_fom = (:memory,)
       kcopy!(n, w, b)  # w ← b
     end
     MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M(b - Ax₀)
-    β = knorm(n, r₀)                    # β = ‖r₀‖₂
+    WisI || kmul!(Wq, W, r₀)
+    β = knorm_elliptic(n, r₀, Wq)       # β = ‖r₀‖_W
 
     rNorm = β
     history && push!(rNorms, β)
@@ -217,13 +222,14 @@ kwargs_workspace_fom = (:memory,)
           kmul!(w, A, x)
           kaxpby!(n, one(FC), b, -one(FC), w)
           MisI || mulorldiv!(r₀, M, w, ldiv)
-          β = knorm(n, r₀)
+          WisI || kmul!(Wq, W, r₀)
+          β = knorm_elliptic(n, r₀, Wq)
         end
       end
 
       # Initial ζ₁ and v₁
       z[1] = β
-      kdivcopy!(n, V[1], r₀, rNorm)  # v₁ = r₀ / ‖r₀‖
+      kdivcopy!(n, V[1], r₀, β)  # v₁ = r₀ / ‖r₀‖, with ‖r₀‖ recomputed after a restart
 
       npass = npass + 1
       inner_iter = 0
@@ -251,21 +257,24 @@ kwargs_workspace_fom = (:memory,)
         kmul!(w, A, p)                                 # w ← ANvₖ
         MisI || mulorldiv!(q, M, w, ldiv)              # q ← MANvₖ
         for i = 1 : inner_iter
-          U[nr+i] = kdot(n, V[i], q)      # hᵢₖ = (vᵢ)ᴴq
+          WisI || kmul!(Wq, W, q)
+          U[nr+i] = kdot(n, V[i], Wq)     # hᵢₖ = (vᵢ)ᴴWq
           kaxpy!(n, -U[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
         end
 
         # Reorthogonalization of the Krylov basis.
         if reorthogonalization
           for i = 1 : inner_iter
-            Htmp = kdot(n, V[i], q)
+            WisI || kmul!(Wq, W, q)
+            Htmp = kdot(n, V[i], Wq)
             U[nr+i] += Htmp
             kaxpy!(n, -Htmp, V[i], q)
           end
         end
 
         # Compute hₖ₊₁.ₖ
-        Hbis = knorm(n, q)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+        WisI || kmul!(Wq, W, q)
+        Hbis = knorm_elliptic(n, q, Wq)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖_W
 
         # Update the LU factorization of Hₖ.
         if inner_iter ≥ 2
@@ -280,7 +289,7 @@ kwargs_workspace_fom = (:memory,)
         l[inner_iter] = Hbis / U[nr+inner_iter]
 
         # Update residual norm estimate.
-        # ‖ M(b - Axₖ) ‖₂ = hₖ₊₁.ₖ * |ζₖ / uₖ.ₖ|
+        # ‖ M(b - Axₖ) ‖_W = hₖ₊₁.ₖ * |ζₖ / uₖ.ₖ|
         rNorm = Hbis * abs(z[inner_iter] / U[nr+inner_iter])
         history && push!(rNorms, rNorm)
 

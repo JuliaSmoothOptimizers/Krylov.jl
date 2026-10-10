@@ -12,7 +12,7 @@ export fgmres, fgmres!
 
 """
     (x, stats) = fgmres(A, b::AbstractVector{FC};
-                        memory::Int=20, M=I, N=I, ldiv::Bool=false,
+                        memory::Int=20, M=I, N=I, W=I, ldiv::Bool=false,
                         restart::Bool=false, reorthogonalization::Bool=false,
                         atol::T=√eps(T), rtol::T=√eps(T), itmax::Int=0,
                         timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
@@ -56,6 +56,7 @@ For an in-place variant that reuses memory across solves, see [`fgmres!`](@ref).
 * `memory`: if `restart = true`, the restarted version FGMRES(k) is used with `k = memory`. If `restart = false`, the parameter `memory` should be used as a hint of the number of iterations to limit dynamic memory allocations. Additional storage will be allocated if the number of iterations exceeds `memory`;
 * `M`: linear operator that models a nonsingular matrix of size `n` used for left preconditioning;
 * `N`: linear operator that models a nonsingular matrix of size `n` used for right preconditioning;
+* `W`: linear operator that models a Hermitian positive definite matrix of size `n` defining the inner product ⟨x, y⟩_W = xᴴWy. FGMRES minimizes the residual in the norm ‖·‖_W and the stopping tolerances apply to this norm. `W` is applied with `mul!`;
 * `ldiv`: define whether the preconditioners use `ldiv!` or `mul!`;
 * `restart`: restart the method after `memory` iterations;
 * `reorthogonalization`: reorthogonalize the new vectors of the Krylov basis against all previous vectors;
@@ -102,6 +103,7 @@ def_optargs_fgmres = (:(x0::AbstractVector),)
 
 def_kwargs_fgmres = (:(; M = I                            ),
                      :(; N = I                            ),
+                     :(; W = I                            ),
                      :(; ldiv::Bool = false               ),
                      :(; restart::Bool = false            ),
                      :(; reorthogonalization::Bool = false),
@@ -121,7 +123,7 @@ def_kwargs_workspace_fgmres = extract_parameters.(def_kwargs_workspace_fgmres)
 
 args_fgmres = (:A, :b)
 optargs_fgmres = (:x0,)
-kwargs_fgmres = (:M, :N, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_fgmres = (:M, :N, :W, :ldiv, :restart, :reorthogonalization, :atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
 kwargs_workspace_fgmres = (:memory,)
 
 @eval begin
@@ -137,15 +139,16 @@ kwargs_workspace_fgmres = (:memory,)
     length(b) == m || error("Inconsistent problem size")
     (verbose > 0) && @printf(iostream, "FGMRES: system of size %d\n", n)
 
-    # Check M = Iₙ
+    # Check M = Iₙ and W = Iₙ
     MisI = (M === I)
+    WisI = (W === I)
 
     # Check type consistency
     eltype(A) == FC || @warn "eltype(A) ≠ $FC. This could lead to errors or additional allocations in operator-vector products."
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI  , workspace, :q , S, workspace.x)  # The length of q is n
+    allocate_if(!MisI || !WisI, workspace, :q , S, workspace.x)  # The length of q is n
     allocate_if(restart, workspace, :Δx, S, workspace.x)  # The length of Δx is n
     Δx, x, w, V, Z = workspace.Δx, workspace.x, workspace.w, workspace.V, workspace.Z
     z, c, s, R, stats = workspace.z, workspace.c, workspace.s, workspace.R, workspace.stats
@@ -155,6 +158,7 @@ kwargs_workspace_fgmres = (:memory,)
     q  = MisI ? w : workspace.q
     r₀ = MisI ? w : workspace.q
     xr = restart ? Δx : x
+    Wq = WisI ? q : (MisI ? workspace.q : w)  # Wq = W * q, w is free once q ← Mw
 
     # Initial solution x₀.
     kfill!(x, zero(FC))
@@ -168,7 +172,8 @@ kwargs_workspace_fgmres = (:memory,)
       kcopy!(n, w, b)  # w ← b
     end
     MisI || mulorldiv!(r₀, M, w, ldiv)  # r₀ = M(b - Ax₀)
-    β = knorm(n, r₀)                    # β = ‖r₀‖₂
+    WisI || kmul!(Wq, W, r₀)
+    β = knorm_elliptic(n, r₀, Wq)       # β = ‖r₀‖_W
 
     rNorm = β
     history && push!(rNorms, β)
@@ -224,13 +229,14 @@ kwargs_workspace_fgmres = (:memory,)
           kmul!(w, A, x)
           kaxpby!(n, one(FC), b, -one(FC), w)
           MisI || mulorldiv!(r₀, M, w, ldiv)
-          β = knorm(n, r₀)
+          WisI || kmul!(Wq, W, r₀)
+          β = knorm_elliptic(n, r₀, Wq)
         end
       end
 
       # Initial ζ₁ and v₁
       z[1] = β
-      kdivcopy!(n, V[1], r₀, rNorm)  # v₁ = r₀ / ‖r₀‖
+      kdivcopy!(n, V[1], r₀, β)  # v₁ = r₀ / ‖r₀‖, with ‖r₀‖ recomputed after a restart
 
       npass = npass + 1
       workspace.inner_iter = 0
@@ -260,21 +266,24 @@ kwargs_workspace_fgmres = (:memory,)
         kmul!(w, A, Z[inner_iter])                         # w  ← Azₖ
         MisI || mulorldiv!(q, M, w, ldiv)                  # q  ← MAzₖ
         for i = 1 : inner_iter
-          R[nr+i] = kdot(n, V[i], q)      # hᵢₖ = (vᵢ)ᴴq
+          WisI || kmul!(Wq, W, q)
+          R[nr+i] = kdot(n, V[i], Wq)     # hᵢₖ = (vᵢ)ᴴWq
           kaxpy!(n, -R[nr+i], V[i], q)    # q ← q - hᵢₖvᵢ
         end
 
         # Reorthogonalization of the basis.
         if reorthogonalization
           for i = 1 : inner_iter
-            Htmp = kdot(n, V[i], q)
+            WisI || kmul!(Wq, W, q)
+            Htmp = kdot(n, V[i], Wq)
             R[nr+i] += Htmp
             kaxpy!(n, -Htmp, V[i], q)
           end
         end
 
         # Compute hₖ₊₁.ₖ
-        Hbis = knorm(n, q)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖₂
+        WisI || kmul!(Wq, W, q)
+        Hbis = knorm_elliptic(n, q, Wq)  # hₖ₊₁.ₖ = ‖vₖ₊₁‖_W
 
         # Update the QR factorization of Hₖ₊₁.ₖ.
         # Apply previous Givens reflections Ωᵢ.
@@ -296,7 +305,7 @@ kwargs_workspace_fgmres = (:memory,)
         z[inner_iter] =      c[inner_iter]  * z[inner_iter]
 
         # Update residual norm estimate.
-        # ‖ M⁻¹(b - Axₖ) ‖₂ = |ζₖ₊₁|
+        # ‖ M⁻¹(b - Axₖ) ‖_W = |ζₖ₊₁|
         rNorm = abs(ζₖ₊₁)
         history && push!(rNorms, rNorm)
 
