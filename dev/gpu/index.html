@@ -165,7 +165,27 @@ if oneAPI.functional()
 
   # Solve a dense least-squares problem on an Intel GPU
   x, stats = lsqr(A_gpu, b_gpu)
-end</code></pre><div class="admonition is-info" id="Note-f042903143414fd3"><header class="admonition-header">Note<a class="admonition-anchor" href="#Note-f042903143414fd3" title="Permalink"></a></header><div class="admonition-body"><p>The library <code>oneMKL</code> is interfaced in oneAPI.jl and accelerates linear algebra operations on Intel GPUs. Only dense linear systems are supported for the time being because sparse linear algebra routines are not interfaced yet.</p></div></div><h2 id="Apple-M1-GPUs"><a class="docs-heading-anchor" href="#Apple-M1-GPUs">Apple M1 GPUs</a><a id="Apple-M1-GPUs-1"></a><a class="docs-heading-anchor-permalink" href="#Apple-M1-GPUs" title="Permalink"></a></h2><p>All solvers in Krylov.jl can be used with <a href="https://github.com/JuliaGPU/Metal.jl">Metal.jl</a> and allow computations on Apple M1 GPUs. Problems stored in CPU format (<code>Matrix</code> and <code>Vector</code>) must first be converted to the related GPU format (<code>MtlMatrix</code> and <code>MtlVector</code>).</p><pre><code class="language-julia hljs">using Krylov, Metal
+end</code></pre><p>Sparse matrices have a specific storage on Intel GPUs (<code>oneSparseMatrixCSR</code> or <code>oneSparseMatrixCSC</code>):</p><pre><code class="language-julia hljs">using Krylov, oneAPI
+using oneAPI.oneMKL, SparseArrays
+
+if oneAPI.functional()
+  T = Float32  # oneAPI.jl also works with ComplexF32
+  m = 200
+  n = 100
+
+  # CPU Arrays
+  A_cpu = sprand(T, m, n, 0.3)
+  b_cpu = rand(T, m)
+
+  # GPU Arrays
+  A_csr_gpu = oneSparseMatrixCSR(A_cpu)
+  A_csc_gpu = oneSparseMatrixCSC(A_cpu)
+  b_gpu = oneVector(b_cpu)
+
+  # Solve a rectangular and sparse system on an Intel GPU
+  x_csr, stats_csr = lsqr(A_csr_gpu, b_gpu)
+  x_csc, stats_csc = lsmr(A_csc_gpu, b_gpu)
+end</code></pre><div class="admonition is-info" id="Note-92af9800a55d6f9f"><header class="admonition-header">Note<a class="admonition-anchor" href="#Note-92af9800a55d6f9f" title="Permalink"></a></header><div class="admonition-body"><p>The library <code>oneMKL</code> is interfaced in oneAPI.jl and accelerates dense and sparse linear algebra operations on Intel GPUs. Sparse matrix-vector products are only supported for the formats <code>oneSparseMatrixCSR</code> and <code>oneSparseMatrixCSC</code>; <code>oneSparseMatrixCSC</code> requires oneMKL 2025.3 or later. A <code>oneSparseMatrixCOO</code> can be created but cannot be used with Krylov.jl because oneMKL does not provide products for this format.</p></div></div><h2 id="Apple-M1-GPUs"><a class="docs-heading-anchor" href="#Apple-M1-GPUs">Apple M1 GPUs</a><a id="Apple-M1-GPUs-1"></a><a class="docs-heading-anchor-permalink" href="#Apple-M1-GPUs" title="Permalink"></a></h2><p>All solvers in Krylov.jl can be used with <a href="https://github.com/JuliaGPU/Metal.jl">Metal.jl</a> and allow computations on Apple M1 GPUs. Problems stored in CPU format (<code>Matrix</code> and <code>Vector</code>) must first be converted to the related GPU format (<code>MtlMatrix</code> and <code>MtlVector</code>).</p><pre><code class="language-julia hljs">using Krylov, Metal
 
 T = Float32  # Metal.jl also works with ComplexF32
 n = 10
