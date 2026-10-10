@@ -103,6 +103,35 @@ end
       @test(resid ≤ fgmres_tol)
       @test(stats.solved)
 
+      # Inner product ⟨x, y⟩_W = xᴴWy
+      A, b = nonsymmetric_indefinite(FC=FC)
+      n = length(b)
+      s = [10.0^((-1)^i * (i % 7)) for i = 1:n]
+      W = Diagonal(1 ./ s.^2)
+      Wnorm(r) = sqrt(real(dot(r, W * r)))
+      for k in (1, 5, n)
+        (x, stats) = fgmres(A, b, W=W, itmax=k, memory=k, atol=0.0, rtol=0.0, history=true)
+        # FGMRES in the inner product of W = S⁻² is FGMRES on S⁻¹AS y = S⁻¹b with x = Sy
+        (y, _) = fgmres(A, b, M=Diagonal(1 ./ s), N=Diagonal(s), itmax=k, memory=k, atol=0.0, rtol=0.0)
+        @test norm((x - y) ./ s) ≤ 1.0e-10 * norm(y ./ s)
+        @test stats.residuals[1] ≈ Wnorm(b)
+        @test stats.residuals[end] ≈ Wnorm(b - A * x) atol=1.0e-8 * Wnorm(b)
+      end
+
+      # Dense inner product with and without left preconditioning, warm start, restart and reorthogonalization
+      A, b, M = square_preconditioned(FC=FC)
+      n = length(b)
+      B = FC[sin(i + 2j) for i = 1:n, j = 1:n]
+      W = B' * B + I
+      Wnorm_dense(r) = sqrt(real(dot(r, W * r)))
+      x0 = FC[cos(i) for i = 1:n]
+      for MM in (I, M), restart in (false, true), reorthogonalization in (false, true)
+        (x, stats) = fgmres(A, b, x0, M=MM, W=W, restart=restart, reorthogonalization=reorthogonalization, memory=5, history=true)
+        @test stats.residuals[1] ≈ Wnorm_dense(MM * (b - A * x0))
+        @test Wnorm_dense(MM * (b - A * x)) ≤ fgmres_tol * Wnorm_dense(MM * b)
+        @test(stats.solved)
+      end
+
       # Restart
       for restart ∈ (false, true)
         memory = 10
@@ -148,6 +177,14 @@ end
       r = b - A * x
       resid = norm(r) / norm(b)
       @test(resid ≤ fgmres_tol)
+      @test(stats.solved)
+
+      # Flexible preconditioning with an inner product
+      W = Diagonal(FC[1 + i % 3 for i = 1:length(b)])
+      N = FlexiblePreconditioner(J, 1.0)
+      (x, stats) = fgmres(A, b, N=N, W=W)
+      r = b - A * x
+      @test sqrt(real(dot(r, W * r))) ≤ fgmres_tol * sqrt(real(dot(b, W * b)))
       @test(stats.solved)
     end
   end

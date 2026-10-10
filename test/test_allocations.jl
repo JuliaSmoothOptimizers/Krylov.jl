@@ -294,6 +294,12 @@
         fgmres!(workspace, A, b)  # warmup
         inplace_fgmres_bytes = @allocated fgmres!(workspace, A, b)
         @test inplace_fgmres_bytes == 0
+
+        # The inner product W only needs the vector q
+        W = Diagonal(ones(FC, n))
+        fgmres!(workspace, A, b; W)  # warmup
+        inplace_fgmres_bytes = @allocated fgmres!(workspace, A, b; W)
+        @test inplace_fgmres_bytes == 0
       end
 
       @testset "CGS" begin
