@@ -556,6 +556,23 @@
         @test inplace_bilq_bytes == 0
       end
 
+      @testset "SQMR" begin
+        # SQMR needs 6 n-vectors: r, z, p, w, d, x
+        storage_sqmr_bytes(n) = nbits_FC * 6 * n
+
+        expected_sqmr_bytes = storage_sqmr_bytes(n)
+        sqmr(A, b)  # warmup
+        actual_sqmr_bytes = @allocated sqmr(A, b)
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_sqmr_bytes ≤ actual_sqmr_bytes ≤ 1.02 * expected_sqmr_bytes
+        end
+
+        workspace = SqmrWorkspace(A, b)
+        sqmr!(workspace, A, b)  # warmup
+        inplace_sqmr_bytes = @allocated sqmr!(workspace, A, b)
+        @test inplace_sqmr_bytes == 0
+      end
+
       @testset "QMR" begin
         # QMR needs:
         # - 9 n-vectors: uₖ₋₁, uₖ, vₖ₋₁, vₖ, x, wₖ₋₁, wₖ, p, q
