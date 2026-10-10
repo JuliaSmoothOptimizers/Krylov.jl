@@ -15,8 +15,18 @@
 # Liu, Yang, and Roosta, MINRES: from negative curvature detection to monotonicity properties,
 # SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
 #
+# `complex_symmetric = true` runs the same recurrence on the conjugate
+# Bunse-Gerstner-Stover (BGS) process instead of the Hermitian Lanczos
+# process, for complex symmetric A (transpose(A) = A). This specializes
+# Choi's CS-MINRES-QLP to the optimized two-direction MINRES-QLP recurrence;
+# see
+#
+# S.-C. T. Choi, Minimal residual methods for complex symmetric, skew symmetric and skew Hermitian systems.
+# Technical Report ANL/MCS-P3028-0812, Computation Institute, University of Chicago, 2013. arXiv:1304.6782.
+#
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
-# Montreal, September 2019.
+# Sou-Cheng T. Choi, <schoi32@illinoistech.edu>
+# Montreal, September 2019 -- Chicago, October 2026.
 
 export minres_qlp, minres_qlp!
 
@@ -26,7 +36,8 @@ export minres_qlp, minres_qlp!
                             linesearch::Bool=false, λ::T=zero(T), atol::T=√eps(T),
                             rtol::T=√eps(T), itmax::Int=0,
                             timemax::Float64=Inf, verbose::Int=0, history::Bool=false,
-                            callback=workspace->false, iostream::IO=kstdout)
+                            callback=workspace->false, iostream::IO=kstdout,
+                            complex_symmetric::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -35,11 +46,19 @@ export minres_qlp, minres_qlp!
 
 MINRES-QLP can be warm-started from an initial guess `x0` where `kwargs` are the same keyword arguments as above.
 
-MINRES-QLP is the only method based on the Lanczos process that returns the minimum-norm
-solution on singular inconsistent systems (A + λI)x = b of size n, where λ is a shift parameter.
+For Hermitian `A`, MINRES-QLP is the only method based on the Lanczos process that, in exact
+arithmetic, returns the minimum-norm solution on singular inconsistent systems
+(A + λI)x = b of size n, where λ is a shift parameter.
 It is significantly more complex but can be more reliable than MINRES when A is ill-conditioned.
 
 M also indicates the weighted norm in which residuals are measured.
+
+If `complex_symmetric = true`, `A` is complex symmetric (`transpose(A) == A`)
+instead of Hermitian, and MINRES-QLP runs on the conjugate Bunse-Gerstner-Stover
+(BGS) process instead of the Hermitian Lanczos process. This specializes Choi's
+CS-MINRES-QLP recurrence; `complex_symmetric = true` requires `FC <: Complex`,
+`M = I`, and `linesearch = false`. A real symmetric matrix is Hermitian, so
+use `complex_symmetric = false` (the default) for it.
 
 #### Interface
 
@@ -49,7 +68,7 @@ For an in-place variant that reuses memory across solves, see [`minres_qlp!`](@r
 
 #### Input arguments
 
-* `A`: a linear operator that models a Hermitian matrix of dimension `n`;
+* `A`: a linear operator that models a Hermitian matrix of dimension `n`, or a complex symmetric matrix if `complex_symmetric = true`;
 * `b`: a vector of length `n`.
 
 #### Optional argument
@@ -58,13 +77,13 @@ For an in-place variant that reuses memory across solves, see [`minres_qlp!`](@r
 
 #### Keyword arguments
 
-* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
+* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning; not supported if `complex_symmetric = true`;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `Artol`: relative stopping tolerance based on the Aᴴ-residual norm;
-* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. If `true` and nonpositive curvature is detected, the behavior depends on the iteration:
+* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. Not supported if `complex_symmetric = true`. If `true` and nonpositive curvature is detected, the behavior depends on the iteration:
  – at iteration k = 1, the solver takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1;
  – at iteration k > 1, the solver returns the solution from iteration k – 1, the residual from iteration k is a nonpositive curvature direction stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
@@ -72,7 +91,8 @@ For an in-place variant that reuses memory across solves, see [`minres_qlp!`](@r
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
-* `iostream`: stream to which output is logged.
+* `iostream`: stream to which output is logged;
+* `complex_symmetric`: run MINRES-QLP on the conjugate BGS process for a complex symmetric `A` instead of the Hermitian Lanczos process.
 
 #### Output arguments
 
@@ -83,8 +103,9 @@ For an in-place variant that reuses memory across solves, see [`minres_qlp!`](@r
 
 * S.-C. T. Choi, *Iterative methods for singular linear equations and least-squares problems*, Ph.D. thesis, ICME, Stanford University, 2006.
 * S.-C. T. Choi, C. C. Paige and M. A. Saunders, [*MINRES-QLP: A Krylov subspace method for indefinite or singular symmetric systems*](https://doi.org/10.1137/100787921), SIAM Journal on Scientific Computing, Vol. 33(4), pp. 1810--1836, 2011.
-* S.-C. T. Choi and M. A. Saunders, [*Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems*](https://doi.org/10.1145/2527267), ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014.
+* S.-C. T. Choi and M. A. Saunders, [*Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems*](https://doi.org/10.1145/2527267), ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014 (reference MATLAB implementation at the [SOL MINRES-QLP page](https://web.stanford.edu/group/SOL/software/minresqlp/minresqlp-matlab/)).
 * Y. Liu and F. Roosta, [*MINRES: From Negative Curvature Detection to Monotonicity Properties*](https://doi.org/10.1137/21M143666X), SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
+* S.-C. T. Choi, [*Minimal residual methods for complex symmetric, skew symmetric and skew Hermitian systems*](https://arxiv.org/abs/1304.6782), Technical Report ANL/MCS-P3028-0812, Computation Institute, University of Chicago, 2013, for `complex_symmetric = true`.
 
 """
 function minres_qlp end
@@ -119,16 +140,40 @@ def_kwargs_minres_qlp = (:(; M = I                        ),
                          :(; verbose::Int = 0             ),
                          :(; history::Bool = false        ),
                          :(; callback = workspace -> false),
-                         :(; iostream::IO = kstdout       ))
+                         :(; iostream::IO = kstdout       ),
+                         :(; complex_symmetric::Bool = false))
 
 def_kwargs_minres_qlp = extract_parameters.(def_kwargs_minres_qlp)
 
 args_minres_qlp = (:A, :b)
 optargs_minres_qlp = (:x0,)
-kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbose, :history, :callback, :iostream, :complex_symmetric)
 
 @eval begin
   function minres_qlp!(workspace :: MinresQlpWorkspace{T,FC,S}, $(def_args_minres_qlp...); $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    if complex_symmetric
+      FC <: Complex || error("complex_symmetric = true requires a complex element type")
+      M === I || throw(ArgumentError("complex_symmetric = true does not support preconditioning"))
+      linesearch && throw(ArgumentError("complex_symmetric = true does not support linesearch"))
+      return _minres_qlp!(ComplexSymmetricStructure(), workspace, A, b, M, ldiv, linesearch, λ,
+                          atol, rtol, Artol, itmax, timemax, verbose, history, callback, iostream)
+    end
+    return _minres_qlp!(HermitianStructure(), workspace, A, b, M, ldiv, linesearch, λ,
+                        atol, rtol, Artol, itmax, timemax, verbose, history, callback, iostream)
+  end
+end
+
+# Shared kernel for the Hermitian Lanczos process and the conjugate BGS
+# process. The two structures differ only at the sites marked with a
+# trailing comment referencing a hook (lanczos_mul!, lanczos_dot,
+# trial_conj!, lanczos_scalar) or a conj() that is the identity for real
+# scalars, so it is the identity on the Hermitian path.
+function _minres_qlp!(structure :: LanczosStructure, workspace :: MinresQlpWorkspace{T,FC,S}, A, b :: AbstractVector{FC},
+                      M, ldiv :: Bool, linesearch :: Bool, λ :: T, atol :: T, rtol :: T, Artol :: T,
+                      itmax :: Int, timemax :: Float64, verbose :: Int, history :: Bool, callback,
+                      iostream :: IO) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+
+    Tr = lanczos_scalar(structure, T, FC)
 
     # Timer
     start_time = time_ns()
@@ -210,15 +255,15 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
 
     # Set up workspace.
     kfill!(M⁻¹vₖ₋₁, zero(FC))
-    ζbarₖ = βₖ
-    ξₖ₋₁ = zero(T)
-    τₖ₋₂ = τₖ₋₁ = τₖ = zero(T)
-    ψbarₖ₋₂ = zero(T)
-    μbisₖ₋₂ = μbarₖ₋₁ = zero(T)
+    ζbarₖ = Tr(βₖ)
+    ξₖ₋₁ = zero(Tr)
+    τₖ₋₂ = τₖ₋₁ = τₖ = zero(Tr)
+    ψbarₖ₋₂ = zero(Tr)
+    μbisₖ₋₂ = μbarₖ₋₁ = zero(Tr)
     kfill!(wₖ₋₁, zero(FC))
     kfill!(wₖ, zero(FC))
-    cₖ₋₂ = cₖ₋₁ = cₖ = one(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ
-    sₖ₋₂ = sₖ₋₁ = sₖ = zero(T)  # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+    cₖ₋₂ = cₖ₋₁ = cₖ = one(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ; always real
+    sₖ₋₂ = sₖ₋₁ = sₖ = zero(Tr) # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
 
     # Tolerance for breakdown detection.
     btol = eps(T)^(3//4)
@@ -239,20 +284,19 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
       # Update iteration index.
       iter = iter + 1
 
-      # Continue the preconditioned Lanczos process.
+      # Continue the Lanczos process (Hermitian structure) or the conjugate
+      # BGS process (complex-symmetric structure).
       # M(A + λI)Vₖ = Vₖ₊₁Tₖ₊₁.ₖ
-      # βₖ₊₁vₖ₊₁ = M(A + λI)vₖ - αₖvₖ - βₖvₖ₋₁
+      # βₖ₊₁vₖ₊₁ = M(A + λI)vₖ - αₖvₖ - βₖvₖ₋₁    (Hermitian: vₖ throughout)
+      # βₖ₊₁vₖ₊₁ = M(A + λI)v̄ₖ - αₖvₖ - βₖvₖ₋₁    (complex symmetric)
 
-      kmul!(p, A, vₖ)        # p ← Avₖ
-      if λ ≠ 0
-        kaxpy!(n, λ, vₖ, p)  # p ← p + λvₖ
-      end
+      lanczos_mul!(structure, n, p, A, vₖ, λ)  # p ← (A + λI)vₖ, or (A + λI)v̄ₖ; vₖ restored
 
       if iter ≥ 2
         kaxpy!(n, -βₖ, M⁻¹vₖ₋₁, p)  # p ← p - βₖ * M⁻¹vₖ₋₁
       end
 
-      αₖ = kdotr(n, vₖ, p)  # αₖ = ⟨vₖ,p⟩
+      αₖ = lanczos_dot(structure, n, vₖ, p)  # αₖ = ⟨vₖ,p⟩, real part only for the Hermitian structure
 
       kaxpy!(n, -αₖ, M⁻¹vₖ, p)  # p ← p - αₖM⁻¹vₖ
 
@@ -266,7 +310,7 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
         MisI || kdiv!(m, p, βₖ₊₁)
       end
 
-      ANorm² = ANorm² + αₖ * αₖ + βₖ * βₖ + βₖ₊₁ * βₖ₊₁
+      ANorm² = ANorm² + abs2(αₖ) + βₖ * βₖ + βₖ₊₁ * βₖ₊₁
 
       # Update the QR factorization of Tₖ₊₁.ₖ = Qₖ [ Rₖ ].
       #                                            [ Oᵀ ]
@@ -283,6 +327,12 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
       # If k = 1, we don't have any previous reflection.
       # If k = 2, we apply the last reflection.
       # If k ≥ 3, we only apply the two previous reflections.
+      #
+      # For the complex-symmetric structure, every reflection below uses the
+      # convention [c s; conj(s) -c] with c real (`sym_givens`); a bare `s`
+      # always belongs to the "first output row" of a reflection, and every
+      # "second output row" use of a sine is conjugated. conj() is the
+      # identity on the real sines of the Hermitian structure.
 
       # Apply previous Givens reflections Qₖ₋₂.ₖ₋₁
       if iter ≥ 3
@@ -297,7 +347,7 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
         # [cₖ₋₁  sₖ₋₁] [γbarₖ₋₁] = [γₖ₋₁ ]
         # [sₖ₋₁ -cₖ₋₁] [   αₖ  ]   [λbarₖ]
         γₖ₋₁  = cₖ₋₁ * γbarₖ₋₁ + sₖ₋₁ * αₖ
-        λbarₖ = sₖ₋₁ * γbarₖ₋₁ - cₖ₋₁ * αₖ
+        λbarₖ = conj(sₖ₋₁) * γbarₖ₋₁ - cₖ₋₁ * αₖ
       end
       iter == 1 && (λbarₖ = αₖ)
 
@@ -338,7 +388,7 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
       # [cₖ  sₖ] [ζbarₖ] = [   ζₖ  ]
       # [sₖ -cₖ] [  0  ]   [ζbarₖ₊₁]
       ζₖ      = cₖ * ζbarₖ
-      ζbarₖ₊₁ = sₖ * ζbarₖ
+      ζbarₖ₊₁ = conj(sₖ) * ζbarₖ
 
       # check for nonpositive curvature
       if linesearch
@@ -354,30 +404,41 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
       # [ •        •  •  • ϵₖ₋₂]   [ •    •    •    •   μₖ₋₂     •      •  ]
       # [ •           •  • γₖ₋₁]   [ •         •    •   ψₖ₋₂  μbisₖ₋₁   0  ]
       # [ 0  •  •  •  •  0  λₖ ]   [ 0    •    •    0   ρₖ₋₂  ψbarₖ₋₁ μbarₖ]
+      #
+      # For the complex-symmetric structure this stage factorizes Rₖ as if
+      # transposed, which becomes conjugate-transposed: feed conj() of every
+      # entry of Rₖ (λₖ, γₖ₋₁, ϵₖ₋₂) into this stage, and conjugate every
+      # pivot and projected right-hand-side entry this stage produces
+      # (μbisₖ₋₁, μₖ₋₂, ψbarₖ₋₁) on the way out, so that downstream uses
+      # that do not themselves conjugate (τₖ, the direction updates) see
+      # already-conjugated values, matching Rₖᴴ instead of Rₖᵗ.
 
       if iter == 1
         μbarₖ = λₖ
       elseif iter == 2
         # [μbar₁ γ₁] [cp₂  sp₂] = [μbis₁   0  ]
         # [  0   λ₂] [sp₂ -cp₂]   [ψbar₁ μbar₂]
-        (cpₖ, spₖ, μbisₖ₋₁) = sym_givens(μbarₖ₋₁, γₖ₋₁)
-        ψbarₖ₋₁ =  spₖ * λₖ
+        (cpₖ, spₖ, μbisₖ₋₁) = sym_givens(conj(μbarₖ₋₁), conj(γₖ₋₁))
+        μbisₖ₋₁ = conj(μbisₖ₋₁)
+        ψbarₖ₋₁ =  conj(spₖ) * λₖ
         μbarₖ   = -cpₖ * λₖ
       else
         # [μbisₖ₋₂   0     ϵₖ₋₂] [cpₖ  0   spₖ]   [μₖ₋₂   0     0 ]
         # [ψbarₖ₋₂ μbarₖ₋₁ γₖ₋₁] [ 0   1    0 ] = [ψₖ₋₂ μbarₖ₋₁ θₖ]
         # [  0       0      λₖ ] [spₖ  0  -cpₖ]   [ρₖ₋₂   0     ηₖ]
-        (cpₖ, spₖ, μₖ₋₂) = sym_givens(μbisₖ₋₂, ϵₖ₋₂)
-        ψₖ₋₂ =  cpₖ * ψbarₖ₋₂ + spₖ * γₖ₋₁
+        (cpₖ, spₖ, μₖ₋₂) = sym_givens(conj(μbisₖ₋₂), conj(ϵₖ₋₂))
+        μₖ₋₂ = conj(μₖ₋₂)
+        ψₖ₋₂ =  cpₖ * ψbarₖ₋₂ + conj(spₖ) * γₖ₋₁
         θₖ   =  spₖ * ψbarₖ₋₂ - cpₖ * γₖ₋₁
-        ρₖ₋₂ =  spₖ * λₖ
+        ρₖ₋₂ =  conj(spₖ) * λₖ
         ηₖ   = -cpₖ * λₖ
 
         # [μₖ₋₂   0     0 ] [1   0    0 ]   [μₖ₋₂   0       0  ]
         # [ψₖ₋₂ μbarₖ₋₁ θₖ] [0  cdₖ  sdₖ] = [ψₖ₋₂ μbisₖ₋₁   0  ]
         # [ρₖ₋₂   0     ηₖ] [0  sdₖ -cdₖ]   [ρₖ₋₂ ψbarₖ₋₁ μbarₖ]
-        (cdₖ, sdₖ, μbisₖ₋₁) = sym_givens(μbarₖ₋₁, θₖ)
-        ψbarₖ₋₁ =  sdₖ * ηₖ
+        (cdₖ, sdₖ, μbisₖ₋₁) = sym_givens(conj(μbarₖ₋₁), conj(θₖ))
+        μbisₖ₋₁ = conj(μbisₖ₋₁)
+        ψbarₖ₋₁ =  conj(sdₖ) * ηₖ
         μbarₖ   = -cdₖ * ηₖ
       end
 
@@ -405,6 +466,11 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
       end
 
       # Compute directions wₖ₋₂, ẘₖ₋₁ and w̄ₖ, last columns of Wₖ = Vₖ(Pₖ)ᴴ
+      # (Hermitian) or Wₖ = conj(Vₖ)(Pₖ)ᴴ (complex symmetric): toggle vₖ to
+      # the trial basis for this block only, and restore it immediately
+      # after, since vₖ is still needed unconjugated by the next iteration's
+      # Lanczos/BGS step above.
+      trial_conj!(structure, n, vₖ)
       if iter == 1
         # w̅₁ = v₁
         kcopy!(n, wₖ, vₖ)
@@ -416,7 +482,7 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
         kcopy!(n, wₖ, wₖ₋₁)
         kaxpby!(n, -cpₖ, vₖ, spₖ, wₖ)
         # Compute ẘₖ₋₁
-        kaxpby!(n, spₖ, vₖ, cpₖ, wₖ₋₁)
+        kaxpby!(n, conj(spₖ), vₖ, cpₖ, wₖ₋₁)
       else
         # [ẘₖ₋₂ w̄ₖ₋₁ vₖ] [cpₖ  0   spₖ] [1   0    0 ] = [wₖ₋₂ ẘₖ₋₁ w̄ₖ] ⟷ wₖ₋₂ = cpₖ * ẘₖ₋₂ + spₖ * vₖ
         #                [ 0   1    0 ] [0  cdₖ  sdₖ]                  ⟷ ẘₖ₋₁ = cdₖ * w̄ₖ₋₁ + sdₖ * (spₖ * ẘₖ₋₂ - cpₖ * vₖ)
@@ -425,14 +491,15 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
         w̄ₖ₋₁ = wₖ
         # Update the solution x
         kaxpy!(n, cpₖ * τₖ₋₂, ẘₖ₋₂, x)
-        kaxpy!(n, spₖ * τₖ₋₂, vₖ, x)
+        kaxpy!(n, conj(spₖ) * τₖ₋₂, vₖ, x)
         # Compute wₐᵤₓ = spₖ * ẘₖ₋₂ - cpₖ * vₖ
         kaxpby!(n, -cpₖ, vₖ, spₖ, ẘₖ₋₂)
         wₐᵤₓ = ẘₖ₋₂
         # Compute ẘₖ₋₁ and w̄ₖ
-        kref!(n, w̄ₖ₋₁, wₐᵤₓ, cdₖ, sdₖ)
+        kref!(n, w̄ₖ₋₁, wₐᵤₓ, cdₖ, conj(sdₖ))
         @kswap!(wₖ₋₁, wₖ)
       end
+      trial_conj!(structure, n, vₖ)
 
       # Update vₖ, M⁻¹vₖ₋₁, M⁻¹vₖ
       MisI || kcopy!(n, vₖ, vₖ₊₁)  # vₖ ← vₖ₊₁
@@ -457,11 +524,11 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
         μmin = abs_μbarₖ
         μmax = abs_μbarₖ
       elseif iter == 2
-        μmax = max(μmax, μbisₖ₋₁, abs_μbarₖ)
-        μmin = min(μmin, μbisₖ₋₁, abs_μbarₖ)
+        μmax = max(μmax, abs(μbisₖ₋₁), abs_μbarₖ)
+        μmin = min(μmin, abs(μbisₖ₋₁), abs_μbarₖ)
       else
-        μmax = max(μmax, μₖ₋₂, μbisₖ₋₁, abs_μbarₖ)
-        μmin = min(μmin, μₖ₋₂, μbisₖ₋₁, abs_μbarₖ)
+        μmax = max(μmax, abs(μₖ₋₂), abs(μbisₖ₋₁), abs_μbarₖ)
+        μmin = min(μmin, abs(μₖ₋₂), abs(μbisₖ₋₁), abs_μbarₖ)
       end
       Acond = μmax / μmin
       history && push!(Aconds, Acond)
@@ -501,7 +568,7 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
       μbarₖ₋₁ = μbarₖ
       ζbarₖ = ζbarₖ₊₁
       βₖ = βₖ₊₁
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %7.1e  %8.1e  %.2fs\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ, μbarₖ, ANorm, Acond, backward, start_time |> ktimer)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %7.1e  %8.1e  %7.1e  %7.1e  %8.1e  %.2fs\n", iter, rNorm, ArNorm, βₖ₊₁, λₖ isa Complex ? abs(λₖ) : λₖ, μbarₖ isa Complex ? abs(μbarₖ) : μbarₖ, ANorm, Acond, backward, start_time |> ktimer)
     end
     (verbose > 0) && @printf(iostream, "\n")
 
@@ -533,5 +600,4 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
     stats.timer = start_time |> ktimer
     stats.status = status
     return workspace
-  end
 end

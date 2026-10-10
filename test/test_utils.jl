@@ -30,6 +30,86 @@ function symmetric_indefinite(n :: Int=10; FC=Float64,  shift=0)
   return A, b
 end
 
+# Complex symmetric (transpose(A) == A, not Hermitian) and nonsingular
+# system, for the `complex_symmetric` keyword of `minres_qlp` and `minares`.
+function complex_symmetric_definite(n :: Int=10; FC=ComplexF64)
+  α = FC(im)
+  A = spdiagm(-1 => α * ones(FC, n-1), 0 => 3 * ones(FC, n), 1 => α * ones(FC, n-1))
+  b = A * FC[1:n;]
+  return A, b
+end
+
+# Complex symmetric, singular and inconsistent system, with rank-1
+# A = [1 im; im -1] padded with a zero row and column: det(A[1:2,1:2]) = 0 and
+# b lies outside range(A).
+function complex_symmetric_inconsistent(; FC=ComplexF64)
+  A = FC[1 im 0; im -1 0; 0 0 0]
+  b = FC[1, 0, 1]
+  return A, b
+end
+
+# Complex symmetric, singular and consistent system A = FΣFᵀ, a Takagi
+# factorization with F the unitary DFT matrix and two zero σᵢ.
+function complex_symmetric_singular(n :: Int=10; FC=ComplexF64)
+  T = real(FC)
+  F = [cispi(-2 * T(j * k) / n) / sqrt(T(n)) for j = 0:n-1, k = 0:n-1]
+  σ = [T.(n:-1:3); zeros(T, 2)]
+  A = F * Diagonal(σ) * transpose(F)
+  A = (A + transpose(A)) / 2
+  b = A * FC[1:n;]
+  return A, b
+end
+
+# Dense, well-conditioned complex symmetric system from a fixed seed.
+function complex_symmetric_dense(n :: Int=12; FC=ComplexF64)
+  rng = Random.MersenneTwister(n)
+  X = randn(rng, FC, n, n)
+  A = (X + transpose(X)) / 2 + 2I
+  b = randn(rng, FC, n)
+  return A, b
+end
+
+# Orthonormal basis of the conjugate Saunders trial space
+# K_q(AᴴA, conj(b)) + K_p(AᴴA, Aᴴb) with q = cld(k, 2) and p = fld(k, 2).
+function conjugate_saunders_basis(A, b, k)
+  N = A' * A
+  function arnoldi(v, m)
+    V = zeros(eltype(b), length(b), 0)
+    m == 0 && return V
+    V = reshape(v / norm(v), :, 1)
+    for _ = 2:m
+      w = N * V[:, end]
+      for _ = 1:2
+        w -= V * (V' * w)
+      end
+      V = hcat(V, w / norm(w))
+    end
+    return V
+  end
+  F = svd(hcat(arnoldi(conj.(b), cld(k, 2)), arnoldi(A' * b, fld(k, 2))))
+  return F.U[:, 1:count(>(1e-10 * F.S[1]), F.S)]
+end
+
+# Minimum-norm minimizers over that space of ‖Aᴴr‖ (MINARES) and of ‖r‖ (MINRES-QLP).
+function cs_minares_oracle(A, b, k)
+  Q = conjugate_saunders_basis(A, b, k)
+  return Q * (pinv(A' * (A * Q)) * (A' * b))
+end
+
+function cs_minres_qlp_oracle(A, b, k)
+  Q = conjugate_saunders_basis(A, b, k)
+  return Q * (pinv(A * Q) * b)
+end
+
+# Bytes allocated by a second in-place solve. On Julia 1.10, `@allocated ex`
+# evaluates `ex` inside the caller, so a call from a test loop over element
+# types also counts the cost of that loosely typed call site (160 bytes on
+# 1.10.12); newer versions wrap `ex` in a function call, as this helper does.
+function inplace_bytes(solver!, workspace, A, b; kwargs...)
+  solver!(workspace, A, b; kwargs...)
+  return @allocated solver!(workspace, A, b; kwargs...)
+end
+
 """
     system_zero_quad(n::Int=2; FC=Float64)
 

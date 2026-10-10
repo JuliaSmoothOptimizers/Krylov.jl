@@ -64,6 +64,20 @@ function test_mp(FC)
       end
     end
   end
+
+  if FC <: Complex
+    for method in (:minres_qlp, :minares)
+      @testset "$method (complex_symmetric)" begin
+        A, b = complex_symmetric_definite(n, FC=FC)
+        x, _ = krylov_solve(Val{method}(), A, b, complex_symmetric=true, history=true)
+        atol = √eps(T)
+        rtol = √eps(T)
+        Κ = (T == Float16 ? 10 : 1)
+        @test norm(A * x - b) ≤ Κ * (atol + norm(b) * rtol)
+        @test eltype(x) == FC
+      end
+    end
+  end
 end
 
 @testset "mp" begin
