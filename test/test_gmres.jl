@@ -90,6 +90,51 @@
       @test(resid ≤ gmres_tol)
       @test(stats.solved)
 
+      # Inner product ⟨x, y⟩_W = xᴴWy
+      A, b = nonsymmetric_indefinite(FC=FC)
+      n = length(b)
+      s = [10.0^((-1)^i * (i % 7)) for i = 1:n]
+      W = Diagonal(1 ./ s.^2)
+      Wnorm(r) = sqrt(real(dot(r, W * r)))
+      for k in (1, 5, n)
+        (x, stats) = gmres(A, b, W=W, itmax=k, memory=k, atol=0.0, rtol=0.0, history=true)
+        # GMRES in the inner product of W = S⁻² is GMRES on S⁻¹AS y = S⁻¹b with x = Sy
+        (y, _) = gmres(A, b, M=Diagonal(1 ./ s), N=Diagonal(s), itmax=k, memory=k, atol=0.0, rtol=0.0)
+        @test norm((x - y) ./ s) ≤ 1.0e-10 * norm(y ./ s)
+        @test stats.residuals[1] ≈ Wnorm(b)
+        @test stats.residuals[end] ≈ Wnorm(b - A * x) atol=1.0e-8 * Wnorm(b)
+      end
+      (x, stats) = gmres(A, b, W=W)
+      @test Wnorm(b - A * x) ≤ gmres_tol * Wnorm(b)
+      @test(stats.solved)
+
+      # After a restart, v₁ is normalized by the recomputed ‖r₀‖_W, not by the estimate
+      n = 40
+      A = FC.(I + 2 * [sin(i * j + 1) for i = 1:n, j = 1:n] / sqrt(n))
+      s = [10.0^((i % 9) - 4) for i = 1:n]
+      W = Diagonal(1 ./ s.^2)
+      b = FC.(s .* [cos(3i) for i = 1:n])
+      workspace = GmresWorkspace(A, b; memory=3)
+      deviation = Ref(0.0)
+      callback = workspace -> (workspace.inner_iter == 1 && (deviation[] = max(deviation[], abs(sqrt(real(dot(workspace.V[1], W * workspace.V[1]))) - 1))); false)
+      gmres!(workspace, A, b, W=W, restart=true, itmax=60, atol=0.0, rtol=1.0e-12, callback=callback)
+      @test workspace.stats.niter > 3
+      @test deviation[] ≤ 1.0e-12
+
+      # Dense inner product with left preconditioning, warm start, restart and reorthogonalization
+      A, b, M = square_preconditioned(FC=FC)
+      n = length(b)
+      B = FC[sin(i + 2j) for i = 1:n, j = 1:n]
+      W = B' * B + I
+      Wnorm_dense(r) = sqrt(real(dot(r, W * r)))
+      x0 = FC[cos(i) for i = 1:n]
+      for restart in (false, true), reorthogonalization in (false, true)
+        (x, stats) = gmres(A, b, x0, M=M, W=W, restart=restart, reorthogonalization=reorthogonalization, memory=5, history=true)
+        @test stats.residuals[1] ≈ Wnorm_dense(M * (b - A * x0))
+        @test Wnorm_dense(M * (b - A * x)) ≤ gmres_tol * Wnorm_dense(M * b)
+        @test(stats.solved)
+      end
+
       # Restart
       for restart ∈ (false, true)
         memory = 10

@@ -1,3 +1,6 @@
+# A keyword argument call from global scope allocates on Julia 1.10
+allocated_with_W(solver!, workspace, A, b, W) = @allocated solver!(workspace, A, b; W)
+
 @testset "allocations" begin
 
   for FC in (Float32, Float64, ComplexF32, ComplexF64)
@@ -204,6 +207,11 @@
         diom!(workspace, A, b)  # warmup
         inplace_diom_bytes = @allocated diom!(workspace, A, b)
         @test inplace_diom_bytes == 0
+
+        W = Diagonal(ones(FC, n))
+        allocated_with_W(diom!, workspace, A, b, W)  # warmup
+        inplace_diom_bytes = allocated_with_W(diom!, workspace, A, b, W)
+        @test inplace_diom_bytes == 0
       end
 
       @testset "FOM" begin
@@ -224,6 +232,11 @@
         workspace = FomWorkspace(A, b; memory=mem)
         fom!(workspace, A, b)  # warmup
         inplace_fom_bytes = @allocated fom!(workspace, A, b)
+        @test inplace_fom_bytes == 0
+
+        W = Diagonal(ones(FC, n))
+        allocated_with_W(fom!, workspace, A, b, W)  # warmup
+        inplace_fom_bytes = allocated_with_W(fom!, workspace, A, b, W)
         @test inplace_fom_bytes == 0
       end
 
@@ -246,6 +259,11 @@
         dqgmres!(workspace, A, b)  # warmup
         inplace_dqgmres_bytes = @allocated dqgmres!(workspace, A, b)
         @test inplace_dqgmres_bytes == 0
+
+        W = Diagonal(ones(FC, n))
+        allocated_with_W(dqgmres!, workspace, A, b, W)  # warmup
+        inplace_dqgmres_bytes = allocated_with_W(dqgmres!, workspace, A, b, W)
+        @test inplace_dqgmres_bytes == 0
       end
 
       @testset "GMRES" begin
@@ -267,6 +285,12 @@
         gmres!(workspace, A, b)  # warmup
         inplace_gmres_bytes = @allocated gmres!(workspace, A, b)
         @test inplace_gmres_bytes == 0
+
+        # The inner product W only needs the vector p
+        W = Diagonal(ones(FC, n))
+        allocated_with_W(gmres!, workspace, A, b, W)  # warmup
+        inplace_gmres_bytes = allocated_with_W(gmres!, workspace, A, b, W)
+        @test inplace_gmres_bytes == 0
       end
 
       @testset "FGMRES" begin
@@ -287,6 +311,12 @@
         workspace = FgmresWorkspace(A, b; memory=mem)
         fgmres!(workspace, A, b)  # warmup
         inplace_fgmres_bytes = @allocated fgmres!(workspace, A, b)
+        @test inplace_fgmres_bytes == 0
+
+        # The inner product W only needs the vector q
+        W = Diagonal(ones(FC, n))
+        allocated_with_W(fgmres!, workspace, A, b, W)  # warmup
+        inplace_fgmres_bytes = allocated_with_W(fgmres!, workspace, A, b, W)
         @test inplace_fgmres_bytes == 0
       end
 
