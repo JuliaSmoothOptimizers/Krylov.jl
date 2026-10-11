@@ -413,3 +413,67 @@ function extract_parameters(ex::Expr)
   Base.Docs.validcall(p.args[]) || throw(ArgumentError("Given expression is not a kw parameter tuple [e.g. :(; x)]: $ex"))
   return p.args[]
 end
+
+
+# HermitianStructure, ComplexSymmetricStructure
+#
+# Singleton types selecting which structure a shared Lanczos-type kernel
+# specializes for: `A' = A` (Hermitian, including real symmetric) or
+# `transpose(A) = A` (complex symmetric, abbreviated CS). Dispatching on these
+# types -- rather than branching at runtime inside the kernel on a `Bool`
+# keyword -- lets the compiler produce one specialization per structure, so a
+# fix made in the shared kernel body applies to both structures automatically
+# and the Hermitian specialization is unaffected by the complex-symmetric one.
+abstract type LanczosStructure end
+struct HermitianStructure <: LanczosStructure end
+struct ComplexSymmetricStructure <: LanczosStructure end
+
+# Tr = lanczos_scalar(structure, T, FC)
+#
+# Scalar type of the projected tridiagonal and of every Givens rotation sine
+# in a shared Hermitian/complex-symmetric Lanczos-type kernel: `T` for the
+# Hermitian structure (the projected tridiagonal is real even when `FC` is
+# complex), `FC` for the complex-symmetric structure.
+lanczos_scalar(::HermitianStructure, ::Type{T}, ::Type{FC}) where {T, FC} = T
+lanczos_scalar(::ComplexSymmetricStructure, ::Type{T}, ::Type{FC}) where {T, FC} = FC
+
+# Conjugate `x` in place.
+kconj!(n :: Integer, x :: AbstractVector) = (x .= conj.(x); x)
+
+# lanczos_mul!(structure, n, p, A, v, λ)
+#
+# Set `p = (A + λI) * v` for the Hermitian structure, or `p = (A + λI) * conj(v)`
+# for the complex-symmetric structure; `v` is left unchanged on return. `λ` is
+# real in both cases.
+@inline function lanczos_mul!(::HermitianStructure, n, p, A, v, λ)
+  kmul!(p, A, v)
+  (λ ≠ 0) && kaxpy!(n, λ, v, p)
+  return p
+end
+@inline function lanczos_mul!(::ComplexSymmetricStructure, n, p, A, v, λ)
+  kconj!(n, v)
+  kmul!(p, A, v)
+  (λ ≠ 0) && kaxpy!(n, λ, v, p)
+  kconj!(n, v)
+  return p
+end
+
+# lanczos_dot(structure, n, v, p)
+#
+# Projection of `p` onto the current Lanczos basis vector `v`: the real part of
+# `⟨v, p⟩` for the Hermitian structure (`kdotr`), the full complex `⟨v, p⟩` for
+# the complex-symmetric structure (`kdot`). `v` must be the current basis
+# vector (not a vector still holding an unnormalized candidate); `kdotr` does
+# not depend on this distinction since it only keeps the real part, but `kdot`
+# does.
+@inline lanczos_dot(::HermitianStructure, n, v, p) = kdotr(n, v, p)
+@inline lanczos_dot(::ComplexSymmetricStructure, n, v, p) = kdot(n, v, p)
+
+# trial_conj!(structure, n, v)
+#
+# Toggle `v` in place between the generated Lanczos basis and the trial basis
+# used to form solution directions: a no-op for the Hermitian structure, and
+# in-place conjugation for the complex-symmetric structure, whose trial
+# iterate is built from `conj(vₖ)`.
+@inline trial_conj!(::HermitianStructure, n, v) = v
+@inline trial_conj!(::ComplexSymmetricStructure, n, v) = kconj!(n, v)
