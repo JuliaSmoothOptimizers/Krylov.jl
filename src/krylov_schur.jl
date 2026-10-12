@@ -143,12 +143,13 @@ Workspace for the in-place method [`krylov_schur!`](@ref).
 
 The following outer constructors can be used to initialize this workspace:
 
-    workspace = KrylovSchurWorkspace(m, n, S; memory = 20)
+    workspace = KrylovSchurWorkspace(m, n, SV, SM; memory = 20)
     workspace = KrylovSchurWorkspace(A, b; memory = 20)
 
 `m` and `n` denote the dimensions of the linear operator `A` passed to the in-place method; `A` must be square (`m = n`).
-`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}` or `Vector{ComplexF64}`.
-A real `S` requires a real operator `A`.
+`SV` and `SM` are the storage types of the vectors and matrices in the workspace, such as `Vector{Float64}` and
+`Matrix{Float64}`, or `Vector{ComplexF64}` and `Matrix{ComplexF64}`.
+A real storage type requires a real operator `A`.
 `memory` is the dimension of the Krylov subspace; it is set to `n` if the value given is larger than `n`.
 The Krylov basis is stored in a dense matrix of size `n × (memory+1)`.
 The complex eigenvectors are stored in a dense matrix of size `n × p`, where `p` is the number of
@@ -177,21 +178,19 @@ mutable struct KrylovSchurWorkspace{T,FC<:FloatOrComplex{T},S,M,Mc}
   stats  :: EigenStats{T}
 end
 
-function KrylovSchurWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
+function KrylovSchurWorkspace(m::Integer, n::Integer, SV::Type, SM::Type; memory::Int = 20)
   m == n || error("The operator must be square")
   start_allocation_time = time_ns()
   memory = min(n, memory)
-  FC = eltype(S)
+  FC = eltype(SV)
   T  = real(FC)
-  # The matrices are allocated with `similar` so that their types are concrete,
-  # even if `S` is not (e.g., `CuVector{T}` without its memory type parameter).
-  hd = S(undef, memory+1)
-  V  = similar(hd, FC, n, memory+1)
-  Vtmp = similar(hd, FC, min(n, 4096), memory)
-  Qd = similar(hd, FC, memory, memory)
-  X  = similar(hd, Complex{T}, n, 0)
-  S  = typeof(hd)
-  M  = typeof(V)
+  V  = SM(undef, n, memory+1)
+  Vtmp = SM(undef, min(n, 4096), memory)
+  Qd = SM(undef, memory, memory)
+  hd = SV(undef, memory+1)
+  X  = similar(V, Complex{T}, n, 0)
+  SV = isconcretetype(SV) ? SV : typeof(hd)
+  SM = isconcretetype(SM) ? SM : typeof(V)
   Mc = typeof(X)
   h  = Vector{FC}(undef, memory+1)
   htmp = Vector{FC}(undef, memory+1)
@@ -205,7 +204,7 @@ function KrylovSchurWorkspace(m::Integer, n::Integer, S::Type; memory::Int = 20)
   perm = collect(1:memory)
   select = fill(false, memory)
   stats = EigenStats(T)
-  workspace = KrylovSchurWorkspace{T,FC,S,M,Mc}(n, memory, V, Vtmp, Qd, hd, X, h, htmp, B, Tm, Q, θ, Y,
+  workspace = KrylovSchurWorkspace{T,FC,SV,SM,Mc}(n, memory, V, Vtmp, Qd, hd, X, h, htmp, B, Tm, Q, θ, Y,
                                                 res, score, perm, select, 0, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
@@ -214,8 +213,9 @@ end
 function KrylovSchurWorkspace(A, b; memory::Int = 20)
   m, n = size(A)
   m == n || error("The operator must be square")
-  S = ktypeof(b)
-  KrylovSchurWorkspace(m, n, S; memory)
+  SV = ktypeof(b)
+  SM = vector_to_matrix(SV)
+  KrylovSchurWorkspace(m, n, SV, SM; memory)
 end
 
 eigenvalues(workspace::KrylovSchurWorkspace) = view(workspace.θ, 1:workspace.nev)

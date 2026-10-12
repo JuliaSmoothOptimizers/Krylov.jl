@@ -117,6 +117,8 @@ end
   end
 
   @testset "in-place, accessors and stopping criteria" begin
+    workspace = KrylovSchurWorkspace(n, n, Vector{Float64}, Matrix{Float64}; memory=30)
+    @test workspace.memory == 30
     workspace = KrylovSchurWorkspace(A, ones(n); memory=30)
     @test workspace.memory == 30
     krylov_schur!(workspace, A, ones(n); nev=4, history=true)

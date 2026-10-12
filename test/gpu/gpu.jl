@@ -69,7 +69,7 @@ function test_eigensolver(S, M)
   n = 50
   cpu_A = Matrix(Diagonal(FC.(1:n))) + FC.(triu(ones(n, n), 1)) / n
   cpu_b = ones(FC, n)
-  workspace = KrylovSchurWorkspace(n, n, S; memory = 20)
+  workspace = KrylovSchurWorkspace(n, n, S, M; memory = 20)
   krylov_schur!(workspace, M(cpu_A), S(cpu_b); nev = 3)
   λ, X, stats = Krylov.results(workspace)
   @test stats.solved
