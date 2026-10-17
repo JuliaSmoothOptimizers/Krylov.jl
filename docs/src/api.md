@@ -10,6 +10,7 @@ Krylov.AdjointStats
 Krylov.LNLQStats
 Krylov.LSLQStats
 Krylov.LsmrStats
+Krylov.EigenStats
 ```
 
 ## Workspaces
