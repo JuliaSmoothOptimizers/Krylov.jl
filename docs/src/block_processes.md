@@ -229,3 +229,38 @@ The function [`montoison_orban`](@ref montoison_orban(::Any, ::Any, ::AbstractMa
 ```@docs
 montoison_orban(::Any, ::Any, ::AbstractMatrix{FC}, ::AbstractMatrix{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)
 ```
+
+## [Block Bunse-Gerstner-Stöver](@id block-bunse-gerstner-stover)
+
+If the vector $b$ in the [Bunse-Gerstner-Stöver](@ref bunse-gerstner-stover) process is replaced by a matrix $B$ with $p$ columns, we can derive the block Bunse-Gerstner-Stöver process.
+
+![block_bunse_gerstner_stover](./graphics/block_bunse_gerstner_stover.png)
+
+After $k$ iterations of the block process of Bunse-Gerstner and Stöver applied to a complex symmetric matrix $A = A^T$, the situation may be summarized as
+```math
+\begin{align*}
+  A \bar{V}_k &= V_{k+1} T_{k+1,k}, \\
+  V_k^H V_k &= I_{pk},
+\end{align*}
+```
+where $\bar{V}_k$ denotes the entrywise complex conjugate of $V_k$ and
+```math
+T_{k+1,k} =
+\begin{bmatrix}
+  \Omega_1 & \Psi_2^T &        &          \\
+  \Psi_2   & \Omega_2 & \ddots &          \\
+           & \ddots   & \ddots & \Psi_k^T \\
+           &          & \Psi_k & \Omega_k \\
+           &          &        & \Psi_{k+1}
+\end{bmatrix}.
+```
+
+The function [`bunse_gerstner_stover`](@ref bunse_gerstner_stover(::Any, ::AbstractMatrix{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)) returns $V_{k+1}$, $\Psi_1$ and $T_{k+1,k}$.
+
+!!! note
+    The block Bunse-Gerstner-Stöver process is equivalent to the block Saunders-Simon-Yip process applied to $A = A^T$ with $C = \bar{B}$, for which $U_k = \bar{V}_k$, at half the cost.
+    If $A$ and $B$ are real, it reduces to the block Hermitian Lanczos process.
+
+```@docs
+bunse_gerstner_stover(::Any, ::AbstractMatrix{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)
+```

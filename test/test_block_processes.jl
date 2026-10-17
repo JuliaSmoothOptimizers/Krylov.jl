@@ -239,6 +239,54 @@
           end
         end
       end
+
+      @testset "Block Bunse-Gerstner-Stöver" begin
+        A = rand(FC, n, n)
+        A = A + transpose(A)
+        B = rand(FC, n, p)
+
+        @testset "algo = $algo" for algo in ("householder", "gs", "mgs", "givens")
+          V, Ψ₁, T = bunse_gerstner_stover(A, B, k; algo)
+
+          @test norm(V[:,1:p*s]' * V[:,1:p*s] - I) ≤ 1e-4
+          @test V[:,1:p] * Ψ₁ ≈ B
+          @test T[1:k*p,1:k*p] ≈ transpose(T[1:k*p,1:k*p])
+          @test A * conj(V[:,1:k*p]) ≈ V * T
+        end
+
+        # Equivalent to the block Saunders-Simon-Yip process with C = B̄ in exact arithmetic.
+        V, Ψ₁, T = bunse_gerstner_stover(A, B, k; algo="mgs")
+        V2, Ψ₂, T2, U2, Φ₂ᴴ, Tᴴ2 = saunders_simon_yip(A, B, conj(B), k; algo="mgs")
+        @test V[:,1:p*s] ≈ V2[:,1:p*s]
+        @test conj(V[:,1:p*s]) ≈ U2[:,1:p*s]
+        @test Ψ₁ ≈ Ψ₂
+        @test T[1:p*(s+1),1:p*s] ≈ T2[1:p*(s+1),1:p*s]
+
+        @testset "memory" begin
+          function storage_block_bunse_gerstner_stover_bytes(n, p, k)
+            nnzT = p*p + (k-1)*p*(2*p+1) + div(p*(p+1), 2)
+            memory = 0
+            memory += (p*k+1) * nbits_I       # Tₖ₊₁.ₖ -- colptr
+            memory += nnzT * nbits_I          # Tₖ₊₁.ₖ -- rowval
+            memory += nnzT * nbits_FC         # Tₖ₊₁.ₖ -- nzval
+            memory += p*p * nbits_FC          # Ψ₁
+            memory += p*p * nbits_FC          # Ωᵢ, Ψᵢ and Ψᵢ₊₁
+            memory += n*p * (k+1) * nbits_FC  # Vₖ₊₁
+            memory += n*p * nbits_FC          # vbar
+            memory += p*n * nbits_FC          # q
+            return memory
+          end
+
+          expected_block_bunse_gerstner_stover_bytes = storage_block_bunse_gerstner_stover_bytes(n, p, k)
+          actual_block_bunse_gerstner_stover_bytes = @allocated bunse_gerstner_stover(A, B, k; algo="mgs")
+          verbose && println("Block Bunse-Gerstner-Stöver | $FC")
+          verbose && println(expected_block_bunse_gerstner_stover_bytes, " ≤ ", actual_block_bunse_gerstner_stover_bytes, " ≤ ", 1.02 * expected_block_bunse_gerstner_stover_bytes, " ?")
+          verbose && println()
+          if VERSION < v"1.11.5" || !Sys.isapple()
+            @test expected_block_bunse_gerstner_stover_bytes ≤ actual_block_bunse_gerstner_stover_bytes ≤ 1.02 * expected_block_bunse_gerstner_stover_bytes
+          end
+        end
+      end
     end
   end
 end

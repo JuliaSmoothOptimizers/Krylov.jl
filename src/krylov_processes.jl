@@ -1,4 +1,4 @@
-export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_simon_yip, montoison_orban
+export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_simon_yip, montoison_orban, bunse_gerstner_stover
 
 """
     V, β, T = hermitian_lanczos(A, b, k; allow_breakdown=false, reorthogonalization=false)
@@ -624,4 +624,96 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
     end
   end
   return V, β, H, U, γ, F
+end
+
+"""
+    V, β, T = bunse_gerstner_stover(A, b, k; allow_breakdown=false)
+
+#### Input arguments
+
+* `A`: a linear operator that models a complex symmetric matrix of dimension `n`;
+* `b`: a vector of length `n`;
+* `k`: the number of iterations of the Bunse-Gerstner-Stöver process.
+
+#### Keyword argument
+
+* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs.
+
+#### Output arguments
+
+* `V`: a dense `n × (k+1)` matrix;
+* `β`: a coefficient such that `βv₁ = b`;
+* `T`: a sparse `(k+1) × k` tridiagonal matrix.
+
+#### References
+
+* T. Takagi, [*On an algebraic problem related to an analytic theorem of Carathéodory and Fejér and on an allied theorem of Landau*](https://doi.org/10.4099/jjm1924.1.0_83), Japanese Journal of Mathematics, 1, pp. 83--93, 1924.
+* A. Bunse-Gerstner and W. B. Gragg, [*Singular value decompositions of complex symmetric matrices*](https://doi.org/10.1016/0377-0427(88)90386-X), Journal of Computational and Applied Mathematics, 21(1), pp. 41--54, 1988.
+* A. Bunse-Gerstner and R. Stöver, [*On a conjugate gradient-type method for solving complex symmetric linear systems*](https://doi.org/10.1016/S0024-3795(98)10091-5), Linear Algebra and its Applications, 287(1--3), pp. 105--123, 1999.
+"""
+function bunse_gerstner_stover(A, b::AbstractVector{FC}, k::Int;
+                               allow_breakdown::Bool=false) where FC <: FloatOrComplex
+  m, n = size(A)
+  R = real(FC)
+  S = ktypeof(b)
+  M = vector_to_matrix(S)
+
+  colptr = zeros(Int, k+1)
+  rowval = zeros(Int, 3k-1)
+  nzval = zeros(FC, 3k-1)
+
+  colptr[1] = 1
+  for i = 1:k
+    pos = colptr[i]
+    colptr[i+1] = 3i
+    if i == 1
+      rowval[pos] = i
+      rowval[pos+1] = i+1
+    else
+      rowval[pos] = i-1
+      rowval[pos+1] = i
+      rowval[pos+2] = i+1
+    end
+  end
+
+  β₁ = zero(R)
+  vbar = S(undef, n)
+  V = M(undef, n, k+1)
+  T = SparseMatrixCSC(k+1, k, colptr, rowval, nzval)
+
+  pαᵢ = 1  # Position of αᵢ in the vector `nzval`
+  for i = 1:k
+    vᵢ = view(V,:,i)
+    vᵢ₊₁ = q = view(V,:,i+1)
+    if i == 1
+      β₁ = knorm(n, b)
+      if β₁ == 0
+        !allow_breakdown && error("Exact breakdown β₁ == 0.")
+        kfill!(vᵢ, zero(FC))
+      else
+        kdivcopy!(n, vᵢ, b, β₁)
+      end
+    end
+    vbar .= conj.(vᵢ)
+    kmul!(q, A, vbar)
+    if i ≥ 2
+      vᵢ₋₁ = view(V,:,i-1)
+      βᵢ = nzval[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
+      nzval[pαᵢ-1] = βᵢ  # Tᵢ₋₁.ᵢ = βᵢ
+      kaxpy!(n, -βᵢ, vᵢ₋₁, q)
+    end
+    αᵢ = kdot(n, vᵢ, q)
+    kaxpy!(n, -αᵢ, vᵢ, q)
+    nzval[pαᵢ] = αᵢ  # Tᵢ.ᵢ = αᵢ
+    βᵢ₊₁ = knorm(n, q)
+    if βᵢ₊₁ == 0
+      !allow_breakdown && error("Exact breakdown βᵢ₊₁ == 0 at iteration i = $i.")
+      kfill!(vᵢ₊₁, zero(FC))
+    else
+      kdivcopy!(n, vᵢ₊₁, q, βᵢ₊₁)
+    end
+    nzval[pαᵢ+1] = βᵢ₊₁  # Tᵢ₊₁.ᵢ = βᵢ₊₁
+    pαᵢ = pαᵢ + 3
+  end
+  return V, β₁, T
 end
