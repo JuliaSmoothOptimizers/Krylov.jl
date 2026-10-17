@@ -41,6 +41,7 @@ The following table summarizes the most relevant processes for each linear probl
 | Least-norm problems                                            | Golub-Kahan -- Saunders-Simon-Yip |
 | Saddle-point and Hermitian quasi-definite systems              | Golub-Kahan -- Saunders-Simon-Yip |
 | Generalized saddle-point and non-Hermitian partitioned systems | Montoison-Orban                   |
+| Complex symmetric linear systems                               | Bunse-Gerstner-Stöver             |
 
 ### Notation
 
@@ -357,4 +358,44 @@ Related methods: [`GPMR`](@ref gpmr).
 
 ```@docs
 montoison_orban(::Any, ::Any, ::AbstractVector{FC}, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)
+```
+
+## [Bunse-Gerstner-Stöver](@id bunse-gerstner-stover)
+
+![bunse_gerstner_stover](./graphics/bunse_gerstner_stover.png)
+
+After $k$ iterations of the process of Bunse-Gerstner and Stöver applied to a complex symmetric matrix $A = A^T$, the situation may be summarized as
+```math
+\begin{align*}
+  A \bar{V}_k &= V_k T_k + \beta_{k+1} v_{k+1} e_k^T = V_{k+1} T_{k+1,k}, \\
+  V_k^H V_k &= I_k,
+\end{align*}
+```
+where $\bar{V}_k$ denotes the entrywise complex conjugate of $V_k$ and
+```math
+T_k =
+\begin{bmatrix}
+  \alpha_1 & \beta_2  &         &         \\
+  \beta_2  & \alpha_2 & \ddots  &         \\
+           & \ddots   & \ddots  & \beta_k \\
+           &          & \beta_k & \alpha_k
+\end{bmatrix}
+, \qquad
+T_{k+1,k} =
+\begin{bmatrix}
+  T_{k} \\
+  \beta_{k+1} e_{k}^T
+\end{bmatrix}.
+```
+The tridiagonal matrix $T_k = V_k^H A \bar{V}_k$ is complex symmetric, i.e., $T_k^T = T_k$, with complex diagonal entries and real positive off-diagonal entries.
+The process of Bunse-Gerstner and Stöver is the iterative counterpart of the unitary tridiagonalization used to compute the Takagi factorization $A = V \Sigma V^T$.
+
+The function [`bunse_gerstner_stover`](@ref bunse_gerstner_stover(::Any, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)) returns $V_{k+1}$, $\beta_1$ and $T_{k+1,k}$.
+
+!!! note
+    The Bunse-Gerstner-Stöver process is equivalent to the Saunders-Simon-Yip process applied to $A = A^T$ with $c = \bar{b}$, for which $U_k = \bar{V}_k$ and $\gamma_i = \beta_i$, at half the cost.
+    If $A$ and $b$ are real, it reduces to the Hermitian Lanczos process.
+
+```@docs
+bunse_gerstner_stover(::Any, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)
 ```
