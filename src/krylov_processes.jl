@@ -631,7 +631,7 @@ end
 
 #### Input arguments
 
-* `A`: a linear operator that models a complex symmetric matrix of dimension `n`;
+* `A`: a linear operator that models a symmetric matrix of dimension `n`;
 * `b`: a vector of length `n`;
 * `k`: the number of iterations of the Bunse-Gerstner-Stöver process.
 
