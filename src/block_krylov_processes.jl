@@ -698,7 +698,8 @@ end
 
 * `V`: a dense `n × p(k+1)` matrix;
 * `Ψ`: a dense `p × p` upper triangular matrix such that `V₁Ψ = B`;
-* `T`: a sparse `p(k+1) × pk` complex symmetric block tridiagonal matrix with a bandwidth `p`.
+* `T`: a sparse `p(k+1) × pk` block tridiagonal matrix with a bandwidth `p`.
+
 """
 function bunse_gerstner_stover(A, B::AbstractMatrix{FC}, k::Int; algo::String="householder") where FC <: FloatOrComplex
   m, n = size(A)
