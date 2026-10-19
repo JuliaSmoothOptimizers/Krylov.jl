@@ -39,7 +39,6 @@ end
           end
           b = rand(FC, n)
           @testset "reorthogonalization = $reorthogonalization" for reorthogonalization in (false, true)
-
             V, β₁, T = hermitian_lanczos(A, b, k; reorthogonalization, skew_hermitian)
 
             @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
@@ -210,7 +209,6 @@ end
           end
           b = rand(FC, n)
           @testset "reorthogonalization = $reorthogonalization" for reorthogonalization in (false, true)
-
             V, β₁, T = bunse_gerstner_stover(A, b, k; reorthogonalization, skew_symmetric)
 
             @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4

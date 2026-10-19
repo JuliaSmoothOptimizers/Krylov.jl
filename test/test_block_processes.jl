@@ -23,7 +23,6 @@
           B = rand(FC, n, p)
 
           @testset "algo = $algo" for algo in ("householder", "gs", "mgs", "givens")
-
             V, Ψ₁, T = hermitian_lanczos(A, B, k; algo, skew_hermitian)
 
             @test norm(V[:,1:p*s]' * V[:,1:p*s] - I) ≤ 1e-4

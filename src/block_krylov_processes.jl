@@ -84,6 +84,16 @@ function hermitian_lanczos(A, B::AbstractMatrix{FC}, k::Int; algo::String="house
       end
     else
       mul!(Ωᵢ, vᵢ', q)  # Ωᵢ = vᵢᴴ * q
+      # Ωᵢ is Hermitian or skew-Hermitian in exact arithmetic.
+      for jj = 1:p
+        for ii = jj+1:p
+          if skew_hermitian
+            Ωᵢ[jj,ii] = -conj(Ωᵢ[ii,jj])
+          else
+            Ωᵢ[jj,ii] = conj(Ωᵢ[ii,jj])
+          end
+        end
+      end
     end
     if FC <: Complex
       for i = 1:p
@@ -118,7 +128,7 @@ function hermitian_lanczos(A, B::AbstractMatrix{FC}, k::Int; algo::String="house
       vᵢ₊₁ .= q
     end
 
-    # Store the block Ψᵢ₊₁ in Tₖ₊₁.ₖ
+    # Store the block ±Ψᵢ₊₁ in Tₖ₊₁.ₖ and the block Ψᵢ₊₁ᴴ in Tₖ.ₖ₊₁
     for ii = 1:p
       indi = pos3+ii-1
       for jj = 1:p
@@ -793,6 +803,16 @@ function bunse_gerstner_stover(A, B::AbstractMatrix{FC}, k::Int; algo::String="h
       end
     else
       mul!(Ωᵢ, vᵢ', q)  # Ωᵢ = vᵢᴴ * q
+      # Ωᵢ is symmetric or skew-symmetric in exact arithmetic.
+      for jj = 1:p
+        for ii = jj+1:p
+          if skew_symmetric
+            Ωᵢ[jj,ii] = -Ωᵢ[ii,jj]
+          else
+            Ωᵢ[jj,ii] = Ωᵢ[ii,jj]
+          end
+        end
+      end
     end
     if skew_symmetric
       for i = 1:p
@@ -817,7 +837,7 @@ function bunse_gerstner_stover(A, B::AbstractMatrix{FC}, k::Int; algo::String="h
       vᵢ₊₁ .= q
     end
 
-    # Store the block Ψᵢ₊₁ in Tₖ₊₁.ₖ and the block Ψᵢ₊₁ᵀ in Tₖ.ₖ₊₁
+    # Store the block ±Ψᵢ₊₁ in Tₖ₊₁.ₖ and the block Ψᵢ₊₁ᵀ in Tₖ.ₖ₊₁
     for ii = 1:p
       indi = pos3+ii-1
       for jj = 1:p

@@ -88,7 +88,6 @@ T_{k+1,k} =
   \beta_{k+1} e_{k}^T
 \end{bmatrix}.
 ```
-Note that depending on how we normalize the vectors that compose $V_k$, $T_{k+1,k}$ can be a real tridiagonal matrix even if $A$ is a complex matrix.
 
 The function [`hermitian_lanczos`](@ref hermitian_lanczos(::Any, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)) returns $V_{k+1}$, $\beta_1$ and $T_{k+1,k}$.
 
