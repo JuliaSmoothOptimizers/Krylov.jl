@@ -163,4 +163,84 @@
       @test solver.stats.solved == true
     end
   end
+
+  @testset "complex_symmetric" begin
+    for FC in (ComplexF64, ComplexF32)
+      T = real(FC)
+      tol = T === Float32 ? T(1.0e-3) : T(1.0e-6)
+
+      # Nonsingular complex symmetric system.
+      A, b = complex_symmetric_definite(FC=FC)
+      (x, stats) = minres_qlp(A, b; complex_symmetric=true)
+      @test norm(x - A \ b) / norm(A \ b) ≤ tol
+      @test stats.solved
+
+      # Warm start.
+      x0 = (A \ b) .+ FC(0.01) .* ones(FC, size(A, 1))
+      (x, stats) = minres_qlp(A, b, x0; complex_symmetric=true)
+      @test norm(x - A \ b) / norm(A \ b) ≤ tol
+
+      # Real shift.
+      λ = T(0.3)
+      (x, stats) = minres_qlp(A, b; complex_symmetric=true, λ=λ)
+      r = b - (A + λ * I) * x
+      @test norm(r) / norm(b) ≤ tol * norm(A) * norm(x)
+      @test stats.solved
+
+      # Singular, inconsistent complex symmetric system.
+      As, bs = complex_symmetric_inconsistent(FC=FC)
+      (x, stats) = minres_qlp(As, bs; complex_symmetric=true)
+      r = bs - As * x
+      Aresid = norm(As' * r) / norm(As' * bs)
+      @test Aresid ≤ tol
+      @test stats.inconsistent
+
+      # krylov_solve generic interface.
+      workspace = krylov_workspace(Val(:minres_qlp), A, b)
+      krylov_solve!(workspace, A, b; complex_symmetric=true)
+      @test norm(workspace.x - A \ b) / norm(A \ b) ≤ tol
+
+      # Verbose output.
+      io = IOBuffer()
+      minres_qlp(A, b; complex_symmetric=true, verbose=1, iostream=io)
+      @test occursin("MINRES-QLP: system of size", String(take!(io)))
+
+      # Allocation-free in-place path.
+      @test inplace_bytes(minres_qlp!, MinresQlpWorkspace(A, b), A, b; complex_symmetric=true) == 0
+
+      # complex_symmetric=true requires a complex element type.
+      Ar, br = symmetric_indefinite(FC=T)
+      @test_throws ErrorException minres_qlp(Ar, br; complex_symmetric=true)
+
+      # complex_symmetric=true does not support preconditioning or linesearch.
+      @test_throws ArgumentError minres_qlp(A, b; complex_symmetric=true, M=Diagonal(ones(FC, size(A, 1))))
+      @test_throws ArgumentError minres_qlp(A, b; complex_symmetric=true, linesearch=true)
+    end
+
+    # Singular, consistent complex symmetric system: the minimum-norm solution.
+    A, b = complex_symmetric_singular()
+    (x, stats) = minres_qlp(A, b; complex_symmetric=true)
+    @test norm(x - pinv(A) * b) / norm(pinv(A) * b) ≤ 1.0e-6
+    @test stats.solved
+
+    # Iterates and both estimates against a dense oracle at every k; the
+    # ‖Arₖ₋₁‖ estimate lags the iterate by one step.
+    A, b = complex_symmetric_dense()
+    xprev = zeros(ComplexF64, length(b))
+    for k = 1:8
+      workspace = MinresQlpWorkspace(A, b)
+      minres_qlp!(workspace, A, b; complex_symmetric=true, itmax=k, atol=0.0, rtol=0.0, Artol=0.0, history=true)
+      x, stats = workspace.x, workspace.stats
+      @test norm(x - cs_minres_qlp_oracle(A, b, k)) ≤ 1.0e-8 * norm(x)
+      @test abs(stats.residuals[end] - norm(b - A * x)) ≤ 1.0e-8 * norm(b)
+      k ≥ 2 && @test abs(stats.Aresiduals[end] - norm(A' * (b - A * xprev))) ≤ 1.0e-8 * norm(A' * b)
+      xprev = copy(x)
+    end
+
+    # Complex{BigFloat}.
+    A, b = complex_symmetric_definite(FC=Complex{BigFloat})
+    (x, stats) = minres_qlp(A, b; complex_symmetric=true)
+    @test norm(x - Matrix(A) \ b) / norm(Matrix(A) \ b) ≤ sqrt(eps(BigFloat))
+    @test stats.solved
+  end
 end

@@ -59,6 +59,9 @@ Each table summarizes the storage requirements of Krylov methods recommended to 
 |:-------:|:-----------------------:|:-----------------------:|:-------------------------------:|:-------------------------:|
 | Storage | $5n$                    | $6n$                    | $6n$                            | $8n$                      |
 
+[`MINRES-QLP`](@ref minres_qlp) and [`MINARES`](@ref minares) with `complex_symmetric=true` solve a complex
+symmetric system (`transpose(A) == A`) instead, using the same $6n$ and $8n$ storage.
+
 #### Non-Hermitian square linear systems
 
 | Methods | [`CGS`](@ref cgs) | [`BICGSTAB`](@ref bicgstab) | [`BiLQ`](@ref bilq) | [`QMR`](@ref qmr) |
