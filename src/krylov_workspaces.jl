@@ -3,7 +3,8 @@ CgLanczosShiftWorkspace, MinresQlpWorkspace, DqgmresWorkspace, DiomWorkspace, Us
 UsymqrWorkspace, TricgWorkspace, TrimrWorkspace, TrilqrWorkspace, CgsWorkspace, BicgstabWorkspace,
 BilqWorkspace, QmrWorkspace, BilqrWorkspace, CglsWorkspace, CglsLanczosShiftWorkspace, CrlsWorkspace, CgneWorkspace,
 CrmrWorkspace, LslqWorkspace, LsqrWorkspace, LsmrWorkspace, LnlqWorkspace, CraigWorkspace, CraigmrWorkspace,
-GmresWorkspace, FomWorkspace, GpmrWorkspace, UsymlqrWorkspace, FgmresWorkspace, CarWorkspace, MinaresWorkspace
+GmresWorkspace, FomWorkspace, GpmrWorkspace, UsymlqrWorkspace, FgmresWorkspace, CarWorkspace, MinaresWorkspace,
+SqmrWorkspace
 
 export KrylovConstructor
 
@@ -1797,6 +1798,78 @@ function QmrWorkspace(A, b)
   m, n = size(A)
   S = ktypeof(b)
   QmrWorkspace(m, n, S)
+end
+
+"""
+Workspace for the in-place methods [`sqmr!`](@ref) and [`krylov_solve!`](@ref).
+
+The following outer constructors can be used to initialize this workspace:
+
+    workspace = SqmrWorkspace(m, n, S)
+    workspace = SqmrWorkspace(A, b)
+    workspace = SqmrWorkspace(kc::KrylovConstructor{S,S})
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`sqmr`](@ref) only supports square linear operators, `m` and `n` must be equal.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
+"""
+mutable struct SqmrWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
+  m          :: Int
+  n          :: Int
+  r          :: S
+  z          :: S
+  p          :: S
+  w          :: S
+  d          :: S
+  Δx         :: S
+  x          :: S
+  warm_start :: Bool
+  stats      :: SimpleStats{T}
+end
+
+function SqmrWorkspace(kc::KrylovConstructor{S,S}) where S
+  start_allocation_time = time_ns()
+  FC   = eltype(S)
+  T    = real(FC)
+  m    = length(kc.vm)
+  n    = length(kc.vn)
+  r    = similar(kc.vn)
+  z    = similar(kc.vn)
+  p    = similar(kc.vn)
+  w    = similar(kc.vn)
+  d    = similar(kc.vn)
+  Δx   = similar(kc.vn_empty)
+  x    = similar(kc.vn)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  workspace = SqmrWorkspace{T,FC,S}(m, n, r, z, p, w, d, Δx, x, false, stats)
+  workspace.stats.allocation_timer = start_allocation_time |> ktimer
+  return workspace
+end
+
+function SqmrWorkspace(m::Integer, n::Integer, S::Type)
+  start_allocation_time = time_ns()
+  FC   = eltype(S)
+  T    = real(FC)
+  r    = S(undef, n)
+  z    = S(undef, n)
+  p    = S(undef, n)
+  w    = S(undef, n)
+  d    = S(undef, n)
+  Δx   = S(undef, 0)
+  x    = S(undef, n)
+  S = isconcretetype(S) ? S : typeof(x)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], 0.0, 0.0, "unknown")
+  workspace = SqmrWorkspace{T,FC,S}(m, n, r, z, p, w, d, Δx, x, false, stats)
+  workspace.stats.allocation_timer = start_allocation_time |> ktimer
+  return workspace
+end
+
+function SqmrWorkspace(A, b)
+  m, n = size(A)
+  S = ktypeof(b)
+  SqmrWorkspace(m, n, S)
 end
 
 """
