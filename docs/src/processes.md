@@ -35,13 +35,13 @@ The following table summarizes the most relevant processes for each linear probl
 
 | Linear problems                                                |  Processes                        |
 |:--------------------------------------------------------------:|:---------------------------------:|
-| Hermitian linear systems                                       | Hermitian Lanczos                 |
+| Hermitian and skew-Hermitian linear systems                    | Hermitian Lanczos                 |
 | Square Non-Hermitian linear systems                            | Non-Hermitian Lanczos -- Arnoldi  |
 | Least-squares problems                                         | Golub-Kahan -- Saunders-Simon-Yip |
 | Least-norm problems                                            | Golub-Kahan -- Saunders-Simon-Yip |
 | Saddle-point and Hermitian quasi-definite systems              | Golub-Kahan -- Saunders-Simon-Yip |
 | Generalized saddle-point and non-Hermitian partitioned systems | Montoison-Orban                   |
-| Complex symmetric linear systems                               | Bunse-Gerstner-Stöver             |
+| Complex symmetric and skew-symmetric linear systems            | Bunse-Gerstner-Stöver             |
 
 ### Notation
 
@@ -68,7 +68,7 @@ For matrices $C \in \mathbb{C}^{n \times n} \enspace$ and $\enspace T \in \mathb
 After $k$ iterations of the Hermitian Lanczos process, the situation may be summarized as
 ```math
 \begin{align*}
-  A V_k &= V_k T_k + \beta_{k+1,k} v_{k+1} e_k^T = V_{k+1} T_{k+1,k}, \\
+  A V_k &= V_k T_k + \beta_{k+1} v_{k+1} e_k^T = V_{k+1} T_{k+1,k}, \\
   V_k^H V_k &= I_k,
 \end{align*}
 ```
