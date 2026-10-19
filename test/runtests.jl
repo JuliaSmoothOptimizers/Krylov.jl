@@ -10,6 +10,7 @@ include("test_utils.jl")
 include("test_aux.jl")
 include("test_stats.jl")
 include("test_block_processes.jl")
+include("test_block_cg.jl")
 include("test_processes.jl")
 
 include("test_usymlqr.jl")

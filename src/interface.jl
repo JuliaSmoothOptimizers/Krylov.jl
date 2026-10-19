@@ -249,6 +249,7 @@ end
 for (workspace, krylov, args, def_args, optargs, def_optargs, kwargs, def_kwargs, kwargs_workspace, def_kwargs_workspace) in [
   (:BlockMinresWorkspace, :block_minres, args_block_minres, def_args_block_minres, optargs_block_minres, def_optargs_block_minres, kwargs_block_minres, def_kwargs_block_minres, ()                          , ()                              )
   (:BlockGmresWorkspace , :block_gmres , args_block_gmres , def_args_block_gmres , optargs_block_gmres , def_optargs_block_gmres , kwargs_block_gmres , def_kwargs_block_gmres , kwargs_workspace_block_gmres, def_kwargs_workspace_block_gmres)
+  (:BlockCgWorkspace    , :block_cg    , args_block_cg    , def_args_block_cg    , optargs_block_cg    , def_optargs_block_cg    , kwargs_block_cg    , def_kwargs_block_cg    , kwargs_workspace_block_cg   , def_kwargs_workspace_block_cg   )
 ]
   # Create the symbol for the in-place method
   krylov! = Symbol(krylov, :!)

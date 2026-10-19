@@ -207,6 +207,7 @@ end
 for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:BlockMinresWorkspace, :block_minres!, 1, 1, 0, true)
   (:BlockGmresWorkspace , :block_gmres! , 1, 1, 0, true)
+  (:BlockCgWorkspace    , :block_cg!    , 1, 1, 0, true)
 ]
   @eval begin
     elapsed_time(workspace :: $KS) = workspace.stats.timer

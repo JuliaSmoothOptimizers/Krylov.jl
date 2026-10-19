@@ -53,6 +53,10 @@ Each table summarizes the storage requirements of Krylov methods recommended to 
 |:-------:|:---------------:|:---------------:|:-----------------:|:-------------------------------:|:-------------------------------------------:|
  Storage  | $4n$            | $5n$            | $7n$              | $5n$                            | $3n + 2np + 5p$                             |
 
+For [`BLOCK-CG`](@ref block_cg) with $p$ right-hand sides the storage is $5np + 8p^2 + 4p$,
+plus $3nk + kp$ with a null space of dimension $k$ (the $p \times p$ matrices are Gram matrices
+and coefficients of the search block, six of them on the host).
+
 #### Hermitian indefinite linear systems
 
 | Methods | [`SYMMLQ`](@ref symmlq) | [`MINRES`](@ref minres) | [`MINRES-QLP`](@ref minres_qlp) | [`MINARES`](@ref minares) |
