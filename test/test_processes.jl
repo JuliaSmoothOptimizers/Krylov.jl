@@ -30,22 +30,33 @@ end
     @testset "Data Type: $FC" begin
 
       @testset "Hermitian Lanczos" begin
-        A = rand(FC, n, n)
-        A = A' * A
-        b = rand(FC, n)
-        @testset "reorthogonalization = $reorthogonalization" for reorthogonalization in (false, true)
-          V, β₁, T = hermitian_lanczos(A, b, k; reorthogonalization)
+        @testset "skew_hermitian = $skew_hermitian" for skew_hermitian in (false, true)
+          A = rand(FC, n, n)
+          if skew_hermitian
+            A = A - A'
+          else
+            A = A + A'
+          end
+          b = rand(FC, n)
+          @testset "reorthogonalization = $reorthogonalization" for reorthogonalization in (false, true)
+            V, β₁, T = hermitian_lanczos(A, b, k; reorthogonalization, skew_hermitian)
 
-          @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
-          @test β₁ * V[:,1] ≈ b
-          @test A * V[:,1:k] ≈ V * T
+            @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
+            @test β₁ * V[:,1] ≈ b
+            if skew_hermitian
+              @test T[1:k,1:k] ≈ -adjoint(T[1:k,1:k])
+            else
+              @test T[1:k,1:k] ≈ adjoint(T[1:k,1:k])
+            end
+            @test A * V[:,1:k] ≈ V * T
 
-          storage_hermitian_lanczos_bytes(n, k) = 4k * nbits_I + (3k-1) * nbits_R + n*(k+1) * nbits_FC
+            storage_hermitian_lanczos_bytes(n, k) = 4k * nbits_I + (3k-1) * nbits_FC + n*(k+1) * nbits_FC
 
-          expected_hermitian_lanczos_bytes = storage_hermitian_lanczos_bytes(n, k)
-          actual_hermitian_lanczos_bytes = @allocated hermitian_lanczos(A, b, k; reorthogonalization)
-          if VERSION < v"1.11.5" || !Sys.isapple()
-            @test expected_hermitian_lanczos_bytes ≤ actual_hermitian_lanczos_bytes ≤ 1.02 * expected_hermitian_lanczos_bytes
+            expected_hermitian_lanczos_bytes = storage_hermitian_lanczos_bytes(n, k)
+            actual_hermitian_lanczos_bytes = @allocated hermitian_lanczos(A, b, k; reorthogonalization, skew_hermitian)
+            if VERSION < v"1.11.5" || !Sys.isapple()
+              @test expected_hermitian_lanczos_bytes ≤ actual_hermitian_lanczos_bytes ≤ 1.02 * expected_hermitian_lanczos_bytes
+            end
           end
         end
       end
@@ -189,29 +200,43 @@ end
       end
 
       @testset "Bunse-Gerstner-Stöver" begin
-        A = rand(FC, n, n)
-        A = A + transpose(A)
-        b = rand(FC, n)
-        V, β₁, T = bunse_gerstner_stover(A, b, k)
+        @testset "skew_symmetric = $skew_symmetric" for skew_symmetric in (false, true)
+          A = rand(FC, n, n)
+          if skew_symmetric
+            A = A - transpose(A)
+          else
+            A = A + transpose(A)
+          end
+          b = rand(FC, n)
+          @testset "reorthogonalization = $reorthogonalization" for reorthogonalization in (false, true)
+            V, β₁, T = bunse_gerstner_stover(A, b, k; reorthogonalization, skew_symmetric)
 
-        @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
-        @test β₁ * V[:,1] ≈ b
-        @test T[1:k,1:k] ≈ transpose(T[1:k,1:k])
-        @test A * conj(V[:,1:k]) ≈ V * T
+            @test norm(V[:,1:s]' * V[:,1:s] - I) ≤ 1e-4
+            @test β₁ * V[:,1] ≈ b
+            if skew_symmetric
+              @test T[1:k,1:k] ≈ -transpose(T[1:k,1:k])
+            else
+              @test T[1:k,1:k] ≈ transpose(T[1:k,1:k])
+            end
+            @test A * conj(V[:,1:k]) ≈ V * T
 
-        # Equivalent to the Saunders-Simon-Yip process with c = b̄ in exact arithmetic.
-        V2, β₂, T2, U2, γ₂ᴴ, Tᴴ2 = saunders_simon_yip(A, b, conj(b), k)
-        @test V[:,1:s] ≈ V2[:,1:s]
-        @test conj(V[:,1:s]) ≈ U2[:,1:s]
-        @test β₁ ≈ β₂ ≈ γ₂ᴴ
-        @test T[1:s+1,1:s] ≈ T2[1:s+1,1:s]
+            # Equivalent to the Saunders-Simon-Yip process with c = b̄ in exact arithmetic.
+            if !skew_symmetric
+              V2, β₂, T2, U2, γ₂ᴴ, Tᴴ2 = saunders_simon_yip(A, b, conj(b), k)
+              @test V[:,1:s] ≈ V2[:,1:s]
+              @test conj(V[:,1:s]) ≈ U2[:,1:s]
+              @test β₁ ≈ β₂ ≈ γ₂ᴴ
+              @test T[1:s+1,1:s] ≈ T2[1:s+1,1:s]
+            end
 
-        storage_bunse_gerstner_stover_bytes(n, k) = 4k * nbits_I + (3k-1) * nbits_FC + n*(k+1) * nbits_FC + n * nbits_FC
+            storage_bunse_gerstner_stover_bytes(n, k) = 4k * nbits_I + (3k-1) * nbits_FC + n*(k+1) * nbits_FC + n * nbits_FC
 
-        expected_bunse_gerstner_stover_bytes = storage_bunse_gerstner_stover_bytes(n, k)
-        actual_bunse_gerstner_stover_bytes = @allocated bunse_gerstner_stover(A, b, k)
-        if VERSION < v"1.11.5" || !Sys.isapple()
-          @test expected_bunse_gerstner_stover_bytes ≤ actual_bunse_gerstner_stover_bytes ≤ 1.02 * expected_bunse_gerstner_stover_bytes
+            expected_bunse_gerstner_stover_bytes = storage_bunse_gerstner_stover_bytes(n, k)
+            actual_bunse_gerstner_stover_bytes = @allocated bunse_gerstner_stover(A, b, k; reorthogonalization, skew_symmetric)
+            if VERSION < v"1.11.5" || !Sys.isapple()
+              @test expected_bunse_gerstner_stover_bytes ≤ actual_bunse_gerstner_stover_bytes ≤ 1.02 * expected_bunse_gerstner_stover_bytes
+            end
+          end
         end
       end
     end

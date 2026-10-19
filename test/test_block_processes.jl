@@ -13,39 +13,50 @@
     @testset "Data Type: $FC" begin
 
       @testset "Block Hermitian Lanczos" begin
-        A = rand(FC, n, n)
-        A = A' * A
-        B = rand(FC, n, p)
+        @testset "skew_hermitian = $skew_hermitian" for skew_hermitian in (false, true)
+          A = rand(FC, n, n)
+          if skew_hermitian
+            A = A - A'
+          else
+            A = A + A'
+          end
+          B = rand(FC, n, p)
 
-        @testset "algo = $algo" for algo in ("householder", "gs", "mgs", "givens")
-          V, Ψ₁, T = hermitian_lanczos(A, B, k; algo)
+          @testset "algo = $algo" for algo in ("householder", "gs", "mgs", "givens")
+            V, Ψ₁, T = hermitian_lanczos(A, B, k; algo, skew_hermitian)
 
-          @test norm(V[:,1:p*s]' * V[:,1:p*s] - I) ≤ 1e-4
-          @test V[:,1:p] * Ψ₁ ≈ B
-          @test A * V[:,1:p*k] ≈ V * T
-        end
-
-        @testset "memory" begin
-          function storage_block_hermitian_lanczos_bytes(n, p, k)
-            nnzT = p*p + (k-1)*p*(2*p+1) + div(p*(p+1), 2)
-            memory = 0
-            memory += (p*k+1) * nbits_I       # Tₖ₊₁.ₖ -- colptr
-            memory += nnzT * nbits_I          # Tₖ₊₁.ₖ -- rowval
-            memory += nnzT * nbits_FC         # Tₖ₊₁.ₖ -- nzval
-            memory += p*p * nbits_FC          # Ψ₁
-            memory += p*p * nbits_FC          # Ωᵢ, Ψᵢ and Ψᵢ₊₁
-            memory += n*p * (k+1) * nbits_FC  # Vₖ₊₁
-            memory += p*n * nbits_FC          # q
-            return memory
+            @test norm(V[:,1:p*s]' * V[:,1:p*s] - I) ≤ 1e-4
+            @test V[:,1:p] * Ψ₁ ≈ B
+            if skew_hermitian
+              @test T[1:p*k,1:p*k] ≈ -adjoint(T[1:p*k,1:p*k])
+            else
+              @test T[1:p*k,1:p*k] ≈ adjoint(T[1:p*k,1:p*k])
+            end
+            @test A * V[:,1:p*k] ≈ V * T
           end
 
-          expected_block_hermitian_lanczos_bytes = storage_block_hermitian_lanczos_bytes(n, p, k)
-          actual_block_hermitian_lanczos_bytes = @allocated hermitian_lanczos(A, B, k; algo="mgs")
-          verbose && println("Block Hermitian Lanczos | $FC")
-          verbose && println(expected_block_hermitian_lanczos_bytes, " ≤ ", actual_block_hermitian_lanczos_bytes, " ≤ ", 1.02 * expected_block_hermitian_lanczos_bytes, " ?")
-          verbose && println()
-          if VERSION < v"1.11.5" || !Sys.isapple()
-            @test expected_block_hermitian_lanczos_bytes ≤ actual_block_hermitian_lanczos_bytes ≤ 1.02 * expected_block_hermitian_lanczos_bytes
+          @testset "memory" begin
+            function storage_block_hermitian_lanczos_bytes(n, p, k)
+              nnzT = p*p + (k-1)*p*(2*p+1) + div(p*(p+1), 2)
+              memory = 0
+              memory += (p*k+1) * nbits_I       # Tₖ₊₁.ₖ -- colptr
+              memory += nnzT * nbits_I          # Tₖ₊₁.ₖ -- rowval
+              memory += nnzT * nbits_FC         # Tₖ₊₁.ₖ -- nzval
+              memory += p*p * nbits_FC          # Ψ₁
+              memory += p*p * nbits_FC          # Ωᵢ, Ψᵢ and Ψᵢ₊₁
+              memory += n*p * (k+1) * nbits_FC  # Vₖ₊₁
+              memory += p*n * nbits_FC          # q
+              return memory
+            end
+
+            expected_block_hermitian_lanczos_bytes = storage_block_hermitian_lanczos_bytes(n, p, k)
+            actual_block_hermitian_lanczos_bytes = @allocated hermitian_lanczos(A, B, k; algo="mgs", skew_hermitian)
+            verbose && println("Block Hermitian Lanczos | $FC")
+            verbose && println(expected_block_hermitian_lanczos_bytes, " ≤ ", actual_block_hermitian_lanczos_bytes, " ≤ ", 1.02 * expected_block_hermitian_lanczos_bytes, " ?")
+            verbose && println()
+            if VERSION < v"1.11.5" || !Sys.isapple()
+              @test expected_block_hermitian_lanczos_bytes ≤ actual_block_hermitian_lanczos_bytes ≤ 1.02 * expected_block_hermitian_lanczos_bytes
+            end
           end
         end
       end
@@ -241,49 +252,61 @@
       end
 
       @testset "Block Bunse-Gerstner-Stöver" begin
-        A = rand(FC, n, n)
-        A = A + transpose(A)
-        B = rand(FC, n, p)
+        @testset "skew_symmetric = $skew_symmetric" for skew_symmetric in (false, true)
+          A = rand(FC, n, n)
+          if skew_symmetric
+            A = A - transpose(A)
+          else
+            A = A + transpose(A)
+          end
+          B = rand(FC, n, p)
 
-        @testset "algo = $algo" for algo in ("householder", "gs", "mgs", "givens")
-          V, Ψ₁, T = bunse_gerstner_stover(A, B, k; algo)
+          @testset "algo = $algo" for algo in ("householder", "gs", "mgs", "givens")
+            V, Ψ₁, T = bunse_gerstner_stover(A, B, k; algo, skew_symmetric)
 
-          @test norm(V[:,1:p*s]' * V[:,1:p*s] - I) ≤ 1e-4
-          @test V[:,1:p] * Ψ₁ ≈ B
-          @test T[1:k*p,1:k*p] ≈ transpose(T[1:k*p,1:k*p])
-          @test A * conj(V[:,1:k*p]) ≈ V * T
-        end
-
-        # Equivalent to the block Saunders-Simon-Yip process with C = B̄ in exact arithmetic.
-        V, Ψ₁, T = bunse_gerstner_stover(A, B, k; algo="mgs")
-        V2, Ψ₂, T2, U2, Φ₂ᴴ, Tᴴ2 = saunders_simon_yip(A, B, conj(B), k; algo="mgs")
-        @test V[:,1:p*s] ≈ V2[:,1:p*s]
-        @test conj(V[:,1:p*s]) ≈ U2[:,1:p*s]
-        @test Ψ₁ ≈ Ψ₂
-        @test T[1:p*(s+1),1:p*s] ≈ T2[1:p*(s+1),1:p*s]
-
-        @testset "memory" begin
-          function storage_block_bunse_gerstner_stover_bytes(n, p, k)
-            nnzT = p*p + (k-1)*p*(2*p+1) + div(p*(p+1), 2)
-            memory = 0
-            memory += (p*k+1) * nbits_I       # Tₖ₊₁.ₖ -- colptr
-            memory += nnzT * nbits_I          # Tₖ₊₁.ₖ -- rowval
-            memory += nnzT * nbits_FC         # Tₖ₊₁.ₖ -- nzval
-            memory += p*p * nbits_FC          # Ψ₁
-            memory += p*p * nbits_FC          # Ωᵢ, Ψᵢ and Ψᵢ₊₁
-            memory += n*p * (k+1) * nbits_FC  # Vₖ₊₁
-            memory += n*p * nbits_FC          # vbar
-            memory += p*n * nbits_FC          # q
-            return memory
+            @test norm(V[:,1:p*s]' * V[:,1:p*s] - I) ≤ 1e-4
+            @test V[:,1:p] * Ψ₁ ≈ B
+            if skew_symmetric
+              @test T[1:p*k,1:p*k] ≈ -transpose(T[1:p*k,1:p*k])
+            else
+              @test T[1:p*k,1:p*k] ≈ transpose(T[1:p*k,1:p*k])
+            end
+            @test A * conj(V[:,1:k*p]) ≈ V * T
           end
 
-          expected_block_bunse_gerstner_stover_bytes = storage_block_bunse_gerstner_stover_bytes(n, p, k)
-          actual_block_bunse_gerstner_stover_bytes = @allocated bunse_gerstner_stover(A, B, k; algo="mgs")
-          verbose && println("Block Bunse-Gerstner-Stöver | $FC")
-          verbose && println(expected_block_bunse_gerstner_stover_bytes, " ≤ ", actual_block_bunse_gerstner_stover_bytes, " ≤ ", 1.02 * expected_block_bunse_gerstner_stover_bytes, " ?")
-          verbose && println()
-          if VERSION < v"1.11.5" || !Sys.isapple()
-            @test expected_block_bunse_gerstner_stover_bytes ≤ actual_block_bunse_gerstner_stover_bytes ≤ 1.02 * expected_block_bunse_gerstner_stover_bytes
+          # Equivalent to the block Saunders-Simon-Yip process with C = B̄ in exact arithmetic.
+          if !skew_symmetric
+            V, Ψ₁, T = bunse_gerstner_stover(A, B, k; algo="mgs")
+            V2, Ψ₂, T2, U2, Φ₂ᴴ, Tᴴ2 = saunders_simon_yip(A, B, conj(B), k; algo="mgs")
+            @test V[:,1:p*s] ≈ V2[:,1:p*s]
+            @test conj(V[:,1:p*s]) ≈ U2[:,1:p*s]
+            @test Ψ₁ ≈ Ψ₂
+            @test T[1:p*(s+1),1:p*s] ≈ T2[1:p*(s+1),1:p*s]
+          end
+
+          @testset "memory" begin
+            function storage_block_bunse_gerstner_stover_bytes(n, p, k)
+              nnzT = p*p + (k-1)*p*(2*p+1) + div(p*(p+1), 2)
+              memory = 0
+              memory += (p*k+1) * nbits_I       # Tₖ₊₁.ₖ -- colptr
+              memory += nnzT * nbits_I          # Tₖ₊₁.ₖ -- rowval
+              memory += nnzT * nbits_FC         # Tₖ₊₁.ₖ -- nzval
+              memory += p*p * nbits_FC          # Ψ₁
+              memory += p*p * nbits_FC          # Ωᵢ, Ψᵢ and Ψᵢ₊₁
+              memory += n*p * (k+1) * nbits_FC  # Vₖ₊₁
+              memory += n*p * nbits_FC          # vbar
+              memory += p*n * nbits_FC          # q
+              return memory
+            end
+
+            expected_block_bunse_gerstner_stover_bytes = storage_block_bunse_gerstner_stover_bytes(n, p, k)
+            actual_block_bunse_gerstner_stover_bytes = @allocated bunse_gerstner_stover(A, B, k; algo="mgs", skew_symmetric)
+            verbose && println("Block Bunse-Gerstner-Stöver | $FC")
+            verbose && println(expected_block_bunse_gerstner_stover_bytes, " ≤ ", actual_block_bunse_gerstner_stover_bytes, " ≤ ", 1.02 * expected_block_bunse_gerstner_stover_bytes, " ?")
+            verbose && println()
+            if VERSION < v"1.11.5" || !Sys.isapple()
+              @test expected_block_bunse_gerstner_stover_bytes ≤ actual_block_bunse_gerstner_stover_bytes ≤ 1.02 * expected_block_bunse_gerstner_stover_bytes
+            end
           end
         end
       end

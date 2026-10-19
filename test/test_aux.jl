@@ -169,8 +169,8 @@
       b2 = rand(T)
 
       Krylov.kdot(n, x, y)
-
       Krylov.kdotr(n, x, y)
+      Krylov.kdoti(n, x, y)
 
       Krylov.knorm(n, x)
 

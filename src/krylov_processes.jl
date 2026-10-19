@@ -1,18 +1,19 @@
 export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_simon_yip, montoison_orban, bunse_gerstner_stover
 
 """
-    V, β, T = hermitian_lanczos(A, b, k; allow_breakdown=false, reorthogonalization=false)
+    V, β, T = hermitian_lanczos(A, b, k; allow_breakdown=false, reorthogonalization=false, skew_hermitian=false)
 
 #### Input arguments
 
-* `A`: a linear operator that models a Hermitian matrix of dimension `n`;
+* `A`: a linear operator that models a Hermitian or skew-Hermitian matrix of dimension `n`;
 * `b`: a vector of length `n`;
 * `k`: the number of iterations of the Hermitian Lanczos process.
 
 #### Keyword arguments
 
 * `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs;
-* `reorthogonalization`: reorthogonalize each newly added vector of the Krylov basis against only the two previous vectors (local reorthogonalization).
+* `reorthogonalization`: reorthogonalize each newly added vector of the Krylov basis against only the two previous vectors (local reorthogonalization);
+* `skew_hermitian`: specify whether `A` is Hermitian or skew-Hermitian.
 
 #### Output arguments
 
@@ -26,7 +27,7 @@ export hermitian_lanczos, nonhermitian_lanczos, arnoldi, golub_kahan, saunders_s
 * H. D. Simon, [*The Lanczos algorithm with partial reorthogonalization*](https://doi.org/10.1090/S0025-5718-1984-0725988-X), Mathematics of computation, 42(165), pp. 115--142, 1984.
 """
 function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
-                           allow_breakdown::Bool=false, reorthogonalization::Bool=false) where FC <: FloatOrComplex
+                           allow_breakdown::Bool=false, reorthogonalization::Bool=false, skew_hermitian::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
   R = real(FC)
   S = ktypeof(b)
@@ -34,7 +35,7 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
 
   colptr = zeros(Int, k+1)
   rowval = zeros(Int, 3k-1)
-  nzval = zeros(R, 3k-1)
+  nzval = zeros(FC, 3k-1)
 
   colptr[1] = 1
   for i = 1:k
@@ -70,23 +71,47 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
     kmul!(q, A, vᵢ)
     if i ≥ 2
       vᵢ₋₁ = view(V,:,i-1)
-      βᵢ = nzval[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
+      if skew_hermitian
+        βᵢ = -nzval[pαᵢ-2]  # βᵢ = -Tᵢ.ᵢ₋₁
+      else
+        βᵢ = nzval[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
+      end
       nzval[pαᵢ-1] = βᵢ  # Tᵢ₋₁.ᵢ = βᵢ
       kaxpy!(n, -βᵢ, vᵢ₋₁, q)
     end
-    αᵢ = kdotr(n, vᵢ, q)
-    kaxpy!(n, -αᵢ, vᵢ, q)
+    αᵢ = zero(FC)
+    if !skew_hermitian
+      αᵢ = kdotr(n, vᵢ, q)
+      kaxpy!(n, -αᵢ, vᵢ, q)
+    else
+      if FC <: Complex
+        αᵢ = kdoti(n, vᵢ, q)
+        kaxpy!(n, -αᵢ, vᵢ, q)
+      end
+    end
     if reorthogonalization
       if i ≥ 2
         vᵢ₋₁ = view(V,:,i-1)
         βtmp = kdotr(n, vᵢ₋₁, q)
-        nzval[pαᵢ-2] += βtmp
+        if skew_hermitian
+          nzval[pαᵢ-2] -= βtmp
+        else
+          nzval[pαᵢ-2] += βtmp
+        end
         nzval[pαᵢ-1] += βtmp
         kaxpy!(n, -βtmp, vᵢ₋₁, q)
       end
-      αtmp = kdotr(n, vᵢ, q)
-      αᵢ += αtmp
-      kaxpy!(n, -αtmp, vᵢ, q)
+      if !skew_hermitian
+        αtmp = kdotr(n, vᵢ, q)
+        αᵢ += αtmp
+        kaxpy!(n, -αtmp, vᵢ, q)
+      else
+        if FC <: Complex
+          αtmp = kdoti(n, vᵢ, q)
+          αᵢ += αtmp
+          kaxpy!(n, -αtmp, vᵢ, q)
+        end
+      end
     end
     nzval[pαᵢ] = αᵢ  # Tᵢ.ᵢ = αᵢ
     βᵢ₊₁ = knorm(n, q)
@@ -94,9 +119,17 @@ function hermitian_lanczos(A, b::AbstractVector{FC}, k::Int;
       !allow_breakdown && error("Exact breakdown βᵢ₊₁ == 0 at iteration i = $i.")
       kfill!(vᵢ₊₁, zero(FC))
     else
-      kdivcopy!(n, vᵢ₊₁, q, βᵢ₊₁)
+      if skew_hermitian
+        kdivcopy!(n, vᵢ₊₁, q, -βᵢ₊₁)
+      else
+        kdivcopy!(n, vᵢ₊₁, q, βᵢ₊₁)
+      end
     end
-    nzval[pαᵢ+1] = βᵢ₊₁  # Tᵢ₊₁.ᵢ = βᵢ₊₁
+    if skew_hermitian
+      nzval[pαᵢ+1] = -βᵢ₊₁  # Tᵢ₊₁.ᵢ = -βᵢ₊₁
+    else
+      nzval[pαᵢ+1] = βᵢ₊₁  # Tᵢ₊₁.ᵢ = βᵢ₊₁
+    end
     pαᵢ = pαᵢ + 3
   end
   return V, β₁, T
@@ -627,17 +660,19 @@ function montoison_orban(A, B, b::AbstractVector{FC}, c::AbstractVector{FC}, k::
 end
 
 """
-    V, β, T = bunse_gerstner_stover(A, b, k; allow_breakdown=false)
+    V, β, T = bunse_gerstner_stover(A, b, k; allow_breakdown=false, reorthogonalization=false, skew_symmetric=false)
 
 #### Input arguments
 
-* `A`: a linear operator that models a symmetric matrix of dimension `n`;
+* `A`: a linear operator that models a symmetric or skew-symmetric matrix of dimension `n`;
 * `b`: a vector of length `n`;
 * `k`: the number of iterations of the Bunse-Gerstner-Stöver process.
 
-#### Keyword argument
+#### Keyword arguments
 
-* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs.
+* `allow_breakdown`: specify whether to continue the process or raise an error when an exact breakdown occurs;
+* `reorthogonalization`: reorthogonalize each newly added vector of the Krylov basis against only the two previous vectors (local reorthogonalization);
+* `skew_symmetric`: specify whether `A` is symmetric or skew-symmetric.
 
 #### Output arguments
 
@@ -652,7 +687,7 @@ end
 * A. Bunse-Gerstner and R. Stöver, [*On a conjugate gradient-type method for solving complex symmetric linear systems*](https://doi.org/10.1016/S0024-3795(98)10091-5), Linear Algebra and its Applications, 287(1--3), pp. 105--123, 1999.
 """
 function bunse_gerstner_stover(A, b::AbstractVector{FC}, k::Int;
-                               allow_breakdown::Bool=false) where FC <: FloatOrComplex
+                               allow_breakdown::Bool=false, reorthogonalization::Bool=false, skew_symmetric::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
   R = real(FC)
   S = ktypeof(b)
@@ -698,21 +733,54 @@ function bunse_gerstner_stover(A, b::AbstractVector{FC}, k::Int;
     kmul!(q, A, vbar)
     if i ≥ 2
       vᵢ₋₁ = view(V,:,i-1)
-      βᵢ = nzval[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
+      if skew_symmetric
+        βᵢ = -nzval[pαᵢ-2]  # βᵢ = -Tᵢ.ᵢ₋₁
+      else
+        βᵢ = nzval[pαᵢ-2]  # βᵢ = Tᵢ.ᵢ₋₁
+      end
       nzval[pαᵢ-1] = βᵢ  # Tᵢ₋₁.ᵢ = βᵢ
       kaxpy!(n, -βᵢ, vᵢ₋₁, q)
     end
-    αᵢ = kdot(n, vᵢ, q)
-    kaxpy!(n, -αᵢ, vᵢ, q)
+    αᵢ = zero(FC)
+    if !skew_symmetric
+      αᵢ = kdot(n, vᵢ, q)
+      kaxpy!(n, -αᵢ, vᵢ, q)
+    end
+    if reorthogonalization
+      if i ≥ 2
+        vᵢ₋₁ = view(V,:,i-1)
+        βtmp = kdotr(n, vᵢ₋₁, q)
+        if skew_symmetric
+          nzval[pαᵢ-2] -= βtmp
+        else
+          nzval[pαᵢ-2] += βtmp
+        end
+        nzval[pαᵢ-1] += βtmp
+        kaxpy!(n, -βtmp, vᵢ₋₁, q)
+      end
+      if !skew_symmetric
+        αtmp = kdot(n, vᵢ, q)
+        αᵢ += αtmp
+        kaxpy!(n, -αtmp, vᵢ, q)
+      end
+    end
     nzval[pαᵢ] = αᵢ  # Tᵢ.ᵢ = αᵢ
     βᵢ₊₁ = knorm(n, q)
     if βᵢ₊₁ == 0
       !allow_breakdown && error("Exact breakdown βᵢ₊₁ == 0 at iteration i = $i.")
       kfill!(vᵢ₊₁, zero(FC))
     else
-      kdivcopy!(n, vᵢ₊₁, q, βᵢ₊₁)
+      if skew_symmetric
+        kdivcopy!(n, vᵢ₊₁, q, -βᵢ₊₁)
+      else
+        kdivcopy!(n, vᵢ₊₁, q, βᵢ₊₁)
+      end
     end
-    nzval[pαᵢ+1] = βᵢ₊₁  # Tᵢ₊₁.ᵢ = βᵢ₊₁
+    if skew_symmetric
+      nzval[pαᵢ+1] = -βᵢ₊₁  # Tᵢ₊₁.ᵢ = -βᵢ₊₁
+    else
+      nzval[pαᵢ+1] = βᵢ₊₁  # Tᵢ₊₁.ᵢ = βᵢ₊₁
+    end
     pαᵢ = pαᵢ + 3
   end
   return V, β₁, T
