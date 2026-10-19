@@ -1,15 +1,16 @@
 """
-    V, Ψ, T = hermitian_lanczos(A, B, k; algo="householder")
+    V, Ψ, T = hermitian_lanczos(A, B, k; algo="householder", skew_hermitian=false)
 
 #### Input arguments
 
-* `A`: a linear operator that models a Hermitian matrix of dimension `n`;
+* `A`: a linear operator that models a Hermitian or skew-Hermitian matrix of dimension `n`;
 * `B`: a matrix of size `n × p`;
 * `k`: the number of iterations of the block Hermitian Lanczos process.
 
 #### Keyword arguments
 
-* `algo`: the algorithm to perform reduced QR factorizations (`"gs"`, `"mgs"`, `"givens"` or `"householder"`).
+* `algo`: the algorithm to perform reduced QR factorizations (`"gs"`, `"mgs"`, `"givens"` or `"householder"`);
+* `skew_hermitian`: specify whether `A` is Hermitian or skew-Hermitian.
 
 #### Output arguments
 
@@ -17,7 +18,7 @@
 * `Ψ`: a dense `p × p` upper triangular matrix such that `V₁Ψ = B`;
 * `T`: a sparse `p(k+1) × pk` block tridiagonal matrix with a bandwidth `p`.
 """
-function hermitian_lanczos(A, B::AbstractMatrix{FC}, k::Int; algo::String="householder") where FC <: FloatOrComplex
+function hermitian_lanczos(A, B::AbstractMatrix{FC}, k::Int; algo::String="householder", skew_hermitian::Bool=false) where FC <: FloatOrComplex
   m, n = size(A)
   t, p = size(B)
 
@@ -74,18 +75,42 @@ function hermitian_lanczos(A, B::AbstractMatrix{FC}, k::Int; algo::String="house
       kgemmtr!('L', trans, 'N', β, vᵢ, q, ω, Ωᵢ)
       for i = 1:p
         for j = i+1:p
-          Ωᵢ[i,j] = conj(Ωᵢ[j,i])
+          if skew_hermitian
+            Ωᵢ[i,j] = -conj(Ωᵢ[j,i])
+          else
+            Ωᵢ[i,j] = conj(Ωᵢ[j,i])
+          end
         end
       end
     else
-      mul!(Ωᵢ, vᵢ', q)     # Ωᵢ = vᵢᴴ * q
+      mul!(Ωᵢ, vᵢ', q)  # Ωᵢ = vᵢᴴ * q
+      # Ωᵢ is Hermitian or skew-Hermitian in exact arithmetic.
+      for jj = 1:p
+        for ii = jj+1:p
+          if skew_hermitian
+            Ωᵢ[jj,ii] = -conj(Ωᵢ[ii,jj])
+          else
+            Ωᵢ[jj,ii] = conj(Ωᵢ[ii,jj])
+          end
+        end
+      end
     end
     if FC <: Complex
       for i = 1:p
-        Ωᵢ[i,i] = real(Ωᵢ[i,i])
+        if skew_hermitian
+          Ωᵢ[i,i] = im * imag(Ωᵢ[i,i])
+        else
+          Ωᵢ[i,i] = real(Ωᵢ[i,i])
+        end
+      end
+    else
+      if skew_hermitian
+        for i = 1:p
+          Ωᵢ[i,i] = zero(FC)
+        end
       end
     end
-    mul!(q, vᵢ, Ωᵢ, α, β)  # q = q - vᵢ * Ωᵢᴴ
+    mul!(q, vᵢ, Ωᵢ, α, β)  # q = q - vᵢ * Ωᵢ
 
     # Store the block Ωᵢ in Tₖ₊₁.ₖ
     for ii = 1:p
@@ -97,14 +122,22 @@ function hermitian_lanczos(A, B::AbstractMatrix{FC}, k::Int; algo::String="house
     end
 
     reduced_qr!(q, Ψᵢ₊₁, algo)
-    vᵢ₊₁ .= q
+    if skew_hermitian
+      vᵢ₊₁ .= .- q
+    else
+      vᵢ₊₁ .= q
+    end
 
-    # Store the block Ψᵢ₊₁ in Tₖ₊₁.ₖ
+    # Store the block ±Ψᵢ₊₁ in Tₖ₊₁.ₖ and the block Ψᵢ₊₁ᴴ in Tₖ.ₖ₊₁
     for ii = 1:p
       indi = pos3+ii-1
       for jj = 1:p
         indj = pos1+jj-1
-        (ii ≤ jj) && (T[indi,indj] = Ψᵢ₊₁[ii,jj])
+        if skew_hermitian
+          (ii ≤ jj) && (T[indi,indj] = -Ψᵢ₊₁[ii,jj])
+        else
+          (ii ≤ jj) && (T[indi,indj] = Ψᵢ₊₁[ii,jj])
+        end
         (ii ≤ jj) && (i < k) && (T[indj,indi] = conj(Ψᵢ₊₁[ii,jj]))
       end
     end
@@ -679,4 +712,144 @@ function montoison_orban(A, B, D::AbstractMatrix{FC}, C::AbstractMatrix{FC}, k::
     uⱼ₊₁ .= qᵤ
   end
   return V, Γ, H, U, Λ, F
+end
+
+"""
+    V, Ψ, T = bunse_gerstner_stover(A, B, k; algo="householder", skew_symmetric=false)
+
+#### Input arguments
+
+* `A`: a linear operator that models a symmetric or skew-symmetric matrix of dimension `n`;
+* `B`: a matrix of size `n × p`;
+* `k`: the number of iterations of the block Bunse-Gerstner-Stöver process.
+
+#### Keyword arguments
+
+* `algo`: the algorithm to perform reduced QR factorizations (`"gs"`, `"mgs"`, `"givens"` or `"householder"`);
+* `skew_symmetric`: specify whether `A` is symmetric or skew-symmetric.
+
+#### Output arguments
+
+* `V`: a dense `n × p(k+1)` matrix;
+* `Ψ`: a dense `p × p` upper triangular matrix such that `V₁Ψ = B`;
+* `T`: a sparse `p(k+1) × pk` block tridiagonal matrix with a bandwidth `p`.
+"""
+function bunse_gerstner_stover(A, B::AbstractMatrix{FC}, k::Int; algo::String="householder", skew_symmetric::Bool=false) where FC <: FloatOrComplex
+  m, n = size(A)
+  t, p = size(B)
+
+  nnzT = p*p + (k-1)*p*(2*p+1) + div(p*(p+1), 2)
+  colptr = zeros(Int, p*k+1)
+  rowval = zeros(Int, nnzT)
+  nzval = zeros(FC, nnzT)
+
+  colptr[1] = 1
+  for j = 1:k*p
+    pos = colptr[j]
+    for i = max(1, j-p):j+p
+      rowval[pos] = i
+      pos += 1
+    end
+    colptr[j+1] = pos
+  end
+
+  vbar = copy(B)
+  V = zeros(FC, n, (k+1)*p)
+  T = SparseMatrixCSC((k+1)*p, k*p, colptr, rowval, nzval)
+
+  α = -one(FC)
+  β = one(FC)
+  ω = zero(FC)
+  trans = FC <: AbstractFloat ? 'T' : 'C'
+  q = zeros(FC, n, p)
+  Ψ₁ = zeros(FC, p, p)
+  Ωᵢ = Ψᵢ = Ψᵢ₊₁ = zeros(FC, p, p)
+
+  for i = 1:k
+    pos1 = (i-1)*p + 1
+    pos2 = i*p
+    pos3 = pos1 + p
+    pos4 = pos2 + p
+    vᵢ = view(V,:,pos1:pos2)
+    vᵢ₊₁ = view(V,:,pos3:pos4)
+
+    if i == 1
+      q .= B
+      reduced_qr!(q, Ψ₁, algo)
+      vᵢ .= q
+    end
+
+    # q ← Av̄
+    vbar .= conj.(vᵢ)
+    mul!(q, A, vbar)
+
+    if i ≥ 2
+      pos5 = pos1 - p
+      pos6 = pos2 - p
+      vᵢ₋₁ = view(V,:,pos5:pos6)
+      mul!(q, vᵢ₋₁, transpose(Ψᵢ), α, β)  # q = q - vᵢ₋₁ * Ψᵢᵀ
+    end
+
+    if VERSION ≥ v"1.12" && FC <: BLAS.BlasFloat
+      kgemmtr!('L', trans, 'N', β, vᵢ, q, ω, Ωᵢ)
+      for i = 1:p
+        for j = i+1:p
+          if skew_symmetric
+            Ωᵢ[i,j] = -Ωᵢ[j,i]
+          else
+            Ωᵢ[i,j] = Ωᵢ[j,i]
+          end
+        end
+      end
+    else
+      mul!(Ωᵢ, vᵢ', q)  # Ωᵢ = vᵢᴴ * q
+      # Ωᵢ is symmetric or skew-symmetric in exact arithmetic.
+      for jj = 1:p
+        for ii = jj+1:p
+          if skew_symmetric
+            Ωᵢ[jj,ii] = -Ωᵢ[ii,jj]
+          else
+            Ωᵢ[jj,ii] = Ωᵢ[ii,jj]
+          end
+        end
+      end
+    end
+    if skew_symmetric
+      for i = 1:p
+        Ωᵢ[i,i] = zero(FC)
+      end
+    end
+    mul!(q, vᵢ, Ωᵢ, α, β)  # q = q - vᵢ * Ωᵢ
+
+    # Store the block Ωᵢ in Tₖ₊₁.ₖ
+    for ii = 1:p
+      indi = pos1+ii-1
+      for jj = 1:p
+        indj = pos1+jj-1
+        T[indi,indj] = Ωᵢ[ii,jj]
+      end
+    end
+
+    reduced_qr!(q, Ψᵢ₊₁, algo)
+    if skew_symmetric
+      vᵢ₊₁ .= .- q
+    else
+      vᵢ₊₁ .= q
+    end
+
+    # Store the block ±Ψᵢ₊₁ in Tₖ₊₁.ₖ and the block Ψᵢ₊₁ᵀ in Tₖ.ₖ₊₁
+    for ii = 1:p
+      indi = pos3+ii-1
+      for jj = 1:p
+        indj = pos1+jj-1
+        if skew_symmetric
+          (ii ≤ jj) && (T[indi,indj] = -Ψᵢ₊₁[ii,jj])
+        else
+          (ii ≤ jj) && (T[indi,indj] = Ψᵢ₊₁[ii,jj])
+        end
+        (ii ≤ jj) && (i < k) && (T[indj,indi] = Ψᵢ₊₁[ii,jj])
+      end
+    end
+  end
+  return V, Ψ₁, T
 end

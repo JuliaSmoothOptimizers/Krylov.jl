@@ -1,4 +1,4 @@
-using LinearOperators, CUDA, CUDA.CUSPARSE, CUDA.CUSOLVER
+using LinearOperators, CUDA, CUDA.cuSPARSE, CUDA.cuSOLVER
 
 include("gpu.jl")
 

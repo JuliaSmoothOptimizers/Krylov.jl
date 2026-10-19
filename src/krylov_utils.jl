@@ -313,6 +313,9 @@ kdot(n :: Integer, x :: AbstractVector{T}, y :: AbstractVector{T}) where T <: Fl
 kdotr(n :: Integer, x :: AbstractVector{T}, y :: AbstractVector{T}) where T <: AbstractFloat = kdot(n, x, y)
 kdotr(n :: Integer, x :: AbstractVector{Complex{T}}, y :: AbstractVector{Complex{T}}) where T <: AbstractFloat = kdot(n, x, y) |> real
 
+kdoti(n :: Integer, x :: AbstractVector{T}, y :: AbstractVector{T}) where T <: AbstractFloat = kdot(n, x, y)
+kdoti(n :: Integer, x :: AbstractVector{Complex{T}}, y :: AbstractVector{Complex{T}}) where T <: AbstractFloat = im * (kdot(n, x, y) |> imag)
+
 knorm(n :: Integer, x :: Vector{T}) where T <: BLAS.BlasFloat = BLAS.nrm2(n, x, 1)
 knorm(n :: Integer, x :: AbstractVector{T}) where T <: FloatOrComplex = norm(x)
 
