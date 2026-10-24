@@ -140,7 +140,8 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       kcopy!(n, r, b)  # r ← b
     end
 
-    # p₀ = r₀ = M(b - Ax₀)
+    # p₀ = Mr₀ = M(b - Ax₀)
+    # The vector r stores Mrₖ.
     if MisI
       kcopy!(n, p, r)  # p ← r
     else
@@ -148,9 +149,9 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       kcopy!(n, r, p)  # r ← p
     end
 
-    kmul!(s, A, r)  # s₀ = Ar₀
+    kmul!(s, A, r)  # s ← AMr₀
 
-    # q₀ = MAp₀ and s₀ = MAr₀
+    # q₀ = MAp₀ and s₀ = MAMr₀
     if MisI
       kcopy!(n, q, s)  # q ← s
     else
@@ -162,11 +163,11 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     kcopy!(n, u, t)     # u₀ = Aq₀
     ρ = kdotr(n, t, s)  # ρ₀ = ⟨t₀ , s₀⟩
 
-    # Compute ‖r₀‖₂ = ‖M(b - Ax₀)‖₂
+    # Compute ‖Mr₀‖₂
     rNorm = knorm(n, r)
     history && push!(rNorms, rNorm)
 
-    # Compute ‖Ar₀‖_M = ‖AM(b - Ax₀)‖_M = √⟨r₀, t₀⟩
+    # Compute ‖AMr₀‖_M = √⟨Mr₀, t₀⟩
     ArNorm = MisI ? knorm(n, s) : knorm_elliptic(n, r, t)
     history && push!(ArNorms, ArNorm)
 
@@ -198,10 +199,10 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       MisI || mulorldiv!(Mu, M, u, ldiv)
       α = ρ / kdotr(n, u, Mu)  # αₖ = ρₖ / ⟨uₖ, Muₖ⟩
       kaxpy!(n,  α, p, x)      # xₖ₊₁ = xₖ + αₖ * pₖ
-      kaxpy!(n, -α, q, r)      # rₖ₊₁ = rₖ - αₖ * qₖ
+      kaxpy!(n, -α, q, r)      # Mrₖ₊₁ = Mrₖ - αₖ * qₖ
       kaxpy!(n, -α, Mu, s)     # sₖ₊₁ = sₖ - αₖ * Muₖ
 
-      # Compute ‖rₖ‖₂ = ‖M(b - Axₖ)‖₂
+      # Compute ‖Mrₖ‖₂
       rNorm = knorm(n, r)
       history && push!(rNorms, rNorm)
 
@@ -213,11 +214,11 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
         ρ_next = kdotr(n, t, s)       # ρₖ₊₁ = ⟨tₖ₊₁ , sₖ₊₁⟩
         β = ρ_next / ρ                # βₖ = ρₖ₊₁ / ρₖ
         ρ = ρ_next
-        kaxpby!(n, one(FC), r, β, p)  # pₖ₊₁ = rₖ₊₁ + βₖ * pₖ
+        kaxpby!(n, one(FC), r, β, p)  # pₖ₊₁ = Mrₖ₊₁ + βₖ * pₖ
         kaxpby!(n, one(FC), s, β, q)  # qₖ₊₁ = sₖ₊₁ + βₖ * qₖ
         kaxpby!(n, one(FC), t, β, u)  # uₖ₊₁ = tₖ₊₁ + βₖ * uₖ
 
-        # Compute ‖Arₖ‖_M = ‖AM(b - Axₖ)‖_M = √⟨rₖ, tₖ⟩
+        # Compute ‖AMrₖ‖_M = √⟨Mrₖ, tₖ⟩
         ArNorm = MisI ? knorm(n, s) : knorm_elliptic(n, r, t)
         history && push!(ArNorms, ArNorm)
       end
