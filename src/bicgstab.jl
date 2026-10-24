@@ -227,14 +227,21 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       NisI || mulorldiv!(z, N, s, ldiv)  # zₖ = N⁻¹sₖ
       kmul!(d, A, z)                     # dₖ = Azₖ
       MisI || mulorldiv!(t, M, d, ldiv)  # tₖ = M⁻¹dₖ
-      ω = kdot(n, t, s) / kdot(n, t, t)  # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
-      kaxpy!(n, ω, z, x)                 # xₖ = xₐᵤₓ + ωₖzₖ
-      kcopy!(n, r, s)                    # rₖ = sₖ
-      kaxpy!(n, -ω, t, r)                # rₖ = rₖ - ωₖtₖ
-      next_ρ = kdot(n, c, r)             # ρₖ₊₁ = ⟨r̅₀,rₖ⟩
-      β = (next_ρ / ρ) * (α / ω)         # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
-      kaxpy!(n, -ω, v, p)                # pₐᵤₓ = pₖ - ωₖvₖ
-      kaxpby!(n, one(FC), r, β, p)       # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
+      tNorm² = kdotr(n, t, t)            # ⟨tₖ,tₖ⟩
+      if tNorm² == 0
+        # tₖ = 0 when sₖ = 0: xₐᵤₓ is already an exact solution.
+        ω = zero(FC)
+        kcopy!(n, r, s)                  # rₖ = sₖ
+      else
+        ω = kdot(n, t, s) / tNorm²       # ⟨tₖ,sₖ⟩ / ⟨tₖ,tₖ⟩
+        kaxpy!(n, ω, z, x)               # xₖ = xₐᵤₓ + ωₖzₖ
+        kcopy!(n, r, s)                  # rₖ = sₖ
+        kaxpy!(n, -ω, t, r)              # rₖ = rₖ - ωₖtₖ
+        next_ρ = kdot(n, c, r)           # ρₖ₊₁ = ⟨r̅₀,rₖ⟩
+        β = (next_ρ / ρ) * (α / ω)       # βₖ₊₁ = (ρₖ₊₁ / ρₖ) * (αₖ / ωₖ)
+        kaxpy!(n, -ω, v, p)              # pₐᵤₓ = pₖ - ωₖvₖ
+        kaxpby!(n, one(FC), r, β, p)     # pₖ₊₁ = rₖ₊₁ + βₖ₊₁pₐᵤₓ
+      end
 
       # Compute residual norm ‖rₖ‖₂.
       rNorm = knorm(n, r)
@@ -245,7 +252,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
       resid_decrease_lim = rNorm ≤ ε
       solved = resid_decrease_lim
       tired = iter ≥ itmax
-      breakdown = (α == 0 || isnan(α))
+      breakdown = (α == 0 || isnan(α) || ω == 0)
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
       kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %8.1e  %8.1e  %.2fs\n", iter, rNorm, abs(α), abs(ω), start_time |> ktimer)
@@ -254,7 +261,7 @@ kwargs_bicgstab = (:c, :M, :N, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, 
 
     # Termination status
     tired               && (status = "maximum number of iterations exceeded")
-    breakdown           && (status = "breakdown αₖ == 0")
+    breakdown           && (status = (ω == 0) ? "breakdown ωₖ == 0" : "breakdown αₖ == 0")
     solved              && (status = "solution good enough given atol and rtol")
     user_requested_exit && (status = "user-requested exit")
     overtimed           && (status = "time limit exceeded")
