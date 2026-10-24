@@ -218,7 +218,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
         kaxpby!(n, one(FC), t, β, u)  # uₖ₊₁ = tₖ₊₁ + βₖ * uₖ
 
         # Compute ‖Arₖ‖
-        ArNorm = MisI ? knorm(n, s) : knorm_elliptic(n, r, u)
+        ArNorm = MisI ? knorm(n, s) : knorm_elliptic(n, r, t)
         history && push!(ArNorms, ArNorm)
       end
 

@@ -34,6 +34,18 @@
       @test(resid ≤ car_tol)
       @test(stats.solved)
 
+      # The estimates are ‖Mrₖ‖₂ and ‖AMrₖ‖_M with a preconditioner
+      A, b = symmetric_definite(FC=FC)
+      n = length(b)
+      X = rand(FC, n, n)
+      M = Matrix(Hermitian(X * X' + n * I))
+      for k in 1:5
+        (x, stats) = car(A, b, M=M, itmax=k, atol=0.0, rtol=0.0, history=true)
+        r = b - A * x
+        @test stats.residuals[end] ≈ norm(M * r)
+        @test stats.Aresiduals[end] ≈ sqrt(real(dot(A * M * r, M * (A * M * r))))
+      end
+
       # Test singular and consistent system
       A, b = singular_consistent(FC=FC)
       x, stats = car(A, b)
