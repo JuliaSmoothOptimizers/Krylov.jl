@@ -68,12 +68,52 @@
       @test(stats.solved)
 
       # Test with Jacobi (or diagonal) preconditioner
-      # A, b, M = square_preconditioned(FC=FC)
-      # (x, stats) = minares(A, b, M=M)
-      # r = b - A * x
-      # resid = sqrt(real(dot(r, M * r))) / sqrt(real(dot(b, M * b)))
-      # @test(resid ≤ minares_tol * norm(A) * norm(x))
-      # @test(stats.solved)
+      A, b, M = square_preconditioned(FC=FC)
+      (x, stats) = minares(A, b, M=M)
+      r = b - A * x
+      resid = sqrt(real(dot(r, M * r))) / sqrt(real(dot(b, M * b)))
+      @test(resid ≤ minares_tol * norm(A) * norm(x))
+      @test(stats.solved)
+
+      # Test with a dense Hermitian positive-definite preconditioner
+      A, b = symmetric_indefinite(FC=FC)
+      n = length(b)
+      X = rand(FC, n, n)
+      M = Matrix(Hermitian(X * X' + n * I))
+      for (P, ldiv) in ((M, false), (cholesky(Hermitian(inv(M))), true))
+        (x, stats) = minares(A, b, M=P, ldiv=ldiv, history=true)
+        r = b - A * x
+        @test(norm(r) ≤ minares_tol * norm(A) * norm(x))
+        @test(stats.solved)
+        # The residual norms are estimated in the M-norm.
+        @test stats.residuals[end] ≈ sqrt(real(dot(r, M * r))) atol=minares_tol * norm(b)
+      end
+
+      # Warm start and shift with a preconditioner
+      x0 = rand(FC, n)
+      for λ in (0.0, 0.5)
+        (x, stats) = minares(A, b, x0, M=M, λ=λ)
+        r = b - (A + λ * I) * x
+        @test(norm(r) ≤ minares_tol * norm(A) * norm(x))
+        @test(stats.solved)
+      end
+
+      # The estimates are ‖rₖ‖_M and ‖AMrₖ‖_M with a preconditioner
+      for k in 1:5
+        (x, stats) = minares(A, b, M=M, itmax=k, atol=0.0, rtol=0.0, Artol=0.0, history=true)
+        r = b - A * x
+        @test stats.residuals[end] ≈ sqrt(real(dot(r, M * r)))
+        @test stats.Aresiduals[end] ≈ sqrt(real(dot(A * M * r, M * (A * M * r))))
+      end
+
+      # Test the in-place method with and without a preconditioner
+      workspace = MinaresWorkspace(A, b)
+      for P in (M, I, M)
+        minares!(workspace, A, b, M=P)
+        r = b - A * workspace.x
+        @test(norm(r) ≤ minares_tol * norm(A) * norm(workspace.x))
+        @test(workspace.stats.solved)
+      end
 
       # test callback function
       A, b = sparse_laplacian(FC=FC)
