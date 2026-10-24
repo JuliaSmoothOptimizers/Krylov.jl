@@ -369,6 +369,17 @@ kwargs_workspace_lslq = (:window,)
         end
         Anorm² = Anorm² + αL * αL + βL * βL  # = ‖Lₖ‖²
         Anorm = sqrt(Anorm²)
+      else
+        # βₖ₊₁ = 0: the Golub-Kahan process terminates and there is no vₖ₊₁.
+        α = zero(T)
+        kfill!(v, zero(FC))
+        NisI || kfill!(Nv, zero(FC))
+        αL = zero(T)
+        βL = zero(T)
+        if λ ≠ 0
+          (cL, sL, βL) = sym_givens(β, λ)
+          λ = sqrt(λ²)
+        end
       end
 
       # Continue QR factorization of Bₖ
@@ -483,8 +494,11 @@ kwargs_workspace_lslq = (:window,)
       solved_lim = (test2 ≤ atol)
       zero_resid_lim = (test1 ≤ ε)
 
+      # If βₖ₊₁ = 0 and λ = 0, the LSLQ point is the exact solution of the consistent system.
+      zero_resid_exact = (β == 0) && (λ == 0)
+
       ill_cond = ill_cond_mach || ill_cond_lim
-      zero_resid = zero_resid_mach || zero_resid_lim
+      zero_resid = zero_resid_mach || zero_resid_lim || zero_resid_exact
       solved = solved_mach || solved_lim || zero_resid || fwd_err_lbnd || fwd_err_ubnd
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns

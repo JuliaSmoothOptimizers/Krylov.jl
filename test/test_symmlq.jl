@@ -80,4 +80,30 @@
       @test_throws TypeError symmlq(A, b, callback = workspace -> "string", history = true)
     end
   end
+
+  # The Krylov subspace is invariant after one iteration.
+  @testset "exact breakdown" begin
+    for FC in (Float64, ComplexF64)
+      n = 6
+      A = Matrix{FC}(2I, n, n)
+      b = FC[1:n;]
+      for transfer_to_cg in (false, true)
+        (x, stats) = symmlq(A, b, transfer_to_cg=transfer_to_cg)
+        @test norm(x - b / 2) ≤ 1e-10 * norm(b / 2)
+        @test stats.solved
+      end
+
+      # (A + λI)x = b
+      (x, stats) = symmlq(A, b, λ=1.0)
+      @test norm(x - b / 3) ≤ 1e-10 * norm(b / 3)
+      @test stats.solved
+      X = rand(FC, n, n)
+      H = Matrix(Hermitian(X * X' + I))
+      for λ in (-0.5, 0.5)
+        (x, stats) = symmlq(H, b, λ=λ)
+        @test norm(b - (H + λ * I) * x) ≤ symmlq_tol * norm(b)
+        @test stats.solved
+      end
+    end
+  end
 end

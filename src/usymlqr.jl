@@ -230,6 +230,7 @@ kwargs_usymlqr = (:ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     solved_ln = !ln || rNorm_ln ≤ ε_ln
     solved = solved_ls && solved_ln
     inconsistent = false
+    breakdown = false
     tired = iter ≥ itmax
     status = "unknown"
     ill_cond = false
@@ -309,6 +310,12 @@ kwargs_usymlqr = (:ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       # [s̄ₖ -cₖ] [βₖ₊₁ ]   [0 ]
       (cₖ, sₖ, δₖ) = sym_givens(δbarₖ, βₖ₊₁)
 
+      # Rₖ is singular and the process can't continue.
+      if δₖ == 0
+        breakdown = true
+        break
+      end
+
       # Compute the direction wₖ, the last column of Wₖ = Uₖ(Rₖ)⁻¹ ⟷ (Rₖ)ᵀ(Wₖ)ᵀ = (Uₖ)ᵀ.
       # w₁ = u₁ / δ₁
       if iter == 1
@@ -347,7 +354,12 @@ kwargs_usymlqr = (:ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hi
         # Update the residual rₖ.
         # rₖ ← |sₖ|² * rₖ₋₁ - cₖ * ϕbarₖ₊₁ * vₖ₊₁
         # Note: vₖ₊₁ = q / βₖ₊₁
-        kaxpby!(m, -cₖ * ϕbarₖ₊₁ / βₖ₊₁, q, abs2(sₖ), rₖ)
+        if βₖ₊₁ ≠ 0
+          kaxpby!(m, -cₖ * ϕbarₖ₊₁ / βₖ₊₁, q, abs2(sₖ), rₖ)
+        else
+          # βₖ₊₁ = 0 ⟹ sₖ = 0 and ϕbarₖ₊₁ = 0
+          kfill!(rₖ, zero(FC))
+        end
 
         # Compute ‖rₖ‖ = ‖ b - Ayₖ‖ = |ϕbarₖ₊₁|.
         rNorm_ls = abs(ϕbarₖ₊₁)
@@ -361,9 +373,9 @@ kwargs_usymlqr = (:ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hi
         ϕbarₖ = ϕbarₖ₊₁
 
         # Update solved_ls
-        solved_ls = rNorm_ls ≤ ε_ls
+        # The least-squares problem is also solved when ‖Aᴴrₖ₋₁‖ is small.
         iter == 1 && (κ = atol + rtol * AᴴrNorm)
-        inconsistent = !solved_ls && AᴴrNorm ≤ κ
+        solved_ls = (rNorm_ls ≤ ε_ls) || (AᴴrNorm ≤ κ)
       end
 
       if ln && !solved_ln
@@ -430,11 +442,22 @@ kwargs_usymlqr = (:ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hi
         end
         history && push!(rNorms, rNorm_ln)
 
-        # Update ηₖ₋₁
-        ηₖ₋₁ = ηₖ
-
         # Update solved_ln
         solved_ln = rNorm_ln ≤ ε_ln
+
+        # If γₖ₊₁ = 0 and βₖ₊₁ = 0, both processes terminate and AᴴVₖ = Uₖ(Tₖ)ᴴ.
+        # The last component ζₖ of the solution of (Rₖ)ᴴhₖ = γ₁e₁ gives the exact least-norm solution.
+        if !solved_ln && (γₖ₊₁ == 0) && (βₖ₊₁ == 0)
+          ζₖ = ηₖ / conj(δₖ)
+          # xₖ ← (xᴸ)ₖ + ζₖ * dₖ with dₖ = cₖ * d̅ₖ because sₖ = 0
+          kaxpy!(m, ζₖ * cₖ, d̅, xₖ)
+          # zₖ ← (zᴸ)ₖ - ζₖ * wₖ
+          kaxpy!(n, -ζₖ, wₖ, zₖ)
+          solved_ln = true
+        end
+
+        # Update ηₖ₋₁
+        ηₖ₋₁ = ηₖ
       end
 
       # Compute vₖ₊₁ and uₖ₊₁.
@@ -484,6 +507,7 @@ kwargs_usymlqr = (:ls, :ln, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :hi
 
     # Termination status
     tired               && (status = "maximum number of iterations exceeded")
+    breakdown           && (status = "breakdown δₖ = 0")
     solved              && (status = "solution good enough given atol and rtol")
     user_requested_exit && (status = "user-requested exit")
     overtimed           && (status = "time limit exceeded")

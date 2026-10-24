@@ -74,4 +74,18 @@
     @test typeof(workspace.y) === typeof(d)
     @test workspace.stats.solved
   end
+
+  # The Krylov subspace is invariant after one iteration.
+  @testset "exact breakdown" begin
+    for FC in (Float64, ComplexF64)
+      n = 6
+      A = Matrix{FC}(2I, n, n)
+      b = FC[1:n;]
+      c = FC[n:-1:1;]
+      (x, y, stats) = usymlqr(A, b, c)
+      K = [I A; A' zeros(FC, n, n)]
+      @test norm(K * [x; y] - [b; c]) ≤ 1e-10 * norm([b; c])
+      @test stats.solved
+    end
+  end
 end

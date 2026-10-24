@@ -330,28 +330,32 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
         kdivcopy!(n, uₖ, p, conj(γₖ₊₁))  # uₖ₊₁ = p / γ̄ₖ₊₁
       end
 
-      # Compute ⟨vₖ,vₖ₊₁⟩ and ‖vₖ₊₁‖
-      vₖᴴvₖ₊₁ = kdot(n, vₖ₋₁, vₖ)
-      norm_vₖ₊₁ = knorm(n, vₖ)
+      # Compute ⟨vₖ,q⟩ and ‖q‖ where q = βₖ₊₁vₖ₊₁.
+      # We use q instead of vₖ₊₁ because βₖ₊₁ = 0 when the Krylov subspace is invariant.
+      vₖᴴq = kdot(n, vₖ₋₁, q)
+      qNorm = knorm(n, q)
+      norm_vₖ₊₁ = βₖ₊₁ ≠ 0 ? qNorm / βₖ₊₁ : zero(T)
 
       # Compute BiLQ residual norm
-      # ‖rₖ‖ = √(|μₖ|²‖vₖ‖² + |ωₖ|²‖vₖ₊₁‖² + μ̄ₖωₖ⟨vₖ,vₖ₊₁⟩ + μₖω̄ₖ⟨vₖ₊₁,vₖ⟩)
+      # ‖rₖ‖ = √(|μₖ|²‖vₖ‖² + |ωₖ|²‖q‖² + μ̄ₖωₖ⟨vₖ,q⟩ + μₖω̄ₖ⟨q,vₖ⟩) with ωₖ = sₖζₖ₋₁
       if iter == 1
         rNorm_lq = bNorm
       else
         μₖ = βₖ * (sₖ₋₁ * ζₖ₋₂ - cₖ₋₁ * cₖ * ζₖ₋₁) + αₖ * sₖ * ζₖ₋₁
-        ωₖ = βₖ₊₁ * sₖ * ζₖ₋₁
-        θₖ = conj(μₖ) * ωₖ * vₖᴴvₖ₊₁
-        rNorm_lq = sqrt(abs2(μₖ) * norm_vₖ^2 + abs2(ωₖ) * norm_vₖ₊₁^2 + 2 * real(θₖ))
+        ωₖ = sₖ * ζₖ₋₁
+        θₖ = conj(μₖ) * ωₖ * vₖᴴq
+        rNorm_lq = sqrt(abs2(μₖ) * norm_vₖ^2 + abs2(ωₖ) * qNorm^2 + 2 * real(θₖ))
       end
       history && push!(rNorms, rNorm_lq)
 
       # Compute BiCG residual norm
-      # ‖rₖ‖ = |ρₖ| * ‖vₖ₊₁‖
-      if transfer_to_bicg && (abs(δbarₖ) > eps(T))
+      # ‖rₖ‖ = |ρₖ| * ‖q‖ with ρₖ = sₖζₖ₋₁ - cₖζbarₖ
+      # If pᴴq = 0, the Lanczos process can't continue and we use the BiCG point.
+      use_bicg = transfer_to_bicg || (pᴴq == 0)
+      if use_bicg && (abs(δbarₖ) > eps(T))
         ζbarₖ = ηₖ / δbarₖ
-        ρₖ = βₖ₊₁ * (sₖ * ζₖ₋₁ - cₖ * ζbarₖ)
-        rNorm_cg = abs(ρₖ) * norm_vₖ₊₁
+        ρₖ = sₖ * ζₖ₋₁ - cₖ * ζbarₖ
+        rNorm_cg = abs(ρₖ) * qNorm
       end
 
       # Update sₖ₋₁, cₖ₋₁, ηₖ₋₁, γₖ, βₖ, δbarₖ₋₁ and norm_vₖ.
@@ -366,7 +370,7 @@ kwargs_bilq = (:c, :transfer_to_bicg, :M, :N, :ldiv, :atol, :rtol, :itmax, :time
       # Update stopping criterion.
       user_requested_exit = callback(workspace) :: Bool
       solved_lq = rNorm_lq ≤ ε
-      solved_cg = transfer_to_bicg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ ε)
+      solved_cg = use_bicg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ ε)
       tired = iter ≥ itmax
       breakdown = !solved_lq && !solved_cg && (pᴴq == 0)
       timer = time_ns() - start_time

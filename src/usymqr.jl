@@ -195,6 +195,7 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
     # Stopping criterion.
     solved = rNorm ≤ ε
     inconsistent = false
+    breakdown = false
     tired = iter ≥ itmax
     status = "unknown"
     user_requested_exit = false
@@ -263,6 +264,12 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
       # [s̄ₖ -cₖ] [βₖ₊₁ ]   [0 ]
       (cₖ, sₖ, δₖ) = sym_givens(δbarₖ, βₖ₊₁)
 
+      # Rₖ is singular and the process can't continue.
+      if δₖ == 0
+        breakdown = true
+        break
+      end
+
       # Update z̅ₖ₊₁ = Qₖ.ₖ₊₁ [ z̄ₖ ]
       #                      [ 0  ]
       #
@@ -311,9 +318,15 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
 
       if βₖ₊₁ ≠ zero(T)
         kdivcopy!(m, vₖ, q, βₖ₊₁)  # vₖ₊₁ = q / βₖ₊₁
+      else
+        # vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
+        kfill!(vₖ, zero(FC))
       end
       if γₖ₊₁ ≠ zero(T)
         kdivcopy!(n, uₖ, p, γₖ₊₁)  # uₖ₊₁ = p / γₖ₊₁
+      else
+        # uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
+        kfill!(uₖ, zero(FC))
       end
 
       # Update directions for x.
@@ -346,6 +359,8 @@ kwargs_usymqr = (:atol, :rtol, :itmax, :timemax, :verbose, :history, :callback, 
 
     # Termination status
     tired               && (status = "maximum number of iterations exceeded")
+    breakdown           && (status = "breakdown δₖ = 0")
+    inconsistent        && (status = "found approximate least-squares solution")
     solved              && (status = "solution good enough given atol and rtol")
     user_requested_exit && (status = "user-requested exit")
     overtimed           && (status = "time limit exceeded")

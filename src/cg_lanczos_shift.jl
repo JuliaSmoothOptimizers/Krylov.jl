@@ -204,6 +204,9 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
 
     # Main loop.
     while ! (solved || tired || user_requested_exit || overtimed)
+      # ρₖ = ‖vₖ‖² is required to check the curvature and update the shifted systems.
+      MisI || (ρ = kdotr(n, v, v))
+
       # Form next Lanczos vector.
       # βₖ₊₁Mvₖ₊₁ = Avₖ - δₖMvₖ - βₖMvₖ₋₁
       kmul!(Mv_next, A, v)                # Mvₖ₊₁ ← Avₖ
@@ -216,12 +219,14 @@ kwargs_cg_lanczos_shift = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :t
       kcopy!(n, Mv, Mv_next)              # Mvₖ ← Mvₖ₊₁
       MisI || mulorldiv!(v, M, Mv, ldiv)  # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
       β = knorm_elliptic(n, v, Mv)        # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
-      kdiv!(n, v, β)                      # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-      MisI || kdiv!(n, Mv, β)             # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+      # If βₖ₊₁ = 0, the Krylov subspace is invariant and vₖ₊₁ = 0.
+      if β ≠ 0
+        kdiv!(n, v, β)                      # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+        MisI || kdiv!(n, Mv, β)             # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+      end
 
       # Check curvature: vₖᴴ(A + sᵢI)vₖ = vₖᴴAvₖ + sᵢ‖vₖ‖² = δₖ + ρₖ * sᵢ with ρₖ = ‖vₖ‖².
       # It is possible to show that σₖ² (δₖ + ρₖ * sᵢ - ωₖ₋₁ / γₖ₋₁) = pₖᴴ (A + sᵢ I) pₖ.
-      MisI || (ρ = kdotr(n, v, v))
       for i = 1 : nshifts
         δhat[i] = δ + ρ * shifts[i]
         γ[i] = inv(δhat[i] - ω[i] / γ[i])
