@@ -46,7 +46,7 @@ For an in-place variant that reuses memory across solves, see [`cg_lanczos_shift
 
 #### Keyword arguments
 
-* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
+* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning. Only a positive multiple of the identity `M = μI` is supported. Other preconditioners break the shift invariance of the Krylov subspace and give wrong solutions for nonzero shifts;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `check_curvature`: if `true`, check that the curvature of the quadratic along the search direction is positive, and abort if not;
 * `atol`: absolute stopping tolerance based on the residual norm;
