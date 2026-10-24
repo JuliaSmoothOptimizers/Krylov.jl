@@ -28,6 +28,15 @@
       @test(resid ≤ bicgstab_tol)
       @test(stats.solved)
 
+      # Exact solution after the first half-step (sₖ = 0).
+      # See https://github.com/JuliaSmoothOptimizers/Krylov.jl/issues/1126
+      A = Matrix{FC}(I, 3, 3)
+      b = FC[1, 2, 3]
+      (x, stats) = bicgstab(A, b)
+      @test x ≈ b
+      @test stats.solved
+      @test stats.niter == 1
+
       # Nonsymmetric indefinite variant.
       A, b = nonsymmetric_indefinite(FC=FC)
       (x, stats) = bicgstab(A, b)
