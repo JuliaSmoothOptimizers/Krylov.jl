@@ -149,7 +149,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     # Initialize the preconditioned Lanczos process.
     # β₁M⁻¹v₁ = r₀
     if warm_start
-      kmul!(M⁻¹vₖ, A, Δx)  # r₀ = b - Ax₀
+      kmul!(M⁻¹vₖ, A, Δx)  # r₀ = b - (A + λI)x₀
       (λ ≠ 0) && kaxpy!(n, λ, Δx, M⁻¹vₖ)
       kaxpby!(n, one(FC), b, -one(FC), M⁻¹vₖ)
     else
