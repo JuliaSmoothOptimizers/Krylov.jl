@@ -130,11 +130,11 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
-    allocate_if(!MisI, workspace, :M⁻¹vₖ  , S, workspace.x)  # The length of M⁻¹vₖ is n
-    allocate_if(!MisI, workspace, :M⁻¹vₖ₊₁, S, workspace.x)  # The length of M⁻¹vₖ₊₁ is n
+    allocate_if(!MisI, workspace, :M⁻¹vₖ, S, workspace.x)  # The length of M⁻¹vₖ is n
     Δx, vₖ, vₖ₊₁, x, q, stats = workspace.Δx, workspace.vₖ, workspace.vₖ₊₁, workspace.x, workspace.q, workspace.stats
+    # With a preconditioner, q is not needed as a temporary vector and stores M⁻¹vₖ₊₁.
     M⁻¹vₖ   = MisI ? vₖ   : workspace.M⁻¹vₖ
-    M⁻¹vₖ₊₁ = MisI ? vₖ₊₁ : workspace.M⁻¹vₖ₊₁
+    M⁻¹vₖ₊₁ = MisI ? vₖ₊₁ : q
     wₖ₋₂, wₖ₋₁ = workspace.wₖ₋₂, workspace.wₖ₋₁
     dₖ₋₂, dₖ₋₁ = workspace.dₖ₋₂, workspace.dₖ₋₁
     warm_start = workspace.warm_start
@@ -281,14 +281,26 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       # (A + λI)Vₖ₊₁ = M⁻¹Vₖ₊₂Tₖ₊₂.ₖ₊₁
       # βₖ₊₂M⁻¹vₖ₊₂ = (A + λI)vₖ₊₁ - αₖ₊₁M⁻¹vₖ₊₁ - βₖ₊₁M⁻¹vₖ
       if iter ≤ ℓ-1
-        kmul!(q, A, vₖ₊₁)  # q ← Avₖ₊₁
-        kaxpby!(n, one(T), q, -βₖ₊₁, M⁻¹vₖ)  # Forms M⁻¹vₖ₊₂ : M⁻¹vₖ ← Avₖ₊₁ - βₖ₊₁M⁻¹vₖ
+        # M⁻¹vₖ₊₂ is formed in a vector that is not used anymore.
+        # Without preconditioner, vₖ = M⁻¹vₖ is still needed and we use q.
+        # With a preconditioner, vₖ was only needed to compute wₖ.
+        t = MisI ? q : vₖ
+        kmul!(t, A, vₖ₊₁)                 # t ← Avₖ₊₁
+        kaxpy!(n, -βₖ₊₁, M⁻¹vₖ, t)        # t ← t - βₖ₊₁M⁻¹vₖ
         if λ ≠ 0
-          kaxpy!(n, λ, vₖ₊₁, M⁻¹vₖ)          # M⁻¹vₖ ← M⁻¹vₖ + λvₖ₊₁
+          kaxpy!(n, λ, vₖ₊₁, t)           # t ← t + λvₖ₊₁
         end
-        αₖ₊₁ = kdotr(n, M⁻¹vₖ, vₖ₊₁)         # αₖ₊₁ = ⟨(A + λI)vₖ₊₁ - βₖ₊₁M⁻¹vₖ , vₖ₊₁⟩
-        kaxpy!(n, -αₖ₊₁, M⁻¹vₖ₊₁, M⁻¹vₖ)     # M⁻¹vₖ ← M⁻¹vₖ - αₖ₊₁M⁻¹vₖ₊₁
-        MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)  # vₖ₊₂ = M * M⁻¹vₖ₊₂
+        αₖ₊₁ = kdotr(n, t, vₖ₊₁)          # αₖ₊₁ = ⟨(A + λI)vₖ₊₁ - βₖ₊₁M⁻¹vₖ , vₖ₊₁⟩
+        kaxpy!(n, -αₖ₊₁, M⁻¹vₖ₊₁, t)      # t ← t - αₖ₊₁M⁻¹vₖ₊₁
+        if MisI
+          # vₖ₊₂ = M⁻¹vₖ₊₂ = t
+          @kswap!(q, vₖ)
+          M⁻¹vₖ = vₖ
+        else
+          # M⁻¹vₖ is not needed anymore and stores vₖ₊₂ = M * M⁻¹vₖ₊₂
+          mulorldiv!(M⁻¹vₖ, M, t, ldiv)
+          @kswap!(vₖ, M⁻¹vₖ)
+        end
         βₖ₊₂ = knorm_elliptic(n, vₖ, M⁻¹vₖ)  # βₖ₊₂ = ‖M⁻¹vₖ₊₂‖_M
 
         # Detection of early termination

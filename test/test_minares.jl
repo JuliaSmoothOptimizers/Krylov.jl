@@ -89,12 +89,31 @@
         @test stats.residuals[end] ≈ sqrt(real(dot(r, M * r))) atol=minares_tol * norm(b)
       end
 
-      # Test the in-place method with a preconditioner
+      # Warm start and shift with a preconditioner
+      x0 = rand(FC, n)
+      for λ in (0.0, 0.5)
+        (x, stats) = minares(A, b, x0, M=M, λ=λ)
+        r = b - (A + λ * I) * x
+        @test(norm(r) ≤ minares_tol * norm(A) * norm(x))
+        @test(stats.solved)
+      end
+
+      # The estimates are ‖rₖ‖_M and ‖AMrₖ‖_M with a preconditioner
+      for k in 1:5
+        (x, stats) = minares(A, b, M=M, itmax=k, atol=0.0, rtol=0.0, Artol=0.0, history=true)
+        r = b - A * x
+        @test stats.residuals[end] ≈ sqrt(real(dot(r, M * r)))
+        @test stats.Aresiduals[end] ≈ sqrt(real(dot(A * M * r, M * (A * M * r))))
+      end
+
+      # Test the in-place method with and without a preconditioner
       workspace = MinaresWorkspace(A, b)
-      minares!(workspace, A, b, M=M)
-      r = b - A * workspace.x
-      @test(norm(r) ≤ minares_tol * norm(A) * norm(workspace.x))
-      @test(workspace.stats.solved)
+      for P in (M, I, M)
+        minares!(workspace, A, b, M=P)
+        r = b - A * workspace.x
+        @test(norm(r) ≤ minares_tol * norm(A) * norm(workspace.x))
+        @test(workspace.stats.solved)
+      end
 
       # test callback function
       A, b = sparse_laplacian(FC=FC)

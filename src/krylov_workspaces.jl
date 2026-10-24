@@ -168,7 +168,6 @@ mutable struct MinaresWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
   dₖ₋₁       :: S
   q          :: S
   M⁻¹vₖ      :: S
-  M⁻¹vₖ₊₁    :: S
   warm_start :: Bool
   stats      :: SimpleStats{T}
 end
@@ -188,10 +187,9 @@ function MinaresWorkspace(kc::KrylovConstructor{S,S}) where S
   dₖ₋₂ = similar(kc.vn)
   dₖ₋₁ = similar(kc.vn)
   q    = similar(kc.vn)
-  M⁻¹vₖ   = similar(kc.vn_empty)
-  M⁻¹vₖ₊₁ = similar(kc.vn_empty)
+  M⁻¹vₖ = similar(kc.vn_empty)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
-  workspace = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, M⁻¹vₖ, M⁻¹vₖ₊₁, false, stats)
+  workspace = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, M⁻¹vₖ, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
 end
@@ -209,11 +207,10 @@ function MinaresWorkspace(m::Integer, n::Integer, S::Type)
   dₖ₋₂ = S(undef, n)
   dₖ₋₁ = S(undef, n)
   q    = S(undef, n)
-  M⁻¹vₖ   = S(undef, 0)
-  M⁻¹vₖ₊₁ = S(undef, 0)
+  M⁻¹vₖ = S(undef, 0)
   S = isconcretetype(S) ? S : typeof(x)
   stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
-  workspace = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, M⁻¹vₖ, M⁻¹vₖ₊₁, false, stats)
+  workspace = MinaresWorkspace{T,FC,S}(m, n, Δx, vₖ, vₖ₊₁, x, wₖ₋₂, wₖ₋₁, dₖ₋₂, dₖ₋₁, q, M⁻¹vₖ, false, stats)
   workspace.stats.allocation_timer = start_allocation_time |> ktimer
   return workspace
 end
