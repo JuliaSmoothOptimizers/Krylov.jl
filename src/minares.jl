@@ -440,7 +440,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       # x = Vₖyₖ = Dₖzₖ = x₋₁ + ζₖdₖ
       kaxpy!(n, ζₖ, dₖ, x)
 
-      # Update ‖Arₖ‖ estimate
+      # Update ‖AMrₖ‖_M estimate
       (iter ≤ ℓ-2)  && (ArNorm = sqrt(ζbisₖ₊₁^2 + ζbarₖ₊₂^2))
       (iter == ℓ-1) && (ArNorm = abs(ζbisₖ₊₁))
       (iter == ℓ)   && (ArNorm = zero(T))
@@ -540,8 +540,8 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       end
       πₖ₊₁ = χbarₖ₊₁
 
-      # Update ‖rₖ‖ estimate
-      # ‖ rₖ ‖ = √((πₖ₋₁ - τₖ₋₁)² + (πₖ - τₖ)² + (πₖ₊₁)²)
+      # Update ‖rₖ‖_M estimate
+      # ‖rₖ‖_M = √((πₖ₋₁ - τₖ₋₁)² + (πₖ - τₖ)² + (πₖ₊₁)²)
       if iter == 1
         rNorm = sqrt((πₖ - τₖ)^2 + πₖ₊₁^2)
       else

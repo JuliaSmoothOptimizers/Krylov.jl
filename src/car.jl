@@ -162,11 +162,11 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
     kcopy!(n, u, t)     # u₀ = Aq₀
     ρ = kdotr(n, t, s)  # ρ₀ = ⟨t₀ , s₀⟩
 
-    # Compute ‖r₀‖
+    # Compute ‖r₀‖₂ = ‖M(b - Ax₀)‖₂
     rNorm = knorm(n, r)
     history && push!(rNorms, rNorm)
 
-    # Compute ‖Ar₀‖_M = √⟨r₀, t₀⟩
+    # Compute ‖Ar₀‖_M = ‖AM(b - Ax₀)‖_M = √⟨r₀, t₀⟩
     ArNorm = MisI ? knorm(n, s) : knorm_elliptic(n, r, t)
     history && push!(ArNorms, ArNorm)
 
@@ -201,7 +201,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
       kaxpy!(n, -α, q, r)      # rₖ₊₁ = rₖ - αₖ * qₖ
       kaxpy!(n, -α, Mu, s)     # sₖ₊₁ = sₖ - αₖ * Muₖ
 
-      # Compute ‖rₖ‖
+      # Compute ‖rₖ‖₂ = ‖M(b - Axₖ)‖₂
       rNorm = knorm(n, r)
       history && push!(rNorms, rNorm)
 
@@ -217,7 +217,7 @@ kwargs_car = (:M, :ldiv, :atol, :rtol, :itmax, :timemax, :verbose, :history, :ca
         kaxpby!(n, one(FC), s, β, q)  # qₖ₊₁ = sₖ₊₁ + βₖ * qₖ
         kaxpby!(n, one(FC), t, β, u)  # uₖ₊₁ = tₖ₊₁ + βₖ * uₖ
 
-        # Compute ‖Arₖ‖_M = √⟨rₖ, tₖ⟩
+        # Compute ‖Arₖ‖_M = ‖AM(b - Axₖ)‖_M = √⟨rₖ, tₖ⟩
         ArNorm = MisI ? knorm(n, s) : knorm_elliptic(n, r, t)
         history && push!(ArNorms, ArNorm)
       end
