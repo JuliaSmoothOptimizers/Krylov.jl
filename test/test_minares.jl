@@ -68,12 +68,33 @@
       @test(stats.solved)
 
       # Test with Jacobi (or diagonal) preconditioner
-      # A, b, M = square_preconditioned(FC=FC)
-      # (x, stats) = minares(A, b, M=M)
-      # r = b - A * x
-      # resid = sqrt(real(dot(r, M * r))) / sqrt(real(dot(b, M * b)))
-      # @test(resid ≤ minares_tol * norm(A) * norm(x))
-      # @test(stats.solved)
+      A, b, M = square_preconditioned(FC=FC)
+      (x, stats) = minares(A, b, M=M)
+      r = b - A * x
+      resid = sqrt(real(dot(r, M * r))) / sqrt(real(dot(b, M * b)))
+      @test(resid ≤ minares_tol * norm(A) * norm(x))
+      @test(stats.solved)
+
+      # Test with a dense Hermitian positive-definite preconditioner
+      A, b = symmetric_indefinite(FC=FC)
+      n = length(b)
+      X = rand(FC, n, n)
+      M = Matrix(Hermitian(X * X' + n * I))
+      for (P, ldiv) in ((M, false), (cholesky(Hermitian(inv(M))), true))
+        (x, stats) = minares(A, b, M=P, ldiv=ldiv, history=true)
+        r = b - A * x
+        @test(norm(r) ≤ minares_tol * norm(A) * norm(x))
+        @test(stats.solved)
+        # The residual norms are estimated in the M-norm.
+        @test stats.residuals[end] ≈ sqrt(real(dot(r, M * r))) atol=minares_tol * norm(b)
+      end
+
+      # Test the in-place method with a preconditioner
+      workspace = MinaresWorkspace(A, b)
+      minares!(workspace, A, b, M=M)
+      r = b - A * workspace.x
+      @test(norm(r) ≤ minares_tol * norm(A) * norm(workspace.x))
+      @test(workspace.stats.solved)
 
       # test callback function
       A, b = sparse_laplacian(FC=FC)
