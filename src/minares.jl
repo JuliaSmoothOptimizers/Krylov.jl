@@ -29,7 +29,7 @@ MINARES can be warm-started from an initial guess `x0` where `kwargs` are the sa
 
 MINARES solves the Hermitian linear system Ax = b of size n.
 MINARES minimizes ‖Arₖ‖₂ when M = Iₙ and ‖AMrₖ‖_M otherwise.
-The estimates computed every iteration are ‖Mrₖ‖₂ and ‖AMrₖ‖_M.
+The estimates computed every iteration are ‖rₖ‖_M and ‖AMrₖ‖_M.
 
 #### Interface
 
@@ -124,14 +124,17 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
 
     # Tests M = Iₙ
     MisI = (M === I)
-    !MisI && error("Preconditioners are not yet supported")
 
     # Check type consistency
     eltype(A) == FC || error("eltype(A) ≠ $FC")
     ktypeof(b) == S || error("ktypeof(b) must be equal to $S")
 
     # Set up workspace.
+    allocate_if(!MisI, workspace, :M⁻¹vₖ, S, workspace.x)  # The length of M⁻¹vₖ is n
     Δx, vₖ, vₖ₊₁, x, q, stats = workspace.Δx, workspace.vₖ, workspace.vₖ₊₁, workspace.x, workspace.q, workspace.stats
+    # With a preconditioner, q is not needed as a temporary vector and stores M⁻¹vₖ₊₁.
+    M⁻¹vₖ   = MisI ? vₖ : workspace.M⁻¹vₖ
+    M⁻¹vₖ₊₁ = MisI ? vₖ₊₁ : q
     wₖ₋₂, wₖ₋₁ = workspace.wₖ₋₂, workspace.wₖ₋₁
     dₖ₋₂, dₖ₋₁ = workspace.dₖ₋₂, workspace.dₖ₋₁
     warm_start = workspace.warm_start
@@ -143,31 +146,35 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
 
     kfill!(x, zero(FC))  # x₀
 
-    # Initialize the Lanczos process.
-    # β₁v₁ = r₀
+    # Initialize the preconditioned Lanczos process.
+    # β₁M⁻¹v₁ = r₀
     if warm_start
-      kmul!(vₖ, A, Δx)  # r₀ = b - Ax₀
-      (λ ≠ 0) && kaxpy!(n, λ, Δx, vₖ)
-      kaxpby!(n, one(FC), b, -one(FC), vₖ)
+      kmul!(M⁻¹vₖ, A, Δx)  # r₀ = b - (A + λI)x₀
+      (λ ≠ 0) && kaxpy!(n, λ, Δx, M⁻¹vₖ)
+      kaxpby!(n, one(FC), b, -one(FC), M⁻¹vₖ)
     else
-      kcopy!(n, vₖ, b)  # r₀ = b
+      kcopy!(n, M⁻¹vₖ, b)  # r₀ = b
     end
-    βₖ = knorm(n, vₖ)  # β₁ = ‖v₁‖
+    MisI || mulorldiv!(vₖ, M, M⁻¹vₖ, ldiv)
+    βₖ = knorm_elliptic(n, vₖ, M⁻¹vₖ)  # β₁ = ‖r₀‖_M
     if βₖ ≠ 0
       kdiv!(n, vₖ, βₖ)
+      MisI || kdiv!(n, M⁻¹vₖ, βₖ)
     end
     β₁ = βₖ
 
-    # β₂v₂ = (A + λI)v₁ - α₁v₁
-    kmul!(vₖ₊₁, A, vₖ)
+    # β₂M⁻¹v₂ = (A + λI)v₁ - α₁M⁻¹v₁
+    kmul!(M⁻¹vₖ₊₁, A, vₖ)
     if λ ≠ 0
-      kaxpy!(n, λ, vₖ, vₖ₊₁)
+      kaxpy!(n, λ, vₖ, M⁻¹vₖ₊₁)
     end
-    αₖ = kdotr(n, vₖ, vₖ₊₁)   # α₁ = (vₖ)ᵀ(A + λI)vₖ
-    kaxpy!(n, -αₖ, vₖ, vₖ₊₁)
-    βₖ₊₁ = knorm(n, vₖ₊₁)    # β₂ = ‖v₂‖
+    αₖ = kdotr(n, vₖ, M⁻¹vₖ₊₁)  # α₁ = (v₁)ᴴ(A + λI)v₁
+    kaxpy!(n, -αₖ, M⁻¹vₖ, M⁻¹vₖ₊₁)
+    MisI || mulorldiv!(vₖ₊₁, M, M⁻¹vₖ₊₁, ldiv)
+    βₖ₊₁ = knorm_elliptic(n, vₖ₊₁, M⁻¹vₖ₊₁)  # β₂ = ‖M⁻¹v₂‖_M
     if βₖ₊₁ ≠ 0
       kdiv!(n, vₖ₊₁, βₖ₊₁)
+      MisI || kdiv!(n, M⁻¹vₖ₊₁, βₖ₊₁)
     end
 
     ξₖ₋₁ = zero(T)
@@ -187,8 +194,8 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     kfill!(wₖ₋₁, zero(FC))  # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
     kfill!(dₖ₋₂, zero(FC))  # Column k-2 of Dₖ = Wₖ(Uₖ)⁻¹
     kfill!(dₖ₋₁, zero(FC))  # Column k-1 of Dₖ = Wₖ(Uₖ)⁻¹
-    β₁α₁ = βₖ * αₖ           # Variable used to update zₖ
-    β₁β₂ = βₖ * βₖ₊₁         # Variable used to update zₖ
+    β₁α₁ = βₖ * αₖ          # Variable used to update zₖ
+    β₁β₂ = βₖ * βₖ₊₁        # Variable used to update zₖ
     ϵₖ₋₂ = ϵₖ₋₁ = zero(T)
     ℓ = itmax + 2
 
@@ -270,24 +277,38 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         kdiv!(n, wₖ, λₖ)
       end
 
-      # Continue the Lanczos process.
-      # M(A + λI)Vₖ₊₁ = Vₖ₊₂Tₖ₊₂.ₖ₊₁
-      # βₖ₊₂vₖ₊₂ = M(A + λI)vₖ₊₁ - αₖ₊₁vₖ₊₁ - βₖ₊₁vₖ
+      # Continue the preconditioned Lanczos process.
+      # (A + λI)Vₖ₊₁ = M⁻¹Vₖ₊₂Tₖ₊₂.ₖ₊₁
+      # βₖ₊₂M⁻¹vₖ₊₂ = (A + λI)vₖ₊₁ - αₖ₊₁M⁻¹vₖ₊₁ - βₖ₊₁M⁻¹vₖ
       if iter ≤ ℓ-1
-        kmul!(q, A, vₖ₊₁)  # q ← Avₖ
-        kaxpby!(n, one(T), q, -βₖ₊₁, vₖ)  # Forms vₖ₊₂ : vₖ ← Avₖ₊₁ - βₖ₊₁vₖ
+        # M⁻¹vₖ₊₂ is formed in a vector that is not used anymore.
+        # Without preconditioner, vₖ = M⁻¹vₖ is still needed and we use q.
+        # With a preconditioner, vₖ was only needed to compute wₖ.
+        t = MisI ? q : vₖ
+        kmul!(t, A, vₖ₊₁)             # t ← Avₖ₊₁
+        kaxpy!(n, -βₖ₊₁, M⁻¹vₖ, t)    # t ← t - βₖ₊₁M⁻¹vₖ
         if λ ≠ 0
-          kaxpy!(n, λ, vₖ₊₁, vₖ)          # vₖ ← vₖ + λvₖ₊₁
+          kaxpy!(n, λ, vₖ₊₁, t)       # t ← t + λvₖ₊₁
         end
-        αₖ₊₁ = kdotr(n, vₖ, vₖ₊₁)         # αₖ₊₁ = ⟨(A + λI)vₖ₊₁ - βₖ₊₁vₖ , vₖ₊₁⟩
-        kaxpy!(n, -αₖ₊₁, vₖ₊₁, vₖ)        # vₖ ← vₖ - αₖ₊₁vₖ₊₁
-        βₖ₊₂ = knorm(n, vₖ)               # βₖ₊₂ = ‖vₖ₊₂‖
-      
+        αₖ₊₁ = kdotr(n, t, vₖ₊₁)      # αₖ₊₁ = ⟨(A + λI)vₖ₊₁ - βₖ₊₁M⁻¹vₖ , vₖ₊₁⟩
+        kaxpy!(n, -αₖ₊₁, M⁻¹vₖ₊₁, t)  # t ← t - αₖ₊₁M⁻¹vₖ₊₁
+        if MisI
+          # vₖ₊₂ = M⁻¹vₖ₊₂ = t
+          @kswap!(q, vₖ)
+          M⁻¹vₖ = vₖ
+        else
+          # M⁻¹vₖ is not needed anymore and stores vₖ₊₂ = M * M⁻¹vₖ₊₂
+          mulorldiv!(M⁻¹vₖ, M, t, ldiv)
+          @kswap!(vₖ, M⁻¹vₖ)
+        end
+        βₖ₊₂ = knorm_elliptic(n, vₖ, M⁻¹vₖ)  # βₖ₊₂ = ‖M⁻¹vₖ₊₂‖_M
+
         # Detection of early termination
         if βₖ₊₂ ≤ btol
           ℓ = iter + 1
         else
           kdiv!(n, vₖ, βₖ₊₂)
+          MisI || kdiv!(n, M⁻¹vₖ, βₖ₊₂)
         end
       end
 
@@ -419,7 +440,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       # x = Vₖyₖ = Dₖzₖ = x₋₁ + ζₖdₖ
       kaxpy!(n, ζₖ, dₖ, x)
 
-      # Update ‖Arₖ‖ estimate
+      # Update ‖AMrₖ‖_M estimate
       (iter ≤ ℓ-2)  && (ArNorm = sqrt(ζbisₖ₊₁^2 + ζbarₖ₊₂^2))
       (iter == ℓ-1) && (ArNorm = abs(ζbisₖ₊₁))
       (iter == ℓ)   && (ArNorm = zero(T))
@@ -519,8 +540,8 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       end
       πₖ₊₁ = χbarₖ₊₁
 
-      # Update ‖rₖ‖ estimate
-      # ‖ rₖ ‖ = √((πₖ₋₁ - τₖ₋₁)² + (πₖ - τₖ)² + (πₖ₊₁)²)
+      # Update ‖rₖ‖_M estimate
+      # ‖rₖ‖_M = √((πₖ₋₁ - τₖ₋₁)² + (πₖ - τₖ)² + (πₖ₊₁)²)
       if iter == 1
         rNorm = sqrt((πₖ - τₖ)^2 + πₖ₊₁^2)
       else
@@ -538,6 +559,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
 
       # Update variables
       @kswap!(vₖ, vₖ₊₁)
+      @kswap!(M⁻¹vₖ, M⁻¹vₖ₊₁)
       if iter ≥ 2
         @kswap!(wₖ₋₂, wₖ₋₁)
         @kswap!(dₖ₋₂, dₖ₋₁)
