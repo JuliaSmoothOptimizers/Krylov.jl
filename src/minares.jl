@@ -133,7 +133,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     allocate_if(!MisI, workspace, :M⁻¹vₖ, S, workspace.x)  # The length of M⁻¹vₖ is n
     Δx, vₖ, vₖ₊₁, x, q, stats = workspace.Δx, workspace.vₖ, workspace.vₖ₊₁, workspace.x, workspace.q, workspace.stats
     # With a preconditioner, q is not needed as a temporary vector and stores M⁻¹vₖ₊₁.
-    M⁻¹vₖ   = MisI ? vₖ   : workspace.M⁻¹vₖ
+    M⁻¹vₖ   = MisI ? vₖ : workspace.M⁻¹vₖ
     M⁻¹vₖ₊₁ = MisI ? vₖ₊₁ : q
     wₖ₋₂, wₖ₋₁ = workspace.wₖ₋₂, workspace.wₖ₋₁
     dₖ₋₂, dₖ₋₁ = workspace.dₖ₋₂, workspace.dₖ₋₁
@@ -194,8 +194,8 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     kfill!(wₖ₋₁, zero(FC))  # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
     kfill!(dₖ₋₂, zero(FC))  # Column k-2 of Dₖ = Wₖ(Uₖ)⁻¹
     kfill!(dₖ₋₁, zero(FC))  # Column k-1 of Dₖ = Wₖ(Uₖ)⁻¹
-    β₁α₁ = βₖ * αₖ           # Variable used to update zₖ
-    β₁β₂ = βₖ * βₖ₊₁         # Variable used to update zₖ
+    β₁α₁ = βₖ * αₖ          # Variable used to update zₖ
+    β₁β₂ = βₖ * βₖ₊₁        # Variable used to update zₖ
     ϵₖ₋₂ = ϵₖ₋₁ = zero(T)
     ℓ = itmax + 2
 
@@ -285,13 +285,13 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         # Without preconditioner, vₖ = M⁻¹vₖ is still needed and we use q.
         # With a preconditioner, vₖ was only needed to compute wₖ.
         t = MisI ? q : vₖ
-        kmul!(t, A, vₖ₊₁)                 # t ← Avₖ₊₁
-        kaxpy!(n, -βₖ₊₁, M⁻¹vₖ, t)        # t ← t - βₖ₊₁M⁻¹vₖ
+        kmul!(t, A, vₖ₊₁)             # t ← Avₖ₊₁
+        kaxpy!(n, -βₖ₊₁, M⁻¹vₖ, t)    # t ← t - βₖ₊₁M⁻¹vₖ
         if λ ≠ 0
-          kaxpy!(n, λ, vₖ₊₁, t)           # t ← t + λvₖ₊₁
+          kaxpy!(n, λ, vₖ₊₁, t)       # t ← t + λvₖ₊₁
         end
-        αₖ₊₁ = kdotr(n, t, vₖ₊₁)          # αₖ₊₁ = ⟨(A + λI)vₖ₊₁ - βₖ₊₁M⁻¹vₖ , vₖ₊₁⟩
-        kaxpy!(n, -αₖ₊₁, M⁻¹vₖ₊₁, t)      # t ← t - αₖ₊₁M⁻¹vₖ₊₁
+        αₖ₊₁ = kdotr(n, t, vₖ₊₁)      # αₖ₊₁ = ⟨(A + λI)vₖ₊₁ - βₖ₊₁M⁻¹vₖ , vₖ₊₁⟩
+        kaxpy!(n, -αₖ₊₁, M⁻¹vₖ₊₁, t)  # t ← t - αₖ₊₁M⁻¹vₖ₊₁
         if MisI
           # vₖ₊₂ = M⁻¹vₖ₊₂ = t
           @kswap!(q, vₖ)
