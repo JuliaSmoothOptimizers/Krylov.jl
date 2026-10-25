@@ -53,6 +53,21 @@ function test_processes(S, M)
   cpu_B, cpu_c = over_consistent(n, m, FC=FC)
   gpu_A, gpu_B, gpu_b, gpu_c = M(cpu_A), M(cpu_B), S(cpu_b), S(cpu_c)
   V, β, H, U, γ, F = montoison_orban(gpu_A, gpu_B, gpu_b, gpu_c, k)
+
+  for skew in (false, true)
+    cpu_A = rand(FC, n, n)
+    cpu_A = skew ? cpu_A - cpu_A' : cpu_A + cpu_A'
+    cpu_b = rand(FC, n)
+    gpu_A, gpu_b = M(cpu_A), S(cpu_b)
+    V, β, T = hermitian_lanczos(gpu_A, gpu_b, k; skew_hermitian=skew)
+    @test norm(cpu_A * Matrix(V[:,1:k]) - Matrix(V) * T) ≤ 1e-4 * norm(T)
+
+    cpu_A = rand(FC, n, n)
+    cpu_A = skew ? cpu_A - transpose(cpu_A) : cpu_A + transpose(cpu_A)
+    gpu_A = M(cpu_A)
+    V, β, T = bunse_gerstner_stover(gpu_A, gpu_b, k; skew_symmetric=skew)
+    @test norm(cpu_A * conj(Matrix(V[:,1:k])) - Matrix(V) * T) ≤ 1e-4 * norm(T)
+  end
 end
 
 function test_solver(S, M)
