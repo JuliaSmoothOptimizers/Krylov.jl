@@ -42,7 +42,7 @@ MINARES minimizes ‖Arₖ‖₂ when M = Iₙ and ‖AMrₖ‖_M otherwise.
 The estimates computed every iteration are ‖rₖ‖_M and ‖AMrₖ‖_M.
 
 If `complex_symmetric = true`, `A` is complex symmetric (`transpose(A) == A`)
-instead of Hermitian, and MINARES runs on the conjugate Bunse-Gerstner-Stover
+instead of Hermitian, and MINARES runs on the Bunse-Gerstner-Stover
 (BGS) process instead of the Hermitian Lanczos process. It then minimizes
 ‖Aᴴrₖ‖₂ over the conjugate Saunders trial space and estimates ‖rₖ‖₂ and
 ‖Aᴴrₖ‖₂; this is CS-MinAres. `complex_symmetric = true` requires

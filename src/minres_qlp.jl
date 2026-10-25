@@ -54,7 +54,7 @@ It is significantly more complex but can be more reliable than MINRES when A is 
 M also indicates the weighted norm in which residuals are measured.
 
 If `complex_symmetric = true`, `A` is complex symmetric (`transpose(A) == A`)
-instead of Hermitian, and MINRES-QLP runs on the conjugate Bunse-Gerstner-Stover
+instead of Hermitian, and MINRES-QLP runs on the Bunse-Gerstner-Stover
 (BGS) process instead of the Hermitian Lanczos process. This specializes Choi's
 CS-MINRES-QLP recurrence; `complex_symmetric = true` requires `FC <: Complex`,
 `M = I`, and `linesearch = false`. A real symmetric matrix is Hermitian, so
@@ -405,13 +405,10 @@ function _minres_qlp!(structure :: LanczosStructure, workspace :: MinresQlpWorks
       # [ •           •  • γₖ₋₁]   [ •         •    •   ψₖ₋₂  μbisₖ₋₁   0  ]
       # [ 0  •  •  •  •  0  λₖ ]   [ 0    •    •    0   ρₖ₋₂  ψbarₖ₋₁ μbarₖ]
       #
-      # For the complex-symmetric structure this stage factorizes Rₖ as if
-      # transposed, which becomes conjugate-transposed: feed conj() of every
-      # entry of Rₖ (λₖ, γₖ₋₁, ϵₖ₋₂) into this stage, and conjugate every
-      # pivot and projected right-hand-side entry this stage produces
-      # (μbisₖ₋₁, μₖ₋₂, ψbarₖ₋₁) on the way out, so that downstream uses
-      # that do not themselves conjugate (τₖ, the direction updates) see
-      # already-conjugated values, matching Rₖᴴ instead of Rₖᵗ.
+      # Tₖ₊₁.ₖ is not conjugated: Rₖ is its QR factor. This stage reduces rows of Rₖ from the
+      # right, but sym_givens reduces columns, so it is fed conjugated entries: [a b]G = [conj(ρ) 0]
+      # for (c, s, ρ) = sym_givens(conj(a), conj(b)), with G = [c s; conj(s) -c]. In this stage conj()
+      # only implements this row reduction; it is the identity for real Rₖ (Hermitian structure).
 
       if iter == 1
         μbarₖ = λₖ
