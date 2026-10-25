@@ -227,7 +227,7 @@ kwargs_workspace_dqgmres = (:memory,)
         ipos = mod(i-1, mem) + 1  # Position corresponding to vᵢ in the circular stack V.
         diag = iter - i + 1
         WisI || kmul!(Ww, W, w)
-        H[diag] = kdot(n, Ww, V[ipos])   # hᵢ.ₖ = ⟨MANvₖ, vᵢ⟩_W
+        H[diag] = kdot(n, V[ipos], Ww)   # hᵢ.ₖ = ⟨vᵢ, MANvₖ⟩_W
         kaxpy!(n, -H[diag], V[ipos], w)  # w ← w - hᵢ.ₖvᵢ
       end
 
@@ -237,7 +237,7 @@ kwargs_workspace_dqgmres = (:memory,)
           ipos = mod(i-1, mem) + 1
           diag = iter - i + 1
           WisI || kmul!(Ww, W, w)
-          Htmp = kdot(n, Ww, V[ipos])
+          Htmp = kdot(n, V[ipos], Ww)
           H[diag] += Htmp
           kaxpy!(n, -Htmp, V[ipos], w)
         end

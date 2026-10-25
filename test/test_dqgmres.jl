@@ -131,4 +131,15 @@
       @test_throws TypeError dqgmres(A, b, callback = workspace -> "string", history = true)
     end
   end
+
+  # With memory = n, DQGMRES terminates after n iterations.
+  @testset "complete memory" begin
+    for FC in (Float64, ComplexF64)
+      n = 6
+      A = rand(FC, n, n) + 3I
+      b = rand(FC, n)
+      (x, stats) = dqgmres(A, b, memory=n, itmax=n)
+      @test norm(b - A * x) ≤ 1e-10 * norm(b)
+    end
+  end
 end
