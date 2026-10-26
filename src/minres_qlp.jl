@@ -155,25 +155,19 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
       FC <: Complex || error("complex_symmetric = true requires a complex element type")
       M === I || throw(ArgumentError("complex_symmetric = true does not support preconditioning"))
       linesearch && throw(ArgumentError("complex_symmetric = true does not support linesearch"))
-      return _minres_qlp!(ComplexSymmetricStructure(), workspace, A, b, M, ldiv, linesearch, λ,
+      return _minres_qlp!(Val(true), workspace, A, b, M, ldiv, linesearch, λ,
                           atol, rtol, Artol, itmax, timemax, verbose, history, callback, iostream)
     end
-    return _minres_qlp!(HermitianStructure(), workspace, A, b, M, ldiv, linesearch, λ,
+    return _minres_qlp!(Val(false), workspace, A, b, M, ldiv, linesearch, λ,
                         atol, rtol, Artol, itmax, timemax, verbose, history, callback, iostream)
   end
-end
 
-# Shared kernel for the Hermitian Lanczos process and the conjugate BGS
-# process. The two structures differ only at the sites marked with a
-# trailing comment referencing a hook (lanczos_mul!, lanczos_dot,
-# trial_conj!, lanczos_scalar) or a conj() that is the identity for real
-# scalars, so it is the identity on the Hermitian path.
-function _minres_qlp!(structure :: LanczosStructure, workspace :: MinresQlpWorkspace{T,FC,S}, A, b :: AbstractVector{FC},
-                      M, ldiv :: Bool, linesearch :: Bool, λ :: T, atol :: T, rtol :: T, Artol :: T,
-                      itmax :: Int, timemax :: Float64, verbose :: Int, history :: Bool, callback,
-                      iostream :: IO) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-
-    Tr = lanczos_scalar(structure, T, FC)
+  # CS is a compile-time constant, so the compiler resolves every CS branch below and the projected
+  # scalars have one type: T for the Hermitian Lanczos process, FC for the BGS process.
+  function _minres_qlp!(::Val{CS}, workspace :: MinresQlpWorkspace{T,FC,S}, A, b :: AbstractVector{FC},
+                        M, ldiv :: Bool, linesearch :: Bool, λ :: T, atol :: T, rtol :: T, Artol :: T,
+                        itmax :: Int, timemax :: Float64, verbose :: Int, history :: Bool, callback,
+                        iostream :: IO) where {CS, T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -255,15 +249,15 @@ function _minres_qlp!(structure :: LanczosStructure, workspace :: MinresQlpWorks
 
     # Set up workspace.
     kfill!(M⁻¹vₖ₋₁, zero(FC))
-    ζbarₖ = Tr(βₖ)
-    ξₖ₋₁ = zero(Tr)
-    τₖ₋₂ = τₖ₋₁ = τₖ = zero(Tr)
-    ψbarₖ₋₂ = zero(Tr)
-    μbisₖ₋₂ = μbarₖ₋₁ = zero(Tr)
+    ζbarₖ = (CS ? FC : T)(βₖ)
+    ξₖ₋₁ = zero(CS ? FC : T)
+    τₖ₋₂ = τₖ₋₁ = τₖ = zero(CS ? FC : T)
+    ψbarₖ₋₂ = zero(CS ? FC : T)
+    μbisₖ₋₂ = μbarₖ₋₁ = zero(CS ? FC : T)
     kfill!(wₖ₋₁, zero(FC))
     kfill!(wₖ, zero(FC))
     cₖ₋₂ = cₖ₋₁ = cₖ = one(T)   # Givens cosines used for the QR factorization of Tₖ₊₁.ₖ; always real
-    sₖ₋₂ = sₖ₋₁ = sₖ = zero(Tr) # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
+    sₖ₋₂ = sₖ₋₁ = sₖ = zero(CS ? FC : T) # Givens sines used for the QR factorization of Tₖ₊₁.ₖ
 
     # Tolerance for breakdown detection.
     btol = eps(T)^(3//4)
@@ -284,19 +278,23 @@ function _minres_qlp!(structure :: LanczosStructure, workspace :: MinresQlpWorks
       # Update iteration index.
       iter = iter + 1
 
-      # Continue the Lanczos process (Hermitian structure) or the conjugate
-      # BGS process (complex-symmetric structure).
+      # Continue the Lanczos process (Hermitian) or the BGS process (CS).
       # M(A + λI)Vₖ = Vₖ₊₁Tₖ₊₁.ₖ
       # βₖ₊₁vₖ₊₁ = M(A + λI)vₖ - αₖvₖ - βₖvₖ₋₁    (Hermitian: vₖ throughout)
       # βₖ₊₁vₖ₊₁ = M(A + λI)v̄ₖ - αₖvₖ - βₖvₖ₋₁    (complex symmetric)
 
-      lanczos_mul!(structure, n, p, A, vₖ, λ)  # p ← (A + λI)vₖ, or (A + λI)v̄ₖ; vₖ restored
+      CS && conj!(vₖ)
+      kmul!(p, A, vₖ)        # p ← Avₖ, or Av̄ₖ if CS
+      if λ ≠ 0
+        kaxpy!(n, λ, vₖ, p)  # p ← p + λvₖ
+      end
+      CS && conj!(vₖ)
 
       if iter ≥ 2
         kaxpy!(n, -βₖ, M⁻¹vₖ₋₁, p)  # p ← p - βₖ * M⁻¹vₖ₋₁
       end
 
-      αₖ = lanczos_dot(structure, n, vₖ, p)  # αₖ = ⟨vₖ,p⟩, real part only for the Hermitian structure
+      αₖ = CS ? kdot(n, vₖ, p) : kdotr(n, vₖ, p)  # αₖ = ⟨vₖ,p⟩, real part only for the Hermitian case
 
       kaxpy!(n, -αₖ, M⁻¹vₖ, p)  # p ← p - αₖM⁻¹vₖ
 
@@ -328,11 +326,11 @@ function _minres_qlp!(structure :: LanczosStructure, workspace :: MinresQlpWorks
       # If k = 2, we apply the last reflection.
       # If k ≥ 3, we only apply the two previous reflections.
       #
-      # For the complex-symmetric structure, every reflection below uses the
+      # If CS, every reflection below uses the
       # convention [c s; conj(s) -c] with c real (`sym_givens`); a bare `s`
       # always belongs to the "first output row" of a reflection, and every
       # "second output row" use of a sine is conjugated. conj() is the
-      # identity on the real sines of the Hermitian structure.
+      # identity on the real sines of the Hermitian case.
 
       # Apply previous Givens reflections Qₖ₋₂.ₖ₋₁
       if iter ≥ 3
@@ -408,7 +406,7 @@ function _minres_qlp!(structure :: LanczosStructure, workspace :: MinresQlpWorks
       # Tₖ₊₁.ₖ is not conjugated: Rₖ is its QR factor. This stage reduces rows of Rₖ from the
       # right, but sym_givens reduces columns, so it is fed conjugated entries: [a b]G = [conj(ρ) 0]
       # for (c, s, ρ) = sym_givens(conj(a), conj(b)), with G = [c s; conj(s) -c]. In this stage conj()
-      # only implements this row reduction; it is the identity for real Rₖ (Hermitian structure).
+      # only implements this row reduction; it is the identity for real Rₖ (Hermitian case).
 
       if iter == 1
         μbarₖ = λₖ
@@ -467,7 +465,7 @@ function _minres_qlp!(structure :: LanczosStructure, workspace :: MinresQlpWorks
       # the trial basis for this block only, and restore it immediately
       # after, since vₖ is still needed unconjugated by the next iteration's
       # Lanczos/BGS step above.
-      trial_conj!(structure, n, vₖ)
+      CS && conj!(vₖ)
       if iter == 1
         # w̅₁ = v₁
         kcopy!(n, wₖ, vₖ)
@@ -496,7 +494,7 @@ function _minres_qlp!(structure :: LanczosStructure, workspace :: MinresQlpWorks
         kref!(n, w̄ₖ₋₁, wₐᵤₓ, cdₖ, conj(sdₖ))
         @kswap!(wₖ₋₁, wₖ)
       end
-      trial_conj!(structure, n, vₖ)
+      CS && conj!(vₖ)
 
       # Update vₖ, M⁻¹vₖ₋₁, M⁻¹vₖ
       MisI || kcopy!(n, vₖ, vₖ₊₁)  # vₖ ← vₖ₊₁
@@ -597,4 +595,5 @@ function _minres_qlp!(structure :: LanczosStructure, workspace :: MinresQlpWorks
     stats.timer = start_time |> ktimer
     stats.status = status
     return workspace
+  end
 end

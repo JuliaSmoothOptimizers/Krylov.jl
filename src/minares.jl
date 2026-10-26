@@ -136,22 +136,18 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     if complex_symmetric
       FC <: Complex || error("complex_symmetric = true requires a complex element type")
       M === I || throw(ArgumentError("complex_symmetric = true does not support preconditioning"))
-      return _minares!(ComplexSymmetricStructure(), workspace, A, b, M, ldiv, λ, atol, rtol, Artol,
+      return _minares!(Val(true), workspace, A, b, M, ldiv, λ, atol, rtol, Artol,
                        itmax, timemax, verbose, history, callback, iostream)
     end
-    return _minares!(HermitianStructure(), workspace, A, b, M, ldiv, λ, atol, rtol, Artol,
+    return _minares!(Val(false), workspace, A, b, M, ldiv, λ, atol, rtol, Artol,
                      itmax, timemax, verbose, history, callback, iostream)
   end
-end
 
-# Shared kernel, as in _minres_qlp!: the structures differ only at the
-# structure hooks and at conj() calls, which are the identity on the real
-# scalars of the Hermitian structure.
-function _minares!(structure :: LanczosStructure, workspace :: MinaresWorkspace{T,FC,S}, A, b :: AbstractVector{FC}, M,
-                   ldiv :: Bool, λ :: T, atol :: T, rtol :: T, Artol :: T, itmax :: Int, timemax :: Float64,
-                   verbose :: Int, history :: Bool, callback, iostream :: IO) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-
-    Tr = lanczos_scalar(structure, T, FC)
+  # CS is a compile-time constant, so the compiler resolves every CS branch below and the projected
+  # scalars have one type: T for the Hermitian Lanczos process, FC for the BGS process.
+  function _minares!(::Val{CS}, workspace :: MinaresWorkspace{T,FC,S}, A, b :: AbstractVector{FC}, M,
+                     ldiv :: Bool, λ :: T, atol :: T, rtol :: T, Artol :: T, itmax :: Int, timemax :: Float64,
+                     verbose :: Int, history :: Bool, callback, iostream :: IO) where {CS, T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -204,9 +200,14 @@ function _minares!(structure :: LanczosStructure, workspace :: MinaresWorkspace{
     end
     β₁ = βₖ
 
-    # β₂M⁻¹v₂ = (A + λI)v₁ - α₁M⁻¹v₁, with v̄₁ in place of v₁ on the right for the complex-symmetric structure
-    lanczos_mul!(structure, n, M⁻¹vₖ₊₁, A, vₖ, λ)
-    αₖ = lanczos_dot(structure, n, vₖ, M⁻¹vₖ₊₁)  # α₁ = (v₁)ᴴ(A + λI)v₁, or (v₁)ᴴ(A + λI)v̄₁
+    # β₂M⁻¹v₂ = (A + λI)v₁ - α₁M⁻¹v₁, with v̄₁ in place of v₁ on the right if CS
+    CS && conj!(vₖ)
+    kmul!(M⁻¹vₖ₊₁, A, vₖ)
+    if λ ≠ 0
+      kaxpy!(n, λ, vₖ, M⁻¹vₖ₊₁)
+    end
+    CS && conj!(vₖ)
+    αₖ = CS ? kdot(n, vₖ, M⁻¹vₖ₊₁) : kdotr(n, vₖ, M⁻¹vₖ₊₁)  # α₁ = (v₁)ᴴ(A + λI)v₁, or (v₁)ᴴ(A + λI)v̄₁
     kaxpy!(n, -αₖ, M⁻¹vₖ, M⁻¹vₖ₊₁)
     MisI || mulorldiv!(vₖ₊₁, M, M⁻¹vₖ₊₁, ldiv)
     βₖ₊₁ = knorm_elliptic(n, vₖ₊₁, M⁻¹vₖ₊₁)  # β₂ = ‖M⁻¹v₂‖_M
@@ -215,26 +216,26 @@ function _minares!(structure :: LanczosStructure, workspace :: MinaresWorkspace{
       MisI || kdiv!(n, M⁻¹vₖ₊₁, βₖ₊₁)
     end
 
-    ξₖ₋₁ = zero(Tr)
-    τₖ₋₂ = τₖ₋₁ = τₖ = zero(Tr)
-    θbarₖ₋₂ = zero(Tr)
-    ψbisₖ₋₂ = ψbarₖ₋₁ = zero(Tr)
-    πₖ₋₂ = πₖ₋₁ = πₖ = zero(Tr)
-    χbarₖ = zero(Tr)
-    ζbisₖ = ζbarₖ₊₁ = γbarₖ = zero(Tr)
-    λbarₖ = γₖ₋₁ = zero(Tr)
-    c̃₂ₖ₋₄ = zero(T); s̃₂ₖ₋₄ = zero(Tr)
-    c̃₂ₖ₋₃ = zero(T); s̃₂ₖ₋₃ = zero(Tr)
-    c̃₂ₖ₋₂ = zero(T); s̃₂ₖ₋₂ = zero(Tr)
-    c̃₂ₖ₋₁ = zero(T); s̃₂ₖ₋₁ = zero(Tr)
-    c̃₂ₖ   = zero(T); s̃₂ₖ   = zero(Tr)
+    ξₖ₋₁ = zero(CS ? FC : T)
+    τₖ₋₂ = τₖ₋₁ = τₖ = zero(CS ? FC : T)
+    θbarₖ₋₂ = zero(CS ? FC : T)
+    ψbisₖ₋₂ = ψbarₖ₋₁ = zero(CS ? FC : T)
+    πₖ₋₂ = πₖ₋₁ = πₖ = zero(CS ? FC : T)
+    χbarₖ = zero(CS ? FC : T)
+    ζbisₖ = ζbarₖ₊₁ = γbarₖ = zero(CS ? FC : T)
+    λbarₖ = γₖ₋₁ = zero(CS ? FC : T)
+    c̃₂ₖ₋₄ = zero(T); s̃₂ₖ₋₄ = zero(CS ? FC : T)
+    c̃₂ₖ₋₃ = zero(T); s̃₂ₖ₋₃ = zero(CS ? FC : T)
+    c̃₂ₖ₋₂ = zero(T); s̃₂ₖ₋₂ = zero(CS ? FC : T)
+    c̃₂ₖ₋₁ = zero(T); s̃₂ₖ₋₁ = zero(CS ? FC : T)
+    c̃₂ₖ   = zero(T); s̃₂ₖ   = zero(CS ? FC : T)
     kfill!(wₖ₋₂, zero(FC))  # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
     kfill!(wₖ₋₁, zero(FC))  # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
     kfill!(dₖ₋₂, zero(FC))  # Column k-2 of Dₖ = Wₖ(Uₖ)⁻¹
     kfill!(dₖ₋₁, zero(FC))  # Column k-1 of Dₖ = Wₖ(Uₖ)⁻¹
     β₁α₁ = βₖ * αₖ          # Variable used to update zₖ
-    β₁β₂ = βₖ * βₖ₊₁ * one(Tr)  # Variable used to update zₖ
-    ϵₖ₋₂ = ϵₖ₋₁ = zero(Tr)
+    β₁β₂ = βₖ * βₖ₊₁ * one(CS ? FC : T)  # Variable used to update zₖ
+    ϵₖ₋₂ = ϵₖ₋₁ = zero(CS ? FC : T)
     ℓ = itmax + 2
 
     rNorm = β₁
@@ -294,8 +295,8 @@ function _minares!(structure :: LanczosStructure, workspace :: MinaresWorkspace{
       (cₖ, sₖ, λₖ) = sym_givens(λbarₖ, βₖ₊₁)
 
       # Compute the direction wₖ, the last column of Wₖ = Vₖ(Rₖ)⁻¹ ⟷ (Rₖ)ᵀ(Wₖ)ᵀ = (Vₖ)ᵀ.
-      # The complex-symmetric structure uses conj(Vₖ) in place of Vₖ.
-      trial_conj!(structure, n, vₖ)
+      # If CS, conj(Vₖ) replaces Vₖ.
+      CS && conj!(vₖ)
       # w₁ = v₁ / λ₁
       if iter == 1
         wₖ = wₖ₋₁
@@ -316,7 +317,7 @@ function _minares!(structure :: LanczosStructure, workspace :: MinaresWorkspace{
         kaxpy!(n, one(T), vₖ, wₖ)
         kdiv!(n, wₖ, λₖ)
       end
-      trial_conj!(structure, n, vₖ)
+      CS && conj!(vₖ)
 
       # Continue the preconditioned Lanczos process.
       # (A + λI)Vₖ₊₁ = M⁻¹Vₖ₊₂Tₖ₊₂.ₖ₊₁
@@ -326,14 +327,14 @@ function _minares!(structure :: LanczosStructure, workspace :: MinaresWorkspace{
         # Without preconditioner, vₖ = M⁻¹vₖ is still needed and we use q.
         # With a preconditioner, vₖ was only needed to compute wₖ.
         t = MisI ? q : vₖ
-        trial_conj!(structure, n, vₖ₊₁)  # v̄ₖ₊₁ for the complex-symmetric structure
+        CS && conj!(vₖ₊₁)             # v̄ₖ₊₁ if CS
         kmul!(t, A, vₖ₊₁)             # t ← Avₖ₊₁
         kaxpy!(n, -βₖ₊₁, M⁻¹vₖ, t)    # t ← t - βₖ₊₁M⁻¹vₖ
         if λ ≠ 0
           kaxpy!(n, λ, vₖ₊₁, t)       # t ← t + λvₖ₊₁
         end
-        trial_conj!(structure, n, vₖ₊₁)
-        αₖ₊₁ = lanczos_dot(structure, n, vₖ₊₁, t)  # αₖ₊₁ = ⟨vₖ₊₁, (A + λI)vₖ₊₁ - βₖ₊₁M⁻¹vₖ⟩: the basis vector goes first
+        CS && conj!(vₖ₊₁)
+        αₖ₊₁ = CS ? kdot(n, vₖ₊₁, t) : kdotr(n, t, vₖ₊₁)  # αₖ₊₁ = ⟨(A + λI)vₖ₊₁ - βₖ₊₁M⁻¹vₖ , vₖ₊₁⟩; vₖ₊₁ goes first if CS
         kaxpy!(n, -αₖ₊₁, M⁻¹vₖ₊₁, t)  # t ← t - αₖ₊₁M⁻¹vₖ₊₁
         if MisI
           # vₖ₊₂ = M⁻¹vₖ₊₂ = t
@@ -367,7 +368,7 @@ function _minares!(structure :: LanczosStructure, workspace :: MinaresWorkspace{
 
       # Update the QR factorization Nₖ = Q̃ₖ [ Uₖ ].
       #                                     [ Oᵀ ]
-      # For the complex-symmetric structure, Nₖ = conj(Tₖ₊₂.ₖ₊₁)Qₖ[I; 0] has entries conj(λⱼ), conj(γⱼ), conj(ϵⱼ).
+      # If CS, Nₖ = conj(Tₖ₊₂.ₖ₊₁)Qₖ[I; 0] has entries conj(λⱼ), conj(γⱼ), conj(ϵⱼ).
       #
       # [ λ₁  0   •   •   •    •   0  ]      [ μ₁  ϕ₁  ρ₁  0   •    •   0    ]
       # [ γ₁  λ₂  •                •  ]      [ 0   μ₂  ϕ₂  •   •        •    ]
@@ -661,4 +662,5 @@ function _minares!(structure :: LanczosStructure, workspace :: MinaresWorkspace{
     stats.timer = start_time |> ktimer
     stats.status = status
     return workspace
+  end
 end
