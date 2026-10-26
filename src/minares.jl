@@ -6,12 +6,9 @@
 # MinAres: An Iterative Solver for Symmetric Linear Systems
 # SIAM Journal on Matrix Analysis and Applications, 46(1), pp. 509--529, 2025.
 #
-# `complex_symmetric = true` runs the same recurrence on the conjugate
-# Bunse-Gerstner-Stover (BGS) process instead of the Hermitian Lanczos
-# process, for complex symmetric A (transpose(A) = A); see
-#
-# S.-C. T. Choi, A. Montoison, D. Orban and M. A. Saunders, CS-MinAres:
-# Normal-residual minimization for complex symmetric linear systems.
+# The complex symmetric variant (complex_symmetric = true) follows
+# S.-C. T. Choi, A. Montoison, D. Orban and M. A. Saunders
+# CS-MINRES-QLP and CS-MinAres: Krylov Methods for Complex Symmetric Linear Systems
 # Manuscript, 2026.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
@@ -88,8 +85,7 @@ For an in-place variant that reuses memory across solves, see [`minares!`](@ref)
 #### References
 
 * A. Montoison, D. Orban and M. A. Saunders, [*MinAres: An Iterative Solver for Symmetric Linear Systems*](https://doi.org/10.1137/23M1605454), SIAM Journal on Matrix Analysis and Applications, 46(1), pp. 509--529, 2025.
-* S.-C. T. Choi, [*Minimal residual methods for complex symmetric, skew symmetric and skew Hermitian systems*](https://arxiv.org/abs/1304.6782), Technical Report ANL/MCS-P3028-0812, Computation Institute, University of Chicago, 2013, for `complex_symmetric = true`.
-* S.-C. T. Choi, A. Montoison, D. Orban and M. A. Saunders, *CS-MinAres: Normal-Residual Minimization for Complex Symmetric Linear Systems*, manuscript, 2026, for `complex_symmetric = true`.
+* S.-C. T. Choi, A. Montoison, D. Orban and M. A. Saunders, *CS-MINRES-QLP and CS-MinAres: Krylov Methods for Complex Symmetric Linear Systems*, manuscript, 2026.
 """
 function minares end
 
