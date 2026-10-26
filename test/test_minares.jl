@@ -167,9 +167,6 @@
       minares(A, b; complex_symmetric=true, verbose=1, iostream=io)
       @test occursin("MINARES: system of size", String(take!(io)))
 
-      # Allocation-free in-place path.
-      @test inplace_bytes(minares!, MinaresWorkspace(A, b), A, b; complex_symmetric=true) == 0
-
       # complex_symmetric=true is a no-op for real data.
       Ar, br = symmetric_indefinite(FC=T)
       (xr, statsr) = minares(Ar, br)

@@ -205,9 +205,6 @@
       minres_qlp(A, b; complex_symmetric=true, verbose=1, iostream=io)
       @test occursin("MINRES-QLP: system of size", String(take!(io)))
 
-      # Allocation-free in-place path.
-      @test inplace_bytes(minres_qlp!, MinresQlpWorkspace(A, b), A, b; complex_symmetric=true) == 0
-
       # complex_symmetric=true is a no-op for real data.
       Ar, br = symmetric_indefinite(FC=T)
       (xr, statsr) = minres_qlp(Ar, br)

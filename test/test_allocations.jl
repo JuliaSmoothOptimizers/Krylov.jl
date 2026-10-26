@@ -171,7 +171,11 @@ allocated_with_W(solver!, workspace, A, b, W) = @allocated solver!(workspace, A,
         # complex_symmetric = true uses the same storage as the Hermitian path.
         if FC <: Complex
           Acs, bcs = complex_symmetric_definite(n, FC=FC)
-          @test inplace_bytes(minres_qlp!, MinresQlpWorkspace(Acs, bcs), Acs, bcs; complex_symmetric=true) == 0
+          workspace = MinresQlpWorkspace(Acs, bcs)
+          cs_solve! = (ws, A, b) -> minres_qlp!(ws, A, b; complex_symmetric=true)  # @allocated would count a keyword call made here
+          cs_solve!(workspace, Acs, bcs)  # warmup
+          inplace_minres_qlp_bytes = @allocated cs_solve!(workspace, Acs, bcs)
+          @test inplace_minres_qlp_bytes == 0
         end
       end
 
@@ -195,7 +199,11 @@ allocated_with_W(solver!, workspace, A, b, W) = @allocated solver!(workspace, A,
         # complex_symmetric = true uses the same storage as the Hermitian path.
         if FC <: Complex
           Acs, bcs = complex_symmetric_definite(n, FC=FC)
-          @test inplace_bytes(minares!, MinaresWorkspace(Acs, bcs), Acs, bcs; complex_symmetric=true) == 0
+          workspace = MinaresWorkspace(Acs, bcs)
+          cs_solve! = (ws, A, b) -> minares!(ws, A, b; complex_symmetric=true)  # @allocated would count a keyword call made here
+          cs_solve!(workspace, Acs, bcs)  # warmup
+          inplace_minares_bytes = @allocated cs_solve!(workspace, Acs, bcs)
+          @test inplace_minares_bytes == 0
         end
       end
 
