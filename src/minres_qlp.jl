@@ -15,7 +15,6 @@
 # Liu, Yang, and Roosta, MINRES: from negative curvature detection to monotonicity properties,
 # SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
 #
-# The complex symmetric variant (complex_symmetric = true) follows
 # S.-C. T. Choi, Minimal residual methods for complex symmetric, skew symmetric and skew Hermitian systems.
 # Technical Report ANL/MCS-P3028-0812, Computation Institute, University of Chicago, 2013. arXiv:1304.6782.
 #
