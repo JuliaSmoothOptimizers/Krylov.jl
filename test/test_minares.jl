@@ -170,9 +170,12 @@
       # Allocation-free in-place path.
       @test inplace_bytes(minares!, MinaresWorkspace(A, b), A, b; complex_symmetric=true) == 0
 
-      # complex_symmetric=true requires a complex element type.
+      # complex_symmetric=true is a no-op for real data.
       Ar, br = symmetric_indefinite(FC=T)
-      @test_throws ErrorException minares(Ar, br; complex_symmetric=true)
+      (xr, statsr) = minares(Ar, br)
+      (xs, statss) = minares(Ar, br; complex_symmetric=true)
+      @test xs == xr
+      @test statss.niter == statsr.niter
 
       # complex_symmetric=true does not support preconditioning.
       @test_throws ArgumentError minares(A, b; complex_symmetric=true, M=Diagonal(ones(FC, size(A, 1))))

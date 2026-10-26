@@ -54,9 +54,9 @@ M also indicates the weighted norm in which residuals are measured.
 If `complex_symmetric = true`, `A` is complex symmetric (`transpose(A) == A`)
 instead of Hermitian, and MINRES-QLP runs on the Bunse-Gerstner-Stover
 (BGS) process instead of the Hermitian Lanczos process. This specializes Choi's
-CS-MINRES-QLP recurrence; `complex_symmetric = true` requires `FC <: Complex`,
-`M = I`, and `linesearch = false`. A real symmetric matrix is Hermitian, so
-use `complex_symmetric = false` (the default) for it.
+CS-MINRES-QLP recurrence. For complex `FC`, `complex_symmetric = true` requires
+`M = I` and `linesearch = false`; for real `FC` it has no effect, since a real
+symmetric matrix is also Hermitian.
 
 #### Interface
 
@@ -75,13 +75,13 @@ For an in-place variant that reuses memory across solves, see [`minres_qlp!`](@r
 
 #### Keyword arguments
 
-* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning; not supported if `complex_symmetric = true`;
+* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning; not supported if `complex_symmetric = true` with complex `FC`;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
 * `rtol`: relative stopping tolerance based on the residual norm;
 * `Artol`: relative stopping tolerance based on the Aᴴ-residual norm;
-* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. Not supported if `complex_symmetric = true`. If `true` and nonpositive curvature is detected, the behavior depends on the iteration:
+* `linesearch`: if `true`, indicate that the solution is to be used in an inexact Newton method with linesearch. Not supported if `complex_symmetric = true` with complex `FC`. If `true` and nonpositive curvature is detected, the behavior depends on the iteration:
  – at iteration k = 1, the solver takes the right-hand side (i.e., the preconditioned negative gradient) as the current solution. The same search direction is returned in `workspace.npc_dir`, and `stats.npcCount` is set to 1;
  – at iteration k > 1, the solver returns the solution from iteration k – 1, the residual from iteration k is a nonpositive curvature direction stored in `stats.npc_dir` and `stats.npcCount` is set to 1;
 * `itmax`: the maximum number of iterations. If `itmax=0`, the default number of iterations is set to `2n`;
@@ -150,8 +150,7 @@ kwargs_minres_qlp = (:M, :ldiv, :linesearch, :λ, :atol, :rtol, :Artol, :itmax, 
 
 @eval begin
   function minres_qlp!(workspace :: MinresQlpWorkspace{T,FC,S}, $(def_args_minres_qlp...); $(def_kwargs_minres_qlp...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-    if complex_symmetric
-      FC <: Complex || error("complex_symmetric = true requires a complex element type")
+    if complex_symmetric && FC <: Complex
       M === I || throw(ArgumentError("complex_symmetric = true does not support preconditioning"))
       linesearch && throw(ArgumentError("complex_symmetric = true does not support linesearch"))
       return _minres_qlp!(Val(true), workspace, A, b, M, ldiv, linesearch, λ,

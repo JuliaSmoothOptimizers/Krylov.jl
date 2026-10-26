@@ -42,9 +42,9 @@ If `complex_symmetric = true`, `A` is complex symmetric (`transpose(A) == A`)
 instead of Hermitian, and MINARES runs on the Bunse-Gerstner-Stover
 (BGS) process instead of the Hermitian Lanczos process. It then minimizes
 ‖Aᴴrₖ‖₂ over the conjugate Saunders trial space and estimates ‖rₖ‖₂ and
-‖Aᴴrₖ‖₂; this is CS-MinAres. `complex_symmetric = true` requires
-`FC <: Complex` and `M = I`. A real symmetric matrix is Hermitian, so use
-`complex_symmetric = false` (the default) for it.
+‖Aᴴrₖ‖₂; this is CS-MinAres. For complex `FC`, `complex_symmetric = true`
+requires `M = I`; for real `FC` it has no effect, since a real symmetric
+matrix is also Hermitian.
 
 #### Interface
 
@@ -63,7 +63,7 @@ For an in-place variant that reuses memory across solves, see [`minares!`](@ref)
 
 #### Keyword arguments
 
-* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning; not supported if `complex_symmetric = true`;
+* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning; not supported if `complex_symmetric = true` with complex `FC`;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
@@ -129,8 +129,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
 
 @eval begin
   function minares!(workspace :: MinaresWorkspace{T,FC,S}, $(def_args_minares...); $(def_kwargs_minares...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
-    if complex_symmetric
-      FC <: Complex || error("complex_symmetric = true requires a complex element type")
+    if complex_symmetric && FC <: Complex
       M === I || throw(ArgumentError("complex_symmetric = true does not support preconditioning"))
       return _minares!(Val(true), workspace, A, b, M, ldiv, λ, atol, rtol, Artol,
                        itmax, timemax, verbose, history, callback, iostream)
