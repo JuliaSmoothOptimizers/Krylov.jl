@@ -6,8 +6,13 @@
 # MinAres: An Iterative Solver for Symmetric Linear Systems
 # SIAM Journal on Matrix Analysis and Applications, 46(1), pp. 509--529, 2025.
 #
+# S.-C. T. Choi, A. Montoison, D. Orban and M. A. Saunders
+# CS-MINRES-QLP and CS-MinAres: Krylov Methods for Complex Symmetric Linear Systems
+# Manuscript, 2026.
+#
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
-# Palo Alto, March 2022.
+# Sou-Cheng T. Choi, <schoi32@illinoistech.edu>
+# Palo Alto, March 2022 -- Chicago, October 2026.
 
 export minares, minares!
 
@@ -18,7 +23,8 @@ export minares, minares!
                          rtol::T=√eps(T), Artol::T = √eps(T),
                          itmax::Int=0, timemax::Float64=Inf,
                          verbose::Int=0, history::Bool=false,
-                         callback=workspace->false, iostream::IO=kstdout)
+                         callback=workspace->false, iostream::IO=kstdout,
+                         complex_symmetric::Bool=false)
 
 `T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
 `FC` is `T` or `Complex{T}`.
@@ -31,6 +37,16 @@ MINARES solves the Hermitian linear system Ax = b of size n.
 MINARES minimizes ‖Arₖ‖₂ when M = Iₙ and ‖AMrₖ‖_M otherwise.
 The estimates computed every iteration are ‖rₖ‖_M and ‖AMrₖ‖_M.
 
+If `complex_symmetric = true`, `A` is complex symmetric (`transpose(A) == A`)
+instead of Hermitian, and MINARES runs on the Bunse-Gerstner-Stover
+(BGS) process instead of the Hermitian Lanczos process. With Vₖ containing the
+generated BGS basis vectors, it chooses coefficients yₖ in xₖ = x₀ + conj(Vₖ)yₖ
+to minimize ‖A conj(rₖ)‖₂, the normal-residual norm. Since Aᵀ = A, this equals
+‖Aᴴrₖ‖₂. It estimates ‖rₖ‖₂ and ‖A conj(rₖ)‖₂; this is CS-MinAres.
+For complex `FC`, `complex_symmetric = true`
+requires `M = I`; for real `FC` it has no effect, since a real symmetric
+matrix is also Hermitian.
+
 #### Interface
 
 To easily switch between Krylov methods, use the generic interface [`krylov_solve`](@ref) with `method = :minares`.
@@ -39,7 +55,7 @@ For an in-place variant that reuses memory across solves, see [`minares!`](@ref)
 
 #### Input arguments
 
-* `A`: a linear operator that models a Hermitian (possibly singular) matrix of dimension `n`;
+* `A`: a linear operator that models a Hermitian (possibly singular) matrix of dimension `n`, or a complex symmetric matrix if `complex_symmetric = true`;
 * `b`: a vector of length `n`.
 
 #### Optional argument
@@ -48,7 +64,8 @@ For an in-place variant that reuses memory across solves, see [`minares!`](@ref)
 
 #### Keyword arguments
 
-* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning;
+* `complex_symmetric`: set to `true` to specify that `A` is complex symmetric. Defaults to `false`;
+* `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning; not supported if `complex_symmetric = true` with complex `FC`;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `λ`: regularization parameter;
 * `atol`: absolute stopping tolerance based on the residual norm;
@@ -66,9 +83,10 @@ For an in-place variant that reuses memory across solves, see [`minares!`](@ref)
 * `x`: a dense vector of length `n`;
 * `stats`: statistics collected on the run in a [`SimpleStats`](@ref) structure.
 
-#### Reference
+#### References
 
 * A. Montoison, D. Orban and M. A. Saunders, [*MinAres: An Iterative Solver for Symmetric Linear Systems*](https://doi.org/10.1137/23M1605454), SIAM Journal on Matrix Analysis and Applications, 46(1), pp. 509--529, 2025.
+* S.-C. T. Choi, A. Montoison, D. Orban and M. A. Saunders, *CS-MINRES-QLP and CS-MinAres: Krylov Methods for Complex Symmetric Linear Systems*, manuscript, 2026.
 """
 function minares end
 
@@ -101,16 +119,31 @@ def_kwargs_minares = (:(; M = I                        ),
                       :(; verbose::Int = 0             ),
                       :(; history::Bool = false        ),
                       :(; callback = workspace -> false),
-                      :(; iostream::IO = kstdout       ))
+                      :(; iostream::IO = kstdout       ),
+                      :(; complex_symmetric::Bool = false))
 
 def_kwargs_minares = extract_parameters.(def_kwargs_minares)
 
 args_minares = (:A, :b)
 optargs_minares = (:x0,)
-kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbose, :history, :callback, :iostream)
+kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbose, :history, :callback, :iostream, :complex_symmetric)
 
 @eval begin
   function minares!(workspace :: MinaresWorkspace{T,FC,S}, $(def_args_minares...); $(def_kwargs_minares...)) where {T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
+    if complex_symmetric && FC <: Complex
+      M === I || throw(ArgumentError("complex_symmetric = true does not support preconditioning"))
+      return _minares!(Val(true), workspace, A, b, M, ldiv, λ, atol, rtol, Artol,
+                       itmax, timemax, verbose, history, callback, iostream)
+    end
+    return _minares!(Val(false), workspace, A, b, M, ldiv, λ, atol, rtol, Artol,
+                     itmax, timemax, verbose, history, callback, iostream)
+  end
+
+  # CS is a compile-time constant, so the compiler resolves every CS branch below and the projected
+  # scalars have one type: T for the Hermitian Lanczos process, FC for the BGS process.
+  function _minares!(::Val{CS}, workspace :: MinaresWorkspace{T,FC,S}, A, b :: AbstractVector{FC}, M,
+                     ldiv :: Bool, λ :: T, atol :: T, rtol :: T, Artol :: T, itmax :: Int, timemax :: Float64,
+                     verbose :: Int, history :: Bool, callback, iostream :: IO) where {CS, T <: AbstractFloat, FC <: FloatOrComplex{T}, S <: AbstractVector{FC}}
 
     # Timer
     start_time = time_ns()
@@ -163,12 +196,14 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     end
     β₁ = βₖ
 
-    # β₂M⁻¹v₂ = (A + λI)v₁ - α₁M⁻¹v₁
+    # β₂M⁻¹v₂ = (A + λI)v₁ - α₁M⁻¹v₁, with v̄₁ in place of v₁ on the right if CS
+    CS && conj!(vₖ)
     kmul!(M⁻¹vₖ₊₁, A, vₖ)
     if λ ≠ 0
       kaxpy!(n, λ, vₖ, M⁻¹vₖ₊₁)
     end
-    αₖ = kdotr(n, vₖ, M⁻¹vₖ₊₁)  # α₁ = (v₁)ᴴ(A + λI)v₁
+    CS && conj!(vₖ)
+    αₖ = CS ? kdot(n, vₖ, M⁻¹vₖ₊₁) : kdotr(n, vₖ, M⁻¹vₖ₊₁)  # α₁ = (v₁)ᴴ(A + λI)v₁, or (v₁)ᴴ(A + λI)v̄₁
     kaxpy!(n, -αₖ, M⁻¹vₖ, M⁻¹vₖ₊₁)
     MisI || mulorldiv!(vₖ₊₁, M, M⁻¹vₖ₊₁, ldiv)
     βₖ₊₁ = knorm_elliptic(n, vₖ₊₁, M⁻¹vₖ₊₁)  # β₂ = ‖M⁻¹v₂‖_M
@@ -177,33 +212,33 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       MisI || kdiv!(n, M⁻¹vₖ₊₁, βₖ₊₁)
     end
 
-    ξₖ₋₁ = zero(T)
-    τₖ₋₂ = τₖ₋₁ = τₖ = zero(T)
-    θbarₖ₋₂ = zero(T)
-    ψbisₖ₋₂ = ψbarₖ₋₁ = zero(T)
-    πₖ₋₂ = πₖ₋₁ = πₖ = zero(T)
-    χbarₖ = zero(T)
-    ζbisₖ = ζbarₖ₊₁ = γbarₖ = zero(T)
-    λbarₖ = γₖ₋₁ = zero(T)
-    c̃₂ₖ₋₄ = s̃₂ₖ₋₄ = zero(T)
-    c̃₂ₖ₋₃ = s̃₂ₖ₋₃ = zero(T)
-    c̃₂ₖ₋₂ = s̃₂ₖ₋₂ = zero(T)
-    c̃₂ₖ₋₁ = s̃₂ₖ₋₁ = zero(T)
-    c̃₂ₖ   = s̃₂ₖ   = zero(T)
+    ξₖ₋₁ = zero(CS ? FC : T)
+    τₖ₋₂ = τₖ₋₁ = τₖ = zero(CS ? FC : T)
+    θbarₖ₋₂ = zero(CS ? FC : T)
+    ψbisₖ₋₂ = ψbarₖ₋₁ = zero(CS ? FC : T)
+    πₖ₋₂ = πₖ₋₁ = πₖ = zero(CS ? FC : T)
+    χbarₖ = zero(CS ? FC : T)
+    ζbisₖ = ζbarₖ₊₁ = γbarₖ = zero(CS ? FC : T)
+    λbarₖ = γₖ₋₁ = zero(CS ? FC : T)
+    c̃₂ₖ₋₄ = zero(T); s̃₂ₖ₋₄ = zero(CS ? FC : T)
+    c̃₂ₖ₋₃ = zero(T); s̃₂ₖ₋₃ = zero(CS ? FC : T)
+    c̃₂ₖ₋₂ = zero(T); s̃₂ₖ₋₂ = zero(CS ? FC : T)
+    c̃₂ₖ₋₁ = zero(T); s̃₂ₖ₋₁ = zero(CS ? FC : T)
+    c̃₂ₖ   = zero(T); s̃₂ₖ   = zero(CS ? FC : T)
     kfill!(wₖ₋₂, zero(FC))  # Column k-2 of Wₖ = Vₖ(Rₖ)⁻¹
     kfill!(wₖ₋₁, zero(FC))  # Column k-1 of Wₖ = Vₖ(Rₖ)⁻¹
     kfill!(dₖ₋₂, zero(FC))  # Column k-2 of Dₖ = Wₖ(Uₖ)⁻¹
     kfill!(dₖ₋₁, zero(FC))  # Column k-1 of Dₖ = Wₖ(Uₖ)⁻¹
     β₁α₁ = βₖ * αₖ          # Variable used to update zₖ
-    β₁β₂ = βₖ * βₖ₊₁        # Variable used to update zₖ
-    ϵₖ₋₂ = ϵₖ₋₁ = zero(T)
+    β₁β₂ = βₖ * βₖ₊₁ * one(CS ? FC : T)  # Variable used to update zₖ
+    ϵₖ₋₂ = ϵₖ₋₁ = zero(CS ? FC : T)
     ℓ = itmax + 2
 
     rNorm = β₁
     ε = atol + rtol * rNorm
     history && push!(rNorms, rNorm)
 
-    ArNorm = sqrt(β₁α₁^2 + β₁β₂^2)
+    ArNorm = sqrt(abs2(β₁α₁) + abs2(β₁β₂))
     κ = atol + Artol * ArNorm
     history && push!(ArNorms, ArNorm)
 
@@ -256,6 +291,8 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       (cₖ, sₖ, λₖ) = sym_givens(λbarₖ, βₖ₊₁)
 
       # Compute the direction wₖ, the last column of Wₖ = Vₖ(Rₖ)⁻¹ ⟷ (Rₖ)ᵀ(Wₖ)ᵀ = (Vₖ)ᵀ.
+      # If CS, conj(Vₖ) replaces Vₖ.
+      CS && conj!(vₖ)
       # w₁ = v₁ / λ₁
       if iter == 1
         wₖ = wₖ₋₁
@@ -276,6 +313,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         kaxpy!(n, one(T), vₖ, wₖ)
         kdiv!(n, wₖ, λₖ)
       end
+      CS && conj!(vₖ)
 
       # Continue the preconditioned Lanczos process.
       # (A + λI)Vₖ₊₁ = M⁻¹Vₖ₊₂Tₖ₊₂.ₖ₊₁
@@ -285,12 +323,14 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         # Without preconditioner, vₖ = M⁻¹vₖ is still needed and we use q.
         # With a preconditioner, vₖ was only needed to compute wₖ.
         t = MisI ? q : vₖ
+        CS && conj!(vₖ₊₁)             # v̄ₖ₊₁ if CS
         kmul!(t, A, vₖ₊₁)             # t ← Avₖ₊₁
         kaxpy!(n, -βₖ₊₁, M⁻¹vₖ, t)    # t ← t - βₖ₊₁M⁻¹vₖ
         if λ ≠ 0
           kaxpy!(n, λ, vₖ₊₁, t)       # t ← t + λvₖ₊₁
         end
-        αₖ₊₁ = kdotr(n, t, vₖ₊₁)      # αₖ₊₁ = ⟨(A + λI)vₖ₊₁ - βₖ₊₁M⁻¹vₖ , vₖ₊₁⟩
+        CS && conj!(vₖ₊₁)
+        αₖ₊₁ = CS ? kdot(n, vₖ₊₁, t) : kdotr(n, t, vₖ₊₁)  # αₖ₊₁ = ⟨(A + λI)vₖ₊₁ - βₖ₊₁M⁻¹vₖ , vₖ₊₁⟩; vₖ₊₁ goes first if CS
         kaxpy!(n, -αₖ₊₁, M⁻¹vₖ₊₁, t)  # t ← t - αₖ₊₁M⁻¹vₖ₊₁
         if MisI
           # vₖ₊₂ = M⁻¹vₖ₊₂ = t
@@ -319,11 +359,14 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       end
       if iter ≤ ℓ-1
         γₖ      = cₖ * γbarₖ + sₖ * αₖ₊₁
-        λbarₖ₊₁ = sₖ * γbarₖ - cₖ * αₖ₊₁
+        λbarₖ₊₁ = conj(sₖ) * γbarₖ - cₖ * αₖ₊₁
       end
 
       # Update the QR factorization Nₖ = Q̃ₖ [ Uₖ ].
       #                                     [ Oᵀ ]
+      # If CS, Nₖ = conj(Tₖ₊₂.ₖ₊₁)Qₖ[I; 0] has entries conj(λⱼ), conj(γⱼ), conj(ϵⱼ).
+      # Indeed, rₖ = Vₖ₊₁(β₁e₁ - Tₖ₊₁.ₖyₖ), and AᴴVₖ₊₁ = conj(Vₖ₊₂)conj(Tₖ₊₂.ₖ₊₁).
+      # The projected residual itself is not conjugated.
       #
       # [ λ₁  0   •   •   •    •   0  ]      [ μ₁  ϕ₁  ρ₁  0   •    •   0    ]
       # [ γ₁  λ₂  •                •  ]      [ 0   μ₂  ϕ₂  •   •        •    ]
@@ -344,11 +387,11 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         # [ c̃₂ₖ₋₄      s̃₂ₖ₋₄ ] [   0   ]   [ ρₖ₋₂  ] 
         # [        1         ] [   0   ] = [   0   ]
         # [ s̃₂ₖ₋₄     -c̃₂ₖ₋₄ ] [   λₖ  ]   [ λhatₖ ]
-        ρₖ₋₂  =  s̃₂ₖ₋₄ * λₖ
-        λhatₖ = -c̃₂ₖ₋₄ * λₖ
+        ρₖ₋₂  =  s̃₂ₖ₋₄ * conj(λₖ)
+        λhatₖ = -c̃₂ₖ₋₄ * conj(λₖ)
       end
    
-      iter == 2 && (λhatₖ = λₖ)
+      iter == 2 && (λhatₖ = conj(λₖ))
       if iter ≥ 2
         # Apply previous reflection Q̃ₖ.ₖ₋₁
         # [ c̃₂ₖ₋₃   s̃₂ₖ₋₃    ] [   0   ]   [ ϕbarₖ₋₁ ]
@@ -362,15 +405,15 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
           # [ c̃₂ₖ₋₂      s̃₂ₖ₋₂ ] [ ϕbarₖ₋₁ ]   [  ϕₖ₋₁  ]
           # [        1         ] [  μbarₖ  ] = [  μbarₖ ]
           # [ s̃₂ₖ₋₂     -c̃₂ₖ₋₂ ] [    γₖ   ]   [  γhatₖ ]
-          ϕₖ₋₁  = c̃₂ₖ₋₂ * ϕbarₖ₋₁ + s̃₂ₖ₋₂ * γₖ
-          γhatₖ = s̃₂ₖ₋₂ * ϕbarₖ₋₁ - c̃₂ₖ₋₂ * γₖ
+          ϕₖ₋₁  = c̃₂ₖ₋₂ * ϕbarₖ₋₁ + s̃₂ₖ₋₂ * conj(γₖ)
+          γhatₖ = conj(s̃₂ₖ₋₂) * ϕbarₖ₋₁ - c̃₂ₖ₋₂ * conj(γₖ)
         else
           ϕₖ₋₁ = ϕbarₖ₋₁
         end
       end
 
-      iter == 1 && (μbarₖ = λₖ)
-      iter == 1 && (γhatₖ = γₖ)
+      iter == 1 && (μbarₖ = conj(λₖ))
+      iter == 1 && (γhatₖ = conj(γₖ))
       if iter ≤ ℓ-1
         # Compute and apply current Givens reflection Q̃ₖ₊₁.ₖ
         # [ c̃₂ₖ₋₁   s̃₂ₖ₋₁    ] [ μbarₖ ] = [ μbisₖ ]
@@ -386,13 +429,13 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         # [ c̃₂ₖ      s̃₂ₖ ] [ μbisₖ ] = [ μₖ ] 
         # [      1       ] [   0   ]   [ 0  ]
         # [ s̃₂ₖ     -c̃₂ₖ ] [   ϵₖ  ]   [ 0  ]
-        (c̃₂ₖ, s̃₂ₖ, μₖ) = sym_givens(μbisₖ, ϵₖ)
+        (c̃₂ₖ, s̃₂ₖ, μₖ) = sym_givens(μbisₖ, conj(ϵₖ))
       else
         μₖ = μbisₖ
       end
 
-      # Update zₖ = (Q̃ₖ)ᵀ(β₁α₁e₁ + β₁β₂e₂)
-      iter == 1 && (ζbisₖ   = β₁α₁)
+      # Update zₖ = (Q̃ₖ)ᴴ(β₁ᾱ₁e₁ + β₁β₂e₂)
+      iter == 1 && (ζbisₖ   = conj(β₁α₁))
       iter == 1 && (ζbarₖ₊₁ = β₁β₂)
 
       if iter ≤ ℓ-1
@@ -400,7 +443,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         # [ s̃₂ₖ₋₁  -c̃₂ₖ₋₁    ] [ ζbarₖ₊₁ ]   [ ζbisₖ₊₁ ]
         # [                1 ] [    0    ]   [    0    ]
         ζringₖ  = c̃₂ₖ₋₁ * ζbisₖ + s̃₂ₖ₋₁ * ζbarₖ₊₁
-        ζbisₖ₊₁ = s̃₂ₖ₋₁ * ζbisₖ - c̃₂ₖ₋₁ * ζbarₖ₊₁
+        ζbisₖ₊₁ = conj(s̃₂ₖ₋₁) * ζbisₖ - c̃₂ₖ₋₁ * ζbarₖ₊₁
       else
         ζringₖ = ζbisₖ
       end
@@ -410,7 +453,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         # [      1       ] [ ζbisₖ₊₁ ]   [ ζbisₖ₊₁ ]
         # [ s̃₂ₖ     -c̃₂ₖ ] [    0    ]   [ ζbarₖ₊₂ ]
         ζₖ      = c̃₂ₖ * ζringₖ
-        ζbarₖ₊₂ = s̃₂ₖ * ζringₖ
+        ζbarₖ₊₂ = conj(s̃₂ₖ) * ζringₖ
       else
         ζₖ = ζringₖ
       end
@@ -441,12 +484,13 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       kaxpy!(n, ζₖ, dₖ, x)
 
       # Update ‖AMrₖ‖_M estimate
-      (iter ≤ ℓ-2)  && (ArNorm = sqrt(ζbisₖ₊₁^2 + ζbarₖ₊₂^2))
+      (iter ≤ ℓ-2)  && (ArNorm = sqrt(abs2(ζbisₖ₊₁) + abs2(ζbarₖ₊₂)))
       (iter == ℓ-1) && (ArNorm = abs(ζbisₖ₊₁))
       (iter == ℓ)   && (ArNorm = zero(T))
       history && push!(ArNorms, ArNorm)
 
       # Update the LQ factorization Uₖ = L̂ₖP̂ₖ.
+      # A row [a b] is reduced by (c, s, ρ) = sym_givens(conj(a), conj(b)): [a b][c s; conj(s) -c] = [conj(ρ) 0].
       #
       # [ μ₁  ϕ₁  ρ₁  0   •    •   0    ]   [ ψ₁   0    •    •     •      •      0  ]
       # [ 0   μ₂  ϕ₂  •   •        •    ]   [ θ₁   ψ₂   •                        •  ] 
@@ -461,24 +505,27 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       elseif iter == 2
         # [ ψbar₁  ϕ₁ ] [ ĉ₁   ŝ₁ ] = [ ψbis₁    0   ]
         # [   0    μ₂ ] [ ŝ₁  -ĉ₁ ]   [ θbar₁  ψbar₂ ]
-        (ĉ₂ₖ₋₃, ŝ₂ₖ₋₃, ψbisₖ₋₁) = sym_givens(ψbarₖ₋₁, ϕₖ₋₁)
-        θbarₖ₋₁ =  ŝ₂ₖ₋₃ * μₖ
+        (ĉ₂ₖ₋₃, ŝ₂ₖ₋₃, ψbisₖ₋₁) = sym_givens(conj(ψbarₖ₋₁), conj(ϕₖ₋₁))
+        ψbisₖ₋₁ = conj(ψbisₖ₋₁)
+        θbarₖ₋₁ =  conj(ŝ₂ₖ₋₃) * μₖ
         ψbarₖ   = -ĉ₂ₖ₋₃ * μₖ
       else
         # [ ψbisₖ₋₂   0     ρₖ₋₂ ] [ ĉ₂ₖ₋₄      ŝ₂ₖ₋₄ ]   [ ψₖ₋₂     0     0  ]
         # [ θbarₖ₋₂ ψbarₖ₋₁ ϕₖ₋₁ ] [        1         ] = [ θₖ₋₂  ψbarₖ₋₁  δₖ ]
         # [   0       0      μₖ  ] [ ŝ₂ₖ₋₄     -ĉ₂ₖ₋₄ ]   [ ωₖ₋₂     0     ηₖ ]
-        (ĉ₂ₖ₋₄, ŝ₂ₖ₋₄, ψₖ₋₂) = sym_givens(ψbisₖ₋₂, ρₖ₋₂)
-        θₖ₋₂ =  ĉ₂ₖ₋₄ * θbarₖ₋₂ + ŝ₂ₖ₋₄ * ϕₖ₋₁
+        (ĉ₂ₖ₋₄, ŝ₂ₖ₋₄, ψₖ₋₂) = sym_givens(conj(ψbisₖ₋₂), conj(ρₖ₋₂))
+        ψₖ₋₂ = conj(ψₖ₋₂)
+        θₖ₋₂ =  ĉ₂ₖ₋₄ * θbarₖ₋₂ + conj(ŝ₂ₖ₋₄) * ϕₖ₋₁
         δₖ   =  ŝ₂ₖ₋₄ * θbarₖ₋₂ - ĉ₂ₖ₋₄ * ϕₖ₋₁
-        ωₖ₋₂ =  ŝ₂ₖ₋₄ * μₖ
+        ωₖ₋₂ =  conj(ŝ₂ₖ₋₄) * μₖ
         ηₖ   = -ĉ₂ₖ₋₄ * μₖ
 
         # [ ψₖ₋₂     0     0  ] [ 1                ]   [ ψₖ₋₂    0        0   ]
         # [ θₖ₋₂  ψbarₖ₋₁  δₖ ] [    ĉ₂ₖ₋₃   ŝ₂ₖ₋₃ ] = [ θₖ₋₂  ψbisₖ₋₁    0   ]
         # [ ωₖ₋₂     0     ηₖ ] [    ŝ₂ₖ₋₃  -ĉ₂ₖ₋₃ ]   [ ωₖ₋₂  θbarₖ₋₁  ψbarₖ ]
-        (ĉ₂ₖ₋₃, ŝ₂ₖ₋₃, ψbisₖ₋₁) = sym_givens(ψbarₖ₋₁, δₖ)
-        θbarₖ₋₁ =  ŝ₂ₖ₋₃ * ηₖ
+        (ĉ₂ₖ₋₃, ŝ₂ₖ₋₃, ψbisₖ₋₁) = sym_givens(conj(ψbarₖ₋₁), conj(δₖ))
+        ψbisₖ₋₁ = conj(ψbisₖ₋₁)
+        θbarₖ₋₁ =  conj(ŝ₂ₖ₋₃) * ηₖ
         ψbarₖ   = -ĉ₂ₖ₋₃ * ηₖ
       end
 
@@ -505,15 +552,15 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         τₖ   = (ξₖ - θbarₖ₋₁ * τₖ₋₁) / ψbarₖ
       end
 
-      # The components of (Qₖ)ᵀβ₁e₁ are (χ₁, ..., χₖ, χbarₖ₊₁)
+      # The components of (Qₖ)ᴴβ₁e₁ are (χ₁, ..., χₖ, χbarₖ₊₁)
       (iter == 1) && (χbarₖ = β₁)
 
       # [ cₖ  sₖ ] [ χbarₖ ] = [    χₖ   ]
       # [ sₖ -cₖ ] [   0   ]   [ χbarₖ₊₁ ]
       χₖ      = cₖ * χbarₖ
-      χbarₖ₊₁ = sₖ * χbarₖ
+      χbarₖ₊₁ = conj(sₖ) * χbarₖ
 
-      # Update pₖ₊₁ = [ P̂ₖ  0 ](Qₖ)ᵀβ₁e₁
+      # Update pₖ₊₁ = [ P̂ₖ  0 ](Qₖ)ᴴβ₁e₁
       #               [ 0   1 ]
       if iter == 1
         πₖ = χₖ
@@ -522,30 +569,30 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         # [ ŝ₁  -ĉ₁ ] [ χ₂ ]   [ π₂ ]
         πaux₋₁ = πₖ₋₁
         πₖ₋₁ = ĉ₂ₖ₋₃ * πaux₋₁ + ŝ₂ₖ₋₃ * χₖ
-        πₖ   = ŝ₂ₖ₋₃ * πaux₋₁ - ĉ₂ₖ₋₃ * χₖ
+        πₖ   = conj(ŝ₂ₖ₋₃) * πaux₋₁ - ĉ₂ₖ₋₃ * χₖ
       else
         # [ ĉ₂ₖ₋₄      ŝ₂ₖ₋₄ ] [ πₖ₋₂ ]   [ πₖ₋₂ ]
         # [        1         ] [ πₖ₋₁ ] = [ πₖ₋₁ ]
         # [ ŝ₂ₖ₋₄     -ĉ₂ₖ₋₄ ] [  χₖ  ]   [  πₖ  ]
         πaux₋₂ = πₖ₋₂
         πₖ₋₂ = ĉ₂ₖ₋₄ * πaux₋₂ + ŝ₂ₖ₋₄ * χₖ
-        πₖ   = ŝ₂ₖ₋₄ * πaux₋₂ - ĉ₂ₖ₋₄ * χₖ
+        πₖ   = conj(ŝ₂ₖ₋₄) * πaux₋₂ - ĉ₂ₖ₋₄ * χₖ
 
         # [ 1                ] [ πₖ₋₂ ]   [ πₖ₋₂ ]
         # [    ĉ₂ₖ₋₃   ŝ₂ₖ₋₃ ] [ πₖ₋₁ ] = [ πₖ₋₁ ]
         # [    ŝ₂ₖ₋₃  -ĉ₂ₖ₋₃ ] [  πₖ  ]   [  πₖ  ]
         πaux₋₁ = πₖ₋₁
         πₖ₋₁ = ĉ₂ₖ₋₃ * πaux₋₁ + ŝ₂ₖ₋₃ * πₖ
-        πₖ   = ŝ₂ₖ₋₃ * πaux₋₁ - ĉ₂ₖ₋₃ * πₖ
+        πₖ   = conj(ŝ₂ₖ₋₃) * πaux₋₁ - ĉ₂ₖ₋₃ * πₖ
       end
       πₖ₊₁ = χbarₖ₊₁
 
       # Update ‖rₖ‖_M estimate
       # ‖rₖ‖_M = √((πₖ₋₁ - τₖ₋₁)² + (πₖ - τₖ)² + (πₖ₊₁)²)
       if iter == 1
-        rNorm = sqrt((πₖ - τₖ)^2 + πₖ₊₁^2)
+        rNorm = sqrt(abs2(πₖ - τₖ) + abs2(πₖ₊₁))
       else
-        rNorm = sqrt((πₖ₋₁ - τₖ₋₁)^2 + (πₖ - τₖ)^2 + πₖ₊₁^2)
+        rNorm = sqrt(abs2(πₖ₋₁ - τₖ₋₁) + abs2(πₖ - τₖ) + abs2(πₖ₊₁))
       end
       history && push!(rNorms, rNorm)
 
@@ -592,7 +639,7 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
         ζbarₖ₊₁ = ζbarₖ₊₂
       end
 
-      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %8.1e  %.2fs\n", iter, rNorm, ArNorm, βₖ, ζₖ, start_time |> ktimer)
+      kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %7.1e  %7.1e  %8.1e  %.2fs\n", iter, rNorm, ArNorm, βₖ, ζₖ isa Complex ? abs(ζₖ) : ζₖ, start_time |> ktimer)
     end
     (verbose > 0) && @printf(iostream, "\n")
 
