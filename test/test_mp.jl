@@ -4,7 +4,7 @@ function test_mp(FC)
   for method in (:cg, :cgls, :usymqr, :cgne, :cgs, :crmr, :cg_lanczos, :dqgmres, :diom, :cr, :gpmr,
                  :lslq, :lsqr, :lsmr, :lnlq, :craig, :bicgstab, :craigmr, :crls, :symmlq, :minres,
                  :bilq, :minres_qlp, :qmr, :usymlq, :tricg, :trimr, :trilqr, :bilqr, :gmres, :fom,
-                 :car, :minares, :fgmres, :usymlqr, :cg_lanczos_shift, :cgls_lanczos_shift)
+                 :car, :minares, :fgmres, :usymlqr, :sqmr, :cg_lanczos_shift, :cgls_lanczos_shift)
 
     @testset "$method" begin
       A = spdiagm(-1 => -ones(FC,n-1), 0 => 3*ones(FC,n), 1 => -ones(FC,n-1))

@@ -485,6 +485,25 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
   end
 
+  # SQMR
+  @testset "sqmr" begin
+    x, stats = sqmr(A, b, x0)
+    r = b - A * x
+    resid = norm(r) / norm(b)
+    @test(resid ≤ tol)
+
+    workspace = SqmrWorkspace(A, b)
+    krylov_solve!(workspace, A, b, x0)
+    r = b - A * workspace.x
+    resid = norm(r) / norm(b)
+    @test(resid ≤ tol)
+
+    krylov_solve!(workspace, J, d, z0)
+    r = d - J * workspace.x
+    resid = norm(r) / norm(d)
+    @test(resid ≤ tol)
+  end
+
   # QMR
   @testset "qmr" begin
     x, stats = qmr(A, b, x0)
