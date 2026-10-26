@@ -75,6 +75,7 @@ For an in-place variant that reuses memory across solves, see [`minres_qlp!`](@r
 
 #### Keyword arguments
 
+* `complex_symmetric`: set to `true` to specify that `A` is complex symmetric. Defaults to `false`;
 * `M`: linear operator that models a Hermitian positive-definite matrix of size `n` used for centered preconditioning; not supported if `complex_symmetric = true` with complex `FC`;
 * `ldiv`: define whether the preconditioner uses `ldiv!` or `mul!`;
 * `λ`: regularization parameter;
@@ -89,8 +90,7 @@ For an in-place variant that reuses memory across solves, see [`minres_qlp!`](@r
 * `verbose`: additional details can be displayed if verbose mode is enabled (verbose > 0). Information will be displayed every `verbose` iterations;
 * `history`: collect additional statistics on the run such as residual norms, or Aᴴ-residual norms;
 * `callback`: function or functor called as `callback(workspace)` that returns `true` if the Krylov method should terminate, and `false` otherwise;
-* `iostream`: stream to which output is logged;
-* `complex_symmetric`: run MINRES-QLP on the conjugate BGS process for a complex symmetric `A` instead of the Hermitian Lanczos process.
+* `iostream`: stream to which output is logged.
 
 #### Output arguments
 
