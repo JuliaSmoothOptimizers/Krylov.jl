@@ -101,7 +101,7 @@ For an in-place variant that reuses memory across solves, see [`minres_qlp!`](@r
 
 * S.-C. T. Choi, *Iterative methods for singular linear equations and least-squares problems*, Ph.D. thesis, ICME, Stanford University, 2006.
 * S.-C. T. Choi, C. C. Paige and M. A. Saunders, [*MINRES-QLP: A Krylov subspace method for indefinite or singular symmetric systems*](https://doi.org/10.1137/100787921), SIAM Journal on Scientific Computing, Vol. 33(4), pp. 1810--1836, 2011.
-* S.-C. T. Choi and M. A. Saunders, [*Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems*](https://doi.org/10.1145/2527267), ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014 (reference MATLAB implementation at the [SOL MINRES-QLP page](https://web.stanford.edu/group/SOL/software/minresqlp/minresqlp-matlab/)).
+* S.-C. T. Choi and M. A. Saunders, [*Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems*](https://doi.org/10.1145/2527267), ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014.
 * Y. Liu and F. Roosta, [*MINRES: From Negative Curvature Detection to Monotonicity Properties*](https://doi.org/10.1137/21M143666X), SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
 * S.-C. T. Choi, [*Minimal residual methods for complex symmetric, skew symmetric and skew Hermitian systems*](https://arxiv.org/abs/1304.6782), Technical Report ANL/MCS-P3028-0812, Computation Institute, University of Chicago, 2013.
 * S.-C. T. Choi, A. Montoison, D. Orban and M. A. Saunders, *CS-MINRES-QLP and CS-MinAres: Krylov Methods for Complex Symmetric Linear Systems*, manuscript, 2026.
