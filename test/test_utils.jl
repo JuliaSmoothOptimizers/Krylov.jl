@@ -90,7 +90,7 @@ function conjugate_saunders_basis(A, b, k)
   return F.U[:, 1:count(>(1e-10 * F.S[1]), F.S)]
 end
 
-# Minimum-norm minimizers over that space of ‖Aᴴr‖ (MINARES) and of ‖r‖ (MINRES-QLP).
+# Minimum-norm minimizers over the conjugate Saunders space of ‖Aᴴr‖ = ‖A conj(r)‖ (CS-MinAres) and of ‖r‖ (CS-MINRES-QLP).
 function cs_minares_oracle(A, b, k)
   Q = conjugate_saunders_basis(A, b, k)
   return Q * (pinv(A' * (A * Q)) * (A' * b))
