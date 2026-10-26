@@ -69,9 +69,9 @@ function complex_symmetric_dense(n :: Int=12; FC=ComplexF64)
   return A, b
 end
 
-# Orthonormal basis of the conjugate Saunders trial space
+# Orthonormal basis for span(conj(Vₖ)), where Vₖ contains the BGS basis vectors, equivalently
 # K_q(AᴴA, conj(b)) + K_p(AᴴA, Aᴴb) with q = cld(k, 2) and p = fld(k, 2).
-function conjugate_saunders_basis(A, b, k)
+function bgs_trial_basis(A, b, k)
   N = A' * A
   function arnoldi(v, m)
     V = zeros(eltype(b), length(b), 0)
@@ -90,14 +90,15 @@ function conjugate_saunders_basis(A, b, k)
   return F.U[:, 1:count(>(1e-10 * F.S[1]), F.S)]
 end
 
-# Minimum-norm minimizers over the conjugate Saunders space of ‖Aᴴr‖ = ‖A conj(r)‖ (CS-MinAres) and of ‖r‖ (CS-MINRES-QLP).
+# Minimum-norm minimizers over span(conj(Vₖ)) of ‖A conj(r)‖ = ‖Aᴴr‖ (CS-MinAres)
+# and ‖r‖ (CS-MINRES-QLP).
 function cs_minares_oracle(A, b, k)
-  Q = conjugate_saunders_basis(A, b, k)
+  Q = bgs_trial_basis(A, b, k)
   return Q * (pinv(A' * (A * Q)) * (A' * b))
 end
 
 function cs_minres_qlp_oracle(A, b, k)
-  Q = conjugate_saunders_basis(A, b, k)
+  Q = bgs_trial_basis(A, b, k)
   return Q * (pinv(A * Q) * b)
 end
 

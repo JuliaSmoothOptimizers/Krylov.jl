@@ -10,16 +10,16 @@
 #
 # S.-C. T. Choi and M. A. Saunders, Algorithm 937: MINRES-QLP for symmetric and Hermitian linear equations and least-squares problems.
 # ACM Transactions on Mathematical Software, 40(2), pp. 1--12, 2014.
-# 
-# Negative curvature detection follows
-# Liu, Yang, and Roosta, MINRES: from negative curvature detection to monotonicity properties,
-# SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
 #
 # S.-C. T. Choi, Minimal residual methods for complex symmetric, skew symmetric and skew Hermitian systems.
 # Technical Report ANL/MCS-P3028-0812, Computation Institute, University of Chicago, 2013. arXiv:1304.6782.
 #
 # S.-C. T. Choi, A. Montoison, D. Orban and M. A. Saunders, CS-MINRES-QLP and CS-MinAres: Krylov Methods for Complex Symmetric Linear Systems.
 # Manuscript, 2026.
+#
+# Negative curvature detection follows
+# Liu, Yang, and Roosta, MINRES: from negative curvature detection to monotonicity properties,
+# SIAM Journal on Optimization, 32(4), pp. 2636--2661, 2022.
 #
 # Alexis Montoison, <alexis.montoison@polymtl.ca>
 # Sou-Cheng T. Choi, <schoi32@illinoistech.edu>

@@ -6,7 +6,6 @@
 # MinAres: An Iterative Solver for Symmetric Linear Systems
 # SIAM Journal on Matrix Analysis and Applications, 46(1), pp. 509--529, 2025.
 #
-# The complex symmetric variant (complex_symmetric = true) follows
 # S.-C. T. Choi, A. Montoison, D. Orban and M. A. Saunders
 # CS-MINRES-QLP and CS-MinAres: Krylov Methods for Complex Symmetric Linear Systems
 # Manuscript, 2026.
@@ -40,9 +39,11 @@ The estimates computed every iteration are ‖rₖ‖_M and ‖AMrₖ‖_M.
 
 If `complex_symmetric = true`, `A` is complex symmetric (`transpose(A) == A`)
 instead of Hermitian, and MINARES runs on the Bunse-Gerstner-Stover
-(BGS) process instead of the Hermitian Lanczos process. It then minimizes
-‖Aᴴrₖ‖₂ over the conjugate Saunders trial space and estimates ‖rₖ‖₂ and
-‖Aᴴrₖ‖₂; this is CS-MinAres. For complex `FC`, `complex_symmetric = true`
+(BGS) process instead of the Hermitian Lanczos process. With Vₖ containing the
+generated BGS basis vectors, it chooses coefficients yₖ in xₖ = x₀ + conj(Vₖ)yₖ
+to minimize ‖A conj(rₖ)‖₂, the normal-residual norm. Since Aᵀ = A, this equals
+‖Aᴴrₖ‖₂. It estimates ‖rₖ‖₂ and ‖A conj(rₖ)‖₂; this is CS-MinAres.
+For complex `FC`, `complex_symmetric = true`
 requires `M = I`; for real `FC` it has no effect, since a real symmetric
 matrix is also Hermitian.
 
@@ -364,6 +365,8 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
       # Update the QR factorization Nₖ = Q̃ₖ [ Uₖ ].
       #                                     [ Oᵀ ]
       # If CS, Nₖ = conj(Tₖ₊₂.ₖ₊₁)Qₖ[I; 0] has entries conj(λⱼ), conj(γⱼ), conj(ϵⱼ).
+      # Indeed, rₖ = Vₖ₊₁(β₁e₁ - Tₖ₊₁.ₖyₖ), and AᴴVₖ₊₁ = conj(Vₖ₊₂)conj(Tₖ₊₂.ₖ₊₁).
+      # The projected residual itself is not conjugated.
       #
       # [ λ₁  0   •   •   •    •   0  ]      [ μ₁  ϕ₁  ρ₁  0   •    •   0    ]
       # [ γ₁  λ₂  •                •  ]      [ 0   μ₂  ϕ₂  •   •        •    ]

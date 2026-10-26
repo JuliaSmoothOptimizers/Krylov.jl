@@ -182,6 +182,19 @@
     # Iterates and both estimates against a dense oracle at every k. Only the
     # ‖rₖ‖ estimate check sees the LQ factorization of Uₖ.
     A, b = complex_symmetric_dense()
+    # Check the BGS trial space and projected normal-residual identity independently.
+    k = 6
+    V, β, H = bunse_gerstner_stover(A, b, k + 1)
+    Q = bgs_trial_basis(A, b, k)
+    @test norm(Q * Q' - conj.(V[:, 1:k]) * transpose(V[:, 1:k])) ≤ 1.0e-10
+    y = ComplexF64.(1:k) / k
+    t = -H[1:k+1, 1:k] * y
+    t[1] += β
+    r = b - A * (conj.(V[:, 1:k]) * y)
+    @test norm(A' * r - conj.(V) * (conj.(H) * t)) ≤ 1.0e-10 * norm(A' * r)
+    Qₖ = Matrix(qr(Matrix(H[1:k+1, 1:k])).Q)[:, 1:k]
+    N = conj.(H) * Qₖ
+    @test norm(triu(N, 1)) + norm(tril(N, -3)) ≤ 1.0e-10 * norm(N)
     for k = 1:8
       workspace = MinaresWorkspace(A, b)
       minares!(workspace, A, b; complex_symmetric=true, itmax=k, atol=0.0, rtol=0.0, Artol=0.0, history=true)

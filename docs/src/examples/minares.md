@@ -20,8 +20,9 @@ Ar = A * r
 
 ## Complex symmetric systems
 
-A complex symmetric matrix satisfies `transpose(A) == A` without being Hermitian; such systems arise, for instance, from damped wave problems.
-With `complex_symmetric = true`, MINARES runs on the Bunse-Gerstner-Stover (BGS) process instead of the Hermitian Lanczos process and minimizes the normal-residual norm ‖Aᴴrₖ‖₂ = ‖A conj(rₖ)‖₂, which is ‖Arₖ‖₂ for real `A`.
+A complex symmetric matrix satisfies `transpose(A) == A` and need not be Hermitian; such systems arise, for instance, from damped wave problems.
+With `complex_symmetric = true`, MINARES runs on the Bunse-Gerstner-Stover (BGS) process instead of the Hermitian Lanczos process and minimizes the normal-residual norm ‖A conj(rₖ)‖₂.
+Since Aᵀ = A, this equals ‖Aᴴrₖ‖₂; for real `A`, it also equals ‖Arₖ‖₂.
 [`minres_qlp`](@ref) accepts the same keyword.
 
 ```@example minares_cs
@@ -38,5 +39,5 @@ x, stats = minares(A, b; complex_symmetric = true)
 show(stats)
 r = b - A * x
 @printf("Relative residual: %8.1e\n", norm(r) / norm(b))
-@printf("Relative Aᴴ-residual: %8.1e\n", norm(A' * r) / norm(A' * b))
+@printf("Relative normal residual: %8.1e\n", norm(A * conj.(r)) / norm(A * conj.(b)))
 ```
