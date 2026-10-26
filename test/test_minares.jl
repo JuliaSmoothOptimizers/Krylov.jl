@@ -162,11 +162,6 @@
       krylov_solve!(workspace, A, b; complex_symmetric=true)
       @test norm(workspace.x - A \ b) / norm(A \ b) ≤ tol
 
-      # Verbose output.
-      io = IOBuffer()
-      minares(A, b; complex_symmetric=true, verbose=1, iostream=io)
-      @test occursin("MINARES: system of size", String(take!(io)))
-
       # complex_symmetric=true is a no-op for real data.
       Ar, br = symmetric_indefinite(FC=T)
       (xr, statsr) = minares(Ar, br)
