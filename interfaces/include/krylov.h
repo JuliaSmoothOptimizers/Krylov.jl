@@ -4,7 +4,7 @@
 /* Version */
 #define KRYLOV_VERSION_MAJOR 0
 #define KRYLOV_VERSION_MINOR 10
-#define KRYLOV_VERSION_PATCH 11
+#define KRYLOV_VERSION_PATCH 12
 
 #ifdef __cplusplus
 extern "C" {
