@@ -145,6 +145,10 @@ include("gpu.jl")
       test_solver(S, M)
     end
 
+    @testset "eigensolver -- $FC" begin
+      test_eigensolver(S, M)
+    end
+
     @testset "ktypeof -- $FC" begin
       dv = S(rand(FC, 10))
       b = view(dv, 4:8)

@@ -79,6 +79,19 @@ function test_solver(S, M)
   krylov_solve!(workspace, A, b)  # Test that we don't have errors
 end
 
+function test_eigensolver(S, M)
+  FC = eltype(S)
+  n = 50
+  cpu_A = Matrix(Diagonal(FC.(1:n))) + FC.(triu(ones(n, n), 1)) / n
+  cpu_b = ones(FC, n)
+  workspace = KrylovSchurWorkspace(n, n, S, M; memory = 20)
+  krylov_schur!(workspace, M(cpu_A), S(cpu_b); nev = 3)
+  λ, X, stats = Krylov.results(workspace)
+  @test stats.solved
+  @test Array(λ)[1:3] ≈ [n, n-1, n-2]
+  @test X isa AbstractMatrix{complex(FC)}
+end
+
 function test_conversion(S, M)
   @test Krylov.vector_to_matrix(S) <: M
   @test Krylov.matrix_to_vector(M) <: S

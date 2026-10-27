@@ -67,6 +67,7 @@ include("craig.jl")
 include("craigmr.jl")
 
 include("cg_lanczos_shift.jl")
+include("krylov_schur.jl")
 include("cgls_lanczos_shift.jl")
 
 include("interface.jl")
