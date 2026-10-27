@@ -107,4 +107,21 @@
       @test_throws TypeError bilq(A, b, callback = workspace -> "string", history = true)
     end
   end
+
+  # The Krylov subspace is invariant after one iteration.
+  @testset "exact breakdown" begin
+    for FC in (Float64, ComplexF64)
+      n = 6
+      A = Matrix{FC}(2I, n, n)
+      b = FC[1:n;]
+      c = FC[n:-1:1;]
+      for transfer_to_bicg in (false, true)
+        for d in (b, c)
+          (x, stats) = bilq(A, b, c=d, transfer_to_bicg=transfer_to_bicg)
+          @test norm(x - b / 2) ≤ 1e-10 * norm(b / 2)
+          @test stats.solved
+        end
+      end
+    end
+  end
 end

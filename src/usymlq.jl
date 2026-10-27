@@ -296,9 +296,15 @@ kwargs_usymlq = (:transfer_to_usymcg, :atol, :rtol, :itmax, :timemax, :verbose, 
 
       if βₖ₊₁ ≠ zero(T)
         kdivcopy!(m, vₖ, q, βₖ₊₁)  # vₖ₊₁ = q / βₖ₊₁
+      else
+        # vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}
+        kfill!(vₖ, zero(FC))
       end
       if γₖ₊₁ ≠ zero(T)
         kdivcopy!(n, uₖ, p, γₖ₊₁)  # uₖ₊₁ = p / γₖ₊₁
+      else
+        # uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}
+        kfill!(uₖ, zero(FC))
       end
 
       # Compute USYMLQ residual norm

@@ -212,6 +212,7 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
     solved_dual = cNorm == 0
     tired = iter ≥ itmax
     breakdown = false
+    terminated = false
     status = "unknown"
     user_requested_exit = false
     overtimed = false
@@ -237,7 +238,13 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
 
       pᴴq = kdot(n, p, q)  # pᴴq  = ⟨p,q⟩
       βₖ₊₁ = √(abs(pᴴq))   # βₖ₊₁ = √(|pᴴq|)
-      γₖ₊₁ = pᴴq / βₖ₊₁    # γₖ₊₁ = pᴴq / βₖ₊₁
+      if pᴴq ≠ 0
+        γₖ₊₁ = pᴴq / βₖ₊₁  # γₖ₊₁ = pᴴq / βₖ₊₁
+      else
+        # The Lanczos process can't continue.
+        # We still use γ̄ₖ₊₁uₖ₊₁ = p to compute the QMR point at the next iteration.
+        γₖ₊₁ = knorm(n, p)
+      end
 
       # Update the LQ factorization of Tₖ = L̅ₖQₖ.
       # [ α₁ γ₂ 0  •  •  •  0 ]   [ δ₁   0    •   •   •    •    0   ]
@@ -310,37 +317,40 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
           kaxpby!(n, -cₖ, vₖ, conj(sₖ), d̅)
         end
 
-        # Compute ⟨vₖ,vₖ₊₁⟩ and ‖vₖ₊₁‖
-        vₖᴴvₖ₊₁ = kdot(n, vₖ, q) / βₖ₊₁
-        norm_vₖ₊₁ = knorm(n, q) / βₖ₊₁
+        # Compute ⟨vₖ,q⟩ and ‖q‖ where q = βₖ₊₁vₖ₊₁.
+        # We use q instead of vₖ₊₁ because βₖ₊₁ = 0 when the Krylov subspace is invariant.
+        vₖᴴq = kdot(n, vₖ, q)
+        qNorm = knorm(n, q)
 
         # Compute BiLQ residual norm
-        # ‖rₖ‖ = √(|μₖ|²‖vₖ‖² + |ωₖ|²‖vₖ₊₁‖² + μ̄ₖωₖ⟨vₖ,vₖ₊₁⟩ + μₖω̄ₖ⟨vₖ₊₁,vₖ⟩)
+        # ‖rₖ‖ = √(|μₖ|²‖vₖ‖² + |ωₖ|²‖q‖² + μ̄ₖωₖ⟨vₖ,q⟩ + μₖω̄ₖ⟨q,vₖ⟩) with ωₖ = sₖζₖ₋₁
         if iter == 1
           rNorm_lq = bNorm
         else
           μₖ = βₖ * (sₖ₋₁ * ζₖ₋₂ - cₖ₋₁ * cₖ * ζₖ₋₁) + αₖ * sₖ * ζₖ₋₁
-          ωₖ = βₖ₊₁ * sₖ * ζₖ₋₁
-          θₖ = conj(μₖ) * ωₖ * vₖᴴvₖ₊₁
-          rNorm_lq = sqrt(abs2(μₖ) * norm_vₖ^2 + abs2(ωₖ) * norm_vₖ₊₁^2 + 2 * real(θₖ))
+          ωₖ = sₖ * ζₖ₋₁
+          θₖ = conj(μₖ) * ωₖ * vₖᴴq
+          rNorm_lq = sqrt(abs2(μₖ) * norm_vₖ^2 + abs2(ωₖ) * qNorm^2 + 2 * real(θₖ))
         end
         history && push!(rNorms, rNorm_lq)
 
         # Update ‖vₖ‖
-        norm_vₖ = norm_vₖ₊₁
+        norm_vₖ = βₖ₊₁ ≠ 0 ? qNorm / βₖ₊₁ : zero(T)
 
         # Compute BiCG residual norm
-        # ‖rₖ‖ = |ρₖ| * ‖vₖ₊₁‖
-        if transfer_to_bicg && (abs(δbarₖ) > eps(T))
+        # ‖rₖ‖ = |ρₖ| * ‖q‖ with ρₖ = sₖζₖ₋₁ - cₖζbarₖ
+        # If pᴴq = 0, the Lanczos process can't continue and we use the BiCG point.
+        use_bicg = transfer_to_bicg || (pᴴq == 0)
+        if use_bicg && (abs(δbarₖ) > eps(T))
           ζbarₖ = ηₖ / δbarₖ
-          ρₖ = βₖ₊₁ * (sₖ * ζₖ₋₁ - cₖ * ζbarₖ)
-          rNorm_cg = abs(ρₖ) * norm_vₖ₊₁
+          ρₖ = sₖ * ζₖ₋₁ - cₖ * ζbarₖ
+          rNorm_cg = abs(ρₖ) * qNorm
         end
 
         # Update primal stopping criterion
         solved_lq_tol = rNorm_lq ≤ εL
         solved_lq = solved_lq_tol
-        solved_cg_tol = transfer_to_bicg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ εL)
+        solved_cg_tol = use_bicg && (abs(δbarₖ) > eps(T)) && (rNorm_cg ≤ εL)
         solved_cg = solved_cg_tol
         solved_primal = solved_lq || solved_cg
       end
@@ -412,6 +422,8 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
       if pᴴq ≠ zero(FC)
         kdivcopy!(n, vₖ, q, βₖ₊₁)        # vₖ₊₁ = q / βₖ₊₁
         kdivcopy!(n, uₖ, p, conj(γₖ₊₁))  # uₖ₊₁ = p / γ̄ₖ₊₁
+      elseif γₖ₊₁ ≠ 0
+        kdivcopy!(n, uₖ, p, γₖ₊₁)        # uₖ₊₁ = p / ‖p‖
       end
 
       # Update ϵₖ₋₃, λₖ₋₂, δbarₖ₋₁, cₖ₋₁, sₖ₋₁, γₖ and βₖ.
@@ -429,7 +441,10 @@ kwargs_bilqr = (:transfer_to_bicg, :atol, :rtol, :itmax, :timemax, :verbose, :hi
 
       user_requested_exit = callback(workspace) :: Bool
       tired = iter ≥ itmax
-      breakdown = !solved_lq && !solved_cg && (pᴴq == 0)
+      # If pᴴq = 0, the primal problem must be solved now.
+      # The dual problem has one more iteration to be solved.
+      breakdown = ((pᴴq == 0) && !solved_primal) || (terminated && !solved_dual)
+      terminated = terminated || (pᴴq == 0)
       timer = time_ns() - start_time
       overtimed = timer > timemax_ns
 

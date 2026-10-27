@@ -198,14 +198,17 @@ kwargs_workspace_symmlq = (:window,)
     kcopy!(n, w̅, vold)  # w̅ ← vold
 
     kmul!(Mv, A, vold)
-    α = kdotr(m, vold, Mv) + λ
+    (λ ≠ 0) && kaxpy!(m, λ, vold, Mv)  # Mv = Mv + λ * vold
+    α = kdotr(m, vold, Mv)
     kaxpy!(m, -α, Mvold, Mv)  # Mv = Mv - α * Mvold
     MisI || mulorldiv!(v, M, Mv, ldiv)
     β = kdotr(m, v, Mv)
     β < 0 && error("Preconditioner is not positive definite")
     β = sqrt(β)
-    kdiv!(m, v, β)
-    MisI || kdiv!(m, Mv, β)
+    if β ≠ 0
+      kdiv!(m, v, β)
+      MisI || kdiv!(m, Mv, β)
+    end
 
     # Start QR factorization
     γbar = α
@@ -232,7 +235,7 @@ kwargs_workspace_symmlq = (:window,)
     if γbar ≠ 0
       ζbar = η / γbar
       xcgNorm = abs(ζbar)
-      rcgNorm = β₁ * abs(ζbar)
+      rcgNorm = β * abs(ζbar)
       history && push!(rcgNorms, rcgNorm)
     else
       history && push!(rcgNorms, missing)
@@ -272,7 +275,8 @@ kwargs_workspace_symmlq = (:window,)
     tol = atol + rtol * β₁
     status = "unknown"
     solved_lq = solved_mach = solved_lim = (rNorm ≤ tol)
-    solved_cg = (γbar ≠ 0) && transfer_to_cg && rcgNorm ≤ tol
+    # If β₂ = 0, the Krylov subspace is invariant and the CG point solves the system.
+    solved_cg = (γbar ≠ 0) && ((transfer_to_cg && rcgNorm ≤ tol) || β == 0)
     tired = iter ≥ itmax
     ill_cond = ill_cond_mach = ill_cond_lim = false
     solved = zero_resid = solved_lq || solved_cg
@@ -297,7 +301,8 @@ kwargs_workspace_symmlq = (:window,)
       # Generate next Lanczos vector
       oldβ = β
       kmul!(Mv_next, A, v)
-      α = kdotr(m, v, Mv_next) + λ
+      (λ ≠ 0) && kaxpy!(m, λ, v, Mv_next)  # Mv_next = Mv_next + λ * v
+      α = kdotr(m, v, Mv_next)
       kaxpy!(m, -oldβ, Mvold, Mv_next)
       kcopy!(m, Mvold, Mv)  # Mvold ← Mv
       kaxpy!(m, -α, Mv, Mv_next)
@@ -306,8 +311,10 @@ kwargs_workspace_symmlq = (:window,)
       β = kdotr(m, v, Mv)
       β < 0 && error("Preconditioner is not positive definite")
       β = sqrt(β)
-      kdiv!(m, v, β)
-      MisI || kdiv!(m, Mv, β)
+      if β ≠ 0
+        kdiv!(m, v, β)
+        MisI || kdiv!(m, Mv, β)
+      end
 
       # Continue A norm estimate
       ANorm² = ANorm² + α * α + oldβ * oldβ + β * β
@@ -421,7 +428,8 @@ kwargs_workspace_symmlq = (:window,)
       zero_resid_lim = (test1 ≤ tol)
       fwd_err = (err ≤ etol) || ((γbar ≠ 0) && (errcg ≤ etol))
       solved_lq = rNorm ≤ tol
-      solved_cg = transfer_to_cg && (γbar ≠ 0) && rcgNorm ≤ tol
+      # If βₖ₊₁ = 0, the Krylov subspace is invariant and the CG point solves the system.
+      solved_cg = (γbar ≠ 0) && ((transfer_to_cg && rcgNorm ≤ tol) || β == 0)
       
       user_requested_exit = callback(workspace) :: Bool
       zero_resid = solved_lq || solved_cg

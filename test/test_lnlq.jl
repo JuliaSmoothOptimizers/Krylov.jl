@@ -167,4 +167,22 @@ end
       end
     end
   end
+
+  # The Krylov subspace is invariant after one iteration.
+  @testset "exact breakdown" begin
+    for FC in (Float64, ComplexF64)
+      n = 6
+      A = Matrix{FC}(2I, n, n)
+      b = FC[1:n;]
+      A = [A zeros(FC, n, 2)]
+      for λ in (0.0, 0.5)
+        for transfer_to_craig in (false, true)
+          (x, y, stats) = lnlq(A, b, λ=λ, transfer_to_craig=transfer_to_craig)
+          @test norm(y - b / (4 + λ^2)) ≤ 1e-10 * norm(b)
+          @test norm(x - A' * y) ≤ 1e-10 * norm(b)
+          @test stats.solved
+        end
+      end
+    end
+  end
 end

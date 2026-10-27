@@ -212,8 +212,11 @@ kwargs_cg_lanczos = (:M, :ldiv, :check_curvature, :atol, :rtol, :itmax, :timemax
       kcopy!(n, Mv, Mv_next)              # Mvₖ ← Mvₖ₊₁
       MisI || mulorldiv!(v, M, Mv, ldiv)  # vₖ₊₁ = M⁻¹ * Mvₖ₊₁
       β = knorm_elliptic(n, v, Mv)        # βₖ₊₁ = vₖ₊₁ᴴ M vₖ₊₁
-      kdiv!(n, v, β)                      # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
-      MisI || kdiv!(n, Mv, β)             # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+      # If βₖ₊₁ = 0, the Krylov subspace is invariant and vₖ₊₁ = 0.
+      if β ≠ 0
+        kdiv!(n, v, β)                      # vₖ₊₁  ←  vₖ₊₁ / βₖ₊₁
+        MisI || kdiv!(n, Mv, β)             # Mvₖ₊₁ ← Mvₖ₊₁ / βₖ₊₁
+      end
       Anorm2 += β_prev^2 + β^2 + δ^2      # Use ‖Tₖ₊₁‖₂ as increasing approximation of ‖A‖₂.
       β_prev = β
 

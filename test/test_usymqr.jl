@@ -119,4 +119,17 @@
       @test_throws TypeError usymqr(A, b, c, callback = workspace -> "string", history = true)
     end
   end
+
+  # The Krylov subspace is invariant after one iteration.
+  @testset "exact breakdown" begin
+    for FC in (Float64, ComplexF64)
+      n = 6
+      A = Matrix{FC}(2I, n, n)
+      b = FC[1:n;]
+      c = FC[n:-1:1;]
+      (x, stats) = usymqr(A, b, c)
+      @test norm(x - b / 2) ≤ 1e-10 * norm(b / 2)
+      @test stats.solved
+    end
+  end
 end

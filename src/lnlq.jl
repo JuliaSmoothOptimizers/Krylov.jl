@@ -304,6 +304,7 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     # Stopping criterion.
     solved_lq = false
     solved_cg = false
+    exact_cg = false
     tired = false
     status = "unknown"
     user_requested_exit = false
@@ -361,6 +362,14 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
       if βₖ₊₁ ≠ 0
         kdiv!(m, u, βₖ₊₁)
         MisI || kdiv!(m, Mu, βₖ₊₁)
+      else
+        # βₖ₊₁ = 0: the Golub-Kahan process terminates and the CRAIG point is exact.
+        # (xᶜ)ₖ = (xᵃᵘˣ)ₖ and (yᶜ)ₖ ← (yᴸ)ₖ₋₁ + ζbarₖ * w̄ₖ
+        kaxpy!(m, ζbarₖ, w̄, y)
+        exact_cg = true
+        history && push!(rNorms, zero(T))
+        kdisplay(iter, verbose) && @printf(iostream, "%5d  %7.1e  %.2fs\n", iter, zero(T), start_time |> ktimer)
+        break
       end
 
       # αₖ₊₁Nvₖ₊₁ = Aᴴuₖ₊₁ - βₖ₊₁Nvₖ
@@ -525,7 +534,9 @@ kwargs_lnlq = (:M, :N, :ldiv, :transfer_to_craig, :sqd, :λ, :σ, :utolx, :utoly
     end
     (verbose > 0) && @printf(iostream, "\n")
 
-    if solved_cg && (ζbarₖ > eps(T))
+    if exact_cg
+      solved_cg = true
+    elseif solved_cg && (abs(ζbarₖ) > eps(T))
       if λ > 0
         # (xᶜ)ₖ ← (xᵃᵘˣ)ₖ₋₁ + τₖ * (cpₖvₖ + spₖqₖ₋₁)
         kaxpy!(n, τₖ * cpₖ, v, x)

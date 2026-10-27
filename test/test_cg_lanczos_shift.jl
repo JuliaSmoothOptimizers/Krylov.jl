@@ -55,4 +55,21 @@ end
       @test_throws TypeError cg_lanczos_shift(A, b, shifts, callback = workspace -> "string", history = true)
     end
   end
+
+  # The Krylov subspace is invariant after one iteration.
+  @testset "exact breakdown" begin
+    for FC in (Float64, ComplexF64)
+      n = 6
+      A = Matrix{FC}(2I, n, n)
+      b = FC[1:n;]
+      shifts = [0.0, 0.5, 3.0]
+      for M in (I, Matrix{FC}(0.5I, n, n))
+        (x, stats) = cg_lanczos_shift(A, b, shifts, M=M)
+        for (i, σ) in enumerate(shifts)
+          @test norm(x[i] - b / (2 + σ)) ≤ 1e-10 * norm(b)
+        end
+        @test stats.solved
+      end
+    end
+  end
 end
