@@ -49,6 +49,7 @@ makedocs(
                            "BICGSTAB" => "examples/bicgstab.md",
                            "DQGMRES" => "examples/dqgmres.md",
                            "BLOCK-GMRES" => "examples/block_gmres.md",
+                           "BLOCK-CG" => "examples/block_cg.md",
                            "CGNE" => "examples/cgne.md",
                            "CRMR" => "examples/crmr.md",
                            "CRAIG" => "examples/craig.md",

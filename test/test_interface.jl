@@ -365,9 +365,11 @@ function test_block_krylov_workspaces(FC; use_val::Bool=true)
   workspaces = Dict{Symbol, BlockKrylovWorkspace}()
   if use_val
     workspaces[:block_minres] = @inferred krylov_workspace(Val(:block_minres), m, n, p, SV, SM)
+    workspaces[:block_cg] = @inferred krylov_workspace(Val(:block_cg), m, n, p, SV, SM)
     workspaces[:block_gmres] = @inferred krylov_workspace(Val(:block_gmres), m, n, p, SV, SM; memory=mem)
   else
     workspaces[:block_minres] = krylov_workspace(:block_minres, m, n, p, SV, SM)
+    workspaces[:block_cg] = krylov_workspace(:block_cg, m, n, p, SV, SM)
     workspaces[:block_gmres] = krylov_workspace(:block_gmres, m, n, p, SV, SM; memory=mem)
   end
 

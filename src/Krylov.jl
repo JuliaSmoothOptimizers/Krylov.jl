@@ -19,6 +19,7 @@ include("krylov_show.jl")
 
 include("block_minres.jl")
 include("block_gmres.jl")
+include("block_cg.jl")
 
 include("cg.jl")
 include("cr.jl")
