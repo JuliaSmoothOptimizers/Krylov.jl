@@ -108,6 +108,24 @@ end
         @test norm(X[:, 4]) ≤ 1e-12
       end
 
+      @testset "singular Gram matrix and exhausted search block" begin
+        # semidefinite A whose null space is not given: PᴴAP = diag(0, 1) is not positive definite
+        # and is pseudo-inverted, the column in the null space of A stays unsolved
+        D = Diagonal(FC.(0:5))
+        E = Matrix{FC}(I, 6, 2)
+        X, stats = block_cg(D, E; itmax=4)
+        @test all(isfinite, X)
+        @test X[:, 2] ≈ E[:, 2]
+        @test norm(X[:, 1]) == 0
+        @test !stats.solved
+        # a preconditioner that maps the residual to zero leaves no search direction
+        X, stats = block_cg(Diagonal(FC.(1:6)), E; M=Diagonal(FC[0, 0, 1, 1, 1, 1]))
+        @test norm(X) == 0
+        @test stats.niter == 1
+        @test !stats.solved
+        @test stats.status == "no search direction left (rank-deficient search block)"
+      end
+
       @testset "preconditioner" begin
         d = diag(A)
         _, s0 = block_cg(A, B; nullspace=ones(T, n), rtol=1e-8, atol=0.0)
