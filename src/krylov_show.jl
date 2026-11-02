@@ -80,7 +80,7 @@ function show(io :: IO, workspace :: _KrylovWorkspace{T,FC,Sm,Sn}; show_stats ::
     architecture = "CPU / GPU"
   end
   l1 = max(length(name_workspace), lFC + 11)  # length("Precision: ") = 11
-  nchar = type_workspace <: Union{CgLanczosShiftWorkspace, CglsLanczosShiftWorkspace, FomWorkspace, DiomWorkspace, DqgmresWorkspace, GmresWorkspace, FgmresWorkspace, GpmrWorkspace, BlockGmresWorkspace} ? 8 : 0  # length("Vector{}") = 8
+  nchar = type_workspace <: Union{CgLanczosShiftWorkspace, CglsLanczosShiftWorkspace, FomWorkspace, DiomWorkspace, DqgmresWorkspace, GmresWorkspace, FgmresWorkspace, GpmrWorkspace, BicgstablWorkspace, BlockGmresWorkspace} ? 8 : 0  # length("Vector{}") = 8
   l2 = max(ndigits(workspace.m) + 7, length(architecture) + 14, lS + nchar)  # length("nrows: ") = 7 and length("Architecture: ") = 14
   l2 = max(l2, length(name_stats) + 2 + lT)  # length("{}") = 2
   l3 = max(ndigits(workspace.n) + 7, length(storage) + 9)  # length("Storage: ") = 9 and length("cols: ") = 7

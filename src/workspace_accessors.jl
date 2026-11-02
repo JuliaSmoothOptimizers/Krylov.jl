@@ -105,6 +105,7 @@ for (KS, fun, nsol, nA, nAt, warm_start) in [
   (:UsymlqWorkspace   , :usymlq!    , 1, 1, 1, true )
   (:LnlqWorkspace     , :lnlq!      , 2, 1, 1, false)
   (:BicgstabWorkspace , :bicgstab!  , 1, 2, 0, true )
+  (:BicgstablWorkspace, :bicgstabl! , 1, :(2 * workspace.ℓ), 0, true )
   (:CrlsWorkspace     , :crls!      , 1, 1, 1, false)
   (:LsqrWorkspace     , :lsqr!      , 1, 1, 1, false)
   (:MinresWorkspace   , :minres!    , 1, 1, 0, true )

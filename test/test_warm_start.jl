@@ -447,6 +447,25 @@ function test_warm_start(FC)
     @test(resid ≤ tol)
   end
 
+  # BiCGstab(ℓ)
+  @testset "bicgstabl" begin
+    x, stats = bicgstabl(A, b, x0)
+    r = b - A * x
+    resid = norm(r) / norm(b)
+    @test(resid ≤ tol)
+
+    workspace = BicgstablWorkspace(A, b)
+    krylov_solve!(workspace, A, b, x0)
+    r = b - A * workspace.x
+    resid = norm(r) / norm(b)
+    @test(resid ≤ tol)
+
+    krylov_solve!(workspace, J, d, z0)
+    r = d - J * workspace.x
+    resid = norm(r) / norm(d)
+    @test(resid ≤ tol)
+  end
+
   # CGS
   @testset "cgs" begin
     x, stats = cgs(A, b, x0)

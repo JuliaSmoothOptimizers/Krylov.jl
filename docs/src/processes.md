@@ -160,7 +160,7 @@ T_{k,k+1} =
 
 The function [`nonhermitian_lanczos`](@ref nonhermitian_lanczos(::Any, ::AbstractVector{FC}, ::AbstractVector{FC}, ::Int) where FC <: (Union{Complex{T}, T} where T <: AbstractFloat)) returns $V_{k+1}$, $\beta_1$, $T_{k+1,k}$, $U_{k+1}$, $\bar{\gamma}_1$ and $T_{k,k+1}^H$.
 
-Related methods: [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), [`CGS`](@ref cgs) and [`BICGSTAB`](@ref bicgstab).
+Related methods: [`BiLQ`](@ref bilq), [`QMR`](@ref qmr), [`BiLQR`](@ref bilqr), [`CGS`](@ref cgs), [`BICGSTAB`](@ref bicgstab) and [`BiCGstab(ℓ)`](@ref bicgstabl).
 
 !!! note
     The scaling factors used in our implementation are $\beta_k = |u_k^H v_k|^{\tfrac{1}{2}}$ and $\gamma_k = (u_k^H v_k) / \beta_k$.

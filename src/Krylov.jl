@@ -47,6 +47,7 @@ include("trilqr.jl")
 
 include("cgs.jl")
 include("bicgstab.jl")
+include("bicgstabl.jl")
 
 include("bilq.jl")
 include("qmr.jl")

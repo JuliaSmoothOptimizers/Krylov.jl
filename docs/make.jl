@@ -47,6 +47,7 @@ makedocs(
                            "TriMR" => "examples/trimr.md",
                            "USYMLQR" => "examples/usymlqr.md",
                            "BICGSTAB" => "examples/bicgstab.md",
+                           "BiCGstab(ℓ)" => "examples/bicgstabl.md",
                            "DQGMRES" => "examples/dqgmres.md",
                            "BLOCK-GMRES" => "examples/block_gmres.md",
                            "CGNE" => "examples/cgne.md",

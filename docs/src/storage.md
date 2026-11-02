@@ -40,6 +40,7 @@ This section provides the storage requirements of all Krylov methods available i
 We denote by $m$ and $n$ the number of rows and columns of the linear problem.
 The memory parameter of DIOM, FOM, DQGMRES, GMRES, FGMRES and GPMR is $k$.
 The numbers of shifts of CG-LANCZOS-SHIFT and CGLS-LANCZOS-SHIFT is $p$.
+The number of BiCG steps per iteration of BiCGstab(ℓ) is $\ell$.
 
 ## Theoretical storage requirements
 
@@ -65,9 +66,9 @@ Each table summarizes the storage requirements of Krylov methods recommended to 
 |:-------:|:-----------------:|:---------------------------:|:-------------------:|:-----------------:|
 | Storage | $6n$              | $6n$                        | $8n$                | $9n$              |
 
-| Methods | [`DIOM`](@ref diom) | [`DQGMRES`](@ref dqgmres) |
-|:-------:|:-------------------:|:-------------------------:|
-| Storage | $n(2k+1) + 2k - 1$  | $n(2k+2) + 3k + 1$        |
+| Methods | [`DIOM`](@ref diom) | [`DQGMRES`](@ref dqgmres) | [`BiCGstab(ℓ)`](@ref bicgstabl)        |
+|:-------:|:-------------------:|:-------------------------:|:--------------------------------------:|
+| Storage | $n(2k+1) + 2k - 1$  | $n(2k+2) + 3k + 1$        | $n(2\ell+3) + \dfrac{\ell(\ell+7)}{2}$ |
 
 | Methods | [`FOM`](@ref fom)                                  | [`GMRES`](@ref gmres)                   | [`FGMRES`](@ref fgmres)                  |
 |:-------:|:--------------------------------------------------:|:---------------------------------------:|:----------------------------------------:|

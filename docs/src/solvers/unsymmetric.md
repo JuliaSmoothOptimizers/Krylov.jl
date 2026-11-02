@@ -34,6 +34,14 @@ bicgstab!
 BicgstabWorkspace
 ```
 
+## BiCGstab(ℓ)
+
+```@docs
+bicgstabl
+bicgstabl!
+BicgstablWorkspace
+```
+
 ## DIOM
 
 ```@docs

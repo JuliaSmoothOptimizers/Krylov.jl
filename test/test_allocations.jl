@@ -356,6 +356,27 @@ allocated_with_W(solver!, workspace, A, b, W) = @allocated solver!(workspace, A,
         @test inplace_bicgstab_bytes == 0
       end
 
+      @testset "BiCGstab(ℓ)" begin
+        # BiCGstab(ℓ) needs:
+        # - (2ℓ+3) n-vectors: x, R[1:ℓ+1], U[1:ℓ+1]
+        # - 4 ℓ-vectors: σ, γ, γ′, γ″
+        # - 1 (ℓ*(ℓ-1)/2)-vector: τ
+        storage_bicgstabl_bytes(ℓ, n) = nbits_FC * ((2 * ℓ + 3) * n + (3 * ℓ) + (ℓ * (ℓ-1) / 2)) + nbits_T * ℓ
+
+        ℓ = 4
+        expected_bicgstabl_bytes = storage_bicgstabl_bytes(ℓ, n)
+        bicgstabl(A, b; ℓ)  # warmup
+        actual_bicgstabl_bytes = @allocated bicgstabl(A, b; ℓ)
+        if VERSION < v"1.11.5" || !Sys.isapple()
+          @test expected_bicgstabl_bytes ≤ actual_bicgstabl_bytes ≤ 1.02 * expected_bicgstabl_bytes
+        end
+
+        workspace = BicgstablWorkspace(A, b; ℓ)
+        bicgstabl!(workspace, A, b)  # warmup
+        inplace_bicgstabl_bytes = @allocated bicgstabl!(workspace, A, b)
+        @test inplace_bicgstabl_bytes == 0
+      end
+
       @testset "CGNE" begin
         # CGNE needs:
         # - 3 n-vectors: x, p, Aᴴz

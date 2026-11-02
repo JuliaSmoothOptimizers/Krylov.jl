@@ -1,6 +1,6 @@
 export KrylovWorkspace, MinresWorkspace, CgWorkspace, CrWorkspace, SymmlqWorkspace, CgLanczosWorkspace,
 CgLanczosShiftWorkspace, MinresQlpWorkspace, DqgmresWorkspace, DiomWorkspace, UsymlqWorkspace,
-UsymqrWorkspace, TricgWorkspace, TrimrWorkspace, TrilqrWorkspace, CgsWorkspace, BicgstabWorkspace,
+UsymqrWorkspace, TricgWorkspace, TrimrWorkspace, TrilqrWorkspace, CgsWorkspace, BicgstabWorkspace, BicgstablWorkspace,
 BilqWorkspace, QmrWorkspace, BilqrWorkspace, CglsWorkspace, CglsLanczosShiftWorkspace, CrlsWorkspace, CgneWorkspace,
 CrmrWorkspace, LslqWorkspace, LsqrWorkspace, LsmrWorkspace, LnlqWorkspace, CraigWorkspace, CraigmrWorkspace,
 GmresWorkspace, FomWorkspace, GpmrWorkspace, UsymlqrWorkspace, FgmresWorkspace, CarWorkspace, MinaresWorkspace
@@ -1629,6 +1629,94 @@ function BicgstabWorkspace(A, b)
   m, n = size(A)
   S = ktypeof(b)
   BicgstabWorkspace(m, n, S)
+end
+
+"""
+Workspace for the in-place methods [`bicgstabl!`](@ref) and [`krylov_solve!`](@ref).
+
+The following outer constructors can be used to initialize this workspace:
+
+    workspace = BicgstablWorkspace(m, n, S; ℓ = 2)
+    workspace = BicgstablWorkspace(A, b; ℓ = 2)
+    workspace = BicgstablWorkspace(kc::KrylovConstructor{S,S}; ℓ = 2)
+
+`m` and `n` denote the dimensions of the linear operator `A` passed to the in-place methods.
+Since [`bicgstabl`](@ref) only supports square linear operators, `m` and `n` must be equal.
+`S` is the storage type of the vectors in the workspace, such as `Vector{Float64}`.
+`ℓ` is set to `n` if the value given is larger than `n`.
+
+[`KrylovConstructor`](@ref) facilitates the allocation of vectors in the workspace if `S(undef, n)` is not available.
+"""
+mutable struct BicgstablWorkspace{T,FC,S} <: _KrylovWorkspace{T,FC,S,S}
+  m          :: Int
+  n          :: Int
+  ℓ          :: Int
+  Δx         :: S
+  x          :: S
+  q          :: S
+  yz         :: S
+  R          :: Vector{S}
+  U          :: Vector{S}
+  τ          :: Vector{FC}
+  σ          :: Vector{T}
+  γ          :: Vector{FC}
+  γ′         :: Vector{FC}
+  γ″         :: Vector{FC}
+  warm_start :: Bool
+  stats      :: SimpleStats{T}
+end
+
+function BicgstablWorkspace(kc::KrylovConstructor{S,S}; ℓ::Int = 2) where S
+  start_allocation_time = time_ns()
+  FC = eltype(S)
+  T  = real(FC)
+  m  = length(kc.vm)
+  n  = length(kc.vn)
+  ℓ  = min(ℓ, n)
+  Δx = similar(kc.vn_empty)
+  x  = similar(kc.vn)
+  q  = similar(kc.vn_empty)
+  yz = similar(kc.vn_empty)
+  R  = S[similar(kc.vn) for i = 1 : ℓ+1]
+  U  = S[similar(kc.vn) for i = 1 : ℓ+1]
+  τ  = Vector{FC}(undef, div(ℓ * (ℓ-1), 2))
+  σ  = Vector{T}(undef, ℓ)
+  γ  = Vector{FC}(undef, ℓ)
+  γ′ = Vector{FC}(undef, ℓ)
+  γ″ = Vector{FC}(undef, ℓ)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
+  workspace = BicgstablWorkspace{T,FC,S}(m, n, ℓ, Δx, x, q, yz, R, U, τ, σ, γ, γ′, γ″, false, stats)
+  workspace.stats.allocation_timer = start_allocation_time |> ktimer
+  return workspace
+end
+
+function BicgstablWorkspace(m::Integer, n::Integer, S::Type; ℓ::Int = 2)
+  start_allocation_time = time_ns()
+  FC = eltype(S)
+  T  = real(FC)
+  ℓ  = min(ℓ, n)
+  Δx = S(undef, 0)
+  x  = S(undef, n)
+  q  = S(undef, 0)
+  yz = S(undef, 0)
+  R  = S[S(undef, n) for i = 1 : ℓ+1]
+  U  = S[S(undef, n) for i = 1 : ℓ+1]
+  τ  = Vector{FC}(undef, div(ℓ * (ℓ-1), 2))
+  σ  = Vector{T}(undef, ℓ)
+  γ  = Vector{FC}(undef, ℓ)
+  γ′ = Vector{FC}(undef, ℓ)
+  γ″ = Vector{FC}(undef, ℓ)
+  S  = isconcretetype(S) ? S : typeof(x)
+  stats = SimpleStats(0, false, false, false, 0, T[], T[], T[], T[], 0.0, 0.0, "unknown")
+  workspace = BicgstablWorkspace{T,FC,S}(m, n, ℓ, Δx, x, q, yz, R, U, τ, σ, γ, γ′, γ″, false, stats)
+  workspace.stats.allocation_timer = start_allocation_time |> ktimer
+  return workspace
+end
+
+function BicgstablWorkspace(A, b; ℓ::Int = 2)
+  m, n = size(A)
+  S = ktypeof(b)
+  BicgstablWorkspace(m, n, S; ℓ)
 end
 
 """
