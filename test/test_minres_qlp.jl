@@ -163,4 +163,161 @@
       @test solver.stats.solved == true
     end
   end
+
+  @testset "complex_symmetric" begin
+    for FC in (ComplexF64, ComplexF32)
+      T = real(FC)
+      tol = T === Float32 ? T(1.0e-3) : T(1.0e-6)
+
+      # Nonsingular complex symmetric system.
+      A, b = complex_symmetric_definite(FC=FC)
+      (x, stats) = minres_qlp(A, b; complex_symmetric=true)
+      @test norm(x - A \ b) / norm(A \ b) ≤ tol
+      @test stats.solved
+
+      # Tiny problem sizes n = 1, ..., 4.
+      for n in 1:4
+        An, bn = complex_symmetric_definite(n, FC=FC)
+        xtrue = Matrix(An) \ bn
+        (xn, statsn) = minres_qlp(An, bn; complex_symmetric=true)
+        @test norm(xn - xtrue) / norm(xtrue) ≤ tol
+        @test statsn.solved
+      end
+
+      # Warm start.
+      x0 = (A \ b) .+ FC(0.01) .* ones(FC, size(A, 1))
+      (x, stats) = minres_qlp(A, b, x0; complex_symmetric=true)
+      @test norm(x - A \ b) / norm(A \ b) ≤ tol
+
+      # Real shift.
+      λ = T(0.3)
+      (x, stats) = minres_qlp(A, b; complex_symmetric=true, λ=λ)
+      r = b - (A + λ * I) * x
+      @test norm(r) / norm(b) ≤ tol * norm(A) * norm(x)
+      @test stats.solved
+
+      # Singular, inconsistent complex symmetric system.
+      As, bs = complex_symmetric_inconsistent(FC=FC)
+      (x, stats) = minres_qlp(As, bs; complex_symmetric=true)
+      r = bs - As * x
+      Aresid = norm(As' * r) / norm(As' * bs)
+      @test Aresid ≤ tol
+      @test stats.inconsistent
+
+      # krylov_solve generic interface.
+      workspace = krylov_workspace(Val(:minres_qlp), A, b)
+      krylov_solve!(workspace, A, b; complex_symmetric=true)
+      @test norm(workspace.x - A \ b) / norm(A \ b) ≤ tol
+
+      # complex_symmetric=true is a no-op for real data.
+      Ar, br = symmetric_indefinite(FC=T)
+      (xr, statsr) = minres_qlp(Ar, br)
+      (xs, statss) = minres_qlp(Ar, br; complex_symmetric=true)
+      @test xs == xr
+      @test statss.niter == statsr.niter
+
+      # complex_symmetric=true does not support preconditioning or linesearch.
+      @test_throws ArgumentError minres_qlp(A, b; complex_symmetric=true, M=Diagonal(ones(FC, size(A, 1))))
+      @test_throws ArgumentError minres_qlp(A, b; complex_symmetric=true, linesearch=true)
+    end
+
+    # Singular, consistent complex symmetric system: the minimum-norm solution.
+    A, b = complex_symmetric_singular()
+    (x, stats) = minres_qlp(A, b; complex_symmetric=true)
+    @test norm(x - pinv(A) * b) / norm(pinv(A) * b) ≤ 1.0e-6
+    @test stats.solved
+
+    # Iterates and both estimates against a dense oracle at every k; the
+    # ‖Arₖ₋₁‖ estimate lags the iterate by one step.
+    A, b = complex_symmetric_dense()
+    xprev = zeros(ComplexF64, length(b))
+    for k = 1:8
+      workspace = MinresQlpWorkspace(A, b)
+      minres_qlp!(workspace, A, b; complex_symmetric=true, itmax=k, atol=0.0, rtol=0.0, Artol=0.0, history=true)
+      x, stats = workspace.x, workspace.stats
+      @test norm(x - cs_minres_qlp_oracle(A, b, k)) ≤ 1.0e-8 * norm(x)
+      @test abs(stats.residuals[end] - norm(b - A * x)) ≤ 1.0e-8 * norm(b)
+      k ≥ 2 && @test abs(stats.Aresiduals[end] - norm(A' * (b - A * xprev))) ≤ 1.0e-8 * norm(A' * b)
+      xprev = copy(x)
+    end
+
+    # Complex{BigFloat}.
+    A, b = complex_symmetric_definite(FC=Complex{BigFloat})
+    (x, stats) = minres_qlp(A, b; complex_symmetric=true)
+    @test norm(x - Matrix(A) \ b) / norm(Matrix(A) \ b) ≤ sqrt(eps(BigFloat))
+    @test stats.solved
+  end
+
+  @testset "stats[1] closed form" begin
+    # residuals[1] is pushed before the main loop and is unaffected by
+    # subsequently running itmax=1. Aresiduals[1] pushes no entry before the
+    # loop and only appears after that same itmax=1 run (lagged, but still
+    # the k=0 closed form). Both track r₀=b-(A+λI)x₀, not b: residuals[1]=
+    # ‖r₀‖; Aresiduals[1]: Hermitian ‖(A+λI)r₀‖, complex symmetric
+    # ‖(A+λI)conj(r₀)‖. Checked at x₀=0, at a warm start, and with a nonzero
+    # shift λ combined with a warm start.
+    for FC in (Float64, ComplexF64)
+      T = real(FC)
+      A, b = symmetric_indefinite(FC=FC)
+      (_, stats) = minres_qlp(A, b; itmax=1, history=true, atol=zero(T), rtol=zero(T))
+      @test stats.residuals[1] ≈ norm(b)
+      @test stats.Aresiduals[1] ≈ norm(A' * b)
+
+      x0 = rand(FC, length(b))
+      r0 = b - A * x0
+      (_, stats0) = minres_qlp(A, b, x0; itmax=1, history=true, atol=zero(T), rtol=zero(T))
+      @test stats0.residuals[1] ≈ norm(r0)
+      @test stats0.Aresiduals[1] ≈ norm(A' * r0)
+
+      λ = T(0.7)
+      r0λ = b - (A + λ * I) * x0
+      (_, statsλ) = minres_qlp(A, b, x0; λ=λ, itmax=1, history=true, atol=zero(T), rtol=zero(T))
+      @test statsλ.residuals[1] ≈ norm(r0λ)
+      @test statsλ.Aresiduals[1] ≈ norm((A + λ * I)' * r0λ)
+    end
+    for FC in (ComplexF64, ComplexF32)
+      T = real(FC)
+      Acs, bcs = complex_symmetric_definite(FC=FC)
+      (_, stats) = minres_qlp(Acs, bcs; complex_symmetric=true, itmax=1, history=true, atol=zero(T), rtol=zero(T))
+      @test stats.residuals[1] ≈ norm(bcs)
+      @test stats.Aresiduals[1] ≈ norm(Acs * conj.(bcs))
+
+      x0cs = rand(FC, size(Acs, 1))
+      r0cs = bcs - Acs * x0cs
+      (_, stats0cs) = minres_qlp(Acs, bcs, x0cs; complex_symmetric=true, itmax=1, history=true, atol=zero(T), rtol=zero(T))
+      @test stats0cs.residuals[1] ≈ norm(r0cs)
+      @test stats0cs.Aresiduals[1] ≈ norm(Acs * conj.(r0cs))
+
+      λ = T(0.7)
+      r0csλ = bcs - (Acs + λ * I) * x0cs
+      (_, statscsλ) = minres_qlp(Acs, bcs, x0cs; complex_symmetric=true, λ=λ, itmax=1, history=true, atol=zero(T), rtol=zero(T))
+      @test statscsλ.residuals[1] ≈ norm(r0csλ)
+      @test statscsλ.Aresiduals[1] ≈ norm((Acs + λ * I) * conj.(r0csλ))
+    end
+  end
+
+  @testset "stats[2] closed form" begin
+    # residuals is current: residuals[2] comes directly from an itmax=1 run.
+    # Aresiduals is one-step lagged: Aresiduals[2] (at itmax=2) equals the
+    # closed form at x₁ from that same itmax=1 run, not x₂.
+    # Hermitian: ‖r₁‖, ‖Ar₁‖; complex symmetric: ‖r₁‖, ‖A conj(r₁)‖.
+    for FC in (Float64, ComplexF64)
+      T = real(FC)
+      A, b = symmetric_indefinite(FC=FC)
+      (x1, stats1) = minres_qlp(A, b; itmax=1, history=true, atol=zero(T), rtol=zero(T))
+      r1 = b - A * x1
+      @test stats1.residuals[2] ≈ norm(r1)
+      (_, stats2) = minres_qlp(A, b; itmax=2, history=true, atol=zero(T), rtol=zero(T))
+      @test stats2.Aresiduals[2] ≈ norm(A' * r1)
+    end
+    for FC in (ComplexF64, ComplexF32)
+      T = real(FC)
+      Acs, bcs = complex_symmetric_definite(FC=FC)
+      (x1cs, stats1) = minres_qlp(Acs, bcs; complex_symmetric=true, itmax=1, history=true, atol=zero(T), rtol=zero(T))
+      r1cs = bcs - Acs * x1cs
+      @test stats1.residuals[2] ≈ norm(r1cs)
+      (_, stats2) = minres_qlp(Acs, bcs; complex_symmetric=true, itmax=2, history=true, atol=zero(T), rtol=zero(T))
+      @test stats2.Aresiduals[2] ≈ norm(Acs * conj.(r1cs))
+    end
+  end
 end

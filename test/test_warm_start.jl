@@ -198,6 +198,20 @@ function test_warm_start(FC)
     r = d - J * workspace.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
+
+    if FC <: Complex
+      Acs, bcs = complex_symmetric_definite(n, FC=FC)
+      x0cs = FC(1.2 + 0.8im) * ones(FC, n)
+      x, stats = minres_qlp(Acs, bcs, x0cs, complex_symmetric=true)
+      r = bcs - Acs * x
+      resid = norm(r) / norm(bcs)
+      @test(resid ≤ tol)
+
+      krylov_solve!(workspace, Acs, bcs, x0cs, complex_symmetric=true)
+      r = bcs - Acs * workspace.x
+      resid = norm(r) / norm(bcs)
+      @test(resid ≤ tol)
+    end
   end
 
   # SYMMLQ
@@ -331,6 +345,20 @@ function test_warm_start(FC)
     r = d - J * workspace.x
     resid = norm(r) / norm(d)
     @test(resid ≤ tol)
+
+    if FC <: Complex
+      Acs, bcs = complex_symmetric_definite(n, FC=FC)
+      x0cs = FC(1.2 + 0.8im) * ones(FC, n)
+      x, stats = minares(Acs, bcs, x0cs, complex_symmetric=true)
+      r = bcs - Acs * x
+      resid = norm(r) / norm(bcs)
+      @test(resid ≤ tol)
+
+      krylov_solve!(workspace, Acs, bcs, x0cs, complex_symmetric=true)
+      r = bcs - Acs * workspace.x
+      resid = norm(r) / norm(bcs)
+      @test(resid ≤ tol)
+    end
   end
 
   # DIOM
