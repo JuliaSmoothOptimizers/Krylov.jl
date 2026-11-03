@@ -139,6 +139,15 @@
       @test norm(x - A \ b) / norm(A \ b) ≤ tol
       @test stats.solved
 
+      # Tiny problem sizes n = 1, ..., 4.
+      for n in 1:4
+        An, bn = complex_symmetric_definite(n, FC=FC)
+        xtrue = Matrix(An) \ bn
+        (xn, statsn) = minares(An, bn; complex_symmetric=true)
+        @test norm(xn - xtrue) / norm(xtrue) ≤ tol
+        @test statsn.solved
+      end
+
       # Warm start.
       x0 = (A \ b) .+ FC(0.01) .* ones(FC, size(A, 1))
       (x, stats) = minares(A, b, x0; complex_symmetric=true)
@@ -210,5 +219,74 @@
     (x, stats) = minares(A, b; complex_symmetric=true)
     @test norm(x - Matrix(A) \ b) / norm(Matrix(A) \ b) ≤ sqrt(eps(BigFloat))
     @test stats.solved
+  end
+
+  @testset "stats[1] closed form" begin
+    # residuals[1] and Aresiduals[1] are both pushed before the main loop, so
+    # they never depend on itmax. Both track r₀=b-(A+λI)x₀, not b:
+    # residuals[1]=‖r₀‖; Aresiduals[1]: Hermitian ‖(A+λI)r₀‖, complex
+    # symmetric ‖(A+λI)conj(r₀)‖. Checked at x₀=0, at a warm start, and with
+    # a nonzero shift λ combined with a warm start.
+    for FC in (Float64, ComplexF32, ComplexF64)
+      T = real(FC)
+      A, b = symmetric_indefinite(FC=FC)
+      (_, stats) = minares(A, b; history=true)
+      @test stats.residuals[1] ≈ norm(b)
+      @test stats.Aresiduals[1] ≈ norm(A' * b)
+
+      x0 = rand(FC, length(b))
+      r0 = b - A * x0
+      (_, stats0) = minares(A, b, x0; history=true)
+      @test stats0.residuals[1] ≈ norm(r0)
+      @test stats0.Aresiduals[1] ≈ norm(A' * r0)
+
+      λ = T(0.7)
+      if FC != ComplexF32  # symmetric_indefinite's shift*eye(n) silently promotes ComplexF32 to ComplexF64
+        r0λ = b - (A + λ * I) * x0
+        (_, statsλ) = minares(A, b, x0; λ=λ, history=true)
+        @test statsλ.residuals[1] ≈ norm(r0λ)
+        @test statsλ.Aresiduals[1] ≈ norm((A + λ * I)' * r0λ)
+      end
+
+      FC <: Complex || continue
+      Acs, bcs = complex_symmetric_definite(FC=FC)
+      (_, stats) = minares(Acs, bcs; complex_symmetric=true, history=true)
+      @test stats.residuals[1] ≈ norm(bcs)
+      @test stats.Aresiduals[1] ≈ norm(Acs * conj.(bcs))
+
+      x0cs = rand(FC, size(Acs, 1))
+      r0cs = bcs - Acs * x0cs
+      (_, stats0cs) = minares(Acs, bcs, x0cs; complex_symmetric=true, history=true)
+      @test stats0cs.residuals[1] ≈ norm(r0cs)
+      @test stats0cs.Aresiduals[1] ≈ norm(Acs * conj.(r0cs))
+
+      r0csλ = bcs - (Acs + λ * I) * x0cs
+      (_, statscsλ) = minares(Acs, bcs, x0cs; complex_symmetric=true, λ=λ, history=true)
+      @test statscsλ.residuals[1] ≈ norm(r0csλ)
+      @test statscsλ.Aresiduals[1] ≈ norm((Acs + λ * I) * conj.(r0csλ))
+    end
+  end
+
+  @testset "stats[2] closed form" begin
+    # The in-loop push is current (not lagged): residuals[2]/Aresiduals[2]
+    # are produced once the main loop has run its first iteration, from that
+    # same run's x₁. Hermitian: ‖r₁‖, ‖Ar₁‖; complex symmetric: ‖r₁‖,
+    # ‖A conj(r₁)‖.
+    for FC in (Float64, ComplexF64)
+      T = real(FC)
+      A, b = symmetric_indefinite(FC=FC)
+      (x1, stats) = minares(A, b; itmax=1, history=true, atol=zero(T), rtol=zero(T), Artol=zero(T))
+      r1 = b - A * x1
+      @test stats.residuals[2] ≈ norm(r1)
+      @test stats.Aresiduals[2] ≈ norm(A' * r1)
+    end
+    for FC in (ComplexF64, ComplexF32)
+      T = real(FC)
+      Acs, bcs = complex_symmetric_definite(FC=FC)
+      (x1cs, stats) = minares(Acs, bcs; complex_symmetric=true, itmax=1, history=true, atol=zero(T), rtol=zero(T), Artol=zero(T))
+      r1cs = bcs - Acs * x1cs
+      @test stats.residuals[2] ≈ norm(r1cs)
+      @test stats.Aresiduals[2] ≈ norm(Acs * conj.(r1cs))
+    end
   end
 end
