@@ -43,6 +43,9 @@ instead of Hermitian, and MINARES runs on the Bunse-Gerstner-Stover
 generated BGS basis vectors, it chooses coefficients yₖ in xₖ = x₀ + conj(Vₖ)yₖ
 to minimize ‖A conj(rₖ)‖₂, the normal-residual norm. Since Aᵀ = A, this equals
 ‖Aᴴrₖ‖₂. It estimates ‖rₖ‖₂ and ‖A conj(rₖ)‖₂; this is CS-MinAres.
+Without `x0`, a stop on the ‖A conj(rₖ)‖₂ test with ‖rₖ‖₂ > ε = `atol + rtol‖b‖` replaces `x` by
+x - conj(r)(rᵀx)/‖r‖² (the minimum-norm solution if `x` is exactly stationary) and sets
+`stats.inconsistent`, unless this raises ‖r‖₂ by more than ε.
 For complex `FC`, `complex_symmetric = true`
 requires `M = I`; for real `FC` it has no effect, since a real symmetric
 matrix is also Hermitian.
@@ -653,10 +656,32 @@ kwargs_minares = (:M, :ldiv, :λ, :atol, :rtol, :Artol, :itmax, :timemax, :verbo
     warm_start && kaxpy!(n, one(FC), Δx, x)
     workspace.warm_start = false
 
+    # Stationary with ‖r‖ not small: b is not in range(A + λI). With x₀ = 0, lift x to x† = x - conj(r)(rᵀx)/‖r‖²,
+    # kept only if ‖r‖ grows by at most ε, since x need not be exactly stationary.
+    inconsistent = false
+    if CS && !warm_start && (ArNorm ≤ κ) && (rNorm > ε)
+      r, r̄, t = vₖ, q, vₖ₊₁
+      kmul!(r, A, x)
+      (λ ≠ 0) && kaxpy!(n, λ, x, r)
+      kaxpby!(n, one(FC), b, -one(FC), r)  # r = b - (A + λI)x
+      ρ = knorm(n, r)
+      kcopy!(n, r̄, r)
+      conj!(r̄)
+      c = kdot(n, r̄, x) / ρ^2              # rᵀx / ‖r‖²
+      kmul!(t, A, r̄)
+      (λ ≠ 0) && kaxpy!(n, λ, r̄, t)
+      kaxpy!(n, c, t, r)                   # residual of x - c conj(r)
+      if knorm(n, r) ≤ ρ + ε
+        kaxpy!(n, -c, r̄, x)
+        inconsistent = true
+        status = "found approximate minimum least-squares solution"
+      end
+    end
+
     # Update stats
     stats.niter = iter
     stats.solved = solved
-    # stats.inconsistent = inconsistent
+    stats.inconsistent = inconsistent
     stats.timer = start_time |> ktimer
     stats.status = status
     return workspace

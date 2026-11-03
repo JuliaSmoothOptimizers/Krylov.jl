@@ -160,11 +160,14 @@
       @test norm(r) / norm(b) ≤ tol * norm(A) * norm(x)
       @test stats.solved
 
-      # Singular, inconsistent complex symmetric system.
+      # Singular, inconsistent: lifted to the minimum-norm solution.
       As, bs = complex_symmetric_inconsistent(FC=FC)
       (x, stats) = minares(As, bs; complex_symmetric=true)
       r = bs - As * x
       @test norm(As' * r) / norm(As' * bs) ≤ tol
+      xmn = pinv(Matrix(As)) * bs
+      @test norm(x - xmn) / norm(xmn) ≤ tol
+      @test stats.inconsistent
 
       # krylov_solve generic interface.
       workspace = krylov_workspace(Val(:minares), A, b)
@@ -187,6 +190,36 @@
     (x, stats) = minares(A, b; complex_symmetric=true)
     @test norm(x - pinv(A) * b) / norm(pinv(A) * b) ≤ 1.0e-6
     @test stats.solved
+
+    # Singular, inconsistent: lifted to the minimum-norm solution, same residual and stationarity.
+    b = b + nullspace(Matrix(A'))[:, 1]
+    xmn = pinv(A) * b
+    (x, stats) = minares(A, b; complex_symmetric=true)
+    r = b - A * x
+    @test norm(x - xmn) / norm(xmn) ≤ 1.0e-6
+    @test abs(norm(r) - norm(b - A * xmn)) ≤ 1.0e-10 * norm(b)
+    @test norm(A' * r) ≤ 1.0e-8 * norm(A' * b)
+    @test stats.inconsistent
+    @test stats.status == "found approximate minimum least-squares solution"
+
+    # Shifted: (A - λI) + λI = A.
+    (x, stats) = minares(A - 0.5I, b; complex_symmetric=true, λ=0.5)
+    @test norm(x - xmn) / norm(xmn) ≤ 1.0e-6
+    @test stats.inconsistent
+
+    # Warm start: no lift, which needs x₀ = 0.
+    (x, stats) = minares(A, b, nullspace(Matrix(A))[:, 1]; complex_symmetric=true)
+    @test norm(A' * (b - A * x)) ≤ 1.0e-8 * norm(A' * b)
+    @test !stats.inconsistent
+
+    # Ill-conditioned nonsingular: the ‖A conj(r)‖ test fires first; the lift would raise ‖r‖, so it is rejected.
+    rng = Random.MersenneTwister(10)
+    Q = Matrix(qr(randn(rng, ComplexF64, 10, 10)).Q)
+    A = Q * Diagonal(exp10.(range(0, -4, length=10))) * transpose(Q)
+    b = randn(rng, ComplexF64, 10)
+    (x, stats) = minares(A, b; complex_symmetric=true)
+    @test norm(b - A * x) ≤ 1.0e-6 * norm(b)
+    @test !stats.inconsistent
 
     # Iterates and both estimates against a dense oracle at every k. Only the
     # ‖rₖ‖ estimate check sees the LQ factorization of Uₖ.
